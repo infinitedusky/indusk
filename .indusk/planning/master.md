@@ -33,6 +33,7 @@ roadmap:
   - indusk-demo
   - promise-sources
   - promise-timeline
+  - test-kinds
   - admin-plan-authoring
   - demo-app-template
   - server-provisioning
@@ -278,6 +279,12 @@ lesson title, or a chat log.
     clause **already shipped** (the version line reports installed, published,
     project-updated and packaged commits since the release commit); what
     remains is naming the plans rather than counting commits.
+- **Next, brief accepted** (2026-10-05): [test-kinds](test-kinds/brief.md) —
+  every phase waited about five minutes on `pnpm test`, 216 s of it eight
+  admin tests that boot `next dev` and Jaeger to check rules. Five kinds of
+  test, each with its moment; the smallest kind by default; code that decides
+  takes its clock and reads as inputs; the root suite parallel again. Its own
+  promises, over both suites: the everyday suite never waits, and stays fast.
 - **Parent, living master** (2026-10-05):
   [promise-core](promise-core/master.md) — the promise is the first
   primitive. A person can start from a promise alone: the tests are written
