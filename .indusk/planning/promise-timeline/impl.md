@@ -253,7 +253,7 @@ table would be rebuilt there.*
 - [x] `lib/promises/telemetry.ts` `marksBetween`: compare a run's `indusk.project` after the same normalisation `markProjectId` applies (A15)
 - [x] `apps/indusk-admin/src/lib/promise-timeline.ts`: key the store by the source's query URL as well as its name, so a repointed server starts empty (A16)
 - [x] The store re-reads a tail long enough for late runs — the last `LATE_MS` (10 minutes) on every refresh, not one — and the whole health window once every `FULL_REREAD_MS` (10 minutes), so a run later than the tail is still read within a bounded time (A17)
-- [ ] `fixIncident`: refuse an incident whose root cause is the unwritten line, naming it (A18)
+- [x] `fixIncident`: refuse an incident whose root cause is the unwritten line, naming it (A18)
 - [ ] The store reads a window newest first, in slices, and keeps each slice as it lands: a refresh that runs out of budget keeps what it read, extends the covered range by it, and the next refresh continues from there; the strip draws what is covered and says how far back that reaches (A19)
 
 #### Build Phase 6 Verification

@@ -214,6 +214,13 @@ export function fixIncident(registry: Registry, id: string, now: Date = new Date
 			`incident "${id}" is already fixed${incident.fixed ? ` (${incident.fixed})` : ""}`,
 		);
 	}
+	// A fix is a claim about a cause someone found. With the root cause still
+	// the line `promises record` wrote, nobody has said what broke (A18).
+	if (incident.rootCause.trim() === UNWRITTEN_ROOT_CAUSE) {
+		throw new Error(
+			`incident "${id}" has no root cause written — replace "${UNWRITTEN_ROOT_CAUSE}" under ## Root cause in ${incident.file} before marking it fixed`,
+		);
+	}
 	const path = join(registry.dir, incident.file);
 	let text = readFileSync(path, "utf-8");
 	text = setScalar(text, "status", "fixed");
