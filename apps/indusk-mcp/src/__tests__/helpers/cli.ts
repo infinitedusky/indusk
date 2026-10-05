@@ -71,7 +71,11 @@ function defaultTestHome(): string {
  * Run the built CLI in `cwd`. `env` overlays the inherited environment — for
  * a test that needs git to see a fixed date or no identity at all.
  */
-export function runCli(cwd: string, args: string[], env: Record<string, string | undefined> = {}): RunResult {
+export function runCli(
+	cwd: string,
+	args: string[],
+	env: Record<string, string | undefined> = {},
+): RunResult {
 	const r = spawnSync("node", [CLI_BIN, ...args], {
 		cwd,
 		encoding: "utf-8",
