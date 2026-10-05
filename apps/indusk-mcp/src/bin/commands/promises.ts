@@ -4,7 +4,12 @@ import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
 import { readPromises } from "../../lib/promises/registry.js";
 import { formatStatus, parseDuration } from "../../lib/promises/status.js";
-import { JaegerUnreachable, readPromiseMarks } from "../../lib/promises/telemetry.js";
+import {
+	alarmSource,
+	JaegerUnreachable,
+	readSources,
+	type SourceRead,
+} from "../../lib/promises/telemetry.js";
 import { watchPromises, watchReport } from "../../lib/promises/watch.js";
 
 /**
@@ -32,10 +37,13 @@ export async function promisesCheck(projectRoot: string): Promise<void> {
 /**
  * `indusk promises status [--since <duration>]` (day-monitor, ADR D5).
  *
- * Read-only. Exit 0 with one block per promise when Jaeger answered; exit 2
- * naming where it looked when it could not, and never a count — "0
- * violations" from a backend nobody reached is the one wrong answer. The
- * window defaults to the quiet window (`promises.quiet_window_days`).
+ * Read-only. One block per promise per source (promise-sources, ADR D3): with
+ * one source, exactly as before; with `local` and `production`, a section
+ * each, headed with its name and URL. A source that could not be read says so
+ * naming where it looked, and never a count — "0 violations" from a backend
+ * nobody reached is the one wrong answer. Exit 2 when the alarm source could
+ * not be read. The window defaults to the quiet window
+ * (`promises.quiet_window_days`).
  */
 export async function promisesStatus(
 	projectRoot: string,
@@ -63,25 +71,43 @@ export async function promisesStatus(
 		window = getQuietWindowDays(projectRoot);
 	}
 	const promises = read.registry.promises;
-	try {
-		const marks = await readPromiseMarks(projectRoot, read.registry, { sinceMs });
-		console.info(formatStatus(promises, marks, window));
-	} catch (err) {
-		if (err instanceof WatcherBlind) {
-			// Answered and did not hear: the 2026-10-01 case. Starting the daemon
-			// is the wrong advice — something is already answering.
-			console.error(
-				`${err.message}\nNo count is reported for any behaviour promise. Whatever answers at ${err.where} is not receiving what is sent to ${err.intake}.`,
-			);
+	const reads = await readSources(projectRoot, read.registry, { sinceMs });
+	const alarm = alarmSource(reads.map((r) => r.name));
+	if (reads.length === 1) {
+		// One source: today's output, with no section header (A7).
+		const [only] = reads;
+		if (only.ok) console.info(formatStatus(promises, only.marks, window));
+		else {
+			console.error(failureText(projectRoot, only));
 			process.exitCode = 2;
-			return;
 		}
-		if (!(err instanceof JaegerUnreachable)) throw err;
-		console.error(
-			`${err.message}\nNo count is reported for any behaviour promise. Start the daemon with \`indusk telemetry start\`.`,
-		);
-		process.exitCode = 2;
+		return;
 	}
+	// Every source in its own section, each failure said in its own (ADR D3).
+	// The exit code follows the alarm source: a laptop with no daemon beside a
+	// production server that answered is not a failed status run.
+	const sections = reads.map((r) =>
+		r.ok
+			? `${r.name} — ${r.label}\n${formatStatus(promises, r.marks, window)}`
+			: `${r.name} — ${r.label}\n${failureText(projectRoot, r)}`,
+	);
+	console.info(sections.join("\n\n"));
+	if (reads.some((r) => r.name === alarm && !r.ok)) process.exitCode = 2;
+}
+
+/** What a failed source says in place of counts, with advice for that source. */
+function failureText(projectRoot: string, read: Extract<SourceRead, { ok: false }>): string {
+	if (read.error instanceof WatcherBlind) {
+		// Answered and did not hear: the 2026-10-01 case. Starting the daemon
+		// is the wrong advice — something is already answering.
+		return `${read.error.message}\nNo count is reported for any behaviour promise. Whatever answers at ${read.error.where} is not receiving what is sent to ${read.error.intake}.`;
+	}
+	const named = readConfig(projectRoot)?.promises?.jaeger;
+	const hint =
+		read.name === "production" && named
+			? `Check ${named.url} is up and that ${named.credential_env} holds its credential.`
+			: "Start the daemon with `indusk telemetry start`.";
+	return `${read.error.message}\nNo count is reported for any behaviour promise. ${hint}`;
 }
 
 const WATCH_SOURCES = ["local", "smoke", "deployed"] as const;
@@ -113,9 +139,10 @@ export async function promisesWatch(
 		// daemon when their project reads a deployed server sends them to the
 		// wrong machine.
 		const named = readConfig(projectRoot)?.promises?.jaeger;
-		const hint = named
-			? `Nothing was recorded. The project reads ${named.url}; check it is up and that ${named.credential_env} holds its credential.`
-			: "Nothing was recorded. Start the daemon with `indusk telemetry start`.";
+		const hint =
+			named && source === "deployed"
+				? `Nothing was recorded. The project reads ${named.url}; check it is up and that ${named.credential_env} holds its credential.`
+				: "Nothing was recorded. Start the daemon with `indusk telemetry start`.";
 		console.error(
 			err instanceof WatcherBlind
 				? `${err.message}\nNothing was recorded: a watcher that cannot hear has nothing to record.`
