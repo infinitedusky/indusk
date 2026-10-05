@@ -78,7 +78,8 @@ exists today and answers wrongly.
   - A3: each behaviour promise row carries a `data-source="local"` and a `data-source="production"` chip with different `data-health`.
   - A4: with the server stopped, production's section says unknown and local's chips still show.
   - A6: the sidebar's red mark follows production, not local.
-- [ ] Run each and read each failure. A1–A6 should fail on their own assertions (one source read today); A7 should pass. A red that is a load or setup failure is not authored
+- [x] Run each and read each failure. A1–A6 should fail on their own assertions (one source read today); A7 should pass. A red that is a load or setup failure is not authored
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Regression Guards
 
@@ -86,7 +87,7 @@ exists today and answers wrongly.
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A6 fail on their own assertions and A7 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/promise-sources`; `pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-promise-sources`); the leak guard is clear afterwards (`node apps/indusk-mcp/scripts/check-test-daemons.js`)
+- [x] A1–A6 fail on their own assertions and A7 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/promise-sources`; `pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-promise-sources`); the leak guard is clear afterwards (`node apps/indusk-mcp/scripts/check-test-daemons.js`)
 
 ### Build Phase 1: sources, read per source
 
