@@ -201,6 +201,50 @@ refuses the write on a refusal. It reaches the CLI as `indusk` on `PATH`, or as
 one too old to have `contract`), the write is refused with the command it ran
 and how it failed. `promises check` runs it for every open plan.
 
+## `promises confirm`
+
+```
+indusk promises confirm <plan> [--code-root <path>]
+```
+
+Closes a plan's promises. For each promise the plan owns that is still
+`declared`, it sets `tests:` to the test files the plan's rows name, `sites:`
+to the other files under the code root that carry the promise's token, and
+`state: enforced`, with a History line naming the rows; a promise it
+`supersedes` is retired. Then it runs `promises check`. It writes plan
+documents and commits nothing.
+
+```
+seat-released-on-timeout: enforced — 1 test file, 1 code site
+seats-v2: 1 promise confirmed; the registry check passes.
+```
+
+Everything that can refuse is decided before anything is written. Exit **2**,
+with nothing written, naming:
+
+| Situation | Refusal names |
+|---|---|
+| No row of the plan's impl names the promise in its `For` cell | the promise |
+| A row that names it is not `passing` | the promise, the row and its state |
+| The rows that name it name no test file in their `Test` cell | the promise and the rows |
+| A test file a row names does not exist under the code root, or does not carry the token | the promise and the file |
+| No code carries the token, for a `behaviour` or `state` promise | the promise |
+| It replaces a promise that code still names | the promise, the one it replaces, and each file |
+| The brief lists a promise under **Changes** that the plan never changed | the promise, and the `change` command |
+| The brief lists a replacement that was declared without recording what it replaces | both promises, and the `replace` command |
+| A name that is not an open plan folder | the name |
+
+A plan that holds no `declared` promise has nothing to confirm; the command
+says so and exits **0**, so running it twice is safe.
+
+`--code-root` names where the plan's code and tests are. It defaults to the
+project's code root. In a workbench a plan's tests exist only in its own code
+worktree until it lands, so the retrospective passes that worktree.
+
+The retrospective runs this before it archives the plan
+([Step 8a](/reference/skills/retrospective)); its gate names the promises the
+plan's rows do not yet prove. The MCP tool is `confirm_promises`.
+
 ## `promises check`
 
 ```

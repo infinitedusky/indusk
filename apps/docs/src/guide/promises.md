@@ -51,7 +51,7 @@ For `state` and `structure` promises the regression suite *is* the monitor, on t
 stateDiagram-v2
     [*] --> declared: stated in planning
     [*] --> enforced: stated after a failure, guarded
-    declared --> enforced: links in place at close
+    declared --> enforced: confirmed when its plan closes
     declared --> known-violated: could not be established (incident)
     enforced --> known-violated: broken, incident opened
     known-violated --> enforced: fixed
@@ -99,21 +99,49 @@ running system reports. See [The loop](#the-loop).
 
 ## Who owns a promise
 
-The plan that established it. Ownership moves only when another plan supersedes the promise. A plan closes *holding* its promises — closed is the resting state, and the archived plan is the owner of record that a violation wakes. Only a plan holding none is truly finished.
+The plan that established it, until a later plan changes it: a plan that improves a promise's sentence takes the promise over. A plan closes *holding* its promises — closed is the resting state, and the archived plan is the owner of record that a violation wakes. Only a plan holding none is truly finished.
+
+## A promise's life in plans
+
+A promise comes from a planning conversation, and four commands carry it. Nobody types a registry file. The planner calls the tools of the same names.
+
+| Moment | Command | What it does |
+|---|---|---|
+| The plan's [brief](/guide/briefs) is agreed | `indusk promises declare` | Writes the promise as `declared`, owned by the plan. |
+| The plan closes | `indusk promises confirm <plan>` | Each promise the plan declared becomes `enforced`: its `tests:` are the files the plan's test rows name, its `sites:` the other files that carry its token. Refuses, and writes nothing, while a promise has no passing row that names it. |
+| A later plan partly changes what it commits to | `indusk promises change` | The sentence is replaced and the later plan takes the promise over. Its name, its incidents and the marks in code stay; its History keeps the old sentence, the reason and the plan that owned it before. |
+| Its name no longer describes it | `indusk promises replace` | A new promise is declared recording which it replaces. The old one stays in force while the plan builds and is retired when that plan is confirmed. |
+
+A promise is proven by a row, not by a claim. Each row of a plan's [Test Trajectory](/guide/test-trajectory) says what it is for, and confirming reads those rows: every row that names the promise is `passing`, and the test files they name exist and carry `promise: <name>`. A `behaviour` or `state` promise also needs code that carries the token, because a promise about what the system does names the code that keeps it.
+
+Prefer changing to replacing. A promise a new plan partly invalidates is usually the same commitment said better, and changing it keeps one name, one file and one history. If it breaks later, the plan that changed it is the one reopened.
+
+```mermaid
+flowchart LR
+  B[Brief agreed] -->|declare| D[(declared)]
+  D -->|rows pass; confirm at close| E[(enforced)]
+  E -->|a later plan: change| E
+  E -->|a later plan: replace, then its confirm| R[(retired)]
+  E -->|it breaks| K[(known-violated)]
+  K -->|fixed| E
+```
 
 ## How to write one
 
-1. **Declare the domain** it belongs to in `.indusk/config.json` under
-   `promises.domains`, if it is not there yet.
-2. **Write the file** `.indusk/promises/<name>.md` — kebab-case name, the
-   kind, the state, the owner plan, and the statement as the body's first
-   paragraph. One sentence, observable, never implementation.
-3. **Link it.** Put the token `promise: <name>` in a comment at the code
-   site that enforces it and in the test that checks it, and list both paths
-   in the file. A `structure` promise needs only the check; a
-   `known-violated` one needs an incident instead.
-4. **Run `indusk promises check`.** It refuses by name until every link the
-   kind requires is in place, and passes with a summary once it is.
+In a plan, the planner does this from the conversation (above). By hand, for a
+promise stated after a failure:
+
+1. **Declare it**: `indusk promises declare <name> --plan <plan> --kind <kind>
+   --domain <domain> --statement "<one sentence>"`. Kebab-case name; one
+   sentence, observable, never implementation. A domain the project has not
+   declared is refused, unless it declares none yet.
+2. **Link it.** Put the token `promise: <name>` in a comment at the code
+   site that keeps it and in the test that checks it. A `structure` promise
+   needs only the test.
+3. **Name it in a test row.** The plan's row for that test says
+   `promise: <name>` in its `For` cell and the test file in its `Test` cell.
+4. **Confirm it** when the plan closes: `indusk promises confirm <plan>`. It
+   refuses by name until the rows and the links are in place.
 
 The file shapes, every refusal and the exit codes are in the
 [`indusk promises` reference](/reference/cli/promises).
