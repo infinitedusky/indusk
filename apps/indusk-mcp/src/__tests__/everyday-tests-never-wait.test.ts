@@ -38,6 +38,17 @@ const PATTERNS: Array<{ name: string; re: RegExp; unlessFakeTimers?: boolean }> 
 		re: /\bsetTimeout\(\s*(?:r|res|resolve|done|next|ok)\s*,\s*(?:[1-9]\d{2,}|\d{1,3}(?:_\d{3})+)\s*\)/,
 		unlessFakeTimers: true,
 	},
+	// The promise form (`node:timers/promises`): the delay is the first argument.
+	{
+		name: "waits 100 ms or more",
+		re: /\bsetTimeout\(\s*(?:[1-9]\d{2,}|\d{1,3}(?:_\d{3})+)\s*[,)]/,
+		unlessFakeTimers: true,
+	},
+	{
+		name: "waits 100 ms or more",
+		re: /\bscheduler\.wait\(\s*(?:[1-9]\d{2,}|\d{1,3}(?:_\d{3})+)\s*[,)]/,
+		unlessFakeTimers: true,
+	},
 ];
 
 const ADMIN_TIERS = join(REPO, "apps/indusk-admin/vitest.tiers.ts");
