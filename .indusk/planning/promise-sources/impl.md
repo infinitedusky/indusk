@@ -1,7 +1,7 @@
 ---
 title: "Promise sources — local and production, side by side"
 date: 2026-10-04
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
