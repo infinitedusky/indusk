@@ -1,7 +1,7 @@
 ---
 title: "Promise sources — local and production, side by side"
 date: 2026-10-04
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -51,6 +51,8 @@ there is one. See [brief.md](brief.md), [test-plan.md](test-plan.md) and
 | A5 | `promises watch --source deployed` records incidents from the production server and `--source local` from the laptop: a violation only in production is recorded by the first and not the second | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 | A6 | A violation only in local is shown, but does not raise the alarm when a production source exists: no red sidebar mark in the admin, and `needsAttention` names only production's | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts, apps/indusk-admin/src/__tests__/http-promise-sources.test.ts |
 | A7 | A project that names no production server behaves exactly as today: one source, local, with every reader's output unchanged | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
+| A8 | A `promises.jaeger` that is not an object, or names no `url` or no `credential_env`, is production's own refusal naming the missing key: `status` still prints local's section and exits 2, `promise_health` reports local's rows with production `ok: false`, and the admin still draws local's chips | Phase 0 | Build Phase 5 | planned | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
+| A9 | A production whose intake and query port accept connections and never answer does not hold the other source past the reader's budget: with a 2 s `timeoutMs`, `readSources` returns within 3 s, local `ok: true`, production `ok: false` | Phase 0 | Build Phase 5 | planned | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 
 ## Checklist
 
@@ -172,6 +174,29 @@ exists today and answers wrongly.
 #### Build Phase 4 Document
 
 - [x] Admin overview (`apps/docs/src/reference/admin-ui/overview.md`): chips per source; `apps/docs/src/changelog.md` Unreleased, Added: local and production side by side
+
+### Build Phase 5: Falsification — a misconfigured or silent production must not take local down with it
+
+**Goal**: verify whether "one dead source never hides another" (ADR D2) holds against two failures found by reading the built code. Each row is one hypothesis that is red today; each item below is the fix it needs.
+
+- **A8**: `resolveProduction` calls `named.url.trim()`. A config of `"jaeger": "https://…"` (a string where an object belongs) or one with no `url` throws a `TypeError`. That is not `JaegerUnreachable`, so `resolveMarkSources` rethrows it and the whole read dies: `status` prints a stack trace and no local section, `promise_health` errors outright, and the admin's catch-all marks every source unknown, local included. A missing `credential_env` is not a crash but is refused as "names undefined", which names nothing to fix.
+- **A9**: `probeWatcher` sends with `sendWatcherSpan`'s default 5 s timeout whatever `waitMs` the caller passed, then (since Build Phase 1) asks the query API with up to `waitMs` more. A production host that accepts connections and never answers holds a 2 s admin read for about 7 s, and `readSources` waits for every source, so local's chips and the sidebar wait with it on every refresh.
+
+- [ ] `lib/promises/telemetry.ts` `resolveProduction`: check the shape of `promises.jaeger` before using it. Not an object, a `url` that is not a non-empty string, or a `credential_env` that is not a non-empty string is a `JaegerUnreachable` naming the key (`promises.jaeger`, `promises.jaeger.url`, `promises.jaeger.credential_env`), so it is production's failure and local is still read
+- [ ] `lib/promises/probe.ts`: the probe's send is bounded by the caller's `waitMs` (the `timeoutMs` argument `sendWatcherSpan` already takes), so the whole probe of an unanswering source fits the reader's budget
+
+#### Build Phase 5 Verification
+
+- [ ] A8 and A9 pass, and A1–A7 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/promise-sources src/__tests__/always-on-falsification src/__tests__/watcher-probe`); the leak guard is clear afterwards
+- [ ] `tsc --noEmit` clean in both packages; Biome clean on the changed files
+
+#### Build Phase 5 Context
+
+- [ ] guard: A8 carries `lesson: one-dead-source-never-hides-another` — the lesson gains the case: a source's *configuration* failing is that source's failure too, not the read's
+
+#### Build Phase 5 Document
+
+- [ ] `apps/docs/src/reference/cli/promises.md`: a malformed `promises.jaeger` is refused for production by key while local is still read; the probe's send is bounded by the reader's timeout
 
 ## Files Affected
 
