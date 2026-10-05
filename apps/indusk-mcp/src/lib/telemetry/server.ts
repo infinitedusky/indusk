@@ -41,13 +41,13 @@ export const PASS_INTERVAL_ENV = "INDUSK_SERVER_PASS_INTERVAL_MS";
 export const PASS_WINDOW_ENV = "INDUSK_SERVER_PASS_WINDOW_HOURS";
 /** Overrides the heartbeat's staleness, `max(3 × interval, 3 min)` by default — for tests. */
 export const WATCHER_STALE_ENV = "INDUSK_SERVER_WATCHER_STALE_MS";
-/** Where the pass reads Jaeger, when it is not the server reading its own. */
 /**
  * The query API as people reach it (e.g. https://<app>.fly.dev:16687), for the
  * trace links the server posts to Slack. Optional: without it the server's
  * messages name the trace and ask for this setting (day-always-on-deploy A11).
  */
 export const PUBLIC_QUERY_URL_ENV = "INDUSK_SERVER_PUBLIC_QUERY_URL";
+/** Where the pass reads Jaeger, when it is not the server reading its own. */
 export const QUERY_URL_ENV = "INDUSK_SERVER_QUERY_URL";
 /** `user:password`, as a reader off the server holds it. */
 export const CREDENTIAL_ENV = "INDUSK_SERVER_CREDENTIAL";
