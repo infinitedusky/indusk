@@ -59,12 +59,12 @@ checked is still checked, and InDusk holds two promises about its own suite
 | A11 | A blind watcher's source says *watcher blind* | Build Phase 1 | Build Phase 1 | planned |
 | A12 | A violated promise names its newest violation's environment | Build Phase 1 | Build Phase 1 | planned |
 | A13 | The Promises page rendered against a real Jaeger shows a run's chips and strip (system tier) | Build Phase 2 | Build Phase 2 | planned |
-| A14 | An everyday-tier test in either package that starts a server or waits on the wall clock fails the guard, naming file, line and call | Test Phase 1 | Build Phase 2 | planned |
-| A15 | A short-lived process that runs and exits (`git`, the CLI) does not trip the guard | Test Phase 1 | Test Phase 1 | planned |
+| A14 | An everyday-tier test in either package that starts a server or waits on the wall clock fails the guard, naming file, line and call | Test Phase 1 | Build Phase 2 | written |
+| A15 | A short-lived process that runs and exits (`git`, the CLI) does not trip the guard | Test Phase 1 | Test Phase 1 | passing |
 | A16 | Every everyday run is marked held or broken with its duration; a slow run fails nothing; an overlapping run is not judged | Build Phase 5 | Build Phase 5 | planned |
 | A17 | A run at or over 120 s reads violated for `everyday-suite-stays-fast`, owned by test-kinds | Build Phase 5 | Build Phase 5 | planned |
-| A18 | An impl with `test_kinds: required` whose row has no kind, or one outside the five, is refused naming the five | Test Phase 1 | Build Phase 4 | planned |
-| A19 | The planner's Verification template no longer offers `pnpm test` as a phase's default | Test Phase 1 | Build Phase 4 | planned |
+| A18 | An impl with `test_kinds: required` whose row has no kind, or one outside the five, is refused naming the five | Test Phase 1 | Build Phase 4 | written |
+| A19 | The planner's Verification template no longer offers `pnpm test` as a phase's default | Test Phase 1 | Build Phase 4 | written |
 
 ### Deferred Verification
 
@@ -83,11 +83,11 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 **Goal**: author every test that can be authored against today's tree, and record why the rest cannot.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create test-kinds`, which records the assignment so the admin and plan tools read the plan from it) — worktree-per-plan default
-- [ ] A14: `apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts`. Lists each package's everyday files (its test files minus its tier list; the admin has none yet, so all), scans them against a data table of patterns (server starters `startNextDev`, `startAlwaysOnServer`, the daemon/Jaeger starters, `spawn(` with `detached: true`; waits `sleep(`, `setTimeout`/`setInterval` with a literal ≥ 100 ms in a file without `vi.useFakeTimers`), and fails naming file, line and call. Message carries `lesson: everyday-tests-never-wait`. RED: the admin's 16 `next dev` files and mcp's four clock-waiting files
-- [ ] A15: in the same file, a case scanning a fixture string that calls `spawnSync("git", …)` and `execFile` of the CLI finds nothing
-- [ ] A18: `apps/indusk-mcp/src/__tests__/test-kinds-validation.test.ts`. Runs `hooks/validate-impl-structure.js` (over its stdin, as the hook is run) on an impl with `test_kinds: required` and a row whose `Kind` is `example`, and on one with no `Kind`; expects refusal naming `unit, contract, live check, smoke, promise`. RED: accepted today
-- [ ] A19: `apps/indusk-mcp/src/__tests__/planner-verification-template.test.ts`. Reads `skills/planner.md`'s impl template; fails while a Verification line offers `pnpm test` as the example command. RED today (line 519)
+- [x] Create/confirm this plan's worktree (`indusk worktree create test-kinds`, which records the assignment so the admin and plan tools read the plan from it) — worktree-per-plan default
+- [x] A14: `apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts`. Lists each package's everyday files (its test files minus its tier list; the admin has none yet, so all), scans them against a data table of patterns (server starters `startNextDev`, `startAlwaysOnServer`, the daemon/Jaeger starters, `spawn(` with `detached: true`; waits `sleep(`, `setTimeout`/`setInterval` with a literal ≥ 100 ms in a file without `vi.useFakeTimers`), and fails naming file, line and call. Message carries `lesson: everyday-tests-never-wait`. RED: the admin's 15 `next dev` files and `LiveRefresh.test.tsx` (real timers, found by the guard), and mcp's four clock-waiting files — 20 files. The timer pattern was narrowed on first run to the wait idiom (a promise resolved after N ms): a deadline timer that fires only when a test fails (`query-door`), or a hanging child's body (`run/falsification`), waits for nothing on a passing run
+- [x] A15: in the same file, a case scanning a fixture string that calls `spawnSync("git", …)` and `execFile` of the CLI finds nothing
+- [x] A18: `apps/indusk-mcp/src/__tests__/test-kinds-validation.test.ts`. Runs `hooks/validate-impl-structure.js` (over its stdin, as the hook is run) on an impl with `test_kinds: required` and a row whose `Kind` is `example`, and on one with no `Kind`; expects refusal naming `unit, contract, live check, smoke, promise`. RED: accepted today
+- [x] A19: `apps/indusk-mcp/src/__tests__/planner-verification-template.test.ts`. Reads `skills/planner.md`'s impl template; fails while a Verification line offers `pnpm test` as the example command. RED today (line 519)
 
 #### Deferred to Build Phase 1
 
@@ -124,8 +124,8 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 #### Test Phase 1 Verification
 
-- [ ] A14, A18, A19 authored and red, each on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/everyday-tests-never-wait src/__tests__/test-kinds-validation src/__tests__/planner-verification-template`): A14 names the 20 files, A18 reports acceptance, A19 names line 519; A15 passes
-- [ ] The deferred bodies above reviewed: A4–A12 compile once `Deps` and `fakeSource` exist, and each asserts a rule its HTTP file asserts today
+- [x] A14, A18, A19 authored and red, each on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/everyday-tests-never-wait src/__tests__/test-kinds-validation src/__tests__/planner-verification-template`): A14 names the 20 files, A18 reports acceptance, A19 names line 519; A15 passes — confirmed: 4 red on their assertions (A18's "style word" and "no column" cases exit 0; its control passes), 4 green
+- [x] The deferred bodies above reviewed: A4–A12 compile once `Deps` and `fakeSource` exist, and each asserts a rule its HTTP file asserts today
 
 ### Build Phase 1: The store and the health read take their clock and their reads
 
@@ -157,6 +157,7 @@ checked is still checked, and InDusk holds two promises about its own suite
 - [ ] `apps/indusk-admin/vitest.system.config.ts` + `"test:system"` script: runs `SYSTEM`, one file at a time, through `with-daemon-guard.js`
 - [ ] A13: `apps/indusk-admin/src/__tests__/http-promises-page-contract.test.ts` — one real Jaeger, one held and one violated run, the page shows a red and a green chip and a strip; from `http-promise-timeline.test.ts`'s setup
 - [ ] Delete the eight HTTP promise files (`http-promise-timeline-sources`, `-falsify`, `http-promise-sources`, `http-promise-remote`, `http-promise-health`, `http-promise-timeline-transfer`, `http-watcher-blind`, `http-promise-timeline`) — each only after Build Phase 1 recorded all its assertions red-then-green
+- [ ] `apps/indusk-admin/src/components/LiveRefresh.test.tsx`: fake timers in place of its four real waits (found by the A14 guard at Test Phase 1)
 - [ ] mcp's four clock-waiting files: `monitor-mark`, `telemetry-query-latency`, `admin/__tests__/daemon-identity`, `telemetry/orphans` — fake timers where the wait is incidental; into `SYSTEM` where the wait is the subject; the choice recorded per file
 - [ ] Root `package.json`: `"test:system"` runs both packages' system tiers (`turbo test:system --concurrency=1`); `apps/indusk-mcp/package.json`'s `release` calls the root one (`pnpm -w test:system`)
 - [ ] The guard (A14) reads the admin's `vitest.tiers.ts` as it reads mcp's
