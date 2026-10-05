@@ -53,7 +53,7 @@ there is one. See [brief.md](brief.md), [test-plan.md](test-plan.md) and
 | A7 | A project that names no production server behaves exactly as today: one source, local, with every reader's output unchanged | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 | A8 | A `promises.jaeger` that is not an object, or names no `url` or no `credential_env`, is production's own refusal naming the missing key: `status` still prints local's section and exits 2, `promise_health` reports local's rows with production `ok: false`, and the admin still draws local's chips | Phase 0 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 | A9 | A production whose intake and query port accept connections and never answer does not hold the other source past the reader's budget: with a 2 s `timeoutMs`, `readSources` returns within 3 s, local `ok: true`, production `ok: false` | Phase 0 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
-| A10 | Advice for a failed source comes from the failure, not from re-reading the config: with `"jaeger": "https://…"`, neither `promises status` nor `promises watch --source deployed` prints `undefined`, and both name `promises.jaeger` | Build Phase 6 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
+| A10 | Advice for a failed source comes from the failure, not from re-reading the config: with `"jaeger": "https://…"`, neither `promises status` nor `promises watch --source deployed` prints `undefined`, and both name `promises.jaeger` | Build Phase 6 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 
 ## Checklist
 
@@ -216,9 +216,9 @@ exists today and answers wrongly.
 
 #### Build Phase 6 Verification
 
-- [ ] A10: with `"jaeger": "https://…"`, `promises status` and `promises watch --source deployed` print no `undefined` and name `promises.jaeger`
-- [ ] Behaviour parity: A1–A9 and the existing promise suites still pass after the move (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/promise-sources src/__tests__/monitor-status src/__tests__/monitor-watch src/__tests__/watcher-probe src/__tests__/always-on-source src/__tests__/always-on-health-tool src/__tests__/always-on-falsification src/__tests__/always-on-cleanup`; admin: `vitest run src/__tests__/http-promise-sources src/__tests__/http-promise-health src/__tests__/http-promise-remote src/__tests__/http-watcher-blind` and the component tests); `tsc` clean in both packages; the leak guard clear
-- [ ] No import cycle between `telemetry.ts` and `probe.ts`: `grep` finds no `./telemetry` import of `probe` (`telemetry.ts` imports nothing from `probe.ts`)
+- [x] A10: with `"jaeger": "https://…"`, `promises status` and `promises watch --source deployed` print no `undefined` and name `promises.jaeger`
+- [x] Behaviour parity: A1–A9 and the existing promise suites still pass after the move (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/promise-sources src/__tests__/monitor-status src/__tests__/monitor-watch src/__tests__/watcher-probe src/__tests__/always-on-source src/__tests__/always-on-health-tool src/__tests__/always-on-falsification src/__tests__/always-on-cleanup`; admin: `vitest run src/__tests__/http-promise-sources src/__tests__/http-promise-health src/__tests__/http-promise-remote src/__tests__/http-watcher-blind` and the component tests); `tsc` clean in both packages; the leak guard clear
+- [x] No import cycle between `telemetry.ts` and `probe.ts`: `grep` finds no `./telemetry` import of `probe` (`telemetry.ts` imports nothing from `probe.ts`)
 
 #### Build Phase 6 Context
 
