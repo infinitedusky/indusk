@@ -61,6 +61,12 @@ URL, each laid out as status prints today. It exits 0 when every source
 answered and heard, and 2 when any source is unreachable or blind, after
 printing the others. A failing source is said, never shown as zero.
 
+*Refined in Build Phase 2:* the exit code follows the **alarm source** (D5) —
+2 when it could not be read; a failed `local` beside an answering
+`production` is printed in its section and exits 0. "Any source" would fail
+every status run on a laptop with no daemon running, and broke the existing
+A10 (`always-on-source.test.ts`), which asserts exactly that case exits 0.
+
 **D4 — `promise_health`:** adds `sources`, one entry per source with its rows
 and `needsAttention`, or its failure. The top-level `source`, `promises` and
 `needsAttention` stay, holding the alarm source's, so existing consumers read
