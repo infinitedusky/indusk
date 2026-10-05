@@ -78,6 +78,67 @@ answers one question, and lets one file edit through. If any of the three
 cannot be made to work, the demo's script changes, and it is cheaper to learn
 that before building around it.
 
+## Spike findings (2026-10-05)
+
+Run against `claude` 2.1.197 on Sandy's Max login, in a scratch project with
+InDusk installed (`indusk init --local`), from a 100-line Node script that
+starts `claude -p --input-format stream-json --output-format stream-json
+--verbose --permission-prompt-tool stdio` and plays the person's part. All
+three unknowns work.
+
+1. **A question answered — works, including the real planner.** A call to
+   `AskUserQuestion` arrives on stdout as a `control_request` (`subtype:
+   can_use_tool`, `tool_name: AskUserQuestion`) carrying the questions and
+   their options as structured data. The script answers with a
+   `control_response` whose `updatedInput.answers` maps each question's text
+   to the chosen label, and Claude continues with it ("Your questions have
+   been answered"). Driven through `/planner`, the skill loaded, asked two
+   questions, received both answers, and wrote its brief.
+2. **A permission prompt answered — works.** Any tool call that needs
+   permission arrives as the same `can_use_tool` request; `behavior: allow`
+   or `deny` in the response decides it. Two cautions:
+   - **Which calls ask is the developer's own settings.** Sandy's global
+     settings allow most commands, so few were asked. The admin must pass
+     `--permission-mode default` explicitly: without it the session inherits
+     the developer's `defaultMode` (Sandy's is `auto`), nothing is asked, and
+     in the first run a write to a mistyped path outside the project went
+     through unasked.
+   - **A new project is untrusted.** `claude` printed "Ignoring 9
+     permissions.allow entries from .claude/settings.json: this workspace has
+     not been trusted". A project created in the demo must be trusted
+     (`hasTrustDialogAccepted` in `~/.claude.json`) or its own allow-list is
+     ignored — the same cause as half of
+     `i-2026-10-03-every-commit-evaluated`.
+3. **A long session — works.** A `control_request` with `subtype: interrupt`
+   stops a running session cleanly: an acknowledgement, a final result
+   (`error_during_execution`), and the process exits. A new process started
+   with `--resume <session_id>` continues the same conversation: asked what it
+   had been doing, it answered correctly. A browser reload is irrelevant,
+   because the admin server owns the process; an admin restart resumes by
+   session id.
+
+Also observed:
+
+- **Hooks run headless.** `trunk-guard` refused a write on `main` exactly as
+  in a terminal, and Claude asked how to proceed, through the same question
+  relay.
+- **`--permission-prompt-tool stdio` is not in `claude --help`.** It is the
+  protocol the Agent SDK uses underneath, so it is maintained, but it is not
+  a documented CLI contract. Two options for the build, to decide in the ADR:
+  drive the CLI directly, pinned by a test that runs these three exchanges
+  against the installed `claude`; or use the official Agent SDK
+  (`@anthropic-ai/claude-agent-sdk`, `canUseTool`), which wraps exactly this
+  protocol — if it runs on the developer's own login, which this spike did
+  not check. The brief's "no Agent SDK" was written before the protocol was
+  known and should be revisited, not assumed.
+- **`indusk init`'s closing instructions are stale.** They say `indusk infra
+  start` and `init` writes a `.cgcignore`, both left over from the retired
+  Graphiti/CGC setup. The demo's first step shows that output; fix it before
+  recording.
+
+The driver script is not kept in the repository; the protocol shapes above are
+what the build needs.
+
 ## Out of scope for the demo
 
 A broader visual overhaul, editing documents in place, hosting the admin,
