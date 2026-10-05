@@ -53,6 +53,11 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-10-03: **1.57.1 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit d0bcbba (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-03: **1.57.2 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit c1888ef (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-03: **1.57.3 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 9d47236 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-04: **1.58.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 8be732f (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-04: **1.58.1 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 84ccd43 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-04: **1.58.2 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit e01fa38 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-04: **1.58.3 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 3fbc990 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-04: **1.58.4 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit f008e85 (`pnpm release`, recorded by `scripts/record-release.js`).
 
 ---
 
@@ -660,6 +665,111 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-03T23:37:22.582Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session bcc4908a — eval: watcher-heartbeat A2 commit cb89b25d
+
+**Session ID**: bcc4908a-7aac-482b-aeef-1c7a06bee8c3
+**Last updated**: 2026-10-04T00:15:55.728Z
+**Branch**: plan/watcher-heartbeat
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 70f6b76c — eval: watcher-heartbeat A5 commit f6167429
+
+**Session ID**: 70f6b76c-9710-47b9-bc13-6365a15be905
+**Last updated**: 2026-10-04T00:16:01.831Z
+**Branch**: plan/watcher-heartbeat
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session eed155da — eval agent: scoring watcher-heartbeat A8 commit
+
+**Session ID**: eed155da-7cf3-4eb3-b066-8ecf9cbbd1ce
+**Last updated**: 2026-10-04T00:16:13.928Z
+**Branch**: plan/watcher-heartbeat
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 9996749e — eval: watcher-heartbeat Test Phase 1 commit 5a643393
+
+**Session ID**: 9996749e-65ba-44f1-bcbe-9fec9fc29fa4
+**Last updated**: 2026-10-04T00:16:49.146Z
+**Branch**: plan/watcher-heartbeat
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 05bed386 — eval: scoring commit 257ffafb (cleanup phase close)
+
+**Session ID**: 05bed386-d2a7-4f57-b79c-88cf071ed5e1
+**Last updated**: 2026-10-04T02:21:11.902Z
+**Branch**: plan/watcher-heartbeat
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
 
 ### In Flight
 
