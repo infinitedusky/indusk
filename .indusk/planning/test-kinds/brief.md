@@ -1,7 +1,7 @@
 ---
 title: "Test kinds — each question answered by the smallest test, at its own moment"
 date: 2026-10-05
-status: draft
+status: accepted
 workflow: feature
 ---
 
@@ -60,11 +60,14 @@ an honest red without a boundary.
 
 **5. The plan's own promises.** InDusk keeps this plan's purpose the way it
 keeps any other: as promises, so drift is seen and reopens the plan, rather
-than being felt weeks later.
+than being felt weeks later. Both cover **both suites**, mcp and admin: they
+are one project and one plan, under one set of rules (Sandy, 2026-10-05).
 
 - **`everyday-tests-never-wait`** (structure, checked by a test): the
   everyday suite never starts a server (`next dev`, a Jaeger or always-on
-  server, a daemon) and never sleeps on the wall clock. A guard test reads
+  server, a daemon: anything that outlives a call) and never sleeps on the
+  wall clock. A short-lived process that runs and exits (`git`, our own CLI)
+  is a contract with that tool and is allowed. A guard test reads
   every everyday-tier test file and fails naming the file and the call; such
   a test belongs in the system tier. This catches the cause the day the slow
   test is written.
@@ -108,6 +111,11 @@ than being felt weeks later.
 - Converting the eight admin promise files; one page test to the system
   tier; the root suite back to parallel.
 - A lesson carried by the converted tests.
+- The four mcp everyday files that wait on the real clock (`monitor-mark`,
+  `telemetry-query-latency`, `admin/daemon-identity`, `telemetry/orphans`):
+  each gets a fake clock, or moves to the system tier when the wait is the
+  point. The guard starts with no exemption list.
+- Both promises, declared in `.indusk/promises/`, over both suites.
 
 ### Out of Scope
 
@@ -120,9 +128,10 @@ than being felt weeks later.
   within N minutes"): a follow-up for the watcher's plans. This plan's
   promises are about the tests (5 above); the watcher heartbeat already
   covers whether the watcher can hear.
-- **The mcp suite's slow files** (`workbench-split` 44 s, `monitor-mark`
-  14 s…): audited against the kinds in a follow-up, using the rules this plan
-  writes. At 49 s in parallel, mcp is not the bottleneck.
+- **mcp files that are slow without waiting** (`workbench-split` 44 s of
+  real git work, and others): not caught by the guard, since they neither
+  start a server nor sleep. `everyday-suite-stays-fast` shows whether they
+  matter; a follow-up takes them on if it does.
 - A suite time budget. Rejected (Sandy): the cause is the kind of test, not
   the number.
 
