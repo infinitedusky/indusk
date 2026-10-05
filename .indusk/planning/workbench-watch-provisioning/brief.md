@@ -7,7 +7,7 @@ workflow: feature
 
 # Every workbench is watched from its first commit — Brief
 
-*Moved verbatim on 2026-10-02 from [day-always-on-deploy's brief](../day-always-on-deploy/brief.md), where it was written, so each piece can run at its own size; item numbers restarted.*
+*Moved verbatim on 2026-10-02 from [day-always-on-deploy's brief](../archive/day-always-on-deploy/brief.md), where it was written, so each piece can run at its own size; item numbers restarted.*
 
 ## Problem and direction
 
@@ -50,6 +50,6 @@ workbench.
 
 ## Depends on
 
-- [day-always-on-deploy](../day-always-on-deploy/brief.md) — one instance
+- [day-always-on-deploy](../archive/day-always-on-deploy/brief.md) — one instance
   deployed and smoked by hand before provisioning automates it.
 - [watcher-heartbeat](../watcher-heartbeat/brief.md).

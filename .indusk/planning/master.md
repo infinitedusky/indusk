@@ -109,12 +109,11 @@ promise.) Three sub-plans:
   `promise_health` telling a session. Detect-and-notify only. See
   `/decisions/day-always-on` and `/lessons/day-always-on`. **The deployment is
   its own step** — `day-always-on-deploy`, below.
-- [day-always-on-deploy/brief.md](day-always-on-deploy/brief.md) — **4b′
-  deployed** — brief accepted; next is the test-plan. **Deliberately held**
-  (Sandy, 2026-09-25): the deploy waits until the whole loop is proven working
-  locally end-to-end. Needs a Fly account and a Slack webhook; **not** blocked
-  on a publish — 1.54.0 (release commit b185e375) already carries the always-on
-  code, with zero packaged commits since.
+- [day-always-on-deploy/brief.md](archive/day-always-on-deploy/brief.md) — **4b′
+  deployed** — **closed 2026-10-04** (falsified, cleaned, retrospective,
+  archived): `indusk-always-on` on Fly passed the smoke and an idle hour; the
+  smoke found three server bugs (1.58.2–1.58.4) and falsification four more
+  (bumped as 1.58.5, unpublished). See `/decisions/day-always-on-deploy`.
 - `day-contract` — **4c, the contract in planning** (proposed 2026-09-18 as
   4a's cut; created when 4a closes): promises declared before code, every
   trajectory row names what it establishes or preserves, the retrospective
@@ -194,8 +193,8 @@ of the deploy brief on 2026-10-02.
      machine-global registry" promise looks broken;
    - `watch` is one pass, not a watcher — recording waits for a person,
      which became `day-always-on-deploy` items 10–14.
-4. **[day-always-on-deploy](day-always-on-deploy/brief.md) — test-plan next**,
-   once 1 and 3 hold.
+4. **[day-always-on-deploy](archive/day-always-on-deploy/brief.md) — closed
+   2026-10-04.**
 5. **[context-tiers](archive/context-tiers/brief.md) — closed 2026-10-02**
    (moved ahead of the deploy by Sandy the same day; 24 rows green, falsified
    5, cleaned, retrospective, archived). The root went from 61,438 to 14,678
