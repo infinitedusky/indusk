@@ -4,6 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Changed
+- **The always-on image and Fly reference are verified against a real deployment.** The guide's smoke procedure ran end to end on Fly (2026-10-04), including an idle hour with a heartbeat every 60 s and no gap. It found three server bugs, fixed in 1.58.2–1.58.4. The reference Fly config spells auto-stop `"off"` and names its public query address. The guide now shows the steps as run (`fly apps create`, `--ha=false`, a dedicated IPv4 for the query port) and the observed record. The scripted half of the smoke is `e2e/deployed-smoke.e2e.test.ts`, re-runnable against any deployment.
+- **`pnpm test:system` is back to about two minutes.** Always-on test files run in parallel again now that each server's ports come from its settings.
+
 ## [1.58.4] — 2026-10-04
 
 ### Fixed
