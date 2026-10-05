@@ -126,7 +126,10 @@ describe("planner-promises A31 — a row with a cell missing or too many", () =>
 
 	it("refuses a row one cell short, naming it", async () => {
 		const r = await validate(broken((l) => l.replace(/ \| a regression guard \|$/, " |")));
-		expect(r.exitCode, r.stderr).toBe(2);
+		expect(
+			r.exitCode,
+			`lesson: a-reader-that-drops-what-it-cannot-read-passes-every-rule-above-it\n${r.stderr}`,
+		).toBe(2);
 		// About the row's cells: a dangling Verification reference also names T2.
 		expect(r.stderr).toMatch(/T2[^\n]*cells?|cells?[^\n]*T2/i);
 	});
