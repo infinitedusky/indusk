@@ -1,7 +1,7 @@
 ---
 title: "Always-on deploy — run the server somewhere real"
 date: 2026-10-04
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -288,17 +288,18 @@ Reviewed: the 21 files this branch changed under `apps/` and `docker/` since the
 
 #### Build Phase 5 Verification
 
-- [ ] (no tests flip at this phase — reason: refactor)
-- [ ] The tests that use the two edited files still pass, their assertions unedited: `pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/always-on-door-startup src/__tests__/always-on-two-servers src/__tests__/always-on-server src/__tests__/always-on-browser-login src/__tests__/always-on-public-link`, and the leak guard is clear (`node apps/indusk-mcp/scripts/check-test-daemons.js`)
-- [ ] `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` exits 0, and Biome is clean on the two edited files
+- [x] (no tests flip at this phase — reason: refactor)
+- [x] The tests that use the two edited files still pass, their assertions unedited: `pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/always-on-door-startup src/__tests__/always-on-two-servers src/__tests__/always-on-server src/__tests__/always-on-browser-login src/__tests__/always-on-public-link`, and the leak guard is clear (`node apps/indusk-mcp/scripts/check-test-daemons.js`) — 5 files, 11 tests; all-clear
+- [x] `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` exits 0, and Biome is clean on the two edited files — both
+- [x] Shape — reviewed the two files this phase changed; nothing to change. Each lost a private copy and gained one import; nothing else moved.
 
 #### Build Phase 5 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`, Tests, "Fixtures with one home": add a free loopback port — `freeLoopbackPort` (`lib/telemetry/query-door.ts`), so the next always-on test imports it rather than writing a fourth
+- [x] `apps/indusk-mcp/CLAUDE.md`, Tests, "Fixtures with one home": add a free loopback port — `freeLoopbackPort` (`lib/telemetry/query-door.ts`), so the next always-on test imports it rather than writing a fourth
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased: under Changed, one line that the always-on tests pick ports through the server's own `freeLoopbackPort` — internal, recorded so the release that carries it says what moved
+- [x] `apps/docs/src/changelog.md` Unreleased: under Changed, one line that the always-on tests pick ports through the server's own `freeLoopbackPort` — internal, recorded so the release that carries it says what moved
 
 ## Files Affected
 
