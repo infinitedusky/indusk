@@ -9,6 +9,7 @@ updated: 2026-09-25
 parents:
   - indusk-v2-dawn
   - indusk-v4-day
+  - indusk-demo
 roadmap:
   - workbench-trust-fixes
   - hook-cwd-independence
@@ -28,7 +29,13 @@ roadmap:
   - test-daemons-never-leak
   - watcher-heartbeat
   - day-always-on-deploy
+  - indusk-demo
+  - promise-sources
   - promise-timeline
+  - admin-plan-authoring
+  - demo-app-template
+  - server-provisioning
+  - planner-promises
   - incident-recording
   - workbench-watch-provisioning
   - plan-premises

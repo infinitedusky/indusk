@@ -91,6 +91,10 @@ item; they become this plan's test plan once the brief is accepted.
 - Pointed at the deployed server after the deploy smoke's break-and-recover,
   the page shows the red and the return to green.
 
+## Part of
+
+[indusk-demo](../indusk-demo/master.md), step 2: the visual of promises holding in production while you build.
+
 ## Depends on
 
 - [day-always-on-deploy](../day-always-on-deploy/brief.md) for the last
