@@ -1,5 +1,6 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { git } from "../git.js";
 import { anyPromiseTokenPattern, PROMISES_REL_DIR } from "./vocabulary.js";
 
@@ -13,9 +14,11 @@ import { anyPromiseTokenPattern, PROMISES_REL_DIR } from "./vocabulary.js";
  * (`ls-files --cached --others --exclude-standard`), except prose (a guide or
  * a plan document mentions names in examples and is never a code site),
  * everything under `.indusk/` (the registry's own incident frontmatter
- * carries `promise: <name>`), and binary files. A code root that is not a
- * git repository throws, so the caller refuses rather than reporting an
- * empty scan as clean.
+ * carries `promise: <name>`), and binary files. The promise scan also leaves
+ * out the hooks this package installed under `.claude/hooks/`: they are the
+ * package's files, and name the promises of the repository that ships them.
+ * A code root that is not a git repository throws, so the caller refuses
+ * rather than reporting an empty scan as clean.
  */
 
 /** Files the reverse scan never reads: prose mentions names; code sites and tests are not prose. */
@@ -32,6 +35,23 @@ function extensionOf(file: string): string {
 	return dot < 0 ? "" : base.slice(dot);
 }
 
+const INSTALLED_HOOKS_DIR = ".claude/hooks/";
+
+/**
+ * The hook files this package installs into a project. A project's own hook
+ * in the same folder is still read: only these names are the package's.
+ * Found by planner-promises' live check, where a new project's first
+ * `promises check` failed on `check-gates.js`.
+ *
+ * Only the promise scan skips them. The lesson scan must not: an installed
+ * hook is the enforcer that delivers its lesson, in every project.
+ */
+function packageHookFiles(): ReadonlySet<string> {
+	// `src/lib/promises/` and `dist/lib/promises/` are the same depth below the package root.
+	const dir = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "hooks");
+	return new Set(existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(".js")) : []);
+}
+
 /** Every tracked or untracked-but-not-ignored file under the code root that the scan reads. */
 export async function scannableFiles(codeRoot: string): Promise<string[]> {
 	const out = await git(codeRoot, "ls-files", "--cached", "--others", "--exclude-standard", "-z");
@@ -46,7 +66,13 @@ export async function scannableFiles(codeRoot: string): Promise<string[]> {
 
 /** name → files that carry its promise token, across the code root. */
 export async function citedNames(codeRoot: string): Promise<Map<string, string[]>> {
-	return await citedTokens(codeRoot, anyPromiseTokenPattern);
+	const installed = packageHookFiles();
+	return await citedTokens(
+		codeRoot,
+		anyPromiseTokenPattern,
+		(rel) =>
+			rel.startsWith(INSTALLED_HOOKS_DIR) && installed.has(rel.slice(INSTALLED_HOOKS_DIR.length)),
+	);
 }
 
 /**
@@ -57,9 +83,12 @@ export async function citedNames(codeRoot: string): Promise<Map<string, string[]
 export async function citedTokens(
 	codeRoot: string,
 	pattern: () => RegExp,
+	/** Files this scan leaves out, by code-root-relative path. */
+	skip: (rel: string) => boolean = () => false,
 ): Promise<Map<string, string[]>> {
 	const cited = new Map<string, string[]>();
 	for (const rel of await scannableFiles(codeRoot)) {
+		if (skip(rel)) continue;
 		const abs = join(codeRoot, rel);
 		if (!existsSync(abs) || !statSync(abs).isFile()) continue;
 		const buf = readFileSync(abs);

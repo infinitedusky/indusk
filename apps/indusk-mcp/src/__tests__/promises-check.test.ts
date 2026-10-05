@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import {
 	cleanProjectOptions,
 	type PromiseProjectOptions,
@@ -331,6 +333,37 @@ describe.skipIf(SHOULD_SKIP)("indusk promises check — refusals by name", () =>
 			expect(r.stderr, label).toContain("i-2026-08-26-detector-overtriggers");
 			expect(r.stderr, label).toMatch(expectText);
 		}
+	});
+
+	it("the hooks InDusk installs are the package's files: a token in one is not this project's citation", () => {
+		// planner-promises A23, found by the live check: a project's first
+		// `promises check` failed on `.claude/hooks/check-gates.js`, which names
+		// a promise of the repository that ships it.
+		const shipped = readFileSync(join(REPO_ROOT, "apps/indusk-mcp/hooks/check-gates.js"), "utf-8");
+		expect(shipped, "precondition: the shipped hook carries a promise token").toMatch(
+			/promise: [a-z]/,
+		);
+		const p = promiseProject(
+			withClean((o) => {
+				o.files = { ...o.files, ".claude/hooks/check-gates.js": shipped };
+			}),
+		);
+		const r = check(p.root);
+		expect(r.code, r.stderr).toBe(0);
+	});
+
+	it("a hook the project wrote itself is still read", () => {
+		const p = promiseProject(
+			withClean((o) => {
+				o.files = {
+					...o.files,
+					".claude/hooks/seat-guard.js": `// ${token("seat-map-never-stale")}\n`,
+				};
+			}),
+		);
+		const r = check(p.root);
+		expect(r.code).toBe(2);
+		expect(r.stderr).toContain(".claude/hooks/seat-guard.js");
 	});
 
 	it("the token form is the one the fixture writes", () => {
