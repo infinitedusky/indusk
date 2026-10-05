@@ -240,5 +240,6 @@ pointer; the pointer holds the story.
   `helpers/cli.ts` (pins `INDUSK_HOME`). Jaeger tests start the real daemon
   (`helpers/local-jaeger.ts`); the evaluator runs against a fake `claude` +
   `helpers/otlp-capture.ts`; the always-on server via
-  `helpers/always-on-server.ts`; Slack via `helpers/slack-capture.ts` — never a
+  `helpers/always-on-server.ts`, a free loopback port via `freeLoopbackPort`
+  (`lib/telemetry/query-door.ts`); Slack via `helpers/slack-capture.ts` — never a
   stub. — see `.indusk/planning/archive/workbench-trust-fixes/`
