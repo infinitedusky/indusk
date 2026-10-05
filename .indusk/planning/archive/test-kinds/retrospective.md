@@ -163,3 +163,5 @@ before, raised 1 and had 0 judged wrong, so there is no streak.
 - Trajectory: 23 rows, all passing. 4 came from falsification (A20–A23).
 - Suites at close: `pnpm test` 54 s green; `test:system` both tiers green
   (mcp 37 files, admin 13)
+
+Landed on main at da4a2f23, 2026-10-05.
