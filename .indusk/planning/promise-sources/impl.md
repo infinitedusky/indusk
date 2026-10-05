@@ -157,19 +157,21 @@ exists today and answers wrongly.
 - [x] The Promises page: one chip per source per behaviour promise (`data-source`), labelled with the source name, through `HealthChip`. A failed source's banner (unknown health or *watcher blind*) sits in its own section. With one source the page renders as today
   - As built: the alarm source's chip leads the row. `http-promise-remote.test.ts` reads a row's *first* chip, and on a production-naming project with no local daemon that is the chip that raises; ordering local first turned it *unverified*. A promise red in any source sorts first; only the alarm source marks the sidebar
 - [x] The project layout's sidebar: the red mark from the alarm source
+- [x] Shape (`apps/indusk-admin/src/components/Promises.tsx`) — reviewed, left as-is: the new `SourceBanner` and the per-source `PromiseStateCell` are named units with one job each, and `chipsOf` is the one place a row's chips are decided; the file was already 440 lines before this phase, and splitting it is an inter-file question for /cleanup
 
 #### Build Phase 4 Verification
 
 - [x] A3, A4 and A6 pass, and the admin's existing promise tests are unchanged (`pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-promise-sources src/__tests__/http-promise-health src/__tests__/http-promise-remote src/__tests__/http-watcher-blind`); admin `tsc` clean
-- [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
+- [x] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
+  - `pnpm test`: mcp 1677 passed / 5 skipped, admin 350 passed; `test:system`: 116 passed. The first `pnpm test` run failed 25 admin HTTP tests on socket errors and left 10 daemons (killed): `next dev` servers died under turbo's parallel mcp + admin load. Alone, the admin's node project passed 204/204 with no leak, and the rerun of `pnpm test` was green. `http-promise-sources` adds two daemon + server + `next dev` setups to that run; if the flake recurs, it is the first candidate to move out of it
 
 #### Build Phase 4 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a behaviour promise has one chip per source; the sidebar's red follows the alarm source
+- [x] `apps/indusk-admin/CLAUDE.md`: a behaviour promise has one chip per source; the sidebar's red follows the alarm source
 
 #### Build Phase 4 Document
 
-- [ ] Admin overview (`apps/docs/src/reference/admin-ui/overview.md`): chips per source; `apps/docs/src/changelog.md` Unreleased, Added: local and production side by side
+- [x] Admin overview (`apps/docs/src/reference/admin-ui/overview.md`): chips per source; `apps/docs/src/changelog.md` Unreleased, Added: local and production side by side
 
 ## Files Affected
 
