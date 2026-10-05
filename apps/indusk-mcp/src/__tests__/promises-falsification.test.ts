@@ -201,6 +201,8 @@ describe.skipIf(SHOULD_SKIP)("A30 — an enforced promise with an open incident 
 					promise: "seat-never-double-booked",
 					source: "local",
 					status: "fixed",
+					// promise-timeline D1: a fixed incident says when it was fixed.
+					fixed: "2026-09-02T10:00:00Z",
 				});
 			}),
 		);

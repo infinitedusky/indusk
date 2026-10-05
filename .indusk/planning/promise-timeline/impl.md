@@ -58,7 +58,7 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 | A2 | A promise no run marks says so instead of drawing an empty strip | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A3 | A violation's cell is red while its incident is open or unrecorded, and purple on the next refresh after the incident is marked fixed | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A4 | Each incident is a band from when it opened to when it was fixed; an open one runs to now | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
-| A5 | `promises fix <id>` records when the incident was fixed and returns the promise to enforced; `promises check` refuses a fixed incident with no time, naming the file | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/promises-fix.test.ts |
+| A5 | `promises fix <id>` records when the incident was fixed and returns the promise to enforced; `promises check` refuses a fixed incident with no time, naming the file | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-fix.test.ts |
 | A6 | An unfixed violation older than the window still shows "violated N ago — open" on its row and every group above it | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A7 | Rows group by plan or domain; a collapsed group shows the worst state per cell (red over purple over green) and opens to its promises | Build Phase 5 | Build Phase 5 | planned | apps/indusk-admin/src/components/PromiseGroups.test.tsx |
 | A8 | With a production server the page opens on production's strip; local's is selectable and says how far back it reaches; a source that cannot be read says so and the other is still drawn | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
@@ -118,10 +118,12 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 - [x] `lib/promises/check.ts`: refuse `status: fixed` without `fixed`, naming the file
 - [x] The two fixed incidents get `fixed` from the commit that fixed them (`i-2026-09-15-gates-silently-off`, `i-2026-10-03-every-commit-evaluated`), so this repository's own `promises check` stays green
 
+- [x] (discovered) Two existing tests built incidents in the old shape: `promises-falsification.test.ts`'s "a fixed incident on an enforced promise is history" fixture now says when it was fixed (its assertion — no state refusal — unchanged), and the admin's `Promises.test.tsx` incident literal gains `opened`, `fixed` and `traces` (caught by the admin's own type-check test, A25, against the fresh build)
+
 #### Build Phase 1 Verification
 
-- [ ] A5 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-fix`); `pnpm promises:check` exits 0 on this repository
-- [ ] `tsc --noEmit` clean; Biome clean on the changed files
+- [x] A5 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-fix`); `pnpm promises:check` exits 0 on this repository — 3/3; check: 4 promises, 3 incidents, exit 0. `pnpm test`: mcp 1702 passed / 5 skipped with the leak guard clear; the admin's only failures are this plan's own red rows (A1–A4, A6, A8–A12), as planned
+- [x] `tsc --noEmit` clean; Biome clean on the changed files — both packages, against the fresh build
 
 #### Build Phase 1 Context
 
