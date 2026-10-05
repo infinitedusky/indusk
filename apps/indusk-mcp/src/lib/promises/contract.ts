@@ -1,6 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import matter from "gray-matter";
 import { LESSONS_REL_DIR } from "../lessons/state.js";
 import { parseTrajectory, type Trajectory } from "../trajectory/parser.js";
 import {
@@ -10,7 +9,7 @@ import {
 } from "../trajectory/validator.js";
 import { type BriefContract, parseBriefContract } from "./brief-contract.js";
 import { type PlanFolder, planFolderPath, planFolderStatus, planFolders } from "./plan-folder.js";
-import { type PromiseEntry, type Registry, readPromises } from "./registry.js";
+import { type PromiseEntry, parseFrontmatter, type Registry, readPromises } from "./registry.js";
 import { PROMISES_REL_DIR } from "./vocabulary.js";
 
 /**
@@ -283,16 +282,12 @@ export type ImplRead =
 
 /** Read an impl's frontmatter and trajectory, or say why it cannot be read — never throw (A35). */
 export function readImpl(text: string): ImplRead {
-	let parsed: { data: Record<string, unknown>; content: string };
-	try {
-		const r = matter(text);
-		parsed = { data: r.data as Record<string, unknown>, content: r.content };
-	} catch (err) {
-		return { ok: false, error: (err as Error).message.split("\n")[0] };
+	// An impl may have no frontmatter at all; one that opens a block must parse.
+	if (!text.trimStart().startsWith("---")) {
+		return { ok: true, frontmatter: {}, trajectory: parseTrajectory(text) };
 	}
-	if (text.trimStart().startsWith("---") && Object.keys(parsed.data).length === 0) {
-		return { ok: false, error: "its frontmatter could not be parsed (no fields read)" };
-	}
+	const parsed = parseFrontmatter(text);
+	if ("error" in parsed) return { ok: false, error: parsed.error.split("\n")[0] };
 	return { ok: true, frontmatter: parsed.data, trajectory: parseTrajectory(parsed.content) };
 }
 

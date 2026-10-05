@@ -142,9 +142,11 @@ function isStringList(value: unknown): value is string[] {
 /**
  * Parse frontmatter structurally. gray-matter throws on malformed YAML in
  * plain Node but returns `data: {}` inside vitest, so a document that opens
- * with `---` and yields no data is malformed either way.
+ * with `---` and yields no data is malformed either way. The one frontmatter
+ * reader the promise modules use: the registry, the contract's impl reader and
+ * the writer's read-back all ask here, so none can drop the guard.
  */
-function parseFrontmatter(
+export function parseFrontmatter(
 	raw: string,
 ): { data: Record<string, unknown>; content: string } | { error: string } {
 	let parsed: { data: Record<string, unknown>; content: string };

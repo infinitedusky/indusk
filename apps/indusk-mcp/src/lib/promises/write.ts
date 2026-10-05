@@ -1,6 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import matter from "gray-matter";
 import { readConfig, writeConfig } from "../config.js";
 import { isUsableSegment } from "../path-segment.js";
 import { setScalar } from "./frontmatter-edit.js";
@@ -8,6 +7,7 @@ import { planFolderStatus } from "./plan-folder.js";
 import {
 	firstParagraph,
 	type PromiseEntry,
+	parseFrontmatter,
 	promiseProblem,
 	promisesDir,
 	type Registry,
@@ -155,13 +155,10 @@ export function declarePromise(planRoot: string, input: DeclareInput): string {
  * refused from then on. The text is read back before anything is written.
  */
 function requireReadable(name: string, text: string): void {
-	let parsed: { data: Record<string, unknown>; content: string };
-	try {
-		const r = matter(text);
-		parsed = { data: r.data as Record<string, unknown>, content: r.content };
-	} catch (err) {
+	const parsed = parseFrontmatter(text);
+	if ("error" in parsed) {
 		return refuse(
-			`${name}: written as given, this promise could not be read back (${(err as Error).message.split("\n")[0]}) — a domain is one word such as \`seating\`, with no colon; nothing was written`,
+			`${name}: written as given, this promise could not be read back (${parsed.error.split("\n")[0]}) — a domain is one word such as \`seating\`, with no colon; nothing was written`,
 		);
 	}
 	const problem = promiseProblem(parsed.data, name, firstParagraph(parsed.content));
