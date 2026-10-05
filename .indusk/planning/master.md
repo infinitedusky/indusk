@@ -316,6 +316,13 @@ lesson title, or a chat log.
   "Plans this changes" names thirteen existing plans it touches; **none has
   been edited, and the demo's script stands.** Measurements in
   [research](promise-core/research.md).
+- **Standalone, brief draft** (2026-10-05):
+  [release-checks-run-once](release-checks-run-once/brief.md) — the slow test
+  tier ran at planner-promises' landing and runs again at release, on the same
+  tree minutes apart; and the retrospective's landing and release steps name
+  dusk's own commands in a skill every project installs. Run the slow tier at
+  most once per commit, and read each project's commands from its config.
+  Opened by Sandy at that landing; not yet in the sequence.
 - **Standalone, brief draft** (2026-10-01, rewritten the same day):
   [plan-premises](plan-premises/brief.md) — a place to put the *why*. A project
   states its aim and the metrics it judges it by, in the user's own words;
