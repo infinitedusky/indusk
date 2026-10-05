@@ -1,7 +1,7 @@
 ---
 title: "Promise timeline"
 date: 2026-10-05
-status: proposed
+status: accepted
 ---
 
 # Promise timeline
