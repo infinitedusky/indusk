@@ -36,6 +36,9 @@ is the record.
 - Sentence six is the demotion. Plans, gates, tests-first and review are in
   service of the promises, not the other way round. A plan source can be an
   extension; promises cannot.
+- Sentence seven is unfolded in
+  [contract-ui/manifesto.md](../contract-ui/manifesto.md), the manifesto for
+  the interface. That document uses the softer wording for sentence one.
 - "Cannot be trusted" was judged a little strong on first reading and left as
   written. The alternative on the table was something like "whose work cannot
   be taken on trust". Open.
@@ -70,3 +73,5 @@ the list.
 - **2026-10-02** — first written, in conversation. Seven sentences. "Cannot be
   trusted" flagged as strong and kept. Candidate premises added by the working
   session.
+- **2026-10-05** — statement unchanged. Pointer added to the interface
+  manifesto, which unfolds sentence seven.
