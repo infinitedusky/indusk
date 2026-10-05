@@ -108,7 +108,8 @@ function section(lines: Line[], level: number, title: string): Line[] | null {
 }
 
 /**
- * Top-level items of a section: lines that match `marker` at column 0, each
+ * Top-level items of a section: lines that match `marker` (up to three
+ * spaces in, as markdown allows), each
  * with what is wrapped or nested under it. A blank line ends an item's
  * wrapped text but not the item — a sub-bullet may follow one.
  */
@@ -148,15 +149,22 @@ function items(lines: Line[], marker: RegExp): Item[] {
 	return out;
 }
 
-const NUMBERED = /^\d+\.\s+/;
-const BULLET = /^[-*]\s+/;
+const NUMBERED = /^ {0,3}\d+\.\s+/;
+const BULLET = /^ {0,3}[-*]\s+/;
+/** An entry under "This plan makes": numbered as the template writes it, or bulleted. */
+const ENTRY = /^ {0,3}(?:\d+\.|[-*])\s+/;
+/** A line that starts with a promise's name, as an entry does. */
+const NAMES_A_PROMISE = /^\s*(?:(?:\d+\.|[-*])\s+)?\*\*`([^`]+)`\*\*/;
+const LABEL = /^\*\*(must not break|changes|replaces)\*\*(.*)$/i;
+/** The template's own placeholder, `{how we would know}`: not a measure. */
+const PLACEHOLDER = /^\{[^}]*\}$/;
 
 /** The value of a `- Measure: …` sub-bullet (the label may be bold); null when absent or empty. */
 function labelled(subs: string[], label: string): string | null {
 	const pattern = new RegExp(`^\\**${label}\\**\\s*:\\**\\s*(.*)$`, "i");
 	for (const sub of subs) {
 		const m = pattern.exec(sub);
-		if (m) return m[1].trim() === "" ? null : m[1].trim();
+		if (m) return m[1].trim() === "" || PLACEHOLDER.test(m[1].trim()) ? null : m[1].trim();
 	}
 	return null;
 }
@@ -178,9 +186,10 @@ function readExpectations(lines: Line[]): Pick<BriefContract, "expectations" | "
 	return { expectations, noExpectations: null };
 }
 
-function readMakes(lines: Line[], problems: string[]): BriefMade[] {
+function readMakes(lines: Line[], problems: string[], read: Set<number>): BriefMade[] {
 	const makes: BriefMade[] = [];
-	for (const item of items(lines, NUMBERED)) {
+	for (const item of items(lines, ENTRY)) {
+		read.add(item.n);
 		const m = /^\*\*`([^`]+)`\*\*\s*(?:\(([^)]*)\))?[.:]?\s*(.*)$/.exec(item.text);
 		if (!m) {
 			problems.push(
@@ -196,6 +205,7 @@ function readMakes(lines: Line[], problems: string[]): BriefMade[] {
 function readExisting(
 	lines: Line[],
 	problems: string[],
+	read: Set<number>,
 ): Pick<BriefContract, "mustNotBreak" | "changes" | "replaces"> {
 	const out = {
 		mustNotBreak: [] as string[],
@@ -205,7 +215,7 @@ function readExisting(
 	// Split the section at its labels; what comes before the first is preamble.
 	const groups: Array<{ list: ListKey | null; lines: Line[] }> = [{ list: null, lines: [] }];
 	for (const line of lines) {
-		const label = /^\*\*(must not break|changes|replaces)\*\*(.*)$/i.exec(line.text);
+		const label = LABEL.exec(line.text);
 		if (!label) {
 			groups[groups.length - 1].lines.push(line);
 			continue;
@@ -220,6 +230,7 @@ function readExisting(
 	}
 	for (const group of groups) {
 		for (const item of items(group.lines, BULLET)) {
+			read.add(item.n);
 			const named = NAMED.exec(item.text);
 			if (group.list === null) {
 				// Preamble is prose. A bullet there that names a promise is an
@@ -256,7 +267,36 @@ function readExisting(
 	return out;
 }
 
-/** Read a brief's contract. `legacy` when it has no `## Promises` heading. */
+/**
+ * What the Promises section says that no list read (A32): a line that starts
+ * with a promise's name but is not an entry of any list, and a label outside
+ * "### Existing promises". Either way the promise would be checked by
+ * nothing, which is the failure this reader exists to prevent.
+ */
+function unreadLines(promises: Line[], read: Set<number>): string[] {
+	const existing = new Set((section(promises, 3, "Existing promises") ?? []).map((l) => l.n));
+	const notPromised = new Set((section(promises, 3, "Not promised") ?? []).map((l) => l.n));
+	const out: string[] = [];
+	for (const line of promises) {
+		if (notPromised.has(line.n)) continue;
+		const label = LABEL.exec(line.text);
+		if (label && !existing.has(line.n)) {
+			out.push(
+				`line ${line.n}: the label **${LISTS[label[1].toLowerCase() as ListKey]}** is not under "### Existing promises", so nothing reads the promises listed under it`,
+			);
+			continue;
+		}
+		const named = NAMES_A_PROMISE.exec(line.text);
+		if (named && !read.has(line.n)) {
+			out.push(
+				`line ${line.n}: \`${named[1]}\` is written in the Promises section, but no list reads it — an entry goes under "### This plan makes", or under one of the three labels in "### Existing promises"`,
+			);
+		}
+	}
+	return out;
+}
+
+/** Read a brief's contract. `legacy` when it has no `## Promises` heading and none of the parts beneath it. */
 export function parseBriefContract(text: string): ParsedBrief {
 	const raw = text.split("\n");
 	const fenced = fencedLineMask(raw);
@@ -265,20 +305,45 @@ export function parseBriefContract(text: string): ParsedBrief {
 		.filter((_, i) => !fenced[i]);
 
 	const promises = section(lines, 2, "Promises");
-	if (promises === null) return { shape: "legacy" };
+	if (promises === null) {
+		// A brief written in the new parts without the heading that holds them
+		// is out of shape, not one written before the parts existed.
+		const newParts = lines.filter(
+			(l) =>
+				/^##\s+Expectations\s*$/i.test(l.text) ||
+				/^###\s+This plan makes\s*$/i.test(l.text) ||
+				LABEL.test(l.text),
+		);
+		if (newParts.length === 0) return { shape: "legacy" };
+		return {
+			shape: "contract",
+			...readExpectations(section(lines, 2, "Expectations") ?? []),
+			makes: [],
+			mustNotBreak: [],
+			changes: [],
+			replaces: [],
+			problems: [
+				`line ${newParts[0].n}: the brief is written in the parts of a contract but has no "## Promises" heading above them, so none of its promises is read — add "## Promises" above "### This plan makes"`,
+			],
+		};
+	}
 
 	const problems: string[] = [];
+	const read = new Set<number>();
 	const makes = section(promises, 3, "This plan makes");
 	if (makes === null) {
 		problems.push(
 			'"## Promises" has no "### This plan makes" section — the promises this plan makes are listed there, or it says None.',
 		);
 	}
+	const made = makes === null ? [] : readMakes(makes, problems, read);
+	const existing = readExisting(section(promises, 3, "Existing promises") ?? [], problems, read);
+	problems.push(...unreadLines(promises, read));
 	return {
 		shape: "contract",
 		...readExpectations(section(lines, 2, "Expectations") ?? []),
-		makes: makes === null ? [] : readMakes(makes, problems),
-		...readExisting(section(promises, 3, "Existing promises") ?? [], problems),
+		makes: made,
+		...existing,
 		problems,
 	};
 }

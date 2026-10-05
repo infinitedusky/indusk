@@ -53,7 +53,10 @@ describe("planner-promises A20 — the planner's brief template", () => {
 			.replaceAll("{promise-name}", "seat-held-once")
 			.replaceAll("{behaviour | state | structure}", "state")
 			.replaceAll("{old-name}", "seat-never-double-booked")
-			.replaceAll("{new-name}", "seat-held-once");
+			.replaceAll("{new-name}", "seat-held-once")
+			// A placeholder is not a measure (A34): the planner fills these in.
+			.replace(/- Measure: \{[^}]*\}/, "- Measure: desk calls about stuck seats, per week")
+			.replace(/- Look: \{[^}]*\}/, "- Look: two weeks after release");
 		const brief = parseBriefContract(filled);
 		if (brief.shape !== "contract") throw new Error("the template reads as a legacy brief");
 		expect(brief.problems).toEqual([]);
