@@ -265,7 +265,9 @@ phase-boundary-record-never-malformed (state, planning, enforced)
   `every-commit-evaluated` for every project on a machine — to the project's
   configured `graphiti.groupId`, else the name of the **main checkout** (the
   folder holding the repository's shared git directory), so the trunk and every
-  plan worktree agree. An application's own spans need not carry it.
+  plan worktree agree. An application's own spans need not carry it. The tag
+  is compared after the same normalisation as the id, so a run tagged
+  `timeline-smoke` counts for the project whose id is `timeline_smoke`.
 
 Exit **0** when Jaeger answered and heard. Exit **2** when it could not be
 reached — no daemon running (it names `$INDUSK_HOME/telemetry.json`), or the
@@ -437,8 +439,9 @@ Marks the incident `status: fixed` and records `fixed: <now>`, and returns its
 promise from `known-violated` to `enforced` when no other incident of it is
 still open; the promise keeps the incident in its `incidents` list, as its
 history. It writes plan documents and commits nothing. Exit **2** naming the
-id when it is unknown or already fixed. Write the root cause first: `promises
-check` still refuses a fixed incident whose root cause is unwritten. Before
+id when it is unknown or already fixed, and when its root cause is still the
+line `promises record` wrote — write the root cause first; the file is left
+untouched. Before
 this command existed, closing an incident was three hand edits, and the time
 it was fixed was recorded nowhere.
 
