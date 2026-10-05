@@ -60,7 +60,7 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 | A4 | Each incident is a band from when it opened to when it was fixed; an open one runs to now | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A5 | `promises fix <id>` records when the incident was fixed and returns the promise to enforced; `promises check` refuses a fixed incident with no time, naming the file | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-fix.test.ts |
 | A6 | An unfixed violation older than the window still shows "violated N ago — open" on its row and every group above it | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
-| A7 | Rows group by plan or domain; a collapsed group shows the worst state per cell (red over purple over green) and opens to its promises | Build Phase 5 | Build Phase 5 | planned | apps/indusk-admin/src/components/PromiseGroups.test.tsx |
+| A7 | Rows group by plan or domain; a collapsed group shows the worst state per cell (red over purple over green) and opens to its promises | Build Phase 5 | Build Phase 5 | skipped | apps/indusk-admin/src/components/PromiseGroups.test.tsx |
 | A8 | With a production server the page opens on production's strip; local's is selectable and says how far back it reaches; a source that cannot be read says so and the other is still drawn | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
 | A9 | Production's chip is red for an unrecorded or open violation, and `fixed` once every recent violation's incident is fixed | Test Phase 1 | Build Phase 3 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
 | A10 | Local's chip is red while the newest local run is a violation and green once a newer run holds, with no incident | Test Phase 1 | Build Phase 3 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
@@ -95,7 +95,7 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 #### Deferred to Build Phase 5
 
-- **A7** — a browser component test of the grouped strips (`PromiseGroups.test.tsx`), which imports the component Build Phase 5 introduces; the file would fail to load today. Body reviewed:
+- **A7** — *moved to [contract-ui](../contract-ui/brief.md) on 2026-10-05 with the groups it tests; state `skipped` here for that reason.* A browser component test of the grouped strips (`PromiseGroups.test.tsx`), which imports the component Build Phase 5 introduces; the file would fail to load today. Body reviewed:
 
   ```tsx
   // render <PromiseGroups> with two promises in one plan: one red at cell 3, one purple at cell 5
@@ -206,15 +206,18 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 - [x] `apps/docs/src/reference/admin-ui/overview.md`: the timeline — cells, colours, bands, windows, sources — with the Mermaid diagram of a cell's colour from its incident's state
 
-### Build Phase 5: groups, and the deployed smoke
+### Build Phase 5: the deployed smoke
 
-- [ ] `components/PromiseGroups.tsx` (client island): each group's summary strip (worst state per cell among its promises) and collapse, over the page's existing grouping buttons; the old-break marker carried to every group above (D7)
-- [ ] Author A7 from the Test Phase 1 register (`PromiseGroups.test.tsx`)
+*Trimmed 2026-10-05 (Sandy): collapsible groups and A7 moved to
+[contract-ui](../contract-ui/brief.md), which reorganises the admin around
+premises, promises and phases — groups built here on today's plan-and-domain
+table would be rebuilt there.*
+
 - [ ] A13: run the deployed smoke's break and recovery (`e2e/deployed-smoke.e2e.test.ts` against the Fly server), record the incident, `promises fix` it, and read the page against `promises.jaeger`
 
 #### Build Phase 5 Verification
 
-- [ ] A7 passes (`cd apps/indusk-admin && pnpm exec vitest run src/components/PromiseGroups`); A13 observed on the deployed server — red, then purple after `promises fix`, then green runs — with a screenshot in the impl
+- [ ] A13 observed on the deployed server — red, then purple after `promises fix`, then green runs — with a screenshot in the impl
 - [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
 
 #### Build Phase 5 Context

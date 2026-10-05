@@ -120,7 +120,7 @@ rendered, with each incident drawn as a band beneath it from `opened` to
 server read; the default source is the alarm source, and local's view says
 how far back its marks reach (A8). A promise with no marks says so (A2).
 
-**D7 — Groups and the old-break marker.** The page's existing grouping (by
+**D7 — Groups and the old-break marker.** *Moved 2026-10-05 (Sandy) to [contract-ui](../contract-ui/brief.md), which reorganises the admin around premises, promises and phases; groups follow that hierarchy there.* The page's existing grouping (by
 plan, domain, state, kind) keeps its button row; a group gains a summary
 strip — at each cell the worst state among its promises — and collapses to
 it, in a small client island (A7). A promise whose incident is open, or whose
