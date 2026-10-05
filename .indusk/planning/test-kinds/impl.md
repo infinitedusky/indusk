@@ -7,6 +7,8 @@ test_kinds: required
 test_phases: required
 rationale: required
 gate_policy: ask
+cleanup: skipped
+cleanup_reason: "reviewed every changed file. Flagged by size and left as-is: the four skills, the changelog and validate-impl-structure.js (prose or long-standing files this plan added under 35 lines to); lib/trajectory/validator.ts (579 lines, +34: one rule beside its siblings). The kind rule lives in both the hook and the library by the repo's established mirror pattern (hooks cannot import TypeScript; the trajectory parser is mirrored the same way) with the kinds list pinned by test-kinds-parity.test.ts. The two admin unit-test files share ~10 lines of fixture setup — two copies, under the rule of three, with fakeSource and promiseRegistry already extracted as helpers. Everything else is new, single-purpose and under 200 lines. Nothing warrants extraction."
 ---
 
 # Test kinds
