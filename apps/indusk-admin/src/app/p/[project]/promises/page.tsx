@@ -6,7 +6,12 @@ import {
 } from "@/components/Promises";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { readAdminRefreshMs } from "@/lib/project-reader";
-import { alarmRead, healthRows, readHealth } from "@/lib/promise-health";
+import {
+  alarmRead,
+  healthRows,
+  readHealth,
+  ruleFor,
+} from "@/lib/promise-health";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
@@ -63,7 +68,7 @@ export default async function PerProjectPromisesPage({
     registry && health
       ? health.map((read) => ({
           name: read.name,
-          rows: healthRows(registry, read),
+          rows: healthRows(registry, read, ruleFor(read, health)),
           ...(read.ok
             ? {}
             : {

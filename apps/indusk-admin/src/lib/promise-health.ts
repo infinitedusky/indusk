@@ -1,4 +1,6 @@
+import { violationState } from "@infinitedusky/indusk-mcp/promises/incidents";
 import type {
+  IncidentEntry,
   PromiseEntry,
   Registry,
 } from "@infinitedusky/indusk-mcp/promises/registry";
@@ -34,6 +36,7 @@ import { readAdminRefreshMs } from "./project-reader";
 
 export const PROMISE_HEALTHS = [
   "red",
+  "fixed",
   "green",
   "unverified",
   "amber",
@@ -151,29 +154,61 @@ export function alarmRead(
  * could not be read. A state or structure promise has no observed health —
  * its health is the suite's — so it gets no chip (null).
  */
+/**
+ * How a source's chip judges a promise's violations (promise-timeline, ADR D3).
+ *
+ * - `incidents` — production's, or the only source's: red while any violation
+ *   in the window is unrecorded or its incident open; `fixed` once every one
+ *   of them is fixed. A mended promise is not called broken for a week.
+ * - `newest` — local's, beside a production source: the newest local run
+ *   decides. A local break during development is work in progress; nobody
+ *   records an incident for it, so the incident rule would leave it red for
+ *   the whole window after the fix.
+ */
+export type HealthRule = "incidents" | "newest";
+
+/**
+ * One promise's chip. Retired is grey and known-violated amber whatever
+ * telemetry says, unless a live break makes it red; a behaviour promise is
+ * red, `fixed`, green or hollow "unverified" by its source's rule. A state or
+ * structure promise has no observed health — its health is the suite's — so
+ * it gets no chip (null).
+ */
 export function healthOf(
   p: PromiseEntry,
   read: HealthRead | null,
+  incidents: IncidentEntry[] = [],
+  rule: HealthRule = "incidents",
 ): HealthRow | null {
   if (p.state === "retired")
     return { health: "grey", violations: null, lastSeen: null };
   const marks = read?.ok ? read.marks.byPromise.get(p.name) : undefined;
   const violations = marks ? marks.violations.length : null;
-  const lastSeen = newestMark(marks)?.toISOString() ?? null;
-  if (p.kind === "behaviour" && violations !== null && violations > 0) {
-    return {
-      health: "red",
-      violations,
-      lastSeen,
-      environment: marks?.violations[0]?.environment ?? null,
-      ...(marks?.truncated ? { atLeast: true } : {}),
-    };
+  const newest = newestMark(marks);
+  const lastSeen = newest?.toISOString() ?? null;
+  const red = (): HealthRow => ({
+    health: "red",
+    violations,
+    lastSeen,
+    environment: marks?.violations[0]?.environment ?? null,
+    ...(marks?.truncated ? { atLeast: true } : {}),
+  });
+  if (p.kind === "behaviour" && marks && marks.violations.length > 0) {
+    const live =
+      rule === "newest"
+        ? newest?.getTime() === marks.violations[0].at.getTime()
+        : marks.violations.some(
+            (v) => violationState(v.traceId, incidents) !== "fixed",
+          );
+    if (live) return red();
   }
   if (p.state === "known-violated")
     return { health: "amber", violations, lastSeen };
   if (p.kind !== "behaviour") return null;
   const silence = read?.ok ? silencePastExpectation(p, read.marks) : null;
   const quiet = silence ? { silence } : {};
+  if (rule === "incidents" && violations !== null && violations > 0)
+    return { health: "fixed", violations, lastSeen, ...quiet };
   if (marks?.lastUpheld)
     return { health: "green", violations, lastSeen, ...quiet };
   return { health: "unverified", violations, lastSeen, ...quiet };
@@ -183,10 +218,11 @@ export function healthOf(
 export function healthRows(
   registry: Registry,
   read: HealthRead | null,
+  rule: HealthRule = "incidents",
 ): Record<string, HealthRow> {
   const out: Record<string, HealthRow> = {};
   for (const p of registry.promises) {
-    const row = healthOf(p, read);
+    const row = healthOf(p, read, registry.incidents, rule);
     if (row) out[p.name] = row;
   }
   return out;
@@ -207,4 +243,17 @@ export function redPlans(
       .filter((p) => rows[p.name]?.health === "red")
       .map((p) => p.owner),
   );
+}
+
+/**
+ * The rule a source's chip is judged by: `newest` for local when the project
+ * also has production, `incidents` otherwise (ADR D3).
+ */
+export function ruleFor(
+  read: SourceHealthRead,
+  reads: SourceHealthRead[],
+): HealthRule {
+  return read.name === "local" && reads.some((r) => r.name === "production")
+    ? "newest"
+    : "incidents";
 }

@@ -118,6 +118,10 @@
 			"types": "./dist/lib/promises/timeline.d.ts",
 			"default": "./dist/lib/promises/timeline.js"
 		},
+		"./promises/incidents": {
+			"types": "./dist/lib/promises/incidents.d.ts",
+			"default": "./dist/lib/promises/incidents.js"
+		},
 		"./testing/trace-shape": {
 			"types": "./dist/lib/testing/trace-shape.d.ts",
 			"default": "./dist/lib/testing/trace-shape.js"

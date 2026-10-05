@@ -160,7 +160,8 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 ### Build Phase 3: the chips
 
-- [ ] `apps/indusk-admin/src/lib/promise-health.ts`: `PROMISE_HEALTHS` gains `fixed`; production's (and a one-source project's) chip by `violationState` — red for unrecorded or open, `fixed` when every violation in the window is fixed; local's chip, when production exists, by the newest local run
+- [x] `apps/indusk-admin/src/lib/promise-health.ts`: `PROMISE_HEALTHS` gains `fixed`; production's (and a one-source project's) chip by `violationState` — red for unrecorded or open, `fixed` when every violation in the window is fixed; local's chip, when production exists, by the newest local run
+  - As built: `healthOf` takes the registry's incidents and a `HealthRule` (`incidents | newest`); `ruleFor(read, reads)` picks it per source, and the sidebar's `redPlans` uses the alarm source's, `incidents`. `violationState` reaches the admin through a new `promises/incidents` subpath
 - [ ] `components/bars/labels.ts`: `PROMISE_HEALTH_CHIP.fixed` — purple, "fixed", aria "violated in the window, every incident fixed"
 
 #### Build Phase 3 Verification
