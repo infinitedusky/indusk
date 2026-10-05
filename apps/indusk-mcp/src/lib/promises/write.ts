@@ -1,10 +1,17 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import matter from "gray-matter";
 import { readConfig, writeConfig } from "../config.js";
 import { isUsableSegment } from "../path-segment.js";
 import { setScalar } from "./frontmatter-edit.js";
 import { planFolderStatus } from "./plan-folder.js";
-import { type PromiseEntry, promisesDir, readPromises } from "./registry.js";
+import {
+	firstParagraph,
+	type PromiseEntry,
+	promiseProblem,
+	promisesDir,
+	readPromises,
+} from "./registry.js";
 import { PROMISE_KINDS, PROMISE_NAME, type PromiseKind } from "./vocabulary.js";
 
 /**
@@ -132,13 +139,36 @@ export function declarePromise(planRoot: string, input: DeclareInput): string {
 	const origin = input.supersedes
 		? `declared (${plan}), replacing \`${input.supersedes}\`, which is retired when ${plan} closes.`
 		: `declared (${plan}), from its planning conversation.`;
+	const text = `---\n${frontmatter.join("\n")}\n---\n\n${statement}\n\n## History\n- ${today(input.now ?? new Date())} — ${origin}\n`;
+	requireReadable(name, text);
 	mkdirSync(dir, { recursive: true });
 	declareDomain();
-	writeFileSync(
-		path,
-		`---\n${frontmatter.join("\n")}\n---\n\n${statement}\n\n## History\n- ${today(input.now ?? new Date())} — ${origin}\n`,
-	);
+	writeFileSync(path, text);
 	return path;
+}
+
+/**
+ * The writer applies its reader's rule (planner-promises A37). A domain YAML
+ * reads as a number, a boolean or a mapping, or a sentence that begins with a
+ * heading, wrote a file the registry could not read, and every promise command
+ * refused from then on. The text is read back before anything is written.
+ */
+function requireReadable(name: string, text: string): void {
+	let parsed: { data: Record<string, unknown>; content: string };
+	try {
+		const r = matter(text);
+		parsed = { data: r.data as Record<string, unknown>, content: r.content };
+	} catch (err) {
+		return refuse(
+			`${name}: written as given, this promise could not be read back (${(err as Error).message.split("\n")[0]}) — a domain is one word such as \`seating\`, with no colon; nothing was written`,
+		);
+	}
+	const problem = promiseProblem(parsed.data, name, firstParagraph(parsed.content));
+	if (problem !== null) {
+		refuse(
+			`${name}: written as given, the registry could not read this promise back: ${problem} — a domain is a word such as \`seating\`, not a number or true/false, and the sentence is plain text that does not begin with #; nothing was written`,
+		);
+	}
 }
 
 export interface ChangeInput {
@@ -185,6 +215,7 @@ export function changePromise(planRoot: string, input: ChangeInput): PromiseEntr
 		text,
 		`- ${today(input.now ?? new Date())} — changed by ${plan}: ${reason}. It read: "${promise.statement}"${from}`,
 	);
+	requireReadable(name, text);
 	writeFileSync(path, text);
 	return { ...promise, statement, owner: plan };
 }
