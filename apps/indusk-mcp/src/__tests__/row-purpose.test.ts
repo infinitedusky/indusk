@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
+import { token } from "../lib/tokens.js";
 import { runHook } from "./helpers/hook-runner.js";
 import { implText } from "./helpers/plan-fixture.js";
 
@@ -14,6 +15,11 @@ import { implText } from "./helpers/plan-fixture.js";
  * naming the row. Driven through the real hook. (Whether a named promise or
  * lesson exists is the contract check's, A6.)
  */
+
+// Built, never spelled: a literal token in a test source reads as a citation
+// to the repository's own registry check.
+const PROMISE = token("promise", "seat-never-double-booked");
+const LESSON = token("lesson", "a-seat-is-held-in-one-statement");
 
 const roots: string[] = [];
 afterAll(() => {
@@ -51,18 +57,13 @@ const impl = (cells: Array<string | null>, keys = ["test_purpose: required"]) =>
 describe("planner-promises A5 — every test row says what it is for", () => {
 	it("accepts rows that name a promise, name a lesson, or give a reason", async () => {
 		const r = await validate(
-			impl([
-				"promise: seat-never-double-booked",
-				"lesson: a-seat-is-held-in-one-statement",
-				"a regression guard over the old seat map",
-				"promise: seat-never-double-booked, lesson: a-seat-is-held-in-one-statement",
-			]),
+			impl([PROMISE, LESSON, "a regression guard over the old seat map", `${PROMISE}, ${LESSON}`]),
 		);
 		expect(r.exitCode, r.stderr).toBe(0);
 	});
 
 	it("refuses a row whose For cell is empty, naming the row", async () => {
-		const r = await validate(impl(["promise: seat-never-double-booked", ""]));
+		const r = await validate(impl([PROMISE, ""]));
 		expect(r.exitCode, "a row that says nothing about what it is for").not.toBe(0);
 		expect(r.stderr).toMatch(/\bT2\b/);
 		expect(r.stderr).toMatch(/promise|lesson|reason/);

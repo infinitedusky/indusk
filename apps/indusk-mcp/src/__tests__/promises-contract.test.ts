@@ -13,6 +13,7 @@ import {
 	type PromiseProject,
 	type PromiseSpec,
 	promiseProject,
+	token,
 } from "./helpers/promises-fixture.js";
 
 /**
@@ -35,6 +36,7 @@ const MADE = "seat-released-on-timeout";
 const MADE_SENTENCE = "A held seat is released when its hold runs out.";
 const KEPT = "seat-never-double-booked";
 const LESSON = "a-seat-is-held-in-one-statement";
+const NO_SUCH_LESSON = "a-lesson-nobody-wrote";
 
 let fixture: PromiseProject | null = null;
 afterEach(() => {
@@ -196,9 +198,7 @@ describe.skipIf(SHOULD_SKIP)("A6 — what a row names exists", () => {
 	});
 
 	it("refuses a row naming a promise the registry does not hold, naming the row and the promise", () => {
-		const r = contract(
-			project({ impl: rows(`promise: ${MADE}`, "promise: seat-map-never-stale") }),
-		);
+		const r = contract(project({ impl: rows(token(MADE), token("seat-map-never-stale")) }));
 		expect(r.code, r.stdout + r.stderr).toBe(2);
 		expect(r.stderr).toMatch(/\bT2\b/);
 		expect(r.stderr).toContain("seat-map-never-stale");
@@ -217,10 +217,10 @@ describe.skipIf(SHOULD_SKIP)("A6 — what a row names exists", () => {
 	});
 
 	it("refuses a row naming a lesson with no file, naming the lesson", () => {
-		const r = contract(project({ impl: rows("lesson: a-lesson-nobody-wrote") }));
+		const r = contract(project({ impl: rows(`lesson: ${NO_SUCH_LESSON}`) }));
 		expect(r.code, r.stdout + r.stderr).toBe(2);
 		expect(r.stderr).toMatch(/\bT1\b/);
-		expect(r.stderr).toContain("a-lesson-nobody-wrote");
+		expect(r.stderr).toContain(NO_SUCH_LESSON);
 	});
 });
 

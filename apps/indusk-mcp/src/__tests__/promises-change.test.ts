@@ -16,7 +16,7 @@ import {
  * promise: a-changed-promise-keeps-its-history — planner-promises A25, A26.
  *
  * A later plan that affects a promise either improves it in place or replaces
- * it. Improved, it is the same promise: same name and file, so its incidents
+ * it. Improved, it stays one promise — same name and file — so its incidents
  * and the marks that name it stay attached; the plan that changed it takes it
  * over, and its History keeps the old sentence, the reason and the plan that
  * owned it before. Replaced, the old one is retired when the new plan closes
