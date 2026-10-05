@@ -5,7 +5,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runPass } from "../lib/always-on/pass.js";
 import { recordViolations } from "../lib/promises/incidents.js";
 import { readPromises } from "../lib/promises/registry.js";
-import { basicAuthHeaders, type MarkedSpan, resolveMarkSource } from "../lib/promises/telemetry.js";
+import {
+	basicAuthHeaders,
+	type MarkedSpan,
+	resolveMarkSources,
+} from "../lib/promises/telemetry.js";
 import { readServerSettings } from "../lib/telemetry/server.js";
 import { type AlwaysOnServer, startAlwaysOnServer } from "./helpers/always-on-server.js";
 import { SHOULD_SKIP } from "./helpers/cli.js";
@@ -102,7 +106,11 @@ describe("A27 — a named Jaeger with no usable URL says which key to fix", () =
 	});
 
 	it("names promises.jaeger.url rather than refusing against a nameless URL", async () => {
-		await expect(resolveMarkSource(fixture.planRoot)).rejects.toThrow(/promises\.jaeger\.url/);
+		const production = (await resolveMarkSources(fixture.planRoot)).find(
+			(s) => s.name === "production",
+		);
+		expect(production?.ok).toBe(false);
+		expect(production?.ok === false && production.error.message).toMatch(/promises\.jaeger\.url/);
 	});
 });
 

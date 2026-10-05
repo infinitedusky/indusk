@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveMarkSource } from "../lib/promises/telemetry.js";
+import { resolveMarkSources } from "../lib/promises/telemetry.js";
 import { readPassSettings } from "../lib/telemetry/server.js";
 import { promiseProject, siteFile, testFile } from "./helpers/promises-fixture.js";
 
@@ -78,8 +78,10 @@ describe("A29 — one way to build a Jaeger endpoint", () => {
 		});
 		process.env[CRED_ENV] = "indusk:pw";
 		try {
-			const source = await resolveMarkSource(fixture.planRoot);
-			expect(source.endpoint.queryUrl).toBe(fromPass);
+			const production = (await resolveMarkSources(fixture.planRoot)).find(
+				(s) => s.name === "production",
+			);
+			expect(production?.ok && production.source.endpoint.queryUrl).toBe(fromPass);
 			expect(fromPass, "trailing slash and whitespace are both gone").toBe("https://host");
 		} finally {
 			delete process.env[CRED_ENV];

@@ -1,7 +1,7 @@
 import { readConfig } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
-import { probeWatcher } from "./probe.js";
+import { probeWatcher, WatcherBlind } from "./probe.js";
 
 // The admin reads both read failures through this one subpath, so its
 // `instanceof` sees the same classes the read path throws.
@@ -305,18 +305,21 @@ export async function markedSpans(opts: {
 }
 
 /**
- * Where this project's marks are read from (day-always-on, ADR D5).
+ * Where this project's marks are read from (promise-sources, ADR D1).
  *
- * One decision, made once: a project that names `promises.jaeger` reads the
- * always-on server it names; a project that names none reads its local
- * telemetry daemon, exactly as before. Absence is the rule rather than a
- * migration — every project that existed before this change names nothing and
- * behaves identically, which is what A14 guards.
+ * Sources are derived, not configured: every project has `local`, its
+ * telemetry daemon; a project that names `promises.jaeger` also has
+ * `production`, the always-on server it names. Absence is the rule rather
+ * than a migration — a project that names nothing has one source and behaves
+ * exactly as before (A7).
  *
  * The credential lives in the environment variable the config *names*, never
  * in the config: `.indusk/config.json` is committed.
  */
+export type SourceName = "local" | "production";
+
 export interface MarkSource {
+	name: SourceName;
 	endpoint: JaegerEndpoint;
 	/** Where it read, named as a person should see it. */
 	label: string;
@@ -333,21 +336,60 @@ export interface MarkSource {
 /** The config key a named server's intake comes from, as a reader is told to set it. */
 export const INTAKE_CONFIG_KEY = "promises.jaeger.otlp_url";
 
-export async function resolveMarkSource(root: string): Promise<MarkSource> {
-	const named = readConfig(root)?.promises?.jaeger;
-	if (!named) {
-		const status = await daemonStatus();
-		if (!status.running) {
-			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
-		}
-		const endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
-		return {
-			endpoint,
-			label: endpoint.queryUrl,
-			remote: false,
-			intakeUrl: `http://localhost:${status.otlpPort}`,
-		};
+/**
+ * A source this project has, resolved — or why it could not be. A source that
+ * cannot be resolved (no daemon running, a missing credential) is that
+ * source's failure, never the others' (ADR D2).
+ */
+export type ResolvedSource =
+	| { name: SourceName; ok: true; source: MarkSource }
+	| { name: SourceName; ok: false; error: JaegerUnreachable };
+
+/** The sources this project has, by name — no I/O. */
+export function sourceNames(root: string): SourceName[] {
+	return readConfig(root)?.promises?.jaeger ? ["local", "production"] : ["local"];
+}
+
+/**
+ * The source whose breaks raise the alarm (ADR D5): production when there is
+ * one, otherwise local. A local break during development is work in progress.
+ */
+export function alarmSource(names: readonly SourceName[]): SourceName {
+	return names.includes("production") ? "production" : "local";
+}
+
+export async function resolveMarkSources(root: string): Promise<ResolvedSource[]> {
+	return Promise.all(
+		sourceNames(root).map(async (name): Promise<ResolvedSource> => {
+			try {
+				const source = name === "local" ? await resolveLocal() : resolveProduction(root);
+				return { name, ok: true, source };
+			} catch (err) {
+				if (err instanceof JaegerUnreachable) return { name, ok: false, error: err };
+				throw err;
+			}
+		}),
+	);
+}
+
+async function resolveLocal(): Promise<MarkSource> {
+	const status = await daemonStatus();
+	if (!status.running) {
+		throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 	}
+	const endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
+	return {
+		name: "local",
+		endpoint,
+		label: endpoint.queryUrl,
+		remote: false,
+		intakeUrl: `http://localhost:${status.otlpPort}`,
+	};
+}
+
+function resolveProduction(root: string): MarkSource {
+	const named = readConfig(root)?.promises?.jaeger;
+	if (!named) throw new Error("resolveProduction called for a project naming no promises.jaeger");
 
 	const queryUrl = jaegerEndpoint(named.url).queryUrl;
 	// Refuse against the config key, not against the empty string it holds. An
@@ -373,6 +415,7 @@ export async function resolveMarkSource(root: string): Promise<MarkSource> {
 	}
 	const intake = named.otlp_url ? normalizeJaegerUrl(named.otlp_url) : "";
 	return {
+		name: "production",
 		endpoint: jaegerEndpoint(queryUrl, credential),
 		label: queryUrl,
 		remote: true,
@@ -380,17 +423,103 @@ export async function resolveMarkSource(root: string): Promise<MarkSource> {
 	};
 }
 
+export interface ReadMarksOptions {
+	sinceMs?: number;
+	timeoutMs?: number;
+	now?: Date;
+}
+
 /**
- * This project's marks, as every reader asks for them: the registry's
- * behaviour promises that are not retired, with their aliases, filtered to
- * this project's id, over the quiet window unless `sinceMs` says otherwise.
- * The one call `status`, `watch` and the admin make — each once assembled the
- * four by hand, and A27/A28 had to change all three.
+ * One source's marks (ADR D2): the named source, the alarm source by default
+ * — production when the project names one — so every caller predating
+ * promise-sources reads what it read before. Throws as it always has:
+ * `JaegerUnreachable` or `WatcherBlind`.
  */
 export async function readPromiseMarks(
 	root: string,
 	registry: Registry,
-	opts: { sinceMs?: number; timeoutMs?: number; now?: Date } = {},
+	opts: ReadMarksOptions & { source?: SourceName } = {},
+): Promise<MarkedSpansResult> {
+	const resolved = await resolveMarkSources(root);
+	const name = opts.source ?? alarmSource(resolved.map((r) => r.name));
+	const one = resolved.find((r) => r.name === name);
+	if (!one) {
+		throw new Error(`no ${name} source: promises.jaeger is not set in ${root}/.indusk/config.json`);
+	}
+	if (!one.ok) throw one.error;
+	return readSource(root, registry, one.source, opts);
+}
+
+/** One source's read: its marks, or why it has none. Never all-or-nothing. */
+export type SourceRead =
+	| { name: SourceName; label: string; ok: true; marks: MarkedSpansResult }
+	| {
+			name: SourceName;
+			label: string;
+			ok: false;
+			kind: "unreachable" | "blind";
+			/** What was consulted: the daemon's meta file, or the query URL. */
+			where: string;
+			reason: string;
+			error: JaegerUnreachable | WatcherBlind;
+	  };
+
+/**
+ * Every source's marks, each with its own failure (ADR D2). One dead source
+ * never hides another: a laptop with no daemon still reads production, and a
+ * production outage still shows the local loop.
+ */
+export async function readSources(
+	root: string,
+	registry: Registry,
+	opts: ReadMarksOptions = {},
+): Promise<SourceRead[]> {
+	const resolved = await resolveMarkSources(root);
+	return Promise.all(
+		resolved.map(async (r): Promise<SourceRead> => {
+			if (!r.ok) return failedRead(r.name, r.error.where, r.error);
+			try {
+				const marks = await readSource(root, registry, r.source, opts);
+				return { name: r.name, label: r.source.label, ok: true, marks };
+			} catch (err) {
+				if (err instanceof JaegerUnreachable || err instanceof WatcherBlind) {
+					return failedRead(r.name, r.source.label, err);
+				}
+				throw err;
+			}
+		}),
+	);
+}
+
+function failedRead(
+	name: SourceName,
+	label: string,
+	error: JaegerUnreachable | WatcherBlind,
+): SourceRead {
+	const blind = error instanceof WatcherBlind;
+	return {
+		name,
+		label,
+		ok: false,
+		kind: blind ? "blind" : "unreachable",
+		where: error.where,
+		reason: blind ? error.reason : error.message,
+		error,
+	};
+}
+
+/**
+ * One source's marks, as every reader asks for them: the registry's
+ * behaviour promises that are not retired, with their aliases, filtered to
+ * this project's id, over the quiet window unless `sinceMs` says otherwise.
+ * The one assembly `status`, `watch` and the admin share — each once assembled
+ * the four by hand, and A27/A28 had to change all three.
+ */
+async function readSource(
+	root: string,
+	registry: Registry,
+	source: MarkSource,
+	opts: ReadMarksOptions,
 ): Promise<MarkedSpansResult> {
 	const now = opts.now ?? new Date();
 	const behaviour = registry.promises.filter(
@@ -407,7 +536,6 @@ export async function readPromiseMarks(
 			getQuietWindowDays(root) * 86_400_000,
 			...behaviour.map((p) => p.expectEvery?.ms ?? 0),
 		);
-	const source = await resolveMarkSource(root);
 	// Prove the watcher hears before reporting anything it heard: a Jaeger
 	// that answers and receives nothing reads exactly like a quiet week
 	// (watcher-heartbeat). `JaegerUnreachable` from the source still wins.

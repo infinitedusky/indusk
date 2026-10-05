@@ -71,7 +71,7 @@ function defaultTestHome(): string {
  * Run the built CLI in `cwd`. `env` overlays the inherited environment — for
  * a test that needs git to see a fixed date or no identity at all.
  */
-export function runCli(cwd: string, args: string[], env: NodeJS.ProcessEnv = {}): RunResult {
+export function runCli(cwd: string, args: string[], env: Record<string, string | undefined> = {}): RunResult {
 	const r = spawnSync("node", [CLI_BIN, ...args], {
 		cwd,
 		encoding: "utf-8",
@@ -97,7 +97,7 @@ export function runCli(cwd: string, args: string[], env: NodeJS.ProcessEnv = {})
 export function runCliAsync(
 	cwd: string,
 	args: string[],
-	env: NodeJS.ProcessEnv = {},
+	env: Record<string, string | undefined> = {},
 ): Promise<RunResult> {
 	return new Promise((resolve, reject) => {
 		const child = spawn("node", [CLI_BIN, ...args], {

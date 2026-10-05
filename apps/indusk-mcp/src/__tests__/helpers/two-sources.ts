@@ -29,7 +29,7 @@ export interface TwoSources {
 	production: AlwaysOnServer;
 	project: PromiseProject;
 	/** Environment for a CLI run: the daemon's home and the server's credential. */
-	env: NodeJS.ProcessEnv;
+	env: Record<string, string>;
 	stop: () => Promise<void>;
 }
 
