@@ -7,9 +7,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ### Added
 - **Test kinds.** A test plan names each assertion's kind — `unit`, `contract`, `live check`, `smoke` or `promise` — the smallest that can prove it, and the kind says when its test runs. An impl with `test_kinds: required` has every trajectory row's kind checked when written. A phase now runs only its own rows' tests and the tests related to the files it changed; both tiers run at landing.
 - **The admin's system tier** (`pnpm test:system` in `apps/indusk-admin`): every test that starts `next dev` or a real Jaeger. The root `test:system` runs both packages'.
-- **Two promises about the suite.** `everyday-tests-never-wait`: a guard fails any everyday test, in either package, that starts a server or waits on the clock. `everyday-suite-stays-fast`: each root `pnpm test` is marked held (under 120 s) or broken in the local telemetry daemon, with its duration; a slow run fails nothing, and a run that overlapped another is not judged.
+- **Two promises about the suite.** `everyday-tests-never-wait`: a guard fails any everyday test, in either package, that starts a server or waits on the clock. `everyday-suite-stays-fast`: each root `pnpm test` is marked held (under 120 s) or broken in the local telemetry daemon, with its duration; a slow run fails nothing; a run that overlapped another, or failed fast, is not judged.
 
 ### Changed
+- **No test run is replayed from turbo's cache.** A cached replay kept the never-wait guard in mcp from seeing a change to the admin's tests.
 - **`pnpm test` takes about a minute, from about five.** Every test that starts `next dev` or a real Jaeger moved to the admin's new system tier (`pnpm test:system`, run at landing and on release); the store's and the chips' rules are unit tests with fake sources and a test clock. With no server left in either everyday tier, the two packages run in parallel again.
 
 ## [1.60.0] — 2026-10-05

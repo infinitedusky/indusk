@@ -1,7 +1,7 @@
 ---
 title: "Test kinds"
 date: 2026-10-05
-status: in-progress
+status: completed
 trajectory: required
 test_kinds: required
 test_phases: required
@@ -66,10 +66,10 @@ checked is still checked, and InDusk holds two promises about its own suite
 | A17 | A run at or over 120 s reads violated for `everyday-suite-stays-fast`, owned by test-kinds | Build Phase 5 | Build Phase 5 | passing | unit |
 | A18 | An impl with `test_kinds: required` whose row has no kind, or one outside the five, is refused naming the five | Test Phase 1 | Build Phase 4 | passing | unit |
 | A19 | The planner's Verification template no longer offers `pnpm test` as a phase's default | Test Phase 1 | Build Phase 4 | passing | unit |
-| A20 | After a change that only adds an admin test which starts `next dev`, the root `pnpm test` fails: no package's test run is replayed from turbo's cache, so the guard in mcp sees the admin's files every time | Phase 0 | Build Phase 6 | written | unit |
-| A21 | The guard catches a wait written with `node:timers/promises` — `await setTimeout(5_000)`, `scheduler.wait(5_000)` — as it catches `setTimeout(r, 5_000)` | Phase 0 | Build Phase 6 | written | unit |
-| A22 | A file commented out of the admin's `SYSTEM` list, which vitest then runs as everyday, is scanned as everyday by the guard | Phase 0 | Build Phase 6 | written | unit |
-| A23 | A run that fails within seconds is not marked `everyday-suite-stays-fast` upheld — a crash measures nothing; a slow failing run is still marked broken | Phase 0 | Build Phase 6 | written | unit |
+| A20 | After a change that only adds an admin test which starts `next dev`, the root `pnpm test` fails: no package's test run is replayed from turbo's cache, so the guard in mcp sees the admin's files every time | Phase 0 | Build Phase 6 | passing | unit |
+| A21 | The guard catches a wait written with `node:timers/promises` — `await setTimeout(5_000)`, `scheduler.wait(5_000)` — as it catches `setTimeout(r, 5_000)` | Phase 0 | Build Phase 6 | passing | unit |
+| A22 | A file commented out of the admin's `SYSTEM` list, which vitest then runs as everyday, is scanned as everyday by the guard | Phase 0 | Build Phase 6 | passing | unit |
+| A23 | A run that fails within seconds is not marked `everyday-suite-stays-fast` upheld — a crash measures nothing; a slow failing run is still marked broken | Phase 0 | Build Phase 6 | passing | unit |
 
 ### Deferred Verification
 
@@ -269,16 +269,17 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 #### Build Phase 6 Verification
 
-- [ ] A20–A23 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/everyday-tests-never-wait src/__tests__/suite-speed src/__tests__/turbo-test-not-cached`); A1–A19 still pass
-- [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear; A1 re-measured with the cache off
+- [x] A20–A23 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/everyday-tests-never-wait src/__tests__/suite-speed src/__tests__/turbo-test-not-cached`); A1–A19 still pass — 13 tests in the three files; every earlier row's test green in the full runs below
+- [x] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear; A1 re-measured with the cache off — on a quiet machine `pnpm test` 54 s, marked upheld (53 s); `test:system` both tiers green (mcp 37, admin 13). Two earlier runs this phase (114 s and 61 s) overlapped the evaluator's own runs of this worktree's suite, one per commit; the mark refused to judge both — the overlap check working live, on the case it exists for
+- [x] Shape — the guard's pattern table grew two rows and its admin list reader imports the module; `suiteSpeedMark` gained one input; turbo.json one key; nothing to change
 
 #### Build Phase 6 Context
 
-- [ ] guard: the turbo test carries `lesson: a-test-run-is-never-replayed-from-a-cache`; the root `CLAUDE.md` `pnpm test` line says no test run is cached — only if it fits the root budget, otherwise the lesson alone
+- [x] guard: the turbo test carries `lesson: a-test-run-is-never-replayed-from-a-cache`; the root `CLAUDE.md` `pnpm test` line says no test run is cached — only if it fits the root budget, otherwise the lesson alone — the lesson alone: the root has 1 byte of its 20 % margin left
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/guide/test-kinds.md`: no run is replayed from turbo's cache, and why; the speed mark skips a run that failed fast. `apps/docs/src/changelog.md` Unreleased: the same two lines
+- [x] `apps/docs/src/guide/test-kinds.md`: no run is replayed from turbo's cache, and why; the speed mark skips a run that failed fast. `apps/docs/src/changelog.md` Unreleased: the same two lines
 
 ## Files Affected
 

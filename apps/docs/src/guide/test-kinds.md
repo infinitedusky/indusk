@@ -54,6 +54,11 @@ files are its **system tier**.
 - **`pnpm test:system`** runs both packages' system tiers, at landing and on
   release.
 
+No test run is replayed from turbo's cache (`"cache": false` on the `test`
+task). turbo keys a cache on a package's own files, and some tests read beyond
+their package: the never-wait guard lives in mcp and reads the admin's tests.
+A replayed green answers a question about an older tree.
+
 ## The suite's own promises
 
 InDusk keeps this the way it keeps anything else, as promises:
@@ -63,6 +68,8 @@ InDusk keeps this the way it keeps anything else, as promises:
   starts a server or waits on the clock.
 - **`everyday-suite-stays-fast`** (behaviour, watched). Each `pnpm test` run is
   marked held or broken with how long it took. A slow run fails nothing; it
-  reads red on the Promises page.
+  reads red on the Promises page. A run that overlapped another test run (an
+  evaluator's, usually) is not judged, and neither is one that failed in under
+  two minutes: a crash at startup measures nothing.
 
 Why: the plan's ADR, `.indusk/planning/test-kinds/adr.md`.
