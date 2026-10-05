@@ -89,3 +89,7 @@ Across five questions per commit, 258 answers were `info`, 20 `warning` and 7 `c
 - **An earlier claim here was wrong.** This section first said the Biome config does not enable `noUnusedImports`. It does, at `error`, and has since March. The import in question had been removed before any check ran on it. The evaluator caught this.
 - **Shape:** one finding across ten phases (Build Phase 5: `confirmPlan` doing two jobs at 129 lines, split into `judge` and `enforce`), zero judged wrong by a human. One Shape note I wrote in Build Phase 9 claimed a finding that had not happened; it was corrected the next commit. No streak to report.
 - **A test at its limit, not this plan's:** the Dawn loop's full-run test takes 3.4–4.0 s on trunk and here against vitest's 5 s default, and timed out once under parallel load.
+
+## Landing
+
+Landed on main at 4c2953c3, 2026-10-05.
