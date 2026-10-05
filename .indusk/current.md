@@ -29,6 +29,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **watch-reopen-collision (2026-10-03)** — `watch` exits 0 only when every open incident it touched is carried by its owner's Maintenance phase; a missed reopen is retried every run ([archive](planning/archive/watch-reopen-collision/)).
 - **test-daemons-never-leak (2026-10-03)** — tests never auto-start a telemetry daemon, and `pnpm test` / `test:system` end failing on any left in a temp home, pass or fail ([archive](planning/archive/test-daemons-never-leak/)).
 - **watcher-heartbeat (2026-10-03)** — every promise read probes its Jaeger and says *watcher blind* instead of a count; the always-on server beats each pass and tells Slack once each way; promises may declare `expect_every` ([archive](planning/archive/watcher-heartbeat/)).
+- **promise-sources (2026-10-05)** — every reader shows `local` and `production` side by side, each source's failure its own; production raises the alarm ([archive](planning/archive/promise-sources/)).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
 
