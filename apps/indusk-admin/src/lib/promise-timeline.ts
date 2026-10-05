@@ -47,7 +47,7 @@ interface Held {
   coveredFrom: number;
   coveredTo: number;
   promises: string;
-  /** Per promise: marks by `${traceId}|${at}|${outcome}`. */
+  /** For each promise, its marks keyed by `${traceId}|${at}|${outcome}`. */
   marks: Map<string, Map<string, TimelineMark>>;
   atLeast: Map<string, FullSlice[]>;
 }

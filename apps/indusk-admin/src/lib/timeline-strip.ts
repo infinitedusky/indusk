@@ -169,7 +169,7 @@ export interface TimelineView {
   /** The sources the project has, for the source switch. */
   sources: string[];
   window: WindowKey;
-  /** Per promise: its strip, or "empty" when no run marks it. */
+  /** For each promise, its strip — or "empty" when no run marks it. */
   strips: Record<string, Strip | "empty">;
   /** Local's view: how far back its runs reach ("local history since …"). */
   reach: string | null;

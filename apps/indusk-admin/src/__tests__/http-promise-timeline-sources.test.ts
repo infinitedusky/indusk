@@ -47,7 +47,7 @@ async function page(query = ""): Promise<string> {
 function row(html: string, promise: string): string {
   const start = html.indexOf(`data-promise="${promise}"`);
   if (start === -1) return "";
-  // The next *other* promise: the strip under a row carries its promise's
+  // Up to the next *other* promise, since the strip under a row carries its promise.s
   // name too (the markup contract), and must stay inside the row's slice.
   const other = /data-promise="([^"]*)"/g;
   other.lastIndex = start + 1;
