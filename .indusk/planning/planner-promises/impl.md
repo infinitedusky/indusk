@@ -82,6 +82,21 @@ promises proven; and an incident starts from the tests that were vouching
 | A26 | When a plan that replaces a promise closes, the old one is retired, the new one records which it replaced, and the check passes; a replacement naming a promise that does not exist is refused | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
 | A27 | A changed promise that breaks later reopens the plan that changed it, and its incident lists the rows that name it in both plans | Test Phase 1 | Build Phase 6 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/incident-proven-by.test.ts |
 | A28 | A promise a plan declared and then dropped, before it was ever in force, leaves the registry by a command; one that is in force, or another plan's, is refused, naming it, and nothing is removed | Build Phase 8 | Build Phase 8 | passing | unit | lets the planner drop or rename a promise without anyone deleting a registry file by hand (Sandy, 2026-10-05) | apps/indusk-mcp/src/__tests__/promises-withdraw.test.ts |
+| A29 | A test row with no purpose, or a level that is not a level, is refused whatever wrote it: added by an edit that touches only the table, or by a script, the plan's contract still names the row | Build Phase 9 | Build Phase 9 | planned | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
+| A30 | A purpose that tries to name a promise or a lesson and is not written as one (the name in backticks, words after it, "and" for a comma) is refused, naming the row, and so is one that is only a mark such as `-`, `n/a` or `TBD`; neither is read as a reason | Build Phase 9 | Build Phase 9 | planned | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/row-purpose.test.ts |
+| A31 | A test row with a cell missing or a cell too many is refused, naming the row; it is never dropped, so the promise it names is never reported as named by no row | Build Phase 9 | Build Phase 9 | planned | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/row-purpose.test.ts |
+| A32 | A promise written anywhere in a brief's Promises section is read or refused by name, never dropped: indented, bulleted where numbered is expected, or under a missing "Existing promises" heading; and a brief written in the new headings without `## Promises` is out of shape, not exempt | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
+| A33 | A row naming a promise the registry does not hold, a retired promise or a missing lesson is refused in a plan whose brief has no Promises section, or that has no brief | Build Phase 9 | Build Phase 9 | planned | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
+| A34 | An expectation whose measure or time to look is still the template's placeholder in braces is refused, naming the expectation | Build Phase 9 | Build Phase 9 | planned | unit | promise: an-expectation-says-how-it-is-measured | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
+| A35 | An open plan whose impl cannot be read makes the registry check, the contract and the confirm refuse, naming that file; none of them crashes | Build Phase 9 | Build Phase 9 | planned | unit | lesson: detectors-must-distinguish-could-not-check-from-checked-and-failed | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
+| A36 | The retrospective's gate names a plan's unproven promises when it is given the plan's folder as a relative path | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
+| A37 | A promise is never written in a form the registry cannot read back: a domain that reads as a number or a boolean, or holds a colon, and a sentence that begins with `#`, are refused before the file is written, and the registry still reads | Build Phase 9 | Build Phase 9 | planned | unit | the registry's writer applies its reader's own rule, so one command cannot leave every other unable to run | apps/indusk-mcp/src/__tests__/promises-declare.test.ts |
+| A38 | A replacement that was first declared as an ordinary new promise can still be recorded as replacing the old one, by the command the refusal at close names; the plan then closes and the old promise is retired | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
+| A39 | A plan that is building is held by the registry check even while its brief still says draft | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
+| A40 | A plan that changes a promise and moves or replaces its test closes without anyone editing the registry: the promise's tests and sites are the ones that exist when the plan is confirmed | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
+| A41 | A promise about state or behaviour whose name appears only in test files is not confirmed, and a file any row names as a test is never recorded as the code that keeps a promise | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
+| A42 | A confirm that stopped after enforcing a replacement and before retiring what it replaced is finished by running it again | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
+| A43 | A plan archived while a promise it declared is still declared is not a dead end: the same commands confirm the promise from the archived plan's rows, or withdraw it, and the registry check's refusal names them | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 
 ### Deferred Verification
 
@@ -131,6 +146,10 @@ promises proven; and an incident starts from the tests that were vouching
 #### Deferred to Build Phase 8
 
 - **A28** — not deferred from this phase but added after it: withdrawal was asked for on 2026-10-05, once the seven build phases had closed (Sandy: "Add withdrawal"). The gap was found writing the planner's steps: a promise declared and then dropped or renamed could only leave the registry by deleting its file by hand. Its test reaches the command over the CLI, so it is written before the command and is red on an unknown command.
+
+#### Deferred to Build Phase 9
+
+- **A29–A43** — the falsification's hypotheses, formed on 2026-10-05 by reading the finished code against what the rows above claim. None could have been written in this phase: each names a way a check passes without checking, and those ways were only visible once the checks existed. Each is written before its fix and must fail on its own assertion first.
 
 #### Regression Guards
 
@@ -333,6 +352,56 @@ promises proven; and an incident starts from the tests that were vouching
 #### Build Phase 8 Document
 
 - [x] `apps/docs/src/reference/cli/promises.md`: `withdraw`; `guide/promises.md`: the row in "A promise's life in plans"; `changelog.md`: the commands entry names it — also `guide/briefs.md`, which now says promises are declared when the brief is accepted (it said "as it writes the brief", which Build Phase 7 made untrue); the docs site builds
+
+### Build Phase 9: Falsification — what the checks pass without checking
+
+**Goal**: verify whether the attested state holds against the ways each check can pass having checked nothing, and the ways a plan following the commands can reach a dead end. Fifteen hypotheses, each read out of the finished code: A29–A35 are checks that are silent where they should refuse, A36–A37 and A39 are checks that depend on how they are called or what they are given, and A38 and A40–A43 are plans that cannot close, or close wrongly, without someone editing the registry by hand. Each row is one hypothesis; each item is the fix if it confirms.
+
+- [ ] A29–A43 written first, each red on its own assertion
+- [ ] The row rules run in the contract (A29). `lib/promises/contract.ts`: for an impl past `draft` that sets `test_purpose` or `test_levels`, run the package's own row rules (shape, purpose, level) and refuse naming the row. Today they run only in the hook, and only on an edit whose new text holds a phase heading or an unchecked item: an Edit that adds or changes a row alone, a check-off, and any file written by a script are never judged. The hook already hands every write to the contract, and `promises check` runs it, so one place closes all three
+- [ ] A purpose is a token or a reason, never something between (A30). `lib/trajectory/parser.ts` and the hooks' copy, pinned equal: a cell that holds `promise:` or `lesson:` and is not tokens only is `malformed`, and `validateRowPurpose` (package and hook) refuses it with the form to use; so is a cell with no two words in it. Today `` promise: `seat-held` `` reads as the reason the row needs no promise
+- [ ] A row the table cannot hold is refused (A31). `lib/trajectory/validator.ts` and the hook: under `test_purpose: required`, a table line whose cell count is not the header's is an error naming its first cell. Today the parser drops it, so every rule above the parser passes it. Gated on the key, so every impl written before this plan is still accepted as it was (A18)
+- [ ] The brief's parser reads or refuses everything written in its words (A32). `lib/promises/brief-contract.ts`: list entries with up to three spaces of indent and either marker; any line in the Promises section that starts with a promise's name and that no list read is a problem; a label outside `### Existing promises` is a problem; a brief with `## Expectations` or `### This plan makes` and no `## Promises` is out of shape, not legacy
+- [ ] Rows are checked whatever the brief's shape (A33). `contract.ts`: a legacy brief, or none, is a contract with empty lists for the row checks, in an open plan
+- [ ] A placeholder is not a measure (A34). `brief-contract.ts`: a `Measure` or `Look` that is only `{…}` reads as absent
+- [ ] An impl that cannot be read is a refusal naming it (A35). `contract.ts` and `rows.ts`: the trajectory read catches a frontmatter it cannot parse; `promises check`, `contract` and `confirm` name the file where today they end in a stack trace
+- [ ] The gate resolves the folder it is given (A36). `lib/cleanup/gate.ts`: `resolve(planDir)` before looking for the planning root; a relative path today finds none and reports no unproven promise
+- [ ] The writer applies the reader's rule (A37). `lib/promises/write.ts`: `declare` and `change` read back the text they are about to write with `promiseProblem` and refuse on a problem, with nothing written
+- [ ] `replace` records the link on a replacement the plan already declared (A38). `write.ts`: when `--by` names a promise this plan declared with no `supersedes`, set it there. Today `replace` refuses because the name exists, and that is the command confirm's refusal tells the reader to run. `skills/planner.md`: a promise that is some entry's replacement is saved with `replace_promise` only
+- [ ] A building plan is held whatever its brief's status says (A39). `contract.ts`: the sweep leaves a draft brief unchecked only while the plan has no impl past `draft`
+- [ ] Confirm keeps an in-force promise's links true (A40, A41). `lib/promises/confirm.ts`: for every promise the plan owns that its rows name, in force or declared, `tests:` are the listed tests that still exist and carry the token plus the rows' test files, and `sites:` the other files that carry it; a file any row of the plan names as a test is never a site; a History line only when something changed
+- [ ] Confirm run again finishes what it started (A42). `confirm.ts`: the replaced promise is retired before the replacement is enforced, and an in-force promise of the plan whose `supersedes` is still in force is retired on the next run
+- [ ] An archived plan's declared promise can still be confirmed or withdrawn (A43). `confirm.ts` and `write.ts` accept the plan's archived folder; `check.ts`'s "declared, but its owner is archived" names both commands in place of "mark it enforced" by hand. `skills/planner.md`: a bugfix or refactor that skips the retrospective still runs `indusk promises confirm`
+- [ ] From the live check's own observations, in `skills/planner.md`: Step 0 reads `.indusk/planning/CLAUDE.md` when the project has no `master.md`; the conversation settles what will be true and does not propose how to build it; a promise a test with chosen inputs can prove is `state`, and `behaviour` is for what only the running system shows; "every `pnpm test`" becomes "the project's test run, where it runs `indusk promises check`". And the comment my insertion mangled above `validateRowPurpose` in `validator.ts`
+
+#### Build Phase 9 Verification
+
+- [ ] A29: a row with an empty `For`, or a level that is not one, reaches an in-progress impl by an edit of the table alone and by a direct file write; the contract refuses both, naming the row
+- [ ] A30: a purpose written as a promise in backticks, one with words after the name, and one that is only a mark are each refused, naming the row; a plain reason still passes
+- [ ] A31: a row one cell short and a row one cell long are each refused by name; the archived impls still validate
+- [ ] A32: each of four briefs (an indented entry, a bulleted "makes", labels with no "Existing promises" heading, the new headings without `## Promises`) is refused naming the promise or the heading; none passes as empty
+- [ ] A33: a row naming a promise the registry does not hold is refused in a plan with a legacy brief and in one with no brief
+- [ ] A34: an expectation whose measure is `{how we would know}` is refused, naming it
+- [ ] A35: with one open plan's impl frontmatter broken, `promises check`, `promises contract` and `promises confirm` each exit 2 naming the file
+- [ ] A36: the gate, given `.indusk/planning/<plan>` from the project root, names the unproven promise
+- [ ] A37: `declare` with the domain `2026`, the domain `true`, a domain holding `: `, and a sentence beginning `#` is refused each time, and `promises check` still runs
+- [ ] A38: declare the replacement, then `replace <old> --by <it>`: the link is recorded; confirm retires the old promise
+- [ ] A39: an in-progress impl beside a brief marked `draft`, with a made promise the registry lacks: `promises check` refuses
+- [ ] A40: a changed promise whose test file moved is confirmed with the new file listed and the missing one gone
+- [ ] A41: a state promise named by its row's test and by one other test file, and by no code, is refused; with a code site added, the second test is not listed as a site when a row names it
+- [ ] A42: a replacement already `enforced` beside an old promise still in force, owned by the plan: confirm retires the old one
+- [ ] A43: a promise still `declared` in an archived plan is confirmed from the archived rows; another is withdrawn; `promises check`'s refusal names both commands
+- [ ] Every earlier row still passes, and every plan folder in this repository still passes `promises contract --all` (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promises- src/__tests__/row-purpose src/__tests__/test-levels src/__tests__/incident-proven-by src/__tests__/planner-brief-template src/lib/trajectory src/lib/cleanup src/__tests__/impl-corpus`, then `vitest related` over the files changed)
+
+#### Build Phase 9 Context
+
+- [ ] guard: `row-purpose.test.ts` carries `lesson: a-reader-that-drops-what-it-cannot-read-passes-every-rule-above-it`; the lesson file is written with it (the dropped row, the entry no list read, the token read as a reason are one mistake three times)
+- [ ] hooks (`apps/indusk-mcp/hooks/CLAUDE.md`): the row rules are the contract's, so they hold for a file any tool wrote; the hook's own run of them is the early word on a draft
+- [ ] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): a plan that skips the retrospective still confirms its promises; an archived plan's declared promise is confirmed or withdrawn, never edited by hand
+
+#### Build Phase 9 Document
+
+- [ ] `apps/docs/src/reference/cli/promises.md`: the contract's new refusals (a row out of shape, a purpose that is neither token nor reason, a brief entry no list read, a placeholder measure, an impl that cannot be read), `replace` on an already-declared replacement, `confirm` and `withdraw` on an archived plan, and that confirm refreshes an in-force promise's links; `guide/briefs.md` and `guide/promises.md` where they describe the same; `changelog.md` Unreleased
 
 ## Files Affected
 
