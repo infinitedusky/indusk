@@ -58,7 +58,21 @@ export function parseTrajectoryFromBody(implBody) {
 	return {
 		rows: parseTrajectoryTable(tableLines),
 		deferred: parseDeferredBlock(deferredLines),
+		misshapen: findMisshapenRows(tableLines),
 	};
+}
+
+/** Port of `findMisshapenRows` in `src/lib/trajectory/parser.ts` (planner-promises A31). */
+export function findMisshapenRows(tableLines) {
+	const pipeLines = tableLines.filter((line) => line.trim().startsWith("|"));
+	if (pipeLines.length < 2) return [];
+	const expected = parseTableRow(pipeLines[0]).length;
+	return pipeLines.slice(2).flatMap((line) => {
+		const cells = parseTableRow(line);
+		if (cells.length === expected) return [];
+		const first = /^\|\s*([^|]*)/.exec(line.trim())?.[1].trim() ?? "";
+		return [{ id: first || "(a row with no ID)", cells: cells.length, expected }];
+	});
 }
 
 export function parseTableRow(line) {
