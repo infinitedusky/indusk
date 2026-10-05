@@ -1,7 +1,7 @@
 ---
 title: "Promise sources — local and production, side by side"
 date: 2026-10-04
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -227,7 +227,7 @@ exists today and answers wrongly.
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`, the library paragraph: sources and reads come from `@infinitedusky/indusk-mcp/promises/sources`, the query layer from `promises/telemetry`
+- [x] `apps/docs/src/reference/cli/promises.md`, the library paragraph: sources and reads come from `@infinitedusky/indusk-mcp/promises/sources`, the query layer from `promises/telemetry`
 
 ## Files Affected
 
