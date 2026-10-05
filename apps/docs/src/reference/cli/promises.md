@@ -274,12 +274,23 @@ API within 5 seconds (it names both). Either way, no count is printed for any
 promise.
 
 The marks are read by one library, `@infinitedusky/indusk-mcp/promises/telemetry`.
-`readPromiseMarks(root, registry, { sinceMs? })` is the call `status`, `watch`
-and the admin make: it takes the registry's behaviour promises that are not
-retired, their aliases, the project id and the quiet window, and asks
-`markedSpans` — which throws `JaegerUnreachable` rather than returning an empty
-result. Before it reads, it calls `probeWatcher`, which throws `WatcherBlind`
-(exported from the same subpath) when the probe does not come back. A probe
+A project has one or two **sources**: `local`, its telemetry daemon, always;
+and `production`, the server `promises.jaeger` names, when it names one.
+`resolveMarkSources(root)` returns each, or why it could not be resolved (no
+daemon running, a missing credential). The **alarm source** —
+`alarmSource(names)` — is production when there is one, otherwise local: a
+local break during development is work in progress, not an alarm.
+`readSources(root, registry, opts)` reads every source and returns one entry
+each: its marks, or its failure (`unreachable` or `blind`, where it looked,
+and why). It never throws for one source's failure, so one dead source never
+hides another. `readPromiseMarks(root, registry, { sinceMs?, source? })` reads
+one source, the alarm source by default: it takes the registry's behaviour
+promises that are not retired, their aliases, the project id and the quiet
+window, and asks `markedSpans` — which throws `JaegerUnreachable` rather than
+returning an empty result. Before it reads, it calls `probeWatcher`, which throws `WatcherBlind`
+(exported from the same subpath) when the probe does not come back. When the
+intake refuses the probe and the query API does not answer either, nobody is
+there, and it throws `JaegerUnreachable` instead. A probe
 that came back is trusted for 30 seconds per query URL, within one process. The same subpath exports `newestMark(marks)` (when a promise was last seen: its newest mark, upheld or violated) and `silencePastExpectation(promise, marks)` (the `expect_every` judgment). `promise_health`, `promises status` and the admin read both, so no surface restates either rule. How an application marks a promise is in the
 [promises guide](/guide/promises#marking-a-behaviour-promise).
 

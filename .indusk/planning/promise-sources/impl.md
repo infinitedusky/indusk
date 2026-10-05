@@ -109,7 +109,7 @@ exists today and answers wrongly.
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`, the library paragraph: `resolveMarkSources`, `readSources`, the alarm source
+- [x] `apps/docs/src/reference/cli/promises.md`, the library paragraph: `resolveMarkSources`, `readSources`, the alarm source
 
 ### Build Phase 2: status per source, and watch --source
 
