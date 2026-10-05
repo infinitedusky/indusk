@@ -13,6 +13,12 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   (`feature`, `bugfix`, `refactor`, `spike`), declared in the brief's
   frontmatter — never inferred from which files exist. — see
   `/reference/skills/planner`
+- **A brief holds expectations and promises, and everything else is
+  research.** Its shape is read by `indusk promises contract`, so keep the
+  headings and each label on its own line; a draft is not held to the
+  registry, an accepted brief is, by every `pnpm test`. The problem, the
+  context and the decisions made on the way go in `research.md`. — see
+  `/guide/briefs`
 - **Cross-reference related plans by path, and update both** when work in one
   changes something the other names — a plan never cites stale information.
 - **Plan hierarchy is declared top-down, in frontmatter**: the root `master.md`
