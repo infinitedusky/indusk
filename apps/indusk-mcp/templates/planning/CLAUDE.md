@@ -52,11 +52,13 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   earliest authorable phase, never the fix phase; `Writable ≤ Passes` is
   enforced at write time. Deferred Verification rows need `reason:` /
   `would require:` / `mitigation:`. — see `/guide/test-trajectory`
-- **A test plan's Kind is one of five** — `unit` / `contract` / `live check` /
-  `smoke` / `promise` — the smallest that proves the assertion; the kind says
-  when the test runs (a phase runs only its rows and related tests; both tiers
-  run at landing). `test_kinds: required` makes the hook refuse a row with no
-  kind or another word. — see `/guide/test-kinds`
+- **A test row has a `Level` and a `For`.** The level is one of five — `unit` /
+  `contract` / `live check` / `smoke` / `promise` — the smallest that proves
+  the assertion, and it says when the test runs (a phase runs only its rows
+  and related tests; both tiers run at landing). `For` says what the test is
+  for: `promise: <name>`, `lesson: <name>`, or the reason it needs neither.
+  `test_levels: required` and `test_purpose: required` make the hook refuse a
+  row without them. — see `/guide/test-levels`
 - Vitest is the committed test runner (adaptive first-connect setup); moved
   here from the root at test-kinds' close. — see
   `.indusk/planning/archive/verify-skill/adr.md`

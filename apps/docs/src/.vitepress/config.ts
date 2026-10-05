@@ -62,7 +62,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Plan Lifecycle", link: "/guide/plan-lifecycle" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
-						{ text: "Test Kinds", link: "/guide/test-kinds" },
+						{ text: "Test Levels", link: "/guide/test-levels" },
 						{ text: "Promises", link: "/guide/promises" },
 						{ text: "Always On", link: "/guide/always-on" },
 						{ text: "The Shape Check", link: "/guide/shape" },

@@ -4,7 +4,8 @@ date: 2026-10-05
 status: in-progress
 trajectory: required
 test_phases: required
-test_kinds: required
+test_levels: required
+test_purpose: required
 rationale: required
 gate_policy: ask
 ---
@@ -50,13 +51,13 @@ promises proven; and an incident starts from the tests that were vouching
 
 ## Test Trajectory
 
-| ID | Asserts | Writable at | Passes at | State | Kind | For | Test |
+| ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|------|-----|------|
 | A1 | A promise written from a planning conversation is in the registry as `declared`, owned by its plan, with the sentence the person approved, and the check passes | Test Phase 1 | Build Phase 3 | written | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-declare.test.ts |
 | A2 | In a project that has declared no domains, writing its first promise declares that promise's domain with it, and the check passes | Test Phase 1 | Build Phase 3 | written | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-declare.test.ts |
 | A3 | A plan cannot start building while its brief names, among the promises it makes, one the registry does not hold or another plan owns; the refusal names the promise | Test Phase 1 | Build Phase 4 | written | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
 | A4 | A plan cannot start building while its brief lists, among the promises it must not break, changes or replaces, one that does not exist or is already retired; the refusal names it | Test Phase 1 | Build Phase 4 | written | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
-| A5 | An impl whose every test row names a promise, names a lesson, or gives a reason is accepted; one with a row that does none of these is refused, naming the row | Test Phase 1 | Build Phase 2 | written | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/row-purpose.test.ts |
+| A5 | An impl whose every test row names a promise, names a lesson, or gives a reason is accepted; one with a row that does none of these is refused, naming the row | Test Phase 1 | Build Phase 2 | passing | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/row-purpose.test.ts |
 | A6 | A row that names a promise the registry does not hold, a retired promise, or a lesson that does not exist is refused, naming it | Test Phase 1 | Build Phase 4 | written | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
 | A7 | A plan's page in the admin shows, for each test row, what it is for | Build Phase 7 | Build Phase 7 | planned | unit | promise: every-test-says-what-it-is-for | apps/indusk-admin/src/components/phases/TrajectoryRowsTable.test.tsx |
 | A8 | A plan holding a declared promise that no passing row names cannot close; the refusal names the promise | Test Phase 1 | Build Phase 5 | written | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
@@ -67,10 +68,10 @@ promises proven; and an incident starts from the tests that were vouching
 | A13 | The row added to a plan that an incident reopens names the promise that broke and has a level, and the plan's impl still validates | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-incident-names-its-tests | apps/indusk-mcp/src/__tests__/reopen-row-complete.test.ts |
 | A14 | A plan cannot start building while an expectation in its brief has no measure or no time to look; the refusal names the expectation | Test Phase 1 | Build Phase 4 | written | unit | promise: an-expectation-says-how-it-is-measured | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
 | A15 | A brief that says it has no expectations, with the reason, is accepted | Test Phase 1 | Build Phase 4 | written | unit | promise: an-expectation-says-how-it-is-measured | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
-| A16 | The hooks' copy of the test levels equals the package's list, and the hooks' row parser reads the new column exactly as the package's does | Test Phase 1 | Build Phase 2 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/test-levels-parity.test.ts |
+| A16 | The hooks' copy of the test levels equals the package's list, and the hooks' row parser reads the new column exactly as the package's does | Test Phase 1 | Build Phase 2 | passing | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/test-levels-parity.test.ts |
 | A17 | With this plan's tests added, no everyday test starts a server or waits | Test Phase 1 | Test Phase 1 | passing | unit | promise: everyday-tests-never-wait, promise: everyday-suite-stays-fast | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | A18 | Every impl and every brief written before this plan is accepted exactly as it was | Test Phase 1 | Build Phase 4 | written | unit | a regression guard over the documents written before this plan | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
-| A19 | A new impl names each test's level under `Level`; the archived test-kinds impl, which says `Kind`, still validates | Test Phase 1 | Build Phase 2 | written | unit | a rename decided 2026-10-05; keeps the old spelling working | apps/indusk-mcp/src/__tests__/test-levels-validation.test.ts |
+| A19 | A new impl names each test's level under `Level`; the archived test-kinds impl, which says `Kind`, still validates | Test Phase 1 | Build Phase 2 | passing | unit | a rename decided 2026-10-05; keeps the old spelling working | apps/indusk-mcp/src/__tests__/test-levels-validation.test.ts |
 | A20 | The planner's brief template has Expectations and Promises, and no Problem, Proposed Direction or Success Criteria | Test Phase 1 | Build Phase 7 | written | unit | pins the template every new plan is handed | apps/indusk-mcp/src/__tests__/planner-brief-template.test.ts |
 | A21 | A bugfix or refactor plan may carry a research document, and is not marked incomplete without one | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the why left the brief, so those plans need somewhere to put it | apps/indusk-mcp/src/__tests__/research-optional.test.ts |
 | A22 | This plan's own six promises go the whole way: `declared` before its first test, named by these rows, and `enforced` when it is confirmed | Build Phase 7 | Build Phase 7 | planned | live check | promise: a-closed-plan-kept-its-promises | |
@@ -156,25 +157,27 @@ promises proven; and an incident starts from the tests that were vouching
 
 ### Build Phase 2: The row has a level and a purpose
 
-- [ ] `lib/test-levels.ts` (`TEST_LEVELS`, `isTestLevel`, `levelsList`) and `hooks/_test-levels.js`, pinned equal; `lib/test-kinds.ts` re-exports them; the package exports `./test-levels` and keeps `./test-kinds`
-- [ ] Both parsers (`lib/trajectory/parser.ts`, `hooks/_trajectory-parser.js`): a `Level` header, or `Kind` when either key is set, gives the row's level; a `For` header gives `purpose: { promises, lessons, reason }`
-- [ ] The validator and the hook: `test_levels: required` means what `test_kinds: required` meant, and says "level"; `test_purpose: required` refuses a row whose `For` cell is empty, naming the row
-- [ ] Rename `test-kinds-validation.test.ts` and `test-kinds-parity.test.ts` to the `test-levels` names the rows cite, keeping every case
-- [ ] This impl: `Kind` becomes `Level`, `test_kinds` becomes `test_levels`, and `test_purpose: required` is set — the plan validated by its own rule
-- [ ] `indusk update` in this repository, so the installed hooks match
+- [x] `lib/test-levels.ts` (`TEST_LEVELS`, `isTestLevel`, `levelsList`) and `hooks/_test-levels.js`, pinned equal; `lib/test-kinds.ts` re-exports them; the package exports `./test-levels` and keeps `./test-kinds`
+- [x] Both parsers (`lib/trajectory/parser.ts`, `hooks/_trajectory-parser.js`): a `Level` header, or `Kind` when either key is set, gives the row's level; a `For` header gives `purpose: { promises, lessons, reason }`
+- [x] The validator and the hook: `test_levels: required` means what `test_kinds: required` meant, and says "level"; `test_purpose: required` refuses a row whose `For` cell is empty, naming the row
+- [x] Rename `test-kinds-validation.test.ts` and `test-kinds-parity.test.ts` to the `test-levels` names the rows cite, keeping every case
+- [x] This impl: `Kind` becomes `Level`, `test_kinds` becomes `test_levels`, and `test_purpose: required` is set — the plan validated by its own rule
+- [x] `indusk update` in this repository, so the installed hooks match — and the installed `_test-kinds.js`, which `update` does not remove, deleted by hand
+- [x] (discovered) The hook runs top to bottom, so a module-level `const` declared below the validation call did not exist when the call ran (`Cannot access 'PURPOSE_FORMS' before initialization`); the text lives inside its function. Caught by A5 on its first run
 
 #### Build Phase 2 Verification
 
-- [ ] A5, A16 and A19 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/row-purpose src/__tests__/test-levels-validation src/__tests__/test-levels-parity src/lib/trajectory src/__tests__/impl-corpus src/__tests__/hook-shared-modules`)
-- [ ] `apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts` still passes with the changed hook
+- [x] A5, A16 and A19 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/row-purpose src/__tests__/test-levels-validation src/__tests__/test-levels-parity src/lib/trajectory src/__tests__/impl-corpus src/__tests__/hook-shared-modules`) — with the reopen tests: 116 tests, about 2 s
+- [x] `apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts` still passes with the changed hook
+- [x] Shape — the purpose reader is one small function with a pinned copy for the hooks, as the row parser already is; the two validators sit beside each other and say the same words in both places. Nothing to change
 
 #### Build Phase 2 Context
 
-- [ ] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): the test-kinds entry becomes "a row's `Level` is one of five, and its `For` says what the test is for — a promise, a lesson, or why neither; `test_levels` and `test_purpose` make the hook refuse a row without them"
+- [x] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): the test-kinds entry becomes "a row's `Level` is one of five, and its `For` says what the test is for — a promise, a lesson, or why neither; `test_levels` and `test_purpose` make the hook refuse a row without them"
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/guide/test-kinds.md` moves to `guide/test-levels.md`, the old page left as a pointer; `guide/test-trajectory.md` gains `Level` and `For`; the sidebar follows
+- [x] `apps/docs/src/guide/test-kinds.md` moves to `guide/test-levels.md`, the old page left as a pointer; `guide/test-trajectory.md` gains `Level` and `For`; the sidebar follows
 
 ### Build Phase 3: Commands write the registry
 
@@ -296,5 +299,5 @@ promises proven; and an incident starts from the tests that were vouching
 
 ## Notes
 
-- The impl is written with `Kind` and `test_kinds: required` because that is what today's hook validates. Build Phase 2 renames both here.
+- The impl was written with `Kind` and `test_kinds: required`, which is what the hook validated then. Build Phase 2 renamed both here and set `test_purpose: required`.
 - Skill text here will be rewritten again by `house-rules-out`, the first plan in the promise-core master; whichever lands second carries the other's edits.

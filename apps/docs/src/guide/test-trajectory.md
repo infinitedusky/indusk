@@ -133,10 +133,11 @@ Add when the plan benefits from the extra dimension; the template does not inclu
 
 | Column | Values | When to add |
 |--------|--------|-------------|
-| `Kind` | `unit`, `contract`, `live check`, `smoke`, `promise` | Every new impl: set `test_kinds: required` and the hook refuses a row with no kind or another word — see [Test kinds](/guide/test-kinds) |
+| `Level` | `unit`, `contract`, `live check`, `smoke`, `promise` | Every new impl: set `test_levels: required` and the hook refuses a row with no level or another word — see [Test levels](/guide/test-levels). First spelled `Kind` and `test_kinds: required`, which still validate |
+| `For` | `promise: <name>`, `lesson: <name>` (one or more, comma-separated), or the reason the test needs neither | Every new impl: set `test_purpose: required` and the hook refuses a row that does not say what it is for |
 | `Scope` | `unit`, `integration`, `e2e` | Older impls only; the kind replaces it |
 
-Impls written before test kinds may carry the older style words in `Kind` (`example`, `property`, `contract`, `approval`, `formal`); without `test_kinds: required` they validate as they always did.
+Impls written before test levels may carry the older style words in `Kind` (`example`, `property`, `contract`, `approval`, `formal`); without `test_levels: required` (or its first spelling, `test_kinds: required`) they validate as they always did.
 | `Test` | Test **file** paths, comma-separated | The plan may be verified with [`atdawn verify`](../reference/cli/verify.md) — which is any plan whose phases might be executed outside a lane Dawn controls |
 
 ### The `Test` column and what it unlocks
