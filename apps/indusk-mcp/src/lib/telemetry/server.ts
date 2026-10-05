@@ -41,13 +41,13 @@ export const PASS_INTERVAL_ENV = "INDUSK_SERVER_PASS_INTERVAL_MS";
 export const PASS_WINDOW_ENV = "INDUSK_SERVER_PASS_WINDOW_HOURS";
 /** Overrides the heartbeat's staleness, `max(3 × interval, 3 min)` by default — for tests. */
 export const WATCHER_STALE_ENV = "INDUSK_SERVER_WATCHER_STALE_MS";
-/** Where the pass reads Jaeger, when it is not the server reading its own. */
 /**
  * The query API as people reach it (e.g. https://<app>.fly.dev:16687), for the
  * trace links the server posts to Slack. Optional: without it the server's
  * messages name the trace and ask for this setting (day-always-on-deploy A11).
  */
 export const PUBLIC_QUERY_URL_ENV = "INDUSK_SERVER_PUBLIC_QUERY_URL";
+/** Where the pass reads Jaeger, when it is not the server reading its own. */
 export const QUERY_URL_ENV = "INDUSK_SERVER_QUERY_URL";
 /** `user:password`, as a reader off the server holds it. */
 export const CREDENTIAL_ENV = "INDUSK_SERVER_CREDENTIAL";
@@ -161,13 +161,52 @@ export function readServerSettings(env: NodeJS.ProcessEnv = process.env): Server
 		slackWebhook: required(env, SLACK_WEBHOOK_ENV),
 		passIntervalMs: positive(env, PASS_INTERVAL_ENV, DEFAULT_PASS_INTERVAL_MS, "milliseconds"),
 		passWindowMs: positive(env, PASS_WINDOW_ENV, DEFAULT_PASS_WINDOW_HOURS, "hours") * 3_600_000,
-		publicQueryUrl: env[PUBLIC_QUERY_URL_ENV]?.trim()
-			? jaegerEndpoint(required(env, PUBLIC_QUERY_URL_ENV)).queryUrl
-			: null,
+		publicQueryUrl: env[PUBLIC_QUERY_URL_ENV]?.trim() ? publicQueryUrl(env) : null,
 		...(env[WATCHER_STALE_ENV]?.trim()
 			? { watcherStaleMs: positive(env, WATCHER_STALE_ENV, 0, "milliseconds") }
 			: {}),
 	};
+}
+
+/**
+ * The public query URL, checked: it goes into every Slack message the server
+ * posts, so it must be a link Slack can open and must not carry a secret.
+ * Trimming slashes alone let `https://user:password@…` post the password to
+ * the channel and `<app>.fly.dev:16687` post a dead link (A15). A path is
+ * kept, for a Jaeger served under a prefix; a query or fragment is refused,
+ * since `/trace/<id>` would land inside it. The refusal never repeats the
+ * value — it may be the secret.
+ */
+function publicQueryUrl(env: NodeJS.ProcessEnv): string {
+	const raw = required(env, PUBLIC_QUERY_URL_ENV);
+	let url: URL;
+	try {
+		url = new URL(raw);
+	} catch {
+		throw new MissingServerSetting(
+			PUBLIC_QUERY_URL_ENV,
+			"not an absolute URL (https://<host>:<port>)",
+		);
+	}
+	if (url.protocol !== "https:" && url.protocol !== "http:") {
+		throw new MissingServerSetting(
+			PUBLIC_QUERY_URL_ENV,
+			`not an http(s) URL (got ${url.protocol})`,
+		);
+	}
+	if (url.username || url.password) {
+		throw new MissingServerSetting(
+			PUBLIC_QUERY_URL_ENV,
+			"carrying a user or password, which every Slack message would show — the link asks a browser to log in instead",
+		);
+	}
+	if (url.search || url.hash) {
+		throw new MissingServerSetting(
+			PUBLIC_QUERY_URL_ENV,
+			"carrying a query or fragment, which a trace link would land inside",
+		);
+	}
+	return jaegerEndpoint(raw).queryUrl;
 }
 
 /**
@@ -280,18 +319,25 @@ export async function serve(env: NodeJS.ProcessEnv = process.env): Promise<numbe
 	const jaegerQueryPort = await freeLoopbackPort();
 	writeFileSync(configPath, renderServerConfig(settings, jaegerQueryPort));
 
+	// The door binds before Jaeger starts. Bound after, a taken public port
+	// failed the start with Jaeger already running — an orphan holding the
+	// intake and badger's lock, so every restart failed too (A13). Until
+	// Jaeger answers, the door answers 502.
+	const door = await openDoor(settings.queryPort, jaegerQueryPort);
+	const shutDoor = (): void => {
+		door.closeAllConnections();
+		door.close();
+	};
+
 	const binary = resolveBinary("jaeger");
 	const child = spawn(binary, [`--config=file:${configPath}`], { stdio: "inherit" });
-	const door = await startQueryDoor({
-		publicPort: settings.queryPort,
-		jaegerPort: jaegerQueryPort,
-	});
 
 	const timer = startPass(settings);
 
 	return new Promise<number>((resolve, reject) => {
 		child.once("error", (err) => {
 			clearInterval(timer);
+			shutDoor();
 			reject(err);
 		});
 		for (const signal of ["SIGTERM", "SIGINT"] as const) {
@@ -299,8 +345,25 @@ export async function serve(env: NodeJS.ProcessEnv = process.env): Promise<numbe
 		}
 		child.once("close", (code) => {
 			clearInterval(timer);
-			door.close();
+			// Every connection, not only idle ones: a browser holding a
+			// response must not keep a server whose Jaeger is gone alive (A14).
+			shutDoor();
 			resolve(code ?? 0);
 		});
 	});
+}
+
+/** The query door, or a refusal naming the setting when its port is taken. */
+async function openDoor(publicPort: number, jaegerPort: number): ReturnType<typeof startQueryDoor> {
+	try {
+		return await startQueryDoor({ publicPort, jaegerPort });
+	} catch (err) {
+		if ((err as NodeJS.ErrnoException).code === "EADDRINUSE") {
+			throw new MissingServerSetting(
+				QUERY_PORT_ENV,
+				`port ${publicPort}, which another process is already listening on`,
+			);
+		}
+		throw err;
+	}
 }

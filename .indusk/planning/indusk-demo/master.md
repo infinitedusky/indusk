@@ -56,7 +56,7 @@ gets people excited, so the demo runs through it.
 
 | # | Plan | What it adds to the demo |
 |---|---|---|
-| 0 | [day-always-on-deploy](../day-always-on-deploy/brief.md) | the server, verified on Fly (impl complete; close-out) |
+| 0 | [day-always-on-deploy](../archive/day-always-on-deploy/brief.md) | the server, verified on Fly — closed 2026-10-04 |
 | 1 | [promise-sources](../promise-sources/brief.md) | local and production read side by side |
 | 2 | [promise-timeline](../promise-timeline/brief.md) | promises holding over time — the visual |
 | 3 | [admin-plan-authoring](../admin-plan-authoring/brief.md) | "New plan" in the UI, through the CLI |

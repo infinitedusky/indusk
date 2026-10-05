@@ -7,7 +7,7 @@ workflow: feature
 
 # Recording and handling never wait for a person to think of it — Brief
 
-*Moved verbatim on 2026-10-02 from [day-always-on-deploy's brief](../day-always-on-deploy/brief.md), where it was written, so each piece can run at its own size; item numbers restarted.*
+*Moved verbatim on 2026-10-02 from [day-always-on-deploy's brief](../archive/day-always-on-deploy/brief.md), where it was written, so each piece can run at its own size; item numbers restarted.*
 
 ## Problem and direction
 
@@ -73,7 +73,7 @@ connection from [workbench-watch-provisioning](../workbench-watch-provisioning/b
 ## Depends on
 
 - [watcher-heartbeat](../watcher-heartbeat/brief.md).
-- For item 1: [day-always-on-deploy](../day-always-on-deploy/brief.md) and
+- For item 1: [day-always-on-deploy](../archive/day-always-on-deploy/brief.md) and
   [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md).
 - [watch-reopen-collision](../watch-reopen-collision/brief.md) — a scheduled
   `watch` must not silently fail to reopen an owner.

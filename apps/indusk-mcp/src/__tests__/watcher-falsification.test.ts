@@ -177,7 +177,10 @@ describe.skipIf(SHOULD_SKIP)("A12 — more heartbeats than one query returns", (
 		slack = await startSlackCapture();
 		server = await startAlwaysOnServer({
 			env: {
-				INDUSK_SERVER_PASS_INTERVAL_MS: "1000",
+				// A beat every 250 ms reaches more beats than one 50-trace query
+				// returns in about 13 s; 5 s of staleness keeps the narrow read
+				// (twice that, ~40 beats) under the limit, as in production.
+				INDUSK_SERVER_PASS_INTERVAL_MS: "250",
 				INDUSK_SERVER_WATCHER_STALE_MS: "5000",
 				INDUSK_SERVER_SLACK_WEBHOOK: slack.url,
 			},
@@ -191,10 +194,20 @@ describe.skipIf(SHOULD_SKIP)("A12 — more heartbeats than one query returns", (
 	});
 
 	it("after 60+ passes the server still reads its newest beat and stays listening", async () => {
-		await new Promise((r) => setTimeout(r, 70_000));
+		await new Promise((r) => setTimeout(r, 16_000));
+		// The premise: more beats landed than one 50-trace query returns.
+		const params = new URLSearchParams({
+			service: "indusk-watcher",
+			operation: "watcher.heartbeat",
+			lookback: "1h",
+			limit: "200",
+		});
+		const res = await server.query(`/api/traces?${params}`);
+		const beats = ((await res.json()) as { data?: unknown[] }).data?.length ?? 0;
+		expect(beats, "heartbeats stored").toBeGreaterThan(50);
 		const blind = slack.texts().filter((t) => /watcher blind/i.test(t));
 		expect(blind, blind.join("\n")).toEqual([]);
-	}, 120_000);
+	}, 60_000);
 });
 
 describe.skipIf(SHOULD_SKIP)("A14 — expect_every on a promise nothing would judge", () => {

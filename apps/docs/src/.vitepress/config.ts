@@ -227,6 +227,7 @@ const config = defineConfig({
 						{ text: "Monitor", link: "/decisions/day-monitor" },
 						{ text: "Context Tiers", link: "/decisions/context-tiers" },
 						{ text: "Always On", link: "/decisions/day-always-on" },
+						{ text: "Always-on Deploy", link: "/decisions/day-always-on-deploy" },
 						{ text: "Watcher Heartbeat", link: "/decisions/watcher-heartbeat" },
 						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },
@@ -273,6 +274,7 @@ const config = defineConfig({
 						{ text: "Promises — Lessons", link: "/lessons/day-promises" },
 						{ text: "Monitor — Lessons", link: "/lessons/day-monitor" },
 						{ text: "Always On — Lessons", link: "/lessons/day-always-on" },
+						{ text: "Always-on Deploy — Lessons", link: "/lessons/day-always-on-deploy" },
 						{ text: "Workbench Trust Fixes — Lessons", link: "/lessons/workbench-trust-fixes" },
 						{
 							text: "Worktree Config Schema Pointer — Lessons",

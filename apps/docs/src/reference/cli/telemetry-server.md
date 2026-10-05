@@ -116,6 +116,33 @@ A server whose pass stops altogether (the process wedged) sends no heartbeat
 and has nothing left to notice that. The host's restart policy covers that
 case.
 
+### The query door
+
+The public query port is answered by the server's own process, which passes
+every request to Jaeger on a loopback-only port. When Jaeger refuses a request
+for missing or wrong credentials, the door adds `WWW-Authenticate: Basic`, so a
+browser opening a trace link shows a login box. Jaeger's own basic auth sends no
+such challenge. The door checks nothing itself: Jaeger is still the only thing
+that reads the password.
+
+Since 1.58.5 the door binds before Jaeger starts, so a query port another process already
+holds stops the server with a refusal naming `INDUSK_SERVER_QUERY_PORT`, and
+nothing is left running behind it. If Jaeger drops a response half-way, the
+door ends the browser's response as broken rather than leaving it waiting; a
+browser that leaves half-way closes the request to Jaeger.
+
+### When it announces nothing
+
+`announced nothing — /data/announced.json is not valid JSON` means the record of
+what has been announced cannot be read. The server refuses to guess: announcing
+everything again could flood the channel, and announcing nothing is visible in
+the log. Since 1.58.2 the record is flushed to disk before and after every
+write, so a machine restart cannot empty it; since 1.58.5 a write cut short by
+a full volume also leaves the previous record in place rather than a truncated
+one. To repair a server that hit this before 1.58.2, remove the file (`fly ssh console -C "rm /data/announced.json"`).
+The next pass reads an absent record as empty and announces the last
+`INDUSK_SERVER_PASS_WINDOW_HOURS` of violations once.
+
 ### Running a pass by hand
 
 ```bash
@@ -137,6 +164,7 @@ did not start. `--once` is required: the scheduled pass belongs to
 | `INDUSK_SERVER_VOLUME` | yes | The directory badger's files and the rendered config live in. Created if absent. |
 | `INDUSK_SERVER_OTLP_PORT` | yes | The port the OTLP HTTP receiver binds. |
 | `INDUSK_SERVER_QUERY_PORT` | yes | The port the query API and the Jaeger UI bind. |
+| `INDUSK_SERVER_PUBLIC_QUERY_URL` | no | The query API as people reach it, e.g. `https://<app>.fly.dev:16687`. Slack trace links and the "watcher blind" message use it. Without it, a message names the trace and asks for this setting rather than linking to the server's loopback address. It must be an absolute `http`/`https` URL with no user, password, query or fragment, or (since 1.58.5) the server refuses to start: every Slack message would show a credential, and a link without a scheme does not open. A path is kept, for a Jaeger served under a prefix. |
 | `INDUSK_SERVER_GRPC_PORT` | no | Jaeger's gRPC query port, bound to `127.0.0.1` only: it has no basic auth and nothing outside the container needs it. Defaults to 16685; give a second server on the same host its own. |
 | `INDUSK_SERVER_USER` | yes | The basic-auth user, for both doors. |
 | `INDUSK_SERVER_PASSWORD` | yes | Its password. Never commit it; give it to the host as a secret. |

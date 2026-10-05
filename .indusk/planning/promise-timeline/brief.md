@@ -8,7 +8,7 @@ workflow: feature
 # Promise timeline — Brief
 
 *Moved verbatim on 2026-10-04 from item 6 of
-[day-always-on-deploy's brief](../day-always-on-deploy/brief.md), where it was
+[day-always-on-deploy's brief](../archive/day-always-on-deploy/brief.md), where it was
 written on 2026-10-03, so the smoke test does not wait on a UI build.*
 
 ## Problem and direction
@@ -97,6 +97,6 @@ item; they become this plan's test plan once the brief is accepted.
 
 ## Depends on
 
-- [day-always-on-deploy](../day-always-on-deploy/brief.md) for the last
+- [day-always-on-deploy](../archive/day-always-on-deploy/brief.md) for the last
   assertion only: the history that lasts weeks lives on the deployed server's
   volume. Everything else can be built and tested against a local Jaeger.

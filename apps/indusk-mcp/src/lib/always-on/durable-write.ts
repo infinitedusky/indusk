@@ -1,4 +1,4 @@
-import { closeSync, fsyncSync, mkdirSync, openSync, renameSync, writeSync } from "node:fs";
+import { closeSync, fsyncSync, mkdirSync, openSync, renameSync, rmSync, writeSync } from "node:fs";
 import { dirname } from "node:path";
 
 /**
@@ -12,6 +12,11 @@ import { dirname } from "node:path";
  * `announced.json` left it empty, and every pass after refused to announce
  * anything (day-always-on-deploy, 2026-10-04). So: write the temp file and
  * flush it, rename, then flush the directory that holds the new name.
+ *
+ * Every byte, too: on a nearly full volume `write(2)` returns short rather
+ * than failing, and a single unchecked write renamed a truncated record over
+ * the good one (A16). A write that fails removes its temp file and leaves the
+ * old record where it was.
  */
 export function writeFileDurably(path: string, content: string): void {
 	const dir = dirname(path);
@@ -19,16 +24,28 @@ export function writeFileDurably(path: string, content: string): void {
 	const temp = `${path}.${process.pid}.tmp`;
 	const fd = openSync(temp, "w");
 	try {
-		writeSync(fd, content);
+		writeAll(fd, Buffer.from(content, "utf-8"));
 		fsyncSync(fd);
-	} finally {
+	} catch (err) {
 		closeSync(fd);
+		rmSync(temp, { force: true });
+		throw err;
 	}
+	closeSync(fd);
 	renameSync(temp, path);
 	const dirFd = openSync(dir, "r");
 	try {
 		fsyncSync(dirFd);
 	} finally {
 		closeSync(dirFd);
+	}
+}
+
+function writeAll(fd: number, bytes: Buffer): void {
+	let written = 0;
+	while (written < bytes.length) {
+		const n = writeSync(fd, bytes, written, bytes.length - written);
+		if (n <= 0) throw new Error(`wrote nothing after ${written} of ${bytes.length} bytes`);
+		written += n;
 	}
 }
