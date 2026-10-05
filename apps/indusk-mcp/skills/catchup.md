@@ -134,8 +134,17 @@ Call `list_plans` with `{ active: true }` — this returns only genuinely in-mot
 
 Call `promise_health`. It reports, per behaviour promise, the violations in the
 window, the open incidents, and — the number that matters — **violations no
-incident records yet**. It reads whichever Jaeger the project names: its local
-daemon, or a deployed always-on server.
+incident records yet**. It reads every source: `local`, the laptop's daemon,
+and `production`, the always-on server, when the project names one. The
+top-level fields are the **alarm source's** — production when there is one —
+and `sources` holds each source's own rows.
+
+**Name the source of each raised violation**: "seat-released — 1 unrecorded
+violation in production". A violation that appears only under `local` while
+production exists is work in progress: mention it after the raised ones, as
+local, and do not put it ahead of the roadmap. A source whose entry says
+`ok: false` is said on its own line — "production could not be reached
+(https://…)" — never left out and never shown as zero.
 
 **Open violations outrank the roadmap.** When the user asks what is next, say
 the unrecorded violations first, by name, before any plan or roadmap item. A
@@ -143,7 +152,8 @@ promise is a commitment the system made and is now breaking; the next feature
 can wait a sentence. Run `indusk promises watch` to record them as incidents,
 which also reopens each owning plan with a Maintenance phase.
 
-If the tool reports an error, say so — "health unknown, Jaeger at X could not
+If the tool reports an error, or the top level has `promises: null` with an
+`error` (production could not be read beside a local that answered), say so — "health unknown, Jaeger at X could not
 be reached" — and never report zero violations instead. "Nothing is broken"
 and "nobody could look" are different answers, and only one of them is
 reassuring.
