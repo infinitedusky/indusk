@@ -30,8 +30,14 @@ import {
  * and its timeline both need the window. So the admin holds, per project and
  * source, every mark it has read and the range those marks cover, and a
  * request reads only what is not covered: the whole range the first time,
- * then from the newest covered moment (less a minute, for spans indexed late)
- * to now. A refresh with nothing new moves almost nothing (A12).
+ * then the last ten minutes to now. A refresh with nothing new moves almost
+ * nothing (A12).
+ *
+ * A run reaches Jaeger when its exporter sends it, not when it ended: a
+ * buffered exporter, or an application that reconnects, delivers a run
+ * minutes after its moment. So every refresh re-reads a late tail of
+ * `LATE_MS`, and every `FULL_REREAD_MS` the whole window is read again, its
+ * held marks kept, for a run later still (A17).
  *
  * Held marks are keyed by the server they came from, not only the source's
  * name: a project repointed at another server starts over rather than drawing
@@ -45,12 +51,16 @@ import {
  */
 
 export const LONGEST_WINDOW_MS = 30 * 86_400_000;
-/** Re-read on every request: spans that Jaeger indexes late. */
-const OVERLAP_MS = 60_000;
+/** Re-read on every request: runs that reach Jaeger after they ended. */
+const LATE_MS = 10 * 60_000;
+/** How often the whole window is read again, for runs later than the tail. */
+const FULL_REREAD_MS = 10 * 60_000;
 
 interface Held {
   coveredFrom: number;
   coveredTo: number;
+  /** When coverage last reached the oldest moment asked for; null while a read is under way. */
+  fullAt: number | null;
   promises: string;
   /** For each promise, its marks keyed by `${traceId}|${at}|${outcome}`. */
   marks: Map<string, Map<string, TimelineMark>>;
@@ -123,17 +133,22 @@ export async function readWindow(
   const promises = behaviourNames(registry);
   let h = held.get(key);
   if (h && h.promises !== promises) h = undefined;
+  // Time for the whole window again: keep the marks, forget the coverage.
+  if (h && h.fullAt !== null && now - h.fullAt >= FULL_REREAD_MS) {
+    h = { ...h, coveredFrom: now, coveredTo: now, fullAt: null };
+  }
 
   const ranges: Array<[number, number]> = [];
-  if (!h) ranges.push([fromMs, now]);
+  if (!h || h.coveredFrom >= h.coveredTo) ranges.push([fromMs, now]);
   else {
     if (fromMs < h.coveredFrom) ranges.push([fromMs, h.coveredFrom]);
-    ranges.push([Math.max(h.coveredFrom, h.coveredTo - OVERLAP_MS), now]);
+    ranges.push([Math.max(h.coveredFrom, h.coveredTo - LATE_MS), now]);
   }
 
   const next: Held = h ?? {
-    coveredFrom: fromMs,
-    coveredTo: fromMs,
+    coveredFrom: now,
+    coveredTo: now,
+    fullAt: null,
     promises,
     marks: new Map(),
     atLeast: new Map(),
@@ -170,6 +185,8 @@ export async function readWindow(
     next.coveredFrom = Math.min(next.coveredFrom, from);
     next.coveredTo = Math.max(next.coveredTo, to);
   }
+
+  if (next.coveredFrom <= fromMs && next.fullAt === null) next.fullAt = now;
 
   // Keep no more than the longest window offered.
   const floor = now - LONGEST_WINDOW_MS;
