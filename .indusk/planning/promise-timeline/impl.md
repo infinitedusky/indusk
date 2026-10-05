@@ -194,15 +194,17 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 #### Build Phase 4 Verification
 
 - [x] A1–A4, A6, A8, A11 and A12 pass (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline`); `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear — all ten timeline tests pass; `pnpm test`: mcp 1705 passed / 5 skipped, admin 361 passed; `test:system`: 133 passed; both end with the leak guard's all-clear
-- [ ] U1: screenshots of the 7-day strip (one red, one purple, one green-only promise) reviewed by Sandy
+- [x] U1: screenshots of the 7-day strip (one red, one purple, one green-only promise) reviewed by Sandy — shown on this repository's own data (`every-commit-evaluated`: purple for the fixed 2026-10-03 incident, red for the open 2026-10-05 one, green runs between), as a screenshot and live from the worktree's admin; Sandy, 2026-10-05: "this is good for now"
+
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. The store (`lib/promise-timeline.ts`), the pure strip (`lib/timeline-strip.ts`) and the component (`PromiseTimeline.tsx`) each have one job; `Promises.tsx` grew a strip row and `TimelineControls` — whether that file splits is /cleanup's
 
 #### Build Phase 4 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: the timeline's reads go through the store (`lib/promise-timeline.ts`), which reads only uncovered ranges — never a whole-window read per request
+- [x] `apps/indusk-admin/CLAUDE.md`: the timeline's reads go through the store (`lib/promise-timeline.ts`), which reads only uncovered ranges — never a whole-window read per request
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the timeline — cells, colours, bands, windows, sources — with the Mermaid diagram of a cell's colour from its incident's state
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the timeline — cells, colours, bands, windows, sources — with the Mermaid diagram of a cell's colour from its incident's state
 
 ### Build Phase 5: groups, and the deployed smoke
 

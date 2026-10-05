@@ -45,7 +45,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   (stale)` is derived from the content hash on every read; a papers-only plan
   takes the paper-stage status as its header status.
 - **The Promises page** reads only through the `promises/registry` subpath
-  (`lib/promises-reader.ts`, which also derives "holding N"); observed health in
+  (`lib/promises-reader.ts`, which also derives "holding N"); marks — the
+  chips' and the timeline's — come from the store (`lib/promise-timeline.ts`),
+  which reads only uncovered ranges, never the whole window per request; observed health in
   `lib/promise-health.ts` (one cached 2 s read per source; a behaviour
   promise has a chip per source, the alarm source's first, and the sidebar's
   red follows the alarm source only; unreachable = hollow, never
