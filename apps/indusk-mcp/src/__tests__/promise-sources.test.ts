@@ -1,6 +1,9 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createServer, type Server } from "node:net";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { readPromises } from "../lib/promises/registry.js";
+import { readSources } from "../lib/promises/telemetry.js";
 import { registerPlanTools } from "../tools/plan-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { newTraceId } from "./helpers/local-jaeger.js";
@@ -229,3 +232,118 @@ describe.skipIf(SHOULD_SKIP)("promise-sources — A7: no production server, exac
 		expect(json.needsAttention).toEqual([HELD]);
 	}, 60_000);
 });
+
+/** Replace `promises.jaeger` in the fixture's committed config. */
+function setJaeger(t: TwoSources, jaeger: unknown): void {
+	const path = join(t.project.planRoot, ".indusk", "config.json");
+	const config = JSON.parse(readFileSync(path, "utf-8"));
+	config.promises.jaeger = jaeger;
+	writeFileSync(path, JSON.stringify(config, null, "\t"));
+}
+
+describe.skipIf(SHOULD_SKIP)(
+	"promise-sources — A8: a malformed promises.jaeger is production's failure",
+	() => {
+		let t: TwoSources;
+
+		beforeAll(async () => {
+			t = await startTwoSources(marks());
+		}, 180_000);
+
+		afterAll(async () => {
+			await t?.stop();
+		});
+
+		it("a string where the object belongs: local is still printed, production refused by key, exit 2", () => {
+			setJaeger(t, t.production.queryUrl);
+			const r = runCli(t.project.root, ["promises", "status"], t.env);
+			const text = r.stdout + r.stderr;
+			expect(text, "no stack trace").not.toMatch(/TypeError|at .*\.js:\d+/);
+			expect(
+				section(text, "local"),
+				`lesson: one-dead-source-never-hides-another\n${text}`,
+			).toContain(LOCAL_BREAK);
+			expect(section(text, "production"), text).toContain("promises.jaeger");
+			expect(r.code, text).toBe(2);
+		}, 60_000);
+
+		it("no url: promise_health reports local's rows and production failed naming promises.jaeger.url", async () => {
+			setJaeger(t, { credential_env: CRED_ENV });
+			const { json, isError } = await health(t);
+			expect(isError, JSON.stringify(json)).toBe(false);
+			expect(sourceOf(json, "local")?.promises?.find((p) => p.name === HELD)?.violations).toBe(1);
+			const production = sourceOf(json, "production") as
+				| (SourceEntry & { reason?: string })
+				| undefined;
+			expect(production?.ok).toBe(false);
+			expect(production?.reason ?? "").toContain("promises.jaeger.url");
+		}, 60_000);
+
+		it("no credential_env: the refusal names promises.jaeger.credential_env, and readSources (the admin's read) still returns local", async () => {
+			setJaeger(t, { url: t.production.queryUrl, otlp_url: t.production.otlpUrl });
+			const read = readPromises(t.project.planRoot);
+			if (!read.ok) throw new Error("fixture registry did not read");
+			const saved = process.env.INDUSK_HOME;
+			process.env.INDUSK_HOME = t.local.home;
+			try {
+				const reads = await readSources(t.project.planRoot, read.registry, { timeoutMs: 2_000 });
+				const local = reads.find((r) => r.name === "local");
+				const production = reads.find((r) => r.name === "production");
+				expect(local?.ok).toBe(true);
+				expect(production?.ok).toBe(false);
+				expect(production?.ok === false && production.reason).toContain(
+					"promises.jaeger.credential_env",
+				);
+			} finally {
+				if (saved === undefined) delete process.env.INDUSK_HOME;
+				else process.env.INDUSK_HOME = saved;
+			}
+		}, 60_000);
+	},
+);
+
+describe.skipIf(SHOULD_SKIP)(
+	"promise-sources — A9: a silent production does not hold local past the budget",
+	() => {
+		let t: TwoSources;
+		let silent: Server;
+		let silentUrl = "";
+
+		beforeAll(async () => {
+			t = await startTwoSources(marks());
+			// Accepts every connection and never answers: a host that black-holes.
+			silent = createServer(() => {});
+			await new Promise<void>((resolve) => silent.listen(0, "127.0.0.1", resolve));
+			const address = silent.address();
+			if (!address || typeof address === "string") throw new Error("no port");
+			silentUrl = `http://127.0.0.1:${address.port}`;
+			setJaeger(t, { url: silentUrl, otlp_url: silentUrl, credential_env: CRED_ENV });
+		}, 180_000);
+
+		afterAll(async () => {
+			silent?.close();
+			await t?.stop();
+		});
+
+		it("readSources with a 2 s budget returns within 3 s, local read, production failed", async () => {
+			const read = readPromises(t.project.planRoot);
+			if (!read.ok) throw new Error("fixture registry did not read");
+			const saved = { home: process.env.INDUSK_HOME, cred: process.env[CRED_ENV] };
+			process.env.INDUSK_HOME = t.local.home;
+			process.env[CRED_ENV] = t.production.credential;
+			try {
+				const started = Date.now();
+				const reads = await readSources(t.project.planRoot, read.registry, { timeoutMs: 2_000 });
+				const took = Date.now() - started;
+				expect(reads.find((r) => r.name === "local")?.ok).toBe(true);
+				expect(reads.find((r) => r.name === "production")?.ok).toBe(false);
+				expect(took, `took ${took} ms`).toBeLessThan(3_000);
+			} finally {
+				if (saved.home === undefined) delete process.env.INDUSK_HOME;
+				else process.env.INDUSK_HOME = saved.home;
+				if (saved.cred === undefined) delete process.env[CRED_ENV];
+				else process.env[CRED_ENV] = saved.cred;
+			}
+		}, 60_000);
+	},
+);
