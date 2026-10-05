@@ -220,3 +220,96 @@ describe.skipIf(SHOULD_SKIP)("A11 — a workbench: the plan's code is not beside
 		expect(promise(p).data.tests).toEqual([TEST]);
 	});
 });
+
+/**
+ * planner-promises A36 — the gate resolves the folder it is given. It looked
+ * for the planning root in the path as written, so a relative path found none
+ * and the gate reported no unproven promise.
+ */
+describe.skipIf(SHOULD_SKIP)("A36 — the gate, given the plan's folder as a relative path", () => {
+	it("names the unproven promise when the path is relative to the project root", () => {
+		const p = project({ rows: [proving("written")] });
+		const before = process.cwd();
+		process.chdir(p.planRoot);
+		try {
+			const dir = join(".indusk", "planning", PLAN);
+			const ready = checkRetrospectiveReadiness(dir, readFileSync(join(dir, "impl.md"), "utf-8"));
+			expect(ready.missing).toContain("promises");
+			expect(ready.unprovenPromises).toEqual([NAME]);
+		} finally {
+			process.chdir(before);
+		}
+	});
+});
+
+/**
+ * planner-promises A41 — a test is not the code that keeps a promise. Every
+ * file carrying the token that a proving row did not name was taken for a
+ * code site, so a state promise named only by tests was confirmed, its second
+ * test listed as its site.
+ */
+describe.skipIf(SHOULD_SKIP)("A41 — a file a row names as a test is never a code site", () => {
+	const OTHER = "src/seat-release-race.test.ts";
+	const rowsWithGuard = [proving(), { cells: { For: "a regression guard", Test: OTHER } }];
+
+	it("refuses a state promise whose name appears only in test files", () => {
+		const p = project({
+			rows: rowsWithGuard,
+			files: { [TEST]: testFile(NAME), [OTHER]: testFile(NAME) },
+		});
+		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(NAME);
+		expect(r.stderr).toMatch(/no code/);
+		expect(promise(p).data.state).toBe("declared");
+	});
+
+	it("records only the code as its site when another row's test also carries the token", () => {
+		const p = project({
+			rows: rowsWithGuard,
+			files: { [SITE]: siteFile(NAME), [TEST]: testFile(NAME), [OTHER]: testFile(NAME) },
+		});
+		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(r.code, r.stdout + r.stderr).toBe(0);
+		expect(promise(p).data.sites).toEqual([SITE]);
+	});
+});
+
+/**
+ * planner-promises A43 — an archived plan's declared promise is not a dead
+ * end. A plan that closed without its retrospective (a bugfix may skip it)
+ * left the promise declared; the registry check refused it, and confirm and
+ * withdraw refused an archived plan, so only a hand edit could clear it.
+ */
+describe.skipIf(SHOULD_SKIP)("A43 — a plan archived with a promise still declared", () => {
+	const DROPPED = "seat-count-matches-table";
+
+	it("the check names the commands; withdraw and confirm work on the archived plan", () => {
+		fixture = promiseProject({
+			domains: ["seating"],
+			promises: [declared, { ...declared, name: DROPPED, statement: "Seats match the table." }],
+			planFiles: {
+				[`archive/${PLAN}/brief.md`]: briefText(PLAN, {
+					makes: [{ name: NAME, sentence: SENTENCE }],
+				}),
+				[`archive/${PLAN}/impl.md`]: implText(PLAN, impl([proving()])),
+			},
+			files: { [SITE]: siteFile(NAME), [TEST]: testFile(NAME) },
+		});
+		const p = fixture;
+
+		const before = runCli(p.planRoot, ["promises", "check"]);
+		expect(before.code).toBe(2);
+		expect(before.stderr).toContain("indusk promises confirm");
+		expect(before.stderr).toContain("indusk promises withdraw");
+
+		const withdrawn = runCli(p.planRoot, ["promises", "withdraw", DROPPED, "--plan", PLAN]);
+		expect(withdrawn.code, withdrawn.stdout + withdrawn.stderr).toBe(0);
+		const confirmed = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(confirmed.code, confirmed.stdout + confirmed.stderr).toBe(0);
+		expect(promise(p).data.state).toBe("enforced");
+
+		const after = runCli(p.planRoot, ["promises", "check"]);
+		expect(after.code, after.stderr).toBe(0);
+	});
+});

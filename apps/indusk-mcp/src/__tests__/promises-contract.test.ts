@@ -66,21 +66,27 @@ const kept = (over: Partial<PromiseSpec> = {}): PromiseSpec => ({
 });
 
 function project(opts: {
-	brief?: BriefSpec | "legacy";
+	/** `none` writes the plan folder with no brief at all. */
+	brief?: BriefSpec | "legacy" | "none";
 	/** The brief's whole text, for a brief the fixture would never write. */
 	briefRaw?: string;
 	impl?: ImplSpec;
+	/** The impl's whole text, for an impl the fixture would never write. */
+	implRaw?: string;
 	promises?: PromiseSpec[];
 }): PromiseProject {
 	const brief = opts.brief ?? { makes: [{ name: MADE, sentence: MADE_SENTENCE }] };
+	const briefFile =
+		opts.briefRaw ??
+		(brief === "none" ? null : brief === "legacy" ? legacyBriefText(PLAN) : briefText(PLAN, brief));
+	const impl = opts.implRaw ?? (opts.impl ? implText(PLAN, opts.impl) : null);
 	fixture = promiseProject({
 		domains: ["seating"],
 		landed: { [OLD_PLAN]: daysAgo(30) },
 		promises: opts.promises ?? [made()],
 		planFiles: {
-			[`${PLAN}/brief.md`]:
-				opts.briefRaw ?? (brief === "legacy" ? legacyBriefText(PLAN) : briefText(PLAN, brief)),
-			...(opts.impl ? { [`${PLAN}/impl.md`]: implText(PLAN, opts.impl) } : {}),
+			...(briefFile === null ? {} : { [`${PLAN}/brief.md`]: briefFile }),
+			...(impl === null ? {} : { [`${PLAN}/impl.md`]: impl }),
 		},
 		files: {
 			"src/seat.test.ts": `// promise: ${KEPT}\n`,
@@ -477,6 +483,187 @@ describe.skipIf(SHOULD_SKIP)(
 			const r = contract(project({}), "seats-v9");
 			expect(r.code, r.stdout + r.stderr).toBe(2);
 			expect(r.stderr).toContain("seats-v9");
+		});
+	},
+);
+
+/**
+ * planner-promises A29 — the row rules hold whatever wrote the row. The hook
+ * judges a row only when the edit's own text holds a phase heading or an
+ * unchecked item, so an edit of the table alone, a check-off, or a script
+ * reached an in-progress impl unjudged. The contract, which the hook runs on
+ * every write and `promises check` runs for every open plan, now holds them.
+ */
+describe.skipIf(SHOULD_SKIP)("A29 — the row rules hold whatever wrote the row", () => {
+	const DEV_CLI = { INDUSK_BIN: `node ${CLI_BIN}`, INDUSK_SKIP_UPDATE_CHECK: "1" };
+	const leveled = (level: string, For: string): ImplSpec => ({
+		keys: ["test_purpose: required", "test_levels: required"],
+		columns: ["Level", "For"],
+		rows: [{ cells: { Level: "unit", For: token(MADE) } }, { cells: { Level: level, For } }],
+	});
+
+	it.each([
+		["an empty purpose", leveled("unit", "")],
+		["a level that is not a level", leveled("integration", "a regression guard")],
+	] as Array<[string, ImplSpec]>)(
+		"a file written by a script with %s: the contract names the row",
+		(_why, spec) => {
+			const r = contract(project({ impl: spec }));
+			expect(r.code, r.stdout + r.stderr).toBe(2);
+			expect(r.stderr).toMatch(/\bT2\b/);
+		},
+	);
+
+	it("an edit that touches only the table: the hook names the row", async () => {
+		const p = project({ impl: leveled("unit", "a regression guard") });
+		const r = await runHook(
+			"validate-impl-structure.js",
+			{
+				tool_name: "Edit",
+				cwd: p.root,
+				tool_input: {
+					file_path: join(p.planRoot, ".indusk", "planning", PLAN, "impl.md"),
+					old_string: "| unit | a regression guard |",
+					new_string: "| unit |  |",
+				},
+			},
+			{ env: DEV_CLI },
+		);
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toMatch(/\bT2\b/);
+	});
+});
+
+/**
+ * planner-promises A32 — a promise written in the brief's words is read or
+ * refused by name, never dropped. Each of these read as an empty list, so the
+ * check passed having checked nothing.
+ */
+describe.skipIf(SHOULD_SKIP)("A32 — a brief entry no list read is refused, never dropped", () => {
+	const MISSING = "seat-map-never-stale";
+	const base = (extra: BriefSpec = {}) =>
+		briefText(PLAN, { makes: [{ name: MADE, sentence: MADE_SENTENCE }], ...extra });
+
+	it("a promise this plan makes, indented", () => {
+		const r = contract(
+			project({
+				briefRaw: base().replace(`1. **\`${MADE}\`**`, `  1. **\`${MADE}\`**`),
+				promises: [],
+			}),
+		);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(MADE);
+	});
+
+	it("a promise this plan makes, bulleted where a number is expected", () => {
+		const r = contract(
+			project({
+				briefRaw: base().replace(`1. **\`${MADE}\`**`, `- **\`${MADE}\`**`),
+				promises: [],
+			}),
+		);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(MADE);
+	});
+
+	it("the three labels with no Existing promises heading above them", () => {
+		const brief = base({ mustNotBreak: [MISSING] }).replace("### Existing promises\n", "");
+		const r = contract(project({ briefRaw: brief }));
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(MISSING);
+	});
+
+	it("the new headings without ## Promises are out of shape, not a brief written before them", () => {
+		const r = contract(
+			project({ briefRaw: base().replace("## Promises\n", "## What we promise\n"), promises: [] }),
+		);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toMatch(/## Promises/);
+	});
+});
+
+/**
+ * planner-promises A33 — a row's names are checked whatever the brief's
+ * shape. The contract returned early for a legacy brief, or none, before it
+ * read a row.
+ */
+describe.skipIf(SHOULD_SKIP)("A33 — rows are checked in a plan with a legacy brief or none", () => {
+	it.each(["legacy", "none"] as const)(
+		"with a %s brief, a row naming a promise the registry does not hold is refused",
+		(brief) => {
+			const r = contract(
+				project({ brief, promises: [], impl: rows(token("seat-map-never-stale")) }),
+			);
+			expect(r.code, r.stdout + r.stderr).toBe(2);
+			expect(r.stderr).toMatch(/\bT1\b/);
+			expect(r.stderr).toContain("seat-map-never-stale");
+		},
+	);
+});
+
+/** planner-promises A34 — the template's placeholder is not a measure. */
+describe.skipIf(SHOULD_SKIP)(
+	"A34 — a placeholder in braces is not a measure or a time to look",
+	() => {
+		it.each([
+			[
+				"measure",
+				{ text: "People seat themselves", measure: "{how we would know}", look: "in two weeks" },
+			],
+			[
+				"look",
+				{ text: "People seat themselves", measure: "seats taken per day", look: "{when to check}" },
+			],
+		])("refuses an expectation whose %s is the placeholder, naming it", (_part, expectation) => {
+			const r = contract(
+				project({
+					brief: { expectations: [expectation], makes: [{ name: MADE, sentence: MADE_SENTENCE }] },
+				}),
+			);
+			expect(r.code, r.stdout + r.stderr).toBe(2);
+			expect(r.stderr).toContain("People seat themselves");
+		});
+	},
+);
+
+/**
+ * planner-promises A35 — an impl that cannot be read is a refusal naming it.
+ * Its frontmatter failed to parse and the commands ended in a stack trace.
+ */
+describe.skipIf(SHOULD_SKIP)("A35 — an open plan's impl that cannot be read", () => {
+	const broken = "---\ntitle: [never closed\nstatus: in-progress\n---\n\n# seats-v2\n";
+
+	it.each([
+		["promises check", ["promises", "check"]],
+		["promises contract", ["promises", "contract", PLAN]],
+		["promises confirm", ["promises", "confirm", PLAN]],
+	])("%s refuses naming the file, and does not crash", (_name, args) => {
+		const p = project({ implRaw: broken });
+		const r = runCli(p.root, args);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(`.indusk/planning/${PLAN}/impl.md`);
+		expect(r.stderr, "a stack trace is not a refusal").not.toMatch(/^\s+at .+:\d+:\d+\)?$/m);
+	});
+});
+
+/**
+ * planner-promises A39 — a building plan is held whatever its brief's status
+ * says. The sweep left a draft brief unchecked so an unfinished conversation
+ * does not turn every test run red; a brief left at draft once the plan was
+ * building took the plan out of the check entirely.
+ */
+describe.skipIf(SHOULD_SKIP)(
+	"A39 — a plan that is building is held while its brief says draft",
+	() => {
+		it("promises check refuses its broken contract", () => {
+			const draft = briefText(PLAN, { makes: [{ name: MADE, sentence: MADE_SENTENCE }] }).replace(
+				"status: accepted",
+				"status: draft",
+			);
+			const p = project({ briefRaw: draft, promises: [kept()], impl: rows("a regression guard") });
+			const r = runCli(p.root, ["promises", "check"]);
+			expect(r.code, r.stdout + r.stderr).toBe(2);
+			expect(r.stderr).toContain(MADE);
 		});
 	},
 );

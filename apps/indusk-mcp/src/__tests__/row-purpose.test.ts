@@ -80,3 +80,60 @@ describe("planner-promises A5 — every test row says what it is for", () => {
 		expect(r.exitCode, r.stderr).toBe(0);
 	});
 });
+
+/**
+ * planner-promises A30 — a purpose is a token or a reason, never something
+ * between. A cell that tries to name a promise or a lesson and is not written
+ * as one used to read as the reason the row needs neither, so the row named
+ * nothing and the plan's promise looked unproven with no refusal anywhere. A
+ * cell that is only a mark is not a reason either.
+ */
+describe("planner-promises A30 — a purpose that is neither a token nor a reason", () => {
+	it.each([
+		["the name in backticks", "promise: `seat-never-double-booked`"],
+		["words after the name", `${PROMISE} (the seat map)`],
+		["and in place of a comma", `${PROMISE} and ${LESSON}`],
+		["a dash", "-"],
+		["n/a", "n/a"],
+		["TBD", "TBD"],
+	])("refuses %s, naming the row", async (_why, cell) => {
+		const r = await validate(impl([PROMISE, cell]));
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toMatch(/\bT2\b/);
+	});
+
+	it("still accepts a plain reason", async () => {
+		const r = await validate(
+			impl(["a regression guard", "renames the column; keeps the old spelling"]),
+		);
+		expect(r.exitCode, r.stderr).toBe(0);
+	});
+});
+
+/**
+ * planner-promises A31 — a row the table cannot hold is refused by name. The
+ * parser dropped a row whose cell count was not the header's, so every rule
+ * above it passed the row, and the promise it named read as named by none.
+ */
+describe("planner-promises A31 — a row with a cell missing or too many", () => {
+	const broken = (mangle: (line: string) => string) => {
+		const text = impl([PROMISE, "a regression guard"]);
+		return text
+			.split("\n")
+			.map((l) => (l.startsWith("| T2 |") ? mangle(l) : l))
+			.join("\n");
+	};
+
+	it("refuses a row one cell short, naming it", async () => {
+		const r = await validate(broken((l) => l.replace(/ \| a regression guard \|$/, " |")));
+		expect(r.exitCode, r.stderr).toBe(2);
+		// About the row's cells: a dangling Verification reference also names T2.
+		expect(r.stderr).toMatch(/T2[^\n]*cells?|cells?[^\n]*T2/i);
+	});
+
+	it("refuses a row one cell long, naming it", async () => {
+		const r = await validate(broken((l) => `${l} extra |`));
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toMatch(/T2[^\n]*cells?|cells?[^\n]*T2/i);
+	});
+});

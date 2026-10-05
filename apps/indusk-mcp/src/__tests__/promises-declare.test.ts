@@ -156,3 +156,28 @@ describe.skipIf(SHOULD_SKIP)(
 		});
 	},
 );
+
+/**
+ * planner-promises A37 — the writer applies its reader's rule. A domain that
+ * YAML reads as a number or a boolean, or that holds a colon, and a sentence
+ * that begins with `#`, were written as given, and the registry could no
+ * longer be read: every promise command refused from then on.
+ */
+describe.skipIf(SHOULD_SKIP)("A37 — nothing is written that the registry cannot read back", () => {
+	it.each([
+		["a domain that reads as a number", { domain: "2026" }],
+		["a domain that reads as a boolean", { domain: "true" }],
+		["a domain holding a colon", { domain: "seating: tables" }],
+		["a sentence that begins with #", { statement: "# A seat is held once." }],
+	])("refuses %s, writes nothing, and the registry still reads", (_why, over) => {
+		const p = project(undefined);
+		const r = declare(p, over);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(NAME);
+		expect(existsSync(promiseFile(p)), "nothing written").toBe(false);
+		const check = runCli(p.root, ["promises", "check"]);
+		expect(check.stderr).not.toMatch(
+			/frontmatter|could not be parsed|missing `domain`|no statement/,
+		);
+	});
+});
