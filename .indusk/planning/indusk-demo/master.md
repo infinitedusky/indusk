@@ -8,10 +8,10 @@ subplans:
   - day-always-on-deploy
   - promise-sources
   - promise-timeline
+  - planner-promises
   - admin-plan-authoring
   - demo-app-template
   - server-provisioning
-  - planner-promises
   - demo-rehearsal
 ---
 
@@ -93,12 +93,19 @@ Made after reviewing the script against what is built (Sandy chose each).
 |---|---|---|
 | 0 | [day-always-on-deploy](../archive/day-always-on-deploy/brief.md) | the server, verified on Fly — closed 2026-10-04 |
 | 1 | [promise-sources](../archive/promise-sources/brief.md) | local and production read side by side — closed 2026-10-05 |
-| 2 | [promise-timeline](../archive/promise-timeline/brief.md) | promises holding over time, and the chip rules both break steps end on |
+| 2 | [promise-timeline](../archive/promise-timeline/brief.md) | promises holding over time, and the chip rules both break steps end on — closed 2026-10-05 |
 | 3 | [admin-plan-authoring](../admin-plan-authoring/brief.md) | "New plan" and "Build" in the UI, through the CLI |
 | 4 | [demo-app-template](../demo-app-template/brief.md) | a working app to promise about, deploy and break |
 | 5 | [server-provisioning](../server-provisioning/brief.md) | one command gives a project its server |
 | 6 | [planner-promises](../planner-promises/brief.md) | the planner asks for promises |
 | 7 | demo-rehearsal | record a dry run of the script end to end, fix what it trips on |
+
+**Built out of this order** (Sandy, 2026-10-05): `planner-promises` goes
+next, ahead of steps 3–5. It depends on none of them, it edits the planner
+and trajectory files [test-kinds](../archive/test-kinds/brief.md) just
+changed, and it is also component 4c of the
+[Day master plan](../indusk-v4-day/master.md). The step numbers stay as they
+are, because other documents cite them.
 
 **Spike before step 2 is built**: one day on step 3's mechanism — a headless
 `claude` started from the admin, a question answered through it, a permission

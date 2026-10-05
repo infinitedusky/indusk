@@ -24,6 +24,7 @@ subplans:
   - watcher-heartbeat
   - day-always-on-deploy
   - promise-timeline
+  - planner-promises
   - incident-recording
   - workbench-watch-provisioning
   - day-contract
@@ -63,7 +64,8 @@ builds the promise as a primitive: registry, kinds, states, links, the check.
 Step 4b — what was called Midnight — watches behaviour promises in the
 running system, records the root cause as an incident, and wakes the owning
 plan. Step 4c puts promises into planning: declared before code, named by
-every trajectory row, confirmed at close, and the change rule. Steps 5–7 and
+every trajectory row, confirmed at close. Step 4c′ is the change rule: a plan
+that changes a promise retires it and declares the replacement. Steps 5–7 and
 9 make the proof honest at review time. Step 10 is where a reviewer reads
 the contract without opening the diff.
 
@@ -92,13 +94,14 @@ Open this file to answer "where are we." The shape itself lives in
 | 4b | **Monitor — behaviour-promise violation detection and root cause, from the running system's telemetry** | 9 | **closed 2026-09-19** (30 rows green, falsified 6 — all confirmed and fixed, cleaned, retrospective, archived) — the plain-OTel mark, `promises status`/`watch` over local Jaeger, incidents, reopening by a Maintenance phase, `monitor`, observed health in the admin; `pnpm e2e` breaks `every-commit-evaluated` on purpose and watches the loop close | An alert from the running system (local under Jaeger counts) names the promise that broke; the incident records the root cause and where it ran; the owning plan reopens | [day-monitor](../archive/day-monitor/brief.md) |
 | 4b′ | **Always-on — the monitor where no developer machine is on: persistent Jaeger, the scheduled run, the receiver** | 9 | **closed 2026-09-21** (retrospective written, archived) — the shipped Jaeger as an always-on server (badger on a volume, basic auth both doors, `indusk telemetry serve` as process 1); an in-process pass announcing each violation once to Slack and only after Slack accepts; a project naming its Jaeger in `promises.jaeger`, absence = local; `promise_health` telling a session. Detect-and-notify only. **Acceptance is met in mechanism, not yet observed in a deployed run** — that is 4b′ᴰ's, below | A violation in a deployed run opens an incident and reopens its plan while every developer machine is off | [day-always-on](../archive/day-always-on/brief.md) |
 | 4b′ᴰ | **Always-on deployed — the mechanism actually running somewhere that stays on** | 9 | **closed 2026-10-04** — `indusk-always-on` on Fly passed the smoke and an idle hour; three server bugs fixed in 1.58.2–1.58.4, four more from falsification bumped as 1.58.5 — see `/decisions/day-always-on-deploy` | 4b′'s own acceptance, observed: a violation in a deployed run opens an incident and reopens its plan while every developer machine is off | [day-always-on-deploy](../archive/day-always-on-deploy/brief.md) |
-| 4c | **The contract in planning — promises declared before code, named by every row, confirmed at close; the change rule** | 2, 9 | proposed 2026-09-18 as 4a's cut (the planning half crossed planner, test plan, trajectory, retrospective, validator and admin); create when 4a closes | A closing plan confirms a declared promise to `enforced`; a row naming no promise is refused; a change touching a promise's code site without naming it is recorded "touched, unacknowledged" | `day-contract` |
-| 5 | **Claims proved honestly — red observed, amendments recorded** | 3, 4 | not started; also takes the per-invocation gate ledger (`.indusk/gates.jsonl`) that `hook-cwd-independence` cut and no step picked up | A born-green row and a silently amended claim are both reported; an honest plan is clean | `day-claim-evidence` |
+| 4c | **The contract in planning — promises declared before code, every test row says what it is for, confirmed at close** | 2, 9 | **next** — brief draft, re-scoped 2026-10-05 (Sandy) when this master and [promise-core](../promise-core/master.md) were reconciled: it takes three of the four parts proposed for `day-contract` on 2026-09-18, is also demo step 6, and renames the trajectory's test `Kind` column to `Level` | A plan written through the planner ends with its promises in the registry; a row naming no promise, no lesson and no reason is refused; a closing plan confirms a declared promise to `enforced`; an incident names the rows that prove the broken promise | [planner-promises](../planner-promises/brief.md) |
+| 4c′ | **The change rule — a plan that changes a promise retires it and declares the replacement** | 2, 9 | not created; split from 4c on 2026-10-05; after the demo; needs 4c's rows that name promises | A `supersedes` naming a promise that does not exist or is not retired is refused; a change touching a promise's code site without naming it is recorded "touched, unacknowledged" | `day-contract` |
+| 5 | **Claims proved honestly — red observed, amendments recorded** | 3, 4 | not started; also takes the per-invocation gate ledger (`.indusk/gates.jsonl`) that `hook-cwd-independence` cut. **Keeps "red observed"** (Sandy, 2026-10-05): promise-core proposed moving it to `promise-first-build`, its last plan; it is built once here instead, recorded by the system and never typed by an author, where both a test row and a promise can read it, and `promise-first-build` reuses it | A born-green row and a silently amended claim are both reported; an honest plan is clean | `day-claim-evidence` |
 | 6 | **Binding — the test dies when the behaviour it claims is broken** | 6 | not started; needs 4a (a promise's code site is one candidate for "the claim's code") and 5; carries the amendment-log rule (2026-09-14): no decision crosses a phase boundary until it is written into the plan, and `/work` checks the Amendment log is current at every fresh-phase hand-off — a decision that lives only in the conversation is testimony | A test asserting the wrong property under the right name reports *unbound*; a real test reports *bound* | `day-claim-binding` |
 | 7 | **Uncovered surface — changed code no claim exercises, acknowledged** | 7 | not started | A changed file no row exercises is listed; acknowledgement is recorded and survives re-verification | `day-uncovered-surface` |
 | 8 | **Any executor — a phase dispatched to a non-Claude agent is verified the same way** | 10 | not started; absorbs `cursor-support` (archived 2026-09-14): Cursor as an executor | Dawn 7's own: a phase dispatched to a non-Claude agent is verified and its verdict recorded | [dawn-agents](../indusk-v2-dawn/master.md), Dawn 7 |
 | 9 | **Probe — a reviewer's question becomes an executed scenario** | 8 | not started | A reviewer's question becomes an executed scenario with a verdict; green accretes as a new row | `day-probe` |
-| 10 | **The review — a verdict without reading the diff** | 1–10 | not started; carries `documentation-phase-gate`'s question (archived 2026-09-14): where docs land is decided by the bundle, not per phase. **Carries the gate ledger** (2026-09-15, from `hook-cwd-independence`'s cut): every hook invocation appends one line to `.indusk/gates.jsonl` (hook, file judged, verdict, exit code, time) through one `_gate-ledger.js` hook module with a `lib/gates/ledger.ts` twin, registered with every "what changed" detector and given `merge=union` in the commit that first writes it; the Process record (artifact 10 of the shape) is its reader, so it is built when the reader is | The shape's own acceptance test: one plant per row class, all caught, approval reached from the bundle alone | `day-pr-review` |
+| 10 | **The review — a verdict without reading the diff** | 1–10 | not started; carries `documentation-phase-gate`'s question (archived 2026-09-14): where docs land is decided by the bundle, not per phase. **Reads the gate ledger, which component 5 writes** (placed here 2026-09-15 from `hook-cwd-independence`'s cut, given to 5 on 2026-09-17; this row still claimed it until 2026-10-05): every hook invocation appends one line to `.indusk/gates.jsonl` (hook, file judged, verdict, exit code, time) through one `_gate-ledger.js` hook module with a `lib/gates/ledger.ts` twin, registered with every "what changed" detector and given `merge=union` in the commit that first writes it; the Process record (artifact 10 of the shape) is its reader | The shape's own acceptance test: one plant per row class, all caught, approval reached from the bundle alone | `day-pr-review` |
 
 **Small steps** — not in the sequence, runnable whenever a gap opens:
 
@@ -109,8 +112,9 @@ Open this file to answer "where are we." The shape itself lives in
 
 ## Order
 
-**0 → 1 → {2, 3} → {4a, 5, 7} → {4b, 4c, 6} → 8 → 9 → 10**, with S1 any
-time. Re-ordered 2026-09-17 with 0–3 closed; 4c added 2026-09-18.
+**0 → 1 → {2, 3} → {4a, 5, 7} → {4b, 4c, 6} → 8 → 9 → 10**, with 4c′ any
+time after 4c and S1 any time. Re-ordered 2026-09-17 with 0–3 closed; 4c added
+2026-09-18; 4c split, and placed next, 2026-10-05.
 
 - **0 first, on paper.** Nothing else is scoped until the shape is accepted;
   every component below names the row it closes.
@@ -129,6 +133,19 @@ time. Re-ordered 2026-09-17 with 0–3 closed; 4c added 2026-09-18.
 - **4c needs 4a** and nothing else: it puts the registry's vocabulary into the
   planner, the test plan, the trajectory and the retrospective. 4b and 4c
   share no code and can run at once.
+- **Reconciled with [promise-core](../promise-core/master.md), 2026-10-05**
+  (Sandy). That master makes the promise the first primitive and re-scopes
+  three plans here. Three decisions:
+  - **4c is `planner-promises`, and it is next.** `planner-promises` (demo
+    step 6) and `day-contract` described the same work. `planner-promises`
+    takes declaring, naming and confirming; `day-contract` keeps the change
+    rule as 4c′. Confirmation went with `planner-promises`, not with the
+    change rule as promise-core's table had it, because the demo needs a
+    promise to reach `enforced` before a violation can move it.
+  - **5 keeps "red observed".** Built once, in the shape promise-core asks
+    for; `promise-first-build` reuses it.
+  - **Tests have a level, promises have a kind.** The trajectory's `Kind`
+    column from test-kinds becomes `Level`, in `planner-promises`.
 - **4c's intended shape, every test says what it is for** (Sandy,
   2026-10-02). A trajectory row names **the promise it proves**, **or the
   lesson it guards** (the `lesson: <name>` token `context-tiers` introduces),
@@ -139,7 +156,7 @@ time. Re-ordered 2026-09-17 with 0–3 closed; 4c added 2026-09-18.
   instead of inviting its own deletion; a test that can state neither has to
   justify existing, which is where a test that cannot fail gets noticed. Builds
   on `context-tiers`, which supplies the lesson token.
-- **4c's change rule: a plan that changes a promise retires it and declares
+- **4c′'s change rule: a plan that changes a promise retires it and declares
   the replacement** (Sandy, 2026-10-03). A promise is born in the plan that
   declares it, and a violation reopens that plan — but a later plan that
   changes the promised code must not leave the promise pointing at the plan
@@ -195,8 +212,9 @@ assume before it exists.
 | `day-always-on` | 4b′ — the always-on tier split from 4b: the shipped Jaeger as a server, the in-process pass announcing once to Slack, a project naming its Jaeger | **closed 2026-09-21**, archived |
 | `release-ritual` | S2 — the release procedure finishes itself; prerequisite for 4b′ᴰ, which installs the published package | **closed 2026-10-01** — merged `283f6723`, archived |
 | `day-always-on-deploy` | 4b′ᴰ — 4b′ running where nothing turns off | closed 2026-10-04, archived |
-| `day-contract` | 4c — the contract in planning: promises declared before code, trajectory rows establish or preserve one, confirmation at close, the change rule ("touched, unacknowledged") | proposed 2026-09-18, not created |
-| `day-claim-evidence` | 5 — observed red, amendment log, gate ledger | not created |
+| `planner-promises` | 4c — the contract in planning: the planner asks for promises, every test row says what it is for, a closing plan confirms; renames the test `Kind` column to `Level` | brief draft, re-scoped 2026-10-05, **next** |
+| `day-contract` | 4c′ — the change rule: `supersedes`, and "touched, unacknowledged" | not created; after the demo |
+| `day-claim-evidence` | 5 — observed red (recorded by the system; `promise-first-build` reuses it), amendment log, gate ledger | not created |
 | `day-claim-binding` | 6 — mutation per row | not created |
 | `day-uncovered-surface` | 7 — coverage per row, acknowledgement | not created |
 | `day-probe` | 9 — reviewer question → executed scenario | not created |

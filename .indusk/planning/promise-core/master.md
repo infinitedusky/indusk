@@ -17,8 +17,11 @@ what must change to make it true, and which existing plans it touches. The
 measurements behind it are in [research.md](research.md). The aim it serves is
 the seven sentences in [plan-premises/aim.md](../plan-premises/aim.md).
 
-Nothing here is built. No plan below is created, and no other plan has been
-edited. This is the record to work from.
+Nothing here is built and no plan below is created. On 2026-10-05 this
+master was reconciled with the [Day master](../indusk-v4-day/master.md): three
+decisions are recorded under Decided, and `planner-promises`' brief and the Day
+master were edited to match. No other plan has been edited. This is the record
+to work from.
 
 ## The primitive
 
@@ -179,11 +182,12 @@ failing, and a mark that reports a break.
 - A promise with no `owner` is valid. When it breaks, the incident is
   recorded and announced; nothing is reopened. The response path already has a
   `no-owner` branch; the registry and the check are what refuse.
-- "Seen failing" is recorded by the system against the promise, not typed by
-  an author into a checklist. This is row 4 of the pull-request shape, "red
-  observed", specified and unbuilt. It comes forward from
-  `day-claim-evidence`, component 5 in the Day master plan, which was to
-  build it.
+- "Seen failing" is recorded by the system, not typed by an author into a
+  checklist. This is row 4 of the pull-request shape, "red observed",
+  specified and unbuilt. `day-claim-evidence`, component 5 in the Day master
+  plan, builds it (Sandy, 2026-10-05; first written here as coming forward
+  into this plan), where both a test row and a promise can read it. This plan
+  reads that record for a promise that has no plan.
 - Two small rules join `promises check`: a behaviour promise cannot be
   `established`, and a promise whose mark has never fired in any source is
   reported.
@@ -209,17 +213,18 @@ copies, and opening it is a large change that nothing here requires.
 ## Plans this changes
 
 Each row names a plan, where it stands, and what this would change in it.
-None has been edited.
+Edited so far, on 2026-10-05: `planner-promises`' brief, and the Day master's
+rows for `day-contract` and `day-claim-evidence`. The rest have not been.
 
 | Plan | Stands | What changes |
 |---|---|---|
-| [planner-promises](../planner-promises/brief.md), demo step 6: the planner asks what a plan promises | brief draft | It writes each promise "with this plan as owner". Owner becomes optional. It is also where "every test row names a promise" lands for workflows that have a checklist. |
-| [test-kinds](../archive/test-kinds/brief.md): five kinds of test, each run at its own moment | closed 2026-10-05 | Agrees on substance: watching is what promises are for. Two vocabularies now use the word "kind", one for promises and one for tests. One needs another word. |
+| [planner-promises](../planner-promises/brief.md), demo step 6 and component 4c in the Day master plan: the planner asks what a plan promises | brief draft, re-scoped 2026-10-05, next to build | It is where "every test row says what it is for" lands for workflows that have a checklist, and where a closing plan confirms its promises. It writes each promise "with this plan as owner"; owner becomes optional in `promise-first-build`. It also renames the test `Kind` column to `Level`. |
+| [test-kinds](../archive/test-kinds/brief.md): five kinds of test, each run at its own moment | closed 2026-10-05 | Agrees on substance: watching is what promises are for. Two vocabularies used the word "kind", one for promises and one for tests. Decided 2026-10-05: tests have a level, promises keep kind; `planner-promises` does the rename. |
 | [admin-plan-authoring](../admin-plan-authoring/brief.md), demo step 3: New plan and Build from the admin | brief draft, spike done | Unchanged for the demo. Afterwards, starting a plan asks which workflow, and the builder reuses its request handling. |
 | [contract-ui](../contract-ui/brief.md): the admin organised around premises, promises and phases | brief and manifesto draft | The lowest level is "phases". A promise built on the short path has none. That level becomes the work toward a promise, which may be a phase or only a test run. |
 | [indusk-demo](../indusk-demo/master.md): a new project, start to finish, recorded | living | The script stands as written. The short path is added at the end. |
-| `day-contract`, component 4c in the Day master plan: promises declared in planning | not created | Its rule that a test row must name a promise moves to the core as "a test names a promise". What remains is the change rule, that touching a promise's code without naming it is recorded, and confirmation at close. |
-| `day-claim-evidence`, component 5 in the Day master plan: red observed, amendments recorded | not created | "Red observed" moves forward into `promise-first-build`. The amendment log stays. |
+| `day-contract`, component 4c′ in the Day master plan: the change rule | not created; after the demo | Its other three parts (declared in planning, a test row says what it is for, confirmed at close) are `planner-promises`. What remains is the change rule: a plan that changes a promise retires it and declares the replacement, and touching a promise's code without naming it is recorded. |
+| `day-claim-evidence`, component 5 in the Day master plan: red observed, amendments recorded | not created | Decided 2026-10-05: it keeps "red observed" and builds it once, recorded by the system; `promise-first-build` reuses it. The amendment log and the gate ledger stay. |
 | `day-claim-binding` and `day-uncovered-surface`, components 6 and 7 in the Day master plan | not created | Both are specified per change and per test row. The audit this conversation described is the same two checks run per promise across the registry, when a promise's test or marked code changes. |
 | [incident-recording](../incident-recording/brief.md): recording on a schedule, landed as a pull request | brief draft | The pull request carries "the owner's Maintenance phase". With no owner it carries the incident alone. |
 | [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md): every workbench gets a server | brief draft | It ties a server to a workbench. A workbench is house. The server belongs to a project. |
@@ -233,6 +238,13 @@ None has been edited.
   demo's script and its plans are not disturbed.
 - **It needs the workflow builder first**, and the builder is a simple screen
   for selecting steps, not a new mechanism.
+- **Reconciled with the Day master** (Sandy, 2026-10-05):
+  - `planner-promises` is the contract entering planning (Day's 4c) and is
+    built next. `day-contract` keeps the change rule only.
+  - `day-claim-evidence` builds "seen failing, recorded by the system";
+    `promise-first-build` reuses it and does not wait on it being rebuilt.
+  - Tests have a level, promises have a kind. The rename is
+    `planner-promises`'.
 
 ## Still Sandy's to decide
 
