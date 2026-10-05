@@ -39,6 +39,7 @@ roadmap:
   - incident-recording
   - workbench-watch-provisioning
   - plan-premises
+  - contract-ui
 ---
 
 # Master Plan
