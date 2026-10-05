@@ -115,6 +115,7 @@ exists today and answers wrongly.
 
 - [x] `bin/commands/promises.ts` `status`: one section per source (header: name and URL), today's block layout inside each. Exit 0 when every source answered and heard, 2 when any did not (after printing the rest)
   - As built (refines ADR D3): exit 2 when the **alarm source** could not be read; a failed `local` beside an answering `production` is printed in its section and exits 0. Under "any source", `always-on-source.test.ts` A10 — status on a production-naming project with no local daemon, asserting exit 0 — goes red, and every laptop without a running daemon would fail every status run. A4 (production down → exit 2) holds either way
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 - [x] `watch --source`: `deployed` reads `production`, refused naming `promises.jaeger` when none is set; `local`, `smoke` and `desk` read `local` (`lib/promises/watch.ts` takes the source name)
 
 #### Build Phase 2 Verification
@@ -124,7 +125,7 @@ exists today and answers wrongly.
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md` is near its budget, so a context entry goes to the guard instead: `promise-sources.test.ts` A5 carries `lesson: a-flag-that-names-a-source-must-choose-it` — a `--source` that only labels its output reports production from a laptop
+- [x] `apps/indusk-mcp/CLAUDE.md` is near its budget, so a context entry goes to the guard instead: `promise-sources.test.ts` A5 carries `lesson: a-flag-that-names-a-source-must-choose-it` — a `--source` that only labels its output reports production from a laptop
 
 #### Build Phase 2 Document
 
