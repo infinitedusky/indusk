@@ -107,8 +107,9 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A6 and A8–A12 fail on their own assertions (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-fix`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline`); the leak guard is clear afterwards (`node apps/indusk-mcp/scripts/check-test-daemons.js`)
-- [ ] The deferred A7 body reviewed: it will compile at Build Phase 5, and it asserts the worst-state summary and the regrouping
+- [x] A1–A6 and A8–A12 fail on their own assertions (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-fix`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline`); the leak guard is clear afterwards (`node apps/indusk-mcp/scripts/check-test-daemons.js`)
+- [x] The deferred A7 body reviewed: it will compile at Build Phase 5, and it asserts the worst-state summary and the regrouping — it imports only `PromiseGroups`, which Build Phase 5 introduces, and its three checks are the worst state per cell when collapsed, both strips when expanded, and the regroup by domain
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change (tests and a fixture field only)
 
 ### Build Phase 1: an incident records when it was fixed
 
