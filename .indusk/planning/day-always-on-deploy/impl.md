@@ -265,7 +265,7 @@ Found while investigating (2026-10-04), before any row was written:
 
 #### Build Phase 4 Context
 
-- [ ] current.md, the shared region's day-always-on line: the four falsification fixes are on the branch and unreleased — the deployed 1.58.4 still has them, and none needs a redeploy to stay safe on Fly (one machine, a fixed public port, a URL without a credential, a 3 GB volume far from full)
+- [x] current.md, the shared region's day-always-on line: the four falsification fixes are on the branch and unreleased — the deployed 1.58.4 still has them, and none needs a redeploy to stay safe on Fly (one machine, a fixed public port, a URL without a credential, a 3 GB volume far from full)
 
 #### Build Phase 4 Document
 
