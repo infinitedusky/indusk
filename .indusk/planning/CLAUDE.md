@@ -28,7 +28,9 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   the plan root, not code and not machine state. Every kind has a promise;
   `pnpm test` ends with `pnpm promises:check`. Only a promise about something
   known to happen regularly declares `expect_every`; silence without it is the
-  good outcome. — see `/decisions/day-promises`
+  good outcome. An incident is closed with `indusk promises fix <id>`, which
+  records when; `check` refuses a fixed incident that does not say. — see
+  `/decisions/day-promises`
 
 ## The impl
 

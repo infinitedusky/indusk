@@ -125,9 +125,11 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 - [x] A5 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-fix`); `pnpm promises:check` exits 0 on this repository — 3/3; check: 4 promises, 3 incidents, exit 0. `pnpm test`: mcp 1702 passed / 5 skipped with the leak guard clear; the admin's only failures are this plan's own red rows (A1–A4, A6, A8–A12), as planned
 - [x] `tsc --noEmit` clean; Biome clean on the changed files — both packages, against the fresh build
 
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+
 #### Build Phase 1 Context
 
-- [ ] planning: `.indusk/planning/CLAUDE.md` (via its template) — "an incident is closed with `indusk promises fix`, which records when"
+- [x] planning: `.indusk/planning/CLAUDE.md` (via its template) — "an incident is closed with `indusk promises fix`, which records when"
 
 #### Build Phase 1 Document
 
