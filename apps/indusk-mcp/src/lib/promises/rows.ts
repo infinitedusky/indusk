@@ -1,5 +1,8 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import matter from "gray-matter";
 import { parseTrajectory } from "../trajectory/parser.js";
+import { planFolders } from "./plan-folder.js";
 import type { PromiseEntry, Registry } from "./registry.js";
 
 /**
@@ -8,8 +11,8 @@ import type { PromiseEntry, Registry } from "./registry.js";
  * A row's `For` cell is the one link between a test and the promise it
  * proves. Two readers need it: closing a plan (do the plan's rows prove what
  * it declared?) and an incident (which rows were vouching for what broke?).
- * Both read rows through here. Reads impl text only — no code root, no git —
- * so the retrospective's gate and the admin can ask it for any plan.
+ * Both read rows through here. Reads plan documents only — no code root, no
+ * git — so the retrospective's gate and the admin can ask it for any plan.
  */
 
 /** A row of an impl that names the promise. */
@@ -29,6 +32,39 @@ export function rowsNamingIn(
 	return parseTrajectory(matter(implText).content)
 		.rows.filter((r) => r.purpose?.promises.some((n) => names.has(n)))
 		.map((r) => ({ id: r.id, state: r.state, tests: r.test ?? [] }));
+}
+
+/** A row naming the promise, and the plan whose impl holds it. */
+export interface PlanRow extends NamingRow {
+	plan: string;
+	archived: boolean;
+}
+
+/**
+ * Every row, in every plan's impl, active and archived, whose `For` names the
+ * promise (ADR D6): what was vouching for it. A promise a later plan changed
+ * is named by rows in both plans. An impl that cannot be read is named in
+ * `unreadable`, never skipped: "no row names it" must not be what a broken
+ * file looks like.
+ */
+export function rowsNaming(
+	planRoot: string,
+	promise: Pick<PromiseEntry, "name" | "aliases">,
+): { rows: PlanRow[]; unreadable: string[] } {
+	const rows: PlanRow[] = [];
+	const unreadable: string[] = [];
+	for (const folder of planFolders(planRoot)) {
+		const implPath = join(folder.dir, "impl.md");
+		if (!existsSync(implPath)) continue;
+		try {
+			for (const row of rowsNamingIn(readFileSync(implPath, "utf-8"), promise)) {
+				rows.push({ ...row, plan: folder.plan, archived: folder.archived });
+			}
+		} catch {
+			unreadable.push(folder.plan);
+		}
+	}
+	return { rows, unreadable };
 }
 
 export interface RowProof {

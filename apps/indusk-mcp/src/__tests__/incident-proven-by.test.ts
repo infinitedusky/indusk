@@ -126,7 +126,10 @@ describe("A12 — an incident names the rows that prove the broken promise", () 
 	it("lists each row that names it: the plan, the row, and whether it is passing", () => {
 		const { incident } = record(project());
 		const section = provenBy(incident);
-		expect(section, "the incident has a Proven by section").not.toBeNull();
+		expect(
+			section,
+			"lesson: an-incident-starts-from-the-tests-that-vouched\nthe incident has no Proven by section",
+		).not.toBeNull();
 		expect(section).toMatch(new RegExp(`${OLD_PLAN}.*\\bT1\\b.*passing`));
 		expect(section, "a row that is for something else is not listed").not.toMatch(/\bT2\b/);
 	});

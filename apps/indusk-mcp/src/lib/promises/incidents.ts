@@ -1,8 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import matter from "gray-matter";
 import { setList, setScalar } from "./frontmatter-edit.js";
 import type { IncidentEntry, PromiseEntry, Registry } from "./registry.js";
+import { rowsNaming } from "./rows.js";
 import type { MarkedSpan } from "./telemetry.js";
 import {
 	INCIDENTS_SUBDIR,
@@ -89,6 +90,39 @@ export function oneLine(value: string): string {
 	return value.replace(/[\r\n\u2028\u2029]+/g, " ").trim();
 }
 
+/**
+ * The incident's `## Proven by` section (planner-promises ADR D6): every test
+ * row, in any plan, that names the broken promise — the plan, the row, and
+ * whether it passes. A fix starts from the tests that were vouching: a
+ * passing row here is a test that did not catch this break.
+ *
+ * Written once, when the incident opens. It is a record of what was vouching
+ * at the time, not a live view; the rows themselves move on.
+ */
+export function provenBy(planRoot: string, promise: PromiseEntry): string {
+	const { rows, unreadable } = rowsNaming(planRoot, promise);
+	const lines =
+		rows.length === 0
+			? [
+					`No test row names this promise, so no plan says which test proves it. ${
+						promise.tests.length > 0
+							? `Its registry entry lists as tests: ${promise.tests.join(", ")}.`
+							: "Its registry entry lists no test either."
+					}`,
+				]
+			: rows.map(
+					(r) =>
+						`- \`${r.plan}\` row ${r.id} — ${r.state}${r.tests.length > 0 ? ` (${r.tests.join(", ")})` : ""}`,
+				);
+	if (unreadable.length > 0) {
+		lines.push(
+			"",
+			`Not read — the impl could not be parsed: ${unreadable.map((p) => `\`${p}\``).join(", ")}.`,
+		);
+	}
+	return lines.join("\n");
+}
+
 function incidentText(o: {
 	id: string;
 	promise: string;
@@ -99,6 +133,8 @@ function incidentText(o: {
 	symptom: string;
 	/** From the span, when it carried one (day-always-on D6); omitted entirely when it did not. */
 	environment: string | null;
+	/** The rows that were proving the promise, as `provenBy` writes them. */
+	provenBy: string;
 }): string {
 	const frontmatter = [
 		`id: ${o.id}`,
@@ -112,7 +148,7 @@ function incidentText(o: {
 		"traces:",
 		...o.traces.map((t) => `  - '${t}'`),
 	];
-	return `---\n${frontmatter.join("\n")}\n---\n\n## Symptom\n\n${oneLine(o.symptom)}\n\n## Root cause\n\n${UNWRITTEN_ROOT_CAUSE}\n\n## Fix\n\n${NOT_YET_FIXED}\n`;
+	return `---\n${frontmatter.join("\n")}\n---\n\n## Symptom\n\n${oneLine(o.symptom)}\n\n## Proven by\n\n${o.provenBy}\n\n## Root cause\n\n${UNWRITTEN_ROOT_CAUSE}\n\n## Fix\n\n${NOT_YET_FIXED}\n`;
 }
 
 /**
@@ -167,6 +203,8 @@ export function recordViolations(
 			// none: one server holds staging and production, and an incident
 			// that names the wrong one sends a person to the wrong logs.
 			environment: newest.environment,
+			// The registry directory is `<plan root>/.indusk/promises`.
+			provenBy: provenBy(resolve(registry.dir, "..", ".."), promise),
 		}),
 	);
 	ensurePromiseCarries(registry, promise, id);
