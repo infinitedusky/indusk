@@ -168,7 +168,7 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 ### Build Phase 4: the strips
 
-- [ ] `apps/indusk-admin/src/lib/promise-timeline.ts`: the store (D5) — per project, source and promise: marks held, deduplicated by trace, and the range covered; a request reads only uncovered ranges and the last minute again; pruned to 30 days
+- [ ] `apps/indusk-admin/src/lib/promise-timeline.ts`: the store (D5) — per project, source and promise: marks held, deduplicated by trace, and the range covered; a request reads only uncovered ranges and the last minute again; pruned to 30 days. **The chips read from it too**: A12's red measured the second load at half the first (120 KB of 242 KB) because `readHealth` re-reads the whole quiet window each time its cache expires; the store holds the quiet window for every source, and the chips colour from it
 - [ ] `components/PromiseTimeline.tsx`: the strip (96 / 84 / 90 cells; worst state per cell by `violationState`), bands from `opened` to `fixed` or now, the no-marks row, `data-at-least` cells, the old-break marker (D6, D7)
 - [ ] The Promises page: `?window` (`24h | 7d | 30d`, default `7d`) and `?source` (default the alarm source), each strip under its promise's row; local's view says how far back its marks reach; a failed source says so in place of its strip
 
