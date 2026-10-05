@@ -218,12 +218,12 @@ rows for `day-contract` and `day-claim-evidence`. The rest have not been.
 
 | Plan | Stands | What changes |
 |---|---|---|
-| [planner-promises](../planner-promises/brief.md), demo step 6 and component 4c in the Day master plan: the planner asks what a plan promises | brief draft, re-scoped 2026-10-05, next to build | It is where "every test row says what it is for" lands for workflows that have a checklist, and where a closing plan confirms its promises. It writes each promise "with this plan as owner"; owner becomes optional in `promise-first-build`. It also renames the test `Kind` column to `Level`. |
+| [planner-promises](../planner-promises/brief.md), demo step 6 and component 4c in the Day master plan: the brief is the expectations and the promises | brief and test plan accepted 2026-10-05, next to build | It is where "every test row says what it is for" lands for workflows that have a checklist, where a closing plan confirms its promises, and where a plan says which existing promises it keeps, changes or replaces. It writes each promise "with this plan as owner"; owner becomes optional in `promise-first-build`. It also renames the test `Kind` column to `Level`, and adds expectations to the brief: why the work is done, each with its measure. An expectation is not a kind of promise, as this master already rules. |
 | [test-kinds](../archive/test-kinds/brief.md): five kinds of test, each run at its own moment | closed 2026-10-05 | Agrees on substance: watching is what promises are for. Two vocabularies used the word "kind", one for promises and one for tests. Decided 2026-10-05: tests have a level, promises keep kind; `planner-promises` does the rename. |
 | [admin-plan-authoring](../admin-plan-authoring/brief.md), demo step 3: New plan and Build from the admin | brief draft, spike done | Unchanged for the demo. Afterwards, starting a plan asks which workflow, and the builder reuses its request handling. |
 | [contract-ui](../contract-ui/brief.md): the admin organised around premises, promises and phases | brief and manifesto draft | The lowest level is "phases". A promise built on the short path has none. That level becomes the work toward a promise, which may be a phase or only a test run. |
 | [indusk-demo](../indusk-demo/master.md): a new project, start to finish, recorded | living | The script stands as written. The short path is added at the end. |
-| `day-contract`, component 4c′ in the Day master plan: the change rule | not created; after the demo | Its other three parts (declared in planning, a test row says what it is for, confirmed at close) are `planner-promises`. What remains is the change rule: a plan that changes a promise retires it and declares the replacement, and touching a promise's code without naming it is recorded. |
+| `day-contract`, component 4c′ in the Day master plan: the check at change time | not created; after the demo | Everything else first proposed for it is `planner-promises`, including changing or replacing a promise. What remains is the check: code that touches a promise's site, in a plan that does not name it, is recorded. |
 | `day-claim-evidence`, component 5 in the Day master plan: red observed, amendments recorded | not created | Decided 2026-10-05: it keeps "red observed" and builds it once, recorded by the system; `promise-first-build` reuses it. The amendment log and the gate ledger stay. |
 | `day-claim-binding` and `day-uncovered-surface`, components 6 and 7 in the Day master plan | not created | Both are specified per change and per test row. The audit this conversation described is the same two checks run per promise across the registry, when a promise's test or marked code changes. |
 | [incident-recording](../incident-recording/brief.md): recording on a schedule, landed as a pull request | brief draft | The pull request carries "the owner's Maintenance phase". With no owner it carries the incident alone. |
@@ -240,7 +240,11 @@ rows for `day-contract` and `day-claim-evidence`. The rest have not been.
   for selecting steps, not a new mechanism.
 - **Reconciled with the Day master** (Sandy, 2026-10-05):
   - `planner-promises` is the contract entering planning (Day's 4c) and is
-    built next. `day-contract` keeps the change rule only.
+    built next. `day-contract` keeps only the check at change time.
+  - The brief is what the planning conversation produced: expectations and
+    promises. Everything else is research.
+  - A partial change improves a promise in place and the changing plan takes
+    it over; a replacement retires it.
   - `day-claim-evidence` builds "seen failing, recorded by the system";
     `promise-first-build` reuses it and does not wait on it being rebuilt.
   - Tests have a level, promises have a kind. The rename is

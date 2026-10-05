@@ -35,7 +35,7 @@ Why this, now:
 | Document | Holds | Whose |
 |---|---|---|
 | Research | Everything that is not an expectation or a promise: why now, what exists today, what was found, what was decided on the way | the agents' |
-| Brief | What the conversation produced: the expectations, and the promises (the ones this plan makes, the existing ones it must not break, and what was chosen not to promise) | the person's |
+| Brief | What the conversation produced: the expectations, and the promises (the ones this plan makes; the existing ones it must not break, changes or replaces; and what was chosen not to promise) | the person's |
 | Test plan | How each promise is proven: its tests and their level | the agents' |
 | ADR | The design that makes those tests pass, and what was rejected | the agents' |
 
@@ -49,6 +49,26 @@ Why this, now:
   and its proof could pick tests it already passes.
 - **Open for the ADR**: bugfix and refactor plans have no research document
   today. If the why leaves the brief, they need somewhere to put it.
+
+### Existing promises: must not break, changes, replaces
+
+- Before a plan's promises are saved, the agent reads every promise in force
+  and sorts the related ones with the person into three lists.
+- **A partial change improves the promise in place.** It keeps its name and
+  file, so the marks in code, its incidents and its timeline stay attached.
+  Its sentence is revised, its owner becomes the changing plan (a later break
+  reopens the plan that last described it), and its History gains a line: the
+  date, the plan, the old sentence, the reason and the previous owner.
+- **A replacement** is for a promise whose name no longer describes it: the
+  old one is retired and the new one records which it replaced.
+- This refines the Day master's rule of 2026-10-03, under which any change
+  retired the promise and declared a replacement.
+- **Finding the context later**: the promise file is the hub. Its History
+  lists every plan that made or changed it; the rows that name it, in any
+  plan, are found by its name; its incidents name it. Nothing is written into
+  the earlier plan, and "changed by" is derived by reading.
+- `day-contract` keeps only the check at change time: code that touches a
+  promise's site in a plan that does not name it.
 
 ### Expectations
 

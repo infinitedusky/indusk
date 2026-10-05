@@ -61,10 +61,25 @@ and can be corrected.
    still be edited.
 5. **`an-expectation-says-how-it-is-measured`** (state). Every expectation in
    a brief says how it will be measured and when to look.
+6. **`a-changed-promise-keeps-its-history`** (state). A plan that changes or
+   replaces an existing promise says so in its brief. A changed promise keeps
+   its name, and its file records the old sentence, the reason and the plan
+   that owned it before. A replaced one is retired, and the new one records
+   which it replaced.
 
-### Must not break
+### Existing promises
 
-Promises already in force that this change touches:
+Before a plan's promises are saved, the agent reads every promise in force
+and goes through the related ones with the person. Each lands in one of three
+lists (Sandy, 2026-10-05):
+
+- **Must not break**: still true as written.
+- **Changes**: the same commitment, its sentence improved. It keeps its name;
+  this plan takes it over.
+- **Replaces**: its name no longer describes it. It is retired and a new one
+  is declared.
+
+**Must not break**, for this plan:
 
 - **`one-definition-per-shared-rule`**. The row parser has a copy for the
   hooks. The new column and the rename land in both, pinned equal.
@@ -75,10 +90,14 @@ Promises already in force that this change touches:
 And one guard that is not yet a promise: every impl written before this plan
 validates exactly as it did.
 
+**Changes**: none. **Replaces**: none.
+
 ### Not promised
 
-- **The change rule**: a plan that changes a promise retires it and declares
-  the replacement. `day-contract`, component 4c′ in the Day master plan.
+- **The check at change time**: code that touches a promise's site, in a plan
+  that does not name that promise, is flagged. `day-contract`, component 4c′
+  in the Day master plan. Until it exists, noticing which existing promises a
+  plan affects is the agent's judgment, backed by those promises' own tests.
 - **"Seen failing", recorded by the system.** `day-claim-evidence`, component
   5 in the Day master plan.
 - **A promise with no plan to own it**, and building from a promise alone.
@@ -101,5 +120,5 @@ validates exactly as it did.
 
 ## Blocks
 
-- `day-contract`: the change rule needs rows that name promises.
+- `day-contract`: its check needs briefs and rows that name promises.
 - [indusk-demo](../indusk-demo/master.md) step 6, and `demo-rehearsal`.

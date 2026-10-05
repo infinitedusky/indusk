@@ -119,16 +119,16 @@ promise.) Three sub-plans:
   smoke found three server bugs (1.58.2–1.58.4) and falsification four more
   (bumped as 1.58.5, unpublished). See `/decisions/day-always-on-deploy`.
 - [planner-promises](planner-promises/brief.md) — **4c, the contract in
-  planning — next** (re-scoped 2026-10-05, when the Day master and the
-  promise-core master were reconciled): the planner asks what a plan
-  promises, every trajectory row says what it is for (a promise, a lesson, or
-  why neither), the close confirms a declared promise to `enforced`, and the
-  test `Kind` column becomes `Level`. Proposed 2026-09-18 as `day-contract`;
-  also demo step 6.
-- `day-contract` — **4c′, the change rule** (split 2026-10-05; after the
-  demo): a plan that changes a promise retires it and declares the
-  replacement, and a change that touches a promise's code site without naming
-  it is "touched, unacknowledged".
+  planning — next** (brief and test plan accepted 2026-10-05): the brief is
+  what the planning conversation produced, expectations and promises; every
+  trajectory row says what it is for (a promise, a lesson, or why neither);
+  the close confirms a declared promise to `enforced`; an existing promise a
+  plan affects is kept, changed in place or replaced; and the test `Kind`
+  column becomes `Level`. Proposed 2026-09-18 as `day-contract`; also demo
+  step 6.
+- `day-contract` — **4c′, the check at change time** (split 2026-10-05; after
+  the demo): a change that touches a promise's code site, in a plan that does
+  not name it, is "touched, unacknowledged".
 - `day-claim-evidence` — **5** keeps "red observed" (2026-10-05): seen
   failing is recorded by the system, built once there, and
   `promise-first-build` reuses it.
@@ -215,8 +215,8 @@ of the deploy brief on 2026-10-02.
    bytes under an 18,432 budget; area rules load from four nested context
    files; enforcers name their lesson. A Day subplan.
 6. **[planner-promises](planner-promises/brief.md) — 4c, next**
-   (2026-10-05). `day-contract`, now 4c′ and only the change rule, follows
-   the demo.
+   (2026-10-05). `day-contract`, now 4c′ and only the check at change time,
+   follows the demo.
 
 ## Stream 3 — Finish Dawn
 

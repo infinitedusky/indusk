@@ -1,7 +1,7 @@
 ---
 title: "The planner asks for promises — Test Plan"
 date: 2026-10-05
-status: draft
+status: accepted
 ---
 
 # Planner promises — Test Plan
@@ -24,7 +24,7 @@ real system, and is recorded in the plan.
 | A1 | A promise written from a planning conversation is in the registry as `declared`, owned by its plan, with the sentence the person approved, and the registry check passes. | unit |
 | A2 | In a project that has declared no domains, writing its first promise declares that promise's domain with it, and the check passes. | unit |
 | A3 | A plan cannot start building while its brief names, among the promises it makes, one that the registry does not hold or that another plan owns. The refusal names the promise. | unit |
-| A4 | A plan cannot start building while its brief lists, among the promises it must not break, one that does not exist or is retired. The refusal names it. | unit |
+| A4 | A plan cannot start building while its brief lists, among the promises it must not break, changes or replaces, one that does not exist or is already retired. The refusal names it. | unit |
 
 ## Proves `every-test-says-what-it-is-for`
 
@@ -57,6 +57,15 @@ real system, and is recorded in the plan.
 | A14 | A plan cannot start building while an expectation in its brief has no measure or no time to look. The refusal names the expectation. | unit |
 | A15 | A brief that says it has no expectations, with the reason, is accepted. | unit |
 
+## Proves `a-changed-promise-keeps-its-history`
+
+| ID | Assertion | Level |
+|----|-----------|-------|
+| A24 | A test row that names a promise another plan owns is refused unless the brief lists that promise under must not break, changes or replaces. | unit |
+| A25 | When a plan that changes a promise closes, the promise has its new sentence and is owned by that plan, and its History shows the old sentence, the reason and the plan that owned it before. Its incidents and the marks in code that name it still resolve. | unit |
+| A26 | When a plan that replaces a promise closes, the old one is retired, the new one records which it replaced, and the registry check passes. A replacement that names a promise which does not exist is refused. | unit |
+| A27 | A changed promise that breaks later reopens the plan that changed it, and its incident lists the rows that name it in both plans. | unit |
+
 ## Guards promises already in force
 
 | ID | Assertion | For | Level |
@@ -80,7 +89,7 @@ still pass with the changed hook, and each phase's verification runs them.
 
 | ID | Assertion | Level |
 |----|-----------|-------|
-| A22 | This plan's own five promises go the whole way: written as `declared` before its first test, named by this plan's rows, and `enforced` when it closes. | live check, recorded at close |
+| A22 | This plan's own six promises go the whole way: written as `declared` before its first test, named by this plan's rows, and `enforced` when it closes. | live check, recorded at close |
 | A23 | In a new scratch project, a planning conversation ends with declared promises in the registry and a brief that names them, and nobody typed a registry file. | live check, once, recorded |
 
 ## Untestable Assertions
@@ -88,10 +97,11 @@ still pass with the changed hook, and each phase's verification runs them.
 | ID | Assertion | Reason untestable | Compensating control |
 |----|-----------|-------------------|----------------------|
 | U1 | The planner holds the conversation well: it draws out what the person wants, reads the promises back, and takes corrections. | It is an agent following prose. | A23 checks the outcome once; the brief's first expectation measures it over five plans; the demo rehearsal runs it on camera. |
+| U2 | The agent notices every existing promise a new plan affects. | No code exists at planning time to check against; it is a reading of sentences. | The affected promise's own tests fail if it is broken, so the plan cannot close green; a row that names it forces the brief to address it (A24); `day-contract` later flags code that touches its site unnamed. |
 
 ## Notes
 
-- This plan's five promises are written to the registry in its first phase,
+- This plan's six promises are written to the registry in its first phase,
   not at brief acceptance. This repository has a test
   (`promises-cli.test.ts`, "every promise enforced or known-violated") that a
   `declared` promise turns red, and a test cannot change on the trunk. The
