@@ -104,8 +104,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   → `/work` → `/cleanup` (authors a Cleanup Phase; its threshold is
   attention-focus, not a cap) → `/work` → `/retrospective`, whose Step 0 blocks
   unless both rituals are terminal or skipped with a reason. Ritual phases are
-  detected by titles that START with the ritual word. — see
-  `/decisions/falsification-ritual`
+  detected by titles that START with the ritual word. The retrospective
+  confirms the plan's promises (`indusk promises confirm <plan>`) before it
+  archives; a declared promise no passing row names blocks the close. — see
+  `/decisions/falsification-ritual`, `/reference/skills/retrospective`
 - **The retrospective's compaction step**: plan close demotes the plan's
   narrative to one line + archive link, compresses any context entries it
   authored to rule + pointer, and collapses one old root entry per close. — see
