@@ -393,7 +393,7 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 - [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-05-every-commit-evaluated.md`) — three causes: a worktree commit evaluated as the trunk's HEAD (the hook read the event's `cwd`, not the commit's `cd`/`-C`; `git -C <dir> commit` was not even recognised as a commit), so duplicate runs in bursts hit the API's rate limit (429) with no retry on a fresh start; and once, a resumed session pinned to a retired model. A32 written red in `src/__tests__/eval-trigger-commit-anchor.test.ts`
 - [ ] Fix: a code site, a widened test, or a revised promise
 - [x] (discovered, cause 1) `hooks/_commit-anchor.js`: trunk-guard's reading of where a commit lands (`COMMIT_RE`, `commitAnchor`) moves to a shared module both hooks import. `eval-trigger.js` filters with it (so `git -C <dir> commit` is seen) and evaluates the repository the commit landed in; the event's `cwd` stays the state path. `eval-trigger-filter-falsepositives` now exercises the shared regex; `hook-shared-modules` counts one definition. Installed copies in `.claude/hooks/` synced
-- [ ] (discovered, cause 2) `lib/eval/persistent-evaluator.ts`: a fresh start that the API rate limits (`api_error_status: 429`) is retried with backoff, a bounded number of times, before the run is marked violated — today only a resumed session is retried
+- [x] (discovered, cause 2) `lib/eval/persistent-evaluator.ts`: a fresh start that the API rate limits (`api_error_status: 429`) is retried with backoff, a bounded number of times, before the run is marked violated — today only a resumed session is retried
 
 #### Build Phase 10 Verification
 

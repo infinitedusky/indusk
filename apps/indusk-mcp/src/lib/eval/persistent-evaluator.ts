@@ -121,6 +121,36 @@ function parseClaudeOutput(stdout: string): {
 	return { scorecardText, usage, sessionId };
 }
 
+/**
+ * Whether a run failed because the API rate limited it before doing anything
+ * (`api_error_status: 429`, "Server is temporarily limiting requests"). Nine of
+ * the eleven violations in i-2026-10-05-every-commit-evaluated were this: a
+ * burst of commits each started an evaluator, the API refused some, and a
+ * fresh start was never retried, so those commits were never graded.
+ */
+export function isRateLimited(run: { code: number | null; stdout: string }): boolean {
+	if (run.code === 0) return false;
+	try {
+		const out = JSON.parse(run.stdout) as { api_error_status?: unknown };
+		return out.api_error_status === 429;
+	} catch {
+		return false;
+	}
+}
+
+/** How many times a rate-limited start is tried again before the run is marked violated. */
+export const RATE_LIMIT_RETRIES = 3;
+
+/**
+ * The wait before retry `attempt` (1-based): 15 s, 45 s, 90 s by default —
+ * long enough for a burst to pass. `INDUSK_EVAL_RATE_LIMIT_DELAY_MS` replaces
+ * the base, for tests.
+ */
+function rateLimitDelayMs(attempt: number): number {
+	const base = Number(process.env.INDUSK_EVAL_RATE_LIMIT_DELAY_MS) || 15_000;
+	return base * [1, 3, 6][Math.min(attempt, 3) - 1];
+}
+
 async function spawnClaude(
 	args: string[],
 	prompt: string,
@@ -323,7 +353,19 @@ Output ONLY the JSON scorecard — no commentary.`;
 						// cwd = git repo so the rubric's `git show ${changeId}` runs in
 						// the repo. In workbench mode gitRoot differs from projectRoot
 						// (the non-git state root); single-repo callers fall back to it.
-						const spawned = await spawnClaude(args, prompt, opts.gitRoot ?? opts.projectRoot);
+						const cwd = opts.gitRoot ?? opts.projectRoot;
+						let spawned = await spawnClaude(args, prompt, cwd);
+						// A rate limit is the API's, not the evaluator's: wait and start
+						// again rather than mark the commit ungraded (day-monitor A33).
+						for (
+							let attempt = 1;
+							attempt <= RATE_LIMIT_RETRIES && isRateLimited(spawned);
+							attempt++
+						) {
+							span.setAttribute("rate_limit.retries", attempt);
+							await new Promise((r) => setTimeout(r, rateLimitDelayMs(attempt)));
+							spawned = await spawnClaude(args, prompt, cwd);
+						}
 						span.setAttribute("exit.code", spawned.code ?? -1);
 						span.setAttribute("stdout.length", spawned.stdout.length);
 						if (spawned.code !== 0) {
