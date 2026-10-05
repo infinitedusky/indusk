@@ -892,6 +892,16 @@ promisesCmd
 	});
 
 promisesCmd
+	.command("fix <incident>")
+	.description(
+		"Close an incident: mark it fixed, record when, and return its promise to enforced when no other incident of it is open. Writes plan documents; commits nothing. Exit 2 naming the id when it is unknown or already fixed.",
+	)
+	.action(async (incident: string) => {
+		const { promisesFix } = await import("./commands/promises.js");
+		await promisesFix(rootOrExit(), incident);
+	});
+
+promisesCmd
 	.command("watch")
 	.description(
 		"One monitor pass: open or extend an incident for each behaviour promise with new violations in the local Jaeger, and append a Maintenance phase to its owning plan. Writes plan documents; commits nothing. Exit 2 when Jaeger cannot be reached.",

@@ -1,5 +1,6 @@
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
+import { fixIncident } from "../../lib/promises/incidents.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
 import { readPromises } from "../../lib/promises/registry.js";
 import {
@@ -98,6 +99,32 @@ export async function promisesStatus(
 /** What a failed source says in place of counts: its error, then what to do. */
 function failureText(read: Extract<SourceRead, { ok: false }>): string {
 	return `${read.error.message}\nNo count is reported for any behaviour promise. ${sourceAdvice(read.name, read.error)}`;
+}
+
+/**
+ * `indusk promises fix <incident-id>` (promise-timeline, ADR D1). Close an
+ * incident: `status: fixed`, `fixed: <now>`, and its promise back to
+ * `enforced` when no other incident of it is open. Writes plan documents,
+ * commits nothing. Exit 2 naming the id when it is unknown or already fixed,
+ * or when the registry cannot be read.
+ */
+export async function promisesFix(projectRoot: string, id: string): Promise<void> {
+	const read = readPromises(projectRoot);
+	if (!read.ok) {
+		if ("missing" in read) console.error(`${read.missing}: no promise registry`);
+		else for (const p of read.problems) console.error(`${p.file}: ${p.problem}`);
+		process.exitCode = 2;
+		return;
+	}
+	try {
+		const fixed = fixIncident(read.registry, id);
+		console.info(
+			`${fixed.id} fixed at ${fixed.fixed}. Run \`indusk promises check\` before committing.`,
+		);
+	} catch (err) {
+		console.error((err as Error).message);
+		process.exitCode = 2;
+	}
 }
 
 const WATCH_SOURCES = ["local", "smoke", "deployed"] as const;
