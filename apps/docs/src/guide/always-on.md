@@ -69,14 +69,10 @@ needs TLS in front of it.
 
 ### The image
 
-::: warning Not yet run anywhere
-The image and the Fly configuration below are **written but unverified**. The
-image installs the published package, which cannot carry
-`indusk telemetry serve` until the release that adds it; the Fly settings are
-a careful guess that nobody has watched hold. Everything else on this page is
-tested against the real binary, including the end-to-end run. Verifying these
-two is [its own plan](https://github.com/infinitedusky/dusk) — until it
-closes, treat this section as a starting point rather than a recipe.
+::: tip Verified on Fly, 2026-10-04
+The image and the Fly configuration were built and deployed for real, and the
+smoke procedure below was run against them. What it found, and what changed
+because of it, is recorded under [Observed](#observed-2026-10-04).
 :::
 
 ```bash
@@ -233,10 +229,12 @@ whole promise registry down.
 
 ## Smoke-testing a deployment
 
-Run this once against a new server, before trusting it. It takes about half an
-hour, most of which is waiting on purpose. **Nobody has run it yet** — it is
-the procedure the deploy plan will follow, written while the behaviour it
-checks was fresh.
+Run this once against a new server, before trusting it. It takes about an
+hour and a half, most of which is waiting on purpose. Steps 1, 2, 4 and 6 are
+also a script: set `INDUSK_DEPLOYED_QUERY_URL`, `INDUSK_DEPLOYED_OTLP_URL`,
+`INDUSK_DEPLOYED_CREDENTIAL` and `INDUSK_DEPLOYED_FLY_APP`, then run
+`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.e2e.config.ts e2e/deployed-smoke`.
+Steps 3 and 5 need a person reading the channel.
 
 **1. Deploy and check both doors refuse.** Every step below sends credentials;
 these two must not work without them.
@@ -277,6 +275,32 @@ arrives, auto-stop is genuinely off.
 `promises.jaeger`, set the credential variable, and run
 `indusk promises status`. It should report the violations you just caused and
 name the server it read.
+
+#### Observed, 2026-10-04
+
+The first run, against `indusk-always-on` on Fly (one `shared-cpu-1x` machine
+in `iad`, a 3 GB volume):
+
+- **Both doors refused** without credentials (401) and accepted with them.
+- **A violation reached Slack** within a pass, naming the promise, the symptom,
+  the environment and the service. Its trace link pointed at the server's own
+  loopback address until `INDUSK_SERVER_PUBLIC_QUERY_URL` existed (1.58.3), and
+  opened to "no basic auth provided" until the query door sent a login
+  challenge (1.58.4). Then a click asked for a login and opened the trace.
+- **A machine restart emptied the announced record**, and the server announced
+  nothing from then on. The record was written by rename without being flushed
+  to disk; since 1.58.2 it is flushed before and after. After the fix, the trace
+  and both records survived a restart, and the next pass remembered what it had
+  already announced.
+- **An idle hour:** nothing reached the server from 23:42 to 00:43 UTC, and it
+  wrote a heartbeat every 60 s throughout (63 beats, no gap). A violation sent
+  at 00:43:54 was announced at 00:44:47. Auto-stop is genuinely off.
+- **A laptop read it** through `promises.jaeger` (`url`, `otlp_url`,
+  `credential_env`) and was not watcher blind.
+- **What the written configuration got wrong:** `fly launch` rewrites the config
+  file and drops its comments; auto-stop is now spelled `"off"`; Fly runs two
+  machines unless told `--ha=false`; a first deploy has no public IP, and the
+  query port needs a dedicated IPv4. See [On Fly](#on-fly).
 
 ## What this does not do
 
