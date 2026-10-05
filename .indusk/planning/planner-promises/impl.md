@@ -1,7 +1,7 @@
 ---
 title: "The planner asks for promises"
 date: 2026-10-05
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -435,7 +435,7 @@ promises proven; and an incident starts from the tests that were vouching
 
 #### Build Phase 10 Document
 
-- [ ] `apps/docs/src/reference/tools/indusk-mcp.md`: rows for `declare_promise`, `change_promise`, `replace_promise`, `withdraw_promise` and `confirm_promises`, beside `list_promises` and `promise_health` — the page lists every tool and was never given the five this plan added (found by this ritual)
+- [x] `apps/docs/src/reference/tools/indusk-mcp.md`: rows for `declare_promise`, `change_promise`, `replace_promise`, `withdraw_promise` and `confirm_promises`, beside `list_promises` and `promise_health` — the page lists every tool and was never given the five this plan added (found by this ritual)
 
 ## Files Affected
 
