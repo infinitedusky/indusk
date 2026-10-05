@@ -1,7 +1,7 @@
 ---
 title: "Promise timeline — Test Plan"
 date: 2026-10-05
-status: draft
+status: accepted
 ---
 
 # Promise timeline — Test Plan
