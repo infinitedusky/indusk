@@ -44,6 +44,9 @@ are about keeping the two lanes in step.
   cannot be run refuses and says why: the command, how it failed, and that
   `INDUSK_BIN` names another build
   (`lesson: detectors-must-distinguish-could-not-check-from-checked-and-failed`).
+  The row rules (shape, level, purpose) are the contract's too, so they hold
+  for a file any tool wrote; the hook's own run of them, on an edit that adds
+  a phase or an item, is the early word on a draft.
 - The budget hook judges growth, not size; a root is the state root, a
   declared repo's dir (`declaredRepoDirsAt`), or any checkout's top (`.git`
   present — plan worktrees), never a depth. Every hook that refuses names its

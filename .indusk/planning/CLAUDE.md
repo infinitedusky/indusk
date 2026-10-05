@@ -36,7 +36,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   known to happen regularly declares `expect_every`; silence without it is the
   good outcome. A promise is written by `indusk promises declare | change |
   replace`, and one never in force taken back by `withdraw` (the planner's
-  tools of the same names), never by hand. An incident
+  tools of the same names), never by hand. A plan confirms its promises
+  (`indusk promises confirm`) before it archives, retrospective or not; an
+  archived plan's declared promise is confirmed or withdrawn by the same
+  commands, never edited by hand. An incident
   is closed with `indusk promises fix <id>`, which records when; `check`
   refuses a fixed incident that does not say. — see `/decisions/day-promises`
 

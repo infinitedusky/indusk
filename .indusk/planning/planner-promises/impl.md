@@ -396,9 +396,9 @@ promises proven; and an incident starts from the tests that were vouching
 
 #### Build Phase 9 Context
 
-- [ ] guard: `row-purpose.test.ts` carries `lesson: a-reader-that-drops-what-it-cannot-read-passes-every-rule-above-it`; the lesson file is written with it (the dropped row, the entry no list read, the token read as a reason are one mistake three times)
-- [ ] hooks (`apps/indusk-mcp/hooks/CLAUDE.md`): the row rules are the contract's, so they hold for a file any tool wrote; the hook's own run of them is the early word on a draft
-- [ ] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): a plan that skips the retrospective still confirms its promises; an archived plan's declared promise is confirmed or withdrawn, never edited by hand
+- [x] guard: `row-purpose.test.ts` carries `lesson: a-reader-that-drops-what-it-cannot-read-passes-every-rule-above-it`; the lesson file is written with it (the dropped row, the entry no list read, the token read as a reason are one mistake three times) — `list_lessons` reads it as guarded by that test
+- [x] hooks (`apps/indusk-mcp/hooks/CLAUDE.md`): the row rules are the contract's, so they hold for a file any tool wrote; the hook's own run of them is the early word on a draft
+- [x] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): a plan that skips the retrospective still confirms its promises; an archived plan's declared promise is confirmed or withdrawn, never edited by hand
 
 #### Build Phase 9 Document
 
