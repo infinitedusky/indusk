@@ -1,6 +1,11 @@
 import { rmSync } from "node:fs";
 import { type AlwaysOnServer, startAlwaysOnServer } from "./always-on-server.js";
-import { type FixtureSpan, type LocalJaeger, startLocalJaeger } from "./local-jaeger.js";
+import {
+	type FixtureSpan,
+	type LocalJaeger,
+	newTraceId,
+	startLocalJaeger,
+} from "./local-jaeger.js";
 import {
 	daysAgo,
 	type PromiseProject,
@@ -23,6 +28,44 @@ import {
 
 export const CRED_ENV = "INDUSK_TEST_PRODUCTION_CREDENTIAL";
 export const OWNER = "seats-v2";
+export const HELD = "seat-held";
+export const RELEASED = "seat-released";
+
+/**
+ * The contrast every promise-sources suite asserts against: `seat-held` is
+ * broken on the laptop and holds in production, `seat-released` the reverse.
+ * A reader that reads one source, or mixes them, gives a wrong answer.
+ * Pass the violation trace ids to assert on them; otherwise fresh ones.
+ */
+export function crossedMarks(
+	traces: { local?: string; production?: string } = {},
+): Pick<TwoSourcesOptions, "promises" | "localMarks" | "productionMarks"> {
+	return {
+		promises: [HELD, RELEASED],
+		localMarks: [
+			{
+				service: "seats-app",
+				name: "hold-seat",
+				promise: HELD,
+				outcome: "violated",
+				symptom: "held twice on my laptop",
+				traceId: traces.local ?? newTraceId(),
+			},
+			{ service: "seats-app", name: "release-seat", promise: RELEASED, outcome: "upheld" },
+		],
+		productionMarks: [
+			{ service: "seats-app", name: "hold-seat", promise: HELD, outcome: "upheld" },
+			{
+				service: "seats-app",
+				name: "release-seat",
+				promise: RELEASED,
+				outcome: "violated",
+				symptom: "release never fired in production",
+				traceId: traces.production ?? newTraceId(),
+			},
+		],
+	};
+}
 
 export interface TwoSources {
 	local: LocalJaeger;

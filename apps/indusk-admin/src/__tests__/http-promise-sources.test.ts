@@ -2,7 +2,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { newTraceId } from "../../../indusk-mcp/src/__tests__/helpers/local-jaeger";
 import {
   CRED_ENV,
+  crossedMarks,
+  HELD,
   OWNER,
+  RELEASED,
   startTwoSources,
   type TwoSources,
 } from "../../../indusk-mcp/src/__tests__/helpers/two-sources";
@@ -26,9 +29,6 @@ import {
  *
  * Red today: one chip per promise, from production only.
  */
-
-const HELD = "seat-held";
-const RELEASED = "seat-released";
 
 function row(html: string, name: string): string {
   const start = html.indexOf(`data-promise="${name}"`);
@@ -67,39 +67,7 @@ describe("A3, A4 — a chip per source; one source down, the other still shown",
   let dev: DevServer;
 
   beforeAll(async () => {
-    t = await startTwoSources({
-      promises: [HELD, RELEASED],
-      localMarks: [
-        {
-          service: "seats-app",
-          name: "hold-seat",
-          promise: HELD,
-          outcome: "violated",
-          traceId: newTraceId(),
-        },
-        {
-          service: "seats-app",
-          name: "release-seat",
-          promise: RELEASED,
-          outcome: "upheld",
-        },
-      ],
-      productionMarks: [
-        {
-          service: "seats-app",
-          name: "hold-seat",
-          promise: HELD,
-          outcome: "upheld",
-        },
-        {
-          service: "seats-app",
-          name: "release-seat",
-          promise: RELEASED,
-          outcome: "violated",
-          traceId: newTraceId(),
-        },
-      ],
-    });
+    t = await startTwoSources(crossedMarks());
     dev = await open(t, "sources");
   }, 240_000);
 

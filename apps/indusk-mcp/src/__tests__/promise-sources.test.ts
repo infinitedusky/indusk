@@ -8,7 +8,14 @@ import { registerPlanTools } from "../tools/plan-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { newTraceId } from "./helpers/local-jaeger.js";
 import { toolCaller } from "./helpers/tool-call.js";
-import { CRED_ENV, startTwoSources, type TwoSources } from "./helpers/two-sources.js";
+import {
+	CRED_ENV,
+	crossedMarks,
+	HELD,
+	RELEASED,
+	startTwoSources,
+	type TwoSources,
+} from "./helpers/two-sources.js";
 
 /**
  * promise-sources — A1, A2, A4–A7: a developer reads local and production side
@@ -28,9 +35,6 @@ import { CRED_ENV, startTwoSources, type TwoSources } from "./helpers/two-source
  *
  * Red today: one source is read — the named server — and nothing says which.
  */
-
-const HELD = "seat-held";
-const RELEASED = "seat-released";
 
 /** A source's section: from its header line to the next source's header, or the end. */
 function section(out: string, name: "local" | "production"): string {
@@ -78,31 +82,7 @@ const LOCAL_BREAK = newTraceId();
 const PROD_BREAK = newTraceId();
 
 function marks() {
-	return {
-		promises: [HELD, RELEASED],
-		localMarks: [
-			{
-				service: "seats-app",
-				name: "hold-seat",
-				promise: HELD,
-				outcome: "violated" as const,
-				symptom: "held twice on my laptop",
-				traceId: LOCAL_BREAK,
-			},
-			{ service: "seats-app", name: "release-seat", promise: RELEASED, outcome: "upheld" as const },
-		],
-		productionMarks: [
-			{ service: "seats-app", name: "hold-seat", promise: HELD, outcome: "upheld" as const },
-			{
-				service: "seats-app",
-				name: "release-seat",
-				promise: RELEASED,
-				outcome: "violated" as const,
-				symptom: "release never fired in production",
-				traceId: PROD_BREAK,
-			},
-		],
-	};
+	return crossedMarks({ local: LOCAL_BREAK, production: PROD_BREAK });
 }
 
 describe.skipIf(SHOULD_SKIP)("promise-sources — local and production side by side", () => {
