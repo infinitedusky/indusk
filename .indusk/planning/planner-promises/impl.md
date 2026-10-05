@@ -81,7 +81,7 @@ promises proven; and an incident starts from the tests that were vouching
 | A25 | When a plan that changes a promise closes, the promise has its new sentence and is owned by that plan, and its History shows the old sentence, the reason and the previous owner; its incidents and the marks that name it still resolve | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
 | A26 | When a plan that replaces a promise closes, the old one is retired, the new one records which it replaced, and the check passes; a replacement naming a promise that does not exist is refused | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
 | A27 | A changed promise that breaks later reopens the plan that changed it, and its incident lists the rows that name it in both plans | Test Phase 1 | Build Phase 6 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/incident-proven-by.test.ts |
-| A28 | A promise a plan declared and then dropped, before it was ever in force, leaves the registry by a command; one that is in force, or another plan's, is refused, naming it, and nothing is removed | Build Phase 8 | Build Phase 8 | written | unit | lets the planner drop or rename a promise without anyone deleting a registry file by hand (Sandy, 2026-10-05) | apps/indusk-mcp/src/__tests__/promises-withdraw.test.ts |
+| A28 | A promise a plan declared and then dropped, before it was ever in force, leaves the registry by a command; one that is in force, or another plan's, is refused, naming it, and nothing is removed | Build Phase 8 | Build Phase 8 | passing | unit | lets the planner drop or rename a promise without anyone deleting a registry file by hand (Sandy, 2026-10-05) | apps/indusk-mcp/src/__tests__/promises-withdraw.test.ts |
 
 ### Deferred Verification
 
@@ -316,22 +316,23 @@ promises proven; and an incident starts from the tests that were vouching
 **Goal**: a promise a plan declared and then drops or renames, before it is in force, leaves the registry by a command, so the planner never deletes a registry file by hand. Added 2026-10-05 at Sandy's request, after the seven phases above closed.
 
 - [x] A28 written first: `promises-withdraw.test.ts`, through the CLI and the tool. RED: `promises withdraw` is not a command — eight cases, all red: seven on "unknown command 'withdraw'" (exit 1 where 0 or 2 is asserted), the tool's on no tool of that name
-- [ ] `lib/promises/write.ts`: `withdrawPromise(planRoot, { name, plan })` — removes the file of a promise that is `declared` and owned by that open plan; refuses, naming the promise, one the registry does not hold, one in any other state, one another plan owns, and one that lists an incident
-- [ ] `promises withdraw <name> --plan <plan>` and the `withdraw_promise` tool
-- [ ] `skills/planner.md`: a promise dropped or renamed after acceptance is withdrawn with the tool (a rename is a withdrawal and a declaration), and the brief is edited with it
-- [ ] ADR D4 gains the command, dated
+- [x] `lib/promises/write.ts`: `withdrawPromise(planRoot, { name, plan })` — removes the file of a promise that is `declared` and owned by that open plan; refuses, naming the promise, one the registry does not hold, one in any other state, one another plan owns, and one that lists an incident — and one more, found writing it: a promise another promise records replacing (`supersedes`), which would leave that record pointing at nothing; the replacement is withdrawn first. It does not scan the code: a promise still named by code after it is withdrawn is `promises check`'s refusal, which the command's message says to run
+- [x] `promises withdraw <name> --plan <plan>` and the `withdraw_promise` tool
+- [x] `skills/planner.md`: a promise dropped or renamed after acceptance is withdrawn with the tool (a rename is a withdrawal and a declaration), and the brief is edited with it — a dropped promise that was seriously considered goes under Not promised; the installed skill is synced
+- [x] ADR D4 gains the command, dated — a row in the commands table marked as added after acceptance, and a paragraph saying why
 
 #### Build Phase 8 Verification
 
-- [ ] A28 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promises-withdraw src/__tests__/promises-declare src/__tests__/promises-check src/__tests__/planner-brief-template src/__tests__/skill-sync-parity`)
+- [x] A28 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promises-withdraw src/__tests__/promises-declare src/__tests__/promises-check src/__tests__/planner-brief-template src/__tests__/skill-sync-parity`) — nine cases; with every promise, tool and context file: 26 files, 246 tests; `vitest related` over the three changed modules: 68 pass
+- [x] Shape — `withdrawPromise` is thirty-three lines beside its three siblings in the one writer, refusing before it removes anything, as they refuse before they write. Nothing to change
 
 #### Build Phase 8 Context
 
-- [ ] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): the `.indusk/promises/` entry names `withdraw` beside `declare | change | replace`
+- [x] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): the `.indusk/promises/` entry names `withdraw` beside `declare | change | replace` — and the installed copy; every pointer resolves
 
 #### Build Phase 8 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: `withdraw`; `guide/promises.md`: the row in "A promise's life in plans"; `changelog.md`: the commands entry names it
+- [x] `apps/docs/src/reference/cli/promises.md`: `withdraw`; `guide/promises.md`: the row in "A promise's life in plans"; `changelog.md`: the commands entry names it — also `guide/briefs.md`, which now says promises are declared when the brief is accepted (it said "as it writes the brief", which Build Phase 7 made untrue); the docs site builds
 
 ## Files Affected
 
@@ -342,7 +343,7 @@ promises proven; and an incident starts from the tests that were vouching
 | `apps/indusk-mcp/src/lib/test-levels.ts`, `hooks/_test-levels.js` | the levels, renamed |
 | `apps/indusk-mcp/src/lib/promises/{write,brief-contract,contract,confirm,rows}.ts` | new |
 | `apps/indusk-mcp/src/lib/promises/{registry,check,incidents,reopen}.ts` | `supersedes`, `Proven by`, the reopened row |
-| `apps/indusk-mcp/src/bin/{cli.ts,commands/promises.ts}`, `src/tools/plan-tools.ts` | five commands, four tools |
+| `apps/indusk-mcp/src/bin/{cli.ts,commands/promises.ts}`, `src/tools/plan-tools.ts` | six commands, five tools |
 | `apps/indusk-mcp/hooks/validate-impl-structure.js` | purpose, levels, the contract call |
 | `apps/indusk-mcp/src/lib/cleanup/gate.ts` | `promises` at close |
 | `apps/indusk-mcp/skills/{planner,work,retrospective}.md`, `templates/workflows/*.md`, `templates/planning/CLAUDE.md` | the conversation, the templates, the confirm step |

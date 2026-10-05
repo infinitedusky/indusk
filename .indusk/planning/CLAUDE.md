@@ -35,7 +35,8 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   `pnpm test` ends with `pnpm promises:check`. Only a promise about something
   known to happen regularly declares `expect_every`; silence without it is the
   good outcome. A promise is written by `indusk promises declare | change |
-  replace` (the planner's tools of the same names), never by hand. An incident
+  replace`, and one never in force taken back by `withdraw` (the planner's
+  tools of the same names), never by hand. An incident
   is closed with `indusk promises fix <id>`, which records when; `check`
   refuses a fixed incident that does not say. — see `/decisions/day-promises`
 
