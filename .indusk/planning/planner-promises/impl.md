@@ -1,7 +1,7 @@
 ---
 title: "The planner asks for promises"
 date: 2026-10-05
-status: draft
+status: in-progress
 trajectory: required
 test_phases: required
 test_kinds: required
