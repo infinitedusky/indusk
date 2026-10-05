@@ -54,18 +54,18 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | Each marked promise has a strip over the chosen window (24 h, 7 d, 30 d): upheld runs green, violations coloured, each in the cell for its time | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
-| A2 | A promise no run marks says so instead of drawing an empty strip | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
-| A3 | A violation's cell is red while its incident is open or unrecorded, and purple on the next refresh after the incident is marked fixed | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
-| A4 | Each incident is a band from when it opened to when it was fixed; an open one runs to now | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
+| A1 | Each marked promise has a strip over the chosen window (24 h, 7 d, 30 d): upheld runs green, violations coloured, each in the cell for its time | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
+| A2 | A promise no run marks says so instead of drawing an empty strip | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
+| A3 | A violation's cell is red while its incident is open or unrecorded, and purple on the next refresh after the incident is marked fixed | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
+| A4 | Each incident is a band from when it opened to when it was fixed; an open one runs to now | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A5 | `promises fix <id>` records when the incident was fixed and returns the promise to enforced; `promises check` refuses a fixed incident with no time, naming the file | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-fix.test.ts |
-| A6 | An unfixed violation older than the window still shows "violated N ago — open" on its row and every group above it | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
+| A6 | An unfixed violation older than the window still shows "violated N ago — open" on its row and every group above it | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A7 | Rows group by plan or domain; a collapsed group shows the worst state per cell (red over purple over green) and opens to its promises | Build Phase 5 | Build Phase 5 | planned | apps/indusk-admin/src/components/PromiseGroups.test.tsx |
-| A8 | With a production server the page opens on production's strip; local's is selectable and says how far back it reaches; a source that cannot be read says so and the other is still drawn | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
+| A8 | With a production server the page opens on production's strip; local's is selectable and says how far back it reaches; a source that cannot be read says so and the other is still drawn | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
 | A9 | Production's chip is red for an unrecorded or open violation, and `fixed` once every recent violation's incident is fixed | Test Phase 1 | Build Phase 3 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
 | A10 | Local's chip is red while the newest local run is a violation and green once a newer run holds, with no incident | Test Phase 1 | Build Phase 3 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
-| A11 | A window with more runs than one query returns is drawn end to end, and a cell that may be missing runs says "at least" | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
-| A12 | After the first read of a window, a refresh with nothing new transfers only marks newer than those held, measured on the wire | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline-transfer.test.ts |
+| A11 | A window with more runs than one query returns is drawn end to end, and a cell that may be missing runs says "at least" | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
+| A12 | After the first read of a window, a refresh with nothing new transfers only marks newer than those held, measured on the wire | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-transfer.test.ts |
 | A13 | Pointed at the deployed server after a break and its fix, the page shows red, then purple, then green | Build Phase 5 | Build Phase 5 | planned | manual: `pnpm --filter @infinitedusky/indusk-mcp e2e deployed-smoke`, then the admin against `promises.jaeger` |
 
 ### Deferred Verification
@@ -193,7 +193,7 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 #### Build Phase 4 Verification
 
-- [ ] A1–A4, A6, A8, A11 and A12 pass (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline`); `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
+- [x] A1–A4, A6, A8, A11 and A12 pass (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline`); `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear — all ten timeline tests pass; `pnpm test`: mcp 1705 passed / 5 skipped, admin 361 passed; `test:system`: 133 passed; both end with the leak guard's all-clear
 - [ ] U1: screenshots of the 7-day strip (one red, one purple, one green-only promise) reviewed by Sandy
 
 #### Build Phase 4 Context
