@@ -88,6 +88,7 @@ dusk/
 - Watcher heartbeat: every promise read first probes its Jaeger (a span sent and read back) and says *watcher blind*, never zero; the server beats each pass and tells Slack once each way — see `/decisions/watcher-heartbeat`
 - Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `/decisions/promise-sources`
 - Promise timeline: compact sliced reads; an admin store that reads only what is new plus a late tail; one `violationState` (unrecorded / open / fixed) for chip and timeline; incidents record `fixed` via `promises fix` — see `/decisions/promise-timeline`
+- Test kinds: five kinds (unit / contract / live check / smoke / promise), each with its moment, the smallest by default; code that decides takes its clock and reads as inputs; servers only in the system tier; the suite's speed is a promise — see `.indusk/planning/test-kinds/adr.md`
 
 ## Known Gotchas
 

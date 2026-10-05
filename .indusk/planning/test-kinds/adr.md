@@ -1,7 +1,7 @@
 ---
 title: "Test kinds"
 date: 2026-10-05
-status: proposed
+status: accepted
 ---
 
 # Test kinds
