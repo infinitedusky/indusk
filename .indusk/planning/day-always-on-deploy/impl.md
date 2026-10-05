@@ -1,7 +1,7 @@
 ---
 title: "Always-on deploy — run the server somewhere real"
 date: 2026-10-04
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
