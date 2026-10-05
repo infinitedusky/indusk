@@ -30,14 +30,16 @@ files by hand, and nothing connects a promise to the tests that prove it:
 
 ## Proposed Direction
 
-1. **The planner proposes, the person decides.** At brief time the planner
-   proposes what this plan promises will stay true, each as one plain
-   sentence. The person accepts, rewords or declines each. An accepted one is
-   written as a promise in `.indusk/promises/`, owned by this plan,
-   `state: declared`, before any code exists. The agent assigns its kind from
-   the sentence and the person can correct it. A declined proposal is recorded
-   in the brief and not raised again. A plan may make no promise; the brief
-   then says so, with the reason.
+1. **The conversation is the input.** The person and the agent talk through
+   what is wanted. That conversation is the main thing a person gives a plan
+   (Sandy, 2026-10-05). From it the agent writes the promises: each one plain
+   sentence, owned by this plan, `state: declared`, in `.indusk/promises/`,
+   before any code exists. Before saving them it reads them back, and the
+   person corrects them in the same conversation. The agent assigns each
+   promise's kind from its sentence, and the person can correct that too.
+   Something the person chose not to promise is recorded in the brief and not
+   raised again. A plan may make no promise; the brief then says so, with the
+   reason.
 2. **Every test says what it is for** (Sandy, 2026-10-02). A trajectory row
    names the promise it proves, or the lesson it guards (the `lesson: <name>`
    token), or says why it needs neither. A row that states none of the three is
