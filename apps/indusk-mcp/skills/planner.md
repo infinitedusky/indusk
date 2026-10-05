@@ -95,6 +95,8 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    Then run `indusk promises contract {plan-name}`. It refuses, naming the promise or the expectation, until the brief and the registry agree. When it passes, set `status: accepted`. From then on `indusk promises check` holds the plan to it, and with it every `pnpm test`.
 
+   **If the person later drops or renames a promise this plan declared**, take it back with `withdraw_promise` and edit the brief to match. A rename is `withdraw_promise`, then `declare_promise` with the new name. A dropped promise that was seriously considered goes under **Not promised**, with where it went. Never delete a file under `.indusk/promises/` by hand. Only a promise that was never in force can be withdrawn: one that is already `enforced` leaves the registry when a later plan replaces it.
+
    **When the brief moves from `draft` to `accepted`**, write a highlight so the eval agent can record it:
    ```
    mcp__indusk__highlight({
