@@ -17,7 +17,7 @@ import {
 } from "../src/__tests__/helpers/promises-fixture.js";
 import { type SlackCapture, startSlackCapture } from "../src/__tests__/helpers/slack-capture.js";
 import { toolCaller } from "../src/__tests__/helpers/tool-call.js";
-import { registerPlanTools } from "../src/tools/plan-tools.js";
+import { registerPromiseTools } from "../src/tools/promise-tools.js";
 
 /**
  * day-always-on — A21, end to end, with no developer machine in the loop
@@ -239,7 +239,7 @@ describe("day-always-on — the loop with no developer machine in it", () => {
 	it("and a session asked what is next is told about it", async () => {
 		process.env[CRED_ENV] = server.credential;
 		try {
-			const tools = toolCaller((s) => registerPlanTools(s, fixture.planRoot));
+			const tools = toolCaller((s) => registerPromiseTools(s, fixture.planRoot));
 			const { json, isError } = await tools.call("promise_health", {});
 			expect(isError, JSON.stringify(json)).toBe(false);
 			const report = json as {
