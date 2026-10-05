@@ -88,6 +88,7 @@ dusk/
 - Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `/decisions/promise-sources`
 - Promise timeline: compact sliced reads; an admin store that reads only what is new plus a late tail; one `violationState` (unrecorded / open / fixed) for chip and timeline; incidents record `fixed` via `promises fix` — see `/decisions/promise-timeline`
 - Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
+- Briefs hold expectations and promises; rows say what they prove — see `.indusk/planning/planner-promises/adr.md`
 
 ## Known Gotchas
 

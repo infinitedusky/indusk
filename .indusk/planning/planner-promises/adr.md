@@ -1,7 +1,7 @@
 ---
 title: "The planner asks for promises"
 date: 2026-10-05
-status: proposed
+status: accepted
 ---
 
 # The planner asks for promises
