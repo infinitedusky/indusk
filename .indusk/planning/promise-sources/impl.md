@@ -149,7 +149,7 @@ exists today and answers wrongly.
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/skills/catchup.md`: the source of a raised violation; `apps/docs/src/guide/promises.md`: a "Local and production" section
+- [x] `apps/docs/src/reference/skills/catchup.md`: the source of a raised violation; `apps/docs/src/guide/promises.md`: a "Local and production" section
 
 ### Build Phase 4: the admin, per source
 

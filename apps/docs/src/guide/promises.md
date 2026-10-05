@@ -204,6 +204,35 @@ every evaluator run, and `pnpm e2e` breaks it on purpose (a model that does
 not exist) to prove the whole path. The commands are in the
 [`indusk promises` reference](/reference/cli/promises).
 
+## Local and production
+
+A project reads promise marks from one or two **sources**. `local` is the
+telemetry daemon on the developer's machine, and every project has it.
+`production` is the always-on server a project names in `promises.jaeger`.
+Reading both side by side is the point: while building, the same promise can
+be red on the laptop and green in production, and seeing both says what a
+change has broken before it ships.
+
+```mermaid
+flowchart LR
+    Laptop["your runs"] --> Local["local<br/>(the daemon)"]
+    Deployed["the deployed app"] --> Production["production<br/>(promises.jaeger)"]
+    Local --> Readers["status · promise_health · the admin"]
+    Production --> Readers
+    Production -->|alarm source| Alarm["needsAttention · sidebar red<br/>status exit · catchup raises"]
+```
+
+Every reader shows every source, each in its own section, chip or entry. Only
+one source raises the alarm: production when there is one, otherwise local. A
+break that appears only locally is work in progress. It is shown under
+`local` and not raised. A source that cannot be read, or whose watcher is
+blind, says so for that source, and the other source is still shown: one dead
+source never hides another. `promises watch --source deployed` records
+production's breaks; `--source local` records the laptop's.
+
+A project that names no server has one source, `local`, and every reader
+behaves exactly as it did before sources existed.
+
 ## Watcher blind
 
 Every reader — `promises status`, `promises watch`, `promise_health`, the
