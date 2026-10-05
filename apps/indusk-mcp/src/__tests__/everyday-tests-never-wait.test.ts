@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { SYSTEM as MCP_SYSTEM } from "../../vitest.tiers";
 
 /**
- * promise: everyday-tests-never-wait (test-kinds A14, A15).
+ * The everyday suite never waits (test-kinds A14, A15).
  *
  * The everyday suite answers "is this rule right?", in seconds, at every
  * phase. A test that starts a server or waits on the wall clock is asking a
