@@ -4,6 +4,12 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **Local and production, side by side.** A project that names an always-on server in `promises.jaeger` now reads both it and the laptop's telemetry daemon. `promises status` prints a section per source; `promise_health` adds `sources`, each with its own rows or its own failure; the admin draws a health chip per source on every behaviour promise. Only production raises the alarm — the top-level `needsAttention`, the sidebar's red, `status`'s exit code and catchup's "raise first" — so a break on the laptop is shown as work in progress, not raised. One source that cannot be read never hides the other. `watch --source deployed` now reads production and `--source local` the laptop, instead of only labelling the incident. A project that names no server behaves exactly as before.
+
+### Fixed
+- **A server that is down reads as unreachable, not *watcher blind*.** When the probe's send failed, every reader called the watcher blind, which advises looking for a stranger on the port. If the query API does not answer either, nobody is there, and readers now say so.
+
 ## [1.58.4] — 2026-10-04
 
 ### Fixed
