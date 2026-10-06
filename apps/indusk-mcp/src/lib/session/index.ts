@@ -3,6 +3,7 @@
  * one definition behind the admin and the build runner.
  */
 
+export { isAdminHost } from "./hosts.js";
 export {
 	defaultRecordPath,
 	type ManagedStart,
