@@ -857,6 +857,17 @@ plansCmd
 	});
 
 plansCmd
+	.command("next <name>")
+	.description(
+		"What an unattended build does next: work, falsify, cleanup, a judgement the plan declared, review, or cannot continue",
+	)
+	.option("--json", "Print the step as JSON")
+	.action(async (name: string, opts: { json?: boolean }) => {
+		const { plansNext } = await import("./commands/plans.js");
+		await plansNext(process.cwd(), name, opts.json === true);
+	});
+
+plansCmd
 	.command("land <name>")
 	.description(
 		"Land an accepted plan: merge the trunk in, run plans.land_checks, merge to the trunk, remove its worktree and branch",

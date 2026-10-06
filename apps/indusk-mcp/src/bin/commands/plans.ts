@@ -1,3 +1,5 @@
+import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
+import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import {
 	acceptPlan,
@@ -42,6 +44,37 @@ export function plansAccept(cwd: string, name: string, auto: boolean): Promise<v
 		const a = await acceptPlan(cwd, name, auto ? "auto" : "person");
 		return `Accepted ${a.plan} at ${a.accepted}${a.acceptedBy === "auto" ? ", by its workflow" : ""}.`;
 	});
+}
+
+/** `indusk plans next <name>` — what an unattended build does next, from the plan as it stands. */
+export async function plansNext(cwd: string, name: string, json: boolean): Promise<void> {
+	try {
+		const step = nextBuildStep(await readBuildPlan(cwd, name));
+		console.info(json ? JSON.stringify(step) : describeStep(step));
+	} catch (err) {
+		if (err instanceof BuildPlanUnreadable) {
+			console.error(`Refused: ${err.message}`);
+			process.exit(1);
+		}
+		throw err;
+	}
+}
+
+function describeStep(s: BuildStep): string {
+	switch (s.step) {
+		case "work":
+			return `work: ${s.phase}`;
+		case "falsify":
+			return "falsify: every phase is closed and the falsification has not run";
+		case "cleanup":
+			return "cleanup: falsification is closed and the cleanup has not run";
+		case "judgement":
+			return `judgement: ${s.phase} waits on a person — ${s.item}`;
+		case "review":
+			return "review: built — every phase, the falsification and the cleanup are closed";
+		case "cannot-continue":
+			return `cannot continue: ${s.why}`;
+	}
 }
 
 /** `indusk plans land <name>` — an accepted plan's build reaches the trunk. */
