@@ -63,7 +63,10 @@ export async function daemonStart(opts: DaemonStartOptions): Promise<DaemonMeta>
 	ensureHome();
 
 	const logFd = openSync(logFilePath(), "a");
-	const child = spawn("node", [opts.nextBin, "start", "--port", String(opts.port)], {
+	// Loopback only (admin-plan-authoring, ADR D2): the admin's routes start the
+	// developer's own `claude`, so they must never be reachable from the
+	// network. Without `-H`, Next listens on every interface.
+	const child = spawn("node", [opts.nextBin, "start", "--port", String(opts.port), "-H", "127.0.0.1"], {
 		cwd: opts.adminDir,
 		detached: true,
 		stdio: ["ignore", logFd, logFd],
