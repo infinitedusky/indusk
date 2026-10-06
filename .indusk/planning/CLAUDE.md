@@ -100,7 +100,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   commit is marked a violation of `a-plan-is-written-on-its-own-branch`.
   Approving and landing commit InDusk's own bookkeeping left on the trunk;
   any other uncommitted work there is the person's — shown at review, never
-  committed by a session. — see `/reference/cli/plans`
+  committed by a session. In a workbench, a plan's documents live at the
+  workbench root and only its code gets `plan/<name>`, in the repo its
+  `code.json` names (`--repo` when there are several). — see
+  `/reference/cli/plans`
 - **A Context gate item names its tier and destination** — `guard: <test>
   carries lesson: <name>`, `planning: …` (this file, via its template), an
   area's own `CLAUDE.md`, `current.md: …`, or `root (<section>): … —
