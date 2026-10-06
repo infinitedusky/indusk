@@ -81,6 +81,7 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 **Goal**: write each row that reaches its subject over the CLI, across the versioned-workbench `LAYOUTS`, and see each fail on its own assertion.
 
 - [ ] Confirm this plan's worktree (`indusk plans start feature workbench-plan-authoring` made it and recorded the assignment) — worktree-per-plan default
+- [ ] root (Key Decisions): the ADR's one-line entry, added here rather than at ADR acceptance — `plans approve` refuses a branch that changes anything outside `.indusk/`, and the planner skill adds the line before approval; that mismatch is a follow-on
 - [ ] A1, A2, A3, A6, A11, A12, A15, A16: `plans-workbench.test.ts`, through the CLI over `LAYOUTS` and a two-repo workbench: start, the code file, approve without a merge, a declared promise landing in the code worktree, review's files, land in the repo, and a missing worktree reported. RED today: `plans start` refuses in a workbench
 - [ ] A4, A5, A7, A8: `contract-resolver.test.ts`, through `indusk promises list`, `status` and `check` over a workbench whose repo holds a contract and one whose does not, and two workbenches on one repo. RED today: the workbench's folder is read
 - [ ] A17: `contract-resolver-single-definition.test.ts` scans `src/lib` for a join to `.indusk/promises` outside the resolver, and for a code root decided outside `resolveExecutionRoots`. RED today: `promisesDir` and `confirm.ts` each join it
