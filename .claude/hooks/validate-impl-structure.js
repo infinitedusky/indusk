@@ -17,6 +17,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { policyFromEnvironment } from "./_gate-policy.js";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
 import {
 	ANY_PHASE_HEADING,
@@ -96,6 +97,9 @@ const newContent = toolInput.new_string ?? toolInput.content ?? "";
 
 // Read gate policy
 function readGatePolicy() {
+	// The environment a build sets outranks the plan (admin-plan-authoring, D5)
+	const fromBuild = policyFromEnvironment();
+	if (fromBuild) return fromBuild;
 	// Check the content being written for a gate_policy in frontmatter
 	const contentToCheck = toolInput.content ?? toolInput.new_string ?? "";
 	const fmMatch = contentToCheck.match(/gate_policy:\s*(strict|ask|auto)/);
