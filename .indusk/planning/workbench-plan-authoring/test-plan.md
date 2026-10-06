@@ -1,7 +1,7 @@
 ---
 title: "Workbench plan authoring — Test Plan"
 date: 2026-10-06
-status: draft
+status: accepted
 ---
 
 # Workbench plan authoring — Test Plan
