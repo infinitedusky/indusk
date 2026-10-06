@@ -825,7 +825,46 @@ contextCmd
 
 const plansCmd = program
 	.command("plans")
-	.description("Planning-lifecycle housekeeping (archive-dead)");
+	.description("A plan's lifecycle: start, approve, accept, land; and housekeeping (archive-dead)");
+
+plansCmd
+	.command("start <type> <name>")
+	.description(
+		"Start a plan on its own branch and worktree (type: feature, bugfix, refactor, spike); nothing reaches the trunk until it is approved",
+	)
+	.action(async (type: string, name: string) => {
+		const { plansStart } = await import("./commands/plans.js");
+		await plansStart(process.cwd(), type, name);
+	});
+
+plansCmd
+	.command("approve <name>")
+	.description(
+		"Approve a plan: its brief is checked, then its documents and promises merge to the trunk; the build continues on its branch",
+	)
+	.action(async (name: string) => {
+		const { plansApprove } = await import("./commands/plans.js");
+		await plansApprove(process.cwd(), name);
+	});
+
+plansCmd
+	.command("accept <name>")
+	.description("Accept a plan's build so it may land; recorded in its impl on its branch")
+	.option("--auto", "Recorded as accepted by the plan's workflow, not a person")
+	.action(async (name: string, opts: { auto?: boolean }) => {
+		const { plansAccept } = await import("./commands/plans.js");
+		await plansAccept(process.cwd(), name, opts.auto === true);
+	});
+
+plansCmd
+	.command("land <name>")
+	.description(
+		"Land an accepted plan: merge the trunk in, run plans.land_checks, merge to the trunk, remove its worktree and branch",
+	)
+	.action(async (name: string) => {
+		const { plansLand } = await import("./commands/plans.js");
+		await plansLand(process.cwd(), name);
+	});
 
 plansCmd
 	.command("archive-dead")

@@ -1,4 +1,57 @@
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
+import {
+	acceptPlan,
+	approvePlan,
+	landPlan,
+	PlanCommandRefusal,
+	startPlan,
+} from "../../lib/plans/index.js";
+
+/** Run a plan verb: print what it did, or its refusal on stderr and exit 1. */
+async function planVerb(run: () => Promise<string>): Promise<void> {
+	try {
+		console.info(await run());
+	} catch (err) {
+		if (err instanceof PlanCommandRefusal) {
+			console.error(`Refused: ${err.message}`);
+			process.exit(1);
+		}
+		throw err;
+	}
+}
+
+/** `indusk plans start <type> <name>` — the plan's own branch and worktree, its first document there. */
+export function plansStart(cwd: string, type: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const s = await startPlan(cwd, type, name);
+		return `Started ${s.plan} (${s.type}) in ${s.worktree} on ${s.branch}; its ${s.document} is there, and nothing is on the trunk until it is approved.`;
+	});
+}
+
+/** `indusk plans approve <name>` — the documents and promises reach the trunk. */
+export function plansApprove(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const a = await approvePlan(cwd, name);
+		return `Approved ${a.plan}: ${a.paths.length} file(s) merged to the trunk at ${a.merge.slice(0, 8)}; its build continues on its branch.`;
+	});
+}
+
+/** `indusk plans accept <name>` — the build may ship. */
+export function plansAccept(cwd: string, name: string, auto: boolean): Promise<void> {
+	return planVerb(async () => {
+		const a = await acceptPlan(cwd, name, auto ? "auto" : "person");
+		return `Accepted ${a.plan} at ${a.accepted}${a.acceptedBy === "auto" ? ", by its workflow" : ""}.`;
+	});
+}
+
+/** `indusk plans land <name>` — an accepted plan's build reaches the trunk. */
+export function plansLand(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const l = await landPlan(cwd, name);
+		const checks = l.checks.length > 0 ? ` after ${l.checks.length} check(s)` : "";
+		return `Landed ${l.plan} on the trunk at ${l.merge.slice(0, 8)}${checks}; its worktree and branch are removed.`;
+	});
+}
 
 export interface PlansArchiveDeadOptions {
 	dryRun?: boolean;

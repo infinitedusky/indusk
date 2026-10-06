@@ -82,6 +82,10 @@
 			"types": "./dist/lib/lifecycle.d.ts",
 			"default": "./dist/lib/lifecycle.js"
 		},
+		"./plans": {
+			"types": "./dist/lib/plans/index.d.ts",
+			"default": "./dist/lib/plans/index.js"
+		},
 		"./workflow-types": {
 			"types": "./dist/lib/workflow-types.d.ts",
 			"default": "./dist/lib/workflow-types.js"
