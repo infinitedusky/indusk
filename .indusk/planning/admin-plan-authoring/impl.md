@@ -58,9 +58,9 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | New plan in the admin, with a type and a name, starts a planning session, and what the session says appears in the panel as it says it | Build Phase 4 | Build Phase 6 | written | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-mcp/src/lib/session/trust.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A2 | A question the session asks appears in the panel with its choices; the answer reaches the session and it continues | Build Phase 4 | Build Phase 6 | written | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A3 | A tool-use request appears in the panel; allowing it lets the session go on, denying it tells the session no | Build Phase 4 | Build Phase 6 | written | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A1 | New plan in the admin, with a type and a name, starts a planning session, and what the session says appears in the panel as it says it | Build Phase 4 | Build Phase 6 | passing | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-mcp/src/lib/session/trust.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A2 | A question the session asks appears in the panel with its choices; the answer reaches the session and it continues | Build Phase 4 | Build Phase 6 | passing | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A3 | A tool-use request appears in the panel; allowing it lets the session go on, denying it tells the session no | Build Phase 4 | Build Phase 6 | passing | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A4 | A planning session asks before every write, even when the developer's own Claude Code allows writes without asking | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts |
 | A5 | Claude Code still answers a question, a permission request and an interrupt over the session's stream | Build Phase 4 | Build Phase 4 | passing | contract | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/__tests__/session-protocol-contract.test.ts |
 | A6 | A plan started in the admin and one started in the editor produce the same plan folder and registry entries, and either continues from the other | Build Phase 9 | Build Phase 9 | planned | live check | promise: a-plan-can-start-from-the-admin | manual: recorded in Build Phase 9 |
@@ -78,7 +78,7 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A18 | A plan that has not been accepted cannot be landed on `main`; the refusal names the plan | Test Phase 1 | Build Phase 1 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 | A19 | Accepting a plan in the panel runs the release workflow: the retrospective, the merge to `main`, the branch and worktree removed | Build Phase 7 | Build Phase 7 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
 | A20 | With `release.auto_accept`, a build that reaches review goes on to the release workflow without the person | Build Phase 7 | Build Phase 7 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
-| A21 | Stopping a session from the panel ends it, and what it wrote stays written | Build Phase 5 | Build Phase 6 | written | unit | promise: a-session-can-be-stopped | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A21 | Stopping a session from the panel ends it, and what it wrote stays written | Build Phase 5 | Build Phase 6 | passing | unit | promise: a-session-can-be-stopped | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A22 | When the admin stops, or starts again after a crash, no session it started is still running | Build Phase 5 | Build Phase 5 | passing | contract | promise: a-session-can-be-stopped | apps/indusk-mcp/src/__tests__/admin-session-lifecycle.test.ts |
 | A23 | Approving runs the same brief check as the command line and refuses with its message when a promise is missing from the registry | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
 | A24 | In a build session the admin starts, a checkoff that skips a gate without a reason is refused | Build Phase 7 | Build Phase 7 | planned | contract | promise: gates-ran-at-every-checkoff | apps/indusk-mcp/src/__tests__/build-session-gates.test.ts |
@@ -293,24 +293,25 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 ### Build Phase 6: The panel
 
-- [ ] `components/session/SessionPanel.tsx`: the stream, a question with its choices, a permission request with Allow and Deny, Stop
-- [ ] New plan on the project page: a type and a name, then `plans start` and a planning session in the new worktree
-- [ ] Approve on a plan's page, once its impl is written: `plans approve`, its refusal shown as the command gives it
-- [ ] The plan page refreshes when the session reports a write
-- [ ] A1–A3 and A21 panel halves written red, then passing
+- [x] `components/session/SessionPanel.tsx`: the stream, a question with its choices, a permission request with Allow and Deny, Stop — also says whether the worktree was trusted, and how the session ended; an answered request is not offered again. Imports only types from the package; the session code is Node's
+- [x] New plan on the project page: a type and a name, then `plans start` and a planning session in the new worktree — `POST /api/plans` refuses before making anything while another session runs, so no worktree is left without its conversation; the page then moves to the plan, where `PlanSession` finds the running session and connects
+- [x] Approve on a plan's page, once its impl is written: `plans approve`, its refusal shown as the command gives it — offered for a plan on its own branch whose impl is not yet approved; `POST /api/plans/approve` calls `approvePlan` and returns a refusal's words with 409
+- [x] The plan page refreshes when the session reports a write — `SessionConnector` calls `router.refresh()` on a Write, Edit, MultiEdit or NotebookEdit event and when the session ends; seen working in Build Phase 9's live checks, not by a test here
+- [x] A1–A3 and A21 panel halves written red, then passing — written before `SessionPanel.tsx` existed (a load error; its subject is the new component). Two then failed on the test's own lookup (an option's text includes its description); the lookup reads the option's label. 9 pass
 
 #### Build Phase 6 Verification
 
-- [ ] A1, A2, A3, A21 pass (`cd apps/indusk-admin && pnpm exec vitest run src/components/session`)
-- [ ] A25 still passes (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/admin-uses-package-commands`)
+- [x] A1, A2, A3, A21 pass (`cd apps/indusk-admin && pnpm exec vitest run src/components/session`) — the panel 9; their package halves (`src/lib/session`: protocol, trust, manager) 31; `tsc --noEmit` clean in the admin
+- [x] A25 still passes (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/admin-uses-package-commands`) — 3; the new routes import only `/plans` and `/session` from the package and spawn nothing
+- [x] Shape — `SessionPanel` renders events and reports choices, with `EventView` and `QuestionView` each one job; `SessionConnector` owns only the event stream and the POSTs; `PlanSession` decides only what to offer on a plan's page; each route reads, calls one package function, maps a refusal. One thing looked at and kept: `NewPlanForm` and `PlanSession` each have a small `fetch`-then-show-the-error block — two copies, below the rule of three, and the place to share them is cleanup's question. Nothing to change
 
 #### Build Phase 6 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: the session panel reads one event stream and sends replies; it never parses the session's protocol itself
+- [x] `apps/indusk-admin/CLAUDE.md`: the session panel reads one event stream and sends replies; it never parses the session's protocol itself — added to the entry Build Phase 5 wrote, with the rule that a client component imports only types from `/session`
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: the panel, with a screenshot of a question
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: the panel, with a screenshot of a question — the panel is described in words. The screenshot was taken (the real component, styled, in the admin's test browser) but not committed: `.gitignore` ignores every `*.png`, and overriding a repository-wide rule is Sandy's call, raised with him; the image is kept in the session scratchpad
 
 ### Build Phase 7: Build, review, accept, release
 
