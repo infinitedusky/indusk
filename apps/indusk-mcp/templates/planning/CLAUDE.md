@@ -93,10 +93,12 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
 - **Worktree-per-plan is the default**: Phase 1 opens with `indusk worktree
   create <plan>` (records the assignment; the landing releases it); opt out
   with `worktree: none` in impl frontmatter. — see `/reference/cli/worktree`
-- **A plan can start on its own branch**: `indusk plans start <type> <name>`
-  writes its documents in its worktree only; `plans approve` checks the brief
-  and merges them to the trunk; `plans land` refuses a plan not yet `plans
-  accept`ed. — see `/reference/cli/plans`
+- **A plan is written on its own branch, by convention**: `indusk plans start
+  <type> <name>` writes its documents in its worktree only; `plans approve`
+  checks the brief and merges them to the trunk; `plans land` refuses a plan
+  not yet `plans accept`ed. A plan written on `main` is not refused; each such
+  commit is marked a violation of `a-plan-is-written-on-its-own-branch`. — see
+  `/reference/cli/plans`
 - **A Context gate item names its tier and destination** — `guard: <test>
   carries lesson: <name>`, `planning: …` (this file, via its template), an
   area's own `CLAUDE.md`, `current.md: …`, or `root (<section>): … —
