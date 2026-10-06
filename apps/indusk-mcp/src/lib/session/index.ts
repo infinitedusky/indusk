@@ -2,6 +2,14 @@
  * Sessions of the developer's own `claude` (admin-plan-authoring, ADR D1),
  * one definition behind the admin and the build runner.
  */
+
+export {
+	defaultRecordPath,
+	type ManagedStart,
+	SessionBusy,
+	SessionManager,
+	type SessionRecord,
+} from "./manager.js";
 export { type Decision, decideBuildPermission, refuseBuildQuestion } from "./permissions.js";
 export {
 	answerQuestion,

@@ -40,6 +40,7 @@ interface Held {
 	session: Session;
 	events: StartedEvent[];
 	listeners: Set<(ev: StartedEvent) => void>;
+	answered: Set<string>;
 }
 
 export function defaultRecordPath(): string {
@@ -70,6 +71,7 @@ export class SessionManager {
 			session: undefined as unknown as Session,
 			events: [],
 			listeners: new Set(),
+			answered: new Set(),
 		};
 		const session = this.launch({
 			...opts,
@@ -116,6 +118,41 @@ export class SessionManager {
 		for (const ev of h.events) listen(ev);
 		h.listeners.add(listen);
 		return () => h.listeners.delete(listen);
+	}
+
+	/**
+	 * Answer what session `id` asked, by the request's id: a question with the
+	 * person's answers (question text → label), a tool request with allow or
+	 * deny. Refuses a request the session never made or already had answered.
+	 */
+	reply(
+		id: string,
+		reply:
+			| { requestId: string; answers: Record<string, string> }
+			| { requestId: string; allow: true }
+			| { requestId: string; allow: false; message: string },
+	): void {
+		const h = this.held.get(id);
+		if (!h) throw new Error(`no session ${id} is running`);
+		if (h.answered.has(reply.requestId))
+			throw new Error(`request ${reply.requestId} was already answered`);
+		const asked = h.events.find(
+			(e) => (e.type === "question" || e.type === "permission") && e.requestId === reply.requestId,
+		);
+		if (!asked) throw new Error(`session ${id} made no request ${reply.requestId}`);
+		if (asked.type === "question") {
+			if (!("answers" in reply))
+				throw new Error(`request ${reply.requestId} is a question: answer it`);
+			h.session.answer(asked, reply.answers);
+		} else if (asked.type === "permission") {
+			if (!("allow" in reply))
+				throw new Error(`request ${reply.requestId} asks to use ${asked.tool}: allow or deny it`);
+			h.session.decide(
+				asked,
+				reply.allow ? { allow: true } : { allow: false, message: reply.message },
+			);
+		}
+		h.answered.add(reply.requestId);
 	}
 
 	async stop(id: string, graceMs?: number): Promise<void> {

@@ -117,3 +117,41 @@ describe("A21 — a session can be stopped, and only one runs at a time", () => 
 		await expect(m.stop("nope")).rejects.toThrow(/nope/);
 	});
 });
+
+describe("A21 — the panel's answers reach the session by the request's id", () => {
+	it("an answer to a request the session never made is refused, naming it", () => {
+		const { m } = manager();
+		const { id } = m.start({ ...planning, ...meta });
+		expect(() => m.reply(id, { requestId: "r-none", allow: true })).toThrow(/r-none/);
+	});
+});
+
+describe("A21 — an answer is delivered once, to the request it answers", () => {
+	it("a question answered through the manager reaches the session; a second answer is refused", () => {
+		const dir = mkdtempSync(join(tmpdir(), "session-manager-"));
+		dirs.push(dir);
+		const answered: Array<Record<string, string>> = [];
+		let emit: SessionOptions["onEvent"] = () => {};
+		const m = new SessionManager({
+			recordPath: join(dir, "r.json"),
+			start: (opts) => {
+				emit = opts.onEvent;
+				return {
+					pid: 1,
+					kind: opts.kind,
+					cwd: opts.cwd,
+					say: () => {},
+					answer: (_ev, answers) => answered.push(answers),
+					decide: () => {},
+					stop: async () => {},
+					done: new Promise(() => {}),
+				};
+			},
+		});
+		const { id } = m.start({ ...planning, ...meta });
+		emit({ type: "question", requestId: "q1", questions: [], input: {} });
+		m.reply(id, { requestId: "q1", answers: { "Which workflow?": "feature" } });
+		expect(answered).toEqual([{ "Which workflow?": "feature" }]);
+		expect(() => m.reply(id, { requestId: "q1", answers: {} })).toThrow(/already answered/);
+	});
+});
