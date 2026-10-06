@@ -72,9 +72,9 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A12 | A build stops at a judgement item the plan declared and names the item | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/plans-next.test.ts |
 | A13 | A build that cannot continue stops and says why: a session error after its retries, two steps with no progress, or a `blocker:` line | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/lib/build/next-step.test.ts |
 | A14 | A build stops at review when every phase, falsification and cleanup is closed, and does not start the retrospective | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/plans-next.test.ts |
-| A15 | The review lists each promise the plan makes with the passing tests naming it; one with none is unproven | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
-| A16 | The review shows what falsification looked for, what it found and what was fixed | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
-| A17 | The review shows the files the plan's branch changed against `main` | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
+| A15 | The review lists each promise the plan makes with the passing tests naming it; one with none is unproven | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
+| A16 | The review shows what falsification looked for, what it found and what was fixed | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
+| A17 | The review shows the files the plan's branch changed against `main` | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A18 | A plan that has not been accepted cannot be landed on `main`; the refusal names the plan | Test Phase 1 | Build Phase 1 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 | A19 | Accepting a plan in the panel runs the release workflow: the retrospective, the merge to `main`, the branch and worktree removed | Build Phase 7 | Build Phase 7 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
 | A20 | With `release.auto_accept`, a build that reaches review goes on to the release workflow without the person | Build Phase 7 | Build Phase 7 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
@@ -87,7 +87,7 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A27 | In a scratch project, one plan goes the whole way in the admin without a terminal: started, planned, promises accepted, approved, built to review, evidence read, accepted, released | Build Phase 9 | Build Phase 9 | planned | live check | promise: a-build-runs-to-review-unasked | manual: recorded in Build Phase 9 |
 | A28 | This plan's six promises go from `declared` to `enforced` when it closes | Build Phase 9 | Build Phase 9 | planned | live check | promise: a-review-shows-its-evidence | manual: `indusk promises confirm admin-plan-authoring`, recorded in Build Phase 9 |
 | A29 | A non-merge commit on `main` that changes an active plan's documents is marked as a violation of the own-branch promise; a merge from the plan's branch is marked upheld; the commit is never refused | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/trunk-plan-commit-mark.test.ts |
-| A30 | A build writes inside its worktree without asking and is refused outside it; a gate item it skips carries its reason, and the review lists every skip | Build Phase 3 | Build Phase 7 | planned | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/gate-policy-env.test.ts, apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-mcp/src/__tests__/plans-review.test.ts |
+| A30 | A build writes inside its worktree without asking and is refused outside it; a gate item it skips carries its reason, and the review lists every skip | Build Phase 3 | Build Phase 7 | written | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/gate-policy-env.test.ts, apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A31 | A plan that is in review or accepted shows that position on its admin page | Test Phase 1 | Build Phase 2 | passing | unit | the planning rule that a plan adding a lifecycle position renders it in the admin, in the same plan | apps/indusk-mcp/src/lib/lifecycle-review.test.ts, apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
 
 ### Deferred Verification
@@ -227,23 +227,24 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 ### Build Phase 3: The review, and skips with reasons
 
-- [ ] `lib/build/review.ts`: `buildReview(root, plan)` per ADR D6, reading promises and rows through the confirm module's reader, never a copy
-- [ ] `indusk plans review <name>` prints it, `--json` for the admin
-- [ ] `check-gates.js` and `validate-impl-structure.js` read `INDUSK_GATE_POLICY` before the impl and settings; under `auto` a skip without a reason is refused
-- [ ] A30's hook half written red over the hook boundary, then passing
+- [x] `lib/build/review.ts`: `buildReview(root, plan)` per ADR D6, reading promises and rows through the confirm module's reader, never a copy — `promises/rows.ts`'s `rowProofs`, the half of confirmation that reads only the impl, so the review cannot call proven what the close refuses; a promise the brief makes but the registry lacks is still listed, by name
+- [x] `indusk plans review <name>` prints it, `--json` for the admin
+- [x] `check-gates.js` and `validate-impl-structure.js` read `INDUSK_GATE_POLICY` before the impl and settings; under `auto` a skip without a reason is refused — through one hook-local module, `hooks/_gate-policy.js` (`policyFromEnvironment`, `skipCarriesReason`). The reason rule applies when the environment set `auto`; a plan that sets `gate_policy: auto` itself keeps the bare `(none needed)` it has today. A value that is not a policy is ignored, never read as `auto`
+- [x] A30's hook half written red over the hook boundary, then passing — `gate-policy-env.test.ts`: 4 red on their assertions (exit 2 where 0 is expected, or a hint with no word about a reason), 2 controls green; then 6 of 6. The review's half is a case in `plans-review.test.ts` (every skip, with its reason); the worktree half waits for the session, Build Phase 4
 
 #### Build Phase 3 Verification
 
-- [ ] A15, A16, A17 pass, and A30's hook half (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plans-review src/__tests__/gate-policy-env`)
-- [ ] `hook-cwd-independence.test.ts` and `check-gates` tests still pass
+- [x] A15, A16, A17 pass, and A30's hook half (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plans-review src/__tests__/gate-policy-env`) — 10 tests; `tsc --noEmit` clean
+- [x] `hook-cwd-independence.test.ts` and `check-gates` tests still pass — with the shared-module, registration, CJS-consumer and init hook tests and `src/lib/run`: 25 files, 119 tests
+- [x] Shape — `review.ts` is one assembly function and three small readers (promises, files, the skip test), each named for what it reads; `_gate-policy.js` holds the two facts both hooks need and nothing else. One thing looked at and kept: `review.ts` resolves the trunk branch itself rather than through `plans/plan-branch.ts`, because a review must also work for a plan with no worktree (it then lists no files), and `planBranch` refuses that case by design. Nothing to change
 
 #### Build Phase 3 Context
 
-- [ ] guard: `gate-policy-env.test.ts` carries `lesson: a-build-skips-a-gate-only-with-its-reason`; the lesson file is written with it
+- [x] guard: `gate-policy-env.test.ts` carries `lesson: a-build-skips-a-gate-only-with-its-reason`; the lesson file is written with it — `.claude/lessons/a-build-skips-a-gate-only-with-its-reason.md`, written in the worktree by hand (the lesson tool writes to the session's trunk)
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/skills/work.md`: the gate policy table gains the environment level
+- [x] `apps/docs/src/reference/skills/work.md`: the gate policy table gains the environment level — the page had no policy table; it now has the four levels and what each policy counts as a skip. `reference/cli/plans.md` gains `plans review`
 
 ### Build Phase 4: The session
 
