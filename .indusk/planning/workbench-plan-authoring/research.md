@@ -105,3 +105,48 @@ File and line references are to `apps/indusk-mcp/src` unless noted.
    - release the code worktree.
 7. **Sync and the plan commands both write to the root.** Bookkeeping commits
    and the trunk check would race an auto-committer on the same tree.
+
+## Design note: one contract, kept with the code
+
+*From the conversation with Sandy, 2026-10-06.*
+
+**What a workbench is for.** It takes the context out of the project. Plans,
+lessons, skills, sessions and the agent's setup all live beside the repo
+instead of inside it. "We're building the agents who work on a repo, not the
+repo itself."
+
+**The problem.** InDusk is meant to be integrated: telemetry links back to
+promises, and promises back to plans. Today a workbench holds the promise
+registry. The code already carries the promise names, in `promise:` tokens
+and in the marks it sends in production. Two workbenches on one repo could
+each define the same name differently. Then one application's telemetry
+would be read against two contracts, and the premise breaks.
+
+**The rule.** Promises belong with the code; the work belongs in the
+workbench.
+- **Promises in the repo.** `.indusk/promises/` is the application's
+  contract. One repo has one contract, however many workbenches work on it.
+  The registry, the tests and the telemetry share one history.
+- **The work in the workbench.** Plans, sessions, lessons and agent setup
+  live there. A plan names the promises it makes or changes.
+- **A shadow contract until the repo accepts it.** A repo that has not
+  adopted InDusk (a client's, typically) cannot hold the folder yet. Until
+  it does, its contract lives in the workbench. It is versioned there, since
+  the workbench root is a git repo ("You are versioning them so it is
+  okay"), and it is watched against the application's telemetry like any
+  other. The tokens in the code are harmless comments meanwhile.
+
+**How a client comes to adopt it.**
+1. You work from a workbench, under a shadow contract.
+2. An incident caught, or a review's evidence, makes the case.
+3. A pull request moves the contract into their repo: the folder, a CI
+   check, and one paragraph of explanation. It is small, and already true.
+4. Once adopted, the workbench reads the contract from the repo, and every
+   workbench on that repo shares it.
+
+**What this changes for this plan.**
+- A workbench plan reads and writes promises in **the repo's contract when
+  the repo holds one, and the workbench's shadow contract when it does not**,
+  through one resolver.
+- Moving a shadow contract into the repo (a command that writes the folder
+  and opens the pull request) is its own plan.

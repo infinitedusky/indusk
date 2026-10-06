@@ -36,6 +36,11 @@ plan after this one.*
 - **New plan asks which repo** when the workbench wraps more than one, and
   the plan records the choice. With one repo it asks nothing (Sandy,
   2026-10-06).
+- **Promises belong with the code; the work belongs in the workbench.** A
+  repo has one contract (`.indusk/promises/`), however many workbenches work
+  on it. Until a repo accepts the folder, its contract lives in the
+  workbench as a versioned shadow contract (Sandy, 2026-10-06; the design
+  note in [research](research.md)).
 
 ## Promises
 
@@ -44,6 +49,11 @@ plan after this one.*
 1. **`a-plan-knows-its-code`** (state). A plan in a workbench records which
    repo holds its code and which worktree it is built in. Every step reads
    them from that record: build, review, accept and land.
+2. **`a-project-has-one-contract`** (state). A repo's promises are read and
+   written in one place: the repo's own `.indusk/promises/` once it holds
+   one, otherwise the workbench's shadow contract. Every reader goes through
+   the same resolver: the plan commands, the registry check, the watcher and
+   the admin. A promise is never read from both.
 
 ### Existing promises
 
@@ -83,6 +93,8 @@ None.
   the mockup shapes it, and its own plan builds it.
 - **A plan that changes two repos at once.** One plan changes one repo; a
   change across repos is two plans.
+- **Moving a shadow contract into its repo**: the command that writes the
+  folder and opens the pull request. That is its own plan, after this one.
 - **Creating a project or a workbench from the admin**, and an **Update
   button**: follow-ons named in the smoke check.
 - **Where InDusk's bookkeeping is written**:
