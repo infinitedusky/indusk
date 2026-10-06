@@ -36,6 +36,7 @@ the real system and is recorded in the plan.
 | A8 | Until the plan is approved, its documents and declared promises exist on its branch and not on `main`. | unit |
 | A9 | Approving the plan brings its documents and promises to `main`, and its build then runs on the same branch. | unit |
 | A10 | Starting a plan whose name already has a folder, a branch or a worktree is refused, naming which. | unit |
+| A29 | A commit on `main` that adds a plan's documents other than by its approval merge is recorded as a violation of this promise and shows in `indusk promises status` and the admin's Promises page; the commit itself is not refused. Commits made before this plan lands are not reported. | unit |
 
 ## Proves `a-build-runs-to-review-unasked`
 
@@ -90,15 +91,14 @@ the real system and is recorded in the plan.
 | ID | Assertion | Reason untestable | Compensating control |
 |----|-----------|-------------------|----------------------|
 | U1 | An unattended build does good work without being asked. | It is an agent following prose. | Falsification and cleanup still run; the review shows the evidence (A15–A17); nothing ships until accepted (A18); the brief's second expectation counts the stops. |
-| U2 | A plan started from the editor (`/planner`) is also written on its own branch. | The editor path is the planner skill, an agent following prose. | See the first note: the trunk guard can make it structural. The ADR decides. |
+| U2 | A plan started from the editor (`/planner`) is also written on its own branch. | The editor path is the planner skill, an agent following prose. | A29: a plan written on `main` instead is recorded as a violation, so whether the convention holds is seen after the fact. |
 
 ## Notes
 
-- **Plan documents on `main`.** Today the trunk guard allows them, and today's
-  brief was written there. If a plan is written on its own branch wherever it
-  starts, the guard could refuse a new plan folder on `main` outside an
-  approval merge. That makes U2 testable and breaks today's habit. A question
-  for the ADR.
+- **Plan documents on `main` stay allowed** (Sandy, 2026-10-06: "have it stay
+  a convention and then we can see the violations"). The trunk guard does not
+  refuse them; A29 detects and records them instead. Where the detection runs
+  is the ADR's question.
 - **What "cannot continue" means** (A13) is an open question in research; the
   ADR names the conditions, and A13's cases follow them.
 - **Unit tests drive the session through its stream, not a process.** The
