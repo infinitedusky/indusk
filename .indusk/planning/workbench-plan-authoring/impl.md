@@ -50,11 +50,11 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 | A1 | Starting a plan in a one-repo workbench writes its documents at the root, makes a code worktree in that repo on `plan/<name>`, and records both | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A2 | In a two-repo workbench, starting needs the repo named and records it; without one it is refused, naming the repos | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A3 | Every later step finds the code worktree from the plan's record; a record naming a worktree that is gone is reported, never guessed | Test Phase 1 | Build Phase 3 | written | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
-| A4 | In a workbench whose repo holds `.indusk/promises/`, promises are read from the repo and the workbench's folder is not read | Test Phase 1 | Build Phase 1 | written | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
+| A4 | In a workbench whose repo holds `.indusk/promises/`, promises are read from the repo and the workbench's folder is not read | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
 | A5 | In a workbench whose repo holds no promises folder, promises are read and written in the workbench | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
 | A6 | Declaring a promise in a plan whose repo holds a contract writes it in the plan's code worktree | Test Phase 1 | Build Phase 2 | written | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
-| A7 | The registry check, `promises status` and `promises list` give the same promises for a project, with or without a contract in its repo | Test Phase 1 | Build Phase 1 | written | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
-| A8 | Two workbenches on one repo that holds a contract read the same promises | Test Phase 1 | Build Phase 1 | written | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
+| A7 | The registry check, `promises status` and `promises list` give the same promises for a project, with or without a contract in its repo | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
+| A8 | Two workbenches on one repo that holds a contract read the same promises | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
 | A9 | New plan in a workbench project, in the admin, starts the plan; with more than one repo the form asks which | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/components/session/NewPlanForm.test.tsx |
 | A10 | A workbench plan's page offers Continue planning, Approve, Build and Review at the moments a normal-mode plan's does | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/lib/plan-actions.test.ts |
 | A11 | Approving a workbench plan runs the brief check and marks it approved with nothing merged; a refused brief is refused with the check's message | Test Phase 1 | Build Phase 3 | written | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
@@ -111,12 +111,13 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 **Goal**: every promise reader finds the folder through `contractDir`.
 
-- [ ] `contractDir(root, plan?)` in `lib/promises/registry.ts` (D4): normal mode, the project's folder; a workbench, the plan's repo's folder (its code worktree for a plan in flight) when that repo holds one, else the workbench's
-- [ ] Every caller of `promisesDir`, and `confirm.ts`'s own join, goes through it; `promisesDir` is removed
+- [x] `contractDir(root, plan?)` in `lib/promises/registry.ts` (D4): normal mode, the project's folder; a workbench, the plan's repo's folder (its code worktree for a plan in flight) when that repo holds one, else the workbench's — `contractDir(root)` here; a workbench with several repos reads its own folder until a plan names its repo, and the plan argument comes with Build Phase 2's code file
+- [x] Every caller of `promisesDir`, and `confirm.ts`'s own join, goes through it; `promisesDir` is removed — three sites: the registry's reader, the writer, and confirm's empty-registry fallback
 
 #### Build Phase 1 Verification
 
-- [ ] A4, A5, A7, A8 pass (`pnpm exec vitest run src/__tests__/contract-resolver`), and `vitest related` over the changed modules
+- [x] A4, A5, A7, A8 pass (`pnpm exec vitest run src/__tests__/contract-resolver`), and `vitest related` over the changed modules — 7 of 7 with A17's file; related, 15 files and 116 tests. A7 first failed on the test's own pattern (`promises check` says "1 promise", singular), fixed in the test
+- [x] Shape — `contractDir` is one rule with one job, beside the reader it serves. Nothing to change
 
 #### Build Phase 1 Context
 
