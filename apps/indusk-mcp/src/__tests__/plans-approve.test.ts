@@ -153,4 +153,19 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 		expect(git(p.trunk, ["log", "--format=%s", "main"])).toMatch(/bookkeeping/);
 		expect(git(p.trunk, ["status", "--porcelain"])).toBe("");
 	});
+
+	// A37: `git status` reports a staged rename as `R  old -> new`; read as one
+	// path, `git add` of that string fails and approval dies on a raw error.
+	it("A37 — a lesson renamed and staged on main is committed as bookkeeping, both sides; approval goes on", () => {
+		p.commit(p.trunk, { ".claude/lessons/old-name.md": "# a lesson\n" }, "a lesson");
+		git(wt, ["merge", "-q", "main"]);
+		git(p.trunk, ["mv", ".claude/lessons/old-name.md", ".claude/lessons/new-name.md"]);
+		writePlan();
+		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		expect(r.code, out(r)).toBe(0);
+		expect(git(p.trunk, ["status", "--porcelain"])).toBe("");
+		const files = git(p.trunk, ["ls-tree", "-r", "--name-only", "main", ".claude/lessons"]);
+		expect(files).toContain(".claude/lessons/new-name.md");
+		expect(files).not.toContain(".claude/lessons/old-name.md");
+	});
 });

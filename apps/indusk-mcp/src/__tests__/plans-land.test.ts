@@ -90,4 +90,48 @@ describe.skipIf(SHOULD_SKIP)("indusk plans land", () => {
 		expect(out(r)).toContain("src/seat.ts");
 		expect(p.mainSha()).toBe(before);
 	});
+
+	it("A37 — a staged rename of the person's file onto a path the plan touches is named by its new path", () => {
+		p.commit(p.trunk, { "src/draft.ts": "// someone's draft\n" }, "a draft");
+		git(wt, ["merge", "-q", "main"]);
+		p.commit(wt, { "src/draft.ts": "// the plan's edit\n" }, "the plan edits the draft");
+		git(p.trunk, ["mv", "src/draft.ts", "src/seat.ts"]);
+		expect(runCli(p.trunk, ["plans", "accept", PLAN]).code).toBe(0);
+		const before = p.mainSha();
+		const r = runCli(p.trunk, ["plans", "land", PLAN]);
+		expect(r.code).not.toBe(0);
+		expect(out(r)).toContain("src/seat.ts");
+		expect(out(r)).not.toContain("->");
+		expect(p.mainSha()).toBe(before);
+	});
+
+	// A35: a build step's session may run any shell command, so `accept` and
+	// `land` themselves refuse inside one. The release session (the
+	// retrospective, started by acceptance) is not a build step and lands.
+	it("A35 — inside a build step, accept is refused naming the step, and nothing is recorded", () => {
+		const r = runCli(p.trunk, ["plans", "accept", PLAN], { INDUSK_BUILD_STEP: "work" });
+		expect(r.code).not.toBe(0);
+		expect(out(r)).toMatch(/build step/i);
+		expect(out(r)).toContain("work");
+		const impl = matter(readFileSync(join(wt, planDir, "impl.md"), "utf-8"));
+		expect(impl.data.accepted).toBeUndefined();
+	});
+
+	it("A35 — inside a build step, land is refused naming the step, even for an accepted plan", () => {
+		expect(runCli(p.trunk, ["plans", "accept", PLAN]).code).toBe(0);
+		const before = p.mainSha();
+		const r = runCli(p.trunk, ["plans", "land", PLAN], { INDUSK_BUILD_STEP: "cleanup" });
+		expect(r.code).not.toBe(0);
+		expect(out(r)).toMatch(/build step/i);
+		expect(out(r)).toContain("cleanup");
+		expect(p.mainSha()).toBe(before);
+		expect(existsSync(wt)).toBe(true);
+	});
+
+	it("A35 — the release session, outside any build step, still lands", () => {
+		expect(runCli(p.trunk, ["plans", "accept", PLAN]).code).toBe(0);
+		const r = runCli(p.trunk, ["plans", "land", PLAN], { INDUSK_BUILD_STEP: undefined });
+		expect(r.code, out(r)).toBe(0);
+		expect(p.onMain()).toContain("src/seat.ts");
+	});
 });
