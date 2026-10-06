@@ -36,7 +36,15 @@ export type SessionEvent =
 	| { type: "question"; requestId: string; questions: Question[]; input: Record<string, unknown> }
 	| { type: "permission"; requestId: string; tool: string; input: Record<string, unknown> }
 	| { type: "ack"; requestId: string }
-	| { type: "result"; ok: boolean; subtype: string; text: string; sessionId: string }
+	| {
+			type: "result";
+			ok: boolean;
+			subtype: string;
+			text: string;
+			sessionId: string;
+			/** The API's refusal status, when the run ended on one (429: rate-limited). */
+			apiErrorStatus?: number;
+	  }
 	| { type: "other"; text: string };
 
 export type PermissionEvent = Extract<SessionEvent, { type: "permission" }>;
@@ -104,6 +112,9 @@ export function parseSessionLine(line: string): SessionEvent[] {
 					subtype: String(ev.subtype ?? ""),
 					text: String(ev.result ?? ""),
 					sessionId: String(ev.session_id ?? ""),
+					...(typeof ev.api_error_status === "number"
+						? { apiErrorStatus: ev.api_error_status }
+						: {}),
 				},
 			];
 		default:

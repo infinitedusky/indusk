@@ -70,6 +70,7 @@ const limited: StartedEvent = {
 	subtype: "success",
 	text: "API Error: Server is temporarily limiting requests · Rate limited",
 	sessionId: "s",
+	apiErrorStatus: 429,
 };
 const opts = (manager: SessionManager, sleeps: number[] = []) => ({
 	manager,
