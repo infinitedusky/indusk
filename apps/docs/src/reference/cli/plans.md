@@ -26,6 +26,17 @@ Refuses:
 - a name with a folder on the trunk, naming the folder;
 - a name whose branch `plan/<name>` already exists.
 
+#### In a workbench: `plans start <type> <name> [--repo <repo>]`
+
+A workbench keeps its plans at the workbench root and its code in the repos it declares. There:
+- **the documents** go at the workbench root, on the root's own branch, and the first one is committed there (the root's sync loop pushes it);
+- **the code** gets a worktree in the repo, on `plan/<name>`. It is made through the worktree extension's setup script when the workbench configures the repo (`.indusk/worktree-configs/<repo>.json`), so the repo's overlays and env apply; otherwise it is a plain `git worktree add`;
+- **`.indusk/planning/<name>/code.json`** links the two: `{ repo, branch, worktree }`, the worktree relative to the root. Every later step reads it. A code file naming a worktree that is gone is reported by name, never guessed.
+
+`--repo` names the repo when the workbench wraps more than one. Without it, starting is refused, listing the repos. With one repo, it is that repo.
+
+A code worktree inside the root that the root's ignore rules don't already cover gets an ignore line, committed with the plan, so sync never sweeps it into the root's history.
+
 ### `plans approve <name>`
 
 Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the worktree's copy; sets the impl's `status: approved` and commits it on the branch; merges the branch into the trunk with a merge commit. The build then continues in the same worktree on the same branch.
