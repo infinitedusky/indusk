@@ -221,9 +221,15 @@ Update `.indusk/current.md`'s Project (shared) region: the plan leaves the in-fl
 
 ### Step 10: Land on Trunk
 
-Merge the plan branch into `main`, release the worktree assignment
-(`indusk worktree release {plan}`), delete the worktree and branch, verify on
-trunk, and record the landing sha in the archived retrospective.
+Land with `indusk plans land {plan}`. It refuses a plan that has not been
+accepted (`indusk plans accept {plan}`, Accept in the admin, or
+`release.auto_accept`), so a build reaches `main` only once someone, or its
+workflow, has accepted it. Then it merges `main` into the branch, runs
+`plans.land_checks`, merges into `main` with `--no-ff`, releases the worktree
+assignment, and removes the worktree and the branch. Afterwards, verify on
+trunk and record the landing sha in the archived retrospective. With
+reviewers, merge the PR instead, then release, remove the worktree and delete
+the branch by hand. See [`indusk plans`](/reference/cli/plans).
 
 ### Step 11: Bump
 

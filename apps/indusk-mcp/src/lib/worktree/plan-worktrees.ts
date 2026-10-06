@@ -78,7 +78,7 @@ export type PlanCopies =
 			ok: true;
 			/** The main working tree — the project, whichever checkout asked. */
 			projectRoot: string;
-			/** One entry per plan folder on the trunk, archive excluded. */
+			/** One entry per plan folder on the trunk, archive excluded, and per plan only its assigned worktree holds. */
 			copies: Map<string, PlanCopy>;
 			/** Worktrees of the repository that hold no live assignment. */
 			unassigned: { name: string; path: string; branch: string | null }[];
@@ -249,7 +249,14 @@ export async function resolvePlanCopies(anyCheckout: string): Promise<PlanCopies
 
 	const copies = new Map<string, PlanCopy>();
 	const claimed = new Set<string>();
-	for (const plan of trunkPlans(repo.projectRoot)) {
+	// A plan written on its own branch has no trunk folder until it is
+	// approved (admin-plan-authoring); its assignment is how a reader finds it.
+	const onTrunk = trunkPlans(repo.projectRoot);
+	const branchOnly = record.assignments
+		.filter((a) => !onTrunk.includes(a.plan) && repo.linked.has(canonical(a.path)))
+		.filter((a) => existsSync(join(getPlanningDir(canonical(a.path)), a.plan)))
+		.map((a) => a.plan);
+	for (const plan of [...new Set([...onTrunk, ...branchOnly])].sort()) {
 		const { copy, live } = copyFor(plan, record.assignments, repo);
 		copies.set(plan, copy);
 		for (const path of live) claimed.add(path);

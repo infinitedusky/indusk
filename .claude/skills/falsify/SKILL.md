@@ -90,6 +90,8 @@ When you reach that point, present the user with a summary:
 
 The user confirms termination — or points at an area you didn't investigate. Not "add another hypothesis" — they should point at a *region* you missed. If that produces a new hypothesis, add it to the Falsification Phase. If nothing new surfaces, the ritual ends; the Falsification Phase stays authored and unchecked.
 
+
+**Unattended.** In a build started from the admin (`INDUSK_GATE_POLICY=auto` in the environment) there is nobody to confirm termination. Stop hunting when you reach the point above, write the summary into the phase you authored (what you looked at, and what you did not, with reasons), and end the session; the review shows it to the person who accepts the build.
 ## If there are no hypotheses
 
 If after investigation you genuinely cannot form any specific hypothesis, **do not author an empty Falsification Phase**. Instead, add to the plan's `impl.md` frontmatter:

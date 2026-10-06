@@ -1,0 +1,9 @@
+# A mass of failing tests in a shared worktree can be a concurrent process colliding on a lock file, not a regression — check for another process before debugging the diff
+
+During test-daemons-never-leak (dusk), the eval agent — grading a branch's commits — ran that branch's tests in the same worktree a person was concurrently using. Its Next.js dev server held the admin app's `.next/` lock (the project's own `fileParallelism: false` constraint: Next locks `.next/`, only one dev server runs safely per directory at a time). The person's concurrent `pnpm test` then produced 38–39 false HTTP-level failures — the identical suite passed 343/343 run alone. The failure signature (a wall of HTTP smoke failures) looked exactly like a real break.
+
+This is the same symptom class as [[kill-test-processes-by-tree-and-check-for-orphans-by-working-directory]] (an orphaned server from a killed run holds the lock) but a different mechanism: here nothing was killed — two legitimate processes (an evaluator and a developer) simply ran in the same worktree at the same time.
+
+**Why:** a shared worktree has exactly one `.next/` (or any other single-writer lock) regardless of how many processes want to use it concurrently. Mass, uniform-looking failures are a strong signal of environment contention, not code — a real regression from a diff is rarely 38 tests failing in exactly the same way.
+
+**How to apply:** before re-running or debugging a sudden wall of failures in a shared worktree, check whether another process (another agent, another terminal, an evaluator) is running tests or a dev server there concurrently — `ps`/`lsof` on the lock path, or check who else has the worktree open. This needs a structural fix of its own (evaluate against a snapshot/copy, or make concurrent runs visible before they collide) — until then, this check-first habit avoids wasting a debugging pass on phantom failures.

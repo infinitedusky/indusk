@@ -1,4 +1,128 @@
+import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
+import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
+import { buildReview, type Review } from "../../lib/build/review.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
+import {
+	acceptPlan,
+	approvePlan,
+	landPlan,
+	PlanCommandRefusal,
+	startPlan,
+} from "../../lib/plans/index.js";
+
+/** Run a plan verb: print what it did, or its refusal on stderr and exit 1. */
+async function planVerb(run: () => Promise<string>): Promise<void> {
+	try {
+		console.info(await run());
+	} catch (err) {
+		if (err instanceof PlanCommandRefusal) {
+			console.error(`Refused: ${err.message}`);
+			process.exit(1);
+		}
+		throw err;
+	}
+}
+
+/** `indusk plans start <type> <name>` — the plan's own branch and worktree, its first document there. */
+export function plansStart(cwd: string, type: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const s = await startPlan(cwd, type, name);
+		return `Started ${s.plan} (${s.type}) in ${s.worktree} on ${s.branch}; its ${s.document} is there, and nothing is on the trunk until it is approved.`;
+	});
+}
+
+/** `indusk plans approve <name>` — the documents and promises reach the trunk. */
+export function plansApprove(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const a = await approvePlan(cwd, name);
+		return `Approved ${a.plan}: ${a.paths.length} file(s) merged to the trunk at ${a.merge.slice(0, 8)}; its build continues on its branch.`;
+	});
+}
+
+/** `indusk plans accept <name>` — the build may ship. */
+export function plansAccept(cwd: string, name: string, auto: boolean): Promise<void> {
+	return planVerb(async () => {
+		const a = await acceptPlan(cwd, name, auto ? "auto" : "person");
+		return `Accepted ${a.plan} at ${a.accepted}${a.acceptedBy === "auto" ? ", by its workflow" : ""}.`;
+	});
+}
+
+/** `indusk plans next <name>` — what an unattended build does next, from the plan as it stands. */
+export async function plansNext(cwd: string, name: string, json: boolean): Promise<void> {
+	try {
+		const step = nextBuildStep(await readBuildPlan(cwd, name));
+		console.info(json ? JSON.stringify(step) : describeStep(step));
+	} catch (err) {
+		if (err instanceof BuildPlanUnreadable) {
+			console.error(`Refused: ${err.message}`);
+			process.exit(1);
+		}
+		throw err;
+	}
+}
+
+function describeStep(s: BuildStep): string {
+	switch (s.step) {
+		case "work":
+			return `work: ${s.phase}`;
+		case "falsify":
+			return "falsify: every phase is closed and the falsification has not run";
+		case "cleanup":
+			return "cleanup: falsification is closed and the cleanup has not run";
+		case "judgement":
+			return `judgement: ${s.phase} waits on a person — ${s.item}`;
+		case "review":
+			return "review: built — every phase, the falsification and the cleanup are closed";
+		case "cannot-continue":
+			return `cannot continue: ${s.why}`;
+	}
+}
+
+/** `indusk plans review <name>` — what a person needs to decide whether a built plan may ship. */
+export async function plansReview(cwd: string, name: string, json: boolean): Promise<void> {
+	try {
+		const r = await buildReview(cwd, name);
+		console.info(json ? JSON.stringify(r, null, 2) : describeReview(r));
+	} catch (err) {
+		if (err instanceof BuildPlanUnreadable) {
+			console.error(`Refused: ${err.message}`);
+			process.exit(1);
+		}
+		throw err;
+	}
+}
+
+function describeReview(r: Review): string {
+	const lines = [`${r.plan} — review`, "", "Promises:"];
+	for (const p of r.promises) {
+		lines.push(
+			p.proven
+				? `  ✓ ${p.name} — ${p.rows.map((row) => row.id).join(", ")}`
+				: `  ✗ ${p.name} — unproven: ${p.why}`,
+		);
+	}
+	for (const f of r.falsification) {
+		lines.push("", `${f.phase}:`);
+		for (const row of f.rows) lines.push(`  ${row.id} (${row.state}) ${row.asserts}`);
+		for (const item of f.items) lines.push(`  ${item.done ? "[x]" : "[ ]"} ${item.text}`);
+	}
+	lines.push("", `Files changed: ${r.files.length}`);
+	for (const f of r.files) lines.push(`  ${f.status} ${f.path}`);
+	if (r.skips.length > 0) {
+		lines.push("", "Skipped:");
+		for (const s of r.skips) lines.push(`  ${s.phase} ${s.gate}: ${s.item}`);
+	}
+	return lines.join("\n");
+}
+
+/** `indusk plans land <name>` — an accepted plan's build reaches the trunk. */
+export function plansLand(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const l = await landPlan(cwd, name);
+		const checks = l.checks.length > 0 ? ` after ${l.checks.length} check(s)` : "";
+		return `Landed ${l.plan} on the trunk at ${l.merge.slice(0, 8)}${checks}; its worktree and branch are removed.`;
+	});
+}
 
 export interface PlansArchiveDeadOptions {
 	dryRun?: boolean;

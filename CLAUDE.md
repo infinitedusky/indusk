@@ -43,7 +43,7 @@ dusk/
 - pnpm workspaces + Turborepo; **Node 22 required** (Tailwind 4 native bindings).
 - **Biome, not ESLint** — `pnpm check` / `pnpm check:fix` / `pnpm format`. Biome config is a knowledge artifact (`biome-rationale.md`); the ratchet only tightens.
 - `pnpm test`: parallel, never starts a server or daemon (`INDUSK_SKIP_TELEMETRY_AUTOSTART`); it and `test:system` end failing on one left in a temp home, pass or fail. `test:system`: each package's `vitest.tiers.ts` files, at landing and by `pnpm release`. **E2e**: `pnpm e2e` (needs `claude` + a daemon) — promise loop, always-on server, nested-context probe; run at the close of a plan touching a `CLAUDE.md`.
-- **Every `CLAUDE.md` has a hard write-time budget** — `claude-md-budget.js` refuses growth past `context.claude_md_budget_bytes` (18432 here; reason in `.indusk/config.json`); shrinking is always allowed; nested files: `nested_claude_md_budget_bytes` (16384). Entries are rule + pointer; growth past it means a rule belongs at a lower tier. `indusk context check-pointers` verifies every pointer and lesson token in every context file and refuses hand-copied `**Version**:` claims. — see `/guide/context-budget`
+- `indusk context check-pointers` verifies every pointer and lesson token in every context file and refuses hand-copied `**Version**:` claims. — see `/guide/context-budget`
 - **An unrecorded promise violation outranks the roadmap** when answering "what's next"; unreachable telemetry is said, never reported as a zero. — see `/reference/skills/catchup`
 - **`.indusk/current.md` is the operational layer**: a `## Project (shared)` region any agent may edit (what is in flight, blockers, what is next) plus per-agent `## Session <short> — <task>` sections, each written only by its own session via `mcp__indusk__update_current_section` (typically at `/handoff`); commit like any file. `merge=union` merges concurrent appends; every mutation goes through the `current.md.lock` file lock. — see `/decisions/multi-agent-coordination`
 - Plans live in `.indusk/planning/{kebab-case}/`; use `/planner` before implementing — don't jump to code. The planning rules load with the plan documents.
@@ -79,7 +79,7 @@ dusk/
 - InDusk Makeover (2026-07-23): budgets + decay + removal — the 60 KB budget hook + compaction, Graphiti/CGC removed with the lessons rail kept, current.md sweep + dead-draft archive, catchup diet, MCP keep-lists, hub push/pull. Supersedes context-budget. — see `.indusk/planning/archive/indusk-makeover/adr.md`
 - Versioned workbench (1.37.0–1.38.3): the workbench root is a git repo with its own remote and a sync loop; repos declared in `worktree.repos[]` — see `/decisions/versioned-workbench`
 - Dawn workbench execution (6.5): one `resolveExecutionRoots` behind run/verify/cleanup; two roots and a commit cadence per repo in the loop; `codeSha` on the ledger and `repo` on queued evals, absence a rule not a migration; multi-repo still refuses — see `/decisions/dawn-workbench-execution`
-- Admin UI phase progress: one `lifecycle` module (positions as nouns, activities as verbs, gate stages) read by `parsePlan`, the retrospective gate and the admin; phases keyed `{kind, number}` through progress, Shape and the boundary record (absent kind = build); three tri-state bars live via `router.refresh()`; a plan that adds a stage renders it, pinned — see `/decisions/admin-ui-phase-progress`
+- Admin UI phase progress: one `lifecycle` module read by `parsePlan`, the retrospective gate and the admin; phases keyed `{kind, number}` (absent kind = build); a plan that adds a stage renders it — see `/decisions/admin-ui-phase-progress`
 - Writing skill: papers are plan documents (`kind: paper`, never inferred); `/write` prose-only; publish commits in the destination, never pushes — see `.indusk/planning/archive/writing-skill/adr.md`
 - Promises (Day 4a): one markdown file per promise at the plan root, links as declared paths verified by a `promise: <name>` token, per-kind link rule, four states, domains in config, one `lib/promises/` behind CLI/MCP/admin — see `/decisions/day-promises`
 - Monitor (Day 4b): plain-OTel promise mark, no InDusk runtime code; `promises status`/`watch` over local Jaeger; reopen by Maintenance phase; `monitor` from files — see `/decisions/day-monitor`
@@ -89,7 +89,7 @@ dusk/
 - Promise timeline: compact sliced reads; an admin store that reads only what is new plus a late tail; one `violationState` (unrecorded / open / fixed) for chip and timeline; incidents record `fixed` via `promises fix` — see `/decisions/promise-timeline`
 - Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
-- Admin plan authoring: the developer's own `claude` driven by one session module; `indusk plans start|approve|accept|land`; build steps chosen by a pure function, gate skips shown at review; nothing lands unaccepted — see `.indusk/planning/admin-plan-authoring/adr.md`
+- Admin plan authoring: `plans start → approve → build → accept → land`, through the developer's own `claude`; nothing lands unaccepted — see `/decisions/admin-plan-authoring`
 
 ## Known Gotchas
 

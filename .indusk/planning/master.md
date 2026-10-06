@@ -303,6 +303,12 @@ lesson title, or a chat log.
   promises, commands write the registry, every test row says what it is for,
   a plan cannot build while its brief, rows and registry disagree, and closes
   with its promises confirmed. See `/decisions/planner-promises`.
+- **Closed** (2026-10-06): [admin-plan-authoring](archive/admin-plan-authoring/brief.md)
+  — the admin plans, builds unattended to review, shows the evidence and
+  releases on acceptance, through the developer's own `claude` and the
+  `indusk plans` commands. Falsification closed a DNS-rebinding hole; the U3
+  smoke check of the published package follows the release. See
+  `/decisions/admin-plan-authoring`.
 - **Parent, living master** (2026-10-05):
   [promise-core](promise-core/master.md) — the promise is the first
   primitive. A person can start from a promise alone: the tests are written
@@ -316,6 +322,14 @@ lesson title, or a chat log.
   "Plans this changes" names thirteen existing plans it touches; **none has
   been edited, and the demo's script stands.** Measurements in
   [research](promise-core/research.md).
+- **Standalone, brief draft** (2026-10-06):
+  [bookkeeping-lives-where-it-is-read](bookkeeping-lives-where-it-is-read/brief.md)
+  — InDusk writes current.md, its highlight logs, evaluator results and lessons
+  into `main`'s working tree, and nothing commits them, so every landing must
+  decide whose they are. Write each record where it is read: commit shared
+  records when they are written, carry a plan's notes on its branch.
+  admin-plan-authoring's Build Phase 10 handles the symptom. Opened by Sandy;
+  not yet in the sequence.
 - **Standalone, brief draft** (2026-10-06):
   [context-reaches-every-session](context-reaches-every-session/brief.md) —
   the nested-context probe went red: headless Claude Code runs (2.1.288,

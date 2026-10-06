@@ -13,6 +13,11 @@ import { dirname, join } from "node:path";
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
 import { markProjectId } from "../promises/config.js";
+import {
+	isRateLimitedResult,
+	RATE_LIMIT_RETRIES,
+	rateLimitDelayMs,
+} from "../session/rate-limit.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import {
@@ -131,24 +136,21 @@ function parseClaudeOutput(stdout: string): {
 export function isRateLimited(run: { code: number | null; stdout: string }): boolean {
 	if (run.code === 0) return false;
 	try {
-		const out = JSON.parse(run.stdout) as { api_error_status?: unknown };
-		return out.api_error_status === 429;
+		return isRateLimitedResult(JSON.parse(run.stdout));
 	} catch {
 		return false;
 	}
 }
 
-/** How many times a rate-limited start is tried again before the run is marked violated. */
-export const RATE_LIMIT_RETRIES = 3;
-
 /**
- * The wait before retry `attempt` (1-based): 15 s, 45 s, 90 s by default —
- * long enough for a burst to pass. `INDUSK_EVAL_RATE_LIMIT_DELAY_MS` replaces
- * the base, for tests.
+ * The shared schedule (`session/rate-limit.ts`); `INDUSK_EVAL_RATE_LIMIT_DELAY_MS`
+ * replaces its base, for tests.
  */
-function rateLimitDelayMs(attempt: number): number {
-	const base = Number(process.env.INDUSK_EVAL_RATE_LIMIT_DELAY_MS) || 15_000;
-	return base * [1, 3, 6][Math.min(attempt, 3) - 1];
+function evalRateLimitDelayMs(attempt: number): number {
+	return rateLimitDelayMs(
+		attempt,
+		Number(process.env.INDUSK_EVAL_RATE_LIMIT_DELAY_MS) || undefined,
+	);
 }
 
 async function spawnClaude(
@@ -363,7 +365,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 							attempt++
 						) {
 							span.setAttribute("rate_limit.retries", attempt);
-							await new Promise((r) => setTimeout(r, rateLimitDelayMs(attempt)));
+							await new Promise((r) => setTimeout(r, evalRateLimitDelayMs(attempt)));
 							spawned = await spawnClaude(args, prompt, cwd);
 						}
 						span.setAttribute("exit.code", spawned.code ?? -1);

@@ -98,6 +98,8 @@ The plan's impl status stays `in-progress` because the Cleanup Phase is unchecke
 
 Continue until you genuinely cannot name another warranted extraction or refactor — not "I've flagged enough files", but "I have reviewed the changed files and every remaining one is either under threshold or cohesive-and-correctly-shaped." Present the user with a summary: files flagged + recommended, files reviewed-and-left-as-is (with reasons), files under threshold (untouched). The user confirms termination or points at a file you under-scrutinized.
 
+
+**Unattended.** In a build started from the admin (`INDUSK_GATE_POLICY=auto` in the environment) there is nobody to confirm termination. Stop reviewing when you reach the point above, write the summary into the phase you authored (what you looked at, and what you did not, with reasons), and end the session; the review shows it to the person who accepts the build.
 ## If there is nothing to clean up
 
 If after investigation there is genuinely nothing worth decomposing — every changed file is under threshold or cohesive — **do not author an empty Cleanup Phase**. Instead add to the plan's `impl.md` frontmatter:

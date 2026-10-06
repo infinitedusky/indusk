@@ -360,7 +360,7 @@ When invoked as `/work --autopilot {plan}`, execute the plan's remaining phases 
 6. **Red or blocker → STOP LOUD.** A failing verification, a blocked edit the subagent couldn't resolve, or a drifted trajectory halts the loop and surfaces the blocker to the human. Never advance on red. Do **not** auto-retry-and-mutate — one honest attempt per phase; a phase that can't reach green is a human decision, not a machine loop. (Per-phase iteration inside the subagent is fine; cross-phase barreling-on is not.)
 7. **Per-phase commit + eval.** Each phase's subagent commits per item, so a bad phase is an isolated, revertable unit and the eval trigger fires at its natural granularity.
 
-**Hard stop at impl-complete.** When the last phase closes, **stop and hand back to the human for `/falsify`.** Autopilot loops *impl phases only* — it never auto-runs the close-out rituals (`/falsify`, `/cleanup`, `/retrospective`). Those are human-gated by design: falsification is adversarial self-examination the author is worst-placed to automate, and cleanup + retrospective need judgment. Autopilot gets the plan to "impl complete, all phases green"; the human drives it home.
+**Hard stop at impl-complete.** When the last phase closes, autopilot stops and hands back for `/falsify`. Autopilot loops *impl phases only*. A build started from the admin goes further — through falsification and cleanup to review — but it does so because `indusk plans next` decides each step and a fresh session runs it (see *Unattended* below), not because autopilot chains the rituals.
 
 ### What autopilot does NOT do
 
@@ -373,6 +373,18 @@ When invoked as `/work --autopilot {plan}`, execute the plan's remaining phases 
 ### Deterministic engine (optional)
 
 Where the harness `Workflow` tool is available, the loop can run as a Workflow (sequential, one phase per stage, budget-bounded) instead of a hand-driven subagent loop — this adds a hard token budget and deterministic control flow. The contract above is identical either way; Workflow is the more rigorous executor, the sequential Agent-tool loop is the always-available fallback.
+
+## Unattended (a build started from the admin)
+
+A build started from the admin (`Build` on an approved plan's page) runs each step as a fresh session of the developer's own `claude` with nobody to answer it: `/work`, then `/falsify`, `/cleanup` and `/work` again, as `indusk plans next` decides, stopping at review. The session's environment says so: `INDUSK_GATE_POLICY=auto`. In such a session:
+
+- **Do not ask.** A question is answered with "decide on your own judgement and record why". Decide, write the decision and its reason into the plan (an item's note, or the phase's Forward Intelligence), and carry on.
+- **Skip a gate item only with its reason** — `(none needed — <why>)` or `skip-reason: <why>`. A bare `(none needed)` is refused by `check-gates.js` under the build's policy; the review lists every skip for the person who accepts the build (`lesson: a-build-skips-a-gate-only-with-its-reason`).
+- **Stop when the plan says a person must look.** An item naming a Deferred Verification row, a manual or visual check: leave it unchecked and end the session. The build stops there and shows the item.
+- **Stop when you cannot continue**, and say why in the plan — a `blocker:` line on the phase. Do not loop on a gate that will not pass.
+- **Write only inside the plan's worktree.** A write outside it is refused.
+- **Never commit, stash or discard work that is not the plan's.** InDusk's own bookkeeping on `main` (`current.md`, the highlight logs, evaluator results, lessons) is committed by `indusk plans approve` and `plans land`; anything else uncommitted there may be someone's real work — stop with a `blocker:` naming it.
+- **Never start `/retrospective`.** The release begins with acceptance.
 
 ## Corrections and Context Learning
 

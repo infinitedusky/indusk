@@ -239,6 +239,25 @@ function ImplSections({
           promisesHref={promisesHref}
         />
       )}
+      {!split.cleanup &&
+        plan.skippedRituals
+          ?.filter((r) => r.ritual === "cleanup")
+          .map((r) => (
+            <section
+              key="cleanup-skipped"
+              className="flex flex-col gap-2"
+              data-testid="cleanup-skipped"
+            >
+              <CollapsibleSection
+                title="Cleanup"
+                defaultOpen
+                persistKey={`plan:${plan.name}:section:cleanup`}
+                copyMarkdown={`## Cleanup\n\nSkipped: ${r.reason}\n`}
+              >
+                <p className="text-sm text-gray-700">Skipped: {r.reason}</p>
+              </CollapsibleSection>
+            </section>
+          ))}
       {split.post.length > 0 && (
         <PhasesSection
           phases={split.post}

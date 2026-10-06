@@ -39,12 +39,20 @@ describe("A18 — the kickoff creates the assignment and the landing releases it
 	});
 
 	it("the retrospective's landing step releases between the merge and the worktree removal", () => {
+		// Since admin-plan-authoring the order lives in `indusk plans land`
+		// (lib/plans/land.ts), which the landing step calls; the reviewers' path,
+		// still spelled out in the skill, keeps the same order.
 		const landing = section("retrospective.md", /^### Step 10/m, /^### |^## /m);
-		const merge = landing.indexOf("merge --no-ff");
-		const release = landing.indexOf("indusk worktree release");
-		const remove = landing.indexOf("git worktree remove");
-		expect(merge, "merge step").toBeGreaterThanOrEqual(0);
-		expect(release, "release step").toBeGreaterThan(merge);
+		expect(landing).toContain("indusk plans land");
+		const reviewers = landing.slice(landing.indexOf("With reviewers"));
+		const release = reviewers.indexOf("indusk worktree release");
+		const remove = reviewers.indexOf("git worktree remove");
+		expect(release, "release step").toBeGreaterThan(0);
 		expect(remove, "removal step").toBeGreaterThan(release);
+		const land = readFileSync(join(__dirname, "../lib/plans/land.ts"), "utf-8");
+		const merge = land.indexOf("mergeIntoTrunk(pb");
+		expect(merge, "merge").toBeGreaterThan(0);
+		expect(land.indexOf("releasePlan(pb.trunk"), "release").toBeGreaterThan(merge);
+		expect(land.indexOf('"worktree", "remove"'), "remove").toBeGreaterThan(land.indexOf("releasePlan(pb.trunk"));
 	});
 });

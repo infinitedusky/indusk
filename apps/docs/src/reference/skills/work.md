@@ -254,6 +254,20 @@ The retrospective skill hard-blocks (Step 0 Falsification Gate) until either the
 
 See the [Falsification Ritual guide](/guide/falsification-ritual) for the bounty-hunting ritual itself and the three outcomes.
 
+## Unattended builds
+
+A build started from the admin (Build, on an approved plan's page) runs each step as a fresh session of the developer's own `claude`, with nobody to answer it. `indusk plans next` decides each step: `/work`, then `/falsify`, `/cleanup` and `/work` again, until the plan reaches review. Each session runs with `INDUSK_GATE_POLICY=auto`, and in it the skill:
+
+- **does not ask.** A question is answered with "decide on your own judgement and record why", so the decision and its reason go into the plan.
+- **skips a gate item only with its reason**, as `(none needed — <why>)` or `skip-reason: <why>`. `check-gates.js` refuses a bare `(none needed)` under this policy, and the review lists every skip.
+- **stops at an item the plan declared for a person** (a Deferred Verification row, a manual or visual check) and leaves it unchecked; the build stops there and shows it.
+- **records a `blocker:` and stops** rather than looping on a gate that won't pass.
+- **writes only inside the plan's worktree**; a write outside it is refused.
+- **never commits, stashes or discards work that is not the plan's.** InDusk's bookkeeping on `main` is committed by [`plans approve` and `plans land`](/reference/cli/plans#indusk-s-bookkeeping-on-the-trunk); anything else uncommitted there stops the build with a `blocker:` naming it.
+- **never starts `/retrospective`.** The release begins when the plan is accepted, and `plans accept` and `plans land` refuse inside a build step (each step's session runs with `INDUSK_BUILD_STEP` set).
+
+See [the plan lifecycle](/guide/plan-lifecycle) and [sessions](/reference/admin-ui/sessions).
+
 ## Hook Enforcement
 
 Two hooks enforce the gate system at the tool level, catching mistakes the skill instructions alone cannot prevent.
@@ -275,6 +289,24 @@ Phase 3 blocked: complete Phase 2 gates first:
 The hook exits with code 2, which prevents the edit from being applied. The agent receives the stderr message as feedback and must complete the listed items before retrying.
 
 **Escape hatch:** Adding `<!-- skip-gates -->` to the edit content bypasses the hook. This exists for manual corrections, not for routine use.
+
+**Gate policy** decides what counts as skipping a gate item instead of doing it. It is read from four places, the first found winning:
+
+| Level | Where | Set by |
+|---|---|---|
+| Environment | `INDUSK_GATE_POLICY` | an unattended build, for each of its sessions (`auto`) |
+| Plan | `gate_policy:` in the impl's frontmatter | the plan's author |
+| Project | `indusk.gate_policy` in `.claude/settings.json` | the project |
+| Default | `ask` | — |
+
+| Policy | A gate item counts as skipped when it says |
+|---|---|
+| `strict` | never — every item is done |
+| `ask` | `(none needed — asked: "…" — user: "…")`: the person's answer, quoted |
+| `auto`, set by the plan | `(none needed)`, `(not applicable)` or `skip-reason:` |
+| `auto`, set by the environment | `(none needed — <why>)` or `skip-reason: <why>`: a bare `(none needed)` is refused, because [the review](/reference/cli/plans#plans-review-name-json) lists every skip for the person who accepts the build |
+
+A value of `INDUSK_GATE_POLICY` that is not a policy is ignored, never read as `auto`. `check-gates.js` and `validate-impl-structure.js` read it through one module, `hooks/_gate-policy.js`.
 
 **Trajectory enforcement:** If the impl has a `## Test Trajectory` section, the hook ALSO checks that every trajectory row whose `Passes at: Phase N` lies before the phase being advanced into is in state `passing`, `skipped`, or `blocked`. A row still in `planned`, `writable`, or `written` blocks the advance. This is structural enforcement of the "deferral is impossible" property — the implementer cannot close a phase whose committed tests aren't passing.
 

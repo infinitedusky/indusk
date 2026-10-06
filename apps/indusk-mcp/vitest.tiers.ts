@@ -18,6 +18,7 @@
 export const SYSTEM = [
 	"src/__tests__/admin-bundle-pack.test.ts",
 	"src/__tests__/admin-cli-lifecycle.test.ts",
+	"src/__tests__/admin-session-lifecycle.test.ts",
 	"src/__tests__/always-on-browser-login.test.ts",
 	"src/__tests__/always-on-door-startup.test.ts",
 	"src/__tests__/always-on-falsification.test.ts",
@@ -28,6 +29,7 @@ export const SYSTEM = [
 	"src/__tests__/always-on-server.test.ts",
 	"src/__tests__/always-on-source.test.ts",
 	"src/__tests__/always-on-two-servers.test.ts",
+	"src/__tests__/build-session-gates.test.ts",
 	"src/__tests__/cli-bare-ui-cwd-aware.test.ts",
 	"src/__tests__/monitor-mark.test.ts",
 	"src/__tests__/monitor-plans.test.ts",
@@ -35,6 +37,7 @@ export const SYSTEM = [
 	"src/__tests__/monitor-watch.test.ts",
 	"src/__tests__/promise-sources.test.ts",
 	"src/__tests__/promise-timeline-reader.test.ts",
+	"src/__tests__/session-protocol-contract.test.ts",
 	"src/__tests__/telemetry-cli-lifecycle.test.ts",
 	"src/__tests__/telemetry-existing-project-upgrade.test.ts",
 	"src/__tests__/telemetry-explicit-disable.test.ts",

@@ -330,6 +330,46 @@ unchecked item, the plan is **reopened** instead: listed active, and
 `executing` that phase. Ticking the phase off returns it to `monitor` — the
 incident's `last_seen` restarted the window — and then to `archived`.
 
+## Plan, approve, build, review, accept, release
+
+Added by admin-plan-authoring. A plan can now go the whole way from the admin, or from the editor or a terminal through the same commands, and a build behaves the same wherever it starts.
+
+1. **Plan.** `indusk plans start <type> <name>` gives the plan its own branch and worktree; its documents and declared promises are written there and nowhere on `main`. From the admin, New plan does this and starts a planning session; the person answers its questions in the panel.
+2. **Approve.** `indusk plans approve <name>` runs the brief check, then merges the plan's documents and promises to `main` — promises reach `main` before any code, so every other plan sees them. The build continues on the same branch.
+3. **Build.** Unattended: after each step `indusk plans next` decides what comes next — work an open phase, author the falsification, author the cleanup — and a fresh session does it. A build stops only at review, at a judgement the plan declared, or when it cannot continue. It may skip a gate item only with its reason. It never starts the retrospective, and `plans accept` and `plans land` refuse inside one of its steps.
+4. **Review.** `indusk plans review <name>` shows each promise with the tests that prove it, what falsification found and fixed, the files changed, every skip, and any uncommitted work on `main` where the plan will land.
+5. **Accept.** `indusk plans accept <name>` (or Accept in the panel; or the project's workflow, with `release.auto_accept`).
+6. **Release.** The retrospective runs and lands the plan with `indusk plans land <name>`, which refuses a plan that was not accepted. Publishing stays the operator's.
+
+```mermaid
+sequenceDiagram
+    actor P as Person
+    participant A as Admin
+    participant C as claude (developer's own)
+    participant B as plan/<name> worktree
+    participant M as main
+    P->>A: New plan (type, name)
+    A->>B: plans start — branch, worktree, first document
+    A->>C: planning session: /planner <type> <name>
+    C-->>P: questions, in the panel
+    P-->>C: answers
+    C->>B: brief, promises, test plan, ADR, impl
+    P->>A: Approve
+    A->>M: plans approve — brief check, then documents and promises merge
+    P->>A: Build
+    loop until review, a declared judgement, or cannot continue
+        A->>A: plans next
+        A->>C: build session: /work, /falsify or /cleanup
+        C->>B: code, tests, checkoffs (gates judge each)
+    end
+    A-->>P: review: promises and proof, falsification, files, skips
+    P->>A: Accept
+    A->>C: release session: /retrospective
+    C->>M: plans land — merge, worktree and branch removed
+```
+
+A plan written on `main` instead of its own branch is not refused: that path is a convention, and the commit is recorded as a violation of `a-plan-is-written-on-its-own-branch` so whether it holds can be seen. See [`indusk plans`](/reference/cli/plans) and [sessions](/reference/admin-ui/sessions).
+
 ## See also
 
 - [The Shape check](/guide/shape) — the per-phase craft review

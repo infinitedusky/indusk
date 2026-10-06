@@ -6,7 +6,22 @@ Loaded by Claude Code when a file under `apps/indusk-admin/` is read. Rules that
 apply only here; cross-cutting design intent stays in the root `CLAUDE.md`.
 Each entry is a rule and a pointer; the pointer holds the story.
 
-- Next.js App Router, read-only viewer over `.indusk/planning/` + `.indusk/eval/`,
+- **The admin writes only through the package**: its routes (`app/api/sessions/`)
+  start, answer and stop sessions through `@infinitedusky/indusk-mcp/session`,
+  and plans change through `/plans`; no file in this app writes a plan file,
+  spawns a process (beyond the two read-only git readers) or parses Claude's
+  protocol. Guarded by `admin-uses-package-commands.test.ts`.
+- **Every handler under `app/api` calls `adminOnly(request)` first**: the
+  `Host` must be the admin's own (`isAdminHost`), and a `POST`'s `Origin`
+  must match it. Listening on 127.0.0.1 is not enough: DNS rebinding points
+  another site's name there, and its `Origin` and `Host` agree. Guarded by
+  `admin-hosts.test.ts`, which calls every handler every route module
+  exports. The session panel
+  (`components/session/`) renders the events the package's protocol produced
+  and sends a person's choices back through the routes; a client component
+  imports only *types* from `/session`, whose code is Node's. — see
+  `/reference/admin-ui/sessions`
+- Next.js App Router viewer over `.indusk/planning/` + `.indusk/eval/`,
   hosted as one machine-global daemon (`indusk ui start/stop/restart/status`,
   registry `~/.indusk/projects.json`, routes `/p/[project]/...`). Custom
   Tailwind primitives — no shadcn, no Radix. Reuse indusk-mcp's parsers through

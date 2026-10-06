@@ -12,6 +12,7 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
+import { policyFromEnvironment, skipCarriesReason } from "./_gate-policy.js";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
 import { phaseExists, phaseOrdinal, phaseSequence } from "./_impl-headings.js";
 import { parseImplPhases as parsePhases } from "./_impl-phases.js";
@@ -37,8 +38,10 @@ if (!filePath.endsWith("/impl.md") && !filePath.endsWith("\\impl.md")) {
 // Check for skip-gates escape hatch
 const newContent = toolInput.new_string ?? toolInput.content ?? "";
 
-// Read gate policy from the impl file and settings
+// Read gate policy: the environment a build sets, then the impl file, then settings
+const policyFromBuild = policyFromEnvironment();
 function readGatePolicy() {
+	if (policyFromBuild) return policyFromBuild;
 	try {
 		const content = readFileSync(filePath, "utf-8");
 		const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
@@ -359,7 +362,9 @@ for (const item of newlyChecked) {
 				text.includes("(not applicable)") ||
 				text.includes("skip-reason:");
 
-			if (gatePolicy === "auto") return hasBareOptOut;
+			// A build's sessions (INDUSK_GATE_POLICY=auto) skip only with a reason,
+			// which the review shows; a plan that set auto itself keeps the bare form.
+			if (gatePolicy === "auto") return policyFromBuild ? skipCarriesReason(text) : hasBareOptOut;
 
 			// ask mode: requires conversation proof
 			// Format: (none needed — asked: "{question}" — user: "{answer}")
@@ -382,7 +387,9 @@ for (const item of newlyChecked) {
 					? "Gate policy is 'strict' — no overrides allowed.\n"
 					: gatePolicy === "ask"
 						? 'Gate policy is \'ask\' — to skip, you must ask the user and include proof.\nFormat: (none needed — asked: "your question" — user: "their answer")\n'
-						: "To skip a gate item, mark with (none needed) or skip-reason: {why}\n";
+						: policyFromBuild
+							? "This build runs under INDUSK_GATE_POLICY=auto: skip a gate item only with its reason — (none needed — {why}) or skip-reason: {why}; the review lists every skip\n"
+							: "To skip a gate item, mark with (none needed) or skip-reason: {why}\n";
 			process.stderr.write(
 				`${phaseLabel(item.phaseKind, item.phase)} blocked (policy: ${gatePolicy}): complete ${phaseLabel(phase.kind, phase.number)} gates first:\n${missing}\n${skipHint}`,
 			);

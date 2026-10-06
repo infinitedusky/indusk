@@ -1,8 +1,96 @@
 # `indusk plans`
 
-Planning-lifecycle housekeeping. Introduced in the `indusk-makeover` plan as the decay mechanism for `.indusk/planning/` — before it, dead-draft plans accumulated forever and every `/catchup` paid to list them.
+A plan's lifecycle from start to landing — `start`, `approve`, `accept`, `land` (admin-plan-authoring) — and planning housekeeping, `archive-dead` (indusk-makeover).
 
-## Subcommands
+## A plan's lifecycle
+
+A plan is written on its own branch, in its own worktree. Its documents and declared promises reach the trunk when it is approved; its build reaches the trunk only after it is accepted. The admin, the skills and the terminal all call these same four commands.
+
+```bash
+indusk plans start <type> <name>    # its branch, its worktree, its first document
+indusk plans approve <name>         # the brief check, then its documents merge to the trunk
+indusk plans accept <name> [--auto] # the build may ship
+indusk plans land <name>            # the build reaches the trunk; worktree and branch removed
+```
+
+Every command acts on the plan's worktree, from any checkout of the project. Each refusal names what it refused, prints `Refused: …` and exits 1, with nothing written.
+
+### `plans start <type> <name>`
+
+Creates `plan/<name>` from the trunk branch, its worktree at `<project>-worktrees/<name>`, and the assignment that tells every reader where the plan lives — the admin and the plan tools read it from there even though the trunk has no folder for it. Writes and commits the first document in the worktree: `brief.md`, or `research.md` for a spike, as a draft declaring `workflow: <type>`. Nothing is written on the trunk.
+
+Refuses:
+
+- a `<type>` that is not `feature`, `bugfix`, `refactor` or `spike`;
+- a name already started, naming its worktree;
+- a name with a folder on the trunk, naming the folder;
+- a name whose branch `plan/<name>` already exists.
+
+### `plans approve <name>`
+
+Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the worktree's copy; sets the impl's `status: approved` and commits it on the branch; merges the branch into the trunk with a merge commit. The build then continues in the same worktree on the same branch.
+
+Refuses:
+
+- a brief the check refuses, with the check's message;
+- a branch that already changes anything outside `.indusk/`, naming the files — it is past approval;
+- uncommitted changes in the worktree;
+- uncommitted changes on the trunk on any path the merge would bring in (never stashed), other than InDusk's bookkeeping.
+
+### InDusk's bookkeeping on the trunk
+
+The evaluator, the highlight tool and the session sections write into the trunk's working tree and nothing else commits them: `.indusk/current.md`, `.indusk/highlights.jsonl`, `.indusk/highlights-processed.jsonl`, `.indusk/eval/` and `.claude/lessons/`. `approve` and `land` commit whatever of these is uncommitted, in a commit of its own (`chore(indusk): bookkeeping, committed before …`), then check the trunk. Anything else uncommitted there may be someone's real work: it is refused, named, and listed by `plans review` as *uncommitted on main* so the person sorts it out before accepting.
+
+### `plans accept <name> [--auto]`
+
+Writes `accepted: <time>` and `accepted_by: person` (or `auto`, with `--auto`: a workflow that accepts on its own) to the impl's frontmatter and commits it on the branch.
+
+Refused inside a build step. An unattended build runs each step (work, falsify, cleanup) with `INDUSK_BUILD_STEP` set to the step, and `accept` and `land` refuse under it, naming the step: a build stops at review, and acceptance is the person's. The release session that acceptance starts is not marked, so it lands. This stops a confused session, not a determined one: a session that unsets the variable is not stopped.
+
+### `plans next <name> [--json]`
+
+What an unattended build does next, read from the plan as it stands — its worktree while it has one. It writes nothing; the build runner asks it after every step, and a person can ask it too.
+
+| Answer | When |
+|---|---|
+| `work` | a phase is open — an impl phase, or a falsification or cleanup phase; names the phase |
+| `falsify` | every phase is closed and no falsification phase or skip exists |
+| `cleanup` | falsification is closed and no cleanup phase or skip exists |
+| `judgement` | the open phase's next item is one the plan declared for a person — a Deferred Verification row, a manual or visual check; names the item |
+| `review` | every phase, the falsification and the cleanup are closed. Never `retrospective`: that waits for acceptance |
+| `cannot continue` | the open phase has a `blocker:` line; or every phase is closed while a row is not terminal. The runner adds two of its own: the step's session ended in an error after its retries, or two steps in a row made no progress |
+
+Judgement items are recognised by the same rule [`indusk run`](/reference/cli/run) pauses on. With `--json` it prints `{"step": …}` with the phase, item or reason; without, a sentence.
+
+### `plans review <name> [--json]`
+
+What a person reads before accepting a built plan, assembled from its documents and its branch. The admin's review panel renders the JSON.
+
+- **Promises** — each promise the brief makes, with the rows naming it and their states. A promise is *proven* when every row naming it passes and names a test file — the same reading `indusk promises confirm` applies at close, so the review never calls proven what the close would refuse. An unproven one says why.
+- **Falsification** — each falsification phase: the rows it added (what it looked for) and its fix items (what it changed).
+- **Files** — what the plan's branch changed against the trunk branch since they diverged. Empty for a plan with no worktree.
+- **Skips** — every gate item marked skipped rather than done, with its text, so its reason is read.
+
+### `plans land <name>`
+
+The one way a plan's build reaches the trunk. Merges the trunk into the branch, runs the project's checks in the worktree, merges the branch into the trunk with a merge commit, releases the assignment, removes the worktree and deletes the branch. The retrospective's landing step calls it.
+
+The checks are `plans.land_checks` in `.indusk/config.json`, each a shell command run in the worktree; none run when the key is absent.
+
+```json
+{ "plans": { "land_checks": ["pnpm test"] } }
+```
+
+Refuses:
+
+- a plan with no `accepted` — accept it first;
+- a call from inside a build step (`INDUSK_BUILD_STEP`), naming the step;
+- uncommitted changes in the worktree;
+- a conflict bringing the trunk into the branch (the merge is aborted);
+- a failing check, naming it;
+- uncommitted changes on the trunk on the paths the plan touches, other than InDusk's bookkeeping, which it commits first.
+
+## Housekeeping
 
 ### `plans archive-dead`
 

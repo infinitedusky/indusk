@@ -1,12 +1,16 @@
 import { existsSync, readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { checkRetrospectiveReadiness } from "@infinitedusky/indusk-mcp/cleanup/gate";
+import {
+  checkRetrospectiveReadiness,
+  isCleanupSkipped,
+} from "@infinitedusky/indusk-mcp/cleanup/gate";
 import {
   isFalsificationComplete,
   type LogEntry,
   readFalsificationLog,
 } from "@infinitedusky/indusk-mcp/falsification/log";
+import { isFalsificationSkipped } from "@infinitedusky/indusk-mcp/falsification/skip";
 import { parseImplString } from "@infinitedusky/indusk-mcp/impl-parser";
 import {
   derivePlanPosition,
@@ -111,6 +115,14 @@ export interface Plan {
   adr?: ADRData;
   impl?: ImplData;
   falsification?: FalsificationData;
+  /**
+   * Falsification or cleanup the impl skipped with its reason
+   * (admin-plan-authoring) — read through the package's own skip readers.
+   */
+  skippedRituals?: Array<{
+    ritual: "falsification" | "cleanup";
+    reason: string;
+  }>;
   retrospective?: RetroData;
   /** Every `kind: paper` document, in filename order, with its body. Absent when there are none. */
   papers?: PaperEntry[];
@@ -308,13 +320,26 @@ async function readPlanFolder(
 
   // The plan bar's position: the same facts `list_plans` and the retrospective
   // gate read, composed by the lifecycle module rather than here.
-  const readiness =
+  // The impl read whole, frontmatter included: readiness reads its skip keys,
+  // and the position reads `accepted:` (admin-plan-authoring).
+  const implRaw =
     impl !== null && !isMalformed(impl)
-      ? checkRetrospectiveReadiness(
-          planDir,
-          readFileSync(join(planDir, "impl.md"), "utf-8"),
-        )
+      ? readFileSync(join(planDir, "impl.md"), "utf-8")
       : null;
+  const readiness =
+    implRaw !== null ? checkRetrospectiveReadiness(planDir, implRaw) : null;
+  const skippedRituals =
+    implRaw === null
+      ? []
+      : [
+          {
+            ritual: "falsification" as const,
+            check: isFalsificationSkipped(implRaw),
+          },
+          { ritual: "cleanup" as const, check: isCleanupSkipped(implRaw) },
+        ]
+          .filter((r) => r.check.skipped)
+          .map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" }));
   // A closed plan may be back in motion — reopened by an incident, or in
   // `monitor` — derived from files by the same function `list_plans` reads.
   const after =
@@ -323,7 +348,7 @@ async function readPlanFolder(
       : undefined;
   const position = derivePlanPosition({
     summary: parsed,
-    impl: implData ? parseImplString(implData.content) : null,
+    impl: implRaw !== null ? parseImplString(implRaw) : null,
     readiness,
     archived,
     ...(after ? { afterClose: after } : {}),
@@ -361,6 +386,7 @@ async function readPlanFolder(
     adr: adr !== null && !isMalformed(adr) ? adr : undefined,
     impl: implData,
     falsification: falsificationData,
+    ...(skippedRituals.length > 0 ? { skippedRituals } : {}),
     retrospective:
       retrospective !== null && !isMalformed(retrospective)
         ? retrospective
@@ -421,8 +447,11 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
     }
     return read;
   };
+  // A plan on its own branch has no trunk folder until it is approved
+  // (admin-plan-authoring); the package's resolver lists it by its assignment.
+  const names = [...new Set([...folders, ...resolved.copies.keys()])].sort();
   return Promise.all(
-    folders.map(async (name) => {
+    names.map(async (name) => {
       const copy: PlanCopy = resolved.copies.get(name) ?? {
         plan: name,
         root,

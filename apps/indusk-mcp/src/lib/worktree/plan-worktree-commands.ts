@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import { getTrunkBranches } from "../config.js";
 import { git } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
+import { currentTrunkBranch } from "../trunk-branch.js";
 import {
 	type Assignment,
 	PlanWorktreeRefusal,
@@ -37,10 +37,16 @@ async function writableRepository(anyCheckout: string): Promise<Repository> {
 	return repo;
 }
 
-function requirePlan(repo: Repository, plan: string): void {
-	if (!isUsableSegment(plan) || !existsSync(join(repo.projectRoot, PLANNING_REL, plan))) {
+/**
+ * A plan is assigned once its folder exists — on the trunk, or in the
+ * worktree being assigned. The second is a plan written on its own branch
+ * (admin-plan-authoring): it has no folder on the trunk until it is approved.
+ */
+function requirePlan(repo: Repository, plan: string, worktree?: string): void {
+	const exists = (root: string) => existsSync(join(root, PLANNING_REL, plan));
+	if (!isUsableSegment(plan) || !(exists(repo.projectRoot) || (worktree && exists(worktree)))) {
 		throw new PlanWorktreeRefusal(
-			`no plan named "${plan}" in ${join(repo.projectRoot, PLANNING_REL)} — a plan is assigned after its folder exists on the trunk`,
+			`no plan named "${plan}" in ${join(repo.projectRoot, PLANNING_REL)}${worktree ? ` or ${join(worktree, PLANNING_REL)}` : ""} — a plan is assigned after its folder exists`,
 		);
 	}
 }
@@ -58,8 +64,8 @@ export async function assignPlan(
 	worktreePath: string,
 ): Promise<Assignment> {
 	const repo = await writableRepository(anyCheckout);
-	requirePlan(repo, plan);
 	const path = canonical(worktreePath);
+	requirePlan(repo, plan, path);
 	const target = repo.linked.get(path);
 	if (!target) {
 		throw new PlanWorktreeRefusal(
@@ -115,9 +121,19 @@ export async function releasePlan(anyCheckout: string, plan: string): Promise<As
 export async function createPlanWorktree(
 	anyCheckout: string,
 	plan: string,
+	opts: {
+		/**
+		 * Write the plan's first documents in the new worktree before it is
+		 * assigned — `plans start`, whose plan has no folder on the trunk.
+		 * Without it the plan must already be on the trunk.
+		 */
+		seed?: (worktree: string) => void;
+	} = {},
 ): Promise<{ assignment: Assignment; created: string }> {
 	const repo = await writableRepository(anyCheckout);
-	requirePlan(repo, plan);
+	if (!opts.seed) requirePlan(repo, plan);
+	else if (!isUsableSegment(plan))
+		throw new PlanWorktreeRefusal(`"${plan}" is not a usable plan name`);
 	const record = await readRecord(anyCheckout);
 	if (!record.ok) refuseUnreadable(record);
 	const created = join(dirname(repo.projectRoot), `${basename(repo.projectRoot)}-worktrees`, plan);
@@ -131,9 +147,8 @@ export async function createPlanWorktree(
 				: `${created} already exists and is not a worktree of this repository (often what a removed worktree leaves behind) — remove it, then run create again`,
 		);
 	}
-	const trunkBranch = await git(repo.projectRoot, "branch", "--show-current");
-	const allowed = getTrunkBranches(repo.projectRoot);
-	if (!allowed.includes(trunkBranch)) {
+	const { branch: trunkBranch, allowed, onTrunk } = await currentTrunkBranch(repo.projectRoot);
+	if (!onTrunk) {
 		throw new PlanWorktreeRefusal(
 			`the trunk at ${repo.projectRoot} is on ${trunkBranch ? `branch ${trunkBranch}` : "no branch"}, not a trunk branch (${allowed.join(", ")}) — a plan branch forks from the trunk; check out the trunk branch first, or list this one in worktree.trunk_guard.branches`,
 		);
@@ -152,6 +167,7 @@ export async function createPlanWorktree(
 	} catch (err) {
 		throw new PlanWorktreeRefusal(`git worktree add failed: ${(err as Error).message.trim()}`);
 	}
+	opts.seed?.(canonical(created));
 	const assignment = await assignPlan(repo.projectRoot, plan, created);
 	return { assignment, created: canonical(created) };
 }

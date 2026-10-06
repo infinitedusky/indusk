@@ -30,6 +30,10 @@
 			"types": "./dist/lib/falsification/log.d.ts",
 			"default": "./dist/lib/falsification/log.js"
 		},
+		"./falsification/skip": {
+			"types": "./dist/lib/falsification/skip.d.ts",
+			"default": "./dist/lib/falsification/skip.js"
+		},
 		"./cleanup/oversized": {
 			"types": "./dist/lib/cleanup/oversized.d.ts",
 			"default": "./dist/lib/cleanup/oversized.js"
@@ -81,6 +85,18 @@
 		"./lifecycle": {
 			"types": "./dist/lib/lifecycle.d.ts",
 			"default": "./dist/lib/lifecycle.js"
+		},
+		"./build": {
+			"types": "./dist/lib/build/index.d.ts",
+			"default": "./dist/lib/build/index.js"
+		},
+		"./plans": {
+			"types": "./dist/lib/plans/index.d.ts",
+			"default": "./dist/lib/plans/index.js"
+		},
+		"./session": {
+			"types": "./dist/lib/session/index.d.ts",
+			"default": "./dist/lib/session/index.js"
 		},
 		"./workflow-types": {
 			"types": "./dist/lib/workflow-types.d.ts",
