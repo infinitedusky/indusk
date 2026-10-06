@@ -11,6 +11,7 @@ import { testFile, writePromise } from "./helpers/promises-fixture.js";
 
 /**
  * promise: a-review-shows-its-evidence — admin-plan-authoring A15, A16, A17.
+ * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the review's half.
  *
  * When a build stops for review, `indusk plans review <plan>` assembles what
  * the person needs to decide: each promise the plan makes with the passing
@@ -59,6 +60,10 @@ test_purpose: required
 #### Build Phase 1 Verification
 
 - [x] A1 passes
+
+#### Build Phase 1 Document
+
+- [x] (none needed — seats have no public page yet)
 
 ### Build Phase 2: Falsification — holds that never expire
 
@@ -111,6 +116,7 @@ interface Review {
 		items: Array<{ text: string; done: boolean }>;
 	}>;
 	files: Array<{ path: string }>;
+	skips: Array<{ phase: string; gate: string; item: string }>;
 }
 
 function review(): Review {
@@ -142,6 +148,16 @@ describe.skipIf(SHOULD_SKIP)("indusk plans review", () => {
 		]);
 		expect(falsification[0].items).toEqual([
 			{ text: "read the hold's expiry from a monotonic clock", done: true },
+		]);
+	});
+
+	it("A30 — every gate item the build skipped, with its reason", () => {
+		expect(review().skips).toEqual([
+			{
+				phase: "Build Phase 1: Seats",
+				gate: "document",
+				item: "(none needed — seats have no public page yet)",
+			},
 		]);
 	});
 
