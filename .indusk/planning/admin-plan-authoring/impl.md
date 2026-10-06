@@ -78,8 +78,8 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A18 | A plan that has not been accepted cannot be landed on `main`; the refusal names the plan | Test Phase 1 | Build Phase 1 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 | A19 | Accepting a plan in the panel runs the release workflow: the retrospective, the merge to `main`, the branch and worktree removed | Build Phase 7 | Build Phase 7 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
 | A20 | With `release.auto_accept`, a build that reaches review goes on to the release workflow without the person | Build Phase 7 | Build Phase 7 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
-| A21 | Stopping a session from the panel ends it, and what it wrote stays written | Build Phase 5 | Build Phase 6 | planned | unit | promise: a-session-can-be-stopped | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A22 | When the admin stops, or starts again after a crash, no session it started is still running | Build Phase 5 | Build Phase 5 | planned | contract | promise: a-session-can-be-stopped | apps/indusk-mcp/src/__tests__/admin-session-lifecycle.test.ts |
+| A21 | Stopping a session from the panel ends it, and what it wrote stays written | Build Phase 5 | Build Phase 6 | written | unit | promise: a-session-can-be-stopped | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A22 | When the admin stops, or starts again after a crash, no session it started is still running | Build Phase 5 | Build Phase 5 | passing | contract | promise: a-session-can-be-stopped | apps/indusk-mcp/src/__tests__/admin-session-lifecycle.test.ts |
 | A23 | Approving runs the same brief check as the command line and refuses with its message when a promise is missing from the registry | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
 | A24 | In a build session the admin starts, a checkoff that skips a gate without a reason is refused | Build Phase 7 | Build Phase 7 | planned | contract | promise: gates-ran-at-every-checkoff | apps/indusk-mcp/src/__tests__/build-session-gates.test.ts |
 | A25 | The admin starts plans, creates worktrees, checks briefs, lands plans and starts `claude` only through the package's code | Test Phase 1 | Build Phase 7 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-admin/src/__tests__/admin-uses-package-commands.test.ts |
@@ -270,24 +270,26 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 ### Build Phase 5: The daemon owns sessions
 
-- [ ] `daemon.ts` starts Next with `-H 127.0.0.1`
-- [ ] `lib/session/manager.ts`: one session at a time; the record in `~/.indusk/admin-sessions.json`; `stopAll()`; `reapRecorded()` checks each pid is the `claude` it started
-- [ ] `indusk ui stop` calls `stopAll()` before the daemon; the daemon calls `reapRecorded()` at start
-- [ ] The admin's routes: `POST /api/sessions`, `POST /api/sessions/:id/reply`, `POST /api/sessions/:id/stop`, `GET /api/sessions/:id/events`; each `POST` refuses an `Origin` that is not the admin's
-- [ ] A21 manager half and A22 written red, then passing; A22 in `SYSTEM`
+- [x] (discovered — Sandy, 2026-10-06: "Trust automatic") `lib/session/trust.ts`: before a session starts, a worktree of a project Claude Code already trusts is trusted like it (`hasTrustDialogAccepted` only, read-modify-rename); a project nobody trusted never is, and an unreadable config is left alone. `startSession` reports `trusted` or `untrusted` as its first event. `trust.test.ts` (A1's Test cell): 6 cases against a temporary config, never the developer's
+- [x] `daemon.ts` starts Next with `-H 127.0.0.1` — every client already reached it on 127.0.0.1 (the identity probe, the port check, the Caddy route); `admin-cli-lifecycle.test.ts` exercises the start at this phase's verification
+- [x] `lib/session/manager.ts`: one session at a time; the record in `~/.indusk/admin-sessions.json`; `stopAll()`; `reapRecorded()` checks each pid is the `claude` it started — by the process's command line (`ps -o command=`) containing the program it started; the manager also keeps each session's events, so a panel that connects late replays them (`subscribe`)
+- [x] `indusk ui stop` calls `stopAll()` before the daemon; the daemon calls `reapRecorded()` at start — `ui stop` is its own process, not the daemon, so it cannot reach the daemon's manager; both `ui stop` (before the daemon stops) and `ui start` (before one starts) end the recorded sessions from the record with `reapRecorded`, which A22 exercises against real processes
+- [x] The admin's routes: `POST /api/sessions`, `POST /api/sessions/:id/reply`, `POST /api/sessions/:id/stop`, `GET /api/sessions/:id/events`; each `POST` refuses an `Origin` that is not the admin's — plus `GET /api/sessions` (the running one). The origin is compared with the request's `Host`, so the Caddy route (`indusk.dawn`) works; `session-host.test.ts` pins it. Matching a reply to its request is the manager's (`reply`, one answer per request), so no route spells the protocol. Smoke-tested on the production build: GET answers, a POST with no or a foreign origin is 403, a bad body 400, and the server listens on 127.0.0.1 only
+- [x] A21 manager half and A22 written red, then passing; A22 in `SYSTEM` — both written before `manager.ts` existed (load errors; their subject is the new manager). A21's half: 8 tests with a fake session. A22: 3 against real processes — a stand-in `claude` that never stops is ended by `stopAll`, ended by a later manager after its owner was dropped, and a recorded pid now running another program is left alone
 
 #### Build Phase 5 Verification
 
-- [ ] A21's manager half passes (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/manager`)
-- [ ] A22 passes (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/admin-session-lifecycle`), and `admin-cli-lifecycle.test.ts` still passes
+- [x] A21's manager half passes (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/manager`) — 8 tests; the admin's `session-host.test.ts` 3; `tsc --noEmit` clean in both packages; the admin's production build compiles the four routes
+- [x] A22 passes (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/admin-session-lifecycle`), and `admin-cli-lifecycle.test.ts` still passes — 10 of 10, after `node scripts/bundle-admin.js`: a fresh worktree has no admin bundle (it is gitignored), so `ui start` refused and six lifecycle tests failed until it was built — nothing this plan changed. A first run also overlapped another process running the same file in this worktree
+- [x] Shape — `manager.ts` holds one job (own sessions: start, record, answer, stop, reap) and its record I/O is two private functions; `session-host.ts` only finds the manager, the plan's location and the origin rule; each route reads its body, asks the manager, and maps a refusal to a status. One thing looked at and kept: the manager keeps every event of a running session in memory so a late panel can replay them; a session's events end with it, and only one runs at a time. Nothing to change
 
 #### Build Phase 5 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: the admin is no longer read-only; it writes only through package commands and sessions, its routes are localhost-only and check their origin
+- [x] `apps/indusk-admin/CLAUDE.md`: the admin is no longer read-only; it writes only through package commands and sessions, its routes are localhost-only and check their origin — the first entry, naming its guard; "read-only" dropped from the next one
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: the routes, one session at a time, stopping, and what happens when the daemon stops or crashes; `apps/docs/src/decisions/admin-ui-hosting.md` notes the amendment
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: the routes, one session at a time, stopping, and what happens when the daemon stops or crashes; `apps/docs/src/decisions/admin-ui-hosting.md` notes the amendment
 
 ### Build Phase 6: The panel
 
