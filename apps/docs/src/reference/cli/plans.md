@@ -41,6 +41,21 @@ Refuses:
 
 Writes `accepted: <time>` and `accepted_by: person` (or `auto`, with `--auto`: a workflow that accepts on its own) to the impl's frontmatter and commits it on the branch.
 
+### `plans next <name> [--json]`
+
+What an unattended build does next, read from the plan as it stands — its worktree while it has one. It writes nothing; the build runner asks it after every step, and a person can ask it too.
+
+| Answer | When |
+|---|---|
+| `work` | a phase is open — an impl phase, or a falsification or cleanup phase; names the phase |
+| `falsify` | every phase is closed and no falsification phase or skip exists |
+| `cleanup` | falsification is closed and no cleanup phase or skip exists |
+| `judgement` | the open phase's next item is one the plan declared for a person — a Deferred Verification row, a manual or visual check; names the item |
+| `review` | every phase, the falsification and the cleanup are closed. Never `retrospective`: that waits for acceptance |
+| `cannot continue` | the open phase has a `blocker:` line; or every phase is closed while a row is not terminal. The runner adds two of its own: the step's session ended in an error after its retries, or two steps in a row made no progress |
+
+Judgement items are recognised by the same rule [`indusk run`](/reference/cli/run) pauses on. With `--json` it prints `{"step": …}` with the phase, item or reason; without, a sentence.
+
 ### `plans land <name>`
 
 The one way a plan's build reaches the trunk. Merges the trunk into the branch, runs the project's checks in the worktree, merges the branch into the trunk with a merge commit, releases the assignment, removes the worktree and deletes the branch. The retrospective's landing step calls it.
