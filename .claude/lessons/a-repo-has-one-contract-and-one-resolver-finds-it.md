@@ -1,0 +1,5 @@
+# A repo has one contract, and one resolver finds it — never build a path to `.indusk/promises` yourself
+
+A repo's promises are its contract. Once a repo holds `.indusk/promises/`, that folder is the contract, however many workbenches work on the repo. Until it does, the workbench's own folder is a versioned shadow contract. Which one applies is decided in one place: `contractDir` in `lib/promises/registry.ts`. A module that joins its own path to the folder reads the shadow while the repo says otherwise. That is two definitions of one promise, which is the problem the one-contract rule exists to end.
+
+What to do: reach the promises folder through `contractDir(root, plan?)`, never with `join(..., ".indusk", "promises")`. Likewise, in the plan, build and session modules, find a plan's code through `resolveExecutionRoots` and the plan's `code.json`, never by looking up the workbench's repos yourself. Guarded by `contract-resolver-single-definition.test.ts` (workbench-plan-authoring A17). See `.indusk/planning/workbench-plan-authoring/adr.md` (D2, D4).
