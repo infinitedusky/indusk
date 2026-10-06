@@ -47,12 +47,12 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | Starting a plan in a one-repo workbench writes its documents at the root, makes a code worktree in that repo on `plan/<name>`, and records both | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
-| A2 | In a two-repo workbench, starting needs the repo named and records it; without one it is refused, naming the repos | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
+| A1 | Starting a plan in a one-repo workbench writes its documents at the root, makes a code worktree in that repo on `plan/<name>`, and records both | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
+| A2 | In a two-repo workbench, starting needs the repo named and records it; without one it is refused, naming the repos | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A3 | Every later step finds the code worktree from the plan's record; a record naming a worktree that is gone is reported, never guessed | Test Phase 1 | Build Phase 3 | written | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A4 | In a workbench whose repo holds `.indusk/promises/`, promises are read from the repo and the workbench's folder is not read | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
 | A5 | In a workbench whose repo holds no promises folder, promises are read and written in the workbench | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
-| A6 | Declaring a promise in a plan whose repo holds a contract writes it in the plan's code worktree | Test Phase 1 | Build Phase 2 | written | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
+| A6 | Declaring a promise in a plan whose repo holds a contract writes it in the plan's code worktree | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A7 | The registry check, `promises status` and `promises list` give the same promises for a project, with or without a contract in its repo | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
 | A8 | Two workbenches on one repo that holds a contract read the same promises | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
 | A9 | New plan in a workbench project, in the admin, starts the plan; with more than one repo the form asks which | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/components/session/NewPlanForm.test.tsx |
@@ -63,7 +63,7 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 | A14 | In a workbench, a real build session's checkoff is refused by the workbench's gates when an earlier phase skipped a gate without its reason | Build Phase 4 | Build Phase 4 | planned | contract | promise: gates-ran-at-every-checkoff | apps/indusk-mcp/src/__tests__/build-session-gates-workbench.test.ts |
 | A15 | A workbench plan's review lists the files its code branch changed in its repo, and uncommitted work on that repo's trunk on those paths | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A16 | Landing an unaccepted workbench plan is refused; once accepted, its code merges into the repo's trunk and its code worktree and branch are removed | Test Phase 1 | Build Phase 3 | written | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
-| A17 | No module but the contract resolver joins a path to `.indusk/promises`, and none but `resolveExecutionRoots` decides a code root | Test Phase 1 | Build Phase 2 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/contract-resolver-single-definition.test.ts |
+| A17 | No module but the contract resolver joins a path to `.indusk/promises`, and none but `resolveExecutionRoots` decides a code root | Test Phase 1 | Build Phase 2 | passing | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/contract-resolver-single-definition.test.ts |
 | A18 | In a normal-mode project every plan command, the build and the admin behave as in 1.63.0 | Test Phase 1 | Test Phase 1 | passing | unit | normal mode stays as it shipped; the existing plans, build, session and admin tests are the proof, run unchanged | apps/indusk-mcp/src/__tests__/plans-start.test.ts, apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 | A19 | In a scratch copy of a real workbench, one plan goes from New plan to landed in the admin, without a terminal | Build Phase 6 | Build Phase 6 | planned | live check | the whole flow in a workbench, recorded in Build Phase 6; each promise it walks is proven by its own rows | manual: recorded in Build Phase 6 |
 
@@ -131,22 +131,23 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 **Goal**: `plans start` works in a workbench and writes `code.json`; every step can read it.
 
-- [ ] `plans start <type> <name> [--repo <repo>]` in a workbench (D1): the document at the root, committed there; the code worktree on `plan/<name>` through the worktree extension's setup script; `--repo` required when more than one repo is declared
-- [ ] `code.json` and `readPlanCode(root, plan)` (D2): the problem a malformed file or a missing worktree gives, by name
-- [ ] `resolveExecutionRoots` takes the plan: a workbench plan's code root is its code worktree, including in a multi-repo workbench
-- [ ] Declaring a promise in a plan whose repo holds a contract writes it in the code worktree (A6)
+- [x] (the setup script gained `--branch`, its default still the slug; a repo without `.indusk/worktree-configs/<repo>.json` (writing-workbench has none, the other seven do) gets a plain `git worktree add` instead of a refusal; a code worktree inside the root not already ignored there gets an ignore line, committed with the plan, so sync never sweeps it in; the package-root walk moved to `lib/package-root.ts` so the CLI and the plan commands share it) `plans start <type> <name> [--repo <repo>]` in a workbench (D1): the document at the root, committed there; the code worktree on `plan/<name>` through the worktree extension's setup script; `--repo` required when more than one repo is declared
+- [x] (in `lib/worktree/roots.ts`, beside `chooseCodeRepo`: the home for where code lives) `code.json` and `readPlanCode(root, plan)` (D2): the problem a malformed file or a missing worktree gives, by name
+- [x] `resolveExecutionRoots` takes the plan: a workbench plan's code root is its code worktree, including in a multi-repo workbench
+- [x] Declaring a promise in a plan whose repo holds a contract writes it in the code worktree (A6) — `contractDir(root, plan)`
 
 #### Build Phase 2 Verification
 
-- [ ] A1, A2, A6, A17 pass, and the existing `roots`, `run` and `verify` workbench tests stay green (`pnpm exec vitest run src/__tests__/plans-workbench src/__tests__/contract-resolver-single-definition src/lib/worktree/roots src/lib/run/workbench-split src/lib/verify/workbench-split`)
+- [x] (A1 in all four layouts and without a worktree config, A2 with two repos, A6, A17: passing; the five files 34 tests; related to the seven changed modules, 32 files and 204 tests; the worktree script's own tests, 4 files and 24 tests) A1, A2, A6, A17 pass, and the existing `roots`, `run` and `verify` workbench tests stay green
+- [x] Shape — `startWorkbenchPlan` does one job (start a plan in a workbench) through named steps: `chooseCodeRepo`, `setupThroughExtension`, `ignoreAtRoot`. `readPlanCode` and `chooseCodeRepo` sit where code roots are decided. Nothing to change (`pnpm exec vitest run src/__tests__/plans-workbench src/__tests__/contract-resolver-single-definition src/lib/worktree/roots src/lib/run/workbench-split src/lib/verify/workbench-split`)
 
 #### Build Phase 2 Context
 
-- [ ] planning (`templates/planning/CLAUDE.md`): a workbench plan's documents are at the root and its code is named in `code.json`
+- [x] planning (`templates/planning/CLAUDE.md`): a workbench plan's documents are at the root and its code is named in `code.json` — added to the own-branch entry; installed copy synced
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/plans.md`: `--repo`, the code file, and starting in a workbench
+- [x] `apps/docs/src/reference/cli/plans.md`: `--repo`, the code file, and starting in a workbench
 
 ### Build Phase 3: Approve, review and land in a workbench
 
