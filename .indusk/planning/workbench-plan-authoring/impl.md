@@ -121,11 +121,11 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 #### Build Phase 1 Context
 
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`, Promises and telemetry): the registry is found through `contractDir`; a repo's own contract wins over the workbench's
+- [x] mcp (`apps/indusk-mcp/CLAUDE.md`, Promises and telemetry): the registry is found through `contractDir`; a repo's own contract wins over the workbench's — delivered by the enforcer tier, which comes first: guard `contract-resolver-single-definition.test.ts` carries lesson: a-repo-has-one-contract-and-one-resolver-finds-it. The package file is 2 bytes under its budget and stays unchanged
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/guide/contract.md` (new): one contract per repo, the shadow contract, and how a repo adopts one; added to the sidebar
+- [x] `apps/docs/src/guide/contract.md` (new): one contract per repo, the shadow contract, and how a repo adopts one; added to the sidebar — the docs site builds
 
 ### Build Phase 2: A workbench plan starts, and knows its code
 
