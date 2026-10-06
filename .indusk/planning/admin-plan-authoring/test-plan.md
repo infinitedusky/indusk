@@ -1,7 +1,7 @@
 ---
 title: "Plan authoring from the admin — Test Plan"
 date: 2026-10-06
-status: draft
+status: accepted
 ---
 
 # Admin plan authoring — Test Plan
