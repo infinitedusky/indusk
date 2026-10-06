@@ -383,6 +383,7 @@ A build started from the admin (`Build` on an approved plan's page) runs each st
 - **Stop when the plan says a person must look.** An item naming a Deferred Verification row, a manual or visual check: leave it unchecked and end the session. The build stops there and shows the item.
 - **Stop when you cannot continue**, and say why in the plan — a `blocker:` line on the phase. Do not loop on a gate that will not pass.
 - **Write only inside the plan's worktree.** A write outside it is refused.
+- **Never commit, stash or discard work that is not the plan's.** InDusk's own bookkeeping on `main` (`current.md`, the highlight logs, evaluator results, lessons) is committed by `indusk plans approve` and `plans land`; anything else uncommitted there may be someone's real work — stop with a `blocker:` naming it.
 - **Never start `/retrospective`.** The release begins with acceptance.
 
 ## Corrections and Context Learning

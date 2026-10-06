@@ -139,4 +139,18 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 		expect(out(r)).toContain("seat.ts");
 		expect(git(wt, ["rev-parse", "HEAD"])).toBe(head);
 	});
+
+	it("A32 — InDusk's own notes uncommitted on main do not block approval: committed as bookkeeping first", () => {
+		writeFileSync(join(p.trunk, ".gitattributes"), ".indusk/current.md merge=union\n");
+		writeFileSync(join(p.trunk, ".indusk", "current.md"), "# now\n");
+		git(p.trunk, ["add", "-A"]);
+		git(p.trunk, ["commit", "-qm", "current.md"]);
+		git(wt, ["merge", "-q", "main"]);
+		writePlan({ extra: { ".indusk/current.md": "# now\n\n## Session plan — seat-holds\n" } });
+		writeFileSync(join(p.trunk, ".indusk", "current.md"), "# now\n\n## Session eval — notes\n");
+		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		expect(r.code, out(r)).toBe(0);
+		expect(git(p.trunk, ["log", "--format=%s", "main"])).toMatch(/bookkeeping/);
+		expect(git(p.trunk, ["status", "--porcelain"])).toBe("");
+	});
 });

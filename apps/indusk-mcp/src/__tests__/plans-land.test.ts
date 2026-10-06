@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -64,5 +64,30 @@ describe.skipIf(SHOULD_SKIP)("indusk plans land", () => {
 		expect(git(p.trunk, ["rev-list", "--parents", "-n", "1", "main"]).split(" ")).toHaveLength(3);
 		expect(existsSync(wt)).toBe(false);
 		expect(gitResult(p.trunk, ["rev-parse", "--verify", `plan/${PLAN}`]).code).not.toBe(0);
+	});
+
+	it("A32 — InDusk's own notes left uncommitted on main are committed as bookkeeping, and the plan lands", () => {
+		writeFileSync(
+			join(p.trunk, ".indusk", "current.md"),
+			"# now\n\n## Session abc — eval\n\nfinished\n",
+		);
+		expect(runCli(p.trunk, ["plans", "accept", PLAN]).code).toBe(0);
+		const r = runCli(p.trunk, ["plans", "land", PLAN]);
+		expect(r.code, out(r)).toBe(0);
+		expect(git(p.trunk, ["log", "--format=%s", "main"])).toMatch(/bookkeeping/);
+		expect(git(p.trunk, ["status", "--porcelain"])).toBe("");
+		expect(p.onMain()).toContain("src/seat.ts");
+	});
+
+	it("A32 — other uncommitted work on main where the plan lands is refused, naming it, and not committed", () => {
+		writeFileSync(join(p.trunk, "src-seat-draft.txt"), "someone's draft\n");
+		mkdirSync(join(p.trunk, "src"), { recursive: true });
+		writeFileSync(join(p.trunk, "src", "seat.ts"), "// someone else's seat\n");
+		expect(runCli(p.trunk, ["plans", "accept", PLAN]).code).toBe(0);
+		const before = p.mainSha();
+		const r = runCli(p.trunk, ["plans", "land", PLAN]);
+		expect(r.code).not.toBe(0);
+		expect(out(r)).toContain("src/seat.ts");
+		expect(p.mainSha()).toBe(before);
 	});
 });

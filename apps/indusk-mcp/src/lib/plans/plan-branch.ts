@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { getTrunkBranches } from "../config.js";
 import { git, headSha } from "../git.js";
 import { resolvePlanCopies } from "../worktree/plan-worktrees.js";
+import { commitTrunkBookkeeping, uncommittedWork } from "./bookkeeping.js";
 
 /**
  * What every `indusk plans` verb after `start` needs (admin-plan-authoring,
@@ -74,13 +75,22 @@ export async function branchChanges(pb: PlanBranch): Promise<string[]> {
 	return out.split("\n").filter(Boolean);
 }
 
-/** Refuse when the trunk's working tree has changes on any of `paths`: a merge would mix them in. Never stashes. */
-export async function refuseDirtyTrunk(pb: PlanBranch, paths: string[]): Promise<void> {
-	if (paths.length === 0) return;
-	const dirty = await git(pb.trunk, "status", "--porcelain", "--", ...paths);
-	if (dirty) {
+/**
+ * Before a merge onto the trunk: commit InDusk's own uncommitted bookkeeping
+ * there (`bookkeeping.ts`), then refuse when anything else uncommitted sits on
+ * a path the merge would touch — it may be someone's work, so it is the
+ * person's to sort out, and the review lists it first. Never stashes.
+ */
+export async function refuseDirtyTrunk(
+	pb: PlanBranch,
+	paths: string[],
+	why: string,
+): Promise<void> {
+	await commitTrunkBookkeeping(pb, why);
+	const work = await uncommittedWork(pb.trunk, paths);
+	if (work.length > 0) {
 		throw new PlanCommandRefusal(
-			`the trunk at ${pb.trunk} has uncommitted changes on paths ${pb.plan} touches — commit or move them first:\n${dirty}`,
+			`the trunk at ${pb.trunk} has uncommitted work on paths ${pb.plan} touches, and it may be someone's — commit or move it first: ${work.join(", ")}`,
 		);
 	}
 }

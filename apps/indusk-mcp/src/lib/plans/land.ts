@@ -65,7 +65,7 @@ export async function landPlan(anyCheckout: string, plan: string): Promise<Lande
 		}
 	}
 
-	await refuseDirtyTrunk(pb, await branchChanges(pb));
+	await refuseDirtyTrunk(pb, await branchChanges(pb), `before landing ${plan}`);
 	const merge = await mergeIntoTrunk(pb, `Merge ${pb.branch}: ${plan} landed`);
 	await releasePlan(pb.trunk, plan);
 	await git(pb.trunk, "worktree", "remove", pb.worktree);

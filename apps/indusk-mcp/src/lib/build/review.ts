@@ -7,6 +7,7 @@ import { isFalsificationSkipped } from "../falsification/skip.js";
 import { git } from "../git.js";
 import { type ImplPhase, parseImplString } from "../impl-parser-core.js";
 import { RITUAL_ORDER } from "../lifecycle.js";
+import { uncommittedWork } from "../plans/bookkeeping.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { type PromiseEntry, readPromises } from "../promises/registry.js";
 import { rowProofs } from "../promises/rows.js";
@@ -57,6 +58,12 @@ export interface Review {
 	skips: ReviewSkip[];
 	/** Falsification or cleanup skipped by the plan's frontmatter, with the reason given. */
 	skippedRituals: Array<{ ritual: "falsification" | "cleanup"; reason: string }>;
+	/**
+	 * Uncommitted work on the trunk, outside InDusk's own bookkeeping, on paths
+	 * the plan's merge will touch — the person's to sort out before accepting,
+	 * since landing refuses it (Build Phase 10).
+	 */
+	uncommittedOnMain: string[];
 }
 
 export async function buildReview(anyCheckout: string, plan: string): Promise<Review> {
@@ -90,6 +97,10 @@ export async function buildReview(anyCheckout: string, plan: string): Promise<Re
 				.flatMap((g) => g.items.map((i) => ({ text: i.text, done: i.checked }))),
 		})),
 		files,
+		uncommittedOnMain: await uncommittedWork(
+			copies.projectRoot,
+			files.map((f) => f.path),
+		),
 		skippedRituals: [
 			{ ritual: "falsification" as const, check: isFalsificationSkipped(implText) },
 			{ ritual: "cleanup" as const, check: isCleanupSkipped(implText) },

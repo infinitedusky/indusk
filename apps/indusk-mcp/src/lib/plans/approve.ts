@@ -1,5 +1,6 @@
 import { git } from "../git.js";
 import { checkPlanContract } from "../promises/contract.js";
+import { statusPaths } from "./bookkeeping.js";
 import {
 	branchChanges,
 	implPath,
@@ -51,7 +52,7 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
 		);
 	}
 
-	await refuseDirtyTrunk(pb, paths);
+	await refuseDirtyTrunk(pb, paths, `before approving ${plan}`);
 	await setImplKeys(pb, impl, { status: "approved" }, `plan(${plan}): impl approved`);
 	const merge = await mergeIntoTrunk(pb, `plan(${plan}): approved — its documents and promises`);
 	return { plan, merge, paths };
@@ -66,12 +67,8 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
  */
 async function commitPlanDocuments(pb: Awaited<ReturnType<typeof planBranch>>): Promise<void> {
 	const status = await git(pb.worktree, "status", "--porcelain", "--untracked-files=all");
-	const lines = status.split("\n").filter(Boolean);
-	// `git` trims its output, so the first line may have lost its leading
-	// space: take the path after the status code, however it is padded.
-	const outside = lines
-		.map((l) => l.replace(/^\s*\S{1,2}\s+/, ""))
-		.filter((path) => !path.startsWith(".indusk/"));
+	const lines = statusPaths(status);
+	const outside = lines.filter((path) => !path.startsWith(".indusk/"));
 	if (outside.length > 0) {
 		throw new PlanCommandRefusal(
 			`${pb.plan}'s worktree ${pb.worktree} has uncommitted changes outside .indusk/ — commit or move them first: ${outside.join(", ")}`,

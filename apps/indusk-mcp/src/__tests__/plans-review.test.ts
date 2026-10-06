@@ -1,3 +1,4 @@
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
@@ -118,6 +119,7 @@ interface Review {
 	files: Array<{ path: string }>;
 	skips: Array<{ phase: string; gate: string; item: string }>;
 	skippedRituals: Array<{ ritual: string; reason: string }>;
+	uncommittedOnMain: string[];
 }
 
 function review(): Review {
@@ -179,6 +181,14 @@ describe.skipIf(SHOULD_SKIP)("indusk plans review", () => {
 		expect(review().skippedRituals).toEqual([
 			{ ritual: "cleanup", reason: "one small file; nothing to decompose" },
 		]);
+	});
+
+	it("A33 — uncommitted work on main where the plan will land is listed; InDusk's own notes are not", () => {
+		mkdirSync(join(p.trunk, "src"), { recursive: true });
+		writeFileSync(join(p.trunk, "src", "seat-release.ts"), "// someone's work in progress\n");
+		writeFileSync(join(p.trunk, ".indusk", "current.md"), "# eval notes\n");
+		writeFileSync(join(p.trunk, "unrelated.txt"), "not a path this plan touches\n");
+		expect(review().uncommittedOnMain).toEqual(["src/seat-release.ts"]);
 	});
 
 	it("A17 — the files the branch changed against main", () => {
