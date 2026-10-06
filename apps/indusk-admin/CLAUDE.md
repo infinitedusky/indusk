@@ -12,7 +12,11 @@ Each entry is a rule and a pointer; the pointer holds the story.
   spawns a process (beyond the two read-only git readers) or parses Claude's
   protocol. Every `POST` refuses an `Origin` that is not its `Host`
   (`sameOrigin`); the daemon listens on 127.0.0.1 only. Guarded by
-  `admin-uses-package-commands.test.ts`. — see `/reference/admin-ui/sessions`
+  `admin-uses-package-commands.test.ts`. The session panel
+  (`components/session/`) renders the events the package's protocol produced
+  and sends a person's choices back through the routes; a client component
+  imports only *types* from `/session`, whose code is Node's. — see
+  `/reference/admin-ui/sessions`
 - Next.js App Router viewer over `.indusk/planning/` + `.indusk/eval/`,
   hosted as one machine-global daemon (`indusk ui start/stop/restart/status`,
   registry `~/.indusk/projects.json`, routes `/p/[project]/...`). Custom
