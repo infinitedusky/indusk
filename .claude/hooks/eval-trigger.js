@@ -383,6 +383,14 @@ syslog(
 );
 
 const syslogPath = resolve(statePath, ".indusk", "eval", "system.log");
+// A plan written on main instead of its own branch is marked, never refused
+// (admin-plan-authoring, ADR D8): the evaluator's process marks the commit
+// first, on the same tracer, so the marks flush with the evaluation's. A
+// package too old to have the module skips it and evaluates as before.
+const trunkCommitPath = evaluatorRunnerPath.replace(
+	/eval[\\/]evaluator-runner\.js$/,
+	"promises/trunk-commit.js",
+);
 // NOTE: this inline script runs with --input-type=module (see spawn below).
 // ESM scope — use static imports from node: specifiers only. CJS module
 // resolution throws ReferenceError in ESM scope at parse, and stdio:"ignore"
@@ -426,7 +434,15 @@ process.on("unhandledRejection", (reason) => {
   process.exit(1);
 });
 syslog("evaluator process started — changeId: ${changeId}");
-import("${useModule}")
+import(${JSON.stringify(trunkCommitPath)})
+  .then((t) => t.markTrunkCommit({
+    projectRoot: ${JSON.stringify(statePath)},
+    gitRoot: ${JSON.stringify(gitPath ?? statePath)},
+    sha: ${JSON.stringify(changeId)},
+  }))
+  .then((n) => { if (n) syslog("marked " + n + " plan(s) for a-plan-is-written-on-its-own-branch"); })
+  .catch(() => {})
+  .then(() => import("${useModule}"))
   .then(m => {
     syslog("evaluator module loaded — calling ${useFunction}");
     // CONTRACT: the state root MUST be passed as \`projectRoot\` (the key both
