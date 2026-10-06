@@ -1,4 +1,4 @@
-import { refuse, sessionManager } from "@/lib/session-host";
+import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +12,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
+  const refused = adminOnly(request);
+  if (refused) return refused;
   const { id } = await params;
   if (!sessionManager().get(id))
     return refuse(404, `no session ${id} is running`);

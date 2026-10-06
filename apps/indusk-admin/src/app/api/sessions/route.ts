@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 import {
+  adminOnly,
   planLocation,
   refuse,
-  sameOrigin,
   sessionManager,
 } from "@/lib/session-host";
 
@@ -10,7 +10,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** The session running now, if any (admin-plan-authoring, ADR D2). */
-export function GET(): Response {
+export function GET(request: NextRequest): Response {
+  const refused = adminOnly(request);
+  if (refused) return refused;
   return Response.json({ session: sessionManager().current() ?? null });
 }
 
@@ -20,9 +22,11 @@ export function GET(): Response {
  * naming the first.
  */
 export async function POST(request: NextRequest): Promise<Response> {
-  if (!sameOrigin(request.headers.get("origin"), request.headers.get("host"))) {
-    return refuse(403, "a session is started only from the admin's own page");
-  }
+  const refused = adminOnly(
+    request,
+    "a session is started only from the admin's own page",
+  );
+  if (refused) return refused;
   const body = (await request.json().catch(() => null)) as {
     project?: string;
     plan?: string;

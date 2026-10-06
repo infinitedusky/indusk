@@ -1,4 +1,4 @@
-import { SessionManager } from "@infinitedusky/indusk-mcp/session";
+import { isAdminHost, SessionManager } from "@infinitedusky/indusk-mcp/session";
 import { livePlanCopy } from "@infinitedusky/indusk-mcp/worktree/plan-worktrees";
 import { getProjectPath } from "./registry-client";
 
@@ -37,6 +37,33 @@ export function sameOrigin(
   } catch {
     return false;
   }
+}
+
+/**
+ * The check every route under `app/api` makes first (admin-plan-authoring
+ * A34): the `Host` is one of the admin's own (`isAdminHost` — a rebound name
+ * makes `Origin` and `Host` agree, so `sameOrigin` alone lets it through),
+ * and a request that changes something also came from the admin's page. A
+ * refusal to return, or null to go on.
+ */
+export function adminOnly(
+  request: Request,
+  refusal = "only the admin's own page may do this",
+): Response | null {
+  const host = request.headers.get("host");
+  if (!isAdminHost(host)) {
+    return refuse(
+      403,
+      `the admin answers only on its own hosts, not ${host ?? "none"}`,
+    );
+  }
+  if (
+    request.method !== "GET" &&
+    !sameOrigin(request.headers.get("origin"), host)
+  ) {
+    return refuse(403, refusal);
+  }
+  return null;
 }
 
 /** The project's root and where `plan` lives in it now — its worktree while it has one. */

@@ -20,8 +20,8 @@ import * as sessions from "@/app/api/sessions/route";
  * 127.0.0.1 sends `Origin` and `Host` that both name that site, so comparing
  * the two lets it through. The admin's routes start the developer's `claude`,
  * stream what it says and accept plans; each must answer only on the admin's
- * own hosts. Every route under `app/api` is listed here, so a new one fails
- * this file until it is added.
+ * own hosts. Every route module under `app/api` is imported here, and every
+ * handler it exports is called, so a new route fails this file until it is added.
  */
 
 type Handler = (
@@ -29,18 +29,29 @@ type Handler = (
   ctx: { params: Promise<{ id: string }> },
 ) => Promise<Response>;
 
-const ROUTES: Array<[string, "GET" | "POST", Handler]> = [
-  ["plans", "POST", plans.POST as Handler],
-  ["plans/accept", "POST", accept.POST as Handler],
-  ["plans/approve", "POST", approve.POST as Handler],
-  ["plans/build", "POST", build.POST as Handler],
-  ["plans/review", "GET", review.GET as Handler],
-  ["sessions", "POST", sessions.POST as Handler],
-  ["sessions/[id]/events", "GET", events.GET as Handler],
-  ["sessions/[id]/reply", "POST", reply.POST as Handler],
-  ["sessions/[id]/say", "POST", say.POST as Handler],
-  ["sessions/[id]/stop", "POST", stop.POST as Handler],
-];
+const MODULES: Record<string, Record<string, unknown>> = {
+  plans,
+  "plans/accept": accept,
+  "plans/approve": approve,
+  "plans/build": build,
+  "plans/review": review,
+  sessions,
+  "sessions/[id]/events": events,
+  "sessions/[id]/reply": reply,
+  "sessions/[id]/say": say,
+  "sessions/[id]/stop": stop,
+};
+
+/** Every handler every route module exports, read from the module, so none is missed. */
+const ROUTES: Array<[string, "GET" | "POST", Handler]> = Object.entries(
+  MODULES,
+).flatMap(([name, mod]) =>
+  (["GET", "POST"] as const)
+    .filter((m) => typeof mod[m] === "function")
+    .map(
+      (m) => [name, m, mod[m] as Handler] as [string, "GET" | "POST", Handler],
+    ),
+);
 
 function call(
   handler: Handler,
@@ -69,11 +80,11 @@ describe("A34 — the admin answers only on its own hosts", () => {
   }
 });
 
-it("A34 — every route under app/api is in the list above", () => {
+it("A34 — every route module under app/api is imported above", () => {
   const api = join(__dirname, "..", "app", "api");
   const found = readdirSync(api, { recursive: true, encoding: "utf-8" })
     .filter((f) => f.endsWith("route.ts"))
     .map((f) => relative(".", join(f, "..")))
     .sort();
-  expect(found).toEqual(ROUTES.map(([name]) => name).sort());
+  expect(found).toEqual(Object.keys(MODULES).sort());
 });

@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { refuse, sameOrigin, sessionManager } from "@/lib/session-host";
+import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,9 +9,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  if (!sameOrigin(request.headers.get("origin"), request.headers.get("host"))) {
-    return refuse(403, "a session is stopped only from the admin's own page");
-  }
+  const refused = adminOnly(
+    request,
+    "a session is stopped only from the admin's own page",
+  );
+  if (refused) return refused;
   const { id } = await params;
   try {
     await sessionManager().stop(id);

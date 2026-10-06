@@ -1,7 +1,7 @@
 import { PlanCommandRefusal, startPlan } from "@infinitedusky/indusk-mcp/plans";
 import type { NextRequest } from "next/server";
 import { getProjectPath } from "@/lib/registry-client";
-import { refuse, sameOrigin, sessionManager } from "@/lib/session-host";
+import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,9 +16,11 @@ export const dynamic = "force-dynamic";
  * promise: a-plan-can-start-from-the-admin
  */
 export async function POST(request: NextRequest): Promise<Response> {
-  if (!sameOrigin(request.headers.get("origin"), request.headers.get("host"))) {
-    return refuse(403, "a plan is started only from the admin's own page");
-  }
+  const refused = adminOnly(
+    request,
+    "a plan is started only from the admin's own page",
+  );
+  if (refused) return refused;
   const body = (await request.json().catch(() => null)) as {
     project?: string;
     type?: string;

@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { buildState, startBuild } from "@/lib/build-host";
-import { refuse, sameOrigin, sessionManager } from "@/lib/session-host";
+import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
 import { ownsSession } from "@/lib/session-owner";
 
 export const runtime = "nodejs";
@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 
 /** What the plan's build is doing: `?project=&plan=` (admin-plan-authoring A11–A14). */
 export function GET(request: NextRequest): Response {
+  const refused = adminOnly(request);
+  if (refused) return refused;
   const project = request.nextUrl.searchParams.get("project") ?? "";
   const plan = request.nextUrl.searchParams.get("plan") ?? "";
   const session = sessionManager().current();
@@ -19,9 +21,11 @@ export function GET(request: NextRequest): Response {
 
 /** Build an approved plan, unattended, to review: `{ project, plan }`. */
 export async function POST(request: NextRequest): Promise<Response> {
-  if (!sameOrigin(request.headers.get("origin"), request.headers.get("host"))) {
-    return refuse(403, "a build is started only from the admin's own page");
-  }
+  const refused = adminOnly(
+    request,
+    "a build is started only from the admin's own page",
+  );
+  if (refused) return refused;
   const body = (await request.json().catch(() => null)) as {
     project?: string;
     plan?: string;

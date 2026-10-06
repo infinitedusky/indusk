@@ -1,15 +1,17 @@
 import type { NextRequest } from "next/server";
 import { startRelease } from "@/lib/build-host";
-import { refuse, sameOrigin } from "@/lib/session-host";
+import { adminOnly, refuse } from "@/lib/session-host";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** Accept a built plan; the release workflow then runs (admin-plan-authoring A19). */
 export async function POST(request: NextRequest): Promise<Response> {
-  if (!sameOrigin(request.headers.get("origin"), request.headers.get("host"))) {
-    return refuse(403, "a plan is accepted only from the admin's own page");
-  }
+  const refused = adminOnly(
+    request,
+    "a plan is accepted only from the admin's own page",
+  );
+  if (refused) return refused;
   const body = (await request.json().catch(() => null)) as {
     project?: string;
     plan?: string;
