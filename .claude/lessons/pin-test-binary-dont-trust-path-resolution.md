@@ -1,0 +1,7 @@
+# A test that shells out to a bare command name runs whatever is on PATH, not the code under test — pin the binary via an env var the test harness sets
+
+dusk's everyday Vitest suite shells out to `indusk telemetry register` (invoked from init's extension hook) using the bare command name. On a developer machine, PATH resolves that to the globally installed CLI (1.57.2) — not the workspace build the test is supposed to exercise. The practical effect in `test-daemons-never-leak`: a hook test asserting the new `INDUSK_SKIP_TELEMETRY_AUTOSTART` behavior sat green for the wrong reason, or red in a way that looked unrelated — A1 in that plan's trajectory sat red because its hooks ran the global CLI, not the code being tested, and nobody noticed until falsification dug into which binary actually ran.
+
+**How to apply:** whenever a test shells out to a project's own CLI/binary by bare name, resolve it explicitly — set an `INDUSK_BIN`-style env var in the test config pointing at the workspace build, and have the shelled-out code prefer that override over PATH lookup. Before trusting that a behavior change reached a test ("the switch works because the test passes"), check which binary the test actually invoked — `which <cmd>` inside the test, or log the resolved path. A green test that ran the wrong binary is a false positive that looks identical to a true one.
+
+See `.indusk/planning/test-daemons-never-leak/brief.md`, `.indusk/planning/test-daemons-never-leak/test-plan.md`.

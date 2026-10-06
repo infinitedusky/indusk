@@ -1,0 +1,5 @@
+# A background evaluator that re-runs tests in the worktree it's grading collides with a person's concurrent test run in that same worktree
+
+If an eval/grading agent runs a branch's test suite in the same worktree a person is actively working in (rather than a snapshot or an isolated copy), the two runs compete for the same file locks, ports, and build caches. dusk observed 38–39 false admin HTTP failures from exactly this: the evaluator's `next dev` held the admin app's `.next/` lock while a person's concurrent `pnpm test` ran the same suite — alone, that suite was 343/343.
+
+When a test run shows a cluster of failures that don't look related to the actual change (e.g. many unrelated HTTP/dev-server failures), check for another process in the same worktree holding the same lock/port before assuming the failures are real and re-running in a loop. This needs a structural fix of its own (evaluate against a snapshot, or make concurrent runs visible to each other) — not yet built as of 2026-10-03; recorded in `.indusk/planning/archive/test-daemons-never-leak/retrospective.md` under "Insights Worth Carrying Forward" as a plan for later.

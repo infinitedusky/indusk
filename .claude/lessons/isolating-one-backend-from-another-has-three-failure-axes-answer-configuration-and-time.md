@@ -1,0 +1,12 @@
+# "Each source's failure is its own" has three axes — a wrong answer, a malformed configuration, and silence over time — and testing only the first still lets the other two take every source down together
+
+promise-sources (`.indusk/planning/archive/promise-sources/`) built per-source isolation so one backend (e.g. a down production server) couldn't hide another backend's health (e.g. a healthy local daemon). The four build phases' tests covered only the "answer" axis — a source that's unreachable or doesn't hear back — using well-formed config and servers that either answer correctly or refuse outright. Falsification then found two inputs those tests never constructed:
+
+- **A8 — configuration:** `"jaeger": "https://…"`, a bare string where the config schema expected an object, threw a raw `TypeError` from deep inside URL parsing. This killed every reader for every source, including the local one that had nothing wrong with it — a malformed config for one source took the whole read down, not just that source's half.
+- **A9 — time:** a host that accepts a TCP connection and then never answers (a real failure mode for a cloud host behind a firewall or security group) held a 2-second admin read for 7 seconds, because the probe's outbound send ignored the caller's own timeout budget.
+
+Both defects passed all four build phases because every build-phase test used realistic-but-narrow inputs: a well-formed `promises.jaeger` block, and a server that either worked or cleanly refused. Neither "someone pastes a URL where an object belongs" nor "a cloud host black-holes connections" are edge cases — they're ordinary failure modes that the happy-path test inputs never constructed.
+
+**How to apply:** when designing isolation between independent backends/sources/replicas — anything where one instance's failure must not take down a sibling instance's health — explicitly test all three failure axes before calling isolation complete: (1) the instance returns a wrong or absent answer, (2) the instance's own configuration is malformed, and (3) the instance accepts input but never responds within budget. A test plan that only plans failure rows for axis 1 will ship with axes 2 and 3 untested, as happened here — write failure rows across all three from the start, per the retrospective's own "What We'd Do Differently."
+
+See `.indusk/planning/archive/promise-sources/retrospective.md` ("Getting to Done", "What We Learned", "What We'd Do Differently").
