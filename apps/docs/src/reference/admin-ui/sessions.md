@@ -22,6 +22,14 @@ Claude writes one JSON object per line. A question (`AskUserQuestion`) and a req
 
 `lib/session/protocol.ts` holds the whole protocol as pure functions, tested against exchanges recorded from a real session. `--permission-prompt-tool stdio` is the protocol under the official Agent SDK but is not in `claude --help`. A contract test (`session-protocol-contract.test.ts`) runs the real CLI through a question, a write and an interrupt at every landing and release. If Claude Code changes it, the fallback is the Agent SDK with an API key, behind the same `lib/session` interface.
 
+## The panel
+
+New plan, on a project's page, takes a type and a name. It starts the plan on its own branch (`indusk plans start`), then a planning session running `/planner <type> <name>` in the plan's worktree, and opens the plan's page, where the panel runs. Approve appears on a plan's page once it is on its own branch with an impl not yet approved. It runs `indusk plans approve` and shows a refusal in the command's own words.
+
+The panel shows what the session says and the tools it uses, in order. A question appears with its choices; the person picks one per question and answers. A request to use a tool can be allowed or denied. Stop ends the session, and what it already wrote stays written. When the session writes a file, the page refreshes, so the plan appears and grows in the sidebar as it is written.
+
+The panel only renders the events the package's protocol produced and sends the person's choices back through the routes. It never reads Claude's output itself.
+
 ## The daemon owns them
 
 The admin daemon, the one `indusk ui` starts, holds the sessions through one `SessionManager`:
