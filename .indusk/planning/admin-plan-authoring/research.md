@@ -119,6 +119,12 @@ word each, and falsification found fifteen defects without him.
   any code, so every other plan sees them. Today the worktree is created at
   implementation start, and the trunk guard allows plan documents on `main`;
   both change.
+- **Trust is automatic for a trusted project's worktrees** (Sandy, 2026-10-06:
+  "Trust automatic"). Found building the session: every plan worktree is a
+  path Claude Code has never trusted (`~/.claude.json` held each of this
+  repository's worktrees as untrusted, the repository itself as trusted), so
+  ADR D1's refusal would have refused every plan. A worktree of a trusted
+  project is now trusted like it; a project nobody trusted never is.
 - **The planning documents keep their steps.** The approvals discussed were the
   implementation's, not the test plan's or the ADR's.
 
