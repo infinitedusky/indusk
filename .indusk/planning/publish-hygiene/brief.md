@@ -33,6 +33,11 @@ None.
   write (2 of 9 runs observed); nothing was asked because nothing was tried.
   The promise held each time a write was attempted; the test must ask the
   question the promise makes, not depend on the model's choice to try.
+- **`gates-ran-at-every-checkoff`**. Added after this plan's landing run
+  (16:28) timed out its contract test (admin-plan-authoring A24,
+  `build-session-gates.test.ts`) at 300 s; alone it passed in 15 s and 22 s.
+  The test's sessions could wait forever on a question a real build would
+  decline. The promise held; the test must not hang.
 
 **Changes**
 

@@ -1,7 +1,7 @@
 ---
 title: "publish-hygiene"
 date: 2026-10-06
-status: completed
+status: in-progress
 falsification: skipped
 falsification_reason: "investigated the leave-out rule's edges (a `types-*` sibling does not match; no runtime file ends in .map), whether next start reads anything left out (the trimmed bundle served / and the API by hand), the retried write's side effects (a denied write leaves no file), and the 2FA prompt under loglevel warn (npm prints it with output.standard); no specific hypothesis survived, and the live 2FA case is U1"
 cleanup: skipped
@@ -29,6 +29,7 @@ warnings, errors and 2FA prompt without a line per file ([brief](brief.md),
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | A planning session asked to write a file asks first and hears a denial; the test makes the model attempt the write, tries once more when it answers without trying, and says plainly when it never tried | Test Phase 1 | Test Phase 1 | passing | contract | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/__tests__/session-protocol-contract.test.ts |
 | A2 | The published package carries no source maps, no Next build trace and no generated types | Test Phase 1 | Build Phase 1 | passing | contract | the package ships only what runs; the admin-ui-hosting decision bounds the tarball's size | apps/indusk-mcp/src/__tests__/admin-bundle-pack.test.ts |
+| A4 | A build session started under the project's gates waits on nothing: a question is declined as a build declines it, a session that has not ended in two minutes is stopped and tried once more, and a rate limit is judged by the shared rule | Build Phase 2 | Build Phase 2 | passing | contract | promise: gates-ran-at-every-checkoff | apps/indusk-mcp/src/__tests__/build-session-gates.test.ts |
 | A3 | The release's publish step runs with npm's notices off, so its warnings, errors and 2FA prompt show and its per-file listing does not | Test Phase 1 | Build Phase 1 | passing | unit | the release's output stays readable; research records why the 2FA prompt survives the setting | apps/indusk-mcp/src/__tests__/release-script.test.ts |
 
 ### Deferred Verification
@@ -77,6 +78,28 @@ warnings, errors and 2FA prompt without a line per file ([brief](brief.md),
 #### Build Phase 1 Document
 
 - [x] `apps/docs/src/changelog.md` Unreleased → the 1.63.0 section, under Fixed: the package no longer ships source maps or build artefacts (size before and after); the release's output no longer lists every file
+
+### Build Phase 2: The build-session contract waits on nothing
+
+**Goal**: the landing run of `pnpm test:system` (16:28) timed out A24's first case at 300 s (`build-session-gates.test.ts`, admin-plan-authoring A24: a build session's checkoff is judged by the project's gates). Run alone from a clean environment it passed twice, in 15 s and 22 s. The test's setup can wait forever where a real build cannot:
+- it answers permission requests but not questions, which a build declines with "decide and record why";
+- no session has a deadline;
+- it keeps a third copy of the rate-limit rule, matching the result's text, which Build Phase 12 of admin-plan-authoring (its cleanup phase) missed.
+
+- [x] `build-session-gates.test.ts`: a question is declined with `refuseBuildQuestion`'s message, as the manager declines one for a build; each session is stopped if it has not ended in 120 s, and that attempt is retried once; a run is rate-limited by `isRateLimitedResult` and waits the shared schedule; a failure names which of these happened, with the session's last events
+
+#### Build Phase 2 Verification
+
+- [x] (passed four of four, both cases, after two more setup defects surfaced in the first runs and were fixed: the prompt never asked the model to read the file, and Claude Code refuses an `Edit` on an unread file — which would also let the bare-`(none needed)` case pass for the wrong reason; and a retry after a hang judged only the last attempt, which found the line already checked. The prompt now reads first, and an attempt that tried the edit ends the retries) A4: `build-session-gates.test.ts` passes three times from a clean environment (`env -i HOME PATH … pnpm exec vitest run --config vitest.system.config.ts src/__tests__/build-session-gates.test.ts`)
+- [ ] Both tiers green on the branch: `pnpm test` and `pnpm test:system`
+
+#### Build Phase 2 Context
+
+- [ ] guard: none new — after this phase `session/rate-limit.ts` is the only rate-limit rule under `apps/indusk-mcp/src` (`grep -rln "rate.?limit" apps/indusk-mcp/src`), and the package `CLAUDE.md` already names it
+
+#### Build Phase 2 Document
+
+- [ ] Confirm no page under `apps/docs/src` describes this test's retry or timeout (`grep -rn "build-session-gates" apps/docs/src`); a test's setup changes nothing a reader of the docs relies on
 
 ## Files Affected
 
