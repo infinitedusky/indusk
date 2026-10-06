@@ -1,0 +1,5 @@
+# When two rules that are each independently right contradict each other at a specific collision point, fix the symptom in the plan that hit it and send the root cause to its own draft brief — don't resolve the contradiction inline
+
+"Never commit another's work" and "never land onto a dirty trunk" are both correct rules, and they contradicted each other at InDusk's own uncommitted bookkeeping sitting on main (approve/land commits leave bookkeeping behind). admin-plan-authoring fixed the immediate symptom — approve/land now commit InDusk's own bookkeeping, and review lists any other uncommitted work separately — without trying to adjudicate which rule should win in general. The general question (where should bookkeeping live, and who reads it) went to its own draft brief: `bookkeeping-lives-where-it-is-read`.
+
+Pattern: a plan that discovers two good rules collide should not improvise a general resolution under deadline pressure. Patch the specific collision, name the general tension, and let a dedicated plan resolve it with room to think.

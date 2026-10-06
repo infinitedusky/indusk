@@ -303,6 +303,11 @@ lesson title, or a chat log.
   promises, commands write the registry, every test row says what it is for,
   a plan cannot build while its brief, rows and registry disagree, and closes
   with its promises confirmed. See `/decisions/planner-promises`.
+- **Closed, standalone bugfix** (2026-10-06): [publish-hygiene](archive/publish-hygiene/brief.md)
+  — before 1.63.0 published: the tarball drops its source maps (41.5 → 14.5
+  MB unpacked), the release stops listing every packed file, and the system
+  tier's flaky contract and page tests were made to hold from a plain
+  terminal (session contract, A24's build-session contract, A20's cold page).
 - **Closed** (2026-10-06): [admin-plan-authoring](archive/admin-plan-authoring/brief.md)
   — the admin plans, builds unattended to review, shows the evidence and
   releases on acceptance, through the developer's own `claude` and the

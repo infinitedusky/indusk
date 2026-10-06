@@ -1,0 +1,7 @@
+# Comparing a request's Origin to its Host is not a same-origin check — DNS rebinding makes both headers name the attacker's site
+
+admin-plan-authoring's retrospective found a security hole: a server bound to loopback checked `Origin === Host` and treated a match as proof the request came from the admin's own UI. Under DNS rebinding, the attacker's page resolves a hostname to 127.0.0.1 after the browser's same-origin check passes, so Origin and Host both carry the attacker-controlled name — they agree with each other while both being wrong.
+
+The fix is to check Host (or Origin) against the server's own known names/ports explicitly, not against each other. This must run on every route, including GETs — a GET that hands out a session id is exactly what an attacker needs next, so "only guard mutating routes" is also wrong. See `isAdminHost`/`adminOnly` in apps/indusk-admin.
+
+How to apply: whenever a loopback-bound server validates request origin, grep for `Origin` vs `Host` comparisons and confirm at least one side is checked against a hardcoded/configured allowlist of the server's own names — never Origin-vs-Host alone. Treat this as a trajectory row of its own (`author-boundary-tests-at-earliest-writable-phase-not-last`) rather than something a live check will incidentally catch, since admin-plan-authoring's live check ran for the whole plan with this hole open and didn't surface it.

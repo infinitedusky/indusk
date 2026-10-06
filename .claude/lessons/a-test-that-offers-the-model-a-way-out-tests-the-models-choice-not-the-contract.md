@@ -1,0 +1,7 @@
+# A contract test that gives the model an escape hatch ("say DENIED and stop") is testing whether the model takes the hatch, not the contract it's named for
+
+publish-hygiene's A1: the session-protocol-contract test's subject was Claude Code's permission exchange (does a denied write get asked about and then refused), but its prompt let the model answer "DENIED" without ever calling the Write tool. Inside a Claude Code session the model always tried the write first; from a plain terminal it sometimes took the stated way out instead (2 of 9 runs) — passing for the agent, failing for the person, with zero defect in the product being tested. It looked like a flaky test; it was a test measuring the wrong thing.
+
+The fix: name the tool explicitly and offer no way out ("Call the Write tool now... before you write anything else"), detect when a run attempted no tool call, retry once, and fail with a message that says the model never attempted the write — not a generic assertion failure.
+
+Applies to any contract test that drives a model through a prompt: if the prompt contains an alternative to the action under test ("if you can't, say X"), the model choosing the alternative is a valid completion that tells you nothing about the contract. Remove the alternative; force the action; treat "never attempted" as its own named failure mode, not an assertion that silently fails downstream. See `.indusk/planning/archive/publish-hygiene/retrospective.md`.

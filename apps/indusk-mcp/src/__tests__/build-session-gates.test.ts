@@ -4,13 +4,18 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { GATE_POLICY_FOR_BUILDS } from "../lib/build/build-session.js";
-import { decideBuildPermission } from "../lib/session/permissions.js";
+import { decideBuildPermission, refuseBuildQuestion } from "../lib/session/permissions.js";
+import {
+	isRateLimitedResult,
+	RATE_LIMIT_RETRIES,
+	rateLimitDelayMs,
+} from "../lib/session/rate-limit.js";
 import { type StartedEvent, startSession } from "../lib/session/start.js";
 import { runCli } from "./helpers/cli.js";
 import { git } from "./helpers/test-git.js";
 
 /**
- * promise: gates-ran-at-every-checkoff — admin-plan-authoring A24, a contract.
+ * promise: gates-ran-at-every-checkoff — admin-plan-authoring A24, a contract; publish-hygiene A4.
  *
  * A build session the admin starts is still judged by the project's gates.
  * In a project `indusk init` set up, a real `claude` build session — run
@@ -86,7 +91,19 @@ function project(skip: string): { dir: string; impl: string } {
 	return { dir, impl };
 }
 
-async function onceToCheckOff(p: { dir: string; impl: string }): Promise<StartedEvent[]> {
+/** How long one session may run before it is stopped as hung (publish-hygiene A4). */
+const SESSION_DEADLINE_MS = 120_000;
+
+type Attempt = { events: StartedEvent[]; hung: boolean };
+
+/**
+ * One session, answered exactly as a build answers it (`build-session.ts`):
+ * a permission by `decideBuildPermission`, a question declined with
+ * `refuseBuildQuestion`'s message, so it never waits on a person who is not
+ * there. A session still running after the deadline is stopped and reported
+ * as hung — the landing run of 2026-10-06 waited 300 s on one.
+ */
+async function onceToCheckOff(p: { dir: string; impl: string }): Promise<Attempt> {
 	const events: StartedEvent[] = [];
 	const holder: { s?: ReturnType<typeof startSession> } = {};
 	const s = startSession({
@@ -95,28 +112,60 @@ async function onceToCheckOff(p: { dir: string; impl: string }): Promise<Started
 		model: "sonnet",
 		env: GATE_POLICY_FOR_BUILDS,
 		prompt:
-			"Use the Edit tool once on .indusk/planning/seats/impl.md: replace the line `- [ ] build holds` with `- [x] build holds`. Make no other change. If the edit is refused, say REFUSED and stop; do not try another way.",
+			"This project is a test fixture for InDusk's gate hooks; its plan describes no real work, and the test asks whether the hooks let one checkoff through. Read .indusk/planning/seats/impl.md, then use the Edit tool once on it: replace the line `- [ ] build holds` with `- [x] build holds`. Make no other change. If a hook refuses the edit, say REFUSED and stop; do not try another way.",
 		onEvent: (ev) => {
 			events.push(ev);
 			if (ev.type === "permission") holder.s?.decide(ev, decideBuildPermission(ev, p.dir));
+			if (ev.type === "question") {
+				const refusal = refuseBuildQuestion(ev);
+				holder.s?.decide(
+					{ type: "permission", requestId: ev.requestId, tool: "AskUserQuestion", input: ev.input },
+					{ allow: false, message: refusal.allow ? "" : refusal.message },
+				);
+			}
 			if (ev.type === "result") void holder.s?.stop(2000);
 		},
 	});
 	holder.s = s;
+	let hung = false;
+	const deadline = setTimeout(() => {
+		hung = true;
+		void s.stop(2000);
+	}, SESSION_DEADLINE_MS);
 	await s.done;
-	return events;
+	clearTimeout(deadline);
+	return { events, hung };
 }
 
 const rateLimited = (events: StartedEvent[]) =>
-	events.some((e) => e.type === "result" && /rate.?limit|\b429\b/i.test(e.text));
+	events.some((e) => e.type === "result" && isRateLimitedResult(e));
 
-/** Ask, trying again after a wait when the API is rate limiting — a refusal must come from the gates, never from a session that never ran. */
+/**
+ * Ask, trying again when the API rate-limited the session (the shared rule
+ * and schedule) or when it hung before trying the edit (once) — a refusal
+ * must come from the gates, never from a session that never ran. Returns
+ * every attempt's events.
+ */
 async function askToCheckOff(p: { dir: string; impl: string }): Promise<StartedEvent[]> {
-	for (let attempt = 0; ; attempt++) {
-		const events = await onceToCheckOff(p);
-		if (!rateLimited(events)) return events;
-		if (attempt === 2) throw new Error("rate limited three times; the gates were never reached");
-		await new Promise((r) => setTimeout(r, 20_000));
+	let hangs = 0;
+	const all: StartedEvent[] = [];
+	for (let limits = 0; ; ) {
+		const { events, hung } = await onceToCheckOff(p);
+		all.push(...events);
+		const last = JSON.stringify(events.slice(-3));
+		// Once an edit was tried, the gates have judged it; a session that then
+		// overran the deadline changes nothing, and a retry would find the
+		// line already checked.
+		if (triedToEdit(events)) return all;
+		if (hung) {
+			if (++hangs > 1)
+				throw new Error(`the session hung twice, past ${SESSION_DEADLINE_MS} ms: ${last}`);
+			continue;
+		}
+		if (!rateLimited(events)) return all;
+		if (++limits > RATE_LIMIT_RETRIES)
+			throw new Error(`rate limited ${limits} times; the gates were never reached: ${last}`);
+		await new Promise((r) => setTimeout(r, rateLimitDelayMs(limits, 10_000)));
 	}
 }
 
@@ -128,7 +177,10 @@ describe.skipIf(!HAS_CLAUDE)("A24 — a build session is judged by the project's
 		const p = project("(none needed — seats have no public page yet)");
 		const events = await askToCheckOff(p);
 		expect(triedToEdit(events), JSON.stringify(events.slice(-3))).toBe(true);
-		expect(readFileSync(p.impl, "utf-8")).toContain("- [x] build holds");
+		expect(
+			readFileSync(p.impl, "utf-8"),
+			`the edit was tried and the file did not change: ${JSON.stringify(events.slice(-4))}`,
+		).toContain("- [x] build holds");
 	}, 300_000);
 
 	it("a bare (none needed) is refused by check-gates, and the file is unchanged", async () => {

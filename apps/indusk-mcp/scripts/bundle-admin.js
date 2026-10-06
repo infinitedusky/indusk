@@ -19,7 +19,8 @@
  *   - test-fixtures/          → testing only
  *   - vitest.config.ts        → testing only
  *   - tsconfig.json           → built output is JS
- *   - .next/cache/            → ephemeral build cache, slow to round-trip via npm
+ *   - .next/cache/, .next/dev/, source maps, the build trace and generated
+ *     types → nothing runs them (`leftOut` below)
  *
  * The destination apps/indusk-mcp/admin/ is .gitignore'd; only its existence
  * via the package.json `files: ["admin"]` entry pulls it into the tarball.
@@ -63,6 +64,24 @@ if (existsSync(ADMIN_DEST)) {
 
 mkdirSync(ADMIN_DEST, { recursive: true });
 
+/**
+ * What the copy leaves out of the build — none of it runs:
+ *   - .next/cache  — webpack/turbopack cache, ephemeral
+ *   - .next/dev    — leftover from running `next dev` in the same dir; can
+ *                    balloon to >200 MB and is unrelated to production
+ *   - *.map        — source maps: 160 files, 26.7 MB of 1.63.0's 41.5 MB
+ *                    unpacked (publish-hygiene)
+ *   - .next/trace, .next/trace-build, .next/types/ — the build's own trace
+ *                    and generated types
+ */
+function leftOut(path) {
+	return (
+		path.endsWith(".map") ||
+		/\.next\/(cache|dev|types)(\/|$)/.test(path) ||
+		/\.next\/trace(-build)?$/.test(path)
+	);
+}
+
 const items = [
 	{ src: ".next", dst: ".next", required: true },
 	{ src: "public", dst: "public", required: false },
@@ -85,7 +104,7 @@ for (const item of items) {
 		//   - .next/cache  — webpack/turbopack cache, ephemeral
 		//   - .next/dev    — leftover from running `next dev` in the same dir;
 		//                    can balloon to >200 MB and is unrelated to production
-		filter: (s) => !s.includes(".next/cache") && !s.includes(".next/dev"),
+		filter: (s) => !leftOut(s),
 	});
 }
 

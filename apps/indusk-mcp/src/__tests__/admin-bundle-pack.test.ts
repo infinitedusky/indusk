@@ -93,4 +93,27 @@ describe("T18 — admin app bundled into indusk-mcp tarball", () => {
 			expect(out).toContain("package/admin/next.config.ts");
 		},
 	);
+
+	// publish-hygiene A2: the 1.63.0 tarball was 41.5 MB unpacked, 26.7 MB of
+	// it 160 source maps, plus Next's build trace and generated types. None of
+	// it runs; every install downloaded it.
+	it.skipIf(SHOULD_SKIP)(
+		"tarball carries no source maps, Next build trace or generated types",
+		() => {
+			expect(tarballPath).not.toBeNull();
+			const files = execFileSync("tar", ["tzf", tarballPath as string], {
+				encoding: "utf-8",
+			}).split("\n");
+			const unwanted = files.filter(
+				(f) =>
+					f.endsWith(".map") ||
+					/^package\/admin\/\.next\/(trace|trace-build)$/.test(f) ||
+					f.startsWith("package/admin/.next/types/"),
+			);
+			expect(
+				unwanted,
+				`${unwanted.length} packed: ${unwanted.slice(0, 5).join(", ")}\nlesson: the-published-package-ships-only-what-runs`,
+			).toEqual([]);
+		},
+	);
 });

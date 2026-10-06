@@ -29,6 +29,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 - **A file renamed on `main` no longer stops approving or landing.** A staged rename was read as one path, `old -> new`, and `git add` failed on it.
 - **The review lists a plan's files against the project's trunk branch.** With the trunk checked out on another branch, it diffed against a literal `main`; it now lists no files until the trunk is back on a trunk branch.
 - **A build step is retried only when the API rate-limited it**, judged by `api_error_status: 429` as the evaluator judges it, not by words in its result.
+- **The package no longer ships source maps or build artefacts.** The bundled admin carried 160 source maps, Next's build trace and generated types; the tarball goes from 41.5 MB unpacked (10.7 MB compressed, 1,170 files) to 14.5 MB (4.1 MB, 939 files).
+- **`pnpm release` no longer lists every packed file**, which hid its own failures; warnings, errors and the 2FA prompt still print.
 
 ## [1.62.0] — 2026-10-05
 

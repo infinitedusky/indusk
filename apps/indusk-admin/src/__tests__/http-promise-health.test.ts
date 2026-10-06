@@ -350,6 +350,10 @@ beforeAll(async () => {
   const dev = await startNextDev({ home });
   url = dev.url;
   stop = dev.stop;
+  // `next dev` compiles a page on its first request. Paid here, within this
+  // hook's budget, not inside A20's five seconds — where it timed out twice
+  // under the full system tier's load on 2026-10-06 (publish-hygiene).
+  await (await fetch(`${url}/p/health/promises`)).text();
 }, 120_000);
 
 afterAll(async () => {
@@ -424,42 +428,38 @@ describe("A14 — a reopened plan (admin half)", () => {
 });
 
 describe("A22 — Jaeger unreachable (runs last: stops Jaeger)", () => {
-  it(
-    "every behaviour chip is hollow with 'health unknown since …', and none is green",
-    { timeout: 30_000 },
-    async () => {
-      // One successful read first, so "since" has a time to name.
-      await fetch(`${url}/p/health/promises`);
-      jaeger?.stop();
-      await sleep(2_500); // past the project's 1s refresh interval
-      const html = await (await fetch(`${url}/p/health/promises`)).text();
-      for (const name of [DOUBLE, RELEASE, UNSEEN]) {
-        expect(healthOf(html, name), name).toBe("unverified");
-      }
-      expect(html).not.toContain('data-health="green"');
-      expect(html).toMatch(/health unknown since/i);
-    },
-  );
+  it("every behaviour chip is hollow with 'health unknown since …', and none is green", {
+    timeout: 30_000,
+  }, async () => {
+    // One successful read first, so "since" has a time to name.
+    await fetch(`${url}/p/health/promises`);
+    jaeger?.stop();
+    await sleep(2_500); // past the project's 1s refresh interval
+    const html = await (await fetch(`${url}/p/health/promises`)).text();
+    for (const name of [DOUBLE, RELEASE, UNSEEN]) {
+      expect(healthOf(html, name), name).toBe("unverified");
+    }
+    expect(html).not.toContain('data-health="green"');
+    expect(html).toMatch(/health unknown since/i);
+  });
 });
 
 describe("A26 — a query port that answers with something that is not Jaeger (runs after A22)", () => {
-  it(
-    "the Promises page and the project page still render 200, health unknown, nothing green",
-    { timeout: 30_000 },
-    async () => {
-      const fake = await startFakeQueryPort(home);
-      try {
-        await sleep(2_500); // past the project's 1s refresh interval
-        const promises = await fetch(`${url}/p/health/promises`);
-        expect(promises.status).toBe(200);
-        const html = await promises.text();
-        expect(html).not.toContain('data-health="green"');
-        expect(html).toMatch(/health unknown since/i);
-        const project = await fetch(`${url}/p/health/`);
-        expect(project.status).toBe(200);
-      } finally {
-        await fake.close();
-      }
-    },
-  );
+  it("the Promises page and the project page still render 200, health unknown, nothing green", {
+    timeout: 30_000,
+  }, async () => {
+    const fake = await startFakeQueryPort(home);
+    try {
+      await sleep(2_500); // past the project's 1s refresh interval
+      const promises = await fetch(`${url}/p/health/promises`);
+      expect(promises.status).toBe(200);
+      const html = await promises.text();
+      expect(html).not.toContain('data-health="green"');
+      expect(html).toMatch(/health unknown since/i);
+      const project = await fetch(`${url}/p/health/`);
+      expect(project.status).toBe(200);
+    } finally {
+      await fake.close();
+    }
+  });
 });
