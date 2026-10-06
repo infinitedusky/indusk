@@ -303,6 +303,12 @@ lesson title, or a chat log.
   promises, commands write the registry, every test row says what it is for,
   a plan cannot build while its brief, rows and registry disagree, and closes
   with its promises confirmed. See `/decisions/planner-promises`.
+- **Closed** (2026-10-06): [admin-plan-authoring](archive/admin-plan-authoring/brief.md)
+  — the admin plans, builds unattended to review, shows the evidence and
+  releases on acceptance, through the developer's own `claude` and the
+  `indusk plans` commands. Falsification closed a DNS-rebinding hole; the U3
+  smoke check of the published package follows the release. See
+  `/decisions/admin-plan-authoring`.
 - **Parent, living master** (2026-10-05):
   [promise-core](promise-core/master.md) — the promise is the first
   primitive. A person can start from a promise alone: the tests are written
