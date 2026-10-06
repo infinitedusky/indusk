@@ -35,19 +35,23 @@ that day. The first brief, its spike and what the admin lacks are in
    the admin as well as from the editor or a terminal: in the admin, the person
    has the planning conversation, answers its questions in the panel and
    accepts its promises, and either way it is the same plan in the same files.
-2. **`a-build-runs-to-review-unasked`** (state). An approved plan is built in
-   its own worktree through its phases, falsification and cleanup without
+2. **`a-plan-is-written-on-its-own-branch`** (state). Starting a plan, with its
+   type and name, creates its own branch and worktree; its documents and
+   promises are written there and reach `main` when the plan is approved, and
+   its build continues on the same branch.
+3. **`a-build-runs-to-review-unasked`** (state). An approved plan's
+   implementation runs through its phases, falsification and cleanup without
    asking for approval, and stops only when it is ready for review, for a
    judgement the plan declared, or when it cannot continue.
-3. **`a-review-shows-its-evidence`** (state). When a build stops for review,
+4. **`a-review-shows-its-evidence`** (state). When a build stops for review,
    the panel shows what was built and the evidence: each promise with the
    passing tests that prove it, what falsification found and fixed, and the
    files changed.
-4. **`nothing-ships-until-accepted`** (state). Nothing merges to `main`,
-   publishes or deploys until the build is accepted, by the person or by a
+5. **`nothing-ships-until-accepted`** (state). A plan's build does not merge
+   to `main`, publish or deploy until it is accepted, by the person or by a
    workflow set to accept automatically; then the release workflow runs the
    retrospective, the merge and the rest of the release.
-5. **`a-session-can-be-stopped`** (state). A session started from the admin can
+6. **`a-session-can-be-stopped`** (state). A session started from the admin can
    be stopped from the panel, and none is left running when the admin stops.
 
 ### Existing promises

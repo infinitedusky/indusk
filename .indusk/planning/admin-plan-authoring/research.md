@@ -108,6 +108,17 @@ word each, and falsification found fifteen defects without him.
 - **What InDusk is** (Sandy): "a planning and release workflow system and an
   implementation system that's all built on this idea of maintaining promises
   over time."
+- **A plan is written on its own branch** (Sandy, 2026-10-06). Starting a plan
+  with its type and name creates its branch and worktree; the documents and
+  declared promises merge to `main` when the plan is approved, and the build
+  continues on the same branch. Why: several people or agents planning on
+  `main`'s working tree at once collide (on 2026-10-05 another session's
+  unsaved `current.md` edits sat in the way of a landing). Per plan rather than
+  one personal planning branch: approving one merges just that plan, and
+  dropping a draft is deleting a branch. Approved promises reach `main` before
+  any code, so every other plan sees them. Today the worktree is created at
+  implementation start, and the trunk guard allows plan documents on `main`;
+  both change.
 - **The planning documents keep their steps.** The approvals discussed were the
   implementation's, not the test plan's or the ADR's.
 
