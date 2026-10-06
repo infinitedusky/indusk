@@ -106,7 +106,8 @@ pointer; the pointer holds the story.
   not intentions**; the invoker fails loud (exit 2, non-zero, timeout all
   block). — see `/reference/cli/run`
 - **`lib/build/`**: `nextBuildStep` (pure), a runner that never starts the
-  retrospective, sessions under `INDUSK_GATE_POLICY=auto`. — see
+  retrospective, steps under `stepEnv`. One rate-limit rule
+  (`session/rate-limit.ts`), one trunk reader (`trunk-branch.ts`). — see
   `/reference/cli/plans`
 - **`indusk verify`** (`lib/verify/`): detects and never repairs — premature
   checkoff, skipped test-first duty (applied to phase N directly), goalpost
@@ -233,14 +234,13 @@ pointer; the pointer holds the story.
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
   where code lives runs over all four); a promise-bearing project —
-  `helpers/promises-fixture.ts` (also a watched behaviour promise, its code
-  files, an open incident); a plan in a worktree —
+  `helpers/promises-fixture.ts` (also watched promises, code files,
+  incidents); a plan in a worktree —
   `helpers/plan-worktree-fixture.ts`; trunk-guard —
   `helpers/trunk-guard-fixture.ts`; the throwing git runner —
   `helpers/test-git.ts`; MCP tools — `helpers/tool-call.ts`; the built CLI —
   `helpers/cli.ts` (pins `INDUSK_HOME`). Jaeger tests start the real daemon
   (`helpers/local-jaeger.ts`); the evaluator runs against a fake `claude` +
   `helpers/otlp-capture.ts`; the always-on server via
-  `helpers/always-on-server.ts`, a free loopback port via `freeLoopbackPort`
-  (`lib/telemetry/query-door.ts`); Slack via `helpers/slack-capture.ts` — never a
-  stub. — see `.indusk/planning/archive/workbench-trust-fixes/`
+  `helpers/always-on-server.ts`, a free port via `freeLoopbackPort`; Slack
+  via `helpers/slack-capture.ts` — never a stub. — see `.indusk/planning/archive/workbench-trust-fixes/`
