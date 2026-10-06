@@ -58,11 +58,11 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | New plan in the admin, with a type and a name, starts a planning session, and what the session says appears in the panel as it says it | Build Phase 4 | Build Phase 6 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A2 | A question the session asks appears in the panel with its choices; the answer reaches the session and it continues | Build Phase 4 | Build Phase 6 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A3 | A tool-use request appears in the panel; allowing it lets the session go on, denying it tells the session no | Build Phase 4 | Build Phase 6 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A4 | A planning session asks before every write, even when the developer's own Claude Code allows writes without asking | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts |
-| A5 | Claude Code still answers a question, a permission request and an interrupt over the session's stream | Build Phase 4 | Build Phase 4 | planned | contract | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/__tests__/session-protocol-contract.test.ts |
+| A1 | New plan in the admin, with a type and a name, starts a planning session, and what the session says appears in the panel as it says it | Build Phase 4 | Build Phase 6 | written | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A2 | A question the session asks appears in the panel with its choices; the answer reaches the session and it continues | Build Phase 4 | Build Phase 6 | written | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A3 | A tool-use request appears in the panel; allowing it lets the session go on, denying it tells the session no | Build Phase 4 | Build Phase 6 | written | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A4 | A planning session asks before every write, even when the developer's own Claude Code allows writes without asking | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts |
+| A5 | Claude Code still answers a question, a permission request and an interrupt over the session's stream | Build Phase 4 | Build Phase 4 | passing | contract | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/__tests__/session-protocol-contract.test.ts |
 | A6 | A plan started in the admin and one started in the editor produce the same plan folder and registry entries, and either continues from the other | Build Phase 9 | Build Phase 9 | planned | live check | promise: a-plan-can-start-from-the-admin | manual: recorded in Build Phase 9 |
 | A7 | Starting a plan with a type and a name creates its branch and worktree, recorded so the admin and plan tools read the plan from there | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-start.test.ts |
 | A8 | Until approval, the plan's documents and declared promises exist on its branch and not on `main` | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-start.test.ts |
@@ -248,24 +248,25 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 ### Build Phase 4: The session
 
-- [ ] Record fixture streams from a real `claude` session: a question, a permission request, an interrupt, a result, an error
-- [ ] `lib/session/protocol.ts`: `parseSessionLine`, `answerQuestion`, `decidePermission`, `interrupt`, `buildArgs(kind)` (`default` for planning, `acceptEdits` for build)
-- [ ] `lib/session/permissions.ts`: a build's decision — allowed inside the worktree, denied outside
-- [ ] `lib/session/start.ts`: `startSession({ cwd, prompt, kind })` — refuses an untrusted project, saying how to trust it; the package exports `./session`
-- [ ] A1–A4 protocol halves and A5 written red, then passing; A5 added to `vitest.tiers.ts` `SYSTEM`
+- [x] Record fixture streams from a real `claude` session: a question, a permission request, an interrupt, a result, an error — taken from the spike's recordings of 2026-10-05 (Claude Code 2.1.197) rather than new sessions: `__fixtures__/question.jsonl` (the planner's first question, the reply sent, the result), `permission.jsonl` (a Write and a Bash request, each with its reply), `interrupt.jsonl` (the interrupt, its acknowledgement, the `error_during_execution` result — the error case). Trimmed to the lines the protocol reads; the home directory rewritten to `/Users/dev`
+- [x] `lib/session/protocol.ts`: `parseSessionLine`, `answerQuestion`, `decidePermission`, `interrupt`, `buildArgs(kind)` (`default` for planning, `acceptEdits` for build) — and `userMessage`; each reply checked equal to the one Claude accepted in the recording
+- [x] `lib/session/permissions.ts`: a build's decision — allowed inside the worktree, denied outside — a tool given a path is judged by it (a sibling named like the worktree is outside); a tool given none runs in the worktree and the hooks judge it, which is a boundary on what is asked, not a sandbox; a build's question is answered by telling it to decide on its own judgement and record why
+- [x] `lib/session/start.ts`: `startSession({ cwd, prompt, kind })` — refuses an untrusted project, saying how to trust it; the package exports `./session` — **changed from the ADR**: it does not refuse. Every plan worktree is a new path Claude Code has never trusted (`~/.claude.json` records each existing worktree of this repository as untrusted, the trunk as trusted), so refusing would refuse every plan; an untrusted project still runs and only ignores its own allow-list, so more is asked (the spike ran that way). The session reports `untrusted` as its first event instead, for the panel to show. Whether to trust a trusted trunk's worktrees automatically is Sandy's to decide
+- [x] A1–A4 protocol halves and A5 written red, then passing; A5 added to `vitest.tiers.ts` `SYSTEM` — the protocol tests were written before `protocol.ts` and could only fail to load (their subject is the new module, the reason they were deferred here); 12 then passed, and A30's worktree half 5 more. A5 against Claude Code 2.1.197: 3 of 3 in 22 s
 
 #### Build Phase 4 Verification
 
-- [ ] A4 and the protocol halves of A1–A3 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session`)
-- [ ] A5 passes against the installed `claude` (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/session-protocol-contract`)
+- [x] A4 and the protocol halves of A1–A3 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session`) — 17 tests with A30's worktree half; with the never-wait guard, 23; `tsc --noEmit` clean
+- [x] A5 passes against the installed `claude` (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/session-protocol-contract`) — Claude Code 2.1.197 on Sonnet: a question answered and its answer written to a file, a denied write that stayed unwritten, an interrupt that ended the session; 3 of 3, 22 s
+- [x] Shape — `protocol.ts` is pure (lines to events, answers to replies); `start.ts` owns only the process and its pipes; `permissions.ts` is a build's two decisions. One thing looked at and kept: `start.ts`'s `isTrusted` reads Claude Code's own config by exact path and infers nothing, because whether Claude Code honours a trusted trunk for its worktrees is not ours to guess. Nothing to change
 
 #### Build Phase 4 Context
 
-- [ ] guard: `session-protocol-contract.test.ts` carries `lesson: the-admin-drives-claude-over-an-undocumented-flag-and-a-contract-test-watches-it`; the lesson file is written with it
+- [x] guard: `session-protocol-contract.test.ts` carries `lesson: the-admin-drives-claude-over-an-undocumented-flag-and-a-contract-test-watches-it`; the lesson file is written with it
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: how a session is started, its two kinds, and the trust requirement
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: how a session is started, its two kinds, and the trust requirement — new page, in the sidebar; trust is described as it was found (reported, not required)
 
 ### Build Phase 5: The daemon owns sessions
 
