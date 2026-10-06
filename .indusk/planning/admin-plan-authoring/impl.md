@@ -1,7 +1,7 @@
 ---
 title: "Plan authoring from the admin"
 date: 2026-10-06
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -382,11 +382,11 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 #### Build Phase 9 Context
 
-- [ ] current.md: the live checks' results, and any stop in A27 that was not declared
+- [x] current.md: the live checks' results, and any stop in A27 that was not declared — this session's section, through `update_current_section` (the trunk's copy; left uncommitted beside the other sessions' changes there): the run, the fixes, no undeclared stop, and the open questions (the unattended retrospective committing another session's notes; the U3 smoke; `update` registering a worktree)
 
 #### Build Phase 9 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased: the admin can start, build, review and release a plan; `indusk plans` verbs; a plan cannot land before it is accepted
+- [x] `apps/docs/src/changelog.md` Unreleased: the admin can start, build, review and release a plan; `indusk plans` verbs; a plan cannot land before it is accepted
 
 ## Files Affected
 
