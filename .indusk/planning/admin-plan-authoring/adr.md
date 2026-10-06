@@ -1,7 +1,7 @@
 ---
 title: "Plan authoring from the admin"
 date: 2026-10-06
-status: proposed
+status: accepted
 ---
 
 # Plan authoring from the admin

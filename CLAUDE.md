@@ -89,6 +89,7 @@ dusk/
 - Promise timeline: compact sliced reads; an admin store that reads only what is new plus a late tail; one `violationState` (unrecorded / open / fixed) for chip and timeline; incidents record `fixed` via `promises fix` — see `/decisions/promise-timeline`
 - Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
+- Admin plan authoring: the developer's own `claude` driven by one session module; `indusk plans start|approve|accept|land`; build steps chosen by a pure function, gate skips shown at review; nothing lands unaccepted — see `.indusk/planning/admin-plan-authoring/adr.md`
 
 ## Known Gotchas
 
