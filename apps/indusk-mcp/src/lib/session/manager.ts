@@ -14,6 +14,8 @@ import { type Session, type SessionOptions, type StartedEvent, startSession } fr
  *
  * The manager keeps each session's events so a panel that connects after the
  * session started still sees all of it, then hears the rest as it happens.
+ *
+ * promise: a-session-can-be-stopped
  */
 
 export class SessionBusy extends Error {}

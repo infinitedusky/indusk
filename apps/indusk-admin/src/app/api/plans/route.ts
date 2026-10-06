@@ -12,6 +12,8 @@ export const dynamic = "force-dynamic";
  * planning session runs `/planner <type> <name>` there. Refused before
  * anything is made while another session runs, so no worktree is left
  * without its conversation.
+ *
+ * promise: a-plan-can-start-from-the-admin
  */
 export async function POST(request: NextRequest): Promise<Response> {
   if (!sameOrigin(request.headers.get("origin"), request.headers.get("host"))) {

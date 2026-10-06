@@ -16,6 +16,8 @@ import {
  * continues on the same branch. Refused, with nothing written, when the brief
  * check refuses, when the branch already holds anything but plan documents,
  * or when the trunk has uncommitted changes where the merge would land.
+ *
+ * promise: a-plan-is-written-on-its-own-branch
  */
 
 export interface ApprovedPlan {

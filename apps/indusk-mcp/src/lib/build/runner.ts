@@ -10,6 +10,8 @@ import { type BuildPlan, type BuildStep, nextBuildStep, type StepOutcome } from 
  * Everything that touches the world is a dependency — reading the plan,
  * running a step's session, recording acceptance — so the decisions here are
  * tested with fakes and the real wiring lives in `build-session.ts`.
+ *
+ * promise: a-build-runs-to-review-unasked
  */
 
 export type BuildStepName = "work" | "falsify" | "cleanup" | "retrospective";

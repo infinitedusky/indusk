@@ -25,6 +25,8 @@ const execFileAsync = promisify(execFile);
  *
  * The checks are `plans.land_checks` in `.indusk/config.json`, each a shell
  * command run in the worktree; none are run when none are configured.
+ *
+ * promise: nothing-ships-until-accepted
  */
 
 export interface LandedPlan {

@@ -11,6 +11,8 @@
  * `control_response` with `behavior: allow | deny`. The flag is not in
  * `claude --help`; the contract test (`session-protocol-contract.test.ts`)
  * runs the real CLI through these exchanges at every landing and release.
+ *
+ * promise: a-plan-can-start-from-the-admin
  */
 
 export type SessionKind = "planning" | "build";

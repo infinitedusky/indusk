@@ -23,6 +23,8 @@ import { BuildPlanUnreadable } from "./read-plan.js";
  * Promises and rows are read through `promises/rows.ts`, the reader the
  * plan's close uses, so the review cannot call a promise proven that the
  * close would refuse.
+ *
+ * promise: a-review-shows-its-evidence
  */
 
 export interface ReviewPromise {

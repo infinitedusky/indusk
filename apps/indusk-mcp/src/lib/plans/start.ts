@@ -13,6 +13,8 @@ import { PlanCommandRefusal } from "./plan-branch.js";
  * begins on its own branch, in its own worktree, with its first document
  * declaring its type. Nothing is written on the trunk; the documents reach it
  * when the plan is approved.
+ *
+ * promise: a-plan-is-written-on-its-own-branch
  */
 
 export interface StartedPlan {

@@ -10,6 +10,8 @@ import { markPromise } from "./mark.js";
  * it lands, and a commit on the trunk that changes an active plan's documents
  * is marked — violated when it is not a merge, upheld when it is the merge
  * that brought them in. The marks go wherever the evaluator's go.
+ *
+ * promise: a-plan-is-written-on-its-own-branch
  */
 
 export const OWN_BRANCH_PROMISE = "a-plan-is-written-on-its-own-branch";

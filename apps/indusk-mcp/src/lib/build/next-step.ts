@@ -10,6 +10,8 @@ import { detectHumanGate } from "./judgement.js";
  * just run. The runner asks it after every step; `indusk plans next` prints
  * it. It never answers the retrospective: a build stops at review, and the
  * release begins only once the plan is accepted.
+ *
+ * promise: a-build-runs-to-review-unasked
  */
 
 export interface BuildPlan {
