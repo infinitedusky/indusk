@@ -1,7 +1,7 @@
 ---
 title: "Plan authoring from the admin"
 date: 2026-10-06
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
