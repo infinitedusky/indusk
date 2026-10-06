@@ -86,7 +86,7 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A26 | With this plan's tests added, no everyday test starts Claude, a server or a detached process, or waits | Test Phase 1 | Build Phase 9 | written | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | A27 | In a scratch project, one plan goes the whole way in the admin without a terminal: started, planned, promises accepted, approved, built to review, evidence read, accepted, released | Build Phase 9 | Build Phase 9 | planned | live check | promise: a-build-runs-to-review-unasked | manual: recorded in Build Phase 9 |
 | A28 | This plan's six promises go from `declared` to `enforced` when it closes | Build Phase 9 | Build Phase 9 | planned | live check | promise: a-review-shows-its-evidence | manual: `indusk promises confirm admin-plan-authoring`, recorded in Build Phase 9 |
-| A29 | A non-merge commit on `main` that changes an active plan's documents is marked as a violation of the own-branch promise; a merge from the plan's branch is marked upheld; the commit is never refused | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/trunk-plan-commit-mark.test.ts |
+| A29 | A non-merge commit on `main` that changes an active plan's documents is marked as a violation of the own-branch promise; a merge from the plan's branch is marked upheld; the commit is never refused | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/trunk-plan-commit-mark.test.ts |
 | A30 | A build writes inside its worktree without asking and is refused outside it; a gate item it skips carries its reason, and the review lists every skip | Build Phase 3 | Build Phase 7 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/gate-policy-env.test.ts, apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A31 | A plan that is in review or accepted shows that position on its admin page | Test Phase 1 | Build Phase 2 | passing | unit | the planning rule that a plan adding a lifecycle position renders it in the admin, in the same plan | apps/indusk-mcp/src/lib/lifecycle-review.test.ts, apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
 
@@ -337,21 +337,22 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 ### Build Phase 8: The skills, and a plan written on main
 
-- [ ] `skills/planner.md`: starting fresh calls `indusk plans start`; approval calls `indusk plans approve`
-- [ ] `skills/work.md`, `falsify.md`, `cleanup.md`: an unattended section — finish on the agent's own judgement where today they ask, record every gate skip with its reason; the "human-gated by design" text replaced
-- [ ] `skills/retrospective.md`: landing calls `indusk plans land`, and the plan must be accepted first
-- [ ] `lib/promises/mark.ts`: `markPromise(span, name, outcome, symptom)`; `markEvaluation` uses it
-- [ ] `eval-trigger.js`: a commit landed on the trunk branch that is not a merge and changes an active plan's folder marks `a-plan-is-written-on-its-own-branch` violated, naming the plan and the commit; a merge from `plan/<name>` marks it upheld
-- [ ] A29 written red, then passing; `indusk update` here
+- [x] `skills/planner.md`: starting fresh calls `indusk plans start`; approval calls `indusk plans approve` — step 3 starts the plan on its own branch and works in its worktree (a plan the admin started is already there); a new step 10 approves through the command, never by hand
+- [x] `skills/work.md`, `falsify.md`, `cleanup.md`: an unattended section — finish on the agent's own judgement where today they ask, record every gate skip with its reason; the "human-gated by design" text replaced — `work.md`'s "Unattended" section names what a build session does and does not do; falsify's and cleanup's loop exits end on the agent's own judgement and write the summary into the phase
+- [x] `skills/retrospective.md`: landing calls `indusk plans land`, and the plan must be accepted first — Step 10's merge and removal steps are now the command; the reviewers' path keeps its spelled-out order. `plan-worktrees-skills.test.ts` (admin-plan-worktrees) pinned the order merge → release → remove in the prose; it now pins it in `land.ts`, where it is decided, and in the reviewers' path
+- [x] `lib/promises/mark.ts`: `markPromise(span, name, outcome, symptom)`; `markEvaluation` uses it — `markPromise(span, { promise, outcome, project?, symptom? })`
+- [x] `eval-trigger.js`: a commit landed on the trunk branch that is not a merge and changes an active plan's folder marks `a-plan-is-written-on-its-own-branch` violated, naming the plan and the commit; a merge from `plan/<name>` marks it upheld — the reading is `lib/promises/trunk-commit.ts` (`trunkCommitMarks`, then `markTrunkCommit` on the evaluator's tracer); the trigger's detached evaluator process runs it before evaluating, so the marks flush with the evaluation's; it never throws, and a package without the module evaluates as before. Any merge that brings a plan's documents in counts as upheld (approval, landing, or a reviewer's merge)
+- [x] A29 written red, then passing; `indusk update` here — written before `mark.ts` and `trunk-commit.ts` existed (a load error; its subjects were new), then 7 passing. `update` run with this branch's build: it installed the changed skills and hooks, among them `_gate-policy.js`, which Build Phase 3 added and nothing had installed; its version stamp in `config.json` and its registration of this worktree as a project were undone again
 
 #### Build Phase 8 Verification
 
-- [ ] A29 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-plan-commit-mark src/__tests__/eval-trigger-commit-anchor src/__tests__/monitor-mark`)
-- [ ] `src/__tests__/skill-*.test.ts` and `planner-brief-template.test.ts` still pass
+- [x] A29 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-plan-commit-mark src/__tests__/eval-trigger-commit-anchor src/__tests__/monitor-mark`) — 10 everyday; `monitor-mark` is in the system tier and was run there: 6 of 6, the evaluator's mark unchanged through `markPromise`; `tsc --noEmit` clean
+- [x] `src/__tests__/skill-*.test.ts` and `planner-brief-template.test.ts` still pass — 35, with every installed skill byte-identical to its source after `update`
+- [x] Shape — `mark.ts` is the mark and nothing else; `trunk-commit.ts` separates the reading (`trunkCommitMarks`, which the test drives over real git) from the emitting (`markTrunkCommit`, which never throws); the hook gained one chained import. Nothing to change
 
 #### Build Phase 8 Context
 
-- [ ] planning: `templates/planning/CLAUDE.md` — a plan is written on its own branch by convention, and a plan written on `main` is marked, not refused
+- [x] planning: `templates/planning/CLAUDE.md` — a plan is written on its own branch by convention, and a plan written on `main` is marked, not refused — the entry Build Phase 1 wrote, amended; the installed `.indusk/planning/CLAUDE.md` copied from the template (byte-identical), not by a second `update`, whose side effects were already undone once; `check-pointers` passes
 
 #### Build Phase 8 Document
 
