@@ -317,6 +317,14 @@ lesson title, or a chat log.
   been edited, and the demo's script stands.** Measurements in
   [research](promise-core/research.md).
 - **Standalone, brief draft** (2026-10-06):
+  [bookkeeping-lives-where-it-is-read](bookkeeping-lives-where-it-is-read/brief.md)
+  — InDusk writes current.md, its highlight logs, evaluator results and lessons
+  into `main`'s working tree, and nothing commits them, so every landing must
+  decide whose they are. Write each record where it is read: commit shared
+  records when they are written, carry a plan's notes on its branch.
+  admin-plan-authoring's Build Phase 10 handles the symptom. Opened by Sandy;
+  not yet in the sequence.
+- **Standalone, brief draft** (2026-10-06):
   [context-reaches-every-session](context-reaches-every-session/brief.md) —
   the nested-context probe went red: headless Claude Code runs (2.1.288,
   2.1.289) never load subdirectory `CLAUDE.md` files, contrary to the docs,
