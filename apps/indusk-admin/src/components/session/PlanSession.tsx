@@ -15,10 +15,13 @@ export function PlanSession({
   project,
   plan,
   canApprove,
+  canPlan = false,
 }: {
   project: string;
   plan: string;
   canApprove: boolean;
+  /** A plan on its own branch, not yet approved: a planning session can be started or resumed (A6). */
+  canPlan?: boolean;
 }) {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -66,7 +69,32 @@ export function PlanSession({
     router.refresh();
   };
 
-  if (!sessionId && !canApprove) return null;
+  const continuePlanning = async () => {
+    setBusy(true);
+    setProblem(null);
+    const r = await fetch("/api/sessions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        project,
+        plan,
+        kind: "planning",
+        prompt: `/planner ${plan}`,
+      }),
+    });
+    const body = (await r.json().catch(() => ({}))) as {
+      id?: string;
+      error?: string;
+    };
+    setBusy(false);
+    if (!r.ok || !body.id) {
+      setProblem(body.error ?? `HTTP ${r.status}`);
+      return;
+    }
+    setSessionId(body.id);
+  };
+
+  if (!sessionId && !canApprove && !canPlan) return null;
   return (
     <div className="mb-4 flex flex-col gap-2">
       {canApprove ? (
@@ -77,6 +105,21 @@ export function PlanSession({
           <span className="text-xs text-gray-500">
             Checks the brief, then brings the plan's documents and promises to
             main; the build continues on its branch.
+          </span>
+        </div>
+      ) : null}
+      {canPlan && !sessionId ? (
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => void continuePlanning()}
+            disabled={busy}
+          >
+            Continue planning
+          </Button>
+          <span className="text-xs text-gray-500">
+            Starts a planning session in this plan's worktree.
           </span>
         </div>
       ) : null}

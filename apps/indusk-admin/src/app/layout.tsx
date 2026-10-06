@@ -60,7 +60,7 @@ export default function RootLayout({
           >
             <span>InDusk Admin</span>
             <span className="text-xs font-normal text-gray-500">
-              read-only viewer
+              plan, build, review, release
             </span>
           </Link>
         </header>

@@ -89,7 +89,15 @@ export default async function PlanPage({ params }: PlanPageProps) {
   return (
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
-      <PlanSession project={project} plan={name} canApprove={canApprove} />
+      <PlanSession
+        project={project}
+        plan={name}
+        canApprove={canApprove}
+        canPlan={
+          plan.worktree !== undefined &&
+          !["approved", "in-progress", "completed"].includes(implStatus ?? "")
+        }
+      />
       {plan.worktree !== undefined &&
       implStatus !== undefined &&
       ["approved", "in-progress", "completed"].includes(implStatus) ? (
