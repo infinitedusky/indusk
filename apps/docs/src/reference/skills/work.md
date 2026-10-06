@@ -254,6 +254,19 @@ The retrospective skill hard-blocks (Step 0 Falsification Gate) until either the
 
 See the [Falsification Ritual guide](/guide/falsification-ritual) for the bounty-hunting ritual itself and the three outcomes.
 
+## Unattended builds
+
+A build started from the admin (Build, on an approved plan's page) runs each step as a fresh session of the developer's own `claude`, with nobody to answer it. `indusk plans next` decides each step: `/work`, then `/falsify`, `/cleanup` and `/work` again, until the plan reaches review. Each session runs with `INDUSK_GATE_POLICY=auto`, and in it the skill:
+
+- **does not ask.** A question is answered with "decide on your own judgement and record why", so the decision and its reason go into the plan.
+- **skips a gate item only with its reason**, as `(none needed — <why>)` or `skip-reason: <why>`. `check-gates.js` refuses a bare `(none needed)` under this policy, and the review lists every skip.
+- **stops at an item the plan declared for a person** (a Deferred Verification row, a manual or visual check) and leaves it unchecked; the build stops there and shows it.
+- **records a `blocker:` and stops** rather than looping on a gate that won't pass.
+- **writes only inside the plan's worktree**; a write outside it is refused.
+- **never starts `/retrospective`.** The release begins when the plan is accepted.
+
+See [the plan lifecycle](/guide/plan-lifecycle) and [sessions](/reference/admin-ui/sessions).
+
 ## Hook Enforcement
 
 Two hooks enforce the gate system at the tool level, catching mistakes the skill instructions alone cannot prevent.
