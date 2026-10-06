@@ -1,7 +1,7 @@
 ---
 title: "Plan authoring from the admin"
 date: 2026-10-06
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -94,6 +94,9 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A34 | A page on another site whose name resolves to the loopback address (DNS rebinding: `Origin: http://evil.example:3996`, `Host: evil.example:3996`) cannot start a session, answer one, read its events, approve, build or accept a plan; only the admin's own hosts are served | Build Phase 11 | Build Phase 11 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-admin/src/lib/admin-hosts.test.ts |
 | A35 | A build-step session (work, falsify, cleanup) that runs `indusk plans accept` or `plans land` is refused, naming why; the release session started by acceptance still lands | Build Phase 11 | Build Phase 11 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts, apps/indusk-mcp/src/lib/build/build-session.test.ts |
 | A36 | A planning session asks before writing a file even when the developer's or the project's Claude Code settings allow that write (`permissions.allow: ["Edit(...)"]`) | Build Phase 11 | Build Phase 11 | skipped | contract | promise: a-plan-can-start-from-the-admin | none — dropped (Sandy, 2026-10-06): an allow rule is the developer's explicit, per-tool choice and applies in their terminal too; A4 guards against the blanket `auto` default. Run against the real CLI, an untrusted folder's allow rule was not honoured and the write was asked about; proving the trusted case would mean writing `~/.claude.json` while Claude Code writes it |
+| A38 | Reading the trunk's branch gives the branch, whether it is one of the project's trunk branches, and the list, the same answer for starting, approving, landing and reviewing a plan | Build Phase 12 | Build Phase 12 | planned | unit | promise: one-definition-per-shared-rule | |
+| A39 | A panel's request to the admin gives back the server's body when it succeeds, and when it fails the server's error, else its status, else why the request itself failed | Build Phase 12 | Build Phase 12 | planned | unit | promise: one-definition-per-shared-rule | |
+| A40 | A build step and the evaluator judge the same run as rate-limited, or not, by one rule, and wait the same schedule before trying again | Build Phase 12 | Build Phase 12 | planned | unit | promise: one-definition-per-shared-rule | |
 | A37 | A staged rename of a bookkeeping file on `main` (`git mv` of a lesson) does not crash approve or land with a raw git error; the rename is committed as bookkeeping, and a staged rename of the person's file is named by its new path | Build Phase 11 | Build Phase 11 | passing | unit | approve and land read the trunk's status exactly, so A32's commit and refusal hold for every status git reports | apps/indusk-mcp/src/__tests__/plans-approve.test.ts, apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 
 ### Deferred Verification
@@ -182,6 +185,10 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 #### Deferred to Build Phase 10
 
 - **A32, A33** — added after A27 (Sandy, 2026-10-06): the unattended release met InDusk's own uncommitted notes on the trunk and settled it itself; InDusk's bookkeeping should be InDusk's to commit, and anything else the person's to see before accepting. Both reach their subject over the CLI, red on today's refusals and today's review.
+
+#### Deferred to Build Phase 12
+
+- **A38–A40** — from the cleanup ritual, run after Build Phase 11 closed: each names a unit Build Phase 12 extracts, so its subject does not exist yet.
 
 #### Deferred to Build Phase 11
 
@@ -460,6 +467,47 @@ Evidence found while hunting:
 #### Build Phase 11 Document
 
 - [x] `apps/docs/src/reference/admin-ui/sessions.md`: the hosts the admin answers on, and why; `reference/cli/plans.md`: `accept` and `land` refuse inside a build step; `reference/skills/work.md`: a planning session asks before every file write, whatever the settings allow — the first two as written; the third dropped with A36 (asked: "What should happen to A36?" — user: "Drop it (Recommended)"), and `reference/skills/work.md` says instead that accept and land refuse inside a build step
+
+### Build Phase 12: Cleanup — one definition for what three files each spell
+
+**Goal**: decompose the rules this plan's files repeat across each other, under the project's promise `one-definition-per-shared-rule` (a rule shared by two callers has one definition) and the rule of three for the rest. Each item is one extraction or a reasoned leave-as-is. Each new unit gets a row.
+
+What was reviewed: `listOversizedChangedFiles` against `main` flags 19 files. All 19 existed before this plan, and its edits to them are small. Every file the plan created is under its cap, so the work below is about duplication, not size.
+
+- [ ] Extract `currentTrunkBranch(projectRoot)` → `{ branch, allowed, onTrunk }` into `apps/indusk-mcp/src/lib/trunk-branch.ts`. Three sites read the trunk's branch and check it against `getTrunkBranches`, each on its own:
+  - `worktree/plan-worktree-commands.ts` (before this plan);
+  - `plans/plan-branch.ts`;
+  - `build/review.ts`, which falls back silently to a literal `main`.
+
+  The first two keep their own refusal messages. The review diffs against the trunk branch the reader returns, and lists no files when the trunk is on no trunk branch. Basis: the rule of three.
+- [ ] `build/review.ts` reads the branch's changed files through `plan-branch.ts`'s `branchChanges`, extended to return each file's status. Today `changedFiles` repeats the same `git diff trunk...branch`. Basis: `one-definition-per-shared-rule`.
+- [ ] Extract `postJson(url, body)` → `{ ok: true, body } | { ok: false, error }` into `apps/indusk-admin/src/lib/post-json.ts`. Four panel components spell "POST JSON; when not ok, read `{ error }` or fall back to the status" five times between them:
+  - `BuildControls`;
+  - `PlanSession`, twice;
+  - `NewPlanForm`;
+  - `SessionConnector`.
+
+  Each component keeps its own state handling. Basis: the rule of three. The helper is a plain function, not a component or a hook, so react's one-component-per-file does not apply.
+- [ ] One rate-limit rule, shared by the build and the evaluator. Today `build/build-session.ts` matches error text against `429|rate limit` and waits 15, 45 and 90 s. `eval/persistent-evaluator.ts` reads `api_error_status === 429`, the field that incident `i-2026-10-05-every-commit-evaluated` showed is reliable, and waits on the same schedule. Move the rule and the schedule into `apps/indusk-mcp/src/lib/session/rate-limit.ts` and have both use them. First check that the stream's `result` event carries `api_error_status`. If it doesn't, record that here and keep the text match beside the shared schedule. Basis: `one-definition-per-shared-rule`.
+- [ ] (reviewed the admin's route handlers under `app/api` — left as-is: each parses a body of a different shape, and what they share is two lines, `getProjectPath` then a 404. A helper would take more lines than it saves, and `adminOnly` already holds the part that must not differ.)
+- [ ] (reviewed `apps/indusk-mcp/src/bin/cli.ts`, 1,059 lines — left as-is for this plan: almost all of it predates this plan, whose additions are the verb registrations, and those point at `bin/commands/plans.ts`. Splitting the CLI is its own plan, not this one's cleanup.)
+- [ ] (reviewed `lib/lifecycle.ts`, 542 lines, and the admin's `lib/planning-reader.ts`, 597 lines — left as-is: this plan added two positions to the first and branch-only plans plus skipped rituals to the second. Both stay single modules, each with one reason to change: the positions are one table, and the reader is the one place the admin reads a plan.)
+- [ ] (reviewed `hooks/check-gates.js`, `hooks/validate-impl-structure.js` and `hooks/eval-trigger.js` — left as-is: hooks are standalone scripts by design (hooks/CLAUDE.md), and this plan's edits are one policy read each, plus the trunk-commit mark, which calls the package's `markTrunkCommit` rather than repeating it.)
+- [ ] (reviewed the skills and docs pages flagged by size — left as-is: they are prose, and the cap is a lens for code.)
+
+#### Build Phase 12 Verification
+
+- [ ] A38: `currentTrunkBranch` reports the branch, whether it is a trunk branch, and the configured list, for a trunk on `main`, on `master` with `master` configured, and on a feature branch. `plans start`, `approve`, `land` and `review` tests stay green (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/trunk-branch src/__tests__/plans-`)
+- [ ] A39: `postJson` returns the body on a 2xx, the server's `{ error }` on a 4xx, the status when the body has none, and the failure when `fetch` rejects. The session components' tests stay green (`cd apps/indusk-admin && pnpm exec vitest run src/lib/post-json src/components/session`)
+- [ ] A40: the build step and the evaluator judge the same result as rate-limited or not, and wait the same schedule (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/rate-limit src/lib/build/build-session src/lib/eval`)
+
+#### Build Phase 12 Context
+
+- [ ] `apps/indusk-mcp/CLAUDE.md`: the trunk's branch is read through `currentTrunkBranch`, and a rate limit is judged by `session/rate-limit.ts`. A third copy of either is the duplication this phase removed.
+
+#### Build Phase 12 Document
+
+- [ ] Search `apps/docs/src` for the review's fallback to `main`, `changedFiles`, and the build's text match on rate limits, and correct any page that describes them; the changelog's Unreleased entry gains the review's trunk-branch fix if the review's behavior changed
 
 ## Files Affected
 
