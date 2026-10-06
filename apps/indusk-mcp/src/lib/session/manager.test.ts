@@ -155,3 +155,34 @@ describe("A21 — an answer is delivered once, to the request it answers", () =>
 		expect(() => m.reply(id, { requestId: "q1", answers: {} })).toThrow(/already answered/);
 	});
 });
+
+describe("A21 — a question can be declined, as a build declines every one", () => {
+	it("declining sends a refusal with its message; allowing a question without answers is refused", () => {
+		const dir = mkdtempSync(join(tmpdir(), "session-manager-"));
+		dirs.push(dir);
+		const decided: unknown[] = [];
+		let emit: SessionOptions["onEvent"] = () => {};
+		const m = new SessionManager({
+			recordPath: join(dir, "r.json"),
+			start: (opts) => {
+				emit = opts.onEvent;
+				return {
+					pid: 1,
+					kind: opts.kind,
+					cwd: opts.cwd,
+					say: () => {},
+					answer: () => {},
+					decide: (ev, d) => decided.push({ requestId: ev.requestId, ...d }),
+					stop: async () => {},
+					done: new Promise(() => {}),
+				};
+			},
+		});
+		const { id } = m.start({ ...planning, ...meta });
+		emit({ type: "question", requestId: "q1", questions: [], input: {} });
+		emit({ type: "question", requestId: "q2", questions: [], input: {} });
+		m.reply(id, { requestId: "q1", allow: false, message: "decide yourself" });
+		expect(decided).toEqual([{ requestId: "q1", allow: false, message: "decide yourself" }]);
+		expect(() => m.reply(id, { requestId: "q2", allow: true })).toThrow(/answer it or decline it/);
+	});
+});

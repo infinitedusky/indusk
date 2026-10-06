@@ -141,9 +141,23 @@ export class SessionManager {
 		);
 		if (!asked) throw new Error(`session ${id} made no request ${reply.requestId}`);
 		if (asked.type === "question") {
-			if (!("answers" in reply))
-				throw new Error(`request ${reply.requestId} is a question: answer it`);
-			h.session.answer(asked, reply.answers);
+			if ("answers" in reply) {
+				h.session.answer(asked, reply.answers);
+			} else if (!reply.allow) {
+				// A question can be declined like any request: a build asks no one,
+				// and tells the session to decide on its own (permissions.ts).
+				h.session.decide(
+					{
+						type: "permission",
+						requestId: asked.requestId,
+						tool: "AskUserQuestion",
+						input: asked.input,
+					},
+					{ allow: false, message: reply.message },
+				);
+			} else {
+				throw new Error(`request ${reply.requestId} is a question: answer it or decline it`);
+			}
 		} else if (asked.type === "permission") {
 			if (!("allow" in reply))
 				throw new Error(`request ${reply.requestId} asks to use ${asked.tool}: allow or deny it`);
