@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ownsSession, type RunningSession } from "@/lib/session-owner";
 import { SessionConnector } from "./SessionConnector";
 
 /**
@@ -32,18 +33,10 @@ export function PlanSession({
     let live = true;
     void fetch("/api/sessions")
       .then((r) => r.json())
-      .then(
-        (body: {
-          session: { id: string; project: string; plan: string } | null;
-        }) => {
-          if (
-            live &&
-            body.session?.project === project &&
-            body.session.plan === plan
-          )
-            setSessionId(body.session.id);
-        },
-      )
+      .then((body: { session: RunningSession | null }) => {
+        if (live && ownsSession(body.session, project, plan, "planning"))
+          setSessionId(body.session.id);
+      })
       .catch(() => {});
     return () => {
       live = false;

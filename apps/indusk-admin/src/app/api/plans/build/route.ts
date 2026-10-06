@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { buildState, startBuild } from "@/lib/build-host";
 import { refuse, sameOrigin, sessionManager } from "@/lib/session-host";
+import { ownsSession } from "@/lib/session-owner";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,10 +13,7 @@ export function GET(request: NextRequest): Response {
   const session = sessionManager().current();
   return Response.json({
     build: buildState(project, plan),
-    sessionId:
-      session && session.project === project && session.plan === plan
-        ? session.id
-        : null,
+    sessionId: ownsSession(session, project, plan, "build") ? session.id : null,
   });
 }
 
