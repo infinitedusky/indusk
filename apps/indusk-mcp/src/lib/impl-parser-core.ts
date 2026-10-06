@@ -55,6 +55,11 @@ export interface ParsedImpl {
 	title: string;
 	status: string;
 	phases: ImplPhase[];
+	/**
+	 * When the plan's build was accepted (admin-plan-authoring): `accepted:` in
+	 * the frontmatter, written by `indusk plans accept`. Absent until then.
+	 */
+	accepted?: string;
 }
 
 // One entry per `GateKind` in `impl-headings.ts`. OTel was missing here while
@@ -92,6 +97,7 @@ export function parseImplString(raw: string): ParsedImpl {
 		: { data: {} as Record<string, unknown>, content: raw };
 	const title = (data.title as string) ?? "";
 	const status = (data.status as string) ?? "";
+	const accepted = data.accepted instanceof Date ? data.accepted.toISOString() : data.accepted;
 
 	const lines = content.split("\n");
 	const phases: ImplPhase[] = [];
@@ -183,7 +189,9 @@ export function parseImplString(raw: string): ParsedImpl {
 	flushGate();
 	if (currentPhase) phases.push(currentPhase);
 
-	return { title, status, phases };
+	return typeof accepted === "string" && accepted
+		? { title, status, phases, accepted }
+		: { title, status, phases };
 }
 
 export interface PhaseCompletion {

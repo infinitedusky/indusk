@@ -42,6 +42,8 @@ export type PlanPosition =
 	| "executing"
 	| "falsify"
 	| "cleanup"
+	| "review"
+	| "accepted"
 	| "retrospective"
 	| "archived"
 	| "monitor";
@@ -60,6 +62,8 @@ export const PLAN_POSITIONS: readonly PlanPosition[] = [
 	"executing",
 	"falsify",
 	"cleanup",
+	"review",
+	"accepted",
 	"retrospective",
 	"archived",
 	"monitor",
@@ -93,7 +97,7 @@ export function isFinishedDocumentStatus(status: string): boolean {
 
 /**
  * The positions that exist only because a plan has an impl: it is executed,
- * then falsified, then cleaned up. A type with no impl — a spike — never
+ * falsified, cleaned up, reviewed and accepted. A type with no impl — a spike — never
  * reaches them, so they read skipped for it rather than pending forever
  * (admin-plan-type, A21).
  */
@@ -101,6 +105,8 @@ export const IMPL_DEPENDENT_POSITIONS: readonly PlanPosition[] = [
 	"executing",
 	"falsify",
 	"cleanup",
+	"review",
+	"accepted",
 ];
 
 /**
@@ -296,13 +302,19 @@ function resolvePosition(input: DerivePlanPositionInput): {
 					awaiting: `rows not terminal — retrospective blocked${rows ? ` (${rows})` : ""}`,
 				};
 			}
-			if (missing.includes("promises")) {
+			// admin-plan-authoring: a built plan stops for review, and only an
+			// accepted one goes on to the retrospective. An unproven promise is
+			// named at either position; the retrospective refuses until it is.
+			const unproven = missing.includes("promises")
+				? ` — promises unproven, retrospective blocked (${readiness.unprovenPromises.join(", ")})`
+				: "";
+			if (impl?.accepted) {
 				return {
-					position: "retrospective",
-					awaiting: `promises unproven — retrospective blocked (${readiness.unprovenPromises.join(", ")})`,
+					position: "accepted",
+					awaiting: `accepted, the release runs: /retrospective next${unproven}`,
 				};
 			}
-			return { position: "retrospective", awaiting: "cleaned, awaiting /retrospective" };
+			return { position: "review", awaiting: `built, awaiting review${unproven}` };
 		}
 		if (status === "in-progress") {
 			// A33: the active segment always carries the message. Normally the

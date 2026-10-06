@@ -84,9 +84,11 @@ describe("A29 — the plan bar names the block, never 'cleaned' over it", () => 
 			readiness: readiness(["promises"]),
 			archived: false,
 		});
-		expect(state.position).toBe("retrospective");
+		// admin-plan-authoring: a built plan is in review, not at the
+		// retrospective; the unproven promise is still named.
+		expect(state.position).toBe("review");
 		expect(state.awaiting).toContain("seat-released-on-timeout");
-		expect(state.awaiting).not.toMatch(/cleaned/);
+		expect(state.awaiting).toMatch(/retrospective blocked/);
 	});
 
 	it("readiness could not be computed: the message says unknown, never cleaned", () => {
@@ -100,14 +102,15 @@ describe("A29 — the plan bar names the block, never 'cleaned' over it", () => 
 		expect(state.awaiting).not.toMatch(/cleaned/);
 	});
 
-	it("everything satisfied still reads cleaned, awaiting /retrospective", () => {
+	it("everything satisfied reads built, awaiting review — the retrospective waits for acceptance", () => {
 		const state = derivePlanPosition({
 			summary: summary({}),
 			impl: null,
 			readiness: readiness([]),
 			archived: false,
 		});
-		expect(state.awaiting).toMatch(/cleaned/);
+		expect(state.position).toBe("review");
+		expect(state.awaiting).toBe("built, awaiting review");
 	});
 });
 
