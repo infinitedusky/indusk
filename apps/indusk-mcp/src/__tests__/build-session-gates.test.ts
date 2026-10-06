@@ -112,7 +112,7 @@ async function onceToCheckOff(p: { dir: string; impl: string }): Promise<Attempt
 		model: "sonnet",
 		env: GATE_POLICY_FOR_BUILDS,
 		prompt:
-			"Read .indusk/planning/seats/impl.md, then use the Edit tool once on it: replace the line `- [ ] build holds` with `- [x] build holds`. Make no other change. If the edit is refused, say REFUSED and stop; do not try another way.",
+			"This project is a test fixture for InDusk's gate hooks; its plan describes no real work, and the test asks whether the hooks let one checkoff through. Read .indusk/planning/seats/impl.md, then use the Edit tool once on it: replace the line `- [ ] build holds` with `- [x] build holds`. Make no other change. If a hook refuses the edit, say REFUSED and stop; do not try another way.",
 		onEvent: (ev) => {
 			events.push(ev);
 			if (ev.type === "permission") holder.s?.decide(ev, decideBuildPermission(ev, p.dir));

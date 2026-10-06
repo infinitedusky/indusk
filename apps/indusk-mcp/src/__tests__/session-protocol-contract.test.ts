@@ -87,7 +87,7 @@ describe.skipIf(!HAS_CLAUDE)("A5 — Claude Code still speaks the three exchange
 		async () => {
 			const attempt = async () => {
 				const started = run(
-					"Call the Write tool now to create hello.txt in the current directory containing the single word hi. Call it before you write anything else.",
+					"This is a test of Claude Code's permission prompt, in a scratch folder. Call the Write tool now to create hello.txt in the current directory containing the single word hi. Call it before you write anything else.",
 					(ev, s) => {
 						if (ev.type === "permission")
 							s.decide(ev, { allow: false, message: "not in this test" });
