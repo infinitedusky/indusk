@@ -115,7 +115,7 @@ export function declarePromise(planRoot: string, input: DeclareInput): string {
 	if (domain.trim() === "") refuse(`${name}: a promise needs a domain (--domain)`);
 	requireOpenPlan(planRoot, plan);
 
-	const dir = contractDir(planRoot);
+	const dir = contractDir(planRoot, plan);
 	const path = join(dir, `${name}.md`);
 	const registry = registryOrRefuse(planRoot);
 	if (existsSync(path) || registry?.promises.some((p) => p.name === name)) {

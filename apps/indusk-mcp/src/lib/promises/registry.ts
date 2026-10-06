@@ -3,6 +3,7 @@ import { join, relative } from "node:path";
 import matter from "gray-matter";
 import { isUsableRelPath, isUsableSegment } from "../path-segment.js";
 import { declaredRepoDirs, isWorkbench } from "../worktree/repos.js";
+import { readPlanCode } from "../worktree/roots.js";
 import { parseDuration } from "./status.js";
 import {
 	INCIDENT_SOURCES,
@@ -135,8 +136,10 @@ export type ReadRegistryResult =
  * - A workbench wrapping one repo: that repo's `.indusk/promises/` once the
  *   repo holds one; until then the workbench's own folder, its versioned
  *   shadow contract.
- * - A workbench wrapping several repos: the workbench's folder, until a plan
- *   names its repo (Build Phase 2 adds the plan).
+ * - A plan in flight in a workbench whose repo holds a contract: its code
+ *   worktree's copy, so what it declares lands with its code.
+ * - A workbench wrapping several repos, read without a plan: the workbench's
+ *   folder.
  *
  * Every reader and writer of the registry comes here; a second path to the
  * folder would read the shadow while the repo says otherwise
@@ -144,9 +147,18 @@ export type ReadRegistryResult =
  *
  * promise: a-project-has-one-contract
  */
-export function contractDir(root: string): string {
+export function contractDir(root: string, plan?: string): string {
 	const own = join(root, PROMISES_REL_DIR);
 	if (!isWorkbench(root)) return own;
+	// A plan in flight writes into its code worktree's copy of the repo's
+	// contract, so what it declares lands with its code.
+	if (plan !== undefined) {
+		const code = readPlanCode(root, plan);
+		if (code?.ok) {
+			const inFlight = join(code.code.worktree, PROMISES_REL_DIR);
+			if (existsSync(inFlight)) return inFlight;
+		}
+	}
 	const repos = declaredRepoDirs(root);
 	if (repos.length !== 1) return own;
 	const repoContract = join(repos[0].dir, PROMISES_REL_DIR);

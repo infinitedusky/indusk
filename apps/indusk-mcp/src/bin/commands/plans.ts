@@ -24,9 +24,17 @@ async function planVerb(run: () => Promise<string>): Promise<void> {
 }
 
 /** `indusk plans start <type> <name>` — the plan's own branch and worktree, its first document there. */
-export function plansStart(cwd: string, type: string, name: string): Promise<void> {
+export function plansStart(
+	cwd: string,
+	type: string,
+	name: string,
+	opts: { repo?: string } = {},
+): Promise<void> {
 	return planVerb(async () => {
-		const s = await startPlan(cwd, type, name);
+		const s = await startPlan(cwd, type, name, new Date(), opts);
+		if (s.code) {
+			return `Started ${s.plan} (${s.type}): its ${s.document} is at the workbench root, and its code is on ${s.branch} in ${s.code.repo}, at ${s.code.worktree}.`;
+		}
 		return `Started ${s.plan} (${s.type}) in ${s.worktree} on ${s.branch}; its ${s.document} is there, and nothing is on the trunk until it is approved.`;
 	});
 }
