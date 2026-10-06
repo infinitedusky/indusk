@@ -316,6 +316,13 @@ lesson title, or a chat log.
   "Plans this changes" names thirteen existing plans it touches; **none has
   been edited, and the demo's script stands.** Measurements in
   [research](promise-core/research.md).
+- **Standalone, brief draft** (2026-10-06):
+  [context-reaches-every-session](context-reaches-every-session/brief.md) —
+  the nested-context probe went red: headless Claude Code runs (2.1.288,
+  2.1.289) never load subdirectory `CLAUDE.md` files, contrary to the docs,
+  and a test hook did not fire in them either. Deliver nested rules to every
+  session, the planned way being a hook, and rebuild the probe on real sessions.
+  Opened by Sandy; not yet in the sequence.
 - **Standalone, brief draft** (2026-10-05):
   [release-checks-run-once](release-checks-run-once/brief.md) — the slow test
   tier ran at planner-promises' landing and runs again at release, on the same
