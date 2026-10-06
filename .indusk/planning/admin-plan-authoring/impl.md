@@ -1,7 +1,7 @@
 ---
 title: "Plan authoring from the admin"
 date: 2026-10-06
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -91,10 +91,10 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A31 | A plan that is in review or accepted shows that position on its admin page | Test Phase 1 | Build Phase 2 | passing | unit | the planning rule that a plan adding a lifecycle position renders it in the admin, in the same plan | apps/indusk-mcp/src/lib/lifecycle-review.test.ts, apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
 | A32 | Approving or landing a plan commits InDusk's own bookkeeping left uncommitted on `main` (its `current.md`, highlight logs, evaluator results, lessons) in a commit of its own, and still refuses any other uncommitted change on a path the plan touches, naming it | Build Phase 10 | Build Phase 10 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts, apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
 | A33 | The review lists uncommitted changes on `main` that are not InDusk's bookkeeping, on paths the plan touches, so the person sorts them out before accepting | Build Phase 10 | Build Phase 10 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts, apps/indusk-admin/src/components/session/ReviewPanel.test.tsx |
-| A34 | A page on another site whose name resolves to the loopback address (DNS rebinding: `Origin: http://evil.example:3996`, `Host: evil.example:3996`) cannot start a session, answer one, read its events, approve, build or accept a plan; only the admin's own hosts are served | Build Phase 11 | Build Phase 11 | written | unit | promise: nothing-ships-until-accepted | apps/indusk-admin/src/lib/admin-hosts.test.ts |
-| A35 | A build-step session (work, falsify, cleanup) that runs `indusk plans accept` or `plans land` is refused, naming why; the release session started by acceptance still lands | Build Phase 11 | Build Phase 11 | written | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
+| A34 | A page on another site whose name resolves to the loopback address (DNS rebinding: `Origin: http://evil.example:3996`, `Host: evil.example:3996`) cannot start a session, answer one, read its events, approve, build or accept a plan; only the admin's own hosts are served | Build Phase 11 | Build Phase 11 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-admin/src/lib/admin-hosts.test.ts |
+| A35 | A build-step session (work, falsify, cleanup) that runs `indusk plans accept` or `plans land` is refused, naming why; the release session started by acceptance still lands | Build Phase 11 | Build Phase 11 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts, apps/indusk-mcp/src/lib/build/build-session.test.ts |
 | A36 | A planning session asks before writing a file even when the developer's or the project's Claude Code settings allow that write (`permissions.allow: ["Edit(...)"]`) | Build Phase 11 | Build Phase 11 | skipped | contract | promise: a-plan-can-start-from-the-admin | none — dropped (Sandy, 2026-10-06): an allow rule is the developer's explicit, per-tool choice and applies in their terminal too; A4 guards against the blanket `auto` default. Run against the real CLI, an untrusted folder's allow rule was not honoured and the write was asked about; proving the trusted case would mean writing `~/.claude.json` while Claude Code writes it |
-| A37 | A staged rename of a bookkeeping file on `main` (`git mv` of a lesson) does not crash approve or land with a raw git error; the rename is committed as bookkeeping, and a staged rename of the person's file is named by its new path | Build Phase 11 | Build Phase 11 | written | unit | approve and land read the trunk's status exactly, so A32's commit and refusal hold for every status git reports | apps/indusk-mcp/src/__tests__/plans-approve.test.ts, apps/indusk-mcp/src/__tests__/plans-land.test.ts |
+| A37 | A staged rename of a bookkeeping file on `main` (`git mv` of a lesson) does not crash approve or land with a raw git error; the rename is committed as bookkeeping, and a staged rename of the person's file is named by its new path | Build Phase 11 | Build Phase 11 | passing | unit | approve and land read the trunk's status exactly, so A32's commit and refusal hold for every status git reports | apps/indusk-mcp/src/__tests__/plans-approve.test.ts, apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 
 ### Deferred Verification
 
@@ -447,18 +447,19 @@ Evidence found while hunting:
 
 #### Build Phase 11 Verification
 
-- [ ] A34: a request to each `app/api` route with `Host: evil.example:3996` and a matching `Origin` is refused 403; the same request with `Host: 127.0.0.1:3996` is served (red today: `sameOrigin` passes it, the events route checks nothing)
-- [ ] A35: `INDUSK_BUILD_STEP=work indusk plans accept <plan>` and `… plans land <plan>` are refused naming the step; without the variable both run (red today: both run)
-- [ ] A36: in the system tier, a real planning session in a scratch project whose `.claude/settings.json` allows `Edit(notes.md)` is asked to edit `notes.md`, and a permission request reaches the stream before the file changes (red today: the edit happens unasked)
-- [ ] A37: with a lesson `git mv`-ed and staged on the trunk, `plans approve` commits it as bookkeeping and succeeds; with a staged rename of a file the plan touches, the refusal names the new path (red today: `git add` fails on `old -> new`)
+- [x] A34: a request to each `app/api` route with `Host: evil.example:3996` and a matching `Origin` is refused 403; the same request with `Host: 127.0.0.1:3996` is served (red today: `sameOrigin` passes it, the events route checks nothing) — passing: twelve handlers in ten route modules, each refusing the rebound host and serving loopback, plus the inventory (`cd apps/indusk-admin && pnpm exec vitest run --project node src/lib/admin-hosts.test.ts`, 25 tests); the admin's node suite 22 files, 208 tests
+- [x] A35: `INDUSK_BUILD_STEP=work indusk plans accept <plan>` and `… plans land <plan>` are refused naming the step; without the variable both run (red today: both run) — passing, with `stepEnv` marking work, falsify and cleanup and not the retrospective (`build-session.test.ts`)
+- [x] (skipped — A36 dropped; asked: "What should happen to A36?" — user: "Drop it (Recommended)") A36: in the system tier, a real planning session in a scratch project whose `.claude/settings.json` allows `Edit(notes.md)` is asked to edit `notes.md`, and a permission request reaches the stream before the file changes (red today: the edit happens unasked)
+- [x] A37: with a lesson `git mv`-ed and staged on the trunk, `plans approve` commits it as bookkeeping and succeeds; with a staged rename of a file the plan touches, the refusal names the new path (red today: `git add` fails on `old -> new`) — passing; every everyday test driving a `plans` verb and the build module's, 55 tests; both packages type-check; biome clean on the touched files
+- [x] Shape — Build Phase 11 wrote `session/hosts.ts` (which hosts are the admin's), `adminOnly` (the one check every handler makes first), `build/step-env.ts` (the marker's name and its reader, a module of its own so `plans` and `build` share it without importing each other), `stepEnv` beside the gate policy it extends, `refuseInsideBuildStep`, and `statusPaths` reading `-z` itself. Each is one job where it lives. One finding acted on during the phase: three callers spelled the porcelain status command and parsed it apart from each other; the reader now runs it. Nothing more to change
 
 #### Build Phase 11 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a route under `app/api` that changes something or streams a session checks the host first, then the origin; the reason is DNS rebinding, and a new route without the check is how the next hole opens
+- [x] `apps/indusk-admin/CLAUDE.md`: a route under `app/api` that changes something or streams a session checks the host first, then the origin; the reason is DNS rebinding, and a new route without the check is how the next hole opens — every handler, reads included (two of the three unguarded `GET`s hand out what an attacker needs next), with its guard named
 
 #### Build Phase 11 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: the hosts the admin answers on, and why; `reference/cli/plans.md`: `accept` and `land` refuse inside a build step; `reference/skills/work.md`: a planning session asks before every file write, whatever the settings allow
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: the hosts the admin answers on, and why; `reference/cli/plans.md`: `accept` and `land` refuse inside a build step; `reference/skills/work.md`: a planning session asks before every file write, whatever the settings allow — the first two as written; the third dropped with A36 (asked: "What should happen to A36?" — user: "Drop it (Recommended)"), and `reference/skills/work.md` says instead that accept and land refuse inside a build step
 
 ## Files Affected
 
