@@ -68,10 +68,10 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A8 | Until approval, the plan's documents and declared promises exist on its branch and not on `main` | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-start.test.ts |
 | A9 | Approving brings the documents and promises to `main`, and the build then runs on the same branch | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
 | A10 | Starting a plan whose name already has a folder, branch or worktree is refused, naming which | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-start.test.ts |
-| A11 | An approved plan's build goes from its first phase through falsification and cleanup without asking anything, when the plan declares no judgement item | Test Phase 1 | Build Phase 2 | written | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/plans-next.test.ts |
-| A12 | A build stops at a judgement item the plan declared and names the item | Test Phase 1 | Build Phase 2 | written | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/plans-next.test.ts |
-| A13 | A build that cannot continue stops and says why: a session error after its retries, two steps with no progress, or a `blocker:` line | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/lib/build/next-step.test.ts |
-| A14 | A build stops at review when every phase, falsification and cleanup is closed, and does not start the retrospective | Test Phase 1 | Build Phase 2 | written | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/plans-next.test.ts |
+| A11 | An approved plan's build goes from its first phase through falsification and cleanup without asking anything, when the plan declares no judgement item | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/plans-next.test.ts |
+| A12 | A build stops at a judgement item the plan declared and names the item | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/plans-next.test.ts |
+| A13 | A build that cannot continue stops and says why: a session error after its retries, two steps with no progress, or a `blocker:` line | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/lib/build/next-step.test.ts |
+| A14 | A build stops at review when every phase, falsification and cleanup is closed, and does not start the retrospective | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/plans-next.test.ts |
 | A15 | The review lists each promise the plan makes with the passing tests naming it; one with none is unproven | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A16 | The review shows what falsification looked for, what it found and what was fixed | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A17 | The review shows the files the plan's branch changed against `main` | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
@@ -88,7 +88,7 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A28 | This plan's six promises go from `declared` to `enforced` when it closes | Build Phase 9 | Build Phase 9 | planned | live check | promise: a-review-shows-its-evidence | manual: `indusk promises confirm admin-plan-authoring`, recorded in Build Phase 9 |
 | A29 | A non-merge commit on `main` that changes an active plan's documents is marked as a violation of the own-branch promise; a merge from the plan's branch is marked upheld; the commit is never refused | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/trunk-plan-commit-mark.test.ts |
 | A30 | A build writes inside its worktree without asking and is refused outside it; a gate item it skips carries its reason, and the review lists every skip | Build Phase 3 | Build Phase 7 | planned | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/gate-policy-env.test.ts, apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-mcp/src/__tests__/plans-review.test.ts |
-| A31 | A plan that is in review or accepted shows that position on its admin page | Test Phase 1 | Build Phase 2 | written | unit | the planning rule that a plan adding a lifecycle position renders it in the admin, in the same plan | apps/indusk-mcp/src/lib/lifecycle-review.test.ts, apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
+| A31 | A plan that is in review or accepted shows that position on its admin page | Test Phase 1 | Build Phase 2 | passing | unit | the planning rule that a plan adding a lifecycle position renders it in the admin, in the same plan | apps/indusk-mcp/src/lib/lifecycle-review.test.ts, apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
 
 ### Deferred Verification
 
@@ -205,24 +205,25 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 ### Build Phase 2: The next step, and the positions it reads
 
-- [ ] Move `detectHumanGate` from `lib/run/loop.ts` to `lib/build/judgement.ts`; `loop.ts` imports it; add it to `one-definition-per-shared-rule`'s tests
-- [ ] `lib/build/next-step.ts`: `nextBuildStep(plan, outcomes)` per ADR D4's table, with cannot-continue's three causes
-- [ ] `indusk plans next <name>` prints the step as JSON
-- [ ] `lib/lifecycle.ts`: positions `review` (every phase and ritual closed, not accepted) and `accepted` (the impl has `accepted:`), between `cleanup` and `retrospective`; `ParsedImpl` carries `accepted`; the admin's plan page renders each (`impl-approved` already does)
-- [ ] A13 written red, then passing
+- [x] Move `detectHumanGate` from `lib/run/loop.ts` to `lib/build/judgement.ts`; `loop.ts` imports it; add it to `one-definition-per-shared-rule`'s tests — `judgement-single-definition.test.ts`: one definition, imported by `run/loop.ts` and `build/next-step.ts`
+- [x] `lib/build/next-step.ts`: `nextBuildStep(plan, outcomes)` per ADR D4's table, with cannot-continue's three causes — and a fourth found writing it: every phase closed but a row not terminal, which the gates should never allow; it stops rather than calling the plan built. An unproven promise goes to review, where it is shown
+- [x] `indusk plans next <name>` prints the step as JSON — with `--json`; a sentence without. `lib/build/read-plan.ts` reads the plan's live copy for it, the one place the build's decisions meet the disk
+- [x] `lib/lifecycle.ts`: positions `review` (every phase and ritual closed, not accepted) and `accepted` (the impl has `accepted:`), between `cleanup` and `retrospective`; `ParsedImpl` carries `accepted`; the admin's plan page renders each (`impl-approved` already does) — both join `IMPL_DEPENDENT_POSITIONS`. Two tests from admin-ui-phase-progress asserted a cleaned plan reads "awaiting /retrospective"; they now assert review, keeping their point (the bar never claims what it does not hold; an unproven promise is still named). Found doing it: the admin parsed the impl's body without its frontmatter, so `accepted` never reached the position; it now parses the whole file it already read for readiness
+- [x] A13 written red, then passing — written before `next-step.ts` existed, when it could only fail to load; its subject is the new function, so there was no honest assertion-red before it (the reason it was deferred to this phase). Passing: 5 tests
 
 #### Build Phase 2 Verification
 
-- [ ] A11, A12, A13, A14, A31 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plans-next src/lib/build src/lib/run` and `cd apps/indusk-admin && pnpm exec vitest run src/components/PlanDetail`)
-- [ ] `src/lib/run/loop.test.ts` and `lifecycle-render-parity.test.ts` still pass
+- [x] A11, A12, A13, A14, A31 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plans-next src/lib/build src/lib/run` and `cd apps/indusk-admin && pnpm exec vitest run src/components/PlanDetail`) — with `src/lib/lifecycle-review`: 21 files, 96 tests; the admin's PlanDetail and bars browser tests, 8 files, 60 tests; `tsc --noEmit` clean in both packages
+- [x] `src/lib/run/loop.test.ts` and `lifecycle-render-parity.test.ts` still pass — the loop's tests are in the 96; render parity 6 of 6, now with labels for `review` and `accepted`
+- [x] Shape — `next-step.ts` is one pure decision with its types; `read-plan.ts` is its only contact with the disk; `judgement.ts` is the moved rule, unchanged. One thing looked at and kept: `resolvePosition`'s completed branch now names the unproven promises in two messages through one `unproven` suffix rather than two branches. Nothing to change
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`: `lib/build/` holds the build's decisions — the next step and judgement items — and Dawn reads the same judgement rule
+- [x] `apps/indusk-mcp/CLAUDE.md`: `lib/build/` holds the build's decisions — the next step and judgement items — and Dawn reads the same judgement rule — the file was 22 bytes under its 16,384-byte budget; room made by shortening the run entry's restatement of its own gate and dropping two implementation details from the cleanup entry (merge-base fallbacks, `isNew`'s `cat-file`), which state how the code works rather than a rule. Now 16,376 bytes; `check-pointers` passes
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/plans.md`: `next`, its answers and the three causes of cannot-continue; `apps/docs/src/reference/admin-ui/overview.md`: the three new positions
+- [x] `apps/docs/src/reference/cli/plans.md`: `next`, its answers and the three causes of cannot-continue; `apps/docs/src/reference/admin-ui/overview.md`: the three new positions — two new positions (`review`, `accepted`; `impl approved` already existed)
 
 ### Build Phase 3: The review, and skips with reasons
 
