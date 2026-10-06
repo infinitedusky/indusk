@@ -34,6 +34,12 @@ export function ReviewPanel({ review }: { review: Review }) {
           ) : null}
         </ul>
       </div>
+      {review.skippedRituals.map((r) => (
+        <p key={r.ritual} className="text-gray-700">
+          {r.ritual === "falsification" ? "Falsification" : "Cleanup"} skipped:{" "}
+          {r.reason}
+        </p>
+      ))}
       {review.falsification.map((f) => (
         <div key={f.phase}>
           <h3 className="font-medium text-gray-700">{f.phase}</h3>

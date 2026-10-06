@@ -40,6 +40,9 @@ const review: Review = {
     },
   ],
   files: [{ path: "src/seat.ts", status: "A" }],
+  skippedRituals: [
+    { ritual: "cleanup", reason: "one small file; nothing to decompose" },
+  ],
   skips: [
     {
       phase: "Build Phase 1: Seats",
@@ -62,5 +65,8 @@ describe("the review panel shows the evidence", () => {
     expect(text).toContain("Fixed: read the expiry from a monotonic clock");
     expect(text).toContain("src/seat.ts");
     expect(text).toContain("(none needed — no public page yet)");
+    expect(text).toContain(
+      "Cleanup skipped: one small file; nothing to decompose",
+    );
   });
 });
