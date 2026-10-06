@@ -361,6 +361,10 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 ### Build Phase 9: The whole way, once
 
 - [x] (discovered) A planning session is a conversation: the planner asks in prose and presents each document for review, and waits for a reply in the person's words, which the panel could not send. The manager's `say` (recorded as a `you` event, so the panel shows both sides), `POST /api/sessions/:id/say`, and a message box in the panel. Tests: the manager's `say` (red on its assertion first) and the panel sending what was typed, both under A1
+- [x] (discovered in A27) The admin's `readActivePlans` listed only the trunk's plan folders, so New plan opened a 404: a plan on its own branch reaches the sidebar and its page now (`planning-reader.own-branch.test.ts`, red first). And a plan with no running session had no way to start one: Continue planning on its page
+- [x] (discovered in A27) The session log holds to about ten lines and follows new events (Sandy, 2026-10-06: "we need the content to scroll after 10 lines")
+- [x] (discovered in A27) A planning session leaves its documents uncommitted, which approval refused; `approvePlan` now commits the plan's own `.indusk/` changes on the branch and still refuses uncommitted work outside `.indusk/`, naming it (two cases in `plans-approve.test.ts`, red first; the first fix cut a character off the first status line, because `git` trims its output)
+- [x] (discovered in A27) A question could not be answered in the person's own words, nor with several choices; the panel now offers Other with a text field, and several choices when the question allows it (two panel cases, red first)
 - [ ] A27: in a scratch project, one plan from New plan to release in the admin with no terminal; record what happened, every stop and why
 - [ ] A6: one plan started in the editor and continued in the admin, and one the other way round; record both
 - [ ] A28: `indusk promises confirm admin-plan-authoring`; the six promises read `enforced`
