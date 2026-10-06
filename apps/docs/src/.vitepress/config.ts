@@ -62,6 +62,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Plan Lifecycle", link: "/guide/plan-lifecycle" },
 						{ text: "Briefs", link: "/guide/briefs" },
+						{ text: "One Contract per Repo", link: "/guide/contract" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
 						{ text: "Test Levels", link: "/guide/test-levels" },
 						{ text: "Promises", link: "/guide/promises" },
