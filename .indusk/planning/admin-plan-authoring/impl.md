@@ -64,10 +64,10 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A4 | A planning session asks before every write, even when the developer's own Claude Code allows writes without asking | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/lib/session/protocol.test.ts |
 | A5 | Claude Code still answers a question, a permission request and an interrupt over the session's stream | Build Phase 4 | Build Phase 4 | planned | contract | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/__tests__/session-protocol-contract.test.ts |
 | A6 | A plan started in the admin and one started in the editor produce the same plan folder and registry entries, and either continues from the other | Build Phase 9 | Build Phase 9 | planned | live check | promise: a-plan-can-start-from-the-admin | manual: recorded in Build Phase 9 |
-| A7 | Starting a plan with a type and a name creates its branch and worktree, recorded so the admin and plan tools read the plan from there | Test Phase 1 | Build Phase 1 | written | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-start.test.ts |
-| A8 | Until approval, the plan's documents and declared promises exist on its branch and not on `main` | Test Phase 1 | Build Phase 1 | written | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-start.test.ts |
-| A9 | Approving brings the documents and promises to `main`, and the build then runs on the same branch | Test Phase 1 | Build Phase 1 | written | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
-| A10 | Starting a plan whose name already has a folder, branch or worktree is refused, naming which | Test Phase 1 | Build Phase 1 | written | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-start.test.ts |
+| A7 | Starting a plan with a type and a name creates its branch and worktree, recorded so the admin and plan tools read the plan from there | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-start.test.ts |
+| A8 | Until approval, the plan's documents and declared promises exist on its branch and not on `main` | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-start.test.ts |
+| A9 | Approving brings the documents and promises to `main`, and the build then runs on the same branch | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
+| A10 | Starting a plan whose name already has a folder, branch or worktree is refused, naming which | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-start.test.ts |
 | A11 | An approved plan's build goes from its first phase through falsification and cleanup without asking anything, when the plan declares no judgement item | Test Phase 1 | Build Phase 2 | written | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/plans-next.test.ts |
 | A12 | A build stops at a judgement item the plan declared and names the item | Test Phase 1 | Build Phase 2 | written | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/plans-next.test.ts |
 | A13 | A build that cannot continue stops and says why: a session error after its retries, two steps with no progress, or a `blocker:` line | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/lib/build/next-step.test.ts |
@@ -75,12 +75,12 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A15 | The review lists each promise the plan makes with the passing tests naming it; one with none is unproven | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A16 | The review shows what falsification looked for, what it found and what was fixed | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A17 | The review shows the files the plan's branch changed against `main` | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
-| A18 | A plan that has not been accepted cannot be landed on `main`; the refusal names the plan | Test Phase 1 | Build Phase 1 | written | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
+| A18 | A plan that has not been accepted cannot be landed on `main`; the refusal names the plan | Test Phase 1 | Build Phase 1 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 | A19 | Accepting a plan in the panel runs the release workflow: the retrospective, the merge to `main`, the branch and worktree removed | Build Phase 7 | Build Phase 7 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
 | A20 | With `release.auto_accept`, a build that reaches review goes on to the release workflow without the person | Build Phase 7 | Build Phase 7 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
 | A21 | Stopping a session from the panel ends it, and what it wrote stays written | Build Phase 5 | Build Phase 6 | planned | unit | promise: a-session-can-be-stopped | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A22 | When the admin stops, or starts again after a crash, no session it started is still running | Build Phase 5 | Build Phase 5 | planned | contract | promise: a-session-can-be-stopped | apps/indusk-mcp/src/__tests__/admin-session-lifecycle.test.ts |
-| A23 | Approving runs the same brief check as the command line and refuses with its message when a promise is missing from the registry | Test Phase 1 | Build Phase 1 | written | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
+| A23 | Approving runs the same brief check as the command line and refuses with its message when a promise is missing from the registry | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
 | A24 | In a build session the admin starts, a checkoff that skips a gate without a reason is refused | Build Phase 7 | Build Phase 7 | planned | contract | promise: gates-ran-at-every-checkoff | apps/indusk-mcp/src/__tests__/build-session-gates.test.ts |
 | A25 | The admin starts plans, creates worktrees, checks briefs, lands plans and starts `claude` only through the package's code | Test Phase 1 | Build Phase 7 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-admin/src/__tests__/admin-uses-package-commands.test.ts |
 | A26 | With this plan's tests added, no everyday test starts Claude, a server or a detached process, or waits | Test Phase 1 | Build Phase 9 | written | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
@@ -181,24 +181,27 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 ### Build Phase 1: The plan commands
 
-- [ ] `lib/plans/start.ts`: `startPlan(root, type, name)` — refuses a taken folder, branch or worktree, naming which; calls `createPlanWorktree`; writes the plan folder with `workflow: <type>` in the worktree only
-- [ ] `lib/plans/approve.ts`: `approvePlan(root, name)` — `checkPlanContract` on the worktree's copy; refuses a branch touching anything outside `.indusk/`, and a trunk dirty on the branch's paths; merges `--no-ff` into the trunk; sets the impl `approved`
-- [ ] `lib/plans/accept.ts`: `acceptPlan(root, name, by)` — writes `accepted` and `accepted_by` to the impl's frontmatter and commits on the branch
-- [ ] `lib/plans/land.ts`: `landPlan(root, name)` — refuses without `accepted`; merges the trunk into the branch, runs the project's checks, merges `--no-ff` into the trunk, releases and removes the worktree, deletes the branch
-- [ ] `indusk plans start | approve | accept | land` in `bin/commands/plans.ts`; the package exports `./plans`
+- [x] (discovered) `lib/worktree/plan-worktree-commands.ts`: a plan is assigned once its folder exists on the trunk *or in the worktree being assigned*, and `createPlanWorktree` takes a `seed` that writes the first documents before assigning — the old rule ("a plan is assigned after its folder exists on the trunk") refused every plan written on its own branch (found writing Test Phase 1's fixture)
+- [x] (discovered) `lib/worktree/plan-worktrees.ts`: `resolvePlanCopies` also lists a plan that only its assigned worktree holds. Every reader started from the trunk's folders, so a plan on its own branch was invisible to the admin and the plan tools; A7 gained the assertion that `get_plan_status` reads it, red with the old loop and green with this
+- [x] `lib/plans/start.ts`: `startPlan(root, type, name)` — refuses a taken folder, branch or worktree, naming which; calls `createPlanWorktree`; writes the plan folder with `workflow: <type>` in the worktree only
+- [x] `lib/plans/approve.ts`: `approvePlan(root, name)` — `checkPlanContract` on the worktree's copy; refuses a branch touching anything outside `.indusk/`, and a trunk dirty on the branch's paths; merges `--no-ff` into the trunk; sets the impl `approved`
+- [x] `lib/plans/accept.ts`: `acceptPlan(root, name, by)` — writes `accepted` and `accepted_by` to the impl's frontmatter and commits on the branch
+- [x] `lib/plans/land.ts`: `landPlan(root, name)` — refuses without `accepted`; merges the trunk into the branch, runs the project's checks, merges `--no-ff` into the trunk, releases and removes the worktree, deletes the branch — the checks are `plans.land_checks` in `.indusk/config.json`, none when unset; which checks a project runs is `release-checks-run-once`'s
+- [x] `indusk plans start | approve | accept | land` in `bin/commands/plans.ts`; the package exports `./plans`
 
 #### Build Phase 1 Verification
 
-- [ ] A7, A8, A9, A10, A18, A23 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plans-start src/__tests__/plans-approve src/__tests__/plans-land`)
-- [ ] `src/__tests__/plan-worktree*.test.ts` still pass with `createPlanWorktree` shared
+- [x] A7, A8, A9, A10, A18, A23 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plans-start src/__tests__/plans-approve src/__tests__/plans-land`) — 12 tests, 2.5 s; `tsc --noEmit` clean
+- [x] `src/__tests__/plan-worktree*.test.ts` still pass with `createPlanWorktree` shared — with `worktree-cli` and `worktree-visibility-cli`: 6 files, 43 tests
+- [x] Shape — `plan-branch.ts` holds what every verb after `start` needs (find the plan's worktree, the trunk, the refusals, the merge) so each verb file reads as its steps in order; `setFrontmatterKeys` edits lines in place rather than re-serialising, so a document's formatting survives approval and acceptance. One thing looked at and kept: `landPlan` runs `plans.land_checks` through `sh -c`, the one place a project's own command runs, because the commands are the project's to write. Nothing to change
 
 #### Build Phase 1 Context
 
-- [ ] planning: in `templates/planning/CLAUDE.md`, the worktree entry says a plan starts with `indusk plans start`, approval merges its documents, and `plans land` refuses an unaccepted plan — then `indusk update` here
+- [x] planning: in `templates/planning/CLAUDE.md`, the worktree entry says a plan starts with `indusk plans start`, approval merges its documents, and `plans land` refuses an unaccepted plan — then `indusk update` here — a new entry beside the worktree one; `update` run with this branch's build. Found doing it: `indusk update` run in a plan worktree registers the worktree as a project of its own in `~/.indusk/projects.json` (removed by hand); not this plan's to fix, noted for the backlog
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/plans.md`: `start`, `approve`, `accept`, `land`, each with what it refuses
+- [x] `apps/docs/src/reference/cli/plans.md`: `start`, `approve`, `accept`, `land`, each with what it refuses
 
 ### Build Phase 2: The next step, and the positions it reads
 
