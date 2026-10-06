@@ -1,7 +1,7 @@
 ---
 title: "Plan authoring from the admin — plan, build, review and release, through your own Claude Code"
 date: 2026-10-06
-status: draft
+status: accepted
 workflow: feature
 ---
 

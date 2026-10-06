@@ -1,0 +1,16 @@
+---
+name: nothing-ships-until-accepted
+kind: state
+lifetime: holds
+state: declared
+domain: planning
+owner: admin-plan-authoring
+sites: []
+tests: []
+incidents: []
+---
+
+A plan's build does not merge to `main`, publish or deploy until it is accepted, by the person or by a workflow set to accept automatically; then the release workflow runs the retrospective, the merge and the rest of the release.
+
+## History
+- 2026-10-06 — declared (admin-plan-authoring), from its planning conversation.
