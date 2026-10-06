@@ -1,7 +1,11 @@
 ---
 title: "publish-hygiene"
 date: 2026-10-06
-status: approved
+status: completed
+falsification: skipped
+falsification_reason: "investigated the leave-out rule's edges (a `types-*` sibling does not match; no runtime file ends in .map), whether next start reads anything left out (the trimmed bundle served / and the API by hand), the retried write's side effects (a denied write leaves no file), and the 2FA prompt under loglevel warn (npm prints it with output.standard); no specific hypothesis survived, and the live 2FA case is U1"
+cleanup: skipped
+cleanup_reason: "three edits: a named leave-out rule in bundle-admin.js, one word in the release script, a test's setup; nothing repeats across files and nothing warrants extraction"
 trajectory: required
 test_phases: required
 test_levels: required
