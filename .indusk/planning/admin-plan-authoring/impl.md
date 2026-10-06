@@ -1,7 +1,7 @@
 ---
 title: "Plan authoring from the admin"
 date: 2026-10-06
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -89,6 +89,8 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A29 | A non-merge commit on `main` that changes an active plan's documents is marked as a violation of the own-branch promise; a merge from the plan's branch is marked upheld; the commit is never refused | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/trunk-plan-commit-mark.test.ts |
 | A30 | A build writes inside its worktree without asking and is refused outside it; a gate item it skips carries its reason, and the review lists every skip | Build Phase 3 | Build Phase 7 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/gate-policy-env.test.ts, apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A31 | A plan that is in review or accepted shows that position on its admin page | Test Phase 1 | Build Phase 2 | passing | unit | the planning rule that a plan adding a lifecycle position renders it in the admin, in the same plan | apps/indusk-mcp/src/lib/lifecycle-review.test.ts, apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
+| A32 | Approving or landing a plan commits InDusk's own bookkeeping left uncommitted on `main` (its `current.md`, highlight logs, evaluator results, lessons) in a commit of its own, and still refuses any other uncommitted change on a path the plan touches, naming it | Build Phase 10 | Build Phase 10 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts, apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
+| A33 | The review lists uncommitted changes on `main` that are not InDusk's bookkeeping, on paths the plan touches, so the person sorts them out before accepting | Build Phase 10 | Build Phase 10 | planned | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts, apps/indusk-admin/src/components/session/ReviewPanel.test.tsx |
 
 ### Deferred Verification
 
@@ -172,6 +174,10 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 #### Deferred to Build Phase 9
 
 - **A6, A27, A28** — live checks, run once against the real system after everything above exists.
+
+#### Deferred to Build Phase 10
+
+- **A32, A33** — added after A27 (Sandy, 2026-10-06): the unattended release met InDusk's own uncommitted notes on the trunk and settled it itself; InDusk's bookkeeping should be InDusk's to commit, and anything else the person's to see before accepting. Both reach their subject over the CLI, red on today's refusals and today's review.
 
 #### Regression Guards
 
@@ -387,6 +393,27 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 #### Build Phase 9 Document
 
 - [x] `apps/docs/src/changelog.md` Unreleased: the admin can start, build, review and release a plan; `indusk plans` verbs; a plan cannot land before it is accepted
+
+### Build Phase 10: InDusk's bookkeeping, and the person's work, on main
+
+**Goal**: InDusk takes care of its own notes left uncommitted on the trunk; anything else there that a plan's merge would touch is shown to the person at review and stops the release, never settled by a session (Sandy, 2026-10-06). Where bookkeeping should be written at all is the follow-on brief's question.
+
+- [ ] A32 and A33 written red over the CLI
+- [ ] `lib/plans/bookkeeping.ts`: `isBookkeeping(path)` — `.indusk/current.md`, `.indusk/highlights.jsonl`, `.indusk/highlights-processed.jsonl`, `.indusk/eval/`, `.claude/lessons/` — and `commitTrunkBookkeeping(pb)`, one commit labelled as bookkeeping; `approvePlan` and `landPlan` call it before checking the trunk
+- [ ] `buildReview` gains `uncommittedOnMain`: changes on the trunk, outside bookkeeping, on paths the branch touches; the review panel shows them above Accept
+- [ ] `skills/work.md` unattended: never commit, stash or discard work that is not the plan's; InDusk's bookkeeping is committed by `plans land`; anything else stops the release with cannot-continue
+
+#### Build Phase 10 Verification
+
+- [ ] A32, A33 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plans-land src/__tests__/plans-approve src/__tests__/plans-review` and `cd apps/indusk-admin && pnpm exec vitest run src/components/session/ReviewPanel`)
+
+#### Build Phase 10 Context
+
+- [ ] planning: `templates/planning/CLAUDE.md` — at approval and landing InDusk commits its own bookkeeping on the trunk; other uncommitted work there is the person's, shown at review
+
+#### Build Phase 10 Document
+
+- [ ] `apps/docs/src/reference/cli/plans.md`: what `approve` and `land` commit and what they refuse; `reference/skills/work.md`: the unattended rule
 
 ## Files Affected
 
