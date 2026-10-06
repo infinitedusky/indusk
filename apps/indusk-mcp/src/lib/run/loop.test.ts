@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { detectHumanGate } from "../build/judgement.js";
 import { parseImplString } from "../impl-parser.js";
 import {
 	CLI_MJS,
@@ -18,7 +19,7 @@ import {
 	toolCallStep,
 	phase1VerificationLine as verificationLine,
 } from "./harness.test-support.js";
-import { detectHumanGate, runLoop } from "./loop.js";
+import { runLoop } from "./loop.js";
 
 /**
  * T5 — the full loop runs the guinea-pig plan to impl-complete via Claude,

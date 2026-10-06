@@ -2,8 +2,8 @@ import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import type { LanguageModel } from "ai";
+import { detectHumanGate } from "../build/judgement.js";
 import { type ImplPhase, parseImplString } from "../impl-parser.js";
-import type { Trajectory } from "../trajectory/parser.js";
 import { createRunCadences } from "./cadences.js";
 import type { CommitRecord } from "./commit-cadence.js";
 import { type RunDriverOptions, type RunGateOptions, runDriver } from "./driver.js";
@@ -109,46 +109,6 @@ export type RunLoopResult =
 // pending) where 2.5-flash finished in 18. 48 bounds the attempt without
 // starving cautious models; tune per-run via --max-steps.
 const DEFAULT_PHASE_STEPS = 48;
-
-/**
- * Derive whether a phase is a human gate — no new marker required. Returns
- * the matching item texts (empty = machine-verifiable phase).
- */
-export function detectHumanGate(phase: ImplPhase, trajectory: Trajectory): string[] {
-	// Ids named in the Deferred Verification block — an item referencing one
-	// is deferred human judgment even without matching a text pattern.
-	const deferredIds = new Set(
-		trajectory.deferred.flatMap((row) => row.name.match(/\b[TAU]\d+\b/g) ?? []),
-	);
-
-	const matches: string[] = [];
-	for (const gate of phase.gates) {
-		for (const item of gate.items) {
-			if (item.checked) continue; // already handled by a human
-			const referencesDeferredRow = (item.text.match(/\b[TAU]\d+\b/g) ?? []).some((id) =>
-				deferredIds.has(id),
-			);
-			if (referencesDeferredRow || HUMAN_GATE_PATTERNS.some((p) => p.test(item.text))) {
-				matches.push(item.text);
-			}
-		}
-	}
-	return matches;
-}
-
-/**
- * The plan's already-declared "a human must look" phrasings (autopilot step 1)
- * — a Deferred Verification reference, a `U`-prefixed deferred row, or a
- * manual/visual-judgment item.
- */
-const HUMAN_GATE_PATTERNS: readonly RegExp[] = [
-	/deferred verification/i,
-	/\bU\d+\b/,
-	/\bmanual smoke\b/i,
-	/\bbrowser smoke\b/i,
-	/\bmanual(?:ly)?\s+(?:check|verify|verification|test|review)\b/i,
-	/does it look right/i,
-];
 
 /**
  * The plan's effective gate policy. Unset resolves to `ask` — the same
