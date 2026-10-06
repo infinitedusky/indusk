@@ -1,0 +1,5 @@
+# A build skips a gate only with its reason — a bare (none needed) gives the person reviewing it nothing to judge
+
+An unattended build runs with nobody to ask, so the `ask` policy's conversation proof (`asked: … — user: …`) cannot exist, and a build that stopped at every skip question would interrupt the person for exactly what the build was meant to spare them. So a build's sessions run under `INDUSK_GATE_POLICY=auto`. But a skip is still a decision someone has to stand behind: the review (`indusk plans review`) lists every skipped gate item for the person to judge before they accept the build. A bare `(none needed)` puts nothing in that list worth reading.
+
+What to do: in a build, skip a gate item as `(none needed — <why>)` or `skip-reason: <why>`, with a reason a person could disagree with. `check-gates.js` refuses a bare opt-out when the environment set the policy (`hooks/_gate-policy.js`). A plan that sets `gate_policy: auto` itself keeps the bare form, because a person chose it. Guarded by `gate-policy-env.test.ts` (admin-plan-authoring A30).
