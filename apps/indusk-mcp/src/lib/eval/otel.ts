@@ -26,7 +26,7 @@ import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
-import { PROMISE_MARK } from "../promises/vocabulary.js";
+import { markPromise } from "../promises/mark.js";
 import { liveOtlpEndpointSync } from "../telemetry/status.js";
 import type { EvalErrorEntry, EvalScorecard } from "./types.js";
 
@@ -260,18 +260,15 @@ export function markEvaluation(
 	result: EvalScorecard | EvalErrorEntry,
 	project: string,
 ): void {
-	span.setAttribute(PROMISE_MARK.promise, EVALUATION_PROMISE);
 	// Every project's evaluator marks this promise under one service name, so
 	// the mark names its project (`markProjectId`) or one project's failed
 	// evaluation would read as another's violation.
-	span.setAttribute(PROMISE_MARK.project, project);
 	if (!("error" in result && result.error)) {
-		span.setAttribute(PROMISE_MARK.outcome, "upheld");
+		markPromise(span, { promise: EVALUATION_PROMISE, outcome: "upheld", project });
 		return;
 	}
-	span.setAttribute(PROMISE_MARK.outcome, "violated");
 	const symptom = result.message.split("\n").find((l) => l.trim() !== "") ?? "evaluation failed";
-	span.addEvent(PROMISE_MARK.violatedEvent, { [PROMISE_MARK.symptom]: symptom.slice(0, 500) });
+	markPromise(span, { promise: EVALUATION_PROMISE, outcome: "violated", project, symptom });
 }
 
 /**
