@@ -481,7 +481,7 @@ What was reviewed: `listOversizedChangedFiles` against `main` flags 19 files. Al
 
   The first two keep their own refusal messages. The review diffs against the trunk branch the reader returns, and lists no files when the trunk is on no trunk branch. Basis: the rule of three.
 - [x] `build/review.ts` reads the branch's changed files through `plan-branch.ts`'s `branchChanges`, extended to return each file's status. Today `changedFiles` repeats the same `git diff trunk...branch`. Basis: `one-definition-per-shared-rule`.
-- [ ] Extract `postJson(url, body)` → `{ ok: true, body } | { ok: false, error }` into `apps/indusk-admin/src/lib/post-json.ts`. Four panel components spell "POST JSON; when not ok, read `{ error }` or fall back to the status" five times between them:
+- [x] Extract `postJson(url, body)` → `{ ok: true, body } | { ok: false, error }` into `apps/indusk-admin/src/lib/post-json.ts`. Four panel components spell "POST JSON; when not ok, read `{ error }` or fall back to the status" five times between them:
   - `BuildControls`;
   - `PlanSession`, twice;
   - `NewPlanForm`;
