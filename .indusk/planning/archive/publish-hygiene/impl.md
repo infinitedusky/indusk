@@ -11,6 +11,8 @@ test_phases: required
 test_levels: required
 test_purpose: required
 gate_policy: ask
+accepted: 2026-10-06T21:09:33.135Z
+accepted_by: person
 ---
 
 # publish-hygiene
