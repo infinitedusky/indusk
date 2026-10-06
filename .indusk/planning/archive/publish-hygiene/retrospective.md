@@ -91,6 +91,8 @@ green from a clean environment: `pnpm test` 1,965, and `pnpm test:system`
 
 ## Quality
 
-- Shape: 0 findings across two phase reviews; none judged wrong.
+- Shape: 0 findings across three phase reviews; none judged wrong.
 - Falsification and cleanup were skipped, with the reasons recorded in the
   impl's frontmatter.
+
+Landed on main at b1e5f64e, 2026-10-06, by `indusk plans accept` and `indusk plans land`.
