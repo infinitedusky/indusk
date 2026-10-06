@@ -82,6 +82,10 @@
 			"types": "./dist/lib/lifecycle.d.ts",
 			"default": "./dist/lib/lifecycle.js"
 		},
+		"./build": {
+			"types": "./dist/lib/build/index.d.ts",
+			"default": "./dist/lib/build/index.js"
+		},
 		"./plans": {
 			"types": "./dist/lib/plans/index.d.ts",
 			"default": "./dist/lib/plans/index.js"
