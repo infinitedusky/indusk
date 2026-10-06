@@ -84,8 +84,23 @@ export function implPath(pb: PlanBranch): string {
 
 /** The files the plan's branch changes against the trunk branch, since they diverged. */
 export async function branchChanges(pb: PlanBranch): Promise<string[]> {
-	const out = await git(pb.trunk, "diff", "--name-only", `${pb.trunkBranch}...${pb.branch}`);
-	return out.split("\n").filter(Boolean);
+	return (await branchFileChanges(pb.trunk, pb.trunkBranch, pb.branch)).map((f) => f.path);
+}
+
+/** Each file `branch` changes against `trunkBranch` since they diverged, with git's status letter; a rename by its new path. */
+export async function branchFileChanges(
+	trunk: string,
+	trunkBranch: string,
+	branch: string,
+): Promise<Array<{ path: string; status: string }>> {
+	const out = await git(trunk, "diff", "--name-status", `${trunkBranch}...${branch}`);
+	return out
+		.split("\n")
+		.filter(Boolean)
+		.map((line) => {
+			const [status, ...rest] = line.split("\t");
+			return { status, path: rest[rest.length - 1] };
+		});
 }
 
 /**

@@ -3,10 +3,10 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { isCleanupSkipped } from "../cleanup/gate.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
-import { git } from "../git.js";
 import { type ImplPhase, parseImplString } from "../impl-parser-core.js";
 import { RITUAL_ORDER } from "../lifecycle.js";
 import { uncommittedWork } from "../plans/bookkeeping.js";
+import { branchFileChanges } from "../plans/plan-branch.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { type PromiseEntry, readPromises } from "../promises/registry.js";
 import { rowProofs } from "../promises/rows.js";
@@ -147,15 +147,7 @@ async function changedFiles(trunk: string, branch: string): Promise<Review["file
 	// A trunk checked out on no trunk branch has nothing to diff against; the
 	// files are listed once it is back on one.
 	const { branch: trunkBranch, onTrunk } = await currentTrunkBranch(trunk);
-	if (!onTrunk) return [];
-	const out = await git(trunk, "diff", "--name-status", `${trunkBranch}...${branch}`);
-	return out
-		.split("\n")
-		.filter(Boolean)
-		.map((line) => {
-			const [status, ...rest] = line.split("\t");
-			return { status, path: rest[rest.length - 1] };
-		});
+	return onTrunk ? branchFileChanges(trunk, trunkBranch, branch) : [];
 }
 
 const isFalsification = (p: ImplPhase) => new RegExp(`^${RITUAL_ORDER[0]}\\b`, "i").test(p.name);
