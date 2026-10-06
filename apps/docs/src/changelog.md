@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.63.0] — 2026-10-06
+
 ### Added
 
 - **The admin can plan, build, review and release a plan** (admin-plan-authoring). New plan starts a plan on its own branch and a planning session of your own `claude` in the panel — questions with their choices, Other in your own words, permission requests to allow or deny, replies typed, Stop. Approve brings the plan's documents and promises to `main`. Build works the phases, then falsification and cleanup, without asking, and stops at review; the review shows each promise with the tests that prove it, what falsification found or why it was skipped, the files changed and every skipped gate item. Accept runs the retrospective, which lands the plan. See [sessions](/reference/admin-ui/sessions) and [the plan lifecycle](/guide/plan-lifecycle).
