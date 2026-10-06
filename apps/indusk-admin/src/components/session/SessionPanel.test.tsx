@@ -1,3 +1,4 @@
+import "@/app/globals.css";
 import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
@@ -200,6 +201,33 @@ describe("A1 — the person replies in their own words", () => {
     (await button(r, "Send"))?.click();
     await vi.waitFor(() =>
       expect(onSay).toHaveBeenCalledWith("Release them after ten minutes."),
+    );
+  });
+});
+
+describe("the log scrolls after about ten lines, and follows new events", () => {
+  it("a long session is held to a fixed height, scrolled to its latest event", async () => {
+    const many: StartedEvent[] = Array.from({ length: 40 }, (_, i) => ({
+      type: "text",
+      text: `line ${i}`,
+    }));
+    const { container } = await render(
+      <SessionPanel
+        events={[init, ...many]}
+        running
+        onAnswer={vi.fn()}
+        onDecide={vi.fn()}
+        onStop={vi.fn()}
+      />,
+    );
+    const log = container.querySelector(
+      '[data-testid="session-log"]',
+    ) as HTMLElement;
+    expect(log.scrollHeight).toBeGreaterThan(log.clientHeight);
+    await vi.waitFor(() =>
+      expect(log.scrollTop + log.clientHeight).toBeGreaterThanOrEqual(
+        log.scrollHeight - 2,
+      ),
     );
   });
 });

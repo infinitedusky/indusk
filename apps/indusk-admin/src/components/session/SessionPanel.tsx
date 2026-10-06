@@ -1,7 +1,7 @@
 "use client";
 
 import type { Question, StartedEvent } from "@infinitedusky/indusk-mcp/session";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
 /**
@@ -33,6 +33,15 @@ export function SessionPanel({
 }: SessionPanelProps) {
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const [draft, setDraft] = useState("");
+  // About ten lines tall, then it scrolls (Sandy, 2026-10-06). It follows new
+  // events unless the person has scrolled up to read.
+  const log = useRef<HTMLOListElement>(null);
+  const following = useRef(true);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when an event arrives
+  useEffect(() => {
+    const el = log.current;
+    if (el && following.current) el.scrollTop = el.scrollHeight;
+  }, [events.length]);
   const done = (requestId: string) =>
     setAnswered((prev) => new Set(prev).add(requestId));
 
@@ -49,7 +58,16 @@ export function SessionPanel({
           </Button>
         ) : null}
       </header>
-      <ol className="flex flex-col gap-2">
+      <ol
+        ref={log}
+        data-testid="session-log"
+        className="flex max-h-60 flex-col gap-2 overflow-y-auto"
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          following.current =
+            el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+        }}
+      >
         {events.map((ev, i) => (
           // Events never reorder or disappear, so their position is their identity.
           // biome-ignore lint/suspicious/noArrayIndexKey: an append-only log
