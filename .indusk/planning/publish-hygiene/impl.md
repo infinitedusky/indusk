@@ -57,8 +57,8 @@ warnings, errors and 2FA prompt without a line per file ([brief](brief.md),
 
 **Goal**: make A1–A3 pass.
 
-- [ ] `scripts/bundle-admin.js` leaves out `*.map`, `.next/trace`, `.next/trace-build` and `.next/types/` when it copies the build, beside the `.next/cache` and `.next/dev` it already leaves out; its header lists them with the reason
-- [ ] The `release` script runs the publish as `npm_config_loglevel=warn pnpm publish --no-git-checks`
+- [x] `scripts/bundle-admin.js` leaves out `*.map`, `.next/trace`, `.next/trace-build` and `.next/types/` when it copies the build, beside the `.next/cache` and `.next/dev` it already leaves out; its header lists them with the reason
+- [x] The `release` script runs the publish as `npm_config_loglevel=warn pnpm publish --no-git-checks`
 
 #### Build Phase 1 Verification
 
