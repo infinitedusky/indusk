@@ -15,6 +15,7 @@ import { git } from "./helpers/test-git.js";
 /**
  * promise: a-plan-is-written-on-its-own-branch — admin-plan-authoring A9.
  * promise: a-briefs-promises-are-in-the-registry — admin-plan-authoring A23.
+ * promise: nothing-ships-until-accepted — admin-plan-authoring A32, A37, approval's half.
  *
  * Approving a plan brings its documents and declared promises to `main` in
  * one merge, and its build carries on in the same worktree on the same
