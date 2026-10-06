@@ -1,3 +1,4 @@
+import { git } from "../git.js";
 import { checkPlanContract } from "../promises/contract.js";
 import {
 	branchChanges,
@@ -6,7 +7,6 @@ import {
 	PlanCommandRefusal,
 	planBranch,
 	refuseDirtyTrunk,
-	refuseDirtyWorktree,
 	setImplKeys,
 } from "./plan-branch.js";
 
@@ -29,7 +29,7 @@ export interface ApprovedPlan {
 export async function approvePlan(anyCheckout: string, plan: string): Promise<ApprovedPlan> {
 	const pb = await planBranch(anyCheckout, plan);
 	const impl = implPath(pb);
-	await refuseDirtyWorktree(pb);
+	await commitPlanDocuments(pb);
 
 	const paths = await branchChanges(pb);
 	const outside = paths.filter((p) => !p.startsWith(".indusk/"));
@@ -53,4 +53,35 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
 	await setImplKeys(pb, impl, { status: "approved" }, `plan(${plan}): impl approved`);
 	const merge = await mergeIntoTrunk(pb, `plan(${plan}): approved — its documents and promises`);
 	return { plan, merge, paths };
+}
+
+/**
+ * A planning session writes the plan's documents and promises and may leave
+ * them uncommitted (found in admin-plan-authoring's live check). Approval is
+ * the moment they reach the trunk, so it commits them on the branch — the
+ * plan's own `.indusk/` files and nothing else. Uncommitted work outside
+ * `.indusk/` is refused, naming it, with nothing committed.
+ */
+async function commitPlanDocuments(pb: Awaited<ReturnType<typeof planBranch>>): Promise<void> {
+	const status = await git(pb.worktree, "status", "--porcelain", "--untracked-files=all");
+	const lines = status.split("\n").filter(Boolean);
+	// `git` trims its output, so the first line may have lost its leading
+	// space: take the path after the status code, however it is padded.
+	const outside = lines
+		.map((l) => l.replace(/^\s*\S{1,2}\s+/, ""))
+		.filter((path) => !path.startsWith(".indusk/"));
+	if (outside.length > 0) {
+		throw new PlanCommandRefusal(
+			`${pb.plan}'s worktree ${pb.worktree} has uncommitted changes outside .indusk/ — commit or move them first: ${outside.join(", ")}`,
+		);
+	}
+	if (lines.length === 0) return;
+	await git(pb.worktree, "add", "--", ".indusk");
+	await git(
+		pb.worktree,
+		"commit",
+		"-q",
+		"-m",
+		`plan(${pb.plan}): documents and promises, for approval`,
+	);
 }

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -100,5 +100,43 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 		expect(r.code).not.toBe(0);
 		expect(out(r)).toContain("src/seat.ts");
 		expect(p.mainSha()).toBe(before);
+	});
+
+	it("A9 — documents the planning session wrote but did not commit are committed by approval and merged", () => {
+		// Found in Build Phase 9's live check: a planning session writes its
+		// documents and promises and leaves them uncommitted.
+		p.commit(wt, { [`${planDir}/brief.md`]: "# started\n" }, "plan started");
+		writePromise(join(wt, ".indusk", "promises"), {
+			name: NAME,
+			kind: "state",
+			state: "declared",
+			domain: DOMAIN,
+			owner: PLAN,
+			statement: SENTENCE,
+		});
+		writeFileSync(
+			join(wt, planDir, "brief.md"),
+			briefText(PLAN, { makes: [{ name: NAME, sentence: SENTENCE }] }),
+		);
+		writeFileSync(
+			join(wt, planDir, "impl.md"),
+			implText(PLAN, { status: "draft", rows: [{ state: "planned" }] }),
+		);
+		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		expect(r.code, out(r)).toBe(0);
+		expect(p.onMain()).toEqual(
+			expect.arrayContaining([`${planDir}/impl.md`, `.indusk/promises/${NAME}.md`]),
+		);
+		expect(git(wt, ["status", "--porcelain"])).toBe("");
+	});
+
+	it("A9 — uncommitted work outside .indusk/ is refused, naming it; nothing is committed", () => {
+		writePlan();
+		writeFileSync(join(wt, "seat.ts"), "export const seat = 1;\n");
+		const head = git(wt, ["rev-parse", "HEAD"]);
+		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		expect(r.code).not.toBe(0);
+		expect(out(r)).toContain("seat.ts");
+		expect(git(wt, ["rev-parse", "HEAD"])).toBe(head);
 	});
 });
