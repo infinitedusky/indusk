@@ -35,7 +35,11 @@ Refuses:
 - a brief the check refuses, with the check's message;
 - a branch that already changes anything outside `.indusk/`, naming the files — it is past approval;
 - uncommitted changes in the worktree;
-- uncommitted changes on the trunk on any path the merge would bring in (never stashed).
+- uncommitted changes on the trunk on any path the merge would bring in (never stashed), other than InDusk's bookkeeping.
+
+### InDusk's bookkeeping on the trunk
+
+The evaluator, the highlight tool and the session sections write into the trunk's working tree and nothing else commits them: `.indusk/current.md`, `.indusk/highlights.jsonl`, `.indusk/highlights-processed.jsonl`, `.indusk/eval/` and `.claude/lessons/`. `approve` and `land` commit whatever of these is uncommitted, in a commit of its own (`chore(indusk): bookkeeping, committed before …`), then check the trunk. Anything else uncommitted there may be someone's real work: it is refused, named, and listed by `plans review` as *uncommitted on main* so the person sorts it out before accepting.
 
 ### `plans accept <name> [--auto]`
 
@@ -81,7 +85,7 @@ Refuses:
 - uncommitted changes in the worktree;
 - a conflict bringing the trunk into the branch (the merge is aborted);
 - a failing check, naming it;
-- uncommitted changes on the trunk on the paths the plan touches.
+- uncommitted changes on the trunk on the paths the plan touches, other than InDusk's bookkeeping, which it commits first.
 
 ## Housekeeping
 
