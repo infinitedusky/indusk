@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { type Session, type StartedEvent, startSession } from "../lib/session/start.js";
 
 /**
- * promise: a-plan-can-start-from-the-admin — admin-plan-authoring A5, a contract.
+ * promise: a-plan-can-start-from-the-admin — admin-plan-authoring A5, a contract; publish-hygiene A1.
  * lesson: the-admin-drives-claude-over-an-undocumented-flag-and-a-contract-test-watches-it
  *
  * The admin drives the developer's own `claude` over `--permission-prompt-tool
@@ -77,16 +77,33 @@ describe.skipIf(!HAS_CLAUDE)("A5 — Claude Code still speaks the three exchange
 		TIMEOUT,
 	);
 
+	// publish-hygiene A1: whether the write is asked about is Claude Code's;
+	// whether the model tries it is the model's. Started from a plain terminal
+	// it sometimes answered "DENIED" without calling a tool (2 of 9 runs), so
+	// the prompt names the tool and offers no way out, a run that tried
+	// nothing is started once more, and that failure says what it is.
 	it(
 		"a write is asked about in a planning session, and a denial is heard",
 		async () => {
-			const { cwd, events, session } = run(
-				"Create a file named hello.txt containing the single word hi. If you are not allowed, say DENIED and stop.",
-				(ev, s) => {
-					if (ev.type === "permission") s.decide(ev, { allow: false, message: "not in this test" });
-				},
-			);
-			await session.done;
+			const attempt = async () => {
+				const started = run(
+					"Call the Write tool now to create hello.txt in the current directory containing the single word hi. Call it before you write anything else.",
+					(ev, s) => {
+						if (ev.type === "permission")
+							s.decide(ev, { allow: false, message: "not in this test" });
+					},
+				);
+				await started.session.done;
+				return started;
+			};
+			const triedWrite = (events: StartedEvent[]) =>
+				events.some((e) => e.type === "tool" && e.name === "Write");
+			let { cwd, events } = await attempt();
+			if (!triedWrite(events)) ({ cwd, events } = await attempt());
+			expect(
+				triedWrite(events),
+				`the model never attempted the write, twice: ${JSON.stringify(events.slice(-2))}`,
+			).toBe(true);
 			expect(events.some((e) => e.type === "permission" && e.tool === "Write")).toBe(true);
 			expect(existsSync(join(cwd, "hello.txt"))).toBe(false);
 		},
