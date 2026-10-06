@@ -691,6 +691,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-05T02:26:07.063Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session bcc4908a — eval: watcher-heartbeat A2 commit cb89b25d
 
 **Session ID**: bcc4908a-7aac-482b-aeef-1c7a06bee8c3
@@ -718,6 +733,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-05T02:27:40.162Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 70f6b76c — eval: watcher-heartbeat A5 commit f6167429
 
 **Session ID**: 70f6b76c-9710-47b9-bc13-6365a15be905
@@ -745,6 +775,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-05T02:27:59.636Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session eed155da — eval agent: scoring watcher-heartbeat A8 commit
 
 **Session ID**: eed155da-7cf3-4eb3-b066-8ecf9cbbd1ce
@@ -772,6 +817,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-05T02:28:43.594Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 9996749e — eval: watcher-heartbeat Test Phase 1 commit 5a643393
 
 **Session ID**: 9996749e-65ba-44f1-bcbe-9fec9fc29fa4
@@ -799,18 +859,615 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-05T03:16:28.188Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 05bed386 — eval: scoring commit 257ffafb (cleanup phase close)
 
 **Session ID**: 05bed386-d2a7-4f57-b79c-88cf071ed5e1
 **Last updated**: 2026-10-04T02:21:11.902Z
 **Branch**: plan/watcher-heartbeat
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session d7a6c241 — eval: scoring commit 31950412 (day-always-on-deploy)
 
 **Session ID**: d7a6c241-c25c-453a-886c-5ba7c6f9523d
 **Last updated**: 2026-10-04T16:00:16.841Z
 **Branch**: plan/day-always-on-deploy
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/day-always-on-deploy
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 5523269c — eval: Test Phase 1 closed commit 261afdf2
+
+**Session ID**: 5523269c-efdd-479e-ab6b-76956d8339fb
+**Last updated**: 2026-10-06T15:32:16.249Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 5c658a71 — eval: scoring commit 2a327ae6
+
+**Session ID**: 5c658a71-39a6-484e-bbd6-d625edfca028
+**Last updated**: 2026-10-06T15:54:54.601Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 798e605a — eval agent: scoring commit 68d9f8e5
+
+**Session ID**: 798e605a-47ef-4d58-b19f-83481ecc36c6
+**Last updated**: 2026-10-06T15:56:39.872Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session d9f2b493 — eval: scoring commit 618d55df (startSession + ./session export)
+
+**Session ID**: d9f2b493-c532-44d6-9faf-7736b89cd1b3
+**Last updated**: 2026-10-06T15:58:06.817Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 26b99b2d — eval: score commit 67406bef (A1-A5 protocol tests)
+
+**Session ID**: 26b99b2d-1a33-4358-88b1-cc5d8379657b
+**Last updated**: 2026-10-06T15:58:09.319Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 33ac3f81 — eval: reviewing commit f5a8a9b3 (build permissions)
+
+**Session ID**: 33ac3f81-c077-4267-bf31-722340c6bed8
+**Last updated**: 2026-10-06T15:58:13.175Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 44b443ea — eval: scoring commit 49d71337
+
+**Session ID**: 44b443ea-c947-4418-9448-64dc31645d34
+**Last updated**: 2026-10-06T15:58:22.875Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session c7e4b7ec — eval: admin-plan-authoring commit 94b9bb54
+
+**Session ID**: c7e4b7ec-13aa-4578-a283-c219cf25c14b
+**Last updated**: 2026-10-06T16:16:55.095Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 905b156e — eval agent: scoring commit 41def3c5
+
+**Session ID**: 905b156e-4aad-4ed3-9440-e6a39d39ed15
+**Last updated**: 2026-10-06T16:16:55.790Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session f2482881 — eval: reviewing commit a81477d0 (admin-plan-authoring build)
+
+**Session ID**: f2482881-6d48-49d2-a565-b036ea88be8c
+**Last updated**: 2026-10-06T16:16:57.096Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 7aa9953f — eval: review commit a99747c1
+
+**Session ID**: 7aa9953f-0ed9-4cd0-b722-f72621199ca7
+**Last updated**: 2026-10-06T16:18:10.021Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session ffd8d6bc — eval agent: scoring commit 8b17364c
+
+**Session ID**: ffd8d6bc-245b-42c1-8055-884965cc3d1a
+**Last updated**: 2026-10-06T16:18:11.569Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 9704543e — eval: admin-plan-authoring commit a81477d0
+
+**Session ID**: 9704543e-1862-4314-ab77-f3460deffc9d
+**Last updated**: 2026-10-06T16:18:35.917Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session fca6eca9 — eval agent: scoring commit 1148a2d2
+
+**Session ID**: fca6eca9-fbea-4e17-85af-80444b9cc57f
+**Last updated**: 2026-10-06T16:19:17.592Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 5b2137c9 — eval: docs(admin-ui) session panel commit 98c04020
+
+**Session ID**: 5b2137c9-650d-4146-9a06-ffa3f745f9ae
+**Last updated**: 2026-10-06T16:19:51.695Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 81ee38f0 — eval agent: scoring commit 5eeaeb99
+
+**Session ID**: 81ee38f0-ab5e-417e-8d8d-55a9c44700da
+**Last updated**: 2026-10-06T16:19:52.975Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 6ffefe68 — eval: scoring commit 8b17364c (Build Phase 6 closed — the panel)
+
+**Session ID**: 6ffefe68-aec2-4557-b030-d745b97b5cc2
+**Last updated**: 2026-10-06T16:19:55.055Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session d4b7262c — eval: scoring commit a99747c1 (admin-plan-authoring wording)
+
+**Session ID**: d4b7262c-76b8-4520-b82f-2075c73bcdcb
+**Last updated**: 2026-10-06T16:19:55.236Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 58048a8d — eval c5064e4c: SessionPanel component
+
+**Session ID**: 58048a8d-7a3c-4afb-96c0-1feb02dbd2b1
+**Last updated**: 2026-10-06T16:19:55.089Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 8064358a — eval: scoring commit 41b8d972
+
+**Session ID**: 8064358a-b6bb-477d-8e42-9eb0de17bc93
+**Last updated**: 2026-10-06T16:20:33.082Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 44d77815 — eval: reviewing commit a2629ef8 SessionPanel tests
+
+**Session ID**: 44d77815-5fb7-4654-b327-5fce0c24808c
+**Last updated**: 2026-10-06T16:20:39.910Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session e6caa92a — eval: Build Phase 8 context done
+
+**Session ID**: e6caa92a-5d24-4c6c-8c94-6943508543cc
+**Last updated**: 2026-10-06T16:43:56.712Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 7f5432f4 — eval: Build Phase 12 close for admin-plan-authoring
+
+**Session ID**: 7f5432f4-55f6-49e6-8d9c-dd35e518c4f1
+**Last updated**: 2026-10-06T18:59:28.636Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 7f762555 — eval agent: evaluating commit 65246ece
+
+**Session ID**: 7f762555-5053-4958-995f-edffd0bf2395
+**Last updated**: 2026-10-06T19:00:00.524Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 79add0d6 — eval: scoring commit f347e673
+
+**Session ID**: 79add0d6-72c4-4ef6-984e-39d902b56dfb
+**Last updated**: 2026-10-06T19:00:36.224Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 7c23ff9f — eval agent: scoring commit 83ec305a
+
+**Session ID**: 7c23ff9f-e91c-40b4-b63f-cc5de08b27bb
+**Last updated**: 2026-10-06T19:01:06.940Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 3b6f25fe — eval: Build Phase 12 — admin-plan-authoring
+
+**Session ID**: 3b6f25fe-3996-4c9d-a035-2a4fb2733451
+**Last updated**: 2026-10-06T19:01:47.600Z
+**Branch**: plan/admin-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
 
 ### In Flight
 

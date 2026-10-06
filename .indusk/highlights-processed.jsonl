@@ -333,3 +333,8 @@
 {"id":"h-20261003-011","processedAt":"2026-10-03T05:16:51.010Z","action":"wrote-episode","detail":"parallelizing-one-packages-tests-changes-sibling-packages-load-under-turbo"}
 {"id":"h-20261003-012","processedAt":"2026-10-03T05:16:51.954Z","action":"skipped","detail":"hindsight restates h-009 and h-011's root causes as process fixes already captured in their corresponding new lessons; no additional rule"}
 {"id":"h-20261003-013","processedAt":"2026-10-03T15:26:27.642Z","action":"wrote-episode","detail":"a-per-call-cleanup-convention-is-not-a-fix-for-a-background-process-a-test-triggers"}
+{"id":"h-20261003-014","processedAt":"2026-10-06T15:33:56.117Z","action":"skipped","detail":"fully captured by existing lesson a-per-call-cleanup-convention-is-not-a-fix-for-a-background-process-a-test-triggers.md"}
+{"id":"h-20261003-015","processedAt":"2026-10-06T15:34:26.960Z","action":"wrote-episode","detail":"test-bare-command-resolves-from-path-not-code-under-test"}
+{"id":"h-20261003-016","processedAt":"2026-10-06T15:34:27.921Z","action":"wrote-episode","detail":"a-cleanup-guard-chained-with-and-skips-the-run-most-likely-to-leak"}
+{"id":"h-20261003-017","processedAt":"2026-10-06T15:34:28.778Z","action":"wrote-episode","detail":"suspect-concurrent-process-before-trusting-mass-test-failures"}
+{"id":"h-20261003-018","processedAt":"2026-10-06T15:34:29.916Z","action":"skipped","detail":"hindsight folded into the three lessons above (PATH pinning, guard chaining/grace period, concurrent-process check); no standalone rule beyond what they already state"}
