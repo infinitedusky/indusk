@@ -88,7 +88,7 @@ and `/retrospective` (autopilot calls them "human-gated by design"); under the
 default `ask` gate policy it asks before skipping a gate; it pauses on a
 declared judgement item (a deferred-verification row, a manual or visual
 check). In planner-promises Sandy accepted the test plan, ADR and impl with one
-word each, and falsification found fifteen defects without him.
+word each, and falsification found fifteen defects without being asked.
 
 ## Decisions
 
