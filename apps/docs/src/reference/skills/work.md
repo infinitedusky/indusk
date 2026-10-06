@@ -264,7 +264,7 @@ A build started from the admin (Build, on an approved plan's page) runs each ste
 - **records a `blocker:` and stops** rather than looping on a gate that won't pass.
 - **writes only inside the plan's worktree**; a write outside it is refused.
 - **never commits, stashes or discards work that is not the plan's.** InDusk's bookkeeping on `main` is committed by [`plans approve` and `plans land`](/reference/cli/plans#indusk-s-bookkeeping-on-the-trunk); anything else uncommitted there stops the build with a `blocker:` naming it.
-- **never starts `/retrospective`.** The release begins when the plan is accepted.
+- **never starts `/retrospective`.** The release begins when the plan is accepted, and `plans accept` and `plans land` refuse inside a build step (each step's session runs with `INDUSK_BUILD_STEP` set).
 
 See [the plan lifecycle](/guide/plan-lifecycle) and [sessions](/reference/admin-ui/sessions).
 

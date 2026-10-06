@@ -49,7 +49,7 @@ The admin daemon, the one `indusk ui` starts, holds the sessions through one `Se
 | `POST /api/sessions/:id/stop` | interrupt and end it |
 | `GET /api/sessions/:id/events` | its events as server-sent events: everything so far, then each new one |
 
-The daemon listens on `127.0.0.1` only. Every `POST` is refused unless its `Origin` is the host the request was sent to, so another site's page in the developer's browser cannot start a session. This works through the Caddy route `indusk.dawn` as well.
+The daemon listens on `127.0.0.1` only, and every route, reads included, answers only on the admin's own hosts: `127.0.0.1`, `localhost`, `[::1]` and the Caddy route `indusk.dawn`, on any port. Listening on loopback is not enough by itself. Another site can point its own name at `127.0.0.1` (DNS rebinding), and its page then talks to the daemon with an `Origin` and a `Host` that agree. Checking the host refuses it. Every `POST` is also refused unless its `Origin` is the host the request was sent to, so another site's page in the developer's browser cannot start a session, answer one, or accept a plan.
 
 ## Trust
 

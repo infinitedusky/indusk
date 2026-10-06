@@ -45,6 +45,8 @@ The evaluator, the highlight tool and the session sections write into the trunk'
 
 Writes `accepted: <time>` and `accepted_by: person` (or `auto`, with `--auto`: a workflow that accepts on its own) to the impl's frontmatter and commits it on the branch.
 
+Refused inside a build step. An unattended build runs each step (work, falsify, cleanup) with `INDUSK_BUILD_STEP` set to the step, and `accept` and `land` refuse under it, naming the step: a build stops at review, and acceptance is the person's. The release session that acceptance starts is not marked, so it lands. This stops a confused session, not a determined one: a session that unsets the variable is not stopped.
+
 ### `plans next <name> [--json]`
 
 What an unattended build does next, read from the plan as it stands — its worktree while it has one. It writes nothing; the build runner asks it after every step, and a person can ask it too.
@@ -82,6 +84,7 @@ The checks are `plans.land_checks` in `.indusk/config.json`, each a shell comman
 Refuses:
 
 - a plan with no `accepted` — accept it first;
+- a call from inside a build step (`INDUSK_BUILD_STEP`), naming the step;
 - uncommitted changes in the worktree;
 - a conflict bringing the trunk into the branch (the merge is aborted);
 - a failing check, naming it;
