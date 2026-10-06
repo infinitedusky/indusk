@@ -276,6 +276,24 @@ The hook exits with code 2, which prevents the edit from being applied. The agen
 
 **Escape hatch:** Adding `<!-- skip-gates -->` to the edit content bypasses the hook. This exists for manual corrections, not for routine use.
 
+**Gate policy** decides what counts as skipping a gate item instead of doing it. It is read from four places, the first found winning:
+
+| Level | Where | Set by |
+|---|---|---|
+| Environment | `INDUSK_GATE_POLICY` | an unattended build, for each of its sessions (`auto`) |
+| Plan | `gate_policy:` in the impl's frontmatter | the plan's author |
+| Project | `indusk.gate_policy` in `.claude/settings.json` | the project |
+| Default | `ask` | — |
+
+| Policy | A gate item counts as skipped when it says |
+|---|---|
+| `strict` | never — every item is done |
+| `ask` | `(none needed — asked: "…" — user: "…")`: the person's answer, quoted |
+| `auto`, set by the plan | `(none needed)`, `(not applicable)` or `skip-reason:` |
+| `auto`, set by the environment | `(none needed — <why>)` or `skip-reason: <why>`: a bare `(none needed)` is refused, because [the review](/reference/cli/plans#plans-review-name-json) lists every skip for the person who accepts the build |
+
+A value of `INDUSK_GATE_POLICY` that is not a policy is ignored, never read as `auto`. `check-gates.js` and `validate-impl-structure.js` read it through one module, `hooks/_gate-policy.js`.
+
 **Trajectory enforcement:** If the impl has a `## Test Trajectory` section, the hook ALSO checks that every trajectory row whose `Passes at: Phase N` lies before the phase being advanced into is in state `passing`, `skipped`, or `blocked`. A row still in `planned`, `writable`, or `written` blocks the advance. This is structural enforcement of the "deferral is impossible" property — the implementer cannot close a phase whose committed tests aren't passing.
 
 ### gate-reminder.js (PostToolUse)

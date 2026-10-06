@@ -56,6 +56,15 @@ What an unattended build does next, read from the plan as it stands — its work
 
 Judgement items are recognised by the same rule [`indusk run`](/reference/cli/run) pauses on. With `--json` it prints `{"step": …}` with the phase, item or reason; without, a sentence.
 
+### `plans review <name> [--json]`
+
+What a person reads before accepting a built plan, assembled from its documents and its branch. The admin's review panel renders the JSON.
+
+- **Promises** — each promise the brief makes, with the rows naming it and their states. A promise is *proven* when every row naming it passes and names a test file — the same reading `indusk promises confirm` applies at close, so the review never calls proven what the close would refuse. An unproven one says why.
+- **Falsification** — each falsification phase: the rows it added (what it looked for) and its fix items (what it changed).
+- **Files** — what the plan's branch changed against the trunk branch since they diverged. Empty for a plan with no worktree.
+- **Skips** — every gate item marked skipped rather than done, with its text, so its reason is read.
+
 ### `plans land <name>`
 
 The one way a plan's build reaches the trunk. Merges the trunk into the branch, runs the project's checks in the worktree, merges the branch into the trunk with a merge commit, releases the assignment, removes the worktree and deletes the branch. The retrospective's landing step calls it.
