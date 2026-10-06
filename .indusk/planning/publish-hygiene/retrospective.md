@@ -32,6 +32,26 @@ Three fixes, one build phase, and three rows, all passing:
 The plan was started, approved and landed with the `indusk plans` commands
 that 1.63.0 ships.
 
+**Build Phase 2, after the first landing run.** The plan was archived when
+that run timed out a second contract test, A24 (`build-session-gates`, from
+admin-plan-authoring: a build session's checkoff is judged by the project's
+gates), at 300 s. It was reopened. Instrumenting that test turned up three
+defects in its setup, none in the product:
+- it never declined a question, so a session that asked one waited forever;
+- its prompt never asked the model to read the file first, and Claude Code
+  refuses an `Edit` on an unread file. That could also let the
+  "bare `(none needed)` is refused" case pass for the wrong reason;
+- after a hang it judged only the last attempt.
+
+It also kept a third copy of the rate-limit rule, which the previous plan's
+cleanup missed. Now:
+- questions are declined as a build declines them;
+- sessions have a two-minute deadline;
+- the model reads before editing;
+- the shared rule decides rate limits.
+
+Four of four clean-environment runs passed.
+
 ## What We Learned
 
 - **A test that relies on the model's choice is testing the model.** The
@@ -39,6 +59,10 @@ that 1.63.0 ships.
   setup let the model decline before reaching it. From inside a Claude Code
   session the model always tried; from a plain terminal it sometimes did not.
   That is why it passed for the agent and failed for the person.
+- **A contract test against a live model is only as good as the protocol it
+  speaks back.** A24 answered permissions but not questions, so a session
+  could wait for a reply that never came. A test that drives `claude` has to
+  answer everything a real caller answers, and has to bound every wait.
 - **Output that hides the failure is itself a failure.** The release's real
   error was readable all along; nobody could see it.
 

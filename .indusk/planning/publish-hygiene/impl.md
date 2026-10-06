@@ -88,18 +88,20 @@ warnings, errors and 2FA prompt without a line per file ([brief](brief.md),
 
 - [x] `build-session-gates.test.ts`: a question is declined with `refuseBuildQuestion`'s message, as the manager declines one for a build; each session is stopped if it has not ended in 120 s, and that attempt is retried once; a run is rate-limited by `isRateLimitedResult` and waits the shared schedule; a failure names which of these happened, with the session's last events
 
+- [x] Discovered while verifying: the admin's `http-promise-health.test.ts` A20 timed out at 5 s on its first page fetch twice under the full system tier, both today (the admin-plan-authoring landing and this phase's clean-environment run); alone it passes. `beforeAll` starts `next dev`, which compiles a page on its first request, so A20 paid for the compile. `beforeAll` now fetches the page once, within its own 120 s budget
+
 #### Build Phase 2 Verification
 
-- [x] (passed four of four, both cases, after two more setup defects surfaced in the first runs and were fixed: the prompt never asked the model to read the file, and Claude Code refuses an `Edit` on an unread file — which would also let the bare-`(none needed)` case pass for the wrong reason; and a retry after a hang judged only the last attempt, which found the line already checked. The prompt now reads first, and an attempt that tried the edit ends the retries) A4: `build-session-gates.test.ts` passes three times from a clean environment (`env -i HOME PATH … pnpm exec vitest run --config vitest.system.config.ts src/__tests__/build-session-gates.test.ts`)
+- [x] (passed four of four, both cases, after two more setup defects surfaced in the first runs and were fixed: the prompt never asked the model to read the file, and Claude Code refuses an `Edit` on an unread file — which would also let the case of a skip given without its reason pass for the wrong reason; and a retry after a hang judged only the last attempt, which found the line already checked. The prompt now reads first, and an attempt that tried the edit ends the retries) A4: `build-session-gates.test.ts` passes three times from a clean environment (`env -i HOME PATH … pnpm exec vitest run --config vitest.system.config.ts src/__tests__/build-session-gates.test.ts`)
 - [ ] Both tiers green on the branch: `pnpm test` and `pnpm test:system`
 
 #### Build Phase 2 Context
 
-- [ ] guard: none new — after this phase `session/rate-limit.ts` is the only rate-limit rule under `apps/indusk-mcp/src` (`grep -rln "rate.?limit" apps/indusk-mcp/src`), and the package `CLAUDE.md` already names it
+- [x] (holds: five non-test files mention rate limits, and a search for a matching rule — a `rate.?limit` pattern or a `429` comparison — finds one, in `session/rate-limit.ts`) guard: none new — after this phase `session/rate-limit.ts` is the only rate-limit rule under `apps/indusk-mcp/src` (`grep -rln "rate.?limit" apps/indusk-mcp/src`), and the package `CLAUDE.md` already names it
 
 #### Build Phase 2 Document
 
-- [ ] Confirm no page under `apps/docs/src` describes this test's retry or timeout (`grep -rn "build-session-gates" apps/docs/src`); a test's setup changes nothing a reader of the docs relies on
+- [x] (no page names it: 0 files) Confirm no page under `apps/docs/src` describes this test's retry or timeout (`grep -rn "build-session-gates" apps/docs/src`); a test's setup changes nothing a reader of the docs relies on
 
 ## Files Affected
 
