@@ -13,9 +13,10 @@ that day. The first brief, its spike and what the admin lacks are in
 
 ## Expectations
 
-1. **Plans are started and built from the admin.**
-   - Measure: of the next five plans, how many start and build there rather
-     than in the editor.
+1. **The admin becomes a way plans are made and built.**
+   - Measure: of the next five plans, how many use the admin at some step
+     (planning, building, review or release); mixing it with the editor is
+     fine.
    - Look: when the fifth one starts.
 2. **A build interrupts the person only for what the plan declared.**
    - Measure: the stops in those five builds, before review, that were neither
@@ -30,13 +31,14 @@ that day. The first brief, its spike and what the admin lacks are in
 
 ### This plan makes
 
-1. **`a-plan-starts-from-the-admin`** (state). From the admin, a person has the
-   planning conversation, answers its questions in the panel and accepts its
-   promises, without a terminal.
-2. **`a-build-runs-to-review-unasked`** (state). A plan built from the admin
-   runs in its own worktree through its phases, falsification and cleanup
-   without asking for approval, and stops only when it is ready for review,
-   for a judgement the plan declared, or when it cannot continue.
+1. **`a-plan-can-start-from-the-admin`** (state). A plan can be started from
+   the admin as well as from the editor or a terminal: in the admin, the person
+   has the planning conversation, answers its questions in the panel and
+   accepts its promises, and either way it is the same plan in the same files.
+2. **`a-build-runs-to-review-unasked`** (state). An approved plan is built in
+   its own worktree through its phases, falsification and cleanup without
+   asking for approval, and stops only when it is ready for review, for a
+   judgement the plan declared, or when it cannot continue.
 3. **`a-review-shows-its-evidence`** (state). When a build stops for review,
    the panel shows what was built and the evidence: each promise with the
    passing tests that prove it, what falsification found and fixed, and the
