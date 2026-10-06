@@ -16,6 +16,7 @@ import {
 	registerAdminRoute,
 } from "../../lib/admin/proxy-route.js";
 import { pruneRegistry, readRegistry } from "../../lib/admin/registry.js";
+import { SessionManager } from "../../lib/session/manager.js";
 
 /**
  * Resolve the browser URL path for a fresh `indusk ui` invocation. If the
@@ -119,6 +120,7 @@ export async function uiStart(opts: UiStartOptions): Promise<void> {
 	const baseUrl = `http://localhost:${port}/`;
 	console.info(`Starting admin UI on ${baseUrl}`);
 
+	await endRecordedSessions("left by a previous admin");
 	const meta = await daemonStart({ port, adminDir, nextBin });
 	console.info(`  PID: ${meta.pid}`);
 	console.info(`  Logs: ~/.indusk/admin-ui.log`);
@@ -150,6 +152,7 @@ export async function uiRestart(opts: UiStartOptions): Promise<void> {
  * signaled, and whether SIGKILL was required.
  */
 export async function uiStop(): Promise<void> {
+	await endRecordedSessions("started by the admin");
 	const result = await daemonStop();
 	if (!result.stopped) {
 		console.info("Admin UI is not running.");
@@ -269,4 +272,17 @@ export async function uiPrune(opts: { dryRun: boolean }): Promise<void> {
 	for (const entry of result.removed) console.info(`  ${entry.name}  ${entry.path}`);
 	console.info(`Kept ${result.kept.length}.`);
 	if (result.backup) console.info(`Backup written to ${result.backup}`);
+}
+
+/**
+ * End every Claude session the admin recorded (admin-plan-authoring, ADR D2):
+ * before the daemon stops, so none outlives it, and before one starts, so
+ * none a crashed daemon left keeps running. This CLI is a separate process
+ * from the daemon, so it ends them from the record, checking each pid still
+ * runs the program it started.
+ */
+async function endRecordedSessions(which: string): Promise<void> {
+	const ended = await new SessionManager().reapRecorded();
+	if (ended.length > 0)
+		console.info(`Ended ${ended.length} Claude session(s) ${which}: PID ${ended.join(", ")}.`);
 }
