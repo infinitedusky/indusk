@@ -2,6 +2,7 @@ import type { SessionManager } from "../session/manager.js";
 import { decideBuildPermission, refuseBuildQuestion } from "../session/permissions.js";
 import type { StartedEvent } from "../session/start.js";
 import type { BuildStepName } from "./runner.js";
+import { BUILD_STEP_ENV } from "./step-env.js";
 
 /**
  * One step of a build as a session of the developer's own `claude`
@@ -13,6 +14,14 @@ import type { BuildStepName } from "./runner.js";
  */
 
 export const GATE_POLICY_FOR_BUILDS = { INDUSK_GATE_POLICY: "auto" } as const;
+
+/** A step's environment: unattended, and marked as a build step unless it is the release (A35). */
+export function stepEnv(step: BuildStepName): Record<string, string> {
+	return {
+		...GATE_POLICY_FOR_BUILDS,
+		...(step === "retrospective" ? {} : { [BUILD_STEP_ENV]: step }),
+	};
+}
 
 const UNATTENDED =
 	"This build runs unattended (INDUSK_GATE_POLICY=auto): nobody will answer a question. Decide on your own judgement and record each decision and its reason in the plan. Skip a gate item only as `(none needed — <why>)`; the person reviewing the build reads every skip.";
@@ -69,7 +78,7 @@ async function oneSession(step: BuildStepName, opts: BuildSessionOptions): Promi
 		prompt: stepPrompt(step, opts.plan),
 		project: opts.project,
 		plan: opts.plan,
-		env: GATE_POLICY_FOR_BUILDS,
+		env: stepEnv(step),
 		...(opts.claudeBin ? { claudeBin: opts.claudeBin } : {}),
 		...(opts.model ? { model: opts.model } : {}),
 		onEvent: (ev) => {

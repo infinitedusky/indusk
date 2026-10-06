@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
+import { currentBuildStep } from "../build/step-env.js";
 import { getTrunkBranches } from "../config.js";
 import { git, headSha } from "../git.js";
 import { resolvePlanCopies } from "../worktree/plan-worktrees.js";
@@ -28,6 +29,19 @@ export interface PlanBranch {
 	branch: string;
 	/** The plan's folder inside the worktree. */
 	dir: string;
+}
+
+/**
+ * Accepting and landing are the person's, or the release's (A35): refused
+ * inside a build step's session, naming the step, before anything is read.
+ */
+export function refuseInsideBuildStep(verb: string, plan: string): void {
+	const step = currentBuildStep();
+	if (step) {
+		throw new PlanCommandRefusal(
+			`${plan} is not ${verb} from inside a build step (${step}): a build stops at review, and acceptance is the person's`,
+		);
+	}
 }
 
 /** The plan's worktree and the trunk it lands on, or a refusal saying which is missing. */

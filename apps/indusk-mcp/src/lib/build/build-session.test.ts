@@ -4,10 +4,11 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { SessionManager } from "../session/manager.js";
 import type { Session, SessionOptions, StartedEvent } from "../session/start.js";
-import { runStepSession, stepPrompt } from "./build-session.js";
+import { runStepSession, stepEnv, stepPrompt } from "./build-session.js";
 
 /**
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the build session's half.
+ * promise: nothing-ships-until-accepted — admin-plan-authoring A35, the marking half.
  *
  * One step of a build is one session that nobody answers: it runs under
  * `INDUSK_GATE_POLICY=auto`, its writes outside the worktree are refused, its
@@ -134,5 +135,17 @@ describe("A30 — a build step is a session nobody answers", () => {
 
 	it("the retrospective is asked to land the plan with the command that refuses an unaccepted one", () => {
 		expect(stepPrompt("retrospective", "seats")).toContain("indusk plans land seats");
+	});
+});
+
+describe("A35 — a build step's session is marked; the release's is not", () => {
+	it("work, falsify and cleanup run marked as build steps, under the auto gate policy", () => {
+		for (const step of ["work", "falsify", "cleanup"] as const) {
+			expect(stepEnv(step)).toEqual({ INDUSK_GATE_POLICY: "auto", INDUSK_BUILD_STEP: step });
+		}
+	});
+
+	it("the retrospective, which lands the accepted plan, is not marked", () => {
+		expect(stepEnv("retrospective")).toEqual({ INDUSK_GATE_POLICY: "auto" });
 	});
 });

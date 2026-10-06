@@ -1,4 +1,4 @@
-import { implPath, planBranch, setImplKeys } from "./plan-branch.js";
+import { implPath, planBranch, refuseInsideBuildStep, setImplKeys } from "./plan-branch.js";
 
 /**
  * `indusk plans accept <name>` (admin-plan-authoring, ADR D3): the person, or
@@ -21,6 +21,7 @@ export async function acceptPlan(
 	by: AcceptedBy = "person",
 	now: Date = new Date(),
 ): Promise<AcceptedPlan> {
+	refuseInsideBuildStep("accepted", plan);
 	const pb = await planBranch(anyCheckout, plan);
 	const accepted = now.toISOString();
 	await setImplKeys(

@@ -12,6 +12,7 @@ import {
 	planBranch,
 	refuseDirtyTrunk,
 	refuseDirtyWorktree,
+	refuseInsideBuildStep,
 } from "./plan-branch.js";
 
 const execFileAsync = promisify(execFile);
@@ -36,6 +37,7 @@ export interface LandedPlan {
 }
 
 export async function landPlan(anyCheckout: string, plan: string): Promise<LandedPlan> {
+	refuseInsideBuildStep("landed", plan);
 	const pb = await planBranch(anyCheckout, plan);
 	const impl = implPath(pb);
 	if (!implKey(impl, "accepted")) {
