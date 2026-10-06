@@ -415,3 +415,10 @@
 {"id":"h-20261006-007","processedAt":"2026-10-06T20:25:12.417Z","action":"skipped","detail":"one-off contradiction about a third-party tool (Claude Code allow rules) already resolved by Sandy's decision to drop A36; not a durable rule for this project"}
 {"id":"h-20261006-008","processedAt":"2026-10-06T20:25:13.653Z","action":"skipped","detail":"root cause routed to its own draft brief bookkeeping-lives-where-it-is-read per the highlight note; tracked there, not a standalone lesson"}
 {"id":"h-20261006-004","processedAt":"2026-10-06T20:25:14.511Z","action":"skipped","detail":"routine retro-audit summary (deferred rows status), no new durable rule"}
+{"id":"h-20261006-005","processedAt":"2026-10-06T19:23:31.150Z","action":"wrote-episode","detail":"origin-header-check-is-not-same-origin-under-dns-rebinding"}
+{"id":"h-20261006-006","processedAt":"2026-10-06T19:23:32.047Z","action":"wrote-episode","detail":"test-every-route-is-guarded-by-enumerating-exports-not-a-hand-list"}
+{"id":"h-20261006-007","processedAt":"2026-10-06T19:23:32.996Z","action":"wrote-episode","detail":"falsify-a-tool-you-dont-own-against-the-real-tool-not-assumption"}
+{"id":"h-20261006-008","processedAt":"2026-10-06T19:23:34.044Z","action":"wrote-episode","detail":"two-correct-rules-can-contradict-fix-symptom-route-cause-where-visible"}
+{"id":"h-20261006-009","processedAt":"2026-10-06T19:23:35.094Z","action":"wrote-episode","detail":"advisory-lesson-violated-repeatedly-needs-a-pretooluse-enforcer"}
+{"id":"h-20261006-010","processedAt":"2026-10-06T19:23:35.820Z","action":"wrote-episode","detail":"falsify-security-boundaries-before-the-live-check-not-after"}
+{"id":"h-20261006-004","processedAt":"2026-10-06T19:23:51.829Z","action":"skipped","detail":"audit status numbers (3 deferred rows, 0 blocked) — not a durable rule, no lesson warranted"}
