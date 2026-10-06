@@ -1,0 +1,5 @@
+# A CLAUDE.md past its budget holds a rule that belongs lower — make room by moving one down a tier, never by raising the budget to fit
+
+Every `CLAUDE.md` is loaded into sessions, so every byte is paid on every prompt. `claude-md-budget.js` refuses an edit that grows one past its budget: `context.claude_md_budget_bytes` for the root (18,432 bytes in dusk, with the reason in `.indusk/config.json`) and `context.nested_claude_md_budget_bytes` for every nested one (16,384). A shrinking edit is always allowed.
+
+What to do when it refuses: an entry is a rule plus a pointer, and growth past the budget means some rule sits at the wrong tier. Move one down first: to an enforcer whose failure message names its lesson, into the area's own `CLAUDE.md`, or into `.indusk/current.md` when it is operational state. Then make the edit. Raise the budget only as a deliberate, recorded act, with the reason written beside it in `.indusk/config.json`. Shortening other people's entries just to fit yours is the last resort, not the first move. See `/guide/context-budget` and `/guide/context-tiers`.

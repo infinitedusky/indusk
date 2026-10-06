@@ -185,7 +185,8 @@ if (size > budget) {
 				? `run \`/compact-context\` (report mode first) — it demotes shipped narratives to one-line rule + pointer ` +
 					`(docs/decisions page or archived plan), moves operational state to .indusk/current.md, and lands the file under budget in one pass.\n`
 				: `move what this area no longer needs behind a pointer, or into an enforcer that names its lesson.\n`) +
-			`If the budget itself is wrong for this project, raise ${key} in .indusk/config.json as a deliberate, recorded act.`,
+			`If the budget itself is wrong for this project, raise ${key} in .indusk/config.json as a deliberate, recorded act.\n` +
+			"lesson: a-claude-md-past-its-budget-holds-a-rule-that-belongs-lower",
 	);
 	process.exit(2);
 }

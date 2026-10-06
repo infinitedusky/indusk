@@ -43,7 +43,7 @@ dusk/
 - pnpm workspaces + Turborepo; **Node 22 required** (Tailwind 4 native bindings).
 - **Biome, not ESLint** — `pnpm check` / `pnpm check:fix` / `pnpm format`. Biome config is a knowledge artifact (`biome-rationale.md`); the ratchet only tightens.
 - `pnpm test`: parallel, never starts a server or daemon (`INDUSK_SKIP_TELEMETRY_AUTOSTART`); it and `test:system` end failing on one left in a temp home, pass or fail. `test:system`: each package's `vitest.tiers.ts` files, at landing and by `pnpm release`. **E2e**: `pnpm e2e` (needs `claude` + a daemon) — promise loop, always-on server, nested-context probe; run at the close of a plan touching a `CLAUDE.md`.
-- **Every `CLAUDE.md` has a hard write-time budget** — `claude-md-budget.js` refuses growth past `context.claude_md_budget_bytes` (18432 here; reason in `.indusk/config.json`); shrinking is always allowed; nested files: `nested_claude_md_budget_bytes` (16384). Entries are rule + pointer; growth past it means a rule belongs at a lower tier. `indusk context check-pointers` verifies every pointer and lesson token in every context file and refuses hand-copied `**Version**:` claims. — see `/guide/context-budget`
+- `indusk context check-pointers` verifies every pointer and lesson token in every context file and refuses hand-copied `**Version**:` claims. — see `/guide/context-budget`
 - **An unrecorded promise violation outranks the roadmap** when answering "what's next"; unreachable telemetry is said, never reported as a zero. — see `/reference/skills/catchup`
 - **`.indusk/current.md` is the operational layer**: a `## Project (shared)` region any agent may edit (what is in flight, blockers, what is next) plus per-agent `## Session <short> — <task>` sections, each written only by its own session via `mcp__indusk__update_current_section` (typically at `/handoff`); commit like any file. `merge=union` merges concurrent appends; every mutation goes through the `current.md.lock` file lock. — see `/decisions/multi-agent-coordination`
 - Plans live in `.indusk/planning/{kebab-case}/`; use `/planner` before implementing — don't jump to code. The planning rules load with the plan documents.
@@ -89,7 +89,7 @@ dusk/
 - Promise timeline: compact sliced reads; an admin store that reads only what is new plus a late tail; one `violationState` (unrecorded / open / fixed) for chip and timeline; incidents record `fixed` via `promises fix` — see `/decisions/promise-timeline`
 - Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
-- Admin plan authoring: `plans start → approve → build → accept → land`, through the developer's own `claude`; nothing lands unaccepted — see `.indusk/planning/admin-plan-authoring/adr.md`
+- Admin plan authoring: `plans start → approve → build → accept → land`, through the developer's own `claude`; nothing lands unaccepted — see `/decisions/admin-plan-authoring`
 
 ## Known Gotchas
 
