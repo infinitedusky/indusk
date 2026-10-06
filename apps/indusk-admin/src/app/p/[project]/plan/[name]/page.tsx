@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import type { SubplanEntry } from "@/components/ParentPlanView";
 import { PlanDetail } from "@/components/PlanDetail";
+import { BuildControls } from "@/components/session/BuildControls";
 import { PlanSession } from "@/components/session/PlanSession";
 import {
   readActivePlans,
@@ -89,6 +90,18 @@ export default async function PlanPage({ params }: PlanPageProps) {
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       <PlanSession project={project} plan={name} canApprove={canApprove} />
+      {plan.worktree !== undefined &&
+      implStatus !== undefined &&
+      ["approved", "in-progress", "completed"].includes(implStatus) ? (
+        <BuildControls
+          project={project}
+          plan={name}
+          canBuild={
+            implStatus !== "completed" && plan.position?.position !== "review"
+          }
+          inReview={plan.position?.position === "review"}
+        />
+      ) : null}
       <PlanDetail
         plan={plan}
         subplans={subplans}
