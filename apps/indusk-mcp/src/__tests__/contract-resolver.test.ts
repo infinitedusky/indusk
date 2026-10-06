@@ -64,7 +64,7 @@ async function listed(root: string): Promise<string[]> {
 /** The count `indusk promises check` reports, from its summary line. */
 function checked(root: string): number {
 	const r = runCli(root, ["promises", "check"]);
-	const m = `${r.stdout}\n${r.stderr}`.match(/(\d+) promises —/);
+	const m = `${r.stdout}\n${r.stderr}`.match(/(\d+) promises? —/);
 	return m ? Number(m[1]) : -1;
 }
 

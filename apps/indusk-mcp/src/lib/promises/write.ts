@@ -5,11 +5,11 @@ import { isUsableSegment } from "../path-segment.js";
 import { setScalar } from "./frontmatter-edit.js";
 import { planFolderStatus } from "./plan-folder.js";
 import {
+	contractDir,
 	firstParagraph,
 	type PromiseEntry,
 	parseFrontmatter,
 	promiseProblem,
-	promisesDir,
 	type Registry,
 	readPromises,
 } from "./registry.js";
@@ -115,7 +115,7 @@ export function declarePromise(planRoot: string, input: DeclareInput): string {
 	if (domain.trim() === "") refuse(`${name}: a promise needs a domain (--domain)`);
 	requireOpenPlan(planRoot, plan);
 
-	const dir = promisesDir(planRoot);
+	const dir = contractDir(planRoot);
 	const path = join(dir, `${name}.md`);
 	const registry = registryOrRefuse(planRoot);
 	if (existsSync(path) || registry?.promises.some((p) => p.name === name)) {
