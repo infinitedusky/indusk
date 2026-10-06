@@ -110,7 +110,10 @@ describe("T18 — admin app bundled into indusk-mcp tarball", () => {
 					/^package\/admin\/\.next\/(trace|trace-build)$/.test(f) ||
 					f.startsWith("package/admin/.next/types/"),
 			);
-			expect(unwanted, `${unwanted.length} packed: ${unwanted.slice(0, 5).join(", ")}`).toEqual([]);
+			expect(
+				unwanted,
+				`${unwanted.length} packed: ${unwanted.slice(0, 5).join(", ")}\nlesson: the-published-package-ships-only-what-runs`,
+			).toEqual([]);
 		},
 	);
 });

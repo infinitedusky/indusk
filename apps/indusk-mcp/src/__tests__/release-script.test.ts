@@ -19,7 +19,10 @@ const steps = pkg.scripts.release.split("&&").map((s) => s.trim());
 describe("A3 — the release publishes without listing every file", () => {
 	it("the publish step runs with npm_config_loglevel=warn", () => {
 		const publish = steps.find((s) => s.includes("pnpm publish"));
-		expect(publish).toMatch(/^npm_config_loglevel=warn pnpm publish\b/);
+		expect(
+			publish,
+			"lesson: the-release-prints-what-a-person-must-read-not-every-packed-file",
+		).toMatch(/^npm_config_loglevel=warn pnpm publish\b/);
 	});
 
 	it("keeps every step it ran, in the same order", () => {
