@@ -24,8 +24,8 @@ warnings, errors and 2FA prompt without a line per file ([brief](brief.md),
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | A planning session asked to write a file asks first and hears a denial; the test makes the model attempt the write, tries once more when it answers without trying, and says plainly when it never tried | Test Phase 1 | Test Phase 1 | passing | contract | promise: a-plan-can-start-from-the-admin | apps/indusk-mcp/src/__tests__/session-protocol-contract.test.ts |
-| A2 | The published package carries no source maps, no Next build trace and no generated types | Test Phase 1 | Build Phase 1 | written | contract | the package ships only what runs; the admin-ui-hosting decision bounds the tarball's size | apps/indusk-mcp/src/__tests__/admin-bundle-pack.test.ts |
-| A3 | The release's publish step runs with npm's notices off, so its warnings, errors and 2FA prompt show and its per-file listing does not | Test Phase 1 | Build Phase 1 | written | unit | the release's output stays readable; research records why the 2FA prompt survives the setting | apps/indusk-mcp/src/__tests__/release-script.test.ts |
+| A2 | The published package carries no source maps, no Next build trace and no generated types | Test Phase 1 | Build Phase 1 | passing | contract | the package ships only what runs; the admin-ui-hosting decision bounds the tarball's size | apps/indusk-mcp/src/__tests__/admin-bundle-pack.test.ts |
+| A3 | The release's publish step runs with npm's notices off, so its warnings, errors and 2FA prompt show and its per-file listing does not | Test Phase 1 | Build Phase 1 | passing | unit | the release's output stays readable; research records why the 2FA prompt survives the setting | apps/indusk-mcp/src/__tests__/release-script.test.ts |
 
 ### Deferred Verification
 
@@ -62,16 +62,17 @@ warnings, errors and 2FA prompt without a line per file ([brief](brief.md),
 
 #### Build Phase 1 Verification
 
-- [ ] A1, A2 and A3 pass (the three files above), and the bundled admin still starts: `admin-cli-lifecycle.test.ts` in the system tier
-- [ ] `npm pack --dry-run --json` from `apps/indusk-mcp`: no `.map`, no trace, no types; record the file count and size
+- [x] A1, A2 and A3 pass (the three files above), and the bundled admin still starts: `admin-cli-lifecycle.test.ts` in the system tier — A2 with the lifecycle tests, 2 files and 11 tests; A3 with every test that reads the release script, 4 files and 16; A1 three of three from a clean environment. The lifecycle test only starts the daemon, so the trimmed bundle was also started by hand and served `/` (200) and `/api/sessions` (200), and refused a rebound host (403)
+- [x] `npm pack --dry-run --json` from `apps/indusk-mcp`: no `.map`, no trace, no types; record the file count and size — 939 files, 14.5 MB unpacked, 4.1 MB compressed (1.63.0 as first cut: 1,170 files, 41.5 MB, 10.7 MB); 0 maps, 0 trace or types
+- [x] Shape — this phase wrote `leftOut` in `bundle-admin.js` (one rule for what the copy skips, named, with its reasons where the filter used to inline two of them) and one changed word in the release script. Nothing to change
 
 #### Build Phase 1 Context
 
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`, Releases): the admin bundle leaves out maps, trace and types, and the publish runs with npm notices off. The file is 2 bytes under its budget, so an entry moves down a tier first
+- [x] mcp (`apps/indusk-mcp/CLAUDE.md`, Releases): the admin bundle leaves out maps, trace and types, and the publish runs with npm notices off. The file is 2 bytes under its budget, so an entry moves down a tier first — delivered by the enforcer tier instead, which comes first: guard `admin-bundle-pack.test.ts` carries lesson: the-published-package-ships-only-what-runs, and guard `release-script.test.ts` carries lesson: the-release-prints-what-a-person-must-read-not-every-packed-file. The package file is unchanged. `check-pointers` fails in this worktree on one pointer this plan did not write (`.indusk/eval/results.log`, untracked evaluator state absent from a fresh worktree); it passes on trunk
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased → the 1.63.0 section, under Fixed: the package no longer ships source maps or build artefacts (size before and after); the release's output no longer lists every file
+- [x] `apps/docs/src/changelog.md` Unreleased → the 1.63.0 section, under Fixed: the package no longer ships source maps or build artefacts (size before and after); the release's output no longer lists every file
 
 ## Files Affected
 
