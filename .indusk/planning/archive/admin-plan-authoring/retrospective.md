@@ -138,3 +138,12 @@ continued in a terminal. The full `pnpm test` was green at Build Phase 9:
   - Build Phase 11: three callers spelling the status command.
   
   The previous plan also reported 0 judged wrong, so there is no streak.
+
+## Landing
+
+- `pnpm test` green on the branch: 58 + 298 test files, 2,342 tests; the everyday suite marked upheld at 65 s.
+- `pnpm test:system`: 40 + 12 files green. One admin test, `http-promise-health.test.ts` A20, timed out at 5 s on its first page fetch under the full tier's load (a cold `next dev` compile). Rerun alone it passed, 8 of 8. Recorded as a flake; nothing in this plan touched it.
+- The nested-context probe (`e2e/context-tiers.e2e.test.ts`) passed, 4 of 4. That contradicts the draft brief `context-reaches-every-session`, which recorded the same probe red on Claude Code 2.1.288–2.1.289.
+- Trunk's InDusk bookkeeping was committed in its own commit before the merge (2e1889ba), under this plan's own rule. It included 61 lessons the evaluator had left untracked, many of them near-duplicates.
+
+Landed on main at 975f2979, 2026-10-06.
