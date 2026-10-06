@@ -39,6 +39,31 @@ export function FalsificationSection({
       />
     );
   }
+  const skipped = plan.skippedRituals?.find(
+    (r) => r.ritual === "falsification",
+  );
+  if (skipped && !plan.falsification) {
+    return (
+      <section
+        className="flex flex-col gap-2"
+        data-testid="falsification-section"
+      >
+        <CollapsibleSection
+          title="Falsification"
+          defaultOpen={false}
+          persistKey={`plan:${plan.name}:section:falsification`}
+          copyMarkdown={`## Falsification\n\nSkipped: ${skipped.reason}\n`}
+        >
+          <p
+            className="text-sm text-gray-700"
+            data-testid="falsification-skipped"
+          >
+            Skipped: {skipped.reason}
+          </p>
+        </CollapsibleSection>
+      </section>
+    );
+  }
   if (!plan.falsification) {
     return (
       <section
