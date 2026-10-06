@@ -1,7 +1,7 @@
 ---
 title: "publish-hygiene"
 date: 2026-10-06
-status: in-progress
+status: completed
 falsification: skipped
 falsification_reason: "investigated the leave-out rule's edges (a `types-*` sibling does not match; no runtime file ends in .map), whether next start reads anything left out (the trimmed bundle served / and the API by hand), the retried write's side effects (a denied write leaves no file), and the 2FA prompt under loglevel warn (npm prints it with output.standard); no specific hypothesis survived, and the live 2FA case is U1"
 cleanup: skipped
@@ -95,7 +95,8 @@ warnings, errors and 2FA prompt without a line per file ([brief](brief.md),
 #### Build Phase 2 Verification
 
 - [x] (passed four of four, both cases, after two more setup defects surfaced in the first runs and were fixed: the prompt never asked the model to read the file, and Claude Code refuses an `Edit` on an unread file — which would also let the case of a skip given without its reason pass for the wrong reason; and a retry after a hang judged only the last attempt, which found the line already checked. The prompt now reads first, and an attempt that tried the edit ends the retries) A4: `build-session-gates.test.ts` passes three times from a clean environment (`env -i HOME PATH … pnpm exec vitest run --config vitest.system.config.ts src/__tests__/build-session-gates.test.ts`)
-- [ ] Both tiers green on the branch: `pnpm test` and `pnpm test:system`
+- [x] (from a clean environment, as a terminal runs them: `pnpm test` 1,965 passed, the everyday suite upheld at 66 s; `pnpm test:system` 158 of 158 and 56 of 56. Earlier runs on the way failed on a different timing-sensitive test each time: the four traced to a setup defect are fixed here, and `promise-sources` A9 — a test Jaeger slow to start while the load average was 21 — passed on the next two runs) Both tiers green on the branch: `pnpm test` and `pnpm test:system`
+- [x] Shape — Build Phase 2 changed three tests' setup. A24's session handling is one function per job: one attempt, the retry policy across attempts, and the deadline inside the attempt. A20's warm-up is two lines in the hook that owns the server. Nothing to change
 
 #### Build Phase 2 Context
 

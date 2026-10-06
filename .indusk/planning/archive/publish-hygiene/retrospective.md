@@ -52,6 +52,19 @@ cleanup missed. Now:
 
 Four of four clean-environment runs passed.
 
+The verification runs found two more problems, both fixed:
+- **Model judgement, not the hook, refused a checkoff.** With the file read
+  first, the model judged that checking off unbuilt work would misrepresent
+  it, and refused before the hook could decide. Both contract prompts now
+  say plainly that they are tests.
+- **The admin's Promises-page test timed out on `next dev`'s first-request
+  compile** (A20), twice under load. It now warms the page in its setup.
+
+`promise-sources` A9 failed once when a test-started Jaeger was slow to start
+under a load average of 21, and passed twice after. Both tiers were finally
+green from a clean environment: `pnpm test` 1,965, and `pnpm test:system`
+158 + 56.
+
 ## What We Learned
 
 - **A test that relies on the model's choice is testing the model.** The
@@ -70,6 +83,11 @@ Four of four clean-environment runs passed.
 
 - **Run the release's own command from a plain terminal before handing it
   over.** Both failures happened only outside an agent's environment.
+- **Treat every system-tier failure as a lead until it is explained.** Calling
+  the first A20 timeout a flake left it in place for the release to hit.
+- **A prompt to a model under test says it is a test.** A model asked to do
+  something that looks wrong without that context may refuse on its own
+  judgement, and the contract under test never gets to answer.
 
 ## Quality
 
