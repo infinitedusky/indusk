@@ -1,8 +1,65 @@
 # `indusk plans`
 
-Planning-lifecycle housekeeping. Introduced in the `indusk-makeover` plan as the decay mechanism for `.indusk/planning/` — before it, dead-draft plans accumulated forever and every `/catchup` paid to list them.
+A plan's lifecycle from start to landing — `start`, `approve`, `accept`, `land` (admin-plan-authoring) — and planning housekeeping, `archive-dead` (indusk-makeover).
 
-## Subcommands
+## A plan's lifecycle
+
+A plan is written on its own branch, in its own worktree. Its documents and declared promises reach the trunk when it is approved; its build reaches the trunk only after it is accepted. The admin, the skills and the terminal all call these same four commands.
+
+```bash
+indusk plans start <type> <name>    # its branch, its worktree, its first document
+indusk plans approve <name>         # the brief check, then its documents merge to the trunk
+indusk plans accept <name> [--auto] # the build may ship
+indusk plans land <name>            # the build reaches the trunk; worktree and branch removed
+```
+
+Every command acts on the plan's worktree, from any checkout of the project. Each refusal names what it refused, prints `Refused: …` and exits 1, with nothing written.
+
+### `plans start <type> <name>`
+
+Creates `plan/<name>` from the trunk branch, its worktree at `<project>-worktrees/<name>`, and the assignment that tells every reader where the plan lives — the admin and the plan tools read it from there even though the trunk has no folder for it. Writes and commits the first document in the worktree: `brief.md`, or `research.md` for a spike, as a draft declaring `workflow: <type>`. Nothing is written on the trunk.
+
+Refuses:
+
+- a `<type>` that is not `feature`, `bugfix`, `refactor` or `spike`;
+- a name already started, naming its worktree;
+- a name with a folder on the trunk, naming the folder;
+- a name whose branch `plan/<name>` already exists.
+
+### `plans approve <name>`
+
+Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the worktree's copy; sets the impl's `status: approved` and commits it on the branch; merges the branch into the trunk with a merge commit. The build then continues in the same worktree on the same branch.
+
+Refuses:
+
+- a brief the check refuses, with the check's message;
+- a branch that already changes anything outside `.indusk/`, naming the files — it is past approval;
+- uncommitted changes in the worktree;
+- uncommitted changes on the trunk on any path the merge would bring in (never stashed).
+
+### `plans accept <name> [--auto]`
+
+Writes `accepted: <time>` and `accepted_by: person` (or `auto`, with `--auto`: a workflow that accepts on its own) to the impl's frontmatter and commits it on the branch.
+
+### `plans land <name>`
+
+The one way a plan's build reaches the trunk. Merges the trunk into the branch, runs the project's checks in the worktree, merges the branch into the trunk with a merge commit, releases the assignment, removes the worktree and deletes the branch. The retrospective's landing step calls it.
+
+The checks are `plans.land_checks` in `.indusk/config.json`, each a shell command run in the worktree; none run when the key is absent.
+
+```json
+{ "plans": { "land_checks": ["pnpm test"] } }
+```
+
+Refuses:
+
+- a plan with no `accepted` — accept it first;
+- uncommitted changes in the worktree;
+- a conflict bringing the trunk into the branch (the merge is aborted);
+- a failing check, naming it;
+- uncommitted changes on the trunk on the paths the plan touches.
+
+## Housekeeping
 
 ### `plans archive-dead`
 
