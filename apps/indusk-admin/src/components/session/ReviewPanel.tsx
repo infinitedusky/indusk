@@ -15,6 +15,25 @@ export function ReviewPanel({ review }: { review: Review }) {
       data-testid="review-panel"
     >
       <h2 className="font-semibold text-gray-800">Review</h2>
+      {review.uncommittedOnMain.length > 0 ? (
+        <div
+          className="rounded border border-amber-300 bg-amber-50 p-2 text-amber-900"
+          role="alert"
+        >
+          <p className="font-medium">
+            Uncommitted on main, where this plan will land
+          </p>
+          <p className="text-xs">
+            It may be someone's work, so the release stops until it is committed
+            or moved:
+          </p>
+          <ul className="mt-1 font-mono text-xs">
+            {review.uncommittedOnMain.map((path) => (
+              <li key={path}>{path}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div>
         <h3 className="font-medium text-gray-700">Promises</h3>
         <ul className="mt-1 flex flex-col gap-1">

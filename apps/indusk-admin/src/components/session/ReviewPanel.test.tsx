@@ -40,6 +40,7 @@ const review: Review = {
     },
   ],
   files: [{ path: "src/seat.ts", status: "A" }],
+  uncommittedOnMain: [],
   skippedRituals: [
     { ritual: "cleanup", reason: "one small file; nothing to decompose" },
   ],
@@ -68,5 +69,27 @@ describe("the review panel shows the evidence", () => {
     expect(text).toContain(
       "Cleanup skipped: one small file; nothing to decompose",
     );
+  });
+});
+
+describe("A33 — uncommitted work on main is shown before Accept", () => {
+  it("lists it, saying the release will stop until it is committed or moved", async () => {
+    const text =
+      (
+        await render(
+          <ReviewPanel
+            review={{ ...review, uncommittedOnMain: ["src/seat.ts"] }}
+          />,
+        )
+      ).container.textContent ?? "";
+    expect(text).toContain("Uncommitted on main");
+    expect(text).toContain("src/seat.ts");
+  });
+
+  it("says nothing when there is none", async () => {
+    const text =
+      (await render(<ReviewPanel review={review} />)).container.textContent ??
+      "";
+    expect(text).not.toContain("Uncommitted on main");
   });
 });
