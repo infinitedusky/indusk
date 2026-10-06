@@ -214,6 +214,13 @@ function EventView({
   }
 }
 
+const OTHER = "Other";
+
+/**
+ * A question with its choices, as Claude Code asks it: one choice, or several
+ * when the question allows it, or Other — an answer in the person's own
+ * words. Several labels go back joined by ", ".
+ */
 function QuestionView({
   questions,
   open,
@@ -223,41 +230,94 @@ function QuestionView({
   open: boolean;
   onAnswer: (answers: Record<string, string>) => void;
 }) {
-  const [chosen, setChosen] = useState<Record<string, string>>({});
-  const complete = questions.every((q) => chosen[q.question]);
+  const [chosen, setChosen] = useState<Record<string, string[]>>({});
+  const [other, setOther] = useState<Record<string, string>>({});
+  const answerFor = (q: Question): string => {
+    const picks = chosen[q.question] ?? [];
+    return picks
+      .map((label) =>
+        label === OTHER ? (other[q.question] ?? "").trim() : label,
+      )
+      .filter(Boolean)
+      .join(", ");
+  };
+  const complete = questions.every((q) => answerFor(q) !== "");
+  const toggle = (q: Question, label: string) =>
+    setChosen((prev) => {
+      const picks = prev[q.question] ?? [];
+      if (!q.multiSelect) return { ...prev, [q.question]: [label] };
+      return {
+        ...prev,
+        [q.question]: picks.includes(label)
+          ? picks.filter((l) => l !== label)
+          : [...picks, label],
+      };
+    });
   return (
     <div className="rounded border border-blue-300 bg-blue-50 p-2">
-      {questions.map((q) => (
-        <fieldset key={q.question} className="mb-2">
-          <legend className="font-medium text-gray-900">{q.question}</legend>
-          <div className="mt-1 flex flex-col gap-1">
-            {q.options.map((o) => (
-              <button
-                key={o.label}
-                type="button"
-                disabled={!open}
-                onClick={() =>
-                  setChosen((prev) => ({ ...prev, [q.question]: o.label }))
-                }
-                className={`rounded border px-2 py-1 text-left ${
-                  chosen[q.question] === o.label
-                    ? "border-blue-600 bg-white"
-                    : "border-transparent"
-                }`}
-              >
-                <span className="font-medium">{o.label}</span>
-                {o.description ? (
-                  <span className="block text-xs text-gray-600">
-                    {o.description}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-      ))}
+      {questions.map((q) => {
+        const picks = chosen[q.question] ?? [];
+        return (
+          <fieldset key={q.question} className="mb-2">
+            <legend className="font-medium text-gray-900">
+              {q.question}
+              {q.multiSelect ? (
+                <span className="ml-1 text-xs text-gray-500">(choose any)</span>
+              ) : null}
+            </legend>
+            <div className="mt-1 flex flex-col gap-1">
+              {[
+                ...q.options,
+                { label: OTHER, description: "Answer in your own words" },
+              ].map((o) => (
+                <button
+                  key={o.label}
+                  type="button"
+                  disabled={!open}
+                  onClick={() => toggle(q, o.label)}
+                  className={`rounded border px-2 py-1 text-left ${
+                    picks.includes(o.label)
+                      ? "border-blue-600 bg-white"
+                      : "border-transparent"
+                  }`}
+                >
+                  <span className="font-medium">{o.label}</span>
+                  {o.description ? (
+                    <span className="block text-xs text-gray-600">
+                      {o.description}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+              {picks.includes(OTHER) && open ? (
+                <input
+                  aria-label="Other answer"
+                  className="rounded border border-gray-300 px-2 py-1"
+                  value={other[q.question] ?? ""}
+                  onChange={(e) =>
+                    setOther((prev) => ({
+                      ...prev,
+                      [q.question]: e.target.value,
+                    }))
+                  }
+                />
+              ) : null}
+            </div>
+          </fieldset>
+        );
+      })}
       {open ? (
-        <Button size="sm" disabled={!complete} onClick={() => onAnswer(chosen)}>
+        <Button
+          size="sm"
+          disabled={!complete}
+          onClick={() =>
+            onAnswer(
+              Object.fromEntries(
+                questions.map((q) => [q.question, answerFor(q)]),
+              ),
+            )
+          }
+        >
           Answer
         </Button>
       ) : null}

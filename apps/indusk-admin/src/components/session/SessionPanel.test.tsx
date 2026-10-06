@@ -231,3 +231,49 @@ describe("the log scrolls after about ten lines, and follows new events", () => 
     );
   });
 });
+
+describe("A2 — a question can be answered in the person's own words, or with several choices", () => {
+  it("Other takes typed text as the answer", async () => {
+    const r = panel([init, question]);
+    (await button(r.rendered, "Other"))?.click();
+    const { container } = await r.rendered;
+    const other = container.querySelector(
+      'input[aria-label="Other answer"]',
+    ) as HTMLInputElement;
+    await userEvent.fill(other, "a spike first");
+    (await button(r.rendered, "Answer"))?.click();
+    await vi.waitFor(() =>
+      expect(r.handlers.onAnswer).toHaveBeenCalledWith("q1", {
+        "Which workflow?": "a spike first",
+      }),
+    );
+  });
+
+  it("a question that allows several answers sends every chosen label", async () => {
+    const multi: StartedEvent = {
+      type: "question",
+      requestId: "q2",
+      input: {},
+      questions: [
+        {
+          question: "What should change?",
+          multiSelect: true,
+          options: [
+            { label: "Drop OTel" },
+            { label: "Drop Context" },
+            { label: "Rename it" },
+          ],
+        },
+      ],
+    };
+    const r = panel([init, multi]);
+    (await button(r.rendered, "Drop OTel"))?.click();
+    (await button(r.rendered, "Rename it"))?.click();
+    (await button(r.rendered, "Answer"))?.click();
+    await vi.waitFor(() =>
+      expect(r.handlers.onAnswer).toHaveBeenCalledWith("q2", {
+        "What should change?": "Drop OTel, Rename it",
+      }),
+    );
+  });
+});
