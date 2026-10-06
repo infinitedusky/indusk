@@ -336,8 +336,8 @@ Added by admin-plan-authoring. A plan can now go the whole way from the admin, o
 
 1. **Plan.** `indusk plans start <type> <name>` gives the plan its own branch and worktree; its documents and declared promises are written there and nowhere on `main`. From the admin, New plan does this and starts a planning session; the person answers its questions in the panel.
 2. **Approve.** `indusk plans approve <name>` runs the brief check, then merges the plan's documents and promises to `main` — promises reach `main` before any code, so every other plan sees them. The build continues on the same branch.
-3. **Build.** Unattended: after each step `indusk plans next` decides what comes next — work an open phase, author the falsification, author the cleanup — and a fresh session does it. A build stops only at review, at a judgement the plan declared, or when it cannot continue. It may skip a gate item only with its reason. It never starts the retrospective.
-4. **Review.** `indusk plans review <name>` shows each promise with the tests that prove it, what falsification found and fixed, the files changed and every skip.
+3. **Build.** Unattended: after each step `indusk plans next` decides what comes next — work an open phase, author the falsification, author the cleanup — and a fresh session does it. A build stops only at review, at a judgement the plan declared, or when it cannot continue. It may skip a gate item only with its reason. It never starts the retrospective, and `plans accept` and `plans land` refuse inside one of its steps.
+4. **Review.** `indusk plans review <name>` shows each promise with the tests that prove it, what falsification found and fixed, the files changed, every skip, and any uncommitted work on `main` where the plan will land.
 5. **Accept.** `indusk plans accept <name>` (or Accept in the panel; or the project's workflow, with `release.auto_accept`).
 6. **Release.** The retrospective runs and lands the plan with `indusk plans land <name>`, which refuses a plan that was not accepted. Publishing stays the operator's.
 

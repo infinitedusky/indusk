@@ -201,6 +201,7 @@ const config = defineConfig({
 					text: "Decisions",
 					items: [
 						{ text: "Overview", link: "/decisions/" },
+						{ text: "Admin Plan Authoring — plan to release from the admin", link: "/decisions/admin-plan-authoring" },
 						{ text: "Admin UI Hosting — Decision Summary", link: "/decisions/admin-ui-hosting" },
 						{ text: "Admin UI Phase Progress — one lifecycle, three bars", link: "/decisions/admin-ui-phase-progress" },
 						{ text: "Cleanup Ritual — Decision Summary", link: "/decisions/cleanup-ritual" },
@@ -252,6 +253,7 @@ const config = defineConfig({
 						{ text: "Cleanup Ritual — Lessons", link: "/lessons/cleanup-ritual" },
 						{ text: "Dawn Hook Parity — Lessons", link: "/lessons/dawn-hook-parity" },
 						{ text: "Dawn External Orchestrator — Acceptance Matrix", link: "/lessons/dawn-orchestrator-acceptance-matrix" },
+						{ text: "Admin Plan Authoring — Lessons", link: "/lessons/admin-plan-authoring" },
 						{ text: "Admin UI Phase Progress — Lessons", link: "/lessons/admin-ui-phase-progress" },
 						{ text: "Dawn UI Plan Grouping — Lessons", link: "/lessons/dawn-ui-plan-grouping" },
 						{ text: "Dawn Workbench Execution — Lessons", link: "/lessons/dawn-workbench-execution" },

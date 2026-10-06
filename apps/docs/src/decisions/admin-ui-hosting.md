@@ -2,7 +2,7 @@
 
 Shipped in `@infinitedusky/indusk-mcp@1.27.0` through `1.27.7`. Archived at `.indusk/planning/archive/admin-ui-hosting/` in the repo.
 
-> **Amended by admin-plan-authoring (2026-10-06).** The admin is no longer only a reader: it starts, answers and stops sessions of the developer's own `claude`, and starts, approves and accepts plans, all through the package's code (`/session`, `/plans`). It still never writes a plan file itself. Because a route can now start `claude`, the daemon listens on `127.0.0.1` only, and every `POST` refuses a request whose `Origin` is not the admin's own. `indusk ui stop` and `indusk ui start` end any session the admin recorded. See [sessions](/reference/admin-ui/sessions).
+> **Amended by admin-plan-authoring (2026-10-06).** The admin is no longer only a reader: it starts, answers and stops sessions of the developer's own `claude`, and starts, approves and accepts plans, all through the package's code (`/session`, `/plans`). It still never writes a plan file itself. Because a route can now start `claude`, the daemon listens on `127.0.0.1` only, every route answers only on the admin's own hosts (a rebound name points another site at the loopback address), and every `POST` also refuses a request whose `Origin` is not the admin's own. `indusk ui stop` and `indusk ui start` end any session the admin recorded. See [sessions](/reference/admin-ui/sessions).
 
 ## The Problem
 
