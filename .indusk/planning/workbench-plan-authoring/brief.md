@@ -1,7 +1,7 @@
 ---
 title: "Workbench plan authoring"
 date: 2026-10-06
-status: draft
+status: accepted
 workflow: feature
 ---
 
