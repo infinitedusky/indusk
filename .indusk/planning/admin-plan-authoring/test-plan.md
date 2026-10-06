@@ -24,7 +24,7 @@ the real system and is recorded in the plan.
 | A1 | Choosing New plan in the admin, with a type and a name, starts a planning session, and what the session says appears in the panel as it says it. | unit |
 | A2 | A question the session asks appears in the panel with its choices; the person's answer reaches the session and it continues. | unit |
 | A3 | A request to use a tool appears in the panel; allowing it lets the session go on, denying it tells the session no. | unit |
-| A4 | A session started from the admin asks before every write, even when the developer's own Claude Code is set to allow writes without asking. | unit |
+| A4 | A planning session started from the admin asks before every write, even when the developer's own Claude Code is set to allow writes without asking. | unit |
 | A5 | Claude Code still speaks the three exchanges the admin relies on: a question, a permission request and an interrupt, each answered over the session's own stream. | contract |
 | A6 | A plan started in the admin and one started in the editor produce the same kind of plan folder and the same registry entries; either can be continued from the other. | live check |
 
@@ -46,6 +46,7 @@ the real system and is recorded in the plan.
 | A12 | A build stops at a judgement item the plan declared (a deferred verification, a manual or visual check) and shows the item in the panel. | unit |
 | A13 | A build that cannot continue stops and says why, instead of trying again without end. | unit |
 | A14 | A build stops when the plan is ready for review (every phase, falsification and cleanup closed) and does not start the retrospective. | unit |
+| A30 | A build writes inside its plan's worktree without asking, and a write outside it is refused, not asked. A gate item the build skips carries its reason, and the review lists every skip. | unit |
 
 ## Proves `a-review-shows-its-evidence`
 
