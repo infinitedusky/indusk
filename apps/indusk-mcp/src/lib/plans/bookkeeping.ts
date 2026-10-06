@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { git } from "../git.js";
 import type { PlanBranch } from "./plan-branch.js";
 
@@ -25,21 +27,44 @@ export function isBookkeeping(path: string): boolean {
 	return BOOKKEEPING_FILES.includes(path) || BOOKKEEPING_DIRS.some((dir) => path.startsWith(dir));
 }
 
-/** The paths `git status --porcelain` reports, however its first line was trimmed. */
-export function statusPaths(porcelain: string): string[] {
-	return porcelain
-		.split("\n")
-		.filter(Boolean)
-		.map((l) => l.replace(/^\s*\S{1,2}\s+/, ""));
+/**
+ * Every path with an uncommitted change in `checkout`, limited to `paths`
+ * when given — both sides of a rename or copy, each as itself (A37). Read
+ * with `-z`, where a rename is `R  new\0old\0`: read line by line, it is
+ * one string, `old -> new`, that names no file.
+ */
+export async function statusPaths(checkout: string, paths?: string[]): Promise<string[]> {
+	const out = await git(
+		checkout,
+		"status",
+		"--porcelain",
+		"-z",
+		"--untracked-files=all",
+		...(paths ? ["--", ...paths] : []),
+	);
+	const fields = out.split("\0");
+	const found: string[] = [];
+	for (let i = 0; i < fields.length; i++) {
+		const entry = fields[i];
+		if (!entry) continue;
+		// `git()` trims its output, so the first entry may have lost the space
+		// that leads an unstaged status (` M path` arrives as `M path`).
+		const status = entry[2] === " " ? entry.slice(0, 2) : entry.slice(0, 1);
+		found.push(entry.slice(status.length + 1));
+		if (/[RC]/.test(status)) found.push(fields[++i]);
+	}
+	return found;
 }
 
 /** Commit the trunk's uncommitted bookkeeping, if any; returns the paths committed. */
 export async function commitTrunkBookkeeping(pb: PlanBranch, why: string): Promise<string[]> {
-	const paths = statusPaths(
-		await git(pb.trunk, "status", "--porcelain", "--untracked-files=all"),
-	).filter(isBookkeeping);
+	const paths = (await statusPaths(pb.trunk)).filter(isBookkeeping);
 	if (paths.length === 0) return [];
-	await git(pb.trunk, "add", "--", ...paths);
+	// A path gone from disk (a deletion, a rename's old side) cannot be
+	// `git add`ed once the index has dropped it too; the commit below takes
+	// it by name, from HEAD. Only what is on disk needs adding.
+	const onDisk = paths.filter((p) => existsSync(join(pb.trunk, p)));
+	if (onDisk.length > 0) await git(pb.trunk, "add", "--", ...onDisk);
 	await git(
 		pb.trunk,
 		"commit",
@@ -55,7 +80,5 @@ export async function commitTrunkBookkeeping(pb: PlanBranch, why: string): Promi
 /** Uncommitted changes on the trunk, outside InDusk's bookkeeping, on any of `paths`. */
 export async function uncommittedWork(trunk: string, paths: string[]): Promise<string[]> {
 	if (paths.length === 0) return [];
-	return statusPaths(
-		await git(trunk, "status", "--porcelain", "--untracked-files=all", "--", ...paths),
-	).filter((p) => !isBookkeeping(p));
+	return (await statusPaths(trunk, paths)).filter((p) => !isBookkeeping(p));
 }

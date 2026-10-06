@@ -66,8 +66,7 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
  * `.indusk/` is refused, naming it, with nothing committed.
  */
 async function commitPlanDocuments(pb: Awaited<ReturnType<typeof planBranch>>): Promise<void> {
-	const status = await git(pb.worktree, "status", "--porcelain", "--untracked-files=all");
-	const lines = statusPaths(status);
+	const lines = await statusPaths(pb.worktree);
 	const outside = lines.filter((path) => !path.startsWith(".indusk/"));
 	if (outside.length > 0) {
 		throw new PlanCommandRefusal(
