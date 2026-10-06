@@ -474,7 +474,7 @@ Evidence found while hunting:
 
 What was reviewed: `listOversizedChangedFiles` against `main` flags 19 files. All 19 existed before this plan, and its edits to them are small. Every file the plan created is under its cap, so the work below is about duplication, not size.
 
-- [ ] Extract `currentTrunkBranch(projectRoot)` → `{ branch, allowed, onTrunk }` into `apps/indusk-mcp/src/lib/trunk-branch.ts`. Three sites read the trunk's branch and check it against `getTrunkBranches`, each on its own:
+- [x] Extract `currentTrunkBranch(projectRoot)` → `{ branch, allowed, onTrunk }` into `apps/indusk-mcp/src/lib/trunk-branch.ts`. Three sites read the trunk's branch and check it against `getTrunkBranches`, each on its own:
   - `worktree/plan-worktree-commands.ts` (before this plan);
   - `plans/plan-branch.ts`;
   - `build/review.ts`, which falls back silently to a literal `main`.
