@@ -103,9 +103,11 @@ pointer; the pointer holds the story.
   two roots in a one-repo workbench, `resolveInRoots` the one confinement rule;
   loop-owned per-item commits, the plan-side checkoff commit carries
   `Code-Commit:` and is never queued for eval. **Its gate covers tool surfaces,
-  not intentions** — every mutating tool goes through the envelope, and the
-  invoker fails loud (exit 2, non-zero, timeout all block). — see
-  `/reference/cli/run`
+  not intentions**; the invoker fails loud (exit 2, non-zero, timeout all
+  block). — see `/reference/cli/run`
+- **`lib/build/`** holds an unattended build's decisions: `nextBuildStep`
+  (pure) and the judgement-item rule Dawn's loop shares. — see
+  `/reference/cli/plans`
 - **`indusk verify`** (`lib/verify/`): detects and never repairs — premature
   checkoff, skipped test-first duty (applied to phase N directly), goalpost
   drift, red tests (files + exit codes, never runner output), phantom work
@@ -128,9 +130,8 @@ pointer; the pointer holds the story.
   **Phase identity is `{kind, number}`**: a bare number is the build phase; a
   boundary record without `kind` is build by rule.
 - **The cleanup lib throws on non-git roots and refuses workbench roots by
-  declaration**; its diff resolves merge bases through fallbacks; `isNew` uses
-  `git cat-file -e` exit codes; ritual-phase terminality needs ≥1 item and
-  sees nested unchecked items.
+  declaration**; ritual-phase terminality needs ≥1 item and sees nested
+  unchecked items.
 - `phaseOrdinal` reduces to the phase number when a document has no test
   phase — that reduction is the backward-compatibility guarantee. Gate A
   compares `<=`. A validator parsing zero phases refuses. An unterminated
