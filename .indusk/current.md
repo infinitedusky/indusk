@@ -32,11 +32,12 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **promise-sources (2026-10-05)** — every reader shows `local` and `production` side by side, each source's failure its own; production raises the alarm ([archive](planning/archive/promise-sources/)).
 - **promise-timeline (closed, 2026-10-05)** — the Promises page draws each promise's history per source; `promises fix` closes an incident and records when; fixed breaks read purple; falsification fixed late runs and slow windows. See [archive](planning/archive/promise-timeline/).
 - **test-kinds (closed, 2026-10-05)** — `pnpm test` is rules only, about a minute, both packages in parallel and never replayed from cache; servers live in each package's `vitest.tiers.ts` and run at landing and release; `everyday-tests-never-wait` and `everyday-suite-stays-fast` watch it. See [archive](planning/archive/test-kinds/).
+- **admin-plan-authoring (closed, 2026-10-06)** — the admin plans, builds unattended to review, shows the evidence and releases on acceptance, through the developer's own `claude` and `indusk plans start | approve | accept | land | next | review`; falsification closed a DNS-rebinding hole. **Open**: U3, the smoke check of the published package right after `pnpm release` (New plan → Build → Accept → `plans land` in a scratch project), result recorded here. Follow-on draft: `bookkeeping-lives-where-it-is-read`. See [archive](planning/archive/admin-plan-authoring/).
 - **day-always-on-deploy (2026-10-04)** — the always-on server deployed on Fly (`indusk-always-on`) and smoked, idle hour passed; three server bugs found and fixed on the way (1.58.2–1.58.4), four more from falsification bumped as 1.58.5 ([archive](planning/archive/day-always-on-deploy/)).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
 
-- **planner-promises** — **next** (brief and test plan accepted 2026-10-05): Day's 4c and demo step 6 — the brief is the planning conversation's expectations and promises; every test row says what it is for; a closing plan confirms; an existing promise is kept, changed or replaced; the test `Kind` column becomes `Level`. `day-contract` keeps only the check at change time (4c′, after the demo); `day-claim-evidence` (5) keeps "seen failing". See [brief](planning/planner-promises/brief.md).
+- **planner-promises** — **closed 2026-10-05** (Day 4c, demo step 6): a brief holds expectations and promises; commands write the registry; every test row says what it is for; closing confirms; an incident names its tests. See [archive](planning/archive/planner-promises/). Follow-up: `release-checks-run-once` (system tier once, at release; landing checks from project config, not dusk's commands).
 - **The evaluator runs inside the worktree it grades** — it has collided with a person's test runs (ports, `.next/`) in three plans running, and in watcher-heartbeat ran `git stash` on uncommitted work. Unfiled; it needs its own plan (a snapshot worktree, no mutating git). Until then, check `ps` for a vitest in the worktree before a system-tier run, and commit before stepping away.
 - **The deployed always-on server** (day-always-on-deploy, 2026-10-04): Fly app `indusk-always-on`, personal org. Intake: `https://indusk-always-on.fly.dev`. Query and Jaeger UI: `https://indusk-always-on.fly.dev:16687`, user `indusk`. Credential: `INDUSK_DEPLOYED_CREDENTIAL` in `~/.indusk/config.env`. Re-run the smoke with `INDUSK_DEPLOYED_QUERY_URL` / `_OTLP_URL` / `_FLY_APP` set (`e2e/deployed-smoke.e2e.test.ts`). It costs money while it runs: one always-on machine, a 3 GB volume, and a dedicated IPv4 at $2/month. It runs 1.58.4. Four falsification fixes (A13–A16: a taken query port refused before Jaeger starts, the door's connections tied together, the public URL checked, record writes that finish or leave the old record) landed on main and are bumped as 1.58.5, **unpublished** — publish, then redeploy with `VERSION=1.58.5`; none needs a redeploy to keep the Fly server safe — one machine, a fixed port, a URL without a credential, a volume far from full.
 - **indusk-v2-dawn** — parent plan (living master); component status in `planning/indusk-v2-dawn/master.md`
@@ -63,13 +64,18 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-10-04: **1.58.2 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit e01fa38 (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-04: **1.58.3 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 3fbc990 (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-04: **1.58.4 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit f008e85 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-05: **1.59.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit b7bc22e (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-05: **1.59.1 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit cfa6b6e (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-05: **1.60.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit fdabcaf (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-05: **1.61.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 1426e82 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-05: **1.62.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 07bbbb0 (`pnpm release`, recorded by `scripts/record-release.js`).
 
 ---
 
-## Session 780da059 — admin-plan-type: brief ground-truthed, awaiting acceptance; then test plan
+## Session 780da059 — contract-ui: writing — manifesto made true to the aim and the 10-01..03 discussion
 
 **Session ID**: 780da059-f69c-43fc-9940-32075e05833a
-**Last updated**: 2026-10-01T18:44:16.775Z
+**Last updated**: 2026-10-05T12:51:48.071Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
@@ -433,24 +439,29 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
-## Session 4551e898 — starting catchup
+## Session 4551e898 — admin-plan-authoring — build through Build Phase 9 (live checks)
 
 **Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
-**Last updated**: 2026-10-01T15:03:31.125Z
+**Last updated**: 2026-10-06T17:48:52.410Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-(empty)
+- **admin-plan-authoring** on `plan/admin-plan-authoring` (worktree `dusk-worktrees/admin-plan-authoring`): Build Phases 1–8 closed; Build Phase 9 (the whole way, once) has its live checks done and recorded, six promises confirmed `enforced`. Next: the changelog item, then `/falsify`, `/cleanup`, `/retrospective`.
+- **Live checks (A27, A6), 2026-10-06**, in a scratch project (`seatbox`, private InDusk home, this branch's admin on port 3996): one plan went New plan → planning conversation in the panel → Approve → Build (unasked: test phase red on assertions, fix, falsification and cleanup skipped with reasons) → review → Accept → release, landed and archived, promise enforced. No undeclared stop: the build stopped only at review. A second plan's release, with this branch's CLI first on the sessions' PATH, landed through `indusk plans land`. A plan was carried admin → terminal and terminal → admin.
+- Fixed during the live checks (each test-first, committed): branch-only plans missing from the admin's reader (New plan opened a 404), Continue planning, typed replies, Other and multi-select answers, a ten-line scrolling log, approval committing the plan's own documents, skipped rituals in the review and on the plan page, one panel per session.
 
 ### Open Questions
 
-(empty)
+- **Unattended retrospective committed another session's work**: in the scratch project it committed finished evaluator notes in `current.md` that blocked landing, recording why. Proposed: the unattended section says never commit, stash or discard work that is not the plan's — stop with cannot-continue instead. Awaiting Sandy.
+- **U3 smoke** after `pnpm release`: install the published version, `indusk update` a scratch project, one plan from New plan to `plans land` in the admin; a defect opens a bugfix plan.
+- `indusk update` run in a plan worktree registers the worktree as a project in `~/.indusk/projects.json` (removed by hand twice); not this plan's.
+- The scratch project's hooks ran the evaluator on every commit, on Sandy's subscription.
 
 ### Cursor
 
-(empty)
+`.indusk/planning/admin-plan-authoring/impl.md` — Build Phase 9 Document: the changelog's Unreleased entry. Scratch admin still running on 127.0.0.1:3996 (background task); stop it when done.
 
 ---
 
@@ -856,7 +867,7 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 ## Session d1a9188e — eval agent: scoring commit b9f32bb0 (falsification A8/A9)
 
 **Session ID**: d1a9188e-130f-4c7e-b9db-4ea6e6d18f61
-**Last updated**: 2026-10-05T03:16:28.188Z
+**Last updated**: 2026-10-05T03:55:06.892Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
 
@@ -922,6 +933,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:32:16.249Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session 29c41108 — eval: review commit ab022bba
+
+**Session ID**: 29c41108-8e1f-4765-a539-278d4ec8ff63
+**Last updated**: 2026-10-03T05:36:57.743Z
+**Branch**: plan/day-monitor
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/day-monitor
 
 ### In Flight
 
@@ -943,6 +960,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:54:54.601Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session 4b8a3fc4 — eval: scorecard-extractor every-brace fix (c77d4a51)
+
+**Session ID**: 4b8a3fc4-fb46-41c6-af94-b9b88d2dd86c
+**Last updated**: 2026-10-03T05:37:23.770Z
+**Branch**: plan/day-monitor
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/day-monitor
 
 ### In Flight
 
@@ -964,6 +987,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:56:39.872Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session 15948a2b — eval: scoring commit dc10df4e (promise-timeline tests)
+
+**Session ID**: 15948a2b-b0eb-4b9d-9013-fa3c7a8ffdd3
+**Last updated**: 2026-10-05T06:07:35.824Z
+**Branch**: plan/promise-timeline
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-timeline
 
 ### In Flight
 
@@ -985,6 +1014,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:58:06.817Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session 388f6e2c — eval: test-kinds Test Phase 1 commit
+
+**Session ID**: 388f6e2c-cfd2-432a-b041-470605451a2e
+**Last updated**: 2026-10-05T17:13:39.868Z
+**Branch**: plan/test-kinds
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-kinds
 
 ### In Flight
 
@@ -1006,6 +1041,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:58:09.319Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session cfbbcf52 — eval: scoring commit 77bf204e (admin test-kinds A4-A12)
+
+**Session ID**: cfbbcf52-f843-472b-ac17-7769c82e57ad
+**Last updated**: 2026-10-05T17:17:10.676Z
+**Branch**: plan/test-kinds
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-kinds
 
 ### In Flight
 
@@ -1027,6 +1068,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:58:13.175Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session 50c6541c — eval: scoring commit 58862ba3 (test-kinds Phase 1)
+
+**Session ID**: 50c6541c-63f6-4b31-a8c4-6324e8d0aa2c
+**Last updated**: 2026-10-05T17:18:05.332Z
+**Branch**: plan/test-kinds
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-kinds
 
 ### In Flight
 
@@ -1048,6 +1095,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:58:22.875Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session 6b7fa52c — eval agent: scoring commit d849141c (test-kinds Build Phase 1)
+
+**Session ID**: 6b7fa52c-7b75-45cc-820f-506a83bf03ad
+**Last updated**: 2026-10-05T17:22:25.266Z
+**Branch**: plan/test-kinds
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-kinds
 
 ### In Flight
 
@@ -1069,6 +1122,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T16:16:55.095Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session 2687ea27 — eval: review commit ef22f48e
+
+**Session ID**: 2687ea27-2e0a-4e87-a9b9-dcf54b4e657a
+**Last updated**: 2026-10-05T18:16:30.447Z
+**Branch**: plan/test-kinds
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-kinds
 
 ### In Flight
 
@@ -1090,6 +1149,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T16:16:55.790Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session d7e68010 — eval agent: scoring commit ef22f48e
+
+**Session ID**: d7e68010-248f-4c70-a645-2034f4bd915d
+**Last updated**: 2026-10-05T18:16:56.365Z
+**Branch**: plan/test-kinds
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-kinds
 
 ### In Flight
 
@@ -1111,6 +1176,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T16:16:57.096Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session 8ebb5a3d — eval agent: scoring commit 832a3d03
+
+**Session ID**: 8ebb5a3d-21b1-4791-9fe3-ece2419881c9
+**Last updated**: 2026-10-05T18:17:04.524Z
+**Branch**: plan/test-kinds
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-kinds
 
 ### In Flight
 
@@ -1132,6 +1203,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T16:18:10.021Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session 526727a1 — eval: scoring commit 1426e82c (release 1.61.0)
+
+**Session ID**: 526727a1-5333-47ac-8396-cb3aef774bb2
+**Last updated**: 2026-10-05T18:58:25.086Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
@@ -1468,6 +1545,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T19:01:47.600Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+## Session 0d5cca27 — eval: review commit d521d648 (retro test-kinds landed on main)
+
+**Session ID**: 0d5cca27-6f2b-4c6f-96f9-04e22f088584
+**Last updated**: 2026-10-05T18:58:56.072Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 

@@ -1,0 +1,7 @@
+# An evaluator grading a branch must never run git-mutating commands (stash, reset, checkout --) in that branch's own worktree
+
+During the watcher-heartbeat plan's retrospective (dusk, 2026-10-03), the eval agent ran `git stash` while grading a commit in the same worktree the working agent was actively using. That stash captured the working agent's latest edit plus an uncommitted `telemetry.ts` re-export the admin's next commit had compiled against only because the file was still sitting in the working tree — nearly losing both. Recovery required checking the files back out of the stash commit.
+
+This is a distinct and more severe failure mode than read-only port/lock collisions (see [[evaluator-running-tests-in-the-same-worktree-collides-with-concurrent-runs]]): a stash, reset --hard, or checkout -- doesn't just produce a false test failure, it can silently discard or hide another agent's in-progress, uncommitted work.
+
+**What to do instead:** an evaluator (or any background/grading agent) must treat the worktree it's grading as belonging to the working agent. Never run git commands that mutate the working tree or index (`git stash`, `git reset --hard`, `git checkout -- <path>`, `git clean`) there. If a clean tree is needed to run tests, either grade a snapshot/clone instead of the live worktree, or check `git status --short` first and stop (ask, don't clear) if it's dirty — the same rule the project's own `/retrospective` Step 10 already states for merges ("never commit, stash or discard another session's work to clear your own path").
