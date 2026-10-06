@@ -2,8 +2,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { currentBuildStep } from "../build/step-env.js";
-import { getTrunkBranches } from "../config.js";
 import { git, headSha } from "../git.js";
+import { currentTrunkBranch } from "../trunk-branch.js";
 import { resolvePlanCopies } from "../worktree/plan-worktrees.js";
 import { commitTrunkBookkeeping, uncommittedWork } from "./bookkeeping.js";
 
@@ -59,9 +59,8 @@ export async function planBranch(anyCheckout: string, plan: string): Promise<Pla
 		throw new PlanCommandRefusal(`${plan} is not on its own branch: ${why}`);
 	}
 	const trunk = copies.projectRoot;
-	const trunkBranch = await git(trunk, "branch", "--show-current");
-	const allowed = getTrunkBranches(trunk);
-	if (!allowed.includes(trunkBranch)) {
+	const { branch: trunkBranch, allowed, onTrunk } = await currentTrunkBranch(trunk);
+	if (!onTrunk) {
 		throw new PlanCommandRefusal(
 			`the trunk at ${trunk} is on ${trunkBranch || "no branch"}, not a trunk branch (${allowed.join(", ")})`,
 		);

@@ -2,7 +2,6 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { isCleanupSkipped } from "../cleanup/gate.js";
-import { getTrunkBranches } from "../config.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
 import { git } from "../git.js";
 import { type ImplPhase, parseImplString } from "../impl-parser-core.js";
@@ -12,6 +11,7 @@ import { parseBriefContract } from "../promises/brief-contract.js";
 import { type PromiseEntry, readPromises } from "../promises/registry.js";
 import { rowProofs } from "../promises/rows.js";
 import { parseTrajectory } from "../trajectory/parser.js";
+import { currentTrunkBranch } from "../trunk-branch.js";
 import { resolvePlanCopies } from "../worktree/plan-worktrees.js";
 import { BuildPlanUnreadable } from "./read-plan.js";
 
@@ -144,8 +144,10 @@ function reviewPromises(
 }
 
 async function changedFiles(trunk: string, branch: string): Promise<Review["files"]> {
-	const current = await git(trunk, "branch", "--show-current");
-	const trunkBranch = getTrunkBranches(trunk).includes(current) ? current : "main";
+	// A trunk checked out on no trunk branch has nothing to diff against; the
+	// files are listed once it is back on one.
+	const { branch: trunkBranch, onTrunk } = await currentTrunkBranch(trunk);
+	if (!onTrunk) return [];
 	const out = await git(trunk, "diff", "--name-status", `${trunkBranch}...${branch}`);
 	return out
 		.split("\n")

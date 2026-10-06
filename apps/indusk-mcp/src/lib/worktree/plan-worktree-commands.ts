@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import { getTrunkBranches } from "../config.js";
 import { git } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
+import { currentTrunkBranch } from "../trunk-branch.js";
 import {
 	type Assignment,
 	PlanWorktreeRefusal,
@@ -147,9 +147,8 @@ export async function createPlanWorktree(
 				: `${created} already exists and is not a worktree of this repository (often what a removed worktree leaves behind) — remove it, then run create again`,
 		);
 	}
-	const trunkBranch = await git(repo.projectRoot, "branch", "--show-current");
-	const allowed = getTrunkBranches(repo.projectRoot);
-	if (!allowed.includes(trunkBranch)) {
+	const { branch: trunkBranch, allowed, onTrunk } = await currentTrunkBranch(repo.projectRoot);
+	if (!onTrunk) {
 		throw new PlanWorktreeRefusal(
 			`the trunk at ${repo.projectRoot} is on ${trunkBranch ? `branch ${trunkBranch}` : "no branch"}, not a trunk branch (${allowed.join(", ")}) — a plan branch forks from the trunk; check out the trunk branch first, or list this one in worktree.trunk_guard.branches`,
 		);
