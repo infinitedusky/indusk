@@ -4,6 +4,22 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+
+- **The admin can plan, build, review and release a plan** (admin-plan-authoring). New plan starts a plan on its own branch and a planning session of your own `claude` in the panel — questions with their choices, Other in your own words, permission requests to allow or deny, replies typed, Stop. Approve brings the plan's documents and promises to `main`. Build works the phases, then falsification and cleanup, without asking, and stops at review; the review shows each promise with the tests that prove it, what falsification found or why it was skipped, the files changed and every skipped gate item. Accept runs the retrospective, which lands the plan. See [sessions](/reference/admin-ui/sessions) and [the plan lifecycle](/guide/plan-lifecycle).
+- **`indusk plans start | approve | accept | land | next | review`** — the same commands behind the admin, the skills and the terminal. See [`indusk plans`](/reference/cli/plans).
+- **`INDUSK_GATE_POLICY`**: a build's sessions run under `auto`, and skip a gate item only with its reason.
+- **`release.auto_accept`** in `.indusk/config.json`: a built plan goes on to its release without a person.
+- **A plan written on `main`** instead of its own branch is recorded as a violation of `a-plan-is-written-on-its-own-branch`, never refused.
+- **Review and accepted** are lifecycle positions, on the plan bar.
+
+### Changed
+
+- **A plan lands only once accepted**: `indusk plans land` refuses a plan with no `accepted`, and the retrospective lands through it.
+- **A plan can live only on its own branch**: it is assigned, listed and read from its worktree before it has a folder on `main`.
+- **The admin daemon listens on 127.0.0.1 only**, and its routes refuse a request from any page but its own. `indusk ui stop` and `start` end any Claude session the admin started.
+- **A trusted project's plan worktrees are trusted like it** in Claude Code's config before a session starts there; a project nobody trusted never is.
+
 ## [1.62.0] — 2026-10-05
 
 ### Added
