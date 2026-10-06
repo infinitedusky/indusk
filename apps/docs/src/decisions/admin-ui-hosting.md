@@ -2,6 +2,8 @@
 
 Shipped in `@infinitedusky/indusk-mcp@1.27.0` through `1.27.7`. Archived at `.indusk/planning/archive/admin-ui-hosting/` in the repo.
 
+> **Amended by admin-plan-authoring (2026-10-06).** The admin is no longer only a reader: it starts, answers and stops sessions of the developer's own `claude`, and starts, approves and accepts plans, all through the package's code (`/session`, `/plans`). It still never writes a plan file itself. Because a route can now start `claude`, the daemon listens on `127.0.0.1` only, and every `POST` refuses a request whose `Origin` is not the admin's own. `indusk ui stop` and `indusk ui start` end any session the admin recorded. See [sessions](/reference/admin-ui/sessions).
+
 ## The Problem
 
 `indusk-admin-ui` shipped in 1.26.0 with a per-project hosting model: `indusk ui` in each project spawned its own `next dev` subprocess. In practice this broke under trivial multi-project use — port conflicts, no recovery path, and no way to view plans from one project without killing the admin running for another. The per-project model was a false economy: the admin UI reads the filesystem on every request, so there's no per-project state that a single daemon can't serve.
