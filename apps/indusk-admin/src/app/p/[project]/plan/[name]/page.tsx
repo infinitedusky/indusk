@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import type { SubplanEntry } from "@/components/ParentPlanView";
 import { PlanDetail } from "@/components/PlanDetail";
+import { PlanSession } from "@/components/session/PlanSession";
 import {
   readActivePlans,
   readArchivedPlans,
@@ -76,9 +77,18 @@ export default async function PlanPage({ params }: PlanPageProps) {
     name,
   );
 
+  // Approve (admin-plan-authoring A9): a plan on its own branch whose impl is
+  // written and not yet approved. The command decides; this only offers it.
+  const implStatus = plan.impl?.frontmatter.status as string | undefined;
+  const canApprove =
+    plan.worktree !== undefined &&
+    implStatus !== undefined &&
+    !["approved", "in-progress", "completed"].includes(implStatus);
+
   return (
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
+      <PlanSession project={project} plan={name} canApprove={canApprove} />
       <PlanDetail
         plan={plan}
         subplans={subplans}
