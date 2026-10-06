@@ -30,6 +30,10 @@
 			"types": "./dist/lib/falsification/log.d.ts",
 			"default": "./dist/lib/falsification/log.js"
 		},
+		"./falsification/skip": {
+			"types": "./dist/lib/falsification/skip.d.ts",
+			"default": "./dist/lib/falsification/skip.js"
+		},
 		"./cleanup/oversized": {
 			"types": "./dist/lib/cleanup/oversized.d.ts",
 			"default": "./dist/lib/cleanup/oversized.js"
