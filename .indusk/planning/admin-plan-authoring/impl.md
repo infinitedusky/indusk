@@ -76,18 +76,18 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 | A16 | The review shows what falsification looked for, what it found and what was fixed | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A17 | The review shows the files the plan's branch changed against `main` | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A18 | A plan that has not been accepted cannot be landed on `main`; the refusal names the plan | Test Phase 1 | Build Phase 1 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
-| A19 | Accepting a plan in the panel runs the release workflow: the retrospective, the merge to `main`, the branch and worktree removed | Build Phase 7 | Build Phase 7 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
-| A20 | With `release.auto_accept`, a build that reaches review goes on to the release workflow without the person | Build Phase 7 | Build Phase 7 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
+| A19 | Accepting a plan in the panel runs the release workflow: the retrospective, the merge to `main`, the branch and worktree removed | Build Phase 7 | Build Phase 7 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
+| A20 | With `release.auto_accept`, a build that reaches review goes on to the release workflow without the person | Build Phase 7 | Build Phase 7 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/lib/build/runner.test.ts |
 | A21 | Stopping a session from the panel ends it, and what it wrote stays written | Build Phase 5 | Build Phase 6 | passing | unit | promise: a-session-can-be-stopped | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A22 | When the admin stops, or starts again after a crash, no session it started is still running | Build Phase 5 | Build Phase 5 | passing | contract | promise: a-session-can-be-stopped | apps/indusk-mcp/src/__tests__/admin-session-lifecycle.test.ts |
 | A23 | Approving runs the same brief check as the command line and refuses with its message when a promise is missing from the registry | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
-| A24 | In a build session the admin starts, a checkoff that skips a gate without a reason is refused | Build Phase 7 | Build Phase 7 | planned | contract | promise: gates-ran-at-every-checkoff | apps/indusk-mcp/src/__tests__/build-session-gates.test.ts |
-| A25 | The admin starts plans, creates worktrees, checks briefs, lands plans and starts `claude` only through the package's code | Test Phase 1 | Build Phase 7 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-admin/src/__tests__/admin-uses-package-commands.test.ts |
+| A24 | In a build session the admin starts, a checkoff that skips a gate without a reason is refused | Build Phase 7 | Build Phase 7 | passing | contract | promise: gates-ran-at-every-checkoff | apps/indusk-mcp/src/__tests__/build-session-gates.test.ts |
+| A25 | The admin starts plans, creates worktrees, checks briefs, lands plans and starts `claude` only through the package's code | Test Phase 1 | Build Phase 7 | passing | unit | promise: one-definition-per-shared-rule | apps/indusk-admin/src/__tests__/admin-uses-package-commands.test.ts |
 | A26 | With this plan's tests added, no everyday test starts Claude, a server or a detached process, or waits | Test Phase 1 | Build Phase 9 | written | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | A27 | In a scratch project, one plan goes the whole way in the admin without a terminal: started, planned, promises accepted, approved, built to review, evidence read, accepted, released | Build Phase 9 | Build Phase 9 | planned | live check | promise: a-build-runs-to-review-unasked | manual: recorded in Build Phase 9 |
 | A28 | This plan's six promises go from `declared` to `enforced` when it closes | Build Phase 9 | Build Phase 9 | planned | live check | promise: a-review-shows-its-evidence | manual: `indusk promises confirm admin-plan-authoring`, recorded in Build Phase 9 |
 | A29 | A non-merge commit on `main` that changes an active plan's documents is marked as a violation of the own-branch promise; a merge from the plan's branch is marked upheld; the commit is never refused | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/trunk-plan-commit-mark.test.ts |
-| A30 | A build writes inside its worktree without asking and is refused outside it; a gate item it skips carries its reason, and the review lists every skip | Build Phase 3 | Build Phase 7 | written | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/gate-policy-env.test.ts, apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-mcp/src/__tests__/plans-review.test.ts |
+| A30 | A build writes inside its worktree without asking and is refused outside it; a gate item it skips carries its reason, and the review lists every skip | Build Phase 3 | Build Phase 7 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/__tests__/gate-policy-env.test.ts, apps/indusk-mcp/src/lib/session/protocol.test.ts, apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A31 | A plan that is in review or accepted shows that position on its admin page | Test Phase 1 | Build Phase 2 | passing | unit | the planning rule that a plan adding a lifecycle position renders it in the admin, in the same plan | apps/indusk-mcp/src/lib/lifecycle-review.test.ts, apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
 
 ### Deferred Verification
@@ -315,24 +315,25 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 ### Build Phase 7: Build, review, accept, release
 
-- [ ] `lib/build/runner.ts`: `runBuild({ plan, startSession, now })` — a fresh build session per step with `INDUSK_GATE_POLICY=auto`, `nextBuildStep` after each, stops at judgement, cannot-continue or review; never starts the retrospective
-- [ ] On review: Accept runs `plans accept`, then a session running `/retrospective <plan>`; `release.auto_accept: true` accepts at review
-- [ ] The review panel renders `plans review --json`: promises and their tests, falsification, files, skips
-- [ ] Build on an approved plan's page starts the runner; the panel shows its current step and why it stopped
-- [ ] A19, A20 and A24 written red, then passing; A24 in `SYSTEM`
+- [x] `lib/build/runner.ts`: `runBuild({ plan, startSession, now })` — a fresh build session per step with `INDUSK_GATE_POLICY=auto`, `nextBuildStep` after each, stops at judgement, cannot-continue or review; never starts the retrospective — its inputs are `read`, `run(step)` and `accept`, so its decisions are tested with fakes; progress is a fingerprint of the checkboxes, row states and missing rituals before and after a step. The session side is `build-session.ts` (`runStepSession`): a `build` session in the worktree, writes judged by `permissions.ts`, questions declined, a rate-limited step retried after 15, 45 and 90 s. Found writing its test: the manager could not decline a question, only answer it; it now can
+- [x] On review: Accept runs `plans accept`, then a session running `/retrospective <plan>`; `release.auto_accept: true` accepts at review — `runRelease` in the package; `release-config.ts` reads the setting (only `true` counts); the admin's `POST /api/plans/accept` runs it in the daemon
+- [x] The review panel renders `plans review --json`: promises and their tests, falsification, files, skips — `GET /api/plans/review` returns `buildReview`; `ReviewPanel.test.tsx` checks each part reaches the page
+- [x] Build on an approved plan's page starts the runner; the panel shows its current step and why it stopped — `BuildControls` polls `GET /api/plans/build` every 3 s and connects the panel to each step's session as it starts; in review it shows the evidence and Accept. The production build warns that the routes' trace reaches the whole project through `worktree/repos.js`; nothing uses that trace, and it is left as found
+- [x] A19, A20 and A24 written red, then passing; A24 in `SYSTEM` — A19 and A20 were written with `runner.ts` in the same step and not run before it existed (they could only have failed to load). A24 against the real `claude`: first runs were rate limited by the API ("not your usage limit"), which showed the refusal case could pass without the gate ever running; it now retries a rate-limited session and requires that an Edit was attempted. 2 of 2
 
 #### Build Phase 7 Verification
 
-- [ ] A19, A20, A30 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/build src/lib/session src/__tests__/gate-policy-env src/__tests__/plans-review`); A25 still passes
-- [ ] A24 passes (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/build-session-gates`)
+- [x] A19, A20, A30 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/build src/lib/session src/__tests__/gate-policy-env src/__tests__/plans-review`); A25 still passes — 9 files, 61 tests; A25 3; the admin's session and review panels 10; `tsc --noEmit` clean in both; the admin's production build compiles all nine routes
+- [x] A24 passes (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/build-session-gates`) — 2 of 2 against Claude Code 2.1.197, each case having attempted the edit
+- [x] Shape — `runner.ts` is the loop and the release, with its world as three inputs; `build-session.ts` words a step and runs it as one session; `build-host.ts` in the admin holds a build's state and supplies the runner's inputs, nothing more. One finding acted on: the manager's `reply` refused to decline a question, which a build must do for every one — now it declines (found by `build-session.test.ts`). One thing looked at and kept: `build-host.ts`'s `startBuild` and `startRelease` share their refusal and state set-up in two copies, below the rule of three
 
 #### Build Phase 7 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`: a build's sessions run with `INDUSK_GATE_POLICY=auto` and every skip is read at review; the runner never starts the retrospective
+- [x] `apps/indusk-mcp/CLAUDE.md`: a build's sessions run with `INDUSK_GATE_POLICY=auto` and every skip is read at review; the runner never starts the retrospective — the `lib/build/` entry rewritten in place (the file is at its budget); "the judgement rule Dawn shares" dropped from it, because `judgement-single-definition.test.ts` now enforces it, and the skip-with-reason rule is the guard `gate-policy-env.test.ts` and its lesson
 
 #### Build Phase 7 Document
 
-- [ ] `apps/docs/src/guide/plan-lifecycle.md`: plan, approve, build, review, accept, release, from the admin or the editor, with the Mermaid sequence
+- [x] `apps/docs/src/guide/plan-lifecycle.md`: plan, approve, build, review, accept, release, from the admin or the editor, with the Mermaid sequence — a new section in the existing guide; the note about a plan written on `main` describes Build Phase 8's mark, which lands next
 
 ### Build Phase 8: The skills, and a plan written on main
 
