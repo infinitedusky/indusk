@@ -90,6 +90,8 @@ warnings, errors and 2FA prompt without a line per file ([brief](brief.md),
 
 - [x] Discovered while verifying: the admin's `http-promise-health.test.ts` A20 timed out at 5 s on its first page fetch twice under the full system tier, both today (the admin-plan-authoring landing and this phase's clean-environment run); alone it passes. `beforeAll` starts `next dev`, which compiles a page on its first request, so A20 paid for the compile. `beforeAll` now fetches the page once, within its own 120 s budget
 
+- [x] Discovered on the next system-tier run: with the file read first, the model in A24's refusal case read the fixture plan, judged that checking off unbuilt work would misrepresent it, and refused on its own, before any hook could. That refusal is reasonable; the prompt never said the project is a test fixture. Both contract prompts (A24's and A1's) now say plainly what they are testing. Then A24 passed four of four, both cases, and the session contract file three of three, all from a clean environment
+
 #### Build Phase 2 Verification
 
 - [x] (passed four of four, both cases, after two more setup defects surfaced in the first runs and were fixed: the prompt never asked the model to read the file, and Claude Code refuses an `Edit` on an unread file — which would also let the case of a skip given without its reason pass for the wrong reason; and a retry after a hang judged only the last attempt, which found the line already checked. The prompt now reads first, and an attempt that tried the edit ends the retries) A4: `build-session-gates.test.ts` passes three times from a clean environment (`env -i HOME PATH … pnpm exec vitest run --config vitest.system.config.ts src/__tests__/build-session-gates.test.ts`)
