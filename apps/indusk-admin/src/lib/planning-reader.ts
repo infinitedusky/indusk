@@ -422,8 +422,11 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
     }
     return read;
   };
+  // A plan on its own branch has no trunk folder until it is approved
+  // (admin-plan-authoring); the package's resolver lists it by its assignment.
+  const names = [...new Set([...folders, ...resolved.copies.keys()])].sort();
   return Promise.all(
-    folders.map(async (name) => {
+    names.map(async (name) => {
       const copy: PlanCopy = resolved.copies.get(name) ?? {
         plan: name,
         root,
