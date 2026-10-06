@@ -1,7 +1,4 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import {
 	answerQuestion,
 	buildArgs,
@@ -14,21 +11,23 @@ import {
 	type SessionKind,
 	userMessage,
 } from "./protocol.js";
+import { projectOf, trustLikeProject } from "./trust.js";
 
 /**
  * A session of the developer's own `claude` (admin-plan-authoring, ADR D1):
  * the process, its stdin and stdout, and nothing else. What its lines mean is
  * `protocol.ts`'s; who owns the session is the manager's.
  *
- * A project Claude Code has not trusted still runs: it only ignores that
- * project's own allow-list, so more is asked. A plan's worktree is a new path
- * Claude Code has never trusted, so refusing would refuse every plan; the
- * session says so instead, as its first event, and the panel shows it.
+ * A plan's worktree is a new path Claude Code has never trusted. Before the
+ * session starts, a worktree of a trusted project is trusted like it
+ * (`trust.ts`); one that stays untrusted still runs, ignoring its own
+ * allow-list, and the session says which as its first event.
  */
 
 export type StartedEvent =
 	| SessionEvent
-	| { type: "untrusted"; cwd: string }
+	/** Trusted like its project just now, or still untrusted: its allow-list is ignored, so more is asked. */
+	| { type: "trusted" | "untrusted"; cwd: string }
 	| { type: "exit"; code: number | null; stderr: string };
 
 export interface SessionOptions {
@@ -69,7 +68,8 @@ export function startSession(opts: SessionOptions): Session {
 	if (typeof child.pid !== "number")
 		throw new Error(`could not start ${opts.claudeBin ?? "claude"}`);
 
-	if (!isTrusted(opts.cwd, opts.claudeConfig)) opts.onEvent({ type: "untrusted", cwd: opts.cwd });
+	const trust = trustLikeProject(opts.cwd, projectOf(opts.cwd), opts.claudeConfig);
+	if (trust !== "already") opts.onEvent({ type: trust, cwd: opts.cwd });
 
 	let buffer = "";
 	let stderr = "";
@@ -114,17 +114,4 @@ export function startSession(opts: SessionOptions): Session {
 		},
 		done,
 	};
-}
-
-/** Whether Claude Code has trusted `cwd`: its own record in the developer's config, nothing inferred. */
-export function isTrusted(cwd: string, claudeConfig = join(homedir(), ".claude.json")): boolean {
-	if (!existsSync(claudeConfig)) return false;
-	try {
-		const config = JSON.parse(readFileSync(claudeConfig, "utf-8")) as {
-			projects?: Record<string, { hasTrustDialogAccepted?: boolean }>;
-		};
-		return config.projects?.[cwd]?.hasTrustDialogAccepted === true;
-	} catch {
-		return false;
-	}
 }

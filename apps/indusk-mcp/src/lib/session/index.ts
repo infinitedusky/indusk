@@ -17,9 +17,9 @@ export {
 	userMessage,
 } from "./protocol.js";
 export {
-	isTrusted,
 	type Session,
 	type SessionOptions,
 	type StartedEvent,
 	startSession,
 } from "./start.js";
+export { isTrusted, projectOf, type TrustOutcome, trustLikeProject } from "./trust.js";
