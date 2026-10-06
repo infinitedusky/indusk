@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { postJson } from "@/lib/post-json";
 
 const TYPES = ["feature", "bugfix", "refactor", "spike"] as const;
 
@@ -21,21 +22,17 @@ export function NewPlanForm({ project }: { project: string }) {
   const start = async () => {
     setBusy(true);
     setProblem(null);
-    const r = await fetch("/api/plans", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ project, type, name }),
+    const r = await postJson<{ plan?: string }>("/api/plans", {
+      project,
+      type,
+      name,
     });
-    const body = (await r.json().catch(() => ({}))) as {
-      error?: string;
-      plan?: string;
-    };
     setBusy(false);
     if (!r.ok) {
-      setProblem(body.error ?? `HTTP ${r.status}`);
+      setProblem(r.error);
       return;
     }
-    router.push(`/p/${project}/plan/${body.plan}`);
+    router.push(`/p/${project}/plan/${r.body.plan}`);
   };
 
   return (

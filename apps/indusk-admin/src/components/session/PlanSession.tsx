@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { postJson } from "@/lib/post-json";
 import { ownsSession, type RunningSession } from "@/lib/session-owner";
 import { SessionConnector } from "./SessionConnector";
 
@@ -46,17 +47,10 @@ export function PlanSession({
   const approve = async () => {
     setBusy(true);
     setProblem(null);
-    const r = await fetch("/api/plans/approve", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ project, plan }),
-    });
+    const r = await postJson("/api/plans/approve", { project, plan });
     setBusy(false);
     if (!r.ok) {
-      setProblem(
-        ((await r.json().catch(() => ({}))) as { error?: string }).error ??
-          `HTTP ${r.status}`,
-      );
+      setProblem(r.error);
       return;
     }
     router.refresh();
@@ -65,26 +59,18 @@ export function PlanSession({
   const continuePlanning = async () => {
     setBusy(true);
     setProblem(null);
-    const r = await fetch("/api/sessions", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        project,
-        plan,
-        kind: "planning",
-        prompt: `/planner ${plan}`,
-      }),
+    const r = await postJson<{ id?: string }>("/api/sessions", {
+      project,
+      plan,
+      kind: "planning",
+      prompt: `/planner ${plan}`,
     });
-    const body = (await r.json().catch(() => ({}))) as {
-      id?: string;
-      error?: string;
-    };
     setBusy(false);
-    if (!r.ok || !body.id) {
-      setProblem(body.error ?? `HTTP ${r.status}`);
+    if (!r.ok || !r.body.id) {
+      setProblem(r.ok ? "the admin started no session" : r.error);
       return;
     }
-    setSessionId(body.id);
+    setSessionId(r.body.id);
   };
 
   if (!sessionId && !canApprove && !canPlan) return null;

@@ -3,6 +3,7 @@
 import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { postJson } from "@/lib/post-json";
 import { SessionPanel } from "./SessionPanel";
 
 /**
@@ -39,16 +40,8 @@ export function SessionConnector({ sessionId }: { sessionId: string }) {
   }, [sessionId, router]);
 
   const post = async (path: string, body: unknown) => {
-    const r = await fetch(`/api/sessions/${sessionId}/${path}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!r.ok)
-      setProblem(
-        ((await r.json().catch(() => ({}))) as { error?: string }).error ??
-          `HTTP ${r.status}`,
-      );
+    const r = await postJson(`/api/sessions/${sessionId}/${path}`, body);
+    if (!r.ok) setProblem(r.error);
   };
 
   return (

@@ -4,6 +4,7 @@ import type { Review, RunnerStop } from "@infinitedusky/indusk-mcp/build";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { postJson } from "@/lib/post-json";
 import { ReviewPanel } from "./ReviewPanel";
 import { SessionConnector } from "./SessionConnector";
 
@@ -72,19 +73,15 @@ export function BuildControls({
 
   const post = async (path: string) => {
     setProblem(null);
-    const r = await fetch(`/api/plans/${path}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ project, plan }),
+    const r = await postJson<BuildState>(`/api/plans/${path}`, {
+      project,
+      plan,
     });
     if (!r.ok) {
-      setProblem(
-        ((await r.json().catch(() => ({}))) as { error?: string }).error ??
-          `HTTP ${r.status}`,
-      );
+      setProblem(r.error);
       return;
     }
-    setState((await r.json()) as BuildState);
+    setState(r.body);
     router.refresh();
   };
 
