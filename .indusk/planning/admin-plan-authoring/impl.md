@@ -101,6 +101,11 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
   - would require: a trunk guard that refuses plan documents on `main`, which was rejected
   - mitigation: the trunk-commit mark (A29) records each plan written on `main` as a violation, read by `indusk promises status` and the admin's Promises page
 
+- **The published package does the whole flow (U3, smoke)**
+  - reason: a session runs whatever `indusk` is on the developer's PATH, and until this plan is published that is 1.62.0, which has no `plans` verbs — A27's release landed by hand for that reason; only the published tarball tests the bundled admin, `indusk update` installing these skills and hooks, and the global CLI together (Sandy, 2026-10-06: test "with the actual latest published" package)
+  - would require: the release, which follows this plan's close
+  - mitigation: a smoke run right after `pnpm release` — install the published version, `indusk update` a scratch project, and take one small plan from New plan through Build, Accept and `indusk plans land` in the admin; the result is recorded in `current.md`, and a defect opens a bugfix plan whose first failing test is that defect. Before the release, Build Phase 9 reruns the release step with this branch's CLI first on the sessions' PATH, so `plans land` is seen live
+
 ## Checklist
 
 ### Test Phase 1: Every test that can be written over the CLI and the admin's components, red
