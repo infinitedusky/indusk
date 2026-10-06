@@ -1,7 +1,7 @@
 ---
 title: "publish-hygiene"
 date: 2026-10-06
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
