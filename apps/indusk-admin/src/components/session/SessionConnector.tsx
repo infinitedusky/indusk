@@ -64,6 +64,7 @@ export function SessionConnector({ sessionId }: { sessionId: string }) {
           void post("reply", { requestId, allow })
         }
         onStop={() => void post("stop", {})}
+        onSay={(text) => void post("say", { text })}
       />
     </div>
   );

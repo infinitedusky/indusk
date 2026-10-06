@@ -1,5 +1,6 @@
 import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { SessionPanel } from "./SessionPanel";
 
@@ -172,5 +173,33 @@ describe("A21 — the session can be stopped from the panel", () => {
     );
     expect(await button(rendered, "Stop")).toBeUndefined();
     expect(await textOf(rendered)).toContain("Brief written.");
+  });
+});
+
+describe("A1 — the person replies in their own words", () => {
+  it("typing and sending calls onSay with the text, and the person's lines appear", async () => {
+    const onSay = vi.fn();
+    const r = render(
+      <SessionPanel
+        events={[
+          init,
+          { type: "text", text: "What should this do?" },
+          { type: "you", text: "Hold seats." },
+        ]}
+        running
+        onAnswer={vi.fn()}
+        onDecide={vi.fn()}
+        onStop={vi.fn()}
+        onSay={onSay}
+      />,
+    );
+    const { container } = await r;
+    expect(container.textContent).toContain("Hold seats.");
+    const box = container.querySelector("textarea") as HTMLTextAreaElement;
+    await userEvent.fill(box, "Release them after ten minutes.");
+    (await button(r, "Send"))?.click();
+    await vi.waitFor(() =>
+      expect(onSay).toHaveBeenCalledWith("Release them after ten minutes."),
+    );
   });
 });

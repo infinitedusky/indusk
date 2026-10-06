@@ -19,6 +19,8 @@ export interface SessionPanelProps {
   onAnswer: (requestId: string, answers: Record<string, string>) => void;
   onDecide: (requestId: string, allow: boolean) => void;
   onStop: () => void;
+  /** Reply in the person's own words; absent, the panel offers no message box. */
+  onSay?: (text: string) => void;
 }
 
 export function SessionPanel({
@@ -27,8 +29,10 @@ export function SessionPanel({
   onAnswer,
   onDecide,
   onStop,
+  onSay,
 }: SessionPanelProps) {
   const [answered, setAnswered] = useState<Set<string>>(new Set());
+  const [draft, setDraft] = useState("");
   const done = (requestId: string) =>
     setAnswered((prev) => new Set(prev).add(requestId));
 
@@ -67,6 +71,30 @@ export function SessionPanel({
           </li>
         ))}
       </ol>
+      {running && onSay ? (
+        <form
+          className="flex flex-col gap-1"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!draft.trim()) return;
+            onSay(draft);
+            setDraft("");
+          }}
+        >
+          <textarea
+            className="rounded border border-gray-300 p-2"
+            rows={3}
+            placeholder="Reply to Claude"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+          <div>
+            <Button size="sm" type="submit" disabled={!draft.trim()}>
+              Send
+            </Button>
+          </div>
+        </form>
+      ) : null}
     </section>
   );
 }
@@ -104,6 +132,12 @@ function EventView({
       );
     case "text":
       return <p className="whitespace-pre-wrap text-gray-800">{ev.text}</p>;
+    case "you":
+      return (
+        <p className="whitespace-pre-wrap rounded bg-gray-100 p-2 text-gray-900">
+          {ev.text}
+        </p>
+      );
     case "tool":
       return (
         <p className="font-mono text-xs text-gray-500">
