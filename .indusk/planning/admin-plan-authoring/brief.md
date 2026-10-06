@@ -84,6 +84,9 @@ None.
   `workflow-builder`, in the promise-core master.
 - **Approvals of the planning documents.** The test plan and the ADR keep
   their steps.
+- **A personal scratch branch** for ideas and research before they become
+  plans (Sandy, 2026-10-06: later). `.indusk/research/` is that place today,
+  on `main`.
 - Editing documents in place, hosting the admin, more than one session at a
   time.
 
