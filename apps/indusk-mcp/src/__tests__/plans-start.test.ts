@@ -2,12 +2,14 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from
 import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { registerPlanTools } from "../tools/plan-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import {
 	type PlanLifecycleProject,
 	planLifecycleProject,
 } from "./helpers/plan-lifecycle-fixture.js";
 import { git } from "./helpers/test-git.js";
+import { toolCaller } from "./helpers/tool-call.js";
 
 /**
  * promise: a-plan-is-written-on-its-own-branch — admin-plan-authoring A7, A8, A10.
@@ -45,6 +47,15 @@ describe.skipIf(SHOULD_SKIP)("indusk plans start", () => {
 
 		const brief = matter(readFileSync(join(wt, ".indusk", "planning", PLAN, "brief.md"), "utf-8"));
 		expect(brief.data).toMatchObject({ status: "draft", workflow: "feature" });
+	});
+
+	it("A7 — the plan tools read the plan from its worktree, though the trunk has no folder for it", async () => {
+		expect(runCli(p.trunk, ["plans", "start", "feature", PLAN]).code).toBe(0);
+		const tools = toolCaller((server) => registerPlanTools(server, p.trunk));
+		const { json } = await tools.call("get_plan_status", { name: PLAN });
+		expect(json).toMatchObject({
+			worktree: { path: realpathSync(p.worktreeOf(PLAN)), branch: `plan/${PLAN}` },
+		});
 	});
 
 	it("A8 — nothing of the plan is on main, in the trunk's working tree or in its history", () => {
