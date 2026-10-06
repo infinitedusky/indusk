@@ -1,7 +1,7 @@
-import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { gitCommonDirOf } from "../worktree/layout.js";
 
 /**
  * Claude Code's trust for a plan's worktree (admin-plan-authoring; Sandy,
@@ -62,9 +62,6 @@ export function trustLikeProject(
 
 /** The main working tree of the repository `cwd` is in, or `cwd` when git cannot say. */
 export function projectOf(cwd: string): string {
-	const r = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
-		cwd,
-		encoding: "utf-8",
-	});
-	return r.status === 0 ? dirname(r.stdout.trim()) : cwd;
+	const common = gitCommonDirOf(cwd);
+	return common ? dirname(common) : cwd;
 }

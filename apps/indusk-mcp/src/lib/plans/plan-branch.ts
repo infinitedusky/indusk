@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { getTrunkBranches } from "../config.js";
-import { git } from "../git.js";
+import { git, headSha } from "../git.js";
 import { resolvePlanCopies } from "../worktree/plan-worktrees.js";
 
 /**
@@ -105,7 +105,7 @@ export async function mergeIntoTrunk(pb: PlanBranch, message: string): Promise<s
 			`merging ${pb.branch} into ${pb.trunkBranch} failed and was aborted: ${(err as Error).message.trim()}`,
 		);
 	}
-	return git(pb.trunk, "rev-parse", "HEAD");
+	return headSha(pb.trunk);
 }
 
 /** Set frontmatter keys in `path` and commit that file alone on the plan's branch. */
