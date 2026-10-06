@@ -10,9 +10,13 @@ Each entry is a rule and a pointer; the pointer holds the story.
   start, answer and stop sessions through `@infinitedusky/indusk-mcp/session`,
   and plans change through `/plans`; no file in this app writes a plan file,
   spawns a process (beyond the two read-only git readers) or parses Claude's
-  protocol. Every `POST` refuses an `Origin` that is not its `Host`
-  (`sameOrigin`); the daemon listens on 127.0.0.1 only. Guarded by
-  `admin-uses-package-commands.test.ts`. The session panel
+  protocol. Guarded by `admin-uses-package-commands.test.ts`.
+- **Every handler under `app/api` calls `adminOnly(request)` first**: the
+  `Host` must be the admin's own (`isAdminHost`), and a `POST`'s `Origin`
+  must match it. Listening on 127.0.0.1 is not enough: DNS rebinding points
+  another site's name there, and its `Origin` and `Host` agree. Guarded by
+  `admin-hosts.test.ts`, which calls every handler every route module
+  exports. The session panel
   (`components/session/`) renders the events the package's protocol produced
   and sends a person's choices back through the routes; a client component
   imports only *types* from `/session`, whose code is Node's. — see
