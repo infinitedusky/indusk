@@ -1,5 +1,6 @@
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
+import { buildReview, type Review } from "../../lib/build/review.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import {
 	acceptPlan,
@@ -75,6 +76,43 @@ function describeStep(s: BuildStep): string {
 		case "cannot-continue":
 			return `cannot continue: ${s.why}`;
 	}
+}
+
+/** `indusk plans review <name>` — what a person needs to decide whether a built plan may ship. */
+export async function plansReview(cwd: string, name: string, json: boolean): Promise<void> {
+	try {
+		const r = await buildReview(cwd, name);
+		console.info(json ? JSON.stringify(r, null, 2) : describeReview(r));
+	} catch (err) {
+		if (err instanceof BuildPlanUnreadable) {
+			console.error(`Refused: ${err.message}`);
+			process.exit(1);
+		}
+		throw err;
+	}
+}
+
+function describeReview(r: Review): string {
+	const lines = [`${r.plan} — review`, "", "Promises:"];
+	for (const p of r.promises) {
+		lines.push(
+			p.proven
+				? `  ✓ ${p.name} — ${p.rows.map((row) => row.id).join(", ")}`
+				: `  ✗ ${p.name} — unproven: ${p.why}`,
+		);
+	}
+	for (const f of r.falsification) {
+		lines.push("", `${f.phase}:`);
+		for (const row of f.rows) lines.push(`  ${row.id} (${row.state}) ${row.asserts}`);
+		for (const item of f.items) lines.push(`  ${item.done ? "[x]" : "[ ]"} ${item.text}`);
+	}
+	lines.push("", `Files changed: ${r.files.length}`);
+	for (const f of r.files) lines.push(`  ${f.status} ${f.path}`);
+	if (r.skips.length > 0) {
+		lines.push("", "Skipped:");
+		for (const s of r.skips) lines.push(`  ${s.phase} ${s.gate}: ${s.item}`);
+	}
+	return lines.join("\n");
 }
 
 /** `indusk plans land <name>` — an accepted plan's build reaches the trunk. */

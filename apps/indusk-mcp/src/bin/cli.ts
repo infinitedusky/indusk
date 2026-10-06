@@ -868,6 +868,17 @@ plansCmd
 	});
 
 plansCmd
+	.command("review <name>")
+	.description(
+		"What a built plan's review shows: each promise with the tests that prove it, what falsification found and fixed, the files changed, every skipped gate item",
+	)
+	.option("--json", "Print the review as JSON (the admin's panel reads this)")
+	.action(async (name: string, opts: { json?: boolean }) => {
+		const { plansReview } = await import("./commands/plans.js");
+		await plansReview(process.cwd(), name, opts.json === true);
+	});
+
+plansCmd
 	.command("land <name>")
 	.description(
 		"Land an accepted plan: merge the trunk in, run plans.land_checks, merge to the trunk, remove its worktree and branch",
