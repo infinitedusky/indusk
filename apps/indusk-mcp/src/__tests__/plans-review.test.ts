@@ -117,6 +117,7 @@ interface Review {
 	}>;
 	files: Array<{ path: string }>;
 	skips: Array<{ phase: string; gate: string; item: string }>;
+	skippedRituals: Array<{ ritual: string; reason: string }>;
 }
 
 function review(): Review {
@@ -158,6 +159,25 @@ describe.skipIf(SHOULD_SKIP)("indusk plans review", () => {
 				gate: "document",
 				item: "(none needed — seats have no public page yet)",
 			},
+		]);
+	});
+
+	it("A16 — a skipped ritual is shown with its reason", () => {
+		// Found in Build Phase 9's live check: an unattended falsification that
+		// formed no surviving hypothesis skips with its reason, and the review
+		// showed nothing of it.
+		p.commit(
+			wt,
+			{
+				[`${planDir}/impl.md`]: IMPL.replace(
+					"test_purpose: required\n",
+					'test_purpose: required\ncleanup: skipped\ncleanup_reason: "one small file; nothing to decompose"\n',
+				),
+			},
+			"cleanup skipped",
+		);
+		expect(review().skippedRituals).toEqual([
+			{ ritual: "cleanup", reason: "one small file; nothing to decompose" },
 		]);
 	});
 
