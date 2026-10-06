@@ -1,3 +1,5 @@
+import { NewPlanForm } from "@/components/session/NewPlanForm";
+
 interface PerProjectPageProps {
   params: Promise<{ project: string }>;
 }
@@ -13,9 +15,8 @@ interface PerProjectPageProps {
  * re-check of the project path. Trust the layout.
  */
 export default async function PerProjectPage({ params }: PerProjectPageProps) {
-  // Awaiting params is still required by Next 16's dynamic-segment contract,
-  // even though this page doesn't branch on the value.
-  await params;
+  // New plan (admin-plan-authoring A1) needs the project's name.
+  const { project } = await params;
 
   return (
     <div className="flex h-full flex-col items-center justify-center text-center text-gray-500">
@@ -24,6 +25,9 @@ export default async function PerProjectPage({ params }: PerProjectPageProps) {
         Pick a plan from the sidebar to see its phases, trajectory rows, and
         falsification log.
       </p>
+      <div className="mt-6 w-full max-w-sm">
+        <NewPlanForm project={project} />
+      </div>
     </div>
   );
 }
