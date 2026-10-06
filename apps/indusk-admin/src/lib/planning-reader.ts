@@ -308,13 +308,14 @@ async function readPlanFolder(
 
   // The plan bar's position: the same facts `list_plans` and the retrospective
   // gate read, composed by the lifecycle module rather than here.
-  const readiness =
+  // The impl read whole, frontmatter included: readiness reads its skip keys,
+  // and the position reads `accepted:` (admin-plan-authoring).
+  const implRaw =
     impl !== null && !isMalformed(impl)
-      ? checkRetrospectiveReadiness(
-          planDir,
-          readFileSync(join(planDir, "impl.md"), "utf-8"),
-        )
+      ? readFileSync(join(planDir, "impl.md"), "utf-8")
       : null;
+  const readiness =
+    implRaw !== null ? checkRetrospectiveReadiness(planDir, implRaw) : null;
   // A closed plan may be back in motion — reopened by an incident, or in
   // `monitor` — derived from files by the same function `list_plans` reads.
   const after =
@@ -323,7 +324,7 @@ async function readPlanFolder(
       : undefined;
   const position = derivePlanPosition({
     summary: parsed,
-    impl: implData ? parseImplString(implData.content) : null,
+    impl: implRaw !== null ? parseImplString(implRaw) : null,
     readiness,
     archived,
     ...(after ? { afterClose: after } : {}),
