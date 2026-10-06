@@ -90,6 +90,7 @@ dusk/
 - Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
 - Admin plan authoring: `plans start → approve → build → accept → land`, through the developer's own `claude`; nothing lands unaccepted — see `/decisions/admin-plan-authoring`
+
 ## Known Gotchas
 
 - **A safety argument written in a comment is not enforced by the code around it** — grep for comments asserting an invariant and check the control flow delivers it; two workbench-sync paths each reported the worst case as the most reassuring one. — see `/reference/cli/workbench`
