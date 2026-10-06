@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import matter from "gray-matter";
 import { afterEach, describe, expect, it } from "vitest";
@@ -38,12 +38,26 @@ afterEach(() => {
 });
 
 /** The fixture, with a promise domain declared so declare and check have one. */
-function withDomain(wb: VersionedWorkbench): VersionedWorkbench {
+function withDomain(
+	wb: VersionedWorkbench,
+	opts: { worktreeConfigs?: boolean } = {},
+): VersionedWorkbench {
 	made.push(wb);
 	const path = join(wb.root, ".indusk", "config.json");
 	const config = JSON.parse(readFileSync(path, "utf-8"));
 	config.promises = { domains: [DOMAIN] };
 	writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`);
+	// Real workbenches configure each repo for the worktree extension; the
+	// plan's code worktree is made through it when they do.
+	if (opts.worktreeConfigs !== false) {
+		mkdirSync(join(wb.root, ".indusk", "worktree-configs"), { recursive: true });
+		for (const repo of wb.repos) {
+			writeFileSync(
+				join(wb.root, ".indusk", "worktree-configs", `${repo.name}.json`),
+				`${JSON.stringify({ trunk_branch: "main", base_branch: "main", copy_files: [], append_files: [], apply_commits: [] }, null, 2)}\n`,
+			);
+		}
+	}
 	git(wb.root, ["add", "-A"]);
 	git(wb.root, ["commit", "-qm", "promise domain"]);
 	return wb;
@@ -162,6 +176,15 @@ describe.skipIf(SHOULD_SKIP).each(LAYOUTS)("a plan in a workbench — %s", (_lab
 		expect(r.code).not.toBe(0);
 		expect(out(r)).toContain("code.json");
 		expect(out(r)).toContain(readCode(wb).worktree);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("a plan in a workbench whose repo has no worktree config", () => {
+	it("A1 — still starts, its code on a plain worktree of the repo on plan/<name>", () => {
+		const wb = withDomain(LAYOUTS[1][1](), { worktreeConfigs: false });
+		const r = runCli(wb.root, ["plans", "start", "feature", PLAN]);
+		expect(r.code, out(r)).toBe(0);
+		expect(git(codeRoot(wb), ["branch", "--show-current"])).toBe(`plan/${PLAN}`);
 	});
 });
 
