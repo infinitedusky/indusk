@@ -933,6 +933,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:32:16.249Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 29c41108 — eval: review commit ab022bba
 
 **Session ID**: 29c41108-8e1f-4765-a539-278d4ec8ff63
@@ -960,6 +975,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:54:54.601Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 4b8a3fc4 — eval: scorecard-extractor every-brace fix (c77d4a51)
 
 **Session ID**: 4b8a3fc4-fb46-41c6-af94-b9b88d2dd86c
@@ -987,6 +1017,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:56:39.872Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 15948a2b — eval: scoring commit dc10df4e (promise-timeline tests)
 
 **Session ID**: 15948a2b-b0eb-4b9d-9013-fa3c7a8ffdd3
@@ -1014,6 +1059,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:58:06.817Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 388f6e2c — eval: test-kinds Test Phase 1 commit
 
 **Session ID**: 388f6e2c-cfd2-432a-b041-470605451a2e
@@ -1041,6 +1101,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:58:09.319Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session cfbbcf52 — eval: scoring commit 77bf204e (admin test-kinds A4-A12)
 
 **Session ID**: cfbbcf52-f843-472b-ac17-7769c82e57ad
@@ -1068,6 +1143,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:58:13.175Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 50c6541c — eval: scoring commit 58862ba3 (test-kinds Phase 1)
 
 **Session ID**: 50c6541c-63f6-4b31-a8c4-6324e8d0aa2c
@@ -1095,6 +1185,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T15:58:22.875Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 6b7fa52c — eval agent: scoring commit d849141c (test-kinds Build Phase 1)
 
 **Session ID**: 6b7fa52c-7b75-45cc-820f-506a83bf03ad
@@ -1122,6 +1227,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T16:16:55.095Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 2687ea27 — eval: review commit ef22f48e
 
 **Session ID**: 2687ea27-2e0a-4e87-a9b9-dcf54b4e657a
@@ -1149,6 +1269,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T16:16:55.790Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session d7e68010 — eval agent: scoring commit ef22f48e
 
 **Session ID**: d7e68010-248f-4c70-a645-2034f4bd915d
@@ -1176,6 +1311,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T16:16:57.096Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 8ebb5a3d — eval agent: scoring commit 832a3d03
 
 **Session ID**: 8ebb5a3d-21b1-4791-9fe3-ece2419881c9
@@ -1203,6 +1353,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T16:18:10.021Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 526727a1 — eval: scoring commit 1426e82c (release 1.61.0)
 
 **Session ID**: 526727a1-5333-47ac-8396-cb3aef774bb2
@@ -1545,12 +1710,48 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-06T19:01:47.600Z
 **Branch**: plan/admin-plan-authoring
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 0d5cca27 — eval: review commit d521d648 (retro test-kinds landed on main)
 
 **Session ID**: 0d5cca27-6f2b-4c6f-96f9-04e22f088584
 **Last updated**: 2026-10-05T18:58:56.072Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session b83bee7d — eval: publish-hygiene Test Phase 1 close (b72941f6)
+
+**Session ID**: b83bee7d-90f6-4963-a61d-1a0a3bdaf2f1
+**Last updated**: 2026-10-06T20:23:12.982Z
+**Branch**: plan/publish-hygiene
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/publish-hygiene
 
 ### In Flight
 
