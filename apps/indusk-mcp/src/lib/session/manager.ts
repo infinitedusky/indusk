@@ -169,6 +169,21 @@ export class SessionManager {
 		h.answered.add(reply.requestId);
 	}
 
+	/**
+	 * Say something to session `id` in the person's own words — a planning
+	 * conversation is more than its multiple-choice questions. Recorded as a
+	 * `you` event, so the panel shows both sides.
+	 */
+	say(id: string, text: string): void {
+		const h = this.held.get(id);
+		if (!h) throw new Error(`no session ${id} is running`);
+		if (!text.trim()) throw new Error("a message to the session cannot be empty");
+		h.session.say(text);
+		const ev: StartedEvent = { type: "you", text };
+		h.events.push(ev);
+		for (const listen of h.listeners) listen(ev);
+	}
+
 	async stop(id: string, graceMs?: number): Promise<void> {
 		const h = this.held.get(id);
 		if (!h) throw new Error(`no session ${id} is running`);

@@ -186,3 +186,31 @@ describe("A21 — a question can be declined, as a build declines every one", ()
 		expect(() => m.reply(id, { requestId: "q2", allow: true })).toThrow(/answer it or decline it/);
 	});
 });
+
+describe("A1 — the person replies in their own words, and the panel shows it", () => {
+	it("say sends the text to the session and records it as the person's event", () => {
+		const dir = mkdtempSync(join(tmpdir(), "session-manager-"));
+		dirs.push(dir);
+		const said: string[] = [];
+		const m = new SessionManager({
+			recordPath: join(dir, "r.json"),
+			start: (opts) => ({
+				pid: 1,
+				kind: opts.kind,
+				cwd: opts.cwd,
+				say: (text) => said.push(text),
+				answer: () => {},
+				decide: () => {},
+				stop: async () => {},
+				done: new Promise(() => {}),
+			}),
+		});
+		const { id } = m.start({ ...planning, ...meta });
+		const seen: unknown[] = [];
+		m.subscribe(id, (ev) => seen.push(ev));
+		m.say(id, "Looks good — accept the brief.");
+		expect(said).toEqual(["Looks good — accept the brief."]);
+		expect(seen).toContainEqual({ type: "you", text: "Looks good — accept the brief." });
+		expect(() => m.say(id, "   ")).toThrow(/empty/);
+	});
+});

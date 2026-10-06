@@ -28,6 +28,8 @@ export type StartedEvent =
 	| SessionEvent
 	/** Trusted like its project just now, or still untrusted: its allow-list is ignored, so more is asked. */
 	| { type: "trusted" | "untrusted"; cwd: string }
+	/** What the person said, in their own words, through the manager's `say`. */
+	| { type: "you"; text: string }
 	| { type: "exit"; code: number | null; stderr: string };
 
 export interface SessionOptions {
