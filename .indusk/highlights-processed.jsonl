@@ -408,3 +408,10 @@
 {"id":"h-20261006-001","processedAt":"2026-10-06T15:01:58.070Z","action":"skipped","detail":"recorded in admin-plan-authoring/brief.md (status: accepted) and the six new .indusk/promises/*.md files it declared"}
 {"id":"h-20261006-002","processedAt":"2026-10-06T15:08:48.150Z","action":"skipped","detail":"recorded in admin-plan-authoring/test-plan.md (status: accepted) — 29-assertion summary is plan-scoped content already evaluated across commits c9c7120b and 499f108f"}
 {"id":"h-20261006-003","processedAt":"2026-10-06T15:23:04.909Z","action":"skipped","detail":"recorded in admin-plan-authoring/adr.md (status: accepted) — design content covered; see separate lesson written for the CLAUDE.md pointer-timing defect this commit repeats"}
+{"id":"h-20261006-005","processedAt":"2026-10-06T19:23:31.150Z","action":"wrote-episode","detail":"origin-header-check-is-not-same-origin-under-dns-rebinding"}
+{"id":"h-20261006-006","processedAt":"2026-10-06T19:23:32.047Z","action":"wrote-episode","detail":"test-every-route-is-guarded-by-enumerating-exports-not-a-hand-list"}
+{"id":"h-20261006-007","processedAt":"2026-10-06T19:23:32.996Z","action":"wrote-episode","detail":"falsify-a-tool-you-dont-own-against-the-real-tool-not-assumption"}
+{"id":"h-20261006-008","processedAt":"2026-10-06T19:23:34.044Z","action":"wrote-episode","detail":"two-correct-rules-can-contradict-fix-symptom-route-cause-where-visible"}
+{"id":"h-20261006-009","processedAt":"2026-10-06T19:23:35.094Z","action":"wrote-episode","detail":"advisory-lesson-violated-repeatedly-needs-a-pretooluse-enforcer"}
+{"id":"h-20261006-010","processedAt":"2026-10-06T19:23:35.820Z","action":"wrote-episode","detail":"falsify-security-boundaries-before-the-live-check-not-after"}
+{"id":"h-20261006-004","processedAt":"2026-10-06T19:23:51.829Z","action":"skipped","detail":"audit status numbers (3 deferred rows, 0 blocked) — not a durable rule, no lesson warranted"}
