@@ -311,7 +311,7 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 #### Build Phase 6 Document
 
-- [x] `apps/docs/src/reference/admin-ui/sessions.md`: the panel, with a screenshot of a question — the panel is described in words. The screenshot was taken (the real component, styled, in the admin's test browser) but not committed: `.gitignore` ignores every `*.png`, and overriding a repository-wide rule is Sandy's call, raised with him; the image is kept in the session scratchpad
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: the panel, with a screenshot of a question — the panel is described in words. The screenshot was taken (the real component, styled, in the admin's test browser) but not committed: `.gitignore` ignores every `*.png`, and overriding a repository-wide rule is Sandy's call, raised at this phase's close; the image is kept in the session scratchpad
 
 ### Build Phase 7: Build, review, accept, release
 
