@@ -105,8 +105,8 @@ pointer; the pointer holds the story.
   `Code-Commit:` and is never queued for eval. **Its gate covers tool surfaces,
   not intentions**; the invoker fails loud (exit 2, non-zero, timeout all
   block). — see `/reference/cli/run`
-- **`lib/build/`** holds an unattended build's decisions: `nextBuildStep`
-  (pure) and the judgement-item rule Dawn's loop shares. — see
+- **`lib/build/`**: `nextBuildStep` (pure), a runner that never starts the
+  retrospective, sessions under `INDUSK_GATE_POLICY=auto`. — see
   `/reference/cli/plans`
 - **`indusk verify`** (`lib/verify/`): detects and never repairs — premature
   checkoff, skipped test-first duty (applied to phase N directly), goalpost
