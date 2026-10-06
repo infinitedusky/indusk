@@ -356,7 +356,7 @@ next step in code; and nothing lands before it is accepted ([ADR](adr.md)).
 
 #### Build Phase 8 Document
 
-- [ ] `apps/docs/src/reference/skills/work.md` and `retrospective.md`: the unattended section and landing by `plans land`
+- [x] `apps/docs/src/reference/skills/work.md` and `retrospective.md`: the unattended section and landing by `plans land`
 
 ### Build Phase 9: The whole way, once
 
