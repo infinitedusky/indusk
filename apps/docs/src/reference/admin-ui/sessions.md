@@ -51,6 +51,10 @@ The admin daemon, the one `indusk ui` starts, holds the sessions through one `Se
 
 The daemon listens on `127.0.0.1` only, and every route, reads included, answers only on the admin's own hosts: `127.0.0.1`, `localhost`, `[::1]` and the Caddy route `indusk.dawn`, on any port. Listening on loopback is not enough by itself. Another site can point its own name at `127.0.0.1` (DNS rebinding), and its page then talks to the daemon with an `Origin` and a `Host` that agree. Checking the host refuses it. Every `POST` is also refused unless its `Origin` is the host the request was sent to, so another site's page in the developer's browser cannot start a session, answer one, or accept a plan.
 
+## In a workbench
+
+A workbench plan's documents are at the workbench root and its code is in a worktree of the repo its `code.json` names. A session for it runs at the root, so the workbench's own hooks judge every checkoff, and adds the code worktree with `--add-dir`. A build session may write in either place: in the code worktree for the code, and at the root to check items off. Anywhere else is refused, as in normal mode.
+
 ## Trust
 
 Claude Code ignores a project's own allow-list until the project is trusted (`hasTrustDialogAccepted` in `~/.claude.json`), and each plan's worktree is a new path it has never seen. So before a session starts in a worktree, InDusk trusts the worktree like its project: when Claude Code already trusts the project, the worktree gets `hasTrustDialogAccepted: true` and nothing else in the file changes. A project nobody trusted is never trusted on their behalf. Such a session still runs, but it ignores its own allow-list, so more is asked. The session's first event says which happened (`trusted` or `untrusted`), and the panel shows it. The write replaces the file in one rename. Claude Code also writes this file, so a write of its own landing in the same few milliseconds would be lost; that happens once per new worktree.
