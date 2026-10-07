@@ -11,6 +11,8 @@ test_phases: required
 test_levels: required
 test_purpose: required
 gate_policy: ask
+accepted: 2026-10-07T21:16:28.675Z
+accepted_by: person
 ---
 
 # telemetry stop stops what it started
