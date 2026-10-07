@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { evalDir } from "../bookkeeping/roots.js";
 import { fixtureDir, guineaPigHappyPathSteps, realGateScripts } from "./harness.test-support.js";
 import { runLoop } from "./loop.js";
 
@@ -41,8 +42,18 @@ interface QueueWorktree {
 	poisonMarker: string;
 }
 
+const originalHome = process.env.INDUSK_HOME;
+afterEach(() => {
+	if (originalHome === undefined) delete process.env.INDUSK_HOME;
+	else process.env.INDUSK_HOME = originalHome;
+});
+
 async function makeQueueWorktree(prefix: string): Promise<QueueWorktree> {
 	const root = await mkdtemp(join(tmpdir(), `${prefix}-`));
+	// The queue lives in the project's home, outside the checkout
+	// (bookkeeping-lives-where-it-is-read D3): a home of the test's own,
+	// inherited by the drain the hook spawns.
+	process.env.INDUSK_HOME = await mkdtemp(join(tmpdir(), `${prefix}-home-`));
 	await cp(fixtureDir, root, { recursive: true });
 	// Anchor InDusk state in-tree so the queue resolves here, not an ancestor.
 	await mkdir(join(root, ".indusk", "eval"), { recursive: true });
@@ -75,9 +86,7 @@ async function runHappyPath(root: string): Promise<void> {
 }
 
 async function readPending(root: string): Promise<Array<Record<string, unknown>>> {
-	const raw = await readFile(join(root, ".indusk", "eval", "pending.jsonl"), "utf8").catch(
-		() => "",
-	);
+	const raw = await readFile(join(evalDir(root), "pending.jsonl"), "utf8").catch(() => "");
 	return raw
 		.split("\n")
 		.filter((l) => l.trim())

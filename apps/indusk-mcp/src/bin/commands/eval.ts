@@ -7,13 +7,13 @@
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-
+import { evalDir } from "../../lib/bookkeeping/roots.js";
 import { getAllFindings, getUnresolvedFindings, markFinding } from "../../lib/eval/findings.js";
 import { readAllEntries } from "../../lib/eval/log-reader.js";
 import { type EvalScorecard, isScorecard } from "../../lib/eval/types.js";
 
 function getEvalLogPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "eval", "results.log");
+	return join(evalDir(projectRoot), "results.log");
 }
 
 export async function evalSummary(
@@ -222,7 +222,7 @@ export async function evalBaseline(
 	const taskPrompt = readFileSync(taskPath, "utf-8");
 	const taskName = basename(taskPath, ".md").replace(/\s+/g, "-");
 
-	const worktreePath = join(projectRoot, ".indusk", "eval", "baseline-worktree");
+	const worktreePath = join(evalDir(projectRoot), "baseline-worktree");
 
 	console.info("Setting up baseline worktree...");
 

@@ -10,6 +10,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { evalDir } from "../bookkeeping/roots.js";
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
 import { markProjectId } from "../promises/config.js";
@@ -47,11 +48,11 @@ interface EvaluatorSession {
 }
 
 function getSessionPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "eval", "evaluator-session.json");
+	return join(evalDir(projectRoot), "evaluator-session.json");
 }
 
 function getEvalLogPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "eval", "results.log");
+	return join(evalDir(projectRoot), "results.log");
 }
 
 function readSession(projectRoot: string): EvaluatorSession | null {

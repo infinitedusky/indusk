@@ -33,14 +33,14 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { COMMIT_RE, commitAnchor } from "./_commit-anchor.js";
-import { resolveStateAndGitPaths } from "./_hook-paths.js";
+import { projectHome, resolveStateAndGitPaths } from "./_hook-paths.js";
 
-// System log — writes to .indusk/eval/system.log under the InDusk state path.
-// In workbench mode this lands at the workbench root (where .indusk/ lives),
-// NOT at the wrapped repo's path. See `_hook-paths.js` for the rationale.
+// System log — writes to system.log in the project's eval folder, under its
+// home outside every checkout (bookkeeping-lives-where-it-is-read D3), the same
+// from the workbench root, the main checkout and any plan worktree.
 function syslog(statePath, msg) {
 	try {
-		const logDir = resolve(statePath || ".", ".indusk", "eval");
+		const logDir = resolve(projectHome(statePath || "."), "eval");
 		mkdirSync(logDir, { recursive: true });
 		appendFileSync(resolve(logDir, "system.log"), `${new Date().toISOString()} ${msg}\n`);
 	} catch {
@@ -333,7 +333,7 @@ syslog(statePath, `evaluatorRunnerPath: ${evaluatorRunnerPath ?? "NOT FOUND"}`);
 if (!evaluatorRunnerPath) {
 	// Can't find the package — log error and exit
 	const { mkdirSync, appendFileSync } = await import("node:fs");
-	const logPath = resolve(statePath, ".indusk", "eval", "results.log");
+	const logPath = resolve(projectHome(statePath), "eval", "results.log");
 	mkdirSync(dirname(logPath), { recursive: true });
 	const entry = JSON.stringify({
 		version: 1,
@@ -382,7 +382,7 @@ syslog(
 	`spawning evaluator — module: ${useModule}, function: ${useFunction}, changeId: ${changeId}`,
 );
 
-const syslogPath = resolve(statePath, ".indusk", "eval", "system.log");
+const syslogPath = resolve(projectHome(statePath), "eval", "system.log");
 // A plan written on main instead of its own branch is marked, never refused
 // (admin-plan-authoring, ADR D8): the evaluator's process marks the commit
 // first, on the same tracer, so the marks flush with the evaluation's. A
@@ -410,7 +410,7 @@ function syslog(msg) {
 // failure is never silent again.
 function writeErrorResult(message) {
   try {
-    const logPath = join(${JSON.stringify(statePath)}, ".indusk", "eval", "results.log");
+    const logPath = join(${JSON.stringify(resolve(projectHome(statePath), "eval"))}, "results.log");
     mkdirSync(dirname(logPath), { recursive: true });
     const entry = JSON.stringify({
       version: 1,
@@ -495,7 +495,7 @@ syslog(statePath, `evaluator spawned — source: ${source}, pid: ${child.pid}`);
 if (cliSource !== null) {
 	// CLI mode — write a brief notice to stderr and exit
 	process.stderr.write(
-		`📊 Eval evaluator spawned (source=${source}) for ${changeId.slice(0, 8)}. Results will appear in .indusk/eval/results.log\n`,
+		`📊 Eval evaluator spawned (source=${source}) for ${changeId.slice(0, 8)}. Results will appear in ${resolve(projectHome(statePath), "eval", "results.log")} (\`indusk eval\`)\n`,
 	);
 } else {
 	// Hook mode — output structured hook response
@@ -507,7 +507,7 @@ if (cliSource !== null) {
 	});
 	process.stdout.write(output);
 	process.stderr.write(
-		`📊 Eval evaluator spawned in background for ${changeId.slice(0, 8)}. Results will appear in .indusk/eval/results.log\n`,
+		`📊 Eval evaluator spawned in background for ${changeId.slice(0, 8)}. Results will appear in ${resolve(projectHome(statePath), "eval", "results.log")} (\`indusk eval\`)\n`,
 	);
 }
 

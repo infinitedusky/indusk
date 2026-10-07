@@ -26,6 +26,7 @@ import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import { evalDir } from "../bookkeeping/roots.js";
 import { markPromise } from "../promises/mark.js";
 import { liveOtlpEndpointSync } from "../telemetry/status.js";
 import type { EvalErrorEntry, EvalScorecard } from "./types.js";
@@ -35,7 +36,7 @@ const SERVICE_NAME = "indusk-eval-agent";
 
 function syslog(projectRoot: string, msg: string): void {
 	try {
-		const logDir = resolve(projectRoot, ".indusk", "eval");
+		const logDir = evalDir(projectRoot);
 		mkdirSync(logDir, { recursive: true });
 		appendFileSync(resolve(logDir, "system.log"), `${new Date().toISOString()} ${msg}\n`);
 	} catch {

@@ -8,6 +8,7 @@
 
 import { spawn } from "node:child_process";
 import { join } from "node:path";
+import { evalDir } from "../bookkeeping/roots.js";
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { markProjectId } from "../promises/config.js";
 import { ingestScorecard } from "./findings.js";
@@ -49,7 +50,7 @@ export interface EvaluatorRunOptions {
 }
 
 function getEvalLogPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "eval", "results.log");
+	return join(evalDir(projectRoot), "results.log");
 }
 
 async function postTelemetry(endpoint: string, scorecard: EvalScorecard): Promise<void> {
