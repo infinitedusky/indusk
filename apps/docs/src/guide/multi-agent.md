@@ -117,8 +117,15 @@ The `## Project (shared)` anchor section is editable by any agent. Use it for cr
 InDusk never leaves a checkout dirty with its own records (bookkeeping-lives-where-it-is-read):
 
 - **Notes people read** — `current.md` and lessons — are written to the main checkout and committed on `main` as they are written, in a commit of their own (`chore(indusk): …`), from any worktree. Only those files go in the commit: anything you have staged stays staged.
-- **InDusk's machine state** — the highlights queue, which highlights were processed, evaluation results — lives in the project's home outside every checkout, `~/.indusk/projects/<project>/`, the same from every worktree, and never in git. `indusk update` moves an older project's tracked copies there.
+- **InDusk's machine state** — the highlights queue, which highlights were processed, evaluation results — lives in the project's home outside every checkout, `~/.indusk/projects/<project>-<hash>/`, the same from every worktree, and never in git. The hash is taken from the main checkout's path, so two clones of one project on one machine keep separate homes.
 - **A plan's own records** — its phase boundaries, its verify ledger — stay on its branch.
+
+Several sessions and evaluators read that one home at once, so:
+
+- **An evaluator holds the highlights it is offered.** Two commits seconds apart start two evaluators; the second is not offered what the first is turning into lessons. The hold ends when the highlight is marked processed, or after 30 minutes if the evaluator died, and the highlight is offered again.
+- **Each checkout keeps its own evaluator session**, resumed only from that checkout.
+
+**Moving an older project.** `indusk update` moves the tracked highlights and `.indusk/eval/` of the main checkout and of every plan worktree into the home. A highlight already there is recognised by what it says; one whose id another highlight already has gets a new id. A plan branch that still tracks the queue is handled when it lands: `indusk plans land` moves its queue into the home and takes the file out of the branch before bringing `main` in.
 
 ## Worktree visibility and worktree-per-plan
 

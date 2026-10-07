@@ -6,7 +6,7 @@ Before highlights, the working agent called `add_lesson` directly at trigger poi
 
 ## File Layout
 
-Highlights live in the project's home, outside every checkout: `~/.indusk/projects/<project>/` (`$INDUSK_HOME/projects/<project>/` when `INDUSK_HOME` is set). `<project>` is the project's id: its configured `graphiti.groupId`, or its main checkout's folder name with anything but letters, digits and `_` turned into `_`. Every checkout of a project, the main one and every plan worktree, reads and writes the same two files, so a highlight processed for a commit in one worktree is never offered again in another. Neither file is in git; `indusk update` moves a project's older `.indusk/highlights*.jsonl` there and takes them out of git (bookkeeping-lives-where-it-is-read).
+Highlights live in the project's home, outside every checkout: `~/.indusk/projects/<project>-<hash>/` (under `$INDUSK_HOME` when it is set). `<project>` is the project's id: its configured `graphiti.groupId`, or its main checkout's folder name with anything but letters, digits and `_` turned into `_`. `<hash>` is the first 8 hex characters of the sha256 of the main checkout's real path, so two clones of one project keep separate homes. Every checkout of a project, the main one and every plan worktree, reads and writes the same two files, so a highlight processed for a commit in one worktree is never offered again in another. Neither file is in git; `indusk update` moves a project's older `.indusk/highlights*.jsonl` there and takes them out of git (bookkeeping-lives-where-it-is-read).
 
 | File | Purpose |
 |------|---------|
@@ -91,6 +91,8 @@ highlights_unprocessed({})
 ```
 
 Returns an array of `Highlight` objects. Order is the order they were written. The eval agent iterates this list at the start of its run.
+
+What it returns is held for the calling session (its MCP server) for 30 minutes: a second evaluator running at the same time is not offered those highlights. Marking one processed ends its hold; a hold that lapses (the evaluator died) offers the highlight again.
 
 ### `highlight_mark_processed`
 
