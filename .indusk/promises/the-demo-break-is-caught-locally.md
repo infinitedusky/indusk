@@ -2,11 +2,13 @@
 name: the-demo-break-is-caught-locally
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: admin
 owner: demo-app-template
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/bin/commands/demo.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/demo-command.test.ts
 incidents: []
 ---
 
@@ -14,3 +16,4 @@ Turning on the seat-holds example's fault switch makes its promise show broken i
 
 ## History
 - 2026-10-07 — declared (demo-app-template), from its planning conversation.
+- 2026-10-07 — enforced, confirmed for demo-app-template: proven by row A7.

@@ -26,7 +26,6 @@ workflow: feature
 
 1. **`the-demo-app-starts-with-its-promise-holding`** (state). Copying the seat-holds example and running its start command gives a project that runs locally: a page for holding and booking seats, one promise already marked and tested, and that promise shown holding in the admin.
 2. **`the-demo-break-is-caught-locally`** (state). Turning on the seat-holds example's fault switch makes its promise show broken in the admin within seconds, with the span that broke it, and it stays broken after the switch is off, until the break is recorded and fixed.
-3. **`the-deployed-demo-page-answers`** (state). After the seat-holds example is deployed to Fly from its own config, its page answers at the deployed address.
 
 ### Existing promises
 
@@ -47,7 +46,7 @@ None.
 - **A production break.** The Fly config ships in the example and its deployed page is promised to answer; the break in production is the demo's second act, with [server-provisioning](../server-provisioning/brief.md).
 - **Recording the break as an incident without a command.** That is [incident-recording](../incident-recording/brief.md).
 - **Seeing the break in the editor.** That is the VS Code extension, its own plan.
-- **The example's own promise**, `a-held-seat-is-released-in-time` (a seat held and not booked is released when its hold window passes; the window is a few seconds in the demo). It lives in the example's registry, not InDusk's; this plan ships it, and the planner adds more on camera.
+- **The example's own promises**, `a-held-seat-is-released-in-time` (a seat held and not booked is released when its hold window passes; the window is a few seconds in the demo) and `the-deployed-demo-page-answers` (after the example is deployed to Fly from its own config, its page answers at the deployed address). They live in the example's registry, not InDusk's; this plan ships them, and the planner adds more on camera. The deploy promise was made here first and moved to the example's registry at Build Phase 4 (2026-10-07): the code that keeps it is the example's Dockerfile and `fly.toml`, and a copied example may carry only its own tokens.
 
 ## Depends On
 

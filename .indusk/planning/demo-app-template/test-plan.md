@@ -43,7 +43,7 @@ Changed in the live check (Sandy, 2026-10-07): a promise that says "never" is br
 
 ### `the-deployed-demo-page-answers` — After the seat-holds example is deployed to Fly from its own config, its page answers at the deployed address.
 
-A broad promise on purpose (Sandy, 2026-10-07): it covers an outcome that can break many ways. It is split into narrower promises only when a break shows it covers two outcomes.
+A broad promise on purpose (Sandy, 2026-10-07): it covers an outcome that can break many ways. It is split into narrower promises only when a break shows it covers two outcomes. Moved to the example's own registry at Build Phase 4: the code that keeps it is the example's Dockerfile and `fly.toml`.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
