@@ -17,6 +17,7 @@ dusk/
 ├── packages/              # telemetry-binaries-* — platform-split jaeger + otelcol
 ├── .claude/skills/        # Installed skills — package-owned, synced from apps/indusk-mcp/skills/
 ├── .claude/lessons/       # Lessons registry — titles are the rules; a guarded one reaches you from its enforcer
+├── examples/seat-holds/   # The demo example: one promise, broken on cue; its own InDusk project, tested with the workspace
 ├── docker/                # Dockerfiles (always-on image)
 ├── biome.json             # Quality ratchet — see biome-rationale.md for per-rule why
 ├── vitest.config.ts       # Workspace projects; apps inherit via extends
