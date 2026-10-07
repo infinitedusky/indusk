@@ -1,4 +1,6 @@
-import { resolve } from "node:path";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { configDefaults, defineConfig } from "vitest/config";
 import { SYSTEM } from "./vitest.tiers";
 
@@ -14,6 +16,14 @@ process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART = "1";
 // installed globally, not the code under test — which is also why the switch
 // above did nothing until it was here (test-daemons-never-leak).
 process.env.INDUSK_BIN ??= `node ${resolve(__dirname, "dist/bin/cli.js")}`;
+// Tests never write the developer's own InDusk home. Since
+// bookkeeping-lives-where-it-is-read, a project's highlights and evaluation
+// results live under `<INDUSK_HOME>/projects/<project>/`, so a test that forgot
+// its own home wrote a folder per temporary project into ~/.indusk/projects/
+// (over two hundred in one afternoon). Assigned, not `??=`: a developer's
+// exported INDUSK_HOME must not let the suite write there either. A test that
+// needs a home of its own still sets one.
+process.env.INDUSK_HOME = mkdtempSync(join(tmpdir(), "indusk-suite-home-"));
 
 /**
  * The everyday suite: every file in parallel. The blanket

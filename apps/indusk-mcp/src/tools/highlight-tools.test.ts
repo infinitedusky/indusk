@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { bookkeepingRoots } from "../lib/bookkeeping/roots.js";
 import { registerHighlightTools } from "./highlight-tools.js";
 
 interface RegisteredTool {
@@ -47,7 +48,7 @@ describe("T5: highlight MCP tool is registered and calls writeHighlight with tag
 		expect(names).toEqual(["highlight", "highlight_mark_processed", "highlights_unprocessed"]);
 	});
 
-	it("the `highlight` tool handler writes to .indusk/highlights.jsonl with the given inputs", async () => {
+	it("the `highlight` tool handler writes to the project's highlights.jsonl, in its home, with the given inputs", async () => {
 		const server = new MockMcpServer();
 		// biome-ignore lint/suspicious/noExplicitAny: test double
 		registerHighlightTools(server as any, projectRoot);
@@ -68,7 +69,7 @@ describe("T5: highlight MCP tool is registered and calls writeHighlight with tag
 		expect(parsed.id).toMatch(/^h-\d{8}-\d{3}$/);
 
 		// File now exists with the entry
-		const path = join(projectRoot, ".indusk", "highlights.jsonl");
+		const path = join(bookkeepingRoots(projectRoot).home, "highlights.jsonl");
 		expect(existsSync(path)).toBe(true);
 		const lines = readFileSync(path, "utf-8")
 			.split("\n")

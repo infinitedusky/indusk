@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { evaluatorPermissionArgs } from "../lib/eval/permissions.js";
 
 /**
  * T3 — eval-agent-mcp-access Phase 4 regression test.
@@ -122,26 +123,26 @@ describe("T3: resume prompt reaches the Step 4 highlights instructions", () => {
 
 	// T7 (Phase 5 falsification, H16): source-grep regression for the
 	// April 1.23.x MCP-access flags. If anyone refactors persistent-evaluator's
-	// args list and removes --mcp-config or bypassPermissions, the inner
-	// Claude has no MCP tool surface and Step 4 fires into a void — the
+	// args list and removes --mcp-config, or stops allowing InDusk's tools, the
+	// inner Claude has no MCP tool surface and Step 4 fires into a void — the
 	// April-2026 bug returns silently. T3 pins the prompt shape but not the
-	// spawn flags; T7 fills the gap.
-	it("T7: persistent-evaluator.ts contains both --mcp-config AND bypassPermissions literal strings", () => {
-		expect(persistentSource).toContain("--mcp-config");
-		expect(persistentSource).toContain("bypassPermissions");
-		// Both flags should appear in both branches (resume + fresh) of
-		// buildArgsAndPrompt. We don't pin "both branches" strictly — just
-		// the presence somewhere. The args literal must reference both.
+	// spawn flags; T7 fills the gap. Until bookkeeping-lives-where-it-is-read it
+	// pinned `bypassPermissions`, which also let the evaluator stash and check
+	// out files in a live worktree; the tools are now allowed by name
+	// (`lib/eval/permissions.ts`), and that plan's A8 runs a real evaluator
+	// that reaches them.
+	it("T7: persistent-evaluator.ts passes --mcp-config and the evaluator's permissions at both spawn sites, InDusk's tools allowed", () => {
 		const mcpConfigCount = (persistentSource.match(/--mcp-config/g) ?? []).length;
-		const bypassCount = (persistentSource.match(/bypassPermissions/g) ?? []).length;
+		const permissionsCount = (persistentSource.match(/evaluatorPermissionArgs\(\)/g) ?? []).length;
+		expect(mcpConfigCount, "expected --mcp-config in both spawn-arg sites").toBeGreaterThanOrEqual(
+			2,
+		);
 		expect(
-			mcpConfigCount,
-			"expected --mcp-config in at least both spawn-arg sites",
+			permissionsCount,
+			"expected the evaluator's permissions in both spawn-arg sites",
 		).toBeGreaterThanOrEqual(2);
-		expect(
-			bypassCount,
-			"expected bypassPermissions in at least both spawn-arg sites",
-		).toBeGreaterThanOrEqual(2);
+		const args = evaluatorPermissionArgs();
+		expect(args[args.indexOf("--allowed-tools") + 1]?.split(",")).toContain("mcp__indusk__*");
 	});
 
 	it("the resume-prompt construction is NOT the pre-fix minimal shape", () => {
