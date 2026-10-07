@@ -1,7 +1,7 @@
 ---
 title: "Bookkeeping lives where it is read — Test Plan"
 date: 2026-10-07
-status: draft
+status: accepted
 ---
 
 # Bookkeeping lives where it is read — Test Plan
