@@ -48,6 +48,26 @@ Each entry says what happens, where it was seen, and what we know so far.
   by another. Seen 2026-10-06, live check (harmless there: the copy is its
   own clone).
 
+## The demo
+
+- **The promise timeline should be a bar chart of checks.** Seen 2026-10-07
+  in demo-app-template's live check: a break shows as one red square, and the
+  held checks around it do not show at all. Sandy's design: each time bucket
+  (say five minutes) is a bar whose height is how many times the promise was
+  checked in it; green for each held check, red for each violation (the
+  greens keep stacking beside it), and a red turns purple once the incident
+  covering it is fixed. Belongs to plan-cockpit's promise page. It needs a
+  counting read from Jaeger: today's timeline keeps the violations and only
+  the last held mark per window.
+- **The admin did not update in real time.** The promise page refreshes every
+  5 s (`admin.refresh_ms`); in the live check the break needed a manual
+  reload. Look at whether the promise page's refresh reached it.
+- **More promises and features in the demo.** Sandy, 2026-10-07: the demo
+  holds; what it needs next is work that adds promises and features to the
+  seat-holds example, live, through the planner: for example "a booked seat
+  is never double-booked" or "a hold is answered within 200 ms". Belongs to
+  the demo's script steps 2 and 5, and the rehearsal.
+
 ## Admin
 
 - **No Update button, and nothing says a project is behind.** Updating a

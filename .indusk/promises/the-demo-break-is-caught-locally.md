@@ -10,7 +10,7 @@ tests: []
 incidents: []
 ---
 
-Turning on the seat-holds example's fault switch makes its promise show broken in the admin within seconds, with the span that broke it; turning the switch off makes it hold again.
+Turning on the seat-holds example's fault switch makes its promise show broken in the admin within seconds, with the span that broke it, and it stays broken after the switch is off, until the break is recorded and fixed.
 
 ## History
 - 2026-10-07 — declared (demo-app-template), from its planning conversation.

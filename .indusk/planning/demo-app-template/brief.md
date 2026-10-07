@@ -25,7 +25,7 @@ workflow: feature
 ### This plan makes
 
 1. **`the-demo-app-starts-with-its-promise-holding`** (state). Copying the seat-holds example and running its start command gives a project that runs locally: a page for holding and booking seats, one promise already marked and tested, and that promise shown holding in the admin.
-2. **`the-demo-break-is-caught-locally`** (state). Turning on the seat-holds example's fault switch makes its promise show broken in the admin within seconds, with the span that broke it; turning the switch off makes it hold again.
+2. **`the-demo-break-is-caught-locally`** (state). Turning on the seat-holds example's fault switch makes its promise show broken in the admin within seconds, with the span that broke it, and it stays broken after the switch is off, until the break is recorded and fixed.
 3. **`the-deployed-demo-page-answers`** (state). After the seat-holds example is deployed to Fly from its own config, its page answers at the deployed address.
 
 ### Existing promises
