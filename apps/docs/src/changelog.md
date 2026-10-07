@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.64.0] — 2026-10-07
+
 ### Added
 
 - **Plans in workbenches** (workbench-plan-authoring). New plan, approve, build, review, accept and land work in a workbench, from the admin and the terminal. A workbench plan's documents live at the workbench root; its code is on its own branch in the repo it names (`indusk plans start --repo`, or the repo picker when the workbench wraps more than one), recorded in the plan's `code.json`. Sessions run at the root with the code worktree added, so the workbench's own hooks judge every checkoff. See [`indusk plans`](/reference/cli/plans) and [sessions](/reference/admin-ui/sessions).
