@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { realpathSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { markProjectId } from "../promises/config.js";
 import { induskHome } from "../telemetry/status.js";
@@ -26,9 +28,22 @@ export function mainCheckoutOf(anyCheckout: string): string {
 	return common ? dirname(common) : anyCheckout;
 }
 
+/**
+ * The home is keyed by the project's id and a short hash of its main
+ * checkout's real path: the id alone (the committed `groupId`, or the folder
+ * name) is the same in every clone of a project, and two clones on one machine
+ * would share a queue and process each other's highlights (A18).
+ */
 export function bookkeepingRoots(anyCheckout: string): BookkeepingRoots {
 	const trunk = mainCheckoutOf(anyCheckout);
-	return { trunk, home: join(induskHome(), "projects", markProjectId(trunk)) };
+	let real = trunk;
+	try {
+		real = realpathSync(trunk);
+	} catch {
+		// a checkout that is gone keys by the path it had
+	}
+	const hash = createHash("sha256").update(real).digest("hex").slice(0, 8);
+	return { trunk, home: join(induskHome(), "projects", `${markProjectId(trunk)}-${hash}`) };
 }
 
 /** Where evaluation results live: the project's home, the same from every checkout. */

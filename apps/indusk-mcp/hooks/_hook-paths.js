@@ -32,6 +32,7 @@
  */
 
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
@@ -395,8 +396,10 @@ function headCommitTime(dir) {
  * resolves them (bookkeeping-lives-where-it-is-read D4). Hooks cannot import
  * the package, so this is its copy; `lib/bookkeeping/home.test.ts` (A11) pins
  * them equal. The main checkout is the folder holding the shared git
- * directory; the home is `<INDUSK_HOME>/projects/<id>`, the id the configured
- * `graphiti.groupId` or the main checkout's sanitised folder name.
+ * directory; the home is `<INDUSK_HOME>/projects/<id>-<hash>`, the id the
+ * configured `graphiti.groupId` or the main checkout's sanitised folder name,
+ * the hash the first 8 hex of the sha256 of the main checkout's real path, so
+ * two clones of one project never share a home (A18).
  *
  * promise: indusk-leaves-main-clean
  */
@@ -426,6 +429,13 @@ export function projectHome(cwd) {
 		const name = trunk.split("/").filter(Boolean).pop() ?? "";
 		id = name.replace(/[^A-Za-z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
 	}
+	let real = trunk;
+	try {
+		real = realpathSync(trunk);
+	} catch {
+		// a checkout that is gone keys by the path it had
+	}
+	const hash = createHash("sha256").update(real).digest("hex").slice(0, 8);
 	const home = process.env.INDUSK_HOME ?? resolve(homedir(), ".indusk");
-	return resolve(home, "projects", id);
+	return resolve(home, "projects", `${id}-${hash}`);
 }

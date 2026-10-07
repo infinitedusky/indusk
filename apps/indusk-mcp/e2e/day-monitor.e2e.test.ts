@@ -13,7 +13,7 @@ import {
 	testFile,
 } from "../src/__tests__/helpers/promises-fixture.js";
 import { headOf } from "../src/__tests__/helpers/test-git.js";
-import { markProjectId } from "../src/lib/promises/config.js";
+import { evalDir } from "../src/lib/bookkeeping/roots.js";
 
 /**
  * day-monitor — A24, end to end (ADR D10).
@@ -152,13 +152,11 @@ describe("A24 — a broken evaluator is found from telemetry and reopens its own
 
 		// Results are in the project's home under the evaluator's INDUSK_HOME
 		// (bookkeeping-lives-where-it-is-read).
-		const results = join(
-			jaeger.home,
-			"projects",
-			markProjectId(scratch.root),
-			"eval",
-			"results.log",
-		);
+		const previousHome = process.env.INDUSK_HOME;
+		process.env.INDUSK_HOME = jaeger.home;
+		const results = join(evalDir(scratch.root), "results.log");
+		if (previousHome === undefined) delete process.env.INDUSK_HOME;
+		else process.env.INDUSK_HOME = previousHome;
 		const failure = await until("the evaluator's result", 120_000, () =>
 			existsSync(results) && readFileSync(results, "utf-8").trim() !== ""
 				? readFileSync(results, "utf-8")
