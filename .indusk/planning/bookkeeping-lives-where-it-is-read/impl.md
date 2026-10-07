@@ -1,7 +1,7 @@
 ---
 title: "Bookkeeping lives where it is read"
 date: 2026-10-07
-status: approved
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
