@@ -234,12 +234,12 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 #### Build Phase 6 Context
 
-- [ ] current.md: the live check's result and any stop it found
+- [x] current.md: the live check's result and any stop it found — this session's section, through `update_current_section` (the trunk's copy, left uncommitted beside the other sessions' changes there)
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased: plans in workbenches; one contract per repo; a new plan's agent prepares, then asks; Trust in Claude Code
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: a new plan's opening, and Trust in Claude Code
+- [x] `apps/docs/src/changelog.md` Unreleased: plans in workbenches; one contract per repo; a new plan's agent prepares, then asks; Trust in Claude Code
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: a new plan's opening, and Trust in Claude Code (with `POST /api/trust` in the routes table)
 
 ## Files Affected
 
