@@ -116,4 +116,28 @@ describe("T18 — admin app bundled into indusk-mcp tarball", () => {
 			).toEqual([]);
 		},
 	);
+
+	// promise: the-demo-app-starts-with-its-promise-holding — demo-app-template
+	// Build Phase 2: `indusk demo` copies the example from the installed
+	// package, so the tarball carries it, without anything local to one machine.
+	it.skipIf(SHOULD_SKIP)(
+		"tarball carries the seat-holds example, and nothing installed or local in it",
+		() => {
+			expect(tarballPath).not.toBeNull();
+			const files = execFileSync("tar", ["tzf", tarballPath as string], {
+				encoding: "utf-8",
+			}).split("\n");
+			for (const f of [
+				"package/examples/seat-holds/package.json",
+				"package/examples/seat-holds/src/server.ts",
+				"package/examples/seat-holds/public/index.html",
+				"package/examples/seat-holds/.indusk/promises/a-held-seat-is-released-in-time.md",
+			]) {
+				expect(files, f).toContain(f);
+			}
+			expect(
+				files.filter((f) => /^package\/examples\/.*(node_modules|\.indusk\/eval)\//.test(f)),
+			).toEqual([]);
+		},
+	);
 });
