@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import { readConfig } from "@infinitedusky/indusk-mcp/config";
 import {
   type PhaseBoundaryRecord,
@@ -61,5 +62,6 @@ export function readAdminRefreshMs(projectRoot: string): number {
  * instead of showing an empty list (admin-ui-phase-progress A24).
  */
 export function hasEvalDirectory(projectRoot: string): boolean {
-  return existsSync(join(projectRoot, ".indusk", "eval"));
+  // The project's home, outside every checkout (bookkeeping-lives-where-it-is-read).
+  return existsSync(evalDir(projectRoot));
 }
