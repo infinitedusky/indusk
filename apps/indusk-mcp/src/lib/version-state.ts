@@ -45,6 +45,7 @@ export const PACKAGED_PATHS = [
 	"apps/indusk-mcp/extensions",
 	"apps/indusk-mcp/package.json",
 	"apps/indusk-admin",
+	"examples/seat-holds",
 ] as const;
 
 export interface RepoVersionState {

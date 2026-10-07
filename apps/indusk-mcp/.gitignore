@@ -18,3 +18,6 @@
 /admin/
 # Packed tarballs from `pnpm pack` — local build artifacts.
 *.tgz
+
+# Copied from examples/seat-holds at prepack (scripts/bundle-example.js); never edited here.
+/examples/

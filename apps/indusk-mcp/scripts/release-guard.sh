@@ -71,6 +71,7 @@ PACKAGED_PATHS=(
 	"apps/indusk-mcp/extensions"
 	"apps/indusk-mcp/package.json"
 	"apps/indusk-admin"
+	"examples/seat-holds"
 )
 
 # 1. A dirty packaged path publishes something no commit describes.
