@@ -425,3 +425,6 @@
 {"id":"h-20261006-011","processedAt":"2026-10-06T23:46:22.213Z","action":"skipped","detail":"recorded in workbench-plan-authoring/brief.md (status: accepted)"}
 {"id":"h-20261006-012","processedAt":"2026-10-06T23:46:23.080Z","action":"skipped","detail":"recorded in workbench-plan-authoring/test-plan.md (status: accepted)"}
 {"id":"h-20261006-013","processedAt":"2026-10-06T23:46:23.663Z","action":"skipped","detail":"recorded in workbench-plan-authoring/adr.md (status: accepted)"}
+{"id":"h-20261007-001","processedAt":"2026-10-07T18:14:19.740Z","action":"wrote-episode","detail":"name-indusk-version-before-live-check"}
+{"id":"h-20261007-002","processedAt":"2026-10-07T18:14:20.550Z","action":"wrote-episode","detail":"dont-edit-live-check-copy-to-speed-it-up"}
+{"id":"h-20261007-003","processedAt":"2026-10-07T18:14:21.187Z","action":"wrote-episode","detail":"promises-confirm-requires-exact-sentence-match"}

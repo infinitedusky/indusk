@@ -1,7 +1,7 @@
 ---
 title: "Demo app template — a seat-holds app whose promise breaks on cue"
 date: 2026-10-07
-status: draft
+status: accepted
 workflow: feature
 ---
 

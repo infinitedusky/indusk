@@ -1873,3 +1873,24 @@ Full `pnpm test` + `test:system` from a clean environment running; then check of
 (empty)
 
 ---
+
+## Session c2494e04 — eval: scoring commit 37d183c5 (demo-app-template brief/research)
+
+**Session ID**: c2494e04-701a-4e16-bb94-4864270839c0
+**Last updated**: 2026-10-07T18:13:27.362Z
+**Branch**: plan/demo-app-template
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/demo-app-template
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
