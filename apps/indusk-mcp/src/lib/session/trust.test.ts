@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { trustLikeProject } from "./trust.js";
+import { isTrusted, trustLikeProject, trustProject } from "./trust.js";
 
 /**
  * promise: a-plan-can-start-from-the-admin — admin-plan-authoring A1, a session in a plan's worktree.
@@ -86,6 +86,43 @@ describe("a worktree of a trusted project is trusted like it", () => {
 		const c = config({});
 		writeFileSync(c.path, "{ not json");
 		expect(trustLikeProject(WORKTREE, TRUNK, c.path)).toBe("untrusted");
+		expect(readFileSync(c.path, "utf-8")).toBe("{ not json");
+	});
+});
+
+/**
+ * workbench-plan-authoring A25: in the live check the workbench itself was
+ * untrusted, so every session asked about everything. The admin now offers
+ * "Trust in Claude Code"; the click is the person's consent.
+ */
+describe("A25: a project is trusted when the person asks", () => {
+	it("trusts the project, writing only its flag, and is idempotent", () => {
+		const c = config({ [TRUNK]: { allowedTools: ["Bash(git:*)"] }, "/other": { x: 1 } });
+		const before = c.read();
+		expect(isTrusted(TRUNK, c.path)).toBe(false);
+		expect(trustProject(TRUNK, c.path)).toBe("trusted");
+		const after = c.read();
+		expect(after.projects[TRUNK]).toEqual({
+			allowedTools: ["Bash(git:*)"],
+			hasTrustDialogAccepted: true,
+		});
+		expect({ ...after, projects: { ...after.projects, [TRUNK]: before.projects[TRUNK] } }).toEqual(
+			before,
+		);
+		expect(isTrusted(TRUNK, c.path)).toBe(true);
+		expect(trustProject(TRUNK, c.path)).toBe("already");
+	});
+
+	it("trusts a project Claude Code has never seen", () => {
+		const c = config({});
+		expect(trustProject(TRUNK, c.path)).toBe("trusted");
+		expect(c.read().projects[TRUNK]).toEqual({ hasTrustDialogAccepted: true });
+	});
+
+	it("leaves a config it cannot read alone", () => {
+		const c = config({});
+		writeFileSync(c.path, "{ not json");
+		expect(trustProject(TRUNK, c.path)).toBe("untrusted");
 		expect(readFileSync(c.path, "utf-8")).toBe("{ not json");
 	});
 });

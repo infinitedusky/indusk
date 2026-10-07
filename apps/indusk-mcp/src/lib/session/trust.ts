@@ -60,6 +60,15 @@ export function trustLikeProject(
 	return "trusted";
 }
 
+/**
+ * Trust `path` because the person asked, from the admin's "Trust in Claude
+ * Code" (workbench-plan-authoring D12). The click is the consent, as
+ * accepting Claude Code's own prompt is.
+ */
+export function trustProject(_path: string, _claudeConfig = defaultConfig()): TrustOutcome {
+	return "untrusted";
+}
+
 /** The main working tree of the repository `cwd` is in, or `cwd` when git cannot say. */
 export function projectOf(cwd: string): string {
 	const common = gitCommonDirOf(cwd);

@@ -32,4 +32,10 @@ export {
 	type StartedEvent,
 	startSession,
 } from "./start.js";
-export { isTrusted, projectOf, type TrustOutcome, trustLikeProject } from "./trust.js";
+export {
+	isTrusted,
+	projectOf,
+	type TrustOutcome,
+	trustLikeProject,
+	trustProject,
+} from "./trust.js";
