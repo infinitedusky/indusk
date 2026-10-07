@@ -92,7 +92,15 @@ Each entry says what happens, where it was seen, and what we know so far.
   telemetry restart test (`telemetry-cli-lifecycle.test.ts`, T5) never
   checks `telemetry start`'s exit code, so a start that missed its 15 s
   Jaeger readiness wait under load shows only "expected null not to be
-  null"; alone the file passes 3 of 3. Owned by
+  null"; alone the file passes 3 of 3. The likely cause (moderate
+  confidence) is a race in the daemon itself: `findFreePort(0)` picks a free
+  port and releases it before Jaeger binds, so a daemon started in parallel
+  can take it; Jaeger never binds, and start waits its full 15 s (the failing
+  test took 15,060 ms against 0.4 s for the starts before it). The fix: start
+  retries on a fresh port when Jaeger cannot bind, and the test checks
+  start's result. The rerun passed (40/40 and 13/13); publishing then failed
+  with `EOTP` because `pnpm release | tee` gave npm no terminal for the
+  browser sign-in. Owned by
   [release-checks-run-once](release-checks-run-once/brief.md) and the
   small-fixes plan.
 
