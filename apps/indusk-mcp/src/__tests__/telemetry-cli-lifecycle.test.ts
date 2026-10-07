@@ -106,15 +106,38 @@ describe("T3 — `indusk telemetry status` after start", () => {
 	);
 });
 
+/** Every running process whose command line names this test's home: what `check-test-daemons` looks for. */
+function processesFromHome(): string[] {
+	const ps = spawnSync("ps", ["-axo", "pid=,command="], { encoding: "utf-8" });
+	return ps.stdout.split("\n").filter((l) => l.includes(testHome));
+}
+
 describe("T4 — `indusk telemetry stop` shuts down in <3s", () => {
 	it.skipIf(SHOULD_SKIP)(
 		"stop exits 0 and status after reports not running",
 		async () => {
-			runCli(["telemetry", "start", "--otlp-port", "0", "--ui-port", "0"]);
+			// A failed start names its reason here (the 1.64.0 release hid it).
+			const start = runCli(["telemetry", "start", "--otlp-port", "0", "--ui-port", "0"]);
+			expect(start.code, start.stderr || start.stdout).toBe(0);
 			const stop = runCli(["telemetry", "stop"]);
 			expect(stop.code).toBe(0);
 			const status = runCli(["telemetry", "status"]);
 			expect(status.stdout.toLowerCase()).toContain("not running");
+		},
+		30_000,
+	);
+
+	// promise: telemetry-stop-stops-what-it-started — telemetry-stop A4. The
+	// 1.65.0 release left nine processes from temporary homes, each with its
+	// record deleted: stop had reported them stopped.
+	it.skipIf(SHOULD_SKIP)(
+		"after stop, no Jaeger or otelcol is left running from the home",
+		async () => {
+			const start = runCli(["telemetry", "start", "--otlp-port", "0", "--ui-port", "0"]);
+			expect(start.code, start.stderr || start.stdout).toBe(0);
+			expect(processesFromHome().length, "the daemon is running from the home").toBeGreaterThan(0);
+			expect(runCli(["telemetry", "stop"]).code).toBe(0);
+			expect(processesFromHome(), "nothing left running from the home").toEqual([]);
 		},
 		30_000,
 	);
@@ -124,7 +147,8 @@ describe("T5 — `indusk telemetry restart` respawns both binaries", () => {
 	it.skipIf(SHOULD_SKIP)(
 		"PIDs after restart differ from PIDs before",
 		async () => {
-			runCli(["telemetry", "start", "--otlp-port", "0", "--ui-port", "0"]);
+			const start = runCli(["telemetry", "start", "--otlp-port", "0", "--ui-port", "0"]);
+			expect(start.code, start.stderr || start.stdout).toBe(0);
 			const before = readPidsFromStatus();
 			expect(before.jaegerPid).not.toBeNull();
 			expect(before.otelcolPid).not.toBeNull();

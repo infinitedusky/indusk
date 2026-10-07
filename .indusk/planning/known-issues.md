@@ -124,6 +124,11 @@ Each entry says what happens, where it was seen, and what we know so far.
   [release-checks-run-once](release-checks-run-once/brief.md) and the
   small-fixes plan.
 
+- **The admin daemon's stop has the same port-based identity check.**
+  `lib/admin/daemon.ts` keeps its own `verifyIdentity(pid, port)`: a slow
+  port there would skip its own process the way `telemetry stop` did before
+  telemetry-stop-stops-what-it-started (2026-10-07). Two copies of one rule.
+
 ## Package
 
 - **The version notice compares versions as strings.** `hasNewerVersion`
