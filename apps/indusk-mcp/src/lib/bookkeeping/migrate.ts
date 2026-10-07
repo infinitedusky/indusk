@@ -11,6 +11,7 @@ import {
 	statSync,
 } from "node:fs";
 import { join, relative } from "node:path";
+import { parseWorktreeList } from "../git.js";
 import { bookkeepingRoots, evalDir } from "./roots.js";
 
 /**
@@ -132,11 +133,9 @@ function checkoutsOf(trunk: string): string[] {
 	});
 	const listed =
 		r.status === 0
-			? r.stdout
-					.split("\n")
-					.filter((l) => l.startsWith("worktree "))
-					.map((l) => l.slice("worktree ".length))
-					.filter((p) => existsSync(p))
+			? parseWorktreeList(r.stdout)
+					.filter((w) => !w.prunable && existsSync(w.path))
+					.map((w) => w.path)
 			: [];
 	return [trunk, ...listed.filter((p) => realpathSync(p) !== realpathSync(trunk))];
 }
