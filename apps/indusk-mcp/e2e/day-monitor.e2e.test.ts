@@ -13,6 +13,7 @@ import {
 	testFile,
 } from "../src/__tests__/helpers/promises-fixture.js";
 import { headOf } from "../src/__tests__/helpers/test-git.js";
+import { markProjectId } from "../src/lib/promises/config.js";
 
 /**
  * day-monitor — A24, end to end (ADR D10).
@@ -82,7 +83,8 @@ describe("A24 — a broken evaluator is found from telemetry and reopens its own
 
 	beforeAll(async () => {
 		if (!existsSync(CLI_BIN)) throw new Error(`the CLI is not built at ${CLI_BIN} — run pnpm e2e`);
-		if (!claudeOnPath()) throw new Error("the `claude` CLI is not on PATH — this test runs the real one");
+		if (!claudeOnPath())
+			throw new Error("the `claude` CLI is not on PATH — this test runs the real one");
 		jaeger = await startLocalJaeger();
 		scratch = promiseProject({
 			domains: ["gates"],
@@ -141,14 +143,22 @@ describe("A24 — a broken evaluator is found from telemetry and reopens its own
 		delete env.OTEL_EXPORTER_OTLP_ENDPOINT;
 		delete env.OTEL_EXPORTER_OTLP_HEADERS;
 		delete env.INDUSK_EVAL_OTEL;
-		const hook = spawnSync(
-			"node",
-			[HOOK, "--source", "e2e", "--change-id", headOf(scratch.root)],
-			{ cwd: scratch.root, env, encoding: "utf-8" },
-		);
+		const hook = spawnSync("node", [HOOK, "--source", "e2e", "--change-id", headOf(scratch.root)], {
+			cwd: scratch.root,
+			env,
+			encoding: "utf-8",
+		});
 		expect(hook.status, hook.stderr).toBe(0);
 
-		const results = join(scratch.root, ".indusk", "eval", "results.log");
+		// Results are in the project's home under the evaluator's INDUSK_HOME
+		// (bookkeeping-lives-where-it-is-read).
+		const results = join(
+			jaeger.home,
+			"projects",
+			markProjectId(scratch.root),
+			"eval",
+			"results.log",
+		);
 		const failure = await until("the evaluator's result", 120_000, () =>
 			existsSync(results) && readFileSync(results, "utf-8").trim() !== ""
 				? readFileSync(results, "utf-8")

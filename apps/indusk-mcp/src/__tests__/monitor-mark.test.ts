@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { evalDir } from "../lib/bookkeeping/roots.js";
 import { REPO_ROOT, SHOULD_SKIP } from "./helpers/cli.js";
 import {
 	BAD_MODEL_MESSAGE,
@@ -25,6 +26,11 @@ import { headOf } from "./helpers/test-git.js";
  *
  * promise: every-commit-evaluated
  */
+
+// Evaluation results live in the project's home (bookkeeping-lives-where-it-is-read);
+// the system tier has no suite-wide home, so this file takes its own, and every
+// hook and evaluator it spawns inherits it.
+process.env.INDUSK_HOME = mkdtempSync(join(tmpdir(), "monitor-mark-home-"));
 
 const HOOK = join(REPO_ROOT, "apps/indusk-mcp/hooks/eval-trigger.js");
 const PROMISE = "every-commit-evaluated";
@@ -61,11 +67,11 @@ async function evaluate(mode: "bad-model" | "scorecard"): Promise<{
 		if (hook.status !== 0) throw new Error(`eval hook exited ${hook.status}: ${hook.stderr}`);
 
 		// The evaluator is detached: wait for its result, then for its root span.
-		const resultsPath = join(project.root, ".indusk", "eval", "results.log");
+		const resultsPath = join(evalDir(project.root), "results.log");
 		const deadline = Date.now() + 60_000;
 		while (!existsSync(resultsPath) || readFileSync(resultsPath, "utf-8").trim() === "") {
 			if (Date.now() > deadline) {
-				const syslog = join(project.root, ".indusk", "eval", "system.log");
+				const syslog = join(evalDir(project.root), "system.log");
 				throw new Error(
 					`no evaluator result after 60s; system.log:\n${existsSync(syslog) ? readFileSync(syslog, "utf-8") : "(none)"}`,
 				);
@@ -153,7 +159,7 @@ async function markedRun(
 			},
 		);
 		if (hook.status !== 0) throw new Error(`eval hook exited ${hook.status}: ${hook.stderr}`);
-		const resultsPath = join(cwd, ".indusk", "eval", "results.log");
+		const resultsPath = join(evalDir(cwd), "results.log");
 		const deadline = Date.now() + 60_000;
 		while (!existsSync(resultsPath) || readFileSync(resultsPath, "utf-8").trim() === "") {
 			if (Date.now() > deadline) break;
