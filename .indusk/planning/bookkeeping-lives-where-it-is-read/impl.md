@@ -158,7 +158,7 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 - [x] (`releaseBranchBookkeeping` in `migrate.ts`, called by `plans land` after its dirty-worktree check and before the merge) Landing: when the trunk no longer tracks the machine-state files and the plan's branch still does, merge the branch's queue into the home and take the files out of the branch, as a `chore(indusk)` commit on it, before bringing the trunk in (A16)
 - [x] (`<eval>/sessions/<folder>-<hash of its real path>.json`; the old single `evaluator-session.json` is no longer read, so each checkout starts one fresh session after the release) The evaluator's session is recorded per checkout it runs in (keyed by `gitRoot`), and a resume is only attempted from the checkout that made it (A17)
 - [x] (`<id>-<first 8 hex of sha256 of the real path>`; `~/.indusk/projects/dusk` moved to `dusk-2f1b1d2f`; the `day-monitor` e2e reads `evalDir` instead of building the path) The home is keyed by the project id and a short hash of the main checkout's real path, in `bookkeepingRoots` and the hooks' `projectHome` alike (A11 keeps them equal); this repository's home moved to the new key (A18)
-- [ ] `addLesson` refuses a name that is not one kebab-case segment, before writing (A19)
+- [x] (`^[a-z0-9]+(-[a-z0-9]+)*$`, which every lesson in this repository already fits, `community-` ones included) `addLesson` refuses a name that is not one kebab-case segment, before writing (A19)
 
 #### Build Phase 4 Verification
 
