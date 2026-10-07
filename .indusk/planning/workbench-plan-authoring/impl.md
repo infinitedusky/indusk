@@ -181,7 +181,7 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 #### Build Phase 4 Verification
 
-- [x] (A13 with the session and build tests, 8 files and 59 tests; the gates contract three of three from a clean environment, A24's two cases and A14's two each time; the session protocol and lifecycle contracts, 2 files and 6 tests) A13 passes (`pnpm exec vitest run src/lib/session/permissions`); A14 passes three times from a clean environment in the system tier
+- [x] (A13 with the session and build tests, 8 files and 59 tests; the gates contract three of three from a clean environment, its two normal-mode cases (from admin-plan-authoring) and A14's two each time; the session protocol and lifecycle contracts, 2 files and 6 tests) A13 passes (`pnpm exec vitest run src/lib/session/permissions`); A14 passes three times from a clean environment in the system tier
 - [x] Shape — `decideBuildPermission` takes one root or several and judges a path against each, with no other change; `addDirs` is passed through and nothing else touches it. Nothing to change
 
 #### Build Phase 4 Context
