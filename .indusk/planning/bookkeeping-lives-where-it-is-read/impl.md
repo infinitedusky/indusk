@@ -38,16 +38,16 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A session's note written from a plan's worktree lands in the main checkout's `current.md`, committed on `main`; neither checkout is left dirty | Build Phase 1 | Build Phase 2 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
-| A2 | A lesson added from a plan's worktree is written to the main checkout's lessons and committed on `main` | Build Phase 1 | Build Phase 2 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
-| A3 | A highlight, its processed mark and an evaluation's results are written under the project's home, the same from every checkout; none appears in `git status` | Build Phase 1 | Build Phase 2 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
+| A1 | A session's note written from a plan's worktree lands in the main checkout's `current.md`, committed on `main`; neither checkout is left dirty | Build Phase 1 | Build Phase 2 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
+| A2 | A lesson added from a plan's worktree is written to the main checkout's lessons and committed on `main` | Build Phase 1 | Build Phase 2 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
+| A3 | A highlight, its processed mark and an evaluation's results are written under the project's home, the same from every checkout; none appears in `git status` | Build Phase 1 | Build Phase 2 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 | A4 | When the main checkout is off its trunk branch or mid-merge, a note is written there, left uncommitted, and the reason returned; nothing is committed onto another branch | Build Phase 1 | Build Phase 1 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
-| A5 | Two notes written at the same moment are both committed | Build Phase 1 | Build Phase 2 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
+| A5 | Two notes written at the same moment are both committed | Build Phase 1 | Build Phase 2 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
 | A6 | `indusk update` moves a project's tracked highlights into its home, unprocessed ones kept, and takes them out of git | Test Phase 1 | Build Phase 3 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/__tests__/bookkeeping-migration.test.ts |
-| A7 | A highlight processed for a commit in one checkout is not offered again in another | Build Phase 1 | Build Phase 2 | written | unit | promise: a-highlight-becomes-a-lesson-once | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
+| A7 | A highlight processed for a commit in one checkout is not offered again in another | Build Phase 1 | Build Phase 2 | passing | unit | promise: a-highlight-becomes-a-lesson-once | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 | A8 | A real evaluator run on a commit in a plan's worktree writes its lesson on `main` and marks the highlight processed in the project's home | Build Phase 3 | Build Phase 3 | planned | contract | promise: a-highlight-becomes-a-lesson-once | apps/indusk-mcp/src/__tests__/eval-bookkeeping-contract.test.ts |
 | A9 | Landing still refuses a plan when `main` has uncommitted work that is not InDusk's, and the review still lists it | Test Phase 1 | Test Phase 1 | passing | unit | promise: nothing-ships-until-accepted, promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
-| A10 | Every commit is still scored, its result readable where the admin and `indusk eval` look | Build Phase 1 | Build Phase 2 | written | unit | promise: every-commit-evaluated | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
+| A10 | Every commit is still scored, its result readable where the admin and `indusk eval` look | Build Phase 1 | Build Phase 2 | passing | unit | promise: every-commit-evaluated | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 | A11 | A hook and the package resolve the same main checkout and project home from any checkout of a project | Build Phase 1 | Build Phase 1 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 | A12 | The evaluator only reads the checkout it grades: it runs without bypassing permissions, its git is read-only, and the git commands that change a checkout are denied; every place that starts it uses these permissions | Build Phase 2 | Build Phase 2 | passing | unit | found building this plan: the evaluator stashed, checked out and popped in its live worktree; a guard on the evaluator's launch, which no promise of this plan names | apps/indusk-mcp/src/lib/eval/permissions.test.ts |
 
@@ -102,19 +102,21 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 - [x] (through `currentMdPath` and `commitCurrentMd` in `notes.ts`: `update_current_section`, the `agent` CLI's register, done, heartbeat and prune, and the sweep with its archive; `list_lessons` reads the main checkout's lessons too) `update_current_section`, the `agent` CLI and sweep write the main checkout's `current.md` and commit it (A1); `add_lesson` writes the main checkout's lessons and commits them (A2)
 - [x] (`highlights.ts`'s three path helpers resolve the home; its older tests read the home too) The highlight tools and `markProcessed` read and write the project's home (A3, A7)
 - [x] Discovered building this phase: the evaluator, grading a commit in this plan's worktree, ran `git stash -u`, checked out three files from an older commit, ran the tests three times and popped the stash, while this session was editing there; edits to `agent.ts` vanished and came back staged. It ran under `--permission-mode bypassPermissions`, which ignores its allowed-tools list, at all three launch sites. One definition now, `lib/eval/permissions.ts`: `dontAsk`, read-only git allowed, the git commands that change a checkout denied outright. A12, red first. Until this is released, the installed evaluator still runs with bypass
-- [ ] The evaluator's results, findings, session file, pending queue and `system.log`, and the eval-trigger hook, use the project's home; `indusk eval` and the admin read them there (A3, A10)
+- [x] (`evalDir` in the package: `eval.ts`'s results and baseline worktree, `otel.ts`, `evaluator-runner.ts`, `findings.ts`, `persistent-evaluator.ts`, `pending-evals.ts`; `projectHome` in the hooks: `eval-trigger.js`'s system log, results and messages, `_pending-drain.js`; the admin through a new `./bookkeeping/roots` export, in `project-reader.ts` and `planning-reader.ts`. The older tests that read `.indusk/eval/` now read the home, each with an `INDUSK_HOME` of its own. Left as they are: the gitignore entries, the commit cadence's exclusion and approve's safety-net list, which still cover projects not yet migrated) The evaluator's results, findings, session file, pending queue and `system.log`, and the eval-trigger hook, use the project's home; `indusk eval` and the admin read them there (A3, A10)
 
 #### Build Phase 2 Verification
 
-- [ ] A1, A2, A3, A7 and A10 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/bookkeeping && pnpm exec vitest related <files this phase changed> --run`)
+- [x] (the bookkeeping, eval, highlights and pending-queue tests, 11 files, 109, A12 among them; the admin 61 files, 395; `tsc` clean in both) A1, A2, A3, A7 and A10 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/bookkeeping && pnpm exec vitest related <files this phase changed> --run`)
+
+- [x] Shape — Build Phase 2 changed each writer at its one path helper, or its one call site; `permissions.ts` is one definition for three launches. The agent CLI's `writeAtomic` now writes and commits, one job for every caller. Nothing to change
 
 #### Build Phase 2 Context
 
-- [ ] current.md: InDusk's own commits now appear on `main` as `chore(indusk): …`
+- [x] current.md: InDusk's own commits now appear on `main` as `chore(indusk): …` — this session's section, through `update_current_section` (the installed version, which still writes without committing)
 
 #### Build Phase 2 Document
 
-- [ ] The operational-layer page (`apps/docs/src/guide/context-tiers.md` or the multi-agent decision page): `current.md` and lessons are committed on `main` when written
+- [x] (`guide/multi-agent.md`: `/handoff`'s commit step, and a new section, "Where InDusk keeps its records") The operational-layer page (`apps/docs/src/guide/context-tiers.md` or the multi-agent decision page): `current.md` and lessons are committed on `main` when written
 
 ### Build Phase 3: Migration, and the real evaluator
 
