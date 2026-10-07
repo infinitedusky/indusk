@@ -49,7 +49,7 @@ A stranger runs one command and gets the seat-holds example running, its promise
 | A7 | With the switch on, InDusk reports the promise broken within ten seconds of the late release, naming the span; off again, holding | Test Phase 1 | Build Phase 2 | passing | contract | promise: the-demo-break-is-caught-locally | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
 | A8 | The whole break in the admin, from opening the example to the promise broken with its span, under two minutes; switched off, holding again | Build Phase 4 | Build Phase 4 | planned | live check | a live check of the break and the brief's second expectation, recorded in Build Phase 4; its promise is proven by A6 and A7 | manual: recorded in Build Phase 4 |
 | A9 | The everyday suite still never starts the example, the telemetry daemon or a browser; the guard scans the example's tests too | Build Phase 1 | Build Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
-| A10 | Deployed to Fly from the example's own config, its page answers at the deployed address | Test Phase 1 | Build Phase 3 | written | smoke | promise: the-deployed-demo-page-answers | examples/seat-holds-smoke-deployed.mjs |
+| A10 | Deployed to Fly from the example's own config, its page answers at the deployed address | Test Phase 1 | Build Phase 3 | passing | smoke | promise: the-deployed-demo-page-answers | examples/seat-holds-smoke-deployed.mjs |
 
 ## Checklist
 
@@ -154,21 +154,22 @@ A stranger runs one command and gets the seat-holds example running, its promise
 
 ### Build Phase 3: Deployed once
 
-- [ ] `examples/seat-holds/Dockerfile` and `fly.toml`: one machine, the page on 8080, OTLP to the project's server through secrets, `SEAT_HOLDS_ENV=production`, no fault toggle
-- [ ] Deploy once to a Fly app of Sandy's choosing, asking first: it creates a billed app on Sandy's account
-- [ ] A10 green against the deployed address
+- [x] (the image builds on Node 24: npm 10 in `node:22-slim` failed to install the tree, "Cannot read properties of null (reading 'edgesOut')", with or without `--omit=dev`; a `.dockerignore` keeps local state out) `examples/seat-holds/Dockerfile` and `fly.toml`: one machine, the page on 8080, OTLP to the project's server through secrets, `SEAT_HOLDS_ENV=production`, no fault toggle
+- [x] (Sandy: "go ahead", 2026-10-07; app `seat-holds` in the personal org, `iad`, one shared-cpu-1x 256 MB machine; its OTLP secrets point at `indusk-always-on` with `INDUSK_DEPLOYED_CREDENTIAL`, set without printing it) Deploy once to a Fly app of Sandy's choosing, asking first: it creates a billed app on Sandy's account
+- [x] A10 green against the deployed address
 
 #### Build Phase 3 Verification
 
-- [ ] A10 passes (`SEAT_HOLDS_URL=https://<app>.fly.dev node examples/seat-holds/scripts/smoke-deployed.mjs`)
+- [x] ("smoke: https://seat-holds.fly.dev/ answers with the seat page", exit 0; `POST /fault` there answers 403, the switch off as designed; the script moved to `examples/seat-holds-smoke-deployed.mjs` in Build Phase 1) A10 passes
+- [x] Shape — Build Phase 3 wrote a 13-line Dockerfile, a `.dockerignore` and `fly.toml`, each one job. Nothing to change (`SEAT_HOLDS_URL=https://<app>.fly.dev node examples/seat-holds/scripts/smoke-deployed.mjs`)
 
 #### Build Phase 3 Context
 
-- [ ] current.md: the deployed example's app name and address, for the production act
+- [x] current.md: the deployed example's app name and address, for the production act — this session's section, through `update_current_section`
 
 #### Build Phase 3 Document
 
-- [ ] `examples/seat-holds/README.md`: deploying to Fly
+- [x] `examples/seat-holds/README.md`: deploying to Fly
 
 ### Build Phase 4: The live checks, and the promises
 
