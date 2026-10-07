@@ -1,11 +1,14 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { basename, join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { addLesson } from "../lib/bookkeeping/notes.js";
+import { bookkeepingRoots } from "../lib/bookkeeping/roots.js";
 import { LESSONS_REL_DIR, lessonListing } from "../lib/lessons/state.js";
 
 export function registerLessonTools(server: McpServer, projectRoot: string): void {
-	const lessonsDir = join(projectRoot, LESSONS_REL_DIR);
+	// Lessons live in the main checkout (bookkeeping-lives-where-it-is-read D2).
+	const lessonsDir = join(bookkeepingRoots(projectRoot).trunk, LESSONS_REL_DIR);
 
 	server.registerTool(
 		"list_lessons",
@@ -75,31 +78,25 @@ export function registerLessonTools(server: McpServer, projectRoot: string): voi
 			},
 		},
 		async ({ name, title, content }) => {
-			mkdirSync(lessonsDir, { recursive: true });
-
-			const fileName = name.startsWith("community-") ? name.replace("community-", "") : name;
-			const filePath = join(lessonsDir, `${fileName}.md`);
-
-			if (existsSync(filePath)) {
+			// Written to the main checkout's lessons and committed on main, from
+			// any checkout (bookkeeping-lives-where-it-is-read D2).
+			const r = addLesson(projectRoot, { name, title, content });
+			if ("error" in r) {
 				return {
-					content: [
-						{
-							type: "text" as const,
-							text: JSON.stringify({ error: `Lesson ${fileName}.md already exists` }),
-						},
-					],
+					content: [{ type: "text" as const, text: JSON.stringify({ error: r.error }) }],
 					isError: true,
 				};
 			}
-
-			const fileContent = `# ${title}\n\n${content}\n`;
-			writeFileSync(filePath, fileContent);
-
 			return {
 				content: [
 					{
 						type: "text" as const,
-						text: JSON.stringify({ created: `${fileName}.md`, path: filePath }),
+						text: JSON.stringify({
+							created: basename(r.file),
+							path: r.file,
+							committed: r.commit.committed,
+							...(r.commit.committed ? {} : { notCommitted: r.commit.reason }),
+						}),
 					},
 				],
 			};

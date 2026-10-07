@@ -29,6 +29,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
+import { commitCurrentMd, currentMdPath } from "../bookkeeping/notes.js";
 import { getSweepTtlMinutes } from "../config.js";
 import type { AgentSection } from "./current-md.js";
 import { parseCurrentMd, serializeCurrentMd, serializeSectionBlock } from "./current-md.js";
@@ -62,8 +63,10 @@ export interface SweepResult {
  * No-op (empty result) when current.md doesn't exist.
  */
 export function sweepStaleSections(projectRoot: string, opts: SweepOptions = {}): SweepResult {
-	const currentPath = join(projectRoot, ".indusk/current.md");
-	const archivePath = join(projectRoot, ".indusk/archive/current-md-archive.md");
+	// The main checkout's current.md and archive, committed on main when swept
+	// (bookkeeping-lives-where-it-is-read D2).
+	const currentPath = currentMdPath(projectRoot);
+	const archivePath = join(dirname(currentPath), "archive", "current-md-archive.md");
 	const dryRun = opts.dryRun === true;
 	const empty: SweepResult = { swept: [], keptFresh: 0, keptMalformed: 0, dryRun, archivePath };
 	if (!existsSync(currentPath)) return empty;
@@ -119,6 +122,9 @@ export function sweepStaleSections(projectRoot: string, opts: SweepOptions = {})
 		const tmpPath = `${currentPath}.tmp-sweep-${process.pid}`;
 		writeFileSync(tmpPath, serializeCurrentMd(doc));
 		renameSync(tmpPath, currentPath);
+		commitCurrentMd(projectRoot, `swept ${swept.length} stale section(s)`, [
+			join(".indusk", "archive", "current-md-archive.md"),
+		]);
 
 		return result;
 	};
