@@ -56,6 +56,23 @@ Turn it off and the promise holds again.
 | `SEAT_HOLDS_ENV` | `local` | `deployment.environment` on every span |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | — | where spans go: the InDusk daemon, or your project's server |
 
+## Deploy it
+
+`fly.toml` and the `Dockerfile` run it on Fly.io as one machine that never
+sleeps, sending its spans to your project's InDusk server:
+
+```bash
+fly apps create <app>
+fly secrets set \
+  OTEL_EXPORTER_OTLP_ENDPOINT="https://<your-indusk-server>" \
+  OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic%20<base64 of user:password>"
+fly deploy --app <app> --ha=false
+```
+
+The deployed page has no Break it switch. To break the promise in production
+on purpose, set `SEAT_HOLDS_FAULT=slow-release` and deploy; unset it and deploy
+again to fix it.
+
 ## What's in it
 
 - `src/seats.ts` — the rules: hold, book, release, and whether a release was on time. The clock is an argument, so the tests never wait.
