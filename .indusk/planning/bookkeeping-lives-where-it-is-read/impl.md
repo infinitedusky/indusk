@@ -160,6 +160,10 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 - [x] (`<id>-<first 8 hex of sha256 of the real path>`; `~/.indusk/projects/dusk` moved to `dusk-2f1b1d2f`; the `day-monitor` e2e reads `evalDir` instead of building the path) The home is keyed by the project id and a short hash of the main checkout's real path, in `bookkeepingRoots` and the hooks' `projectHome` alike (A11 keeps them equal); this repository's home moved to the new key (A18)
 - [x] (`^[a-z0-9]+(-[a-z0-9]+)*$`, which every lesson in this repository already fits, `community-` ones included) `addLesson` refuses a name that is not one kebab-case segment, before writing (A19)
 
+- [x] Discovered at the package run: the migration parsed `git worktree list` itself; `plan-worktrees-single-definition` (A26 of an earlier plan, one parser in `lib/git.ts`) refused it. It uses `parseWorktreeList`, skipping prunable entries
+- [x] Discovered at the package run: `agent-roles-phase4.test.ts`'s T13 ran the eval hook with `--source handoff` in this repository, where evaluation is on, so every `pnpm test` started a real, paid evaluator of HEAD (one was found running in this worktree). It runs in a temporary project with evaluation off; the no-hang check is unchanged
+- [x] (left as it is, reported to the person) Discovered at the package run: a `project-6bafd0c8` folder appeared in the real `~/.indusk/projects/` at 19:49, written by this branch's hook in a session that ran `ls`, `find` and `cat`, which the evaluator's new permissions deny; no everyday test starts `claude`, and the fixture was gone. Not traced
+
 #### Build Phase 4 Verification
 
 - [ ] A13–A19 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/highlights src/lib/bookkeeping src/lib/eval/evaluator-session.test.ts src/__tests__/bookkeeping-migration.test.ts src/__tests__/plans-land.test.ts`), and A8 still passes (`pnpm e2e -- eval-bookkeeping`)
