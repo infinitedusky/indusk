@@ -121,9 +121,12 @@ describe.skipIf(SHOULD_SKIP)("A12 — promises check across a one-repo workbench
 		}
 	});
 
-	it("a registry file under the code root is not a registry", () => {
-		// The registry is plan-root state: a promises directory inside the
-		// wrapped repo must not be read as the project's registry.
+	it("a repo's own promises folder is its contract, read in place of the workbench's", () => {
+		// day-promises wrote this the other way: the registry was plan-root
+		// state, and a promises folder inside the wrapped repo was not read.
+		// workbench-plan-authoring D4 reversed it: a repo has one contract, its
+		// own `.indusk/promises/` once it holds one, and the workbench's folder
+		// is only its shadow until then. So the repo's folder is the one checked.
 		const wb = LAYOUTS[1]?.[1]();
 		if (!wb) throw new Error("no nested layout");
 		try {
@@ -131,11 +134,10 @@ describe.skipIf(SHOULD_SKIP)("A12 — promises check across a one-repo workbench
 			if (!repo) throw new Error("fixture declared no repo");
 			const inRepo = join(repo.dir, ".indusk", "promises", "x.md");
 			mkdirSync(dirname(inRepo), { recursive: true });
-			writeFileSync(inRepo, "---\nname: x\n---\nnot the registry\n");
+			writeFileSync(inRepo, "---\nname: x\n---\nnot a valid promise\n");
 			const r = runCli(wb.root, ["promises", "check"]);
 			expect(r.code).toBe(2);
-			expect(r.stderr).toMatch(/no promise registry/i);
-			expect(r.stderr).toContain(join(wb.root, ".indusk", "promises").replace(/^\/private/, ""));
+			expect(r.stderr).toMatch(/x\.md: missing or invalid `kind`/);
 		} finally {
 			wb.cleanup();
 		}

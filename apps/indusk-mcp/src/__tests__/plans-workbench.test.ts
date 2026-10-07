@@ -93,7 +93,11 @@ describe.skipIf(SHOULD_SKIP).each(LAYOUTS)("a plan in a workbench — %s", (_lab
 		expect(git(repo.dir, ["branch", "--list", `plan/${PLAN}`])).toContain(`plan/${PLAN}`);
 	});
 
-	it("A11, A12, A15, A16 — approve merges nothing; the code stays on its branch; review lists the repo's files; land needs acceptance, then merges into the repo", () => {
+	// Eight CLI runs in one case: 1.3 s alone, past the 5 s default under the
+	// full parallel suite's load (the landing run timed out here).
+	it("A11, A12, A15, A16 — approve merges nothing; the code stays on its branch; review lists the repo's files; land needs acceptance, then merges into the repo", {
+		timeout: 20_000,
+	}, () => {
 		const wb = withDomain(build());
 		const repo = wb.repos[0];
 		expect(runCli(wb.root, ["plans", "start", "feature", PLAN]).code).toBe(0);
