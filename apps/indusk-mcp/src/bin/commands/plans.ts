@@ -43,6 +43,9 @@ export function plansStart(
 export function plansApprove(cwd: string, name: string): Promise<void> {
 	return planVerb(async () => {
 		const a = await approvePlan(cwd, name);
+		if (a.workbench) {
+			return `Approved ${a.plan}: its documents are committed at the workbench root (${a.merge.slice(0, 8)}); its build continues on its code branch.`;
+		}
 		return `Approved ${a.plan}: ${a.paths.length} file(s) merged to the trunk at ${a.merge.slice(0, 8)}; its build continues on its branch.`;
 	});
 }

@@ -1,4 +1,13 @@
-import { implPath, planBranch, refuseInsideBuildStep, setImplKeys } from "./plan-branch.js";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join, relative } from "node:path";
+import {
+	implPath,
+	planBranch,
+	refuseInsideBuildStep,
+	setFrontmatterKeys,
+	setImplKeys,
+} from "./plan-branch.js";
+import { commitAtRoot, workbenchPlan } from "./workbench-plan.js";
 
 /**
  * `indusk plans accept <name>` (admin-plan-authoring, ADR D3): the person, or
@@ -22,13 +31,20 @@ export async function acceptPlan(
 	now: Date = new Date(),
 ): Promise<AcceptedPlan> {
 	refuseInsideBuildStep("accepted", plan);
-	const pb = await planBranch(anyCheckout, plan);
 	const accepted = now.toISOString();
-	await setImplKeys(
-		pb,
-		implPath(pb),
-		{ accepted, accepted_by: by },
-		`plan(${plan}): accepted${by === "auto" ? " by its workflow" : ""}`,
-	);
+	const message = `plan(${plan}): accepted${by === "auto" ? " by its workflow" : ""}`;
+	// A workbench plan's impl lives at the workbench root, committed there.
+	const wp = await workbenchPlan(anyCheckout, plan);
+	if (wp) {
+		const impl = join(wp.dir, "impl.md");
+		writeFileSync(
+			impl,
+			setFrontmatterKeys(readFileSync(impl, "utf-8"), { accepted, accepted_by: by }),
+		);
+		await commitAtRoot(wp.root, [relative(wp.root, impl)], message);
+		return { plan, accepted, acceptedBy: by };
+	}
+	const pb = await planBranch(anyCheckout, plan);
+	await setImplKeys(pb, implPath(pb), { accepted, accepted_by: by }, message);
 	return { plan, accepted, acceptedBy: by };
 }

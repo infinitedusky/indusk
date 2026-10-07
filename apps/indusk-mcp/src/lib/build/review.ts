@@ -7,6 +7,7 @@ import { type ImplPhase, parseImplString } from "../impl-parser-core.js";
 import { RITUAL_ORDER } from "../lifecycle.js";
 import { uncommittedWork } from "../plans/bookkeeping.js";
 import { branchFileChanges } from "../plans/plan-branch.js";
+import { workbenchPlan } from "../plans/workbench-plan.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { type PromiseEntry, readPromises } from "../promises/registry.js";
 import { rowProofs } from "../promises/rows.js";
@@ -75,14 +76,23 @@ export async function buildReview(anyCheckout: string, plan: string): Promise<Re
 	}
 	const copy = copies.copies.get(plan);
 	if (!copy) throw new BuildPlanUnreadable(`no plan named ${plan}, on the trunk or in a worktree`);
+	// A workbench plan's code is in the repo its code file names
+	// (workbench-plan-authoring D6): read before anything else, so a record
+	// naming a worktree that is gone is said, never worked around.
+	const wp = await workbenchPlan(anyCheckout, plan).catch((err: Error) => {
+		throw new BuildPlanUnreadable(err.message);
+	});
 	const implPath = join(copy.dir, "impl.md");
 	if (!existsSync(implPath)) throw new BuildPlanUnreadable(`${plan} has no impl.md in ${copy.dir}`);
 	const implText = readFileSync(implPath, "utf-8");
 	const impl = parseImplString(implText);
 	const trajectory = parseTrajectory(matter(implText).content);
 
-	const files =
-		copy.source === "worktree" ? await changedFiles(copies.projectRoot, copy.worktree.branch) : [];
+	const files = wp
+		? await branchFileChanges(wp.repoTrunk, wp.trunkBranch, wp.code.branch)
+		: copy.source === "worktree"
+			? await changedFiles(copies.projectRoot, copy.worktree.branch)
+			: [];
 
 	return {
 		plan,
@@ -98,7 +108,7 @@ export async function buildReview(anyCheckout: string, plan: string): Promise<Re
 		})),
 		files,
 		uncommittedOnMain: await uncommittedWork(
-			copies.projectRoot,
+			wp ? wp.repoTrunk : copies.projectRoot,
 			files.map((f) => f.path),
 		),
 		skippedRituals: [
