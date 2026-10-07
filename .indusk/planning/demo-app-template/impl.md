@@ -1,7 +1,7 @@
 ---
 title: "Demo app template — a seat-holds example in this repository"
 date: 2026-10-07
-status: in-progress
+status: completed
 falsification: skipped
 falsification_reason: "Hunted indusk demo's refusals (a non-empty or current folder, a busy port, a stopped daemon), the deployed fault switch (refused with 403), the nested-project scan (a repository whose own root holds .indusk/config.json is still read; only nested ones are skipped, matched by path prefix), local state leaking into the package or a copy (node_modules and .indusk/eval excluded at both), and a violation flipping back after the fault stops (A7 now guards it). No concrete failing case formed. The live check's findings were fixed in Build Phase 4."
 cleanup: skipped
@@ -184,7 +184,8 @@ A stranger runs one command and gets the seat-holds example running, its promise
 
 #### Build Phase 4 Verification
 
-- [ ] A5 and A8 recorded with their results, and the full `pnpm test` and `pnpm test:system` pass from a clean environment
+- [x] (from a clean environment: `pnpm test` 2,009 and 393 and the example's 3 passed, after the root `CLAUDE.md` was trimmed back under its margin and the Dawn loop test's 5 s load timeout passed on the rerun; `pnpm test:system` 41 of 41 files, 163 tests, and 13 of 13, 56 tests, first run. The deployed example's spans reach `indusk-always-on`: a hold on seat-holds.fly.dev came back as a `seat.release` span marked `upheld`) A5 and A8 recorded with their results, and the full `pnpm test` and `pnpm test:system` pass from a clean environment
+- [x] Shape — Build Phase 4 changed the example's button and text, A7's last assertions and the root's tree line. Nothing to change
 
 #### Build Phase 4 Context
 
