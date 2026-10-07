@@ -172,11 +172,11 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 
 #### Build Phase 4 Context
 
-- [ ] current.md: the project home's new key, and that evaluators hold highlights while they process them
+- [x] (this session's section, through the installed `update_current_section`) current.md: the project home's new key, and that evaluators hold highlights while they process them
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/guide/multi-agent.md`, "Where InDusk keeps its records": the home's key, the holds on highlights, and that worktrees are migrated too
+- [x] `apps/docs/src/guide/multi-agent.md`, "Where InDusk keeps its records": the home's key, the holds on highlights, and that worktrees are migrated too
 
 ## Files Affected
 
