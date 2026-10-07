@@ -49,7 +49,7 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | Starting a plan in a one-repo workbench writes its documents at the root, makes a code worktree in that repo on `plan/<name>`, and records both | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A2 | In a two-repo workbench, starting needs the repo named and records it; without one it is refused, naming the repos | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
-| A3 | Every later step finds the code worktree from the plan's record; a record naming a worktree that is gone is reported, never guessed | Test Phase 1 | Build Phase 3 | written | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
+| A3 | Every later step finds the code worktree from the plan's record; a record naming a worktree that is gone is reported, never guessed | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-plan-knows-its-code | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A4 | In a workbench whose repo holds `.indusk/promises/`, promises are read from the repo and the workbench's folder is not read | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
 | A5 | In a workbench whose repo holds no promises folder, promises are read and written in the workbench | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
 | A6 | Declaring a promise in a plan whose repo holds a contract writes it in the plan's code worktree | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
@@ -57,12 +57,12 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 | A8 | Two workbenches on one repo that holds a contract read the same promises | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
 | A9 | New plan in a workbench project, in the admin, starts the plan; with more than one repo the form asks which | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/components/session/NewPlanForm.test.tsx |
 | A10 | A workbench plan's page offers Continue planning, Approve, Build and Review at the moments a normal-mode plan's does | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/lib/plan-actions.test.ts |
-| A11 | Approving a workbench plan runs the brief check and marks it approved with nothing merged; a refused brief is refused with the check's message | Test Phase 1 | Build Phase 3 | written | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
-| A12 | A workbench plan's code stays on its branch in the repo until it lands; the repo's trunk is unchanged before then | Test Phase 1 | Build Phase 3 | written | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
+| A11 | Approving a workbench plan runs the brief check and marks it approved with nothing merged; a refused brief is refused with the check's message | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
+| A12 | A workbench plan's code stays on its branch in the repo until it lands; the repo's trunk is unchanged before then | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A13 | A workbench build writes code in its code worktree and checks items off at the root without asking; a write outside both is refused | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/lib/session/permissions.test.ts |
 | A14 | In a workbench, a real build session's checkoff is refused by the workbench's gates when an earlier phase skipped a gate without its reason | Build Phase 4 | Build Phase 4 | planned | contract | promise: gates-ran-at-every-checkoff | apps/indusk-mcp/src/__tests__/build-session-gates-workbench.test.ts |
-| A15 | A workbench plan's review lists the files its code branch changed in its repo, and uncommitted work on that repo's trunk on those paths | Test Phase 1 | Build Phase 3 | written | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
-| A16 | Landing an unaccepted workbench plan is refused; once accepted, its code merges into the repo's trunk and its code worktree and branch are removed | Test Phase 1 | Build Phase 3 | written | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
+| A15 | A workbench plan's review lists the files its code branch changed in its repo, and uncommitted work on that repo's trunk on those paths | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
+| A16 | Landing an unaccepted workbench plan is refused; once accepted, its code merges into the repo's trunk and its code worktree and branch are removed | Test Phase 1 | Build Phase 3 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A17 | No module but the contract resolver joins a path to `.indusk/promises`, and none but `resolveExecutionRoots` decides a code root | Test Phase 1 | Build Phase 2 | passing | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/contract-resolver-single-definition.test.ts |
 | A18 | In a normal-mode project every plan command, the build and the admin behave as in 1.63.0 | Test Phase 1 | Test Phase 1 | passing | unit | normal mode stays as it shipped; the existing plans, build, session and admin tests are the proof, run unchanged | apps/indusk-mcp/src/__tests__/plans-start.test.ts, apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 | A19 | In a scratch copy of a real workbench, one plan goes from New plan to landed in the admin, without a terminal | Build Phase 6 | Build Phase 6 | planned | live check | the whole flow in a workbench, recorded in Build Phase 6; each promise it walks is proven by its own rows | manual: recorded in Build Phase 6 |
@@ -153,22 +153,23 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 **Goal**: the rest of the plan commands read the code file.
 
-- [ ] Approve in a workbench (D3): the brief check, `status: approved`, committed at the root; nothing merged
-- [ ] Accept and `plans next` read the plan at the root and its code from `code.json`
-- [ ] The review reads the repo (D6): changed files on the code branch against the repo's trunk branch, and uncommitted trunk work on those paths
-- [ ] Land in a workbench (D7, D8): refuse unaccepted; bring the repo's trunk into the code branch; land checks in the code worktree; `--no-ff` into the repo's trunk; remove the worktree and branch; root writes committed at once
+- [x] (one module, `lib/plans/workbench-plan.ts`: `workbenchPlan` finds the plan at the root, its code from `code.json` and its repo's trunk, or refuses by name; `commitAtRoot` commits the verb's own writes) Approve in a workbench (D3): the brief check, `status: approved`, committed at the root; nothing merged
+- [x] Accept and `plans next` read the plan at the root and its code from `code.json` — accept writes and commits at the root; `plans next` already read the plan at the root and needs no code
+- [x] (the code file is read before anything else, so a worktree that is gone is the review's refusal) The review reads the repo (D6): changed files on the code branch against the repo's trunk branch, and uncommitted trunk work on those paths
+- [x] Land in a workbench (D7, D8): refuse unaccepted; bring the repo's trunk into the code branch; land checks in the code worktree; `--no-ff` into the repo's trunk; remove the worktree and branch; root writes committed at once
 
 #### Build Phase 3 Verification
 
-- [ ] A3, A11, A12, A15, A16 pass, and A18's normal-mode tests stay green (`pnpm exec vitest run src/__tests__/plans-`)
+- [x] (the workbench file 20 of 20, every layout; the normal-mode plans and build tests 10 files, 73 tests; `vitest related` finds nothing, since these modules are reached through the CLI) A3, A11, A12, A15, A16 pass, and A18's normal-mode tests stay green (`pnpm exec vitest run src/__tests__/plans-`)
+- [x] Shape — each verb branches once at its top to its workbench form, and the workbench forms share `workbenchPlan` and `commitAtRoot`. `landWorkbenchPlan` repeats the normal-mode landing's steps against the repo rather than the project. They differ in every root they touch, so a merged version would take five parameters to say what the two functions already say; left as two, and named in the cleanup ritual's scope
 
 #### Build Phase 3 Context
 
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`): the plan commands read a workbench plan's code from `readPlanCode`, never by name
+- [x] mcp (`apps/indusk-mcp/CLAUDE.md`): the plan commands read a workbench plan's code from `readPlanCode`, never by name — delivered by the enforcer: A17's third check (the plan, build and session modules never look a repo up) carries lesson: a-repo-has-one-contract-and-one-resolver-finds-it, which names this rule; the package file stays unchanged at 2 bytes under its budget
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/cli/plans.md`: approve, review and land in a workbench
+- [x] `apps/docs/src/reference/cli/plans.md`: approve, review and land in a workbench
 
 ### Build Phase 4: Sessions at the root
 
