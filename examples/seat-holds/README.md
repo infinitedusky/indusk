@@ -41,7 +41,9 @@ pnpm start
 With `SEAT_HOLDS_FAULT_TOGGLE=1`, the page shows a **Break it** switch. Turn it
 on and releases come late on purpose: the next lapsed hold is marked
 `violated`, and InDusk shows the promise broken with the span that broke it.
-Turn it off and the promise holds again.
+Press **Stop the fault** and releases come on time again, but the promise
+stays broken: it said *never*. It holds again once the break is recorded as an
+incident and fixed.
 
 ## Configuration
 

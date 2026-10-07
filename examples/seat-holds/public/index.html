@@ -72,10 +72,10 @@
     el("fault").hidden = !toggle;
     el("fault").className = `fault${fault ? " on" : ""}`;
     el("toggle").className = fault ? "on" : "";
-    el("toggle").textContent = fault ? "Fix it" : "Break it";
+    el("toggle").textContent = fault ? "Stop the fault" : "Break it";
     el("toggle").onclick = () => post("/fault", { on: !fault });
     el("fault-text").textContent = fault
-      ? "Releases are late on purpose. The promise is breaking: look in InDusk."
+      ? "Releases are late on purpose, and every late one breaks the promise. Stopping the fault does not mend it: the promise stays broken until the break is recorded and fixed."
       : "Releases come on time. Break it to make them late, and watch the promise break.";
   }
   render();
