@@ -1,4 +1,0 @@
-2026-10-07T19:33:25.641Z hook fired — tool: Bash, command: cd /Users/the_dusky/code/sandbox/dusk-worktrees/demo-app-template/examples/seat-holds && ls node_mod
-2026-10-07T19:33:25.642Z skip — no git commit in command
-2026-10-07T19:33:31.470Z hook fired — tool: Bash, command: pnpm test 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | grep -E "✓|×|AssertionError|Tests " | head -8
-2026-10-07T19:33:31.471Z skip — no git commit in command
