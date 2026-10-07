@@ -49,6 +49,7 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 | A9 | Landing still refuses a plan when `main` has uncommitted work that is not InDusk's, and the review still lists it | Test Phase 1 | Test Phase 1 | passing | unit | promise: nothing-ships-until-accepted, promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 | A10 | Every commit is still scored, its result readable where the admin and `indusk eval` look | Build Phase 1 | Build Phase 2 | written | unit | promise: every-commit-evaluated | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 | A11 | A hook and the package resolve the same main checkout and project home from any checkout of a project | Build Phase 1 | Build Phase 1 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
+| A12 | The evaluator only reads the checkout it grades: it runs without bypassing permissions, its git is read-only, and the git commands that change a checkout are denied; every place that starts it uses these permissions | Build Phase 2 | Build Phase 2 | passing | unit | found building this plan: the evaluator stashed, checked out and popped in its live worktree; a guard on the evaluator's launch, which no promise of this plan names | apps/indusk-mcp/src/lib/eval/permissions.test.ts |
 
 ## Checklist
 
@@ -98,8 +99,9 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 
 ### Build Phase 2: Every writer through it
 
-- [ ] `update_current_section`, the `agent` CLI and sweep write the main checkout's `current.md` and commit it (A1); `add_lesson` writes the main checkout's lessons and commits them (A2)
-- [ ] The highlight tools and `markProcessed` read and write the project's home (A3, A7)
+- [x] (through `currentMdPath` and `commitCurrentMd` in `notes.ts`: `update_current_section`, the `agent` CLI's register, done, heartbeat and prune, and the sweep with its archive; `list_lessons` reads the main checkout's lessons too) `update_current_section`, the `agent` CLI and sweep write the main checkout's `current.md` and commit it (A1); `add_lesson` writes the main checkout's lessons and commits them (A2)
+- [x] (`highlights.ts`'s three path helpers resolve the home; its older tests read the home too) The highlight tools and `markProcessed` read and write the project's home (A3, A7)
+- [x] Discovered building this phase: the evaluator, grading a commit in this plan's worktree, ran `git stash -u`, checked out three files from an older commit, ran the tests three times and popped the stash, while this session was editing there; edits to `agent.ts` vanished and came back staged. It ran under `--permission-mode bypassPermissions`, which ignores its allowed-tools list, at all three launch sites. One definition now, `lib/eval/permissions.ts`: `dontAsk`, read-only git allowed, the git commands that change a checkout denied outright. A12, red first. Until this is released, the installed evaluator still runs with bypass
 - [ ] The evaluator's results, findings, session file, pending queue and `system.log`, and the eval-trigger hook, use the project's home; `indusk eval` and the admin read them there (A3, A10)
 
 #### Build Phase 2 Verification
