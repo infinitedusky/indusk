@@ -1,7 +1,7 @@
 ---
 title: "Demo app template — a seat-holds example in this repository"
 date: 2026-10-07
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -42,14 +42,14 @@ A stranger runs one command and gets the seat-holds example running, its promise
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | A held seat comes free when its window passes; a booked seat never does; a held seat cannot be held by anyone else | Build Phase 1 | Build Phase 1 | planned | unit | promise: the-demo-app-starts-with-its-promise-holding | examples/seat-holds/src/seats.test.ts |
 | A2 | Every release is marked against the promise: held within the window, broken when late, with a symptom naming the seat and how late | Build Phase 1 | Build Phase 1 | planned | unit | promise: the-demo-app-starts-with-its-promise-holding | examples/seat-holds/src/seats.test.ts |
-| A3 | A fresh copy of the example carries its one promise, and InDusk's registry check passes in it | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-example.test.ts |
-| A4 | Started with `indusk demo`, the example's marks reach the local telemetry daemon, and InDusk reports its promise holding | Test Phase 1 | Build Phase 2 | planned | contract | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
+| A3 | A fresh copy of the example carries its one promise, and InDusk's registry check passes in it | Test Phase 1 | Build Phase 1 | written | unit | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-example.test.ts |
+| A4 | Started with `indusk demo`, the example's marks reach the local telemetry daemon, and InDusk reports its promise holding | Test Phase 1 | Build Phase 2 | written | contract | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
 | A5 | From a fresh copy: one command, the seat page, a seat held, booked and released, the admin showing the promise holding | Build Phase 4 | Build Phase 4 | planned | live check | a live check of the start, recorded in Build Phase 4; its promise is proven by A1–A4 | manual: recorded in Build Phase 4 |
 | A6 | With the fault switch on, a held seat comes free late and its release is marked broken; off, on time and held | Build Phase 1 | Build Phase 1 | planned | unit | promise: the-demo-break-is-caught-locally | examples/seat-holds/src/seats.test.ts |
-| A7 | With the switch on, InDusk reports the promise broken within ten seconds of the late release, naming the span; off again, holding | Test Phase 1 | Build Phase 2 | planned | contract | promise: the-demo-break-is-caught-locally | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
+| A7 | With the switch on, InDusk reports the promise broken within ten seconds of the late release, naming the span; off again, holding | Test Phase 1 | Build Phase 2 | written | contract | promise: the-demo-break-is-caught-locally | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
 | A8 | The whole break in the admin, from opening the example to the promise broken with its span, under two minutes; switched off, holding again | Build Phase 4 | Build Phase 4 | planned | live check | a live check of the break and the brief's second expectation, recorded in Build Phase 4; its promise is proven by A6 and A7 | manual: recorded in Build Phase 4 |
 | A9 | The everyday suite still never starts the example, the telemetry daemon or a browser; the guard scans the example's tests too | Build Phase 1 | Build Phase 1 | planned | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
-| A10 | Deployed to Fly from the example's own config, its page answers at the deployed address | Test Phase 1 | Build Phase 3 | planned | smoke | promise: the-deployed-demo-page-answers | examples/seat-holds/scripts/smoke-deployed.mjs |
+| A10 | Deployed to Fly from the example's own config, its page answers at the deployed address | Test Phase 1 | Build Phase 3 | written | smoke | promise: the-deployed-demo-page-answers | examples/seat-holds/scripts/smoke-deployed.mjs |
 
 ## Checklist
 
@@ -57,10 +57,10 @@ A stranger runs one command and gets the seat-holds example running, its promise
 
 **Goal**: author A3, A4, A7 and A10, each failing on its own assertion today, and record why the rest wait.
 
-- [ ] Confirm this plan's worktree (`indusk worktree create demo-app-template` made it on `plan/demo-app-template` and recorded the assignment) — worktree-per-plan default
-- [ ] A3: `demo-example.test.ts` copies `examples/seat-holds` to a temporary folder and runs `indusk promises check` there, expecting exit 0 and `a-held-seat-is-released-in-time` enforced. RED today: there is no example folder
-- [ ] A4, A7: `demo-command.test.ts`, in the system tier (added to `SYSTEM` in `vitest.tiers.ts`), runs `indusk demo <tmp> --no-open` in a temporary InDusk home, holds and lets a seat lapse over HTTP, and reads `indusk promises status`: holding (A4); then `POST /fault`, a lapse, and broken within ten seconds naming the span, then holding after the toggle is off (A7). RED today: `indusk demo` is an unknown command
-- [ ] A10: `examples/seat-holds/scripts/smoke-deployed.mjs` requests `SEAT_HOLDS_URL` and exits 0 only on a 200 with the page's title; it carries `promise: the-deployed-demo-page-answers`. RED today: nothing is deployed, and it exits non-zero naming the missing address
+- [x] Confirm this plan's worktree (`indusk worktree create demo-app-template` made it on `plan/demo-app-template` and recorded the assignment) — worktree-per-plan default
+- [x] A3: `demo-example.test.ts` copies `examples/seat-holds` to a temporary folder and runs `indusk promises check` there, expecting exit 0 and `a-held-seat-is-released-in-time` enforced. RED today: there is no example folder
+- [x] A4, A7: `demo-command.test.ts`, in the system tier (added to `SYSTEM` in `vitest.tiers.ts`), runs `indusk demo <tmp> --no-open` in a temporary InDusk home, holds and lets a seat lapse over HTTP, and reads `indusk promises status`: holding (A4); then `POST /fault`, a lapse, and broken within ten seconds naming the span, then holding after the toggle is off (A7). RED today: `indusk demo` is an unknown command
+- [x] A10: `examples/seat-holds/scripts/smoke-deployed.mjs` requests `SEAT_HOLDS_URL` and exits 0 only on a 200 with the page's title; it carries `promise: the-deployed-demo-page-answers`. RED today: nothing is deployed, and it exits non-zero naming the missing address
 
 #### Deferred to Build Phase 1
 
@@ -106,7 +106,7 @@ A stranger runs one command and gets the seat-holds example running, its promise
 
 #### Test Phase 1 Verification
 
-- [ ] A3, A4, A7 and A10 are authored and each fails on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/demo-example.test.ts` for A3; `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/demo-command.test.ts` for A4 and A7; `node examples/seat-holds/scripts/smoke-deployed.mjs` for A10), and the deferred body above is reviewed: it compiles once `seats.ts` exports `createSeats`, and it asserts what A1, A2 and A6 claim
+- [x] (A3 red: "examples/seat-holds is the example to copy: expected false to be true"; A4 and A7 red: "indusk demo printed no seat page: error: unknown command 'demo'"; A10 red: exits 1, "SEAT_HOLDS_URL is not set". The deferred body compiles once `createSeats` exists and asserts A1's three rules, A2's held and broken marks with the symptom, and A6's late release.) A3, A4, A7 and A10 are authored and each fails on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/demo-example.test.ts` for A3; `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/demo-command.test.ts` for A4 and A7; `node examples/seat-holds/scripts/smoke-deployed.mjs` for A10), and the deferred body above is reviewed: it compiles once `seats.ts` exports `createSeats`, and it asserts what A1, A2 and A6 claim
 
 ### Build Phase 1: The example runs locally
 
