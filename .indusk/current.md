@@ -442,29 +442,27 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
-## Session 4551e898 — workbench-plan-authoring: closing — live check recorded, promises confirmed
+## Session 4551e898 — demo-app-template: building — Build Phase 3 deployed
 
 **Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
-**Last updated**: 2026-10-07T03:59:08.602Z
+**Last updated**: 2026-10-07T19:53:27.930Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-- **workbench-plan-authoring** (branch `plan/workbench-plan-authoring`): Build Phase 6 done but the suites; then falsify, cleanup, retrospective, land, bump.
-- **Live check (A19)**: numero copied to `~/code/sandbox/numero-scratch` (no remote; own INDUSK_HOME `numero-scratch-home`; admin from the branch on 127.0.0.1:3997). New plan, planning and build ran live; review, accept and land skipped by Sandy's call (they rest on A15, A16).
-- **Fixed in the live check**: landing on the repo's declared base branch (`staging`); a new plan's agent prepares, then asks (A24); Trust in Claude Code (A25).
-- **Moved out**: renaming a plan (design in `.indusk/planning/known-issues.md`).
+- **demo-app-template** (branch `plan/demo-app-template`, worktree `dusk-worktrees/demo-app-template`): Build Phases 1–3 done. The seat-holds example is in `examples/seat-holds/`, `indusk demo` starts it, and it ships in the package.
+- **Deployed example** for the production act: Fly app `seat-holds`, https://seat-holds.fly.dev/, one machine that never sleeps; its spans go to `indusk-always-on`. No Break it switch there: deploy with `SEAT_HOLDS_FAULT=slow-release` to break it in production.
+- Next: Build Phase 4 — Sandy runs the live checks A5 (the start) and A8 (the timed break) in the admin; then promises confirm, the try-it guide, the changelog.
 
 ### Open Questions
 
-- numero runs InDusk 1.56.0, whose planner writes no promises; the admin says nothing about a project being behind (known issue: Update button).
-- A planning session built the change itself and set the impl in-progress, skipping Approve (known issue).
-- Cleanup owed: the scratch copy, its home and the 3997 admin; seatbox in the real registry.
+- Unverified: the deployed example's marks reaching `indusk-always-on` (A10 only checks the page answers).
+- The small-fixes plan, led by bookkeeping-lives-where-it-is-read, still to start in a second session.
 
 ### Cursor
 
-Full `pnpm test` + `test:system` from a clean environment running; then check off Build Phase 6 Verification, then /falsify.
+`.indusk/planning/demo-app-template/impl.md`, Build Phase 4.
 
 ---
 
