@@ -39,7 +39,7 @@ Hold a seat and let it lapse: its release is marked `upheld`, and
 `a-held-seat-is-released-in-time` holding. Press **Break it** and hold another
 seat: its release comes late, is marked `violated` with a symptom like
 `seat 2 released 3.2 s late`, and the promise shows broken with its trace.
-Press **Fix it** and it holds again.
+Press **Stop the fault**: releases come on time again, but the promise stays broken until the break is recorded and fixed.
 
 The example itself, including deploying it to Fly, is described in its
 [README](https://github.com/infinitedusky/indusk/tree/main/examples/seat-holds).
