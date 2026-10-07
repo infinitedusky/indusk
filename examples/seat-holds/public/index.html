@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seat holds</title>
+<style>
+  :root { --bg:#f7f6f2; --ink:#1c1b19; --muted:#6b675f; --line:#dedad0; --held:#c98a14; --booked:#2f6f4f; --bad:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:2rem 1rem; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, sans-serif; }
+  main { max-width: 40rem; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+  p.lede { color: var(--muted); margin: 0 0 1.5rem; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap:.75rem; }
+  .seat { background:#fff; border:1px solid var(--line); border-radius:.6rem; padding:.75rem; min-height:7rem; display:flex; flex-direction:column; gap:.4rem; }
+  .seat h2 { font-size:1rem; margin:0; }
+  .state { font-size:.85rem; color:var(--muted); }
+  .seat.held { border-color: var(--held); }
+  .seat.held .state { color: var(--held); }
+  .seat.booked { border-color: var(--booked); }
+  .seat.booked .state { color: var(--booked); }
+  button { font:inherit; padding:.35rem .7rem; border-radius:.4rem; border:1px solid var(--ink); background:var(--ink); color:#fff; cursor:pointer; }
+  button.secondary { background:#fff; color:var(--ink); }
+  .fault { margin: 1.5rem 0 0; padding: .75rem; border:1px dashed var(--line); border-radius:.6rem; display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; }
+  .fault.on { border-color: var(--bad); color: var(--bad); }
+  .fault button.on { background: var(--bad); border-color: var(--bad); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Seat holds</h1>
+  <p class="lede">Hold a seat and it is yours for a few seconds. If you don't book it, it is released, and this app promises that release is never late.</p>
+  <div class="grid" id="seats"></div>
+  <div class="fault" id="fault" hidden>
+    <button id="toggle" type="button">Break it</button>
+    <span id="fault-text">Releases come on time. Break it to make them late, and watch the promise break.</span>
+  </div>
+</main>
+<script>
+  const who = "you";
+  const el = (id) => document.getElementById(id);
+  async function post(path, body) {
+    await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    render();
+  }
+  async function render() {
+    const { seats, fault, toggle } = await (await fetch("/seats")).json();
+    el("seats").replaceChildren(...seats.map((s) => {
+      const card = document.createElement("div");
+      card.className = `seat ${s.state}`;
+      const title = document.createElement("h2");
+      title.textContent = `Seat ${s.seat}`;
+      const state = document.createElement("div");
+      state.className = "state";
+      state.textContent = s.state === "held" ? `held · ${Math.ceil(s.remainingMs / 1000)} s left`
+        : s.state === "booked" ? "booked" : "free";
+      card.append(title, state);
+      if (s.state === "free") {
+        const b = document.createElement("button");
+        b.textContent = "Hold";
+        b.onclick = () => post("/hold", { seat: s.seat, who });
+        card.append(b);
+      } else if (s.state === "held" && s.who === who) {
+        const b = document.createElement("button");
+        b.className = "secondary";
+        b.textContent = "Book";
+        b.onclick = () => post("/book", { seat: s.seat, who });
+        card.append(b);
+      }
+      return card;
+    }));
+    el("fault").hidden = !toggle;
+    el("fault").className = `fault${fault ? " on" : ""}`;
+    el("toggle").className = fault ? "on" : "";
+    el("toggle").textContent = fault ? "Fix it" : "Break it";
+    el("toggle").onclick = () => post("/fault", { on: !fault });
+    el("fault-text").textContent = fault
+      ? "Releases are late on purpose. The promise is breaking: look in InDusk."
+      : "Releases come on time. Break it to make them late, and watch the promise break.";
+  }
+  render();
+  setInterval(render, 500);
+</script>
+</body>
+</html>

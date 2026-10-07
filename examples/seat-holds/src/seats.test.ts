@@ -1,6 +1,6 @@
-// promise: a-held-seat-is-released-in-time — the example's own promise.
-// promise: the-demo-app-starts-with-its-promise-holding — demo-app-template A1, A2.
-// promise: the-demo-break-is-caught-locally — demo-app-template A6.
+// promise: a-held-seat-is-released-in-time
+// The rules behind this example's one promise. (In InDusk's repository these
+// are rows A1, A2 and A6 of the demo-app-template plan.)
 import { describe, expect, it } from "vitest";
 import { createSeats } from "./seats.js";
 

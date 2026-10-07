@@ -2,7 +2,7 @@
 // promise: the-deployed-demo-page-answers — demo-app-template A10.
 //
 // After the seat-holds example is deployed, its page answers at the deployed
-// address. Run at deploy: SEAT_HOLDS_URL=https://<app>.fly.dev node scripts/smoke-deployed.mjs
+// address. Run at deploy: SEAT_HOLDS_URL=https://<app>.fly.dev node examples/seat-holds-smoke-deployed.mjs
 // Exit 0 only on a 200 whose body is the seat page; otherwise say why and exit 1.
 
 const url = process.env.SEAT_HOLDS_URL;
