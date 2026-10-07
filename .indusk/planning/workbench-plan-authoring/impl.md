@@ -55,8 +55,8 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 | A6 | Declaring a promise in a plan whose repo holds a contract writes it in the plan's code worktree | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A7 | The registry check, `promises status` and `promises list` give the same promises for a project, with or without a contract in its repo | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
 | A8 | Two workbenches on one repo that holds a contract read the same promises | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/contract-resolver.test.ts |
-| A9 | New plan in a workbench project, in the admin, starts the plan; with more than one repo the form asks which | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/components/session/NewPlanForm.test.tsx |
-| A10 | A workbench plan's page offers Continue planning, Approve, Build and Review at the moments a normal-mode plan's does | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/lib/plan-actions.test.ts |
+| A9 | New plan in a workbench project, in the admin, starts the plan; with more than one repo the form asks which | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/components/session/NewPlanForm.test.tsx |
+| A10 | A workbench plan's page offers Continue planning, Approve, Build and Review at the moments a normal-mode plan's does | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/lib/plan-actions.test.ts |
 | A11 | Approving a workbench plan runs the brief check and marks it approved with nothing merged; a refused brief is refused with the check's message | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A12 | A workbench plan's code stays on its branch in the repo until it lands; the repo's trunk is unchanged before then | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A13 | A workbench build writes code in its code worktree and checks items off at the root without asking; a write outside both is refused | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/lib/build/build-session.test.ts |
@@ -196,21 +196,22 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 **Goal**: a workbench plan gets its buttons, and New plan asks for the repo.
 
-- [ ] A9 and A10 written red against the form and the action rule
-- [ ] The plan reader exposes a workbench plan's code file; Continue planning, Approve, Build and Review use it where a normal-mode plan uses its worktree (D9)
-- [ ] New plan lists the workbench's repos and asks when there is more than one; the route passes `--repo`
+- [x] A9 and A10 written red against the form and the action rule — A9 red on its assertion (no repo picker; its one-repo case already holds); A10 red because `plan-actions.ts`, the rule this phase extracts from the page, does not exist yet
+- [x] The plan reader exposes a workbench plan's code file; Continue planning, Approve, Build and Review use it where a normal-mode plan uses its worktree (D9) — `planActions` (`lib/plan-actions.ts`) is the one rule the page reads; `planLocation` gives a workbench session its root and its code worktree, which the sessions route and the build host pass on; the package exports `./worktree/roots` for the reader
+- [x] New plan lists the workbench's repos and asks when there is more than one; the route passes `--repo` — and starts the planning session at the root with the code worktree added
 
 #### Build Phase 5 Verification
 
-- [ ] A9, A10 pass, the admin's node and session component tests stay green (`cd apps/indusk-admin && pnpm exec vitest run src/components/session src/lib`)
+- [x] (27 files, 237 tests: the session components in the browser, the node tests, the admin-hosts and package-commands guards; both packages type-check) A9, A10 pass, the admin's node and session component tests stay green
+- [x] Shape — the page's three inline conditions became one named rule with a test of its own; `planLocation` gained the code worktree and nothing else; the form's picker shows only when there is a choice. Nothing to change (`cd apps/indusk-admin && pnpm exec vitest run src/components/session src/lib`)
 
 #### Build Phase 5 Context
 
-- [ ] admin (`apps/indusk-admin/CLAUDE.md`): a plan's actions read its worktree in normal mode and its code file in a workbench, through one rule
+- [x] admin (`apps/indusk-admin/CLAUDE.md`): a plan's actions read its worktree in normal mode and its code file in a workbench, through one rule
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: New plan's repo picker
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: New plan's repo picker
 
 ### Build Phase 6: The live check, and the promises
 
