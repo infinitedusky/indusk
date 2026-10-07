@@ -4,6 +4,14 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Changed
+
+- **InDusk's records live where they are read** (bookkeeping-lives-where-it-is-read). A session's `current.md` section and a lesson are written to the main checkout and committed on `main` as written (`chore(indusk): …`, only those files, and only when the main checkout is on its trunk branch with no merge or rebase in progress; otherwise written and left for you, with the reason). The highlights queue, its processed list and the evaluator's results live in `~/.indusk/projects/<project>/`, the same from every checkout, so a highlight is processed once and no checkout is left dirty with InDusk's files. `indusk update` moves an existing project's tracked highlights and `.indusk/eval/` there, merged by id, and takes them out of git. See [where InDusk keeps its records](/guide/multi-agent#where-indusk-keeps-its-records).
+
+### Fixed
+
+- **The evaluator only reads the checkout it grades.** It ran with `bypassPermissions`, and was found stashing, checking out and popping files in a live worktree while a session worked there. It now runs with its tools allowed by name: read-only git, InDusk's MCP tools, and every git command that changes a checkout denied.
+
 ## [1.65.1] — 2026-10-07
 
 ### Fixed
