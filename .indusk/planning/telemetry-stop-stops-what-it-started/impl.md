@@ -36,9 +36,9 @@ gate_policy: ask
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A recorded process alive and running this daemon's binary with this daemon's config is stopped, whether or not its port answers | Build Phase 1 | Build Phase 1 | planned | unit | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
-| A2 | A recorded process ID now held by another program is left alone, and the record is still cleared | Build Phase 1 | Build Phase 1 | planned | unit | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
-| A3 | When a process of its own still runs after the stop, stop says so and keeps the record | Build Phase 1 | Build Phase 1 | planned | unit | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
+| A1 | A recorded process alive and running this daemon's binary with this daemon's config is stopped, whether or not its port answers | Build Phase 1 | Build Phase 1 | written | unit | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
+| A2 | A recorded process ID now held by another program is left alone, and the record is still cleared | Build Phase 1 | Build Phase 1 | written | unit | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
+| A3 | When a process of its own still runs after the stop, stop says so and keeps the record | Build Phase 1 | Build Phase 1 | written | unit | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
 | A4 | A real daemon started and then stopped leaves no Jaeger or otelcol running from its home | Test Phase 1 | Build Phase 1 | written | contract | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts |
 
 ## Checklist
@@ -64,7 +64,7 @@ gate_policy: ask
 
 ### Build Phase 1: Stop judges by the command line
 
-- [ ] A1, A2, A3 written red in `lib/telemetry/stop.test.ts` against a `stopDaemon` that keeps today's port-based decision
+- [x] (A1 red with "expected [] to deeply equal [ 101, 102 ]": with the ports slow, nothing is signalled, the release's failure exactly; A2 and A3 red on their own assertions) A1, A2, A3 written red in `lib/telemetry/stop.test.ts` against a `stopDaemon` that keeps today's port-based decision
 - [ ] `lib/telemetry/stop.ts`: `stopDaemon(meta, home, deps)` with `deps = { alive(pid), command(pid), kill(pid, signal), sleep(ms) }`; a process is its own when it is alive and its command line contains its recorded binary and its config under `home` (`telemetry-jaeger.yaml`, `telemetry-collector.yaml`); SIGTERM its own, wait up to 3 s, SIGKILL any left; returns `{ stopped, stillRunning, strangers }`, `stopped` only when none of its own is left
 - [ ] `daemonStop` calls it with the real observations (`ps -o command= -p <pid>`); clears the record unless a process of its own still runs; `indusk telemetry stop` prints the still-running PIDs and exits non-zero when there are any
 
