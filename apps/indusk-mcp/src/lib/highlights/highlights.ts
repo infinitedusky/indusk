@@ -1,5 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { bookkeepingRoots } from "../bookkeeping/roots.js";
 
 export type HighlightLevel = "critical" | "important" | "note";
 export type ProcessedAction = "wrote-episode" | "skipped";
@@ -33,16 +34,19 @@ export interface WriteHighlightInput {
 	level: HighlightLevel;
 }
 
+// The queue and the processed list live in the project's home, outside every
+// checkout, so every checkout of a project reads one queue and one list
+// (bookkeeping-lives-where-it-is-read D3). promise: a-highlight-becomes-a-lesson-once
 function highlightsPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "highlights.jsonl");
+	return join(bookkeepingRoots(projectRoot).home, "highlights.jsonl");
 }
 
 function processedPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "highlights-processed.jsonl");
+	return join(bookkeepingRoots(projectRoot).home, "highlights-processed.jsonl");
 }
 
 function ensureInduskDir(projectRoot: string): void {
-	mkdirSync(join(projectRoot, ".indusk"), { recursive: true });
+	mkdirSync(bookkeepingRoots(projectRoot).home, { recursive: true });
 }
 
 function todayStamp(): string {

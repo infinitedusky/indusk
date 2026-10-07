@@ -1,10 +1,11 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { AgentSection } from "../agents/current-md.js";
 import { parseCurrentMd, upsertSection } from "../agents/current-md.js";
 import { withLock } from "../agents/lock.js";
 import { getTrunkBranches } from "../config.js";
+import { bookkeepingRoots } from "./roots.js";
 
 export type NoteCommit = { committed: true } | { committed: false; reason: string };
 
@@ -56,6 +57,31 @@ function git(cwd: string, ...args: string[]): { code: number; out: string; err: 
 	return { code: r.status ?? -1, out: (r.stdout ?? "").trim(), err: (r.stderr ?? "").trim() };
 }
 
+/** The main checkout's `current.md`, whichever checkout asks. */
+export function currentMdPath(anyCheckout: string): string {
+	return join(bookkeepingRoots(anyCheckout).trunk, CURRENT_MD);
+}
+
+/** Commit `current.md` (and any other notes given) on `main`; call inside the `current.md` lock. */
+export function commitCurrentMd(
+	anyCheckout: string,
+	what: string,
+	also: string[] = [],
+): NoteCommit {
+	return commitNote(
+		bookkeepingRoots(anyCheckout).trunk,
+		[CURRENT_MD, ...also],
+		`chore(indusk): current.md — ${oneLine(what)}`,
+	);
+}
+
+const CURRENT_MD = join(".indusk", "current.md");
+
+function oneLine(text: string): string {
+	const line = text.replace(/\s+/g, " ").trim();
+	return line.length > 72 ? `${line.slice(0, 71)}…` : line;
+}
+
 export interface CurrentSectionInput {
 	sessionId: string;
 	task: string;
@@ -64,14 +90,20 @@ export interface CurrentSectionInput {
 	cursor: string;
 }
 
-/** Write one session's section of `current.md`. */
+/**
+ * Write one session's section of the main checkout's `current.md`, and commit
+ * it on `main` (bookkeeping-lives-where-it-is-read D2), from any checkout.
+ *
+ * promise: indusk-leaves-main-clean
+ */
 export function writeCurrentSection(
-	projectRoot: string,
+	anyCheckout: string,
 	input: CurrentSectionInput,
 ): { section: AgentSection; commit: NoteCommit } {
-	const path = join(projectRoot, ".indusk/current.md");
-	mkdirSync(join(projectRoot, ".indusk"), { recursive: true });
+	const path = currentMdPath(anyCheckout);
+	mkdirSync(dirname(path), { recursive: true });
 	let section!: AgentSection;
+	let commit!: NoteCommit;
 	withLock(`${path}.lock`, () => {
 		const initial = existsSync(path) ? readFileSync(path, "utf-8") : "";
 		const existing = parseCurrentMd(initial).sections.find((s) => s.sessionId === input.sessionId);
@@ -89,8 +121,9 @@ export function writeCurrentSection(
 		const tmpPath = `${path}.tmp.${input.sessionId}`;
 		writeFileSync(tmpPath, upsertSection(initial, section));
 		renameSync(tmpPath, path);
+		commit = commitCurrentMd(anyCheckout, `${section.sessionShort} ${input.task}`);
 	});
-	return { section, commit: { committed: false, reason: "not yet" } };
+	return { section, commit };
 }
 
 export interface LessonInput {
@@ -99,18 +132,32 @@ export interface LessonInput {
 	content: string;
 }
 
-/** Add a lesson; refuses one that already exists. */
+/**
+ * Add a lesson to the main checkout's lessons and commit it on `main`, from
+ * any checkout; refuses one that already exists.
+ *
+ * promise: indusk-leaves-main-clean
+ */
 export function addLesson(
-	projectRoot: string,
+	anyCheckout: string,
 	input: LessonInput,
 ): { file: string; commit: NoteCommit } | { error: string } {
-	const dir = join(projectRoot, ".claude", "lessons");
-	mkdirSync(dir, { recursive: true });
+	const { trunk } = bookkeepingRoots(anyCheckout);
+	const rel = join(".claude", "lessons");
+	mkdirSync(join(trunk, rel), { recursive: true });
 	const fileName = input.name.startsWith("community-")
 		? input.name.replace("community-", "")
 		: input.name;
-	const file = join(dir, `${fileName}.md`);
-	if (existsSync(file)) return { error: `Lesson ${fileName}.md already exists` };
-	writeFileSync(file, `# ${input.title}\n\n${input.content}\n`);
-	return { file, commit: { committed: false, reason: "not yet" } };
+	const file = join(trunk, rel, `${fileName}.md`);
+	mkdirSync(dirname(currentMdPath(anyCheckout)), { recursive: true });
+	return withLock(`${currentMdPath(anyCheckout)}.lock`, () => {
+		if (existsSync(file)) return { error: `Lesson ${fileName}.md already exists` };
+		writeFileSync(file, `# ${input.title}\n\n${input.content}\n`);
+		const commit = commitNote(
+			trunk,
+			[join(rel, `${fileName}.md`)],
+			`chore(indusk): lesson — ${fileName}`,
+		);
+		return { file, commit };
+	});
 }
