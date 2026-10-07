@@ -80,3 +80,5 @@ across four build phases; a human judged none wrong.
 
 - Promises: two in InDusk's registry, two in the example's.
 - Rows: ten, all terminal.
+
+Landed on main at da70eada, 2026-10-07.
