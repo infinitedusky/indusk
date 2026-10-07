@@ -2,6 +2,10 @@
 title: "telemetry stop stops what it started"
 date: 2026-10-07
 status: approved
+falsification: skipped
+falsification_reason: "A small bugfix whose own rows are its falsification: A1 reproduced the release's failure exactly (slow ports, nothing signalled) before the fix; A2 covers a recycled PID and the same binary from another home; A3 a process that will not die; A4 the real daemon. Hunted the remaining path, a command line that cannot be read (ps fails): the process is then not its own and is not signalled, the safe side, and stop reports it still running only if alive and its own. No further case formed."
+cleanup: skipped
+cleanup_reason: "One new module of about 80 lines with one job, and daemonStop shortened by calling it. Nothing to decompose."
 trajectory: required
 test_phases: required
 test_levels: required
@@ -71,6 +75,8 @@ gate_policy: ask
 #### Build Phase 1 Verification
 
 - [x] (A1–A3 4 of 4; the related tests 5 files, 33; the telemetry system files, A4's among them, 5 files, 14; `tsc` and biome clean) A1, A2, A3 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/telemetry/stop.test.ts && pnpm exec vitest related src/lib/telemetry/daemon.ts src/lib/telemetry/stop.ts --run`), and A4 still passes
+
+- [x] Shape — `stop.ts` is one decision with its observations as inputs; `daemonStop` reads the record and hands the real observations to it; the command reports. Nothing to change
 
 #### Build Phase 1 Context
 
