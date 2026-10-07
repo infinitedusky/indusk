@@ -20,16 +20,23 @@ export type Decision = { allow: true } | { allow: false; message: string };
 
 const PATH_KEYS = ["file_path", "path", "notebook_path"] as const;
 
-export function decideBuildPermission(ev: PermissionEvent, worktree: string): Decision {
+export function decideBuildPermission(ev: PermissionEvent, roots: string | string[]): Decision {
+	// A workbench build has two: the root, where its plan is checked off, and
+	// its code worktree (workbench-plan-authoring D5). A relative path is the
+	// first root's, where the session runs.
+	const all = typeof roots === "string" ? [roots] : roots;
+	const inside = (target: string, root: string) => {
+		const rel = relative(resolve(root), target);
+		return !(rel.startsWith("..") || isAbsolute(rel));
+	};
 	for (const key of PATH_KEYS) {
 		const value = ev.input[key];
 		if (typeof value !== "string" || value === "") continue;
-		const target = resolve(worktree, value);
-		const rel = relative(resolve(worktree), target);
-		if (rel.startsWith("..") || isAbsolute(rel)) {
+		const target = resolve(all[0], value);
+		if (!all.some((root) => inside(target, root))) {
 			return {
 				allow: false,
-				message: `This build writes only inside its plan's worktree, ${worktree}; ${value} is outside it. Work inside the worktree, or record that the plan cannot continue.`,
+				message: `This build writes only inside its plan's worktree, ${all.join(" and ")}; ${value} is outside it. Work inside the worktree, or record that the plan cannot continue.`,
 			};
 		}
 	}
