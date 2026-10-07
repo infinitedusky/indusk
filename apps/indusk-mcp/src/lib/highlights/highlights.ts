@@ -190,16 +190,21 @@ function nextSeqForToday(projectRoot: string): number {
  */
 export function writeHighlight(projectRoot: string, input: WriteHighlightInput): Highlight {
 	ensureInduskDir(projectRoot);
-	const seq = nextSeqForToday(projectRoot);
-	const entry: Highlight = {
-		id: `h-${todayStamp()}-${String(seq).padStart(3, "0")}`,
-		timestamp: new Date().toISOString(),
-		level: input.level,
-		tag: input.tag,
-		note: input.note,
-	};
-	appendFileSync(highlightsPath(projectRoot), `${JSON.stringify(entry)}\n`, "utf-8");
-	return entry;
+	// Under the queue's lock: every checkout's sessions append to one queue, and
+	// two reading the day's last number at once would both take the next
+	// (bookkeeping-lives-where-it-is-read A14).
+	return withLock(queueLock(projectRoot), () => {
+		const seq = nextSeqForToday(projectRoot);
+		const entry: Highlight = {
+			id: `h-${todayStamp()}-${String(seq).padStart(3, "0")}`,
+			timestamp: new Date().toISOString(),
+			level: input.level,
+			tag: input.tag,
+			note: input.note,
+		};
+		appendFileSync(highlightsPath(projectRoot), `${JSON.stringify(entry)}\n`, "utf-8");
+		return entry;
+	});
 }
 
 /**
