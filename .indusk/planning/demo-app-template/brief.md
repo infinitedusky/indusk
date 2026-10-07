@@ -46,7 +46,7 @@ None.
 - **A production break.** The Fly config ships in the example and is tried once; the break in production is the demo's second act, with [server-provisioning](../server-provisioning/brief.md).
 - **Recording the break as an incident without a command.** That is [incident-recording](../incident-recording/brief.md).
 - **Seeing the break in the editor.** That is the VS Code extension, its own plan.
-- **The example's own promise**, `a-held-seat-is-released-in-time` (a seat held and not booked is released within 30 seconds). It lives in the example's registry, not InDusk's; this plan ships it, and the planner adds more on camera.
+- **The example's own promise**, `a-held-seat-is-released-in-time` (a seat held and not booked is released when its hold window passes; the window is a few seconds in the demo). It lives in the example's registry, not InDusk's; this plan ships it, and the planner adds more on camera.
 
 ## Depends On
 
