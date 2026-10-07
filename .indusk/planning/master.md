@@ -66,7 +66,11 @@ promise breaking, and the system catching it, as fast as possible, for the
 launch and for showing at Lazer. In order:
 
 1. **A small-fixes bugfix plan**, alongside step 2, from
-   [known-issues.md](known-issues.md): a planning session that builds and
+   [known-issues.md](known-issues.md), led by
+   [bookkeeping-lives-where-it-is-read](bookkeeping-lives-where-it-is-read/brief.md)
+   (the evaluator writes its notes into whichever checkout it runs in and
+   nothing commits them; it blocked three steps in two days and wrote each
+   lesson three times on 2026-10-07): a planning session that builds and
    skips Approve, the planner's worktree step in a workbench, "Ended:
    success", agents' `git stash`, `init` dropping the worktree config,
    approve vs the planner's Key Decisions line, and the release flakes (the
