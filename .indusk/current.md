@@ -1914,3 +1914,24 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 (empty)
 
 ---
+
+## Session 0fabeb66 — eval: bookkeeping-lives-where-it-is-read plan/brief commit
+
+**Session ID**: 0fabeb66-522b-4d20-9f1b-e8e09e4a5149
+**Last updated**: 2026-10-07T22:41:37.855Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
