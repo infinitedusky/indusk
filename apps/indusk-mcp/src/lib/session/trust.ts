@@ -50,14 +50,7 @@ export function trustLikeProject(
 	if (projects[worktree]?.hasTrustDialogAccepted === true) return "already";
 	if (worktree === project || projects[project]?.hasTrustDialogAccepted !== true)
 		return "untrusted";
-	const next = {
-		...config,
-		projects: { ...projects, [worktree]: { ...projects[worktree], hasTrustDialogAccepted: true } },
-	};
-	const temp = `${claudeConfig}.indusk-${process.pid}`;
-	writeFileSync(temp, `${JSON.stringify(next, null, 2)}\n`);
-	renameSync(temp, claudeConfig);
-	return "trusted";
+	return writeTrust(config, worktree, claudeConfig);
 }
 
 /**
@@ -65,8 +58,24 @@ export function trustLikeProject(
  * Code" (workbench-plan-authoring D12). The click is the consent, as
  * accepting Claude Code's own prompt is.
  */
-export function trustProject(_path: string, _claudeConfig = defaultConfig()): TrustOutcome {
-	return "untrusted";
+export function trustProject(path: string, claudeConfig = defaultConfig()): TrustOutcome {
+	const config = existsSync(claudeConfig) ? readConfig(claudeConfig) : {};
+	if (!config) return "untrusted";
+	if (config.projects?.[path]?.hasTrustDialogAccepted === true) return "already";
+	return writeTrust(config, path, claudeConfig);
+}
+
+/** The one write: `path`'s `hasTrustDialogAccepted`, by read-modify-rename. */
+function writeTrust(config: ClaudeConfig, path: string, claudeConfig: string): TrustOutcome {
+	const projects = config.projects ?? {};
+	const next = {
+		...config,
+		projects: { ...projects, [path]: { ...projects[path], hasTrustDialogAccepted: true } },
+	};
+	const temp = `${claudeConfig}.indusk-${process.pid}`;
+	writeFileSync(temp, `${JSON.stringify(next, null, 2)}\n`);
+	renameSync(temp, claudeConfig);
+	return "trusted";
 }
 
 /** The main working tree of the repository `cwd` is in, or `cwd` when git cannot say. */
