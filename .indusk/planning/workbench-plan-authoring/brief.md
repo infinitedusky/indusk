@@ -46,14 +46,9 @@ plan after this one.*
   the project's promises), says when it is ready, and asks the person to
   describe what they want. It never guesses the plan from its name (Sandy,
   2026-10-06, in the live check, where it planned from the title).
-- **A plan can be renamed, by one command that moves everything.** A name
-  gets better once the idea is clear, so the planner may rename a plan, but
-  only through `indusk plans rename`, never by hand with git. The command
-  asks the admin to move a running session's record, since that lives in
-  the admin's memory. The worktree's directory keeps its name: a session
-  may be running in it, and the records hold its path (Sandy, 2026-10-06, in the live check: the planner
-  renamed `new-game-type` to `blind-mans-curse` by hand, and the running
-  session was left filed under a page that no longer existed).
+- **The admin offers trust, on a click.** A project Claude Code does not
+  trust shows "Trust in Claude Code"; the click is the person's consent
+  (Sandy, 2026-10-06, in the live check: "just fix it").
 
 ## Promises
 
@@ -67,11 +62,6 @@ plan after this one.*
    one, otherwise the workbench's shadow contract. Every reader goes through
    the same resolver: the plan commands, the registry check, the watcher and
    the admin. A promise is never read from both.
-3. **`a-renamed-plan-is-found-by-its-new-name`** (state). A plan renamed
-   while it is open is renamed everywhere InDusk looks it up: its documents,
-   its branch, its code record, its promises, its phase records and its
-   running session, whose panel moves to the plan's new page. Nothing looks
-   the plan up by its old name.
 
 ### Existing promises
 
@@ -114,7 +104,12 @@ None.
 - **Moving a shadow contract into its repo**: the command that writes the
   folder and opens the pull request. That is its own plan, after this one.
 - **Creating a project or a workbench from the admin**, and an **Update
-  button**: follow-ons named in the smoke check.
+  button**: follow-ons named in the smoke check. The live check made Update
+  matter more: numero runs InDusk 1.56.0, whose planner writes no promises.
+- **Renaming a plan.** Found in the live check, where a hand rename stranded
+  the running session; designed (`indusk plans rename`, moving the session
+  through the admin) and moved to its own plan by Sandy's call (2026-10-06).
+  The design is in `known-issues.md`.
 - **Where InDusk's bookkeeping is written**:
   `bookkeeping-lives-where-it-is-read`.
 
