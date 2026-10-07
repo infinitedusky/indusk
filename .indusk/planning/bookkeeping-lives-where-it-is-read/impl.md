@@ -41,14 +41,14 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 | A1 | A session's note written from a plan's worktree lands in the main checkout's `current.md`, committed on `main`; neither checkout is left dirty | Build Phase 1 | Build Phase 2 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
 | A2 | A lesson added from a plan's worktree is written to the main checkout's lessons and committed on `main` | Build Phase 1 | Build Phase 2 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
 | A3 | A highlight, its processed mark and an evaluation's results are written under the project's home, the same from every checkout; none appears in `git status` | Build Phase 1 | Build Phase 2 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
-| A4 | When the main checkout is off its trunk branch or mid-merge, a note is written there, left uncommitted, and the reason returned; nothing is committed onto another branch | Build Phase 1 | Build Phase 1 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
-| A5 | Two notes written at the same moment are both committed | Build Phase 1 | Build Phase 1 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
+| A4 | When the main checkout is off its trunk branch or mid-merge, a note is written there, left uncommitted, and the reason returned; nothing is committed onto another branch | Build Phase 1 | Build Phase 1 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
+| A5 | Two notes written at the same moment are both committed | Build Phase 1 | Build Phase 2 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
 | A6 | `indusk update` moves a project's tracked highlights into its home, unprocessed ones kept, and takes them out of git | Test Phase 1 | Build Phase 3 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/__tests__/bookkeeping-migration.test.ts |
 | A7 | A highlight processed for a commit in one checkout is not offered again in another | Build Phase 1 | Build Phase 2 | written | unit | promise: a-highlight-becomes-a-lesson-once | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 | A8 | A real evaluator run on a commit in a plan's worktree writes its lesson on `main` and marks the highlight processed in the project's home | Build Phase 3 | Build Phase 3 | planned | contract | promise: a-highlight-becomes-a-lesson-once | apps/indusk-mcp/src/__tests__/eval-bookkeeping-contract.test.ts |
 | A9 | Landing still refuses a plan when `main` has uncommitted work that is not InDusk's, and the review still lists it | Test Phase 1 | Test Phase 1 | passing | unit | promise: nothing-ships-until-accepted, promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 | A10 | Every commit is still scored, its result readable where the admin and `indusk eval` look | Build Phase 1 | Build Phase 2 | written | unit | promise: every-commit-evaluated | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
-| A11 | A hook and the package resolve the same main checkout and project home from any checkout of a project | Build Phase 1 | Build Phase 1 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
+| A11 | A hook and the package resolve the same main checkout and project home from any checkout of a project | Build Phase 1 | Build Phase 1 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 
 ## Checklist
 
@@ -79,21 +79,22 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 ### Build Phase 1: One resolver, and a note committed on main
 
 - [x] (the writers lifted unchanged out of the MCP tool handlers into `lib/bookkeeping/notes.ts` as `writeCurrentSection` and `addLesson`, so the tests reach the real write path; all nine cases red on their assertions) A1–A5, A7, A10, A11 written red against stubs of `bookkeepingRoots`, `commitNote` and `projectHome`
-- [ ] `lib/bookkeeping/roots.ts`: `bookkeepingRoots(anyCheckout): { trunk, home }` — `trunk` the folder holding the shared git directory (the workbench root in a workbench), `home` `<INDUSK_HOME>/projects/<markProjectId(trunk)>/`
-- [ ] `lib/bookkeeping/notes.ts`: `commitNote(trunk, paths, message)` under `current.md.lock`; commits only when `trunk` is on its trunk branch with no merge, rebase or cherry-pick in progress, with `git commit --only -m "chore(indusk): …" -- <paths>`; else returns `{ committed: false, reason }`
-- [ ] `hooks/_hook-paths.js`: `projectHome(cwd)` and `mainCheckout(cwd)` with the same rule; A11 pins them equal to `bookkeepingRoots`
+- [x] `lib/bookkeeping/roots.ts`: `bookkeepingRoots(anyCheckout): { trunk, home }` — `trunk` the folder holding the shared git directory (the workbench root in a workbench), `home` `<INDUSK_HOME>/projects/<markProjectId(trunk)>/`
+- [x] (the lock is the callers': `commitNote` runs inside the writer's `current.md` lock, since the lock is not re-entrant) `lib/bookkeeping/notes.ts`: `commitNote(trunk, paths, message)` under `current.md.lock`; commits only when `trunk` is on its trunk branch with no merge, rebase or cherry-pick in progress, with `git commit --only -m "chore(indusk): …" -- <paths>`; else returns `{ committed: false, reason }`
+- [x] `hooks/_hook-paths.js`: `projectHome(cwd)` and `mainCheckout(cwd)` with the same rule; A11 pins them equal to `bookkeepingRoots`
 
 #### Build Phase 1 Verification
 
-- [ ] A4, A5 and A11 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/bookkeeping`); A1, A2, A3, A7 and A10 are red on their assertions until the writers move
+- [x] (A4's two cases, A10 and A11 pass; A5 moved to pass at Build Phase 2, since it needs the `current.md` writer to commit; A1, A2, A3, A5 and A7 red on their assertions; A10 passes already, its resolver being this phase's) A4, A5 and A11 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/bookkeeping`); A1, A2, A3, A7 and A10 are red on their assertions until the writers move
+- [x] Shape — `roots.ts` is one rule in two functions; `commitNote` one decision, its refusals named in one table; the hooks' copy mirrors the rule line for line. `notes.ts` holds the writers lifted unchanged, which Build Phase 2 rewires. Nothing to change
 
 #### Build Phase 1 Context
 
-- [ ] mcp: InDusk's records are written through `lib/bookkeeping` — notes to the main checkout and committed, machine state to the project's home; never to the writer's own checkout
+- [x] (delivered in `roots.ts`'s and `_hook-paths.js`'s headers rather than the package's `CLAUDE.md`, which is 2 bytes under its budget) mcp: InDusk's records are written through `lib/bookkeeping` — notes to the main checkout and committed, machine state to the project's home; never to the writer's own checkout
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/tools/highlights.md`: where the queue and the processed list live
+- [x] `apps/docs/src/reference/tools/highlights.md`: where the queue and the processed list live
 
 ### Build Phase 2: Every writer through it
 
