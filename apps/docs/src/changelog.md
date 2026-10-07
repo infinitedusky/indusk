@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.65.0] — 2026-10-07
+
 ### Added
 
 - **`indusk demo`** and the **seat-holds example** (demo-app-template): one command copies a small app with one promise, makes it an InDusk project and starts it with the local telemetry daemon. Press Break it on its page and the promise shows broken with the span that broke it; it stays broken after the fault stops, until the break is recorded and fixed. The example lives in `examples/seat-holds/`, ships in the package, and deploys to Fly. See [Try it in two minutes](/guide/try-it).
