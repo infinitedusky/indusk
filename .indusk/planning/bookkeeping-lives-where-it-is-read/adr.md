@@ -1,7 +1,7 @@
 ---
 title: "Bookkeeping lives where it is read"
 date: 2026-10-07
-status: proposed
+status: accepted
 ---
 
 # Bookkeeping lives where it is read
