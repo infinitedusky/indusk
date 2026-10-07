@@ -5,7 +5,7 @@ import { type Fixture, makeFixture } from "./fixture.test-support.js";
 import { addLesson, commitNote, writeCurrentSection } from "./notes.js";
 
 /**
- * promise: indusk-leaves-main-clean — bookkeeping-lives-where-it-is-read A1, A2, A4, A5.
+ * promise: indusk-leaves-main-clean — bookkeeping-lives-where-it-is-read A1, A2, A4, A5, A19.
  *
  * Notes people read are written to the main checkout, whichever checkout the
  * writer runs in, and committed on `main` as they are written, in a commit of
@@ -105,5 +105,18 @@ describe("notes are committed on main", () => {
 				.split("\n")
 				.filter((s) => s.startsWith("chore(indusk)")),
 		).toHaveLength(2);
+	});
+
+	it("A19: a lesson whose name is not one kebab-case segment is refused before anything is written or committed", () => {
+		const before = f.git(f.main, "rev-parse", "HEAD");
+		for (const name of ["../escaped", "a/b", "nested/../../escaped", "Not Kebab", ""]) {
+			const r = addLesson(f.worktree, { name, title: "t", content: "c" });
+			expect("error" in r, `name ${JSON.stringify(name)} was accepted`).toBe(true);
+		}
+		expect(existsSync(join(f.main, ".claude", "escaped.md"))).toBe(false);
+		expect(existsSync(join(f.main, "escaped.md"))).toBe(false);
+		expect(existsSync(join(f.main, ".claude", "lessons", "a", "b.md"))).toBe(false);
+		expect(f.git(f.main, "rev-parse", "HEAD")).toBe(before);
+		expect(clean(f.main)).toBe("");
 	});
 });
