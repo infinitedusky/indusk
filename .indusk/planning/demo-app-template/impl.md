@@ -123,13 +123,15 @@ A stranger runs one command and gets the seat-holds example running, its promise
 
 - [x] (the example's 3 tests, A3's 2 and the guard's 7 pass; the scanner's related tests 8 files, 73 tests; InDusk's own `promises check` passes with the example in the repository) A1, A2, A6 pass (`pnpm --filter seat-holds test`), A3 passes, and A9 passes with the example scanned (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/demo-example.test.ts src/__tests__/everyday-tests-never-wait.test.ts`)
 
+- [x] Shape — Build Phase 1 wrote `seats.ts` (the rules, one job, the clock an argument), `telemetry.ts` (start, stop, and one mark per release), `server.ts` (routing, the sweeper and shutdown in one small file; splitting a 100-line example server would make it harder to read in a demo) and one static page. The nested-project filter is three lines in the one function that lists scannable files. Nothing to change
+
 #### Build Phase 1 Context
 
-- [ ] root (Architecture): `examples/` in the tree, one line: the seat-holds example, tested with the workspace and shipped in the package — always-on because a new top-level folder is orientation every session needs
+- [x] root (Architecture): `examples/` in the tree, one line: the seat-holds example, tested with the workspace and shipped in the package — always-on because a new top-level folder is orientation every session needs
 
 #### Build Phase 1 Document
 
-- [ ] `examples/seat-holds/README.md`: what it is, the promise, how to run it, the fault switch, that seats live in memory
+- [x] `examples/seat-holds/README.md`: what it is, the promise, how to run it, the fault switch, that seats live in memory
 
 ### Build Phase 2: One command
 
