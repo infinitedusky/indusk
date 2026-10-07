@@ -1,7 +1,7 @@
 ---
 title: "Demo app template — a seat-holds example in this repository"
 date: 2026-10-07
-status: proposed
+status: accepted
 ---
 
 # Demo app template — a seat-holds example in this repository
