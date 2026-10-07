@@ -43,10 +43,10 @@ A stranger runs one command and gets the seat-holds example running, its promise
 | A1 | A held seat comes free when its window passes; a booked seat never does; a held seat cannot be held by anyone else | Build Phase 1 | Build Phase 1 | passing | unit | the example's own rules, proven for its own promise in its own registry (a copied example carries only its own tokens); InDusk's promises rest on A3, A4 and A7 | examples/seat-holds/src/seats.test.ts |
 | A2 | Every release is marked against the promise: held within the window, broken when late, with a symptom naming the seat and how late | Build Phase 1 | Build Phase 1 | passing | unit | the example's own rules, as A1 | examples/seat-holds/src/seats.test.ts |
 | A3 | A fresh copy of the example carries its one promise, and InDusk's registry check passes in it | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-example.test.ts |
-| A4 | Started with `indusk demo`, the example's marks reach the local telemetry daemon, and InDusk reports its promise holding | Test Phase 1 | Build Phase 2 | written | contract | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
+| A4 | Started with `indusk demo`, the example's marks reach the local telemetry daemon, and InDusk reports its promise holding | Test Phase 1 | Build Phase 2 | passing | contract | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
 | A5 | From a fresh copy: one command, the seat page, a seat held, booked and released, the admin showing the promise holding | Build Phase 4 | Build Phase 4 | planned | live check | a live check of the start, recorded in Build Phase 4; its promise is proven by A1–A4 | manual: recorded in Build Phase 4 |
 | A6 | With the fault switch on, a held seat comes free late and its release is marked broken; off, on time and held | Build Phase 1 | Build Phase 1 | passing | unit | the example's own rules, as A1; the break as InDusk sees it is A7 | examples/seat-holds/src/seats.test.ts |
-| A7 | With the switch on, InDusk reports the promise broken within ten seconds of the late release, naming the span; off again, holding | Test Phase 1 | Build Phase 2 | written | contract | promise: the-demo-break-is-caught-locally | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
+| A7 | With the switch on, InDusk reports the promise broken within ten seconds of the late release, naming the span; off again, holding | Test Phase 1 | Build Phase 2 | passing | contract | promise: the-demo-break-is-caught-locally | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
 | A8 | The whole break in the admin, from opening the example to the promise broken with its span, under two minutes; switched off, holding again | Build Phase 4 | Build Phase 4 | planned | live check | a live check of the break and the brief's second expectation, recorded in Build Phase 4; its promise is proven by A6 and A7 | manual: recorded in Build Phase 4 |
 | A9 | The everyday suite still never starts the example, the telemetry daemon or a browser; the guard scans the example's tests too | Build Phase 1 | Build Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | A10 | Deployed to Fly from the example's own config, its page answers at the deployed address | Test Phase 1 | Build Phase 3 | written | smoke | promise: the-deployed-demo-page-answers | examples/seat-holds-smoke-deployed.mjs |
@@ -135,21 +135,22 @@ A stranger runs one command and gets the seat-holds example running, its promise
 
 ### Build Phase 2: One command
 
-- [ ] Ship the example in the package: a `prepack` step copies `examples/seat-holds` (without `node_modules`) to `apps/indusk-mcp/examples/seat-holds`, and `files` gains `examples`; `admin-bundle-pack`'s tarball test lists it
-- [ ] `indusk demo [dir] [--no-open]`: refuse a non-empty `dir`; copy the example from the installed package; `git init`, `indusk init`, install; start the telemetry daemon; start the example with `SEAT_HOLDS_FAULT_TOGGLE=1` and OTLP at the daemon; register the project; print the page's and the admin's addresses
-- [ ] A4 and A7 green in the system tier
+- [x] (`scripts/bundle-example.js`, run by `prepack`; the copy at `apps/indusk-mcp/examples/` is ignored; the release guard's `PACKAGED_PATHS` and its mirror in `version-state.ts` gain `examples/seat-holds`, so a change to the example counts toward a release; the pack test's new case red first) Ship the example in the package: a `prepack` step copies `examples/seat-holds` (without `node_modules`) to `apps/indusk-mcp/examples/seat-holds`, and `files` gains `examples`; `admin-bundle-pack`'s tarball test lists it
+- [x] (`src/bin/commands/demo.ts`; `init` already registers the project and starts telemetry, so the command reuses it, and starts the daemon only if it is still not running; the example runs in the foreground until Ctrl-C) `indusk demo [dir] [--no-open]`: refuse a non-empty `dir`; copy the example from the installed package; `git init`, `indusk init`, install; start the telemetry daemon; start the example with `SEAT_HOLDS_FAULT_TOGGLE=1` and OTLP at the daemon; register the project; print the page's and the admin's addresses
+- [x] A4 and A7 green in the system tier
 
 #### Build Phase 2 Verification
 
-- [ ] A4 and A7 pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/demo-command.test.ts`), and the package's tarball contains `examples/seat-holds` (`pnpm exec vitest run --config vitest.system.config.ts src/__tests__/admin-bundle-pack.test.ts`)
+- [x] (A4 and A7 2 of 2; the pack test's example case passes, its BUILD_ID case needs the admin built, which the system tier's `prepublishOnly` does; `version-state.test.ts` 4 of 4 with the mirror updated; `tsc` clean) A4 and A7 pass
+- [x] Shape — Build Phase 2 wrote `demo.ts` (one command: copy, initialise, install, start, in named steps; `exampleSource` is its own function so the shipped and the in-repository paths are one rule) and `bundle-example.js` (one copy, its exclusions named). Nothing to change (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/demo-command.test.ts`), and the package's tarball contains `examples/seat-holds` (`pnpm exec vitest run --config vitest.system.config.ts src/__tests__/admin-bundle-pack.test.ts`)
 
 #### Build Phase 2 Context
 
-- [ ] mcp: the example is copied into the package at `prepack`, never edited there — the source is `examples/seat-holds`
+- [x] (delivered where the copy is made rather than in the package's `CLAUDE.md`, which is 2 bytes under its budget: the `.gitignore` line and `bundle-example.js`'s header both say it) mcp: the example is copied into the package at `prepack`, never edited there — the source is `examples/seat-holds`
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/demo.md`: `indusk demo`, its options and refusals, in the sidebar
+- [x] `apps/docs/src/reference/cli/demo.md`: `indusk demo`, its options and refusals, in the sidebar
 
 ### Build Phase 3: Deployed once
 
