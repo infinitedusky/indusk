@@ -388,3 +388,16 @@ function headCommitTime(dir) {
 		return -1;
 	}
 }
+
+/**
+ * The main checkout and the project's home, as `lib/bookkeeping/roots.ts`
+ * resolves them (bookkeeping-lives-where-it-is-read D4). Hooks cannot import
+ * the package, so this is its copy; a parity test pins them equal.
+ */
+export function mainCheckout(cwd) {
+	return cwd;
+}
+
+export function projectHome(cwd) {
+	return resolve(cwd, ".indusk");
+}
