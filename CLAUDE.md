@@ -17,7 +17,7 @@ dusk/
 ├── packages/              # telemetry-binaries-* — platform-split jaeger + otelcol
 ├── .claude/skills/        # Installed skills — package-owned, synced from apps/indusk-mcp/skills/
 ├── .claude/lessons/       # Lessons registry — titles are the rules; a guarded one reaches you from its enforcer
-├── examples/seat-holds/   # The demo example: one promise, broken on cue; its own InDusk project, tested with the workspace
+├── examples/seat-holds/   # The demo app (`indusk demo`): its own InDusk project
 ├── docker/                # Dockerfiles (always-on image)
 ├── biome.json             # Quality ratchet — see biome-rationale.md for per-rule why
 ├── vitest.config.ts       # Workspace projects; apps inherit via extends
@@ -92,7 +92,6 @@ dusk/
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
 - Admin plan authoring: `plans start → approve → build → accept → land`, through the developer's own `claude`; nothing lands unaccepted — see `/decisions/admin-plan-authoring`
 - Workbench plans: documents at the workbench root, code on `plan/<name>` in the repo the plan names (`code.json`); one contract per repo — its own `.indusk/promises/`, else the workbench's shadow — through one resolver — see `/decisions/workbench-plan-authoring`
-- Demo example: `examples/seat-holds`, its own InDusk project (the promise scan skips a nested `.indusk/config.json`), shipped in the package, started by `indusk demo` — see `.indusk/planning/demo-app-template/adr.md`
 
 ## Known Gotchas
 
