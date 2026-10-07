@@ -184,12 +184,12 @@ A stranger runs one command and gets the seat-holds example running, its promise
 
 #### Build Phase 4 Context
 
-- [ ] root (Key Decisions): the ADR's one line — the seat-holds example in `examples/`, shipped in the package, started by `indusk demo` — always-on because it is where every demo and launch starts
+- [x] (not added: the root sits at its 20 % margin, `context-tiers-register.test.ts` A13, and the line pushed it to 14,990 bytes against 14,745; the Architecture tree line, shortened to fit, names `examples/seat-holds/` and `indusk demo`, and the decision is published at `/decisions/demo-app-template` at close) root (Key Decisions): the ADR's one line — the seat-holds example in `examples/`, shipped in the package, started by `indusk demo` — always-on because it is where every demo and launch starts
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/guide/try-it.md`: the two-minute walkthrough, in the sidebar
-- [ ] `apps/docs/src/changelog.md` Unreleased: the seat-holds example and `indusk demo`
+- [x] `apps/docs/src/guide/try-it.md`: the two-minute walkthrough, in the sidebar
+- [x] `apps/docs/src/changelog.md` Unreleased: the seat-holds example and `indusk demo`
 
 ## Files Affected
 
