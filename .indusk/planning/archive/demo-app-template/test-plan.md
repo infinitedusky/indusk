@@ -25,13 +25,15 @@ that they prove, and become the impl's Test Trajectory rows.
 | A4 | Started with its start command, the example's marks reach the local telemetry daemon, and InDusk reports its promise holding. | contract |
 | A5 | From a fresh copy: one command, the seat page opens, a seat is held, booked and released, and the admin shows the promise holding. | live check |
 
-### `the-demo-break-is-caught-locally` — Turning on the seat-holds example's fault switch makes its promise show broken in the admin within seconds, with the span that broke it; turning the switch off makes it hold again.
+### `the-demo-break-is-caught-locally` — Turning on the seat-holds example's fault switch makes its promise show broken in the admin within seconds, with the span that broke it, and it stays broken after the switch is off, until the break is recorded and fixed.
+
+Changed in the live check (Sandy, 2026-10-07): a promise that says "never" is broken by one violation however many held checks follow; it holds again only once the break is recorded and fixed.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
 | A6 | With the fault switch on, a held seat comes free late and its release is marked broken; with the switch off, releases are on time and marked held. | unit |
-| A7 | With the switch on, InDusk reports the promise broken within ten seconds of the late release, naming the span; with it off again, the next releases report it holding. | contract |
-| A8 | The whole break in the admin, from opening the example to the promise showing broken with its span, in under two minutes; then switched off, holding again. | live check |
+| A7 | With the switch on, InDusk reports the promise broken within ten seconds of the late release, naming the span; with it off again and releases on time, InDusk still reports the violation. | contract |
+| A8 | The whole break in the admin, from opening the example to the promise showing broken with its span, in under two minutes; with the switch off, still broken. | live check |
 
 ### `everyday-tests-never-wait` — kept
 
@@ -41,7 +43,7 @@ that they prove, and become the impl's Test Trajectory rows.
 
 ### `the-deployed-demo-page-answers` — After the seat-holds example is deployed to Fly from its own config, its page answers at the deployed address.
 
-A broad promise on purpose (Sandy, 2026-10-07): it covers an outcome that can break many ways. It is split into narrower promises only when a break shows it covers two outcomes.
+A broad promise on purpose (Sandy, 2026-10-07): it covers an outcome that can break many ways. It is split into narrower promises only when a break shows it covers two outcomes. Moved to the example's own registry at Build Phase 4: the code that keeps it is the example's Dockerfile and `fly.toml`.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|

@@ -52,13 +52,23 @@ function packageHookFiles(): ReadonlySet<string> {
 	return new Set(existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(".js")) : []);
 }
 
-/** Every tracked or untracked-but-not-ignored file under the code root that the scan reads. */
+const NESTED_PROJECT_CONFIG = /^(.+)\/\.indusk\/config\.json$/;
+
+/**
+ * Every tracked or untracked-but-not-ignored file under the code root that the
+ * scan reads. A folder holding its own `.indusk/config.json` is another InDusk
+ * project with its own registry (the seat-holds example in InDusk's
+ * repository, demo-app-template), so nothing under it is read here.
+ */
 export async function scannableFiles(codeRoot: string): Promise<string[]> {
 	const out = await git(codeRoot, "ls-files", "--cached", "--others", "--exclude-standard", "-z");
-	return out
+	const files = out
 		.split("\0")
 		.map((f) => f.trim())
-		.filter((f) => f !== "")
+		.filter((f) => f !== "");
+	const nested = files.flatMap((f) => NESTED_PROJECT_CONFIG.exec(f)?.[1] ?? []).map((d) => `${d}/`);
+	return files
+		.filter((f) => !nested.some((d) => f.startsWith(d)))
 		.filter((f) => !PROSE_EXTENSIONS.has(extensionOf(f)))
 		.filter((f) => !f.startsWith(`${PROMISES_REL_DIR}/`) && !f.startsWith(".indusk/"))
 		.sort();

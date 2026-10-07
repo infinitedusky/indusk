@@ -428,6 +428,17 @@ uiCmd
 		await uiRestart({ port: opts.port, open: opts.open });
 	});
 
+program
+	.command("demo [dir]")
+	.description(
+		"Copy the seat-holds example (one promise, broken on cue) into dir, make it an InDusk project, and start it with the local telemetry daemon",
+	)
+	.option("--no-open", "Do not open the seat page in a browser")
+	.action(async (dir: string | undefined, opts: { open: boolean }) => {
+		const { demo } = await import("./commands/demo.js");
+		await demo(dir, { open: opts.open });
+	});
+
 // Telemetry daemon (Jaeger + otelcol) — same parent+subcommand + optsWithGlobals
 // pattern as `indusk ui` above. Commander@13 drops duplicated options when they
 // appear on both parent and child, so options live only on the parent.

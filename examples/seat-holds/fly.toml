@@ -1,0 +1,32 @@
+# promise: the-deployed-demo-page-answers
+# The seat-holds example on Fly.io (demo-app-template D7). One machine that
+# never sleeps: the sweeper releases holds once a second, and a stopped
+# machine marks nothing.
+#
+#   fly apps create <app>                      # not `fly launch`: it rewrites this file
+#   fly secrets set \
+#     OTEL_EXPORTER_OTLP_ENDPOINT="https://<your-indusk-server>:4318" \
+#     OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic <base64 of user:password>"
+#   fly deploy --ha=false
+#
+# The page has no Break it switch here. To break the promise in production on
+# purpose, deploy with SEAT_HOLDS_FAULT=slow-release, and deploy again without
+# it to fix it.
+
+app = "seat-holds"
+primary_region = "iad"
+
+[env]
+  PORT = "8080"
+  SEAT_HOLDS_ENV = "production"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

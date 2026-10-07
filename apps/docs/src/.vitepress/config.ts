@@ -53,6 +53,7 @@ const config = defineConfig({
 					text: "Start here",
 					items: [
 						{ text: "What InDusk Is", link: "/guide/" },
+						{ text: "Try It in Two Minutes", link: "/guide/try-it" },
 						{ text: "Getting Started", link: "/guide/getting-started" },
 						{ text: "Walkthrough", link: "/guide/walkthrough" },
 					],
@@ -124,6 +125,7 @@ const config = defineConfig({
 						{ text: "run", link: "/reference/cli/run" },
 						{ text: "verify", link: "/reference/cli/verify" },
 						{ text: "agent", link: "/reference/cli/agent" },
+						{ text: "demo", link: "/reference/cli/demo" },
 						{ text: "plans", link: "/reference/cli/plans" },
 						{ text: "context", link: "/reference/cli/context" },
 						{ text: "papers", link: "/reference/cli/papers" },
@@ -204,6 +206,7 @@ const config = defineConfig({
 						{ text: "Overview", link: "/decisions/" },
 						{ text: "Admin Plan Authoring — plan to release from the admin", link: "/decisions/admin-plan-authoring" },
 						{ text: "Workbench Plan Authoring — plans in workbenches", link: "/decisions/workbench-plan-authoring" },
+						{ text: "Demo App Template — the seat-holds example", link: "/decisions/demo-app-template" },
 						{ text: "Admin UI Hosting — Decision Summary", link: "/decisions/admin-ui-hosting" },
 						{ text: "Admin UI Phase Progress — one lifecycle, three bars", link: "/decisions/admin-ui-phase-progress" },
 						{ text: "Cleanup Ritual — Decision Summary", link: "/decisions/cleanup-ritual" },

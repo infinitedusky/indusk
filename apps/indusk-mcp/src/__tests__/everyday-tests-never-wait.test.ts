@@ -68,6 +68,9 @@ async function packages() {
 	return [
 		{ dir: "apps/indusk-mcp", system: MCP_SYSTEM },
 		{ dir: "apps/indusk-admin", system: await adminSystem() },
+		// The seat-holds example runs in the everyday suite too (demo-app-template A9);
+		// it has no system tier, so every test there must never wait.
+		{ dir: "examples/seat-holds", system: [] },
 	];
 }
 
@@ -118,6 +121,14 @@ describe("everyday-tests-never-wait", () => {
 			findings,
 			`These everyday tests start a server or wait on the clock. Give the rule its clock and its reads as inputs, or move the file to its package's vitest.tiers.ts SYSTEM (lesson: everyday-tests-never-wait):\n${report}`,
 		).toEqual([]);
+	});
+
+	// promise: everyday-tests-never-wait — demo-app-template A9: the seat-holds
+	// example runs in the everyday suite too, so the guard reads its tests.
+	it("the seat-holds example's tests are scanned too (demo-app-template A9)", async () => {
+		const example = (await packages()).find((p) => p.dir === "examples/seat-holds");
+		expect(example, "examples/seat-holds is one of the packages the guard reads").toBeDefined();
+		if (example) expect(await everydayFiles(example)).toContain("src/seats.test.ts");
 	});
 
 	it("a process that runs and exits does not trip the guard (A15)", () => {
