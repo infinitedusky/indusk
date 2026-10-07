@@ -2,6 +2,10 @@
 title: "Demo app template — a seat-holds example in this repository"
 date: 2026-10-07
 status: in-progress
+falsification: skipped
+falsification_reason: "Hunted indusk demo's refusals (a non-empty or current folder, a busy port, a stopped daemon), the deployed fault switch (refused with 403), the nested-project scan (a repository whose own root holds .indusk/config.json is still read; only nested ones are skipped, matched by path prefix), local state leaking into the package or a copy (node_modules and .indusk/eval excluded at both), and a violation flipping back after the fault stops (A7 now guards it). No concrete failing case formed. The live check's findings were fixed in Build Phase 4."
+cleanup: skipped
+cleanup_reason: "listOversizedChangedFiles flagged two files, both over their cap before this plan: cli.ts (one command's 10 lines) and changelog.md (entries). The new files are small and one job each: seats.ts, telemetry.ts, server.ts, demo.ts, bundle-example.js. No cross-file duplication: the example's copy filter and the bundler's are the same rule in two packages that must not import each other (the example is copied out on its own)."
 trajectory: required
 test_phases: required
 test_levels: required
