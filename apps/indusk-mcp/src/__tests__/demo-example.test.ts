@@ -37,12 +37,12 @@ describe.skipIf(SHOULD_SKIP)("A3 — a fresh copy of the example carries its pro
 		expect(existsSync(EXAMPLE), `${EXAMPLE} is the example to copy`).toBe(true);
 	});
 
-	it("its registry check passes, with its one promise enforced", () => {
+	it("its registry check passes, with its promises enforced", () => {
 		const dir = freshCopy();
 		const check = runCli(dir, ["promises", "check"]);
 		expect(check.code, check.stderr || check.stdout).toBe(0);
-		expect(check.stdout).toMatch(/\b1 promises?\b/);
-		expect(check.stdout).toMatch(/enforced 1\b/);
+		expect(check.stdout).toMatch(/\b2 promises\b/);
+		expect(check.stdout).toMatch(/enforced 2\b/);
 		expect(existsSync(join(dir, ".indusk", "promises", `${PROMISE}.md`))).toBe(true);
 	});
 });

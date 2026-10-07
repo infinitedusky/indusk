@@ -12,6 +12,9 @@ import { liveOtlpEndpointSync } from "../../lib/telemetry/status.js";
  * until Ctrl-C, which stops the example.
  *
  * promise: the-demo-app-starts-with-its-promise-holding
+ * promise: the-demo-break-is-caught-locally — the example starts with its fault
+ * switch available and its spans going to the local daemon, where InDusk reads
+ * the break.
  */
 
 export interface DemoOptions {
