@@ -39,7 +39,7 @@ gate_policy: ask
 | A1 | A recorded process alive and running this daemon's binary with this daemon's config is stopped, whether or not its port answers | Build Phase 1 | Build Phase 1 | planned | unit | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
 | A2 | A recorded process ID now held by another program is left alone, and the record is still cleared | Build Phase 1 | Build Phase 1 | planned | unit | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
 | A3 | When a process of its own still runs after the stop, stop says so and keeps the record | Build Phase 1 | Build Phase 1 | planned | unit | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
-| A4 | A real daemon started and then stopped leaves no Jaeger or otelcol running from its home | Test Phase 1 | Build Phase 1 | planned | contract | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts |
+| A4 | A real daemon started and then stopped leaves no Jaeger or otelcol running from its home | Test Phase 1 | Build Phase 1 | written | contract | promise: telemetry-stop-stops-what-it-started | apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts |
 
 ## Checklist
 
@@ -47,8 +47,8 @@ gate_policy: ask
 
 **Goal**: A4 over the CLI against a real daemon; it holds today when ports answer, so it is the regression guard for the whole stop.
 
-- [ ] Confirm this plan's worktree (`indusk plans start bugfix telemetry-stop-stops-what-it-started` made it and recorded the assignment) — worktree-per-plan default
-- [ ] A4: in `telemetry-cli-lifecycle.test.ts`, after `telemetry stop`, no process's command line names the test's home (the same scan `check-test-daemons` runs); and `telemetry start`'s exit code is asserted with its output, so a failed start names its reason (the 1.64.0 failure hid it)
+- [x] Confirm this plan's worktree (`indusk plans start bugfix telemetry-stop-stops-what-it-started` made it and recorded the assignment) — worktree-per-plan default
+- [x] (the restart test, T5, asserts start's result too: it was the 1.64.0 failure) A4: in `telemetry-cli-lifecycle.test.ts`, after `telemetry stop`, no process's command line names the test's home (the same scan `check-test-daemons` runs); and `telemetry start`'s exit code is asserted with its output, so a failed start names its reason (the 1.64.0 failure hid it)
 
 #### Deferred to Build Phase 1
 
@@ -60,7 +60,7 @@ gate_policy: ask
 
 #### Test Phase 1 Verification
 
-- [ ] A4 is authored and passes (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-cli-lifecycle.test.ts`)
+- [x] (5 of 5 in the file) A4 is authored and passes (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-cli-lifecycle.test.ts`)
 
 ### Build Phase 1: Stop judges by the command line
 

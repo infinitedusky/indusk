@@ -182,3 +182,4 @@
 {"plan":"demo-app-template","phase":2,"kind":"build","sha":"f523ecb49ad031df4beed03ad72e665b0f503c41","timestamp":"2026-10-07T19:39:25.379Z"}
 {"plan":"demo-app-template","phase":3,"kind":"build","sha":"e1a0ac9d","timestamp":"2026-10-07T19:53:11.127Z"}
 {"plan":"demo-app-template","phase":4,"kind":"build","sha":"25374a0e72942295fcdba1bb6717c1700f32d0cf","timestamp":"2026-10-07T19:53:40.501Z"}
+{"plan":"telemetry-stop-stops-what-it-started","phase":1,"kind":"test","sha":"b3f3f78647c141e2500726b8c8a0995494973e27","timestamp":"2026-10-07T21:04:02.964Z"}
