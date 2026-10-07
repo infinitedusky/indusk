@@ -62,6 +62,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Plan Lifecycle", link: "/guide/plan-lifecycle" },
 						{ text: "Briefs", link: "/guide/briefs" },
+						{ text: "One Contract per Repo", link: "/guide/contract" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
 						{ text: "Test Levels", link: "/guide/test-levels" },
 						{ text: "Promises", link: "/guide/promises" },
@@ -202,6 +203,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/decisions/" },
 						{ text: "Admin Plan Authoring — plan to release from the admin", link: "/decisions/admin-plan-authoring" },
+						{ text: "Workbench Plan Authoring — plans in workbenches", link: "/decisions/workbench-plan-authoring" },
 						{ text: "Admin UI Hosting — Decision Summary", link: "/decisions/admin-ui-hosting" },
 						{ text: "Admin UI Phase Progress — one lifecycle, three bars", link: "/decisions/admin-ui-phase-progress" },
 						{ text: "Cleanup Ritual — Decision Summary", link: "/decisions/cleanup-ritual" },

@@ -1,4 +1,5 @@
 import { PlanCommandRefusal, startPlan } from "@infinitedusky/indusk-mcp/plans";
+import { newPlanPrompt } from "@infinitedusky/indusk-mcp/session";
 import type { NextRequest } from "next/server";
 import { getProjectPath } from "@/lib/registry-client";
 import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
@@ -9,7 +10,8 @@ export const dynamic = "force-dynamic";
 /**
  * New plan (admin-plan-authoring A1, A7): `{ project, type, name }`. The plan
  * starts on its own branch and worktree (`indusk plans start`), then a
- * planning session runs `/planner <type> <name>` there. Refused before
+ * planning session starts there with `newPlanPrompt` (workbench-plan-authoring
+ * D11): it prepares, then asks for a description. Refused before
  * anything is made while another session runs, so no worktree is left
  * without its conversation.
  *
@@ -25,6 +27,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     project?: string;
     type?: string;
     name?: string;
+    /** In a workbench wrapping several repos, the one the plan's code goes in. */
+    repo?: string;
   } | null;
   if (!body?.project || !body.type || !body.name) {
     return refuse(400, "a new plan needs project, type and name");
@@ -39,11 +43,20 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
   try {
-    const started = await startPlan(root, body.type, body.name);
+    const started = await startPlan(
+      root,
+      body.type,
+      body.name,
+      new Date(),
+      body.repo ? { repo: body.repo } : {},
+    );
+    // In a workbench the session runs at the root, where the plan is written,
+    // with its code worktree added (workbench-plan-authoring D5).
     const { id } = sessionManager().start({
       cwd: started.worktree,
+      ...(started.code ? { addDirs: [started.code.worktree] } : {}),
       kind: "planning",
-      prompt: `/planner ${started.type} ${started.plan}`,
+      prompt: newPlanPrompt(started.type, started.plan),
       project: body.project,
       plan: started.plan,
       onEvent: () => {},

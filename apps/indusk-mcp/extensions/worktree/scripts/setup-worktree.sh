@@ -3,7 +3,7 @@
 # single-repo workbench.
 #
 # Usage:
-#   setup-worktree.sh [--repo <name>] [--worktrees-dir <dir>] <slug> [base-branch]
+#   setup-worktree.sh [--repo <name>] [--worktrees-dir <dir>] [--branch <name>] <slug> [base-branch]
 #
 # Examples:
 #   setup-worktree.sh feat-autoops-cancel-polish
@@ -12,6 +12,10 @@
 # `--repo` names which declared repo to branch from. It is optional when the
 # workbench declares exactly one; with several it is REQUIRED, and omitting it
 # fails naming the candidates rather than defaulting to the first.
+#
+# `--branch` names the new branch; absent, the branch is the slug. `indusk plans
+# start` passes `plan/<name>`, so a workbench plan's code branch is named like a
+# normal-mode plan's (workbench-plan-authoring D1).
 #
 # What it does:
 #   1. Resolves the workbench root (walks up from cwd to find
@@ -40,6 +44,7 @@ source "$SCRIPT_DIR/lib/workbench-helpers.sh"
 
 REPO_ARG=""
 WORKTREES_DIR=""
+BRANCH_ARG=""
 # Flags in any order; both optional. `--worktrees-dir` is passed by the TS
 # wrapper when the repo DECLARES a worktrees location. Absent, worktrees land
 # at the workbench root — today's flat layout, unchanged.
@@ -47,6 +52,7 @@ while [[ "${1:-}" == --* ]]; do
 	case "$1" in
 		--repo) REPO_ARG="${2:?--repo requires a repo name}"; shift 2 ;;
 		--worktrees-dir) WORKTREES_DIR="${2:?--worktrees-dir requires a directory}"; shift 2 ;;
+		--branch) BRANCH_ARG="${2:?--branch requires a branch name}"; shift 2 ;;
 		*) echo "Error: unknown flag $1" >&2; exit 1 ;;
 	esac
 done
@@ -118,7 +124,7 @@ fi
 # prefixing with `feat/` was a per-engagement choice; the v1 extension is
 # repo-shape-agnostic and leaves branch naming to the slug. If a project
 # wants a prefix, it's added in the slug (e.g., `feat-cancel-polish`).
-BRANCH_NAME="$SLUG"
+BRANCH_NAME="${BRANCH_ARG:-$SLUG}"
 
 echo "Setting up worktree:"
 echo "  Workbench:    $WORKBENCH_ROOT"

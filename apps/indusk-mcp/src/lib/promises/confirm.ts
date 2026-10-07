@@ -6,7 +6,13 @@ import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
 import { type PlanFolder, planFileRel, planFolderPath, planFolderStatus } from "./plan-folder.js";
-import { type PromiseEntry, promiseTokenPattern, type Registry, readPromises } from "./registry.js";
+import {
+	contractDir,
+	type PromiseEntry,
+	promiseTokenPattern,
+	type Registry,
+	readPromises,
+} from "./registry.js";
 import { type RowProof, readImpl, rowProofs, rowsNamingIn } from "./rows.js";
 import { appendHistory } from "./write.js";
 
@@ -256,7 +262,7 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 	}
 	const registry: Registry = read.ok
 		? read.registry
-		: { dir: join(planRoot, ".indusk", "promises"), promises: [], incidents: [] };
+		: { dir: contractDir(planRoot), promises: [], incidents: [] };
 
 	const implPath = join(folder.dir, "impl.md");
 	const implText = existsSync(implPath) ? readFileSync(implPath, "utf-8") : null;

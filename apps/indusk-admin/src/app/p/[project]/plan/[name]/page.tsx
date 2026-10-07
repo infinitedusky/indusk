@@ -4,6 +4,8 @@ import type { SubplanEntry } from "@/components/ParentPlanView";
 import { PlanDetail } from "@/components/PlanDetail";
 import { BuildControls } from "@/components/session/BuildControls";
 import { PlanSession } from "@/components/session/PlanSession";
+import { TrustNotice } from "@/components/session/TrustNotice";
+import { planActions } from "@/lib/plan-actions";
 import {
   readActivePlans,
   readArchivedPlans,
@@ -17,6 +19,7 @@ import {
   registryOf,
 } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+import { projectTrusted } from "@/lib/trust-reader";
 
 interface PlanPageProps {
   params: Promise<{ project: string; name: string }>;
@@ -78,36 +81,31 @@ export default async function PlanPage({ params }: PlanPageProps) {
     name,
   );
 
-  // Approve (admin-plan-authoring A9): a plan on its own branch whose impl is
-  // written and not yet approved. The command decides; this only offers it.
-  const implStatus = plan.impl?.frontmatter.status as string | undefined;
-  const canApprove =
-    plan.worktree !== undefined &&
-    implStatus !== undefined &&
-    !["approved", "in-progress", "completed"].includes(implStatus);
+  // What the page offers, one rule for a normal-mode plan (its worktree) and
+  // a workbench plan (its code file) — workbench-plan-authoring A10.
+  const actions = planActions({
+    worktree: plan.worktree,
+    code: plan.code,
+    implStatus: plan.impl?.frontmatter.status as string | undefined,
+    position: plan.position?.position,
+  });
 
   return (
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
+      <TrustNotice project={project} trusted={projectTrusted(projectPath)} />
       <PlanSession
         project={project}
         plan={name}
-        canApprove={canApprove}
-        canPlan={
-          plan.worktree !== undefined &&
-          !["approved", "in-progress", "completed"].includes(implStatus ?? "")
-        }
+        canApprove={actions.canApprove}
+        canPlan={actions.canPlan}
       />
-      {plan.worktree !== undefined &&
-      implStatus !== undefined &&
-      ["approved", "in-progress", "completed"].includes(implStatus) ? (
+      {actions.showBuild ? (
         <BuildControls
           project={project}
           plan={name}
-          canBuild={
-            implStatus !== "completed" && plan.position?.position !== "review"
-          }
-          inReview={plan.position?.position === "review"}
+          canBuild={actions.canBuild}
+          inReview={actions.inReview}
         />
       ) : null}
       <PlanDetail

@@ -35,6 +35,10 @@ import {
   type PlanCopy,
   resolvePlanCopies,
 } from "@infinitedusky/indusk-mcp/worktree/plan-worktrees";
+import {
+  type PlanCode,
+  readPlanCode,
+} from "@infinitedusky/indusk-mcp/worktree/roots";
 import matter from "gray-matter";
 import { type BoundaryRead, readProjectBoundaries } from "./project-reader";
 
@@ -149,6 +153,12 @@ export interface Plan {
   boundaryError?: string;
   /** The worktree this plan was read from, when it is assigned to one (admin-plan-worktrees). */
   worktree?: CopySource["worktree"];
+  /**
+   * In a workbench: the repo, branch and worktree the plan's `code.json`
+   * names (workbench-plan-authoring D2). A workbench plan is started when it
+   * has one, as a normal-mode plan is when it has a worktree.
+   */
+  code?: PlanCode;
   /**
    * Why the trunk copy is shown although the plan is assigned: its worktree
    * is gone, or two live worktrees claim it. `detail` names every path.
@@ -464,7 +474,12 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
         false,
         await boundariesOf(copy.root),
       );
-      return { ...plan, ...copySource(copy) };
+      const code = readPlanCode(root, name);
+      return {
+        ...plan,
+        ...copySource(copy),
+        ...(code?.ok ? { code: code.code } : {}),
+      };
     }),
   );
 }

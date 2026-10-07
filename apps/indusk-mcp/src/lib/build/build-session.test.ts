@@ -9,6 +9,7 @@ import { runStepSession, stepEnv, stepPrompt } from "./build-session.js";
 /**
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the build session's half.
  * promise: nothing-ships-until-accepted — admin-plan-authoring A35, the marking half.
+ * promise: a-build-runs-to-review-unasked — workbench-plan-authoring A13, a workbench build's two roots.
  *
  * One step of a build is one session that nobody answers: it runs under
  * `INDUSK_GATE_POLICY=auto`, its writes outside the worktree are refused, its
@@ -148,5 +149,42 @@ describe("A35 — a build step's session is marked; the release's is not", () =>
 
 	it("the retrospective, which lands the accepted plan, is not marked", () => {
 		expect(stepEnv("retrospective")).toEqual({ INDUSK_GATE_POLICY: "auto" });
+	});
+});
+
+describe("A13 — a workbench build writes in its code worktree and at the root, and nowhere else", () => {
+	const ROOT = "/w/workbench";
+	const CODE = "/w/workbench/seats";
+
+	it("starts at the root with the code worktree added; writes in either are allowed, others refused", async () => {
+		const m = scriptedManager([
+			[
+				{
+					type: "permission",
+					requestId: "code",
+					tool: "Write",
+					input: { file_path: `${CODE}/src/a.ts` },
+				},
+				{
+					type: "permission",
+					requestId: "plan",
+					tool: "Edit",
+					input: { file_path: `${ROOT}/.indusk/planning/seats/impl.md` },
+				},
+				{
+					type: "permission",
+					requestId: "out",
+					tool: "Write",
+					input: { file_path: "/w/elsewhere/a.ts" },
+				},
+				ok,
+			],
+		]);
+		await runStepSession("work", { ...opts(m.manager), worktree: ROOT, addDirs: [CODE] });
+		expect(m.started[0]).toMatchObject({ cwd: ROOT, addDirs: [CODE] });
+		const by = Object.fromEntries(m.replies.map((r) => [r.requestId, r.body]));
+		expect(by.code).toEqual({ allow: true });
+		expect(by.plan).toEqual({ allow: true });
+		expect(by.out).toMatchObject({ allow: false });
 	});
 });

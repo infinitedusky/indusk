@@ -46,6 +46,10 @@
 			"types": "./dist/lib/worktree/repos.d.ts",
 			"default": "./dist/lib/worktree/repos.js"
 		},
+		"./worktree/roots": {
+			"types": "./dist/lib/worktree/roots.d.ts",
+			"default": "./dist/lib/worktree/roots.js"
+		},
 		"./worktree/plan-worktrees": {
 			"types": "./dist/lib/worktree/plan-worktrees.d.ts",
 			"default": "./dist/lib/worktree/plan-worktrees.js"

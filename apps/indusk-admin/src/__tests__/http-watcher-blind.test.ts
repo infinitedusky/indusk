@@ -99,6 +99,9 @@ describe("watcher-heartbeat — A2 (admin): a Jaeger that answers and hears noth
     expect(html).toMatch(/watcher blind/i);
     expect(html).not.toContain('data-health="green"');
     expect(html).not.toMatch(/not seen/i);
-    expect(elapsed, "A13 — rendered within the 2 s health budget plus margin").toBeLessThan(4_000);
+    expect(
+      elapsed,
+      "A13 — rendered within the 2 s health budget plus margin",
+    ).toBeLessThan(4_000);
   }, 40_000);
 });

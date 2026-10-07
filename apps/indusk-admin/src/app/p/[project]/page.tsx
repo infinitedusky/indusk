@@ -1,4 +1,8 @@
+import { readWorkbenchRepos } from "@infinitedusky/indusk-mcp/worktree/repos";
 import { NewPlanForm } from "@/components/session/NewPlanForm";
+import { TrustNotice } from "@/components/session/TrustNotice";
+import { getProjectPath } from "@/lib/registry-client";
+import { projectTrusted } from "@/lib/trust-reader";
 
 interface PerProjectPageProps {
   params: Promise<{ project: string }>;
@@ -15,8 +19,12 @@ interface PerProjectPageProps {
  * re-check of the project path. Trust the layout.
  */
 export default async function PerProjectPage({ params }: PerProjectPageProps) {
-  // New plan (admin-plan-authoring A1) needs the project's name.
+  // New plan (admin-plan-authoring A1) needs the project's name, and in a
+  // workbench its repos (workbench-plan-authoring A9).
   const { project } = await params;
+  const root = getProjectPath(project);
+  const repos = root ? readWorkbenchRepos(root).map((r) => r.name) : [];
+  const trusted = root ? projectTrusted(root) : true;
 
   return (
     <div className="flex h-full flex-col items-center justify-center text-center text-gray-500">
@@ -26,7 +34,8 @@ export default async function PerProjectPage({ params }: PerProjectPageProps) {
         falsification log.
       </p>
       <div className="mt-6 w-full max-w-sm">
-        <NewPlanForm project={project} />
+        <TrustNotice project={project} trusted={trusted} />
+        <NewPlanForm project={project} repos={repos} />
       </div>
     </div>
   );

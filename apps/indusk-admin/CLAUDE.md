@@ -21,6 +21,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
   and sends a person's choices back through the routes; a client component
   imports only *types* from `/session`, whose code is Node's. — see
   `/reference/admin-ui/sessions`
+- **What a plan's page offers is one rule, `planActions`**: a plan is started
+  by its worktree in normal mode or its `code.json` in a workbench, and gets
+  the same buttons either way; a workbench session runs at the root with the
+  code worktree added (`planLocation`). — see `/reference/admin-ui/sessions`
 - Next.js App Router viewer over `.indusk/planning/` + `.indusk/eval/`,
   hosted as one machine-global daemon (`indusk ui start/stop/restart/status`,
   registry `~/.indusk/projects.json`, routes `/p/[project]/...`). Custom

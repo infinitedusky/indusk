@@ -41,6 +41,14 @@ plan after this one.*
   on it. Until a repo accepts the folder, its contract lives in the
   workbench as a versioned shadow contract (Sandy, 2026-10-06; the design
   note in [research](research.md)).
+- **A new plan's agent prepares, then asks.** Started from New plan, the
+  agent first reads the project's state on its own (the master, `current.md`,
+  the project's promises), says when it is ready, and asks the person to
+  describe what they want. It never guesses the plan from its name (Sandy,
+  2026-10-06, in the live check, where it planned from the title).
+- **The admin offers trust, on a click.** A project Claude Code does not
+  trust shows "Trust in Claude Code"; the click is the person's consent
+  (Sandy, 2026-10-06, in the live check: "just fix it").
 
 ## Promises
 
@@ -72,16 +80,25 @@ plan after this one.*
 
 **Changes**
 
-- **`a-plan-can-start-from-the-admin`**. Today it holds only in a
-  normal-mode project. It becomes: a plan can be started from the admin in
-  any project, normal or workbench.
-- **`a-plan-is-written-on-its-own-branch`**. Today it holds only in a
-  normal-mode project. It becomes: a plan's code is written on its own
-  branch. In a normal-mode project its documents are written there too; in a
-  workbench they are written at the root, where the workbench is versioned.
-- **`a-build-runs-to-review-unasked`**. A build in a workbench writes in two
-  places, the code worktree and the plan at the root, and asks about
-  neither.
+Each held only in a normal-mode project; each now reads:
+
+- **`a-plan-can-start-from-the-admin`**. A plan can be started from the
+  admin in any project, normal or workbench, as well as from the editor or a
+  terminal: in the admin, the person has the planning conversation, answers
+  its questions in the panel and accepts its promises, and either way it is
+  the same plan in the same files.
+- **`a-plan-is-written-on-its-own-branch`**. Starting a plan, with its type
+  and name, creates its own branch and worktree for its code, and its build
+  continues on that branch. In a normal-mode project its documents and
+  promises are written there too and reach main when the plan is approved;
+  in a workbench they are written at the workbench root, where the workbench
+  is versioned.
+- **`a-build-runs-to-review-unasked`**. An approved plan's implementation
+  runs through its phases, falsification and cleanup without asking for
+  approval, writing its code in the plan's code worktree and, in a
+  workbench, checking items off at the root, and stops only when it is
+  ready for review, for a judgement the plan declared, or when it cannot
+  continue.
 
 **Replaces**
 
@@ -96,7 +113,12 @@ None.
 - **Moving a shadow contract into its repo**: the command that writes the
   folder and opens the pull request. That is its own plan, after this one.
 - **Creating a project or a workbench from the admin**, and an **Update
-  button**: follow-ons named in the smoke check.
+  button**: follow-ons named in the smoke check. The live check made Update
+  matter more: numero runs InDusk 1.56.0, whose planner writes no promises.
+- **Renaming a plan.** Found in the live check, where a hand rename stranded
+  the running session; designed (`indusk plans rename`, moving the session
+  through the admin) and moved to its own plan by Sandy's call (2026-10-06).
+  The design is in `known-issues.md`.
 - **Where InDusk's bookkeeping is written**:
   `bookkeeping-lives-where-it-is-read`.
 

@@ -48,6 +48,8 @@ export function stepPrompt(step: BuildStepName, plan: string): string {
 export interface BuildSessionOptions {
 	manager: SessionManager;
 	worktree: string;
+	/** A workbench plan's code worktree: the session may write there too (`--add-dir`). */
+	addDirs?: string[];
 	project: string;
 	plan: string;
 	claudeBin?: string;
@@ -84,6 +86,7 @@ async function oneSession(
 	const holder: { id?: string } = {};
 	const { id, session } = opts.manager.start({
 		cwd: opts.worktree,
+		...(opts.addDirs?.length ? { addDirs: opts.addDirs } : {}),
 		kind: "build",
 		prompt: stepPrompt(step, opts.plan),
 		project: opts.project,
@@ -97,7 +100,7 @@ async function oneSession(
 			if (ev.type === "permission") {
 				opts.manager.reply(holder.id, {
 					requestId: ev.requestId,
-					...decideBuildPermission(ev, opts.worktree),
+					...decideBuildPermission(ev, [opts.worktree, ...(opts.addDirs ?? [])]),
 				});
 			} else if (ev.type === "question") {
 				const refusal = refuseBuildQuestion(ev);

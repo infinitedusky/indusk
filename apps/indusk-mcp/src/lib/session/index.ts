@@ -11,6 +11,7 @@ export {
 	SessionManager,
 	type SessionRecord,
 } from "./manager.js";
+export { newPlanPrompt } from "./new-plan-prompt.js";
 export { type Decision, decideBuildPermission, refuseBuildQuestion } from "./permissions.js";
 export {
 	answerQuestion,
@@ -31,4 +32,10 @@ export {
 	type StartedEvent,
 	startSession,
 } from "./start.js";
-export { isTrusted, projectOf, type TrustOutcome, trustLikeProject } from "./trust.js";
+export {
+	isTrusted,
+	projectOf,
+	type TrustOutcome,
+	trustLikeProject,
+	trustProject,
+} from "./trust.js";

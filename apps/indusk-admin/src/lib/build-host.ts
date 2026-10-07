@@ -58,6 +58,7 @@ async function depsFor(project: string, plan: string, state: BuildState) {
         runStepSession(step, {
           manager: sessionManager(),
           worktree: where.cwd,
+          ...(where.addDirs ? { addDirs: where.addDirs } : {}),
           project,
           plan,
         }),

@@ -45,6 +45,12 @@ export interface SessionOptions {
 	env?: NodeJS.ProcessEnv;
 	/** Where Claude Code keeps its trust records; `~/.claude.json` unless a test says otherwise. */
 	claudeConfig?: string;
+	/**
+	 * Directories the session may also work in (`--add-dir`): a workbench
+	 * plan's code worktree, while the session runs at the root so the root's
+	 * hooks judge every checkoff (workbench-plan-authoring D5).
+	 */
+	addDirs?: string[];
 }
 
 export interface Session {
@@ -61,7 +67,11 @@ export interface Session {
 }
 
 export function startSession(opts: SessionOptions): Session {
-	const args = [...buildArgs(opts.kind), ...(opts.model ? ["--model", opts.model] : [])];
+	const args = [
+		...buildArgs(opts.kind),
+		...(opts.model ? ["--model", opts.model] : []),
+		...(opts.addDirs ?? []).flatMap((dir) => ["--add-dir", dir]),
+	];
 	const child: ChildProcess = spawn(opts.claudeBin ?? "claude", args, {
 		cwd: opts.cwd,
 		stdio: ["pipe", "pipe", "pipe"],

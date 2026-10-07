@@ -24,7 +24,7 @@ Claude writes one JSON object per line. A question (`AskUserQuestion`) and a req
 
 ## The panel
 
-New plan, on a project's page, takes a type and a name. It starts the plan on its own branch (`indusk plans start`), then a planning session running `/planner <type> <name>` in the plan's worktree, and opens the plan's page, where the panel runs. Approve appears on a plan's page once it is on its own branch with an impl not yet approved. It runs `indusk plans approve` and shows a refusal in the command's own words.
+New plan, on a project's page, takes a type and a name. It starts the plan on its own branch (`indusk plans start`), then a planning session in the plan's worktree, and opens the plan's page, where the panel runs. The session's first message is `/planner <type> <name>` with instructions to prepare first (read the master, `current.md` and the project's promises), say when it is ready, and ask you to describe the plan. It does not plan from the name. Continue planning sends `/planner <plan>` alone, since the plan's documents already say what it is. In a workbench wrapping more than one repo, the form also asks which repo the plan's code goes in. Approve appears on a plan's page once it is on its own branch with an impl not yet approved. It runs `indusk plans approve` and shows a refusal in the command's own words.
 
 The panel shows what the session says and the tools it uses, in order. A question appears with its choices; the person picks one per question and answers. A request to use a tool can be allowed or denied. Stop ends the session, and what it already wrote stays written. When the session writes a file, the page refreshes, so the plan appears and grows in the sidebar as it is written.
 
@@ -48,9 +48,16 @@ The admin daemon, the one `indusk ui` starts, holds the sessions through one `Se
 | `POST /api/sessions/:id/reply` | answer a question (`{ requestId, answers }`) or a tool request (`{ requestId, allow, message? }`), once |
 | `POST /api/sessions/:id/stop` | interrupt and end it |
 | `GET /api/sessions/:id/events` | its events as server-sent events: everything so far, then each new one |
+| `POST /api/trust` | trust a project in Claude Code: `{ project }`, sent by Trust in Claude Code |
 
 The daemon listens on `127.0.0.1` only, and every route, reads included, answers only on the admin's own hosts: `127.0.0.1`, `localhost`, `[::1]` and the Caddy route `indusk.dawn`, on any port. Listening on loopback is not enough by itself. Another site can point its own name at `127.0.0.1` (DNS rebinding), and its page then talks to the daemon with an `Origin` and a `Host` that agree. Checking the host refuses it. Every `POST` is also refused unless its `Origin` is the host the request was sent to, so another site's page in the developer's browser cannot start a session, answer one, or accept a plan.
 
+## In a workbench
+
+A workbench plan's documents are at the workbench root and its code is in a worktree of the repo its `code.json` names. A session for it runs at the root, so the workbench's own hooks judge every checkoff, and adds the code worktree with `--add-dir`. A build session may write in either place: in the code worktree for the code, and at the root to check items off. Anywhere else is refused, as in normal mode.
+
 ## Trust
 
-Claude Code ignores a project's own allow-list until the project is trusted (`hasTrustDialogAccepted` in `~/.claude.json`), and each plan's worktree is a new path it has never seen. So before a session starts in a worktree, InDusk trusts the worktree like its project: when Claude Code already trusts the project, the worktree gets `hasTrustDialogAccepted: true` and nothing else in the file changes. A project nobody trusted is never trusted on their behalf. Such a session still runs, but it ignores its own allow-list, so more is asked. The session's first event says which happened (`trusted` or `untrusted`), and the panel shows it. The write replaces the file in one rename. Claude Code also writes this file, so a write of its own landing in the same few milliseconds would be lost; that happens once per new worktree.
+Claude Code ignores a project's own allow-list until the project is trusted (`hasTrustDialogAccepted` in `~/.claude.json`), and each plan's worktree is a new path it has never seen. So before a session starts in a worktree, InDusk trusts the worktree like its project: when Claude Code already trusts the project, the worktree gets `hasTrustDialogAccepted: true` and nothing else in the file changes. A project nobody trusted is never trusted on their behalf. Such a session still runs, but it ignores its own allow-list, so more is asked. The session's first event says which happened (`trusted` or `untrusted`), and the panel shows it.
+
+A project Claude Code does not trust shows **Trust in Claude Code** on its project page and its plan pages. The click is your consent, as accepting Claude Code's own trust prompt is: it writes `hasTrustDialogAccepted` for the project's root (`POST /api/trust`) and nothing else, and the button goes. Nothing is trusted without the click. The write replaces the file in one rename. Claude Code also writes this file, so a write of its own landing in the same few milliseconds would be lost; that happens once per new worktree.

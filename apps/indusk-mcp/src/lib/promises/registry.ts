@@ -2,6 +2,8 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import matter from "gray-matter";
 import { isUsableRelPath, isUsableSegment } from "../path-segment.js";
+import { declaredRepoDirs, isWorkbench } from "../worktree/repos.js";
+import { readPlanCode } from "../worktree/roots.js";
 import { parseDuration } from "./status.js";
 import {
 	INCIDENT_SOURCES,
@@ -126,9 +128,41 @@ export type ReadRegistryResult =
 	 */
 	| { ok: false; problems: RegistryProblem[]; partial: Registry };
 
-/** Absolute path of the registry directory for a plan root. */
-export function promisesDir(planRoot: string): string {
-	return join(planRoot, PROMISES_REL_DIR);
+/**
+ * Where a project's promises live: its contract (workbench-plan-authoring,
+ * ADR D4). A repo has one contract, however many workbenches work on it.
+ *
+ * - Normal mode: the project's own `.indusk/promises/`.
+ * - A workbench wrapping one repo: that repo's `.indusk/promises/` once the
+ *   repo holds one; until then the workbench's own folder, its versioned
+ *   shadow contract.
+ * - A plan in flight in a workbench whose repo holds a contract: its code
+ *   worktree's copy, so what it declares lands with its code.
+ * - A workbench wrapping several repos, read without a plan: the workbench's
+ *   folder.
+ *
+ * Every reader and writer of the registry comes here; a second path to the
+ * folder would read the shadow while the repo says otherwise
+ * (`contract-resolver-single-definition.test.ts`).
+ *
+ * promise: a-project-has-one-contract
+ */
+export function contractDir(root: string, plan?: string): string {
+	const own = join(root, PROMISES_REL_DIR);
+	if (!isWorkbench(root)) return own;
+	// A plan in flight writes into its code worktree's copy of the repo's
+	// contract, so what it declares lands with its code.
+	if (plan !== undefined) {
+		const code = readPlanCode(root, plan);
+		if (code?.ok) {
+			const inFlight = join(code.code.worktree, PROMISES_REL_DIR);
+			if (existsSync(inFlight)) return inFlight;
+		}
+	}
+	const repos = declaredRepoDirs(root);
+	if (repos.length !== 1) return own;
+	const repoContract = join(repos[0].dir, PROMISES_REL_DIR);
+	return existsSync(repoContract) ? repoContract : own;
 }
 
 function isOneOf<T extends string>(list: readonly T[], value: unknown): value is T {
@@ -300,7 +334,7 @@ function markdownFiles(dir: string): string[] {
  * registry otherwise.
  */
 export function readPromises(planRoot: string): ReadRegistryResult {
-	const dir = promisesDir(planRoot);
+	const dir = contractDir(planRoot);
 	if (!existsSync(dir) || !statSync(dir).isDirectory()) return { ok: false, missing: dir };
 
 	const problems: RegistryProblem[] = [];

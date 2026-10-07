@@ -830,11 +830,12 @@ const plansCmd = program
 plansCmd
 	.command("start <type> <name>")
 	.description(
-		"Start a plan on its own branch and worktree (type: feature, bugfix, refactor, spike); nothing reaches the trunk until it is approved",
+		"Start a plan on its own branch and worktree (type: feature, bugfix, refactor, spike); nothing reaches the trunk until it is approved. In a workbench, the documents are written at the root and the code gets the branch",
 	)
-	.action(async (type: string, name: string) => {
+	.option("--repo <repo>", "in a workbench wrapping several repos, the one the plan's code goes in")
+	.action(async (type: string, name: string, opts: { repo?: string }) => {
 		const { plansStart } = await import("./commands/plans.js");
-		await plansStart(process.cwd(), type, name);
+		await plansStart(process.cwd(), type, name, opts);
 	});
 
 plansCmd

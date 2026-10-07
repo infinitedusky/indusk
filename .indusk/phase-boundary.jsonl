@@ -172,3 +172,8 @@
 {"plan":"publish-hygiene","phase":1,"kind":"test","sha":"bd6dddf1945e1c678a04fff3fd9978693d191028","timestamp":"2026-10-06T20:21:04.575Z"}
 {"plan":"publish-hygiene","phase":1,"kind":"build","sha":"b72941f672f3a1000fdba5dd9c14b037f51ead83","timestamp":"2026-10-06T20:23:01.571Z"}
 {"plan":"publish-hygiene","phase":2,"kind":"build","sha":"5b6e56d32f9e6b94389697777825f5895b512de9","timestamp":"2026-10-06T20:38:08.684Z"}
+{"plan":"workbench-plan-authoring","phase":1,"kind":"build","sha":"e3480c5b890d6f685131c8616c2b5e01fc79078a","timestamp":"2026-10-06T23:48:51.771Z"}
+{"plan":"workbench-plan-authoring","phase":3,"kind":"build","sha":"5207994b2a4bff6a5bce613936d7b6a63c49122e","timestamp":"2026-10-06T23:57:06.983Z"}
+{"plan":"workbench-plan-authoring","phase":4,"kind":"build","sha":"abb46934f4c96326ec0bd44132123d93c8580ffe","timestamp":"2026-10-07T00:00:42.802Z"}
+{"plan":"workbench-plan-authoring","phase":5,"kind":"build","sha":"a4a001cef7c696962c3b3d5f99600fef773f2197","timestamp":"2026-10-07T00:06:49.708Z"}
+{"plan":"workbench-plan-authoring","phase":6,"kind":"build","sha":"d688542f5c7e63e5ec416f5f33cc01fd28e5d397","timestamp":"2026-10-07T00:11:42.549Z"}

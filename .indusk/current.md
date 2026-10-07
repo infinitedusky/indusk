@@ -1789,3 +1789,87 @@ Full `pnpm test` + `test:system` from a clean environment running; then check of
 (empty)
 
 ---
+
+## Session a33506f2 — eval: review commit da4adbe5 (promises confirmed)
+
+**Session ID**: a33506f2-0af5-48b7-9107-da6bd4b3cb7c
+**Last updated**: 2026-10-07T04:02:08.953Z
+**Branch**: plan/workbench-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/workbench-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 79626395 — eval: scoring da4adbe5 (promises confirmed commit)
+
+**Session ID**: 79626395-d6f0-4719-a697-bcf7aead3c4b
+**Last updated**: 2026-10-07T04:03:11.166Z
+**Branch**: plan/workbench-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/workbench-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session e9e3f262 — eval: scoring commit cffcc4cc
+
+**Session ID**: e9e3f262-e768-4499-a156-9e94d5bdcd58
+**Last updated**: 2026-10-07T04:04:58.299Z
+**Branch**: plan/workbench-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/workbench-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 68598442 — eval: Build Phase 6 context/docs commit b7be52bf
+
+**Session ID**: 68598442-9611-4e61-bd4b-930d2cfc9c31
+**Last updated**: 2026-10-07T04:05:05.079Z
+**Branch**: plan/workbench-plan-authoring
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/workbench-plan-authoring
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---

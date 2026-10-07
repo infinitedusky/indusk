@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, lstatSync, readFileSync, readlinkSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { induskMcpPackageRoot } from "../../lib/package-root.js";
 import { listWorkbenchSubdirs, worktreeOwner } from "../../lib/worktree/layout.js";
 import {
 	assignPlan,
@@ -43,41 +44,13 @@ import { provisionWorktreeEnv } from "./doppler.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
- * Resolve a path inside the indusk-mcp package, regardless of whether
- * we're running from a global install (`~/.pnpm/global/.../indusk-mcp/dist/`)
- * or from the dev monorepo (`apps/indusk-mcp/dist/`). Walks up from the
- * compiled command location until it finds a sibling `package.json`
- * whose `name` matches `@infinitedusky/indusk-mcp`.
- */
-function indusKMcpPackageRoot(): string {
-	let cur = __dirname;
-	for (let i = 0; i < 8; i++) {
-		const pkgJson = join(cur, "package.json");
-		if (existsSync(pkgJson)) {
-			try {
-				const parsed = JSON.parse(readFileSync(pkgJson, "utf-8")) as {
-					name?: string;
-				};
-				if (parsed.name === "@infinitedusky/indusk-mcp") return cur;
-			} catch {
-				// fall through
-			}
-		}
-		const parent = dirname(cur);
-		if (parent === cur) break;
-		cur = parent;
-	}
-	throw new Error(`could not resolve @infinitedusky/indusk-mcp package root from ${__dirname}`);
-}
-
-/**
  * Internal — invoked by the worktree extension's `on_enable` hook.
  * Shells out to `extensions/worktree/hooks/on_enable.sh` with cwd
  * preserved (so the bash script's `_resolve_workbench_root` walks up
  * from the user's invocation dir).
  */
 export function worktreeOnEnable(): void {
-	const pkgRoot = indusKMcpPackageRoot();
+	const pkgRoot = induskMcpPackageRoot();
 	const script = resolve(pkgRoot, "extensions/worktree/hooks/on_enable.sh");
 	if (!existsSync(script)) {
 		console.error(`Error: worktree on_enable hook not found at ${script}`);
@@ -98,7 +71,7 @@ export function worktreeOnEnable(): void {
  * Exits with the script's exit code.
  */
 function runWorktreeScript(scriptName: string, args: string[]): never {
-	const pkgRoot = indusKMcpPackageRoot();
+	const pkgRoot = induskMcpPackageRoot();
 	const script = resolve(pkgRoot, `extensions/worktree/scripts/${scriptName}.sh`);
 	if (!existsSync(script)) {
 		console.error(`Error: ${scriptName}.sh not found at ${script}`);
@@ -159,7 +132,7 @@ export function worktreeCreate(args: string[], projectRoot?: string): never {
 }
 
 function worktreeCreateResolved(slug: string, baseBranch?: string, repo?: string): never {
-	const pkgRoot = indusKMcpPackageRoot();
+	const pkgRoot = induskMcpPackageRoot();
 	const script = resolve(pkgRoot, "extensions/worktree/scripts/setup-worktree.sh");
 	if (!existsSync(script)) {
 		console.error(`Error: setup-worktree.sh not found at ${script}`);

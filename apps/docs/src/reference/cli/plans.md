@@ -26,6 +26,17 @@ Refuses:
 - a name with a folder on the trunk, naming the folder;
 - a name whose branch `plan/<name>` already exists.
 
+#### In a workbench: `plans start <type> <name> [--repo <repo>]`
+
+A workbench keeps its plans at the workbench root and its code in the repos it declares. There:
+- **the documents** go at the workbench root, on the root's own branch, and the first one is committed there (the root's sync loop pushes it);
+- **the code** gets a worktree in the repo, on `plan/<name>`. It is made through the worktree extension's setup script when the workbench configures the repo (`.indusk/worktree-configs/<repo>.json`), so the repo's overlays and env apply; otherwise it is a plain `git worktree add`;
+- **`.indusk/planning/<name>/code.json`** links the two: `{ repo, branch, worktree }`, the worktree relative to the root. Every later step reads it. A code file naming a worktree that is gone is reported by name, never guessed.
+
+`--repo` names the repo when the workbench wraps more than one. Without it, starting is refused, listing the repos. With one repo, it is that repo.
+
+A code worktree inside the root that the root's ignore rules don't already cover gets an ignore line, committed with the plan, so sync never sweeps it into the root's history.
+
 ### `plans approve <name>`
 
 Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the worktree's copy; sets the impl's `status: approved` and commits it on the branch; merges the branch into the trunk with a merge commit. The build then continues in the same worktree on the same branch.
@@ -89,6 +100,16 @@ Refuses:
 - a conflict bringing the trunk into the branch (the merge is aborted);
 - a failing check, naming it;
 - uncommitted changes on the trunk on the paths the plan touches, other than InDusk's bookkeeping, which it commits first.
+
+### In a workbench: approve, accept, review and land
+
+A workbench plan's documents are already at the workbench root, and its code is on a branch in the repo its `code.json` names. So:
+- **`approve`** runs the same brief check, then marks the impl `status: approved` and commits the plan's documents (and the workbench's shadow contract) at the root. Nothing is merged.
+- **`accept`** records `accepted` in the impl at the root, and commits it there.
+- **`review`** lists the files the code branch changed in its repo, against the repo's trunk branch, and any uncommitted work on that trunk on those paths.
+- **`land`** refuses an unaccepted plan. Otherwise it brings the repo's trunk into the code branch, runs the land checks in the code worktree, and merges the branch into the repo's trunk with a merge commit. Then it removes the code worktree and branch. The documents stay at the root, where the retrospective archives them.
+
+Every one of these reads the plan's code from `code.json`. A code file that names a worktree that is gone is refused by name.
 
 ## Housekeeping
 

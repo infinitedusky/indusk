@@ -1,5 +1,8 @@
-import { git } from "../git.js";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
+import { git, headSha } from "../git.js";
 import { checkPlanContract } from "../promises/contract.js";
+import { contractDir } from "../promises/registry.js";
 import { statusPaths } from "./bookkeeping.js";
 import {
 	branchChanges,
@@ -8,8 +11,10 @@ import {
 	PlanCommandRefusal,
 	planBranch,
 	refuseDirtyTrunk,
+	setFrontmatterKeys,
 	setImplKeys,
 } from "./plan-branch.js";
+import { commitAtRoot, type WorkbenchPlan, workbenchPlan } from "./workbench-plan.js";
 
 /**
  * `indusk plans approve <name>` (admin-plan-authoring, ADR D3): the plan's
@@ -27,9 +32,13 @@ export interface ApprovedPlan {
 	merge: string;
 	/** The paths that reached the trunk. */
 	paths: string[];
+	/** A workbench plan: nothing merged; its documents were committed at the workbench root. */
+	workbench?: true;
 }
 
 export async function approvePlan(anyCheckout: string, plan: string): Promise<ApprovedPlan> {
+	const wp = await workbenchPlan(anyCheckout, plan);
+	if (wp) return approveWorkbenchPlan(wp);
 	const pb = await planBranch(anyCheckout, plan);
 	const impl = implPath(pb);
 	await commitPlanDocuments(pb);
@@ -56,6 +65,38 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
 	await setImplKeys(pb, impl, { status: "approved" }, `plan(${plan}): impl approved`);
 	const merge = await mergeIntoTrunk(pb, `plan(${plan}): approved — its documents and promises`);
 	return { plan, merge, paths };
+}
+
+/**
+ * Approving a workbench plan (workbench-plan-authoring D3): its documents
+ * already live at the workbench root, so nothing is merged. The brief check
+ * runs as in normal mode, and refuses with its message; then the impl is
+ * marked approved and the plan's documents and the shadow contract are
+ * committed at the root.
+ *
+ * promise: a-plan-is-written-on-its-own-branch
+ */
+async function approveWorkbenchPlan(wp: WorkbenchPlan): Promise<ApprovedPlan> {
+	const impl = join(wp.dir, "impl.md");
+	const contract = checkPlanContract(wp.root, wp.plan);
+	if (!contract.ok) {
+		throw new PlanCommandRefusal(
+			[
+				`${wp.plan} cannot be approved; its brief check refuses:`,
+				...contract.refusals.map((r) => `  ${r.message}`),
+			].join("\n"),
+		);
+	}
+	writeFileSync(impl, setFrontmatterKeys(readFileSync(impl, "utf-8"), { status: "approved" }));
+	// The root commits the contract only while it is the workbench's shadow; a
+	// repo's own contract is written and committed in the repo (D4).
+	const promises = contractDir(wp.root, wp.plan);
+	const inRepo = [wp.repoTrunk, resolve(wp.root, wp.code.worktree)].some(
+		(dir) => !relative(dir, promises).startsWith(".."),
+	);
+	const paths = [relative(wp.root, wp.dir), ...(inRepo ? [] : [relative(wp.root, promises)])];
+	await commitAtRoot(wp.root, paths, `plan(${wp.plan}): approved`);
+	return { plan: wp.plan, merge: await headSha(wp.root), paths: [], workbench: true };
 }
 
 /**

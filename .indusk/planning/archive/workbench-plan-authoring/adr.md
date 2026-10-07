@@ -147,7 +147,48 @@ archive commit is the root's.
 - **New plan** lists the workbench's repos and asks for one when there is
   more than one.
 
+**D10 — Renaming a plan: moved out.** Written in the live check, after a
+hand rename stranded the running session, then moved to its own plan by
+Sandy's call (2026-10-06) so this one could ship. Its design
+(`indusk plans rename`, moving the session through the admin, the worktree
+directory left where it is) waits in `.indusk/planning/known-issues.md`.
+
+**D11 — A new plan's first prompt says to prepare, then ask.** Added in the
+live check (2026-10-06): given only `/planner <type> <name>`, the agent
+planned from the title. The prompt comes from one package function,
+`newPlanPrompt(type, plan)`, which the admin's New plan route sends:
+- **Prepare first, quietly**: read `.indusk/planning/master.md`,
+  `.indusk/current.md` and the project's promises (`indusk promises check`).
+  No telemetry read: it is slow, and the planner does not need it to listen.
+- **Then say it is ready and ask** the person to describe what they want,
+  in their words.
+- **Never infer the plan from its name.**
+
+Continue planning keeps `/planner <plan>`: the plan's documents already say
+what it is.
+
+**D12 — The admin offers trust, and writes it on a click.** Added in the
+live check (2026-10-06): the workbench was untrusted, so every session asked
+about everything. admin-plan-authoring trusted a worktree like its project
+but never an untrusted project, and only reported it. Now a project Claude
+Code does not trust shows "Trust in Claude Code" on its admin pages. The
+click is the person's consent, the same as accepting Claude Code's own
+prompt; `trustProject` writes only `hasTrustDialogAccepted`, through the one
+write path `trustLikeProject` already uses. Nothing is trusted without the
+click.
+
 ## Alternatives Considered
+
+### Trusting every registered project
+
+Registering a project is not consent to running sessions with its
+allow-list; a project added to look at its plans would be trusted silently.
+
+### Running catchup at the start
+
+Catchup reads promise health from Jaeger and the whole operational state; it
+is slow and long, and most of it is not what a planning conversation needs
+before the person has said anything.
 
 ### A plan branch at the workbench root
 
