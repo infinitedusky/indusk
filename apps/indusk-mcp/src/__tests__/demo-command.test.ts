@@ -100,7 +100,7 @@ describe.skipIf(SHOULD_SKIP)(
 			expect(out).toMatch(/last seen upheld/);
 		}, 60_000);
 
-		it("A7 — with the switch on, a late release reads broken with its trace; off, held again", async () => {
+		it("A7 — with the switch on, a late release reads broken with its trace; off, it is still reported broken", async () => {
 			expect(page, `indusk demo printed no seat page:\n${output}`).toMatch(/^http/);
 			expect((await post("/fault", { on: true })).status).toBe(200);
 			expect((await post("/hold", { seat: 2, who: "bob" })).status).toBe(200);
@@ -108,11 +108,16 @@ describe.skipIf(SHOULD_SKIP)(
 			expect(broken).toMatch(/\b[1-9]\d* violations?\b/);
 			expect(broken, "the violation names its trace").toMatch(/\b[0-9a-f]{32}\b.*seat 2/);
 
+			// A promise that says "never" is broken by one violation however many
+			// held checks follow (Sandy, in the live check): with the fault stopped
+			// and releases on time again, the violation is still reported.
 			const brokenAt = Date.now();
 			expect((await post("/fault", { on: false })).status).toBe(200);
 			expect((await post("/hold", { seat: 3, who: "cy" })).status).toBe(200);
-			const held = await statusUntil((s) => lastUpheldAt(s) > brokenAt, 30_000);
-			expect(lastUpheldAt(held), "held again after the switch is off").toBeGreaterThan(brokenAt);
+			const after = await statusUntil((s) => lastUpheldAt(s) > brokenAt, 30_000);
+			expect(lastUpheldAt(after), "the next release was on time").toBeGreaterThan(brokenAt);
+			expect(after, "the break is still reported").toMatch(/\b[1-9]\d* violations?\b/);
+			expect(after).toMatch(/\b[0-9a-f]{32}\b.*seat 2/);
 		}, 90_000);
 	},
 );
