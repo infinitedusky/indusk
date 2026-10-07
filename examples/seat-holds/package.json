@@ -1,0 +1,25 @@
+{
+	"name": "seat-holds",
+	"version": "0.1.0",
+	"private": true,
+	"description": "A small app with one promise you can break on cue — the InDusk demo example",
+	"type": "module",
+	"scripts": {
+		"start": "tsx src/server.ts",
+		"test": "vitest run",
+		"smoke": "node scripts/smoke-deployed.mjs"
+	},
+	"dependencies": {
+		"@opentelemetry/api": "^1.9.0",
+		"@opentelemetry/exporter-trace-otlp-http": "^0.214.0",
+		"@opentelemetry/resources": "^2.6.0",
+		"@opentelemetry/sdk-trace-base": "^2.6.0",
+		"@opentelemetry/sdk-trace-node": "^2.6.0",
+		"@opentelemetry/semantic-conventions": "^1.40.0",
+		"tsx": "^4.19.0"
+	},
+	"devDependencies": {
+		"typescript": "^5.7.0",
+		"vitest": "^4.1.11"
+	}
+}

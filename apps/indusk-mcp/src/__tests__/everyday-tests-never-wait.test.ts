@@ -120,6 +120,14 @@ describe("everyday-tests-never-wait", () => {
 		).toEqual([]);
 	});
 
+	// promise: everyday-tests-never-wait — demo-app-template A9: the seat-holds
+	// example runs in the everyday suite too, so the guard reads its tests.
+	it("the seat-holds example's tests are scanned too (demo-app-template A9)", async () => {
+		const example = (await packages()).find((p) => p.dir === "examples/seat-holds");
+		expect(example, "examples/seat-holds is one of the packages the guard reads").toBeDefined();
+		if (example) expect(await everydayFiles(example)).toContain("src/seats.test.ts");
+	});
+
 	it("a process that runs and exits does not trip the guard (A15)", () => {
 		const source = [
 			`const out = spawnSync("git", ["rev-parse", "HEAD"], { cwd });`,
