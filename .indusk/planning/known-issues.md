@@ -22,6 +22,9 @@ Each entry says what happens, where it was seen, and what we know so far.
 
 - **No Update button.** Updating a project's InDusk needs `indusk update` in a
   terminal. Seen 2026-10-05, updating seatbox.
+- **No way to delete a plan.** Abandoning a started plan means removing its
+  folder, worktree and branch by hand, and stopping its session first. Seen
+  2026-10-06, live check.
 - **No Create project.** A project can only be registered from the CLI. Seen
   2026-10-05, trying the admin on a fresh workbench.
 
