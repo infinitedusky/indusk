@@ -43,10 +43,10 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 | A3 | A highlight, its processed mark and an evaluation's results are written under the project's home, the same from every checkout; none appears in `git status` | Build Phase 1 | Build Phase 2 | planned | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 | A4 | When the main checkout is off its trunk branch or mid-merge, a note is written there, left uncommitted, and the reason returned; nothing is committed onto another branch | Build Phase 1 | Build Phase 1 | planned | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
 | A5 | Two notes written at the same moment are both committed | Build Phase 1 | Build Phase 1 | planned | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
-| A6 | `indusk update` moves a project's tracked highlights into its home, unprocessed ones kept, and takes them out of git | Test Phase 1 | Build Phase 3 | planned | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/__tests__/bookkeeping-migration.test.ts |
+| A6 | `indusk update` moves a project's tracked highlights into its home, unprocessed ones kept, and takes them out of git | Test Phase 1 | Build Phase 3 | written | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/__tests__/bookkeeping-migration.test.ts |
 | A7 | A highlight processed for a commit in one checkout is not offered again in another | Build Phase 1 | Build Phase 2 | planned | unit | promise: a-highlight-becomes-a-lesson-once | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 | A8 | A real evaluator run on a commit in a plan's worktree writes its lesson on `main` and marks the highlight processed in the project's home | Build Phase 3 | Build Phase 3 | planned | contract | promise: a-highlight-becomes-a-lesson-once | apps/indusk-mcp/src/__tests__/eval-bookkeeping-contract.test.ts |
-| A9 | Landing still refuses a plan when `main` has uncommitted work that is not InDusk's, and the review still lists it | Test Phase 1 | Test Phase 1 | planned | unit | promise: nothing-ships-until-accepted, promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
+| A9 | Landing still refuses a plan when `main` has uncommitted work that is not InDusk's, and the review still lists it | Test Phase 1 | Test Phase 1 | passing | unit | promise: nothing-ships-until-accepted, promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 | A10 | Every commit is still scored, its result readable where the admin and `indusk eval` look | Build Phase 1 | Build Phase 2 | planned | unit | promise: every-commit-evaluated | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 | A11 | A hook and the package resolve the same main checkout and project home from any checkout of a project | Build Phase 1 | Build Phase 1 | planned | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 
@@ -56,9 +56,9 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 
 **Goal**: author A6 red over the CLI and run A9's existing guard; record why the rest wait.
 
-- [ ] Confirm this plan's worktree (`indusk worktree create bookkeeping-lives-where-it-is-read` made it and recorded the assignment) — worktree-per-plan default
-- [ ] A6: `bookkeeping-migration.test.ts` runs `indusk update` on a project whose `.indusk/highlights.jsonl` and `highlights-processed.jsonl` are tracked, in a temporary `INDUSK_HOME`; expects them under `<home>/projects/<project>/`, unprocessed ones kept, gone from `git ls-files`, and ignored. RED today: update leaves them where they are
-- [ ] A9: run the existing landing and review tests (`plans-land.test.ts` A32 and the refusal cases) unchanged; they pass, and stay the guard
+- [x] Confirm this plan's worktree (`indusk worktree create bookkeeping-lives-where-it-is-read` made it and recorded the assignment) — worktree-per-plan default
+- [x] A6: `bookkeeping-migration.test.ts` runs `indusk update` on a project whose `.indusk/highlights.jsonl` and `highlights-processed.jsonl` are tracked, in a temporary `INDUSK_HOME`; expects them under `<home>/projects/<project>/`, unprocessed ones kept, gone from `git ls-files`, and ignored. RED today: update leaves them where they are
+- [x] A9: run the existing landing and review tests (`plans-land.test.ts` A32 and the refusal cases) unchanged; they pass, and stay the guard
 
 #### Deferred to Build Phase 1
 
@@ -74,7 +74,7 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 
 #### Test Phase 1 Verification
 
-- [ ] A6 is authored and fails on its own assertion, and A9 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/bookkeeping-migration.test.ts src/__tests__/plans-land.test.ts`)
+- [x] (A6 red: "the queue is in <home>/projects/bk_project_…: expected false to be true"; `plans-land.test.ts` 8 of 8) A6 is authored and fails on its own assertion, and A9 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/bookkeeping-migration.test.ts src/__tests__/plans-land.test.ts`)
 
 ### Build Phase 1: One resolver, and a note committed on main
 
