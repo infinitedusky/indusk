@@ -80,6 +80,18 @@ in the plan.
 |----|-----------|-------|
 | A17 | The plan commands find a workbench's roots through `resolveExecutionRoots` and the plan's record, and promises through the one contract resolver; no other module resolves either. | unit |
 
+## Proves `a-renamed-plan-is-found-by-its-new-name`
+
+Added in the live check (2026-10-06), when a hand rename stranded a running
+session.
+
+| ID | Assertion | Level |
+|----|-----------|-------|
+| A20 | Renaming an open plan, in a workbench or in normal mode, moves its documents, renames its branch, and rewrites its code record, its promises' owner and its phase records; every plan command then finds it by the new name, and none by the old. | unit |
+| A21 | A rename is refused, with nothing changed, when the new name is taken or not a valid plan name, when the plan is not open, or when a build is running for it. | unit |
+| A22 | A running planning session moved by a rename is found under the plan's new name, and its panel is told the new name and moves to the new page. | unit |
+| A23 | A rename asks the running admin to move the plan's session; with no admin running it renames everything else and says there was no session to move. | unit |
+
 ## For no promise: normal mode unchanged, and the whole flow
 
 | ID | Assertion | Level |

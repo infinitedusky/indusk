@@ -41,6 +41,14 @@ plan after this one.*
   on it. Until a repo accepts the folder, its contract lives in the
   workbench as a versioned shadow contract (Sandy, 2026-10-06; the design
   note in [research](research.md)).
+- **A plan can be renamed, by one command that moves everything.** A name
+  gets better once the idea is clear, so the planner may rename a plan, but
+  only through `indusk plans rename`, never by hand with git. The command
+  asks the admin to move a running session's record, since that lives in
+  the admin's memory. The worktree's directory keeps its name: a session
+  may be running in it, and the records hold its path (Sandy, 2026-10-06, in the live check: the planner
+  renamed `new-game-type` to `blind-mans-curse` by hand, and the running
+  session was left filed under a page that no longer existed).
 
 ## Promises
 
@@ -54,6 +62,11 @@ plan after this one.*
    one, otherwise the workbench's shadow contract. Every reader goes through
    the same resolver: the plan commands, the registry check, the watcher and
    the admin. A promise is never read from both.
+3. **`a-renamed-plan-is-found-by-its-new-name`** (state). A plan renamed
+   while it is open is renamed everywhere InDusk looks it up: its documents,
+   its branch, its code record, its promises, its phase records and its
+   running session, whose panel moves to the plan's new page. Nothing looks
+   the plan up by its old name.
 
 ### Existing promises
 

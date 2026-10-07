@@ -147,7 +147,39 @@ archive commit is the root's.
 - **New plan** lists the workbench's repos and asks for one when there is
   more than one.
 
+**D10 — A plan is renamed by one command.** Added in the live check
+(2026-10-06): the planner renamed a plan by hand with git, and the running
+session stayed filed under the old name, whose page no longer existed.
+`indusk plans rename <old> <new>`:
+- **Moves what InDusk looks the plan up by**: the plan folder (at the root in
+  a workbench, in the plan's worktree in normal mode), the branch
+  `plan/<old>` in the repo that holds it, `code.json` or the plan-worktree
+  record, the `owner` of the plan's promises, and the plan's lines in the
+  phase-boundary record.
+- **Leaves the worktree's directory where it is.** A session may be running
+  in it, as its working directory or an added one, and moving a process's
+  directory silently breaks its hooks. The records hold the path; landing
+  removes the directory.
+- **Moves a running session through the admin.** The session's record lives
+  in the admin's memory, so the command asks the running admin to move it.
+  The admin moves the record and tells the panel, which goes to the new
+  page. With no admin running there is no session to move, and the command
+  says so.
+- **Refuses, changing nothing,** when the new name is taken or invalid, the
+  plan is not open, or a build is running for it.
+- **The planner renames only through it.** The skill says so.
+
 ## Alternatives Considered
+
+### Fixing a plan's name once it starts
+
+Simplest, but a name gets better once the idea is clear, which is what
+happened in the live check (Sandy chose to keep renaming).
+
+### Detecting a hand rename afterwards
+
+The admin would notice the session's plan was gone and guess where it went.
+A guess is the wrong way to find a plan.
 
 ### A plan branch at the workbench root
 
