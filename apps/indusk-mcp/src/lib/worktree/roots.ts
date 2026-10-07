@@ -177,3 +177,26 @@ export function chooseCodeRepo(planRoot: string, named?: string): CodeRepo | Exe
 	const dir = dirs.find((d) => d.name === pick.name)?.dir as string;
 	return { name: pick.name, dir, ...(pick.worktrees ? { worktrees: pick.worktrees } : {}) };
 }
+
+/**
+ * The branch a workbench plan's code is cut from and lands back on: the
+ * repo's `base_branch` in `.indusk/worktree-configs/<repo>.json`, else its
+ * `trunk_branch` — what the worktree extension branches from. A client repo
+ * often integrates on a branch of its own (numero's is `staging`), and a
+ * plan lands where the team merges, never on a `main` it does not use. Null
+ * when the repo has no config, or the config names neither.
+ */
+export function codeRepoBase(planRoot: string, repo: string): string | null {
+	const path = join(planRoot, ".indusk", "worktree-configs", `${repo}.json`);
+	if (!existsSync(path)) return null;
+	try {
+		const config = JSON.parse(readFileSync(path, "utf-8")) as {
+			base_branch?: unknown;
+			trunk_branch?: unknown;
+		};
+		const branch = config.base_branch ?? config.trunk_branch;
+		return typeof branch === "string" && branch !== "" ? branch : null;
+	} catch {
+		return null;
+	}
+}

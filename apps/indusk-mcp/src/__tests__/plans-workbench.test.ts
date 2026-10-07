@@ -179,6 +179,52 @@ describe.skipIf(SHOULD_SKIP).each(LAYOUTS)("a plan in a workbench — %s", (_lab
 	});
 });
 
+describe.skipIf(SHOULD_SKIP)("a plan in a workbench whose repo works from a base branch", () => {
+	// numero's repo declares `base_branch: staging` and is checked out there:
+	// plans branch from staging and land back on it, never on a `main` the
+	// team does not merge into.
+	it("A16 — the code branch is cut from the base branch, and lands back on it", () => {
+		const wb = withDomain(LAYOUTS[1][1]());
+		const repo = wb.repos[0];
+		git(repo.dir, ["checkout", "-q", "-b", "staging"]);
+		commitFile(repo.dir, "STAGING.md", "staging\n", "staging only");
+		writeFileSync(
+			join(wb.root, ".indusk", "worktree-configs", `${repo.name}.json`),
+			`${JSON.stringify({ trunk_branch: "main", base_branch: "staging", copy_files: [], append_files: [], apply_commits: [] }, null, 2)}\n`,
+		);
+		const mainBefore = git(repo.dir, ["rev-parse", "main"]);
+
+		expect(runCli(wb.root, ["plans", "start", "feature", PLAN]).code).toBe(0);
+		expect(existsSync(join(codeRoot(wb), "STAGING.md"))).toBe(true);
+
+		writePromise(join(wb.root, ".indusk", "promises"), {
+			name: NAME,
+			kind: "state",
+			state: "declared",
+			domain: DOMAIN,
+			owner: PLAN,
+			statement: SENTENCE,
+		});
+		writeFileSync(
+			join(planDir(wb), "brief.md"),
+			briefText(PLAN, { makes: [{ name: NAME, sentence: SENTENCE }] }),
+		);
+		writeFileSync(
+			join(planDir(wb), "impl.md"),
+			implText(PLAN, { status: "draft", rows: [{ state: "planned" }] }),
+		);
+		const approve = runCli(wb.root, ["plans", "approve", PLAN]);
+		expect(approve.code, out(approve)).toBe(0);
+		commitFile(codeRoot(wb), "src/seat.ts", "export const seat = 1;\n", "the build");
+		expect(runCli(wb.root, ["plans", "accept", PLAN]).code).toBe(0);
+		const land = runCli(wb.root, ["plans", "land", PLAN]);
+		expect(land.code, out(land)).toBe(0);
+
+		expect(git(repo.dir, ["ls-tree", "-r", "--name-only", "staging"])).toContain("src/seat.ts");
+		expect(git(repo.dir, ["rev-parse", "main"])).toBe(mainBefore);
+	});
+});
+
 describe.skipIf(SHOULD_SKIP)("a plan in a workbench whose repo has no worktree config", () => {
 	it("A1 — still starts, its code on a plain worktree of the repo on plan/<name>", () => {
 		const wb = withDomain(LAYOUTS[1][1](), { worktreeConfigs: false });

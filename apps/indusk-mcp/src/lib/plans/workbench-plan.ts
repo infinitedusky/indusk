@@ -5,7 +5,7 @@ import { git } from "../git.js";
 import { currentTrunkBranch } from "../trunk-branch.js";
 import { resolvePlanCopies } from "../worktree/plan-worktrees.js";
 import { isWorkbench } from "../worktree/repos.js";
-import { chooseCodeRepo, type PlanCode, readPlanCode } from "../worktree/roots.js";
+import { chooseCodeRepo, codeRepoBase, type PlanCode, readPlanCode } from "../worktree/roots.js";
 import { PlanCommandRefusal } from "./plan-branch.js";
 
 /**
@@ -56,10 +56,14 @@ export async function workbenchPlan(
 	if (!read.ok) throw new PlanCommandRefusal(read.problem);
 	const repo = chooseCodeRepo(root, read.code.repo);
 	if ("error" in repo) throw new PlanCommandRefusal(repo.error);
+	// The branch the plan lands on: the repo's declared base branch when its
+	// worktree config names one, else the project's trunk branches.
 	const trunk = await currentTrunkBranch(repo.dir);
-	if (!trunk.onTrunk) {
+	const base = codeRepoBase(root, repo.name);
+	const allowed = base ? [base] : trunk.allowed;
+	if (!allowed.includes(trunk.branch)) {
 		throw new PlanCommandRefusal(
-			`the ${repo.name} checkout at ${repo.dir} is on ${trunk.branch || "no branch"}, not a trunk branch (${trunk.allowed.join(", ")})`,
+			`the ${repo.name} checkout at ${repo.dir} is on ${trunk.branch || "no branch"}, but ${plan} lands on ${allowed.join(" or ")} — check that branch out there first`,
 		);
 	}
 	return { plan, root, dir, code: read.code, repoTrunk: repo.dir, trunkBranch: trunk.branch };
