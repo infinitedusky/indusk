@@ -441,29 +441,29 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
-## Session 4551e898 — admin-plan-authoring — build through Build Phase 9 (live checks)
+## Session 4551e898 — workbench-plan-authoring: closing — live check recorded, promises confirmed
 
 **Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
-**Last updated**: 2026-10-06T17:48:52.410Z
+**Last updated**: 2026-10-07T03:59:08.602Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-- **admin-plan-authoring** on `plan/admin-plan-authoring` (worktree `dusk-worktrees/admin-plan-authoring`): Build Phases 1–8 closed; Build Phase 9 (the whole way, once) has its live checks done and recorded, six promises confirmed `enforced`. Next: the changelog item, then `/falsify`, `/cleanup`, `/retrospective`.
-- **Live checks (A27, A6), 2026-10-06**, in a scratch project (`seatbox`, private InDusk home, this branch's admin on port 3996): one plan went New plan → planning conversation in the panel → Approve → Build (unasked: test phase red on assertions, fix, falsification and cleanup skipped with reasons) → review → Accept → release, landed and archived, promise enforced. No undeclared stop: the build stopped only at review. A second plan's release, with this branch's CLI first on the sessions' PATH, landed through `indusk plans land`. A plan was carried admin → terminal and terminal → admin.
-- Fixed during the live checks (each test-first, committed): branch-only plans missing from the admin's reader (New plan opened a 404), Continue planning, typed replies, Other and multi-select answers, a ten-line scrolling log, approval committing the plan's own documents, skipped rituals in the review and on the plan page, one panel per session.
+- **workbench-plan-authoring** (branch `plan/workbench-plan-authoring`): Build Phase 6 done but the suites; then falsify, cleanup, retrospective, land, bump.
+- **Live check (A19)**: numero copied to `~/code/sandbox/numero-scratch` (no remote; own INDUSK_HOME `numero-scratch-home`; admin from the branch on 127.0.0.1:3997). New plan, planning and build ran live; review, accept and land skipped by Sandy's call (they rest on A15, A16).
+- **Fixed in the live check**: landing on the repo's declared base branch (`staging`); a new plan's agent prepares, then asks (A24); Trust in Claude Code (A25).
+- **Moved out**: renaming a plan (design in `.indusk/planning/known-issues.md`).
 
 ### Open Questions
 
-- **Unattended retrospective committed another session's work**: in the scratch project it committed finished evaluator notes in `current.md` that blocked landing, recording why. Proposed: the unattended section says never commit, stash or discard work that is not the plan's — stop with cannot-continue instead. Awaiting Sandy.
-- **U3 smoke** after `pnpm release`: install the published version, `indusk update` a scratch project, one plan from New plan to `plans land` in the admin; a defect opens a bugfix plan.
-- `indusk update` run in a plan worktree registers the worktree as a project in `~/.indusk/projects.json` (removed by hand twice); not this plan's.
-- The scratch project's hooks ran the evaluator on every commit, on Sandy's subscription.
+- numero runs InDusk 1.56.0, whose planner writes no promises; the admin says nothing about a project being behind (known issue: Update button).
+- A planning session built the change itself and set the impl in-progress, skipping Approve (known issue).
+- Cleanup owed: the scratch copy, its home and the 3997 admin; seatbox in the real registry.
 
 ### Cursor
 
-`.indusk/planning/admin-plan-authoring/impl.md` — Build Phase 9 Document: the changelog's Unreleased entry. Scratch admin still running on 127.0.0.1:3996 (background task); stop it when done.
+Full `pnpm test` + `test:system` from a clean environment running; then check off Build Phase 6 Verification, then /falsify.
 
 ---
 

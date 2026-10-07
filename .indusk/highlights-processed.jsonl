@@ -422,3 +422,6 @@
 {"id":"h-20261006-009","processedAt":"2026-10-06T19:23:35.094Z","action":"wrote-episode","detail":"advisory-lesson-violated-repeatedly-needs-a-pretooluse-enforcer"}
 {"id":"h-20261006-010","processedAt":"2026-10-06T19:23:35.820Z","action":"wrote-episode","detail":"falsify-security-boundaries-before-the-live-check-not-after"}
 {"id":"h-20261006-004","processedAt":"2026-10-06T19:23:51.829Z","action":"skipped","detail":"audit status numbers (3 deferred rows, 0 blocked) — not a durable rule, no lesson warranted"}
+{"id":"h-20261006-011","processedAt":"2026-10-06T23:46:22.213Z","action":"skipped","detail":"recorded in workbench-plan-authoring/brief.md (status: accepted)"}
+{"id":"h-20261006-012","processedAt":"2026-10-06T23:46:23.080Z","action":"skipped","detail":"recorded in workbench-plan-authoring/test-plan.md (status: accepted)"}
+{"id":"h-20261006-013","processedAt":"2026-10-06T23:46:23.663Z","action":"skipped","detail":"recorded in workbench-plan-authoring/adr.md (status: accepted)"}
