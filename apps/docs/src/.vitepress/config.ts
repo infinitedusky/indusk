@@ -124,6 +124,7 @@ const config = defineConfig({
 						{ text: "run", link: "/reference/cli/run" },
 						{ text: "verify", link: "/reference/cli/verify" },
 						{ text: "agent", link: "/reference/cli/agent" },
+						{ text: "demo", link: "/reference/cli/demo" },
 						{ text: "plans", link: "/reference/cli/plans" },
 						{ text: "context", link: "/reference/cli/context" },
 						{ text: "papers", link: "/reference/cli/papers" },
