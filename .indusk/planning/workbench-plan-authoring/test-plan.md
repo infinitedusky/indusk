@@ -92,6 +92,14 @@ session.
 | A22 | A running planning session moved by a rename is found under the plan's new name, and its panel is told the new name and moves to the new page. | unit |
 | A23 | A rename asks the running admin to move the plan's session; with no admin running it renames everything else and says there was no session to move. | unit |
 
+## For no promise: a new plan's agent prepares, then asks
+
+Added in the live check (2026-10-06).
+
+| ID | Assertion | Level |
+|----|-----------|-------|
+| A24 | A plan started from New plan opens a session told to read the project's state first, then say it is ready and ask for a description, and not to infer the plan from its name; Continue planning is told none of this. | unit |
+
 ## For no promise: normal mode unchanged, and the whole flow
 
 | ID | Assertion | Level |

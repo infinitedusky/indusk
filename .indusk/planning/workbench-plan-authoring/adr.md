@@ -169,7 +169,27 @@ session stayed filed under the old name, whose page no longer existed.
   plan is not open, or a build is running for it.
 - **The planner renames only through it.** The skill says so.
 
+**D11 — A new plan's first prompt says to prepare, then ask.** Added in the
+live check (2026-10-06): given only `/planner <type> <name>`, the agent
+planned from the title. The prompt comes from one package function,
+`newPlanPrompt(type, plan)`, which the admin's New plan route sends:
+- **Prepare first, quietly**: read `.indusk/planning/master.md`,
+  `.indusk/current.md` and the project's promises (`indusk promises check`).
+  No telemetry read: it is slow, and the planner does not need it to listen.
+- **Then say it is ready and ask** the person to describe what they want,
+  in their words.
+- **Never infer the plan from its name.**
+
+Continue planning keeps `/planner <plan>`: the plan's documents already say
+what it is.
+
 ## Alternatives Considered
+
+### Running catchup at the start
+
+Catchup reads promise health from Jaeger and the whole operational state; it
+is slow and long, and most of it is not what a planning conversation needs
+before the person has said anything.
 
 ### Fixing a plan's name once it starts
 

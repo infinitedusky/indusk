@@ -41,6 +41,11 @@ plan after this one.*
   on it. Until a repo accepts the folder, its contract lives in the
   workbench as a versioned shadow contract (Sandy, 2026-10-06; the design
   note in [research](research.md)).
+- **A new plan's agent prepares, then asks.** Started from New plan, the
+  agent first reads the project's state on its own (the master, `current.md`,
+  the project's promises), says when it is ready, and asks the person to
+  describe what they want. It never guesses the plan from its name (Sandy,
+  2026-10-06, in the live check, where it planned from the title).
 - **A plan can be renamed, by one command that moves everything.** A name
   gets better once the idea is clear, so the planner may rename a plan, but
   only through `indusk plans rename`, never by hand with git. The command

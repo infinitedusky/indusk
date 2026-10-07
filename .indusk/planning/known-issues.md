@@ -9,14 +9,9 @@ Each entry says what happens, where it was seen, and what we know so far.
 
 ## Agents and sessions
 
-- **A new agent starts without the project's state.** New plan opens a session
-  whose only message is `/planner <type> <name>`. It gets `CLAUDE.md` and the
-  master, but not what catchup reads: `current.md` (what is in flight or
-  blocked), promise health, or git state. A plan could be written without
-  knowing about an unrecorded promise violation, which the project's own rule
-  ranks above the roadmap. Open question: what context to give a new agent,
-  and how (full catchup is slow; a short version is `current.md` plus one
-  promise-health line). Seen 2026-10-06, workbench-plan-authoring live check.
+- **A build or review session starts without the project's state.** New plan's
+  agent now prepares first (workbench-plan-authoring, ADR D11); the other
+  sessions the admin starts still begin with their skill alone.
 
 ## Admin
 
