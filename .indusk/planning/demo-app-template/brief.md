@@ -1,51 +1,57 @@
 ---
-title: "Demo app template — a working app to promise about, deploy and break"
-date: 2026-10-04
+title: "Demo app template — a seat-holds app whose promise breaks on cue"
+date: 2026-10-07
 status: draft
 workflow: feature
 ---
 
 # Demo app template — Brief
 
-*Revised 2026-10-05 after the demo script was reviewed: the template ships
-without promises (Sandy's decision), and how it is delivered is said.*
+*Rewritten 2026-10-07 from the 2026-10-04 draft, after the master's new order
+("Now — show the promise loop"). What changed and why is in
+[research](research.md).*
 
-## Problem
+## Expectations
 
-The only things that mark promises today are the evaluator and the smoke
-script. The demo needs a real, small application that a new project starts
-from: something worth making promises about, deployable, with a way to break
-one promise on cue.
+1. **People who see the demo understand the promise loop.**
+   - Measure: at the Lazer showing, how many people ask to try it, or ask how the break was caught; after launch, stars and clones of the example.
+   - Look: after the Lazer showing, and a week after launch.
+2. **The break shows up fast.**
+   - Measure: in the recorded rehearsal, the time from opening the example to the promise showing broken, under two minutes.
+   - Look: at the demo rehearsal.
 
-## Direction
+## Promises
 
-- **A minimal working service (Node) with no promises.** It has two or three
-  operations a person would naturally promise something about, and exports
-  plain OpenTelemetry to whatever OTLP endpoint its environment names: the
-  local daemon on a laptop, the project's server when deployed. The first plan
-  written in the demo adds the promises — their marks at the sites and their
-  tests. A template that shipped them already marked would leave that plan
-  nothing to promise.
-- **A fault switch on those operations** (an env var), so one of them can be
-  made to misbehave on cue. Once the first plan has marked the operation, the
-  switch is what makes the demo's production break reproducible. It belongs
-  to the template rather than the plan, so the plan does not have to build its
-  own sabotage.
-- **A Fly config** for the app, beside the always-on server's.
-- **Delivered as a repository to clone.** `indusk init` has no template
-  mechanism and the demo does not need one: clone the repository, run
-  `indusk init` in it. A `--template` flag can come later if starting from
-  templates becomes a habit.
+### This plan makes
 
-## Success criteria
+1. **`the-demo-app-starts-with-its-promise-holding`** (state). Copying the seat-holds example and running its start command gives a project that runs locally: a page for holding and booking seats, one promise already marked and tested, and that promise shown holding in the admin.
+2. **`the-demo-break-is-caught-locally`** (state). Turning on the seat-holds example's fault switch makes its promise show broken in the admin within seconds, with the span that broke it; turning the switch off makes it hold again.
 
-- A clone of the template runs locally and deploys to Fly with no promise in
-  its registry and no promise mark in its code.
-- After a plan adds a promise to one operation, flipping the fault switch on
-  the deployed app produces a violation of that promise on the project's
-  server.
+### Existing promises
 
-## Part of
+**Must not break**
 
-[indusk-demo](../indusk-demo/master.md), step 4 in its build order; script
-step 1 (start a new project) and the break in script step 6.
+- **`everyday-tests-never-wait`**. The example is tested with the package; a test that starts it, the daemon or a browser belongs in the system tier.
+
+**Changes**
+
+None.
+
+**Replaces**
+
+None.
+
+### Not promised
+
+- **A production break.** The Fly config ships in the example and is tried once; the break in production is the demo's second act, with [server-provisioning](../server-provisioning/brief.md).
+- **Recording the break as an incident without a command.** That is [incident-recording](../incident-recording/brief.md).
+- **Seeing the break in the editor.** That is the VS Code extension, its own plan.
+- **The example's own promise**, `a-held-seat-is-released-in-time` (a seat held and not booked is released within 30 seconds). It lives in the example's registry, not InDusk's; this plan ships it, and the planner adds more on camera.
+
+## Depends On
+
+- None. The promise mark, the local daemon and the admin's promise page exist (day-monitor, promise-sources, promise-timeline).
+
+## Blocks
+
+- [incident-recording](../incident-recording/brief.md) and the VS Code extension use the example as their test bed; demo-rehearsal records it.
