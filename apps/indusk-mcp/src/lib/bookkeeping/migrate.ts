@@ -56,22 +56,7 @@ export function migrateBookkeeping(anyCheckout: string): string[] {
 			}
 			moved.push(label(join(".indusk", name)));
 		}
-		const oldEval = join(checkout, ".indusk", "eval");
-		if (existsSync(oldEval) && statSync(oldEval).isDirectory()) {
-			const dest = evalDir(anyCheckout);
-			mkdirSync(dest, { recursive: true });
-			for (const entry of readdirSync(oldEval)) {
-				const from = join(oldEval, entry);
-				if (!statSync(from).isFile()) continue;
-				const to = join(dest, entry);
-				if (entry.endsWith(".log") || entry.endsWith(".jsonl")) {
-					appendFileSync(to, readFileSync(from));
-				} else if (!existsSync(to)) {
-					copyFileSync(from, to);
-				}
-			}
-			if (isTrunk) untrack(trunk, join(".indusk", "eval"));
-			rmSync(oldEval, { recursive: true, force: true });
+		if (moveEvalDir(checkout, evalDir(anyCheckout), isTrunk ? trunk : null)) {
 			moved.push(label(join(".indusk", "eval/")));
 		}
 	}
@@ -123,6 +108,30 @@ export function releaseBranchBookkeeping(worktree: string): string[] {
 	if (commit.status !== 0)
 		throw new Error(`could not take the highlights out of the branch: ${commit.stderr}`);
 	return rels;
+}
+
+/**
+ * Move a checkout's `.indusk/eval/` into `dest`: logs appended, any other file
+ * copied only where `dest` has none; untracked first when `trunk` is given.
+ * Returns whether there was one.
+ */
+function moveEvalDir(checkout: string, dest: string, trunk: string | null): boolean {
+	const oldEval = join(checkout, ".indusk", "eval");
+	if (!existsSync(oldEval) || !statSync(oldEval).isDirectory()) return false;
+	mkdirSync(dest, { recursive: true });
+	for (const entry of readdirSync(oldEval)) {
+		const from = join(oldEval, entry);
+		if (!statSync(from).isFile()) continue;
+		const to = join(dest, entry);
+		if (entry.endsWith(".log") || entry.endsWith(".jsonl")) {
+			appendFileSync(to, readFileSync(from));
+		} else if (!existsSync(to)) {
+			copyFileSync(from, to);
+		}
+	}
+	if (trunk) untrack(trunk, join(".indusk", "eval"));
+	rmSync(oldEval, { recursive: true, force: true });
+	return true;
 }
 
 /** The main checkout first, then every worktree git lists for it. */
