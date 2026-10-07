@@ -77,6 +77,53 @@ export function migrateBookkeeping(anyCheckout: string): string[] {
 	return moved;
 }
 
+/**
+ * A plan's branch that still tracks the highlights files after `main` stopped
+ * (`indusk update` ran on `main` while the plan was open) would conflict when
+ * landing brings `main` in: deleted there, changed here. Before that, landing
+ * calls this in the plan's worktree: its queue and marks are merged into the
+ * home, and the files leave the branch in a `chore(indusk)` commit of their
+ * own. Nothing happens while `main` still tracks them (A16). Returns the paths
+ * taken out.
+ *
+ * promise: indusk-leaves-main-clean
+ */
+export function releaseBranchBookkeeping(worktree: string): string[] {
+	const { trunk, home } = bookkeepingRoots(worktree);
+	const names = ["highlights.jsonl", "highlights-processed.jsonl"];
+	const tracked = (cwd: string, rel: string) =>
+		spawnSync("git", ["ls-files", "--", rel], { cwd, encoding: "utf-8" }).stdout.trim() !== "";
+	const rels = names
+		.map((n) => join(".indusk", n))
+		.filter((rel) => tracked(worktree, rel) && !tracked(trunk, rel));
+	if (rels.length === 0) return [];
+	mkdirSync(home, { recursive: true });
+	const queue = join(worktree, ".indusk", "highlights.jsonl");
+	const processed = join(worktree, ".indusk", "highlights-processed.jsonl");
+	const renamed = existsSync(queue) ? mergeQueue(queue, join(home, "highlights.jsonl")) : new Map();
+	if (existsSync(processed)) {
+		mergeProcessed(processed, join(home, "highlights-processed.jsonl"), renamed);
+	}
+	spawnSync("git", ["rm", "-q", "--cached", "--", ...rels], { cwd: worktree });
+	for (const rel of rels) rmSync(join(worktree, rel), { force: true });
+	const commit = spawnSync(
+		"git",
+		[
+			"commit",
+			"-q",
+			"--only",
+			"-m",
+			"chore(indusk): highlights move to the project home",
+			"--",
+			...rels,
+		],
+		{ cwd: worktree, encoding: "utf-8" },
+	);
+	if (commit.status !== 0)
+		throw new Error(`could not take the highlights out of the branch: ${commit.stderr}`);
+	return rels;
+}
+
 /** The main checkout first, then every worktree git lists for it. */
 function checkoutsOf(trunk: string): string[] {
 	const r = spawnSync("git", ["worktree", "list", "--porcelain"], {

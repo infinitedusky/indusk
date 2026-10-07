@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import { releaseBranchBookkeeping } from "../bookkeeping/migrate.js";
 import { readConfig } from "../config.js";
 import { git, headSha } from "../git.js";
 import { releasePlan } from "../worktree/plan-worktree-commands.js";
@@ -52,6 +53,7 @@ export async function landPlan(anyCheckout: string, plan: string): Promise<Lande
 		);
 	}
 	await refuseDirtyWorktree(pb);
+	releaseBranchBookkeeping(pb.worktree);
 
 	try {
 		await git(pb.worktree, "merge", "--no-edit", pb.trunkBranch);
