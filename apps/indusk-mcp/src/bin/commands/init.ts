@@ -36,6 +36,17 @@ const GITIGNORE_ENTRIES = [
 	{ comment: "# Session-specific handoff (not project knowledge)", pattern: ".claude/handoff.md" },
 	{ comment: "# Semantic graph event log (large, local-only)", pattern: ".indusk/graph/" },
 	{ comment: "# Eval results (local-only)", pattern: ".indusk/eval/" },
+	// InDusk's machine state lives in the project's home, outside every checkout
+	// (bookkeeping-lives-where-it-is-read); a stray copy is never committed.
+	{
+		comment: "# InDusk's highlights queue (lives in ~/.indusk/projects/)",
+		pattern: ".indusk/highlights.jsonl",
+	},
+	{
+		comment: "# InDusk's processed highlights (lives in ~/.indusk/projects/)",
+		pattern: ".indusk/highlights-processed.jsonl",
+	},
+	{ comment: "# The current.md writers' lock", pattern: ".indusk/current.md.lock" },
 	// Manifests are CONFIGURATION and belong in version control. Ignoring the
 	// whole directory made every manifest untracked, so a project that patched
 	// one had no diff, no history, and got it replaced by `indusk update` with

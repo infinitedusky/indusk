@@ -869,6 +869,13 @@ export async function update(projectRoot: string): Promise<void> {
 		const { writeGitInfoExclude } = await import("./init.js");
 		writeGitInfoExclude(projectRoot);
 	} else {
+		// Machine state out of the checkout and into the project's home first, so
+		// the ignore rules below never hide a tracked file
+		// (bookkeeping-lives-where-it-is-read D5).
+		const { migrateBookkeeping } = await import("../../lib/bookkeeping/migrate.js");
+		for (const moved of migrateBookkeeping(projectRoot)) {
+			console.info(`  moved: ${moved} → the project's home (~/.indusk/projects/), out of git`);
+		}
 		const { ensureGitignore, ensureCurrentMdMergeUnion } = await import("./init.js");
 		ensureGitignore(projectRoot);
 		ensureCurrentMdMergeUnion(projectRoot);
