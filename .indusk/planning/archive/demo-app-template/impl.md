@@ -11,6 +11,8 @@ test_phases: required
 test_levels: required
 test_purpose: required
 gate_policy: ask
+accepted: 2026-10-07T20:22:49.303Z
+accepted_by: person
 ---
 
 # Demo app template
