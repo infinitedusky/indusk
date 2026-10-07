@@ -185,3 +185,4 @@
 {"plan":"telemetry-stop-stops-what-it-started","phase":1,"kind":"test","sha":"b3f3f78647c141e2500726b8c8a0995494973e27","timestamp":"2026-10-07T21:04:02.964Z"}
 {"plan":"telemetry-stop-stops-what-it-started","phase":1,"kind":"build","sha":"b70aa94c4c7a0b826415939f196faa19cf90c252","timestamp":"2026-10-07T21:04:44.345Z"}
 {"plan":"bookkeeping-lives-where-it-is-read","phase":1,"kind":"test","sha":"1b5c575603d16349e106bb5843313f054f34d317","timestamp":"2026-10-07T22:46:31.512Z"}
+{"plan":"bookkeeping-lives-where-it-is-read","phase":1,"kind":"build","sha":"e02775af5fe5ccbc8bf0c412becd949a85f34c89","timestamp":"2026-10-07T22:47:30.838Z"}
