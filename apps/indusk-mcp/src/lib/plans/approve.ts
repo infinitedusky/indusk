@@ -1,7 +1,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { git, headSha } from "../git.js";
 import { checkPlanContract } from "../promises/contract.js";
+import { contractDir } from "../promises/registry.js";
 import { statusPaths } from "./bookkeeping.js";
 import {
 	branchChanges,
@@ -87,7 +88,13 @@ async function approveWorkbenchPlan(wp: WorkbenchPlan): Promise<ApprovedPlan> {
 		);
 	}
 	writeFileSync(impl, setFrontmatterKeys(readFileSync(impl, "utf-8"), { status: "approved" }));
-	const paths = [relative(wp.root, wp.dir), join(".indusk", "promises")];
+	// The root commits the contract only while it is the workbench's shadow; a
+	// repo's own contract is written and committed in the repo (D4).
+	const promises = contractDir(wp.root, wp.plan);
+	const inRepo = [wp.repoTrunk, resolve(wp.root, wp.code.worktree)].some(
+		(dir) => !relative(dir, promises).startsWith(".."),
+	);
+	const paths = [relative(wp.root, wp.dir), ...(inRepo ? [] : [relative(wp.root, promises)])];
 	await commitAtRoot(wp.root, paths, `plan(${wp.plan}): approved`);
 	return { plan: wp.plan, merge: await headSha(wp.root), paths: [], workbench: true };
 }
