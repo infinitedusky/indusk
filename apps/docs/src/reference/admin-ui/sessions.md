@@ -24,7 +24,7 @@ Claude writes one JSON object per line. A question (`AskUserQuestion`) and a req
 
 ## The panel
 
-New plan, on a project's page, takes a type and a name. It starts the plan on its own branch (`indusk plans start`), then a planning session running `/planner <type> <name>` in the plan's worktree, and opens the plan's page, where the panel runs. Approve appears on a plan's page once it is on its own branch with an impl not yet approved. It runs `indusk plans approve` and shows a refusal in the command's own words.
+New plan, on a project's page, takes a type and a name. It starts the plan on its own branch (`indusk plans start`), then a planning session running `/planner <type> <name>` in the plan's worktree, and opens the plan's page, where the panel runs. In a workbench wrapping more than one repo, the form also asks which repo the plan's code goes in. Approve appears on a plan's page once it is on its own branch with an impl not yet approved. It runs `indusk plans approve` and shows a refusal in the command's own words.
 
 The panel shows what the session says and the tools it uses, in order. A question appears with its choices; the person picks one per question and answers. A request to use a tool can be allowed or denied. Stop ends the session, and what it already wrote stays written. When the session writes a file, the page refreshes, so the plan appears and grows in the sidebar as it is written.
 
