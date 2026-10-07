@@ -74,7 +74,7 @@ describe("notes are committed on main", () => {
 
 		f.git(f.main, "checkout", "-q", "main");
 		writeFileSync(
-			join(f.git(f.main, "rev-parse", "--git-dir"), "MERGE_HEAD"),
+			join(f.git(f.main, "rev-parse", "--absolute-git-dir"), "MERGE_HEAD"),
 			`${f.git(f.main, "rev-parse", "HEAD")}\n`,
 		);
 		const merging = commitNote(f.main, note("three.md"), "chore(indusk): three");

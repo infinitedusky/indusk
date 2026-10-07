@@ -33,6 +33,7 @@
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 
 /**
@@ -392,12 +393,39 @@ function headCommitTime(dir) {
 /**
  * The main checkout and the project's home, as `lib/bookkeeping/roots.ts`
  * resolves them (bookkeeping-lives-where-it-is-read D4). Hooks cannot import
- * the package, so this is its copy; a parity test pins them equal.
+ * the package, so this is its copy; `lib/bookkeeping/home.test.ts` (A11) pins
+ * them equal. The main checkout is the folder holding the shared git
+ * directory; the home is `<INDUSK_HOME>/projects/<id>`, the id the configured
+ * `graphiti.groupId` or the main checkout's sanitised folder name.
+ *
+ * promise: indusk-leaves-main-clean
  */
 export function mainCheckout(cwd) {
-	return cwd;
+	try {
+		const common = execFileSync(
+			"git",
+			["-C", cwd, "rev-parse", "--path-format=absolute", "--git-common-dir"],
+			{ encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] },
+		).trim();
+		return common ? dirname(common) : cwd;
+	} catch {
+		return cwd;
+	}
 }
 
 export function projectHome(cwd) {
-	return resolve(cwd, ".indusk");
+	const trunk = mainCheckout(cwd);
+	let id = "";
+	try {
+		const config = JSON.parse(readFileSync(resolve(trunk, ".indusk", "config.json"), "utf-8"));
+		if (typeof config?.graphiti?.groupId === "string") id = config.graphiti.groupId;
+	} catch {
+		// no config: the folder name below
+	}
+	if (id === "") {
+		const name = trunk.split("/").filter(Boolean).pop() ?? "";
+		id = name.replace(/[^A-Za-z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
+	}
+	const home = process.env.INDUSK_HOME ?? resolve(homedir(), ".indusk");
+	return resolve(home, "projects", id);
 }
