@@ -59,8 +59,8 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 | A10 | A workbench plan's page offers Continue planning, Approve, Build and Review at the moments a normal-mode plan's does | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/lib/plan-actions.test.ts |
 | A11 | Approving a workbench plan runs the brief check and marks it approved with nothing merged; a refused brief is refused with the check's message | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A12 | A workbench plan's code stays on its branch in the repo until it lands; the repo's trunk is unchanged before then | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-plan-is-written-on-its-own-branch | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
-| A13 | A workbench build writes code in its code worktree and checks items off at the root without asking; a write outside both is refused | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/lib/session/permissions.test.ts |
-| A14 | In a workbench, a real build session's checkoff is refused by the workbench's gates when an earlier phase skipped a gate without its reason | Build Phase 4 | Build Phase 4 | planned | contract | promise: gates-ran-at-every-checkoff | apps/indusk-mcp/src/__tests__/build-session-gates-workbench.test.ts |
+| A13 | A workbench build writes code in its code worktree and checks items off at the root without asking; a write outside both is refused | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-build-runs-to-review-unasked | apps/indusk-mcp/src/lib/build/build-session.test.ts |
+| A14 | In a workbench, a real build session's checkoff is refused by the workbench's gates when an earlier phase skipped a gate without its reason | Build Phase 4 | Build Phase 4 | passing | contract | promise: gates-ran-at-every-checkoff | apps/indusk-mcp/src/__tests__/build-session-gates.test.ts |
 | A15 | A workbench plan's review lists the files its code branch changed in its repo, and uncommitted work on that repo's trunk on those paths | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A16 | Landing an unaccepted workbench plan is refused; once accepted, its code merges into the repo's trunk and its code worktree and branch are removed | Test Phase 1 | Build Phase 3 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A17 | No module but the contract resolver joins a path to `.indusk/promises`, and none but `resolveExecutionRoots` decides a code root | Test Phase 1 | Build Phase 2 | passing | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/contract-resolver-single-definition.test.ts |
@@ -175,21 +175,22 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 **Goal**: build and planning sessions in a workbench start at the root and reach the code.
 
-- [ ] A13 and A14 written red (A13 against the two-root `decideBuildPermission`; A14 in the system tier over a workbench project)
-- [ ] `startSession` takes extra directories and passes `--add-dir`; build and planning sessions in a workbench start at the root with the code worktree added (D5)
-- [ ] `decideBuildPermission(ev, roots)` allows a write inside any of its roots
+- [x] A13 and A14 written red (A13 against the two-root `decideBuildPermission`; A14 in the system tier over a workbench project) — A13 through the build session's scripted fake in `build-session.test.ts`, red: the session starts with no added directory and refuses the code worktree. A14 as a second `describe` in `build-session-gates.test.ts`, sharing its session helpers rather than copying them (the rows' Test cells name those files). It passes already, from a clean environment, both cases, because a session at the root is judged by the root's hooks; it stays as the guard that adding the code directory does not move the gates. Building its project found that `indusk init` rewrites `config.json` and drops a workbench's declaration, so the test restores it
+- [x] `startSession` takes extra directories and passes `--add-dir`; build and planning sessions in a workbench start at the root with the code worktree added (D5) — the package side: `startSession({ addDirs })` and `runStepSession({ addDirs })`. The admin passes them from the plan's code file in Build Phase 5, where it decides where a session runs
+- [x] `decideBuildPermission(ev, roots)` allows a write inside any of its roots — still accepts one root, so every existing caller is unchanged
 
 #### Build Phase 4 Verification
 
-- [ ] A13 passes (`pnpm exec vitest run src/lib/session/permissions`); A14 passes three times from a clean environment in the system tier
+- [x] (A13 with the session and build tests, 8 files and 59 tests; the gates contract three of three from a clean environment, A24's two cases and A14's two each time; the session protocol and lifecycle contracts, 2 files and 6 tests) A13 passes (`pnpm exec vitest run src/lib/session/permissions`); A14 passes three times from a clean environment in the system tier
+- [x] Shape — `decideBuildPermission` takes one root or several and judges a path against each, with no other change; `addDirs` is passed through and nothing else touches it. Nothing to change
 
 #### Build Phase 4 Context
 
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`): a workbench session starts at the root, so the workbench's hooks judge its checkoffs
+- [x] mcp (`apps/indusk-mcp/CLAUDE.md`): a workbench session starts at the root, so the workbench's hooks judge its checkoffs — delivered by the enforcer: A14 in `build-session-gates.test.ts` refuses a workbench session whose checkoff escapes the root's gates. The package file stays unchanged at 2 bytes under its budget; growing it needs an entry moved down a tier first, which is this plan's retrospective's periodic pass
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: sessions in a workbench, where they start and what they can write
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: sessions in a workbench, where they start and what they can write
 
 ### Build Phase 5: The admin in a workbench
 
