@@ -2,14 +2,15 @@ import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { git, REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
 /**
  * promise: the-demo-app-starts-with-its-promise-holding — demo-app-template A3.
  *
  * The seat-holds example ships with one promise of its own. A fresh copy of it,
- * nothing else done, is a project whose registry InDusk accepts: its promise is
- * there, enforced, with the test and the code site that keep it.
+ * in a repository of its own as `indusk demo` makes it (the registry check
+ * reads files through git), is a project whose registry InDusk accepts: its
+ * promise is there, enforced, with the test and the code site that keep it.
  */
 
 const EXAMPLE = join(REPO_ROOT, "examples", "seat-holds");
@@ -27,6 +28,7 @@ function freshCopy(): string {
 		recursive: true,
 		filter: (src) => !src.includes("node_modules"),
 	});
+	git(dir, ["init", "-q"]);
 	return dir;
 }
 
