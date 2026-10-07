@@ -126,6 +126,8 @@ export function writeCurrentSection(
 	return { section, commit };
 }
 
+const LESSON_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 export interface LessonInput {
 	name: string;
 	title: string;
@@ -142,6 +144,13 @@ export function addLesson(
 	anyCheckout: string,
 	input: LessonInput,
 ): { file: string; commit: NoteCommit } | { error: string } {
+	// One kebab-case segment: the file is committed on main as it is written,
+	// so a name that leaves the lessons folder must not be written at all (A19).
+	if (!LESSON_NAME.test(input.name)) {
+		return {
+			error: `Lesson name ${JSON.stringify(input.name)} is not one kebab-case segment (e.g. validate-env-vars)`,
+		};
+	}
 	const { trunk } = bookkeepingRoots(anyCheckout);
 	const rel = join(".claude", "lessons");
 	mkdirSync(join(trunk, rel), { recursive: true });
