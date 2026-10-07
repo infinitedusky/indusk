@@ -13,6 +13,11 @@ Each entry says what happens, where it was seen, and what we know so far.
   agent now prepares first (workbench-plan-authoring, ADR D11); the other
   sessions the admin starts still begin with their skill alone.
 
+- **A session's agent runs `git stash` in a worktree.** The stash list is
+  shared by every worktree of a repo, so one session's stash can be popped
+  by another. Seen 2026-10-06, live check (harmless there: the copy is its
+  own clone).
+
 ## Admin
 
 - **No Update button.** Updating a project's InDusk needs `indusk update` in a
