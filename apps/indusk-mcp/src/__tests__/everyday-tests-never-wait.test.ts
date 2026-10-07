@@ -68,6 +68,9 @@ async function packages() {
 	return [
 		{ dir: "apps/indusk-mcp", system: MCP_SYSTEM },
 		{ dir: "apps/indusk-admin", system: await adminSystem() },
+		// The seat-holds example runs in the everyday suite too (demo-app-template A9);
+		// it has no system tier, so every test there must never wait.
+		{ dir: "examples/seat-holds", system: [] },
 	];
 }
 

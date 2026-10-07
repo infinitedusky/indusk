@@ -40,16 +40,16 @@ A stranger runs one command and gets the seat-holds example running, its promise
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A held seat comes free when its window passes; a booked seat never does; a held seat cannot be held by anyone else | Build Phase 1 | Build Phase 1 | written | unit | promise: the-demo-app-starts-with-its-promise-holding | examples/seat-holds/src/seats.test.ts |
-| A2 | Every release is marked against the promise: held within the window, broken when late, with a symptom naming the seat and how late | Build Phase 1 | Build Phase 1 | written | unit | promise: the-demo-app-starts-with-its-promise-holding | examples/seat-holds/src/seats.test.ts |
-| A3 | A fresh copy of the example carries its one promise, and InDusk's registry check passes in it | Test Phase 1 | Build Phase 1 | written | unit | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-example.test.ts |
+| A1 | A held seat comes free when its window passes; a booked seat never does; a held seat cannot be held by anyone else | Build Phase 1 | Build Phase 1 | passing | unit | the example's own rules, proven for its own promise in its own registry (a copied example carries only its own tokens); InDusk's promises rest on A3, A4 and A7 | examples/seat-holds/src/seats.test.ts |
+| A2 | Every release is marked against the promise: held within the window, broken when late, with a symptom naming the seat and how late | Build Phase 1 | Build Phase 1 | passing | unit | the example's own rules, as A1 | examples/seat-holds/src/seats.test.ts |
+| A3 | A fresh copy of the example carries its one promise, and InDusk's registry check passes in it | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-example.test.ts |
 | A4 | Started with `indusk demo`, the example's marks reach the local telemetry daemon, and InDusk reports its promise holding | Test Phase 1 | Build Phase 2 | written | contract | promise: the-demo-app-starts-with-its-promise-holding | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
 | A5 | From a fresh copy: one command, the seat page, a seat held, booked and released, the admin showing the promise holding | Build Phase 4 | Build Phase 4 | planned | live check | a live check of the start, recorded in Build Phase 4; its promise is proven by A1–A4 | manual: recorded in Build Phase 4 |
-| A6 | With the fault switch on, a held seat comes free late and its release is marked broken; off, on time and held | Build Phase 1 | Build Phase 1 | written | unit | promise: the-demo-break-is-caught-locally | examples/seat-holds/src/seats.test.ts |
+| A6 | With the fault switch on, a held seat comes free late and its release is marked broken; off, on time and held | Build Phase 1 | Build Phase 1 | passing | unit | the example's own rules, as A1; the break as InDusk sees it is A7 | examples/seat-holds/src/seats.test.ts |
 | A7 | With the switch on, InDusk reports the promise broken within ten seconds of the late release, naming the span; off again, holding | Test Phase 1 | Build Phase 2 | written | contract | promise: the-demo-break-is-caught-locally | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
 | A8 | The whole break in the admin, from opening the example to the promise broken with its span, under two minutes; switched off, holding again | Build Phase 4 | Build Phase 4 | planned | live check | a live check of the break and the brief's second expectation, recorded in Build Phase 4; its promise is proven by A6 and A7 | manual: recorded in Build Phase 4 |
-| A9 | The everyday suite still never starts the example, the telemetry daemon or a browser; the guard scans the example's tests too | Build Phase 1 | Build Phase 1 | written | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
-| A10 | Deployed to Fly from the example's own config, its page answers at the deployed address | Test Phase 1 | Build Phase 3 | written | smoke | promise: the-deployed-demo-page-answers | examples/seat-holds/scripts/smoke-deployed.mjs |
+| A9 | The everyday suite still never starts the example, the telemetry daemon or a browser; the guard scans the example's tests too | Build Phase 1 | Build Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
+| A10 | Deployed to Fly from the example's own config, its page answers at the deployed address | Test Phase 1 | Build Phase 3 | written | smoke | promise: the-deployed-demo-page-answers | examples/seat-holds-smoke-deployed.mjs |
 
 ## Checklist
 
@@ -110,17 +110,18 @@ A stranger runs one command and gets the seat-holds example running, its promise
 
 ### Build Phase 1: The example runs locally
 
-- [ ] `examples/seat-holds/package.json` (its own `name`, `type: module`, scripts `start`, `test`), added to `pnpm-workspace.yaml` as `examples/*`; no dependency on InDusk
-- [ ] `src/seats.ts`: `createSeats({ seats, windowMs, toleranceMs })` with `hold(seat, who, now)`, `book(seat, who, now)`, `sweep(now, { fault })` returning `{ seat, outcome: "upheld" | "violated", lateMs, symptom? }[]`; the clock is an argument, never read (A1, A2, A6)
-- [ ] `src/telemetry.ts`: `@opentelemetry/sdk-node` with the OTLP HTTP exporter from the standard variables, `service.name = seat-holds`, `deployment.environment` from `SEAT_HOLDS_ENV` (default `local`); `markRelease(result)` opens a span with `indusk.promise = a-held-seat-is-released-in-time`, the outcome, and on a violation the `indusk.promise.violated` event with the symptom
-- [ ] `src/server.ts`: `node:http` serving the page, `POST /hold`, `POST /book`, `GET /seats`, and `POST /fault` (only when `SEAT_HOLDS_FAULT_TOGGLE=1`; `SEAT_HOLDS_FAULT=slow-release` sets it at start); a sweeper once a second calling `sweep` and `markRelease`
-- [ ] `public/index.html`: the seats, their state and countdown, Hold and Book buttons, and the "Break it" toggle when the server allows it
-- [ ] `.indusk/config.json` and `.indusk/promises/a-held-seat-is-released-in-time.md` (behaviour, `enforced`, its test `src/seats.test.ts`, its site `src/telemetry.ts`), so A3 passes in a copy
-- [ ] A9: the never-wait guard's package list includes `examples/seat-holds`
+- [x] `examples/seat-holds/package.json` (its own `name`, `type: module`, scripts `start`, `test`), added to `pnpm-workspace.yaml` as `examples/*`; no dependency on InDusk
+- [x] `src/seats.ts`: `createSeats({ seats, windowMs, toleranceMs })` with `hold(seat, who, now)`, `book(seat, who, now)`, `sweep(now, { fault })` returning `{ seat, outcome: "upheld" | "violated", lateMs, symptom? }[]`; the clock is an argument, never read (A1, A2, A6)
+- [x] `src/telemetry.ts`: `@opentelemetry/sdk-trace-node` rather than `sdk-node` (the same versions this repository already uses, and none of `sdk-node`'s auto-instrumentation the example does not need), spans exported every half second; with the OTLP HTTP exporter from the standard variables, `service.name = seat-holds`, `deployment.environment` from `SEAT_HOLDS_ENV` (default `local`); `markRelease(result)` opens a span with `indusk.promise = a-held-seat-is-released-in-time`, the outcome, and on a violation the `indusk.promise.violated` event with the symptom
+- [x] `src/server.ts`: `node:http` serving the page, `POST /hold`, `POST /book`, `GET /seats`, and `POST /fault` (only when `SEAT_HOLDS_FAULT_TOGGLE=1`; `SEAT_HOLDS_FAULT=slow-release` sets it at start); a sweeper once a second calling `sweep` and `markRelease`
+- [x] `public/index.html`: the seats, their state and countdown, Hold and Book buttons, and the "Break it" toggle when the server allows it
+- [x] `.indusk/config.json` and `.indusk/promises/a-held-seat-is-released-in-time.md`, owned by the plan it came from, shipped archived at `.indusk/planning/archive/seat-holds/` (a promise's owner must be a plan folder), (behaviour, `enforced`, its test `src/seats.test.ts`, its site `src/telemetry.ts`), so A3 passes in a copy
+- [x] A9: the never-wait guard's package list includes `examples/seat-holds`
+- [x] Discovered building the example: InDusk's own `promises check` read the example's tokens as this repository's and refused its promise as unknown. A folder with its own `.indusk/config.json` is another InDusk project, so the promise scan (`scannableFiles` in `lib/promises/citations.ts`) now skips everything under it; a folder without one is still read. Proven by `citations.test.ts`, red on the refusal first. The example's files carry only the example's own token: the deploy smoke check moved to `examples/seat-holds-smoke-deployed.mjs`, outside the copied folder, and A1, A2 and A6 now name the example's rules rather than InDusk's promises, which rest on A3, A4 and A7. A3's copy is a git repository, as `indusk demo` makes it, since the check reads files through git
 
 #### Build Phase 1 Verification
 
-- [ ] A1, A2, A6 pass (`pnpm --filter seat-holds test`), A3 passes, and A9 passes with the example scanned (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/demo-example.test.ts src/__tests__/everyday-tests-never-wait.test.ts`)
+- [x] (the example's 3 tests, A3's 2 and the guard's 7 pass; the scanner's related tests 8 files, 73 tests; InDusk's own `promises check` passes with the example in the repository) A1, A2, A6 pass (`pnpm --filter seat-holds test`), A3 passes, and A9 passes with the example scanned (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/demo-example.test.ts src/__tests__/everyday-tests-never-wait.test.ts`)
 
 #### Build Phase 1 Context
 
