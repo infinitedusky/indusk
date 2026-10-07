@@ -28,7 +28,7 @@ let page = "";
 let output = "";
 
 function status(): string {
-	const r = runCli(dir, ["promises", "status", PROMISE], { INDUSK_HOME: home });
+	const r = runCli(dir, ["promises", "status", "--since", "15m"], { INDUSK_HOME: home });
 	return `${r.stdout}\n${r.stderr}`;
 }
 
