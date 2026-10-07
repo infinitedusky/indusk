@@ -71,6 +71,7 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 | A22 | A running planning session moved by a rename is found under the plan's new name, and its panel is told the new name and moves to the new page | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-renamed-plan-is-found-by-its-new-name | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A23 | A rename asks the running admin to move the plan's session; with no admin running it renames everything else and says there was no session to move | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-renamed-plan-is-found-by-its-new-name | apps/indusk-mcp/src/__tests__/plans-rename.test.ts |
 | A24 | A plan started from New plan opens a session told to read the project's state first, then say it is ready and ask for a description, and not to infer the plan from its name | Build Phase 6 | Build Phase 6 | written | unit | the admin's opening (ADR D11); what the agent then does is observed in A19 | apps/indusk-mcp/src/lib/session/new-plan-prompt.test.ts |
+| A25 | A project Claude Code does not trust shows "Trust in Claude Code" on its admin pages; one click trusts it, writing only that flag and keeping everything else in the config, and the button is gone | Build Phase 6 | Build Phase 6 | written | unit | the admin's trust step (ADR D12); sessions then run on the project's allow-list, observed in A19 | apps/indusk-mcp/src/lib/session/trust.test.ts, apps/indusk-admin/src/components/session/TrustNotice.test.tsx |
 
 ### Deferred Verification
 
@@ -230,6 +231,8 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 - [ ] CLI: `indusk plans rename <old> <new>`; planner skill: rename only through it, never by hand
 - [ ] Discovered in the live check (Sandy, 2026-10-06): given only `/planner <type> <name>`, the agent planned from the title. A new plan's agent should prepare on its own, say when it is ready, and ask for a description (brief decision; ADR D11, the decision that one package function writes the first prompt). Moves the known issue "a new agent starts without the project's state" into this plan. A24 written red first, against a `newPlanPrompt` that returns today's prompt
 - [ ] `lib/session/new-plan-prompt.ts`: `newPlanPrompt(type, plan)`, exported through `/session`; the New plan route sends it (A24)
+- [ ] Discovered in the live check (Sandy, 2026-10-06: "just fix it"): Claude Code had never trusted the workbench, so every session ignored its allow-list and asked about everything; the admin only said so. Known since admin-plan-authoring, which trusted a worktree like its project but never an untrusted project. The person's click is the consent (ADR D12, the decision that the admin offers trust and writes it on a click). A25 written red first
+- [ ] `trustProject(path)` in `lib/session/trust.ts` (one write path with `trustLikeProject`); `POST /api/trust` behind `adminOnly`; `TrustNotice` on the project page and the plan page when `isTrusted` is false (A25)
 - [ ] A19: copy a real workbench (concierge or numero) into a scratch home; New plan, plan, approve, build to review, accept, land, all in the admin; record each step and any stop
 - [ ] `indusk promises confirm workbench-plan-authoring`: the three new promises and the three changed ones enforced
 

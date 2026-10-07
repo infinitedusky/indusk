@@ -100,6 +100,14 @@ Added in the live check (2026-10-06).
 |----|-----------|-------|
 | A24 | A plan started from New plan opens a session told to read the project's state first, then say it is ready and ask for a description, and not to infer the plan from its name. | unit |
 
+## For no promise: the admin offers trust
+
+Added in the live check (2026-10-06).
+
+| ID | Assertion | Level |
+|----|-----------|-------|
+| A25 | A project Claude Code does not trust shows "Trust in Claude Code" on its admin pages; one click trusts it, writing only that flag and keeping everything else in the config, and the button is gone. | unit |
+
 ## For no promise: normal mode unchanged, and the whole flow
 
 | ID | Assertion | Level |

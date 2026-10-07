@@ -183,7 +183,22 @@ planned from the title. The prompt comes from one package function,
 Continue planning keeps `/planner <plan>`: the plan's documents already say
 what it is.
 
+**D12 — The admin offers trust, and writes it on a click.** Added in the
+live check (2026-10-06): the workbench was untrusted, so every session asked
+about everything. admin-plan-authoring trusted a worktree like its project
+but never an untrusted project, and only reported it. Now a project Claude
+Code does not trust shows "Trust in Claude Code" on its admin pages. The
+click is the person's consent, the same as accepting Claude Code's own
+prompt; `trustProject` writes only `hasTrustDialogAccepted`, through the one
+write path `trustLikeProject` already uses. Nothing is trusted without the
+click.
+
 ## Alternatives Considered
+
+### Trusting every registered project
+
+Registering a project is not consent to running sessions with its
+allow-list; a project added to look at its plans would be trusted silently.
 
 ### Running catchup at the start
 
