@@ -227,6 +227,13 @@ authority, this is only the order: **6.5 → (component-4 "thin" ADR, paper) →
 7 → 8**, with 5 (cloud) pulled in when wanted — and noting that
 `workbench restore` is now most of 5's missing bootstrap.
 
+**Parked until adoption** (Sandy, 2026-10-07): components 4, 5, 7 and 8.
+"We start with Claude and focus on what differentiates, then we add
+flexibility if we get interest." Claude Code is the one executor until people
+use InDusk; other agents (7), remote boxes (5) and Linear (8) wait for that
+interest. Component 8 also has to be squared with contract-ui's positioning
+against Linear before it is built.
+
 | Component | Sub-plan | Stage |
 |-----------|----------|-------|
 | 6.5 workbench execution | [dawn-workbench-execution](archive/dawn-workbench-execution/brief.md) | **closed 2026-09-16** (19 rows green, falsified 3, cleaned, retrospective, archived) — one resolver behind run/verify/cleanup, verify judges the code repo, the loop carries two roots with a cadence per repo, evals name their repo; matrix held inside a workbench (5/5, 0 false positives). hook-cwd-independence landed first (2026-09-15) |
