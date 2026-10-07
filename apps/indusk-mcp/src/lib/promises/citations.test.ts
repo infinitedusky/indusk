@@ -13,6 +13,9 @@ import { citedNames } from "./citations.js";
  * this, InDusk's own check refused the example's promise as unknown.
  */
 
+// Built, not spelled out, so this repository's own scan does not read them.
+const token = (name: string) => `// ${"promise"}: ${name}\n`;
+
 const roots: string[] = [];
 afterEach(() => {
 	for (const r of roots.splice(0)) rmSync(r, { recursive: true, force: true });
@@ -32,9 +35,9 @@ function repo(files: Record<string, string>): string {
 describe("a nested InDusk project is its own", () => {
 	it("its files are not read for the outer repository's tokens", async () => {
 		const root = repo({
-			"src/a.ts": "// promise: outer-one\n",
+			"src/a.ts": token("outer-one"),
 			"examples/demo/.indusk/config.json": "{}\n",
-			"examples/demo/src/b.ts": "// promise: inner-one\n",
+			"examples/demo/src/b.ts": token("inner-one"),
 		});
 		const cited = await citedNames(root);
 		expect([...cited.keys()]).toContain("outer-one");
@@ -43,8 +46,8 @@ describe("a nested InDusk project is its own", () => {
 
 	it("a folder without its own config is still read", async () => {
 		const root = repo({
-			"src/a.ts": "// promise: outer-one\n",
-			"examples/plain/src/b.ts": "// promise: inner-one\n",
+			"src/a.ts": token("outer-one"),
+			"examples/plain/src/b.ts": token("inner-one"),
 		});
 		expect([...(await citedNames(root)).keys()]).toContain("inner-one");
 	});
