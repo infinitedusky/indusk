@@ -1,7 +1,7 @@
 ---
 title: "telemetry stop stops what it started — Test Plan"
 date: 2026-10-07
-status: draft
+status: accepted
 ---
 
 # telemetry stop stops what it started — Test Plan

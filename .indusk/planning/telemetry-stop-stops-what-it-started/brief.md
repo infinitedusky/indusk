@@ -1,7 +1,7 @@
 ---
 title: "telemetry stop stops what it started"
 date: 2026-10-07
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
