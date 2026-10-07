@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.65.1] — 2026-10-07
+
 ### Fixed
 
 - **`indusk telemetry stop` stops its own daemon under load, and says when it cannot** (telemetry-stop-stops-what-it-started). It judged its processes by whether their ports answered; on a busy machine a slow port made it signal nothing, delete the daemon's record and report it stopped, leaving Jaeger and otelcol running with nothing to stop them. It now judges by the process's command line, signals only its own, and exits non-zero naming any process that would not stop, keeping the record.
