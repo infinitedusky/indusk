@@ -132,11 +132,13 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 - [x] (this branch's `migrateBookkeeping` run on the main checkout: 333 highlights kept; the processed list 436 lines → 333, the rest repeat marks of one id; `.indusk/eval/` appended into the home. Untracked on `main` as bookkeeping, 480c36a9, which merges cleanly since the branch never changed those files; the repo's `.gitignore` gains the entries on the branch, aa3b00ea. Until the release, the installed version writes a new queue in the main checkout; `indusk update` after the release merges it by id) Run the migration on this repository and commit the result
 - [x] (`a-highlight-becomes-a-lesson-once` enforced, 2 test files; `indusk-leaves-main-clean` enforced, 3 test files, 4 code sites) `indusk promises confirm bookkeeping-lives-where-it-is-read`
 
-- [ ] Discovered at the full run: `multi-agent-e2e.test.ts` timed out at 5 s under the whole suite's load (passes alone). It spawns the CLI nine times, and each `agent` write now also runs git to commit `current.md`; give it a timeout that fits nine process spawns
+- [x] (30 s, 7f0a07f9) Discovered at the full run: `multi-agent-e2e.test.ts` timed out at 5 s under the whole suite's load (passes alone). It spawns the CLI nine times, and each `agent` write now also runs git to commit `current.md`; give it a timeout that fits nine process spawns
+- [x] (7f0a07f9; the system tier then passed 164 of 164 with `~/.indusk/projects` untouched) Discovered at the full run: the system tier had no temporary home, so `build-session-gates`' real sessions and `monitor-mark`'s evaluators wrote six folders into `~/.indusk/projects/`, and `monitor-mark`'s A25 and A33, and the `day-monitor` e2e, still read results from `.indusk/eval/`. `vitest.system.config.ts` takes a temporary `INDUSK_HOME`; the two files read `evalDir`
 
 #### Build Phase 3 Verification
 
-- [ ] A6 and A8 pass, and the full `pnpm test` and `pnpm test:system` pass from a clean environment
+- [x] (from `env -i`: everyday indusk-mcp 2027 passed, admin 395, seat-holds 3; system 164 of 164; A8 and the `day-monitor` e2e pass; no folder left in the real `~/.indusk/projects/` but `dusk`) A6 and A8 pass, and the full `pnpm test` and `pnpm test:system` pass from a clean environment
+- [x] Shape — `migrate.ts` does one job, its merge-by-id, id read and untrack each a named helper; the rest of the phase is tests and test configuration. Nothing to change
 
 #### Build Phase 3 Context
 
