@@ -82,6 +82,20 @@ Each entry says what happens, where it was seen, and what we know so far.
   that changed anything outside `.indusk/` before the build. Seen approving
   workbench-plan-authoring; worked around by moving the line to the build.
 
+## Releases
+
+- **Every release has failed its first `pnpm release`.** 1.63.0 (twice) and
+  1.64.0. The release re-runs the whole system tier (40 files, real Jaeger,
+  otelcol, `next dev` and Claude sessions, run in parallel) minutes after
+  the landing ran it on nearly the same tree, so each release is another
+  roll of the dice on timing-sensitive tests. 1.64.0's failure: the
+  telemetry restart test (`telemetry-cli-lifecycle.test.ts`, T5) never
+  checks `telemetry start`'s exit code, so a start that missed its 15 s
+  Jaeger readiness wait under load shows only "expected null not to be
+  null"; alone the file passes 3 of 3. Owned by
+  [release-checks-run-once](release-checks-run-once/brief.md) and the
+  small-fixes plan.
+
 ## Package
 
 - **The version notice compares versions as strings.** `hasNewerVersion`
