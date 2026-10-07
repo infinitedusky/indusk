@@ -13,6 +13,7 @@ import { markProjectId } from "../promises/config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import { initEvalOtel, markEvaluation, shutdownEvalOtel, withSpan } from "./otel.js";
+import { evaluatorPermissionArgs } from "./permissions.js";
 import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import { claudeExitReason, extractScorecardJson, formatParseError } from "./scorecard-extractor.js";
@@ -85,20 +86,15 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 		projectGroup,
 	});
 
-	const allowedTools = ["Read", "Grep", "Glob", "Bash(git:*)", "mcp__indusk__*"];
-
 	const args = [
 		"--print",
 		"--output-format",
 		"json",
 		"--model",
 		getEvalModel(opts.projectRoot),
-		"--permission-mode",
-		"bypassPermissions",
+		...evaluatorPermissionArgs(),
 		"--mcp-config",
 		".mcp.json",
-		"--allowed-tools",
-		allowedTools.join(","),
 	];
 
 	// Not detached — the eval-trigger hook already spawns this in a separate
@@ -237,20 +233,15 @@ async function runEvaluatorSyncInner(
 		projectGroup,
 	});
 
-	const allowedTools = ["Read", "Grep", "Glob", "Bash(git:*)", "mcp__indusk__*"];
-
 	const args = [
 		"--print",
 		"--output-format",
 		"json",
 		"--model",
 		getEvalModel(opts.projectRoot),
-		"--permission-mode",
-		"bypassPermissions",
+		...evaluatorPermissionArgs(),
 		"--mcp-config",
 		".mcp.json",
-		"--allowed-tools",
-		allowedTools.join(","),
 	];
 
 	return new Promise((resolve) => {

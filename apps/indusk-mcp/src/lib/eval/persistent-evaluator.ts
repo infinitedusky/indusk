@@ -28,6 +28,7 @@ import {
 	shutdownEvalOtel,
 	withSpan,
 } from "./otel.js";
+import { evaluatorPermissionArgs } from "./permissions.js";
 import { buildEvaluatorPrompt, buildHighlightsInstructions } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import {
@@ -83,8 +84,6 @@ function clearSession(projectRoot: string): void {
 		unlinkSync(path);
 	}
 }
-
-const ALLOWED_TOOLS = ["Read", "Grep", "Glob", "Bash(git:*)", "mcp__indusk__*"];
 
 function parseClaudeOutput(stdout: string): {
 	scorecardText: string;
@@ -312,10 +311,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 								session.sessionId,
 								"--mcp-config",
 								".mcp.json",
-								"--permission-mode",
-								"bypassPermissions",
-								"--allowed-tools",
-								ALLOWED_TOOLS.join(","),
+								...evaluatorPermissionArgs(),
 							],
 							prompt: resumePrompt,
 						};
@@ -327,12 +323,9 @@ Output ONLY the JSON scorecard — no commentary.`;
 							"json",
 							"--model",
 							getEvalModel(opts.projectRoot),
-							"--permission-mode",
-							"bypassPermissions",
+							...evaluatorPermissionArgs(),
 							"--mcp-config",
 							".mcp.json",
-							"--allowed-tools",
-							ALLOWED_TOOLS.join(","),
 						],
 						prompt: buildEvaluatorPrompt({
 							rubric: V1_RUBRIC,
