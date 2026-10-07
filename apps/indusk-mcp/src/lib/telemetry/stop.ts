@@ -1,12 +1,26 @@
+import { join } from "node:path";
 import type { DaemonMeta } from "./status.js";
 
-/** What stopping a daemon reads and does, given as inputs so the decision is a unit test. */
+/**
+ * Stopping the telemetry daemon (telemetry-stop-stops-what-it-started).
+ *
+ * A recorded process is this daemon's when it is alive and its command line
+ * runs the recorded binary with this home's own config file. Its port is not
+ * asked: under load a port can be slow, and judging by it once made stop
+ * signal nothing, delete the record and report the daemon stopped (the 1.65.0
+ * release left nine processes that way). A PID now held by another program,
+ * or by the same binary from another home, is never signalled. Stop reports
+ * stopped only when none of its own is left, and keeps the record otherwise.
+ *
+ * promise: telemetry-stop-stops-what-it-started
+ */
+
+/** What stopping reads and does, given as inputs so the decision is a unit test. */
 export interface StopDeps {
 	alive(pid: number): boolean;
 	command(pid: number): string | null;
 	kill(pid: number, signal: NodeJS.Signals): void;
 	sleep(ms: number): Promise<void>;
-	portAnswers(port: number): Promise<boolean>;
 }
 
 export interface StopResult {
@@ -19,15 +33,52 @@ export interface StopResult {
 	stillRunning: number[];
 }
 
+const GRACE_MS = 3000;
+const POLL_MS = 100;
+
+/** Whether `pid` is this daemon's process: alive, and running `binary` with `config`. */
+export function isOwnProcess(pid: number, binary: string, config: string, deps: StopDeps): boolean {
+	if (!deps.alive(pid)) return false;
+	const cmd = deps.command(pid);
+	return cmd !== null && cmd.includes(binary) && cmd.includes(config);
+}
+
 export async function stopDaemon(
 	meta: DaemonMeta,
-	_home: string,
+	home: string,
 	deps: StopDeps,
 ): Promise<StopResult> {
-	const own: number[] = [];
-	if (deps.alive(meta.jaegerPid) && (await deps.portAnswers(meta.uiPort))) own.push(meta.jaegerPid);
-	if (deps.alive(meta.otelcolPid) && (await deps.portAnswers(meta.otelcolHealthPort)))
-		own.push(meta.otelcolPid);
-	for (const pid of own) deps.kill(pid, "SIGTERM");
-	return { stopped: true, clearRecord: true, signaled: own, strangers: [], stillRunning: [] };
+	const recorded = [
+		{ pid: meta.jaegerPid, binary: meta.jaegerBinary, config: join(home, "telemetry-jaeger.yaml") },
+		{
+			pid: meta.otelcolPid,
+			binary: meta.otelcolBinary,
+			config: join(home, "telemetry-collector.yaml"),
+		},
+	];
+	const own = recorded
+		.filter((p) => isOwnProcess(p.pid, p.binary, p.config, deps))
+		.map((p) => p.pid);
+	const strangers = recorded
+		.filter((p) => deps.alive(p.pid) && !own.includes(p.pid))
+		.map((p) => p.pid);
+
+	for (const pid of own) signal(deps, pid, "SIGTERM");
+	for (let waited = 0; waited < GRACE_MS && own.some((pid) => deps.alive(pid)); waited += POLL_MS) {
+		await deps.sleep(POLL_MS);
+	}
+	for (const pid of own.filter((p) => deps.alive(p))) signal(deps, pid, "SIGKILL");
+	await deps.sleep(POLL_MS);
+
+	const stillRunning = own.filter((pid) => deps.alive(pid));
+	const stopped = stillRunning.length === 0;
+	return { stopped, clearRecord: stopped, signaled: own, strangers, stillRunning };
+}
+
+function signal(deps: StopDeps, pid: number, sig: NodeJS.Signals): void {
+	try {
+		deps.kill(pid, sig);
+	} catch {
+		// already gone
+	}
 }

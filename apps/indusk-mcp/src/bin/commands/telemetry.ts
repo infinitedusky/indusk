@@ -216,6 +216,13 @@ export async function telemetryStop(): Promise<void> {
 		console.info("Telemetry daemon is not running.");
 		return;
 	}
+	if (result.stillRunning && result.stillRunning.length > 0) {
+		console.error(
+			`Telemetry daemon did not stop: ${result.stillRunning.join(", ")} still running after SIGKILL. Its record is kept; stop ${result.stillRunning.length === 1 ? "it" : "them"} by hand.`,
+		);
+		process.exitCode = 1;
+		return;
+	}
 	if (result.usedSigkill) {
 		console.warn(
 			`Telemetry daemon (jaeger=${result.signaledJaegerPid} otelcol=${result.signaledOtelcolPid}) did not exit within 3s; forced with SIGKILL.`,

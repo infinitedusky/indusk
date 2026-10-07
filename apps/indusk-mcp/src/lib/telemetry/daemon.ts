@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createServer } from "node:net";
@@ -25,9 +25,10 @@ import { join } from "node:path";
  * immediately after `daemonStart` resolves — the PID/meta files are the
  * durable handoff to subsequent `telemetry status`/`telemetry stop` invocations.
  *
- * PID-reuse hardening: `verifyIdentity(pid, port)` composes `isAlive(pid)`
- * with `isPortListening(port)` to guard against reporting a recycled PID as
- * "running" (admin-UI Phase 7 lesson — applied here).
+ * PID-reuse hardening: `status` composes `isAlive(pid)` with
+ * `isPortListening(port)` (`verifyIdentity`) so a recycled PID is not reported
+ * running. `stop` judges ownership by the process's command line instead
+ * (`stop.ts`): a slow port must never make it skip its own processes.
  */
 
 import {
@@ -40,8 +41,8 @@ import {
 	isPortListening,
 	metaFilePath,
 	pidFilePath,
-	verifyIdentity,
 } from "./status.js";
+import { stopDaemon } from "./stop.js";
 
 export {
 	type DaemonMeta,
@@ -76,6 +77,8 @@ export interface DaemonStopResult {
 	signaledJaegerPid?: number;
 	signaledOtelcolPid?: number;
 	usedSigkill?: boolean;
+	/** Its own processes still running after the stop; the record is kept while any are. */
+	stillRunning?: number[];
 }
 
 // ---- platform + binary resolution ------------------------------------------
@@ -513,61 +516,28 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 		return { stopped: false };
 	}
 
-	// Identity gate for stop: if the recorded PIDs aren't ours anymore
-	// (PID-reuse), clean up files but don't SIGTERM a stranger.
-	const jaegerOk = await verifyIdentity(meta.jaegerPid, meta.uiPort);
-	const otelcolOk = await verifyIdentity(meta.otelcolPid, meta.otelcolHealthPort);
-	if (!jaegerOk && !otelcolOk) {
-		cleanupFiles();
-		return {
-			stopped: true,
-			signaledJaegerPid: meta.jaegerPid,
-			signaledOtelcolPid: meta.otelcolPid,
-		};
-	}
-
-	// Signal both; poll for exit up to 3s; SIGKILL fallback
-	const targets: number[] = [];
-	if (jaegerOk) targets.push(meta.jaegerPid);
-	if (otelcolOk) targets.push(meta.otelcolPid);
-	for (const pid of targets) {
-		try {
-			process.kill(pid, "SIGTERM");
-		} catch {
-			// already gone
-		}
-	}
-
-	for (let i = 0; i < 30; i++) {
-		await sleep(100);
-		if (targets.every((pid) => !isAlive(pid))) {
-			cleanupFiles();
-			return {
-				stopped: true,
-				signaledJaegerPid: meta.jaegerPid,
-				signaledOtelcolPid: meta.otelcolPid,
-			};
-		}
-	}
-
-	let usedSigkill = false;
-	for (const pid of targets) {
-		if (isAlive(pid)) {
-			try {
-				process.kill(pid, "SIGKILL");
-				usedSigkill = true;
-			} catch {
-				// best-effort
-			}
-		}
-	}
-	cleanupFiles();
+	// Ownership is the command line, never the port (telemetry-stop-stops-what-it-started):
+	// a slow port once made stop signal nothing, delete the record and report success.
+	const result = await stopDaemon(meta, induskHome(), {
+		alive: isAlive,
+		command: processCommand,
+		kill: (pid, signal) => process.kill(pid, signal),
+		sleep,
+	});
+	if (result.clearRecord) cleanupFiles();
 	return {
 		stopped: true,
 		signaledJaegerPid: meta.jaegerPid,
 		signaledOtelcolPid: meta.otelcolPid,
-		usedSigkill,
+		stillRunning: result.stillRunning,
 	};
+}
+
+/** A process's command line, or null when it is gone or cannot be read. */
+function processCommand(pid: number): string | null {
+	const r = spawnSync("ps", ["-o", "command=", "-p", String(pid)], { encoding: "utf-8" });
+	const out = r.status === 0 ? r.stdout.trim() : "";
+	return out === "" ? null : out;
 }
 
 export async function daemonRestart(opts: DaemonStartOptions = {}): Promise<DaemonMeta> {

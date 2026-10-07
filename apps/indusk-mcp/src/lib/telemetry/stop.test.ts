@@ -8,7 +8,7 @@ import { type StopDeps, stopDaemon } from "./stop.js";
  * The 1.65.0 release left nine Jaeger and otelcol processes running, each
  * home's record deleted: stop judged its own processes by whether their port
  * answered, under load the port did not, so it signalled nothing and reported
- * them stopped. Here the port never answers, and ownership is the command line.
+ * them stopped. Here no port is read at all: ownership is the command line.
  */
 
 const HOME = "/tmp/indusk-home-x";
@@ -37,7 +37,6 @@ function table(commands: Record<number, string>, { dies = true } = {}) {
 			if (dies) live.delete(pid);
 		},
 		sleep: async () => {},
-		portAnswers: async () => false,
 	};
 	return { deps, signals };
 }
