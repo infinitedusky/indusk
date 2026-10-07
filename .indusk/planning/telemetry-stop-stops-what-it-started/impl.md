@@ -1,7 +1,7 @@
 ---
 title: "telemetry stop stops what it started"
 date: 2026-10-07
-status: approved
+status: completed
 falsification: skipped
 falsification_reason: "A small bugfix whose own rows are its falsification: A1 reproduced the release's failure exactly (slow ports, nothing signalled) before the fix; A2 covers a recycled PID and the same binary from another home; A3 a process that will not die; A4 the real daemon. Hunted the remaining path, a command line that cannot be read (ps fails): the process is then not its own and is not signalled, the safe side, and stop reports it still running only if alive and its own. No further case formed."
 cleanup: skipped
@@ -76,6 +76,7 @@ gate_policy: ask
 
 - [x] (A1–A3 4 of 4; the related tests 5 files, 33; the telemetry system files, A4's among them, 5 files, 14; `tsc` and biome clean) A1, A2, A3 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/telemetry/stop.test.ts && pnpm exec vitest related src/lib/telemetry/daemon.ts src/lib/telemetry/stop.ts --run`), and A4 still passes
 
+- [x] Both full suites from a clean environment, for landing: `pnpm test` 2,010, 394 and 3 passed; `pnpm test:system` 41 of 41 files, 164 tests. Both runs' daemon check failed on the same eight processes, all started at 16:48, twenty minutes before these runs, from homes whose records were intact (so no `stop` ever ran on them; a test run cut off before its cleanup), one of them started by the published 1.64.0 through the demo test's `indusk init`. They were stopped by hand; neither run left a daemon of its own
 - [x] Shape — `stop.ts` is one decision with its observations as inputs; `daemonStop` reads the record and hands the real observations to it; the command reports. Nothing to change
 
 #### Build Phase 1 Context
