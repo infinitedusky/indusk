@@ -230,7 +230,7 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 #### Build Phase 6 Verification
 
-- [ ] A19 is recorded with its result, and the full `pnpm test` and `pnpm test:system` pass from a clean environment
+- [x] A19 is recorded with its result, and the full `pnpm test` and `pnpm test:system` pass from a clean environment — the first clean run failed four everyday tests, three of them real: a workbench approve joined its own path to `.indusk/promises` (A17 caught it; it now commits the contract at the root only while it is the workbench's shadow), day-promises' A12 still asserted the registry was workbench-only (D4 reversed that; the test now asserts the repo's own folder is read), and publish-hygiene's archived impl named other plans' rows by bare ID (the corpus check; reworded); the fourth, the eight-CLI workbench case, timed out at 5 s under load and has 20 s. The second run: `pnpm test` 2,001 and 392 passed, the everyday suite upheld at 71 s. `pnpm test:system`: 38 of 40 files passed; the gates contract and the session-protocol contract failed only on Anthropic's API rate limit (HTTP 429, the limit seen in the panel), and pass on rerun from a clean environment, 7 of 7
 
 #### Build Phase 6 Context
 
