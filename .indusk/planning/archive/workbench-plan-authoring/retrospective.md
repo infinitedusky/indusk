@@ -113,3 +113,5 @@ Falsification and cleanup were skipped, each with its reason in the impl's
 frontmatter. The one hypothesis falsify formed (a repo-held contract leaving
 the code worktree dirty at land) is unreachable until the shadow-contract adopt
 plan, and is written there in `known-issues.md`.
+
+Landed on main at bd70403f, 2026-10-07.
