@@ -6,7 +6,8 @@
 	"type": "module",
 	"scripts": {
 		"start": "tsx src/server.ts",
-		"test": "vitest run"
+		"test": "vitest run",
+		"smoke": "node scripts/smoke-deployed.mjs"
 	},
 	"dependencies": {
 		"@opentelemetry/api": "^1.9.0",
