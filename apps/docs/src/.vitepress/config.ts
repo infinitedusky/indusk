@@ -53,6 +53,7 @@ const config = defineConfig({
 					text: "Start here",
 					items: [
 						{ text: "What InDusk Is", link: "/guide/" },
+						{ text: "Try It in Two Minutes", link: "/guide/try-it" },
 						{ text: "Getting Started", link: "/guide/getting-started" },
 						{ text: "Walkthrough", link: "/guide/walkthrough" },
 					],
