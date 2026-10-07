@@ -66,7 +66,12 @@ Each entry says what happens, where it was seen, and what we know so far.
 
 - **A shadow contract has no adopt command.** A workbench holds a repo's
   contract until the repo adopts it; nothing moves it into the repo yet.
-  From the workbench-plan-authoring design.
+  From the workbench-plan-authoring design. A hypothesis for that plan,
+  from workbench-plan-authoring's falsify: once a repo holds its own
+  contract, `promises confirm` at a plan's close writes into the code
+  worktree, and `plans land` refuses a code worktree with uncommitted
+  changes, so a workbench plan with a repo contract may not land without a
+  commit nobody makes. Unreachable until a repo can adopt its contract.
 - **`init` drops a workbench's `worktree` config.** Seen during
   workbench-plan-authoring.
 

@@ -1,7 +1,11 @@
 ---
 title: "Workbench plan authoring"
 date: 2026-10-06
-status: approved
+status: completed
+falsification: skipped
+falsification_reason: "Hunted the landing run's findings and the paths the live check added. The approve path's hardcoded promises folder was found by A17 at landing and fixed with its test; trust writes only its flag and leaves an unreadable config alone (A25); the new plan prompt is pinned by A24. One concrete hypothesis formed and was deferred to the shadow-contract adopt plan: with a repo-held contract, confirm writes into the code worktree and land refuses it dirty. No repo can hold a contract until that plan, so it is unreachable here (known-issues.md). Sandy asked to close without further scope (2026-10-06)."
+cleanup: skipped
+cleanup_reason: "listOversizedChangedFiles flagged five files, all over their cap before this plan, each touched lightly: changelog.md (entries), planning-reader.ts (the code field), cli.ts (--repo), commands/worktree.ts (the package-root helper), promises/registry.ts (contractDir, the one resolver). The workbench verbs already share workbenchPlan and commitAtRoot, and trust has one write path; no cross-file duplication found. Nothing warrants extraction."
 trajectory: required
 test_phases: required
 test_levels: required
