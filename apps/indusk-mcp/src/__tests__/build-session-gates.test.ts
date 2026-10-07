@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { GATE_POLICY_FOR_BUILDS } from "../lib/build/build-session.js";
 import { decideBuildPermission, refuseBuildQuestion } from "../lib/session/permissions.js";
@@ -13,9 +13,10 @@ import {
 import { type StartedEvent, startSession } from "../lib/session/start.js";
 import { runCli } from "./helpers/cli.js";
 import { git } from "./helpers/test-git.js";
+import { makeVersionedWorkbench } from "./helpers/versioned-workbench.js";
 
 /**
- * promise: gates-ran-at-every-checkoff — admin-plan-authoring A24, a contract; publish-hygiene A4.
+ * promise: gates-ran-at-every-checkoff — admin-plan-authoring A24, a contract; publish-hygiene A4; workbench-plan-authoring A14.
  *
  * A build session the admin starts is still judged by the project's gates.
  * In a project `indusk init` set up, a real `claude` build session — run
@@ -32,23 +33,61 @@ afterEach(() => {
 	for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
 });
 
-function project(skip: string): { dir: string; impl: string } {
+interface GatesProject {
+	dir: string;
+	impl: string;
+	/** In a workbench: the plan's code worktree, the session's second directory. */
+	code?: string;
+}
+
+function project(skip: string, opts: { workbench?: boolean } = {}): GatesProject {
 	const base = realpathSync(mkdtempSync(join(tmpdir(), "build-gates-")));
 	dirs.push(base);
 	const home = join(base, "home");
 	mkdirSync(home);
-	const dir = join(base, "proj");
-	mkdirSync(dir);
-	writeFileSync(join(dir, "package.json"), '{"name":"proj","version":"0.0.0"}\n');
-	git(dir, ["init", "-q", "-b", "main"]);
-	git(dir, ["add", "-A"]);
-	git(dir, ["commit", "-qm", "init"]);
+	let dir = join(base, "proj");
+	let code: string | undefined;
+	let workbenchConfig: unknown;
+	if (opts.workbench) {
+		// workbench-plan-authoring A14: the plan at a workbench root, its code
+		// in a worktree of the repo, the session started at the root.
+		const wb = makeVersionedWorkbench({
+			repos: [{ name: "alpha" }],
+			layout: "sibling",
+			shape: "workbench",
+		});
+		dirs.push(dirname(wb.root));
+		dir = wb.root;
+		workbenchConfig = JSON.parse(
+			readFileSync(join(dir, ".indusk", "config.json"), "utf-8"),
+		).worktree;
+		code = join(dir, "seats");
+		git(wb.repos[0].dir, ["worktree", "add", "-q", "-b", "plan/seats", code]);
+	} else {
+		mkdirSync(dir);
+		writeFileSync(join(dir, "package.json"), '{"name":"proj","version":"0.0.0"}\n');
+		git(dir, ["init", "-q", "-b", "main"]);
+		git(dir, ["add", "-A"]);
+		git(dir, ["commit", "-qm", "init"]);
+	}
 	const r = runCli(dir, ["init", "--local", "--no-index"], {
 		INDUSK_HOME: home,
 		INDUSK_SKIP_SELF_UPDATE: "1",
 		INDUSK_SKIP_TELEMETRY_AUTOSTART: "1",
 	});
 	if (r.code !== 0) throw new Error(`init failed: ${r.stderr}`);
+	if (opts.workbench && code) {
+		// `init` rewrites the config; a workbench's declaration is `setup`'s, so it goes back.
+		const configPath = join(dir, ".indusk", "config.json");
+		const config = JSON.parse(readFileSync(configPath, "utf-8"));
+		config.worktree = { ...(config.worktree ?? {}), ...(workbenchConfig as object) };
+		writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+		mkdirSync(join(dir, ".indusk", "planning", "seats"), { recursive: true });
+		writeFileSync(
+			join(dir, ".indusk", "planning", "seats", "code.json"),
+			`${JSON.stringify({ repo: "alpha", branch: "plan/seats", worktree: "seats" })}\n`,
+		);
+	}
 	const impl = join(dir, ".indusk", "planning", "seats", "impl.md");
 	mkdirSync(join(dir, ".indusk", "planning", "seats"), { recursive: true });
 	writeFileSync(
@@ -88,7 +127,7 @@ function project(skip: string): { dir: string; impl: string } {
 			"",
 		].join("\n"),
 	);
-	return { dir, impl };
+	return { dir, impl, ...(code ? { code } : {}) };
 }
 
 /** How long one session may run before it is stopped as hung (publish-hygiene A4). */
@@ -103,11 +142,12 @@ type Attempt = { events: StartedEvent[]; hung: boolean };
  * there. A session still running after the deadline is stopped and reported
  * as hung — the landing run of 2026-10-06 waited 300 s on one.
  */
-async function onceToCheckOff(p: { dir: string; impl: string }): Promise<Attempt> {
+async function onceToCheckOff(p: GatesProject): Promise<Attempt> {
 	const events: StartedEvent[] = [];
 	const holder: { s?: ReturnType<typeof startSession> } = {};
 	const s = startSession({
 		cwd: p.dir,
+		...(p.code ? { addDirs: [p.code] } : {}),
 		kind: "build",
 		model: "sonnet",
 		env: GATE_POLICY_FOR_BUILDS,
@@ -146,7 +186,7 @@ const rateLimited = (events: StartedEvent[]) =>
  * must come from the gates, never from a session that never ran. Returns
  * every attempt's events.
  */
-async function askToCheckOff(p: { dir: string; impl: string }): Promise<StartedEvent[]> {
+async function askToCheckOff(p: GatesProject): Promise<StartedEvent[]> {
 	let hangs = 0;
 	const all: StartedEvent[] = [];
 	for (let limits = 0; ; ) {
@@ -191,3 +231,26 @@ describe.skipIf(!HAS_CLAUDE)("A24 — a build session is judged by the project's
 		expect(readFileSync(p.impl, "utf-8")).toBe(before);
 	}, 300_000);
 });
+
+describe.skipIf(!HAS_CLAUDE)(
+	"A14 — in a workbench, a build session at the root is judged by the workbench's gates",
+	() => {
+		it("a bare (none needed) is refused by check-gates at the root, and the file is unchanged", async () => {
+			const p = project("(none needed)", { workbench: true });
+			const before = readFileSync(p.impl, "utf-8");
+			const events = await askToCheckOff(p);
+			expect(triedToEdit(events), JSON.stringify(events.slice(-3))).toBe(true);
+			expect(readFileSync(p.impl, "utf-8")).toBe(before);
+		}, 300_000);
+
+		it("a skip with its reason lets the checkoff land at the root", async () => {
+			const p = project("(none needed — seats have no public page yet)", { workbench: true });
+			const events = await askToCheckOff(p);
+			expect(triedToEdit(events), JSON.stringify(events.slice(-3))).toBe(true);
+			expect(
+				readFileSync(p.impl, "utf-8"),
+				`the edit was tried and the file did not change: ${JSON.stringify(events.slice(-4))}`,
+			).toContain("- [x] build holds");
+		}, 300_000);
+	},
+);
