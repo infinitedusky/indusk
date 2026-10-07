@@ -65,7 +65,7 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 | A16 | Landing an unaccepted workbench plan is refused; once accepted, its code merges into the repo's trunk and its code worktree and branch are removed | Test Phase 1 | Build Phase 3 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A17 | No module but the contract resolver joins a path to `.indusk/promises`, and none but `resolveExecutionRoots` decides a code root | Test Phase 1 | Build Phase 2 | passing | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/contract-resolver-single-definition.test.ts |
 | A18 | In a normal-mode project every plan command, the build and the admin behave as in 1.63.0 | Test Phase 1 | Test Phase 1 | passing | unit | normal mode stays as it shipped; the existing plans, build, session and admin tests are the proof, run unchanged | apps/indusk-mcp/src/__tests__/plans-start.test.ts, apps/indusk-mcp/src/__tests__/plans-land.test.ts |
-| A19 | In a scratch copy of a real workbench, one plan goes from New plan to landed in the admin, without a terminal | Build Phase 6 | Build Phase 6 | planned | live check | the whole flow in a workbench, recorded in Build Phase 6; each promise it walks is proven by its own rows | manual: recorded in Build Phase 6 |
+| A19 | In a scratch copy of a real workbench, one plan goes from New plan to landed in the admin, without a terminal | Build Phase 6 | Build Phase 6 | written | live check | the whole flow in a workbench, recorded in Build Phase 6; each promise it walks is proven by its own rows | manual: recorded in Build Phase 6 |
 
 ### Deferred Verification
 
@@ -217,6 +217,7 @@ shadow contract until it adopts one, read through one resolver ([ADR](adr.md)).
 
 **Goal**: one plan in a copy of a real workbench, the whole way in the admin; the promises confirmed.
 
+- [x] Discovered preparing the live check: numero's repo is checked out on `staging`, and its worktree config declares `base_branch: staging` (`trunk_branch: master`). Approve and land refused it as "not a trunk branch", because `currentTrunkBranch` reads the repo's own config, which a client repo doesn't have, and falls back to main and master. A workbench plan now lands on its repo's declared `base_branch`, else its `trunk_branch` (`codeRepoBase` in `roots.ts`), where the worktree extension already cut it from; main and master only without either. Proven by a new case under A16 in `plans-workbench.test.ts` (the code branch cut from staging lands on staging, and main is unchanged), red on that refusal first; the plan tests 6 files, 53 tests
 - [ ] A19: copy a real workbench (concierge or numero) into a scratch home; New plan, plan, approve, build to review, accept, land, all in the admin; record each step and any stop
 - [ ] `indusk promises confirm workbench-plan-authoring`: both new promises and the three changed ones enforced
 
