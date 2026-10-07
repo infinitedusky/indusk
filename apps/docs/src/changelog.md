@@ -4,6 +4,20 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+
+- **Plans in workbenches** (workbench-plan-authoring). New plan, approve, build, review, accept and land work in a workbench, from the admin and the terminal. A workbench plan's documents live at the workbench root; its code is on its own branch in the repo it names (`indusk plans start --repo`, or the repo picker when the workbench wraps more than one), recorded in the plan's `code.json`. Sessions run at the root with the code worktree added, so the workbench's own hooks judge every checkoff. See [`indusk plans`](/reference/cli/plans) and [sessions](/reference/admin-ui/sessions).
+- **One contract per repo.** A repo's promises are read and written in one place: its own `.indusk/promises/` once it has one, otherwise the workbench's shadow contract. See [the contract](/guide/contract).
+- **Trust in Claude Code**: a project Claude Code does not trust shows the button on its admin pages; one click trusts it, so its sessions run on its own allow-list instead of asking about everything.
+
+### Changed
+
+- **A new plan's agent prepares, then asks.** Started from New plan, it reads the project's state first, says when it is ready and asks you to describe the plan, instead of planning from its name.
+
+### Fixed
+
+- **A workbench plan lands on its repo's declared base branch** (`base_branch`, else `trunk_branch`, in the repo's worktree config), not only on `main` or `master`.
+
 ## [1.63.0] — 2026-10-06
 
 ### Added
