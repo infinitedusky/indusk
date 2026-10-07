@@ -1935,3 +1935,66 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 (empty)
 
 ---
+
+## Session 5259ab5b — eval: scoring commit 55ba776d (brief accepted, promises declared, draft test plan)
+
+**Session ID**: 5259ab5b-1efa-4d27-9ac2-a34a589b1f69
+**Last updated**: 2026-10-07T22:41:58.163Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session f296821c — eval: scoring commit 2d9a7542
+
+**Session ID**: f296821c-77ab-4cf0-b76e-3c69b564d68a
+**Last updated**: 2026-10-07T22:44:25.545Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 1e394c36 — eval agent: scoring plan/bookkeeping-lives-where-it-is-read commit aa77cc06
+
+**Session ID**: 1e394c36-34d1-4fdf-8ebe-72a8c68bd28d
+**Last updated**: 2026-10-07T22:45:33.162Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
