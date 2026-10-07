@@ -6,12 +6,12 @@ Before highlights, the working agent called `add_lesson` directly at trigger poi
 
 ## File Layout
 
-Highlights live in the project's `.indusk/` directory — project-scoped, not global:
+Highlights live in the project's home, outside every checkout: `~/.indusk/projects/<project>/` (`$INDUSK_HOME/projects/<project>/` when `INDUSK_HOME` is set). `<project>` is the project's id: its configured `graphiti.groupId`, or its main checkout's folder name with anything but letters, digits and `_` turned into `_`. Every checkout of a project, the main one and every plan worktree, reads and writes the same two files, so a highlight processed for a commit in one worktree is never offered again in another. Neither file is in git; `indusk update` moves a project's older `.indusk/highlights*.jsonl` there and takes them out of git (bookkeeping-lives-where-it-is-read).
 
 | File | Purpose |
 |------|---------|
-| `.indusk/highlights.jsonl` | Append-only queue. One JSON object per line. Written by the working agent. |
-| `.indusk/highlights-processed.jsonl` | Append-only processed log. One JSON object per line. Written by the eval agent. |
+| `highlights.jsonl` | Append-only queue. One JSON object per line. Written by the working agent. |
+| `highlights-processed.jsonl` | Append-only processed log. One JSON object per line. Written by the eval agent. |
 
 Neither file is ever rewritten or edited in place. The unprocessed set is computed by reading both files and filtering highlights whose IDs don't yet appear in the processed log.
 
