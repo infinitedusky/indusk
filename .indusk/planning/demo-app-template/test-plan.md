@@ -1,7 +1,7 @@
 ---
 title: "Demo app template — Test Plan"
 date: 2026-10-07
-status: draft
+status: accepted
 ---
 
 # Demo app template — Test Plan
