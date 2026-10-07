@@ -4,6 +4,7 @@ import type { SubplanEntry } from "@/components/ParentPlanView";
 import { PlanDetail } from "@/components/PlanDetail";
 import { BuildControls } from "@/components/session/BuildControls";
 import { PlanSession } from "@/components/session/PlanSession";
+import { TrustNotice } from "@/components/session/TrustNotice";
 import { planActions } from "@/lib/plan-actions";
 import {
   readActivePlans,
@@ -18,6 +19,7 @@ import {
   registryOf,
 } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+import { projectTrusted } from "@/lib/trust-reader";
 
 interface PlanPageProps {
   params: Promise<{ project: string; name: string }>;
@@ -91,6 +93,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
   return (
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
+      <TrustNotice project={project} trusted={projectTrusted(projectPath)} />
       <PlanSession
         project={project}
         plan={name}

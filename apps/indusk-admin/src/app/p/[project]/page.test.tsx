@@ -81,6 +81,8 @@ vi.mock("@/lib/research-reader", () => ({
   readProjectResearch: async () => [],
 }));
 
+vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
+
 vi.mock("@/lib/registry-client", () => ({
   __esModule: true,
   readRegistryProjects: () => [

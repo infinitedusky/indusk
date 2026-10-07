@@ -12,6 +12,7 @@ import * as reply from "@/app/api/sessions/[id]/reply/route";
 import * as say from "@/app/api/sessions/[id]/say/route";
 import * as stop from "@/app/api/sessions/[id]/stop/route";
 import * as sessions from "@/app/api/sessions/route";
+import * as trust from "@/app/api/trust/route";
 
 /**
  * promise: nothing-ships-until-accepted — admin-plan-authoring A34.
@@ -40,6 +41,7 @@ const MODULES: Record<string, Record<string, unknown>> = {
   "sessions/[id]/reply": reply,
   "sessions/[id]/say": say,
   "sessions/[id]/stop": stop,
+  trust,
 };
 
 /** Every handler every route module exports, read from the module, so none is missed. */

@@ -71,6 +71,8 @@ vi.mock("@/lib/project-reader", () => ({
   readAdminRefreshMs: () => 5000,
 }));
 
+vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
+
 vi.mock("@/lib/registry-client", () => ({
   __esModule: true,
   getProjectPath: (name: string) =>
