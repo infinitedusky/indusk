@@ -425,3 +425,6 @@
 {"id":"h-20261006-011","processedAt":"2026-10-06T23:46:22.213Z","action":"skipped","detail":"recorded in workbench-plan-authoring/brief.md (status: accepted)"}
 {"id":"h-20261006-012","processedAt":"2026-10-06T23:46:23.080Z","action":"skipped","detail":"recorded in workbench-plan-authoring/test-plan.md (status: accepted)"}
 {"id":"h-20261006-013","processedAt":"2026-10-06T23:46:23.663Z","action":"skipped","detail":"recorded in workbench-plan-authoring/adr.md (status: accepted)"}
+{"id":"h-20261007-001","processedAt":"2026-10-07T04:21:21.450Z","action":"wrote-episode","detail":"name-a-live-checks-installed-version-before-running-it"}
+{"id":"h-20261007-002","processedAt":"2026-10-07T04:21:22.251Z","action":"wrote-episode","detail":"never-edit-a-live-check-copy-to-make-it-faster"}
+{"id":"h-20261007-003","processedAt":"2026-10-07T04:21:23.280Z","action":"wrote-episode","detail":"a-briefs-changed-promise-sentence-must-be-the-exact-new-sentence (row-ID half already covered by impl-verification-notes-cannot-name-another-plans-row-ids)"}
