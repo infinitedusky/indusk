@@ -39,11 +39,13 @@ that they prove, and become the impl's Test Trajectory rows.
 |----|-----------------------------------|-------|
 | A9 | The everyday suite still never starts the example, the telemetry daemon or a browser; tests that do are in the system tier. | unit |
 
-### Not for a promise
+### `the-deployed-demo-page-answers` — After the seat-holds example is deployed to Fly from its own config, its page answers at the deployed address.
 
-| ID | Assertion (user-visible behavior) | Level | Why |
-|----|-----------------------------------|-------|-----|
-| A10 | The example's Fly config deploys it once, and its page answers at the deployed address. | smoke | the production second act's prerequisite, tried once; the production break is server-provisioning's |
+A broad promise on purpose (Sandy, 2026-10-07): it covers an outcome that can break many ways. It is split into narrower promises only when a break shows it covers two outcomes.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
+| A10 | Deployed to Fly from the example's own config, its page answers at the deployed address. | smoke |
 
 ## Notes
 
