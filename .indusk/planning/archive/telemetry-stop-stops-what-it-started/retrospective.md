@@ -38,3 +38,5 @@ reproduced the release's failure exactly before the fix.
 ## Quality Ratchet
 
 No rule applies. Shape raised nothing; none judged wrong.
+
+Landed on main at dc39c0b9, 2026-10-07.
