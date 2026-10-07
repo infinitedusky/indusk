@@ -80,16 +80,25 @@ plan after this one.*
 
 **Changes**
 
-- **`a-plan-can-start-from-the-admin`**. Today it holds only in a
-  normal-mode project. It becomes: a plan can be started from the admin in
-  any project, normal or workbench.
-- **`a-plan-is-written-on-its-own-branch`**. Today it holds only in a
-  normal-mode project. It becomes: a plan's code is written on its own
-  branch. In a normal-mode project its documents are written there too; in a
-  workbench they are written at the root, where the workbench is versioned.
-- **`a-build-runs-to-review-unasked`**. A build in a workbench writes in two
-  places, the code worktree and the plan at the root, and asks about
-  neither.
+Each held only in a normal-mode project; each now reads:
+
+- **`a-plan-can-start-from-the-admin`**. A plan can be started from the
+  admin in any project, normal or workbench, as well as from the editor or a
+  terminal: in the admin, the person has the planning conversation, answers
+  its questions in the panel and accepts its promises, and either way it is
+  the same plan in the same files.
+- **`a-plan-is-written-on-its-own-branch`**. Starting a plan, with its type
+  and name, creates its own branch and worktree for its code, and its build
+  continues on that branch. In a normal-mode project its documents and
+  promises are written there too and reach main when the plan is approved;
+  in a workbench they are written at the workbench root, where the workbench
+  is versioned.
+- **`a-build-runs-to-review-unasked`**. An approved plan's implementation
+  runs through its phases, falsification and cleanup without asking for
+  approval, writing its code in the plan's code worktree and, in a
+  workbench, checking items off at the root, and stops only when it is
+  ready for review, for a judgement the plan declared, or when it cannot
+  continue.
 
 **Replaces**
 
