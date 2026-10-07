@@ -2,11 +2,14 @@
 name: telemetry-stop-stops-what-it-started
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: admin
 owner: telemetry-stop-stops-what-it-started
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/telemetry/stop.ts
+tests:
+  - apps/indusk-mcp/src/lib/telemetry/stop.test.ts
+  - apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts
 incidents: []
 ---
 
@@ -14,3 +17,4 @@ incidents: []
 
 ## History
 - 2026-10-07 — declared (telemetry-stop-stops-what-it-started), from its planning conversation.
+- 2026-10-07 — enforced, confirmed for telemetry-stop-stops-what-it-started: proven by row A1, row A2, row A3, row A4.
