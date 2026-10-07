@@ -49,6 +49,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     const { id, session } = sessionManager().start({
       cwd: where.cwd,
+      ...(where.addDirs ? { addDirs: where.addDirs } : {}),
       kind: body.kind,
       prompt: body.prompt,
       project: body.project,

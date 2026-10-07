@@ -25,6 +25,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     project?: string;
     type?: string;
     name?: string;
+    /** In a workbench wrapping several repos, the one the plan's code goes in. */
+    repo?: string;
   } | null;
   if (!body?.project || !body.type || !body.name) {
     return refuse(400, "a new plan needs project, type and name");
@@ -39,9 +41,18 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
   try {
-    const started = await startPlan(root, body.type, body.name);
+    const started = await startPlan(
+      root,
+      body.type,
+      body.name,
+      new Date(),
+      body.repo ? { repo: body.repo } : {},
+    );
+    // In a workbench the session runs at the root, where the plan is written,
+    // with its code worktree added (workbench-plan-authoring D5).
     const { id } = sessionManager().start({
       cwd: started.worktree,
+      ...(started.code ? { addDirs: [started.code.worktree] } : {}),
       kind: "planning",
       prompt: `/planner ${started.type} ${started.plan}`,
       project: body.project,

@@ -1,5 +1,6 @@
 import { isAdminHost, SessionManager } from "@infinitedusky/indusk-mcp/session";
 import { livePlanCopy } from "@infinitedusky/indusk-mcp/worktree/plan-worktrees";
+import { readPlanCode } from "@infinitedusky/indusk-mcp/worktree/roots";
 import { getProjectPath } from "./registry-client";
 
 /**
@@ -66,17 +67,30 @@ export function adminOnly(
   return null;
 }
 
-/** The project's root and where `plan` lives in it now — its worktree while it has one. */
+/**
+ * The project's root and where `plan` lives in it now — its worktree while it
+ * has one. In a workbench the plan lives at the root and its code in the
+ * worktree its `code.json` names: a session there runs at the root with the
+ * code worktree added (workbench-plan-authoring D5).
+ */
 export async function planLocation(
   project: string,
   plan: string,
-): Promise<{ root: string; cwd: string } | { error: string }> {
+): Promise<
+  { root: string; cwd: string; addDirs?: string[] } | { error: string }
+> {
   const root = getProjectPath(project);
   if (!root) return { error: `no project named ${project}` };
   const live = await livePlanCopy(root, plan);
   if (!live.ok)
     return { error: `the worktree record cannot be read: ${live.problem}` };
-  return { root, cwd: live.copy.root };
+  const code = readPlanCode(root, plan);
+  if (code && !code.ok) return { error: code.problem };
+  return {
+    root,
+    cwd: live.copy.root,
+    ...(code?.ok ? { addDirs: [code.code.worktree] } : {}),
+  };
 }
 
 /** A JSON error response with `status`. */

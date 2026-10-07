@@ -11,11 +11,24 @@ const TYPES = ["feature", "bugfix", "refactor", "spike"] as const;
  * New plan (admin-plan-authoring A1): a type and a name. The plan starts on
  * its own branch and worktree and its planning session begins; the page then
  * moves to the plan, where the conversation runs.
+ *
+ * In a workbench wrapping more than one repo, the form also asks which repo
+ * the plan's code goes in (workbench-plan-authoring A9); with one repo, or
+ * in a normal-mode project, it asks nothing.
  */
-export function NewPlanForm({ project }: { project: string }) {
+export function NewPlanForm({
+  project,
+  repos = [],
+}: {
+  project: string;
+  /** The workbench's declared repos; empty in a normal-mode project. */
+  repos?: string[];
+}) {
   const router = useRouter();
   const [type, setType] = useState<string>("feature");
   const [name, setName] = useState("");
+  const asksRepo = repos.length > 1;
+  const [repo, setRepo] = useState<string>(repos[0] ?? "");
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -26,6 +39,7 @@ export function NewPlanForm({ project }: { project: string }) {
       project,
       type,
       name,
+      ...(asksRepo ? { repo } : {}),
     });
     setBusy(false);
     if (!r.ok) {
@@ -67,6 +81,22 @@ export function NewPlanForm({ project }: { project: string }) {
           onChange={(e) => setName(e.target.value.trim())}
         />
       </label>
+      {asksRepo ? (
+        <label className="flex flex-col gap-1">
+          <span className="text-gray-600">Repo</span>
+          <select
+            className="rounded border border-gray-300 px-2 py-1"
+            value={repo}
+            onChange={(e) => setRepo(e.target.value)}
+          >
+            {repos.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       {problem ? <p className="text-red-700">{problem}</p> : null}
       <Button
         type="submit"
