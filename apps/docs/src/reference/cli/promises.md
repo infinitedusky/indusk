@@ -358,6 +358,29 @@ cannot be probed is not reported.
 Absence is the rule, not a migration: a project that names nothing reads its
 local daemon and behaves exactly as it did before this existed.
 
+`slack_webhook_env` (optional, beside `jaeger`) is the **name of an
+environment variable** holding a Slack incoming-webhook URL, for the
+laptop's own reminders (below). Absent, reminders go to the agent's inbox
+only; the server's own announcements use the server's secret, not this.
+
+### What a recording pass keeps on this machine
+
+Every pass of the writer leaves, in the project's home (`indusk eval home`
+prints where; machine state, never in the repository):
+
+| File | What it holds |
+|------|---------------|
+| `inbox.jsonl` | one line per incident opened or extended, and per reminder: the promise, the incident, the owner and its Maintenance phase. The prompt hook delivers each to the next turn of a session in the project |
+| `inbox-delivered.jsonl` | the ids already delivered, appended, so delivering never rewrites the inbox the recorder is appending to |
+| `heard.jsonl` | one line per violation the pass recorded — when it happened, the promise, the trace, the incident, the source — never a trace twice. The promise page counts from it, past the source's retention and whether or not a page was open |
+| `announced.json` | when each open incident was last reminded, written after Slack accepts, so a restart never repeats a reminder and a refused post is tried again |
+| `recorder.lock` | one recording pass at a time, across the admin, catchup and `watch` |
+
+**Reminders.** An incident open longer than a day is announced again, once a
+day, until it is fixed: an inbox line always, and a Slack message when
+`slack_webhook_env` names a set variable. Reminders read only the registry,
+so a pass whose source cannot be read still reminds.
+
 Both `status` and `watch` print the Jaeger they read, so nobody has to guess
 whether they are looking at production or at the laptop in front of them. A
 server that cannot be reached — down, wrong URL, refused credentials, or a

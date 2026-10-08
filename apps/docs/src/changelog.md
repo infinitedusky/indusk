@@ -6,6 +6,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Added
 
+- **Open incidents are reminded daily** (incident-recording): an incident open longer than a day is announced again once a day until it is fixed, to the agent's inbox and, when `promises.slack_webhook_env` names a set variable, to Slack. A recording pass also keeps, in the project's home, the inbox for the next prompt (`inbox.jsonl`) and every production violation it heard (`heard.jsonl`), which the promise page will count from.
 - **`workflow.steps.land.install`** (small-fixes): how a project installs the landed build on this machine, run by the retrospective's landing step after the merge and named by `indusk checks show`. Dusk declares `pnpm install:local`, which builds everything a publish builds and links the checkout into the global `indusk`, so landing a plan makes it current with nothing published.
 
 - **A plan builds only after approval** (small-fixes): `check-gates` refuses to tick a checklist item while the impl is `draft`, and refuses an edit that moves the impl out of `draft` by any route but `indusk plans approve`. Lesson `a-plan-builds-only-after-approval`; the planner skill now ends the planning session at the written plan, and its Key Decisions line is the first build phase's Context item.
