@@ -80,12 +80,15 @@ A behaviour promise asks for marks in the running system. The recorder is a loop
 - **Recording commits what it writes, on the trunk** (Sandy, 2026-10-08), the way approve and land commit bookkeeping; the Maintenance phase is worked on the plan's own branch afterwards.
 - **An incident open longer than a day is announced again, once a day** (Sandy, 2026-10-08); every reader shows its age always.
 - **The recorder is a behaviour promise** (2026-10-08): its pass marks itself in the local telemetry, so a recorder that cannot read or cannot write is its own broken promise.
+- **The admin asks; the server does not push** (Sandy, 2026-10-08). A laptop has no address the server can call, and Jaeger answers questions rather than announcing, so the server's own pass is polling too; a held connection would deliver a violation no sooner than the server's next pass and would still need a catch-up query after any disconnect. The recorder asks the production Jaeger every 30 seconds with the read every other reader uses. The one real push is the server recording into the repository by pull request, which is workbench-watch-provisioning's.
+- **The break reaches the working agent and the admin keeps what it heard** (Sandy, 2026-10-08). Catchup is too late for a session already running: the recorder leaves each break in a per-project inbox in the InDusk home and a Claude Code hook puts it in front of the agent on its next turn (the VS Code extension reads the same inbox later). The admin keeps its own append-only record of every production violation its recorder saw, in the home, so the promise page counts them over time past Jaeger's retention and whether or not a page was open. The bar chart of checks per time bucket (Sandy's design, in `known-issues.md`) stays with plan-cockpit's promise page; the record behind it is this plan's.
+- **No database** (Sandy, 2026-10-08): Jaeger holds what happened, markdown in the repository holds what was decided about it, JSON lines in the home hold what this machine heard. A shared store earns its place with multi-developer recording, deferred 2026-10-04, and then belongs on the server, which has the volume.
 - **Catchup records when the admin did not** (from the 2026-10-02 brief): a laptop that was closed has an admin that was not running; catchup running `watch` itself closes that gap and reports what it opened.
 
 ## Open Questions
 
-- Where the daily re-announcement is heard when the project names no Slack webhook locally: catchup and the admin for certain; Slack only if a `promises.slack_webhook` (or the server) is given one. Settled in the ADR.
-- The recorder's cadence (the demo wants under a minute) and how a pass that overlaps a person's own `watch` in the same checkout is kept to one writer. The ADR's.
+- Where the daily re-announcement is heard when the project names no Slack webhook locally: catchup, the agent's inbox and the admin for certain; Slack only if a `promises.slack_webhook` (or the server) is given one. Settled in the ADR.
+- How a recorder pass that overlaps a person's own `watch` in the same checkout is kept to one writer, and which hook event delivers the inbox (every prompt, or the session's start and each tool result). The ADR's.
 - Whether a `local`-only project should ever record unprompted. Research says no (demo step 5); the ADR records it.
 
 ## Sources

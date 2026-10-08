@@ -26,6 +26,8 @@ What came out of the planning conversation with Sandy on 2026-10-08. The problem
 2. **`catchup-records-what-it-finds`** (state). When catchup finds a production violation no incident records, it records it itself and reports what it opened, instead of telling the person to run `watch`.
 3. **`an-open-incident-stays-loud`** (state). Every reader — catchup, `promise_health`, `promises status`, the admin — shows each open incident with its age and its owner's Maintenance phase, ahead of the roadmap; one open longer than a day is announced again, once a day, until it is fixed.
 4. **`a-reopened-plan-can-be-worked`** (state). A plan reopened from the archive gets a worktree like any other: `indusk worktree create` and `assign` find it, and the admin and the plan tools read it from there.
+5. **`a-break-reaches-the-working-agent`** (state). A promise broken in production reaches the agent in every running session on the project at its next turn, naming the promise, the incident and the reopened plan, without waiting for a catchup.
+6. **`the-admin-keeps-what-it-heard`** (state). The admin records every production violation its recorder sees, with when it happened and the incident it belongs to, and the promise page shows them counted over time, whether or not a page was open when they happened.
 
 ### Existing promises
 
@@ -48,7 +50,9 @@ None.
 
 - **The always-on server recording incidents itself**, as a pull request to the plan repository: it needs the GitHub connection, which stays with [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md). Until then the server announces, and the developer's admin records.
 - **Multi-developer recording** — who records when two admins watch one project, checkout of incidents, per-person credentials: deferred 2026-10-04 until after the demo.
-- **A notification on the developer's own machine** (desktop, or Slack sent from the laptop): open with Sandy at the time of writing; the reopened plan, catchup and the server's Slack are the channels promised here.
+- **The server pushing to the laptop**: the admin asks the production Jaeger every 30 seconds instead (the reasons are in the research's decisions); a held connection would be no sooner and would still need the asking after a disconnect.
+- **The bar chart of checks per time bucket** on the promise page (Sandy's design, in `known-issues.md`): plan-cockpit's promise page, step 5 of the demo sequence; this plan keeps the record it will draw from.
+- **A desktop notification or Slack from the laptop**: the agent's inbox, catchup, the admin and the server's Slack are the channels promised here; a desktop channel is the VS Code extension's, step 4.
 
 ## Depends On
 
@@ -60,4 +64,6 @@ None.
 ## Blocks
 
 - The demo's step 6 and its rehearsal ([indusk-demo](../indusk-demo/master.md)).
+- The VS Code extension (step 4 of the demo sequence): it reads the agent's inbox and the admin's record rather than Jaeger itself.
+- plan-cockpit (step 5): its bar chart draws from the record this plan keeps.
 - [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md): the server's own recording PR reuses the recorder's writer and commit.
