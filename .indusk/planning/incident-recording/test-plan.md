@@ -1,7 +1,7 @@
 ---
 title: "Recording never waits for a person to think of it — Test Plan"
 date: 2026-10-08
-status: draft
+status: accepted
 ---
 
 # Recording never waits for a person to think of it — Test Plan
