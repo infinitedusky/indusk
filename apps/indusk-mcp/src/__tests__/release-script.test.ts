@@ -59,7 +59,10 @@ describe("A18 — the release publishes the server image before npm", () => {
 	});
 
 	it("the image step pushes a tag named by the version, and fails the release when the push fails", () => {
-		const script = readFileSync(join(__dirname, "..", "..", "scripts", "release-image.sh"), "utf-8");
+		const script = readFileSync(
+			join(__dirname, "..", "..", "scripts", "release-image.sh"),
+			"utf-8",
+		);
 		expect(script).toMatch(/^set -euo pipefail$/m);
 		expect(script).toContain("ghcr.io/infinitedusky/indusk-always-on:${VERSION}");
 		expect(script).toMatch(/docker push "\$\{IMAGE\}:\$\{VERSION\}"/);
