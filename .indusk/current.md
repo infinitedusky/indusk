@@ -2377,3 +2377,24 @@ Build Phase 4 verification → cleanup (skip with reason) → /retrospective →
 (empty)
 
 ---
+
+## Session 035e802a — eval: docs fix a9599863
+
+**Session ID**: 035e802a-65e1-44e0-97e5-5406a9697247
+**Last updated**: 2026-10-08T17:59:45.246Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
