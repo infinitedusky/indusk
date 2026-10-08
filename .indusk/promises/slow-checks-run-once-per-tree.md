@@ -11,6 +11,7 @@ sites:
   - apps/indusk-mcp/src/lib/checks/record.ts
 tests:
   - apps/indusk-mcp/src/__tests__/checks-slow.test.ts
+  - apps/indusk-mcp/src/lib/checks/key.test.ts
 incidents: []
 ---
 
@@ -19,3 +20,4 @@ The slow test tier runs at most once for the same code: release skips it when a 
 ## History
 - 2026-10-08 — declared (release-checks-run-once), from its planning conversation.
 - 2026-10-08 — enforced, confirmed for release-checks-run-once: proven by row A1, row A2, row A3, row A4, row A5.
+- 2026-10-08 — links updated, confirmed for release-checks-run-once: tests apps/indusk-mcp/src/__tests__/checks-slow.test.ts, apps/indusk-mcp/src/lib/checks/key.test.ts; sites apps/indusk-mcp/src/bin/commands/checks.ts, apps/indusk-mcp/src/lib/checks/key.ts, apps/indusk-mcp/src/lib/checks/record.ts.
