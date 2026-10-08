@@ -11,8 +11,10 @@ A Claude Code PostToolUse hook fires after every `git commit`. It spawns a backg
 3. Reads the diff of what was just committed
 4. Answers evaluation questions against the rubric
 5. Writes derived insights to the lessons registry
-6. Logs a structured scorecard to `.indusk/eval/results.log`
+6. Logs a structured scorecard to `<home>/eval/results.log`
 7. Optionally POSTs the scorecard to a configured endpoint
+
+`<home>` is the project's home outside every checkout, `~/.indusk/projects/<project>-<hash>/`; `indusk eval home` prints it.
 
 ```mermaid
 sequenceDiagram
@@ -117,14 +119,14 @@ In `.indusk/config.json`:
 
 The evaluator writes two kinds of output:
 
-- **Scorecards** — logged to `.indusk/eval/results.log` (JSONL)
+- **Scorecards** — logged to `<home>/eval/results.log` (JSONL)
 - **the lessons registry facts** — derived insights written to the project's knowledge graph
 
 The evaluator's the lessons registry writes are selective — only facts that would have changed the outcome. Combined with user-side capture (corrections, brief acceptance, retro lessons), this creates a complete feedback loop.
 
 ## Findings Lifecycle
 
-Eval findings persist until explicitly resolved. When the evaluator scores a commit, any question answered `no` or `partial` becomes an **unresolved finding** in `.indusk/eval/findings.json`.
+Eval findings persist until explicitly resolved. When the evaluator scores a commit, any question answered `no` or `partial` becomes an **unresolved finding** in `<home>/eval/findings.json`.
 
 On every subsequent `git commit`, the hook surfaces unresolved findings to the agent:
 
@@ -158,11 +160,11 @@ indusk eval ignore "zpqywqzs:missing-context"
 
 The eval evaluator reuses sessions across commits to reduce cost. The first eval in a session does a full `/catchup` (~$2-4). Subsequent evals resume the same session via `claude --resume` with just the new change ID — much cheaper.
 
-Session state is stored in `.indusk/eval/evaluator-session.json`. If the session expires or errors, the system clears it and starts fresh automatically.
+Session state is stored per checkout, in `<home>/eval/sessions/`: Claude Code finds a session only from the directory that made it. If the session expires or errors, the system clears it and starts fresh automatically.
 
 ## System Log
 
-The eval system writes to `.indusk/eval/system.log` for full lifecycle visibility:
+The eval system writes to `<home>/eval/system.log` for full lifecycle visibility:
 
 ```
 2026-04-11T21:48:12.700Z hook fired — tool: Bash, command: git commit -m "..."
@@ -187,7 +189,7 @@ Check this log when evals aren't appearing in `results.log`.
 
 ### Scorecard parse failure from prose-prefixed JSON
 
-**Symptom:** an `error: true` entry lands in `.indusk/eval/results.log` with a `message` like `Unexpected token 'N', "Now I've g"... is not valid JSON`. The evaluator otherwise ran to completion (system.log shows `evaluator completed`), and side-effects of its work landed (highlights got marked processed, lessons were written) — but the final scorecard never made it into `results.log`. The eval system silently under-counts its own work because error-entries default `lessonWrites: 0` even when MCP writes happened.
+**Symptom:** an `error: true` entry lands in `<home>/eval/results.log` with a `message` like `Unexpected token 'N', "Now I've g"... is not valid JSON`. The evaluator otherwise ran to completion (system.log shows `evaluator completed`), and side-effects of its work landed (highlights got marked processed, lessons were written) — but the final scorecard never made it into `results.log`. The eval system silently under-counts its own work because error-entries default `lessonWrites: 0` even when MCP writes happened.
 
 **Cause:** the model sometimes prefixes natural-language prose to its JSON output despite the prompt saying "output only JSON" (e.g., `"Now I've got everything I need. Here's the scorecard:\n\n{...}"`). The previous parser tried `JSON.parse(stdout)` directly and a fenced-code-block regex; neither tolerated raw prose-prefixed JSON, so the call landed in the catch handler and produced an error-entry whose `message` field contained only the parse-error string — no snippet of what Claude actually wrote.
 
@@ -195,7 +197,7 @@ Check this log when evals aren't appearing in `results.log`.
 
 ### MCP tools unreachable from the spawned subprocess
 
-**Symptom:** every scorecard in `.indusk/eval/results.log` records `lessonWrites: 0` and `mcpToolCalls: 0`, even when `.indusk/highlights.jsonl` has unprocessed entries that the evaluator's prompt explicitly asks Claude to read and write to the lessons registry. `.indusk/highlights-processed.jsonl` is never created. The evaluator runs to completion, writes a scorecard, but never invokes any `mcp__*` tool.
+**Symptom:** every scorecard in `<home>/eval/results.log` records `lessonWrites: 0` and `mcpToolCalls: 0`, even when `<home>/highlights.jsonl` has unprocessed entries that the evaluator's prompt explicitly asks Claude to read and write to the lessons registry. `.indusk/highlights-processed.jsonl` is never created. The evaluator runs to completion, writes a scorecard, but never invokes any `mcp__*` tool.
 
 **Cause:** `claude --print` does NOT auto-discover the project's `.mcp.json` from cwd. Without `--mcp-config`, the evaluator has no MCP tools at all.
 

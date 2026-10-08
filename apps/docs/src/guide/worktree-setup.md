@@ -278,11 +278,10 @@ Same as Flow A step 3 — this creates the trunk symlink, writes config.json, sc
 #### 4. Move InDusk state into the workbench
 
 ```sh
-# Move the directories you want to preserve from numero to the workbench
+# Move the directories you want to preserve from numero to the workbench.
+# Evaluation results and highlights live in the project's home, outside both;
+# run `indusk update` in the workbench afterwards and it moves any older copies there.
 mv ~/code/sandbox/numero/.indusk/planning ~/code/sandbox/numero-workbench/.indusk/planning
-mv ~/code/sandbox/numero/.indusk/eval ~/code/sandbox/numero-workbench/.indusk/eval     2>/dev/null || true
-mv ~/code/sandbox/numero/.indusk/highlights.jsonl ~/code/sandbox/numero-workbench/.indusk/highlights.jsonl 2>/dev/null || true
-mv ~/code/sandbox/numero/.indusk/highlights-processed.jsonl ~/code/sandbox/numero-workbench/.indusk/highlights-processed.jsonl 2>/dev/null || true
 mv ~/code/sandbox/numero/.indusk/research ~/code/sandbox/numero-workbench/.indusk/research 2>/dev/null || true
 mv ~/code/sandbox/numero/.indusk/lessons ~/code/sandbox/numero-workbench/.indusk/lessons 2>/dev/null || true
 ```
@@ -374,8 +373,7 @@ If all four succeed, the migration is done.
 | Artifact | Per-developer (lives in workbench) | Shared (lives in wrapped repo) |
 |---|---|---|
 | Plans (`.indusk/planning/`) | ✓ |  |
-| Eval results (`.indusk/eval/`) | ✓ |  |
-| Highlights (`.indusk/highlights*.jsonl`) | ✓ |  |
+| Eval results and highlights (the project's home, `indusk eval home`) | ✓ (outside both) |  |
 | Worktree config (`.indusk/worktree-configs/numero.json`) | ✓ |  |
 | `composeProjectName` in `ce.json` | ✓ |  |
 | Code | | ✓ |

@@ -32,7 +32,7 @@ flowchart LR
     impl[".indusk/planning/&lt;plan&gt;/impl.md"]
     gates[".claude/hooks/ — the gate scripts"]
     ledger[".indusk/verify/ledger.jsonl"]
-    queue[".indusk/eval/pending.jsonl"]
+    queue["&lt;home&gt;/eval/pending.jsonl"]
   end
   subgraph code["code root (the declared repo)"]
     files["source + tests"]
@@ -138,7 +138,7 @@ One boundary worth knowing: a checkoff performed through `bash` rather than the 
 
 ## The eval queue
 
-The lane cannot evaluate its own work: the evaluator needs the `claude` CLI, and a run may be happening on a remote cell that has never heard of Claude Code. So each commit appends one record to `.indusk/eval/pending.jsonl`, and evaluation happens later, from wherever `claude` lives.
+The lane cannot evaluate its own work: the evaluator needs the `claude` CLI, and a run may be happening on a remote cell that has never heard of Claude Code. So each commit appends one record to `<home>/eval/pending.jsonl`, and evaluation happens later, from wherever `claude` lives.
 
 ```mermaid
 sequenceDiagram
@@ -160,7 +160,7 @@ sequenceDiagram
 
 Draining is `/rail-check`'s job (or `node .claude/hooks/eval-trigger.js --drain-pending` directly). Each record is marked drained **before** its evaluator spawns, so a crashed spawn is a logged gap rather than a double-evaluation — re-running a drain is always safe. That ledger entry is **provisional**: if the evaluator exits non-zero (no `claude` on the machine, a broken runner), the record is un-drained and stays queued, and the drain reports how many failed. A machine that cannot evaluate never destroys the backlog — it just doesn't shrink it. `check_health` reports a standing backlog: the queue is durable, so nothing is lost, but un-drained records mean the lane's lessons have not reached the registry yet.
 
-The queue and its ledger live under `.indusk/eval/` and are deliberately excluded from the run's own commits — run bookkeeping is not plan history.
+The queue and its ledger live under `<home>/eval/`, outside every checkout, so they are never in the run's own commits — run bookkeeping is not plan history. `<home>` is the project's home outside every checkout, `~/.indusk/projects/<project>-<hash>/`; `indusk eval home` prints it.
 
 ## `--model`
 

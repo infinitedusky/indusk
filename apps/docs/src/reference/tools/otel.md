@@ -394,7 +394,7 @@ Endpoint comes from the standard `OTEL_EXPORTER_OTLP_ENDPOINT` env var — same 
 
 ### Graceful Degradation
 
-| Condition | Result | Logged to `.indusk/eval/system.log` |
+| Condition | Result | Logged to `<home>/eval/system.log` (`indusk eval home`) |
 |-----------|--------|-------------------------------------|
 | `enabled: false` (default) | No-op tracer | Nothing |
 | `enabled: true`, no `OTEL_EXPORTER_OTLP_ENDPOINT` | No-op tracer | `eval.otel.enabled but OTEL_EXPORTER_OTLP_ENDPOINT is unset — falling back to no-op tracer` |

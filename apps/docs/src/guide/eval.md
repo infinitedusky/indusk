@@ -13,6 +13,12 @@ The eval system scores every commit automatically. No setup needed beyond having
 indusk eval summary
 ```
 
+The raw files — the scorecards (`eval/results.log`), the lifecycle log (`eval/system.log`) and the highlights — live in the project's home outside every checkout, the same from every worktree. `indusk eval home` prints it:
+
+```bash
+tail "$(indusk eval home)/eval/results.log"
+```
+
 That's it. The eval hook fires on every `git commit` inside a Claude Code session. The evaluator's diff-fetch instruction tells Claude to run `git show ${changeId}` against the just-committed SHA.
 
 **One thing to know about**: git's commit-after-work pattern means the eval fires post-hoc — the eval agent has the diff and the session transcript but no pre-stated intent. Plan-driven workflows compensate: the active plan's brief + impl serve as the stated intent that the eval agent reads via `/catchup`.
