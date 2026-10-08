@@ -63,7 +63,7 @@ A run covers a key: for each tracked file the slow tests cover (`workflow.steps.
 
 So the bump and its changelog entry are not a change; any code, test, test configuration or lockfile change is.
 
-**A run is recorded only when it is fully green over a clean tree.** A non-zero exit, a covered file with an uncommitted change, an untracked file among them, or a key that changed while the tests ran: nothing is recorded, and the next `--unless-covered` runs the tests.
+**A run is recorded only when it is fully green over a clean tree.** A non-zero exit, a covered file with an uncommitted change, an untracked file among them, or a key that changed while the tests ran: nothing is recorded, and the next `--unless-covered` runs the tests. So does a `covers` entry that lists no tracked file (a typo), or an empty list: a key over nothing would be covered by every run, so there is no key, and the command says which entry. Declared paths are compared normalised, so `./apps/docs/src/changelog.md` and `apps/docs/src/changelog.md` are the same file.
 
 **The record is per machine.** It lives in this machine's project home, the same from the main checkout and every plan worktree; a release from another machine runs the tests once there.
 
