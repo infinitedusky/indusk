@@ -73,6 +73,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-10-06: **1.63.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit c60c105 (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-07: **1.64.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 789978b (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-07: **1.65.1 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit a7e1639 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-08: **1.66.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 2e2743d (`pnpm release`, recorded by `scripts/record-release.js`).
 
 ---
 
@@ -2005,6 +2006,21 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-07T23:26:18.880Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 6eb1cc82 — eval: grading commit 254c3f46 (evaluator checkout isolation test)
 
 **Session ID**: 6eb1cc82-0e20-45a7-9235-6ed6756ac599
@@ -2242,6 +2258,69 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-08T02:54:42.669Z
 **Branch**: plan/bookkeeping-lives-where-it-is-read
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session f8aa9e8a — eval agent: scoring commit bb90509e
+
+**Session ID**: f8aa9e8a-0bc4-4b89-8d55-59ab03ce0f98
+**Last updated**: 2026-10-08T04:46:48.852Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 03ca1ff8 — eval: scoring commit a3872c1a (bookkeeping-lives-where-it-is-read landed)
+
+**Session ID**: 03ca1ff8-7e1e-47d5-bf48-9ef949f52fcc
+**Last updated**: 2026-10-08T04:47:30.225Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session a90c364f — eval agent: scoring release commit d9fa2e33
+
+**Session ID**: a90c364f-ac49-4c6e-b63f-ca02348ad89d
+**Last updated**: 2026-10-08T04:48:00.451Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
