@@ -246,7 +246,7 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 ### Build Phase 5: Catchup records
 
-- [ ] `tools/promise-tools.ts`: `record_breaks` — runs `recordBreaks` with `by: "catchup"` for the project and answers `{ opened, extended, unowned, committed }` or the refusal (A8)
+- [x] (answers `{ opened, extended, unowned, committed }`, each change by id, promise and owner; a refusal or a pass that marked itself broken is `isError` with its reason; A8 1/1) `tools/promise-tools.ts`: `record_breaks` — runs `recordBreaks` with `by: "catchup"` for the project and answers `{ opened, extended, unowned, committed }` or the refusal (A8)
 - [ ] `skills/catchup.md` step 8a: when `promise_health` reports unrecorded production violations, call `record_breaks` and report what it opened; list open incidents with their ages ahead of the roadmap; never "run `indusk promises watch`" (A9, A13); resync `.claude/skills/`
 
 #### Build Phase 5 Verification
