@@ -28,7 +28,10 @@ describe("A3 — the release publishes without listing every file", () => {
 	it("keeps every step it ran, in the same order", () => {
 		expect(steps.map((s) => s.replace(/^npm_config_loglevel=warn /, ""))).toEqual([
 			"bash scripts/release-guard.sh",
-			"pnpm -w test:system",
+			// release-checks-run-once: the slow tests run unless a green run at
+			// landing already covered this code, through this build's own CLI.
+			"pnpm build",
+			"node dist/bin/cli.js checks slow --unless-covered",
 			"npm whoami",
 			"pnpm publish --no-git-checks",
 			"node scripts/record-release.js",
