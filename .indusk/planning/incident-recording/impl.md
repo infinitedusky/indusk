@@ -207,6 +207,7 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 ### Build Phase 3: The hook
 
+ - [x] Shape (reviewed `break-inbox.js`, `hook-command.ts`, the e2e probe and the pin updates — nothing found within each unit; `hooks/break-inbox.js` — left as-is: its `readLines` mirrors `lib/promises/inbox.ts`'s reader because a hook cannot import the TS library; whether it becomes a `_`-module port pinned by count, as the other mirrors are, is a cross-file question for `/cleanup`; `rules.unreadable` was empty)
 - [x] (no `_project-home.js` was needed: `_hook-paths.js` already exports `projectHome(statePath)`, the hooks' mirror of `bookkeepingRoots`, which the eval trigger uses; A18 4/4) `hooks/break-inbox.js`: `UserPromptSubmit`; resolves the state root (`_hook-paths.js`) and the home's project id (one definition with `bookkeeping/roots` — a `_project-home.js` port, pinned by count like the other `_` modules); reads undelivered entries, prints `hookSpecificOutput.additionalContext` naming each, appends to `inbox-delivered.jsonl`; exits 0 with nothing in under 100 ms; says on its own line when the inbox cannot be read; `promise: a-break-reaches-the-working-agent` in its header (A18)
 - [x] (`sameMatcher`/`matcherless` in `hook-command.ts`: an absent `matcher` key and "" are one group, and "" is written as no key; `hook-cwd-independence`'s pinned registration counts move from nine to ten and A3's expected settings gain the group; this repository's settings gain only the group, its one escaped character kept) `HOOK_REGISTRATIONS` gains `["UserPromptSubmit", "", "break-inbox.js"]`; `hookGroups`/`ensureHookRegistered` accept an empty matcher (no `matcher` key written); `hook-registration.test.ts` A24's event and matcher rules learn the new event; `init`/`update` register it; this repository's `.claude/settings.json` and `.claude/hooks/` resynced (hook parity)
 - [x] (a scratch project registering the package's hook through `--settings` — an untrusted scratch directory's project settings can be ignored — and an inbox holding one break; red first as "a fresh repo…" with no incident, after giving the session room past `--max-turns 2`, which it hit with exit 1; green once the hook existed: the answer named `i-2026-10-08-seat-released-QX7`) A19: `e2e/break-inbox.e2e.test.ts` authored and run (`pnpm e2e -- break-inbox`)
@@ -217,11 +218,11 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 #### Build Phase 3 Context
 
-- [ ] hooks `CLAUDE.md`: `break-inbox.js` runs on every prompt and must stay under 100 ms — it reads one file and exits; `_project-home.js` mirrors `bookkeeping/roots`'s id
+- [x] (written as a rule: one small read and exit, never blocking, never a second read; the home comes from `_hook-paths.js`'s `projectHome`, so there is no `_project-home.js` to mirror) hooks `CLAUDE.md`: `break-inbox.js` runs on every prompt and must stay under 100 ms — it reads one file and exits; `_project-home.js` mirrors `bookkeeping/roots`'s id
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/guide/index.md` hooks table: nine hooks, `break-inbox` under its own event; the Dawn master's keep/shed record classifies it (shed: the thin lane has no prompt); `apps/docs/src/guide/multi-agent.md`: how a break reaches a running session
+- [x] (the guide's table and the Dawn record were done at verification, for `hooks-record-parity`; `multi-agent.md` gains "When a promise breaks", the anchor the table links to) `apps/docs/src/guide/index.md` hooks table: nine hooks, `break-inbox` under its own event; the Dawn master's keep/shed record classifies it (shed: the thin lane has no prompt); `apps/docs/src/guide/multi-agent.md`: how a break reaches a running session
 
 ### Build Phase 4: Age in every reader
 
