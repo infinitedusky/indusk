@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import {
 	appendFileSync,
 	copyFileSync,
@@ -12,6 +11,7 @@ import {
 } from "node:fs";
 import { join, relative } from "node:path";
 import { parseWorktreeList } from "../git.js";
+import { gitSync } from "./git.js";
 import { readJsonl } from "./jsonl.js";
 import { bookkeepingRoots, evalDir } from "./roots.js";
 
@@ -78,8 +78,7 @@ export function migrateBookkeeping(anyCheckout: string): string[] {
 export function releaseBranchBookkeeping(worktree: string): string[] {
 	const { trunk, home } = bookkeepingRoots(worktree);
 	const names = ["highlights.jsonl", "highlights-processed.jsonl"];
-	const tracked = (cwd: string, rel: string) =>
-		spawnSync("git", ["ls-files", "--", rel], { cwd, encoding: "utf-8" }).stdout.trim() !== "";
+	const tracked = (cwd: string, rel: string) => gitSync(cwd, "ls-files", "--", rel).out !== "";
 	const rels = names
 		.map((n) => join(".indusk", n))
 		.filter((rel) => tracked(worktree, rel) && !tracked(trunk, rel));
@@ -91,23 +90,21 @@ export function releaseBranchBookkeeping(worktree: string): string[] {
 	if (existsSync(processed)) {
 		mergeProcessed(processed, join(home, "highlights-processed.jsonl"), renamed);
 	}
-	spawnSync("git", ["rm", "-q", "--cached", "--", ...rels], { cwd: worktree });
+	gitSync(worktree, "rm", "-q", "--cached", "--", ...rels);
 	for (const rel of rels) rmSync(join(worktree, rel), { force: true });
-	const commit = spawnSync(
-		"git",
-		[
-			"commit",
-			"-q",
-			"--only",
-			"-m",
-			"chore(indusk): highlights move to the project home",
-			"--",
-			...rels,
-		],
-		{ cwd: worktree, encoding: "utf-8" },
+	const commit = gitSync(
+		worktree,
+		"commit",
+		"-q",
+		"--only",
+		"-m",
+		"chore(indusk): highlights move to the project home",
+		"--",
+		...rels,
 	);
-	if (commit.status !== 0)
-		throw new Error(`could not take the highlights out of the branch: ${commit.stderr}`);
+	if (commit.code !== 0) {
+		throw new Error(`could not take the highlights out of the branch: ${commit.err}`);
+	}
 	return rels;
 }
 
@@ -137,13 +134,10 @@ function moveEvalDir(checkout: string, dest: string, trunk: string | null): bool
 
 /** The main checkout first, then every worktree git lists for it. */
 function checkoutsOf(trunk: string): string[] {
-	const r = spawnSync("git", ["worktree", "list", "--porcelain"], {
-		cwd: trunk,
-		encoding: "utf-8",
-	});
+	const r = gitSync(trunk, "worktree", "list", "--porcelain");
 	const listed =
-		r.status === 0
-			? parseWorktreeList(r.stdout)
+		r.code === 0
+			? parseWorktreeList(r.out)
 					.filter((w) => !w.prunable && existsSync(w.path))
 					.map((w) => w.path)
 			: [];
@@ -199,8 +193,7 @@ function mergeProcessed(src: string, dest: string, renamed: Map<string, string>)
 
 /** Take a path out of git's index, if it is tracked; the file itself is the caller's. */
 function untrack(trunk: string, rel: string): void {
-	const tracked = spawnSync("git", ["ls-files", "--", rel], { cwd: trunk, encoding: "utf-8" });
-	if (tracked.status === 0 && tracked.stdout.trim() !== "") {
-		spawnSync("git", ["rm", "-r", "-q", "--cached", "--", rel], { cwd: trunk });
-	}
+	const tracked = gitSync(trunk, "ls-files", "--", rel);
+	if (tracked.code === 0 && tracked.out !== "")
+		gitSync(trunk, "rm", "-r", "-q", "--cached", "--", rel);
 }

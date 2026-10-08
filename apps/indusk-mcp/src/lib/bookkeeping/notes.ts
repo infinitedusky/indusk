@@ -1,10 +1,10 @@
-import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { AgentSection } from "../agents/current-md.js";
 import { parseCurrentMd, upsertSection } from "../agents/current-md.js";
 import { withLock } from "../agents/lock.js";
 import { getTrunkBranches } from "../config.js";
+import { gitSync as git } from "./git.js";
 import { bookkeepingRoots } from "./roots.js";
 
 export type NoteCommit = { committed: true } | { committed: false; reason: string };
@@ -51,11 +51,6 @@ const IN_PROGRESS: Array<[string, string]> = [
 	["rebase-merge", "a rebase"],
 	["rebase-apply", "a rebase"],
 ];
-
-function git(cwd: string, ...args: string[]): { code: number; out: string; err: string } {
-	const r = spawnSync("git", args, { cwd, encoding: "utf-8" });
-	return { code: r.status ?? -1, out: (r.stdout ?? "").trim(), err: (r.stderr ?? "").trim() };
-}
 
 /** The main checkout's `current.md`, whichever checkout asks. */
 export function currentMdPath(anyCheckout: string): string {
