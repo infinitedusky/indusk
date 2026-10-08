@@ -1,5 +1,6 @@
+import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { mkdtempSync } from "node:fs";
+import { copyFileSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { createInterface } from "node:readline";
@@ -10,6 +11,7 @@ import { JaegerUnreachable } from "../../lib/promises/telemetry.js";
 import { connect, probeServer } from "../../lib/server/connect.js";
 import { DeployRefused, deploy } from "../../lib/server/deploy.js";
 import { realFly } from "../../lib/server/fly.js";
+import { DOCKERFILE_TEMPLATE } from "../../lib/server/fly-config.js";
 import { redactingWriter } from "../../lib/server/redact.js";
 import { secretsFile } from "../../lib/server/secrets-file.js";
 import { induskHome } from "../../lib/telemetry/status.js";
@@ -101,6 +103,7 @@ export interface ServerDeployOptions {
 	slackWebhookEnv?: string;
 	version: string;
 	rotate?: boolean;
+	buildFrom?: string;
 	cwd?: string;
 }
 
@@ -136,6 +139,7 @@ export async function serverDeploy(opts: ServerDeployOptions): Promise<void> {
 				version: opts.version,
 				slackWebhook,
 				rotate: opts.rotate,
+				buildFrom: opts.buildFrom,
 			},
 			{
 				fly: realFly(),
@@ -143,6 +147,7 @@ export async function serverDeploy(opts: ServerDeployOptions): Promise<void> {
 				print: (line) => console.info(line),
 				random: () => randomBytes(24).toString("hex"),
 				tempDir: () => mkdtempSync(join(tmpdir(), "indusk-fly-")),
+				buildImage: buildServerImage,
 				connect: (input, out) => connect(input, { probe: probeServer(projectName), secrets, out }),
 			},
 		);
@@ -150,4 +155,19 @@ export async function serverDeploy(opts: ServerDeployOptions): Promise<void> {
 		console.error(err instanceof Error ? err.message : String(err));
 		process.exitCode = err instanceof DeployRefused ? 2 : 1;
 	}
+}
+
+/** Build the server image from a packed tarball through the package's own template. */
+async function buildServerImage(tarball: string, tag: string): Promise<void> {
+	const ctx = mkdtempSync(join(tmpdir(), "indusk-image-"));
+	copyFileSync(tarball, join(ctx, "indusk.tgz"));
+	const r = spawnSync(
+		"docker",
+		["build", "-f", DOCKERFILE_TEMPLATE, "--build-arg", "TARBALL=indusk.tgz", "-t", tag, ctx],
+		{ stdio: "inherit" },
+	);
+	if (r.status !== 0)
+		throw new DeployRefused(
+			`docker build of ${tag} failed (exit ${r.status}); nothing was deployed.`,
+		);
 }

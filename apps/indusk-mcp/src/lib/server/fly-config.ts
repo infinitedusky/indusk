@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
  */
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 export const FLY_TEMPLATE = join(packageRoot, "templates/server/fly.toml");
+export const DOCKERFILE_TEMPLATE = join(packageRoot, "templates/server/Dockerfile");
 
 export const DEFAULT_REGION = "iad";
 

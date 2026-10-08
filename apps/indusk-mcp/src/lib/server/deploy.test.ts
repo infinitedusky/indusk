@@ -269,6 +269,22 @@ describe("deploy", () => {
 		});
 	});
 
+	it("--build-from builds the image from the tarball on this machine and deploys it local-only", async () => {
+		const f = fakeFly(fresh());
+		const { root, home } = project();
+		const built: [string, string][] = [];
+		const { d } = deps(f.fly, home, {
+			async buildImage(tarball, tag) {
+				built.push([tarball, tag]);
+			},
+		});
+		await deploy(input(root, { buildFrom: "/tmp/indusk-mcp-1.70.0.tgz" }), d);
+		expect(built).toEqual([["/tmp/indusk-mcp-1.70.0.tgz", "indusk-always-on-local:1.70.0"]]);
+		const dep = f.calls.find((c) => c.args[0] === "deploy");
+		expect(dep?.args).toContain("indusk-always-on-local:1.70.0");
+		expect(dep?.args).toContain("--local-only");
+	});
+
 	it("A20 — pulls the published image for its version; never builds", async () => {
 		const f = fakeFly(fresh());
 		const { root, home } = project();

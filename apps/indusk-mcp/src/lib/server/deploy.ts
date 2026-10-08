@@ -20,6 +20,8 @@ import type { SecretsFile } from "./secrets-file.js";
  */
 export const IMAGE = "ghcr.io/infinitedusky/indusk-always-on";
 export const SERVER_USER = "indusk";
+/** The tag an image built on this machine gets; never pushed anywhere but Fly. */
+export const LOCAL_IMAGE = "indusk-always-on-local";
 
 export interface DeployInput {
 	projectRoot: string;
@@ -30,6 +32,12 @@ export interface DeployInput {
 	version: string;
 	slackWebhook?: string | null;
 	rotate?: boolean;
+	/**
+	 * A packed tarball to build the image from on this machine, for a version no
+	 * release has published yet (the live check, a server change under test).
+	 * Without it, deploy pulls the published image and never builds (A20).
+	 */
+	buildFrom?: string;
 }
 
 export interface DeployDeps {
@@ -42,6 +50,8 @@ export interface DeployDeps {
 	random(): string;
 	/** A directory for the generated Fly config. */
 	tempDir(): string;
+	/** Build the server image from a tarball through the package's template, tagged `tag`. */
+	buildImage?(tarball: string, tag: string): Promise<void>;
 }
 
 export class DeployRefused extends Error {
@@ -72,11 +82,13 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 	const stored = deps.secrets.get(credentialEnv);
 
 	const state = await readFlyState(deps.fly, app);
+	const image = input.buildFrom ? `${LOCAL_IMAGE}:${input.version}` : `${IMAGE}:${input.version}`;
 	const plan = planDeploy(state, {
 		app,
 		org: input.org ?? recorded?.org ?? null,
 		region,
-		image: `${IMAGE}:${input.version}`,
+		image,
+		localImage: Boolean(input.buildFrom),
 		configPath: writeFlyConfig(deps.tempDir(), { app, region }),
 		recordedApp: recorded?.app ?? null,
 		haveCredential: Boolean(stored),
@@ -90,7 +102,13 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 	const webhook = input.slackWebhook ?? null;
 	const out = redactingWriter(deps.print, [password ?? "", webhook ?? "", credential]);
 
-	out.line(`Deploying ${IMAGE}:${input.version} as ${app} (${plan.org}, ${region}).`);
+	if (input.buildFrom) {
+		if (!deps.buildImage)
+			throw new DeployRefused("this deploy cannot build an image: no builder was given");
+		out.line(`Building ${image} from ${input.buildFrom} …`);
+		await deps.buildImage(input.buildFrom, image);
+	}
+	out.line(`Deploying ${image} as ${app} (${plan.org}, ${region}).`);
 	const server = { provider: "fly" as const, app, org: plan.org, region };
 	for (const step of plan.steps) {
 		await runStep(deps.fly, step, out, { password, webhook });

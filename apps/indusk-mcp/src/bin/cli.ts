@@ -444,6 +444,10 @@ serverCmd
 		"The server version to deploy (default: this indusk's); `--version` is the CLI's own",
 	)
 	.option("--rotate", "Set a new server password")
+	.option(
+		"--build-from <tarball>",
+		"Build the server image from a packed tarball on this machine, for a version no release has published",
+	)
 	.action(
 		async (opts: {
 			app?: string;
@@ -452,6 +456,7 @@ serverCmd
 			slackWebhookEnv?: string;
 			serverVersion?: string;
 			rotate?: boolean;
+			buildFrom?: string;
 		}) => {
 			const { serverDeploy } = await import("./commands/server.js");
 			const { serverVersion, ...rest } = opts;
