@@ -7,6 +7,8 @@ test_phases: required
 test_levels: required
 test_purpose: required
 gate_policy: ask
+accepted: 2026-10-08T04:46:18.179Z
+accepted_by: person
 ---
 
 # Bookkeeping lives where it is read
