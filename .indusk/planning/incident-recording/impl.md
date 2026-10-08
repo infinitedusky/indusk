@@ -59,8 +59,8 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 | A12 | The admin's promise page shows each open incident's age and links to its owner's Maintenance phase; a fixed one shows when it was fixed | Test Phase 1 | Build Phase 4 | passing | unit | promise: an-open-incident-stays-loud | apps/indusk-admin/src/components/Promises.incidents.test.tsx |
 | A13 | The catchup skill puts open incidents, with ages, ahead of the roadmap alongside unrecorded violations | Test Phase 1 | Build Phase 5 | passing | unit | promise: an-open-incident-stays-loud | apps/indusk-mcp/src/__tests__/catchup-records.test.ts |
 | A14 | An incident open longer than a day is announced again, in the inbox and in Slack when a webhook is named, once a day and not again the same day across restarts; fixing it ends the announcements | Build Phase 2 | Build Phase 2 | passing | unit | promise: an-open-incident-stays-loud | apps/indusk-mcp/src/lib/promises/reminders.test.ts |
-| A15 | `worktree create` on an archived plan with an open Maintenance phase creates its worktree and records the assignment; `assign` accepts one made another way; `list_plans` and the admin read the plan from it | Test Phase 1 | Build Phase 7 | written | unit | promise: a-reopened-plan-can-be-worked | apps/indusk-mcp/src/__tests__/reopened-plan-worktree.test.ts |
-| A16 | `worktree create` on an archived plan with no open Maintenance phase is refused, saying it is archived and how it reopens | Test Phase 1 | Build Phase 7 | written | unit | promise: a-reopened-plan-can-be-worked | apps/indusk-mcp/src/__tests__/reopened-plan-worktree.test.ts |
+| A15 | `worktree create` on an archived plan with an open Maintenance phase creates its worktree and records the assignment; `assign` accepts one made another way; `list_plans` and the admin read the plan from it | Test Phase 1 | Build Phase 7 | passing | unit | promise: a-reopened-plan-can-be-worked | apps/indusk-mcp/src/__tests__/reopened-plan-worktree.test.ts |
+| A16 | `worktree create` on an archived plan with no open Maintenance phase is refused, saying it is archived and how it reopens | Test Phase 1 | Build Phase 7 | passing | unit | promise: a-reopened-plan-can-be-worked | apps/indusk-mcp/src/__tests__/reopened-plan-worktree.test.ts |
 | A17 | When a pass opens or extends an incident, the project's inbox gains an entry naming the promise, the incident and the reopened plan | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/lib/promises/inbox.test.ts |
 | A18 | On a session's next turn the hook puts every undelivered inbox entry in front of the agent and marks it delivered; a later turn repeats nothing; another project's session sees nothing; an unreadable inbox is said | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/break-inbox-hook.test.ts |
 | A19 | Claude Code delivers the hook's text on the prompt after the entry was written: a session asked "what is next" names the broken promise first, without a catchup | Build Phase 3 | Build Phase 3 | passing | contract | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/e2e/break-inbox.e2e.test.ts |
@@ -295,19 +295,23 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 ### Build Phase 7: A reopened plan's worktree
 
-- [ ] `lib/worktree/plan-worktree-commands.ts` `requirePlan`: resolve the folder as `reopen.ts`'s `ownerDir` does — active, else archived — and accept an archived plan only when `openMaintenancePhasesIn` finds an open phase; otherwise refuse naming the archive and that a plan reopens through an incident (A15, A16); `createPlanWorktree` and `assignPlan` both go through it
+- [x] `lib/worktree/plan-worktree-commands.ts` `requirePlan`: resolve the folder as `reopen.ts`'s `ownerDir` does — active, else archived — and accept an archived plan only when `openMaintenancePhasesIn` finds an open phase; otherwise refuse naming the archive and that a plan reopens through an incident (A15, A16); `createPlanWorktree` and `assignPlan` both go through it
+- [x] (discovered: A15's "`list_plans` and the admin read the plan from it" had no test, and was false) `lib/worktree/plan-worktrees.ts` `resolvePlanCopies`: an assignment whose live worktree holds the plan's archived folder puts it in the inventory, as one holding an active folder already did — before, a reopened plan was read from the trunk and its worktree listed as unassigned; `worktreeCopy` flags `archivedInWorktree` ("awaiting landing" in the admin) only when the trunk's copy is not archived too, so a reopened plan reads as worked in its worktree. New case in `reopened-plan-worktree.test.ts`, red on its own assertion at each step
+- [x] (discovered) `reopened-plan-worktree.test.ts` read the assignment record through `gitOut`, which keeps git's trailing newline, so the path it checked never existed; it reads through the trimmed `git` helper the other worktree tests use
 
 #### Build Phase 7 Verification
 
-- [ ] A15, A16 pass; the worktree tests still do (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/reopened-plan-worktree.test.ts src/__tests__/plan-worktree*.test.ts src/lib/worktree`)
+- [x] (55/55; `vitest related` on both changed modules 127/127) A15, A16 pass; the worktree tests still do (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/reopened-plan-worktree.test.ts src/__tests__/plan-worktree*.test.ts src/lib/worktree`)
+
+- [x] Shape (reviewed `requirePlan`, `resolvePlanCopies`'s inventory filter, `worktreeCopy` and the test file — nothing found: `requirePlan` reads as active, reopened, closed, unknown, each with its own refusal; the reopened case in `worktreeCopy` is one early return beside the awaiting-landing one it is told apart from; `rules.unreadable` was empty)
 
 #### Build Phase 7 Context
 
-- [ ] planning `CLAUDE.md` (via the package template): a plan reopened from the archive is worked in a worktree like any other, `indusk worktree create <plan>`; a closed plan reopens through an incident, never through `worktree create`
+- [x] planning `CLAUDE.md` (via the package template): a plan reopened from the archive is worked in a worktree like any other, `indusk worktree create <plan>`; a closed plan reopens through an incident, never through `worktree create`
 
 #### Build Phase 7 Document
 
-- [ ] `apps/docs/src/reference/cli/worktree.md`: a reopened archived plan; changelog Fixed
+- [x] (step 1 of `create` names the reopened case and the refusal; the reader table gains its row) `apps/docs/src/reference/cli/worktree.md`: a reopened archived plan; changelog Fixed
 
 ## Files Affected
 

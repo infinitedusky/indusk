@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { git } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
+import { openMaintenancePhasesIn, ownerDir } from "../promises/reopen.js";
 import { currentTrunkBranch } from "../trunk-branch.js";
 import {
 	type Assignment,
@@ -41,14 +42,28 @@ async function writableRepository(anyCheckout: string): Promise<Repository> {
  * A plan is assigned once its folder exists — on the trunk, or in the
  * worktree being assigned. The second is a plan written on its own branch
  * (admin-plan-authoring): it has no folder on the trunk until it is approved.
+ * An archived plan is assigned only while an incident has reopened it — an
+ * open Maintenance phase in its impl, found as `watch` writes it
+ * (`ownerDir`); a closed one is refused, saying how a plan reopens.
  */
 function requirePlan(repo: Repository, plan: string, worktree?: string): void {
-	const exists = (root: string) => existsSync(join(root, PLANNING_REL, plan));
-	if (!isUsableSegment(plan) || !(exists(repo.projectRoot) || (worktree && exists(worktree)))) {
+	if (!isUsableSegment(plan)) {
+		throw new PlanWorktreeRefusal(`"${plan}" is not a usable plan name`);
+	}
+	const roots = worktree ? [repo.projectRoot, worktree] : [repo.projectRoot];
+	if (roots.some((root) => existsSync(join(root, PLANNING_REL, plan)))) return;
+	const archived = roots
+		.map((root) => ownerDir(root, plan))
+		.filter((dir): dir is string => dir !== null);
+	if (archived.some((dir) => openMaintenancePhasesIn(dir).length > 0)) return;
+	if (archived.length > 0) {
 		throw new PlanWorktreeRefusal(
-			`no plan named "${plan}" in ${join(repo.projectRoot, PLANNING_REL)}${worktree ? ` or ${join(worktree, PLANNING_REL)}` : ""} — a plan is assigned after its folder exists`,
+			`${plan} is archived (${archived[0]}) and has no open Maintenance phase — a closed plan reopens when an incident against one of its promises is recorded (indusk promises watch), not by creating a worktree`,
 		);
 	}
+	throw new PlanWorktreeRefusal(
+		`no plan named "${plan}" in ${roots.map((root) => join(root, PLANNING_REL)).join(" or ")} — a plan is assigned after its folder exists`,
+	);
 }
 
 /**

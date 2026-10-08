@@ -1,7 +1,8 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { gitOut, runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { copySource, resolvePlanCopies } from "../lib/worktree/plan-worktrees.js";
+import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import {
 	type PlanLifecycleProject,
 	planLifecycleProject,
@@ -42,7 +43,7 @@ status: completed
 `;
 
 const record = (p: PlanLifecycleProject): string => {
-	const common = gitOut(p.trunk, ["rev-parse", "--path-format=absolute", "--git-common-dir"]);
+	const common = git(p.trunk, ["rev-parse", "--path-format=absolute", "--git-common-dir"]);
 	const file = join(common, "indusk-plan-worktrees.json");
 	return existsSync(file) ? readFileSync(file, "utf-8") : "";
 };
@@ -63,30 +64,51 @@ afterEach(() => p.cleanup());
 
 const out = (r: { stdout: string; stderr: string }) => `${r.stdout}\n${r.stderr}`;
 
-describe.skipIf(SHOULD_SKIP)("A15 — a reopened archived plan gets a worktree like any other", () => {
-	it("`worktree create` makes its worktree and records the assignment", () => {
-		const r = runCli(p.trunk, ["worktree", "create", REOPENED]);
-		expect(r.code, out(r)).toBe(0);
-		expect(existsSync(p.worktreeOf(REOPENED))).toBe(true);
-		expect(record(p)).toContain(`"plan": "${REOPENED}"`);
-	});
+describe.skipIf(SHOULD_SKIP)(
+	"A15 — a reopened archived plan gets a worktree like any other",
+	() => {
+		it("`worktree create` makes its worktree and records the assignment", () => {
+			const r = runCli(p.trunk, ["worktree", "create", REOPENED]);
+			expect(r.code, out(r)).toBe(0);
+			expect(existsSync(p.worktreeOf(REOPENED))).toBe(true);
+			expect(record(p)).toContain(`"plan": "${REOPENED}"`);
+		});
 
-	it("`worktree assign` accepts a worktree made another way", () => {
-		const path = p.worktreeOf(REOPENED);
-		git(p.trunk, ["worktree", "add", "-q", path, "-b", `plan/${REOPENED}`, "main"]);
-		const r = runCli(p.trunk, ["worktree", "assign", REOPENED, path]);
-		expect(r.code, out(r)).toBe(0);
-		expect(record(p)).toContain(`"plan": "${REOPENED}"`);
-	});
-});
+		it("readers take the plan from its worktree, and the worktree counts as assigned", async () => {
+			const r = runCli(p.trunk, ["worktree", "create", REOPENED]);
+			expect(r.code, out(r)).toBe(0);
+			const all = await resolvePlanCopies(p.trunk);
+			if (!all.ok) throw new Error(all.problem);
+			const copy = all.copies.get(REOPENED);
+			expect(copy?.source, "the reopened plan is read from the trunk").toBe("worktree");
+			expect(copy?.dir).toBe(
+				join(realpathSync(p.worktreeOf(REOPENED)), ".indusk", "planning", "archive", REOPENED),
+			);
+			expect(all.unassigned.map((w) => w.path)).not.toContain(realpathSync(p.worktreeOf(REOPENED)));
+			// Archived on the trunk too: reopened, not "archived on its branch, awaiting landing".
+			expect(copySource(copy)).toEqual({ worktree: expect.anything() });
+		});
 
-describe.skipIf(SHOULD_SKIP)("A16 — a closed archived plan is refused, and told how a plan reopens", () => {
-	it("names the archive and the incident route, and creates nothing", () => {
-		const r = runCli(p.trunk, ["worktree", "create", CLOSED]);
-		expect(r.code).not.toBe(0);
-		expect(out(r)).toMatch(/archive/i);
-		expect(out(r)).toMatch(/incident/i);
-		expect(out(r)).not.toMatch(/no plan named/);
-		expect(existsSync(p.worktreeOf(CLOSED))).toBe(false);
-	});
-});
+		it("`worktree assign` accepts a worktree made another way", () => {
+			const path = p.worktreeOf(REOPENED);
+			git(p.trunk, ["worktree", "add", "-q", path, "-b", `plan/${REOPENED}`, "main"]);
+			const r = runCli(p.trunk, ["worktree", "assign", REOPENED, path]);
+			expect(r.code, out(r)).toBe(0);
+			expect(record(p)).toContain(`"plan": "${REOPENED}"`);
+		});
+	},
+);
+
+describe.skipIf(SHOULD_SKIP)(
+	"A16 — a closed archived plan is refused, and told how a plan reopens",
+	() => {
+		it("names the archive and the incident route, and creates nothing", () => {
+			const r = runCli(p.trunk, ["worktree", "create", CLOSED]);
+			expect(r.code).not.toBe(0);
+			expect(out(r)).toMatch(/archive/i);
+			expect(out(r)).toMatch(/incident/i);
+			expect(out(r)).not.toMatch(/no plan named/);
+			expect(existsSync(p.worktreeOf(CLOSED))).toBe(false);
+		});
+	},
+);

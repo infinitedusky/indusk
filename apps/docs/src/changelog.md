@@ -24,6 +24,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Fixed
 
+- **A plan an incident reopened gets a worktree** (incident-recording): `indusk worktree create` and `assign` refused an archived plan with an open Maintenance phase as "no plan named …"; they now accept it, and refuse a closed archived plan saying how a plan reopens. Once assigned, the plan tools and the admin read it from its worktree; before, they read the trunk's archived copy and listed the worktree as unassigned.
 - **`indusk ui stop` knows its daemon by when it started, never by its port** (small-fixes): the admin daemon's stop and status had the port-based identity check `telemetry stop` was cured of in 1.60 — under load a slow port read as "not ours", and stop skipped its own process and deleted the record. One rule now, `lib/process-identity.ts`, behind both stops. The admin's daemon is a `next` process that started when its record says: `next start` renames itself `next-server (vX)`, so the binary and port it was given are not in its command line, and an install moves its working directory, but its start time stays. A daemon still running after SIGTERM and SIGKILL is reported, with a non-zero exit, and its record kept.
 - **The approval gate reads the whole file** (small-fixes): an Edit that moved a draft's status without including the `status:` key, or a frontmatter that wrote `status: "draft"` in quotes, got past it.
 - **`stash-guard` refuses `git stash branch <name>` with no stash named**: it pops the top entry into a new branch.

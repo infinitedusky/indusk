@@ -196,8 +196,10 @@ function copyFor(
 
 /**
  * The copy in a live assigned worktree, found on disk: the active plan folder,
- * else the archived one (the retrospective moves it on the branch before the
- * landing releases), else the trunk's copy with the folder reported missing.
+ * else the archived one — awaiting landing when only the branch archived it
+ * (the retrospective moves it before the landing releases), reopened when the
+ * trunk's is archived too — else the trunk's copy with the folder reported
+ * missing.
  */
 function worktreeCopy(
 	plan: string,
@@ -211,6 +213,11 @@ function worktreeCopy(
 	if (existsSync(active)) return { plan, root: path, dir: active, source: "worktree", worktree };
 	const archived = join(planning, "archive", plan);
 	if (existsSync(archived)) {
+		// Archived on the trunk as well: a closed plan an incident reopened,
+		// worked here like any other — not one awaiting its landing.
+		if (existsSync(join(getPlanningDir(trunk.root), "archive", plan))) {
+			return { plan, root: path, dir: archived, source: "worktree", worktree };
+		}
 		return {
 			plan,
 			root: path,
@@ -250,11 +257,16 @@ export async function resolvePlanCopies(anyCheckout: string): Promise<PlanCopies
 	const copies = new Map<string, PlanCopy>();
 	const claimed = new Set<string>();
 	// A plan written on its own branch has no trunk folder until it is
-	// approved (admin-plan-authoring); its assignment is how a reader finds it.
+	// approved (admin-plan-authoring), and an archived plan reopened by an
+	// incident has only an archived one (incident-recording); in both, its
+	// assignment is how a reader finds it.
 	const onTrunk = trunkPlans(repo.projectRoot);
 	const branchOnly = record.assignments
 		.filter((a) => !onTrunk.includes(a.plan) && repo.linked.has(canonical(a.path)))
-		.filter((a) => existsSync(join(getPlanningDir(canonical(a.path)), a.plan)))
+		.filter((a) => {
+			const planning = getPlanningDir(canonical(a.path));
+			return existsSync(join(planning, a.plan)) || existsSync(join(planning, "archive", a.plan));
+		})
 		.map((a) => a.plan);
 	for (const plan of [...new Set([...onTrunk, ...branchOnly])].sort()) {
 		const { copy, live } = copyFor(plan, record.assignments, repo);
