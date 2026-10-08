@@ -1,5 +1,7 @@
 import { execFile } from "node:child_process";
-import { join } from "node:path";
+import { realpathSync } from "node:fs";
+import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { releaseBranchBookkeeping } from "../bookkeeping/migrate.js";
 import { readConfig } from "../config.js";
@@ -41,10 +43,20 @@ export interface LandedPlan {
 	checks: string[];
 }
 
-export async function landPlan(anyCheckout: string, plan: string): Promise<LandedPlan> {
+export interface LandOptions {
+	/** Where the running `indusk` is installed; this module's own file when not given. */
+	runningFrom?: string;
+}
+
+export async function landPlan(
+	anyCheckout: string,
+	plan: string,
+	opts: LandOptions = {},
+): Promise<LandedPlan> {
 	refuseInsideBuildStep("landed", plan);
+	const runningFrom = opts.runningFrom ?? fileURLToPath(import.meta.url);
 	const wp = await workbenchPlan(anyCheckout, plan);
-	if (wp) return landWorkbenchPlan(wp);
+	if (wp) return landWorkbenchPlan(wp, runningFrom);
 	const pb = await planBranch(anyCheckout, plan);
 	const impl = implPath(pb);
 	if (!implKey(impl, "accepted")) {
@@ -52,6 +64,7 @@ export async function landPlan(anyCheckout: string, plan: string): Promise<Lande
 			`${plan} has not been accepted, so it does not land — accept it first (indusk plans accept ${plan})`,
 		);
 	}
+	refuseRemovingOwnBuild(plan, pb.worktree, pb.trunk, runningFrom);
 	await refuseDirtyWorktree(pb);
 	releaseBranchBookkeeping(pb.worktree);
 
@@ -94,13 +107,14 @@ export async function landPlan(anyCheckout: string, plan: string): Promise<Lande
  *
  * promise: nothing-ships-until-accepted
  */
-async function landWorkbenchPlan(wp: WorkbenchPlan): Promise<LandedPlan> {
+async function landWorkbenchPlan(wp: WorkbenchPlan, runningFrom: string): Promise<LandedPlan> {
 	const { plan, code, repoTrunk, trunkBranch } = wp;
 	if (!implKey(join(wp.dir, "impl.md"), "accepted")) {
 		throw new PlanCommandRefusal(
 			`${plan} has not been accepted, so it does not land — accept it first (indusk plans accept ${plan})`,
 		);
 	}
+	refuseRemovingOwnBuild(plan, code.worktree, repoTrunk, runningFrom);
 	const dirty = await git(code.worktree, "status", "--porcelain");
 	if (dirty) {
 		throw new PlanCommandRefusal(
@@ -151,6 +165,33 @@ async function landWorkbenchPlan(wp: WorkbenchPlan): Promise<LandedPlan> {
 	await git(repoTrunk, "worktree", "remove", code.worktree);
 	await git(repoTrunk, "branch", "-d", code.branch);
 	return { plan, merge, checks };
+}
+
+/**
+ * Landing removes the plan's worktree. When the running `indusk` is installed
+ * from that worktree — `pnpm install:local` run on the plan's branch links the
+ * global install there — the land would delete its own files mid-run and
+ * leave the next step's `indusk` dangling (small-fixes A21). Refused before
+ * anything is merged, naming the re-link.
+ */
+function refuseRemovingOwnBuild(
+	plan: string,
+	worktree: string,
+	trunk: string,
+	runningFrom: string,
+): void {
+	const real = (p: string) => {
+		try {
+			return realpathSync(p);
+		} catch {
+			return p;
+		}
+	};
+	const rel = relative(real(worktree), real(runningFrom));
+	if (rel.startsWith("..") || rel.startsWith("/")) return;
+	throw new PlanCommandRefusal(
+		`the indusk running this is installed from ${plan}'s worktree (${worktree}), which landing removes. Install from the trunk first — in ${trunk}: pnpm install:local (or npm install -g ./apps/indusk-mcp) — then land again`,
+	);
 }
 
 function landChecks(trunk: string): string[] {
