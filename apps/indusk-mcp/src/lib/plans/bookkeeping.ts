@@ -21,7 +21,9 @@ const BOOKKEEPING_FILES = [
 	".indusk/highlights.jsonl",
 	".indusk/highlights-processed.jsonl",
 ];
-const BOOKKEEPING_DIRS = [".indusk/eval/", ".claude/lessons/"];
+// Incidents are written unprompted by the recorder (incident-recording, ADR
+// D3): InDusk's, like the lessons, and committed rather than left behind.
+const BOOKKEEPING_DIRS = [".indusk/eval/", ".claude/lessons/", ".indusk/promises/incidents/"];
 
 export function isBookkeeping(path: string): boolean {
 	return BOOKKEEPING_FILES.includes(path) || BOOKKEEPING_DIRS.some((dir) => path.startsWith(dir));

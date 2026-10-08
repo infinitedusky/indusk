@@ -73,6 +73,8 @@ export interface RecordResult {
 	mark?: PassMark;
 	/** Set when the pass was refused before it read anything, naming why. */
 	refused?: string;
+	/** What broke the pass, when it marked itself broken: a caller's own reporting reads it. */
+	error?: Error;
 }
 
 /** How long a caller waits for another's pass before it gives up. */
@@ -145,8 +147,9 @@ function pick(changes: WatchChange[], kind: WatchChange["kind"]): RecordedChange
 }
 
 function failed(result: RecordResult, mark: (m: PassMark) => void, err: unknown): RecordResult {
-	const symptom = (err as Error).message ?? String(err);
-	result.mark = { outcome: "violated", symptom };
+	const error = err instanceof Error ? err : new Error(String(err));
+	result.mark = { outcome: "violated", symptom: error.message };
+	result.error = error;
 	mark(result.mark);
 	return result;
 }
