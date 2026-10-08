@@ -181,7 +181,7 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: `watch` commits what it writes, naming the commit; the recorder's writer and its mark; `apps/docs/src/changelog.md` Unreleased: Changed — `promises watch` commits
+- [x] (the `watch` section's "commits nothing" replaced: the commit, the worktree case, the workbench case, the three callers, the lock and the pass's mark; changelog Unreleased Changed) `apps/docs/src/reference/cli/promises.md`: `watch` commits what it writes, naming the commit; the recorder's writer and its mark; `apps/docs/src/changelog.md` Unreleased: Changed — `promises watch` commits
 
 ### Build Phase 2: What a pass leaves for the machine
 
