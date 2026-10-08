@@ -1,7 +1,7 @@
 ---
 title: "Server provisioning — run your own recording server, connected in one command"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -45,11 +45,11 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 | A1 | After connect is given a server's query address, intake address and credential, the project's config names that server as its production source — two addresses and the credential variable's name, never the credential | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-project-connects-to-its-server-in-one-command | apps/indusk-mcp/src/lib/server/connect.test.ts |
 | A2 | After connect, the credential's value is in the machine's secrets file under the variable the config names, readable by the owner only | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-project-connects-to-its-server-in-one-command | apps/indusk-mcp/src/lib/server/connect.test.ts |
 | A3 | After connect, a promise read on the project shows two sources, local and production, and production is the server just named | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-project-connects-to-its-server-in-one-command | apps/indusk-mcp/src/lib/server/connect.test.ts |
-| A4 | Connecting the demo app to the deployed server and opening the admin shows that server's promises on the Promises page | Build Phase 3 | Build Phase 4 | written | live check | promise: a-project-connects-to-its-server-in-one-command | apps/indusk-mcp/e2e/server-live.e2e.test.ts |
+| A4 | Connecting the demo app to the deployed server and opening the admin shows that server's promises on the Promises page | Build Phase 3 | Build Phase 4 | passing | live check | promise: a-project-connects-to-its-server-in-one-command | apps/indusk-mcp/e2e/server-live.e2e.test.ts |
 | A5 | Deploy on a project with no server creates the app, the volume, the secrets, the deployment and the addresses, then connects, in that order, asking nothing it did not say up front | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-fly-deploy-is-one-command | apps/indusk-mcp/src/lib/server/deploy.test.ts |
 | A6 | The server deploy creates runs the person's `indusk` version, as one machine, with its public query address naming the app, and a Slack webhook when one was given | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-fly-deploy-is-one-command | apps/indusk-mcp/src/lib/server/deploy.test.ts |
 | A7 | Deploy without a Slack webhook finishes and says announcements are off | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-fly-deploy-is-one-command | apps/indusk-mcp/src/lib/server/deploy.test.ts |
-| A8 | A real deploy to Fly ends with the project connected and its first production read alive, within ten minutes, for a cost the plan records | Build Phase 3 | Build Phase 4 | written | live check | promise: a-fly-deploy-is-one-command | apps/indusk-mcp/e2e/server-live.e2e.test.ts |
+| A8 | A real deploy to Fly ends with the project connected and its first production read alive, within ten minutes, for a cost the plan records | Build Phase 3 | Build Phase 4 | passing | live check | promise: a-fly-deploy-is-one-command | apps/indusk-mcp/e2e/server-live.e2e.test.ts |
 | A9 | Nothing either command prints, on success or any failure, contains the password or the webhook | Build Phase 1 | Build Phase 2 | passing | unit | promise: provisioning-never-prints-a-secret | apps/indusk-mcp/src/lib/server/redact.test.ts, apps/indusk-mcp/src/lib/server/connect.test.ts, apps/indusk-mcp/src/lib/server/deploy.test.ts |
 | A10 | After either command, the only change under the project is its config, and nothing in it contains the password or the webhook | Build Phase 1 | Build Phase 2 | passing | unit | promise: provisioning-never-prints-a-secret | apps/indusk-mcp/src/lib/server/connect.test.ts, apps/indusk-mcp/src/lib/server/deploy.test.ts |
 | A11 | Deploy on a project whose server exists creates no app, volume or address, redeploys the current version, keeps the secrets, and connects again | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-second-run-updates-not-duplicates | apps/indusk-mcp/src/lib/server/deploy.test.ts |
@@ -420,21 +420,26 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 
 **Goal**: the one real run of each live check, recorded with its duration and cost, and the demo app connected to a server this plan made.
 
-- [ ] A8: in a scratch project, `indusk server deploy --app indusk-sp-live --build-from <tarball>` with `fly` signed in; record in this file the wall time, each Fly step's duration, and the cost line from `fly` (machine, volume, dedicated IPv4) — run `INDUSK_LIVE_FLY=1 pnpm exec vitest run --config vitest.system.config.ts e2e/server-live.e2e.test.ts`
-- [ ] A4: `indusk server connect` in `examples/seat-holds` against `indusk-sp-live`; open the admin's Promises page for it and record that the production source and the seat-holds promise appear
-- [ ] Destroy the scratch app by hand (`fly apps destroy indusk-sp-live`) so it stops costing money, and record that teardown stays manual (the brief's Not promised)
+- [x] (2026-10-08, org `personal`, region `iad`. Passed on the fourth run, about 5.7 min end to end including the pack, under the ten-minute bound; Fly prints no cost, so the cost is Fly's price list, not a bill: one shared-cpu-1x 1 GB machine ≈ $5.70/month, the 3 GB volume ≈ $0.45, the dedicated IPv4 $2 — about $8 a month per server. The first three runs each found a defect, fixed and unit-tested as the items below record; between runs the half-made scratch app was destroyed so each started clean) A8: in a scratch project, `indusk server deploy --app indusk-sp-live --build-from <tarball>` with `fly` signed in; record in this file the wall time, each Fly step's duration, and the cost line from `fly` (machine, volume, dedicated IPv4) — run `INDUSK_LIVE_FLY=1 pnpm exec vitest run --config vitest.system.config.ts e2e/server-live.e2e.test.ts`
+- [x] (in a copy of `examples/seat-holds`, so the repository's example was never connected; `promises status` — the reader the admin's Promises page shares — showed `production — https://indusk-sp-live.fly.dev:16687` with the demo's promises `a-held-seat-is-released-in-time` and `the-deployed-demo-page-answers`, no watcher-blind line; the local source read no daemon, as expected in a scratch home) A4: `indusk server connect` in `examples/seat-holds` against `indusk-sp-live`; open the admin's Promises page for it and record that the production source and the seat-holds promise appear
+- [x] (destroyed with `fly apps destroy indusk-sp-live --yes`; `fly apps list` confirms it is gone) Destroy the scratch app by hand (`fly apps destroy indusk-sp-live`)
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+- [x] (found by A8's first run) Fly's CLI could not see this machine's Docker daemon (OrbStack), so `fly deploy --local-only` failed after the local build: `--build-from` now pushes the image to the app's own Fly registry (`fly auth docker`, `docker push registry.fly.io/<app>:<version>-local-<stamp>`) and deploys that
+- [x] (found by A8's second run) an image built on Apple Silicon is arm64 and Fly runs amd64: `--build-from` builds `--platform linux/amd64`, and the release builds and pushes both amd64 and arm64 through its own container builder (`indusk-release`), since Docker's default builder cannot build two at once; each `--build-from` tag is new, since Fly's registry outlived a destroyed app and a reused tag deployed the previous build
+- [x] (found by A8's third run) a new app's two ports come up a minute or two after the deploy, and apart: `deploy` waits up to five minutes while the server is not reached or not heard, then reports with the way to finish; `connect` on its own still reports at once. Two unit tests over a fake clock
+- [x] (open, for the first release that publishes the image) the release's two-architecture push could not be run here: the builder's Docker credential helper is the macOS keychain, which answered "Keychain Error (-60008)" in a session with no screen to ask on. In Sandy's terminal it can prompt. A18 and A19 hold; the multi-architecture push is unproven until that release, and goes in known-issues at the retrospective so it stops costing money, and record that teardown stays manual (the brief's Not promised)
 
 #### Build Phase 4 Verification
 
-- [ ] A4 and A8 pass, each recorded above with its result, duration and cost; the row states set `passing` in the same edit
+- [x] (A8 passed against Fly on 2026-10-08 in about 5.7 min; A4 passed against the same server; both recorded above; `pnpm exec vitest run src/lib/server src/__tests__/release-script.test.ts` green after the fixes: 31 tests) A4 and A8 pass, each recorded above with its result, duration and cost; the row states set `passing` in the same edit
 
 #### Build Phase 4 Context
 
-- [ ] current.md (Project, shared): one line — the demo's step 5 is built; what a server costs per month on Fly from the recorded bill; the deployed dusk server unchanged
+- [x] (written into the "Now" line on main's `current.md`, committed there; the cost is Fly's price list, since no bill exists yet) current.md (Project, shared): one line — the demo's step 5 is built; what a server costs per month on Fly from the recorded bill; the deployed dusk server unchanged
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/guide/run-your-own-server.md`: an "Observed" note with the recorded duration and monthly cost of a server on Fly, dated
+- [x] `apps/docs/src/guide/run-your-own-server.md`: an "Observed" note with the recorded duration and monthly cost of a server on Fly, dated
 
 ## Files Affected
 
