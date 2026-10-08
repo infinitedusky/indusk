@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -39,5 +39,34 @@ describe("A14 — one definition of process identity, used by both stops", () =>
 		expect(daemon, LESSON).toMatch(/from "\.\.\/process-identity\.js"/);
 		const identity = daemon.slice(daemon.indexOf("function verifyIdentity"));
 		expect(identity.slice(0, identity.indexOf("\n}")), LESSON).not.toContain("isPortListening");
+	});
+});
+
+/**
+ * small-fixes A23 (cleanup): the reads behind identity are defined once too.
+ * Three copies each of "is it alive" and "what does `ps` say it is" sat in
+ * the admin daemon, the telemetry daemon and the session manager — and had
+ * already drifted: only the admin's read `ps` in the C locale, which
+ * `lstart` needs to parse.
+ */
+describe("A23 — one place reads whether a process is alive and what `ps` says it is", () => {
+	const sources = (dir: string): string[] =>
+		readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+			const p = join(dir, e.name);
+			if (e.isDirectory()) return e.name === "__tests__" ? [] : sources(p);
+			return /\.ts$/.test(e.name) && !/\.test(-support)?\.ts$/.test(e.name) ? [p] : [];
+		});
+	const definers = (pattern: RegExp) =>
+		sources(LIB)
+			.filter((f) => pattern.test(readFileSync(f, "utf-8")))
+			.map((f) => f.slice(LIB.length))
+			.sort();
+
+	it("only `process-identity.ts` signals 0 to ask whether a pid is alive", () => {
+		expect(definers(/\bkill\(\s*\w+\s*,\s*0\s*\)/), LESSON).toEqual(["process-identity.ts"]);
+	});
+
+	it("only `process-identity.ts` asks `ps` about one pid", () => {
+		expect(definers(/["']ps["'],\s*\[[^\]]*["']-p["']/), LESSON).toEqual(["process-identity.ts"]);
 	});
 });

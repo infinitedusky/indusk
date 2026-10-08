@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
 	ensureHookRegistered,
@@ -94,5 +96,39 @@ describe("A11 — hookFileOf reads the file a registered command runs", () => {
 		["npx something-else", null],
 	])("%s → %s", (command, file) => {
 		expect(hookFileOf(command)).toBe(file);
+	});
+});
+
+/**
+ * small-fixes A24 (cleanup): which hooks a project registers is one table.
+ * `init` and `update` each kept a list; adding the stash guard meant editing
+ * both, as the hooks CLAUDE.md said to. Both now read `HOOK_REGISTRATIONS`.
+ *
+ * promise: one-definition-per-shared-rule
+ */
+describe("A24 — init and update register hooks from one table", () => {
+	const SRC = new URL("../", import.meta.url).pathname;
+	const HOOKS = new URL("../../hooks/", import.meta.url).pathname;
+	const registered = readdirSync(HOOKS)
+		.filter((f) => f.endsWith(".js") && !f.startsWith("_"))
+		.sort();
+
+	it("the table names every registered hook in the package, under an event and a matcher", async () => {
+		const mod = (await import("../lib/hook-command.js")) as Record<string, unknown>;
+		const table = mod.HOOK_REGISTRATIONS as [string, string, string][] | undefined;
+		expect(table, "lib/hook-command.ts exports HOOK_REGISTRATIONS").toBeDefined();
+		expect([...new Set((table ?? []).map(([, , file]) => file))].sort()).toEqual(registered);
+		for (const [event, matcher] of table ?? []) {
+			expect(["PreToolUse", "PostToolUse"]).toContain(event);
+			expect(matcher).toMatch(/^(Edit\|Write|Bash)$/);
+		}
+	});
+
+	it("neither init.ts nor update.ts names a hook file of its own", () => {
+		for (const rel of ["bin/commands/init.ts", "bin/commands/update.ts"]) {
+			const source = readFileSync(join(SRC, rel), "utf-8");
+			const named = registered.filter((f) => source.includes(`"${f}"`));
+			expect(named, `${rel} names hooks outside the table`).toEqual([]);
+		}
 	});
 });
