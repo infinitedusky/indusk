@@ -1,9 +1,11 @@
 ---
 title: "Demo — a new project, start to finish"
 date: 2026-10-04
+updated: 2026-10-08
 status: living
 # Ordered children: the demo path, in build order. Each child is a small plan
-# of its own; the parent holds only the script and the order.
+# of its own; the parent holds only the script and the order. A name with no
+# folder renders as queued until it is opened with /planner.
 subplans:
   - day-always-on-deploy
   - promise-sources
@@ -11,11 +13,24 @@ subplans:
   - planner-promises
   - admin-plan-authoring
   - demo-app-template
-  - server-provisioning
+  - incident-recording
+  - vscode-extension
+  - plan-cockpit
   - demo-rehearsal
+  - server-provisioning
 ---
 
 # Demo — a new project, start to finish
+
+> **Where we are (2026-10-08).** Steps 0–4 are closed: the server, both
+> promise sources, the timeline, the planner's promises, planning and building
+> from the UI, and the demo app. **The next step is
+> [incident-recording](../incident-recording/brief.md)** — the watcher runs by
+> itself and a break announces itself. After it, in order: the VS Code
+> extension, plan-cockpit, the rehearsal. Server provisioning comes after the
+> launch. The sequence is the one the root
+> [master](../master.md)'s "Now — show the promise loop" sets out; this file
+> is its demo-side copy and the one the admin's sidebar reads.
 
 **Audience** (Sandy, 2026-10-04): people Sandy wants to join the build effort.
 **What they should see**: how you would start a new project with InDusk, and
@@ -94,11 +109,11 @@ Made after reviewing the script against what is built (Sandy chose each).
 | 0 | [day-always-on-deploy](../archive/day-always-on-deploy/brief.md) | the server, verified on Fly — closed 2026-10-04 |
 | 1 | [promise-sources](../archive/promise-sources/brief.md) | local and production read side by side — closed 2026-10-05 |
 | 2 | [promise-timeline](../archive/promise-timeline/brief.md) | promises holding over time, and the chip rules both break steps end on — closed 2026-10-05 |
-| 3 | [admin-plan-authoring](../admin-plan-authoring/brief.md) | "New plan" and "Build" in the UI, through the CLI |
-| 4 | [demo-app-template](../demo-app-template/brief.md) | a working app to promise about, deploy and break |
-| 5 | [server-provisioning](../server-provisioning/brief.md) | one command gives a project its server |
+| 3 | [admin-plan-authoring](../archive/admin-plan-authoring/brief.md) | "New plan" and "Build" in the UI, through the CLI — closed 2026-10-06 |
+| 4 | [demo-app-template](../archive/demo-app-template/brief.md) | a working app to promise about, deploy and break — closed 2026-10-07 |
+| 5 | [server-provisioning](../server-provisioning/brief.md) | one command gives a project its server — after the launch (2026-10-08) |
 | 6 | [planner-promises](../archive/planner-promises/brief.md) | the planner asks for promises — closed 2026-10-05 |
-| 7 | demo-rehearsal | record a dry run of the script end to end, fix what it trips on |
+| 7 | demo-rehearsal | record a dry run of the script end to end, fix what it trips on — after step 10 |
 
 **Built out of this order** (Sandy, 2026-10-05): `planner-promises` goes
 next, ahead of steps 3–5. It depends on none of them, it edits the planner
@@ -111,4 +126,39 @@ are, because other documents cite them.
 `claude` started from the admin, a question answered through it, a permission
 prompt answered through it. It is the one piece whose failure changes the
 script, so it is tried first. The spike's questions are in
-[admin-plan-authoring's brief](../admin-plan-authoring/brief.md).
+[admin-plan-authoring's brief](../archive/admin-plan-authoring/brief.md).
+
+## Decisions (2026-10-08)
+
+Sandy, after small-fixes closed: the goal is to show a promise breaking and
+the system catching it, as fast as possible, for the launch and for showing at
+Lazer. The demo's remaining path is the root master's "Now" sequence, and
+this file now carries it so the sidebar and the numbers agree.
+
+- **incident-recording comes back into the demo**, as the next step. The
+  2026-10-04 decision deferred it because `watch` could be run by hand; the
+  demo's script step 6 is the watcher catching a production break on its own,
+  which is what the step builds. Its brief is at
+  [incident-recording/brief.md](../incident-recording/brief.md) (draft).
+- **Two steps are declared and not yet opened**, so they show as queued in the
+  sidebar until `/planner` opens each with its brief:
+  - **vscode-extension** — promise markers on the code that carries each
+    promise, live health from telemetry, "fix with Claude" on a break. The
+    break moment, where the fix happens.
+  - **plan-cockpit** — stage 1 of
+    [contract-ui](../contract-ui/brief.md): promise views first (the dashboard,
+    broken first; the promise page with its proof), then the plan page. Its
+    mockup and draft are in `apps/indusk-admin-mockup/`.
+- **demo-rehearsal follows plan-cockpit**: the dry run is recorded once the
+  views it records exist.
+- **server-provisioning moves after the launch.** The demo's server already
+  exists (step 0, deployed on Fly); one command per project is for the people
+  the demo brings in, not for the recording. Its brief stays where it is.
+- **Build order is 4 → 8 → 9 → 10 → 7 → 5.** The step numbers stay as they
+  are, because other documents cite them.
+
+| # | Plan | What it adds to the demo |
+|---|---|---|
+| 8 | [incident-recording](../incident-recording/brief.md) | the watcher runs by itself; a break becomes an incident and announces itself — **next** |
+| 9 | vscode-extension | the break moment in the editor: markers, live health, "fix with Claude" — not opened yet |
+| 10 | plan-cockpit | the promise views: dashboard, promise page with its proof, then the plan page — not opened yet |
