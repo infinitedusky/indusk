@@ -16,6 +16,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Fixed
 
+- **The admin's scorecards page reads each project's results from its home**, and its empty state says where they will appear (`indusk eval home`), instead of naming `.indusk/eval/`.
+- **`pnpm test:system` runs every package's system tier**, even when an earlier one fails; before, a failure in indusk-mcp's tier skipped the admin's, whose failures then surfaced only at release.
 - **The evaluator only reads the checkout it grades.** It ran with `bypassPermissions`, and was found stashing, checking out and popping files in a live worktree while a session worked there. It now runs with its tools allowed by name: read-only git, InDusk's MCP tools, and every git command that changes a checkout denied.
 
 ## [1.65.1] — 2026-10-07

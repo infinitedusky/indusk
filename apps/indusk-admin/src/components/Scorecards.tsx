@@ -13,7 +13,7 @@ import type { Scorecard } from "@/lib/planning-reader";
 
 /**
  * Scorecard rendering. Used by the global /scorecards page (every scorecard
- * from `.indusk/eval/results.log`, framed as a system-improvement signal,
+ * from each project's results log in its home, framed as a system-improvement signal,
  * not as plan-specific data).
  *
  * Per the user's framing: scorecards are not relevant to any individual plan
@@ -64,9 +64,9 @@ export function ScorecardsList({
           the system could improve. Not tied to any single plan.
         </p>
         <p className="text-xs text-gray-500">
-          Source: <span className="font-mono">.indusk/eval/results.log</span>{" "}
-          across every registered project ({sorted.length} entries, most recent
-          first)
+          Source: <span className="font-mono">eval/results.log</span> in each
+          project's home across every registered project ({sorted.length}{" "}
+          entries, most recent first)
         </p>
       </header>
 

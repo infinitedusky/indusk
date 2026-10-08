@@ -11,7 +11,7 @@ interface ScorecardsRouteProps {
 
 /**
  * Per-project scorecards view — reads a single project's
- * `.indusk/eval/results.log` and renders the list. Replaces the Phase 4
+ * its results log in the project's home and renders the list. Replaces the Phase 4
  * cross-project `/scorecards` route, which is removed in Phase 6 as part
  * of the project-siloing move.
  *
@@ -57,7 +57,7 @@ export default async function PerProjectScorecardsPage({
   if (scorecards.length === 0) {
     // Not an error — just no scorecards yet. Say WHY: the eval directory is
     // created by the evaluator's first append, so a project that has never
-    // had an evaluated commit has no `.indusk/eval/` at all (A24).
+    // had an evaluated commit has no eval directory in its home at all (A24).
     const neverEvaluated = !hasEvalDirectory(projectPath);
     return (
       <div className="flex flex-col gap-2" data-testid="scorecards-empty">
@@ -66,7 +66,7 @@ export default async function PerProjectScorecardsPage({
         </h1>
         <p className="text-sm text-gray-500">
           {neverEvaluated
-            ? "no evaluations recorded yet — the first evaluated commit creates `.indusk/eval/`; make a `git commit` inside a Claude Code session to trigger the eval agent."
+            ? "no evaluations recorded yet — the first evaluated commit writes them to the project's home (`indusk eval home`); make a `git commit` inside a Claude Code session to trigger the eval agent."
             : "No eval scorecards recorded for this project yet. Make a `git commit` to trigger the eval agent."}
         </p>
       </div>

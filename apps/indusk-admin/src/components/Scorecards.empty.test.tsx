@@ -50,7 +50,7 @@ import PerProjectScorecardsPage from "@/app/p/[project]/scorecards/page";
 /**
  * admin-ui-phase-progress — A24.
  *
- * `.indusk/eval/` is created by the evaluator's first append, so a project
+ * A project's eval directory is created by the evaluator's first append, so a project
  * shows no scorecards until its first evaluated commit — the "only loads
  * after a prompt" observation. That is the writer's behaviour, not the
  * admin's; the admin's honest change is to say so. Authored RED in Test
@@ -65,6 +65,6 @@ describe("A24 — a project with no eval directory says why it is empty", () => 
     });
     const { container } = await render(ui);
     expect(container.textContent).toContain("no evaluations recorded yet");
-    expect(container.textContent).toContain(".indusk/eval/");
+    expect(container.textContent).toContain("indusk eval home");
   });
 });

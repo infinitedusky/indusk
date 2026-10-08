@@ -7,6 +7,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
+import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { startNextDev } from "./helpers/next-dev";
 
@@ -47,7 +48,9 @@ beforeAll(async () => {
     [projA, "alpha-project-siloed-marker"],
     [projB, "beta-project-siloed-marker"],
   ] as const) {
-    mkdirSync(path.join(proj, ".indusk/eval"), { recursive: true });
+    // Results live in the project's home under the server's INDUSK_HOME
+    // (bookkeeping-lives-where-it-is-read), not in the checkout.
+    mkdirSync(evalDir(proj, testHome), { recursive: true });
     const entry = {
       timestamp: new Date().toISOString(),
       changeId: `${marker}-change`,
@@ -56,7 +59,7 @@ beforeAll(async () => {
       mode: "eval",
     };
     appendFileSync(
-      path.join(proj, ".indusk/eval/results.log"),
+      path.join(evalDir(proj, testHome), "results.log"),
       `${JSON.stringify(entry)}\n`,
     );
   }
