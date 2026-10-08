@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { evalDir } from "../bookkeeping/roots.js";
 import { hooksDir } from "./harness.test-support.js";
 
 /**
@@ -52,7 +53,10 @@ async function makeConsumerProject(prefix: string, records: number): Promise<Con
 			}),
 		);
 	}
-	await writeFile(join(root, ".indusk", "eval", "pending.jsonl"), `${lines.join("\n")}\n`);
+	// The queue is in the project's home, where the installed hook drains it
+	// (bookkeeping-lives-where-it-is-read), not in the checkout.
+	await mkdir(evalDir(root), { recursive: true });
+	await writeFile(join(evalDir(root), "pending.jsonl"), `${lines.join("\n")}\n`);
 	return { root, shas };
 }
 

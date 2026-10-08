@@ -7,6 +7,7 @@ import {
 	oneRepoAtPath,
 	type VersionedWorkbench,
 } from "../../__tests__/helpers/versioned-workbench.js";
+import { evalDir as evalDirOf } from "../bookkeeping/roots.js";
 import { hooksDir } from "./harness.test-support.js";
 import type { PendingEvalRecord } from "./pending-evals.js";
 
@@ -54,7 +55,9 @@ describe("A12 — queued evals name their repo, and the drain honours it", () =>
 			source: "atdawn",
 			timestamp: new Date().toISOString(),
 		};
-		const evalDir = join(wb.root, ".indusk", "eval");
+		// The queue is in the project's home, where the installed hook drains it
+		// (bookkeeping-lives-where-it-is-read), not in the checkout.
+		const evalDir = evalDirOf(wb.root);
 		mkdirSync(evalDir, { recursive: true });
 		writeFileSync(
 			join(evalDir, "pending.jsonl"),
