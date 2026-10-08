@@ -1,7 +1,7 @@
 ---
 title: "Small fixes — Test Plan"
 date: 2026-10-08
-status: draft
+status: accepted
 ---
 
 # Small fixes — Test Plan
