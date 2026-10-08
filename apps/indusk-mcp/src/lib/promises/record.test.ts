@@ -199,6 +199,27 @@ describe("A3 — a pass marks itself", () => {
 		await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([])));
 		expect(marks).toEqual([{ outcome: "upheld" }, { outcome: "upheld" }]);
 	});
+
+	// A7's finding: the recorder is InDusk's, not the recorded project's. A mark
+	// naming the project it recorded is dropped by every other project's read,
+	// and the one registry holding the promise (dusk's) never records itself.
+	it("the pass's mark names no project, so the registry holding the promise reads it", async () => {
+		const mod = (await import("./record.js")) as Record<string, unknown>;
+		expect(typeof mod.recorderMark, "record.ts exports no recorderMark").toBe("function");
+		const attributes: Record<string, unknown> = {};
+		const span = {
+			setAttribute: (k: string, v: unknown) => {
+				attributes[k] = v;
+				return span;
+			},
+			addEvent: () => span,
+		};
+		(mod.recorderMark as (s: typeof span, m: PassMark) => void)(span, { outcome: "upheld" });
+		expect(attributes).toEqual({
+			"indusk.promise": "a-production-break-is-recorded-unasked",
+			"indusk.promise.outcome": "upheld",
+		});
+	});
 });
 
 describe("A4 — two callers at once make one incident", () => {

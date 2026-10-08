@@ -4,7 +4,6 @@ import { acquireLockAsync } from "../agents/lock.js";
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import { initEvalOtel } from "../eval/otel.js";
 import { git } from "../git.js";
-import { markProjectId } from "./config.js";
 import { appendHeard, type HeardRow } from "./heard.js";
 import { appendInbox } from "./inbox.js";
 import { markPromise } from "./mark.js";
@@ -305,6 +304,17 @@ async function topLevel(dir: string): Promise<string> {
 }
 
 /**
+ * What a pass's mark says. It names no project: the recorder is InDusk's,
+ * and its promise lives in InDusk's own registry, while the passes run for
+ * whichever projects name a production source. A mark naming the recorded
+ * project would be dropped by the one read that holds the promise, as A7's
+ * reading found.
+ */
+export function recorderMark(span: Parameters<typeof markPromise>[0], m: PassMark): void {
+	markPromise(span, { promise: RECORDER_PROMISE, outcome: m.outcome, symptom: m.symptom });
+}
+
+/**
  * The pass's mark as a span, through the exporter InDusk's own marks use
  * (the evaluator's and the own-branch mark's). Never throws: a recorder whose
  * telemetry is down still records.
@@ -313,12 +323,7 @@ function realMark(planRoot: string): (m: PassMark) => void {
 	return (m) => {
 		try {
 			const span = initEvalOtel(planRoot).startSpan("indusk.promises.record");
-			markPromise(span, {
-				promise: RECORDER_PROMISE,
-				outcome: m.outcome,
-				project: markProjectId(planRoot),
-				symptom: m.symptom,
-			});
+			recorderMark(span, m);
 			span.end();
 		} catch {
 			// best-effort
