@@ -18,6 +18,7 @@
 export const SYSTEM = [
 	"src/__tests__/admin-bundle-pack.test.ts",
 	"src/__tests__/admin-cli-lifecycle.test.ts",
+	"src/__tests__/admin-recorder.test.ts",
 	"src/__tests__/admin-session-lifecycle.test.ts",
 	"src/__tests__/always-on-browser-login.test.ts",
 	"src/__tests__/always-on-door-startup.test.ts",
