@@ -4,6 +4,14 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+
+- **`workflow.steps.land.install`** (small-fixes): how a project installs the landed build on this machine, run by the retrospective's landing step after the merge and named by `indusk checks show`. Dusk declares `pnpm install:local`, which builds everything a publish builds and links the checkout into the global `indusk`, so landing a plan makes it current with nothing published.
+
+### Changed
+
+- **Dusk publishes deliberately, not per plan.** Landing installs the build locally; `pnpm release` is for a server deploy or another machine, and runs the full slow tests itself before publishing. The retrospective's bump step says so for any project that installs locally.
+
 ## [1.67.0] — 2026-10-08
 
 ### Added

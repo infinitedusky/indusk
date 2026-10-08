@@ -21,6 +21,7 @@ What each step of a project's workflow runs, in `.indusk/config.json`:
 | Key | What it is |
 |---|---|
 | `land.slow_tests` | The slow tests, run once per piece of code by `indusk checks slow`. |
+| `land.install` | Installs the landed build on this machine, run after the merge (dusk: `pnpm install:local`, which builds what a publish builds and links the checkout into the global `indusk`). A project that publishes per plan declares none. |
 | `release.command` | The command that publishes or deploys. |
 | `release.version_file` | The file whose `version` the bump changes. |
 | `release.changelog` | The changelog the bump rolls. |
