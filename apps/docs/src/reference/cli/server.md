@@ -96,6 +96,7 @@ token.
 | `--slack-webhook-env <NAME>` | none | Read the Slack webhook from this variable. Without it, announcements are off: the server records every violation and the admin shows it, and nothing is posted. |
 | `--server-version <version>` | this `indusk`'s version | The server image to run. (`--version` is the CLI's own.) |
 | `--rotate` | off | Set a new server password. |
+| `--build-from <tarball>` | none | Build the image here from a packed tarball (`pnpm pack`), for a version no release has published. It is built for `linux/amd64`, pushed to the app's own Fly registry (`registry.fly.io/<app>:<version>-local-<stamp>`) and deployed from there. Needs Docker. |
 
 ### What it does, in order
 
@@ -124,7 +125,10 @@ Right after the app is created, the project's config records it:
 
 Then it runs [`server connect`](#server-connect) against
 `https://<app>.fly.dev:16687` and `https://<app>.fly.dev`, which reads the
-server back before naming it.
+server back before naming it. A new app's address and certificate come up a
+minute or two after the deploy, and its two ports not together, so deploy
+waits up to five minutes while the server is not reachable yet, trying every
+ten seconds. A refused login is not waited on.
 
 Running it again on a project with a server updates it: it redeploys the
 version and creates nothing else.

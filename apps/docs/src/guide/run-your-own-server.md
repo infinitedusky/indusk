@@ -23,6 +23,14 @@ project. When it ends, the next promise read shows production. Add
 announcements; without it, the server records and nothing is posted. Every
 option is in the [reference](/reference/cli/server#server-deploy).
 
+::: warning Until a release publishes the image
+The image is published by the first release made after this command shipped.
+Before that, the image for your version does not exist yet, and `server
+deploy` builds one from this checkout instead:
+`indusk server deploy --build-from "$(pnpm --filter @infinitedusky/indusk-mcp pack --pack-destination /tmp | tail -1)"`.
+It needs Docker.
+:::
+
 It costs what Fly charges for one small machine, a 3 GB volume and a dedicated
 IPv4 ($2 a month).
 

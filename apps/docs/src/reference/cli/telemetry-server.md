@@ -224,7 +224,8 @@ Every release publishes `indusk telemetry serve` as an image:
 ghcr.io/infinitedusky/indusk-always-on:<version>
 ```
 
-It is built from that release's own packed tarball, through the package's
+It is published for `linux/amd64` and `linux/arm64`, built from that release's
+own packed tarball through the package's
 `templates/server/Dockerfile`, by `scripts/release-image.sh`, which `pnpm
 release` runs before `pnpm publish`: the image and the npm package of a
 release are the same bytes, and a push the registry refuses publishes nothing.
