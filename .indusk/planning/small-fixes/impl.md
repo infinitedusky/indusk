@@ -1,7 +1,7 @@
 ---
 title: "Small fixes"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -253,7 +253,7 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased Changed: `indusk update` ensures every hook `init` registers, from one table, so a project missing `check-gates`, `validate-impl-structure` or `gate-reminder` gets it
+- [x] `apps/docs/src/changelog.md` Unreleased Changed: `indusk update` ensures every hook `init` registers, from one table, so a project missing `check-gates`, `validate-impl-structure` or `gate-reminder` gets it
 
 ## Files Affected
 
