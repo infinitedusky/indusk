@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.67.0] — 2026-10-08
+
 ### Added
 
 - **`workflow.steps`** in `.indusk/config.json`: what each step of a project's workflow runs, named as facts (a command, a path or a name; never conditions or templating). This release reads landing's slow tests and release's command, version file, changelog and covered paths; `indusk update` adds the section empty. See [`indusk checks`](/reference/cli/checks).
