@@ -71,6 +71,11 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 | A24 | An incident file counts as InDusk's bookkeeping: `isBookkeeping` says so, and a landing with an uncommitted incident on the trunk is not stopped by it; `watch` by hand commits what it wrote and says so | Test Phase 1 | Build Phase 1 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/__tests__/incident-bookkeeping.test.ts |
 | A25 | An incident the writer opens names the tests that were proving the promise, as a hand-run `watch` does | Test Phase 1 | Test Phase 1 | passing | unit | promise: an-incident-names-its-tests | apps/indusk-mcp/src/__tests__/incident-proven-by.test.ts |
 | A26 | In a workbench the writer reads the repo's promises through the one resolver and writes the incident where it says, never to a copy of its own | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/lib/promises/record.test.ts |
+| A27 | A pass whose commit fails (another git process holds `index.lock`) leaves the incident on disk uncommitted; the next pass, with no new violation, commits it, and until then every pass marks itself broken — never held while an incident it wrote is uncommitted | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-production-break-is-recorded-unasked | apps/indusk-mcp/src/lib/promises/record.test.ts |
+| A28 | When a pass's commit fails, the inbox entry and the heard row for the break it recorded are written anyway, once | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/lib/promises/record.test.ts |
+| A29 | A pass run in a checkout that is not on a trunk branch (a plan worktree, or the trunk checked out on a feature branch) commits nothing to that branch: it says which branch and where to run it, and marks itself broken | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-production-break-is-recorded-unasked | apps/indusk-mcp/src/lib/promises/record.test.ts |
+| A30 | A session that starts after an incident was fixed is not told about it: the hook delivers only entries whose incident is still open | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/break-inbox-hook.test.ts |
+| A31 | A session that starts after a break and N daily reminders of the same open incident is told once about that incident, not N+1 times | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/break-inbox-hook.test.ts |
 
 ## Checklist
 
@@ -312,6 +317,36 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 #### Build Phase 7 Document
 
 - [x] (step 1 of `create` names the reopened case and the refusal; the reader table gains its row) `apps/docs/src/reference/cli/worktree.md`: a reopened archived plan; changelog Fixed
+
+### Build Phase 8: Falsification — a commit that fails once, a checkout off the trunk, an inbox that never forgets
+
+**Goal**: verify whether the attested state holds against three things the fixtures never did: a commit that fails while the admin checks every five seconds beside a developer's own git, a pass run from a checkout that is not on the trunk, and a Claude session that starts days after the inbox was written. Each row is one hypothesis; each item the fix it needs.
+
+**Read, not run (A27, A28):** `pass()` (`record.ts`) runs `commitRecorded` and then `leaveForTheMachine` in one `try`; a throw from either returns `failed(...)`. The incident file is already on disk by then: `watchPromises` wrote it. On the next pass `recordViolations` (`incidents.ts`) skips every trace an incident already lists, so there is no change, `commitRecorded` returns at `changes.length === 0`, and the pass marks itself `upheld`. Nothing ever commits that incident before a landing sweeps bookkeeping, and the inbox entry and the heard row for that break are never written, so the working agent is never told. With the admin committing every `admin.refresh_ms` while the developer commits in the same checkout, `index.lock` held by the developer's `git commit` is an everyday failure, not a contrived one.
+
+**Read, not run (A29):** nothing on the record path checks the branch. `commitRecorded` commits in whichever branch the plan root's checkout is on; `indusk promises watch`, which now commits too (Build Phase 1), run from a plan worktree commits the incident onto the plan branch, and catchup's `record_breaks` does the same from a session in a worktree. The ADR says recording commits on the trunk.
+
+**Read, not run (A30, A31):** `break-inbox.js` delivers every inbox entry this session has not been given, and a new session has been given none: it receives every break and every daily reminder ever written to the project's inbox, fixed incidents included, each as its own line under "A promise broke in production. It outranks the roadmap". `undelivered` in `inbox.ts` has the same rule.
+
+**Not investigated further, and why:** the loop's timing rules (A23's units cover overlap, throws, reconcile and stop under fake time; a changed `admin.refresh_ms` applies at the next daemon start, which the docs do not promise otherwise); the reminders' Slack failure path (a failed post is not recorded as announced and is retried next pass, by design); the lock's 120 s stale window (a pass is a handful of Jaeger reads with their own timeouts, measured in A6 at well under a minute); evaluation of the recorder's commits (the eval trigger is a Claude hook on a Bash `git commit`, and the recorder commits through Node, so its commits are never evaluated); `requirePlan`'s path handling (plan names pass `isUsableSegment` before any path is built).
+
+- [ ] A27, A28, A29 authored red in `record.test.ts`; A30, A31 in `break-inbox-hook.test.ts`, each red on its own assertion
+- [ ] `record.ts`: the inbox entry and the heard row are written before the commit, so a failed commit cannot lose them (A28)
+- [ ] `record.ts` `commitRecorded`: every pass also commits what earlier passes wrote and did not commit (each open incident's file, its promise's file and its owner's reopened impl, when dirty), and a pass that leaves any of them uncommitted marks itself broken naming the paths (A27)
+- [ ] `record.ts`: before committing, the plan root's checkout must be on a trunk branch (`worktree.trunk_guard.branches`, the list `worktree create` and the trunk guard read); otherwise nothing is committed, the result and the mark say the branch and that recording runs from the trunk checkout (A29)
+- [ ] `hooks/break-inbox.js` and `lib/promises/inbox.ts` `undelivered`: an entry whose incident file says it is no longer open is not delivered, and the undelivered entries for one incident are said as one line, the newest's wording (A30, A31); `.claude/hooks/` resynced
+
+#### Build Phase 8 Verification
+
+- [ ] A27–A31 pass; A1–A4, A17, A18 and A20 still do (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises src/__tests__/break-inbox-hook.test.ts src/__tests__/hook-sync-parity.test.ts`)
+
+#### Build Phase 8 Context
+
+- [ ] mcp `CLAUDE.md`'s `recordBreaks` entry: the machine's record is written before the commit; a pass commits what earlier passes left; it commits only on a trunk branch
+
+#### Build Phase 8 Document
+
+- [ ] `apps/docs/src/decisions/incident-recording.md` and `apps/docs/src/reference/cli/promises.md` (`watch`): a pass commits only on the trunk and finishes what an earlier pass left; `apps/docs/src/guide/multi-agent.md` ("When a promise breaks"): a new session hears each open incident once; changelog Fixed
 
 ## Files Affected
 
