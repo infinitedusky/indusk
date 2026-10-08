@@ -123,3 +123,20 @@ describe("A5 — every test entry point ends with the guard", () => {
 		);
 	});
 });
+
+describe("every package's system tier runs, whatever the one before it did", () => {
+	// With `a && b`, a failure in indusk-mcp's tier (a leaked daemon the guard
+	// named, with every test green) skipped the admin's tier entirely; its two
+	// real failures surfaced only when `pnpm release` ran it, at 1.66.0.
+	it("the root `test:system` runs the admin's tier after indusk-mcp's even when that one failed", () => {
+		const root = JSON.parse(
+			readFileSync(resolve(__dirname, "..", "..", "..", "..", "package.json"), "utf-8"),
+		).scripts as Record<string, string>;
+		const script = root["test:system"];
+		expect(script).toContain("@infinitedusky/indusk-mcp test:system");
+		expect(script).toContain("indusk-admin test:system");
+		expect(script, "an earlier tier's failure must not skip a later one").not.toMatch(
+			/test:system\s*&&/,
+		);
+	});
+});
