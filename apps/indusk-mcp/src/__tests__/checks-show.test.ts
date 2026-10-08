@@ -55,4 +55,19 @@ describe.skipIf(SHOULD_SKIP)("indusk checks show", () => {
 		expect(r.stdout).toMatch(/nothing to publish/i);
 		expect(r.stdout).not.toMatch(/pnpm|test:system/);
 	});
+
+	// A13, found by falsification: a value that is not a fact is refused naming
+	// the key (ADR D5) — in one line, with exit 2, not under a stack trace.
+	it("A13: a value that is not a command, a path or a name is refused in one line naming the key, exit 2", () => {
+		const root = project({ workflow: { steps: { release: { covers: "apps" } } } });
+		for (const args of [
+			["checks", "show"],
+			["checks", "slow"],
+		]) {
+			const r = runCli(root, args);
+			expect(r.code, `${args.join(" ")}: ${r.stderr}`).toBe(2);
+			expect(r.stderr).toContain("workflow.steps.release.covers");
+			expect(r.stderr, "a stack trace").not.toMatch(/\n\s+at /);
+		}
+	});
 });

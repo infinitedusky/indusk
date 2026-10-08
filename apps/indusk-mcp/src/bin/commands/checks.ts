@@ -12,17 +12,22 @@
  * the code at hand and, finding one, says so and runs nothing: release runs
  * the slow tests only when landing's green run does not cover what it ships.
  *
+ * A declaration that is not a fact (ADR D5) is refused in one line naming the
+ * key, exit 2 — never a stack trace (A13).
+ *
  * promise: slow-checks-run-once-per-tree
  */
 
 import { spawnSync } from "node:child_process";
 import { gitSync } from "../../lib/bookkeeping/git.js";
-import { codeKey } from "../../lib/checks/key.js";
+import { codeKey, whyNoKey } from "../../lib/checks/key.js";
 import { findCoveringRun, recordGreenRun } from "../../lib/checks/record.js";
 import { readWorkflowSteps } from "../../lib/checks/steps.js";
+import type { WorkflowSteps } from "../../lib/config.js";
 
 export function checksSlow(checkout: string, opts: { unlessCovered?: boolean }): number {
-	const steps = readWorkflowSteps(checkout);
+	const steps = declared(checkout);
+	if (steps === null) return 2;
 	const command = steps.land?.slow_tests;
 	if (!command) {
 		console.info(
@@ -34,14 +39,19 @@ export function checksSlow(checkout: string, opts: { unlessCovered?: boolean }):
 	const root = top.code === 0 ? top.out : checkout;
 
 	const before = codeKey(root, steps);
-	if (opts.unlessCovered && before) {
-		const covering = findCoveringRun(root, before);
+	if (opts.unlessCovered) {
+		const covering = before ? findCoveringRun(root, before) : null;
 		if (covering) {
 			console.info(
 				`slow tests skipped: covered by the green run at ${covering.at} (${covering.cwd}) of \`${covering.command}\`.`,
 			);
 			return 0;
 		}
+		console.info(
+			before
+				? "slow tests: no green run covers this code."
+				: `slow tests: ${whyNoKey(root, steps)}.`,
+		);
 	}
 
 	const at = new Date().toISOString();
@@ -55,7 +65,7 @@ export function checksSlow(checkout: string, opts: { unlessCovered?: boolean }):
 		console.info("slow tests green: recorded for this code.");
 	} else {
 		console.info(
-			"slow tests green, but not recorded: covered files had uncommitted changes, or changed during the run.",
+			`slow tests green, but not recorded: ${whyNoKey(root, steps) ?? "covered files changed during the run"}.`,
 		);
 	}
 	return 0;
@@ -68,7 +78,8 @@ export function checksSlow(checkout: string, opts: { unlessCovered?: boolean }):
  * promise: landing-and-release-name-the-projects-commands
  */
 export function checksShow(checkout: string): number {
-	const steps = readWorkflowSteps(checkout);
+	const steps = declared(checkout);
+	if (steps === null) return 2;
 	const land = steps.land ?? {};
 	const release = steps.release ?? {};
 	const lines = [
@@ -90,4 +101,14 @@ export function checksShow(checkout: string): number {
 	];
 	console.info(lines.join("\n"));
 	return 0;
+}
+
+/** The declared steps, or `null` after one line on stderr naming what was refused. */
+function declared(checkout: string): WorkflowSteps | null {
+	try {
+		return readWorkflowSteps(checkout);
+	} catch (err) {
+		console.error(err instanceof Error ? err.message : String(err));
+		return null;
+	}
 }
