@@ -14,8 +14,6 @@ export interface DeployWanted {
 	org: string | null;
 	region: string;
 	image: string;
-	/** The image was built on this machine (`--build-from`): Fly takes it from the local daemon. */
-	localImage?: boolean;
 	configPath: string;
 	/** The app this project's config records as its server, if any. */
 	recordedApp: string | null;
@@ -112,17 +110,7 @@ function withOrg(state: FlyState, wanted: DeployWanted, org: string): DeployPlan
 	}
 	steps.push({
 		name: "deploy",
-		args: [
-			"deploy",
-			"-a",
-			a,
-			"-c",
-			wanted.configPath,
-			"--image",
-			wanted.image,
-			"--ha=false",
-			...(wanted.localImage ? ["--local-only"] : []),
-		],
+		args: ["deploy", "-a", a, "-c", wanted.configPath, "--image", wanted.image, "--ha=false"],
 	});
 	if (!state.app.ips.includes("v6"))
 		steps.push({ name: "ips allocate-v6", args: ["ips", "allocate-v6", "-a", a] });

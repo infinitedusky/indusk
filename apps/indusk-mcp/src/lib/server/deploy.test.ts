@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { readConfig } from "../config.js";
 import { WatcherBlind } from "../promises/probe.js";
+import { JaegerUnreachable } from "../promises/telemetry.js";
 import type { ConnectInput } from "./connect.js";
 import { type DeployDeps, type DeployInput, deploy } from "./deploy.js";
 import type { FlyCli, FlyResult } from "./fly.js";
@@ -252,7 +253,12 @@ describe("deploy", () => {
 	it("A17 — read-back fails: names what did not come back, records the server, says a second run finishes", async () => {
 		const f = fakeFly(fresh());
 		const { root, home } = project();
+		let clock = 0;
 		const { d } = deps(f.fly, home, {
+			now: () => clock,
+			async sleep(ms) {
+				clock += ms;
+			},
 			async connect(i) {
 				throw new WatcherBlind(i.queryUrl, i.otlpUrl, "nothing came back");
 			},
@@ -269,20 +275,64 @@ describe("deploy", () => {
 		});
 	});
 
-	it("--build-from builds the image from the tarball on this machine and deploys it local-only", async () => {
+	it("--build-from builds the image here, pushes it to the app's own Fly registry, and deploys that", async () => {
 		const f = fakeFly(fresh());
 		const { root, home } = project();
 		const built: [string, string][] = [];
 		const { d } = deps(f.fly, home, {
+			stamp: () => "s1",
 			async buildImage(tarball, tag) {
 				built.push([tarball, tag]);
 			},
 		});
 		await deploy(input(root, { buildFrom: "/tmp/indusk-mcp-1.70.0.tgz" }), d);
-		expect(built).toEqual([["/tmp/indusk-mcp-1.70.0.tgz", "indusk-always-on-local:1.70.0"]]);
+		expect(built).toEqual([
+			["/tmp/indusk-mcp-1.70.0.tgz", "registry.fly.io/indusk-seat-holds:1.70.0-local-s1"],
+		]);
 		const dep = f.calls.find((c) => c.args[0] === "deploy");
-		expect(dep?.args).toContain("indusk-always-on-local:1.70.0");
-		expect(dep?.args).toContain("--local-only");
+		expect(dep?.args).toContain("registry.fly.io/indusk-seat-holds:1.70.0-local-s1");
+		expect(dep?.args).not.toContain("--local-only");
+	});
+
+	it("A8's finding — a new server not reachable yet is waited for, then read back", async () => {
+		const f = fakeFly(fresh());
+		const { root, home } = project();
+		let tries = 0;
+		let clock = 0;
+		const { d, printed } = deps(f.fly, home, {
+			now: () => clock,
+			async sleep(ms) {
+				clock += ms;
+			},
+			async connect(i) {
+				tries += 1;
+				if (tries < 3) throw new JaegerUnreachable(i.queryUrl, "fetch failed");
+				return { credentialEnv: "INDUSK_SERVER_SEAT_HOLDS_CREDENTIAL" };
+			},
+		});
+		await deploy(input(root), d);
+		expect(tries).toBe(3);
+		expect(printed.join("\n")).toMatch(/not reachable yet/);
+	});
+
+	it("A8's finding — a server still unreachable after the wait is reported, with the way to finish", async () => {
+		const f = fakeFly(fresh());
+		const { root, home } = project();
+		let clock = 0;
+		let tries = 0;
+		const { d } = deps(f.fly, home, {
+			now: () => clock,
+			async sleep(ms) {
+				clock += ms;
+			},
+			async connect(i) {
+				tries += 1;
+				throw new JaegerUnreachable(i.queryUrl, "fetch failed");
+			},
+		});
+		await expect(deploy(input(root), d)).rejects.toThrow(/could not be reached.*run .*again/s);
+		expect(clock).toBeGreaterThanOrEqual(5 * 60_000);
+		expect(tries).toBeGreaterThan(1);
 	});
 
 	it("A20 — pulls the published image for its version; never builds", async () => {

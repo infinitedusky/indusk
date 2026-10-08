@@ -1,4 +1,6 @@
 import { type InduskConfig, readConfig, writeConfig } from "../config.js";
+import { WatcherBlind } from "../promises/probe.js";
+import { JaegerUnreachable } from "../promises/telemetry.js";
 import { type Connected, type ConnectInput, credentialEnvFor } from "./connect.js";
 import type { FlyCli } from "./fly.js";
 import { DEFAULT_REGION, publicAddresses, writeFlyConfig } from "./fly-config.js";
@@ -20,8 +22,6 @@ import type { SecretsFile } from "./secrets-file.js";
  */
 export const IMAGE = "ghcr.io/infinitedusky/indusk-always-on";
 export const SERVER_USER = "indusk";
-/** The tag an image built on this machine gets; never pushed anywhere but Fly. */
-export const LOCAL_IMAGE = "indusk-always-on-local";
 
 export interface DeployInput {
 	projectRoot: string;
@@ -50,8 +50,16 @@ export interface DeployDeps {
 	random(): string;
 	/** A directory for the generated Fly config. */
 	tempDir(): string;
-	/** Build the server image from a tarball through the package's template, tagged `tag`. */
+	/**
+	 * A suffix that makes each `--build-from` tag new: Fly's registry outlives
+	 * a destroyed app, and a reused tag deployed the previous build (A8).
+	 */
+	stamp?(): string;
+	/** Build the server image from a tarball through the package's template, tagged `tag`, and push it to the app's Fly registry. */
 	buildImage?(tarball: string, tag: string): Promise<void>;
+	/** The wait between read-back attempts while a new server comes up. */
+	sleep?(ms: number): Promise<void>;
+	now?(): number;
 }
 
 export class DeployRefused extends Error {
@@ -82,13 +90,17 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 	const stored = deps.secrets.get(credentialEnv);
 
 	const state = await readFlyState(deps.fly, app);
-	const image = input.buildFrom ? `${LOCAL_IMAGE}:${input.version}` : `${IMAGE}:${input.version}`;
+	// An unreleased build goes to the app's own Fly registry, never the public
+	// one, so Fly's CLI need not find this machine's Docker daemon (A8 found that
+	// `--local-only` could not see OrbStack's).
+	const image = input.buildFrom
+		? `registry.fly.io/${app}:${input.version}-local-${deps.stamp?.() ?? Date.now().toString(36)}`
+		: `${IMAGE}:${input.version}`;
 	const plan = planDeploy(state, {
 		app,
 		org: input.org ?? recorded?.org ?? null,
 		region,
 		image,
-		localImage: Boolean(input.buildFrom),
 		configPath: writeFlyConfig(deps.tempDir(), { app, region }),
 		recordedApp: recorded?.app ?? null,
 		haveCredential: Boolean(stored),
@@ -102,15 +114,18 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 	const webhook = input.slackWebhook ?? null;
 	const out = redactingWriter(deps.print, [password ?? "", webhook ?? "", credential]);
 
-	if (input.buildFrom) {
-		if (!deps.buildImage)
-			throw new DeployRefused("this deploy cannot build an image: no builder was given");
-		out.line(`Building ${image} from ${input.buildFrom} …`);
-		await deps.buildImage(input.buildFrom, image);
-	}
 	out.line(`Deploying ${image} as ${app} (${plan.org}, ${region}).`);
 	const server = { provider: "fly" as const, app, org: plan.org, region };
 	for (const step of plan.steps) {
+		if (step.name === "deploy" && input.buildFrom) {
+			// The app exists by now, so its registry does.
+			if (!deps.buildImage)
+				throw new DeployRefused("this deploy cannot build an image: no builder was given");
+			out.line(
+				`Building ${image} from ${input.buildFrom} and pushing it to the app's Fly registry …`,
+			);
+			await deps.buildImage(input.buildFrom, image);
+		}
 		await runStep(deps.fly, step, out, { password, webhook });
 		// Recorded as soon as the app exists, so a failure in any later step
 		// still leaves a second run its identity (A17).
@@ -125,8 +140,18 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 
 	const addresses = publicAddresses(app);
 	try {
-		await deps.connect(
-			{ projectRoot: input.projectRoot, projectName: input.projectName, ...addresses, credential },
+		await connectWhenReachable(
+			() =>
+				deps.connect(
+					{
+						projectRoot: input.projectRoot,
+						projectName: input.projectName,
+						...addresses,
+						credential,
+					},
+					out,
+				),
+			deps,
 			out,
 		);
 	} catch (err) {
@@ -134,6 +159,47 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 		throw new DeployRefused(
 			`${why}\nThe server ${app} exists and is recorded in this project's config; run \`indusk server deploy\` again to finish connecting.`,
 		);
+	}
+}
+
+/** How long a new server may take to become reachable: its addresses and certificate. */
+export const REACHABLE_WITHIN_MS = 5 * 60_000;
+const REACHABLE_POLL_MS = 10_000;
+
+/**
+ * Connect, waiting while the server cannot be reached at all. A Fly app's
+ * address and certificate come up a minute or so after the deploy ends (A8
+ * found the first read-back failing, and the server answering a minute
+ * later, and its two ports come up apart). `connect` on its own still reports
+ * either at once.
+ */
+async function connectWhenReachable(
+	attempt: () => Promise<Connected>,
+	deps: Pick<DeployDeps, "sleep" | "now">,
+	out: LineWriter,
+): Promise<Connected> {
+	const now = deps.now ?? Date.now;
+	const until = now() + REACHABLE_WITHIN_MS;
+	let said = false;
+	for (;;) {
+		try {
+			return await attempt();
+		} catch (err) {
+			// For a server this command just created, not reached and not heard
+			// both mean "not up yet": its two ports come up at different times (A8
+			// saw the query port answer while the intake did not).
+			const notUpYet = err instanceof JaegerUnreachable || err instanceof WatcherBlind;
+			if (!notUpYet || now() >= until) throw err;
+			if (!said) {
+				out.line(
+					"The server is not reachable yet — a new app's address and certificate take a minute or two. Waiting …",
+				);
+				said = true;
+			}
+			await (deps.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms))))(
+				REACHABLE_POLL_MS,
+			);
+		}
 	}
 }
 
