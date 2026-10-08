@@ -15,6 +15,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ### Changed
 
 - **Dusk publishes deliberately, not per plan.** Landing installs the build locally; `pnpm release` is for a server deploy or another machine, and runs the full slow tests itself before publishing. The retrospective's bump step says so for any project that installs locally.
+- **`indusk update` registers every hook `init` does** (small-fixes): both now read one table. Before, `update` only checked some hooks, so a project missing `check-gates`, `validate-impl-structure` or `gate-reminder` stayed without it. Now it gets it.
 - **The session panel says how a turn ended** (small-fixes): **Turn done** with the closing text, **Failed** with the error's first line, or **Session ended** with the exit code. It no longer shows the protocol's `subtype`, whose `success` read as if the session had ended well.
 
 ### Fixed
