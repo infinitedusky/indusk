@@ -2419,3 +2419,24 @@ Build Phase 4 verification → cleanup (skip with reason) → /retrospective →
 (empty)
 
 ---
+
+## Session 91e593be — eval agent: scoring commit 6aec4e4c
+
+**Session ID**: 91e593be-d8ab-4418-8136-20ff92f77c9a
+**Last updated**: 2026-10-08T17:59:47.530Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
