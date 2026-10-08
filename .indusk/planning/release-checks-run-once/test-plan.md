@@ -1,7 +1,7 @@
 ---
 title: "Release checks run once — Test Plan"
 date: 2026-10-08
-status: draft
+status: accepted
 ---
 
 # Release checks run once — Test Plan
