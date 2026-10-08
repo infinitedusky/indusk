@@ -1,12 +1,14 @@
 ---
 title: "Release checks run once"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
 test_purpose: required
 gate_policy: ask
+cleanup: skipped
+cleanup_reason: "reviewed the changed files: the ones over their cap (cli.ts 1100, update.ts 1024, config.ts 654, the work skill 493, the retrospective reference 540, the changelog) were over it before this plan, which added one command registration, one config type, one ensure call, one table row and one entry to each; the new modules are small and each one job — key.ts 98 (the key and why there is none), record.ts 39, steps.ts 67 (read and refuse), checks.ts 114 (two commands and one catch). One duplication across files, git rev-parse --show-toplevel in key.ts and checks.ts, two copies, below the rule of three; lift it when a third appears"
 ---
 
 # Release checks run once
