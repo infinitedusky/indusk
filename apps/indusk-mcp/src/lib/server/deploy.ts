@@ -164,8 +164,14 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 		);
 	} catch (err) {
 		const why = err instanceof Error ? err.message : String(err);
+		// Connecting with a credential stored before this run, and refused: a
+		// second run would use the same one. Only a new password gets past it.
+		const next =
+			password === null
+				? `connected with the credential this machine stored before (${credentialEnv}), and the server did not accept it; run \`indusk server deploy --rotate\` to set a new password`
+				: "run `indusk server deploy` again to finish connecting";
 		throw new DeployRefused(
-			`${why}\nThe server ${app} exists and is recorded in this project's config; run \`indusk server deploy\` again to finish connecting.`,
+			`${why}\nThe server ${app} exists and is recorded in this project's config; ${next}.`,
 		);
 	}
 }
@@ -196,7 +202,11 @@ async function connectWhenReachable(
 			// For a server this command just created, not reached and not heard
 			// both mean "not up yet": its two ports come up at different times (A8
 			// saw the query port answer while the intake did not).
-			const notUpYet = err instanceof JaegerUnreachable || err instanceof WatcherBlind;
+			// A login the server refused is not "not up yet": it is up, and the
+			// credential is wrong. Waiting on it only delays saying so (A24).
+			const refusedLogin = err instanceof Error && /answered 40[13]\b/.test(err.message);
+			const notUpYet =
+				!refusedLogin && (err instanceof JaegerUnreachable || err instanceof WatcherBlind);
 			if (!notUpYet || now() >= until) throw err;
 			if (!said) {
 				out.line(
