@@ -47,9 +47,9 @@ A plan that lands green is released without running the slow tests again, and th
 | A4 | A run over uncommitted changes to covered files records nothing, and `--unless-covered` with such changes runs the tests | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
 | A5 | A green run recorded in a plan's worktree covers the same code on `main` | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
 | A6 | On this repository, after `indusk checks slow` runs green, the release script's `--unless-covered` skips and names that run | Build Phase 3 | Build Phase 3 | planned | live check | promise: slow-checks-run-once-per-tree | manual: on main after landing, `node apps/indusk-mcp/dist/bin/cli.js checks slow --unless-covered` prints the covering run |
-| A7 | The landing and release steps every project installs name none of dusk's commands or paths | Test Phase 1 | Build Phase 2 | written | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/steps-name-project-commands.test.ts |
-| A8 | A project that declares its steps gets them named back by `indusk checks show` | Test Phase 1 | Build Phase 2 | written | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
-| A9 | A project that declares none is told plainly that landing runs no slow tests and release has nothing to publish | Test Phase 1 | Build Phase 2 | written | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
+| A7 | The landing and release steps every project installs name none of dusk's commands or paths | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/steps-name-project-commands.test.ts |
+| A8 | A project that declares its steps gets them named back by `indusk checks show` | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
+| A9 | A project that declares none is told plainly that landing runs no slow tests and release has nothing to publish | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
 | A10 | Landing still refuses an unaccepted plan and runs the declared landing checks | Test Phase 1 | Test Phase 1 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 
 ## Checklist
@@ -100,20 +100,22 @@ A plan that lands green is released without running the slow tests again, and th
 
 - [x] `indusk checks show`: each declared step's tooling, or, for what is not declared, what that means (landing runs no slow tests; release has nothing to publish)
 - [x] (`ensureWorkflowConfig` beside the reader; a fresh project's `update` printed `add: workflow.steps: {}`) `update` adds `workflow: { steps: {} }` through `ensureConfigBlock`
-- [x] (Steps 10–11 open with `indusk checks show` and use only what it names; a project with no release command records that and stops; the bump goes through a release branch when trunk-guard refuses the edits; before handing over, `checks slow --unless-covered` confirms the release will skip. `release-ritual-skill.test.ts`'s T8 pinned `package.json` as the version file, a dusk path this plan's promise rules out: it now expects "declared version file") The retrospective's Steps 10 and 11, `verify.md`'s test table and `work.md`'s phase-runs line name what `indusk checks show` prints, never dusk's commands or paths; resync `.claude/skills/`
+- [x] (Steps 10–11 open with `indusk checks show` and use only what it names; a project with no release command records that and stops; the bump goes through a release branch when trunk-guard refuses the edits; before handing over, `checks slow --unless-covered` confirms the release will skip. `release-ritual-skill.test.ts`'s bump assertion pinned `package.json` as the version file, a dusk path this plan's promise rules out: it now expects "declared version file") The retrospective's Steps 10 and 11, `verify.md`'s test table and `work.md`'s phase-runs line name what `indusk checks show` prints, never dusk's commands or paths; resync `.claude/skills/`
 - [x] Discovered at the package run: `installed-hook-drain.test.ts` and `pending-repo-attribution.test.ts` failed, on `main` too, since the installed hooks were synced to 1.66.0 after its release: they copy `.claude/hooks/` and wrote the pending queue into the checkout, where the 1.66.0 hook no longer reads it. They write it to the project home through `evalDir`
 
 #### Build Phase 2 Verification
 
-- [ ] A7, A8, A9 pass and A10 still does (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/steps-name-project-commands.test.ts src/__tests__/checks-show.test.ts src/__tests__/plans-land.test.ts src/__tests__/skill-sync-parity.test.ts`)
+- [x] (4 files, 38 passed; the whole package passed but for the two drain tests and the release-ritual skill test's version-file assertion, both fixed above) A7, A8, A9 pass and A10 still does (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/steps-name-project-commands.test.ts src/__tests__/checks-show.test.ts src/__tests__/plans-land.test.ts src/__tests__/skill-sync-parity.test.ts`)
+
+- [x] Shape — `checksShow` is one list of facts, each line a declared value or what not declaring it means; `ensureWorkflowConfig` sits beside the reader it scaffolds for. The skill text is prose. Nothing to change
 
 #### Build Phase 2 Context
 
-- [ ] planning: the landing and release steps name only what `indusk checks show` prints — through the package's `templates/planning/CLAUDE.md` if a rule changes there, else the skill alone
+- [x] (no rule in the planning template names the slow or release commands, so the skill alone carries it) planning: the landing and release steps name only what `indusk checks show` prints — through the package's `templates/planning/CLAUDE.md` if a rule changes there, else the skill alone
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/checks.md`: `checks show` and `workflow.steps`, with the facts-never-logic rule; `apps/docs/src/reference/skills/retrospective.md`: Steps 10 and 11
+- [x] `apps/docs/src/reference/cli/checks.md`: `checks show` and `workflow.steps`, with the facts-never-logic rule; `apps/docs/src/reference/skills/retrospective.md`: Steps 10 and 11
 
 ### Build Phase 3: dusk declares its steps
 
