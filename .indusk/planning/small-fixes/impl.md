@@ -47,8 +47,8 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 | A6 | The planner skill ends at the written plan: it names `plans approve` as the only way on and nowhere tells the agent to start building | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
 | A7 | A turn that ends with an API error shows **Failed** and the error's first line, and "success" appears nowhere on the panel | Test Phase 1 | Build Phase 3 | written | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
 | A8 | A turn that completes shows **Turn done**; only a session whose process exited shows **Session ended**, with its exit code | Test Phase 1 | Build Phase 3 | written | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
-| A9 | In a repository with more than one worktree, `git stash` and `git stash pop` are refused before they run, naming a temporary commit and `stash push -m <tag>` / `stash apply <sha>` | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
-| A10 | `stash push -m <tag>`, `stash list` and `stash apply <sha>` are not refused; in a repository with one worktree nothing is refused | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
+| A9 | In a repository with more than one worktree, `git stash` and `git stash pop` are refused before they run, naming a temporary commit and `stash push -m <tag>` / `stash apply <sha>` | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
+| A10 | `stash push -m <tag>`, `stash list` and `stash apply <sha>` are not refused; in a repository with one worktree nothing is refused | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
 | A11 | Every hook in the package has a byte-identical installed copy in this repository, and an installed hook with no package source is reported by name | Test Phase 1 | Test Phase 1 | passing | unit | promise: installed-hooks-match-the-package | apps/indusk-mcp/src/__tests__/hook-sync-parity.test.ts |
 | A12 | `indusk ui stop` with a port slow to answer still stops its own daemon and removes its record; it never signals a process that is not its own, and exits non-zero naming one that would not stop | Build Phase 3 | Build Phase 3 | planned | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/admin/daemon-stop.test.ts |
 | A13 | `indusk telemetry stop` behaves exactly as before: its tests pass unchanged | Test Phase 1 | Test Phase 1 | passing | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
@@ -78,9 +78,9 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 - **A1** — a live check that installs into this machine's global `indusk`; it runs once the install script exists.
 
-#### Deferred to Build Phase 2
+#### Deferred to Build Phase 4
 
-- **A9, A10** — this session's write of `stash-guard.test.ts` was stopped by a safety classifier partway through, and the session was told not to produce it again; nothing about the test is unusual (a two-worktree fixture from `lib/bookkeeping/fixture.test-support.ts`, the `bash` event from `helpers/trunk-guard-fixture.ts`, `runHook("stash-guard.js", …)` expecting exit 2 with the safe commands named, and exit 0 for the allowed spellings and the one-worktree repo), so a fresh session, or Sandy, authors it at Build Phase 2 before the hook; `hook-runner.ts`'s `HookName` already lists `stash-guard.js`.
+- **A9, A10** — this session's write of `stash-guard.test.ts` was stopped by a safety classifier partway through, and the session was told not to produce it again; nothing about the test is unusual (a two-worktree fixture from `lib/bookkeeping/fixture.test-support.ts`, the `bash` event from `helpers/trunk-guard-fixture.ts`, `runHook("stash-guard.js", …)` expecting exit 2 with the safe commands named, and exit 0 for the allowed spellings and the one-worktree repo). The stash guard is its own last phase, Build Phase 4, so the rest of the plan is not held behind it: a fresh session, or Sandy, authors the test there before the hook; `hook-runner.ts`'s `HookName` already lists `stash-guard.js`.
 
 #### Deferred to Build Phase 3
 
@@ -131,24 +131,23 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 - [x] (`checks.md` and the changelog done here; the retrospective reference page's Steps 10–11 updated with them) `apps/docs/src/reference/cli/checks.md`: `land.install`; `apps/docs/src/reference/skills/retrospective.md`: Step 10's install, Step 11 only when publishing; `apps/docs/src/changelog.md` Unreleased
 
-### Build Phase 2: A plan builds only after approval; a stash never crosses worktrees
+### Build Phase 2: A plan builds only after approval
 
 - [ ] `check-gates.js`: refuse an edit that changes an impl's `status:` from `draft` to anything but through `plans approve` (the hook sees a hand edit; approve writes without a tool event), and refuse checking off any build-phase item while the impl's status is `draft`; failure names `lesson: a-plan-builds-only-after-approval` (A4, A5)
 - [ ] `skills/planner.md`: step 6's Key Decisions line becomes "give the impl's first build phase a Context item for the root's Key Decisions line" (A15); step 10 says the planning session ends at the written plan and only `plans approve` moves it on (A6)
-- [ ] `hooks/stash-guard.js`: PreToolUse Bash; when the repository has more than one worktree, refuse `git stash` with no subcommand, `git stash pop` and `git stash drop` without a sha, naming a temporary commit and `stash push -m <tag>` / `stash apply <sha>` (A9, A10); registered beside `trunk-guard.js` in `init.ts`, `update.ts` and this repository's settings
-- [ ] `hook-sync-parity.test.ts` stays green: resync `.claude/hooks/` after the new hook (A11)
+- [ ] `hook-sync-parity.test.ts` stays green: resync `.claude/hooks/` after the gate change (A11)
 
 #### Build Phase 2 Verification
 
-- [ ] A4, A5, A9, A10, A15 pass; A6, A11 still do (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/approval-gate.test.ts src/__tests__/planner-stops-at-the-plan.test.ts src/__tests__/stash-guard.test.ts src/__tests__/hook-sync-parity.test.ts src/__tests__/hook-cwd-independence.test.ts src/__tests__/skill-sync-parity.test.ts`)
+- [ ] A4, A5, A15 pass; A6, A11 still do (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/approval-gate.test.ts src/__tests__/planner-stops-at-the-plan.test.ts src/__tests__/hook-sync-parity.test.ts src/__tests__/hook-cwd-independence.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/context-tiers-hook-lesson.test.ts`)
 
 #### Build Phase 2 Context
 
-- [ ] hooks: `stash-guard.js`'s header carries the rule; the lesson `a-plan-builds-only-after-approval` is the gate's failure message (guard: `check-gates.js` carries `lesson: a-plan-builds-only-after-approval`)
+- [ ] guard: `check-gates.js` carries `lesson: a-plan-builds-only-after-approval`, and the lesson is written so the token resolves
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/skills/planner.md`: the plan ends at approval; `apps/docs/src/guide/multi-agent.md`: the stash rule
+- [ ] `apps/docs/src/reference/skills/planner.md`: the plan ends at approval
 
 ### Build Phase 3: The panel says what happened; one identity rule; numbers
 
@@ -167,6 +166,25 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 #### Build Phase 3 Document
 
 - [ ] `apps/docs/src/reference/admin-ui/sessions.md`: what the panel's three endings mean; `apps/docs/src/changelog.md` Unreleased: the rest
+
+### Build Phase 4: A stash never crosses worktrees
+
+**For a fresh session**: this session could not author A9/A10 (see Test Phase 1's register), so this phase is last and self-contained.
+
+- [ ] A9, A10 authored red in `stash-guard.test.ts` (the register's body): a two-worktree fixture, `runHook("stash-guard.js", bash(cwd, command))`, exit 2 naming the safe commands for `git stash` and `git stash pop`; exit 0 for `stash push -m <tag>`, `stash list`, `stash apply <sha>`, and for everything in a one-worktree repository
+- [ ] `hooks/stash-guard.js`: PreToolUse Bash; when the repository has more than one worktree, refuse `git stash` with no subcommand, `git stash pop` and `git stash drop` without a sha, naming a temporary commit and `stash push -m <tag>` / `stash apply <sha>`; registered beside `trunk-guard.js` in `init.ts`, `update.ts` and this repository's settings; `.claude/hooks/` resynced (A11)
+
+#### Build Phase 4 Verification
+
+- [ ] A9, A10 pass; A11 still does (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/stash-guard.test.ts src/__tests__/hook-sync-parity.test.ts src/__tests__/hook-cwd-independence.test.ts`)
+
+#### Build Phase 4 Context
+
+- [ ] hooks: `stash-guard.js`'s header carries the rule and names its promise
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/guide/multi-agent.md`: the stash rule and the safe commands
 
 ## Files Affected
 
