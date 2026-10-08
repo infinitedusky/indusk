@@ -102,6 +102,28 @@ Each entry says what happens, where it was seen, and what we know so far.
   that changed anything outside `.indusk/` before the build. Seen approving
   workbench-plan-authoring; worked around by moving the line to the build.
 
+## Workflow configuration
+
+- **Every step's tooling under `workflow`.** release-checks-run-once adds
+  `workflow.steps` for landing's slow tests and release; `verify.testRunner`
+  and `plans.land_checks` still live apart and should move in, with a
+  migration for existing projects. Held to the same rule: facts, never logic
+  (a command, a path or a name). The order of steps (promise-core's
+  step-picking screen) would live in the same section. (Sandy, 2026-10-08.)
+- **Announce landing and release as CDEvents.** The Continuous Delivery
+  Foundation's event format (*build finished*, *test suite passed*, *artifact
+  published*) is the nearest thing to OpenTelemetry for delivery; InDusk
+  could emit them so other delivery tools follow along. (Sandy, 2026-10-08.)
+- **Promises can carry a story.** An optional `## Story` in a promise's file
+  and under each promise in the brief: who does what, today and once it holds
+  (the Maya story for `landing-and-release-name-the-projects-commands`). The
+  sentence is what a test checks; the story is why anyone cares. Shown one
+  click down in the admin. (Sandy, 2026-10-08.)
+- **The installed hooks have no parity test.** `skill-sync-parity` pins
+  `.claude/skills/` to the package; nothing pins `.claude/hooks/`, so a hook
+  change reaches this repository only through `indusk update` (found at
+  1.66.0's install).
+
 ## Releases
 
 - **Every release has failed its first `pnpm release`.** 1.63.0 (twice) and
