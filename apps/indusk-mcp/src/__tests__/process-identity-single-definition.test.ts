@@ -16,20 +16,28 @@ import { describe, expect, it } from "vitest";
 
 const LIB = new URL("../lib/", import.meta.url).pathname;
 const read = (rel: string) => readFileSync(join(LIB, rel), "utf-8");
+const LESSON = "lesson: structural-single-definition-test-for-must-agree-invariants";
 
 describe("A14 — one definition of process identity, used by both stops", () => {
 	it("`lib/process-identity.ts` defines `isOwnProcess`, and nothing else does", () => {
-		expect(existsSync(join(LIB, "process-identity.ts")), "lib/process-identity.ts").toBe(true);
-		expect(read("process-identity.ts")).toMatch(/export function isOwnProcess\(/);
-		expect(read("telemetry/stop.ts")).not.toMatch(/export function isOwnProcess\(/);
-		expect(read("admin/daemon.ts")).not.toMatch(/function isOwnProcess\(/);
+		expect(
+			existsSync(join(LIB, "process-identity.ts")),
+			`lib/process-identity.ts — ${LESSON}`,
+		).toBe(true);
+		expect(read("process-identity.ts"), LESSON).toMatch(/export function isOwnProcess\(/);
+		expect(read("telemetry/stop.ts"), `a second copy — ${LESSON}`).not.toMatch(
+			/export function isOwnProcess\(/,
+		);
+		expect(read("admin/daemon.ts"), `a second copy — ${LESSON}`).not.toMatch(
+			/function isOwnProcess\(/,
+		);
 	});
 
 	it("both stops import it, and the admin's identity check no longer asks the port", () => {
-		expect(read("telemetry/stop.ts")).toMatch(/from "\.\.\/process-identity\.js"/);
+		expect(read("telemetry/stop.ts"), LESSON).toMatch(/from "\.\.\/process-identity\.js"/);
 		const daemon = read("admin/daemon.ts");
-		expect(daemon).toMatch(/from "\.\.\/process-identity\.js"/);
+		expect(daemon, LESSON).toMatch(/from "\.\.\/process-identity\.js"/);
 		const identity = daemon.slice(daemon.indexOf("function verifyIdentity"));
-		expect(identity.slice(0, identity.indexOf("\n}"))).not.toContain("isPortListening");
+		expect(identity.slice(0, identity.indexOf("\n}")), LESSON).not.toContain("isPortListening");
 	});
 });

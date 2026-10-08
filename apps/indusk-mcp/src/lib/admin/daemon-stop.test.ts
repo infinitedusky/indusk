@@ -1,7 +1,8 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { uiStop } from "../../bin/commands/ui.js";
 import { type DaemonDeps, type DaemonMeta, daemonStatus, daemonStop } from "./daemon.js";
 
 /**
@@ -75,6 +76,47 @@ describe("A12 — ui stop stops its own daemon by its command line, never by its
 		const kills: [number, string][] = [];
 		await daemonStop(deps({ 7: "node /somewhere/next/dist/bin/next start --port 4321" }, kills));
 		expect(kills).toEqual([[7, "SIGTERM"]]);
+	});
+
+	it("a daemon still running after SIGTERM and SIGKILL is reported, not recorded as stopped", async () => {
+		record({ pid: 4242 });
+		const kills: [number, string][] = [];
+		const table = deps({ 4242: `node ${nextBin} start --port 4321 -H 127.0.0.1` }, kills);
+		table.kill = (pid, signal) => {
+			kills.push([pid, signal]);
+		};
+		const r = await daemonStop(table);
+		expect(kills).toEqual([
+			[4242, "SIGTERM"],
+			[4242, "SIGKILL"],
+		]);
+		expect(r).toEqual({ stopped: false, signaledPid: 4242, usedSigkill: true });
+		expect(existsSync(join(home, "admin-ui.pid")), "the record of a live daemon is kept").toBe(
+			true,
+		);
+	});
+
+	it("`indusk ui stop` exits non-zero naming a daemon that would not stop", async () => {
+		record({ pid: 4242 });
+		const kills: [number, string][] = [];
+		const table = deps({ 4242: `node ${nextBin} start --port 4321 -H 127.0.0.1` }, kills);
+		table.kill = (pid, signal) => {
+			kills.push([pid, signal]);
+		};
+		const said: string[] = [];
+		const error = vi.spyOn(console, "error").mockImplementation((line: unknown) => {
+			said.push(String(line));
+		});
+		const exitCode = process.exitCode;
+		try {
+			await uiStop(table);
+			expect(process.exitCode).toBe(1);
+			expect(said.join("\n")).toContain("PID 4242");
+			expect(said.join("\n")).toContain("would not stop");
+		} finally {
+			error.mockRestore();
+			process.exitCode = exitCode;
+		}
 	});
 
 	it("the same binary on another port is not ours", async () => {

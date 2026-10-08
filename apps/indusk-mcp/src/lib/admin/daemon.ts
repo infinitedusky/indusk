@@ -108,6 +108,11 @@ export async function daemonStart(opts: DaemonStartOptions): Promise<DaemonMeta>
 	return meta;
 }
 
+/**
+ * `stopped: false` with no `signaledPid` is "nothing to stop"; with one, the
+ * daemon was sent SIGTERM then SIGKILL and is still running, and its record
+ * is kept because it is still true (small-fixes A12).
+ */
 export interface DaemonStopResult {
 	stopped: boolean;
 	signaledPid?: number;
@@ -118,10 +123,11 @@ export interface DaemonStopResult {
  * Stop the daemon. SIGTERMs, polls for exit up to 3s, SIGKILLs on timeout,
  * then removes the PID + meta files.
  *
- * Returns `stopped: false` only when there was no daemon to stop (no PID
- * file or a malformed one). A daemon that was already dead on disk but had
- * leftover PID file returns `stopped: true` with the reaped PID — the
- * cleanup itself is work worth reporting.
+ * Returns `stopped: false` when there was no daemon to stop (no PID file or
+ * a malformed one) or, with `signaledPid`, when the daemon survived both
+ * signals. A daemon that was already dead on disk but had a leftover PID
+ * file returns `stopped: true` with the reaped PID — the cleanup itself is
+ * work worth reporting.
  */
 export async function daemonStop(deps: DaemonDeps = realDeps): Promise<DaemonStopResult> {
 	const pidFile = pidFilePath();
@@ -174,17 +180,23 @@ export async function daemonStop(deps: DaemonDeps = realDeps): Promise<DaemonSto
 		}
 	}
 
-	// Grace period expired — SIGKILL
+	// Grace period expired — SIGKILL, then look. A process still there after
+	// that would not stop: say so, and keep the record, which is still true.
 	let usedSigkill = false;
 	try {
 		deps.kill(pid, "SIGKILL");
 		usedSigkill = true;
 	} catch {
-		// Raced with a late natural exit; treat as stopped.
+		// Raced with a late natural exit.
 	}
-
-	cleanupFiles();
-	return { stopped: true, signaledPid: pid, usedSigkill };
+	for (let i = 0; i < 10; i++) {
+		if (!deps.alive(pid)) {
+			cleanupFiles();
+			return { stopped: true, signaledPid: pid, usedSigkill };
+		}
+		await deps.sleep(100);
+	}
+	return { stopped: false, signaledPid: pid, usedSigkill };
 }
 
 export type DaemonStatusResult =
