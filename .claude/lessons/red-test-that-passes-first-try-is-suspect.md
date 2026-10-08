@@ -1,0 +1,7 @@
+# A test written to be red that passes on its first run is suspect — find out why it went green before trusting it
+
+In a falsification/red-test-first workflow, a test authored specifically to prove a hypothesized bug is sometimes green the first time it runs. The instinct is to treat that as confirmation the code was already correct. Check instead whether the test actually exercised the hypothesized failure path — it may have passed for an unrelated reason, meaning the hypothesis was never actually tested.
+
+**Why:** release-checks-run-once (dusk, 2026-10-08, archived at `.indusk/planning/archive/release-checks-run-once/`), Build Phase 4 row A14: the hypothesis was "a covered script gaining/losing its executable bit should change the content key" (since the key hashed blob content but not file mode). The first version of the test changed only the git index's file mode and passed — but it passed because making the tree dirty (differing from HEAD) made the "after" key null, not because the key actually changed due to the mode bit. The test was rewritten to change both the index and the working file's mode, which made it honestly red, confirming the real gap (mode wasn't in the key) and driving the actual fix.
+
+**How to apply:** when a test written to prove a specific failure mode passes immediately, don't accept it — trace exactly which code path made it pass and confirm that path is the one the hypothesis is about, not an incidental side effect (a dirty tree, a different error, a default value) that happens to produce the same outcome.

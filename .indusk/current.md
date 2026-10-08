@@ -444,26 +444,26 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
-## Session 4551e898 — bookkeeping-lives-where-it-is-read — cleanup done, retrospective next
+## Session 4551e898 — release-checks-run-once — falsification, then close
 
 **Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
-**Last updated**: 2026-10-08T02:53:37.259Z
+**Last updated**: 2026-10-08T17:53:39.624Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-- bookkeeping-lives-where-it-is-read: Build Phases 1–5 done (4 = falsification fixes, 5 = cleanup: `pathKey`, a home argument on `bookkeepingRoots`/`evalDir`, one JSONL reader `lib/bookkeeping/jsonl.ts`, one git runner `lib/bookkeeping/git.ts`). Remaining: retrospective, accept, land, bump 1.66.0.
-- This repo's home: `~/.indusk/projects/dusk-2f1b1d2f/`. After the release, run `indusk update` on main to merge the queue the installed version keeps writing there.
+- release-checks-run-once: Build Phases 1–3 done; Build Phase 4 (falsification) found four: a typo'd `covers` keyed nothing and so matched every run (A11); `./`-prefixed changelog/version paths were not recognised (A12); a non-fact value crashed with a stack trace instead of a one-line refusal (A13); a script's +x bit was not in the key (A14). All fixed in `lib/checks/key.ts` and `bin/commands/checks.ts`.
+- Sandy's decision (2026-10-08): dusk's slow tier never blocks landing or release; it runs after release in the background as a promise — the next item in known-issues.md (Releases). Dusk declares no `land.slow_tests`; `pnpm release` runs no slow step.
+- This session's MCP server is still 1.65.1 (started before the upgrade); its writes go to main's `.indusk/`. Use the CLI for promises; /mcp reconnect fixes it.
 
 ### Open Questions
 
-- `~/.indusk/projects/project-6bafd0c8/` appeared at 19:49 from a session not traced to any test; left in place.
-- Each `/catchup` makes one or two `chore(indusk)` commits on main (register + list's heartbeat); the user's call whether heartbeats should commit.
+(empty)
 
 ### Cursor
 
-/retrospective bookkeeping-lives-where-it-is-read.
+Build Phase 4 verification → cleanup (skip with reason) → /retrospective → accept → land → bump 1.67.0.
 
 ---
 
@@ -2342,6 +2342,216 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-08T13:02:23.265Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 02ac7871 — eval: scoring commit db72c61d (release-checks-run-once retrospective)
+
+**Session ID**: 02ac7871-8e0b-4f3b-a7b5-e951f3564d7f
+**Last updated**: 2026-10-08T17:59:39.575Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 035e802a — eval: docs fix a9599863
+
+**Session ID**: 035e802a-65e1-44e0-97e5-5406a9697247
+**Last updated**: 2026-10-08T17:59:45.990Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 61d93d43 — eval: Build Phase 4 closed, release-checks-run-once
+
+**Session ID**: 61d93d43-5505-4cac-a596-d3dbbe7a1306
+**Last updated**: 2026-10-08T17:59:47.377Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 91e593be — eval agent: scoring commit 6aec4e4c
+
+**Session ID**: 91e593be-d8ab-4418-8136-20ff92f77c9a
+**Last updated**: 2026-10-08T17:59:47.530Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 6b4ce41e — eval: reviewing path normaliser fix a301930c
+
+**Session ID**: 6b4ce41e-726c-4ddb-95c6-6b21b378e2e6
+**Last updated**: 2026-10-08T18:00:09.507Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session aabc9a15 — eval: scoring commit 6aec4e4c (release-checks-run-once build phase 4)
+
+**Session ID**: aabc9a15-9125-4b5f-9f29-dc85673ffa38
+**Last updated**: 2026-10-08T18:01:25.549Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 3c3b86e1 — eval agent: scoring commit ff7c0510
+
+**Session ID**: 3c3b86e1-f015-458a-806a-32c9f03ce963
+**Last updated**: 2026-10-08T18:01:24.454Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session da7270c4 — eval: release-checks-run-once a9599863
+
+**Session ID**: da7270c4-cf11-45a8-b853-9bd766812575
+**Last updated**: 2026-10-08T18:01:49.187Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 5fedf9d3 — eval: release-checks-run-once a301930c
+
+**Session ID**: 5fedf9d3-816b-4e79-9d8b-53f1648714bf
+**Last updated**: 2026-10-08T18:01:56.088Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 84321692 — eval: scoring commit 8cf201c8 (release-checks-run-once Build Phase 4)
+
+**Session ID**: 84321692-ae8d-4d54-8d49-0294e6e1ea03
+**Last updated**: 2026-10-08T18:02:13.331Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
 
 ### In Flight
 
