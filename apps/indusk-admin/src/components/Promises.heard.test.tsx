@@ -98,9 +98,7 @@ describe("A22 — with production unreadable, the record is still shown, as of w
       promises: PROMISES,
       incidents: [],
       heard: { rows: HEARD, lastHeard: LAST_HEARD },
-      observed: [
-        { name: "production", rows: {}, unknownSince: hoursAgo(1) },
-      ],
+      observed: [{ name: "production", rows: {}, unknownSince: hoursAgo(1) }],
     } as unknown as Parameters<typeof PromisesTable>[0];
     const { container } = await render(<PromisesTable {...props} />);
     const cell = heardCell(container);
