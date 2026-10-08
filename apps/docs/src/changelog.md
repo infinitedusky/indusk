@@ -6,6 +6,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Added
 
+- **`indusk server deploy`** (server-provisioning, falsified): a failed Fly read is refused rather than taken for "nothing there"; a webhook given to an existing server is set; a stored credential the server rejects is reported with `--rotate` instead of waited on; credential variables are per project, not per folder name.
 - **`indusk server deploy`** (server-provisioning): creates a project's recording server in your own Fly account through your signed-in `fly` — app, volume, secrets on stdin, the published image, addresses — and connects the project. A second run updates and creates nothing. Without a Slack webhook the server starts with announcements off: it records every violation and the admin shows it. See [Run your own server](/guide/run-your-own-server).
 
 - **`indusk server connect`** (server-provisioning): points a project at a recording server you run, anywhere. It reads the server back first, stores the credential on the machine under a per-project variable, and names the server as the project's production source; nothing is written when the server does not answer. The production source now finds its credential in `~/.indusk/config.env` when the environment does not have it, so a connected project reads production with no shell restart. See [`server`](/reference/cli/server).

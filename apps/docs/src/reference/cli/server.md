@@ -35,7 +35,9 @@ arguments.
    runs.
 2. **Stores the credential on this machine**, in `~/.indusk/config.env`
    (`$INDUSK_HOME/config.env` when that is set), under a variable named for the
-   project: `INDUSK_SERVER_<PROJECT>_CREDENTIAL`. The file is readable by its
+   project: `INDUSK_SERVER_<PROJECT>_<HASH>_CREDENTIAL`, where the hash is of
+   the project's repository (shared by its worktrees), or of its folder outside
+   git, so two projects in folders of the same name never share one. The file is readable by its
    owner only. Other lines in it are kept.
 3. **Names the server in the project's config**, `.indusk/config.json`:
 
@@ -102,9 +104,10 @@ and what it has — and then runs only what is missing:
 
 1. `fly apps create <app> --org <org>`
 2. `fly volumes create indusk_telemetry --size 3 --region <region>`
-3. `fly secrets import --stage`, with the password and webhook on stdin, never
-   on the command line. Only for a new app, with `--rotate`, or when this
-   machine does not hold the project's credential.
+3. `fly secrets import --stage`, on stdin, never on the command line: a new
+   password for a new app, with `--rotate`, or when this machine does not
+   hold the project's credential; the webhook whenever one is given, so
+   `--slack-webhook-env` on an existing server sets it and keeps the password.
 4. `fly deploy --image ghcr.io/infinitedusky/indusk-always-on:<version> --ha=false`
    with a Fly configuration generated for the app: one machine that never
    stops, the volume, the two services. It pulls the published image and
@@ -138,6 +141,8 @@ Each refusal exits 2 and has created nothing, unless it says otherwise.
 | `A Fly app named <app> already exists and is not recorded as this project's server. Choose another name with --app <name>.` | |
 | `This project's server is <app>, recorded in its config. …` | `--app` names a different app from the one recorded. |
 | `` `fly <step>` failed (exit N); nothing after it ran. Its output is above. `` | A Fly call failed; what ran before it stays. |
+| `` `fly volumes list -a <app> --json` failed (exit N): … Nothing was created; run this again when Fly answers. `` | Fly did not answer a read. A failed read is never taken for "nothing there", which would create a second volume or address. |
+| `… answered 401` then `… connected with the credential this machine stored before (<variable>), and the server did not accept it; run indusk server deploy --rotate to set a new password.` | The server is up and refused the stored login. Deploy does not wait on it. |
 | `watcher blind — …` then `The server <app> exists and is recorded in this project's config; run indusk server deploy again to finish connecting.` | The server was created but did not read back. A second run creates nothing and tries the connect again. |
 
 Every line it prints, Fly's own output included, passes through a writer that
