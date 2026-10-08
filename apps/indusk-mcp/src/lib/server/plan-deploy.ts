@@ -37,7 +37,9 @@ export interface Step {
 	secrets?: true;
 }
 
-export type DeployPlan = { kind: "steps"; org: string; steps: Step[] } | { kind: "refuse"; message: string };
+export type DeployPlan =
+	| { kind: "steps"; org: string; steps: Step[] }
+	| { kind: "refuse"; message: string };
 
 export const VOLUME_NAME = "indusk_telemetry";
 export const VOLUME_GB = 3;
@@ -50,7 +52,8 @@ export function planDeploy(state: FlyState, wanted: DeployWanted): DeployPlan {
 			"The Fly CLI is not installed. Install it (https://fly.io/docs/flyctl/install/), run `fly auth login`, then run this again.",
 		);
 	}
-	if (state.cli === "signed-out") return refuse("fly is not signed in. Run `fly auth login`, then run this again.");
+	if (state.cli === "signed-out")
+		return refuse("fly is not signed in. Run `fly auth login`, then run this again.");
 
 	if (wanted.recordedApp && wanted.recordedApp !== wanted.app) {
 		return refuse(
@@ -79,21 +82,38 @@ export function planDeploy(state: FlyState, wanted: DeployWanted): DeployPlan {
 function withOrg(state: FlyState, wanted: DeployWanted, org: string): DeployPlan {
 	const a = wanted.app;
 	const steps: Step[] = [];
-	if (!state.app.exists) steps.push({ name: "apps create", args: ["apps", "create", a, "--org", org] });
+	if (!state.app.exists)
+		steps.push({ name: "apps create", args: ["apps", "create", a, "--org", org] });
 	if (!state.app.volumes.includes(VOLUME_NAME)) {
 		steps.push({
 			name: "volumes create",
-			args: ["volumes", "create", VOLUME_NAME, "--size", String(VOLUME_GB), "--region", wanted.region, "-a", a, "--yes"],
+			args: [
+				"volumes",
+				"create",
+				VOLUME_NAME,
+				"--size",
+				String(VOLUME_GB),
+				"--region",
+				wanted.region,
+				"-a",
+				a,
+				"--yes",
+			],
 		});
 	}
 	if (!state.app.exists || wanted.rotate || !wanted.haveCredential) {
-		steps.push({ name: "secrets import", args: ["secrets", "import", "-a", a, "--stage"], secrets: true });
+		steps.push({
+			name: "secrets import",
+			args: ["secrets", "import", "-a", a, "--stage"],
+			secrets: true,
+		});
 	}
 	steps.push({
 		name: "deploy",
 		args: ["deploy", "-a", a, "-c", wanted.configPath, "--image", wanted.image, "--ha=false"],
 	});
-	if (!state.app.ips.includes("v6")) steps.push({ name: "ips allocate-v6", args: ["ips", "allocate-v6", "-a", a] });
+	if (!state.app.ips.includes("v6"))
+		steps.push({ name: "ips allocate-v6", args: ["ips", "allocate-v6", "-a", a] });
 	if (!state.app.ips.includes("v4")) {
 		steps.push({ name: "ips allocate-v4", args: ["ips", "allocate-v4", "--yes", "-a", a] });
 	}

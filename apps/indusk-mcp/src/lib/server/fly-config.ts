@@ -18,7 +18,9 @@ export function publicAddresses(app: string): { queryUrl: string; otlpUrl: strin
 }
 
 export function renderFlyConfig(opts: { app: string; region: string }): string {
-	return readFileSync(FLY_TEMPLATE, "utf-8").replaceAll("{{app}}", opts.app).replaceAll("{{region}}", opts.region);
+	return readFileSync(FLY_TEMPLATE, "utf-8")
+		.replaceAll("{{app}}", opts.app)
+		.replaceAll("{{region}}", opts.region);
 }
 
 export function writeFlyConfig(dir: string, opts: { app: string; region: string }): string {

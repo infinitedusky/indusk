@@ -32,7 +32,11 @@ export function realFly(bin = "fly"): FlyCli {
 					stderr += d;
 				});
 				child.on("error", (err: NodeJS.ErrnoException) => {
-					resolve({ status: err.code === "ENOENT" ? FLY_MISSING : 1, stdout, stderr: stderr || err.message });
+					resolve({
+						status: err.code === "ENOENT" ? FLY_MISSING : 1,
+						stdout,
+						stderr: stderr || err.message,
+					});
 				});
 				child.on("close", (code) => resolve({ status: code ?? 1, stdout, stderr }));
 				child.stdin.end(opts?.stdin ?? "");

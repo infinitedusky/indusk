@@ -424,6 +424,41 @@ serverCmd
 		await serverConnect({ queryUrl, intake: opts.intake, credentialEnv: opts.credentialEnv });
 	});
 
+serverCmd
+	.command("deploy")
+	.description(
+		"Create this project's recording server in your own Fly account and connect it (needs `fly` signed in)",
+	)
+	.option(
+		"--app <name>",
+		"The Fly app name (default: indusk-<project>, or the one this project recorded)",
+	)
+	.option("--org <slug>", "The Fly organisation (needed when your account has several)")
+	.option("--region <code>", "The Fly region (default: iad)")
+	.option(
+		"--slack-webhook-env <name>",
+		"Read the Slack webhook from this environment variable; without it, announcements are off",
+	)
+	.option(
+		"--server-version <version>",
+		"The server version to deploy (default: this indusk's); `--version` is the CLI's own",
+	)
+	.option("--rotate", "Set a new server password")
+	.action(
+		async (opts: {
+			app?: string;
+			org?: string;
+			region?: string;
+			slackWebhookEnv?: string;
+			serverVersion?: string;
+			rotate?: boolean;
+		}) => {
+			const { serverDeploy } = await import("./commands/server.js");
+			const { serverVersion, ...rest } = opts;
+			await serverDeploy({ ...rest, version: serverVersion ?? pkg.version });
+		},
+	);
+
 const uiCmd = program
 	.command("ui")
 	.description("Admin UI daemon lifecycle (start/stop/status)")

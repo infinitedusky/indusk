@@ -61,7 +61,10 @@ export function defaultAppName(projectName: string): string {
 
 export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void> {
 	const config = readConfig(input.projectRoot);
-	if (!config) throw new DeployRefused(`no InDusk config at ${input.projectRoot} — run \`indusk init\` there first`);
+	if (!config)
+		throw new DeployRefused(
+			`no InDusk config at ${input.projectRoot} — run \`indusk init\` there first`,
+		);
 	const recorded = config.server ?? null;
 	const app = input.app ?? recorded?.app ?? defaultAppName(input.projectName);
 	const region = input.region ?? recorded?.region ?? DEFAULT_REGION;
@@ -104,12 +107,17 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 		});
 	}
 	if (setsSecrets && !webhook) {
-		out.line("No Slack webhook given: announcements are off. The server records, and the admin shows what it records.");
+		out.line(
+			"No Slack webhook given: announcements are off. The server records, and the admin shows what it records.",
+		);
 	}
 
 	const addresses = publicAddresses(app);
 	try {
-		await deps.connect({ projectRoot: input.projectRoot, projectName: input.projectName, ...addresses, credential }, out);
+		await deps.connect(
+			{ projectRoot: input.projectRoot, projectName: input.projectName, ...addresses, credential },
+			out,
+		);
 	} catch (err) {
 		const why = err instanceof Error ? err.message : String(err);
 		throw new DeployRefused(
@@ -134,6 +142,8 @@ async function runStep(
 	const r = await fly.run(step.args, stdin === undefined ? undefined : { stdin });
 	for (const line of `${r.stdout}${r.stderr}`.split("\n")) if (line.trim()) out.line(`  ${line}`);
 	if (r.status !== 0) {
-		throw new DeployRefused(`\`fly ${step.name}\` failed (exit ${r.status}); nothing after it ran. Its output is above.`);
+		throw new DeployRefused(
+			`\`fly ${step.name}\` failed (exit ${r.status}); nothing after it ran. Its output is above.`,
+		);
 	}
 }

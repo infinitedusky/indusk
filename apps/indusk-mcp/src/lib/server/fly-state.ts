@@ -26,7 +26,9 @@ export async function readFlyState(fly: FlyCli, app: string): Promise<FlyState> 
 	if (who.status === FLY_MISSING) return { cli: "missing", orgs: [], app: NONE };
 	if (who.status !== 0) return { cli: "signed-out", orgs: [], app: NONE };
 
-	const orgs = Object.keys(json<Record<string, string>>((await fly.run(["orgs", "list", "--json"])).stdout, {}));
+	const orgs = Object.keys(
+		json<Record<string, string>>((await fly.run(["orgs", "list", "--json"])).stdout, {}),
+	);
 	const apps = json<{ Name?: string; Organization?: { Slug?: string } }[]>(
 		(await fly.run(["apps", "list", "--json"])).stdout,
 		[],
@@ -34,8 +36,14 @@ export async function readFlyState(fly: FlyCli, app: string): Promise<FlyState> 
 	const found = apps.find((a) => a.Name === app);
 	if (!found) return { cli: "ok", orgs, app: NONE };
 
-	const volumes = json<{ name?: string }[]>((await fly.run(["volumes", "list", "-a", app, "--json"])).stdout, []);
-	const ips = json<{ Type?: string }[]>((await fly.run(["ips", "list", "-a", app, "--json"])).stdout, []);
+	const volumes = json<{ name?: string }[]>(
+		(await fly.run(["volumes", "list", "-a", app, "--json"])).stdout,
+		[],
+	);
+	const ips = json<{ Type?: string }[]>(
+		(await fly.run(["ips", "list", "-a", app, "--json"])).stdout,
+		[],
+	);
 	return {
 		cli: "ok",
 		orgs,

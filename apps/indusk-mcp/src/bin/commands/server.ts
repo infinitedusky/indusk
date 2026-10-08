@@ -1,3 +1,6 @@
+import { randomBytes } from "node:crypto";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { createInterface } from "node:readline";
 import { Writable } from "node:stream";
@@ -5,6 +8,8 @@ import { resolveProjectRoot } from "../../lib/config.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
 import { JaegerUnreachable } from "../../lib/promises/telemetry.js";
 import { connect, probeServer } from "../../lib/server/connect.js";
+import { DeployRefused, deploy } from "../../lib/server/deploy.js";
+import { realFly } from "../../lib/server/fly.js";
 import { redactingWriter } from "../../lib/server/redact.js";
 import { secretsFile } from "../../lib/server/secrets-file.js";
 import { induskHome } from "../../lib/telemetry/status.js";
@@ -87,4 +92,62 @@ function promptHidden(question: string): Promise<string> {
 		});
 		muted = true;
 	});
+}
+
+export interface ServerDeployOptions {
+	app?: string;
+	org?: string;
+	region?: string;
+	slackWebhookEnv?: string;
+	version: string;
+	rotate?: boolean;
+	cwd?: string;
+}
+
+/** `indusk server deploy`: the project's recording server in your own Fly account, connected. */
+export async function serverDeploy(opts: ServerDeployOptions): Promise<void> {
+	const root = resolveProjectRoot(opts.cwd ?? process.cwd());
+	if (!root) {
+		console.error("No InDusk project here: run `indusk init` first, or run this inside one.");
+		process.exitCode = 2;
+		return;
+	}
+	let slackWebhook: string | null = null;
+	if (opts.slackWebhookEnv) {
+		slackWebhook = process.env[opts.slackWebhookEnv]?.trim() || null;
+		if (!slackWebhook) {
+			console.error(
+				`${opts.slackWebhookEnv} is not set — export it, or leave out --slack-webhook-env for no announcements.`,
+			);
+			process.exitCode = 2;
+			return;
+		}
+	}
+	const projectName = basename(root);
+	const secrets = secretsFile(join(induskHome(), "config.env"));
+	try {
+		await deploy(
+			{
+				projectRoot: root,
+				projectName,
+				app: opts.app,
+				org: opts.org,
+				region: opts.region,
+				version: opts.version,
+				slackWebhook,
+				rotate: opts.rotate,
+			},
+			{
+				fly: realFly(),
+				secrets,
+				print: (line) => console.info(line),
+				random: () => randomBytes(24).toString("hex"),
+				tempDir: () => mkdtempSync(join(tmpdir(), "indusk-fly-")),
+				connect: (input, out) => connect(input, { probe: probeServer(projectName), secrets, out }),
+			},
+		);
+	} catch (err) {
+		console.error(err instanceof Error ? err.message : String(err));
+		process.exitCode = err instanceof DeployRefused ? 2 : 1;
+	}
 }
