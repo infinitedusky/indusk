@@ -398,8 +398,11 @@ the server itself.
 indusk promises status [--since <duration>]
 ```
 
-Read-only. Reports each promise as the configured Jaeger saw
-it over a window — by default the quiet window (`promises.quiet_window_days`,
+Read-only. It opens with one line per **open incident**, oldest first —
+`open incident <id> — <promise>, open 2 days; <owner> carries its Maintenance
+phase` (or "carries NO Maintenance phase for it") — read from the registry, so
+they are printed even when no Jaeger answers. Then it reports each promise as
+the configured Jaeger saw it over a window — by default the quiet window (`promises.quiet_window_days`,
 7 days), or `--since 90m` / `24h` / `7d`. One block per promise, opening on a
 line that starts with its name:
 
