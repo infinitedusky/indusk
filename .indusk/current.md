@@ -2562,3 +2562,24 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 (empty)
 
 ---
+
+## Session 9346cfa1 — eval: scoring commit 65203fda (server block / Fly app)
+
+**Session ID**: 9346cfa1-7dbc-42c4-8e57-321dbee27800
+**Last updated**: 2026-10-08T22:08:55.340Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
