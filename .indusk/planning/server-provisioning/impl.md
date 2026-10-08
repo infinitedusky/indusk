@@ -1,7 +1,7 @@
 ---
 title: "Server provisioning — run your own recording server, connected in one command"
 date: 2026-10-08
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -340,6 +340,10 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 #### Deferred to Build Phase 5
 
 - **A22, A23, A24, A25** — found by falsification after the build phases closed, so they did not exist when this phase did. Their subjects exist now; each is authored red at Build Phase 5's start against the current code, through the same fakes as the deploy and connect tests: a fake Fly whose `volumes list` exits non-zero (A22); an existing, recorded app with a stored credential and a webhook given (A23, read from the `secrets import` stdin); a `connect` that throws `JaegerUnreachable` "… answered 401" against a fake clock (A24, which must not advance five minutes and must name `--rotate`); and two project roots named `app` under different parents (A25).
+
+#### Deferred to Build Phase 6
+
+- **A26, A27** — found by the cleanup review after Build Phase 5. A26's subject, `machineSecrets()`, is introduced in Build Phase 6; its pin reads the three call sites as text, so it is authored red at that phase's start (today each site builds the path itself). A27 compares two files that exist today and is red today on the `[build]` and public URL lines only if the comparison is too strict, so it is written first and run against the current pair.
 
 #### Test Phase 1 Verification
 
