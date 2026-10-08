@@ -32,7 +32,9 @@
  */
 
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 
 /**
@@ -387,4 +389,53 @@ function headCommitTime(dir) {
 	} catch {
 		return -1;
 	}
+}
+
+/**
+ * The main checkout and the project's home, as `lib/bookkeeping/roots.ts`
+ * resolves them (bookkeeping-lives-where-it-is-read D4). Hooks cannot import
+ * the package, so this is its copy; `lib/bookkeeping/home.test.ts` (A11) pins
+ * them equal. The main checkout is the folder holding the shared git
+ * directory; the home is `<INDUSK_HOME>/projects/<id>-<hash>`, the id the
+ * configured `graphiti.groupId` or the main checkout's sanitised folder name,
+ * the hash the first 8 hex of the sha256 of the main checkout's real path, so
+ * two clones of one project never share a home (A18).
+ *
+ * promise: indusk-leaves-main-clean
+ */
+export function mainCheckout(cwd) {
+	try {
+		const common = execFileSync(
+			"git",
+			["-C", cwd, "rev-parse", "--path-format=absolute", "--git-common-dir"],
+			{ encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] },
+		).trim();
+		return common ? dirname(common) : cwd;
+	} catch {
+		return cwd;
+	}
+}
+
+export function projectHome(cwd) {
+	const trunk = mainCheckout(cwd);
+	let id = "";
+	try {
+		const config = JSON.parse(readFileSync(resolve(trunk, ".indusk", "config.json"), "utf-8"));
+		if (typeof config?.graphiti?.groupId === "string") id = config.graphiti.groupId;
+	} catch {
+		// no config: the folder name below
+	}
+	if (id === "") {
+		const name = trunk.split("/").filter(Boolean).pop() ?? "";
+		id = name.replace(/[^A-Za-z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
+	}
+	let real = trunk;
+	try {
+		real = realpathSync(trunk);
+	} catch {
+		// a checkout that is gone keys by the path it had
+	}
+	const hash = createHash("sha256").update(real).digest("hex").slice(0, 8);
+	const home = process.env.INDUSK_HOME ?? resolve(homedir(), ".indusk");
+	return resolve(home, "projects", `${id}-${hash}`);
 }

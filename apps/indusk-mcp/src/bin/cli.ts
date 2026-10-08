@@ -289,6 +289,14 @@ eval_
 	});
 
 eval_
+	.command("home")
+	.description("Print this project's home, where its evaluation results and highlights live")
+	.action(async () => {
+		const { evalHome } = await import("./commands/eval.js");
+		evalHome(process.cwd());
+	});
+
+eval_
 	.command("findings")
 	.description("List unresolved eval findings")
 	.option("--all", "Show all findings including fixed/ignored")

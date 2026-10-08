@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { evalDir } from "../lib/bookkeeping/roots.js";
 import { runHook } from "./helpers/hook-runner.js";
 import {
 	commitFile,
@@ -38,7 +39,7 @@ function commitEvent(cwd: string) {
 const QUIET_PATH = `${dirname(process.execPath)}:/usr/bin:/bin`;
 
 function systemLog(wb: VersionedWorkbench): string {
-	const path = join(wb.root, ".indusk", "eval", "system.log");
+	const path = join(evalDir(wb.root), "system.log");
 	expect(existsSync(path), "system.log was not written under the workbench root").toBe(true);
 	return readFileSync(path, "utf-8");
 }
@@ -67,7 +68,7 @@ describe("A7 — a commit from a cwd at the workbench root", () => {
 
 		const r = await runHook("eval-trigger.js", commitEvent(wb.root), {
 			cwd: wb.root,
-			env: { PATH: QUIET_PATH },
+			env: { PATH: QUIET_PATH, INDUSK_HOME: process.env.INDUSK_HOME },
 		});
 		expect(r.exitCode).toBe(0);
 
@@ -88,7 +89,7 @@ describe("A8 — the refusal reaches the session, not only system.log", () => {
 
 		const r = await runHook("eval-trigger.js", commitEvent(wb.root), {
 			cwd: wb.root,
-			env: { PATH: QUIET_PATH },
+			env: { PATH: QUIET_PATH, INDUSK_HOME: process.env.INDUSK_HOME },
 		});
 		expect(r.exitCode).toBe(0);
 		expect(r.stdout.trim(), "the hook wrote nothing to stdout").not.toBe("");
@@ -153,7 +154,7 @@ describe("A21 — CLI mode never prints the refusal envelope to a terminal", () 
 		wb = twoRepos("nested", { extraConfig: { eval: { enabled: true } } });
 		const r = await runHook("eval-trigger.js", commitEvent(wb.root), {
 			cwd: wb.root,
-			env: { PATH: QUIET_PATH },
+			env: { PATH: QUIET_PATH, INDUSK_HOME: process.env.INDUSK_HOME },
 			args: ["--source", "handoff"],
 		});
 		expect(r.exitCode).toBe(0);

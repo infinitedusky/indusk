@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_REFRESH_MS,
@@ -58,9 +59,18 @@ describe("A37 — readAdminRefreshMs through the package's config reader", () =>
 });
 
 describe("hasEvalDirectory", () => {
-  it("is the presence of .indusk/eval/", () => {
-    expect(hasEvalDirectory(root)).toBe(false);
-    mkdirSync(join(root, ".indusk", "eval"));
-    expect(hasEvalDirectory(root)).toBe(true);
+  // Evaluation results live in the project's home, outside every checkout
+  // (bookkeeping-lives-where-it-is-read).
+  it("is the presence of the project's eval folder", () => {
+    const previous = process.env.INDUSK_HOME;
+    process.env.INDUSK_HOME = join(root, "home");
+    try {
+      expect(hasEvalDirectory(root)).toBe(false);
+      mkdirSync(evalDir(root), { recursive: true });
+      expect(hasEvalDirectory(root)).toBe(true);
+    } finally {
+      if (previous === undefined) delete process.env.INDUSK_HOME;
+      else process.env.INDUSK_HOME = previous;
+    }
   });
 });

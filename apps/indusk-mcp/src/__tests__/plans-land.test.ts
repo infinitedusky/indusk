@@ -1,7 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { bookkeepingRoots } from "../lib/bookkeeping/roots.js";
 import { git as gitResult, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { implText } from "./helpers/plan-fixture.js";
 import {
@@ -12,6 +14,7 @@ import { git } from "./helpers/test-git.js";
 
 /**
  * promise: nothing-ships-until-accepted — admin-plan-authoring A18.
+ * promise: indusk-leaves-main-clean — bookkeeping-lives-where-it-is-read A16.
  *
  * A plan's build reaches `main` only once it is accepted. `plans land`
  * refuses an unaccepted plan, naming it, and leaves `main` alone; after
@@ -77,6 +80,50 @@ describe.skipIf(SHOULD_SKIP)("indusk plans land", () => {
 		expect(git(p.trunk, ["log", "--format=%s", "main"])).toMatch(/bookkeeping/);
 		expect(git(p.trunk, ["status", "--porcelain"])).toBe("");
 		expect(p.onMain()).toContain("src/seat.ts");
+	});
+
+	it("A16 — a branch that still tracks a changed highlights queue lands after main stopped tracking it", () => {
+		const home = mkdtempSync(join(tmpdir(), "plans-land-home-"));
+		const env = { INDUSK_HOME: home };
+		const h = (id: string, note: string) =>
+			`${JSON.stringify({ id, timestamp: "2026-10-07T00:00:00Z", level: "note", tag: "t", note })}\n`;
+		try {
+			p.commit(
+				p.trunk,
+				{ ".indusk/highlights.jsonl": h("h-1", "before the move") },
+				"queue tracked",
+			);
+			git(wt, ["merge", "-q", "main"]);
+			p.commit(
+				wt,
+				{
+					".indusk/highlights.jsonl":
+						h("h-1", "before the move") + h("h-2", "from the plan's sessions"),
+				},
+				"the plan's sessions highlighted",
+			);
+			// What `indusk update` does on main: out of git, ignored.
+			git(p.trunk, ["rm", "-q", "--cached", ".indusk/highlights.jsonl"]);
+			rmSync(join(p.trunk, ".indusk", "highlights.jsonl"));
+			p.commit(
+				p.trunk,
+				{ ".gitignore": ".indusk/highlights.jsonl\n" },
+				"chore(indusk): highlights move to the home",
+			);
+
+			expect(runCli(p.trunk, ["plans", "accept", PLAN], env).code).toBe(0);
+			const r = runCli(p.trunk, ["plans", "land", PLAN], env);
+			expect(r.code, out(r)).toBe(0);
+			expect(p.onMain()).toContain("src/seat.ts");
+			expect(p.onMain()).not.toContain(".indusk/highlights.jsonl");
+			expect(git(p.trunk, ["status", "--porcelain"])).toBe("");
+			const queue = join(bookkeepingRoots(p.trunk, home).home, "highlights.jsonl");
+			expect(existsSync(queue) ? readFileSync(queue, "utf-8") : "").toContain(
+				"from the plan's sessions",
+			);
+		} finally {
+			rmSync(home, { recursive: true, force: true });
+		}
 	});
 
 	it("A32 — other uncommitted work on main where the plan lands is refused, naming it, and not committed", () => {

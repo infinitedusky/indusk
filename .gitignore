@@ -30,6 +30,10 @@ apps/docs/src/.vitepress/dist/
 .indusk/graph/
 # Eval results (local-only)
 .indusk/eval/
+# Machine state, kept in ~/.indusk/projects/<project>/ (bookkeeping-lives-where-it-is-read)
+.indusk/highlights.jsonl
+.indusk/highlights-processed.jsonl
+.indusk/current.md.lock
 
 # Sub-app .claude/ and .indusk/ dirs — these should only exist at the
 # repo root. They get accidentally created when `indusk init` or

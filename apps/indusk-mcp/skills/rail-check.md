@@ -80,10 +80,16 @@ Commit it:
 git commit -am "rail-check: verify post-update eval-trigger fires (1.31.7)"
 ```
 
-Wait ~5 seconds, then check `${projectRoot}/.indusk/eval/system.log` (or `${workbenchRoot}/.indusk/eval/system.log` in workbench mode):
+The evaluator's logs and the highlights live in the project's home, outside every checkout (`~/.indusk/projects/<project>-<hash>/`, the same from every worktree). Ask for it once and use it below:
 
 ```bash
-tail -20 .indusk/eval/system.log
+H="$(indusk eval home)"
+```
+
+Wait ~5 seconds, then check the system log:
+
+```bash
+tail -20 "$H/eval/system.log"
 ```
 
 You should see lines like:
@@ -97,14 +103,14 @@ You should see lines like:
 
 **The load-bearing line is `evaluator spawned` with a real PID.** If you see `skip — no git commit ID available` or `skip — no git repo at cwd`, the workbench fix has not taken effect — report this to the user as a regression and stop. They may need to re-run `indusk update` or check that 1.31.7 actually installed.
 
-After ~60s, check `.indusk/eval/results.log` for a new scorecard entry. If present, the full rail (hook → spawn → claude --print → lessons) is working.
+After ~60s, check `$H/eval/results.log` for a new scorecard entry. If present, the full rail (hook → spawn → claude --print → lessons) is working.
 
 ### Step 4b — Drain the thin lane's pending-eval queue
 
-`atdawn run` (the Dawn thin lane) cannot spawn the evaluator itself — it may be running on a machine with no `claude` CLI — so every loop-owned commit is queued in `.indusk/eval/pending.jsonl` for a later drain from a `claude`-capable environment. This skill owns that drain.
+`atdawn run` (the Dawn thin lane) cannot spawn the evaluator itself — it may be running on a machine with no `claude` CLI — so every loop-owned commit is queued in `$H/eval/pending.jsonl` for a later drain from a `claude`-capable environment. This skill owns that drain.
 
 ```bash
-wc -l .indusk/eval/pending.jsonl .indusk/eval/pending-drained.jsonl 2>/dev/null
+wc -l "$H/eval/pending.jsonl" "$H/eval/pending-drained.jsonl" 2>/dev/null
 ```
 
 Pending minus drained is the backlog. When it is non-zero, drain it:
@@ -113,7 +119,7 @@ Pending minus drained is the backlog. When it is non-zero, drain it:
 node .claude/hooks/eval-trigger.js --drain-pending
 ```
 
-Each record is marked drained **before** its evaluator spawns, so a crashed spawn is a logged gap rather than a double-evaluation — re-running the drain is always safe and never re-evaluates a sha. Report the count drained; the scorecards land in `.indusk/eval/results.log` like any other eval.
+Each record is marked drained **before** its evaluator spawns, so a crashed spawn is a logged gap rather than a double-evaluation — re-running the drain is always safe and never re-evaluates a sha. Report the count drained; the scorecards land in `$H/eval/results.log` like any other eval.
 
 A backlog that keeps growing across rail-checks means thin-lane runs are happening but nobody is draining — the queue is durable, so nothing is lost, but the lane's lessons are not reaching the registry until it runs.
 
@@ -122,10 +128,10 @@ A backlog that keeps growing across rail-checks means thin-lane runs are happeni
 Read both files (line counts):
 
 ```bash
-wc -l .indusk/highlights.jsonl .indusk/highlights-processed.jsonl 2>/dev/null
+wc -l "$H/highlights.jsonl" "$H/highlights-processed.jsonl" 2>/dev/null
 ```
 
-If `.indusk/highlights.jsonl` exists, compute unprocessed = total lines in highlights.jsonl MINUS total lines in highlights-processed.jsonl. (Each line is one highlight; processed dedupes by ID.)
+If `$H/highlights.jsonl` exists, compute unprocessed = total lines in highlights.jsonl MINUS total lines in highlights-processed.jsonl. (Each line is one highlight; processed dedupes by ID.)
 
 Report:
 
@@ -163,12 +169,12 @@ If it exists at `.claude/hooks/`, run:
 node .claude/hooks/eval-trigger.js --source rail-check-backfill
 ```
 
-The hook prints `📊 Eval evaluator spawned (source=rail-check-backfill) for {changeId}. Results will appear in .indusk/eval/results.log` to stderr and spawns the agent in the background. Wait 3-5 minutes for it to drain (longer for large queues).
+The hook prints `📊 Eval evaluator spawned (source=rail-check-backfill) for {changeId}. Results will appear in <the project home>/eval/results.log` to stderr and spawns the agent in the background. Wait 3-5 minutes for it to drain (longer for large queues).
 
 Monitor progress:
 
 ```bash
-tail -f .indusk/eval/system.log
+tail -f "$H/eval/system.log"
 ```
 
 You should see lifecycle markers: `evaluator spawned`, `evaluator process started`, periodically `evaluator completed`. When you see `evaluator completed — scorecard written` (or `error: ...`), the run is done.
@@ -176,14 +182,14 @@ You should see lifecycle markers: `evaluator spawned`, `evaluator process starte
 Re-count unprocessed:
 
 ```bash
-wc -l .indusk/highlights.jsonl .indusk/highlights-processed.jsonl
+wc -l "$H/highlights.jsonl" "$H/highlights-processed.jsonl"
 ```
 
 Unprocessed should now be 0 (or close — the agent skips entries that fail the inner validation).
 
 ### Step 6 — Verify the lessons landed
 
-List the lessons registry (`mcp__indusk__list_lessons`) and compare against `.indusk/highlights-processed.jsonl`: every entry with `action: "wrote-episode"` names the lesson it materialized in its `detail`. Skipped entries carry their reason — a healthy drain shows a mix (accepted-doc highlights are usually skips because the plan docs already record them; corrections usually become lessons).
+List the lessons registry (`mcp__indusk__list_lessons`) and compare against `$H/highlights-processed.jsonl`: every entry with `action: "wrote-episode"` names the lesson it materialized in its `detail`. Skipped entries carry their reason — a healthy drain shows a mix (accepted-doc highlights are usually skips because the plan docs already record them; corrections usually become lessons).
 
 Sample 2-3 of the most recent materialized lessons and read their titles to the user as proof of life.
 
@@ -207,7 +213,7 @@ If anything failed at Step 4 (rail not firing), prioritize that — the user nee
 - **Stop at Step 4 if the rail isn't firing.** Don't backfill against a broken rail — that's exactly the failure mode 1.31.7 fixed.
 - **The user may interrupt** at any step to inspect or course-correct. This is a 5-15 minute procedure, not a one-shot.
 - **If `.claude/hooks/eval-trigger.js` doesn't exist**, the user needs `indusk update` to install it. Report and stop.
-- **In workbench mode**, check both `${workbenchRoot}/.indusk/eval/system.log` AND the wrapped repo's `.indusk/eval/` (if any). The latter should NOT exist; if it does, it's the exact stray state Step 3 is for.
+- **A `.indusk/eval/` or `.indusk/highlights.jsonl` in any checkout** (the workbench root, a wrapped repo, a plan worktree) is state from before the project home: `indusk update` moves it into `$H` and takes it out of git. Run it rather than reading the old copy.
 
 ## When NOT to invoke
 

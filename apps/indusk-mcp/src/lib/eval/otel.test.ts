@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { evalDir } from "../bookkeeping/roots.js";
 import { __resetEvalOtelForTests, initEvalOtel, isEvalOtelEnabled } from "./otel.js";
 
 let projectRoot: string;
@@ -67,7 +68,7 @@ describe("T4: initEvalOtel returns a no-op tracer when eval.otel.enabled is unse
 
 	it("no system.log entry is produced when disabled (nothing to log)", () => {
 		initEvalOtel(projectRoot);
-		const logPath = join(projectRoot, ".indusk", "eval", "system.log");
+		const logPath = join(evalDir(projectRoot), "system.log");
 		expect(existsSync(logPath)).toBe(false);
 	});
 });
@@ -97,7 +98,7 @@ describe("T5: initEvalOtel returns a real tracer when eval.otel.enabled: true AN
 
 		initEvalOtel(projectRoot);
 
-		const logPath = join(projectRoot, ".indusk", "eval", "system.log");
+		const logPath = join(evalDir(projectRoot), "system.log");
 		expect(existsSync(logPath)).toBe(true);
 		const log = readFileSync(logPath, "utf-8");
 		expect(log).toMatch(/eval\.otel initialized/);
@@ -122,7 +123,7 @@ describe("T6: initEvalOtel returns a no-op tracer AND logs a warning when enable
 
 		initEvalOtel(projectRoot);
 
-		const logPath = join(projectRoot, ".indusk", "eval", "system.log");
+		const logPath = join(evalDir(projectRoot), "system.log");
 		expect(existsSync(logPath)).toBe(true);
 		const log = readFileSync(logPath, "utf-8");
 		expect(log).toMatch(/eval\.otel\.enabled but OTEL_EXPORTER_OTLP_ENDPOINT is unset/);
@@ -193,7 +194,7 @@ describe("eval.otel dataset resolution (Dash0-Dataset header)", () => {
 
 		initEvalOtel(projectRoot);
 
-		const logPath = join(projectRoot, ".indusk", "eval", "system.log");
+		const logPath = join(evalDir(projectRoot), "system.log");
 		const log = readFileSync(logPath, "utf-8");
 		expect(log).toContain("dataset: agent-custom");
 	});

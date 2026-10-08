@@ -1,4 +1,5 @@
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -7,7 +8,8 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   readActivePlans,
   readArchivedPlans,
@@ -177,6 +179,27 @@ describe("planning-reader: readMasterPlanOrder", () => {
 });
 
 describe("planning-reader: readEvalScorecards", () => {
+  // Results live in the project's home, outside every checkout
+  // (bookkeeping-lives-where-it-is-read): a home of this suite's own, holding
+  // the fixture's results.
+  let home: string;
+  let previous: string | undefined;
+  beforeAll(() => {
+    previous = process.env.INDUSK_HOME;
+    home = mkdtempSync(join(tmpdir(), "planning-reader-home-"));
+    process.env.INDUSK_HOME = home;
+    mkdirSync(evalDir(FIXTURE_ROOT), { recursive: true });
+    copyFileSync(
+      join(FIXTURE_ROOT, ".indusk/eval/results.log"),
+      join(evalDir(FIXTURE_ROOT), "results.log"),
+    );
+  });
+  afterAll(() => {
+    if (previous === undefined) delete process.env.INDUSK_HOME;
+    else process.env.INDUSK_HOME = previous;
+    rmSync(home, { recursive: true, force: true });
+  });
+
   it("filters scorecards by date range, sorts most-recent-first", async () => {
     const cards = await readEvalScorecards(FIXTURE_ROOT, {
       from: new Date("2026-04-19T08:00:00Z"),
@@ -213,9 +236,9 @@ describe("planning-reader: readEvalScorecards", () => {
   it("skips malformed jsonl lines without throwing", async () => {
     const dir = mkdtempSync(join(tmpdir(), "malformed-eval-"));
     try {
-      mkdirSync(join(dir, ".indusk/eval"), { recursive: true });
+      mkdirSync(evalDir(dir), { recursive: true });
       writeFileSync(
-        join(dir, ".indusk/eval/results.log"),
+        join(evalDir(dir), "results.log"),
         '{"timestamp":"2026-04-19T10:00:00Z","changeId":"good"}\n' +
           "this is not json\n" +
           '{"timestamp":"2026-04-19T11:00:00Z","changeId":"alsogood"}\n',

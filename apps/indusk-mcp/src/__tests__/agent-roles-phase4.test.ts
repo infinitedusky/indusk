@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -66,13 +67,24 @@ describe("T13: eval-trigger.js accepts --source handoff CLI flag and propagates 
 		// We use a short timeout to detect a hang. The hook may fail internally
 		// because the evaluator runner isn't built or jj isn't configured — we
 		// only care that it returns without hanging on stdin.
+		//
+		// In a temporary project with evaluation off: run in this repository,
+		// where evaluation is on, it started a real evaluator of HEAD — a paid
+		// `claude` run on every `pnpm test` (found by bookkeeping-lives-where-it-is-read).
 		const node = process.execPath;
+		const project = mkdtempSync(join(tmpdir(), "handoff-cli-"));
+		mkdirSync(join(project, ".indusk"));
+		writeFileSync(
+			join(project, ".indusk", "config.json"),
+			JSON.stringify({ eval: { enabled: false } }),
+		);
+		execFileSync("git", ["init", "-q", "-b", "main"], { cwd: project });
 		let exitCode: number | null = null;
 		try {
 			execFileSync(node, [hookPath, "--source", "handoff"], {
 				stdio: ["ignore", "pipe", "pipe"],
 				timeout: 10_000,
-				cwd: repoRoot,
+				cwd: project,
 			});
 			exitCode = 0;
 		} catch (err: unknown) {
@@ -86,6 +98,7 @@ describe("T13: eval-trigger.js accepts --source handoff CLI flag and propagates 
 		// Exit 0 (success) or any non-hang exit is acceptable — we only test
 		// that the CLI mode doesn't hang on stdin.
 		expect(exitCode).not.toBeNull();
+		rmSync(project, { recursive: true, force: true });
 	});
 });
 

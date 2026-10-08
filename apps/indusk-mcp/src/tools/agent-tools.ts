@@ -1,10 +1,6 @@
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { AgentSection } from "../lib/agents/current-md.js";
-import { parseCurrentMd, upsertSection } from "../lib/agents/current-md.js";
-import { withLock } from "../lib/agents/lock.js";
+import { currentMdPath, writeCurrentSection } from "../lib/bookkeeping/notes.js";
 
 /**
  * Register the multi-agent presence MCP tools.
@@ -64,29 +60,14 @@ export function registerAgentTools(server: McpServer, projectRoot: string): void
 			},
 		},
 		async ({ sessionId, task, sections }) => {
-			const path = join(projectRoot, ".indusk/current.md");
-			const lockPath = `${path}.lock`;
-			let agentSection!: AgentSection;
-			withLock(lockPath, () => {
-				const initial = existsSync(path) ? readFileSync(path, "utf-8") : "";
-				// Preserve branch/worktree set by `agent register` — this tool promotes
-				// operational state (in_flight/open_questions/cursor), not presence identity.
-				const existing = parseCurrentMd(initial).sections.find((s) => s.sessionId === sessionId);
-				agentSection = {
-					sessionId,
-					sessionShort: sessionId.slice(0, 8),
-					task,
-					lastUpdated: new Date().toISOString(),
-					inFlight: sections.in_flight,
-					openQuestions: sections.open_questions,
-					cursor: sections.cursor,
-					branch: existing?.branch ?? "",
-					worktree: existing?.worktree ?? "",
-				};
-				const updated = upsertSection(initial, agentSection);
-				const tmpPath = `${path}.tmp.${sessionId}`;
-				writeFileSync(tmpPath, updated);
-				renameSync(tmpPath, path);
+			// The main checkout's current.md, committed on main, from any checkout
+			// (bookkeeping-lives-where-it-is-read D2).
+			const { section, commit } = writeCurrentSection(projectRoot, {
+				sessionId,
+				task,
+				inFlight: sections.in_flight,
+				openQuestions: sections.open_questions,
+				cursor: sections.cursor,
 			});
 			return {
 				content: [
@@ -97,8 +78,10 @@ export function registerAgentTools(server: McpServer, projectRoot: string): void
 								ok: true,
 								sessionId,
 								task,
-								lastUpdated: agentSection.lastUpdated,
-								path: ".indusk/current.md",
+								lastUpdated: section.lastUpdated,
+								path: currentMdPath(projectRoot),
+								committed: commit.committed,
+								...(commit.committed ? {} : { notCommitted: commit.reason }),
 							},
 							null,
 							2,

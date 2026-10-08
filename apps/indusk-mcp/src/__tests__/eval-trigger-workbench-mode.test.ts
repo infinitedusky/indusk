@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { evalDir } from "../lib/bookkeeping/roots.js";
 import { runHook } from "./helpers/hook-runner.js";
 import { initRepoWithCommit } from "./helpers/test-git.js";
 
@@ -75,7 +76,7 @@ describe("T4: eval-trigger fires against workbench-shaped projects", () => {
 		await runHook("eval-trigger.js", event, { cwd: wrappedRepo });
 
 		// system.log MUST be written under the workbench root (statePath), not the wrapped repo
-		const systemLogPath = join(workbenchRoot, ".indusk/eval/system.log");
+		const systemLogPath = join(evalDir(workbenchRoot), "system.log");
 		expect(existsSync(systemLogPath), "system.log should exist under workbench root").toBe(true);
 
 		const systemLog = readFileSync(systemLogPath, "utf-8");
@@ -110,7 +111,7 @@ describe("T5: eval-trigger continues to work in single-repo mode (regression)", 
 		const event = buildHookEvent(tmpRoot);
 		await runHook("eval-trigger.js", event, { cwd: tmpRoot });
 
-		const systemLogPath = join(tmpRoot, ".indusk/eval/system.log");
+		const systemLogPath = join(evalDir(tmpRoot), "system.log");
 		expect(existsSync(systemLogPath)).toBe(true);
 
 		const systemLog = readFileSync(systemLogPath, "utf-8");

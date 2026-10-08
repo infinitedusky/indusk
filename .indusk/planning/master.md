@@ -67,10 +67,9 @@ launch and for showing at Lazer. In order:
 
 1. **A small-fixes bugfix plan**, alongside step 2, from
    [known-issues.md](known-issues.md), led by
-   [bookkeeping-lives-where-it-is-read](bookkeeping-lives-where-it-is-read/brief.md)
-   (the evaluator writes its notes into whichever checkout it runs in and
-   nothing commits them; it blocked three steps in two days and wrote each
-   lesson three times on 2026-10-07): a planning session that builds and
+   [bookkeeping-lives-where-it-is-read](archive/bookkeeping-lives-where-it-is-read/retrospective.md)
+   (**closed 2026-10-08, 1.66.0**: notes committed on `main` as written,
+   machine state in the project's home, the evaluator's tools named); then: a planning session that builds and
    skips Approve, the planner's worktree step in a workbench, "Ended:
    success", agents' `git stash`, `init` dropping the worktree config,
    approve vs the planner's Key Decisions line, and the release flakes (the
@@ -372,14 +371,8 @@ lesson title, or a chat log.
   "Plans this changes" names thirteen existing plans it touches; **none has
   been edited, and the demo's script stands.** Measurements in
   [research](promise-core/research.md).
-- **Standalone, brief draft** (2026-10-06):
-  [bookkeeping-lives-where-it-is-read](bookkeeping-lives-where-it-is-read/brief.md)
-  — InDusk writes current.md, its highlight logs, evaluator results and lessons
-  into `main`'s working tree, and nothing commits them, so every landing must
-  decide whose they are. Write each record where it is read: commit shared
-  records when they are written, carry a plan's notes on its branch.
-  admin-plan-authoring's Build Phase 10 handles the symptom. Opened by Sandy;
-  not yet in the sequence.
+- **Closed 2026-10-08** (sequence step 1 of "Now — show the promise loop"):
+  [bookkeeping-lives-where-it-is-read](archive/bookkeeping-lives-where-it-is-read/retrospective.md).
 - **Standalone, brief draft** (2026-10-06):
   [context-reaches-every-session](context-reaches-every-session/brief.md) —
   the nested-context probe went red: headless Claude Code runs (2.1.288,

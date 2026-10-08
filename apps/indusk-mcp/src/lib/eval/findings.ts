@@ -7,9 +7,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-
+import { evalDir } from "../bookkeeping/roots.js";
 import { getScorecardQuestions } from "./scorecard-extractor.js";
-
 import type { EvalScorecard } from "./types.js";
 
 export type FindingState = "unresolved" | "fixed" | "ignored";
@@ -25,7 +24,7 @@ export interface FindingEntry {
 type FindingsMap = Record<string, FindingEntry>;
 
 function getFindingsPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "eval", "findings.json");
+	return join(evalDir(projectRoot), "findings.json");
 }
 
 function readFindings(projectRoot: string): FindingsMap {

@@ -95,9 +95,9 @@ When you reach a moment where the next session (or a hypothetical next agent) wo
    - **`open_questions`** — hypotheses to confirm, design decisions mid-conversation
    - **`cursor`** — where you stopped (file paths + line numbers + next concrete step)
 
-   Atomic read-modify-write. Only your section changes; other agents' sections are byte-untouched.
+   Atomic read-modify-write. Only your section changes; other agents' sections are byte-untouched. It writes the **main checkout's** `current.md`, whichever worktree you are in, and commits it on `main` at once, as `chore(indusk): current.md — …` (bookkeeping-lives-where-it-is-read).
 
-2. Commit the change. Other agents only see committed state — your uncommitted edit is invisible to them.
+2. Nothing to commit yourself. If the main checkout is not on its trunk branch, or a merge or rebase is in progress there, the note is written but left uncommitted, and the tool's answer says why (`notCommitted`).
 
 3. (Optional) `indusk agent done` — removes your section from `current.md`. Otherwise the section ages out via `Last updated` TTL.
 
@@ -111,6 +111,21 @@ If your session produced nothing worth promoting (shipped a feature and closed a
 ### Editing Project (shared)
 
 The `## Project (shared)` anchor section is editable by any agent. Use it for cross-cutting state that's project-wide and short-lived ("merge freeze through Thursday", "telemetry endpoint changed last week"). Don't bundle these edits into your handoff write — they're not your session's state.
+
+## Where InDusk keeps its records
+
+InDusk never leaves a checkout dirty with its own records (bookkeeping-lives-where-it-is-read):
+
+- **Notes people read** — `current.md` and lessons — are written to the main checkout and committed on `main` as they are written, in a commit of their own (`chore(indusk): …`), from any worktree. Only those files go in the commit: anything you have staged stays staged.
+- **InDusk's machine state** — the highlights queue, which highlights were processed, evaluation results — lives in the project's home outside every checkout, `~/.indusk/projects/<project>-<hash>/`, the same from every worktree, and never in git. The hash is taken from the main checkout's path, so two clones of one project on one machine keep separate homes.
+- **A plan's own records** — its phase boundaries, its verify ledger — stay on its branch.
+
+Several sessions and evaluators read that one home at once, so:
+
+- **An evaluator holds the highlights it is offered.** Two commits seconds apart start two evaluators; the second is not offered what the first is turning into lessons. The hold ends when the highlight is marked processed, or after 30 minutes if the evaluator died, and the highlight is offered again.
+- **Each checkout keeps its own evaluator session**, resumed only from that checkout.
+
+**Moving an older project.** `indusk update` moves the tracked highlights and `.indusk/eval/` of the main checkout and of every plan worktree into the home. A highlight already there is recognised by what it says; one whose id another highlight already has gets a new id. A plan branch that still tracks the queue is handled when it lands: `indusk plans land` moves its queue into the home and takes the file out of the branch before bringing `main` in.
 
 ## Worktree visibility and worktree-per-plan
 

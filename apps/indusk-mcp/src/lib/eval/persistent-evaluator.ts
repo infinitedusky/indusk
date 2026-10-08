@@ -4,12 +4,15 @@
  * First eval spawns a new session with full catchup. Subsequent evals resume
  * the same session — no catchup cost, just "evaluate this change."
  *
- * Session state stored in `.indusk/eval/evaluator-session.json`.
+ * Session state is stored in the project's home, one file per checkout the
+ * evaluator runs in (`<eval>/sessions/`): Claude Code finds a session by the
+ * directory that made it, so a session is only resumed from there.
  */
 
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
+import { evalDir, pathKey } from "../bookkeeping/roots.js";
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
 import { markProjectId } from "../promises/config.js";
@@ -28,6 +31,7 @@ import {
 	shutdownEvalOtel,
 	withSpan,
 } from "./otel.js";
+import { evaluatorPermissionArgs } from "./permissions.js";
 import { buildEvaluatorPrompt, buildHighlightsInstructions } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import {
@@ -45,16 +49,24 @@ interface EvaluatorSession {
 	evalCount: number;
 }
 
-function getSessionPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "eval", "evaluator-session.json");
+/**
+ * The session file for evaluations run in `checkout`. One per checkout, all in
+ * the project's home (bookkeeping-lives-where-it-is-read A17): with one shared
+ * file, a worktree commit's evaluation resumed a session the main checkout's
+ * made, which Claude Code cannot find from another directory; the failed
+ * resume cleared it and every switch of checkout paid for a fresh run.
+ */
+function getSessionPath(projectRoot: string, checkout: string): string {
+	const key = `${basename(checkout).replace(/[^A-Za-z0-9_-]+/g, "_")}-${pathKey(checkout)}`;
+	return join(evalDir(projectRoot), "sessions", `${key}.json`);
 }
 
 function getEvalLogPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "eval", "results.log");
+	return join(evalDir(projectRoot), "results.log");
 }
 
-function readSession(projectRoot: string): EvaluatorSession | null {
-	const path = getSessionPath(projectRoot);
+function readSession(projectRoot: string, checkout: string): EvaluatorSession | null {
+	const path = getSessionPath(projectRoot, checkout);
 	if (!existsSync(path)) return null;
 	try {
 		return JSON.parse(readFileSync(path, "utf8"));
@@ -63,14 +75,14 @@ function readSession(projectRoot: string): EvaluatorSession | null {
 	}
 }
 
-function writeSession(projectRoot: string, session: EvaluatorSession): void {
-	const path = getSessionPath(projectRoot);
+function writeSession(projectRoot: string, checkout: string, session: EvaluatorSession): void {
+	const path = getSessionPath(projectRoot, checkout);
 	mkdirSync(dirname(path), { recursive: true });
 	writeFileSync(path, `${JSON.stringify(session, null, 2)}\n`);
 }
 
-function clearSession(projectRoot: string): void {
-	const path = getSessionPath(projectRoot);
+function clearSession(projectRoot: string, checkout: string): void {
+	const path = getSessionPath(projectRoot, checkout);
 	if (existsSync(path)) {
 		// ESM-native unlinkSync — never reintroduce CJS `require()` here.
 		// The runner is loaded via dynamic `import()` from a Node ESM context;
@@ -83,8 +95,6 @@ function clearSession(projectRoot: string): void {
 		unlinkSync(path);
 	}
 }
-
-const ALLOWED_TOOLS = ["Read", "Grep", "Glob", "Bash(git:*)", "mcp__indusk__*"];
 
 function parseClaudeOutput(stdout: string): {
 	scorecardText: string;
@@ -249,7 +259,7 @@ export async function runPersistentEval(opts: {
 			const logWriter = new EvalLogWriter(getEvalLogPath(opts.projectRoot));
 
 			const session = await withSpan(tracer, "eval.read_session", undefined, () =>
-				readSession(opts.projectRoot),
+				readSession(opts.projectRoot, opts.gitRoot ?? opts.projectRoot),
 			);
 
 			rootSpan.setAttribute("resumed", session !== null);
@@ -312,10 +322,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 								session.sessionId,
 								"--mcp-config",
 								".mcp.json",
-								"--permission-mode",
-								"bypassPermissions",
-								"--allowed-tools",
-								ALLOWED_TOOLS.join(","),
+								...evaluatorPermissionArgs(),
 							],
 							prompt: resumePrompt,
 						};
@@ -327,12 +334,9 @@ Output ONLY the JSON scorecard — no commentary.`;
 							"json",
 							"--model",
 							getEvalModel(opts.projectRoot),
-							"--permission-mode",
-							"bypassPermissions",
+							...evaluatorPermissionArgs(),
 							"--mcp-config",
 							".mcp.json",
-							"--allowed-tools",
-							ALLOWED_TOOLS.join(","),
 						],
 						prompt: buildEvaluatorPrompt({
 							rubric: V1_RUBRIC,
@@ -388,7 +392,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 				if (claudeResult.code !== 0) {
 					if (session) {
 						await withSpan(tracer, "eval.clear_stale_session", undefined, () =>
-							clearSession(opts.projectRoot),
+							clearSession(opts.projectRoot, opts.gitRoot ?? opts.projectRoot),
 						);
 						// Recurse — the retry produces its own root span
 						return runPersistentEval(opts);
@@ -449,7 +453,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 						lastEvalAt: new Date().toISOString(),
 						evalCount: (session?.evalCount ?? 0) + 1,
 					};
-					writeSession(opts.projectRoot, newSession);
+					writeSession(opts.projectRoot, opts.gitRoot ?? opts.projectRoot, newSession);
 				});
 
 				await withSpan(tracer, "eval.write_scorecard", undefined, async () => {

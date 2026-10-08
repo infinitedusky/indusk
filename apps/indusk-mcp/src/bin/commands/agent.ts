@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import type { AgentSection } from "../../lib/agents/current-md.js";
 import {
 	listSections,
@@ -13,6 +13,10 @@ import {
 import { withLock } from "../../lib/agents/lock.js";
 import { getSessionId, sanitizeSessionId } from "../../lib/agents/session.js";
 import { sweepStaleSections } from "../../lib/agents/sweep.js";
+import {
+	commitCurrentMd,
+	currentMdPath as mainCurrentMdPath,
+} from "../../lib/bookkeeping/notes.js";
 import { readConfig } from "../../lib/config.js";
 
 /**
@@ -88,9 +92,8 @@ function currentWorktree(cwd: string): string {
 	return (res.stdout ?? "").trim();
 }
 
-function currentMdPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk/current.md");
-}
+// The main checkout's current.md, from any checkout (bookkeeping-lives-where-it-is-read D2).
+const currentMdPath = mainCurrentMdPath;
 
 function currentMdLockPath(projectRoot: string): string {
 	return `${currentMdPath(projectRoot)}.lock`;
@@ -107,11 +110,15 @@ function readCurrent(projectRoot: string): string {
 	return readFileSync(path, "utf-8");
 }
 
-function writeAtomic(projectRoot: string, content: string, sessionId: string): void {
+/** Write current.md atomically and commit it on main; call inside the current.md lock. */
+function writeAtomic(projectRoot: string, content: string, sessionId: string, what: string): void {
 	const path = currentMdPath(projectRoot);
+	mkdirSync(dirname(path), { recursive: true });
 	const tmp = `${path}.tmp.${sessionId}`;
 	writeFileSync(tmp, content);
 	renameSync(tmp, path);
+	const commit = commitCurrentMd(projectRoot, what);
+	if (!commit.committed) console.warn(`current.md is written but not committed: ${commit.reason}`);
 }
 
 export interface AgentRegisterOptions {
@@ -153,7 +160,12 @@ export function agentRegister(projectRoot: string, opts: AgentRegisterOptions): 
 			worktree,
 		};
 		const updated = upsertSection(initial, section);
-		writeAtomic(projectRoot, updated, sessionId);
+		writeAtomic(
+			projectRoot,
+			updated,
+			sessionId,
+			`${section.sessionShort} registered — ${section.task}`,
+		);
 		console.info(`Registered agent ${sessionId} — ${section.task}`);
 	});
 }
@@ -181,7 +193,7 @@ export function agentDone(projectRoot: string, opts: AgentDoneOptions): void {
 			return;
 		}
 		const updated = removeSection(initial, sessionId);
-		writeAtomic(projectRoot, updated, sessionId);
+		writeAtomic(projectRoot, updated, sessionId, `${sessionId.slice(0, 8)} done`);
 		console.info(`Agent ${sessionId} done.`);
 	});
 }
@@ -294,7 +306,7 @@ export function agentList(projectRoot: string): void {
 					worktree: nextWorktree,
 					lastUpdated: new Date().toISOString(),
 				});
-				writeAtomic(projectRoot, touched, sessionId);
+				writeAtomic(projectRoot, touched, sessionId, `${sessionId.slice(0, 8)} heartbeat`);
 			}
 		} catch {
 			// Sanitizer rejection or other failure — skip heartbeat silently. List output below is unaffected.
@@ -325,7 +337,7 @@ export function agentPrune(projectRoot: string): void {
 				return `prune-${Date.now()}`;
 			}
 		})();
-		writeAtomic(projectRoot, updated, sessionId);
+		writeAtomic(projectRoot, updated, sessionId, `pruned ${stale.length} stale section(s)`);
 		console.info(`Pruned ${stale.length} stale section(s).`);
 	});
 }

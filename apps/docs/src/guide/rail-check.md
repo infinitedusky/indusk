@@ -14,9 +14,11 @@ After ANY of the following:
 
 - You ran `indusk update` (especially if upgrading to 1.31.7+) and want to confirm the new hooks took
 - `mcp__indusk__check_health` returned `workbench/stray-state-*` errors
-- You haven't seen new scorecards in `.indusk/eval/results.log` for several commits
-- `.indusk/highlights.jsonl` has grown without `.indusk/highlights-processed.jsonl` catching up
+- You haven't seen new scorecards in `<home>/eval/results.log` for several commits
+- `<home>/highlights.jsonl` has grown without `<home>/highlights-processed.jsonl` catching up
 - Anyone says "the eval pipeline isn't writing anything" or "the lessons registry seems empty"
+
+`<home>` is the project's home outside every checkout, `~/.indusk/projects/<project>-<hash>/`; `indusk eval home` prints it.
 
 ## The easy path — ask the agent
 
@@ -56,7 +58,7 @@ The agent **never auto-deletes**. You confirm each one. If you're not sure, "ins
 
 ### 4. Sanity-commit smoke test
 
-The agent makes a tiny commit (e.g., a comment update in a docs file) and watches `.indusk/eval/system.log` for the lifecycle markers:
+The agent makes a tiny commit (e.g., a comment update in a docs file) and watches `<home>/eval/system.log` for the lifecycle markers:
 
 ```
 ... hook fired — tool: Bash, command: git commit ...
@@ -69,7 +71,7 @@ The agent makes a tiny commit (e.g., a comment update in a docs file) and watche
 
 ### 4b. Drain the thin lane's pending evals
 
-`atdawn run` (the Dawn thin lane) queues one record per loop-owned commit in `.indusk/eval/pending.jsonl` instead of spawning the evaluator itself — it may be running on a machine that has no `claude` CLI at all. The rail check is where those get evaluated:
+`atdawn run` (the Dawn thin lane) queues one record per loop-owned commit in `<home>/eval/pending.jsonl` instead of spawning the evaluator itself — it may be running on a machine that has no `claude` CLI at all. The rail check is where those get evaluated:
 
 ```bash
 node .claude/hooks/eval-trigger.js --drain-pending
@@ -185,9 +187,9 @@ Even with the 1.31.7 fix shipped, the dark-queue pattern can re-emerge from othe
 
 | Signal | Where | Healthy | Concerning |
 |---|---|---|---|
-| Unprocessed highlights | `wc -l .indusk/highlights.jsonl .indusk/highlights-processed.jsonl` | Difference ≤ 5 | Difference > 20 |
-| Recent scorecards | `tail .indusk/eval/results.log` | New entry within the last few commits | No new entries in days |
-| Lifecycle markers | `tail .indusk/eval/system.log` | `evaluator spawned` after each commit | Only `skip — *` entries |
+| Unprocessed highlights | `wc -l <home>/highlights.jsonl <home>/highlights-processed.jsonl` | Difference ≤ 5 | Difference > 20 |
+| Recent scorecards | `tail <home>/eval/results.log` | New entry within the last few commits | No new entries in days |
+| Lifecycle markers | `tail <home>/eval/system.log` | `evaluator spawned` after each commit | Only `skip — *` entries |
 
 Add a daily / weekly `indusk check_health` to your routine — the 1.31.7 stray-state audit catches the workbench-specific failure mode automatically.
 

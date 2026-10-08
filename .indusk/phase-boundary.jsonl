@@ -184,3 +184,9 @@
 {"plan":"demo-app-template","phase":4,"kind":"build","sha":"25374a0e72942295fcdba1bb6717c1700f32d0cf","timestamp":"2026-10-07T19:53:40.501Z"}
 {"plan":"telemetry-stop-stops-what-it-started","phase":1,"kind":"test","sha":"b3f3f78647c141e2500726b8c8a0995494973e27","timestamp":"2026-10-07T21:04:02.964Z"}
 {"plan":"telemetry-stop-stops-what-it-started","phase":1,"kind":"build","sha":"b70aa94c4c7a0b826415939f196faa19cf90c252","timestamp":"2026-10-07T21:04:44.345Z"}
+{"plan":"bookkeeping-lives-where-it-is-read","phase":1,"kind":"test","sha":"1b5c575603d16349e106bb5843313f054f34d317","timestamp":"2026-10-07T22:46:31.512Z"}
+{"plan":"bookkeeping-lives-where-it-is-read","phase":1,"kind":"build","sha":"e02775af5fe5ccbc8bf0c412becd949a85f34c89","timestamp":"2026-10-07T22:47:30.838Z"}
+{"plan":"bookkeeping-lives-where-it-is-read","phase":2,"kind":"build","sha":"54167726ace5dcd15d745f6759b72f362e2eaa80","timestamp":"2026-10-07T22:51:27.107Z"}
+{"plan":"bookkeeping-lives-where-it-is-read","phase":3,"kind":"build","sha":"f2ee6a152c537bb921ff82a39af6026b556308dd","timestamp":"2026-10-07T23:02:04.352Z"}
+{"plan":"bookkeeping-lives-where-it-is-read","phase":4,"kind":"build","sha":"239c92c605188e4b2b3155815d4b073ffbde6c10","timestamp":"2026-10-07T23:40:31.220Z"}
+{"plan":"bookkeeping-lives-where-it-is-read","phase":5,"kind":"build","sha":"4755239c42397b63ffc4e4b788516e634c4f33e8","timestamp":"2026-10-08T02:48:52.259Z"}

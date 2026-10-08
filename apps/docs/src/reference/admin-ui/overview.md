@@ -4,7 +4,7 @@ title: Admin UI — Overview
 
 # Admin UI — Overview
 
-The InDusk admin UI is a read-only viewer over every InDusk project's `.indusk/planning/` and `.indusk/eval/` directories. It's the first Arc 1 demo asset: a visible, demoable surface for the working agent's flow (plans, phases, trajectory rows, falsification logs, eval scorecards).
+The InDusk admin UI is a read-only viewer over every InDusk project's `.indusk/planning/` directories and its evaluation results in its home (`indusk eval home`). It's the first Arc 1 demo asset: a visible, demoable surface for the working agent's flow (plans, phases, trajectory rows, falsification logs, eval scorecards).
 
 Since 1.27.0 it runs as a **single long-lived local daemon** — one Node process serves every InDusk project on your machine, not a new Next.js instance per project. You start it once with `indusk ui start`, close your terminal, and it keeps running in the background until you `indusk ui stop`.
 
@@ -169,13 +169,15 @@ Sections render conditionally on which documents are present, all closed by defa
 | Falsification (1.27.6+ phase path) | `impl.md` phase whose title starts with `Falsification` | Hypotheses table from the phase's trajectory rows (ID / Asserts / State) plus a Fix items list from the phase's `- [ ]` / `- [x]` checklist. Status badge reads `complete` when all rows are `passing`/`skipped` AND no unchecked items remain |
 | Falsification (legacy) | `falsification.md` | Used only when impl.md has no falsification phase. One entry per hypothesis, outcome-color-coded (`fix-in-scope` → green, `spawn-plan` → blue, `accept-finding` → gray) |
 | Follow-up Phases (1.27.6+) | `impl.md` phases AFTER the falsification phase | Same CollapsibleSection shape as regular Phases but in its own section below `Falsification`. Hidden when no post-falsification phases exist |
-| Scorecards | `.indusk/eval/results.log` | Table of scorecards whose timestamp falls in the plan's date range (`brief.date` → `retrospective.date`/now). Most-recent first |
+| Scorecards | `<home>/eval/results.log` | Table of scorecards whose timestamp falls in the plan's date range (`brief.date` → `retrospective.date`/now). Most-recent first |
+
+`<home>` is the project's home outside every checkout, `~/.indusk/projects/<project>-<hash>/`; `indusk eval home` prints it.
 
 Missing optional documents are not errors — sections simply don't render.
 
 **Falsification rendering (1.27.6+)** — when a plan uses the phase-authoring flow from `/falsify` (introduced in 1.27.4), the admin UI automatically detects the falsification phase by scanning for the FIRST phase whose title STARTS with `Falsification` (case-insensitive — the same title-prefix rule the retrospective readiness gate applies, read from the lifecycle's `RITUAL_ORDER`). That phase is hoisted out of the main Phases section and rendered with a dedicated layout: trajectory rows become the Hypotheses table, and checklist items become the Fix items list. Phases authored AFTER the falsification phase — fix-in-scope follow-ups derived from the ritual — render as a distinct "Follow-up Phases" section below. Legacy plans (authored before 1.27.4 with a `falsification.md` log file) continue to render via the log-based path; the two paths are mutually exclusive but both supported, so archives keep rendering correctly.
 
-**`/p/{project}/scorecards` (per-project, 1.27.2+)** — flat table of `{project}`'s scorecards from its `.indusk/eval/results.log`, sorted most-recent-first. No project-name column (redundant inside the project namespace). Two empty states, told apart by whether `.indusk/eval/` exists: the directory is created by the evaluator's first append, so a project that has never had an evaluated commit has no directory at all and the page says "no evaluations recorded yet — the first evaluated commit creates `.indusk/eval/`"; a project with the directory but no scorecards gets the plain "no scorecards recorded yet" line.
+**`/p/{project}/scorecards` (per-project, 1.27.2+)** — flat table of `{project}`'s scorecards from its `<home>/eval/results.log`, sorted most-recent-first. No project-name column (redundant inside the project namespace). Two empty states, told apart by whether `<home>/eval/` exists: the directory is created by the evaluator's first append, so a project that has never had an evaluated commit has no directory at all and the page says "no evaluations recorded yet — the first evaluated commit creates `<home>/eval/`"; a project with the directory but no scorecards gets the plain "no scorecards recorded yet" line.
 
 **`/p/{project}/promises` (per-project, day-promises)** — the promise registry (`.indusk/promises/`, see [`indusk promises`](/reference/cli/promises)) as a table, one row per promise: chip, name, statement, kind, domain, owner plan (linked), sites, tests, incidents; grouped **by plan**, **by domain**, **by state** or **by kind** with a button row, every promise exactly once per grouping; retired promises hidden behind a `Show retired (N)` toggle; every incident in a second table below. Read through the package's `promises/registry` subpath on every request — the admin never parses the directory itself.
 

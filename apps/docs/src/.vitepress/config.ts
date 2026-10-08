@@ -206,6 +206,7 @@ const config = defineConfig({
 						{ text: "Overview", link: "/decisions/" },
 						{ text: "Admin Plan Authoring — plan to release from the admin", link: "/decisions/admin-plan-authoring" },
 						{ text: "Workbench Plan Authoring — plans in workbenches", link: "/decisions/workbench-plan-authoring" },
+						{ text: "Bookkeeping Lives Where It Is Read — notes on main, state in the home", link: "/decisions/bookkeeping-lives-where-it-is-read" },
 						{ text: "Demo App Template — the seat-holds example", link: "/decisions/demo-app-template" },
 						{ text: "Admin UI Hosting — Decision Summary", link: "/decisions/admin-ui-hosting" },
 						{ text: "Admin UI Phase Progress — one lifecycle, three bars", link: "/decisions/admin-ui-phase-progress" },

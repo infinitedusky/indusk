@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { evalDir } from "../bookkeeping/roots.js";
 
 /**
  * The pending-eval queue (dawn-hook-parity A3/A4, ADR Decision 3).
@@ -44,13 +45,13 @@ export function resolveEvalStateDir(worktreeRoot: string): string {
 	let current = resolve(worktreeRoot);
 	for (let i = 0; i < 40; i++) {
 		if (existsSync(join(current, ".indusk"))) {
-			return join(current, ".indusk", "eval");
+			return evalDir(current);
 		}
 		const parent = dirname(current);
 		if (parent === current) break;
 		current = parent;
 	}
-	return join(resolve(worktreeRoot), ".indusk", "eval");
+	return evalDir(resolve(worktreeRoot));
 }
 
 /** Append one record — one successful loop commit — to the pending queue. */

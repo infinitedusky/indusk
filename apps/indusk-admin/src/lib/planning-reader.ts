@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   checkRetrospectiveReadiness,
   isCleanupSkipped,
@@ -203,7 +204,6 @@ export interface Scorecard {
 
 const PLANNING_DIR = ".indusk/planning";
 const ARCHIVE_DIR = "archive";
-const EVAL_RESULTS = ".indusk/eval/results.log";
 const MASTER_FILE = "master.md";
 
 const DOC_FILES = [
@@ -584,7 +584,8 @@ export async function readEvalScorecards(
   projectRoot: string,
   planDateRange: { from: Date; to: Date },
 ): Promise<Scorecard[]> {
-  const path = join(projectRoot, EVAL_RESULTS);
+  // In the project's home, outside every checkout (bookkeeping-lives-where-it-is-read).
+  const path = join(evalDir(projectRoot), "results.log");
   if (!existsSync(path)) return [];
   const raw = await readFile(path, "utf-8");
   const out: Scorecard[] = [];

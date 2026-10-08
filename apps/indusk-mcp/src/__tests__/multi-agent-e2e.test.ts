@@ -93,7 +93,10 @@ describe.skipIf(SHOULD_SKIP)(
 			expect(runAs(sessionB, projectDir, ["agent", "done"]).status).toBe(0);
 			const final = runAs(sessionB, projectDir, ["agent", "list"]);
 			expect(final.stdout).toMatch(/no agents currently registered/);
-		});
+			// Ten CLI processes, and each write now also asks git where the main
+			// checkout is and whether it can commit (bookkeeping-lives-where-it-is-read);
+			// 5 s was too short under the full suite's load.
+		}, 30_000);
 
 		// SKIPPED — section-shape leftover. Pre-existing test debt from the
 		// handoff-multi-agent-section-shape rework (1.30.0) that moved presence

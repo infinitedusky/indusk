@@ -1,5 +1,15 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import {
+	appendFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	renameSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
+import { withLock } from "../agents/lock.js";
+import { readJsonl } from "../bookkeeping/jsonl.js";
+import { bookkeepingRoots } from "../bookkeeping/roots.js";
 
 export type HighlightLevel = "critical" | "important" | "note";
 export type ProcessedAction = "wrote-episode" | "skipped";
@@ -33,16 +43,48 @@ export interface WriteHighlightInput {
 	level: HighlightLevel;
 }
 
+// The queue and the processed list live in the project's home, outside every
+// checkout, so every checkout of a project reads one queue and one list
+// (bookkeeping-lives-where-it-is-read D3). promise: a-highlight-becomes-a-lesson-once
 function highlightsPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "highlights.jsonl");
+	return join(bookkeepingRoots(projectRoot).home, "highlights.jsonl");
 }
 
 function processedPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "highlights-processed.jsonl");
+	return join(bookkeepingRoots(projectRoot).home, "highlights-processed.jsonl");
+}
+
+// One lock for the queue, the processed list and the holds: every checkout,
+// every session and every evaluator of a project share them.
+function queueLock(projectRoot: string): string {
+	return join(bookkeepingRoots(projectRoot).home, "highlights.lock");
+}
+
+function holdsPath(projectRoot: string): string {
+	return join(bookkeepingRoots(projectRoot).home, "highlight-holds.json");
+}
+
+/** How long an evaluator holds the highlights it was offered; a crashed one's come back after this. */
+export const HOLD_MS = 30 * 60_000;
+
+type Holds = Record<string, { holder: string; until: string }>;
+
+function readHolds(projectRoot: string): Holds {
+	try {
+		return JSON.parse(readFileSync(holdsPath(projectRoot), "utf-8")) as Holds;
+	} catch {
+		return {};
+	}
+}
+
+function writeHolds(projectRoot: string, holds: Holds): void {
+	const path = holdsPath(projectRoot);
+	writeFileSync(`${path}.tmp`, `${JSON.stringify(holds, null, 2)}\n`);
+	renameSync(`${path}.tmp`, path);
 }
 
 function ensureInduskDir(projectRoot: string): void {
-	mkdirSync(join(projectRoot, ".indusk"), { recursive: true });
+	mkdirSync(bookkeepingRoots(projectRoot).home, { recursive: true });
 }
 
 function todayStamp(): string {
@@ -55,43 +97,15 @@ function todayStamp(): string {
  * (matching the semantic-graph / falsification log resilience pattern).
  */
 function readAllHighlights(projectRoot: string): Highlight[] {
-	const path = highlightsPath(projectRoot);
-	if (!existsSync(path)) return [];
-
-	const content = readFileSync(path, "utf-8");
-	const lines = content.split("\n").filter((l) => l.length > 0);
-	const highlights: Highlight[] = [];
-	for (const line of lines) {
-		try {
-			const parsed = JSON.parse(line);
-			if (parsed && typeof parsed.id === "string") {
-				highlights.push(parsed as Highlight);
-			}
-		} catch {
-			// skip malformed line
-		}
-	}
-	return highlights;
+	return readJsonl(highlightsPath(projectRoot)).filter(
+		(r): r is Highlight & Record<string, unknown> => typeof r.id === "string",
+	);
 }
 
 function readAllProcessed(projectRoot: string): ProcessedMark[] {
-	const path = processedPath(projectRoot);
-	if (!existsSync(path)) return [];
-
-	const content = readFileSync(path, "utf-8");
-	const lines = content.split("\n").filter((l) => l.length > 0);
-	const marks: ProcessedMark[] = [];
-	for (const line of lines) {
-		try {
-			const parsed = JSON.parse(line);
-			if (parsed && typeof parsed.id === "string") {
-				marks.push(parsed as ProcessedMark);
-			}
-		} catch {
-			// skip malformed line
-		}
-	}
-	return marks;
+	return readJsonl(processedPath(projectRoot)).filter(
+		(r): r is ProcessedMark & Record<string, unknown> => typeof r.id === "string",
+	);
 }
 
 /**
@@ -149,28 +163,61 @@ function nextSeqForToday(projectRoot: string): number {
  */
 export function writeHighlight(projectRoot: string, input: WriteHighlightInput): Highlight {
 	ensureInduskDir(projectRoot);
-	const seq = nextSeqForToday(projectRoot);
-	const entry: Highlight = {
-		id: `h-${todayStamp()}-${String(seq).padStart(3, "0")}`,
-		timestamp: new Date().toISOString(),
-		level: input.level,
-		tag: input.tag,
-		note: input.note,
-	};
-	appendFileSync(highlightsPath(projectRoot), `${JSON.stringify(entry)}\n`, "utf-8");
-	return entry;
+	// Under the queue's lock: every checkout's sessions append to one queue, and
+	// two reading the day's last number at once would both take the next
+	// (bookkeeping-lives-where-it-is-read A14).
+	return withLock(queueLock(projectRoot), () => {
+		const seq = nextSeqForToday(projectRoot);
+		const entry: Highlight = {
+			id: `h-${todayStamp()}-${String(seq).padStart(3, "0")}`,
+			timestamp: new Date().toISOString(),
+			level: input.level,
+			tag: input.tag,
+			note: input.note,
+		};
+		appendFileSync(highlightsPath(projectRoot), `${JSON.stringify(entry)}\n`, "utf-8");
+		return entry;
+	});
 }
 
 /**
  * Return all highlights whose IDs don't yet appear in the processed log.
- * Used by the eval agent (via the `highlights_unprocessed` MCP tool) to
- * find highlights that haven't been written to Graphiti yet.
+ *
+ * With a `holder` (the `highlights_unprocessed` tool passes its evaluator's),
+ * what is returned is held for it for `HOLD_MS`, and highlights another
+ * holder holds are left out: two evaluators running at once (two commits
+ * seconds apart each start one) are never both offered one highlight
+ * (bookkeeping-lives-where-it-is-read A13). `markProcessed` releases a hold;
+ * one that lapses offers the highlight again. Without a holder nothing is
+ * held — a count or a listing.
+ *
+ * promise: a-highlight-becomes-a-lesson-once
  */
-export function readUnprocessedHighlights(projectRoot: string): Highlight[] {
-	const highlights = readAllHighlights(projectRoot);
-	if (highlights.length === 0) return [];
-	const processedIds = new Set(readAllProcessed(projectRoot).map((m) => m.id));
-	return highlights.filter((h) => !processedIds.has(h.id));
+export function readUnprocessedHighlights(
+	projectRoot: string,
+	opts: { holder?: string; now?: Date } = {},
+): Highlight[] {
+	const unprocessed = () => {
+		const highlights = readAllHighlights(projectRoot);
+		if (highlights.length === 0) return [];
+		const processedIds = new Set(readAllProcessed(projectRoot).map((m) => m.id));
+		return highlights.filter((h) => !processedIds.has(h.id));
+	};
+	const { holder } = opts;
+	if (!holder) return unprocessed();
+	ensureInduskDir(projectRoot);
+	const now = (opts.now ?? new Date()).getTime();
+	return withLock(queueLock(projectRoot), () => {
+		const holds = readHolds(projectRoot);
+		const offered = unprocessed().filter((h) => {
+			const hold = holds[h.id];
+			return !hold || hold.holder === holder || Date.parse(hold.until) <= now;
+		});
+		const until = new Date(now + HOLD_MS).toISOString();
+		for (const h of offered) holds[h.id] = { holder, until };
+		writeHolds(projectRoot, holds);
+		return offered;
+	});
 }
 
 /**
@@ -200,7 +247,22 @@ export function markProcessed(
 	detail?: string,
 ): ProcessedMark {
 	ensureInduskDir(projectRoot);
+	return withLock(queueLock(projectRoot), () => {
+		const holds = readHolds(projectRoot);
+		if (holds[id]) {
+			delete holds[id];
+			writeHolds(projectRoot, holds);
+		}
+		return markProcessedLocked(projectRoot, id, action, detail);
+	});
+}
 
+function markProcessedLocked(
+	projectRoot: string,
+	id: string,
+	action: ProcessedAction,
+	detail?: string,
+): ProcessedMark {
 	const existing = readAllProcessed(projectRoot).find((m) => m.id === id);
 	if (existing) {
 		return {

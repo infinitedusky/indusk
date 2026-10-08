@@ -1,0 +1,199 @@
+import {
+	appendFileSync,
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	realpathSync,
+	rmSync,
+	statSync,
+} from "node:fs";
+import { join, relative } from "node:path";
+import { parseWorktreeList } from "../git.js";
+import { gitSync } from "./git.js";
+import { readJsonl } from "./jsonl.js";
+import { bookkeepingRoots, evalDir } from "./roots.js";
+
+/**
+ * Move a project's machine state out of its checkouts and into its home
+ * (bookkeeping-lives-where-it-is-read D5), run by `indusk update`. Every
+ * checkout is read — the main one and each plan worktree, whose sessions kept
+ * their own queue (A15) — and merged into the home: a highlight already there
+ * is recognised by what it says, not its id, since each checkout numbered its
+ * own; one whose id is taken by a different highlight gets a new id, and that
+ * checkout's processed marks follow it. So nothing is duplicated, every
+ * unprocessed highlight stays unprocessed, and running it twice changes
+ * nothing. The main checkout's files then leave git and the checkout; a
+ * worktree's are left for its branch to land (`plans land` takes them out).
+ * `.indusk/eval/` is moved from each, its logs appended. Returns what was
+ * moved, for the update's report.
+ *
+ * promise: indusk-leaves-main-clean
+ */
+export function migrateBookkeeping(anyCheckout: string): string[] {
+	const { trunk, home } = bookkeepingRoots(anyCheckout);
+	const moved: string[] = [];
+	for (const checkout of checkoutsOf(trunk)) {
+		const isTrunk = checkout === trunk;
+		const label = (rel: string) => (isTrunk ? rel : join(relative(trunk, checkout), rel));
+		const queue = join(checkout, ".indusk", "highlights.jsonl");
+		const processed = join(checkout, ".indusk", "highlights-processed.jsonl");
+		if (existsSync(queue) || existsSync(processed)) mkdirSync(home, { recursive: true });
+		const renamed = existsSync(queue)
+			? mergeQueue(queue, join(home, "highlights.jsonl"))
+			: new Map();
+		if (existsSync(processed)) {
+			mergeProcessed(processed, join(home, "highlights-processed.jsonl"), renamed);
+		}
+		for (const [file, name] of [
+			[queue, "highlights.jsonl"],
+			[processed, "highlights-processed.jsonl"],
+		] as const) {
+			if (!existsSync(file)) continue;
+			if (isTrunk) {
+				untrack(trunk, join(".indusk", name));
+				rmSync(file);
+			}
+			moved.push(label(join(".indusk", name)));
+		}
+		if (moveEvalDir(checkout, evalDir(anyCheckout), isTrunk ? trunk : null)) {
+			moved.push(label(join(".indusk", "eval/")));
+		}
+	}
+	return moved;
+}
+
+/**
+ * A plan's branch that still tracks the highlights files after `main` stopped
+ * (`indusk update` ran on `main` while the plan was open) would conflict when
+ * landing brings `main` in: deleted there, changed here. Before that, landing
+ * calls this in the plan's worktree: its queue and marks are merged into the
+ * home, and the files leave the branch in a `chore(indusk)` commit of their
+ * own. Nothing happens while `main` still tracks them (A16). Returns the paths
+ * taken out.
+ *
+ * promise: indusk-leaves-main-clean
+ */
+export function releaseBranchBookkeeping(worktree: string): string[] {
+	const { trunk, home } = bookkeepingRoots(worktree);
+	const names = ["highlights.jsonl", "highlights-processed.jsonl"];
+	const tracked = (cwd: string, rel: string) => gitSync(cwd, "ls-files", "--", rel).out !== "";
+	const rels = names
+		.map((n) => join(".indusk", n))
+		.filter((rel) => tracked(worktree, rel) && !tracked(trunk, rel));
+	if (rels.length === 0) return [];
+	mkdirSync(home, { recursive: true });
+	const queue = join(worktree, ".indusk", "highlights.jsonl");
+	const processed = join(worktree, ".indusk", "highlights-processed.jsonl");
+	const renamed = existsSync(queue) ? mergeQueue(queue, join(home, "highlights.jsonl")) : new Map();
+	if (existsSync(processed)) {
+		mergeProcessed(processed, join(home, "highlights-processed.jsonl"), renamed);
+	}
+	gitSync(worktree, "rm", "-q", "--cached", "--", ...rels);
+	for (const rel of rels) rmSync(join(worktree, rel), { force: true });
+	const commit = gitSync(
+		worktree,
+		"commit",
+		"-q",
+		"--only",
+		"-m",
+		"chore(indusk): highlights move to the project home",
+		"--",
+		...rels,
+	);
+	if (commit.code !== 0) {
+		throw new Error(`could not take the highlights out of the branch: ${commit.err}`);
+	}
+	return rels;
+}
+
+/**
+ * Move a checkout's `.indusk/eval/` into `dest`: logs appended, any other file
+ * copied only where `dest` has none; untracked first when `trunk` is given.
+ * Returns whether there was one.
+ */
+function moveEvalDir(checkout: string, dest: string, trunk: string | null): boolean {
+	const oldEval = join(checkout, ".indusk", "eval");
+	if (!existsSync(oldEval) || !statSync(oldEval).isDirectory()) return false;
+	mkdirSync(dest, { recursive: true });
+	for (const entry of readdirSync(oldEval)) {
+		const from = join(oldEval, entry);
+		if (!statSync(from).isFile()) continue;
+		const to = join(dest, entry);
+		if (entry.endsWith(".log") || entry.endsWith(".jsonl")) {
+			appendFileSync(to, readFileSync(from));
+		} else if (!existsSync(to)) {
+			copyFileSync(from, to);
+		}
+	}
+	if (trunk) untrack(trunk, join(".indusk", "eval"));
+	rmSync(oldEval, { recursive: true, force: true });
+	return true;
+}
+
+/** The main checkout first, then every worktree git lists for it. */
+function checkoutsOf(trunk: string): string[] {
+	const r = gitSync(trunk, "worktree", "list", "--porcelain");
+	const listed =
+		r.code === 0
+			? parseWorktreeList(r.out)
+					.filter((w) => !w.prunable && existsSync(w.path))
+					.map((w) => w.path)
+			: [];
+	return [trunk, ...listed.filter((p) => realpathSync(p) !== realpathSync(trunk))];
+}
+
+type Row = Record<string, unknown> & { id?: unknown };
+
+const rowsOf = (path: string): Row[] => readJsonl(path) as Row[];
+
+/** A highlight is the same highlight when it says the same thing at the same time. */
+const sameness = (h: Row) => JSON.stringify([h.timestamp, h.tag, h.level, h.note]);
+
+/**
+ * Append `src`'s highlights to `dest`, skipping any `dest` already holds;
+ * returns the ids it had to change, old to new, because a different highlight
+ * already had them.
+ */
+function mergeQueue(src: string, dest: string): Map<string, string> {
+	const have = rowsOf(dest);
+	const seen = new Set(have.map(sameness));
+	const ids = new Set(have.map((h) => h.id).filter((id): id is string => typeof id === "string"));
+	const renamed = new Map<string, string>();
+	const add: string[] = [];
+	for (const h of rowsOf(src)) {
+		if (seen.has(sameness(h))) continue;
+		if (typeof h.id === "string" && ids.has(h.id)) {
+			let n = 1;
+			while (ids.has(`${h.id}-m${n}`)) n++;
+			renamed.set(h.id, `${h.id}-m${n}`);
+			h.id = `${h.id}-m${n}`;
+		}
+		if (typeof h.id === "string") ids.add(h.id);
+		seen.add(sameness(h));
+		add.push(JSON.stringify(h));
+	}
+	if (add.length > 0) appendFileSync(dest, `${add.join("\n")}\n`);
+	return renamed;
+}
+
+/** Append `src`'s marks to `dest` under their highlights' ids in the home, skipping ids `dest` has marked. */
+function mergeProcessed(src: string, dest: string, renamed: Map<string, string>): void {
+	const marked = new Set(rowsOf(dest).map((m) => m.id));
+	const add: string[] = [];
+	for (const m of rowsOf(src)) {
+		if (typeof m.id === "string") m.id = renamed.get(m.id) ?? m.id;
+		if (marked.has(m.id)) continue;
+		marked.add(m.id);
+		add.push(JSON.stringify(m));
+	}
+	if (add.length > 0) appendFileSync(dest, `${add.join("\n")}\n`);
+}
+
+/** Take a path out of git's index, if it is tracked; the file itself is the caller's. */
+function untrack(trunk: string, rel: string): void {
+	const tracked = gitSync(trunk, "ls-files", "--", rel);
+	if (tracked.code === 0 && tracked.out !== "")
+		gitSync(trunk, "rm", "-r", "-q", "--cached", "--", rel);
+}

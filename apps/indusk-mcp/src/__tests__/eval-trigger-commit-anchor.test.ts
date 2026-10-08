@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { evalDir } from "../lib/bookkeeping/roots.js";
 import { runHook } from "./helpers/hook-runner.js";
 import { initRepoWithCommit } from "./helpers/test-git.js";
 
@@ -48,8 +49,13 @@ describe("A32 — a worktree commit is evaluated in the worktree", () => {
 	});
 
 	function gitPathLogged(): string {
-		const log = readFileSync(join(trunk, ".indusk", "eval", "system.log"), "utf-8");
-		const line = log.split("\n").find((l) => l.includes("gitPath: "));
+		const log = readFileSync(join(evalDir(trunk), "system.log"), "utf-8");
+		// Every case's checkout is named `trunk`, so they share one project home
+		// and one system.log: the newest line is this case's.
+		const line = log
+			.split("\n")
+			.filter((l) => l.includes("gitPath: "))
+			.at(-1);
 		if (!line) throw new Error(`no gitPath line in system.log:\n${log}`);
 		return /gitPath: (.*?), eval\.enabled/.exec(line)?.[1] ?? "";
 	}

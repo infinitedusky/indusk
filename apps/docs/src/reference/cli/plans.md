@@ -50,7 +50,7 @@ Refuses:
 
 ### InDusk's bookkeeping on the trunk
 
-The evaluator, the highlight tool and the session sections write into the trunk's working tree and nothing else commits them: `.indusk/current.md`, `.indusk/highlights.jsonl`, `.indusk/highlights-processed.jsonl`, `.indusk/eval/` and `.claude/lessons/`. `approve` and `land` commit whatever of these is uncommitted, in a commit of its own (`chore(indusk): bookkeeping, committed before …`), then check the trunk. Anything else uncommitted there may be someone's real work: it is refused, named, and listed by `plans review` as *uncommitted on main* so the person sorts it out before accepting.
+InDusk commits its own notes on `main` as it writes them (`.indusk/current.md` and `.claude/lessons/`), and keeps its machine state outside every checkout, in the project's home. A note it could not commit (the trunk was off its branch or mid-merge), or a project not yet moved by `indusk update`, still leaves these in the trunk's working tree: `.indusk/current.md`, `.indusk/highlights.jsonl`, `.indusk/highlights-processed.jsonl`, `.indusk/eval/` and `.claude/lessons/`. `approve` and `land` commit whatever of these is uncommitted, in a commit of its own (`chore(indusk): bookkeeping, committed before …`), then check the trunk. Anything else uncommitted there may be someone's real work: it is refused, named, and listed by `plans review` as *uncommitted on main* so the person sorts it out before accepting.
 
 ### `plans accept <name> [--auto]`
 

@@ -28,7 +28,7 @@ dusk/
 **Apps:**
 
 - **indusk-mcp** — the InDusk MCP server + CLI (`init`/`update`/`setup`/`extensions`/`agent`/`plans`/`sync`/`context`/`eval`/`ui`/`telemetry`/`worktree`/`promises`/`papers`/`workbench`), published as `@infinitedusky/indusk-mcp`. Skills (`skills/*.md`), hooks (`hooks/*.js`) and the planning context file (`templates/planning/CLAUDE.md`) are package-owned and installed into projects by `init`/`update`. It also hosts the two Dawn commands: `indusk run <plan>` (a model-agnostic gated loop over a plan's phases) and `indusk verify <plan> --phase N` (phase-boundary verification for work Dawn did not execute; detects, never repairs). Git is the only SCM. — see `/reference/cli/run`, `/reference/cli/verify`
-- **indusk-admin** — Next.js read-only viewer over `.indusk/planning/` + `.indusk/eval/`, one machine-global daemon (`indusk ui`), reusing indusk-mcp's parsers through workspace subpath exports — never duplicating parsing. — see `/decisions/admin-ui-hosting`
+- **indusk-admin** — Next.js read-only viewer over `.indusk/planning/` + each project's evaluation results, one machine-global daemon (`indusk ui`), reusing indusk-mcp's parsers through workspace subpath exports — never duplicating parsing. — see `/decisions/admin-ui-hosting`
 - **docs** — VitePress site. Every plan contributes pages at close; ADRs publish to `/decisions/*`.
 
 **Context tiers** — a rule reaches you where and when it applies. This file holds design intent and orientation only. A rule a test or hook enforces is delivered by that enforcer: its failure message names the lesson (`lesson: <name>` → `.claude/lessons/<name>.md`), and `list_lessons` reports each lesson **guarded** or **advisory**, derived on every read. A rule relevant in one area lives in that area's `CLAUDE.md` (`.indusk/planning/` — package-owned and shipped; `apps/indusk-admin/`; `apps/indusk-mcp/`; `apps/indusk-mcp/hooks/`), loaded when a file there is read. Operational state lives in `.indusk/current.md`. A new rule goes to the enforcer first, a directory second, here last and with a reason. — see `/guide/context-tiers`
@@ -44,8 +44,6 @@ dusk/
 - pnpm workspaces + Turborepo; **Node 22 required** (Tailwind 4 native bindings).
 - **Biome, not ESLint** — `pnpm check` / `pnpm check:fix` / `pnpm format`. Biome config is a knowledge artifact (`biome-rationale.md`); the ratchet only tightens.
 - `pnpm test`: parallel, never starts a server or daemon (`INDUSK_SKIP_TELEMETRY_AUTOSTART`); it and `test:system` end failing on one left in a temp home, pass or fail. `test:system`: each package's `vitest.tiers.ts` files, at landing and by `pnpm release`. **E2e**: `pnpm e2e` (needs `claude` + a daemon) — promise loop, always-on server, nested-context probe; run at the close of a plan touching a `CLAUDE.md`.
-- `indusk context check-pointers` verifies every pointer and lesson token in every context file and refuses hand-copied `**Version**:` claims. — see `/guide/context-budget`
-- **An unrecorded promise violation outranks the roadmap** when answering "what's next"; unreachable telemetry is said, never reported as a zero. — see `/reference/skills/catchup`
 - **`.indusk/current.md` is the operational layer**: a `## Project (shared)` region any agent may edit (what is in flight, blockers, what is next) plus per-agent `## Session <short> — <task>` sections, each written only by its own session via `mcp__indusk__update_current_section` (typically at `/handoff`); commit like any file. `merge=union` merges concurrent appends; every mutation goes through the `current.md.lock` file lock. — see `/decisions/multi-agent-coordination`
 - Plans live in `.indusk/planning/{kebab-case}/`; use `/planner` before implementing — don't jump to code. The planning rules load with the plan documents.
 - **Releases: bump on main, after the branch is merged — it is the retrospective's Step 11**, not a thing to remember. `pnpm publish` packs the working tree, so a publish from clean main is blind to every `plan/*` worktree; `pnpm release` enforces the guard. **Before saying whether a publish is current**, read `git rev-list <release-commit>..HEAD` and `git for-each-ref refs/heads/plan/* --no-merged HEAD`, never a version number. — see `/reference/skills/retrospective`
@@ -92,6 +90,7 @@ dusk/
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
 - Admin plan authoring: `plans start → approve → build → accept → land`, through the developer's own `claude`; nothing lands unaccepted — see `/decisions/admin-plan-authoring`
 - Workbench plans: documents at the workbench root, code on `plan/<name>` in the repo the plan names (`code.json`); one contract per repo — its own `.indusk/promises/`, else the workbench's shadow — through one resolver — see `/decisions/workbench-plan-authoring`
+- Bookkeeping: notes committed on `main` as written; machine state in `~/.indusk/projects/<id>-<hash>/` (`indusk eval home`); the evaluator's tools named — see `/decisions/bookkeeping-lives-where-it-is-read`
 
 ## Known Gotchas
 

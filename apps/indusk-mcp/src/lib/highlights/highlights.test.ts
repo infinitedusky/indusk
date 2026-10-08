@@ -2,26 +2,34 @@ import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import { markProcessed, readUnprocessedHighlights, writeHighlight } from "./highlights.js";
 
 let projectRoot: string;
+/** Where the queue and the processed list live: the project's home (bookkeeping-lives-where-it-is-read). */
 let induskDir: string;
+let previousHome: string | undefined;
 
 beforeEach(() => {
 	projectRoot = join(
 		tmpdir(),
 		`highlights-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
 	);
-	induskDir = join(projectRoot, ".indusk");
+	previousHome = process.env.INDUSK_HOME;
+	process.env.INDUSK_HOME = join(projectRoot, "home");
+	mkdirSync(projectRoot, { recursive: true });
+	induskDir = bookkeepingRoots(projectRoot).home;
 	mkdirSync(induskDir, { recursive: true });
 });
 
 afterEach(() => {
+	if (previousHome === undefined) delete process.env.INDUSK_HOME;
+	else process.env.INDUSK_HOME = previousHome;
 	rmSync(projectRoot, { recursive: true, force: true });
 });
 
 describe("T1: writeHighlight appends a JSONL entry with auto-generated ID and timestamp", () => {
-	it("creates .indusk/highlights.jsonl on first write with an entry", () => {
+	it("creates highlights.jsonl in the project's home on first write with an entry", () => {
 		const entry = writeHighlight(projectRoot, {
 			tag: "brief-accepted",
 			note: "agent-roles brief accepted",

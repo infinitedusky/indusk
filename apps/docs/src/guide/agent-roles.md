@@ -30,19 +30,21 @@ graph TB
         INF4[CLI commands enforce conventions]
     end
 
-    WA4 -->|writes| HJ[".indusk/highlights.jsonl"]
+    WA4 -->|writes| HJ["<home>/highlights.jsonl"]
     HJ -->|reads| EA2
     EA3 --> G[Lessons registry]
-    EA5 --> RL[".indusk/eval/results.log"]
+    EA5 --> RL["<home>/eval/results.log"]
     INF1 -.->|enforces on| WA
     INF2 -.->|enforces on| WA
 ```
 
 | Tier | Role | Writes to | Cadence |
 |---|---|---|---|
-| **Working agent** | Does the task — code, plans, tests, docs, handoffs. Flags moments worth remembering via `mcp__indusk__highlight`. | Code, plan files, `.indusk/highlights.jsonl` | Real-time, in-flow |
-| **Eval agent** | Background judge that fires on every `git commit` and at session end via `/handoff`. Reads unprocessed highlights, writes structured lessons with level-weighted edges, scores the commit, writes unresolved findings. | lessons (via `add_lesson`), `.indusk/highlights-processed.jsonl`, `.indusk/eval/results.log` | Asynchronous, per-commit + session-end |
+| **Working agent** | Does the task — code, plans, tests, docs, handoffs. Flags moments worth remembering via `mcp__indusk__highlight`. | Code, plan files, `<home>/highlights.jsonl` | Real-time, in-flow |
+| **Eval agent** | Background judge that fires on every `git commit` and at session end via `/handoff`. Reads unprocessed highlights, writes structured lessons with level-weighted edges, scores the commit, writes unresolved findings. | lessons (via `add_lesson`), `<home>/highlights-processed.jsonl`, `<home>/eval/results.log` | Asynchronous, per-commit + session-end |
 | **Infrastructure** | The hooks, CLI, validators that enforce invariants. Enforce structure at write time | Validator error messages, gate refusals, boundary records | On trigger (git hooks, Claude Code PreToolUse/PostToolUse, `indusk graph sync`) |
+
+`<home>` is the project's home outside every checkout, `~/.indusk/projects/<project>-<hash>/`; `indusk eval home` prints it.
 
 ## What each tier does (and does NOT do)
 
@@ -58,7 +60,7 @@ graph TB
 
 **Do NOT:**
 - Call `mcp__indusk__add_lesson` directly in process skills. The working agent is not the structured-writer to the lessons registry. Use `mcp__indusk__highlight` to flag the moment; the eval agent materializes it.
-- Hand-edit `.indusk/highlights-processed.jsonl` or `.indusk/eval/results.log`. Those are eval-agent outputs.
+- Hand-edit `<home>/highlights-processed.jsonl` or `<home>/eval/results.log`. Those are eval-agent outputs.
 
 **Why this boundary**: direct the lessons registry writes from in-flow code require the working agent to pick a group, phrase the episode as a Y-statement or correction, swallow the lessons registry's network failures, and stop what it was doing to do all that. Highlights flip the model: write a one-line note, keep going. The eval agent does the heavier shaping on its own cadence.
 
@@ -67,9 +69,9 @@ graph TB
 The **eval agent** is a background process spawned by a PostToolUse hook on every `git commit` (and at session end via `/handoff`). It runs as a separate `claude --print` invocation with its own context, fed a structured prompt that includes the working agent's session transcript and the just-committed diff.
 
 **Does:**
-- Reads `.indusk/highlights.jsonl`, filters to unprocessed entries, materializes each as a structured lessons with level-weighted edges
-- Marks each highlight as processed in `.indusk/highlights-processed.jsonl`
-- Scores the commit against a 4-question rubric, writes a scorecard to `.indusk/eval/results.log`
+- Reads `<home>/highlights.jsonl`, filters to unprocessed entries, materializes each as a structured lessons with level-weighted edges
+- Marks each highlight as processed in `<home>/highlights-processed.jsonl`
+- Scores the commit against a 4-question rubric, writes a scorecard to `<home>/eval/results.log`
 - Surfaces unresolved findings to the next session (`indusk eval findings` shows the queue)
 
 **Does NOT:**
@@ -77,7 +79,7 @@ The **eval agent** is a background process spawned by a PostToolUse hook on ever
 - Make plan decisions or write plan documents
 - Run as a slash command — it's only spawned by hooks
 
-**You are not the eval agent during normal sessions.** The eval agent has its own session, its own context, its own model invocation. You may encounter its scorecards (`.indusk/eval/results.log`) and findings (`indusk eval findings`) as input to your `/catchup`, but you don't run as it.
+**You are not the eval agent during normal sessions.** The eval agent has its own session, its own context, its own model invocation. You may encounter its scorecards (`<home>/eval/results.log`) and findings (`indusk eval findings`) as input to your `/catchup`, but you don't run as it.
 
 ### Infrastructure
 
@@ -154,9 +156,9 @@ A user invokes `/planner accept-brief code-reviewer-agent`. What happens:
 
 4. **Infrastructure** (the `eval-trigger.js` hook) sees the commit, checks the trigger regex `/\bgit commit(?=$|\s|;|&|\|)/`, reads the `tool_response.exit_code` (must be 0), then spawns the eval agent as `claude --print` in the background. The working agent's session continues unblocked.
 
-5. **Eval agent** wakes up, runs its own `/catchup`, reads the working agent's session transcript and the just-committed diff. Reads `.indusk/highlights.jsonl`, finds the `brief-accepted` highlight unprocessed, calls `mcp__indusk__add_lesson` to write a structured episode (typed entity, level-weighted edge, project group), and writes the ID to `.indusk/highlights-processed.jsonl`.
+5. **Eval agent** wakes up, runs its own `/catchup`, reads the working agent's session transcript and the just-committed diff. Reads `<home>/highlights.jsonl`, finds the `brief-accepted` highlight unprocessed, calls `mcp__indusk__add_lesson` to write a structured episode (typed entity, level-weighted edge, project group), and writes the ID to `<home>/highlights-processed.jsonl`.
 
-6. **Eval agent** scores the commit against the rubric, writes a scorecard to `.indusk/eval/results.log`, and any `no` or `partial` answers become unresolved findings.
+6. **Eval agent** scores the commit against the rubric, writes a scorecard to `<home>/eval/results.log`, and any `no` or `partial` answers become unresolved findings.
 
 7. **Next session's working agent** runs `/catchup`, which calls `mcp__indusk__list_lessons` and surfaces the brief-accepted episode along with other recent decisions. The working agent now has structured memory of what was accepted last session, written by the eval agent, retrievable across sessions.
 
@@ -177,7 +179,7 @@ The user never sees the boundary. The working agent never had to phrase a Y-stat
 **Call `mcp__indusk__list_lessons` directly.** Reading from the lessons registry is a working-agent activity — only structured *writes* are the eval agent's exclusive territory.
 
 **"What if the working agent skips `/highlight` and just calls `mcp__indusk__add_lesson` anyway?"**
-**Several things break.** First, the episode lands without the eval agent's typing discipline (the agent-roles plan defines the structured shapes the eval agent uses; ad-hoc writes don't match). Second, the highlight doesn't appear in `.indusk/highlights.jsonl` so other agents can't see what was flagged. Third, you can't `indusk eval review` it later because the cross-agent visibility queue is bypassed. **Use `/highlight`.**
+**Several things break.** First, the episode lands without the eval agent's typing discipline (the agent-roles plan defines the structured shapes the eval agent uses; ad-hoc writes don't match). Second, the highlight doesn't appear in `<home>/highlights.jsonl` so other agents can't see what was flagged. Third, you can't `indusk eval review` it later because the cross-agent visibility queue is bypassed. **Use `/highlight`.**
 
 **"When does `/handoff` matter for the pipeline?"**
 **At session end.** Highlights written during the session but not followed by a `git commit` would otherwise wait until the next session's first commit. `/handoff`'s Step 4 fires the eval-trigger explicitly so the queue drains before the session closes.

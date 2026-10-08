@@ -3,17 +3,28 @@
  *
  * `indusk eval summary` — aggregate scores and trends
  * `indusk eval baseline` — run baseline evaluation with vanilla agent
+ * `indusk eval home` — print the project's home (its `eval/` and highlights)
  */
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-
+import { bookkeepingRoots, evalDir } from "../../lib/bookkeeping/roots.js";
 import { getAllFindings, getUnresolvedFindings, markFinding } from "../../lib/eval/findings.js";
 import { readAllEntries } from "../../lib/eval/log-reader.js";
 import { type EvalScorecard, isScorecard } from "../../lib/eval/types.js";
 
+/**
+ * Print the project's home — `<INDUSK_HOME>/projects/<id>-<hash>/` — from any
+ * of its checkouts: its evaluation results are under `eval/`, its highlights
+ * beside them. The hash cannot be worked out by hand, so the skills that read
+ * these files ask for it (`"$(indusk eval home)/eval/results.log"`).
+ */
+export function evalHome(anyCheckout: string): void {
+	console.info(bookkeepingRoots(anyCheckout).home);
+}
+
 function getEvalLogPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "eval", "results.log");
+	return join(evalDir(projectRoot), "results.log");
 }
 
 export async function evalSummary(
@@ -222,7 +233,7 @@ export async function evalBaseline(
 	const taskPrompt = readFileSync(taskPath, "utf-8");
 	const taskName = basename(taskPath, ".md").replace(/\s+/g, "-");
 
-	const worktreePath = join(projectRoot, ".indusk", "eval", "baseline-worktree");
+	const worktreePath = join(evalDir(projectRoot), "baseline-worktree");
 
 	console.info("Setting up baseline worktree...");
 

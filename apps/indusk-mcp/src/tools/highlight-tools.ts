@@ -22,6 +22,9 @@ import {
  * See .indusk/planning/agent-roles/adr.md for the three-tier role model
  * and the highlights-queue interface.
  */
+/** This MCP server's session: each `claude` session, the evaluator's included, starts its own. */
+const HOLDER = `mcp-${process.pid}`;
+
 export function registerHighlightTools(server: McpServer, projectRoot: string): void {
 	server.registerTool(
 		"highlight",
@@ -62,7 +65,9 @@ export function registerHighlightTools(server: McpServer, projectRoot: string): 
 				"Return all highlights that haven't yet been marked as processed. Called by the eval agent to find highlights needing structured episodes.",
 		},
 		async () => {
-			const unprocessed = readUnprocessedHighlights(projectRoot);
+			// Held for this server's session — one evaluator — so a second evaluator
+			// running at once is not offered them (bookkeeping-lives-where-it-is-read A13).
+			const unprocessed = readUnprocessedHighlights(projectRoot, { holder: HOLDER });
 			return {
 				content: [
 					{
