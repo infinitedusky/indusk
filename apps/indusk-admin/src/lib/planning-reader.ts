@@ -44,7 +44,7 @@ import matter from "gray-matter";
 import { type BoundaryRead, readProjectBoundaries } from "./project-reader";
 
 /**
- * The data layer for the admin UI. Reads `.indusk/planning/` and `.indusk/eval/`
+ * The data layer for the admin UI. Reads `.indusk/planning/` and the evaluation results in each project's home
  * directly from disk and reuses indusk-mcp's parsers (trajectory + falsification log)
  * — never duplicates parsing logic. If a parser needs a new export to support the
  * admin UI, add it to the original module rather than recreating it here.
@@ -575,7 +575,7 @@ export async function readPlanMasterContent(
 }
 
 /**
- * Read `.indusk/eval/results.log` (jsonl, one scorecard per line) and return
+ * Read the project's `eval/results.log` in its home (jsonl, one scorecard per line) and return
  * scorecards filtered to the supplied date range. Malformed lines are skipped
  * silently — `results.log` is append-only and may contain partial entries from
  * crashed evaluator processes.

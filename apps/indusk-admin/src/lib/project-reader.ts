@@ -56,7 +56,7 @@ export function readAdminRefreshMs(projectRoot: string): number {
 }
 
 /**
- * Whether the evaluator has ever written for this project: `.indusk/eval/` is
+ * Whether the evaluator has ever written for this project: its home's `eval/` is
  * created by the first append (`EvalLogWriter.ensureDirectory`), so its
  * absence means "no evaluated commit yet", which the scorecards page says
  * instead of showing an empty list (admin-ui-phase-progress A24).
