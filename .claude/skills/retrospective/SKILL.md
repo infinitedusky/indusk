@@ -318,109 +318,48 @@ Update `.indusk/current.md`'s Project (shared) region: the plan leaves the in-fl
 
 ### Step 10: Land — the branch reaches main, and is gone
 
-Archival is the branch's last write. Worktree-per-plan opened a branch at Phase 1, and **a plan is not closed until that branch is on `main` and deleted**. Nothing before this step puts the archive, the docs pages or the code on trunk; the retrospective's own commits sit on the branch until someone merges. The cost of leaving this to memory is on the record: three plans shipped in July on branches nobody merged and their code was later dropped as superseded (root `master.md`, sequence reconciliation); `workbench-trust-fixes` closed and sat "awaits merge" in its master; a publish went out 56 seconds before a twelve-commit plan branch merged, which is why `pnpm release` now refuses unmerged packaged branches.
+Archival is the branch's last write. Worktree-per-plan opened a branch at Phase 1, and **a plan is not closed until that branch is on `main` and deleted**. Nothing before this step puts the archive, the docs pages or the code on trunk; the retrospective's own commits sit on the branch until someone merges. The cost of leaving this to memory is on the record: plans have shipped on branches nobody merged, had their code dropped as superseded, and once a publish went out a minute before a plan branch merged.
+
+**What this project runs is its own.** Before anything below, run `indusk checks show`: it names the project's slow tests, its release command, its version file and its changelog, from `workflow.steps` in `.indusk/config.json`, or says plainly that one is not declared and what that means. Use only what it names. A project that declares no slow tests runs none at landing; one that declares no release command has nothing to publish, and the plan closes at this step.
 
 Do it in this order, all from the plan's worktree until the merge itself:
 
 1. **Confirm the branch is clean and closed** — `git status --short` empty; Steps 0–9 done (the archive folder is committed on the branch).
-2. **Integrate trunk into the branch** — `git fetch origin && git merge main` (or `origin/main`) *in the worktree*, and resolve what conflicts once. Do not rebase a plan branch: a rebase replays every commit and re-asks the same append-only-ledger conflict (`highlights-processed.jsonl`, `current.md`) on each of them — the first attempt at this step aborted a 112-commit rebase on its first replayed commit. Then run the whole of both tiers, `pnpm test` and `pnpm test:system` — landing is when the `contract` tests run, since phases run only what they touched; a green branch before the merge says nothing about the branch after it. A ledger that conflicts here is missing its `merge=union` line in `.gitattributes` — add it in the same commit that resolves the conflict.
+2. **Integrate trunk into the branch** — `git fetch origin && git merge main` (or `origin/main`) *in the worktree*, and resolve what conflicts once. Do not rebase a plan branch: a rebase replays every commit and re-asks the same append-only-ledger conflict on each of them. Then run the project's everyday tests and, if it declares slow tests, `indusk checks slow` — landing is when the slow tier runs, since phases run only what they touched; a green branch before the merge says nothing about the branch after it. `indusk checks slow` records a fully green run on a clean tree, so the release on the same code does not run it again. A ledger that conflicts here is missing its `merge=union` line in `.gitattributes` — add it in the same commit that resolves the conflict.
 3. **Check trunk's working tree on every path the branch touches** — `git -C <trunk> status --short`. A merge is refused when trunk has uncommitted changes on a file the branch also changed (`.indusk/planning/master.md` and `.indusk/current.md` are the usual ones — every plan writes both). Those changes belong to whoever made them: if `indusk agent list` shows another live session on trunk, **ask** — never commit, stash or discard another session's work to clear your own path. A bare `git stash` on a shared stack is off the table regardless (see the git skill).
 4. **Land** — `indusk plans land {plan-name}`. It refuses a plan that has not been accepted (`indusk plans accept {plan-name}`, Accept in the admin, or a project set to `release.auto_accept`), naming it: a plan's build reaches `main` only once someone, or its workflow, has accepted it. It then merges `main` into the branch, runs `plans.land_checks` from `.indusk/config.json`, merges the branch into `main` with `--no-ff`, releases the assignment, removes the worktree and deletes the branch — and refuses, with nothing done, when the trunk has uncommitted changes on a path the branch touches (step 3). With reviewers instead: push and open the PR, merge it, pull trunk, then `indusk worktree release {plan-name}`, `git worktree remove <worktree-path>` and `git branch -d plan/{plan-name}`.
-5. **Delete the remote branch** if it was pushed — `git push origin --delete plan/{plan-name}`. A worktree left behind is a stale `.next/` lock, a stale `dist/`, and a `⚠ collision` in the next `indusk agent list`.
-6. **Verify on trunk** — `git for-each-ref refs/heads/plan/* --no-merged HEAD` no longer lists the plan; `.indusk/planning/archive/{plan-name}/` exists on trunk; `indusk context check-pointers` passes there too (CLAUDE.md pointers were written on the branch and are only now on trunk); the full suites green once on trunk if the rebase in step 2 was not a fast-forward.
+5. **Delete the remote branch** if it was pushed — `git push origin --delete plan/{plan-name}`. A worktree left behind is a stale build lock, a stale build output, and a `⚠ collision` in the next `indusk agent list`.
+6. **Verify on trunk** — `git for-each-ref refs/heads/plan/* --no-merged HEAD` no longer lists the plan; `.indusk/planning/archive/{plan-name}/` exists on trunk; `indusk context check-pointers` passes there too (CLAUDE.md pointers were written on the branch and are only now on trunk).
 7. **Record the landing** — append one line to the archived `retrospective.md` on trunk: `Landed on main at <sha>, <date>.` Commit it on trunk. That line is what distinguishes a closed plan from a merged one when the two are read months later.
 
-**The bump is Step 11, not a thing to remember.** It happens on trunk, immediately after this step, because that is where the guard's own rule points. Publishing itself stays the operator's call.
+**The bump is Step 11, not a thing to remember.** It happens on trunk, immediately after this step. Publishing itself stays the operator's call.
 
 ### Step 11: Bump — the version that describes this tree
 
-The release guard's rule is *bump on main, after the branch is merged*. Step 10
-just merged and is standing on main. This is that moment, and it is the only
-one that knows what shipped — so the bump belongs here, not to whoever next
-tries to publish and has to reconstruct it.
+A project that declares no release command (`indusk checks show` says "nothing to publish") has nothing to bump: **say so, record it in the retrospective, and stop.** Skipping is a finding, not an absence.
 
-Before this step existed, "bump" meant three manual acts every time — edit
-`package.json`, roll the changelog heading, write a commit message in the exact
-format the guard greps for — each silently wrong-able, with no command behind
-them. Publishing 1.54.0 took five attempts and none of them failed for the
-reason its error message gave.
+Otherwise: bump on main, after the branch is merged. Step 10 just merged and is standing on main. This is that moment, and it is the only one that knows what shipped.
 
-**First, is there anything to release?** The question is what packaged files
-changed **since the release commit** — not what the last commit changed. Step
-10 ends by committing the landing note on trunk, so the last commit is always
-that note, and asking it would read "nothing to release" for every plan.
+**First, is there anything to release?** The question is what the release covers that changed **since the last release commit** (the last commit whose message begins `chore(release):`) — not what the last commit changed. Step 10 ends by committing the landing note on trunk, so the last commit is always that note. Ask git: `git -C <trunk> diff --name-only <release-commit>..HEAD -- <covered paths>`, the covered paths being what `indusk checks show` lists under "slow tests cover". This counts every plan that landed since the last release, not only this one — which is right: the bump describes the tree.
 
-Read the `indusk/version` line of `check_health`, which answers exactly this:
-`release commit <sha> for X.Y.Z, N packaged commit(s) since`. Or ask git
-directly, `git -C <trunk> diff --name-only <release-commit>..HEAD -- <paths>`,
-with `<paths>` taken from `PACKAGED_PATHS` in
-`apps/indusk-mcp/scripts/release-guard.sh` — read it there rather than from
-memory: that list is what the guard refuses on, and a copy of it kept anywhere
-else drifts.
+If it names nothing, **say so and stop**: *"Nothing the release covers changed — the version stays at X.Y.Z."* Record that in the retrospective.
 
-This counts every plan that landed since the last release, not only this one —
-which is right: the bump describes the tree.
+**If it did, choose the increment.** You have just written the retrospective, so you know which this is:
 
-If it names nothing, **say so and stop**: *"No packaged paths changed — nothing
-to release; the version stays at X.Y.Z."* Record that in the retrospective. A
-plan that touched only plan documents, docs pages or this repository's own
-skills changes no tarball, and bumping for it ships a version number that
-describes nothing. **Skipping is a finding, not an absence** — write it down,
-or the next reader cannot tell it from the step never having run.
-
-**If it did change packaged paths, choose the increment.** You have just
-written the retrospective, so you know which this is:
-
-- **minor** — the plan added a capability someone can now use: a command, a
-  tool, a config key, a behaviour that did not exist.
+- **minor** — the plan added a capability someone can now use: a command, a tool, a config key, a behaviour that did not exist.
 - **patch** — the plan fixed, hardened or refactored something already shipped.
 
-When a plan genuinely did both, it is a minor. When you cannot tell, it is a
-minor — under-describing a release is the cheaper error, because a consumer who
-expected a fix and got a feature loses nothing.
+When a plan genuinely did both, it is a minor. When you cannot tell, it is a minor — under-describing a release is the cheaper error.
 
-**Then, three writes and one commit:**
+**Then, the writes and one commit**, using the files `indusk checks show` names:
 
-1. **The changelog.** `apps/docs/src/changelog.md` opens with `## [Unreleased]`
-   holding the entries this plan (and any plan that landed since the last
-   release) already wrote. Roll it: leave `## [Unreleased]` empty at the top
-   and insert `## [X.Y.Z] — <today>` beneath it, so the entries now sit under
-   the version that carries them.
-2. **The version.** `apps/indusk-mcp/package.json`'s `version`, and nothing
-   else — the platform-split telemetry packages carry their own.
-3. **The commit**, on trunk, whose *first line* must begin exactly
-   `chore(release): X.Y.Z` — `release-guard.sh` finds the release commit by
-   grepping for it, and `trunk-guard.js` exempts it from the no-code-on-trunk
-   rule by reading it.
+1. **The changelog**, if one is declared. It opens with `## [Unreleased]` holding the entries this plan (and any plan that landed since the last release) already wrote. Roll it: leave `## [Unreleased]` empty at the top and insert `## [X.Y.Z] — <today>` beneath it.
+2. **The version**, in the declared version file, and nothing else.
+3. **The commit**, on trunk, whose *first line* begins exactly `chore(release): X.Y.Z` — release checks find the release commit by it, and `trunk-guard.js` exempts it from the no-code-on-trunk rule by reading it. Pass the message as a **literal `-m`**, or with `-F <file>`; a message built by a heredoc or `$(…)` is *not* read.
 
-   Pass the message as a **literal `-m`**, or with `-F <file>`. Both are read.
-   A message built by a heredoc or `$(…)` is *not* read — the hook says so and
-   refuses rather than guessing, because it does not run a shell.
+If trunk-guard refuses editing the version file or the changelog on trunk, make the two edits on a short release branch, commit `chore(release): X.Y.Z` there, and fast-forward trunk to it, so trunk's HEAD is the release commit. Never route around the refusal with a shell write.
 
-```bash
-git -C <trunk> add apps/indusk-mcp/package.json apps/docs/src/changelog.md
-git -C <trunk> commit -m "chore(release): X.Y.Z — <what shipped, in the plan's own words>" \
-  -m "<the why, as many -m paragraphs as it deserves>"
-```
-
-**Then stop.** Running `pnpm release` is the operator's decision and needs a
-one-time password an agent cannot enter. Say that the bump is committed and the
-tree is ready, and let them choose whether to publish now or let the next plan
-accumulate into the same version.
-
-**Verify before you hand over**, so the guard's refusals are not the first
-thing they see:
-
-```bash
-bash apps/indusk-mcp/scripts/release-guard.sh
-```
-
-It should print that HEAD is the release commit, packaged paths are clean, no
-unmerged packaged work remains, and every declared dependency is installed. If
-it refuses, fix what it names — a refusal here is cheap; the same refusal after
-`npm login` is not.
-
-
+**Then stop.** Running the release command is the operator's decision, and a publish usually needs a credential an agent cannot enter. Say that the bump is committed and the tree is ready. Before handing over, run `indusk checks slow --unless-covered`: it should say the slow tests are covered by landing's green run. If it runs them instead, something the release covers changed since landing — say so before the operator finds out the slow way. If the project's release command begins with its own guard script, run that guard alone too, so its refusals are not the first thing the operator sees.
 
 ## Important
 
