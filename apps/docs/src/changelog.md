@@ -10,6 +10,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 - **A plan builds only after approval** (small-fixes): `check-gates` refuses to tick a checklist item while the impl is `draft`, and refuses an edit that moves the impl out of `draft` by any route but `indusk plans approve`. Lesson `a-plan-builds-only-after-approval`; the planner skill now ends the planning session at the written plan, and its Key Decisions line is the first build phase's Context item.
 
+- **`stash-guard` hook** (small-fixes): in a repository with more than one worktree, which all share one stash stack, the hook refuses `git stash` with no message, `pop`, and `apply`/`drop` with nothing named, and `clear`. The refusal names the safe ways: a temporary commit, or `stash push -u -m <tag>` followed by `stash apply <sha>`. `indusk update` registers it on Bash. See [Worktrees share one stash](/guide/multi-agent#worktrees-share-one-stash).
+
 ### Changed
 
 - **Dusk publishes deliberately, not per plan.** Landing installs the build locally; `pnpm release` is for a server deploy or another machine, and runs the full slow tests itself before publishing. The retrospective's bump step says so for any project that installs locally.
