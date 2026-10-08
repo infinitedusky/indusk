@@ -28,7 +28,11 @@ describe("A3 — the release publishes without listing every file", () => {
 	it("keeps every step it ran, in the same order", () => {
 		expect(steps.map((s) => s.replace(/^npm_config_loglevel=warn /, ""))).toEqual([
 			"bash scripts/release-guard.sh",
-			"pnpm -w test:system",
+			// No slow tier here (release-checks-run-once, Sandy 2026-10-08): dusk's
+			// releases are its own development loop, and the six-to-eight-minute
+			// system tier blocking every landing and release cost more flow than a
+			// patch release costs. It runs after release, in the background, as a
+			// promise — the next item in known-issues.md.
 			"npm whoami",
 			"pnpm publish --no-git-checks",
 			"node scripts/record-release.js",

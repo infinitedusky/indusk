@@ -47,7 +47,7 @@ pointer; the pointer holds the story.
   `phantom.ts`'s `isMachineState`, `shape/changed.ts`'s `isNotCode`,
   `cleanup/oversized.ts`, and `.gitattributes`; those predicates are
   deliberately not shared. Any detection keyed on "what else changed" excludes
-  machine state (`.indusk/verify/`, `.indusk/eval/`,
+  machine state (`.indusk/verify/`, eval results,
   `.indusk/phase-boundary.jsonl`) and includes untracked files. — see
   `/decisions/lifecycle-rebalance`
 
@@ -191,7 +191,7 @@ pointer; the pointer holds the story.
   (absent = empty); `eval-trigger.js --drain-pending` evaluates each once —
   ledger written before spawn, un-drained on a failed evaluator; records carry
   `repo`. The hook only fires inside Claude Code sessions and needs `claude` on
-  PATH; check `.indusk/eval/results.log` + `system.log` when scorecards go
+  PATH; check the project home's eval logs when scorecards go
   missing. — see `/decisions/dawn-hook-parity`
 - **Session IDs sanitize at the boundary** — every session id flows through
   `sanitizeSessionId()` and every section body through `sanitizeSectionBody()`;

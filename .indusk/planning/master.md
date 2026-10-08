@@ -74,7 +74,11 @@ launch and for showing at Lazer. In order:
    success", agents' `git stash`, `init` dropping the worktree config,
    approve vs the planner's Key Decisions line, and the release flakes (the
    telemetry restart test hides why `start` failed; the system tier runs
-   twice per release — [release-checks-run-once](release-checks-run-once/brief.md)).
+   twice per release — [release-checks-run-once](archive/release-checks-run-once/retrospective.md),
+   **closed 2026-10-08, 1.67.0**: `workflow.steps` names each project's commands; `indusk checks
+   slow` runs a slow tier once per piece of code; and dusk itself, by Sandy's decision, no longer
+   waits on its slow tier at landing or release — it is to run after release as a promise, the
+   next item under Releases in [known-issues.md](known-issues.md)).
 2. **[demo-app-template](demo-app-template/brief.md)** — an app with real
    promises, marked through OTel, and a switch that breaks one on cue.
 3. **[incident-recording](incident-recording/brief.md)** — the watcher runs
@@ -380,12 +384,8 @@ lesson title, or a chat log.
   and a test hook did not fire in them either. Deliver nested rules to every
   session, the planned way being a hook, and rebuild the probe on real sessions.
   Opened by Sandy; not yet in the sequence.
-- **Standalone, brief draft** (2026-10-05):
-  [release-checks-run-once](release-checks-run-once/brief.md) — the slow test
-  tier ran at planner-promises' landing and runs again at release, on the same
-  tree minutes apart; and the retrospective's landing and release steps name
-  dusk's own commands in a skill every project installs. Run the slow tier at
-  most once per commit, and read each project's commands from its config.
+- **Closed 2026-10-08** (sequence step 1 of "Now — show the promise loop"):
+  [release-checks-run-once](archive/release-checks-run-once/retrospective.md).
   Opened by Sandy at that landing; not yet in the sequence.
 - **Standalone, brief draft** (2026-10-01, rewritten the same day):
   [plan-premises](plan-premises/brief.md) — a place to put the *why*. A project

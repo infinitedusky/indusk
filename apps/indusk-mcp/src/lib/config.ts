@@ -33,8 +33,35 @@ export interface VerifyToolConfig {
 	config: string;
 }
 
+/**
+ * What each workflow step runs (release-checks-run-once, ADR D4–D5): the
+ * project's own tooling, named. Facts, never logic: every value is a command,
+ * a path or a name — no conditions, templating or expressions; a project that
+ * needs one writes a script it owns and names it here. Shaped for every step,
+ * though only landing's slow tests and release are read today.
+ */
+export interface WorkflowSteps {
+	land?: {
+		/** The slow tests, run once per piece of code (`indusk checks slow`). */
+		slow_tests?: string;
+	};
+	release?: {
+		/** The command that publishes or deploys. */
+		command?: string;
+		/** The file whose `version` the bump changes; read without it when keying the code. */
+		version_file?: string;
+		/** The changelog; left out when keying the code. */
+		changelog?: string;
+		/** What the slow tests cover; absent = the whole repository but `.indusk/`. */
+		covers?: string[];
+	};
+}
+
 export interface InduskConfig {
 	mode: "full" | "local";
+	workflow?: {
+		steps?: WorkflowSteps;
+	};
 	verify: {
 		linter?: VerifyToolConfig;
 		testRunner?: VerifyToolConfig;

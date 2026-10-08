@@ -4,6 +4,21 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+
+- **`workflow.steps`** in `.indusk/config.json`: what each step of a project's workflow runs, named as facts (a command, a path or a name; never conditions or templating). This release reads landing's slow tests and release's command, version file, changelog and covered paths; `indusk update` adds the section empty. See [`indusk checks`](/reference/cli/checks).
+- **`indusk checks show`** names what landing and release run for the project, or says what not declaring one means.
+- **`indusk checks slow`** runs the declared slow tests and records a fully green run over a clean tree in the project's home; with `--unless-covered` it skips when such a run already covered the same code (the version bump and changelog entry are not a change).
+
+### Changed
+
+- **Releasing a plan that landed green runs the slow tests once** (release-checks-run-once). Landing runs them through `indusk checks slow`; the release runs `indusk checks slow --unless-covered`, which skips them when landing's run covered the code it ships.
+- **The landing and release steps name the project's own commands.** The retrospective's Steps 10 and 11, and the verify and work skills, name what `indusk checks show` prints, never dusk's own commands and paths; a project with no release command closes its plan at landing.
+
+### Fixed
+
+- **Two drain tests queue into the project home**, where the 1.66.0 hooks read it; they failed once this repository's installed hooks were synced.
+
 ## [1.66.0] — 2026-10-08
 
 ### Added

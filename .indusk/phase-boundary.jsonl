@@ -190,3 +190,8 @@
 {"plan":"bookkeeping-lives-where-it-is-read","phase":3,"kind":"build","sha":"f2ee6a152c537bb921ff82a39af6026b556308dd","timestamp":"2026-10-07T23:02:04.352Z"}
 {"plan":"bookkeeping-lives-where-it-is-read","phase":4,"kind":"build","sha":"239c92c605188e4b2b3155815d4b073ffbde6c10","timestamp":"2026-10-07T23:40:31.220Z"}
 {"plan":"bookkeeping-lives-where-it-is-read","phase":5,"kind":"build","sha":"4755239c42397b63ffc4e4b788516e634c4f33e8","timestamp":"2026-10-08T02:48:52.259Z"}
+{"plan":"release-checks-run-once","phase":1,"kind":"test","sha":"166f0df6022c186e15e4d0e866f6a05277799f87","timestamp":"2026-10-08T17:23:48.387Z"}
+{"plan":"release-checks-run-once","phase":1,"kind":"build","sha":"b56c37980128931e888612cff59cf4ee4d556735","timestamp":"2026-10-08T17:25:18.676Z"}
+{"plan":"release-checks-run-once","phase":2,"kind":"build","sha":"4be2e1c139e3ecd99a87d277f386e30c17e8420c","timestamp":"2026-10-08T17:28:52.656Z"}
+{"plan":"release-checks-run-once","phase":3,"kind":"build","sha":"a67bae6473279b8e84ce8802e79957d0d8ea3f90","timestamp":"2026-10-08T17:34:38.975Z"}
+{"plan":"release-checks-run-once","phase":4,"kind":"build","sha":"33e6d602cd86f342fd6640cdcba6e7c1204ee477","timestamp":"2026-10-08T17:51:23.881Z"}

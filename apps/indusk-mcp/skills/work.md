@@ -270,7 +270,7 @@ The hook validates that both `asked:` and `user:` are present with non-empty quo
 
 11. **Verification items.** The Verification section requires proof, not assumption. See the verify skill for full guidance.
    - Run checks in order: type check → lint → affected tests → build. Skip checks that don't apply (see verify skill's skip logic table).
-   - **A phase runs what it touched, not the suite**: the test files its own trajectory rows name, plus `pnpm exec vitest related <files this phase changed>` in each package it changed. Seconds, not minutes. The full `pnpm test` and `pnpm test:system` run at **landing** (the retrospective's merge step) and on release — the moment for `contract` tests, which is what the system tier holds.
+   - **A phase runs what it touched, not the suite**: the test files its own trajectory rows name, plus `pnpm exec vitest related <files this phase changed>` in each package it changed. Seconds, not minutes. The full everyday suite and the project's slow tests (`indusk checks slow`, the command `indusk checks show` names) run at **landing** (the retrospective's merge step) — the moment for `contract` tests, which is what the slow tier holds; release skips a slow run landing already covered.
    - Run commands and capture output — verification items must be specific runnable commands, not "verify it works"
    - If a check fails: read the error, fix it, re-run only the failing check. Max 3 attempts before flagging as a blocker to the user.
    - Check items off only when actually verified, not assumed

@@ -221,52 +221,56 @@ Update `.indusk/current.md`'s Project (shared) region: the plan leaves the in-fl
 
 ### Step 10: Land on Trunk
 
+The step starts with `indusk checks show`, which names the project's own slow tests, release command, version file and changelog from `workflow.steps`, or says plainly what not declaring one means. It uses only what that names, so every project's landing fits it. See [`indusk checks`](/reference/cli/checks).
+
 Land with `indusk plans land {plan}`. It refuses a plan that has not been
 accepted (`indusk plans accept {plan}`, Accept in the admin, or
 `release.auto_accept`), so a build reaches `main` only once someone, or its
-workflow, has accepted it. Then it merges `main` into the branch, runs
-`plans.land_checks`, merges into `main` with `--no-ff`, releases the worktree
-assignment, and removes the worktree and the branch. Afterwards, verify on
-trunk and record the landing sha in the archived retrospective. With
-reviewers, merge the PR instead, then release, remove the worktree and delete
-the branch by hand. See [`indusk plans`](/reference/cli/plans).
+workflow, has accepted it. Before that, the agent runs the everyday tests and,
+if the project declares slow tests, `indusk checks slow`, which records a green
+run so the release on the same code does not repeat it. Then `plans land`
+merges `main` into the branch, runs `plans.land_checks`, merges into `main` with
+`--no-ff`, releases the worktree assignment, and removes the worktree and the
+branch. Afterwards, verify on trunk and record the landing sha in the archived
+retrospective. With reviewers, merge the PR instead, then release, remove the
+worktree and delete the branch by hand. See [`indusk plans`](/reference/cli/plans).
 
 ### Step 11: Bump
 
-The release guard's rule is *bump on main, after the branch is merged*. Step 10
-leaves the agent standing on main, holding the one piece of knowledge a later
-publisher would have to reconstruct: what shipped. So the bump happens here.
+A project that declares no release command has nothing to bump: the step says
+so, records it, and stops. Otherwise it bumps on main, after the branch is
+merged. Step 10 leaves the agent standing on main, holding the one piece of
+knowledge a later publisher would have to reconstruct: what shipped.
 
 **What it derives.**
 
-1. **Whether there is anything to release.** It reads the packaged changes
-   since the last release commit, from the `indusk/version` line of
-   `check_health` ("N packaged commit(s) since") or from a diff over
-   `PACKAGED_PATHS` in `release-guard.sh`, read there rather than copied. It does not look at the last commit
-   alone: Step 10 ends by committing the landing note, so the last commit never
-   touches packaged files.
+1. **Whether there is anything to release.** What the release covers that
+   changed since the last `chore(release):` commit, over the paths `indusk
+   checks show` lists. Not the last commit alone: Step 10 ends by committing
+   the landing note.
 2. **The increment, from what the plan did.** A new capability is a **minor**.
    A fix, hardening or refactor of something already shipped is a **patch**.
    When a plan did both, or the answer is unclear, it is a minor.
 3. **The summary, from the retrospective it just wrote.**
 
-**What it writes**, then commits on trunk:
+**What it writes**, then commits on trunk, using the files `indusk checks show` names:
 
 - the changelog: `## [Unreleased]` stays at the top, now empty, and
   `## [X.Y.Z] — <date>` goes beneath it, holding the entries;
-- `apps/indusk-mcp/package.json`'s `version`;
+- the version in the declared version file;
 - a commit whose first line starts `chore(release): X.Y.Z`, passed as a literal
   `-m` or with `-F <file>`. trunk-guard reads either form to apply its release
-  exemption. A message built by `$(…)` or a heredoc cannot be read, so the
-  commit is refused as unreadable.
+  exemption. When trunk-guard refuses editing the two files on trunk, they are
+  edited on a short release branch and trunk is fast-forwarded to it.
 
-It then runs `release-guard.sh` and stops. `pnpm release` is the operator's
-call, because npm's one-time password is not something an agent can enter.
+It then runs `indusk checks slow --unless-covered`, which should report the
+slow tests covered by landing's green run, and stops. Running the release
+command is the operator's call.
 
-**When it skips.** If nothing packaged changed since the release commit, the step says
-*"No packaged paths changed — nothing to release; the version stays at X.Y.Z"*
-and records that in the retrospective. A plan that touched only plan documents,
-docs or this repository's own skills changes no tarball. Writing the skip down
+**When it skips.** If nothing the release covers changed since the release commit, the step says
+*"Nothing the release covers changed — the version stays at X.Y.Z"*
+and records that in the retrospective; likewise when the project declares no
+release command. Writing the skip down
 is what tells a reader that the step ran and found nothing, rather than never
 running.
 
