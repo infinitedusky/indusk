@@ -1,4 +1,4 @@
-import { readConfig, type WorkflowSteps } from "../config.js";
+import { type EnsureResult, ensureConfigBlock, readConfig, type WorkflowSteps } from "../config.js";
 
 /**
  * A project's declared step tooling, `workflow.steps` (release-checks-run-once
@@ -55,4 +55,13 @@ function paths(v: unknown, key: string): string[] | undefined {
 		throw new Error(`workflow.steps.${key} must be a list of paths`);
 	}
 	return v;
+}
+
+/**
+ * Ensure the `workflow` block exists, empty: keyed on presence, so a project
+ * that declares its steps is never touched, and one that declares none still
+ * sees where they would go. Called by `indusk update`.
+ */
+export function ensureWorkflowConfig(projectRoot: string): EnsureResult {
+	return ensureConfigBlock(projectRoot, "workflow", { steps: {} });
 }

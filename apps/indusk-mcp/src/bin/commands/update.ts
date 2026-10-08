@@ -849,6 +849,15 @@ export async function update(projectRoot: string): Promise<void> {
 		"promises.domains (already set)",
 	);
 
+	// [Workflow — release-checks-run-once] scaffold workflow.steps, empty, so a
+	// project sees where it names its slow tests and release (indusk checks show).
+	const { ensureWorkflowConfig } = await import("../../lib/checks/steps.js");
+	reportEnsured(
+		ensureWorkflowConfig(projectRoot),
+		"workflow.steps: {} to .indusk/config.json",
+		"workflow.steps (already set)",
+	);
+
 	// [Decay — indusk-makeover] scaffold sweep + dead-draft keys idempotently.
 	// Presence-keyed; user-customized values never clobbered. Readers default
 	// regardless, so absence is never "disabled".
