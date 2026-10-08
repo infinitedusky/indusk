@@ -51,10 +51,10 @@ A plan that lands green is released without running the slow tests again, and th
 | A8 | A project that declares its steps gets them named back by `indusk checks show` | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
 | A9 | A project that declares none is told plainly that landing runs no slow tests and release has nothing to publish | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
 | A10 | Landing still refuses an unaccepted plan and runs the declared landing checks | Test Phase 1 | Test Phase 1 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
-| A11 | A `covers` entry that matches no tracked file (a typo, or an empty list) gives no key: nothing is recorded, and `--unless-covered` runs the tests, never a key over nothing that every run covers | Build Phase 4 | Build Phase 4 | planned | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/lib/checks/key.test.ts |
-| A12 | A changelog or version file declared with a `./` prefix is still left out of, or read without its version in, the key, so the bump still does not change it | Build Phase 4 | Build Phase 4 | planned | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/lib/checks/key.test.ts |
-| A13 | A `workflow.steps` value that is not a command, a path or a name makes `checks slow` and `checks show` exit 2 with one line naming the key, not a stack trace | Build Phase 4 | Build Phase 4 | planned | unit | found by falsification: D5 says such a value is refused naming the key; an uncaught throw names it under a stack trace with exit 1 | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
-| A14 | A covered script gaining or losing its executable bit changes the key | Build Phase 4 | Build Phase 4 | planned | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/lib/checks/key.test.ts |
+| A11 | A `covers` entry that matches no tracked file (a typo, or an empty list) gives no key: nothing is recorded, and `--unless-covered` runs the tests, never a key over nothing that every run covers | Build Phase 4 | Build Phase 4 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/lib/checks/key.test.ts |
+| A12 | A changelog or version file declared with a `./` prefix is still left out of, or read without its version in, the key, so the bump still does not change it | Build Phase 4 | Build Phase 4 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/lib/checks/key.test.ts |
+| A13 | A `workflow.steps` value that is not a command, a path or a name makes `checks slow` and `checks show` exit 2 with one line naming the key, not a stack trace | Build Phase 4 | Build Phase 4 | passing | unit | found by falsification: D5 says such a value is refused naming the key; an uncaught throw names it under a stack trace with exit 1 | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
+| A14 | A covered script gaining or losing its executable bit changes the key | Build Phase 4 | Build Phase 4 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/lib/checks/key.test.ts |
 
 ## Checklist
 
@@ -145,22 +145,23 @@ A plan that lands green is released without running the slow tests again, and th
 
 **Goal**: verify whether the attested state holds against the ways a declared `covers`, `changelog` or `version_file` can quietly defeat the key — a typo that covers nothing and so matches every run, a `./` prefix the exact-match comparison misses, a mode change the blob hash does not carry — and whether a value that is not a fact is refused the way D5 says. Each row is one hypothesis; each item the fix if it confirms.
 
-- [ ] `codeKey` gives no key when `covers` is an empty list or any entry lists no tracked file; `checks slow` says which entry, records nothing, and `--unless-covered` runs the tests (A11)
-- [ ] The changelog and version file are compared by normalised repo-relative path (`./`, trailing slash, repeated separators), so a declaration written either way is recognised (A12)
-- [ ] `checks slow` and `checks show` catch `readWorkflowSteps`'s refusal and exit 2 with its one line, never a stack trace (A13)
-- [ ] The key's line per file carries the mode beside the blob, so a script gaining or losing `+x` changes it (A14)
+- [x] (confirmed red: a typo'd entry gave a key over nothing. `whyNoKey(root, steps)` names the entry, the empty list, or the dirty files; `codeKey` is null whenever it speaks, and `checks slow` prints it before running and when it does not record) `codeKey` gives no key when `covers` is an empty list or any entry lists no tracked file; `checks slow` says which entry, records nothing, and `--unless-covered` runs the tests (A11)
+- [x] (confirmed red: `./CHANGELOG.md` was counted, so the bump changed the key and release never skipped) The changelog and version file are compared by normalised repo-relative path (`./`, trailing slash, repeated separators), so a declaration written either way is recognised (A12)
+- [x] (confirmed red: an uncaught throw, exit 1 under a stack trace) `checks slow` and `checks show` catch `readWorkflowSteps`'s refusal and exit 2 with its one line, never a stack trace (A13)
+- [x] (confirmed red once the test changed the file's mode as well as the index's — its first run passed by accident, the "after" key null for dirt rather than different) The key's line per file carries the mode beside the blob, so a script gaining or losing `+x` changes it (A14)
 
 #### Build Phase 4 Verification
 
-- [ ] A11–A14 pass, and A1–A5, A8, A9 still do (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/checks src/__tests__/checks-slow.test.ts src/__tests__/checks-show.test.ts`)
+- [x] (3 files, 14 passed; `tsc` clean) A11–A14 pass, and A1–A5, A8, A9 still do
+- [x] Shape — `whyNoKey` is the one place that says why there is no key and `codeKey` defers to it; `coverage` normalises once for both; `declared` is the one catch for both commands. Nothing to change (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/checks src/__tests__/checks-slow.test.ts src/__tests__/checks-show.test.ts`)
 
 #### Build Phase 4 Context
 
-- [ ] current.md: this session's section — the falsification's four findings, one line
+- [x] (through this session's `update_current_section`, which is still the 1.65.1 server and so wrote `main`'s `current.md`, uncommitted; landing's bookkeeping commit takes it) current.md: this session's section — the falsification's four findings, one line
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/cli/checks.md`: a `covers` entry that lists no file gives no key; paths are compared normalised
+- [x] `apps/docs/src/reference/cli/checks.md`: a `covers` entry that lists no file gives no key; paths are compared normalised
 
 ## Files Affected
 
