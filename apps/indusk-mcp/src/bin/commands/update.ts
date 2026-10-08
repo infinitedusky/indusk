@@ -7,7 +7,11 @@ import { globSync } from "glob";
 import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
 import { detectTooling } from "../../lib/detect-tooling.js";
 import { loadExtensionTolerant, localOverrideErrors } from "../../lib/extension-loader.js";
-import { absolutizeHookCommands, ensureHookRegistered } from "../../lib/hook-command.js";
+import {
+	absolutizeHookCommands,
+	ensureHookRegistered,
+	HOOK_REGISTRATIONS,
+} from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
 import { readWorkbenchRepos, repoDir, resolveReposRoot } from "../../lib/worktree/repos.js";
@@ -290,12 +294,6 @@ export async function update(projectRoot: string): Promise<void> {
 		// Ensure eval hook is registered in settings.json
 		const settingsPath = join(projectRoot, ".claude/settings.json");
 		if (existsSync(settingsPath)) {
-			// A hook copied by globSync but never registered in settings is a file
-			// that exists and never runs — the eval-trigger lesson. A new hook is
-			// one `registerHook` line.
-			registerHook(settingsPath, "eval-trigger.js", [["PostToolUse", "Bash"]]);
-			registerHook(settingsPath, "workbench-sync.js", [["PostToolUse", "Edit|Write"]]);
-
 			// Remove the legacy check-catchup hook (indusk-makeover follow-up, found
 			// by the POC versioned-workbench POC): it gates every Edit/Write on
 			// .claude/handoff.md checkboxes the post-1.29 catchup never writes, and
@@ -330,16 +328,15 @@ export async function update(projectRoot: string): Promise<void> {
 				);
 			}
 
-			// The CLAUDE.md budget hook (indusk-makeover P2).
-			registerHook(settingsPath, "claude-md-budget.js", [["PreToolUse", "Edit|Write"]]);
-			// The trunk guard under BOTH matchers: one is half a gate — the commit
-			// gate is what catches edits the Edit gate never sees.
-			registerHook(settingsPath, "trunk-guard.js", [
-				["PreToolUse", "Edit|Write"],
-				["PreToolUse", "Bash"],
-			]);
-			// The stash guard (small-fixes): Bash only — a stash is a command.
-			registerHook(settingsPath, "stash-guard.js", [["PreToolUse", "Bash"]]);
+			// A hook copied by globSync but never registered in settings is a file
+			// that exists and never runs — the eval-trigger lesson. Every row of the
+			// one table `init` reads too (small-fixes A24), each hook under every
+			// matcher it needs.
+			const byFile = new Map<string, [string, string][]>();
+			for (const [event, matcher, file] of HOOK_REGISTRATIONS) {
+				byFile.set(file, [...(byFile.get(file) ?? []), [event, matcher]]);
+			}
+			for (const [file, at] of byFile) registerHook(settingsPath, file, at);
 		}
 	}
 
