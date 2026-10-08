@@ -1,0 +1,7 @@
+# When a plan moves a path, grep for it everywhere at research time — skills, hook messages, and docs pages included, not just importers
+
+From `bookkeeping-lives-where-it-is-read` (`.indusk/planning/archive/bookkeeping-lives-where-it-is-read/retrospective.md`): the plan moved where machine state lives. Code readers of the old path were caught automatically by `tsc` and the test suite. Two shipped skills and eleven docs pages that referenced the old path in prose were not caught by either — they were only found at the retrospective, after the plan had already been built and accepted.
+
+Why it matters: type checkers and tests only catch references that are themselves code. A path mentioned in a skill's markdown instructions, a hook's failure message string, or a docs page's prose is invisible to both — it will compile clean and pass every test while being silently wrong for any human or agent who reads that skill/doc/hook message next.
+
+How to apply: when a plan's research phase identifies a path, identifier, or convention that is moving or being renamed, grep for it across the ENTIRE repo at research time — not just `src/`/`lib/` — explicitly including `.claude/skills/`, hook files (`hooks/*.js` failure-message strings), and `apps/docs/` prose. Turn every hit into a checklist item in the plan, the same as a code importer would be. Don't rely on tsc/tests to find these; they structurally cannot.
