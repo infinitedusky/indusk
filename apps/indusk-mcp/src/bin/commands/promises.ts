@@ -9,6 +9,7 @@ import {
 	checkPlanContract,
 	formatContract,
 } from "../../lib/promises/contract.js";
+import { type OpenIncident, openIncidents } from "../../lib/promises/health.js";
 import { fixIncident } from "../../lib/promises/incidents.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
 import { recordBreaks } from "../../lib/promises/record.js";
@@ -74,6 +75,11 @@ export async function promisesStatus(
 		else for (const p of read.problems) console.error(`${p.file}: ${p.problem}`);
 		process.exitCode = 2;
 		return;
+	}
+	// Open incidents first, before any source (incident-recording A11): they
+	// are files, so they are said even when no Jaeger answers.
+	for (const line of openIncidentLines(openIncidents(projectRoot, read.registry))) {
+		console.info(line);
 	}
 	let sinceMs: number | undefined;
 	let window: number | string;
@@ -382,4 +388,29 @@ export function promisesWithdraw(projectRoot: string, name: string, opts: { plan
 		withdrawPromise(projectRoot, { name, plan: opts.plan });
 		return `${name} withdrawn by ${opts.plan}: it was never in force, and the registry no longer holds it. Take it out of the brief too. ${AFTER_WRITE}`;
 	});
+}
+
+/**
+ * One line per open incident, oldest first: its id, its promise, how long it
+ * has been open, and its owner — with whether the owner carries its
+ * Maintenance phase, since an incident no plan is working is the loudest kind.
+ */
+export function openIncidentLines(open: OpenIncident[]): string[] {
+	return open.map(
+		(i) =>
+			`open incident ${i.id} — ${i.promise}, open ${formatAge(i.ageMs)}; ${i.owner || "no owner"} ${
+				i.ownerHasPhase ? "carries its Maintenance phase" : "carries NO Maintenance phase for it"
+			}`,
+	);
+}
+
+/** `3 days`, `5 hours`, `40 minutes`; `an unknown time` when the incident says no `opened`. */
+export function formatAge(ms: number | null): string {
+	if (ms === null || Number.isNaN(ms)) return "an unknown time";
+	const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"}`;
+	const days = Math.floor(ms / 86_400_000);
+	if (days >= 1) return plural(days, "day");
+	const hours = Math.floor(ms / 3_600_000);
+	if (hours >= 1) return plural(hours, "hour");
+	return plural(Math.max(0, Math.floor(ms / 60_000)), "minute");
 }

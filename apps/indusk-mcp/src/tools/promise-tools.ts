@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { confirmPlan } from "../lib/promises/confirm.js";
-import { promiseHealth } from "../lib/promises/health.js";
+import { openIncidentsAt, promiseHealth } from "../lib/promises/health.js";
 import { WatcherBlind } from "../lib/promises/probe.js";
 import { readPromises } from "../lib/promises/registry.js";
 import {
@@ -199,6 +199,9 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 									// state, so a session can say so rather than "unreachable".
 									...(err instanceof WatcherBlind ? { blind: true } : {}),
 									promises: null,
+									// The incidents are files: nobody could look at Jaeger, and
+									// the open incidents are still loud (incident-recording A10).
+									openIncidents: openIncidentsAt(projectRoot),
 								},
 								null,
 								2,
