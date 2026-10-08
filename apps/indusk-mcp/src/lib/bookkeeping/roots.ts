@@ -36,14 +36,25 @@ export function mainCheckoutOf(anyCheckout: string): string {
  */
 export function bookkeepingRoots(anyCheckout: string): BookkeepingRoots {
 	const trunk = mainCheckoutOf(anyCheckout);
-	let real = trunk;
+	return {
+		trunk,
+		home: join(induskHome(), "projects", `${markProjectId(trunk)}-${pathKey(trunk)}`),
+	};
+}
+
+/**
+ * The first 8 hex of the sha256 of `path`'s real path (the path as given when
+ * it is gone): what tells two checkouts apart where their names are the same.
+ * The hooks' copy is in `hooks/_hook-paths.js`.
+ */
+export function pathKey(path: string): string {
+	let real = path;
 	try {
-		real = realpathSync(trunk);
+		real = realpathSync(path);
 	} catch {
 		// a checkout that is gone keys by the path it had
 	}
-	const hash = createHash("sha256").update(real).digest("hex").slice(0, 8);
-	return { trunk, home: join(induskHome(), "projects", `${markProjectId(trunk)}-${hash}`) };
+	return createHash("sha256").update(real).digest("hex").slice(0, 8);
 }
 
 /** Where evaluation results live: the project's home, the same from every checkout. */

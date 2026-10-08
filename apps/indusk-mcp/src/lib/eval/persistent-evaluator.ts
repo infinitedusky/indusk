@@ -10,17 +10,9 @@
  */
 
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
-import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	realpathSync,
-	unlinkSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import { evalDir } from "../bookkeeping/roots.js";
+import { evalDir, pathKey } from "../bookkeeping/roots.js";
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
 import { markProjectId } from "../promises/config.js";
@@ -65,13 +57,7 @@ interface EvaluatorSession {
  * resume cleared it and every switch of checkout paid for a fresh run.
  */
 function getSessionPath(projectRoot: string, checkout: string): string {
-	let real = checkout;
-	try {
-		real = realpathSync(checkout);
-	} catch {
-		// a checkout that is gone keys by the path it had
-	}
-	const key = `${basename(real).replace(/[^A-Za-z0-9_-]+/g, "_")}-${createHash("sha256").update(real).digest("hex").slice(0, 8)}`;
+	const key = `${basename(checkout).replace(/[^A-Za-z0-9_-]+/g, "_")}-${pathKey(checkout)}`;
 	return join(evalDir(projectRoot), "sessions", `${key}.json`);
 }
 
