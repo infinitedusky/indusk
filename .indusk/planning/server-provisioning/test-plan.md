@@ -1,7 +1,7 @@
 ---
 title: "Server provisioning — Test Plan"
 date: 2026-10-08
-status: draft
+status: accepted
 ---
 
 # Server provisioning — Test Plan
