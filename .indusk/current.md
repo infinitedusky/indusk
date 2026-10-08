@@ -99,414 +99,28 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 5d66ec7c — eval: scoring commit e63bd7fc (admin-ui-phase-progress test plan acceptance)
-
-**Session ID**: 5d66ec7c-4e53-49c2-ac94-1d5c602cfc29
-**Last updated**: 2026-09-16T19:30:26.756Z
-**Branch**: main
-**Worktree**: /Users/the_dusky/code/sandbox/dusk
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 6b521fcd — generation-ship-story: writing — outline drilldown, a short story
-
-**Session ID**: 6b521fcd-36de-4dc1-a62d-3064563b9edc
-**Last updated**: 2026-09-17T15:21:06.840Z
-**Branch**: main
-**Worktree**: /Users/the_dusky/code/sandbox/dusk
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 4b63ba20 — eval: reviewing commit 16e01f51 (A21/A22 RED tests)
-
-**Session ID**: 4b63ba20-9d33-457a-9842-60828f78e863
-**Last updated**: 2026-09-16T21:29:50.535Z
-**Branch**: plan/admin-ui-phase-progress
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-ui-phase-progress
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 6d2745f7 — eval: score commit 9cc32112 (Test Phase 1 rows for admin-ui-phase-progress)
-
-**Session ID**: 6d2745f7-dbd2-4af8-8eb8-76f53b9fc38d
-**Last updated**: 2026-09-16T21:30:11.594Z
-**Branch**: plan/admin-ui-phase-progress
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-ui-phase-progress
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 90c83200 — eval: reviewing commit dbd87861 (admin-ui-phase-progress plan doc)
-
-**Session ID**: 90c83200-0bbc-4614-922b-d859496f36b9
-**Last updated**: 2026-09-16T21:31:39.320Z
-**Branch**: plan/admin-ui-phase-progress
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-ui-phase-progress
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 94a3bdd1 — eval: score commit 74a3faca
-
-**Session ID**: 94a3bdd1-4997-44c9-8daf-079d1c1275bb
-**Last updated**: 2026-09-16T22:54:28.818Z
-**Branch**: plan/admin-ui-phase-progress
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-ui-phase-progress
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session e44e786a — eval agent: scoring commit b32c5222 (trunk-guard A1-A7 RED)
-
-**Session ID**: e44e786a-5646-4094-946f-8ec9647782ad
-**Last updated**: 2026-09-17T21:14:46.320Z
-**Branch**: plan/trunk-guard
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/trunk-guard
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session f774fe34 — eval: score commit 0dec004f
-
-**Session ID**: f774fe34-94bd-4317-bc21-add1c09a14c4
-**Last updated**: 2026-09-19T20:41:17.768Z
-**Branch**: plan/day-monitor
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/day-monitor
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 25c802bd — day-always-on landed + published 1.54.0; release-ritual in flight
-
-**Session ID**: 25c802bd-7505-46cc-a1a7-72186418629a
-**Last updated**: 2026-09-22T06:30:09.288Z
-**Branch**: main
-**Worktree**: /Users/the_dusky/code/sandbox/dusk
-
-### In Flight
-
-**release-ritual** — all three fixes implemented and green, on `plan/release-ritual` (pushed):
-
-1. trunk-guard reads `-F`/`--file` messages, and treats a `-m` from a heredoc/substitution as *unreadable* rather than tokenizing the message into paths. The real bug was sharper than expected: a literal `"` inside a heredoc body closes the tokenizer's quote, so the rest of that line became pathspecs — a message containing the phrase `"exactly once"` was refused with a fragment of itself printed as a filename.
-2. `scripts/check-install.js` verifies every declared dependency resolves before npm is touched. Publishing 1.54.0 failed *after* `npm whoami` because a dependency merged from a plan branch was never installed on trunk.
-3. `/retrospective` gained **Step 11: Bump** — the landed merge decides whether packaged paths changed, the plan decides minor vs patch, the changelog rolls, the `chore(release):` commit is written. Skipping is recorded, not silent.
-
-T1–T9 pass. **Remaining**: Build Phase 3's Context + Document gates, then `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`. Its own close runs Step 11 for real — that is the deferred verification.
-
-### Open Questions
-
-- Should `indusk plans` **refuse an unrecognised document status** instead of treating it as inactive? `context-tiers` carried `status: complete` (vocabulary is `completed`) and vanished from every active listing — one letter, silently. `jev-decision-model/research.md` still has it and is not mine to change.
-- Build Phase 3 carries a discovered item: trunk-guard's allowlist omits `.claude/skills/` and `.claude/hooks/`, which `indusk update` writes — and update is meant to run on trunk. Landing 1.54.0's update needed `INDUSK_TRUNK_GUARD=off` to commit the testing extension's refreshed skill.
-
-### Cursor
-
-Worktree `/Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual` (exists on THIS Mac only; on another machine `git worktree add ../dusk-worktrees/release-ritual plan/release-ritual` then `indusk worktree assign`).
-
-Next concrete step: the two unchecked gates under `#### Build Phase 3 Context` / `Document` in `.indusk/planning/release-ritual/impl.md`, plus the discovered allowlist item above it.
-
-Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh checkout fails 7 tests until `pnpm --filter indusk-admin build && node apps/indusk-mcp/scripts/bundle-admin.js`; `daemon-identity`'s two PID-reuse tests fail identically on `main`; `http-promise-health` A16 times out at 5s under full-suite load and passes alone.
-
----
-
-## Session d0f10e5e — eval agent: scoring commit 106cf6de (day-monitor impl draft)
-
-**Session ID**: d0f10e5e-9a6f-499d-8732-7f0376e2ae58
-**Last updated**: 2026-09-18T23:34:23.352Z
-**Branch**: main
-**Worktree**: /Users/the_dusky/code/sandbox/dusk
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 0ae5d939 — eval agent: scoring commit 82538e15
-
-**Session ID**: 0ae5d939-fa22-4e79-b022-a1eefff361e9
-**Last updated**: 2026-09-20T04:09:33.802Z
-**Branch**: plan/day-always-on
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/day-always-on
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session c2c15cf7 — eval: release-ritual plan/brief/impl commit d7e0061a
-
-**Session ID**: c2c15cf7-3b2a-40b0-83b6-b4d1aa711c22
-**Last updated**: 2026-09-22T00:39:06.437Z
-**Branch**: plan/release-ritual
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 47cf1bc5 — starting catchup
-
-**Session ID**: 47cf1bc5-8dfe-4f22-bf7c-c9ee97905a2b
-**Last updated**: 2026-09-22T06:15:10.560Z
-**Branch**: main
-**Worktree**: /Users/sandycorsillo/code/indusk
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session fe83e89a — eval agent: scoring commit d7e0061a (plan/release-ritual brief+impl)
-
-**Session ID**: fe83e89a-2500-4ca1-b93d-afba563532c9
-**Last updated**: 2026-09-22T00:39:24.066Z
-**Branch**: plan/release-ritual
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 1a22716c — V4 sequence reconciled; release-ritual is further along than trunk shows
-
-**Session ID**: 1a22716c-eea2-4bd6-9e35-378d2d00a596
-**Last updated**: 2026-10-01T14:59:09.312Z
-**Branch**: main
-**Worktree**: /Users/sandycorsillo/code/indusk
-
-### In Flight
-
-**Correcting this section's earlier contents — it was wrong.** It said release-ritual had nothing executed and two gate items pending. Both false, and the cause is worth knowing: the trunk copy of `release-ritual/impl.md` has all 27 items unchecked, but the plan's real state lives on the remote branch `plan/release-ritual`, which already carries Build Phases 1–3. `indusk worktree create release-ritual` cut a fresh branch from `main` rather than checking out the existing remote branch of that name, so the tooling hid the work instead of revealing it. The push was the first thing that touched the remote and the first thing that told the truth (rejected non-fast-forward).
-
-**release-ritual's actual state** (remote `plan/release-ritual`, tip `bcae83b8`): T1–T7 `passing`, T8/T9 `planned`, 12 items checked and 16 not. Landed commits: `e66c8461` trunk-guard reads the message it is given (Build Phase 1), `85963447` the release proves its install before npm sees it (Build Phase 2), `e880f999` the bump becomes the retrospective's Step 11 (Build Phase 3), `bcae83b8` record the allowlist gap update exposed. **Test Phase 1's Context and Document gate items are answered on the branch — user: "Skip both".** Build Phase 3 is the one still open.
-
-**A pre-existing test-first violation sits on that branch**, found by `check-gates` refusing an unrelated edit: `T8` and `T9` are trajectory rows writable at Test Phase 1 and still `planned`, while Build Phase 1–3 items are checked. The gate blocks any further edit in that region until they are authored. Not introduced by this session — it predates it.
-
-### Open Questions
-
-- **Was Build Phase 3 left mid-flight deliberately, or just interrupted?** If another machine or session is still working that branch, stay out of it; if not, the next step is clear (below). This is the one thing to confirm before editing the branch.
-- **T10 and T11 are real but unlanded.** `T10` is a trajectory row asserting that a `git commit` written across backslash-continued lines, staging only allowlisted paths, is allowed. It is not: `commitArgs`'s backslash branch in `trunk-guard.js` carries the escaped newline into the current token and sets `has = true`, so each continuation emits a whitespace-only token that `commitIntent` classifies as a pathspec — the refusal prints one empty bullet per continued line. Verified empirically (identical flags and staged set: exit 0 on one line, exit 2 across several) **and** confirmed to survive Build Phase 1's fix, because the branch's `commitArgs` is byte-identical on that branch. `T3` is adjacent but its fix leaves this spelling live — the phantom token is not the message. `T11`: `record-release.js` labels `git rev-parse --short HEAD` the release commit, so the 1.54.0 note in the shared region credits `d7e0061a` (a plan commit) instead of `b185e375`. Rows and items are preserved on branch `salvage/t10-t11-rows`, pushed, **not** merged — the gate correctly refuses `planned` rows beside completed work.
-- **Recursive plan grouping** — wanted, not critical. Not a declaration edit: `buildGroups` creates one group per `subplans` key regardless of claiming, so nesting Dawn under Day renders Dawn twice. Reason recorded in the root master's Parked section.
-
-### Cursor
-
-**Picking up on another machine — read this first.**
-
-**Pushing from this laptop needed the SSH URL.** `origin` is HTTPS and the osxkeychain credential resolves to GitHub account `lazer-sandyc`, which gets 403 on `infinitedusky/indusk`; the SSH key authenticates as `infinitedusky`. Pushes here were made with an explicit `git@github.com:infinitedusky/indusk.git` and the `origin/*` tracking refs were never updated, so local `main` reads "ahead 3" while GitHub already has it. Verify with `git ls-remote`, not with the ahead/behind count. On the new machine, check which account git and gh authenticate as before concluding anything is unpushed.
-
-**Everything is on GitHub.** `main` at `5b7d5f5b` (sequence reconciliation plus this note). `plan/release-ritual` at `bcae83b8`, untouched by this session. `salvage/t10-t11-rows` carries the T10/T11 rows and items.
-
-**Next concrete step, once the question above is answered:** in a checkout of `plan/release-ritual`, author the four remaining rows red in one pass — T8 and T9 (clearing the pre-existing violation) together with T10 and T11 (clearing the new ones), then land the `salvage/t10-t11-rows` content on top. Files:
-
-- `apps/indusk-mcp/src/__tests__/release-ritual-skill.test.ts` — T8, T9.
-- `apps/indusk-mcp/src/__tests__/trunk-guard-release-message.test.ts` — T10, beside the existing T1–T5.
-- `apps/indusk-mcp/src/__tests__/record-release-commit.test.ts` — T11. Its fixture needs a `chore(release): <v)` commit **and at least one commit after it**; a fixture where the two coincide cannot fail.
-
-**Gate command:** `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/trunk-guard-release-message src/__tests__/release-guard-install src/__tests__/release-ritual-skill src/__tests__/record-release-commit`
-
-**Two standing gotchas:** write every `git commit` on trunk as a single line until T10's fix lands. And a fresh plan worktree has no admin bundle, so nine `indusk ui` tests plus the tarball test fail there until `pnpm --filter indusk-admin build && node scripts/bundle-admin.js` — known-red, not a regression.
-
----
-
-## Session 4551e898 — release-checks-run-once — falsification, then close
+## Session 4551e898 — small-fixes — Build Phases 1–3 done; Build Phase 4 (stash guard) for a fresh session
 
 **Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
-**Last updated**: 2026-10-08T17:53:39.624Z
+**Last updated**: 2026-10-08T20:03:23.582Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-- release-checks-run-once: Build Phases 1–3 done; Build Phase 4 (falsification) found four: a typo'd `covers` keyed nothing and so matched every run (A11); `./`-prefixed changelog/version paths were not recognised (A12); a non-fact value crashed with a stack trace instead of a one-line refusal (A13); a script's +x bit was not in the key (A14). All fixed in `lib/checks/key.ts` and `bin/commands/checks.ts`.
-- Sandy's decision (2026-10-08): dusk's slow tier never blocks landing or release; it runs after release in the background as a promise — the next item in known-issues.md (Releases). Dusk declares no `land.slow_tests`; `pnpm release` runs no slow step.
-- This session's MCP server is still 1.65.1 (started before the upgrade); its writes go to main's `.indusk/`. Use the CLI for promises; /mcp reconnect fixes it.
+- Plan `small-fixes` on `plan/small-fixes` (worktree `dusk-worktrees/small-fixes`). Test Phase 1 and Build Phases 1–3 closed and committed; impl `in-progress`; `advance_plan` passes phases 1–3 and stops at Build Phase 4's own items.
+- Shipped on the branch: `workflow.steps.land.install` + `pnpm install:local` (BP1); the approval gate in `check-gates.js` + lesson `a-plan-builds-only-after-approval`, planner stops at the written plan (BP2); the session panel's three endings, `lib/process-identity.ts` behind both stops with `ui stop` judging by command line and exiting 1 for a daemon that survives SIGKILL, `hasNewerVersion` by number (BP3).
+- Global `indusk` is a symlink to this worktree's `apps/indusk-mcp` (from `pnpm install:local` during BP1). Landing step 7 re-links it from `main`.
 
 ### Open Questions
 
-(empty)
+- Build Phase 4 (the stash guard, A9/A10, `hooks/stash-guard.js`) is for a fresh session or Sandy: this session cannot write `stash-guard.test.ts` (a safety classifier stopped the write; not to be retried here). The register in Test Phase 1 carries the test body.
+- `telemetry/status.ts` still has a port-based `verifyIdentity` for jaeger/otelcol status (not stop) — out of this plan's scope; a known-issues entry at the retrospective.
+- `realDeps.command` in `admin/daemon.ts` and `telemetry/daemon.ts` both read `ps -o command=`; a `/cleanup` question.
 
 ### Cursor
 
-Build Phase 4 verification → cleanup (skip with reason) → /retrospective → accept → land → bump 1.67.0.
-
----
-
-## Session 89a3ef1c — starting catchup
-
-**Session ID**: 89a3ef1c-a487-4fc9-a57f-c5f2df0f29f0
-**Last updated**: 2026-10-01T16:09:00.403Z
-**Branch**: main
-**Worktree**: /Users/the_dusky/code/sandbox/dusk
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session d394bb2b — eval: review commit b8414337 admin-plan-type
-
-**Session ID**: d394bb2b-2808-4b79-bc15-b9f815d464ee
-**Last updated**: 2026-10-01T18:59:58.413Z
-**Branch**: plan/admin-plan-type
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-plan-type
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
+Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 red from the register body, then `hooks/stash-guard.js`, registration in `init.ts`/`update.ts`/settings, `.claude/hooks/` resync, docs `guide/multi-agent.md`). Then `/falsify`, `/cleanup`, `/retrospective` (record A1's live check; known-issues for `telemetry/status.ts`), accept, land with `pnpm install:local` on main. No bump or publish unless Sandy wants the server image.
 
 ---
 
@@ -2553,6 +2167,216 @@ Build Phase 4 verification → cleanup (skip with reason) → /retrospective →
 **Last updated**: 2026-10-08T18:02:13.331Z
 **Branch**: plan/release-checks-run-once
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 44fb39bb — eval: scoring small-fixes brief commit 14e72391
+
+**Session ID**: 44fb39bb-8be9-4d27-beea-54731d33c424
+**Last updated**: 2026-10-08T19:09:12.131Z
+**Branch**: plan/small-fixes
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/small-fixes
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 491b983a — small-fixes — Build Phase 4 (stash guard) onward
+
+**Session ID**: 491b983a-364e-47eb-9147-92907ac9d847
+**Last updated**: 2026-10-08T20:16:14.038Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 4573a6c7 — eval: scoring commit e2be2dea on plan/small-fixes
+
+**Session ID**: 4573a6c7-dcc7-480a-9e74-6682313cd0f6
+**Last updated**: 2026-10-08T20:39:03.187Z
+**Branch**: plan/small-fixes
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/small-fixes
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 5f018503 — eval: small-fixes A23/A24 process reads + hook lists
+
+**Session ID**: 5f018503-ee77-4f31-b1ba-e7b87801726e
+**Last updated**: 2026-10-08T20:43:06.955Z
+**Branch**: plan/small-fixes
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/small-fixes
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session bc4fcbd9 — eval: small-fixes 61b19aa3 check-gates Edit-splice refactor
+
+**Session ID**: bc4fcbd9-ada4-4034-b777-311c092d6d7c
+**Last updated**: 2026-10-08T20:43:37.948Z
+**Branch**: plan/small-fixes
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/small-fixes
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session f9037763 — eval: small-fixes commit 6df63d37
+
+**Session ID**: f9037763-396b-47f2-9ad7-220fc8afe9af
+**Last updated**: 2026-10-08T20:43:55.230Z
+**Branch**: plan/small-fixes
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/small-fixes
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session b93faa09 — eval: Build Phase 5 verified commit bcfdc186
+
+**Session ID**: b93faa09-14aa-4009-a957-f5447ecc7861
+**Last updated**: 2026-10-08T20:43:52.477Z
+**Branch**: plan/small-fixes
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/small-fixes
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 0b9200c4 — eval: scoring commit 5eec48ce (small-fixes A23/A24 red tests)
+
+**Session ID**: 0b9200c4-b2c4-40e1-bbd6-1867fcef5999
+**Last updated**: 2026-10-08T20:43:55.461Z
+**Branch**: plan/small-fixes
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/small-fixes
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session e50657af — eval: scoring commit 2746bca6
+
+**Session ID**: e50657af-42e7-4266-a2af-003f30f7c885
+**Last updated**: 2026-10-08T20:52:11.580Z
+**Branch**: plan/small-fixes
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/small-fixes
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session aaa469c3 — eval: scoring commit 521d4fea (Build Phase 6 cleanup)
+
+**Session ID**: aaa469c3-3871-441f-99f2-fca1ea529691
+**Last updated**: 2026-10-08T20:52:22.187Z
+**Branch**: plan/small-fixes
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/small-fixes
 
 ### In Flight
 
