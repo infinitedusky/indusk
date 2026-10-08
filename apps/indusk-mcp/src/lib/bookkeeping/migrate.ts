@@ -12,6 +12,7 @@ import {
 } from "node:fs";
 import { join, relative } from "node:path";
 import { parseWorktreeList } from "../git.js";
+import { readJsonl } from "./jsonl.js";
 import { bookkeepingRoots, evalDir } from "./roots.js";
 
 /**
@@ -151,19 +152,7 @@ function checkoutsOf(trunk: string): string[] {
 
 type Row = Record<string, unknown> & { id?: unknown };
 
-function rowsOf(path: string): Row[] {
-	if (!existsSync(path)) return [];
-	const rows: Row[] = [];
-	for (const line of readFileSync(path, "utf-8").split("\n")) {
-		if (line.trim() === "") continue;
-		try {
-			rows.push(JSON.parse(line) as Row);
-		} catch {
-			// a malformed line was unreadable where it was, too
-		}
-	}
-	return rows;
-}
+const rowsOf = (path: string): Row[] => readJsonl(path) as Row[];
 
 /** A highlight is the same highlight when it says the same thing at the same time. */
 const sameness = (h: Row) => JSON.stringify([h.timestamp, h.tag, h.level, h.note]);

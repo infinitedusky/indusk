@@ -8,6 +8,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { withLock } from "../agents/lock.js";
+import { readJsonl } from "../bookkeeping/jsonl.js";
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
 
 export type HighlightLevel = "critical" | "important" | "note";
@@ -96,43 +97,15 @@ function todayStamp(): string {
  * (matching the semantic-graph / falsification log resilience pattern).
  */
 function readAllHighlights(projectRoot: string): Highlight[] {
-	const path = highlightsPath(projectRoot);
-	if (!existsSync(path)) return [];
-
-	const content = readFileSync(path, "utf-8");
-	const lines = content.split("\n").filter((l) => l.length > 0);
-	const highlights: Highlight[] = [];
-	for (const line of lines) {
-		try {
-			const parsed = JSON.parse(line);
-			if (parsed && typeof parsed.id === "string") {
-				highlights.push(parsed as Highlight);
-			}
-		} catch {
-			// skip malformed line
-		}
-	}
-	return highlights;
+	return readJsonl(highlightsPath(projectRoot)).filter(
+		(r): r is Highlight & Record<string, unknown> => typeof r.id === "string",
+	);
 }
 
 function readAllProcessed(projectRoot: string): ProcessedMark[] {
-	const path = processedPath(projectRoot);
-	if (!existsSync(path)) return [];
-
-	const content = readFileSync(path, "utf-8");
-	const lines = content.split("\n").filter((l) => l.length > 0);
-	const marks: ProcessedMark[] = [];
-	for (const line of lines) {
-		try {
-			const parsed = JSON.parse(line);
-			if (parsed && typeof parsed.id === "string") {
-				marks.push(parsed as ProcessedMark);
-			}
-		} catch {
-			// skip malformed line
-		}
-	}
-	return marks;
+	return readJsonl(processedPath(projectRoot)).filter(
+		(r): r is ProcessedMark & Record<string, unknown> => typeof r.id === "string",
+	);
 }
 
 /**
