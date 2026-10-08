@@ -31,9 +31,9 @@ pointer; the pointer holds the story.
   `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
   (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
 - **The papers module map** lives in `src/lib/papers/CLAUDE.md`.
-- `lib/server/secrets-file.ts` is the one writer of `~/.indusk/config.env`; a
-  project names a credential's variable, never its value. — see
-  `/reference/cli/server`
+- `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
+  config pair is pinned — `server-single-definition.test.ts`; a project names
+  a credential's variable, never its value.
 - **A new status or kind word is registered with every status-keyed detector
   in the commit that introduces it** — today `archive-dead.ts`
   (`BLOCKING_STATUSES`) and `plan-tools.ts` (`isActivePlanStatus`); `published`
