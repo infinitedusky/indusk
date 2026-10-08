@@ -17,7 +17,7 @@ export interface SecretsFile {
 }
 
 const NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
-const LINE_SEPARATOR = /[\r\n  ]/;
+const LINE_SEPARATOR = /[\r\n\u2028\u2029]/;
 
 export function secretsFile(path: string): SecretsFile {
 	const lines = (): string[] => (existsSync(path) ? readFileSync(path, "utf-8").split("\n") : []);

@@ -162,7 +162,7 @@ describe("connect", () => {
 		git("add", ".");
 		git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "start");
 		await connect(input(root), deps(home));
-		expect(git("status", "--porcelain").stdout.trim().split("\n")).toEqual([
+		expect(git("status", "--porcelain").stdout.trimEnd().split("\n")).toEqual([
 			" M .indusk/config.json",
 		]);
 		expect(readFileSync(join(root, ".indusk", "config.json"), "utf-8")).not.toContain("pw-1");
