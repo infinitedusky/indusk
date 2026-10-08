@@ -1,7 +1,7 @@
 ---
 title: "Server provisioning — run your own recording server, connected in one command"
 date: 2026-10-08
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
