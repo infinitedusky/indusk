@@ -1,5 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { writeFileDurably } from "../always-on/durable-write.js";
+import { induskHome } from "../telemetry/status.js";
 
 /**
  * The machine's secrets file, `~/.indusk/config.env`: one `NAME=value` per
@@ -45,4 +47,13 @@ export function secretsFile(path: string): SecretsFile {
 			writeFileDurably(path, `${[...kept, `${name}=${value}`].join("\n")}\n`, 0o600);
 		},
 	};
+}
+
+/**
+ * This machine's secrets file: `config.env` in the InDusk home
+ * (`$INDUSK_HOME`, else `~/.indusk`). Located here and nowhere else, so what
+ * `server connect` writes is what a promise read finds (server-provisioning A26).
+ */
+export function machineSecrets(): SecretsFile {
+	return secretsFile(join(induskHome(), "config.env"));
 }

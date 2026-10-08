@@ -1,7 +1,6 @@
-import { join } from "node:path";
 import { readConfig } from "../config.js";
-import { secretsFile } from "../server/secrets-file.js";
-import { daemonMetaPath, daemonStatus, induskHome } from "../telemetry/status.js";
+import { machineSecrets } from "../server/secrets-file.js";
+import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
 import { probeWatcher, WatcherBlind } from "./probe.js";
 import type { PromiseEntry, Registry } from "./registry.js";
@@ -172,7 +171,7 @@ function resolveProduction(root: string): MarkSource {
 	// `indusk server connect` stores it: nothing loads that file into the
 	// environment, so without this a connected project read production only
 	// after a shell that exported the variable (server-provisioning A3).
-	const secrets = secretsFile(join(induskHome(), "config.env"));
+	const secrets = machineSecrets();
 	const credential =
 		process.env[named.credential_env]?.trim() || secrets.get(named.credential_env)?.trim();
 	if (!credential) {

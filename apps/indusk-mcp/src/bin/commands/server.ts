@@ -14,8 +14,7 @@ import { realFly } from "../../lib/server/fly.js";
 import { DOCKERFILE_TEMPLATE } from "../../lib/server/fly-config.js";
 import { FlyReadFailed } from "../../lib/server/fly-state.js";
 import { redactingWriter } from "../../lib/server/redact.js";
-import { secretsFile } from "../../lib/server/secrets-file.js";
-import { induskHome } from "../../lib/telemetry/status.js";
+import { machineSecrets } from "../../lib/server/secrets-file.js";
 
 /**
  * `indusk server`: give a project its recording server (server-provisioning).
@@ -59,7 +58,7 @@ export async function serverConnect(opts: ServerConnectOptions): Promise<void> {
 			},
 			{
 				probe: probeServer(basename(root)),
-				secrets: secretsFile(join(induskHome(), "config.env")),
+				secrets: machineSecrets(),
 				out,
 			},
 		);
@@ -128,7 +127,7 @@ export async function serverDeploy(opts: ServerDeployOptions): Promise<void> {
 		}
 	}
 	const projectName = basename(root);
-	const secrets = secretsFile(join(induskHome(), "config.env"));
+	const secrets = machineSecrets();
 	try {
 		await deploy(
 			{
