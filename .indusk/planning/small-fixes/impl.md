@@ -226,7 +226,7 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased Fixed: the admin daemon recognised by its working directory; the approval gate on fragments and quoted status; `stash branch`; `plans land` refusing to remove its own build; a failed turn's reason. `apps/docs/src/guide/multi-agent.md`: `stash branch` in the refused table
+- [x] (the Build Phase 3 entry that said the record carries the `next` binary is rewritten to the start-time rule; four new Fixed entries; the guide's table gains `stash branch`) `apps/docs/src/changelog.md` Unreleased Fixed: the admin daemon recognised by its working directory; the approval gate on fragments and quoted status; `stash branch`; `plans land` refusing to remove its own build; a failed turn's reason. `apps/docs/src/guide/multi-agent.md`: `stash branch` in the refused table
 
 ## Files Affected
 
