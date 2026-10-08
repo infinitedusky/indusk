@@ -246,6 +246,7 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 ### Build Phase 5: Catchup records
 
+ - [x] Shape (reviewed `promise-tools.ts`'s `record_breaks`, the catchup skill and the pin — nothing found: the tool is one call on the writer and a summary; `rules.unreadable` was empty)
 - [x] (answers `{ opened, extended, unowned, committed }`, each change by id, promise and owner; a refusal or a pass that marked itself broken is `isError` with its reason; A8 1/1) `tools/promise-tools.ts`: `record_breaks` — runs `recordBreaks` with `by: "catchup"` for the project and answers `{ opened, extended, unowned, committed }` or the refusal (A8)
 - [x] (step 8a's "Run `indusk promises watch`" paragraph replaced by "Record what nobody recorded" and "Open incidents and open violations outrank the roadmap"; the summary's Promises line names open incidents with their ages and what `record_breaks` opened; `.claude/skills/catchup/SKILL.md` resynced; `promise-tools.test.ts`'s pinned tool set gains `record_breaks`; A9, A13 and the skill parity green) `skills/catchup.md` step 8a: when `promise_health` reports unrecorded production violations, call `record_breaks` and report what it opened; list open incidents with their ages ahead of the roadmap; never "run `indusk promises watch`" (A9, A13); resync `.claude/skills/`
 
@@ -255,11 +256,11 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 #### Build Phase 5 Context
 
-- [ ] current.md (Project shared): catchup records unrecorded production violations itself; the summary's Promises line names what it opened
+- [x] (written on main's `current.md`, 97404a17) current.md (Project shared): catchup records unrecorded production violations itself; the summary's Promises line names what it opened
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/skills/catchup.md`: step 8a as it now reads; `apps/docs/src/reference/tools/indusk-mcp.md`: `record_breaks`
+- [x] (the reference's "Open violations outrank the roadmap" becomes "Catchup records what nobody recorded" and "Open incidents and violations outrank the roadmap"; `record_breaks` gets its row beside `promise_health`) `apps/docs/src/reference/skills/catchup.md`: step 8a as it now reads; `apps/docs/src/reference/tools/indusk-mcp.md`: `record_breaks`
 
 ### Build Phase 6: The admin daemon's loop
 
