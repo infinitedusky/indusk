@@ -138,6 +138,9 @@ pointer; the pointer holds the story.
 
 ## Promises and telemetry
 
+- **`server deploy` decides from a recorded Fly state**: `planDeploy` is pure,
+  every Fly call goes through `FlyCli`; a new Fly call joins the state reader
+  and the planner, never a command. — see `/reference/cli/server`
 - The registry is read through one subpath (`promises/registry`) by CLI, MCP
   (`tools/promise-tools.ts`; writes only via `lib/promises/write.ts`) and admin; marks are read through one call, `readPromiseMarks`, against one
   endpoint builder, `jaegerEndpoint` (`lib/promises/telemetry.ts`);
