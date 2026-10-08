@@ -42,3 +42,28 @@ describe("A25 — one promise vocabulary under src/", () => {
 		).toEqual(["lib/tokens.ts"]);
 	});
 });
+
+/**
+ * incident-recording — one writer of incidents. The admin's loop, catchup's
+ * tool and `promises watch` all go through `recordBreaks`; a second caller of
+ * the pass would be a second writer, the collision the lock exists to stop.
+ */
+describe("one writer of incidents", () => {
+	const files = () => globSync("**/*.ts", { cwd: SRC, ignore: IGNORE }).sort();
+	const matching = (re: RegExp) =>
+		files().filter((f) => re.test(readFileSync(join(SRC, f), "utf-8")));
+
+	it("`recordBreaks` is defined once, in lib/promises/record.ts", () => {
+		expect(
+			matching(/export async function recordBreaks\b/),
+			"lesson: structural-single-definition-test-for-must-agree-invariants — one writer, or one break makes two incidents",
+		).toEqual(["lib/promises/record.ts"]);
+	});
+
+	it("only the writer runs the pass", () => {
+		expect(
+			matching(/\bwatchPromises\(/).filter((f) => f !== "lib/promises/watch.ts"),
+			"lesson: structural-single-definition-test-for-must-agree-invariants — a caller of the pass that skips the writer skips its commit and its lock",
+		).toEqual(["lib/promises/record.ts"]);
+	});
+});

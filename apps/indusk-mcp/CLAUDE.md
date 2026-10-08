@@ -20,7 +20,7 @@ pointer; the pointer holds the story.
   `resolveExecutionRoots` (`lib/worktree/roots.ts`) —
   `execution-roots-single-definition.test.ts`; identity, `ps` reads
   (`lib/process-identity.ts`) — `process-identity-single-definition.test.ts`;
-  `ensureConfigBlock` (`lib/config.ts`) — `promises-cleanup.test.ts`;
+  `recordBreaks` — `promises-single-definition.test.ts`;
   `parseWorktreeList` and the
   plan-worktree record — `plan-worktrees-single-definition.test.ts`;
   `src/lib/impl-headings.ts` and one trajectory-row parser —
