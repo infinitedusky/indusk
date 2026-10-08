@@ -1,7 +1,7 @@
 ---
 title: "Recording never waits for a person to think of it"
 date: 2026-10-08
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
