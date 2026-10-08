@@ -78,7 +78,7 @@ A plan that lands green is released without running the slow tests again, and th
 
 ### Build Phase 1: The key, the record, and `checks slow`
 
-- [ ] `workflow.steps` in `lib/config.ts`'s config type: `land.slow_tests`, `release.command`, `release.version_file`, `release.changelog`, `release.covers` — every value a string or a list of paths (ADR D5)
+- [x] (`WorkflowSteps` in `config.ts`; `readWorkflowSteps` in `lib/checks/steps.ts` refuses, naming the key, any value that is not a non-empty string or, for `covers`, a list of them) `workflow.steps` in `lib/config.ts`'s config type: `land.slow_tests`, `release.command`, `release.version_file`, `release.changelog`, `release.covers` — every value a string or a list of paths (ADR D5)
 - [ ] `lib/checks/key.ts`: `codeKey(checkout, steps)` — sha256 over `path + content hash` for each file `git ls-files` lists under `covers` (default: everything but `.indusk/`), the changelog left out, the version file read without its `version` field; `null` when any covered file has an uncommitted change
 - [ ] `lib/checks/record.ts`: `recordGreenRun(anyCheckout, run)` and `findCoveringRun(anyCheckout, key)` over `<home>/slow-runs.jsonl` (through `readJsonl`)
 - [ ] `indusk checks slow [--unless-covered]` in `bin/commands/checks.ts`: runs the declared command with inherited output; records only on exit 0 with a key before and after that agree; with `--unless-covered`, prints `slow tests skipped: covered by the green run at <at> (<cwd>)` and exits 0 when a record covers the key; with nothing declared, says so and exits 0
