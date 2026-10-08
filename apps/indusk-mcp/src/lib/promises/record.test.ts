@@ -84,21 +84,16 @@ const violation = (trace: string): MarkedSpan =>
 	}) as MarkedSpan;
 
 /** A production read that answers `traces` as violations of PROMISE, after yielding once. */
-const answering =
-	(traces: string[]) =>
-	async (): Promise<MarkedSpansResult> => {
-		await new Promise((r) => setImmediate(r));
-		return {
-			queryUrl: JAEGER.url,
-			since: new Date("2026-10-01T00:00:00Z"),
-			byPromise: new Map([
-				[
-					PROMISE,
-					{ violations: traces.map(violation), truncated: false, lastUpheld: null },
-				],
-			]),
-		};
+const answering = (traces: string[]) => async (): Promise<MarkedSpansResult> => {
+	await new Promise((r) => setImmediate(r));
+	return {
+		queryUrl: JAEGER.url,
+		since: new Date("2026-10-01T00:00:00Z"),
+		byPromise: new Map([
+			[PROMISE, { violations: traces.map(violation), truncated: false, lastUpheld: null }],
+		]),
 	};
+};
 
 const failing = (err: Error) => async (): Promise<MarkedSpansResult> => {
 	throw err;
@@ -113,7 +108,8 @@ beforeEach(() => {
 	cleanups.push(() => rmSync(home, { recursive: true, force: true }));
 });
 afterEach(() => {
-	for (const c of cleanups.splice(0)) c();
+	// Last registered first: a permission restored before its project is removed.
+	for (const c of cleanups.splice(0).reverse()) c();
 });
 
 const deps = (reads: () => Promise<MarkedSpansResult>) => ({
@@ -150,17 +146,25 @@ describe("A1 — a pass records a new production violation once", () => {
 	it("leaves an incident naming the trace and a Maintenance phase; a second pass changes nothing", async () => {
 		const record = await recordBreaks();
 		const fx = project();
-		const first = await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
+		const first = await record(
+			fx.root,
+			{ by: "admin", source: "deployed" },
+			deps(answering([TRACE])),
+		);
 		expect(first.opened).toEqual([expect.objectContaining({ promise: PROMISE, owner: OWNER })]);
 		const [file] = incidentsIn(fx.root);
-		expect(readFileSync(join(fx.root, ".indusk", "promises", "incidents", file), "utf-8")).toContain(
-			TRACE,
-		);
+		expect(
+			readFileSync(join(fx.root, ".indusk", "promises", "incidents", file), "utf-8"),
+		).toContain(TRACE);
 		expect(ownerImpl(fx.root)).toMatch(/### Build Phase 2: Maintenance — i-/);
 
 		const head = gitOut(fx.root, ["rev-parse", "HEAD"]);
 		const implBefore = ownerImpl(fx.root);
-		const second = await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
+		const second = await record(
+			fx.root,
+			{ by: "admin", source: "deployed" },
+			deps(answering([TRACE])),
+		);
 		expect(second.opened).toEqual([]);
 		expect(second.extended).toEqual([]);
 		expect(incidentsIn(fx.root)).toEqual([file]);
@@ -222,8 +226,16 @@ describe("A2 — what a pass records is committed, by path, as InDusk's", () => 
 
 describe("A3 — a pass marks itself", () => {
 	it.each([
-		["the server could not be reached", new JaegerUnreachable(JAEGER.url, "connect ECONNREFUSED"), /reach|ECONNREFUSED/i],
-		["the watcher is blind", new WatcherBlind(JAEGER.url, `${JAEGER.url}/v1/traces`, "probe not read back"), /blind/i],
+		[
+			"the server could not be reached",
+			new JaegerUnreachable(JAEGER.url, "connect ECONNREFUSED"),
+			/reach|ECONNREFUSED/i,
+		],
+		[
+			"the watcher is blind",
+			new WatcherBlind(JAEGER.url, `${JAEGER.url}/v1/traces`, "probe not read back"),
+			/blind/i,
+		],
 	])("%s: nothing recorded, marked broken with the reason", async (_case, err, reason) => {
 		const record = await recordBreaks();
 		const fx = project();
@@ -244,7 +256,9 @@ describe("A3 — a pass marks itself", () => {
 		const head = gitOut(fx.root, ["rev-parse", "HEAD"]);
 		await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
 		expect(gitOut(fx.root, ["rev-parse", "HEAD"])).toBe(head);
-		expect(marks).toEqual([{ outcome: "violated", symptom: expect.stringMatching(/EACCES|permission/i) }]);
+		expect(marks).toEqual([
+			{ outcome: "violated", symptom: expect.stringMatching(/EACCES|permission/i) },
+		]);
 	});
 
 	it("a pass that recorded, and one that found nothing, are marked held", async () => {
@@ -286,7 +300,11 @@ describe("A23 — a project naming no production source is never recorded unprom
 describe("A26 — in a workbench the writer writes where the contract resolver says", () => {
 	it("records into the repo's own contract and commits it in the repo", async () => {
 		const record = await recordBreaks();
-		const wb = makeVersionedWorkbench({ repos: [{ name: "alpha" }], layout: "nested", shape: "workbench" });
+		const wb = makeVersionedWorkbench({
+			repos: [{ name: "alpha" }],
+			layout: "nested",
+			shape: "workbench",
+		});
 		cleanups.push(() => wb.cleanup());
 		const repo = wb.repos[0].dir;
 		const configPath = join(wb.root, ".indusk", "config.json");
@@ -301,7 +319,10 @@ describe("A26 — in a workbench the writer writes where the contract resolver s
 		);
 		git(wb.root, ["add", "-A"]);
 		git(wb.root, ["commit", "-qm", "owner"]);
-		writePromise(join(repo, ".indusk", "promises"), behaviourPromise(PROMISE, { owner: OWNER, domain: "seating" }));
+		writePromise(
+			join(repo, ".indusk", "promises"),
+			behaviourPromise(PROMISE, { owner: OWNER, domain: "seating" }),
+		);
 		for (const [rel, body] of Object.entries(codeFilesFor(PROMISE))) {
 			mkdirSync(join(repo, rel, ".."), { recursive: true });
 			writeFileSync(join(repo, rel), body);

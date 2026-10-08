@@ -112,6 +112,29 @@ export function acquireLock(lockPath: string, opts: FileLockOptions = {}): () =>
 }
 
 /**
+ * `acquireLock` for an async caller: it waits by yielding, never by spinning,
+ * so a second caller in the same process lets the holder finish (a
+ * synchronous spin would block the holder's event loop until the timeout).
+ * The same lockfile, the same `O_EXCL` create and the same stale takeover.
+ */
+export async function acquireLockAsync(
+	lockPath: string,
+	opts: FileLockOptions = {},
+): Promise<() => void> {
+	const { timeoutMs, pollIntervalMs, staleAfterMs } = { ...DEFAULTS, ...opts };
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		if (tryAcquire(lockPath)) return () => rmSync(lockPath, { force: true });
+		if (isStale(lockPath, staleAfterMs)) {
+			rmSync(lockPath, { force: true });
+			continue;
+		}
+		await new Promise((r) => setTimeout(r, pollIntervalMs));
+	}
+	throw new Error(`Timed out acquiring lock on ${lockPath} after ${timeoutMs}ms`);
+}
+
+/**
  * Convenience: run `fn` while holding the lock; release on return or throw.
  */
 export function withLock<T>(lockPath: string, fn: () => T, opts?: FileLockOptions): T {
