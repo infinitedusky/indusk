@@ -92,6 +92,7 @@ dusk/
 - Workbench plans: documents at the workbench root, code on `plan/<name>` in the named repo; one contract per repo through one resolver — see `/decisions/workbench-plan-authoring`
 - Bookkeeping: notes committed on `main` as written; machine state in `~/.indusk/projects/<id>-<hash>/` (`indusk eval home`); the evaluator's tools named — see `/decisions/bookkeeping-lives-where-it-is-read`
 - Workflow steps: `workflow.steps` names what each step runs, facts never logic; dusk's slow tier never blocks landing or release — see `/decisions/release-checks-run-once`
+- Incident recording: one writer (`recordBreaks`) behind the admin's loop, catchup and `watch`; it commits on the trunk and marks its own pass; the admin asks, nothing pushes — see `/decisions/incident-recording`
 
 ## Known Gotchas
 
