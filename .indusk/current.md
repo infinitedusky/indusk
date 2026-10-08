@@ -1998,3 +1998,255 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 (empty)
 
 ---
+
+## Session 6eb1cc82 — eval: grading commit 254c3f46 (evaluator checkout isolation test)
+
+**Session ID**: 6eb1cc82-0e20-45a7-9235-6ed6756ac599
+**Last updated**: 2026-10-07T22:57:31.855Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 6a48f30e — eval agent: scoring commit 223b5c5b (indusk update moves project bookkeeping into its home)
+
+**Session ID**: 6a48f30e-831d-4ec1-bfb1-59ef249e786a
+**Last updated**: 2026-10-07T23:04:27.927Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session eef25d28 — eval: scoring commit 223b5c5b (indusk update bookkeeping move)
+
+**Session ID**: eef25d28-42fd-4656-a265-8de68d1b8c71
+**Last updated**: 2026-10-07T23:05:30.300Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 8dea69a9 — eval: scoring commit 427300da
+
+**Session ID**: 8dea69a9-aaa8-4d2d-890c-467853334dac
+**Last updated**: 2026-10-07T23:29:13.563Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session c4f0e0df — eval: scoring commit 7f0a07f9 (system tier / eval e2e home reads)
+
+**Session ID**: c4f0e0df-acad-433d-bbda-4105779ea41e
+**Last updated**: 2026-10-07T23:40:14.252Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 68344ab3 — eval: reviewing commit 925f9fe8
+
+**Session ID**: 68344ab3-225b-4bf5-909f-7f58c9cca869
+**Last updated**: 2026-10-07T23:51:48.584Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session f95cc841 — eval agent: scoring commit 8fa8978b
+
+**Session ID**: f95cc841-57ce-413c-b5b6-7315b3dca196
+**Last updated**: 2026-10-08T02:52:30.757Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 77314633 — eval agent: scoring commit 646702e9
+
+**Session ID**: 77314633-f6d9-4072-8fa9-1080f349561f
+**Last updated**: 2026-10-08T02:52:39.628Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 2eb45d54 — eval agent: scoring commit de380542
+
+**Session ID**: 2eb45d54-e08d-4da5-ab6a-26570e5173bd
+**Last updated**: 2026-10-08T02:53:53.678Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session ef44dc4a — eval: pathKey extraction in roots.ts
+
+**Session ID**: ef44dc4a-0c4c-47ee-999f-a607bff15cfc
+**Last updated**: 2026-10-08T02:54:17.499Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 7b0bf15d — eval: Build Phase 5 opened, A20 written red
+
+**Session ID**: 7b0bf15d-9284-4dc2-8d9f-a51c6eea796c
+**Last updated**: 2026-10-08T02:54:16.766Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 45f9418c — eval agent: scoring commit 646702e9 (Build Phase 5 cleanup)
+
+**Session ID**: 45f9418c-aead-4341-9601-373aac21e59b
+**Last updated**: 2026-10-08T02:54:42.669Z
+**Branch**: plan/bookkeeping-lives-where-it-is-read
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
