@@ -44,6 +44,7 @@ describe("A7 — a turn that ends with an API error says Failed, never success",
         ok: false,
         subtype: "success",
         text: "API Error: Server is temporarily limiting requests\nThe response may be incomplete.",
+        sessionId: "s",
       },
     ]);
     expect(text).toMatch(/Failed/);
@@ -69,7 +70,7 @@ describe("A22 — a failed turn with no text still says why, in words", () => {
     it(`${subtype}: Failed with a reason, never the raw subtype`, async () => {
       const text = await textOf([
         init,
-        { type: "result", ok: false, subtype, text: "" },
+        { type: "result", ok: false, subtype, text: "", sessionId: "s" },
       ]);
       expect(text).toMatch(/Failed — /);
       const reason = text.split("Failed — ")[1] ?? "";
@@ -83,7 +84,13 @@ describe("A8 — a finished turn and an ended session are told apart", () => {
   it("a completed turn says Turn done, not Ended", async () => {
     const text = await textOf([
       init,
-      { type: "result", ok: true, subtype: "success", text: "" },
+      {
+        type: "result",
+        ok: true,
+        subtype: "success",
+        text: "",
+        sessionId: "s",
+      },
     ]);
     expect(text).toMatch(/Turn done/);
     expect(text).not.toMatch(/Ended/);
@@ -93,7 +100,13 @@ describe("A8 — a finished turn and an ended session are told apart", () => {
     const text = await textOf(
       [
         init,
-        { type: "result", ok: true, subtype: "success", text: "" },
+        {
+          type: "result",
+          ok: true,
+          subtype: "success",
+          text: "",
+          sessionId: "s",
+        },
         { type: "exit", code: 1, stderr: "" },
       ],
       false,

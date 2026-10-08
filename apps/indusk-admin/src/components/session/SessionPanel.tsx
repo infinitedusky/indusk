@@ -203,7 +203,8 @@ function EventView({
         </p>
       ) : (
         <p className="text-red-700">
-          Failed{ev.text ? ` — ${ev.text.split("\n")[0]}` : ""}
+          Failed —{" "}
+          {ev.text ? ev.text.split("\n")[0] : failedWithoutText(ev.subtype)}
         </p>
       );
     case "exit":
@@ -223,6 +224,18 @@ function EventView({
     default:
       return null;
   }
+}
+
+/**
+ * Why a turn failed when Claude Code sent no text: `error_max_turns` and
+ * `error_during_execution` carry only the subtype (small-fixes A22). Said in
+ * words; the raw subtype is the protocol's, not the reader's.
+ */
+function failedWithoutText(subtype: string): string {
+  if (subtype === "error_max_turns") return "the turn limit was reached";
+  if (subtype === "error_during_execution")
+    return "it stopped on an error while running";
+  return "it stopped without a result";
 }
 
 const OTHER = "Other";
