@@ -171,13 +171,9 @@ export async function daemonStop(deps: DaemonDeps = realDeps): Promise<DaemonSto
 		return { stopped: true, signaledPid: pid };
 	}
 
-	// Poll up to 3s (30 × 100ms)
-	for (let i = 0; i < 30; i++) {
-		await deps.sleep(100);
-		if (!deps.alive(pid)) {
-			cleanupFiles();
-			return { stopped: true, signaledPid: pid };
-		}
+	if (await waitForExit(pid, 30, deps)) {
+		cleanupFiles();
+		return { stopped: true, signaledPid: pid };
 	}
 
 	// Grace period expired — SIGKILL, then look. A process still there after
@@ -189,14 +185,20 @@ export async function daemonStop(deps: DaemonDeps = realDeps): Promise<DaemonSto
 	} catch {
 		// Raced with a late natural exit.
 	}
-	for (let i = 0; i < 10; i++) {
-		if (!deps.alive(pid)) {
-			cleanupFiles();
-			return { stopped: true, signaledPid: pid, usedSigkill };
-		}
-		await deps.sleep(100);
+	if (await waitForExit(pid, 10, deps)) {
+		cleanupFiles();
+		return { stopped: true, signaledPid: pid, usedSigkill };
 	}
 	return { stopped: false, signaledPid: pid, usedSigkill };
+}
+
+/** Whether the process leaves within `tries` × 100 ms. */
+async function waitForExit(pid: number, tries: number, deps: DaemonDeps): Promise<boolean> {
+	for (let i = 0; i < tries; i++) {
+		await deps.sleep(100);
+		if (!deps.alive(pid)) return true;
+	}
+	return false;
 }
 
 export type DaemonStatusResult =
