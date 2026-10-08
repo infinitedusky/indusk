@@ -51,3 +51,5 @@ Packaged paths changed (the package's source and skills); the plan adds capabili
 
 - A step that a skill tells an agent to run by hand ("run `pnpm test:system`") has no record and cannot be trusted later; a command that runs it and records it can be. `indusk checks slow` exists so landing's run means something at release.
 - Sandy's standing preference, now in memory: never put a waiting test back in the landing or release path; failures found later are the cheaper error while dusk's author is nearly its only user.
+
+Landed on main at 1503348f, 2026-10-08. Landing waited on the fast suite alone: the first close under the new rule.
