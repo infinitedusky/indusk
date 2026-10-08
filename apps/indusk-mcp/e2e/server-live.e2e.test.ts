@@ -27,7 +27,8 @@ const LIVE = process.env.INDUSK_LIVE_FLY === "1";
 const APP = process.env.INDUSK_LIVE_FLY_APP ?? "indusk-sp-live";
 const ORG = process.env.INDUSK_LIVE_FLY_ORG;
 const PKG = join(REPO_ROOT, "apps/indusk-mcp");
-const home = mkdtempSync(join(tmpdir(), "sp-live-home-"));
+// A4 alone can reuse the machine home an earlier A8 run stored its credential in.
+const home = process.env.INDUSK_LIVE_FLY_HOME ?? mkdtempSync(join(tmpdir(), "sp-live-home-"));
 
 function packed(): string {
 	const dir = mkdtempSync(join(tmpdir(), "sp-live-pack-"));
@@ -86,7 +87,7 @@ describe.skipIf(!LIVE)("live — a recording server on Fly in one command", () =
 			const project = mkdtempSync(join(tmpdir(), "sp-live-demo-"));
 			cpSync(join(PKG, "examples/seat-holds"), project, { recursive: true });
 			const stored = readFileSync(join(home, "config.env"), "utf-8").match(
-				/^([A-Z_]+_CREDENTIAL)=/m,
+				/^([A-Z0-9_]+_CREDENTIAL)=/m,
 			)?.[1];
 			expect(stored, "A8 stored a credential to connect with").toBeTruthy();
 			const r = runCli(
