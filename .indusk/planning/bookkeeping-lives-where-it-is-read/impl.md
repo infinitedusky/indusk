@@ -57,6 +57,7 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 | A17 | Evaluating a commit in a plan worktree does not discard the session the main checkout's evaluator resumes, nor resume a session made in another checkout | Build Phase 4 | Build Phase 4 | passing | unit | found by falsification: one session file in the shared home, but Claude Code finds a session by its directory, so each switch of checkout fails the resume, clears the session and starts a full fresh run | apps/indusk-mcp/src/lib/eval/evaluator-session.test.ts |
 | A18 | Two checkouts of different clones of one project (same `groupId`, or same folder name) have different homes; a highlight queued in one is never processed into the other's lessons | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-highlight-becomes-a-lesson-once | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 | A19 | A lesson whose name is not one kebab-case segment (`../x`, `a/b`) is refused before anything is written or committed | Build Phase 4 | Build Phase 4 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/bookkeeping/notes.test.ts |
+| A20 | A project's home is resolved under a given InDusk home without changing the process's environment, and is the same as when that home is set in the environment | Build Phase 5 | Build Phase 5 | planned | unit | found at cleanup: three tests set `INDUSK_HOME` on the process to read a home, the shape the evaluator's lesson `a-test-fixture-must-not-mutate-shared-process-env` warns against | apps/indusk-mcp/src/lib/bookkeeping/home.test.ts |
 
 ## Checklist
 
@@ -177,6 +178,29 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 #### Build Phase 4 Document
 
 - [x] `apps/docs/src/guide/multi-agent.md`, "Where InDusk keeps its records": the home's key, the holds on highlights, and that worktrees are migrated too
+
+### Build Phase 5: Cleanup — one key for a path, one reader of a log, one git runner, and a home without the environment
+
+**Goal**: remove the copies this plan's files grew beside each other: the path hash written twice, three readers of a JSONL log, a private git runner in one bookkeeping file and bare `spawnSync` calls in its neighbour, and three tests reading a home by setting `INDUSK_HOME` on the process. Each item is behaviour-preserving under the tests already green; A20 pins the one new parameter.
+
+- [ ] `roots.ts` exports `pathKey(path)` (the first 8 hex of the sha256 of its real path); `bookkeepingRoots` and `persistent-evaluator.ts`'s session path both use it. The hooks' copy in `_hook-paths.js` stays a copy, since hooks cannot import the package; A11 keeps it equal
+- [ ] `bookkeepingRoots(anyCheckout, home = induskHome())` and `evalDir(anyCheckout, home)` take the InDusk home as an optional argument; `bookkeeping-migration.test.ts`'s `homeOf`, `plans-land.test.ts`'s A16 and the `day-monitor` e2e pass it instead of setting `INDUSK_HOME` on the process (A20)
+- [ ] One JSONL reader for the bookkeeping files: `highlights.ts`'s `readAllHighlights` and `readAllProcessed` and `migrate.ts`'s `rowsOf` are the same loop (read, split, parse, skip the malformed); lift it to `lib/bookkeeping/jsonl.ts` and use it in all three
+- [ ] One synchronous git runner for `lib/bookkeeping/`: `notes.ts`'s private `git()` moves to `lib/bookkeeping/git.ts`, and `migrate.ts`'s six `spawnSync("git", …)` calls use it
+- [ ] (reviewed `init.ts` 1354 lines, `update.ts` 1015, `planning-reader.ts` 613, `eval-trigger.js` 514, `persistent-evaluator.ts` 512, `_hook-paths.js` 441, `otel.ts` 407, `changelog.md` — left as they are: each was over its cap before this plan, which changed at most 32 lines in any of them, each at one path or one call; decomposing them is not this plan's)
+- [ ] (reviewed `highlights.ts`, `migrate.ts`, `notes.ts`, `permissions.ts` — left as they are once the items above land: each is one module with one job, the queue, the move, the notes and the evaluator's launch)
+
+#### Build Phase 5 Verification
+
+- [ ] A20 passes, and the bookkeeping, highlights, eval, migration and landing tests still pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/bookkeeping src/lib/highlights src/lib/eval src/__tests__/bookkeeping-migration.test.ts src/__tests__/plans-land.test.ts`), with `tsc` clean
+
+#### Build Phase 5 Context
+
+- [ ] current.md: this session's section names the cleanup done; no rule changed (the area's `CLAUDE.md` is untouched — an internal decomposition)
+
+#### Build Phase 5 Document
+
+- [ ] `apps/docs/src/reference/tools/highlights.md`: confirm it names no internal function this phase renames; fix any that it does
 
 ## Files Affected
 
