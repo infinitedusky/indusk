@@ -11,6 +11,34 @@ A promise broken in production becomes a committed incident and reopens the plan
 - **The admin asks; nothing pushes.** A laptop has no address the server can call, and Jaeger answers questions rather than announcing, so the server's own pass is polling too. A subscription from the server is the upgrade when seconds matter or several machines subscribe.
 - **No database.** Jaeger holds what happened; the incident files and Maintenance phases, in the repository, hold what was decided about it; JSON lines in the project's home hold what this machine heard and what it has told the agent.
 
+## How a break reaches the agent
+
+```mermaid
+sequenceDiagram
+    participant App as Deployed app
+    participant J as Server's Jaeger<br/>(promises.jaeger)
+    participant L as Admin daemon's loop<br/>(instrumentation.ts)
+    participant W as recordBreaks
+    participant T as Project trunk
+    participant H as Project home
+    participant K as break-inbox hook
+    participant A as Working agent
+
+    App->>J: span marked violated
+    loop every admin.refresh_ms
+        L->>W: one pass (by admin, production)
+        W->>J: read the promise's marks
+    end
+    W->>T: commit the incident, the promise, the reopened plan's Maintenance phase
+    W->>H: inbox.jsonl entry, heard.jsonl row
+    W->>J: mark its own pass, held or broken
+    A->>K: next prompt
+    K->>H: undelivered entries for this session
+    K-->>A: the broken promise, the incident and the phase to work
+```
+
+The loop runs inside the admin's Node process, started by Next's `register()` when the daemon starts and ended when `indusk ui stop` ends the process. It runs a pass for a project only when the project names a production source, never overlaps one pass with the next, and logs a pass that throws and keeps going. Projects registered while it runs are picked up within a minute.
+
 ## Rejected
 
 - **The server recording by pull request**: it needs a GitHub connection the instance does not have yet; it is workbench-watch-provisioning's, and will reuse the same writer.

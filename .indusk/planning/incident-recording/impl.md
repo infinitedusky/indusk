@@ -269,7 +269,9 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 - [x] (passed in 1 run against the rebuilt bundle) A5: `__tests__/admin-recorder.test.ts` in the system tier (`vitest.tiers.ts` `SYSTEM`): start the admin daemon with a fixture project whose `promises.jaeger` is a local Jaeger holding one violated span; within a minute the incident is committed on the fixture's trunk; stop the daemon
 - [x] (discovered: two guards earlier phases of this plan broke, found by `vitest related`) `record.test-support.ts` moved to `__tests__/helpers/record-fixture.ts` — test support in `lib/` built its own path to the promises folder (`contract-resolver-single-definition`); the root `CLAUDE.md` was 82 bytes over its lowered budget after Build Phase 1's Key Decisions line (`context-tiers-register` A13) — the promise-timeline line compressed to its rule, the detail behind its pointer
 - [ ] A6: the live check — the seat-holds example with `promises.jaeger` pointing at `indusk-always-on` and its exporter at the server's intake, the admin running, `indusk demo break`; record here what appeared and when
+  - blocker: the example's exporter and `promises.jaeger.credential_env` need the server's basic-auth password, which is a write-only Fly secret (`INDUSK_SERVER_PASSWORD` on `indusk-always-on`) and is in no local environment; the operator supplies it, or rotates it (`fly secrets set`, which restarts the server). There is also no `indusk demo break` command: the break is the example's **Break it** switch (`SEAT_HOLDS_FAULT_TOGGLE=1`), so this check runs `indusk demo` with the exporter pointed at the server's intake. The server announces the violation to Slack: expected, and said here when it happens.
 - [ ] A7: `indusk promises status` on this project after the loop has run shows `a-production-break-is-recorded-unasked` held; record the output here
+  - blocker: read on the project A6 runs (dusk itself names no `promises.jaeger`, so the loop never runs for it); waits on A6's credential
 
 #### Build Phase 6 Verification
 
@@ -277,11 +279,11 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 #### Build Phase 6 Context
 
-- [ ] admin `CLAUDE.md`: the daemon runs the recorder loops from `instrumentation.ts`; a project is watched only when it names `promises.jaeger`; `ui stop` ends the loops
+- [x] admin `CLAUDE.md`: the daemon runs the recorder loops from `instrumentation.ts`; a project is watched only when it names `promises.jaeger`; `ui stop` ends the loops
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/decisions/incident-recording.md` with the sequence diagram (server's Jaeger → the admin's loop → the writer → the trunk commit → the inbox → the hook → the agent); `apps/docs/src/reference/admin-ui/overview.md`: the daemon records; changelog Added — the admin records production breaks unasked
+- [x] `apps/docs/src/decisions/incident-recording.md` with the sequence diagram (server's Jaeger → the admin's loop → the writer → the trunk commit → the inbox → the hook → the agent); `apps/docs/src/reference/admin-ui/overview.md`: the daemon records; changelog Added — the admin records production breaks unasked
 
 ### Build Phase 7: A reopened plan's worktree
 

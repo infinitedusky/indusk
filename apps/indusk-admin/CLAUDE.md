@@ -84,6 +84,12 @@ Each entry is a rule and a pointer; the pointer holds the story.
   the home's `heard.jsonl` through the `promises/heard` subpath
   (`readProjectHeard`), never a second reader; incidents show their age and
   their owner's Maintenance phase.
+- **The daemon records production breaks** from `src/instrumentation.ts`:
+  one package loop (`admin/recorder-loop`) per registered project that names
+  `promises.jaeger`, every `admin.refresh_ms`, each pass the package's
+  `recordBreaks`; a local-only project gets none, and `ui stop` ends the loops
+  with the process. The admin composes; the writing is the package's. Guarded
+  by `admin-recorder.test.ts` (system tier). — see `/decisions/incident-recording`
 - **Active plans and their boundary records are read from each plan's live
   root** (`worktree/plan-worktrees`); `components/Worktrees.tsx` renders the
   worktree chip, a broken assignment, unassigned worktrees and the record error.

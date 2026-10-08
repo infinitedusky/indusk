@@ -37,6 +37,8 @@ The daemon reads `~/.indusk/projects.json` on every request, so newly `indusk in
 
 When you close your terminal, the daemon survives: it was spawned with `detached: true` and inherits no parent process handles. `indusk ui stop` finds it via the pid file and sends SIGTERM.
 
+**The daemon records production breaks** (incident-recording). While it runs, with no page open, the daemon checks every registered project that names a production source (`promises.jaeger`) once per `admin.refresh_ms`, and records each break it finds as a committed incident that reopens the owning plan, through the same writer as `indusk promises watch`. A project with only a local source is not checked: a local break is work in progress. Stopping the daemon stops the checking; catchup records whatever it missed. See [the decision](/decisions/incident-recording).
+
 ## The registry
 
 `~/.indusk/projects.json` is the canonical list of projects the admin UI knows about. It's populated by two CLI commands:
