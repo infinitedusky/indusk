@@ -238,11 +238,11 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 #### Build Phase 4 Context
 
-- [ ] admin `CLAUDE.md`: the promise page's counts come from the home's `heard.jsonl` through the package's `promises/heard` subpath, never a second reader; incidents show age and owner
+- [x] (appended to the Promises page entry) admin `CLAUDE.md`: the promise page's counts come from the home's `heard.jsonl` through the package's `promises/heard` subpath, never a second reader; incidents show age and owner
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/tools/indusk-mcp.md`: `promise_health`'s `openIncidents`; `apps/docs/src/reference/admin-ui/promises.md`: the incidents table, the counts and "as of"; changelog Added
+- [x] (there is no `admin-ui/promises.md`: the Promises page is documented in `admin-ui/overview.md`, which gains "Incidents stay loud"; `promises status`'s first lines in the CLI reference; changelog Added) `apps/docs/src/reference/tools/indusk-mcp.md`: `promise_health`'s `openIncidents`; `apps/docs/src/reference/admin-ui/promises.md`: the incidents table, the counts and "as of"; changelog Added
 
 ### Build Phase 5: Catchup records
 
