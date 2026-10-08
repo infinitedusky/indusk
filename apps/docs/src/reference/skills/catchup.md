@@ -21,11 +21,20 @@ Given a fresh session, catchup:
 11. **Reviews installed skills and enabled extensions**.
 12. **Summarizes** to the user with the active plan list, other agents present, project (shared) state, the sweep count, and any promise needing attention.
 
-**Open violations outrank the roadmap.** When you ask what is next, catchup
-names the unrecorded violations first — a promise is a commitment the system
-made and is now breaking, and the next feature can wait a sentence.
-`indusk promises watch` records them as incidents and reopens each owning
-plan with a Maintenance phase. If telemetry cannot be reached, catchup says
+**Catchup records what nobody recorded** (incident-recording). When a
+production source reports violations no incident holds — the admin was not
+running to record them — catchup calls `record_breaks`, the same writer the
+admin's recorder uses: each becomes an incident, committed on the trunk, and
+its owning plan is reopened with a Maintenance phase. Catchup then says what
+it opened. A violation seen only locally is work in progress and is not
+recorded.
+
+**Open incidents and violations outrank the roadmap.** When you ask what is
+next, catchup names the open incidents first, each with how long it has been
+open and whether its owner carries its Maintenance phase, then any violations
+still unrecorded — a promise is a commitment the system made and is breaking,
+and the next feature can wait a sentence. The incidents are files, so they are
+named even when no Jaeger can be read. If telemetry cannot be reached, catchup says
 *health unknown* and names where it looked; it never reports zero violations
 instead, because "nothing is broken" and "nobody could look" are different
 answers and only one of them is reassuring.
