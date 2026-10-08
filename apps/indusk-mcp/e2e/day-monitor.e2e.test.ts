@@ -152,11 +152,7 @@ describe("A24 — a broken evaluator is found from telemetry and reopens its own
 
 		// Results are in the project's home under the evaluator's INDUSK_HOME
 		// (bookkeeping-lives-where-it-is-read).
-		const previousHome = process.env.INDUSK_HOME;
-		process.env.INDUSK_HOME = jaeger.home;
-		const results = join(evalDir(scratch.root), "results.log");
-		if (previousHome === undefined) delete process.env.INDUSK_HOME;
-		else process.env.INDUSK_HOME = previousHome;
+		const results = join(evalDir(scratch.root, jaeger.home), "results.log");
 		const failure = await until("the evaluator's result", 120_000, () =>
 			existsSync(results) && readFileSync(results, "utf-8").trim() !== ""
 				? readFileSync(results, "utf-8")

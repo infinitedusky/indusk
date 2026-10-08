@@ -117,11 +117,7 @@ describe.skipIf(SHOULD_SKIP)("indusk plans land", () => {
 			expect(p.onMain()).toContain("src/seat.ts");
 			expect(p.onMain()).not.toContain(".indusk/highlights.jsonl");
 			expect(git(p.trunk, ["status", "--porcelain"])).toBe("");
-			const previous = process.env.INDUSK_HOME;
-			process.env.INDUSK_HOME = home;
-			const queue = join(bookkeepingRoots(p.trunk).home, "highlights.jsonl");
-			if (previous === undefined) delete process.env.INDUSK_HOME;
-			else process.env.INDUSK_HOME = previous;
+			const queue = join(bookkeepingRoots(p.trunk, home).home, "highlights.jsonl");
 			expect(existsSync(queue) ? readFileSync(queue, "utf-8") : "").toContain(
 				"from the plan's sessions",
 			);

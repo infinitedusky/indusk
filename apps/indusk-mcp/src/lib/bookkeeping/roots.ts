@@ -34,12 +34,9 @@ export function mainCheckoutOf(anyCheckout: string): string {
  * name) is the same in every clone of a project, and two clones on one machine
  * would share a queue and process each other's highlights (A18).
  */
-export function bookkeepingRoots(anyCheckout: string): BookkeepingRoots {
+export function bookkeepingRoots(anyCheckout: string, home = induskHome()): BookkeepingRoots {
 	const trunk = mainCheckoutOf(anyCheckout);
-	return {
-		trunk,
-		home: join(induskHome(), "projects", `${markProjectId(trunk)}-${pathKey(trunk)}`),
-	};
+	return { trunk, home: join(home, "projects", `${markProjectId(trunk)}-${pathKey(trunk)}`) };
 }
 
 /**
@@ -58,6 +55,6 @@ export function pathKey(path: string): string {
 }
 
 /** Where evaluation results live: the project's home, the same from every checkout. */
-export function evalDir(anyCheckout: string): string {
-	return join(bookkeepingRoots(anyCheckout).home, "eval");
+export function evalDir(anyCheckout: string, home = induskHome()): string {
+	return join(bookkeepingRoots(anyCheckout, home).home, "eval");
 }

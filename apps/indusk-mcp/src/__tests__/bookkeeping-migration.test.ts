@@ -29,16 +29,7 @@ const tmp = (prefix: string) => {
 const line = (o: object) => `${JSON.stringify(o)}\n`;
 
 /** The project's home under `home`, resolved the way the package resolves it. */
-function homeOf(project: string, home: string): string {
-	const previous = process.env.INDUSK_HOME;
-	process.env.INDUSK_HOME = home;
-	try {
-		return bookkeepingRoots(project).home;
-	} finally {
-		if (previous === undefined) delete process.env.INDUSK_HOME;
-		else process.env.INDUSK_HOME = previous;
-	}
-}
+const homeOf = (project: string, home: string) => bookkeepingRoots(project, home).home;
 
 const highlight = (id: string, note: string) =>
 	line({ id, timestamp: "2026-10-07T00:00:00Z", level: "note", tag: "t", note });
