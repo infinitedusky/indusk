@@ -25,7 +25,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   by its worktree in normal mode or its `code.json` in a workbench, and gets
   the same buttons either way; a workbench session runs at the root with the
   code worktree added (`planLocation`). — see `/reference/admin-ui/sessions`
-- Next.js App Router viewer over `.indusk/planning/` + `.indusk/eval/`,
+- Next.js App Router viewer over `.indusk/planning/` + each project's eval results in its home,
   hosted as one machine-global daemon (`indusk ui start/stop/restart/status`,
   registry `~/.indusk/projects.json`, routes `/p/[project]/...`). Custom
   Tailwind primitives — no shadcn, no Radix. Reuse indusk-mcp's parsers through
