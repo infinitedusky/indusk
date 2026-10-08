@@ -280,6 +280,14 @@ const checks = program
 	.description("Run and name the project's declared step tooling (workflow.steps)");
 
 checks
+	.command("show")
+	.description("Name what landing and release run for this project, or what is not declared")
+	.action(async () => {
+		const { checksShow } = await import("./commands/checks.js");
+		process.exit(checksShow(process.cwd()));
+	});
+
+checks
 	.command("slow")
 	.description("Run the declared slow tests and record the code a green run covered")
 	.option("--unless-covered", "Skip when a green run already covered this code")
