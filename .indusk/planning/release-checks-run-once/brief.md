@@ -1,7 +1,7 @@
 ---
 title: "Release checks run once"
 date: 2026-10-08
-status: draft
+status: accepted
 workflow: feature
 ---
 
