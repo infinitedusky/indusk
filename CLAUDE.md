@@ -44,7 +44,6 @@ dusk/
 - pnpm workspaces + Turborepo; **Node 22 required** (Tailwind 4 native bindings).
 - **Biome, not ESLint** — `pnpm check` / `pnpm check:fix` / `pnpm format`. Biome config is a knowledge artifact (`biome-rationale.md`); the ratchet only tightens.
 - `pnpm test`: parallel, never starts a server or daemon (`INDUSK_SKIP_TELEMETRY_AUTOSTART`); it and `test:system` end failing on one left in a temp home, pass or fail. `test:system`: each package's `vitest.tiers.ts` files, at landing and by `pnpm release`. **E2e**: `pnpm e2e` (needs `claude` + a daemon) — promise loop, always-on server, nested-context probe; run at the close of a plan touching a `CLAUDE.md`.
-- `indusk context check-pointers` verifies every pointer and lesson token in every context file and refuses hand-copied `**Version**:` claims. — see `/guide/context-budget`
 - **`.indusk/current.md` is the operational layer**: a `## Project (shared)` region any agent may edit (what is in flight, blockers, what is next) plus per-agent `## Session <short> — <task>` sections, each written only by its own session via `mcp__indusk__update_current_section` (typically at `/handoff`); commit like any file. `merge=union` merges concurrent appends; every mutation goes through the `current.md.lock` file lock. — see `/decisions/multi-agent-coordination`
 - Plans live in `.indusk/planning/{kebab-case}/`; use `/planner` before implementing — don't jump to code. The planning rules load with the plan documents.
 - **Releases: bump on main, after the branch is merged — it is the retrospective's Step 11**, not a thing to remember. `pnpm publish` packs the working tree, so a publish from clean main is blind to every `plan/*` worktree; `pnpm release` enforces the guard. **Before saying whether a publish is current**, read `git rev-list <release-commit>..HEAD` and `git for-each-ref refs/heads/plan/* --no-merged HEAD`, never a version number. — see `/reference/skills/retrospective`
@@ -91,7 +90,7 @@ dusk/
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
 - Admin plan authoring: `plans start → approve → build → accept → land`, through the developer's own `claude`; nothing lands unaccepted — see `/decisions/admin-plan-authoring`
 - Workbench plans: documents at the workbench root, code on `plan/<name>` in the repo the plan names (`code.json`); one contract per repo — its own `.indusk/promises/`, else the workbench's shadow — through one resolver — see `/decisions/workbench-plan-authoring`
-- Bookkeeping lives where it is read: `current.md` and lessons go to the main checkout and are committed on `main` as written; machine state (highlights, processed marks, evaluation results) lives in `~/.indusk/projects/<id>-<hash>/` (`indusk eval home`), shared by every checkout, so its readers hold, lock and key by checkout; the evaluator runs with named tools, never `bypassPermissions` — see `/decisions/bookkeeping-lives-where-it-is-read`
+- Bookkeeping: notes committed on `main` as written; machine state in `~/.indusk/projects/<id>-<hash>/` (`indusk eval home`); the evaluator's tools named — see `/decisions/bookkeeping-lives-where-it-is-read`
 
 ## Known Gotchas
 
