@@ -1,6 +1,10 @@
+import { createHash } from "node:crypto";
+import { realpathSync } from "node:fs";
+import { dirname } from "node:path";
 import { readConfig, writeConfig } from "../config.js";
 import { probeWatcher } from "../promises/probe.js";
 import { jaegerEndpoint } from "../promises/telemetry.js";
+import { gitCommonDirOf } from "../worktree/layout.js";
 import type { LineWriter } from "./redact.js";
 import type { SecretsFile } from "./secrets-file.js";
 
@@ -33,13 +37,29 @@ export interface Connected {
 	credentialEnv: string;
 }
 
-/** The variable a project's credential is stored under: one per project, so two projects never share one. */
-export function credentialEnvFor(projectName: string): string {
+/**
+ * The variable a project's credential is stored under: one per project, so
+ * two projects never share one. The name is for people; the suffix is a short
+ * hash of where the project lives — its repository, so every worktree of one
+ * repository shares it, or the folder when it is not one. Two projects in
+ * folders of the same name shared a variable before, and connecting one
+ * replaced the other's credential (server-provisioning A25).
+ */
+export function credentialEnvFor(projectRoot: string, projectName: string): string {
 	const slug = projectName
 		.toUpperCase()
 		.replace(/[^A-Z0-9]+/g, "_")
 		.replace(/^_+|_+$/g, "");
-	return `INDUSK_SERVER_${slug || "PROJECT"}_CREDENTIAL`;
+	const common = gitCommonDirOf(projectRoot);
+	const where = common ? dirname(common) : projectRoot;
+	let real = where;
+	try {
+		real = realpathSync(where);
+	} catch {
+		// A path that cannot be resolved still names itself.
+	}
+	const hash = createHash("sha256").update(real).digest("hex").slice(0, 6).toUpperCase();
+	return `INDUSK_SERVER_${slug || "PROJECT"}_${hash}_CREDENTIAL`;
 }
 
 export async function connect(input: ConnectInput, deps: ConnectDeps): Promise<Connected> {
@@ -56,7 +76,7 @@ export async function connect(input: ConnectInput, deps: ConnectDeps): Promise<C
 		credential: input.credential,
 	});
 
-	const credentialEnv = credentialEnvFor(input.projectName);
+	const credentialEnv = credentialEnvFor(input.projectRoot, input.projectName);
 	deps.secrets.set(credentialEnv, input.credential);
 	writeConfig(input.projectRoot, {
 		...config,

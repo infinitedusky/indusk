@@ -203,7 +203,7 @@ describe("deploy", () => {
 			org: "personal",
 			region: "iad",
 		});
-		writeFileSync(join(home, "config.env"), "INDUSK_SERVER_SEAT_HOLDS_CREDENTIAL=indusk:pw-old\n");
+		writeFileSync(join(home, "config.env"), `${storedVar(root)}=indusk:pw-old\n`);
 		const { d, connected } = deps(f.fly, home);
 		await deploy(input(root), d);
 		expect(verbs(f.writes())).toEqual(["deploy -a"]);

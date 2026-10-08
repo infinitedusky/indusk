@@ -20,6 +20,8 @@ export interface DeployWanted {
 	/** Whether this machine holds the project's server credential. */
 	haveCredential: boolean;
 	rotate: boolean;
+	/** A Slack webhook was given: it is set even on a server that exists (A23). */
+	hasWebhook?: boolean;
 }
 
 export type StepName =
@@ -79,6 +81,11 @@ export function planDeploy(state: FlyState, wanted: DeployWanted): DeployPlan {
 	return withOrg(state, wanted, org);
 }
 
+/** A new password is set for a new app, on `--rotate`, or when this machine lacks the project's credential. */
+export function setsPassword(state: FlyState, wanted: DeployWanted): boolean {
+	return !state.app.exists || wanted.rotate || !wanted.haveCredential;
+}
+
 function withOrg(state: FlyState, wanted: DeployWanted, org: string): DeployPlan {
 	const a = wanted.app;
 	const steps: Step[] = [];
@@ -101,7 +108,7 @@ function withOrg(state: FlyState, wanted: DeployWanted, org: string): DeployPlan
 			],
 		});
 	}
-	if (!state.app.exists || wanted.rotate || !wanted.haveCredential) {
+	if (setsPassword(state, wanted) || wanted.hasWebhook) {
 		steps.push({
 			name: "secrets import",
 			args: ["secrets", "import", "-a", a, "--stage"],

@@ -5,7 +5,7 @@ import { type Connected, type ConnectInput, credentialEnvFor } from "./connect.j
 import type { FlyCli } from "./fly.js";
 import { DEFAULT_REGION, publicAddresses, writeFlyConfig } from "./fly-config.js";
 import { readFlyState } from "./fly-state.js";
-import { planDeploy, type Step } from "./plan-deploy.js";
+import { type DeployWanted, planDeploy, type Step, setsPassword } from "./plan-deploy.js";
 import { type LineWriter, redactingWriter } from "./redact.js";
 import type { SecretsFile } from "./secrets-file.js";
 
@@ -86,7 +86,11 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 	const recorded = config.server ?? null;
 	const app = input.app ?? recorded?.app ?? defaultAppName(input.projectName);
 	const region = input.region ?? recorded?.region ?? DEFAULT_REGION;
-	const credentialEnv = credentialEnvFor(input.projectName);
+	// The variable the project's config already names, when it names one — a
+	// project connected before keeps reading it — else this project's own.
+	const credentialEnv =
+		config.promises?.jaeger?.credential_env ??
+		credentialEnvFor(input.projectRoot, input.projectName);
 	const stored = deps.secrets.get(credentialEnv);
 
 	const state = await readFlyState(deps.fly, app);
@@ -105,11 +109,15 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 		recordedApp: recorded?.app ?? null,
 		haveCredential: Boolean(stored),
 		rotate: Boolean(input.rotate),
+		hasWebhook: Boolean(input.slackWebhook),
 	});
 	if (plan.kind === "refuse") throw new DeployRefused(plan.message);
 
-	const setsSecrets = plan.steps.some((s) => s.secrets);
-	const password = setsSecrets ? deps.random() : null;
+	const newPassword = setsPassword(state, {
+		haveCredential: Boolean(stored),
+		rotate: Boolean(input.rotate),
+	} as DeployWanted);
+	const password = newPassword ? deps.random() : null;
 	const credential = password ? `${SERVER_USER}:${password}` : (stored as string);
 	const webhook = input.slackWebhook ?? null;
 	const out = redactingWriter(deps.print, [password ?? "", webhook ?? "", credential]);
@@ -132,7 +140,7 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 		if (step.name === "apps create") recordServer(input.projectRoot, server);
 	}
 	recordServer(input.projectRoot, server);
-	if (setsSecrets && !webhook) {
+	if (newPassword && !webhook) {
 		out.line(
 			"No Slack webhook given: announcements are off. The server records, and the admin shows what it records.",
 		);
@@ -217,7 +225,8 @@ async function runStep(
 ): Promise<void> {
 	const stdin = step.secrets
 		? [
-				`INDUSK_SERVER_PASSWORD=${secrets.password}`,
+				// Only what changes: a webhook added to an existing server keeps its password (A23).
+				...(secrets.password ? [`INDUSK_SERVER_PASSWORD=${secrets.password}`] : []),
 				...(secrets.webhook ? [`INDUSK_SERVER_SLACK_WEBHOOK=${secrets.webhook}`] : []),
 			].join("\n")
 		: undefined;

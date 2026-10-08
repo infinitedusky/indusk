@@ -7,7 +7,7 @@ import { readConfig } from "../config.js";
 import { WatcherBlind } from "../promises/probe.js";
 import { resolveMarkSources, sourceNames } from "../promises/sources.js";
 import { jaegerEndpoint } from "../promises/telemetry.js";
-import { type ConnectDeps, connect } from "./connect.js";
+import { type ConnectDeps, connect, credentialEnvFor } from "./connect.js";
 import { secretsFile } from "./secrets-file.js";
 
 /**
@@ -20,7 +20,8 @@ import { secretsFile } from "./secrets-file.js";
  * promise: provisioning-never-prints-a-secret
  */
 
-const VAR = "INDUSK_SERVER_SEAT_HOLDS_CREDENTIAL";
+/** The variable a project at `root` stores its credential under (A25: named per project). */
+const varFor = (root: string) => credentialEnvFor(root, "seat-holds");
 const server = {
 	queryUrl: "https://x.fly.dev:16687",
 	otlpUrl: "https://x.fly.dev",
@@ -28,13 +29,10 @@ const server = {
 };
 const previousHome = process.env.INDUSK_HOME;
 
-beforeEach(() => {
-	delete process.env[VAR];
-});
+beforeEach(() => {});
 afterEach(() => {
 	if (previousHome === undefined) delete process.env.INDUSK_HOME;
 	else process.env.INDUSK_HOME = previousHome;
-	delete process.env[VAR];
 });
 
 function project(): { root: string; home: string } {
@@ -80,7 +78,7 @@ describe("connect", () => {
 		expect(readConfig(root)?.promises?.jaeger).toEqual({
 			url: server.queryUrl,
 			otlp_url: server.otlpUrl,
-			credential_env: VAR,
+			credential_env: varFor(root),
 		});
 		expect(readConfig(root)?.promises?.domains).toEqual(["demo"]);
 		expect(readFileSync(join(root, ".indusk", "config.json"), "utf-8")).not.toContain("pw-1");
@@ -89,7 +87,9 @@ describe("connect", () => {
 	it("A2 — stores the value in the secrets file under that variable, owner-only", async () => {
 		const { root, home } = project();
 		await connect(input(root), deps(home));
-		expect(readFileSync(join(home, "config.env"), "utf-8")).toContain(`${VAR}=indusk:pw-1`);
+		expect(readFileSync(join(home, "config.env"), "utf-8")).toContain(
+			`${varFor(root)}=indusk:pw-1`,
+		);
 		expect(statSync(join(home, "config.env")).mode & 0o777).toBe(0o600);
 	});
 
@@ -115,7 +115,7 @@ describe("connect", () => {
 		);
 		expect(readConfig(root)?.promises?.jaeger?.url).toBe("https://y.fly.dev:16687");
 		const env = readFileSync(join(home, "config.env"), "utf-8");
-		expect(env.match(new RegExp(`^${VAR}=`, "gm"))).toHaveLength(1);
+		expect(env.match(new RegExp(`^${varFor(root)}=`, "gm"))).toHaveLength(1);
 		expect(env).toContain("pw-2");
 		expect(env).not.toContain("pw-1");
 	});
