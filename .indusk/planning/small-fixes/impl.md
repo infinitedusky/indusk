@@ -42,8 +42,8 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 | A1 | After the local install, `indusk --version` from any directory reports the checkout's version and `indusk ui start` finds the admin, with nothing published | Build Phase 1 | Build Phase 1 | passing | live check | promise: dusk-installs-its-own-build | manual: `pnpm install:local && cd /tmp && indusk --version && indusk ui status` |
 | A2 | A project that declares `workflow.steps.land.install` gets it named by `indusk checks show`; one that declares none is told landing installs nothing | Test Phase 1 | Build Phase 1 | passing | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
 | A3 | `pnpm release` runs the full slow tests before it publishes, every time | Test Phase 1 | Build Phase 1 | passing | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/release-script.test.ts |
-| A4 | Editing a draft plan's status to `in-progress` by hand is refused, naming the lesson; after `plans approve` the same edit lands | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
-| A5 | Checking off a build item on a draft plan is refused; on an approved plan it lands | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
+| A4 | Editing a draft plan's status to `in-progress` by hand is refused, naming the lesson; after `plans approve` the same edit lands | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
+| A5 | Checking off a build item on a draft plan is refused; on an approved plan it lands | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
 | A6 | The planner skill ends at the written plan: it names `plans approve` as the only way on and nowhere tells the agent to start building | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
 | A7 | A turn that ends with an API error shows **Failed** and the error's first line, and "success" appears nowhere on the panel | Test Phase 1 | Build Phase 3 | written | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
 | A8 | A turn that completes shows **Turn done**; only a session whose process exited shows **Session ended**, with its exit code | Test Phase 1 | Build Phase 3 | written | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
@@ -53,7 +53,7 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 | A12 | `indusk ui stop` with a port slow to answer still stops its own daemon and removes its record; it never signals a process that is not its own, and exits non-zero naming one that would not stop | Build Phase 3 | Build Phase 3 | planned | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/admin/daemon-stop.test.ts |
 | A13 | `indusk telemetry stop` behaves exactly as before: its tests pass unchanged | Test Phase 1 | Test Phase 1 | passing | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
 | A14 | The command-line identity check is defined once, and both stops use it | Test Phase 1 | Build Phase 3 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/process-identity-single-definition.test.ts |
-| A15 | The planner writes the Key Decisions line as the first build phase's context item, never at ADR acceptance | Test Phase 1 | Build Phase 2 | written | unit | a fix to the planner skill so `plans approve` accepts the branch; the approve rule is unchanged | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
+| A15 | The planner writes the Key Decisions line as the first build phase's context item, never at ADR acceptance | Test Phase 1 | Build Phase 2 | passing | unit | a fix to the planner skill so `plans approve` accepts the branch; the approve rule is unchanged | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
 | A16 | The update notice says a newer version exists for `1.10.0` over `1.9.0`, and not for `1.9.0` over `1.10.0` | Test Phase 1 | Build Phase 3 | written | unit | a regression guard over a one-line fix | apps/indusk-mcp/src/lib/version-check.test.ts |
 
 ## Checklist
@@ -133,17 +133,18 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 ### Build Phase 2: A plan builds only after approval
 
-- [ ] `check-gates.js`: refuse an edit that changes an impl's `status:` from `draft` to anything but through `plans approve` (the hook sees a hand edit; approve writes without a tool event), and refuse checking off any build-phase item while the impl's status is `draft`; failure names `lesson: a-plan-builds-only-after-approval` (A4, A5)
-- [ ] `skills/planner.md`: step 6's Key Decisions line becomes "give the impl's first build phase a Context item for the root's Key Decisions line" (A15); step 10 says the planning session ends at the written plan and only `plans approve` moves it on (A6)
-- [ ] `hook-sync-parity.test.ts` stays green: resync `.claude/hooks/` after the gate change (A11)
+- [x] (stronger than the item: on a draft, *any* checkoff is refused, not only a build item's — a draft's checklist is the plan; `draft → abandoned` stays allowed. Both rules sit before the phase parsing, so they hold for Write as well as Edit) `check-gates.js`: refuse an edit that changes an impl's `status:` from `draft` to anything but through `plans approve` (the hook sees a hand edit; approve writes without a tool event), and refuse checking off any build-phase item while the impl's status is `draft`; failure names `lesson: a-plan-builds-only-after-approval` (A4, A5)
+- [x] `skills/planner.md`: step 6's Key Decisions line becomes "give the impl's first build phase a Context item for the root's Key Decisions line" (A15); step 10 says the planning session ends at the written plan and only `plans approve` moves it on (A6)
+- [x] `hook-sync-parity.test.ts` stays green: resync `.claude/hooks/` after the gate change (A11)
 
 #### Build Phase 2 Verification
 
-- [ ] A4, A5, A15 pass; A6, A11 still do (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/approval-gate.test.ts src/__tests__/planner-stops-at-the-plan.test.ts src/__tests__/hook-sync-parity.test.ts src/__tests__/hook-cwd-independence.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/context-tiers-hook-lesson.test.ts`)
+- [x] (approval-gate, context-tiers-hook-lesson, hook-cwd-independence, hook-sync-parity: 16 of 16; planner-stops-at-the-plan and skill parity: 28 of 28) A4, A5, A15 pass; A6, A11 still do (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/approval-gate.test.ts src/__tests__/planner-stops-at-the-plan.test.ts src/__tests__/hook-sync-parity.test.ts src/__tests__/hook-cwd-independence.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/context-tiers-hook-lesson.test.ts`)
+- [x] Shape — two rules of a few lines each in the hook, each before the parsing they must not depend on; the skill is prose. Nothing to change
 
 #### Build Phase 2 Context
 
-- [ ] guard: `check-gates.js` carries `lesson: a-plan-builds-only-after-approval`, and the lesson is written so the token resolves
+- [x] (the lesson written through `add_lesson`, which puts it in the main checkout's `.claude/lessons/` and commits it there; the token resolves on `main` now and on this branch at landing) guard: `check-gates.js` carries `lesson: a-plan-builds-only-after-approval`, and the lesson is written so the token resolves
 
 #### Build Phase 2 Document
 
