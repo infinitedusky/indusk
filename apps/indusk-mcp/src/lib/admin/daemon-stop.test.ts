@@ -126,3 +126,43 @@ describe("A12 — ui stop stops its own daemon by its command line, never by its
 		expect(kills).toEqual([]);
 	});
 });
+
+/**
+ * small-fixes A17 (falsification). A12's fixtures composed the command line
+ * from the spawn arguments; `next start` rewrites its process title, and `ps`
+ * read the live daemon on 2026-10-08 as `next-server (v16.2.4)` — no binary,
+ * no port. The working directory moves too: an install renames the old
+ * package folder aside. Its start time does not: `ps -o lstart=` gave the
+ * record's `startedAt` to the second, and the machine's two other
+ * `next-server`s started a day later.
+ */
+describe("A17 — the daemon as `ps` really reports it", () => {
+	const REAL = "next-server (v16.2.4)      ";
+	const startedAt = "2026-10-08T00:00:00.639Z";
+	const withStart = (table: DaemonDeps, at: Date | null) =>
+		Object.assign(table, { startTime: () => at });
+
+	it("is recognised by `next` and its start time, and stopped", async () => {
+		record({ pid: 4242, startedAt });
+		const kills: [number, string][] = [];
+		await daemonStop(withStart(deps({ 4242: REAL }, kills), new Date("2026-10-08T00:00:00Z")));
+		expect(kills).toEqual([[4242, "SIGTERM"]]);
+	});
+
+	it("another next-server, started at another time, is never signalled", async () => {
+		record({ pid: 27316, startedAt });
+		const kills: [number, string][] = [];
+		const r = await daemonStop(
+			withStart(deps({ 27316: REAL }, kills), new Date("2026-10-08T18:38:48Z")),
+		);
+		expect(kills).toEqual([]);
+		expect(r.stopped).toBe(true);
+	});
+
+	it("a start time that cannot be read is not ours", async () => {
+		record({ pid: 4242, startedAt });
+		const kills: [number, string][] = [];
+		await daemonStop(withStart(deps({ 4242: REAL }, kills), null));
+		expect(kills).toEqual([]);
+	});
+});

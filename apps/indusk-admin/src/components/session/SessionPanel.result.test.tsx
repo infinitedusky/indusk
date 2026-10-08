@@ -55,6 +55,30 @@ describe("A7 — a turn that ends with an API error says Failed, never success",
   });
 });
 
+/**
+ * A22 (falsification): Claude Code's `error_max_turns` and
+ * `error_during_execution` results carry no `result` text, so the panel said
+ * only "Failed" — the promise says with the reason.
+ */
+describe("A22 — a failed turn with no text still says why, in words", () => {
+  for (const [subtype, why] of [
+    ["error_max_turns", /turn limit/i],
+    ["error_during_execution", /error/i],
+    ["error_something_new", /\S/],
+  ] as const) {
+    it(`${subtype}: Failed with a reason, never the raw subtype`, async () => {
+      const text = await textOf([
+        init,
+        { type: "result", ok: false, subtype, text: "" },
+      ]);
+      expect(text).toMatch(/Failed — /);
+      const reason = text.split("Failed — ")[1] ?? "";
+      expect(reason).toMatch(why);
+      expect(text).not.toContain(subtype);
+    });
+  }
+});
+
 describe("A8 — a finished turn and an ended session are told apart", () => {
   it("a completed turn says Turn done, not Ended", async () => {
     const text = await textOf([

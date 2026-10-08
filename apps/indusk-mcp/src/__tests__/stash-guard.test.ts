@@ -46,6 +46,8 @@ const REFUSED = [
 	"git stash pop stash@{0}",
 	"git stash apply",
 	"git stash clear",
+	// A20: `branch <name>` with no stash named pops the top entry into a new branch.
+	"git stash branch fix-x",
 ];
 
 const ALLOWED = [
@@ -55,6 +57,7 @@ const ALLOWED = [
 	"git stash list --format='%H %gs'",
 	"git stash apply 1234567890abcdef1234567890abcdef12345678",
 	"git stash drop stash@{2}",
+	"git stash branch fix-x 1234567890abcdef1234567890abcdef12345678",
 	"git stash show -p stash@{0}",
 	"git status",
 	'echo "git stash pop"',

@@ -89,6 +89,24 @@ describe("A4 — a plan leaves draft only through plans approve", () => {
 		expect(r.stderr).toContain("lesson: a-plan-builds-only-after-approval");
 	});
 
+	it("A19 — an Edit whose old_string leaves out the `status:` key is still the same hand edit", async () => {
+		const { root, implPath } = project("draft");
+		const r = await edit(
+			root,
+			implPath,
+			"draft\ntrajectory: required",
+			"in-progress\ntrajectory: required",
+		);
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toContain("lesson: a-plan-builds-only-after-approval");
+	});
+
+	it('A19 — a quoted `status: "draft"` moved by hand is refused', async () => {
+		const { root, implPath } = project('"draft"');
+		const r = await edit(root, implPath, 'status: "draft"', 'status: "in-progress"');
+		expect(r.exitCode, r.stderr).toBe(2);
+	});
+
 	it("from approved (what plans approve writes) the same edit lands", async () => {
 		const { root, implPath } = project("approved");
 		const r = await edit(root, implPath, "status: approved", "status: in-progress");
@@ -99,6 +117,13 @@ describe("A4 — a plan leaves draft only through plans approve", () => {
 describe("A5 — no build item is checked off on a plan that is not approved", () => {
 	it("on a draft plan the checkoff is refused", async () => {
 		const { root, implPath } = project("draft");
+		const r = await edit(root, implPath, "- [ ] make it hold", "- [x] make it hold");
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toContain("lesson: a-plan-builds-only-after-approval");
+	});
+
+	it("A19 — a quoted `status: \"draft\"` is a draft: the checkoff is refused", async () => {
+		const { root, implPath } = project('"draft"');
 		const r = await edit(root, implPath, "- [ ] make it hold", "- [x] make it hold");
 		expect(r.exitCode, r.stderr).toBe(2);
 		expect(r.stderr).toContain("lesson: a-plan-builds-only-after-approval");
