@@ -528,20 +528,11 @@ function IncidentsTable({
                 {incidentStatus(i, now)}
               </TableCell>
               <TableCell>
-                {(() => {
-                  const owner = ownerOf(i);
-                  if (!owner) return <span className="text-gray-400">—</span>;
-                  return i.status === "open" ? (
-                    <Link
-                      href={`${planHrefPrefix}${owner}`}
-                      className="hover:underline"
-                    >
-                      {owner} · Maintenance — {i.id}
-                    </Link>
-                  ) : (
-                    <span>{owner}</span>
-                  );
-                })()}
+                <IncidentOwner
+                  incident={i}
+                  owner={ownerOf(i)}
+                  planHrefPrefix={planHrefPrefix}
+                />
               </TableCell>
               <TableCell>{i.date}</TableCell>
               <TableCell className="max-w-md">{i.symptom}</TableCell>
@@ -550,6 +541,25 @@ function IncidentsTable({
         </TableBody>
       </Table>
     </section>
+  );
+}
+
+/** An incident's owner: a link naming its Maintenance phase while it is open, the plan's name once fixed. */
+function IncidentOwner({
+  incident,
+  owner,
+  planHrefPrefix,
+}: {
+  incident: IncidentEntry;
+  owner: string | null;
+  planHrefPrefix: string;
+}) {
+  if (!owner) return <span className="text-gray-400">—</span>;
+  if (incident.status !== "open") return <span>{owner}</span>;
+  return (
+    <Link href={`${planHrefPrefix}${owner}`} className="hover:underline">
+      {owner} · Maintenance — {incident.id}
+    </Link>
   );
 }
 
