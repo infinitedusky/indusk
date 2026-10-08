@@ -228,6 +228,8 @@ It is built from that release's own packed tarball, through the package's
 `templates/server/Dockerfile`, by `scripts/release-image.sh`, which `pnpm
 release` runs before `pnpm publish`: the image and the npm package of a
 release are the same bytes, and a push the registry refuses publishes nothing.
-The repository's `docker/Dockerfile.always-on` is a copy of the template. How
+The repository's `docker/Dockerfile.always-on` is a copy of the template, and
+`docker/fly.always-on.toml` agrees with the package's Fly template on every
+setting, mount, service and machine; a test holds both pairs together. How
 to run it, and what it needs: [Run your own server](/guide/run-your-own-server).
 
