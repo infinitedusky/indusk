@@ -26,6 +26,14 @@ option is in the [reference](/reference/cli/server#server-deploy).
 It costs what Fly charges for one small machine, a 3 GB volume and a dedicated
 IPv4 ($2 a month).
 
+::: info Observed, 2026-10-08
+A fresh server on Fly, deployed and connected by `indusk server deploy`, took
+about six minutes end to end, most of it Fly creating the app and the new
+address and certificate coming up; the command waits for them. It costs about
+$8 a month by Fly's price list: one small machine, a 3 GB volume, and a $2
+dedicated IPv4.
+:::
+
 ## Anywhere else: the published image
 
 Every InDusk release publishes the server as an image:
