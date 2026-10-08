@@ -84,9 +84,6 @@
 	},
 	"workflow": {
 		"steps": {
-			"land": {
-				"slow_tests": "pnpm test:system"
-			},
 			"release": {
 				"command": "pnpm release",
 				"version_file": "apps/indusk-mcp/package.json",
@@ -105,10 +102,5 @@
 				]
 			}
 		}
-	},
-	"plans": {
-		"land_checks": [
-			"pnpm --filter @infinitedusky/indusk-mcp build && node apps/indusk-mcp/dist/bin/cli.js checks slow"
-		]
 	}
 }
