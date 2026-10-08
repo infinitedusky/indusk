@@ -21,7 +21,7 @@ Runs the same evaluator process as the automatic eval hook, but against uncommit
 2. Build the evaluator prompt with the v1 rubric
 3. Run the evaluator (uses `runEvaluatorSync` from `apps/indusk-mcp/src/lib/eval/evaluator-runner.ts`)
 4. Display the scorecard inline
-5. Append results to `.indusk/eval/results.log`
+5. Append results to the project home's `eval/results.log` (`"$(indusk eval home)/eval/results.log"`)
 
 ## How to Invoke
 
