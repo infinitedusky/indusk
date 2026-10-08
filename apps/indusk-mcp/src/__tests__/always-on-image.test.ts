@@ -53,7 +53,10 @@ describe.skipIf(!dockerAnswers)("A1 — the always-on image", () => {
 		expect(built.status, built.output.slice(-2_000)).toBe(0);
 	});
 
-	it.each(Object.keys(SETTINGS))(
+	// The webhook is optional since server-provisioning A7: a server without it
+	// records and announces nothing, so it is not among the settings a container
+	// must have.
+	it.each(Object.keys(SETTINGS).filter((k) => k !== "INDUSK_SERVER_SLACK_WEBHOOK"))(
 		"a container without %s exits naming it",
 		(missing) => {
 			const env = Object.entries(SETTINGS)

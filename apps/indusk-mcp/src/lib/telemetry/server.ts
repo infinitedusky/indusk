@@ -84,8 +84,15 @@ export interface ServerSettings {
 	user: string;
 	password: string;
 	retentionHours: number;
-	/** Where violations are announced. Required: a server that cannot say anything is not watching. */
-	slackWebhook: string;
+	/**
+	 * Where violations are announced, or null for a server that records and
+	 * announces nothing. It was required (day-always-on: "a server that cannot
+	 * say anything is not watching"); server-provisioning A7, accepted
+	 * 2026-10-08, made it optional — the server still records every violation
+	 * and the admin still shows it, and the schedule logs once that
+	 * announcements are off.
+	 */
+	slackWebhook: string | null;
 	passIntervalMs: number;
 	passWindowMs: number;
 	/** A heartbeat older than this means the watcher is blind; absent = `max(3 × interval, 3 min)`. */
@@ -158,7 +165,7 @@ export function readServerSettings(env: NodeJS.ProcessEnv = process.env): Server
 		user: required(env, USER_ENV),
 		password: required(env, PASSWORD_ENV),
 		retentionHours: positive(env, RETENTION_ENV, DEFAULT_RETENTION_HOURS, "hours"),
-		slackWebhook: required(env, SLACK_WEBHOOK_ENV),
+		slackWebhook: env[SLACK_WEBHOOK_ENV]?.trim() ? required(env, SLACK_WEBHOOK_ENV) : null,
 		passIntervalMs: positive(env, PASS_INTERVAL_ENV, DEFAULT_PASS_INTERVAL_MS, "milliseconds"),
 		passWindowMs: positive(env, PASS_WINDOW_ENV, DEFAULT_PASS_WINDOW_HOURS, "hours") * 3_600_000,
 		publicQueryUrl: env[PUBLIC_QUERY_URL_ENV]?.trim() ? publicQueryUrl(env) : null,

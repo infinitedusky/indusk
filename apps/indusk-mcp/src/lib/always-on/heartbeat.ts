@@ -122,7 +122,8 @@ export interface HeartbeatOptions {
 	endpoint: JaegerEndpoint;
 	/** The server's own OTLP/HTTP intake. */
 	intakeUrl: string;
-	webhook: string;
+	/** Null when the server announces nothing: the state still advances, and nobody is told. */
+	webhook: string | null;
 	/** The query API as people reach it, named in the blind message; null when not set. */
 	publicQueryUrl?: string | null;
 	staleMs: number;
@@ -267,7 +268,7 @@ export async function heartbeatPass(opts: HeartbeatOptions): Promise<HeartbeatRe
 				previous ?? { state: "listening", since: now.toISOString() },
 			);
 		}
-		if (message && !stateProblem) {
+		if (message && !stateProblem && opts.webhook) {
 			try {
 				await postToSlack(opts.webhook, message, timeoutMs);
 				told = message;
