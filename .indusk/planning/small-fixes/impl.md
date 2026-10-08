@@ -39,9 +39,9 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | After the local install, `indusk --version` from any directory reports the checkout's version and `indusk ui start` finds the admin, with nothing published | Build Phase 1 | Build Phase 1 | planned | live check | promise: dusk-installs-its-own-build | manual: `pnpm install:local && cd /tmp && indusk --version && indusk ui status` |
-| A2 | A project that declares `workflow.steps.land.install` gets it named by `indusk checks show`; one that declares none is told landing installs nothing | Test Phase 1 | Build Phase 1 | written | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
-| A3 | `pnpm release` runs the full slow tests before it publishes, every time | Test Phase 1 | Build Phase 1 | written | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/release-script.test.ts |
+| A1 | After the local install, `indusk --version` from any directory reports the checkout's version and `indusk ui start` finds the admin, with nothing published | Build Phase 1 | Build Phase 1 | passing | live check | promise: dusk-installs-its-own-build | manual: `pnpm install:local && cd /tmp && indusk --version && indusk ui status` |
+| A2 | A project that declares `workflow.steps.land.install` gets it named by `indusk checks show`; one that declares none is told landing installs nothing | Test Phase 1 | Build Phase 1 | passing | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
+| A3 | `pnpm release` runs the full slow tests before it publishes, every time | Test Phase 1 | Build Phase 1 | passing | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/release-script.test.ts |
 | A4 | Editing a draft plan's status to `in-progress` by hand is refused, naming the lesson; after `plans approve` the same edit lands | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
 | A5 | Checking off a build item on a draft plan is refused; on an approved plan it lands | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
 | A6 | The planner skill ends at the written plan: it names `plans approve` as the only way on and nowhere tells the agent to start building | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
@@ -112,23 +112,24 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 ### Build Phase 1: Dusk installs its own build
 
-- [ ] Root `package.json`: `install:local` — `pnpm --filter @infinitedusky/indusk-mcp prepublishOnly && npm install -g ./apps/indusk-mcp` (the same build a publish makes, then a global symlink to the checkout)
-- [ ] `workflow.steps.land.install` in the config type and `readWorkflowSteps`; `checks show` names it or says landing installs nothing (A2); dusk's `.indusk/config.json` declares `pnpm install:local`
-- [ ] The retrospective's Step 10 runs the declared install after the merge; Step 11 says a project that installs locally bumps and publishes only when it decides to (a server deploy, another project or machine), and then `pnpm release` runs the slow tier itself; resync `.claude/skills/`
-- [ ] `apps/indusk-mcp/package.json` `release`: `pnpm -w test:system` back before `npm whoami` (A3)
-- [ ] A1: run `pnpm install:local` on this branch, then from `/tmp`: `indusk --version` and `indusk ui status`; record the output here
+- [x] (`npm install -g ./apps/indusk-mcp` makes a symlink — `$(npm root -g)/@infinitedusky/indusk-mcp -> …/dusk-worktrees/small-fixes/apps/indusk-mcp` — so until this lands the global `indusk` is this branch; landing's step 7 re-links it to `main`) Root `package.json`: `install:local` — `pnpm --filter @infinitedusky/indusk-mcp prepublishOnly && npm install -g ./apps/indusk-mcp` (the same build a publish makes, then a global symlink to the checkout)
+- [x] `workflow.steps.land.install` in the config type and `readWorkflowSteps`; `checks show` names it or says landing installs nothing (A2); dusk's `.indusk/config.json` declares `pnpm install:local`
+- [x] (a new step 7, "Install the landed build"; Step 11 opens with the installs-locally case: say the build is installed and nothing is published, and stop, unless this close is a publish; the `--unless-covered` advice now applies only to a project that declares slow tests at landing) The retrospective's Step 10 runs the declared install after the merge; Step 11 says a project that installs locally bumps and publishes only when it decides to (a server deploy, another project or machine), and then `pnpm release` runs the slow tier itself; resync `.claude/skills/`
+- [x] `apps/indusk-mcp/package.json` `release`: `pnpm -w test:system` back before `npm whoami` (A3)
+- [x] (install exit 0 in about two minutes, "removed 302 packages, and changed 1 package" — the published copy replaced by the link; from `/tmp`: `indusk --version` → `1.67.0`, the checkout's; `indusk ui status` → "Admin UI: running on port 3939", the daemon started 2026-10-06 still serving) A1: run `pnpm install:local` on this branch, then from `/tmp`: `indusk --version` and `indusk ui status`; record the output here
 
 #### Build Phase 1 Verification
 
-- [ ] A2 and A3 pass, A1 recorded (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/checks-show.test.ts src/__tests__/release-script.test.ts src/__tests__/steps-name-project-commands.test.ts src/__tests__/skill-sync-parity.test.ts`)
+- [x] (checks-show 4 of 4; release-script, skill parity, steps-name-project-commands and release-ritual-skill 35 of 35; `tsc` clean) A2 and A3 pass, A1 recorded (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/checks-show.test.ts src/__tests__/release-script.test.ts src/__tests__/steps-name-project-commands.test.ts src/__tests__/skill-sync-parity.test.ts`)
+- [x] Shape — one new key read, shown and declared; one script; the skill is prose. Nothing to change
 
 #### Build Phase 1 Context
 
-- [ ] current.md: dusk's `indusk` is a link to the checkout's build (`pnpm install:local` after each landing); publishing is deliberate
+- [x] current.md: dusk's `indusk` is a link to the checkout's build (`pnpm install:local` after each landing); publishing is deliberate
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/checks.md`: `land.install`; `apps/docs/src/reference/skills/retrospective.md`: Step 10's install, Step 11 only when publishing; `apps/docs/src/changelog.md` Unreleased
+- [x] (`checks.md` and the changelog done here; the retrospective reference page's Steps 10–11 updated with them) `apps/docs/src/reference/cli/checks.md`: `land.install`; `apps/docs/src/reference/skills/retrospective.md`: Step 10's install, Step 11 only when publishing; `apps/docs/src/changelog.md` Unreleased
 
 ### Build Phase 2: A plan builds only after approval; a stash never crosses worktrees
 
