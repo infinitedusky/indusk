@@ -95,21 +95,26 @@ try {
 } catch {
 	// a new file has no status to leave
 }
+/**
+ * The file as this tool call would leave it, or null when it cannot be told
+ * (an Edit whose `old_string` is not in the file). The Edit tool's literal
+ * splice, `replace_all` included — never `String.replace`, whose `$`
+ * patterns substitute (hooks/CLAUDE.md).
+ */
+function applyEdit(disk) {
+	if (event.tool_name === "Write") return newContent;
+	if (event.tool_name !== "Edit" || !oldContent) return null;
+	const at = disk.indexOf(oldContent);
+	if (at === -1) return null;
+	return toolInput.replace_all
+		? disk.split(oldContent).join(newContent)
+		: disk.slice(0, at) + newContent + disk.slice(at + oldContent.length);
+}
+
 if (diskContent !== null) {
 	fromStatus = statusOf(diskContent);
-	if (event.tool_name === "Edit" && oldContent) {
-		// The Edit tool's literal splice, never String.replace (hooks/CLAUDE.md).
-		const at = diskContent.indexOf(oldContent);
-		if (at !== -1) {
-			toStatus = statusOf(
-				toolInput.replace_all
-					? diskContent.split(oldContent).join(newContent)
-					: diskContent.slice(0, at) + newContent + diskContent.slice(at + oldContent.length),
-			);
-		}
-	} else if (event.tool_name === "Write") {
-		toStatus = statusOf(newContent);
-	}
+	const after = applyEdit(diskContent);
+	if (after !== null) toStatus = statusOf(after);
 }
 if (fromStatus === "draft" && toStatus && toStatus !== "draft" && toStatus !== "abandoned") {
 	console.error(
@@ -164,15 +169,9 @@ if (statusOf(fullContent) === "draft") {
 	process.exit(2);
 }
 
-// For Edit, apply the edit to get the new full content
-let newFullContent;
-if (event.tool_name === "Edit" && oldContent) {
-	newFullContent = fullContent.replace(oldContent, newContent);
-} else if (event.tool_name === "Write") {
-	newFullContent = newContent;
-} else {
-	process.exit(0);
-}
+// The new full content, the way the tool will write it
+const newFullContent = applyEdit(fullContent);
+if (newFullContent === null) process.exit(0);
 
 // Detect workflow type from content frontmatter
 function detectWorkflow(content) {
