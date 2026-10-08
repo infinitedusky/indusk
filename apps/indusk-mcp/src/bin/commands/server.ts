@@ -1,6 +1,5 @@
-import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { copyFileSync, mkdtempSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { createInterface } from "node:readline";
@@ -11,8 +10,8 @@ import { JaegerUnreachable } from "../../lib/promises/telemetry.js";
 import { connect, probeServer } from "../../lib/server/connect.js";
 import { DeployRefused, deploy } from "../../lib/server/deploy.js";
 import { realFly } from "../../lib/server/fly.js";
-import { DOCKERFILE_TEMPLATE } from "../../lib/server/fly-config.js";
 import { FlyReadFailed } from "../../lib/server/fly-state.js";
+import { buildServerImage } from "../../lib/server/image.js";
 import { redactingWriter } from "../../lib/server/redact.js";
 import { machineSecrets } from "../../lib/server/secrets-file.js";
 
@@ -154,41 +153,5 @@ export async function serverDeploy(opts: ServerDeployOptions): Promise<void> {
 	} catch (err) {
 		console.error(err instanceof Error ? err.message : String(err));
 		process.exitCode = err instanceof DeployRefused || err instanceof FlyReadFailed ? 2 : 1;
-	}
-}
-
-/** Build the server image from a packed tarball through the package's own template. */
-async function buildServerImage(tarball: string, tag: string): Promise<void> {
-	const ctx = mkdtempSync(join(tmpdir(), "indusk-image-"));
-	copyFileSync(tarball, join(ctx, "indusk.tgz"));
-	const r = spawnSync(
-		"docker",
-		// Fly runs amd64; a build on Apple Silicon is arm64 unless told (A8 found it).
-		[
-			"build",
-			"--platform",
-			"linux/amd64",
-			"-f",
-			DOCKERFILE_TEMPLATE,
-			"--build-arg",
-			"TARBALL=indusk.tgz",
-			"-t",
-			tag,
-			ctx,
-		],
-		{ stdio: "inherit" },
-	);
-	if (r.status !== 0)
-		throw new DeployRefused(
-			`docker build of ${tag} failed (exit ${r.status}); nothing was deployed.`,
-		);
-	const login = spawnSync("fly", ["auth", "docker"], { stdio: "inherit" });
-	if (login.status !== 0)
-		throw new DeployRefused("`fly auth docker` failed; the image was built and not pushed.");
-	const push = spawnSync("docker", ["push", tag], { stdio: "inherit" });
-	if (push.status !== 0) {
-		throw new DeployRefused(
-			`docker push of ${tag} failed (exit ${push.status}); nothing was deployed.`,
-		);
 	}
 }
