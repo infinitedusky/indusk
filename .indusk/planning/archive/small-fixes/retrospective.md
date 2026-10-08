@@ -68,3 +68,5 @@ Cleanup then found the reads behind identity, liveness and `ps`, defined in four
 - Phases: Test Phase 1, Build Phases 1–6 (5 = falsification, 6 = cleanup).
 - 55 files, +1,967/−340; 54 commits on `plan/small-fixes`.
 - New lessons: `a-plan-builds-only-after-approval`, `a-stash-never-crosses-worktrees`, `identify-a-process-by-what-it-cannot-rewrite`.
+
+Landed on main at 9c50560b, 2026-10-08. Installed on this machine with `pnpm install:local` from main (the global `indusk` links to the checkout); the admin was restarted from it (PID 63918 → 16850, one listener on 3939). Nothing published.
