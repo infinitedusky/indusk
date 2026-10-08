@@ -89,8 +89,9 @@ dusk/
 - Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
 - Admin plan authoring: `plans start → approve → build → accept → land`, through the developer's own `claude`; nothing lands unaccepted — see `/decisions/admin-plan-authoring`
-- Workbench plans: documents at the workbench root, code on `plan/<name>` in the repo the plan names (`code.json`); one contract per repo — its own `.indusk/promises/`, else the workbench's shadow — through one resolver — see `/decisions/workbench-plan-authoring`
+- Workbench plans: documents at the workbench root, code on `plan/<name>` in the named repo; one contract per repo through one resolver — see `/decisions/workbench-plan-authoring`
 - Bookkeeping: notes committed on `main` as written; machine state in `~/.indusk/projects/<id>-<hash>/` (`indusk eval home`); the evaluator's tools named — see `/decisions/bookkeeping-lives-where-it-is-read`
+- Workflow steps: `workflow.steps` names what each step runs, facts never logic; dusk's slow tier never blocks landing or release — see `/decisions/release-checks-run-once`
 
 ## Known Gotchas
 
