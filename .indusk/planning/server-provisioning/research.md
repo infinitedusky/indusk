@@ -123,14 +123,21 @@ rather than create. Volumes and addresses likewise: `fly volumes list -a`,
 
 ## Decisions
 
-Sandy accepted the five promises and the expectation as read back on
-2026-10-08. The five questions asked with them were not answered one by one;
-these are the defaults the plan takes, each to be corrected if wrong:
-
-- **A separate command, run by a person.** `indusk server deploy` (name
-  provisional), by someone with `fly` signed in. Not a step of `indusk init`:
-  init writes files, this creates things that cost money. The demo's step 1
-  runs it right after init.
+- **Connect first; Fly as the fast option; anywhere else documented** (Sandy,
+  2026-10-08). The first draft of this plan was one command that drove Fly.
+  Sandy's reading: InDusk is released on GitHub and people run their own
+  recording server — a Jaeger with the server's extras, holding the record
+  that the local admin reads — so a provider-specific deployer inside the
+  product looked like the start of a hosted, multi-tenant service, which this
+  is not. The shape is now three pieces: `indusk server connect`, which does
+  only what is InDusk's to do (name the source, store the credential, read
+  the server back); `indusk server deploy` for Fly, the one-command fast
+  path into the person's own account, which ends by connecting; and the
+  published image with the guide's "what the server needs", for anyone
+  running it themselves. Every server is the person's own.
+- **A separate command, run by a person.** Not a step of `indusk init`: init
+  writes files, a deploy creates things that cost money. The demo's step 1
+  runs the Fly command right after init.
 - **One server per project**, the direction from 2026-10-02 in the larger
   provisioning brief. App name `indusk-<project>` unless given.
 - **Nothing required beyond a signed-in `fly`.** Org and region default (the
@@ -146,9 +153,11 @@ these are the defaults the plan takes, each to be corrected if wrong:
 
 ## Open Questions
 
-- Build on Fly per project (`--remote-only`, minutes) or deploy a prebuilt
-  image from a registry (seconds, and no Dockerfile in the package)? The ADR's
-  question.
+- Which registry publishes the image — GitHub's (`ghcr.io`, beside the
+  repository people clone) or Docker Hub — and how the deliberate release
+  (`pnpm release`, Sandy's, with its one-time code) builds and pushes it. The
+  ADR's question; with a published image the Fly deploy pulls rather than
+  builds, seconds instead of minutes.
 - Where the demo's Slack webhook comes from, if the recording wants Slack.
 - Tearing a server down is not promised; `fly apps destroy` by hand until a
   plan wants it.
