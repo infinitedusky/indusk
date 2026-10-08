@@ -7,9 +7,13 @@ import { readConfig } from "../config.js";
 import { WatcherBlind } from "../promises/probe.js";
 import { JaegerUnreachable } from "../promises/telemetry.js";
 import type { ConnectInput } from "./connect.js";
+import { credentialEnvFor } from "./connect.js";
 import { type DeployDeps, type DeployInput, deploy } from "./deploy.js";
 import type { FlyCli, FlyResult } from "./fly.js";
 import { secretsFile } from "./secrets-file.js";
+
+/** The variable this project's credential is stored under. */
+const storedVar = (root: string) => credentialEnvFor(root, "seat-holds");
 
 /**
  * server-provisioning: `indusk server deploy` creates a project's recording
@@ -30,6 +34,8 @@ interface FakeState {
 	apps: { Name: string; Organization: { Slug: string } }[];
 	volumes: { name: string }[];
 	ips: { Type: string }[];
+	/** Reads that exit non-zero, as `volumes list`. */
+	failing?: string[];
 }
 
 const READS = ["auth whoami", "orgs list", "apps list", "volumes list", "ips list"];
@@ -41,6 +47,8 @@ function fakeFly(state: FakeState) {
 		async run(args, opts) {
 			calls.push({ args: [...args], stdin: opts?.stdin });
 			const cmd = args.slice(0, 2).join(" ");
+			if (state.failing?.includes(cmd))
+				return { status: 1, stdout: "", stderr: `${cmd}: connection reset` };
 			if (state.cli === "missing")
 				return { status: 127, stdout: "", stderr: "fly: command not found" };
 			if (cmd === "auth whoami") {
@@ -333,6 +341,62 @@ describe("deploy", () => {
 		await expect(deploy(input(root), d)).rejects.toThrow(/could not be reached.*run .*again/s);
 		expect(clock).toBeGreaterThanOrEqual(5 * 60_000);
 		expect(tries).toBeGreaterThan(1);
+	});
+
+	it("A22 — a failed listing of an existing app's volumes or addresses refuses, and creates nothing", async () => {
+		for (const failing of ["volumes list", "ips list"]) {
+			const f = fakeFly({ ...existing(), failing: [failing] });
+			const { root, home } = project({
+				provider: "fly",
+				app: "indusk-seat-holds",
+				org: "personal",
+				region: "iad",
+			});
+			writeFileSync(join(home, "config.env"), `${storedVar(root)}=indusk:pw-old\n`);
+			await expect(deploy(input(root), deps(f.fly, home).d)).rejects.toThrow(new RegExp(failing));
+			expect(f.writes(), failing).toEqual([]);
+		}
+	});
+
+	it("A23 — a webhook given to an existing server is set on it, and its password kept", async () => {
+		const f = fakeFly(existing());
+		const { root, home } = project({
+			provider: "fly",
+			app: "indusk-seat-holds",
+			org: "personal",
+			region: "iad",
+		});
+		writeFileSync(join(home, "config.env"), `${storedVar(root)}=indusk:pw-old\n`);
+		const { d, connected } = deps(f.fly, home);
+		await deploy(input(root, { slackWebhook: WEBHOOK }), d);
+		const sec = f.calls.find((c) => verbs([c])[0] === "secrets import");
+		expect(sec?.stdin).toContain(`INDUSK_SERVER_SLACK_WEBHOOK=${WEBHOOK}`);
+		expect(sec?.stdin ?? "").not.toContain("INDUSK_SERVER_PASSWORD");
+		expect(connected[0]?.credential).toBe("indusk:pw-old");
+	});
+
+	it("A24 — a stored credential the server rejects is not waited on, and the refusal names --rotate", async () => {
+		const f = fakeFly(existing());
+		const { root, home } = project({
+			provider: "fly",
+			app: "indusk-seat-holds",
+			org: "personal",
+			region: "iad",
+		});
+		writeFileSync(join(home, "config.env"), `${storedVar(root)}=indusk:pw-stale\n`);
+		let clock = 0;
+		const { d } = deps(f.fly, home, {
+			now: () => clock,
+			async sleep(ms) {
+				clock += ms;
+			},
+			async connect(i) {
+				throw new JaegerUnreachable(i.queryUrl, `${i.queryUrl}/api/traces answered 401`);
+			},
+		});
+		const err = (await deploy(input(root), d).catch((e: Error) => e)) as Error;
+		expect(err.message).toMatch(/--rotate/);
+		expect(clock, "waited on a refused login").toBe(0);
 	});
 
 	it("A20 — pulls the published image for its version; never builds", async () => {

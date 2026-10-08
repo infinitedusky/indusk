@@ -140,6 +140,31 @@ describe("connect", () => {
 		expect(() => statSync(join(home, "config.env"))).toThrow();
 	});
 
+	it("A25 — two projects in folders of the same name keep separate credentials", async () => {
+		const home = mkdtempSync(join(tmpdir(), "sp-home-"));
+		const roots = [0, 1].map(() => {
+			const root = join(mkdtempSync(join(tmpdir(), "sp-parent-")), "app");
+			mkdirSync(join(root, ".indusk"), { recursive: true });
+			writeFileSync(
+				join(root, ".indusk", "config.json"),
+				`${JSON.stringify({ promises: { domains: ["x"] } })}\n`,
+			);
+			return root;
+		});
+		await connect(
+			{ ...input(roots[0] as string), projectName: "app", credential: "indusk:first" },
+			deps(home),
+		);
+		await connect(
+			{ ...input(roots[1] as string), projectName: "app", credential: "indusk:second" },
+			deps(home),
+		);
+		const first = readConfig(roots[0] as string)?.promises?.jaeger?.credential_env as string;
+		const second = readConfig(roots[1] as string)?.promises?.jaeger?.credential_env as string;
+		expect(first).not.toBe(second);
+		expect(secretsFile(join(home, "config.env")).get(first)).toBe("indusk:first");
+	});
+
 	it("A16 — the read-back uses the addresses the project will use", async () => {
 		const { root, home } = project();
 		const probed: { queryUrl: string; otlpUrl: string }[] = [];
