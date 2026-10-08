@@ -445,18 +445,18 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
-## Session 4551e898 — release-checks-run-once — falsification, then close
+## Session 4551e898 — small-fixes — Build Phase 1 done (local install), Build Phase 2 next
 
 **Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
-**Last updated**: 2026-10-08T17:53:39.624Z
+**Last updated**: 2026-10-08T19:44:41.661Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-- release-checks-run-once: Build Phases 1–3 done; Build Phase 4 (falsification) found four: a typo'd `covers` keyed nothing and so matched every run (A11); `./`-prefixed changelog/version paths were not recognised (A12); a non-fact value crashed with a stack trace instead of a one-line refusal (A13); a script's +x bit was not in the key (A14). All fixed in `lib/checks/key.ts` and `bin/commands/checks.ts`.
-- Sandy's decision (2026-10-08): dusk's slow tier never blocks landing or release; it runs after release in the background as a promise — the next item in known-issues.md (Releases). Dusk declares no `land.slow_tests`; `pnpm release` runs no slow step.
-- This session's MCP server is still 1.65.1 (started before the upgrade); its writes go to main's `.indusk/`. Use the CLI for promises; /mcp reconnect fixes it.
+- small-fixes: Build Phase 1 done. Dusk's global `indusk` is now a symlink to a checkout (`pnpm install:local` = prepublishOnly + `npm install -g ./apps/indusk-mcp`); until the plan lands it points at the small-fixes worktree, and landing's step 7 re-links it to main. Publishing is deliberate; `pnpm release` runs the slow tier itself again.
+- A9/A10 (the stash guard's test) could not be authored in this session (a safety classifier stopped the write); deferred to Build Phase 2 for a fresh session or Sandy.
+- Build Phase 2 next: the approval gate in check-gates.js, the planner's end and Key Decisions timing, stash-guard.js, hook parity.
 
 ### Open Questions
 
@@ -464,7 +464,7 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ### Cursor
 
-Build Phase 4 verification → cleanup (skip with reason) → /retrospective → accept → land → bump 1.67.0.
+Build Phase 2 of small-fixes.
 
 ---
 
