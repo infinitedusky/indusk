@@ -60,9 +60,9 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 | A16 | The read-back goes through the addresses the project will use, never an internal or loopback one | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-server-is-read-back-before-the-command-ends | apps/indusk-mcp/src/lib/server/connect.test.ts |
 | A17 | Deploy whose read-back fails ends non-zero naming what did not come back, and says the server exists so a second run can finish | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-server-is-read-back-before-the-command-ends | apps/indusk-mcp/src/lib/server/deploy.test.ts |
 | A18 | The release command publishes the image tagged with the version, and a release whose image push fails is not a release | Test Phase 1 | Build Phase 3 | written | unit | promise: the-recording-server-runs-from-a-published-image | apps/indusk-mcp/src/__tests__/release-script.test.ts |
-| A19 | The image built the way the release builds it starts with a volume, its two ports and its two secrets, and answers a mark sent through it, with no checkout on the host | Test Phase 1 | Build Phase 3 | planned | contract | promise: the-recording-server-runs-from-a-published-image | apps/indusk-mcp/src/__tests__/always-on-image.test.ts |
+| A19 | The image built the way the release builds it starts with a volume, its two ports and its two secrets, and answers a mark sent through it, with no checkout on the host | Test Phase 1 | Build Phase 3 | written | contract | promise: the-recording-server-runs-from-a-published-image | apps/indusk-mcp/src/__tests__/always-on-image.test.ts |
 | A20 | Deploy pulls the published image for its version rather than building one | Build Phase 2 | Build Phase 2 | planned | unit | promise: the-recording-server-runs-from-a-published-image | apps/indusk-mcp/src/lib/server/deploy.test.ts |
-| A21 | The guide's "run your own server" page names every server setting without a default, the volume, the two ports and the connect command | Test Phase 1 | Build Phase 3 | planned | unit | a regression guard over the guide — a server setting added without a line in it is the 2026-10-04 deploy again | apps/indusk-mcp/src/__tests__/server-guide.test.ts |
+| A21 | The guide's "run your own server" page names every server setting without a default, the volume, the two ports and the connect command | Test Phase 1 | Build Phase 3 | written | unit | a regression guard over the guide — a server setting added without a line in it is the 2026-10-04 deploy again | apps/indusk-mcp/src/__tests__/server-guide.test.ts |
 
 ### Deferred Verification
 
@@ -79,8 +79,8 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 
 - [x] Create/confirm this plan's worktree (`indusk worktree create server-provisioning`, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs `indusk worktree assign server-provisioning <path>`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter. Created 2026-10-08 at `dusk-worktrees/server-provisioning`.
 - [x] A18 in `src/__tests__/release-script.test.ts`: the pinned step list gains `bash scripts/release-image.sh` between `npm whoami` and the publish step, so a failed push stops the release before npm has the version; RED today (the step is absent)
-- [ ] A19 in `src/__tests__/always-on-image.test.ts` (system tier): a second describe builds the image from a `pnpm pack` tarball through `templates/server/Dockerfile` (`--build-arg TARBALL=`), starts it with a volume, the two ports and the two secrets, sends a mark through the intake and reads it back from the query API with `probeWatcher`; RED today (no template, and the Dockerfile installs from npm)
-- [ ] A21 in `src/__tests__/server-guide.test.ts`: reads every `INDUSK_SERVER_*` name from `lib/telemetry/` whose read has no default and asserts each appears in `apps/docs/src/guide/run-your-own-server.md`, along with `INDUSK_SERVER_VOLUME`, both ports and the words `indusk server connect`; RED today (the page does not exist)
+- [x] A19 in `src/__tests__/always-on-image.test.ts` (system tier): a second describe builds the image from a `pnpm pack` tarball through `templates/server/Dockerfile` (`--build-arg TARBALL=`), starts it with a volume, the two ports and the two secrets, sends a mark through the intake and reads it back from the query API with `probeWatcher`; RED today (no template, and the Dockerfile installs from npm)
+- [x] A21 in `src/__tests__/server-guide.test.ts`: reads every `INDUSK_SERVER_*` name from `lib/telemetry/` whose read has no default and asserts each appears in `apps/docs/src/guide/run-your-own-server.md`, along with `INDUSK_SERVER_VOLUME`, both ports and the words `indusk server connect`; RED today (the page does not exist)
 
 #### Deferred to Build Phase 1
 
@@ -324,7 +324,7 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 
 #### Test Phase 1 Verification
 
-- [ ] A18, A19 and A21 are authored, and each red one fails on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/release-script.test.ts src/__tests__/server-guide.test.ts`; A19 by `pnpm exec vitest run --config vitest.tiers.ts src/__tests__/always-on-image.test.ts` on a machine where `docker info` answers)
+- [ ] A18, A19 and A21 are authored, and each red one fails on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/release-script.test.ts src/__tests__/server-guide.test.ts`; A19 by `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/always-on-image.test.ts` on a machine where `docker info` answers)
 - [ ] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims — in particular the exported name of the sources reader for A3, confirmed against `lib/promises/sources.ts`
 
 ### Build Phase 1: Connect
@@ -363,6 +363,7 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 - [ ] `lib/server/deploy.ts`: `deploy(wanted, deps: DeployDeps { fly, probe, connect, secrets, out, random })` — generates the password (`random()`, 24 bytes hex in the real deps), sends both secrets on stdin, runs the plan, prints through the redacting writer, prints "announcements are off" without a webhook, records the `server` block, then calls `connect` with the public addresses; a `WatcherBlind` from connect becomes a message that names what did not come back and says the server exists and a second run finishes
 - [ ] `server deploy [--app] [--org] [--region] [--slack-webhook-env NAME] [--version] [--rotate]` in `bin/commands/server.ts` and `cli.ts`; defaults: `indusk-<project>`, the account's only org (refuse naming `--org` when there are several), the template's region, the running version
 - [ ] A5, A6, A7, A11, A13, A14, A17, A20 and the deploy halves of A9 and A10 authored from the register, red first, then green
+- [ ] (found in Test Phase 1) The server refuses to start without `INDUSK_SERVER_SLACK_WEBHOOK` (`readServerSettings` and `readPassSettings` in `lib/telemetry/server.ts` call `required`), so A7's deploy without a webhook would deploy a server that never starts. Make the webhook optional in both readers — no webhook means the pass records and announces nothing, and the server logs once that announcements are off — and change `always-on-image.test.ts`'s "a container without %s exits naming it" case so the webhook is not among the settings a container must have
 
 #### Build Phase 2 Verification
 
@@ -382,14 +383,14 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 **Goal**: the release builds the server's image from its own tarball and pushes it first; an unreleased build can still be deployed for a live check.
 
 - [ ] `templates/server/Dockerfile`: `ARG TARBALL`, `COPY ${TARBALL} /tmp/indusk.tgz`, `npm install -g /tmp/indusk.tgz`; `docker/Dockerfile.always-on` becomes a copy pinned equal to the template by `always-on-image.test.ts` (the repo's documented reference, the package's the one that ships)
-- [ ] `apps/indusk-mcp/scripts/release-image.sh`: `pnpm pack` to a temp dir, `docker build -f templates/server/Dockerfile --build-arg TARBALL=<tgz> -t ghcr.io/infinitedusky/indusk-always-on:<version> -t …:latest`, `docker push` both tags; exits non-zero naming `docker login ghcr.io` when the push is refused for auth
+- [ ] `apps/indusk-mcp/scripts/release-image.sh`: (A19 runs it with `INDUSK_IMAGE_PUSH=0` and `INDUSK_IMAGE=<local name>`, so it honours both: the push is skipped when the first is `0`, and the second replaces `ghcr.io/infinitedusky/indusk-always-on` for the tags; it builds the package first, since `pnpm pack` alone does not) `pnpm pack` to a temp dir, `docker build -f templates/server/Dockerfile --build-arg TARBALL=<tgz> -t ghcr.io/infinitedusky/indusk-always-on:<version> -t …:latest`, `docker push` both tags; exits non-zero naming `docker login ghcr.io` when the push is refused for auth
 - [ ] `package.json` `release`: `bash scripts/release-guard.sh && pnpm -w test:system && npm whoami && bash scripts/release-image.sh && npm_config_loglevel=warn pnpm publish --no-git-checks && node scripts/record-release.js` (A18 goes green)
 - [ ] `deploy --build-from <tarball>`: builds the image locally through the same template and runs `fly deploy --local-only` with the built tag instead of `--image`; A20's rule holds for the default path only, and the flag's help says it is for an unreleased build
 - [ ] A4 and A8 authored in `e2e/server-live.e2e.test.ts` from the register, `written`, skipped by name without `INDUSK_LIVE_FLY=1`
 
 #### Build Phase 3 Verification
 
-- [ ] A18 and A21 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/release-script.test.ts src/__tests__/server-guide.test.ts`); A19 passes in the system tier on this machine (`pnpm exec vitest run --config vitest.tiers.ts src/__tests__/always-on-image.test.ts`, Docker 28 present); A4 and A8 flip to `written`
+- [ ] A18 and A21 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/release-script.test.ts src/__tests__/server-guide.test.ts`); A19 passes in the system tier on this machine (`pnpm exec vitest run --config vitest.system.config.ts src/__tests__/always-on-image.test.ts`, Docker 28 present); A4 and A8 flip to `written`
 
 #### Build Phase 3 Context
 
@@ -403,7 +404,7 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 
 **Goal**: the one real run of each live check, recorded with its duration and cost, and the demo app connected to a server this plan made.
 
-- [ ] A8: in a scratch project, `indusk server deploy --app indusk-sp-live --build-from <tarball>` with `fly` signed in; record in this file the wall time, each Fly step's duration, and the cost line from `fly` (machine, volume, dedicated IPv4) — run `INDUSK_LIVE_FLY=1 pnpm exec vitest run --config vitest.tiers.ts e2e/server-live.e2e.test.ts`
+- [ ] A8: in a scratch project, `indusk server deploy --app indusk-sp-live --build-from <tarball>` with `fly` signed in; record in this file the wall time, each Fly step's duration, and the cost line from `fly` (machine, volume, dedicated IPv4) — run `INDUSK_LIVE_FLY=1 pnpm exec vitest run --config vitest.system.config.ts e2e/server-live.e2e.test.ts`
 - [ ] A4: `indusk server connect` in `examples/seat-holds` against `indusk-sp-live`; open the admin's Promises page for it and record that the production source and the seat-holds promise appear
 - [ ] Destroy the scratch app by hand (`fly apps destroy indusk-sp-live`) so it stops costing money, and record that teardown stays manual (the brief's Not promised)
 
