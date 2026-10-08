@@ -20,6 +20,18 @@ primitive, at three levels — premises judged on evidence, promises that hold o
 fail, phases that complete when tests pass — and nothing in the interface is
 self-reported.
 
+**Stage 2 of two** (Sandy, 2026-10-08). Stage 1 is
+[plan-cockpit](../plan-cockpit/brief.md): the promise dashboard with broken
+promises first, the promise page with its proof, and the plan page as its two
+workflows with the decision it is waiting on. Those are the pages; this plan
+is the home view and the premise level above them, and it changes nothing
+inside them. The two do not overlap: a page belongs to stage 1, the hierarchy
+that arranges the pages belongs here. Stage 1 is on the demo's path to the
+recording; this plan is a child of the [demo](../indusk-demo/master.md) after
+the launch, once plan-premises exists to give it a top level. The mockups both
+stages were drawn from are in
+[`.indusk/research/promise-ui/`](../../research/promise-ui/README.md).
+
 ## Proposed Direction
 
 - **The home view is the hierarchy.** Premises at the top, the promises each
@@ -28,9 +40,9 @@ self-reported.
   evidence report; a promise's health per source and its timeline; a phase's
   tests. Plans and their documents are drill-down detail, reached from a phase.
 - **Production first.** The landing screen leads with what the running system
-  is doing to its promises — the timeline built by
-  [promise-timeline](../archive/promise-timeline/brief.md) — and what is being built
-  toward them.
+  is doing to its promises — stage 1's dashboard, broken first, over the
+  timeline built by [promise-timeline](../archive/promise-timeline/brief.md) —
+  and what is being built toward them.
 - **Groups follow the hierarchy.** Collapsible groups with a summary of their
   worst state, at each level: a premise's promises, a promise's phases. This
   replaces the grouping-by-plan-or-domain that promise-timeline's Build Phase 5
@@ -59,6 +71,9 @@ self-reported.
 - Removing or deriving every hand-set status in the admin
 
 ### Out of Scope
+- The promise dashboard, the promise page and the plan page — stage 1,
+  [plan-cockpit](../plan-cockpit/brief.md); this plan opens onto them as the
+  hierarchy's leaves and does not change them
 - Producing premises and evidence reports (plan-premises)
 - Writing plans from the UI (admin-plan-authoring)
 
@@ -71,6 +86,8 @@ self-reported.
 
 ## Depends On
 
+- [plan-cockpit](../plan-cockpit/brief.md) — stage 1: the pages the hierarchy
+  opens onto.
 - [promise-timeline](../archive/promise-timeline/brief.md) — the timeline and the
   per-source chips.
 - [plan-premises](../plan-premises/brief.md) — for the top level. Without it the
