@@ -18,6 +18,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
+- **Every release publishes the recording server's image** (server-provisioning): `pnpm release` builds `ghcr.io/infinitedusky/indusk-always-on:<version>` from the release's own tarball and pushes it before `pnpm publish`; a refused push stops the release with nothing published. The release machine needs Docker and a one-time `docker login ghcr.io`. The image installs a tarball, not npm, so it never waits on npm's publish-time scan. See [Run your own server](/guide/run-your-own-server#anywhere-else-the-published-image).
+- **The recording server starts without a Slack webhook** (server-provisioning): it records every violation and the admin shows it; nothing is posted. Before, a server without one refused to start.
+
 - **Dusk publishes deliberately, not per plan.** Landing installs the build locally; `pnpm release` is for a server deploy or another machine, and runs the full slow tests itself before publishing. The retrospective's bump step says so for any project that installs locally.
 - **`indusk update` registers every hook `init` does** (small-fixes): both now read one table. Before, `update` only checked some hooks, so a project missing `check-gates`, `validate-impl-structure` or `gate-reminder` stayed without it. Now it gets it.
 - **The session panel says how a turn ended** (small-fixes): **Turn done** with the closing text, **Failed** with the error's first line, or **Session ended** with the exit code. It no longer shows the protocol's `subtype`, whose `success` read as if the session had ended well.

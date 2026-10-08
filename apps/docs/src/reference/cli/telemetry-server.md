@@ -215,3 +215,19 @@ outlive the evidence it is about. Shorten it with
 
 A project names the server it reads in `.indusk/config.json`; naming none
 still reads the local daemon. See [the promises guide](/guide/promises).
+
+## The image
+
+Every release publishes `indusk telemetry serve` as an image:
+
+```
+ghcr.io/infinitedusky/indusk-always-on:<version>
+```
+
+It is built from that release's own packed tarball, through the package's
+`templates/server/Dockerfile`, by `scripts/release-image.sh`, which `pnpm
+release` runs before `pnpm publish`: the image and the npm package of a
+release are the same bytes, and a push the registry refuses publishes nothing.
+The repository's `docker/Dockerfile.always-on` is a copy of the template. How
+to run it, and what it needs: [Run your own server](/guide/run-your-own-server).
+
