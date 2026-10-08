@@ -52,3 +52,5 @@ Packaged paths changed (the package's source and hooks); the plan adds a capabil
 
 - A guard that names its subject's permissions (`evaluatorPermissionArgs`) and a test that pins every launch site to it is cheaper than finding out from a vanished edit.
 - A real-model e2e test (A8, about $0.50) was worth its cost twice: it proved the evaluator's tools still worked under `dontAsk`, and again after the session and home-key changes.
+
+Landed on main at 834e8b4d, 2026-10-08. The installed 1.65.1's landing step re-tracked a fresh `.indusk/highlights.jsonl` in its bookkeeping commit, before the branch's `.gitignore` arrived; moved to the home again in bb90509e.
