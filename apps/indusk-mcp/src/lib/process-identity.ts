@@ -21,6 +21,8 @@
  * promise: indusk-stops-only-its-own-daemons
  */
 
+import { spawnSync } from "node:child_process";
+
 /** What identity reads, given as inputs. */
 export interface ProcessDeps {
 	alive(pid: number): boolean;
@@ -51,3 +53,37 @@ export function isOwnProcess(
 		Math.abs(started.getTime() - recorded) <= START_TOLERANCE_MS
 	);
 }
+
+/** Whether `pid` is alive: signal 0, which delivers nothing and fails only for a pid that is gone. */
+export function isAlive(pid: number): boolean {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/** One `ps` field for one pid, in the C locale (so `lstart` is a date `Date` reads), or `null` when the pid is gone. */
+export function ps(field: string, pid: number): string | null {
+	const r = spawnSync("ps", ["-o", `${field}=`, "-p", String(pid)], {
+		encoding: "utf-8",
+		env: { ...process.env, LC_ALL: "C" },
+	});
+	return r.status === 0 ? r.stdout.trim() || null : null;
+}
+
+/**
+ * The real reads behind `ProcessDeps`, for every daemon InDusk stops and every
+ * session it ends (small-fixes A23): three modules each kept their own, and
+ * only one read `ps` in the C locale.
+ */
+export const realProcessReads: Required<ProcessDeps> = {
+	alive: isAlive,
+	command: (pid) => ps("command", pid),
+	startTime(pid) {
+		const lstart = ps("lstart", pid);
+		const at = lstart === null ? Number.NaN : Date.parse(lstart);
+		return Number.isNaN(at) ? null : new Date(at);
+	},
+};

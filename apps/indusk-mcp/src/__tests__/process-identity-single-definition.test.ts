@@ -63,7 +63,9 @@ describe("A23 — one place reads whether a process is alive and what `ps` says 
 			.sort();
 
 	it("only `process-identity.ts` signals 0 to ask whether a pid is alive", () => {
-		expect(definers(/\bkill\(\s*\w+\s*,\s*0\s*\)/), LESSON).toEqual(["process-identity.ts"]);
+		expect(definers(/process\.kill\(\s*[\w.]+\s*,\s*0\s*\)/), LESSON).toEqual([
+			"process-identity.ts",
+		]);
 	});
 
 	it("only `process-identity.ts` asks `ps` about one pid", () => {

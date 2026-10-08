@@ -1,9 +1,9 @@
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createConnection, createServer } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { isOwnProcess, type ProcessDeps } from "../process-identity.js";
+import { isOwnProcess, type ProcessDeps, realProcessReads } from "../process-identity.js";
 
 /**
  * The admin-ui daemon: a single long-lived `next start` process that serves
@@ -297,15 +297,6 @@ function isPortFree(port: number): Promise<boolean> {
 	});
 }
 
-function isAlive(pid: number): boolean {
-	try {
-		process.kill(pid, 0);
-		return true;
-	} catch {
-		return false;
-	}
-}
-
 /**
  * Whether the recorded PID is still our daemon: alive, a `next` process, and
  * started when the record says (small-fixes A17). `next start` rewrites its
@@ -320,24 +311,9 @@ function verifyIdentity(pid: number, meta: DaemonMeta, deps: ProcessDeps): boole
 	return isOwnProcess(pid, ["next"], deps, meta.startedAt);
 }
 
-/** `ps` in the C locale, so `lstart` is a date `Date` can read. */
-function ps(field: string, pid: number): string | null {
-	const r = spawnSync("ps", ["-o", `${field}=`, "-p", String(pid)], {
-		encoding: "utf-8",
-		env: { ...process.env, LC_ALL: "C" },
-	});
-	return r.status === 0 ? r.stdout.trim() || null : null;
-}
-
 /** The real reads and signals; the tests hand in their own. */
 const realDeps: DaemonDeps = {
-	alive: isAlive,
-	command: (pid) => ps("command", pid),
-	startTime(pid) {
-		const lstart = ps("lstart", pid);
-		const at = lstart === null ? Number.NaN : Date.parse(lstart);
-		return Number.isNaN(at) ? null : new Date(at);
-	},
+	...realProcessReads,
 	kill: (pid, signal) => process.kill(pid, signal),
 	sleep,
 };

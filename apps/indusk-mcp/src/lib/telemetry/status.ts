@@ -2,6 +2,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { createConnection } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { isAlive } from "../process-identity.js";
 
 /**
  * The read side of the local telemetry daemon: where it records itself, and
@@ -92,14 +93,8 @@ function connectOnce(port: number): Promise<"connected" | "refused" | "timeout">
 	});
 }
 
-export function isAlive(pid: number): boolean {
-	try {
-		process.kill(pid, 0);
-		return true;
-	} catch {
-		return false;
-	}
-}
+// One liveness check for every process InDusk reads (small-fixes A23).
+export { isAlive };
 
 export async function verifyIdentity(pid: number, port: number): Promise<boolean> {
 	if (!isAlive(pid)) return false;
@@ -123,7 +118,7 @@ export function cleanupFiles(): void {
 export function liveOtlpEndpointSync(): string | null {
 	try {
 		const meta = JSON.parse(readFileSync(metaFilePath(), "utf-8")) as DaemonMeta;
-		process.kill(meta.jaegerPid, 0);
+		if (!isAlive(meta.jaegerPid)) return null;
 		return `http://localhost:${meta.otlpPort}`;
 	} catch {
 		return null;

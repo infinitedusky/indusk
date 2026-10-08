@@ -1,8 +1,8 @@
-import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { isAlive, realProcessReads } from "../process-identity.js";
 import type { SessionKind } from "./protocol.js";
 import { type Session, type SessionOptions, type StartedEvent, startSession } from "./start.js";
 
@@ -207,7 +207,7 @@ export class SessionManager {
 		const recorded = this.read().filter((r) => !this.held.has(r.id));
 		const ended: number[] = [];
 		for (const r of recorded) {
-			if (!isAlive(r.pid) || !commandOf(r.pid).includes(r.bin)) continue;
+			if (!isAlive(r.pid) || !(realProcessReads.command(r.pid) ?? "").includes(r.bin)) continue;
 			process.kill(r.pid, "SIGTERM");
 			const deadline = Date.now() + graceMs;
 			while (isAlive(r.pid) && Date.now() < deadline)
@@ -238,18 +238,4 @@ export class SessionManager {
 		writeFileSync(temp, `${JSON.stringify({ version: 1, sessions }, null, 2)}\n`);
 		renameSync(temp, this.recordPath);
 	}
-}
-
-function isAlive(pid: number): boolean {
-	try {
-		process.kill(pid, 0);
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-function commandOf(pid: number): string {
-	const r = spawnSync("ps", ["-p", String(pid), "-o", "command="], { encoding: "utf-8" });
-	return r.status === 0 ? r.stdout.trim() : "";
 }
