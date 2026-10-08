@@ -45,16 +45,16 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 | A4 | Editing a draft plan's status to `in-progress` by hand is refused, naming the lesson; after `plans approve` the same edit lands | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
 | A5 | Checking off a build item on a draft plan is refused; on an approved plan it lands | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
 | A6 | The planner skill ends at the written plan: it names `plans approve` as the only way on and nowhere tells the agent to start building | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
-| A7 | A turn that ends with an API error shows **Failed** and the error's first line, and "success" appears nowhere on the panel | Test Phase 1 | Build Phase 3 | written | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
-| A8 | A turn that completes shows **Turn done**; only a session whose process exited shows **Session ended**, with its exit code | Test Phase 1 | Build Phase 3 | written | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
+| A7 | A turn that ends with an API error shows **Failed** and the error's first line, and "success" appears nowhere on the panel | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
+| A8 | A turn that completes shows **Turn done**; only a session whose process exited shows **Session ended**, with its exit code | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
 | A9 | In a repository with more than one worktree, `git stash` and `git stash pop` are refused before they run, naming a temporary commit and `stash push -m <tag>` / `stash apply <sha>` | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
 | A10 | `stash push -m <tag>`, `stash list` and `stash apply <sha>` are not refused; in a repository with one worktree nothing is refused | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
 | A11 | Every hook in the package has a byte-identical installed copy in this repository, and an installed hook with no package source is reported by name | Test Phase 1 | Test Phase 1 | passing | unit | promise: installed-hooks-match-the-package | apps/indusk-mcp/src/__tests__/hook-sync-parity.test.ts |
-| A12 | `indusk ui stop` with a port slow to answer still stops its own daemon and removes its record; it never signals a process that is not its own, and exits non-zero naming one that would not stop | Build Phase 3 | Build Phase 3 | planned | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/admin/daemon-stop.test.ts |
+| A12 | `indusk ui stop` with a port slow to answer still stops its own daemon and removes its record; it never signals a process that is not its own, and exits non-zero naming one that would not stop | Build Phase 3 | Build Phase 3 | passing | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/admin/daemon-stop.test.ts |
 | A13 | `indusk telemetry stop` behaves exactly as before: its tests pass unchanged | Test Phase 1 | Test Phase 1 | passing | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
-| A14 | The command-line identity check is defined once, and both stops use it | Test Phase 1 | Build Phase 3 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/process-identity-single-definition.test.ts |
+| A14 | The command-line identity check is defined once, and both stops use it | Test Phase 1 | Build Phase 3 | passing | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/process-identity-single-definition.test.ts |
 | A15 | The planner writes the Key Decisions line as the first build phase's context item, never at ADR acceptance | Test Phase 1 | Build Phase 2 | passing | unit | a fix to the planner skill so `plans approve` accepts the branch; the approve rule is unchanged | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
-| A16 | The update notice says a newer version exists for `1.10.0` over `1.9.0`, and not for `1.9.0` over `1.10.0` | Test Phase 1 | Build Phase 3 | written | unit | a regression guard over a one-line fix | apps/indusk-mcp/src/lib/version-check.test.ts |
+| A16 | The update notice says a newer version exists for `1.10.0` over `1.9.0`, and not for `1.9.0` over `1.10.0` | Test Phase 1 | Build Phase 3 | passing | unit | a regression guard over a one-line fix | apps/indusk-mcp/src/lib/version-check.test.ts |
 
 ## Checklist
 
@@ -148,7 +148,7 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/skills/planner.md`: the plan ends at approval
+- [x] (the page is `reference/skills/plan.md`; a paragraph after the impl's frontmatter table) `apps/docs/src/reference/skills/planner.md`: the plan ends at approval
 
 ### Build Phase 3: The panel says what happened; one identity rule; numbers
 
@@ -158,15 +158,15 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 #### Build Phase 3 Verification
 
-- [ ] A7, A8, A12, A13, A14, A16 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/admin src/lib/telemetry src/__tests__/process-identity-single-definition.test.ts src/lib/pending-release.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/session`)
+- [x] (mcp: 10 files, 57 tests; admin session: 5 files, 23 tests; tsc clean; `vitest related` over the changed files green; A12 ran red at 9386abe7 on its own assertion first) A7, A8, A12, A13, A14, A16 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/admin src/lib/telemetry src/__tests__/process-identity-single-definition.test.ts src/lib/pending-release.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/session`)
 
 #### Build Phase 3 Context
 
-- [ ] mcp: `lib/process-identity.ts` is the one answer to "is this process mine", for every daemon InDusk stops — in the package `CLAUDE.md`'s single-definition list, with one entry there moved down a tier to make room
+- [x] (the `headSha` / `headShaOrNull` entry moved down: its pin `head-sha-single-definition.test.ts` names the lesson, and the list's closing sentence already says a git primitive belongs in `lib/git.ts`; the file is 16376 of 16384 bytes — the next entry here moves another one down; the A14 pin now names the lesson too, as the list's opening clause promises) mcp: `lib/process-identity.ts` is the one answer to "is this process mine", for every daemon InDusk stops — in the package `CLAUDE.md`'s single-definition list, with one entry there moved down a tier to make room
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: what the panel's three endings mean; `apps/docs/src/changelog.md` Unreleased: the rest
+- [x] (changelog: Added — the approval gate; Changed — the panel's endings; Fixed — `ui stop` identity and the would-not-stop exit, the numeric update notice; Build Phase 4's stash guard is not in it, since it is not built) `apps/docs/src/reference/admin-ui/sessions.md`: what the panel's three endings mean; `apps/docs/src/changelog.md` Unreleased: the rest
 
 ### Build Phase 4: A stash never crosses worktrees
 
