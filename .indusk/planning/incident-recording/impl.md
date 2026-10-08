@@ -199,11 +199,11 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 #### Build Phase 2 Context
 
-- [ ] current.md (Project shared): the project home now holds `inbox.jsonl`, `inbox-delivered.jsonl`, `heard.jsonl`, `announced.json`, `recorder.lock` beside the eval and highlight files — machine state, never in the repo
+- [x] (written on main's `current.md` and committed there, 06125b43 — the shared region is main's, and a branch's copy of it conflicts at landing) current.md (Project shared): the project home now holds `inbox.jsonl`, `inbox-delivered.jsonl`, `heard.jsonl`, `announced.json`, `recorder.lock` beside the eval and highlight files — machine state, never in the repo
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: what the recorder keeps in the home and why each file; `promises.slack_webhook_env` in the config reference; changelog Added — reminders
+- [x] (a table of the five home files in the `promises` reference, reminders, and `slack_webhook_env` in its config section — there is no separate config reference; changelog Added) `apps/docs/src/reference/cli/promises.md`: what the recorder keeps in the home and why each file; `promises.slack_webhook_env` in the config reference; changelog Added — reminders
 
 ### Build Phase 3: The hook
 
