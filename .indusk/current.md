@@ -443,27 +443,26 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
-## Session 4551e898 — demo-app-template: building — Build Phase 3 deployed
+## Session 4551e898 — bookkeeping-lives-where-it-is-read — cleanup done, retrospective next
 
 **Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
-**Last updated**: 2026-10-07T19:53:27.930Z
+**Last updated**: 2026-10-08T02:53:37.259Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-- **demo-app-template** (branch `plan/demo-app-template`, worktree `dusk-worktrees/demo-app-template`): Build Phases 1–3 done. The seat-holds example is in `examples/seat-holds/`, `indusk demo` starts it, and it ships in the package.
-- **Deployed example** for the production act: Fly app `seat-holds`, https://seat-holds.fly.dev/, one machine that never sleeps; its spans go to `indusk-always-on`. No Break it switch there: deploy with `SEAT_HOLDS_FAULT=slow-release` to break it in production.
-- Next: Build Phase 4 — Sandy runs the live checks A5 (the start) and A8 (the timed break) in the admin; then promises confirm, the try-it guide, the changelog.
+- bookkeeping-lives-where-it-is-read: Build Phases 1–5 done (4 = falsification fixes, 5 = cleanup: `pathKey`, a home argument on `bookkeepingRoots`/`evalDir`, one JSONL reader `lib/bookkeeping/jsonl.ts`, one git runner `lib/bookkeeping/git.ts`). Remaining: retrospective, accept, land, bump 1.66.0.
+- This repo's home: `~/.indusk/projects/dusk-2f1b1d2f/`. After the release, run `indusk update` on main to merge the queue the installed version keeps writing there.
 
 ### Open Questions
 
-- Unverified: the deployed example's marks reaching `indusk-always-on` (A10 only checks the page answers).
-- The small-fixes plan, led by bookkeeping-lives-where-it-is-read, still to start in a second session.
+- `~/.indusk/projects/project-6bafd0c8/` appeared at 19:49 from a session not traced to any test; left in place.
+- Each `/catchup` makes one or two `chore(indusk)` commits on main (register + list's heartbeat); the user's call whether heartbeats should commit.
 
 ### Cursor
 
-`.indusk/planning/demo-app-template/impl.md`, Build Phase 4.
+/retrospective bookkeeping-lives-where-it-is-read.
 
 ---
 
@@ -1985,6 +1984,27 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-07T22:45:33.162Z
 **Branch**: plan/bookkeeping-lives-where-it-is-read
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/bookkeeping-lives-where-it-is-read
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 2bedb341 — eval agent: scoring commit 480c36a9
+
+**Session ID**: 2bedb341-715e-4344-823d-799928cb2a41
+**Last updated**: 2026-10-07T23:26:18.880Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
