@@ -1,4 +1,4 @@
-import { readConfig, writeConfig } from "../config.js";
+import { type InduskConfig, readConfig, writeConfig } from "../config.js";
 import { type Connected, type ConnectInput, credentialEnvFor } from "./connect.js";
 import type { FlyCli } from "./fly.js";
 import { DEFAULT_REGION, publicAddresses, writeFlyConfig } from "./fly-config.js";
@@ -91,21 +91,14 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 	const out = redactingWriter(deps.print, [password ?? "", webhook ?? "", credential]);
 
 	out.line(`Deploying ${IMAGE}:${input.version} as ${app} (${plan.org}, ${region}).`);
+	const server = { provider: "fly" as const, app, org: plan.org, region };
 	for (const step of plan.steps) {
 		await runStep(deps.fly, step, out, { password, webhook });
-		if (step.name === "apps create") {
-			writeConfig(input.projectRoot, {
-				...(readConfig(input.projectRoot) ?? config),
-				server: { provider: "fly", app, org: plan.org, region },
-			});
-		}
+		// Recorded as soon as the app exists, so a failure in any later step
+		// still leaves a second run its identity (A17).
+		if (step.name === "apps create") recordServer(input.projectRoot, server);
 	}
-	if (!readConfig(input.projectRoot)?.server) {
-		writeConfig(input.projectRoot, {
-			...(readConfig(input.projectRoot) ?? config),
-			server: { provider: "fly", app, org: plan.org, region },
-		});
-	}
+	recordServer(input.projectRoot, server);
 	if (setsSecrets && !webhook) {
 		out.line(
 			"No Slack webhook given: announcements are off. The server records, and the admin shows what it records.",
@@ -124,6 +117,12 @@ export async function deploy(input: DeployInput, deps: DeployDeps): Promise<void
 			`${why}\nThe server ${app} exists and is recorded in this project's config; run \`indusk server deploy\` again to finish connecting.`,
 		);
 	}
+}
+
+/** Name this project's server in its config; the rest of the config is kept. */
+function recordServer(projectRoot: string, server: NonNullable<InduskConfig["server"]>): void {
+	const config = readConfig(projectRoot);
+	if (config) writeConfig(projectRoot, { ...config, server });
 }
 
 async function runStep(
