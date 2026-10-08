@@ -7,6 +7,8 @@ test_phases: required
 test_levels: required
 test_purpose: required
 gate_policy: ask
+accepted: 2026-10-08T20:58:02.240Z
+accepted_by: person
 ---
 
 # Small fixes
