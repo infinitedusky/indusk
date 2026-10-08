@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.66.0] — 2026-10-08
+
 ### Added
 
 - **`indusk eval home`** prints a project's home, from any of its checkouts: its evaluation results are under `eval/`, its highlights beside them (`tail "$(indusk eval home)/eval/results.log"`). The `rail-check` and `eval-review` skills read them through it.
