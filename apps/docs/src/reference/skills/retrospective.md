@@ -231,7 +231,9 @@ if the project declares slow tests, `indusk checks slow`, which records a green
 run so the release on the same code does not repeat it. Then `plans land`
 merges `main` into the branch, runs `plans.land_checks`, merges into `main` with
 `--no-ff`, releases the worktree assignment, and removes the worktree and the
-branch. Afterwards, verify on trunk; if the project declares how it installs
+branch. It also refuses when the `indusk` running it is installed from the
+plan's worktree, which an install run on the branch does: landing would delete
+the build it runs from, so install from the trunk first. Afterwards, verify on trunk; if the project declares how it installs
 the landed build (`workflow.steps.land.install` — dusk's is `pnpm
 install:local`, which builds what a publish builds and links the checkout into
 the global `indusk`), run that, so the machine's `indusk` is the landed build
