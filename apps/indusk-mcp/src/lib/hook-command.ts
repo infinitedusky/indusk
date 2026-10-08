@@ -50,6 +50,9 @@ export const HOOK_REGISTRATIONS: readonly (readonly [
 	// would commit half-finished source.
 	["PostToolUse", "Edit|Write", "workbench-sync.js"],
 	["PostToolUse", "Bash", "eval-trigger.js"],
+	// A break reaches the working agent (incident-recording): once per prompt,
+	// before the model reads it. The event takes no matcher; "" writes none.
+	["UserPromptSubmit", "", "break-inbox.js"],
 ];
 
 /** `HOOK_REGISTRATIONS` as the settings file's `hooks` object: events, then matcher groups, in table order. */
@@ -60,9 +63,9 @@ export function hookGroups(): Record<
 	const out: Record<string, { matcher: string; hooks: { type: string; command: string }[] }[]> = {};
 	for (const [event, matcher, file] of HOOK_REGISTRATIONS) {
 		out[event] ??= [];
-		let group = out[event].find((g) => g.matcher === matcher);
+		let group = out[event].find((g) => sameMatcher(g.matcher, matcher));
 		if (!group) {
-			group = { matcher, hooks: [] };
+			group = matcherless(matcher, []);
 			out[event].push(group);
 		}
 		group.hooks.push({ type: "command", command: hookCommand(file) });
@@ -104,7 +107,7 @@ export function hookRegistered(
 	matcher: string,
 	hookFile: string,
 ): boolean {
-	const group = (settings.hooks?.[event] ?? []).find((g) => g.matcher === matcher);
+	const group = (settings.hooks?.[event] ?? []).find((g) => sameMatcher(g.matcher, matcher));
 	return (group?.hooks ?? []).some(
 		(h) => typeof h.command === "string" && hookFileOf(h.command) === hookFile,
 	);
@@ -129,12 +132,12 @@ export function ensureHookRegistered(
 	settings.hooks[event] ??= [];
 	const groups = settings.hooks[event];
 	const hook = { type: "command", command: hookCommand(hookFile) };
-	const group = groups.find((g) => g.matcher === matcher);
+	const group = groups.find((g) => sameMatcher(g.matcher, matcher));
 	if (group) {
 		group.hooks ??= [];
 		group.hooks.push(hook);
 	} else {
-		groups.push({ matcher, hooks: [hook] });
+		groups.push(matcherless(matcher, [hook]));
 	}
 	return true;
 }
@@ -216,4 +219,17 @@ export function absolutizeHookCommands(projectRoot: string): AbsolutizeResult {
 function indentOf(raw: string): string {
 	const m = raw.match(/^(\t| +)"/m);
 	return m ? m[1] : "  ";
+}
+
+/**
+ * An event like `UserPromptSubmit` takes no matcher: its group has no
+ * `matcher` key, which the table spells "". The two spellings are one group,
+ * and "" is written as no key at all.
+ */
+function sameMatcher(a: string | undefined, b: string): boolean {
+	return (a ?? "") === b;
+}
+
+function matcherless<H>(matcher: string, hooks: H[]): { matcher: string; hooks: H[] } {
+	return (matcher === "" ? { hooks } : { matcher, hooks }) as { matcher: string; hooks: H[] };
 }
