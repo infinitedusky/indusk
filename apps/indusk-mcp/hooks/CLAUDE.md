@@ -54,3 +54,7 @@ are about keeping the two lanes in step.
   lesson on its own line (`lesson: <name>`): its own string, or directly after
   a `\n` — the scan reads nothing else, and `context-tiers-register.test.ts`
   fails any register enforcer row whose file it cannot read.
+- **`break-inbox.js` runs on every prompt** (`UserPromptSubmit`, no matcher):
+  it reads two small files in the project's home (`projectHome` from
+  `_hook-paths.js`) and exits; it never blocks and never grows a second read.
+  Nothing to say is exit 0 with no output.
