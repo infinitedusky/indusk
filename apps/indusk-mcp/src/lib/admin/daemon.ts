@@ -46,8 +46,6 @@ export interface DaemonMeta {
 	port: number;
 	startedAt: string;
 	adminDir: string;
-	/** The `next` binary the daemon runs: a marker in its command line (small-fixes A12); absent in older records. */
-	nextBin?: string;
 }
 
 /** What stopping and status read and do, given as inputs so the decision is a unit test. */
@@ -99,7 +97,6 @@ export async function daemonStart(opts: DaemonStartOptions): Promise<DaemonMeta>
 		port: opts.port,
 		startedAt: new Date().toISOString(),
 		adminDir: opts.adminDir,
-		nextBin: opts.nextBin,
 	};
 
 	writeFileSync(pidFilePath(), String(child.pid));
@@ -310,25 +307,36 @@ function isAlive(pid: number): boolean {
 }
 
 /**
- * Whether the recorded PID is still our daemon: alive, and its command line
- * carries the markers we started it with — the `next` binary we ran (or, for
- * a record from before it was written down, the word `next`) and the port
- * flag we passed. Never the port itself: slow to answer under load, which
- * once made `telemetry stop` skip its own process (small-fixes A12, through
- * the one `isOwnProcess`). After a crash the OS can recycle the PID to an
- * unrelated process (bash, postgres, another vitest), which carries neither
- * marker; the caller treats that as stale.
+ * Whether the recorded PID is still our daemon: alive, a `next` process, and
+ * started when the record says (small-fixes A17). `next start` rewrites its
+ * process title to `next-server (vX)`, so the binary and port flag we passed
+ * are not in its command line, and every Next server on the machine reads
+ * the same; an install renames the package folder aside, so its working
+ * directory moves. Its start time does neither. Never the port: slow to
+ * answer under load (A12). A PID the OS recycled after a crash started
+ * later; the caller treats that as stale.
  */
 function verifyIdentity(pid: number, meta: DaemonMeta, deps: ProcessDeps): boolean {
-	return isOwnProcess(pid, [meta.nextBin ?? "next", `--port ${meta.port}`], deps);
+	return isOwnProcess(pid, ["next"], deps, meta.startedAt);
+}
+
+/** `ps` in the C locale, so `lstart` is a date `Date` can read. */
+function ps(field: string, pid: number): string | null {
+	const r = spawnSync("ps", ["-o", `${field}=`, "-p", String(pid)], {
+		encoding: "utf-8",
+		env: { ...process.env, LC_ALL: "C" },
+	});
+	return r.status === 0 ? r.stdout.trim() || null : null;
 }
 
 /** The real reads and signals; the tests hand in their own. */
 const realDeps: DaemonDeps = {
 	alive: isAlive,
-	command(pid) {
-		const r = spawnSync("ps", ["-o", "command=", "-p", String(pid)], { encoding: "utf-8" });
-		return r.status === 0 ? r.stdout.trim() || null : null;
+	command: (pid) => ps("command", pid),
+	startTime(pid) {
+		const lstart = ps("lstart", pid);
+		const at = lstart === null ? Number.NaN : Date.parse(lstart);
+		return Number.isNaN(at) ? null : new Date(at);
 	},
 	kill: (pid, signal) => process.kill(pid, signal),
 	sleep,

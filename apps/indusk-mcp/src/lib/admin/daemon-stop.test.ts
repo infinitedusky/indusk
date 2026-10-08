@@ -17,7 +17,9 @@ import { type DaemonDeps, type DaemonMeta, daemonStatus, daemonStop } from "./da
 let home: string;
 const previousHome = process.env.INDUSK_HOME;
 const adminDir = "/opt/indusk/admin";
-const nextBin = "/opt/indusk/node_modules/next/dist/bin/next";
+/** What `ps -o command=` reads for a running `next start` (A17): Next rewrites its title. */
+const NEXT = "next-server (v16.2.4)      ";
+const STARTED = "2026-10-08T00:00:00.639Z";
 
 beforeEach(() => {
 	home = mkdtempSync(join(tmpdir(), "ui-stop-"));
@@ -33,16 +35,17 @@ function record(meta: Partial<DaemonMeta> & { pid: number }): void {
 	writeFileSync(join(home, "admin-ui.pid"), String(meta.pid));
 	writeFileSync(
 		join(home, "admin-ui.json"),
-		JSON.stringify({ port: 4321, startedAt: "2026-10-08T00:00:00Z", adminDir, nextBin, ...meta }),
+		JSON.stringify({ port: 4321, startedAt: STARTED, adminDir, ...meta }),
 	);
 }
 
-/** A process table: pid → command line; the port is never asked. */
+/** A process table: pid → command line, each started when the record says; the port is never asked. */
 function deps(commands: Record<number, string>, kills: [number, string][] = []): DaemonDeps {
 	let gone = new Set<number>();
 	return {
 		alive: (pid) => pid in commands && !gone.has(pid),
 		command: (pid) => commands[pid] ?? null,
+		startTime: (pid) => (pid in commands ? new Date("2026-10-08T00:00:00Z") : null),
 		kill: (pid, signal) => {
 			kills.push([pid, signal]);
 			gone = new Set([...gone, pid]);
@@ -55,9 +58,7 @@ describe("A12 — ui stop stops its own daemon by its command line, never by its
 	it("a port slow to answer does not matter: the recorded process is ours by its command line, and is stopped", async () => {
 		record({ pid: 4242 });
 		const kills: [number, string][] = [];
-		const r = await daemonStop(
-			deps({ 4242: `node ${nextBin} start --port 4321 -H 127.0.0.1` }, kills),
-		);
+		const r = await daemonStop(deps({ 4242: NEXT }, kills));
 		expect(kills).toEqual([[4242, "SIGTERM"]]);
 		expect(r).toMatchObject({ stopped: true, signaledPid: 4242 });
 	});
@@ -71,17 +72,10 @@ describe("A12 — ui stop stops its own daemon by its command line, never by its
 		expect((await daemonStatus()).running).toBe(false);
 	});
 
-	it("a record from before the binary was written down still matches on `next` and the port flag", async () => {
-		record({ pid: 7, nextBin: undefined });
-		const kills: [number, string][] = [];
-		await daemonStop(deps({ 7: "node /somewhere/next/dist/bin/next start --port 4321" }, kills));
-		expect(kills).toEqual([[7, "SIGTERM"]]);
-	});
-
 	it("a daemon still running after SIGTERM and SIGKILL is reported, not recorded as stopped", async () => {
 		record({ pid: 4242 });
 		const kills: [number, string][] = [];
-		const table = deps({ 4242: `node ${nextBin} start --port 4321 -H 127.0.0.1` }, kills);
+		const table = deps({ 4242: NEXT }, kills);
 		table.kill = (pid, signal) => {
 			kills.push([pid, signal]);
 		};
@@ -99,7 +93,7 @@ describe("A12 — ui stop stops its own daemon by its command line, never by its
 	it("`indusk ui stop` exits non-zero naming a daemon that would not stop", async () => {
 		record({ pid: 4242 });
 		const kills: [number, string][] = [];
-		const table = deps({ 4242: `node ${nextBin} start --port 4321 -H 127.0.0.1` }, kills);
+		const table = deps({ 4242: NEXT }, kills);
 		table.kill = (pid, signal) => {
 			kills.push([pid, signal]);
 		};
@@ -119,12 +113,6 @@ describe("A12 — ui stop stops its own daemon by its command line, never by its
 		}
 	});
 
-	it("the same binary on another port is not ours", async () => {
-		record({ pid: 9 });
-		const kills: [number, string][] = [];
-		await daemonStop(deps({ 9: `node ${nextBin} start --port 5555 -H 127.0.0.1` }, kills));
-		expect(kills).toEqual([]);
-	});
 });
 
 /**
@@ -137,8 +125,8 @@ describe("A12 — ui stop stops its own daemon by its command line, never by its
  * `next-server`s started a day later.
  */
 describe("A17 — the daemon as `ps` really reports it", () => {
-	const REAL = "next-server (v16.2.4)      ";
-	const startedAt = "2026-10-08T00:00:00.639Z";
+	const REAL = NEXT;
+	const startedAt = STARTED;
 	const withStart = (table: DaemonDeps, at: Date | null) =>
 		Object.assign(table, { startTime: () => at });
 
