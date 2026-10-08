@@ -444,26 +444,26 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
-## Session 4551e898 — bookkeeping-lives-where-it-is-read — cleanup done, retrospective next
+## Session 4551e898 — release-checks-run-once — falsification, then close
 
 **Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
-**Last updated**: 2026-10-08T02:53:37.259Z
+**Last updated**: 2026-10-08T17:53:39.624Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-- bookkeeping-lives-where-it-is-read: Build Phases 1–5 done (4 = falsification fixes, 5 = cleanup: `pathKey`, a home argument on `bookkeepingRoots`/`evalDir`, one JSONL reader `lib/bookkeeping/jsonl.ts`, one git runner `lib/bookkeeping/git.ts`). Remaining: retrospective, accept, land, bump 1.66.0.
-- This repo's home: `~/.indusk/projects/dusk-2f1b1d2f/`. After the release, run `indusk update` on main to merge the queue the installed version keeps writing there.
+- release-checks-run-once: Build Phases 1–3 done; Build Phase 4 (falsification) found four: a typo'd `covers` keyed nothing and so matched every run (A11); `./`-prefixed changelog/version paths were not recognised (A12); a non-fact value crashed with a stack trace instead of a one-line refusal (A13); a script's +x bit was not in the key (A14). All fixed in `lib/checks/key.ts` and `bin/commands/checks.ts`.
+- Sandy's decision (2026-10-08): dusk's slow tier never blocks landing or release; it runs after release in the background as a promise — the next item in known-issues.md (Releases). Dusk declares no `land.slow_tests`; `pnpm release` runs no slow step.
+- This session's MCP server is still 1.65.1 (started before the upgrade); its writes go to main's `.indusk/`. Use the CLI for promises; /mcp reconnect fixes it.
 
 ### Open Questions
 
-- `~/.indusk/projects/project-6bafd0c8/` appeared at 19:49 from a session not traced to any test; left in place.
-- Each `/catchup` makes one or two `chore(indusk)` commits on main (register + list's heartbeat); the user's call whether heartbeats should commit.
+(empty)
 
 ### Cursor
 
-/retrospective bookkeeping-lives-where-it-is-read.
+Build Phase 4 verification → cleanup (skip with reason) → /retrospective → accept → land → bump 1.67.0.
 
 ---
 
@@ -2342,6 +2342,27 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-08T13:02:23.265Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 02ac7871 — eval: scoring commit db72c61d (release-checks-run-once retrospective)
+
+**Session ID**: 02ac7871-8e0b-4f3b-a7b5-e951f3564d7f
+**Last updated**: 2026-10-08T17:59:39.575Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
 
 ### In Flight
 
