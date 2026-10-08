@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
@@ -17,6 +17,26 @@ import { envIsFunctional } from "./extensions.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../../..");
+
+/**
+ * Register `hookFile` under each `[event, matcher]` a pre-existing project's
+ * settings lack, writing once when anything was added. `update` syncs hook
+ * FILES by globSync; a file never registered is a file that never runs.
+ */
+function registerHook(settingsPath: string, hookFile: string, at: [string, string][]): void {
+	try {
+		const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+		let changed = false;
+		for (const [event, matcher] of at) {
+			if (ensureHookRegistered(settings, event, matcher, hookFile)) changed = true;
+		}
+		if (!changed) return;
+		writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+		console.info(`  registered ${hookFile} in settings.json (${at.map(([, m]) => m).join(" + ")})`);
+	} catch {
+		console.info(`  could not register ${hookFile} in settings.json`);
+	}
+}
 
 /**
  * One line for a config-block ensure: what was added, or that it was already
@@ -270,24 +290,11 @@ export async function update(projectRoot: string): Promise<void> {
 		// Ensure eval hook is registered in settings.json
 		const settingsPath = join(projectRoot, ".claude/settings.json");
 		if (existsSync(settingsPath)) {
-			try {
-				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-				// A hook copied by globSync but never registered in settings is a file
-				// that exists and never runs — the eval-trigger lesson. One helper
-				// registers every hook (`ensureHookRegistered`); a new hook is one call.
-				if (ensureHookRegistered(settings, "PostToolUse", "Bash", "eval-trigger.js")) {
-					const { writeFileSync } = await import("node:fs");
-					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
-					console.info("  registered eval-trigger hook in settings.json");
-				}
-				if (ensureHookRegistered(settings, "PostToolUse", "Edit|Write", "workbench-sync.js")) {
-					const { writeFileSync: wf } = await import("node:fs");
-					wf(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
-					console.info("  registered workbench-sync hook in settings.json");
-				}
-			} catch {
-				console.info("  could not register eval hook in settings.json");
-			}
+			// A hook copied by globSync but never registered in settings is a file
+			// that exists and never runs — the eval-trigger lesson. A new hook is
+			// one `registerHook` line.
+			registerHook(settingsPath, "eval-trigger.js", [["PostToolUse", "Bash"]]);
+			registerHook(settingsPath, "workbench-sync.js", [["PostToolUse", "Edit|Write"]]);
 
 			// Remove the legacy check-catchup hook (indusk-makeover follow-up, found
 			// by the POC versioned-workbench POC): it gates every Edit/Write on
@@ -323,53 +330,16 @@ export async function update(projectRoot: string): Promise<void> {
 				);
 			}
 
-			// Ensure the CLAUDE.md budget hook is registered (indusk-makeover P2).
-			// Same targeted-ensure shape as the eval-trigger block above — update
-			// syncs hook FILES via globSync, but a new hook still needs its
-			// settings.json registration on pre-existing projects.
-			try {
-				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-				if (ensureHookRegistered(settings, "PreToolUse", "Edit|Write", "claude-md-budget.js")) {
-					const { writeFileSync } = await import("node:fs");
-					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
-					console.info("  registered claude-md-budget hook in settings.json");
-				}
-			} catch {
-				console.info("  could not register claude-md-budget hook in settings.json");
-			}
-
-			// Ensure the trunk guard is registered under BOTH matchers (trunk-guard
-			// plan). Same targeted-ensure shape: update syncs the hook FILE via
-			// globSync, but a pre-existing project's settings still need the two
-			// registrations. A hook registered under only one matcher is half a
-			// gate — the commit gate is what catches edits the Edit gate never sees.
-			try {
-				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-				let changed = false;
-				for (const matcher of ["Edit|Write", "Bash"]) {
-					if (ensureHookRegistered(settings, "PreToolUse", matcher, "trunk-guard.js"))
-						changed = true;
-				}
-				if (changed) {
-					const { writeFileSync } = await import("node:fs");
-					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
-					console.info("  registered trunk-guard hook in settings.json (Edit|Write + Bash)");
-				}
-			} catch {
-				console.info("  could not register trunk-guard hook in settings.json");
-			}
-
+			// The CLAUDE.md budget hook (indusk-makeover P2).
+			registerHook(settingsPath, "claude-md-budget.js", [["PreToolUse", "Edit|Write"]]);
+			// The trunk guard under BOTH matchers: one is half a gate — the commit
+			// gate is what catches edits the Edit gate never sees.
+			registerHook(settingsPath, "trunk-guard.js", [
+				["PreToolUse", "Edit|Write"],
+				["PreToolUse", "Bash"],
+			]);
 			// The stash guard (small-fixes): Bash only — a stash is a command.
-			try {
-				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-				if (ensureHookRegistered(settings, "PreToolUse", "Bash", "stash-guard.js")) {
-					const { writeFileSync } = await import("node:fs");
-					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
-					console.info("  registered stash-guard hook in settings.json (Bash)");
-				}
-			} catch {
-				console.info("  could not register stash-guard hook in settings.json");
-			}
+			registerHook(settingsPath, "stash-guard.js", [["PreToolUse", "Bash"]]);
 		}
 	}
 
