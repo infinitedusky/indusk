@@ -41,11 +41,11 @@ A plan that lands green is released without running the slow tests again, and th
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | After a fully green slow run, the same code with only the version bump and a changelog entry on top skips the slow tests, naming the run that covered them | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
-| A2 | A change to any covered file since the green run (code, a test, a test config, the lockfile) runs the slow tests | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
-| A3 | A slow run that exits non-zero records nothing, so the next release runs the tests | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
-| A4 | A run over uncommitted changes to covered files records nothing, and `--unless-covered` with such changes runs the tests | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
-| A5 | A green run recorded in a plan's worktree covers the same code on `main` | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
+| A1 | After a fully green slow run, the same code with only the version bump and a changelog entry on top skips the slow tests, naming the run that covered them | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
+| A2 | A change to any covered file since the green run (code, a test, a test config, the lockfile) runs the slow tests | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
+| A3 | A slow run that exits non-zero records nothing, so the next release runs the tests | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
+| A4 | A run over uncommitted changes to covered files records nothing, and `--unless-covered` with such changes runs the tests | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
+| A5 | A green run recorded in a plan's worktree covers the same code on `main` | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
 | A6 | On this repository, after `indusk checks slow` runs green, the release script's `--unless-covered` skips and names that run | Build Phase 3 | Build Phase 3 | planned | live check | promise: slow-checks-run-once-per-tree | manual: on main after landing, `node apps/indusk-mcp/dist/bin/cli.js checks slow --unless-covered` prints the covering run |
 | A7 | The landing and release steps every project installs name none of dusk's commands or paths | Test Phase 1 | Build Phase 2 | written | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/steps-name-project-commands.test.ts |
 | A8 | A project that declares its steps gets them named back by `indusk checks show` | Test Phase 1 | Build Phase 2 | written | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
@@ -85,15 +85,16 @@ A plan that lands green is released without running the slow tests again, and th
 
 #### Build Phase 1 Verification
 
-- [ ] A1–A5 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/checks-slow.test.ts && pnpm exec vitest related src/lib/checks src/bin/commands/checks.ts --run`)
+- [x] (A1–A5 5 of 5; related tests 78 files, 486 passed; `tsc` clean) A1–A5 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/checks-slow.test.ts && pnpm exec vitest related src/lib/checks src/bin/commands/checks.ts --run`)
+- [x] Shape — `steps.ts` reads and refuses, `key.ts` keys (its version stripping a named helper), `record.ts` reads and appends the record, `checksSlow` decides whether to run and whether to record. One job each; nothing to change
 
 #### Build Phase 1 Context
 
-- [ ] mcp: `lib/checks/` owns whether a slow run covers the code at hand; the key is content, never the commit, and a dirty tree has no key
+- [x] (delivered in `key.ts`'s and `record.ts`'s headers, since the package's `CLAUDE.md` is 2 bytes under its budget, a known issue) mcp: `lib/checks/` owns whether a slow run covers the code at hand; the key is content, never the commit, and a dirty tree has no key
 
 #### Build Phase 1 Document
 
-- [ ] New `apps/docs/src/reference/cli/checks.md`: `checks slow`, `--unless-covered`, the record and the key
+- [x] (and in the sidebar) New `apps/docs/src/reference/cli/checks.md`: `checks slow`, `--unless-covered`, the record and the key
 
 ### Build Phase 2: `checks show`, and steps that name the project's commands
 
