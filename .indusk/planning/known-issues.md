@@ -126,6 +126,19 @@ Each entry says what happens, where it was seen, and what we know so far.
 
 ## Releases
 
+- **Dusk's slow tier runs after release, in the background, as a promise.**
+  Sandy, 2026-10-08: the six-to-eight-minute system tier blocking every
+  landing and release cost more flow than a patch release costs, and dusk's
+  releases are its own development loop. release-checks-run-once took the
+  tier out of dusk's landing and release (`workflow.steps` declares no slow
+  tests; `pnpm release` runs none). Next, the smallest version of what every
+  other project got from CI: `pnpm release` ends by starting `pnpm
+  test:system` detached, against the released code, and a red run marks a
+  dusk promise (`the-released-versions-slow-tests-pass`) broken — an incident
+  on the plan that shipped it, seen by `indusk promises status`, the admin and
+  `/catchup`, never a log nobody reads. The product keeps `indusk checks slow`
+  at landing as its default for projects whose releases go public; a
+  background schedule for the contract level is the later generalisation.
 - **Every release has failed its first `pnpm release`.** 1.63.0 (twice) and
   1.64.0. The release re-runs the whole system tier (40 files, real Jaeger,
   otelcol, `next dev` and Claude sessions, run in parallel) minutes after
