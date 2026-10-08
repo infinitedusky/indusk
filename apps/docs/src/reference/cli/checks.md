@@ -2,6 +2,42 @@
 
 Run and name the tooling a project declares for its workflow steps, under `workflow.steps` in `.indusk/config.json`.
 
+## `workflow.steps`
+
+What each step of a project's workflow runs, in `.indusk/config.json`:
+
+```json
+"workflow": {
+  "steps": {
+    "land":    { "slow_tests": "pytest -m slow" },
+    "release": { "command": "fly deploy",
+                 "version_file": "pyproject.toml",
+                 "changelog": "CHANGES.md",
+                 "covers": ["src", "tests", "pyproject.toml", "uv.lock"] }
+  }
+}
+```
+
+| Key | What it is |
+|---|---|
+| `land.slow_tests` | The slow tests, run once per piece of code by `indusk checks slow`. |
+| `release.command` | The command that publishes or deploys. |
+| `release.version_file` | The file whose `version` the bump changes. |
+| `release.changelog` | The changelog the bump rolls. |
+| `release.covers` | What the slow tests cover (default: the whole repository but `.indusk/`). |
+
+Every key is optional; `indusk update` adds the section empty. A project that declares nothing still gets an honest workflow: landing runs no slow tests, and there is nothing to publish.
+
+**Facts, never logic.** Every value is a command, a path or a name. No conditions, templating, variables or expressions: a step that needs one names a script the project owns, and a command is whatever the project already runs (`mise run test:slow`, `just release`, `pnpm release`). Anything else is refused, naming the key.
+
+## `indusk checks show`
+
+```bash
+indusk checks show
+```
+
+Names what landing and release run for this project, one line per step, or says what not declaring one means ("none declared — landing runs no slow tests"). The retrospective's landing and release steps use only what it prints.
+
 ## `indusk checks slow`
 
 ```bash
