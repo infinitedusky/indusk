@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{margin:0}</style>
+</head>
+<body>
+<title>Promise DevTools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a mock browser window. The page under test on the left, a DevTools pane docked
+   on the right with a Promises tab (and an Elements tab with a Promises sidebar pane).
+   Below 960px the pane docks underneath, the way DevTools does. */
+:root {
+  --ground: #eef0f3;
+  --chrome: #dfe3e8;
+  --chrome-2: #f6f7f9;
+  --page: #ffffff;
+  --ink: #1d232c;
+  --ink-2: #4d5866;
+  --ink-3: #7d8796;
+  --line: #d3d8df;
+  --line-2: #e6e9ee;
+  --dt-bg: #ffffff;
+  --dt-alt: #f5f6f8;
+  --dt-sel: #e3ecfb;
+  --accent: #c2620b;
+  --hl: rgba(74, 134, 232, .22);
+  --hl-line: #4a86e8;
+  --ok: #1f7a4d; --ok-wash: #e3f3ea;
+  --bad: #c0362c; --bad-wash: #fbe5e3;
+  --idle: #8a94a3;
+  --tag: #881280; --attr: #994500; --val: #1a1aa6;
+  --app-accent: #2f5d50; --app-wash: #e8f0ed;
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", system-ui, sans-serif;
+  --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #101318; --chrome: #23282f; --chrome-2: #1a1e24; --page: #15191f;
+    --ink: #e6e9ee; --ink-2: #b2bac6; --ink-3: #8690a0; --line: #343b45; --line-2: #2a3038;
+    --dt-bg: #1e2228; --dt-alt: #23282f; --dt-sel: #253753;
+    --accent: #f0913a; --hl: rgba(110, 160, 245, .25); --hl-line: #7aa7f5;
+    --ok: #5cc98f; --ok-wash: #143225; --bad: #f07a71; --bad-wash: #3a1917; --idle: #8792a3;
+    --tag: #5db0d7; --attr: #9bbbdc; --val: #f29766;
+    --app-accent: #7cc4ad; --app-wash: #1c2c28;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #101318; --chrome: #23282f; --chrome-2: #1a1e24; --page: #15191f;
+  --ink: #e6e9ee; --ink-2: #b2bac6; --ink-3: #8690a0; --line: #343b45; --line-2: #2a3038;
+  --dt-bg: #1e2228; --dt-alt: #23282f; --dt-sel: #253753;
+  --accent: #f0913a; --hl: rgba(110, 160, 245, .25); --hl-line: #7aa7f5;
+  --ok: #5cc98f; --ok-wash: #143225; --bad: #f07a71; --bad-wash: #3a1917; --idle: #8792a3;
+  --tag: #5db0d7; --attr: #9bbbdc; --val: #f29766;
+  --app-accent: #7cc4ad; --app-wash: #1c2c28;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.5 var(--body); padding: 20px clamp(16px, 3vw, 32px) 40px; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--hl-line); outline-offset: 1px; }
+
+.intro { max-width: 1400px; margin: 0 auto 14px; display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: end; justify-content: space-between; }
+.intro h1 { font: 700 24px/1.15 var(--display); margin: 0; }
+.intro p { margin: 4px 0 0; color: var(--ink-2); max-width: 70ch; font-size: 14px; }
+.ctrls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+.ctrls select { background: var(--page); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 13px; }
+.ctrls .bugon { color: var(--bad); font-weight: 600; }
+
+/* browser window */
+.win { max-width: 1400px; margin: 0 auto; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--chrome); box-shadow: 0 10px 40px rgba(20, 25, 35, .12); }
+.wbar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--chrome); }
+.lights { display: flex; gap: 6px; } .lights i { width: 11px; height: 11px; border-radius: 50%; background: var(--line); display: block; }
+.url { flex: 1; min-width: 0; background: var(--chrome-2); border-radius: 999px; padding: 4px 12px; font: 12px/1.4 var(--mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dev { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--chrome-2); font-size: 12px; }
+.dev button { border: 0; background: none; padding: 4px 10px; color: var(--ink-2); }
+.dev button[aria-pressed="true"] { background: var(--page); color: var(--ink); font-weight: 600; }
+.wbody { display: grid; grid-template-columns: minmax(0, 1fr) minmax(380px, 46%); height: 640px; border-top: 1px solid var(--line); }
+@media (max-width: 960px) { .wbody { grid-template-columns: minmax(0, 1fr); grid-template-rows: 420px 560px; height: auto; } }
+
+/* page under test */
+.viewport { position: relative; background: var(--chrome-2); display: flex; justify-content: center; overflow: hidden; min-width: 0; }
+.frame { position: relative; width: 100%; height: 100%; background: var(--page); transition: width .2s; }
+.frame.phone { width: 390px; max-width: 100%; border-inline: 1px solid var(--line); }
+.fscroll { position: absolute; inset: 0; overflow: auto; }
+.overlay { position: absolute; inset: 0; pointer-events: none; z-index: 30; }
+.hlbox { position: absolute; background: var(--hl); outline: 1px solid var(--hl-line); border-radius: 2px; }
+.hlbox.bad { background: rgba(220, 60, 50, .16); outline-color: var(--bad); }
+.hltag { position: absolute; font: 600 11px/1 var(--ui); background: var(--hl-line); color: #fff; padding: 4px 6px; border-radius: 3px; white-space: nowrap; transform: translateY(-100%); }
+.hltag.bad { background: var(--bad); }
+.pin { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: var(--bad); color: #fff; font: 700 12px/20px var(--ui); text-align: center; box-shadow: 0 0 0 3px var(--bad-wash); transform: translate(-50%, -50%); }
+
+/* the fake app (concierge-web) */
+.app { font: 14px/1.45 var(--ui); color: var(--ink); min-height: 100%; display: flex; flex-direction: column; }
+.fbar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line-2); }
+.fbar b { font-weight: 650; }
+.fmenu { display: none; border: 1px solid var(--line); background: var(--page); border-radius: 6px; padding: 3px 8px; font-size: 13px; }
+.fsearch { margin-left: auto; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font-size: 13px; width: 160px; background: var(--page); }
+.fbody { display: flex; flex: 1; min-height: 0; position: relative; }
+.fnav { width: 180px; flex: none; border-right: 1px solid var(--line-2); padding: 10px 8px; display: grid; align-content: start; gap: 2px; background: var(--page); }
+.fnav .nh { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); padding: 2px 8px 6px; }
+.fnav button { text-align: left; border: 0; background: none; padding: 6px 8px; border-radius: 6px; font-size: 13px; }
+.fnav button:hover { background: var(--app-wash); }
+.fnav button[aria-current="page"] { background: var(--app-wash); color: var(--app-accent); font-weight: 600; }
+.fmain { flex: 1; min-width: 0; padding: 18px 20px; display: grid; gap: 12px; align-content: start; }
+.fmain h1 { margin: 0; font-size: 22px; }
+.fmain p { margin: 0; color: var(--ink-2); max-width: 52ch; }
+.freview { justify-self: start; border: 1px solid var(--app-accent); color: var(--app-accent); background: var(--page); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
+.fact { display: grid; gap: 6px; }
+.fact h2 { margin: 0; font-size: 13px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+.factin { overflow-x: auto; border: 1px solid var(--line-2); border-radius: 6px; }
+.bug-overflow .factin { overflow: visible; }
+.fact table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 12px; }
+.fact td, .fact th { text-align: left; padding: 6px 8px; border-top: 1px solid var(--line-2); white-space: nowrap; }
+.fact th { color: var(--ink-3); font-weight: 500; border-top: 0; }
+.frame.phone .fmenu { display: inline-block; }
+.frame.phone .fsearch { width: 110px; }
+.frame.phone .fnav { position: absolute; inset: 0 auto 0 0; z-index: 5; width: 230px; box-shadow: 4px 0 20px rgba(0,0,0,.18); transform: translateX(-105%); transition: transform .18s; }
+.frame.phone.drawer .fnav { transform: none; }
+.bug-drawer.phone .fnav { position: static; transform: none; box-shadow: none; }
+
+/* devtools */
+.dt { background: var(--dt-bg); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; min-height: 0; font: 12px/1.45 var(--ui); color: var(--ink); }
+@media (max-width: 960px) { .dt { border-left: 0; border-top: 1px solid var(--line); } }
+.dtabs { display: flex; align-items: stretch; gap: 0; background: var(--dt-alt); border-bottom: 1px solid var(--line); overflow-x: auto; flex: none; }
+.dtab { border: 0; background: none; padding: 7px 12px; color: var(--ink-2); border-bottom: 2px solid transparent; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+span.dtab { color: var(--ink-3); cursor: default; }
+button.dtab:hover { color: var(--ink); background: var(--dt-bg); }
+.dtab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--hl-line); background: var(--dt-bg); }
+.dtab .bdg { font: 600 10px/1 var(--ui); padding: 2px 5px; border-radius: 999px; background: var(--bad); color: #fff; }
+.ptool { display: flex; align-items: center; gap: 10px; padding: 5px 10px; border-bottom: 1px solid var(--line); flex: none; flex-wrap: wrap; }
+.rec { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.rec i { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); display: block; animation: blink 1.6s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .35; } }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.seg button { border: 0; background: none; padding: 2px 8px; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--dt-sel); color: var(--ink); }
+.tbtn { border: 1px solid var(--line); background: var(--dt-bg); border-radius: 5px; padding: 2px 8px; color: var(--ink-2); }
+.tbtn:hover { color: var(--ink); }
+.src { margin-left: auto; color: var(--ink-3); font-family: var(--mono); font-size: 11px; }
+
+.pbody { flex: 1; min-height: 0; display: grid; grid-template-columns: 200px minmax(0, 1fr); border-bottom: 1px solid var(--line); }
+@media (max-width: 520px) { .pbody { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; } }
+.plist { list-style: none; margin: 0; padding: 0; border-right: 1px solid var(--line); overflow: auto; }
+.prow { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 2px 8px; align-items: center; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line-2); background: none; padding: 8px 10px; }
+.prow:hover { background: var(--dt-alt); }
+.prow[aria-selected="true"] { background: var(--dt-sel); }
+.prow .nm { font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; }
+.prow .ct { grid-column: 2; color: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.prow .ct .b { color: var(--bad); font-weight: 600; }
+.sd { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--idle); }
+.sd.held { background: var(--ok); border-color: var(--ok); }
+.sd.broke { background: var(--bad); border-color: var(--bad); }
+.prow.flash-ok { animation: flashok .9s ease-out; }
+.prow.flash-bad { animation: flashbad 1.2s ease-out; }
+@keyframes flashok { 0% { background: var(--ok-wash); } 100% { background: transparent; } }
+@keyframes flashbad { 0% { background: var(--bad-wash); } 100% { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .prow.flash-ok, .prow.flash-bad, .rec i { animation: none; } .frame, .fnav { transition: none !important; } }
+
+.pdet { overflow: auto; padding: 10px 14px 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.pdet .says { font: 600 14px/1.4 var(--body); margin: 0; }
+.pdet .id { font: 11.5px var(--mono); color: var(--ink-3); }
+.kv { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 10px; margin: 0; }
+.kv dt { color: var(--ink-3); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+.kv code { font: 11.5px var(--mono); background: var(--dt-alt); padding: 1px 4px; border-radius: 3px; }
+.failbox { border: 1px solid var(--bad); background: var(--bad-wash); border-radius: 6px; padding: 8px 10px; display: grid; gap: 6px; }
+.failbox b { color: var(--bad); }
+.failbox .ea { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 2px 10px; font: 11.5px var(--mono); }
+.failbox .ea span:nth-child(odd) { color: var(--ink-3); font-family: var(--ui); font-size: 12px; }
+.failbox .acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.okbox { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; color: var(--ink-2); }
+.okbox b { color: var(--ok); }
+.mini { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.mini li { display: grid; grid-template-columns: 58px 14px minmax(0, 1fr); gap: 6px; font-size: 11.5px; color: var(--ink-2); }
+.mini .t { font-family: var(--mono); color: var(--ink-3); }
+.mini .r.ok { color: var(--ok); } .mini .r.bad { color: var(--bad); }
+.lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); margin: 0; }
+
+.plog { height: 170px; flex: none; overflow: auto; }
+.plog table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.plog th { position: sticky; top: 0; background: var(--dt-alt); text-align: left; font-weight: 500; color: var(--ink-2); padding: 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.plog td { padding: 3px 8px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+.plog td.det { white-space: normal; color: var(--ink-2); min-width: 160px; }
+.plog tr.bad td { background: var(--bad-wash); }
+.plog tr.bad td.res { color: var(--bad); font-weight: 600; }
+.plog td.res.ok { color: var(--ok); }
+.plog .mono { font-family: var(--mono); }
+.plog .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-3); }
+
+/* elements tab */
+.ebody { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 230px; }
+@media (max-width: 520px) { .ebody { grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto; } }
+.etree { overflow: auto; padding: 6px 0; font: 12px/1.6 var(--mono); }
+.enode { display: flex; gap: 6px; align-items: center; width: 100%; text-align: left; border: 0; background: none; padding: 0 8px 0 calc(10px + var(--d) * 14px); white-space: nowrap; }
+.enode:hover { background: var(--dt-alt); }
+.enode[aria-selected="true"] { background: var(--dt-sel); }
+.enode .tg { color: var(--tag); } .enode .at { color: var(--attr); } .enode .vl { color: var(--val); }
+.enode .cov { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.cov.ok { background: var(--ok); } .cov.bad { background: var(--bad); } .cov.in { background: transparent; border: 1.5px solid var(--ok); }
+.epane { border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+@media (max-width: 520px) { .epane { border-left: 0; border-top: 1px solid var(--line); } }
+.epane .etabs { display: flex; background: var(--dt-alt); border-bottom: 1px solid var(--line); }
+.epane .etabs span { padding: 5px 8px; color: var(--ink-3); }
+.epane .etabs span.on { color: var(--ink); border-bottom: 2px solid var(--hl-line); }
+.epane .ein { padding: 10px; overflow: auto; display: grid; gap: 8px; align-content: start; }
+.ecov { display: grid; gap: 6px; }
+.ecov button { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 8px; align-items: start; text-align: left; border: 1px solid var(--line-2); background: var(--dt-bg); border-radius: 6px; padding: 7px 8px; }
+.ecov button:hover { border-color: var(--hl-line); }
+.ecov .sd { margin-top: 3px; }
+.ecov .nm { font: 11px var(--mono); color: var(--ink-3); display: block; }
+.gap { border: 1px dashed var(--line); border-radius: 6px; padding: 8px; color: var(--ink-2); }
+.legend { color: var(--ink-3); font-size: 11px; display: flex; gap: 10px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
+
+.foot { max-width: 1400px; margin: 12px auto 0; color: var(--ink-3); font-size: 12px; }
+</style>
+
+<div class="intro">
+  <div>
+    <h1>Promise DevTools</h1>
+    <p>A mockup of a DevTools extension. Use the page on the left: open plans, switch to Phone, press Review. Each action fires a trigger and the promise's check runs against the live page. Then pick a bug and do it again.</p>
+  </div>
+  <label class="ctrls" for="bug">Simulate a bug
+    <select id="bug">
+      <option value="none">None</option>
+      <option value="link">A renamed plan keeps its old link</option>
+      <option value="overflow">The activity table overflows on phones</option>
+      <option value="drawer">The nav stays open on phones</option>
+      <option value="proof">The proof count goes stale</option>
+    </select>
+  </label>
+</div>
+
+<div class="win">
+  <div class="wbar">
+    <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="url" id="url">localhost:5173/plans/left-nav</span>
+    <span class="dev" role="group" aria-label="Device"><button type="button" id="devDesk" aria-pressed="true">Desktop</button><button type="button" id="devPhone" aria-pressed="false">Phone 390</button></span>
+  </div>
+  <div class="wbody">
+    <div class="viewport">
+      <div class="frame" id="frame">
+        <div class="fscroll" id="fscroll">
+          <div class="app" id="fapp">
+            <header class="fbar">
+              <button class="fmenu" id="fmenu" type="button">☰ Plans</button>
+              <b>concierge-web</b>
+              <input class="fsearch" id="fsearch" type="search" placeholder="Search plans" aria-label="Search plans">
+            </header>
+            <div class="fbody">
+              <nav class="fnav" id="fnav" aria-label="Plans"><span class="nh">Plans</span></nav>
+              <main class="fmain">
+                <h1 id="ftitle">left-nav</h1>
+                <p id="fdesc"></p>
+                <button class="freview" id="freview" type="button">Review · <span id="fproof">6 of 6</span> proven</button>
+                <section class="fact" id="fact">
+                  <h2>Recent activity</h2>
+                  <div class="factin"><table>
+                    <tr><th>When</th><th>Who</th><th>What</th><th>Stage</th><th>Files</th></tr>
+                    <tr><td>Oct 6 19:40</td><td>Claude</td><td>Drafted the decision record</td><td>Decision</td><td>3</td></tr>
+                    <tr><td>Oct 2 11:12</td><td>You</td><td>Accepted the test plan</td><td>Test plan</td><td>1</td></tr>
+                    <tr><td>Oct 1 09:05</td><td>You</td><td>Accepted the brief</td><td>Brief</td><td>1</td></tr>
+                  </table></div>
+                </section>
+              </main>
+            </div>
+          </div>
+        </div>
+        <div class="overlay" id="overlay"></div>
+      </div>
+    </div>
+
+    <section class="dt" aria-label="DevTools">
+      <div class="dtabs" role="tablist">
+        <button class="dtab" type="button" role="tab" id="tabEl" aria-selected="false">Elements</button>
+        <span class="dtab">Console</span>
+        <span class="dtab">Network</span>
+        <button class="dtab" type="button" role="tab" id="tabPr" aria-selected="true">Promises <span class="bdg" id="brokeBadge" hidden></span></button>
+      </div>
+
+      <div id="paneProm" style="display:flex;flex-direction:column;flex:1;min-height:0">
+        <div class="ptool">
+          <span class="rec" title="Checks run while DevTools is open"><i></i>Watching</span>
+          <span class="seg" role="group" aria-label="Show">
+            <button type="button" data-f="all" aria-pressed="true">All</button><button type="button" data-f="held" aria-pressed="false">Held</button><button type="button" data-f="broke" aria-pressed="false">Broken</button>
+          </span>
+          <button class="tbtn" type="button" id="clear">Clear</button>
+          <span class="src">.indusk/promises · 3 on this page</span>
+        </div>
+        <div class="pbody">
+          <ul class="plist" id="plist" role="listbox" aria-label="Promises on this page"></ul>
+          <div class="pdet" id="pdet"></div>
+        </div>
+        <div class="plog"><table><thead><tr><th>Time</th><th>Promise</th><th>Trigger</th><th>Result</th><th>Detail</th><th class="num">ms</th></tr></thead><tbody id="plog"></tbody></table></div>
+      </div>
+
+      <div id="paneEl" style="display:none;flex-direction:column;flex:1;min-height:0">
+        <div class="ebody">
+          <div class="etree" id="etree" role="tree" aria-label="Page elements"></div>
+          <aside class="epane">
+            <div class="etabs"><span>Styles</span><span>Computed</span><span class="on">Promises</span></div>
+            <div class="ein" id="ein"></div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+<p class="foot">Sample data. Nothing here talks to a real repo. The checks really run against the mock page above.</p>
+
+<script>
+const PLANS = [
+  ["left-nav", "Put every active plan one click away from any page."],
+  ["guest-profile-merge", "Merge duplicate guest profiles without losing a stay."],
+  ["loyalty-tiers", "Compute loyalty tiers from nights stayed."],
+  ["booking-reminders", "Remind guests the day before they arrive."],
+  ["menu-sync", "Keep the room-service menu in step with the kitchen."],
+  ["invoice-export", "Export invoices the accounting system takes as they are."],
+];
+const PASSING_TESTS = 6;
+
+/* Promise declarations, as they'd be read from .indusk/promises. */
+const PROMS = [
+  { id: "every-plan-is-one-click-away", says: "Every active plan is one click away from any page.",
+    covers: [".fnav [data-plan]", "#ftitle"], trigger: "nav.plan_opened", when: "Any plan link is clicked",
+    check: "The page title is the plan clicked, and the nav marks it current." },
+  { id: "the-nav-fits-a-phone", says: "On a phone the nav folds away and never pushes the page sideways.",
+    covers: [".fnav", "#fmenu", "#fapp", "#fact"], trigger: "viewport.resized", when: "Width crosses 600 px",
+    check: "Below 600 px the nav is a closed drawer and nothing scrolls sideways." },
+  { id: "a-review-shows-its-evidence", says: "The review shows each promise with the tests that prove it.",
+    covers: ["#freview"], trigger: "review.opened", when: "The Review button is pressed",
+    check: "The proof count equals the passing tests behind the plan's promises." },
+];
+const ST = Object.fromEntries(PROMS.map((p) => [p.id, { held: 0, broke: 0, last: null, fail: null }]));
+let LOG = [], SEL = PROMS[0].id, FILTER = "all", TAB = "prom", ESEL = "#fnav", BUG = "none", CUR = "left-nav";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const now = () => new Date().toTimeString().slice(0, 8);
+const frame = $("frame"), scroller = $("fscroll");
+
+/* ---------- the fake app ---------- */
+function drawNav() {
+  $("fnav").innerHTML = `<span class="nh">Plans</span>` + PLANS.map(([s]) =>
+    `<button type="button" data-plan="${s}" ${s === CUR ? 'aria-current="page"' : ""}>${s}</button>`).join("");
+  $("fnav").querySelectorAll("[data-plan]").forEach((b) => b.onclick = () => openPlan(b.dataset.plan));
+}
+function openPlan(slug) {
+  // The "renamed plan" bug sends menu-sync to a stale route.
+  const target = BUG === "link" && slug === "menu-sync" ? "menu-sync-v1" : slug;
+  const plan = PLANS.find((p) => p[0] === target);
+  CUR = plan ? target : null;
+  $("ftitle").textContent = plan ? plan[0] : "Plan not found";
+  $("fdesc").textContent = plan ? plan[1] : `No plan at /plans/${target}.`;
+  $("url").textContent = `localhost:5173/plans/${target}`;
+  drawNav();
+  frame.classList.remove("drawer");
+  setTimeout(() => run(PROMS[0], `clicked ${slug}`, { slug }), 30);
+}
+$("fmenu").onclick = () => frame.classList.toggle("drawer");
+$("freview").onclick = () => run(PROMS[2], "Review pressed");
+
+/* ---------- checks: they really inspect the mock page ---------- */
+const CHECKS = {
+  "every-plan-is-one-click-away": ({ slug }) => {
+    const title = $("ftitle").textContent;
+    const cur = $("fnav").querySelector('[aria-current="page"]');
+    if (title !== slug) return { ok: false, expected: `title “${slug}”`, actual: `title “${title}”`, at: `.fnav [data-plan="${slug}"]`, detail: `Opened “${title}” instead of ${slug}` };
+    if (!cur || cur.dataset.plan !== slug) return { ok: false, expected: `${slug} marked current`, actual: "no plan marked current", at: `.fnav [data-plan="${slug}"]`, detail: "Nav didn't mark the plan current" };
+    return { ok: true, detail: `Opened ${slug} and marked it current` };
+  },
+  "the-nav-fits-a-phone": () => {
+    const phone = frame.classList.contains("phone");
+    const navR = $("fnav").getBoundingClientRect(), frR = frame.getBoundingClientRect();
+    const navShown = navR.right > frR.left + 4 && navR.width > 0;
+    const over = scroller.scrollWidth - scroller.clientWidth;
+    if (phone && navShown && !frame.classList.contains("drawer")) return { ok: false, expected: "nav closed below 600 px", actual: `nav open, ${Math.round(navR.width)} px wide`, at: "#fnav", detail: "Nav is still open at 390 px" };
+    if (over > 1) return { ok: false, expected: "no sideways scroll", actual: `page scrolls ${over} px sideways`, at: "#fact", detail: `Page scrolls ${over} px sideways at ${Math.round(frR.width)} px` };
+    return { ok: true, detail: phone ? "Nav is a closed drawer · no sideways scroll at 390 px" : "Nav visible · no sideways scroll" };
+  },
+  "a-review-shows-its-evidence": () => {
+    const shown = parseInt($("fproof").textContent, 10);
+    if (shown !== PASSING_TESTS) return { ok: false, expected: `${PASSING_TESTS} proven`, actual: `${shown} proven`, at: "#freview", detail: `Shows ${shown}, but ${PASSING_TESTS} tests pass` };
+    return { ok: true, detail: `Shows ${shown} of 6, matching the passing tests` };
+  },
+};
+
+function run(p, why, args = {}) {
+  const t0 = performance.now();
+  const r = CHECKS[p.id](args);
+  const ms = Math.max(1, Math.round(performance.now() - t0 + 1));
+  const st = ST[p.id];
+  if (r.ok) { st.held++; st.fail = null; } else { st.broke++; st.fail = { ...r, time: now(), why }; }
+  st.last = { ok: r.ok, time: now() };
+  LOG.unshift({ time: now(), id: p.id, trigger: `${p.trigger} · ${why}`, ok: r.ok, detail: r.detail, ms });
+  LOG = LOG.slice(0, 80);
+  if (!r.ok) SEL = p.id;
+  renderDT();
+  const row = document.querySelector(`.prow[data-id="${p.id}"]`);
+  if (row) { row.classList.remove("flash-ok", "flash-bad"); void row.offsetWidth; row.classList.add(r.ok ? "flash-ok" : "flash-bad"); }
+}
+
+/* ---------- overlay: highlights and failure pins ---------- */
+function rectIn(el) {
+  const a = el.getBoundingClientRect(), f = frame.getBoundingClientRect();
+  return { x: a.left - f.left, y: a.top - f.top, w: a.width, h: a.height };
+}
+let HL = null; // { els, label, bad }
+function drawOverlay() {
+  let html = "";
+  if (HL) {
+    HL.els.forEach((el, i) => {
+      const r = rectIn(el);
+      if (r.w < 1 || r.h < 1) return;
+      html += `<div class="hlbox ${HL.bad ? "bad" : ""}" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px"></div>`;
+      if (i === 0) html += `<div class="hltag ${HL.bad ? "bad" : ""}" style="left:${Math.max(0, r.x)}px;top:${Math.max(18, r.y)}px">${esc(HL.label)}</div>`;
+    });
+  }
+  PROMS.forEach((p) => {
+    const f = ST[p.id].fail; if (!f) return;
+    const el = document.querySelector(f.at); if (!el) return;
+    const r = rectIn(el);
+    if (r.w < 1 || r.h < 1 || r.x + r.w <= 0 || r.x >= frame.clientWidth) return;
+    const x = Math.min(frame.clientWidth - 14, Math.max(14, r.x + r.w - 6)), y = Math.max(14, r.y + 6);
+    html += `<div class="pin" style="left:${x}px;top:${y}px" title="${esc(p.id)} broke">!</div>`;
+  });
+  $("overlay").innerHTML = html;
+}
+const coveredEls = (p) => [...new Set(p.covers.flatMap((s) => [...document.querySelectorAll(s)]))];
+function highlightPromise(p) { const f = ST[p.id].fail; HL = { els: f ? [document.querySelector(f.at)].filter(Boolean) : coveredEls(p), label: `${p.id} · ${f ? "broke here" : coveredEls(p).length + " elements"}`, bad: !!f }; drawOverlay(); }
+function clearHL() { HL = null; drawOverlay(); }
+scroller.addEventListener("scroll", drawOverlay);
+window.addEventListener("resize", drawOverlay);
+
+/* ---------- devtools: Promises tab ---------- */
+const stateOf = (id) => ST[id].fail ? "broke" : ST[id].last ? "held" : "idle";
+function renderDT() {
+  const broken = PROMS.filter((p) => ST[p.id].fail).length;
+  $("brokeBadge").textContent = broken; $("brokeBadge").hidden = !broken;
+  const shown = PROMS.filter((p) => FILTER === "all" || stateOf(p.id) === FILTER);
+  $("plist").innerHTML = shown.map((p) => {
+    const s = ST[p.id];
+    return `<li><button class="prow" type="button" role="option" data-id="${p.id}" aria-selected="${SEL === p.id}">
+      <span class="sd ${stateOf(p.id)}"></span><span class="nm">${p.id}</span>
+      <span class="ct">held ${s.held}${s.broke ? ` · <span class="b">broke ${s.broke}</span>` : ""}</span></button></li>`;
+  }).join("") || `<li style="padding:10px;color:var(--ink-3)">Nothing ${FILTER === "held" ? "held" : "broken"} yet.</li>`;
+  document.querySelectorAll(".prow").forEach((b) => {
+    const p = PROMS.find((x) => x.id === b.dataset.id);
+    b.onclick = () => { SEL = p.id; renderDT(); };
+    b.onmouseenter = () => highlightPromise(p);
+    b.onmouseleave = clearHL;
+    b.onfocus = () => highlightPromise(p);
+    b.onblur = clearHL;
+  });
+  renderDetail();
+  $("plog").innerHTML = LOG.map((l) => `<tr class="${l.ok ? "" : "bad"}"><td class="mono">${l.time}</td><td class="mono">${l.id}</td><td>${esc(l.trigger)}</td>
+    <td class="res ${l.ok ? "ok" : ""}">${l.ok ? "held" : "broke"}</td><td class="det">${esc(l.detail)}</td><td class="num">${l.ms}</td></tr>`).join("")
+    || `<tr><td colspan="6" style="color:var(--ink-3);padding:10px 8px">No checks yet. Use the page to fire a trigger.</td></tr>`;
+  drawOverlay();
+  if (TAB === "el") renderElements();
+}
+function renderDetail() {
+  const p = PROMS.find((x) => x.id === SEL), s = ST[p.id];
+  const mine = LOG.filter((l) => l.id === p.id).slice(0, 6);
+  $("pdet").innerHTML = `
+    <div><p class="says">${esc(p.says)}</p><span class="id">${p.id}</span></div>
+    ${s.fail ? `<div class="failbox" role="status"><b>Broke at ${s.fail.time}</b> after ${esc(s.fail.why)}
+        <div class="ea"><span>Expected</span><span>${esc(s.fail.expected)}</span><span>Actual</span><span>${esc(s.fail.actual)}</span><span>Element</span><span>${esc(s.fail.at)}</span></div>
+        <div class="acts"><button class="tbtn" type="button" id="reveal">Reveal in Elements</button><button class="tbtn" type="button" id="fix">Start a fix plan</button><span id="fixNote" style="color:var(--ink-2)"></span></div></div>`
+      : s.last ? `<div class="okbox"><b>Held</b> ${s.held} time${s.held === 1 ? "" : "s"} this session · last at ${s.last.time}</div>`
+      : `<div class="okbox">Not checked yet. ${esc(p.when)} to fire it.</div>`}
+    <dl class="kv">
+      <dt>Covers</dt><dd>${p.covers.map((c) => `<code>${esc(c)}</code>`).join(" ")}</dd>
+      <dt>Trigger</dt><dd><code>${p.trigger}</code> · ${esc(p.when)}</dd>
+      <dt>Check</dt><dd>${esc(p.check)}</dd>
+      <dt>Tests</dt><dd>${p.id === PROMS[2].id ? "A6 · passing" : p.id === PROMS[0].id ? "A1, A2, A3" : "A4, A5"} <span style="color:var(--ink-3)">(run in CI, not here)</span></dd>
+    </dl>
+    ${mine.length ? `<div><p class="lbl">This session</p><ul class="mini">${mine.map((l) => `<li><span class="t">${l.time}</span><span class="r ${l.ok ? "ok" : "bad"}">${l.ok ? "✓" : "✗"}</span><span>${esc(l.detail)}</span></li>`).join("")}</ul></div>` : ""}`;
+  if ($("reveal")) $("reveal").onclick = () => { ESEL = s.fail.at.startsWith(".fnav [") ? s.fail.at : s.fail.at; setTab("el"); };
+  if ($("fix")) $("fix").onclick = () => { $("fixNote").textContent = "Would open a plan that starts with a failing test for this case."; };
+}
+document.querySelectorAll("[data-f]").forEach((b) => b.onclick = () => {
+  FILTER = b.dataset.f; document.querySelectorAll("[data-f]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); renderDT();
+});
+$("clear").onclick = () => { LOG = []; PROMS.forEach((p) => Object.assign(ST[p.id], { held: 0, broke: 0, last: null, fail: null })); renderDT(); };
+
+/* ---------- devtools: Elements tab with a Promises sidebar pane ---------- */
+function tree() {
+  const n = (sel, d, tag, attrs) => ({ sel, d, tag, attrs });
+  return [
+    n("#fapp", 0, "div", [["class", "app"]]),
+    n(".fbar", 1, "header", [["class", "fbar"]]),
+    n("#fmenu", 2, "button", [["class", "fmenu"]]),
+    n("#fsearch", 2, "input", [["class", "fsearch"], ["type", "search"]]),
+    n(".fbody", 1, "div", [["class", "fbody"]]),
+    n("#fnav", 2, "nav", [["class", "fnav"]]),
+    ...PLANS.map(([s]) => n(`.fnav [data-plan="${s}"]`, 3, "button", [["data-plan", s]])),
+    n(".fmain", 2, "main", [["class", "fmain"]]),
+    n("#ftitle", 3, "h1", []),
+    n("#fdesc", 3, "p", []),
+    n("#freview", 3, "button", [["class", "freview"]]),
+    n("#fact", 3, "section", [["class", "fact"]]),
+  ];
+}
+function coverage(el) {
+  const direct = [], inside = [];
+  PROMS.forEach((p) => {
+    const sels = p.covers;
+    if (sels.some((s) => el.matches(s))) direct.push(p);
+    else if (sels.some((s) => el.querySelector(s))) inside.push(p);
+  });
+  return { direct, inside };
+}
+function renderElements() {
+  const nodes = tree();
+  $("etree").innerHTML = nodes.map((nd) => {
+    const el = document.querySelector(nd.sel); if (!el) return "";
+    const c = coverage(el);
+    const bad = c.direct.some((p) => ST[p.id].fail && el.matches(ST[p.id].fail.at));
+    const dot = c.direct.length ? `<span class="cov ${bad ? "bad" : "ok"}" title="${c.direct.length} promise(s)"></span>` : c.inside.length ? `<span class="cov in" title="Promises inside"></span>` : "";
+    return `<button class="enode" type="button" role="treeitem" style="--d:${nd.d}" data-sel='${nd.sel}' aria-selected="${ESEL === nd.sel}">
+      <span><span class="tg">&lt;${nd.tag}</span>${nd.attrs.map(([k, v]) => ` <span class="at">${k}</span>=<span class="vl">"${esc(v)}"</span>`).join("")}<span class="tg">&gt;</span></span>${dot}</button>`;
+  }).join("");
+  document.querySelectorAll(".enode").forEach((b) => {
+    const el = document.querySelector(b.dataset.sel);
+    b.onclick = () => { ESEL = b.dataset.sel; renderElements(); };
+    b.onmouseenter = () => { HL = { els: [el], label: b.dataset.sel, bad: false }; drawOverlay(); };
+    b.onmouseleave = () => { HL = null; drawOverlay(); };
+  });
+  const el = document.querySelector(ESEL);
+  const c = el ? coverage(el) : { direct: [], inside: [] };
+  const item = (p) => `<button type="button" data-goto="${p.id}"><span class="sd ${stateOf(p.id)}"></span><span>${esc(p.says)}<span class="nm">${p.id}</span></span></button>`;
+  $("ein").innerHTML = `
+    <p class="lbl">Covering this element</p>
+    ${c.direct.length ? `<div class="ecov">${c.direct.map(item).join("")}</div>`
+      : `<div class="gap">No promise covers this element. It can change or break without anyone being told.</div>`}
+    ${c.inside.length ? `<p class="lbl">Inside it</p><div class="ecov">${c.inside.map(item).join("")}</div>` : ""}
+    <div class="legend"><span><i style="background:var(--ok)"></i>covered</span><span><i style="background:var(--bad)"></i>broke here</span><span><i style="border:1.5px solid var(--ok)"></i>covered inside</span></div>`;
+  document.querySelectorAll("[data-goto]").forEach((b) => b.onclick = () => { SEL = b.dataset.goto; setTab("prom"); });
+}
+function setTab(t) {
+  TAB = t;
+  $("tabEl").setAttribute("aria-selected", String(t === "el")); $("tabPr").setAttribute("aria-selected", String(t === "prom"));
+  $("paneEl").style.display = t === "el" ? "flex" : "none"; $("paneProm").style.display = t === "prom" ? "flex" : "none";
+  renderDT();
+  if (t === "el") { const el = document.querySelector(ESEL); if (el) { HL = { els: [el], label: ESEL, bad: false }; drawOverlay(); setTimeout(() => { HL = null; drawOverlay(); }, 1400); } }
+}
+$("tabEl").onclick = () => setTab("el");
+$("tabPr").onclick = () => setTab("prom");
+
+/* ---------- device + bug controls ---------- */
+function setDevice(phone) {
+  const was = frame.classList.contains("phone");
+  frame.classList.toggle("phone", phone); frame.classList.remove("drawer");
+  $("devDesk").setAttribute("aria-pressed", String(!phone)); $("devPhone").setAttribute("aria-pressed", String(phone));
+  if (was !== phone) setTimeout(() => run(PROMS[1], phone ? "width 1000 → 390 px" : "width 390 → 1000 px"), 240);
+}
+$("devDesk").onclick = () => setDevice(false);
+$("devPhone").onclick = () => setDevice(true);
+$("bug").onchange = (e) => {
+  BUG = e.target.value;
+  frame.classList.toggle("bug-overflow", BUG === "overflow");
+  frame.classList.toggle("bug-drawer", BUG === "drawer");
+  $("fproof").textContent = BUG === "proof" ? "5 of 6" : "6 of 6";
+  e.target.classList.toggle("bugon", BUG !== "none");
+};
+
+/* ---------- start: the page loads and the load-time checks run ---------- */
+drawNav();
+$("fdesc").textContent = PLANS[0][1];
+renderDT();
+setTimeout(() => run(PROMS[1], "page loaded at 1000 px"), 400);
+</script>
+
+</body>
+</html>
