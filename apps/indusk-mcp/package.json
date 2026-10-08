@@ -143,6 +143,14 @@
 			"types": "./dist/lib/promises/timeline.d.ts",
 			"default": "./dist/lib/promises/timeline.js"
 		},
+		"./promises/record": {
+			"types": "./dist/lib/promises/record.d.ts",
+			"default": "./dist/lib/promises/record.js"
+		},
+		"./admin/recorder-loop": {
+			"types": "./dist/lib/admin/recorder-loop.d.ts",
+			"default": "./dist/lib/admin/recorder-loop.js"
+		},
 		"./promises/heard": {
 			"types": "./dist/lib/promises/heard.d.ts",
 			"default": "./dist/lib/promises/heard.js"

@@ -12,9 +12,6 @@ import {
 	codeFilesFor,
 	writePromise,
 } from "../../__tests__/helpers/promises-fixture.js";
-import { git } from "../../__tests__/helpers/test-git.js";
-import { makeVersionedWorkbench } from "../../__tests__/helpers/versioned-workbench.js";
-import { type PassMark, recordBreaks as record } from "./record.js";
 import {
 	answering,
 	incidentsIn,
@@ -23,7 +20,10 @@ import {
 	PROMISE,
 	recordingProject,
 	TRACE,
-} from "./record.test-support.js";
+} from "../../__tests__/helpers/record-fixture.js";
+import { git } from "../../__tests__/helpers/test-git.js";
+import { makeVersionedWorkbench } from "../../__tests__/helpers/versioned-workbench.js";
+import { type PassMark, recordBreaks as record } from "./record.js";
 import { JaegerUnreachable, WatcherBlind } from "./sources.js";
 import type { MarkedSpansResult } from "./telemetry.js";
 

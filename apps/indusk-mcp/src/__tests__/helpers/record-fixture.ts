@@ -1,13 +1,13 @@
 import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import type { MarkedSpan, MarkedSpansResult } from "../../lib/promises/telemetry.js";
 import {
 	behaviourPromise,
 	codeFilesFor,
 	type IncidentSpec,
 	type PromiseProject,
 	promiseProject,
-} from "../../__tests__/helpers/promises-fixture.js";
-import type { MarkedSpan, MarkedSpansResult } from "./telemetry.js";
+} from "./promises-fixture.js";
 
 /**
  * The recording writer's fixture (incident-recording): a project with one

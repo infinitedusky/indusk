@@ -2,7 +2,6 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { recordBreaks } from "./record.js";
 import {
 	answering,
 	jsonLines,
@@ -10,7 +9,8 @@ import {
 	recordingProject,
 	TRACE,
 	violation,
-} from "./record.test-support.js";
+} from "../../__tests__/helpers/record-fixture.js";
+import { recordBreaks } from "./record.js";
 
 /**
  * incident-recording A20 — promise: the-admin-keeps-what-it-heard.

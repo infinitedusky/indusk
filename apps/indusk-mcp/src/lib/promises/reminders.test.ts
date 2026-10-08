@@ -3,8 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openIncidentSpec } from "../../__tests__/helpers/promises-fixture.js";
+import {
+	answering,
+	jsonLines,
+	PROMISE,
+	recordingProject,
+} from "../../__tests__/helpers/record-fixture.js";
 import { recordBreaks } from "./record.js";
-import { answering, jsonLines, PROMISE, recordingProject } from "./record.test-support.js";
 import { JaegerUnreachable } from "./sources.js";
 
 /**
