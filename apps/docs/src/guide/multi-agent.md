@@ -182,7 +182,7 @@ git stash drop stash@{n}             # find n again by your tag first
 
 A session that is already running hears about a production break on its next prompt, without waiting for a catchup.
 
-Whatever records the break — the admin's recorder, catchup's `record_breaks`, or `promises watch` by hand — also writes it to the project's **inbox**, a file in the project's home that every checkout of the project shares. The `break-inbox` hook runs on every prompt: it reads the entries no session has been given yet, puts them in front of the agent ("a promise broke in production … `seat-holds` is reopened with `Maintenance — i-…`"), and marks them delivered. So every live session in the project hears each break once, on its next turn — the first session to take a turn after the break, that is. A session in another project reads another home and hears nothing.
+Whatever records the break — the admin's recorder, catchup's `record_breaks`, or `promises watch` by hand — also writes it to the project's **inbox**, a file in the project's home that every checkout of the project shares. The `break-inbox` hook runs on every prompt: it reads the entries no session has been given yet, puts them in front of the agent ("a promise broke in production … `seat-holds` is reopened with `Maintenance — i-…`"), and marks them delivered to that session. So every live session in the project hears each break once, on its own next turn, and never again. A session in another project reads another home and hears nothing.
 
 An incident still open a day later is written to the inbox again as a reminder, once a day, until it is fixed.
 
