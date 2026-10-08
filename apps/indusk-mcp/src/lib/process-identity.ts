@@ -13,6 +13,7 @@
  * `ps` reads the admin daemon as `next-server (v16.2.4)` — no binary path,
  * no port flag — and an install renames its package folder aside, moving
  * its working directory. Its start time is the fact neither changes.
+ * lesson: identify-a-process-by-what-it-cannot-rewrite
  *
  * One definition for every daemon InDusk stops; the reads are inputs so the
  * rule is a unit test.

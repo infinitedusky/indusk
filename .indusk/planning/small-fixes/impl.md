@@ -222,7 +222,7 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 #### Build Phase 5 Context
 
-- [ ] mcp: `lib/process-identity.ts`'s header says a marker must be read from a real process, not composed from the spawn arguments — `next start` rewrites its title — and names the working directory as the admin's marker; a lesson for it, so the header's token resolves
+- [x] (the header names the start time, not the working directory this item first said — an install moves the cwd, see the identity item; lesson `identify-a-process-by-what-it-cannot-rewrite` written through `add_lesson` on main, its token in the header) mcp: `lib/process-identity.ts`'s header says a marker must be read from a real process, not composed from the spawn arguments — `next start` rewrites its title — and names the working directory as the admin's marker; a lesson for it, so the header's token resolves
 
 #### Build Phase 5 Document
 
