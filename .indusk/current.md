@@ -15,7 +15,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 **Version**: never hand-copied — read `apps/indusk-mcp/package.json` (published: `npm view @infinitedusky/indusk-mcp version`); history in `apps/docs/src/changelog.md`. `indusk context check-pointers` refuses a literal version claim on this line.
 
-**Now (2026-10-08): the InDusk demo.** The project is [indusk-demo](planning/indusk-demo/master.md) — show a promise breaking and the system catching it. Steps 0–4 are closed. **Next: [incident-recording](planning/incident-recording/brief.md)** (brief draft; open it with `/planner incident-recording`). Then vscode-extension and plan-cockpit (declared, not opened), demo-rehearsal; server-provisioning after the launch. Any agent starting work on dusk starts there unless Sandy says otherwise.
+**Now (2026-10-08): the InDusk demo.** The project is [indusk-demo](planning/indusk-demo/master.md) — show a promise breaking and the system catching it. Steps 0–4 are closed. **Next: [incident-recording](planning/incident-recording/brief.md)** (brief draft; open it with `/planner incident-recording`). Then vscode-extension and plan-cockpit (declared, not opened), demo-rehearsal. **server-provisioning (demo step 5) is built** on `plan/server-provisioning`, ahead of order, and awaits falsify/cleanup/retrospective: `indusk server connect` and `server deploy`; a Fly server is about $8/month (price list) and ~6 min to deploy; the deployed dusk server is unchanged. Any agent starting work on dusk starts there unless Sandy says otherwise.
 
 **In flight** (moved here from the root `CLAUDE.md`'s Current State on 2026-10-02 by context-tiers — operational state lives in this file):
 
