@@ -39,3 +39,29 @@ describe("A3 — the release publishes without listing every file", () => {
 		]);
 	});
 });
+
+/**
+ * server-provisioning A18: every release publishes the recording server's
+ * image, and a release whose image push fails is not a release. The image
+ * step runs after `npm whoami` and before `pnpm publish`, joined by `&&`, so a
+ * refused push stops the chain with nothing on npm.
+ *
+ * promise: the-recording-server-runs-from-a-published-image
+ */
+describe("A18 — the release publishes the server image before npm", () => {
+	it("builds and pushes the image after the npm login check and before publishing", () => {
+		const image = steps.indexOf("bash scripts/release-image.sh");
+		const whoami = steps.indexOf("npm whoami");
+		const publish = steps.findIndex((s) => s.includes("pnpm publish"));
+		expect(image, "the release has no image step").toBeGreaterThan(-1);
+		expect(image).toBeGreaterThan(whoami);
+		expect(image).toBeLessThan(publish);
+	});
+
+	it("the image step pushes a tag named by the version, and fails the release when the push fails", () => {
+		const script = readFileSync(join(__dirname, "..", "..", "scripts", "release-image.sh"), "utf-8");
+		expect(script).toMatch(/^set -euo pipefail$/m);
+		expect(script).toContain("ghcr.io/infinitedusky/indusk-always-on:${VERSION}");
+		expect(script).toMatch(/docker push "\$\{IMAGE\}:\$\{VERSION\}"/);
+	});
+});

@@ -1,7 +1,7 @@
 ---
 title: "Server provisioning — run your own recording server, connected in one command"
 date: 2026-10-08
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -59,7 +59,7 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 | A15 | Connect to a server whose mark does not come back ends non-zero, saying watcher blind with the intake and the reader it tried, and leaves the project's config unchanged | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-server-is-read-back-before-the-command-ends | apps/indusk-mcp/src/lib/server/connect.test.ts |
 | A16 | The read-back goes through the addresses the project will use, never an internal or loopback one | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-server-is-read-back-before-the-command-ends | apps/indusk-mcp/src/lib/server/connect.test.ts |
 | A17 | Deploy whose read-back fails ends non-zero naming what did not come back, and says the server exists so a second run can finish | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-server-is-read-back-before-the-command-ends | apps/indusk-mcp/src/lib/server/deploy.test.ts |
-| A18 | The release command publishes the image tagged with the version, and a release whose image push fails is not a release | Test Phase 1 | Build Phase 3 | planned | unit | promise: the-recording-server-runs-from-a-published-image | apps/indusk-mcp/src/__tests__/release-script.test.ts |
+| A18 | The release command publishes the image tagged with the version, and a release whose image push fails is not a release | Test Phase 1 | Build Phase 3 | written | unit | promise: the-recording-server-runs-from-a-published-image | apps/indusk-mcp/src/__tests__/release-script.test.ts |
 | A19 | The image built the way the release builds it starts with a volume, its two ports and its two secrets, and answers a mark sent through it, with no checkout on the host | Test Phase 1 | Build Phase 3 | planned | contract | promise: the-recording-server-runs-from-a-published-image | apps/indusk-mcp/src/__tests__/always-on-image.test.ts |
 | A20 | Deploy pulls the published image for its version rather than building one | Build Phase 2 | Build Phase 2 | planned | unit | promise: the-recording-server-runs-from-a-published-image | apps/indusk-mcp/src/lib/server/deploy.test.ts |
 | A21 | The guide's "run your own server" page names every server setting without a default, the volume, the two ports and the connect command | Test Phase 1 | Build Phase 3 | planned | unit | a regression guard over the guide — a server setting added without a line in it is the 2026-10-04 deploy again | apps/indusk-mcp/src/__tests__/server-guide.test.ts |
@@ -77,8 +77,8 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 
 **Goal**: author the three rows whose subjects exist today, red on their own assertion, and register every other row with the body it will have, so the review can ask whether each compiles at its phase and asserts what it claims.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create server-provisioning`, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs `indusk worktree assign server-provisioning <path>`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter. Created 2026-10-08 at `dusk-worktrees/server-provisioning`.
-- [ ] A18 in `src/__tests__/release-script.test.ts`: the pinned step list gains `bash scripts/release-image.sh` between `npm whoami` and the publish step, so a failed push stops the release before npm has the version; RED today (the step is absent)
+- [x] Create/confirm this plan's worktree (`indusk worktree create server-provisioning`, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs `indusk worktree assign server-provisioning <path>`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter. Created 2026-10-08 at `dusk-worktrees/server-provisioning`.
+- [x] A18 in `src/__tests__/release-script.test.ts`: the pinned step list gains `bash scripts/release-image.sh` between `npm whoami` and the publish step, so a failed push stops the release before npm has the version; RED today (the step is absent)
 - [ ] A19 in `src/__tests__/always-on-image.test.ts` (system tier): a second describe builds the image from a `pnpm pack` tarball through `templates/server/Dockerfile` (`--build-arg TARBALL=`), starts it with a volume, the two ports and the two secrets, sends a mark through the intake and reads it back from the query API with `probeWatcher`; RED today (no template, and the Dockerfile installs from npm)
 - [ ] A21 in `src/__tests__/server-guide.test.ts`: reads every `INDUSK_SERVER_*` name from `lib/telemetry/` whose read has no default and asserts each appears in `apps/docs/src/guide/run-your-own-server.md`, along with `INDUSK_SERVER_VOLUME`, both ports and the words `indusk server connect`; RED today (the page does not exist)
 
