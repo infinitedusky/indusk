@@ -46,7 +46,7 @@ A plan that lands green is released without running the slow tests again, and th
 | A3 | A slow run that exits non-zero records nothing, so the next release runs the tests | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
 | A4 | A run over uncommitted changes to covered files records nothing, and `--unless-covered` with such changes runs the tests | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
 | A5 | A green run recorded in a plan's worktree covers the same code on `main` | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
-| A6 | On this repository, after `indusk checks slow` runs green, the release script's `--unless-covered` skips and names that run | Build Phase 3 | Build Phase 3 | planned | live check | promise: slow-checks-run-once-per-tree | manual: on main after landing, `node apps/indusk-mcp/dist/bin/cli.js checks slow --unless-covered` prints the covering run |
+| A6 | On this repository, after `indusk checks slow` runs green, the release script's `--unless-covered` skips and names that run | Build Phase 3 | Build Phase 3 | written | live check | promise: slow-checks-run-once-per-tree | manual: on main after landing, `node apps/indusk-mcp/dist/bin/cli.js checks slow --unless-covered` prints the covering run |
 | A7 | The landing and release steps every project installs name none of dusk's commands or paths | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/steps-name-project-commands.test.ts |
 | A8 | A project that declares its steps gets them named back by `indusk checks show` | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
 | A9 | A project that declares none is told plainly that landing runs no slow tests and release has nothing to publish | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
@@ -119,7 +119,7 @@ A plan that lands green is released without running the slow tests again, and th
 
 ### Build Phase 3: dusk declares its steps
 
-- [ ] `.indusk/config.json`: `workflow.steps` (ADR D4's values); `plans.land_checks` gains `node apps/indusk-mcp/dist/bin/cli.js checks slow`
+- [x] (`covers` adds `.claude` and the root configs, which the system tier reads; the landing check builds the package first, so it runs this branch's `checks`) `.indusk/config.json`: `workflow.steps` (ADR D4's values); `plans.land_checks` gains `node apps/indusk-mcp/dist/bin/cli.js checks slow`
 - [ ] `apps/indusk-mcp/package.json` `release`: `pnpm -w test:system` becomes `node dist/bin/cli.js checks slow --unless-covered`
 - [ ] A6: on this branch, `checks slow` green, then `checks slow --unless-covered` skips and names the run; recorded here with its output
 - [ ] `indusk promises confirm release-checks-run-once`
