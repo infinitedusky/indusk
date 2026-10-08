@@ -44,6 +44,7 @@ const REFUSED = [
 	"git stash push",
 	"git stash -u",
 	"git stash pop stash@{0}",
+	"git stash apply",
 	"git stash clear",
 ];
 

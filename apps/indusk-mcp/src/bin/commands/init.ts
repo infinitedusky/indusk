@@ -1061,7 +1061,12 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			},
 			{
 				matcher: "Bash",
-				hooks: [{ type: "command", command: hookCommand("trunk-guard.js") }],
+				hooks: [
+					{ type: "command", command: hookCommand("trunk-guard.js") },
+					// Worktrees share one stash stack: an unnamed stash or a pop
+					// is refused where another session could be on the other end.
+					{ type: "command", command: hookCommand("stash-guard.js") },
+				],
 			},
 		],
 		PostToolUse: [

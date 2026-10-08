@@ -238,8 +238,13 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (CLI boundary)", () => {
 			command: 'node "${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/trunk-guard.js',
 		};
 		const pre = expected.hooks?.PreToolUse ?? [];
+		// small-fixes: and the stash guard, on Bash beside it.
+		const stash = {
+			type: "command",
+			command: 'node "${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/stash-guard.js',
+		};
 		pre.find((e) => e.matcher === "Edit|Write")?.hooks?.push(guard);
-		pre.push({ matcher: "Bash", hooks: [guard] });
+		pre.push({ matcher: "Bash", hooks: [guard, stash] });
 		expect(after).toEqual(expected);
 	});
 
@@ -254,8 +259,8 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (CLI boundary)", () => {
 		const afterFirst = readFileSync(settingsPath, "utf-8");
 		const commands = hookCommands(JSON.parse(afterFirst) as Settings);
 		expect(commands).toContain(custom.command);
-		// six rewritten + the trunk guard's two registrations
-		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(8);
+		// six rewritten + the trunk guard's two registrations + the stash guard's one
+		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(9);
 		expect(commands.filter((c) => RELATIVE_COMMAND.test(c))).toHaveLength(0);
 
 		expect(runCli(dir, ["update"], ENV()).code).toBe(0);
@@ -330,9 +335,9 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (falsification)", () => {
 
 		const commands = hookCommands(readSettings(dir));
 		expect(commands.filter((c) => RELATIVE_COMMAND.test(c))).toEqual([]);
-		// six legacy hooks rewritten + trunk-guard under two matchers = eight, each once
-		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(8);
-		expect(commands).toHaveLength(8);
-		expect(new Set(commands.map((c) => c)).size, "a command registered twice").toBe(7);
+		// six legacy hooks rewritten + trunk-guard under two matchers + stash-guard = nine, each once
+		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(9);
+		expect(commands).toHaveLength(9);
+		expect(new Set(commands.map((c) => c)).size, "a command registered twice").toBe(8);
 	});
 });

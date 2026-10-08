@@ -358,6 +358,18 @@ export async function update(projectRoot: string): Promise<void> {
 			} catch {
 				console.info("  could not register trunk-guard hook in settings.json");
 			}
+
+			// The stash guard (small-fixes): Bash only — a stash is a command.
+			try {
+				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+				if (ensureHookRegistered(settings, "PreToolUse", "Bash", "stash-guard.js")) {
+					const { writeFileSync } = await import("node:fs");
+					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+					console.info("  registered stash-guard hook in settings.json (Bash)");
+				}
+			} catch {
+				console.info("  could not register stash-guard hook in settings.json");
+			}
 		}
 	}
 

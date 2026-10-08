@@ -277,6 +277,10 @@
 					{
 						"type": "command",
 						"command": "node \"${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/trunk-guard.js"
+					},
+					{
+						"type": "command",
+						"command": "node \"${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/stash-guard.js"
 					}
 				]
 			}
