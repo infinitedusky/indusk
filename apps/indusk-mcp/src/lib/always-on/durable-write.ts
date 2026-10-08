@@ -17,12 +17,15 @@ import { dirname } from "node:path";
  * than failing, and a single unchecked write renamed a truncated record over
  * the good one (A16). A write that fails removes its temp file and leaves the
  * old record where it was.
+ *
+ * `mode` is the new file's permission, before the umask: a secrets file passes
+ * `0o600`, so the file is never readable by others even for an instant.
  */
-export function writeFileDurably(path: string, content: string): void {
+export function writeFileDurably(path: string, content: string, mode = 0o666): void {
 	const dir = dirname(path);
 	mkdirSync(dir, { recursive: true });
 	const temp = `${path}.${process.pid}.tmp`;
-	const fd = openSync(temp, "w");
+	const fd = openSync(temp, "w", mode);
 	try {
 		writeAll(fd, Buffer.from(content, "utf-8"));
 		fsyncSync(fd);
