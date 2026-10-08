@@ -69,6 +69,7 @@ describe("A18 — the release publishes the server image before npm", () => {
 		expect(script).toMatch(/^set -euo pipefail$/m);
 		expect(script).toContain('IMAGE="${INDUSK_IMAGE:-ghcr.io/infinitedusky/indusk-always-on}"');
 		expect(script).toMatch(/VERSION="\$\(node -p 'require\("\.\/package\.json"\)\.version'\)"/);
-		expect(script).toMatch(/docker push "\$\{IMAGE\}:\$\{VERSION\}"/);
+		expect(script).toMatch(/-t "\$\{IMAGE\}:\$\{VERSION\}"[^\n]*--push/);
+		expect(script).toContain("--platform linux/amd64,linux/arm64");
 	});
 });
