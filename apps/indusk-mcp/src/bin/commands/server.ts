@@ -12,6 +12,7 @@ import { connect, probeServer } from "../../lib/server/connect.js";
 import { DeployRefused, deploy } from "../../lib/server/deploy.js";
 import { realFly } from "../../lib/server/fly.js";
 import { DOCKERFILE_TEMPLATE } from "../../lib/server/fly-config.js";
+import { FlyReadFailed } from "../../lib/server/fly-state.js";
 import { redactingWriter } from "../../lib/server/redact.js";
 import { secretsFile } from "../../lib/server/secrets-file.js";
 import { induskHome } from "../../lib/telemetry/status.js";
@@ -153,7 +154,7 @@ export async function serverDeploy(opts: ServerDeployOptions): Promise<void> {
 		);
 	} catch (err) {
 		console.error(err instanceof Error ? err.message : String(err));
-		process.exitCode = err instanceof DeployRefused ? 2 : 1;
+		process.exitCode = err instanceof DeployRefused || err instanceof FlyReadFailed ? 2 : 1;
 	}
 }
 
