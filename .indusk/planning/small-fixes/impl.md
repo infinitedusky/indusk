@@ -1,7 +1,7 @@
 ---
 title: "Small fixes"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
