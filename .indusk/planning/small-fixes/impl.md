@@ -1,7 +1,7 @@
 ---
 title: "Small fixes"
 date: 2026-10-08
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -55,6 +55,12 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 | A14 | The command-line identity check is defined once, and both stops use it | Test Phase 1 | Build Phase 3 | passing | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/process-identity-single-definition.test.ts |
 | A15 | The planner writes the Key Decisions line as the first build phase's context item, never at ADR acceptance | Test Phase 1 | Build Phase 2 | passing | unit | a fix to the planner skill so `plans approve` accepts the branch; the approve rule is unchanged | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
 | A16 | The update notice says a newer version exists for `1.10.0` over `1.9.0`, and not for `1.9.0` over `1.10.0` | Test Phase 1 | Build Phase 3 | passing | unit | a regression guard over a one-line fix | apps/indusk-mcp/src/lib/version-check.test.ts |
+| A17 | `indusk ui stop` signals its own daemon when `ps` reports it the way `next start` really does — `next-server (v16.2.4)`, no binary path, no `--port` — and never a `next-server` running from another directory | Build Phase 5 | Build Phase 5 | planned | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/admin/daemon-stop.test.ts |
+| A18 | With the landed build, `indusk ui status` reports the running admin daemon as running and `indusk ui restart` replaces it, leaving one process listening on its port | Build Phase 5 | Build Phase 5 | planned | live check | promise: indusk-stops-only-its-own-daemons | manual: `indusk ui status && indusk ui restart && lsof -nP -iTCP:3939 -sTCP:LISTEN` |
+| A19 | A draft plan's status cannot leave `draft` by an Edit whose `old_string` is a fragment without the `status:` key (`draft` → `in-progress`), nor be checked off when its frontmatter spells it `status: "draft"` | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
+| A20 | With more than one worktree, `git stash branch <name>` with no stash named is refused, since it pops the top entry; `git stash branch <name> <sha>` is not | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
+| A21 | `indusk plans land` refuses, before merging anything, when the `indusk` running it is installed from the worktree it is about to remove, naming how to re-link from the trunk | Build Phase 5 | Build Phase 5 | planned | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/lib/plans/land-own-worktree.test.ts |
+| A22 | A turn that fails with no result text (`error_max_turns`, `error_during_execution`) shows **Failed** with a reason in plain words, and no raw subtype | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
 
 ## Checklist
 
@@ -191,6 +197,34 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 #### Build Phase 4 Document
 
 - [x] (a section, "Worktrees share one stash": why, the refused/allowed table, the safe commands, the off switch; and the changelog's Unreleased Added) `apps/docs/src/guide/multi-agent.md`: the stash rule and the safe commands
+
+### Build Phase 5: Falsification — the world's command lines, fragments, and the build that removes itself
+
+**Goal**: verify whether the attested state holds against inputs the fixtures did not take from the world: the admin daemon's real command line, an Edit that changes a status without its key, the one stash subcommand that pops implicitly, a landing run by the build it deletes, and a failed turn with no text. Each row is one hypothesis; each item the fix it needs.
+
+**Found, not hypothesized (A17):** on this machine the admin daemon (PID 44479, listening on 127.0.0.1:3939, started 2026-10-06) reads from `ps -o command=` as `next-server (v16.2.4)` — `next start` rewrites its process title, so neither `nextBin` nor `--port 3939` is in it. `verifyIdentity` returns false for the real daemon: `ui stop` deletes its record and never signals it; `ui status` sweeps the record and says not running. Two other `next-server` processes on this machine (other projects' dev servers) read identically, so the command line cannot tell them apart. A12's fixture used `node ${adminDir}/server.js`, a line no daemon has. While the global `indusk` is this branch's build, `ui status`/`stop`/`restart` orphan the running daemon.
+
+**Not investigated further, and why:** the telemetry stop (jaeger/otelcol are Go binaries that keep their argv; its identity was live-checked in 1.60); `install:local` and `land.install` beyond A21 (a script and a config key, read by one function each); `hasNewerVersion` (A16 covers ordering; prerelease tags are ignored by design); `stash-guard` spellings inside scripts called by name (out of scope for every Bash-reading hook, as trunk-guard records); two sessions sharing one worktree (they share a working tree, not just a stash — worktree-per-plan's ground, not this hook's).
+
+- [ ] A17 authored red in `daemon-stop.test.ts`: `command` returns `next-server (v16.2.4)` for the recorded PID; expect SIGTERM to it. A stranger `next-server` whose working directory is not the recorded `adminDir` is not signalled
+- [ ] `lib/admin/daemon.ts` identity by a fact `next start` does not rewrite: the process's working directory equals the recorded `adminDir` (the daemon is spawned with `cwd: adminDir`), read on macOS and Linux (`lsof -a -p <pid> -d cwd -Fn`, `/proc/<pid>/cwd`), through `lib/process-identity.ts` so there is still one rule; a cwd that cannot be read is not ours
+- [ ] A19 authored red in `approval-gate.test.ts`; `check-gates.js` judges the status move on the whole file before and after the edit (the file on disk, and the edit applied to it), with the frontmatter's `status` value unquoted — never on `old_string`/`new_string` alone
+- [ ] A20 authored red in `stash-guard.test.ts`; `stash-guard.js` refuses `stash branch <name>` with no stash named
+- [ ] A21 authored red in `land-own-worktree.test.ts`; `plans land` refuses, before any merge, when the running CLI's real path is inside the plan's worktree, naming `pnpm install:local` (or `npm install -g`) from the trunk first
+- [ ] A22 authored red in `SessionPanel.result.test.tsx`; the panel gives a failed turn with no text a plain-words reason from its subtype (`error_max_turns` → the turn limit was reached; `error_during_execution` → it stopped on an error), and an unknown subtype a generic one, never the raw word
+- [ ] A18 (live check, after the merge and the install on trunk): `indusk ui status` reports the daemon running, `indusk ui restart` replaces it, one listener on 3939; record the output here
+
+#### Build Phase 5 Verification
+
+- [ ] A17, A19, A20, A21, A22 pass; A12, A13, A4, A5, A9, A10 still do (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/admin src/lib/telemetry src/__tests__/approval-gate.test.ts src/__tests__/stash-guard.test.ts src/lib/plans/land-own-worktree.test.ts src/__tests__/hook-sync-parity.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/session`)
+
+#### Build Phase 5 Context
+
+- [ ] mcp: `lib/process-identity.ts`'s header says a marker must be read from a real process, not composed from the spawn arguments — `next start` rewrites its title — and names the working directory as the admin's marker; a lesson for it, so the header's token resolves
+
+#### Build Phase 5 Document
+
+- [ ] `apps/docs/src/changelog.md` Unreleased Fixed: the admin daemon recognised by its working directory; the approval gate on fragments and quoted status; `stash branch`; `plans land` refusing to remove its own build; a failed turn's reason. `apps/docs/src/guide/multi-agent.md`: `stash branch` in the refused table
 
 ## Files Affected
 
