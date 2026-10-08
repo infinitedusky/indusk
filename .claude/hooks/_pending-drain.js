@@ -3,7 +3,7 @@
  *
  * The Dawn thin lane (`atdawn run`) cannot spawn an evaluator — it may run on
  * a machine with no `claude` CLI — so every loop-owned commit is queued in
- * `.indusk/eval/pending.jsonl`. This module evaluates that backlog, exactly
+ * the project home's `eval/pending.jsonl`. This module evaluates that backlog, exactly
  * once per record, from any environment that CAN evaluate.
  *
  * Lifted out of `eval-trigger.js` (dawn-hook-parity cleanup): that hook's job
@@ -27,6 +27,7 @@
 import { spawn } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { projectHome } from "./_hook-paths.js";
 
 /**
  * Read a jsonl file into records. Missing file → []; malformed lines are
@@ -97,7 +98,8 @@ function runOne(record, { cwd, triggerScript }) {
  * @returns {Promise<{drained: number, failed: string[], alreadyDrained: number}>}
  */
 export async function drainPendingEvals({ statePath, cwd, triggerScript, log }) {
-	const evalDir = resolve(statePath, ".indusk", "eval");
+	// The project's eval folder, under its home (bookkeeping-lives-where-it-is-read D3).
+	const evalDir = resolve(projectHome(statePath), "eval");
 	const drainedPath = resolve(evalDir, "pending-drained.jsonl");
 
 	const pending = readJsonl(resolve(evalDir, "pending.jsonl"));
