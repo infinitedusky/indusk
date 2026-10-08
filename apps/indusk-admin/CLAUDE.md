@@ -98,5 +98,11 @@ Each entry is a rule and a pointer; the pointer holds the story.
   renders only through `<Markdown>`; the registry is never auto-pruned
   (`indusk ui prune [--dry-run]` backs up first); `runCli` pins `INDUSK_HOME`
   to a temp dir; malformed files quarantine to `.corrupt.{ISO}.bak`; daemon
-  identity = PID liveness AND port-listening; the scorecard-to-plan join is
-  date-range approximate.
+  identity = PID liveness AND its command line, never its port
+  (`lib/process-identity.ts`); the scorecard-to-plan join is date-range
+  approximate.
+- **Promise timeline** (moved from the root, 2026-10-08): compact sliced reads;
+  an admin store that reads only what is new plus a late tail; one
+  `violationState` (unrecorded / open / fixed) for chip and timeline;
+  incidents record `fixed` via `promises fix`. — see
+  `/decisions/promise-timeline`
