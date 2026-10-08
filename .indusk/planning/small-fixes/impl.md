@@ -72,7 +72,7 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 - [x] (green: the package's eleven hooks and the installed eleven are byte-identical, no strays) A11: `hook-sync-parity.test.ts`, the skills parity test over `hooks/` ↔ `.claude/hooks/`; a guard today, since 1.67.0's hooks are installed
 - [x] (green) A13: run `stop.test.ts` unchanged; a guard
 - [x] (red: `"1.10.0"` reads newer than `"1.9.0"` as text, and so does `"1.9.0"`) A16: `version-check.test.ts`: `hasNewerVersion("1.9.0", "1.10.0")` is true and `hasNewerVersion("1.10.0", "1.9.0")` false; RED: it compares strings
-- [ ] A14: `process-identity-single-definition.test.ts` pins one definition of "is this process mine" used by both stops; RED: two
+- [x] (authored at fbc01cf9, red on its own assertion — both tests failed, the file and the imports absent; the tick was missed when Test Phase 1 closed and is written here at Build Phase 3) A14: `process-identity-single-definition.test.ts` pins one definition of "is this process mine" used by both stops; RED: two
 
 #### Deferred to Build Phase 1
 
@@ -152,9 +152,12 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 ### Build Phase 3: The panel says what happened; one identity rule; numbers
 
-- [ ] `SessionPanel.tsx`'s `result` case: **Failed — <first line>** when `ok` is false, **Turn done** when true; the `exit` case: **Session ended (code N)**; never `subtype` (A7, A8)
-- [ ] `lib/process-identity.ts`: `isOwnProcess(pid, expectedCommandLine, deps)` lifted from `telemetry/stop.ts`; `admin/daemon.ts`'s `verifyIdentity` uses it with the bundled admin's path, never the port (A12, A13, A14)
-- [ ] `hasNewerVersion` in `lib/version-check.ts` compares with `isNewerVersion` (A16 goes green); A12 authored red against the new `daemonStop(meta, deps)` seam first, then green
+- [x] `SessionPanel.tsx`'s `result` case: **Failed — <first line>** when `ok` is false, **Turn done** when true; the `exit` case: **Session ended (code N)**; never `subtype` (A7, A8)
+- [x] (the markers are the `next` binary the daemon was started with, recorded in its meta as `nextBin`, and its `--port N` flag; `isOwnProcess(pid, markers[], deps)` takes a list so both stops pass what they know) `lib/process-identity.ts`: `isOwnProcess(pid, expectedCommandLine, deps)` lifted from `telemetry/stop.ts`; `admin/daemon.ts`'s `verifyIdentity` uses it with the bundled admin's path, never the port (A12, A13, A14)
+- [x] (`isNewerVersion` moved into `version-check.ts` and re-exported from `pending-release.ts`, which imports `induskHome` from it — the other direction was a cycle; A12 red at 9386abe7 on its own assertion against the committed `daemon.ts`, green at b41fe9f5; the seam is `daemonStop(deps)` — the meta is read from the record, not passed; a daemon still there after SIGKILL is reported `stopped: false` with its pid, record kept, and `ui stop` exits 1 naming it, at 6e49a955) `hasNewerVersion` in `lib/version-check.ts` compares with `isNewerVersion` (A16 goes green); A12 authored red against the new `daemonStop(meta, deps)` seam first, then green
+ - [x] (done at 14d7bfab; the phase's boundary was recorded late, at 14e9de3d, the commit after Build Phase 2 closed — opening it was missed at phase start) Shape (`apps/indusk-mcp/src/lib/admin/daemon.ts`) — the two wait-for-exit polls in daemonStop (after SIGTERM, after SIGKILL) are one inline block written twice; name it waitForExit(pid, tries, deps) so daemonStop reads as signal, wait, escalate, wait. Rule: Should this inline block have been a named function or module? The general move is to extract it.
+ - [x] Shape (reviewed `apps/indusk-mcp/src/lib/admin/daemon.ts` `realDeps.command` — left as-is: it reads `ps` the way `telemetry/daemon.ts` already does; a second copy across files is `/cleanup`'s question, not this phase's)
+ - [x] Shape (reviewed `apps/indusk-admin/src/components/session/SessionPanel.tsx`, `lib/process-identity.ts`, `bin/commands/ui.ts`, `version-check.ts` — left as-is: each changed unit is a few lines with one reason to change; `rules.unreadable` was empty)
 
 #### Build Phase 3 Verification
 
