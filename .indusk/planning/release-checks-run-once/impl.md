@@ -1,7 +1,7 @@
 ---
 title: "Release checks run once"
 date: 2026-10-08
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -41,16 +41,16 @@ A plan that lands green is released without running the slow tests again, and th
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | After a fully green slow run, the same code with only the version bump and a changelog entry on top skips the slow tests, naming the run that covered them | Test Phase 1 | Build Phase 1 | planned | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
-| A2 | A change to any covered file since the green run (code, a test, a test config, the lockfile) runs the slow tests | Test Phase 1 | Build Phase 1 | planned | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
-| A3 | A slow run that exits non-zero records nothing, so the next release runs the tests | Test Phase 1 | Build Phase 1 | planned | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
-| A4 | A run over uncommitted changes to covered files records nothing, and `--unless-covered` with such changes runs the tests | Test Phase 1 | Build Phase 1 | planned | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
-| A5 | A green run recorded in a plan's worktree covers the same code on `main` | Test Phase 1 | Build Phase 1 | planned | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
+| A1 | After a fully green slow run, the same code with only the version bump and a changelog entry on top skips the slow tests, naming the run that covered them | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
+| A2 | A change to any covered file since the green run (code, a test, a test config, the lockfile) runs the slow tests | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
+| A3 | A slow run that exits non-zero records nothing, so the next release runs the tests | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
+| A4 | A run over uncommitted changes to covered files records nothing, and `--unless-covered` with such changes runs the tests | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
+| A5 | A green run recorded in a plan's worktree covers the same code on `main` | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
 | A6 | On this repository, after `indusk checks slow` runs green, the release script's `--unless-covered` skips and names that run | Build Phase 3 | Build Phase 3 | planned | live check | promise: slow-checks-run-once-per-tree | manual: on main after landing, `node apps/indusk-mcp/dist/bin/cli.js checks slow --unless-covered` prints the covering run |
-| A7 | The landing and release steps every project installs name none of dusk's commands or paths | Test Phase 1 | Build Phase 2 | planned | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/steps-name-project-commands.test.ts |
-| A8 | A project that declares its steps gets them named back by `indusk checks show` | Test Phase 1 | Build Phase 2 | planned | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
-| A9 | A project that declares none is told plainly that landing runs no slow tests and release has nothing to publish | Test Phase 1 | Build Phase 2 | planned | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
-| A10 | Landing still refuses an unaccepted plan and runs the declared landing checks | Test Phase 1 | Test Phase 1 | planned | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
+| A7 | The landing and release steps every project installs name none of dusk's commands or paths | Test Phase 1 | Build Phase 2 | written | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/steps-name-project-commands.test.ts |
+| A8 | A project that declares its steps gets them named back by `indusk checks show` | Test Phase 1 | Build Phase 2 | written | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
+| A9 | A project that declares none is told plainly that landing runs no slow tests and release has nothing to publish | Test Phase 1 | Build Phase 2 | written | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
+| A10 | Landing still refuses an unaccepted plan and runs the declared landing checks | Test Phase 1 | Test Phase 1 | passing | unit | promise: nothing-ships-until-accepted | apps/indusk-mcp/src/__tests__/plans-land.test.ts |
 
 ## Checklist
 
@@ -58,11 +58,11 @@ A plan that lands green is released without running the slow tests again, and th
 
 **Goal**: author A1–A5 and A7–A9 red against the CLI and the installed skills as they are, and run A10 as the guard.
 
-- [ ] Confirm this plan's worktree (`indusk worktree create release-checks-run-once` made it and recorded the assignment) — worktree-per-plan default
-- [ ] A1–A5: `checks-slow.test.ts` builds a git repo with `workflow.steps` declaring a slow command that exits 0 (or 1), runs the built CLI's `checks slow` and `checks slow --unless-covered` in a temporary `INDUSK_HOME`, and reads whether the slow command ran (it writes a marker file). RED today: `checks` is an unknown command
-- [ ] A7: `steps-name-project-commands.test.ts` reads the package's retrospective, verify and work skills and refuses `pnpm test:system`, `pnpm release`, `release-guard.sh`, `PACKAGED_PATHS`, `apps/docs/src/changelog.md` and `apps/indusk-mcp/` in them. RED today: the retrospective names them
-- [ ] A8, A9: `checks-show.test.ts` runs `checks show` in a project with and without `workflow.steps`. RED today: unknown command
-- [ ] A10: run the existing `plans-land.test.ts` unchanged; it passes and stays the guard
+- [x] Confirm this plan's worktree (`indusk worktree create release-checks-run-once` made it and recorded the assignment) — worktree-per-plan default
+- [x] A1–A5: `checks-slow.test.ts` builds a git repo with `workflow.steps` declaring a slow command that exits 0 (or 1), runs the built CLI's `checks slow` and `checks slow --unless-covered` in a temporary `INDUSK_HOME`, and reads whether the slow command ran (it writes a marker file). RED today: `checks` is an unknown command
+- [x] A7: `steps-name-project-commands.test.ts` reads the package's retrospective, verify and work skills and refuses `pnpm test:system`, `pnpm release`, `release-guard.sh`, `PACKAGED_PATHS`, `apps/docs/src/changelog.md` and `apps/indusk-mcp/` in them. RED today: the retrospective names them
+- [x] A8, A9: `checks-show.test.ts` runs `checks show` in a project with and without `workflow.steps`. RED today: unknown command
+- [x] A10: run the existing `plans-land.test.ts` unchanged; it passes and stays the guard
 
 #### Deferred to Build Phase 3
 
@@ -74,7 +74,7 @@ A plan that lands green is released without running the slow tests again, and th
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A5 and A7–A9 are authored and fail on their own assertions (unknown command, named paths found), and A10 passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/checks-slow.test.ts src/__tests__/checks-show.test.ts src/__tests__/steps-name-project-commands.test.ts src/__tests__/plans-land.test.ts`)
+- [x] (A1–A5, A8, A9: "unknown command 'checks'", and A3/A4's marker absent; A7: the retrospective's Steps 10–11 name all six, `verify.md` and `work.md` name `pnpm test:system`; `plans-land.test.ts` 9 of 9) A1–A5 and A7–A9 are authored and fail on their own assertions (unknown command, named paths found), and A10 passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/checks-slow.test.ts src/__tests__/checks-show.test.ts src/__tests__/steps-name-project-commands.test.ts src/__tests__/plans-land.test.ts`)
 
 ### Build Phase 1: The key, the record, and `checks slow`
 
