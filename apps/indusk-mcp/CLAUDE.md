@@ -221,8 +221,10 @@ pointer; the pointer holds the story.
 - **Releases**: `release-guard.sh` refuses dirt on packaged paths, a HEAD that
   is not `chore(release): <version>`, an unmerged packaged `plan/*` branch, and
   an install that does not match the lockfile (`check-install.js`);
-  `record-release.js` writes "published" only on `npm view`'s word. — see
-  `/reference/cli/release`
+  `record-release.js` writes "published" only on `npm view`'s word;
+  `release-image.sh` pushes the server image before `pnpm publish`, so a
+  refused push publishes nothing (needs Docker and `docker login ghcr.io`). —
+  see `/reference/cli/release`
 
 ## Tests
 
