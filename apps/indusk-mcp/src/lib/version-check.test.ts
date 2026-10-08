@@ -174,4 +174,13 @@ describe("hasNewerVersion", () => {
 		expect(hasNewerVersion("1.28.18", null)).toBe(false);
 		expect(hasNewerVersion("1.28.18", "")).toBe(false);
 	});
+
+	// small-fixes A16: the notice compared strings, so any different string
+	// read as newer — an older version on npm, after a bad publish, would
+	// have prompted a downgrade. Numbers, through `isNewerVersion`.
+	it("A16: says newer only when the version is newer, by number", () => {
+		expect(hasNewerVersion("1.9.0", "1.10.0")).toBe(true);
+		expect(hasNewerVersion("1.10.0", "1.9.0")).toBe(false);
+		expect(hasNewerVersion("1.67.0", "1.66.0")).toBe(false);
+	});
 });

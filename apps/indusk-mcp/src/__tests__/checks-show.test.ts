@@ -56,6 +56,21 @@ describe.skipIf(SHOULD_SKIP)("indusk checks show", () => {
 		expect(r.stdout).not.toMatch(/pnpm|test:system/);
 	});
 
+	// small-fixes A2: a project that installs its own build declares the command
+	// under workflow.steps.land.install; landing runs it after the merge.
+	// promise: dusk-installs-its-own-build
+	it("A2: names a declared local install command, and says landing installs nothing when none is declared", () => {
+		const declared = project({
+			workflow: { steps: { land: { install: "pnpm install:local" } } },
+		});
+		const r = runCli(declared, ["checks", "show"]);
+		expect(r.code, r.stderr).toBe(0);
+		expect(r.stdout).toContain("pnpm install:local");
+		const none = runCli(project({}), ["checks", "show"]);
+		expect(none.code, none.stderr).toBe(0);
+		expect(none.stdout).toMatch(/landing installs nothing/i);
+	});
+
 	// A13, found by falsification: a value that is not a fact is refused naming
 	// the key (ADR D5) — in one line, with exit 2, not under a stack trace.
 	it("A13: a value that is not a command, a path or a name is refused in one line naming the key, exit 2", () => {

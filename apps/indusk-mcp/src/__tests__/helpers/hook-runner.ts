@@ -31,6 +31,7 @@ export interface HookResult {
 export type HookName =
 	| "validate-impl-structure.js"
 	| "check-gates.js"
+	| "stash-guard.js"
 	| "claude-md-budget.js"
 	| "trunk-guard.js"
 	| "gate-reminder.js"
