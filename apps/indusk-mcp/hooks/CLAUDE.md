@@ -5,9 +5,10 @@ hooks are plain JS ports that cannot import the TS library, so these rules
 are about keeping the two lanes in step.
 
 - **Hooks discovery is globSync on BOTH sides** (init + update) — a hardcoded
-  list ships a registration without its file. A new hook also needs an
-  `ensureHookRegistered` call (`lib/hook-command.ts`, the ONE way init and
-  update register a hook) from `update.ts`; `trunk-guard.js` needs it under
+  list ships a registration without its file. A new hook also needs a row
+  in `HOOK_REGISTRATIONS` (`lib/hook-command.ts`), the one table `init`
+  builds settings from and `update` ensures through `ensureHookRegistered` —
+  pinned by `hook-registration.test.ts` A24; `trunk-guard.js` has a row under
   TWO matchers (Edit/Write and Bash) — one is half a gate.
 - **`_`-prefixed modules are imported, not registered**: no settings entry, but
   they must exist in `.claude/hooks/` or the importer dies at load

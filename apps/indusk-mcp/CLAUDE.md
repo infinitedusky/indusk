@@ -18,7 +18,7 @@ pointer; the pointer holds the story.
   (`lib/shape/impl-blocks.ts`) — `shape/shared-definitions.test.ts`;
   `lib/worktree/layout.ts` — `workbench-repos-single-definition.test.ts`;
   `resolveExecutionRoots` (`lib/worktree/roots.ts`) —
-  `execution-roots-single-definition.test.ts`; `isOwnProcess`
+  `execution-roots-single-definition.test.ts`; identity, `ps` reads
   (`lib/process-identity.ts`) — `process-identity-single-definition.test.ts`;
   `ensureConfigBlock` (`lib/config.ts`) — `promises-cleanup.test.ts`;
   `parseWorktreeList` and the
