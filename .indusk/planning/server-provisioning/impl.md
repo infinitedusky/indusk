@@ -1,7 +1,7 @@
 ---
 title: "Server provisioning — run your own recording server, connected in one command"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -63,10 +63,10 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 | A19 | The image built the way the release builds it starts with a volume, its two ports and its two secrets, and answers a mark sent through it, with no checkout on the host | Test Phase 1 | Build Phase 3 | passing | contract | promise: the-recording-server-runs-from-a-published-image | apps/indusk-mcp/src/__tests__/always-on-image.test.ts |
 | A20 | Deploy pulls the published image for its version rather than building one | Build Phase 2 | Build Phase 2 | passing | unit | promise: the-recording-server-runs-from-a-published-image | apps/indusk-mcp/src/lib/server/deploy.test.ts |
 | A21 | The guide's "run your own server" page names every server setting without a default, the volume, the two ports and the connect command | Test Phase 1 | Build Phase 3 | passing | unit | a regression guard over the guide — a server setting added without a line in it is the 2026-10-04 deploy again | apps/indusk-mcp/src/__tests__/server-guide.test.ts |
-| A22 | When Fly fails to list an existing app's volumes or addresses, deploy refuses naming the read that failed, and creates no volume and allocates no address | Build Phase 5 | Build Phase 5 | written | unit | promise: a-second-run-updates-not-duplicates | apps/indusk-mcp/src/lib/server/deploy.test.ts |
-| A23 | Deploy with a Slack webhook on a project whose server already exists sets that webhook on the server and keeps its password | Build Phase 5 | Build Phase 5 | written | unit | promise: a-fly-deploy-is-one-command | apps/indusk-mcp/src/lib/server/deploy.test.ts |
-| A24 | A second deploy whose stored credential the server rejects does not wait out the five minutes, and ends naming `--rotate` rather than advising the same run again | Build Phase 5 | Build Phase 5 | written | unit | promise: a-server-is-read-back-before-the-command-ends | apps/indusk-mcp/src/lib/server/deploy.test.ts |
-| A25 | Two projects in folders of the same name keep separate stored credentials: connecting the second leaves what the first reads unchanged | Build Phase 5 | Build Phase 5 | written | unit | promise: a-project-connects-to-its-server-in-one-command | apps/indusk-mcp/src/lib/server/connect.test.ts |
+| A22 | When Fly fails to list an existing app's volumes or addresses, deploy refuses naming the read that failed, and creates no volume and allocates no address | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-second-run-updates-not-duplicates | apps/indusk-mcp/src/lib/server/deploy.test.ts |
+| A23 | Deploy with a Slack webhook on a project whose server already exists sets that webhook on the server and keeps its password | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-fly-deploy-is-one-command | apps/indusk-mcp/src/lib/server/deploy.test.ts |
+| A24 | A second deploy whose stored credential the server rejects does not wait out the five minutes, and ends naming `--rotate` rather than advising the same run again | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-server-is-read-back-before-the-command-ends | apps/indusk-mcp/src/lib/server/deploy.test.ts |
+| A25 | Two projects in folders of the same name keep separate stored credentials: connecting the second leaves what the first reads unchanged | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-project-connects-to-its-server-in-one-command | apps/indusk-mcp/src/lib/server/connect.test.ts |
 
 ### Deferred Verification
 
@@ -455,6 +455,7 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 
 Investigated, with no hypothesis formed: the planner's refusals and step order (pure, covered by A5, A13, A14); the redacting writer (longest-first, empty secrets ignored); the generated Fly config (app names are limited by Fly, which refuses one that could break the file); the release image script's two paths; connect's write order (probe first, then secrets, then config). Not investigated: concurrent runs of two commands against one secrets file (a person runs these by hand, one at a time) and shells that source `config.env` (nothing on this machine does).
 
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 - [x] (a `FlyReadFailed` names the call, its exit and its stderr, and exits 2 like a refusal; a read that answers with something that is not JSON is refused the same way) A22 — `readFlyState` refuses, naming the command and its output, when `fly volumes list` or `fly ips list` exits non-zero for an app that exists; today a failed read parses as an empty list and the planner creates a second volume and another $2 IPv4. `fly orgs list` and `fly apps list` failing are refused the same way
 - [x] (a new password is set only for a new app, on `--rotate`, or when this machine lacks the credential — `setsPassword` in the planner, one rule for both; the import sends only what changes; needed A25's fix to pass, since the test's stored variable is now per project) A23 — the planner includes `secrets import` when a webhook is given, even on an existing app with a stored credential, and that import sends only `INDUSK_SERVER_SLACK_WEBHOOK`, so the password stays; today the webhook is dropped without a word
 - [x] (a 401 or 403 is "up, and the credential is wrong", never "not up yet"; a first deploy whose read-back fails still says run again, since its password is new) A24 — `connectWhenReachable` does not wait on a read that answered 401 (the server is up and refused the login); `deploy`'s failure message names `indusk server deploy --rotate` when it connected with a credential stored from before, instead of "run again", which would use the same rejected credential
@@ -462,15 +463,15 @@ Investigated, with no hypothesis formed: the planner's refusals and step order (
 
 #### Build Phase 5 Verification
 
-- [ ] A22, A23, A24, A25 pass, each red first against the current code (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/server && pnpm exec vitest related src/lib/server/fly-state.ts src/lib/server/plan-deploy.ts src/lib/server/deploy.ts src/lib/server/connect.ts --run`)
+- [x] (red at b72b8a70 on their own assertions; green at 3f6a3dc3: server tests 31 green, `vitest related` 29 green, tsc and biome clean) A22, A23, A24, A25 pass, each red first against the current code (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/server && pnpm exec vitest related src/lib/server/fly-state.ts src/lib/server/plan-deploy.ts src/lib/server/deploy.ts src/lib/server/connect.ts --run`)
 
 #### Build Phase 5 Context
 
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`, the `server deploy` entry): a Fly read that fails is refused, never read as empty — compressed into the existing entry, nothing added
+- [x] (the entry is shorter than before) mcp (`apps/indusk-mcp/CLAUDE.md`, the `server deploy` entry): a Fly read that fails is refused, never read as empty — compressed into the existing entry, nothing added
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/cli/server.md`: the refusal for a failed Fly read; `--slack-webhook-env` on an existing server; `--rotate` named when a stored credential is rejected; the credential variable named per project
+- [x] (and a changelog line) `apps/docs/src/reference/cli/server.md`: the refusal for a failed Fly read; `--slack-webhook-env` on an existing server; `--rotate` named when a stored credential is rejected; the credential variable named per project
 
 ## Files Affected
 
