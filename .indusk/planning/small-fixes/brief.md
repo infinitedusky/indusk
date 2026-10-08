@@ -1,7 +1,7 @@
 ---
 title: "Small fixes"
 date: 2026-10-08
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
@@ -27,6 +27,7 @@ Eight fixes from `known-issues.md`, agreed one at a time with Sandy on 2026-10-0
 3. **`a-session-says-how-it-ended`** (state). The admin's session panel says a turn failed, a turn finished, or the session ended, with the reason; never Claude Code's own status word beside an error.
 4. **`a-stash-never-crosses-worktrees`** (state). A bare `git stash` or `git stash pop` in a worktree is refused, naming the safe way (a temporary commit, or a tagged push applied by its sha).
 5. **`installed-hooks-match-the-package`** (structure). This repository's installed hooks are byte-identical to the package's, the way its installed skills are.
+6. **`indusk-stops-only-its-own-daemons`** (state). `indusk telemetry stop` and `indusk ui stop` judge a process by its command line, never by whether its port answers; each signals only its own, and says, non-zero, when one would not stop. (Replaces `telemetry-stop-stops-what-it-started`, below.)
 
 ### Existing promises
 
