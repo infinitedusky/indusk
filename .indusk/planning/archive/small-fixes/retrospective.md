@@ -31,6 +31,12 @@ Cleanup then found the reads behind identity, liveness and `ps`, defined in four
 - **A pre-existing type error.** The admin package's `tsc` had been red on `SessionPanel.result.test.tsx` since Build Phase 3: its result events lacked `sessionId`, and that phase typechecked only the mcp package. Found and fixed in Build Phase 5.
 - **One hook bypass.** One impl edit went through a Python script, which the gate hooks never see (`lesson: edit-plan-documents-only-through-the-edit-tool-not-sed-or-heredoc`). It changed text only, no checkboxes, and is recorded here because the rule is what it is.
 - **The everyday suite caught one missed record.** `hooks-record-parity.test.ts` (A17 of an earlier plan) requires the guide's hook table and the Dawn master's keep/shed record to name every hook on disk; neither named `stash-guard`. No phase ran it, because no phase touched those documents. The guide now lists eight hooks. The Dawn record classifies the stash guard as shed: the thin lane does not read the model's own shell commands, so a `git stash` there is unguarded, and the record says so rather than claiming parity. The suite then passed: admin 62 files, mcp 323 of 324 files (one skipped), seat-holds 1.
+- **`promises confirm` refused six times at close.** The fixes were mechanical but none had been done during the build:
+  - Two live-check rows (A1, A18) named a promise in their `For` cell, but a live check is not a test file. Following the convention earlier plans use, they now name it in prose and point to the unit rows that prove it.
+  - Two state promises had no code site carrying their token.
+  - The replaced promise's token was still in three telemetry files.
+
+  A promise row's `For`/`Test` shape is checkable as soon as the row is written. It would have been cheaper to run `promises confirm` at the first phase that made a row pass.
 - **A test regex that read prose.** A23's first liveness pattern matched the words `kill(pid, 0)` in two doc comments. Narrowed to `process.kill(…, 0)` in code before the phase closed.
 
 ## What We Learned

@@ -78,7 +78,11 @@ launch and for showing at Lazer. In order:
    **closed 2026-10-08, 1.67.0**: `workflow.steps` names each project's commands; `indusk checks
    slow` runs a slow tier once per piece of code; and dusk itself, by Sandy's decision, no longer
    waits on its slow tier at landing or release — it is to run after release as a promise, the
-   next item under Releases in [known-issues.md](known-issues.md)).
+   next item under Releases in [known-issues.md](known-issues.md)); then
+   [small-fixes](archive/small-fixes/retrospective.md), **closed 2026-10-08**:
+   landing installs the build and publishing is deliberate, a plan builds only after
+   approval, the stash guard, the panel's endings, one process identity (by start time)
+   and one hook table; the workbench items and the restart race stay in known-issues.
 2. **[demo-app-template](demo-app-template/brief.md)** — an app with real
    promises, marked through OTel, and a switch that breaks one on cue.
 3. **[incident-recording](incident-recording/brief.md)** — the watcher runs

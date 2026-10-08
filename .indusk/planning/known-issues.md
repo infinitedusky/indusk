@@ -25,11 +25,6 @@ Each entry says what happens, where it was seen, and what we know so far.
   gets better once the idea is clear), and detecting a hand rename
   afterwards (a guess is the wrong way to find a plan). Its promise was
   `a-renamed-plan-is-found-by-its-new-name`.
-- **A planning session builds.** In the live check the planning agent went
-  on past the written plan, set the impl `in-progress` itself and made the
-  code change, so Approve (the brief and promise checks) never ran. A
-  planning session should stop at the written plan; only `plans approve`
-  should mark a plan approved.
 - **The planner's worktree kickoff item is the normal-mode command.** In a
   workbench New plan has already made the worktree; `indusk worktree assign`
   errors there, and the agent improvised.
@@ -42,11 +37,6 @@ Each entry says what happens, where it was seen, and what we know so far.
 - **A build or review session starts without the project's state.** New plan's
   agent now prepares first (workbench-plan-authoring, ADR D11); the other
   sessions the admin starts still begin with their skill alone.
-
-- **A session's agent runs `git stash` in a worktree.** The stash list is
-  shared by every worktree of a repo, so one session's stash can be popped
-  by another. Seen 2026-10-06, live check (harmless there: the copy is its
-  own clone).
 
 ## The demo
 
@@ -76,9 +66,6 @@ Each entry says what happens, where it was seen, and what we know so far.
   project has installed. numero runs
   InDusk 1.56.0, whose planner writes no promises, so its plans came out
   without them and nothing said why. Seen 2026-10-06, live check.
-- **"Ended: success" on a failed turn.** The panel prints Claude Code's
-  `subtype` (`success`) beside an API error, and "Ended" when only the turn
-  ended. Seen 2026-10-06, live check.
 - **No Create project.** A project can only be registered from the CLI. Seen
   2026-10-05, trying the admin on a fresh workbench.
 
@@ -94,13 +81,6 @@ Each entry says what happens, where it was seen, and what we know so far.
   commit nobody makes. Unreachable until a repo can adopt its contract.
 - **`init` drops a workbench's `worktree` config.** Seen during
   workbench-plan-authoring.
-
-## Planning rules
-
-- **Approve and the planner disagree about the root `CLAUDE.md`.** The planner
-  adds a Key Decisions line when the ADR is accepted; approve refuses a branch
-  that changed anything outside `.indusk/` before the build. Seen approving
-  workbench-plan-authoring; worked around by moving the line to the build.
 
 ## Workflow configuration
 
@@ -119,26 +99,9 @@ Each entry says what happens, where it was seen, and what we know so far.
   (the Maya story for `landing-and-release-name-the-projects-commands`). The
   sentence is what a test checks; the story is why anyone cares. Shown one
   click down in the admin. (Sandy, 2026-10-08.)
-- **The installed hooks have no parity test.** `skill-sync-parity` pins
-  `.claude/skills/` to the package; nothing pins `.claude/hooks/`, so a hook
-  change reaches this repository only through `indusk update` (found at
-  1.66.0's install).
 
 ## Releases
 
-- **Dusk's slow tier runs after release, in the background, as a promise.**
-  Sandy, 2026-10-08: the six-to-eight-minute system tier blocking every
-  landing and release cost more flow than a patch release costs, and dusk's
-  releases are its own development loop. release-checks-run-once took the
-  tier out of dusk's landing and release (`workflow.steps` declares no slow
-  tests; `pnpm release` runs none). Next, the smallest version of what every
-  other project got from CI: `pnpm release` ends by starting `pnpm
-  test:system` detached, against the released code, and a red run marks a
-  dusk promise (`the-released-versions-slow-tests-pass`) broken — an incident
-  on the plan that shipped it, seen by `indusk promises status`, the admin and
-  `/catchup`, never a log nobody reads. The product keeps `indusk checks slow`
-  at landing as its default for projects whose releases go public; a
-  background schedule for the contract level is the later generalisation.
 - **Every release has failed its first `pnpm release`.** 1.63.0 (twice) and
   1.64.0. The release re-runs the whole system tier (40 files, real Jaeger,
   otelcol, `next dev` and Claude sessions, run in parallel) minutes after
@@ -155,18 +118,17 @@ Each entry says what happens, where it was seen, and what we know so far.
   retries on a fresh port when Jaeger cannot bind, and the test checks
   start's result. The rerun passed (40/40 and 13/13); publishing then failed
   with `EOTP` because `pnpm release | tee` gave npm no terminal for the
-  browser sign-in. Owned by
-  [release-checks-run-once](release-checks-run-once/brief.md) and the
-  small-fixes plan.
+  browser sign-in. small-fixes deferred the race: dusk's system tier now runs
+  only at a deliberate publish (`pnpm release`), where a flake costs one rerun.
 
-- **The admin daemon's stop has the same port-based identity check.**
-  `lib/admin/daemon.ts` keeps its own `verifyIdentity(pid, port)`: a slow
-  port there would skip its own process the way `telemetry stop` did before
-  telemetry-stop-stops-what-it-started (2026-10-07). Two copies of one rule.
+- **`telemetry status` still judges its daemon by its port.**
+  `lib/telemetry/status.ts`'s `verifyIdentity(pid, port)` is the identity
+  check for `status` (not `stop`, which small-fixes moved to
+  `lib/process-identity.ts`): a slow port reads as "not running" and sweeps
+  the record. The fix is `isOwnProcess` with the recorded binary and config,
+  as `stop` does. Seen in small-fixes, out of its scope.
 
 ## Package
 
-- **The version notice compares versions as strings.** `hasNewerVersion`
-  should use `isNewerVersion`.
 - **The package `CLAUDE.md` is 2 bytes under its budget.** The next rule
   added there will be refused; one entry needs to move down a tier first.
