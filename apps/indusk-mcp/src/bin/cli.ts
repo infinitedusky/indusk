@@ -275,6 +275,19 @@ program
 		}
 	});
 
+const checks = program
+	.command("checks")
+	.description("Run and name the project's declared step tooling (workflow.steps)");
+
+checks
+	.command("slow")
+	.description("Run the declared slow tests and record the code a green run covered")
+	.option("--unless-covered", "Skip when a green run already covered this code")
+	.action(async (opts) => {
+		const { checksSlow } = await import("./commands/checks.js");
+		process.exit(checksSlow(process.cwd(), { unlessCovered: opts.unlessCovered === true }));
+	});
+
 const eval_ = program.command("eval").description("Context evaluation and quality scoring");
 
 eval_
