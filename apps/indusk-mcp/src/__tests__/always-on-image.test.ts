@@ -1,6 +1,11 @@
 import { spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { probeWatcher } from "../lib/promises/probe.js";
+import { jaegerEndpoint } from "../lib/promises/telemetry.js";
+import { freeLoopbackPort } from "../lib/telemetry/query-door.js";
 import { REPO_ROOT } from "./helpers/cli.js";
 
 /**
@@ -64,4 +69,104 @@ describe.skipIf(!dockerAnswers)("A1 — the always-on image", () => {
 		},
 		90_000,
 	);
+});
+
+/**
+ * server-provisioning A19: the image a release publishes is built from that
+ * release's own packed tarball, by the release's own image script, and runs
+ * with a volume, its two ports and its two secrets — no checkout, no npm —
+ * and answers a mark sent through it.
+ *
+ * The script runs with the push off (`INDUSK_IMAGE_PUSH=0`) and a local
+ * image name, so this test never writes to a registry.
+ *
+ * promise: the-recording-server-runs-from-a-published-image
+ */
+const PKG = join(REPO_ROOT, "apps/indusk-mcp");
+const TEMPLATE = join(PKG, "templates/server/Dockerfile");
+const RELEASE_IMAGE = join(PKG, "scripts/release-image.sh");
+const LOCAL_IMAGE = "indusk-always-on-release-test";
+
+describe.skipIf(!dockerAnswers)("A19 — the image the release builds runs and answers", () => {
+	const version = JSON.parse(readFileSync(join(PKG, "package.json"), "utf-8")).version as string;
+	let built: { status: number | null; output: string } = { status: null, output: "" };
+	let container: string | null = null;
+	let ports = { otlp: 0, query: 0 };
+
+	beforeAll(async () => {
+		if (!existsSync(RELEASE_IMAGE) || !existsSync(TEMPLATE)) return;
+		const r = spawnSync("bash", [RELEASE_IMAGE], {
+			cwd: PKG,
+			encoding: "utf-8",
+			env: { ...process.env, INDUSK_IMAGE_PUSH: "0", INDUSK_IMAGE: LOCAL_IMAGE },
+			maxBuffer: 64 * 1024 * 1024,
+		});
+		built = { status: r.status, output: `${r.stdout}${r.stderr}` };
+		if (r.status !== 0) return;
+		ports = { otlp: await freeLoopbackPort(), query: await freeLoopbackPort() };
+		const volume = mkdtempSync(join(tmpdir(), "a19-volume-"));
+		const run = spawnSync(
+			"docker",
+			[
+				"run",
+				"-d",
+				"--rm",
+				"-v",
+				`${volume}:/data`,
+				"-p",
+				`127.0.0.1:${ports.otlp}:4318`,
+				"-p",
+				`127.0.0.1:${ports.query}:16686`,
+				"-e",
+				"INDUSK_SERVER_VOLUME=/data",
+				"-e",
+				"INDUSK_SERVER_OTLP_PORT=4318",
+				"-e",
+				"INDUSK_SERVER_QUERY_PORT=16686",
+				"-e",
+				"INDUSK_SERVER_USER=indusk",
+				"-e",
+				"INDUSK_SERVER_PASSWORD=a19-password",
+				"-e",
+				"INDUSK_SERVER_SLACK_WEBHOOK=http://127.0.0.1:1/never",
+				`${LOCAL_IMAGE}:${version}`,
+			],
+			{ encoding: "utf-8" },
+		);
+		container = run.status === 0 ? run.stdout.trim() : null;
+		built.output += run.stderr;
+	}, 900_000);
+
+	afterAll(() => {
+		if (container) spawnSync("docker", ["rm", "-f", container]);
+	});
+
+	it("the release has a server Dockerfile template and an image script", () => {
+		expect(existsSync(TEMPLATE), "templates/server/Dockerfile").toBe(true);
+		expect(existsSync(RELEASE_IMAGE), "scripts/release-image.sh").toBe(true);
+	});
+
+	it("the template installs a tarball it is given, never npm", () => {
+		const dockerfile = existsSync(TEMPLATE) ? readFileSync(TEMPLATE, "utf-8") : "";
+		expect(dockerfile).toMatch(/ARG TARBALL/);
+		expect(dockerfile).not.toMatch(/npm install -g "@infinitedusky/);
+	});
+
+	it("builds the image for the package version and starts it", () => {
+		expect(built.status, built.output.slice(-2_000)).toBe(0);
+		expect(container, built.output.slice(-2_000)).not.toBeNull();
+	});
+
+	it("answers a mark sent through its intake, read back from its query API", async () => {
+		expect(container).not.toBeNull();
+		await expect(
+			probeWatcher(
+				{
+					endpoint: jaegerEndpoint(`http://127.0.0.1:${ports.query}`, "indusk:a19-password"),
+					intakeUrl: `http://127.0.0.1:${ports.otlp}`,
+				},
+				{ project: "a19", waitMs: 60_000 },
+			),
+		).resolves.toBeUndefined();
+	}, 120_000);
 });
