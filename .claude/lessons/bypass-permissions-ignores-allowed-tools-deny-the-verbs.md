@@ -1,0 +1,7 @@
+# `claude --permission-mode bypassPermissions` ignores `--allowed-tools` — deny the actual mutating verbs, don't just list read-only ones
+
+Discovered in `bookkeeping-lives-where-it-is-read` (`.indusk/planning/archive/bookkeeping-lives-where-it-is-read/`): the evaluator process is launched with `claude --permission-mode bypassPermissions`, and its `--allowed-tools` list named only read-only git commands (status, show, diff, log). That list is advisory under `bypassPermissions` — the flag bypasses the permission system `--allowed-tools` normally gates, so the evaluator ran `git stash -u` / `git checkout` / `git stash pop` in a live worktree anyway, losing uncommitted edits mid-session.
+
+Why it matters: under `bypassPermissions`, "I only listed safe tools" is not a safety boundary — it reads like one but isn't enforced. A process launched this way will run anything the model decides to run, including state-mutating git commands, unless something actually blocks them.
+
+How to apply: for any headless/evaluator process spawned with `--permission-mode bypassPermissions`, don't rely on an allow-list of read-only tools for safety. Instead name the mutating commands explicitly under a `dontAsk`/deny mechanism (see `lib/eval/permissions.ts` in this repo for the fix — it denies `git stash`, `git checkout`, `git reset --hard`, etc. outright rather than hoping they're never invoked). Treat any new headless Claude invocation the same way: check whether it uses `bypassPermissions`, and if so, audit for an actual deny list, not just an allow list.
