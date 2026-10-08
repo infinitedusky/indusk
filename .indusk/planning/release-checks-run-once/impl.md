@@ -99,7 +99,7 @@ A plan that lands green is released without running the slow tests again, and th
 ### Build Phase 2: `checks show`, and steps that name the project's commands
 
 - [x] `indusk checks show`: each declared step's tooling, or, for what is not declared, what that means (landing runs no slow tests; release has nothing to publish)
-- [ ] `update` adds `workflow: { steps: {} }` through `ensureConfigBlock`
+- [x] (`ensureWorkflowConfig` beside the reader; a fresh project's `update` printed `add: workflow.steps: {}`) `update` adds `workflow: { steps: {} }` through `ensureConfigBlock`
 - [ ] The retrospective's Steps 10 and 11, `verify.md`'s test table and `work.md`'s phase-runs line name what `indusk checks show` prints, never dusk's commands or paths; resync `.claude/skills/`
 
 #### Build Phase 2 Verification
