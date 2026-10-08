@@ -185,12 +185,12 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 ### Build Phase 2: What a pass leaves for the machine
 
-- [ ] `lib/promises/inbox.ts`: `appendInbox(home, entry)` / `readInbox(home)` / `markDelivered(home, ids)` over `inbox.jsonl` + `inbox-delivered.jsonl` in the project's home; the writer appends one `break` entry per opened or extended incident (A17)
+- [x] (`appendInbox(home, news, now)`, `undelivered(home)` → `{ entries, problems }` naming each unreadable line, `markDelivered(home, ids)`; delivering appends to a second file rather than rewriting the one the recorder appends to; A17 2/2) `lib/promises/inbox.ts`: `appendInbox(home, entry)` / `readInbox(home)` / `markDelivered(home, ids)` over `inbox.jsonl` + `inbox-delivered.jsonl` in the project's home; the writer appends one `break` entry per opened or extended incident (A17)
   ```typescript
   export interface InboxEntry { id: string; at: string; kind: "break" | "reminder"; promise: string; incident: string; owner: string; phase: string }
   ```
-- [ ] `lib/promises/heard.ts`: `appendHeard(home, rows)` / `readHeard(home)` / `countHeard(rows, { bucketMs, since })` over `heard.jsonl`, one line per violation `{ at, promise, trace, incident, source }`, deduplicated by trace (A20)
-- [ ] `lib/promises/reminders.ts`: `dueReminders(registry, announced, now, { after: 1 d, every: 1 d })`; the writer appends a `reminder` inbox line for each, posts to Slack when `promises.slack_webhook_env` names a set variable (the server's `postSlack`, moved to `lib/promises/slack.ts` so both use it), and writes `announced.json` after the post is accepted (A14)
+- [x] (the writer keeps what the source answered by wrapping its read, so each row carries when its violation happened; `countHeard` returns per promise, bucket start → count; A20 2/2) `lib/promises/heard.ts`: `appendHeard(home, rows)` / `readHeard(home)` / `countHeard(rows, { bucketMs, since })` over `heard.jsonl`, one line per violation `{ at, promise, trace, incident, source }`, deduplicated by trace (A20)
+- [x] (`postToSlack` moved to `lib/promises/slack.ts`, `always-on/pass.ts` importing and re-exporting it so the heartbeat's import stands; reminders run after every pass, including one whose read failed, and never fail it; a post that is refused is not recorded as announced; A14 4/4, the system-tier `always-on-pass` 5/5) `lib/promises/reminders.ts`: `dueReminders(registry, announced, now, { after: 1 d, every: 1 d })`; the writer appends a `reminder` inbox line for each, posts to Slack when `promises.slack_webhook_env` names a set variable (the server's `postSlack`, moved to `lib/promises/slack.ts` so both use it), and writes `announced.json` after the post is accepted (A14)
 
 #### Build Phase 2 Verification
 

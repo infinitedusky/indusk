@@ -5,9 +5,14 @@ import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import { initEvalOtel } from "../eval/otel.js";
 import { git } from "../git.js";
 import { markProjectId } from "./config.js";
+import { appendHeard, type HeardRow } from "./heard.js";
+import { appendInbox } from "./inbox.js";
 import { markPromise } from "./mark.js";
 import { readPromises } from "./registry.js";
-import { type readPromiseMarks, sourceNames } from "./sources.js";
+import { remind, slackPost } from "./reminders.js";
+import { maintenanceHeadingName } from "./reopen.js";
+import { readPromiseMarks, sourceNames } from "./sources.js";
+import type { MarkedSpansResult } from "./telemetry.js";
 import type { IncidentSource } from "./vocabulary.js";
 import { type WatchChange, watchPromises } from "./watch.js";
 
@@ -48,6 +53,10 @@ export interface RecordOptions {
 export interface RecordDeps {
 	reads?: typeof readPromiseMarks;
 	mark?: (mark: PassMark) => void;
+	/** Slack's post, for reminders; the real one unless given. */
+	post?: (webhook: string, text: string) => Promise<void>;
+	/** Where the variable `promises.slack_webhook_env` names is read; `process.env` unless given. */
+	env?: NodeJS.ProcessEnv;
 	/** The project's home; `bookkeepingRoots(planRoot).home` unless given. */
 	home?: string;
 }
@@ -85,19 +94,11 @@ export async function recordBreaks(
 	opts: RecordOptions,
 	deps: RecordDeps = {},
 ): Promise<RecordResult> {
-	const empty: RecordResult = {
-		opened: [],
-		extended: [],
-		unowned: [],
-		committed: [],
-		changes: [],
-		source: "",
-	};
 	// A local break is work in progress (the-demo-break-is-caught-locally): a
 	// project that names no production source is never recorded as production.
 	if (opts.source === "deployed" && !sourceNames(planRoot).includes("production")) {
 		return {
-			...empty,
+			...nothingRecorded(),
 			refused: `${planRoot} names no production source (promises.jaeger in .indusk/config.json), so there is nothing to record unprompted`,
 		};
 	}
@@ -108,35 +109,124 @@ export async function recordBreaks(
 		timeoutMs: LOCK_TIMEOUT_MS,
 		staleAfterMs: LOCK_TIMEOUT_MS,
 	});
+	const now = opts.now ?? new Date();
 	try {
-		let watched: Awaited<ReturnType<typeof watchPromises>>;
-		try {
-			watched = await watchPromises(planRoot, {
-				source: opts.source,
-				now: opts.now,
-				reads: deps.reads,
-			});
-		} catch (err) {
-			return failed(empty, mark, err);
-		}
-		const result: RecordResult = {
-			...empty,
-			changes: watched.changes,
-			source: watched.source,
-			opened: pick(watched.changes, "opened"),
-			extended: pick(watched.changes, "extended"),
-			unowned: pick(watched.changes, "unowned"),
-		};
-		try {
-			result.committed = await commitRecorded(planRoot, watched.changes, opts.by);
-		} catch (err) {
-			return failed(result, mark, err);
-		}
-		result.mark = { outcome: "upheld" };
-		mark(result.mark);
+		const result = await pass(planRoot, opts, deps, home, now, mark);
+		await remindQuietly(planRoot, home, now, deps);
 		return result;
 	} finally {
 		release();
+	}
+}
+
+/** Watch, commit, leave the inbox and the heard record, mark: one pass under the lock. */
+async function pass(
+	planRoot: string,
+	opts: RecordOptions,
+	deps: RecordDeps,
+	home: string,
+	now: Date,
+	mark: (m: PassMark) => void,
+): Promise<RecordResult> {
+	const empty = nothingRecorded();
+	// What the source answered, kept so the heard record can say when each
+	// violation happened.
+	let heardMarks: MarkedSpansResult | null = null;
+	const read = deps.reads ?? readPromiseMarks;
+	const reads: typeof readPromiseMarks = async (...args) => {
+		heardMarks = await read(...args);
+		return heardMarks;
+	};
+	let watched: Awaited<ReturnType<typeof watchPromises>>;
+	try {
+		watched = await watchPromises(planRoot, { source: opts.source, now, reads });
+	} catch (err) {
+		return failed(empty, mark, err);
+	}
+	const result: RecordResult = {
+		...empty,
+		changes: watched.changes,
+		source: watched.source,
+		opened: pick(watched.changes, "opened"),
+		extended: pick(watched.changes, "extended"),
+		unowned: pick(watched.changes, "unowned"),
+	};
+	try {
+		result.committed = await commitRecorded(planRoot, watched.changes, opts.by);
+		leaveForTheMachine(home, watched.changes, heardMarks, sourceName(opts.source), now);
+	} catch (err) {
+		return failed(result, mark, err);
+	}
+	result.mark = { outcome: "upheld" };
+	mark(result.mark);
+	return result;
+}
+
+function nothingRecorded(): RecordResult {
+	return { opened: [], extended: [], unowned: [], committed: [], changes: [], source: "" };
+}
+
+function sourceName(source: IncidentSource): string {
+	return source === "deployed" ? "production" : source;
+}
+
+/**
+ * What this machine keeps of a pass (ADR D5, D6): an inbox entry per opened
+ * or extended incident, for the next prompt; and a heard row per violation
+ * the pass recorded, for the promise page's counts.
+ */
+function leaveForTheMachine(
+	home: string,
+	changes: WatchChange[],
+	marks: MarkedSpansResult | null,
+	source: string,
+	now: Date,
+): void {
+	const recorded = changes.filter((c) => c.kind === "opened" || c.kind === "extended");
+	appendInbox(
+		home,
+		recorded.map((c) => ({
+			kind: "break",
+			promise: c.promise,
+			incident: c.id,
+			owner: c.owner,
+			phase: maintenanceHeadingName(c.id),
+		})),
+		now,
+	);
+	const rows: HeardRow[] = [];
+	for (const c of recorded) {
+		const spans = marks?.byPromise.get(c.promise)?.violations ?? [];
+		for (const trace of c.traces) {
+			const span = spans.find((s) => s.traceId === trace);
+			rows.push({
+				at: (span?.at ?? now).toISOString(),
+				promise: c.promise,
+				trace,
+				incident: c.id,
+				source,
+			});
+		}
+	}
+	appendHeard(home, rows);
+}
+
+/** Reminders read only the registry, so they run whatever the pass did; they never fail it. */
+async function remindQuietly(
+	planRoot: string,
+	home: string,
+	now: Date,
+	deps: RecordDeps,
+): Promise<void> {
+	const read = readPromises(planRoot);
+	if (!read.ok) return;
+	try {
+		await remind(planRoot, read.registry, home, now, {
+			post: deps.post ?? slackPost,
+			env: deps.env,
+		});
+	} catch {
+		// A reminder that could not be written is tried again next pass.
 	}
 }
 

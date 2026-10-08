@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { postToSlack } from "../promises/slack.js";
 import {
 	DEFAULT_TIMEOUT_MS,
 	type JaegerEndpoint,
@@ -173,16 +174,9 @@ export function slackText(span: MarkedSpan, publicQueryUrl: string | null): stri
 	].join("\n");
 }
 
-/** One Slack message; throws when Slack does not accept it. Shared with the heartbeat's two messages. */
-export async function postToSlack(webhook: string, text: string, timeoutMs: number): Promise<void> {
-	const res = await fetch(webhook, {
-		method: "POST",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ text }),
-		signal: AbortSignal.timeout(timeoutMs),
-	});
-	if (!res.ok) throw new Error(`Slack answered ${res.status}`);
-}
+// One Slack post for the server's pass, its heartbeat and the laptop's
+// reminders (incident-recording): it lives with the promises.
+export { postToSlack };
 
 export interface PassResult {
 	/** Violations Slack accepted this pass. */
