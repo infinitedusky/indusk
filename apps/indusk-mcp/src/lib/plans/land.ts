@@ -173,6 +173,8 @@ async function landWorkbenchPlan(wp: WorkbenchPlan, runningFrom: string): Promis
  * global install there — the land would delete its own files mid-run and
  * leave the next step's `indusk` dangling (small-fixes A21). Refused before
  * anything is merged, naming the re-link.
+ *
+ * promise: dusk-installs-its-own-build
  */
 function refuseRemovingOwnBuild(
 	plan: string,

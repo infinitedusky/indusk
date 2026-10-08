@@ -73,6 +73,7 @@ if (newContent.includes("<!-- skip-gates -->") && gatePolicy !== "strict") {
 // Detect checkbox transition: - [ ] → - [x]
 const oldContent = toolInput.old_string ?? "";
 
+// promise: a-plan-builds-only-after-approval
 // A plan leaves `draft` only through `indusk plans approve`, which writes the
 // file itself with no tool event (small-fixes A4). A planning session once set
 // its plan `in-progress` by hand and started building, so approve's brief and

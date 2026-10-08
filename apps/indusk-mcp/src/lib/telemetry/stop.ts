@@ -13,7 +13,7 @@ import type { DaemonMeta } from "./status.js";
  * or by the same binary from another home, is never signalled. Stop reports
  * stopped only when none of its own is left, and keeps the record otherwise.
  *
- * promise: telemetry-stop-stops-what-it-started
+ * promise: indusk-stops-only-its-own-daemons
  */
 
 /** What stopping reads and does, given as inputs so the decision is a unit test. */
