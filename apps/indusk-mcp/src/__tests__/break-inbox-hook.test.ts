@@ -87,6 +87,23 @@ describe("A18 — the next turn hears every undelivered break, once", () => {
 		expect(context(again.stdout)).toBe("");
 	});
 
+	it("every session in the project hears it once: a second session's next turn is told too", async () => {
+		await runHook("break-inbox.js", prompt(project), { env: { INDUSK_HOME: home } });
+		const second = await runHook(
+			"break-inbox.js",
+			{ ...prompt(project), session_id: "s-2" },
+			{ env: { INDUSK_HOME: home } },
+		);
+		expect(second.exitCode, second.stderr).toBe(0);
+		expect(context(second.stdout)).toContain("i-2026-10-08-seat-released");
+		const again = await runHook(
+			"break-inbox.js",
+			{ ...prompt(project), session_id: "s-2" },
+			{ env: { INDUSK_HOME: home } },
+		);
+		expect(context(again.stdout)).toBe("");
+	});
+
 	it("a session in another project hears nothing", async () => {
 		const r = await runHook("break-inbox.js", prompt(other), { env: { INDUSK_HOME: home } });
 		expect(r.exitCode, r.stderr).toBe(0);

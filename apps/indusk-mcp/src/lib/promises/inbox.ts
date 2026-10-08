@@ -43,11 +43,17 @@ export interface InboxRead {
 	problems: string[];
 }
 
-/** Every entry no session has been given yet. */
-export function undelivered(home: string): InboxRead {
+/**
+ * Every entry `session` has not been given yet. Deliveries are marked per
+ * session, so every running session hears each break once; a mark with no
+ * session counts for every session.
+ */
+export function undelivered(home: string, session: string): InboxRead {
 	const inbox = readLines(join(home, INBOX_FILE));
 	const delivered = new Set(
-		readLines(join(home, DELIVERED_FILE)).values.map((v) => (v as { id?: string }).id),
+		(readLines(join(home, DELIVERED_FILE)).values as { id?: string; session?: string }[])
+			.filter((v) => v.session === undefined || v.session === session)
+			.map((v) => v.id),
 	);
 	return {
 		entries: (inbox.values as InboxEntry[]).filter((e) => !delivered.has(e.id)),
@@ -55,11 +61,11 @@ export function undelivered(home: string): InboxRead {
 	};
 }
 
-export function markDelivered(home: string, ids: string[]): void {
+export function markDelivered(home: string, ids: string[], session: string): void {
 	if (ids.length === 0) return;
 	appendFileSync(
 		join(home, DELIVERED_FILE),
-		`${ids.map((id) => JSON.stringify({ id })).join("\n")}\n`,
+		`${ids.map((id) => JSON.stringify({ id, session })).join("\n")}\n`,
 	);
 }
 

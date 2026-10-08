@@ -8,9 +8,11 @@
  * opens or extends, and each daily reminder, in the project's inbox — a JSON
  * line in the project's home. On every prompt this hook reads the entries no
  * session has been given yet, puts them in front of the agent as additional
- * context, and marks them delivered by appending their ids to
- * `inbox-delivered.jsonl`, so the next prompt repeats nothing. A session in
- * another project reads another home and hears nothing.
+ * context, and marks them delivered to this session by appending
+ * `{ id, session }` to `inbox-delivered.jsonl`, so its next prompt repeats
+ * nothing and every other running session still hears each break once on its
+ * own next turn. A mark with no session counts for every session. A session
+ * in another project reads another home and hears nothing.
  *
  * It runs on every prompt, so it does one small read and exits: nothing to
  * say is an exit 0 with no output. An inbox it cannot read is said on its own
@@ -45,8 +47,13 @@ try {
 if (!statePath) process.exit(0);
 
 const home = projectHome(statePath);
+const session = typeof event.session_id === "string" ? event.session_id : "";
 const inbox = readLines(join(home, INBOX));
-const delivered = new Set(readLines(join(home, DELIVERED)).values.map((v) => v?.id));
+const delivered = new Set(
+	readLines(join(home, DELIVERED))
+		.values.filter((v) => v && (v.session === undefined || v.session === session))
+		.map((v) => v.id),
+);
 const fresh = inbox.values.filter((e) => e && typeof e.id === "string" && !delivered.has(e.id));
 
 if (fresh.length === 0 && inbox.problems.length === 0) process.exit(0);
@@ -72,7 +79,7 @@ console.info(
 if (fresh.length > 0) {
 	appendFileSync(
 		join(home, DELIVERED),
-		`${fresh.map((e) => JSON.stringify({ id: e.id })).join("\n")}\n`,
+		`${fresh.map((e) => JSON.stringify({ id: e.id, session })).join("\n")}\n`,
 	);
 }
 process.exit(0);
