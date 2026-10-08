@@ -160,6 +160,7 @@ So when a repository has more than one worktree, the `stash-guard` hook refuses 
 | `git stash pop`, in any form | `git stash list`, `git stash show` |
 | `git stash apply` with nothing named | `git stash apply <sha>` |
 | `git stash drop` with nothing named | `git stash drop stash@{n}` |
+| `git stash branch <name>` with nothing named (it pops the top) | `git stash branch <name> <sha>` |
 | `git stash clear` | |
 
 The safe ways to set work aside:

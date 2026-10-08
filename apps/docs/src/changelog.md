@@ -19,7 +19,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Fixed
 
-- **`indusk ui stop` judges its daemon by its command line, never its port** (small-fixes): the admin daemon's stop and status had the port-based identity check `telemetry stop` was cured of in 1.60 — under load a slow port read as "not ours", and stop skipped its own process and deleted the record. One rule now, `lib/process-identity.ts`, behind both stops; the admin's record carries the `next` binary it was started with as the marker. A daemon still running after SIGTERM and SIGKILL is reported, with a non-zero exit, and its record kept.
+- **`indusk ui stop` knows its daemon by when it started, never by its port** (small-fixes): the admin daemon's stop and status had the port-based identity check `telemetry stop` was cured of in 1.60 — under load a slow port read as "not ours", and stop skipped its own process and deleted the record. One rule now, `lib/process-identity.ts`, behind both stops. The admin's daemon is a `next` process that started when its record says: `next start` renames itself `next-server (vX)`, so the binary and port it was given are not in its command line, and an install moves its working directory, but its start time stays. A daemon still running after SIGTERM and SIGKILL is reported, with a non-zero exit, and its record kept.
+- **The approval gate reads the whole file** (small-fixes): an Edit that moved a draft's status without including the `status:` key, or a frontmatter that wrote `status: "draft"` in quotes, got past it.
+- **`stash-guard` refuses `git stash branch <name>` with no stash named**: it pops the top entry into a new branch.
+- **`indusk plans land` refuses to remove its own build** (small-fixes): when the `indusk` running it is installed from the plan's worktree, which `pnpm install:local` on a plan branch does, landing would delete it mid-run. It says to install from the trunk first.
+- **A failed turn with no text says why** (small-fixes): the session panel showed only "Failed" for a turn that hit its turn limit or stopped on an error, because Claude Code sends no text for those.
 - **The update notice compares versions by number** (small-fixes): it compared strings, so any version on npm other than the installed one, older included, read as newer.
 
 ## [1.67.0] — 2026-10-08
