@@ -445,26 +445,28 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
-## Session 4551e898 — small-fixes — Build Phase 1 done (local install), Build Phase 2 next
+## Session 4551e898 — small-fixes — Build Phases 1–3 done; Build Phase 4 (stash guard) for a fresh session
 
 **Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
-**Last updated**: 2026-10-08T19:44:41.661Z
+**Last updated**: 2026-10-08T20:03:23.582Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-- small-fixes: Build Phase 1 done. Dusk's global `indusk` is now a symlink to a checkout (`pnpm install:local` = prepublishOnly + `npm install -g ./apps/indusk-mcp`); until the plan lands it points at the small-fixes worktree, and landing's step 7 re-links it to main. Publishing is deliberate; `pnpm release` runs the slow tier itself again.
-- A9/A10 (the stash guard's test) could not be authored in this session (a safety classifier stopped the write); deferred to Build Phase 2 for a fresh session or Sandy.
-- Build Phase 2 next: the approval gate in check-gates.js, the planner's end and Key Decisions timing, stash-guard.js, hook parity.
+- Plan `small-fixes` on `plan/small-fixes` (worktree `dusk-worktrees/small-fixes`). Test Phase 1 and Build Phases 1–3 closed and committed; impl `in-progress`; `advance_plan` passes phases 1–3 and stops at Build Phase 4's own items.
+- Shipped on the branch: `workflow.steps.land.install` + `pnpm install:local` (BP1); the approval gate in `check-gates.js` + lesson `a-plan-builds-only-after-approval`, planner stops at the written plan (BP2); the session panel's three endings, `lib/process-identity.ts` behind both stops with `ui stop` judging by command line and exiting 1 for a daemon that survives SIGKILL, `hasNewerVersion` by number (BP3).
+- Global `indusk` is a symlink to this worktree's `apps/indusk-mcp` (from `pnpm install:local` during BP1). Landing step 7 re-links it from `main`.
 
 ### Open Questions
 
-(empty)
+- Build Phase 4 (the stash guard, A9/A10, `hooks/stash-guard.js`) is for a fresh session or Sandy: this session cannot write `stash-guard.test.ts` (a safety classifier stopped the write; not to be retried here). The register in Test Phase 1 carries the test body.
+- `telemetry/status.ts` still has a port-based `verifyIdentity` for jaeger/otelcol status (not stop) — out of this plan's scope; a known-issues entry at the retrospective.
+- `realDeps.command` in `admin/daemon.ts` and `telemetry/daemon.ts` both read `ps -o command=`; a `/cleanup` question.
 
 ### Cursor
 
-Build Phase 2 of small-fixes.
+Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 red from the register body, then `hooks/stash-guard.js`, registration in `init.ts`/`update.ts`/settings, `.claude/hooks/` resync, docs `guide/multi-agent.md`). Then `/falsify`, `/cleanup`, `/retrospective` (record A1's live check; known-issues for `telemetry/status.ts`), accept, land with `pnpm install:local` on main. No bump or publish unless Sandy wants the server image.
 
 ---
 
