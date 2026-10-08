@@ -78,19 +78,38 @@ const oldContent = toolInput.old_string ?? "";
 // its plan `in-progress` by hand and started building, so approve's brief and
 // promise checks never ran. Any tool edit that moves `status:` off `draft`
 // (to anything but `abandoned`) is that hand edit, whoever makes it.
-const statusOf = (text) => text.match(/^status:\s*(\S+)/m)?.[1];
+//
+// Judged on the whole file before and after, never on the edit's own strings
+// (small-fixes A19): an `old_string` of `draft\ntrajectory: …` moves the
+// status without carrying the `status:` key. The value is the frontmatter's,
+// unquoted — `status: "draft"` is a draft.
+const statusOf = (text) => {
+	const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+	return fm ? /^status:[ \t]*["']?([^"'\s#]+)/m.exec(fm[1])?.[1] : undefined;
+};
 let fromStatus;
 let toStatus;
-if (event.tool_name === "Edit" && oldContent) {
-	fromStatus = statusOf(oldContent);
-	toStatus = statusOf(newContent);
-} else if (event.tool_name === "Write") {
-	try {
-		fromStatus = statusOf(readFileSync(filePath, "utf-8"));
-	} catch {
-		fromStatus = undefined;
+let diskContent = null;
+try {
+	diskContent = readFileSync(filePath, "utf-8");
+} catch {
+	// a new file has no status to leave
+}
+if (diskContent !== null) {
+	fromStatus = statusOf(diskContent);
+	if (event.tool_name === "Edit" && oldContent) {
+		// The Edit tool's literal splice, never String.replace (hooks/CLAUDE.md).
+		const at = diskContent.indexOf(oldContent);
+		if (at !== -1) {
+			toStatus = statusOf(
+				toolInput.replace_all
+					? diskContent.split(oldContent).join(newContent)
+					: diskContent.slice(0, at) + newContent + diskContent.slice(at + oldContent.length),
+			);
+		}
+	} else if (event.tool_name === "Write") {
+		toStatus = statusOf(newContent);
 	}
-	toStatus = statusOf(newContent);
 }
 if (fromStatus === "draft" && toStatus && toStatus !== "draft" && toStatus !== "abandoned") {
 	console.error(
