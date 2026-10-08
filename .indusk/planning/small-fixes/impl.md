@@ -1,7 +1,7 @@
 ---
 title: "Small fixes"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -186,11 +186,11 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 #### Build Phase 4 Context
 
-- [ ] hooks: `stash-guard.js`'s header carries the rule and names its promise
+- [x] (the header states the rule, the refused and allowed spellings and the off switch, and carries `promise: a-stash-never-crosses-worktrees`; the refusal names `lesson: a-stash-never-crosses-worktrees`, written through `add_lesson` on the main checkout — the token resolves on `main` now and on this branch at landing, as Build Phase 2's did) hooks: `stash-guard.js`'s header carries the rule and names its promise
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/guide/multi-agent.md`: the stash rule and the safe commands
+- [x] (a section, "Worktrees share one stash": why, the refused/allowed table, the safe commands, the off switch; and the changelog's Unreleased Added) `apps/docs/src/guide/multi-agent.md`: the stash rule and the safe commands
 
 ## Files Affected
 
