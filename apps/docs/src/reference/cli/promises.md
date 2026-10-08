@@ -517,8 +517,23 @@ indusk promises watch [--source local|smoke|deployed]
 
 One monitor pass over the quiet window: for each behaviour promise with a
 violation not yet recorded in any of its incidents, open or extend an
-incident and send the promise's owner back to work. It **writes plan
-documents and commits nothing** — review what it wrote and commit it.
+incident and send the promise's owner back to work. It **commits what it
+wrote** (since incident-recording), in a commit of its own on the checkout
+that holds each file — `chore(indusk): incident <id> — <promise>, recorded by
+watch` — and says which files it committed. An owner being worked in a plan
+worktree gets its Maintenance phase there, left for that plan's session to
+commit. In a workbench whose repo holds its own contract, the incident is
+committed in the repo.
+
+`watch` is one of three callers of the same writer, `recordBreaks`
+(`lib/promises/record.ts`); the admin's recorder and catchup's
+`record_breaks` tool are the others. One lock per project, in the project's
+home (`recorder.lock`), keeps them to one pass at a time, so two callers at
+once make one incident. Every pass marks itself under
+`a-production-break-is-recorded-unasked` — held, or broken with the reason
+when the source could not be read, the watcher was blind, or the incident
+could not be written or committed — so `promises status` reads the recorder
+like any other promise.
 
 | Exit | Meaning |
 |------|---------|
