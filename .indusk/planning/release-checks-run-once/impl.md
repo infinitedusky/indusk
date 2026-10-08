@@ -1,7 +1,7 @@
 ---
 title: "Release checks run once"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -46,7 +46,7 @@ A plan that lands green is released without running the slow tests again, and th
 | A3 | A slow run that exits non-zero records nothing, so the next release runs the tests | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
 | A4 | A run over uncommitted changes to covered files records nothing, and `--unless-covered` with such changes runs the tests | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
 | A5 | A green run recorded in a plan's worktree covers the same code on `main` | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/checks-slow.test.ts |
-| A6 | On this repository, after `indusk checks slow` runs green, the release script's `--unless-covered` skips and names that run | Build Phase 3 | Build Phase 3 | skipped | live check | promise: slow-checks-run-once-per-tree | manual: on main after landing, `node apps/indusk-mcp/dist/bin/cli.js checks slow --unless-covered` prints the covering run |
+| A6 | On this repository, after `indusk checks slow` runs green, the release script's `--unless-covered` skips and names that run | Build Phase 3 | Build Phase 3 | skipped | live check | a live check of the product on this repository, which by Sandy's decision (2026-10-08) declares no slow tests; the promise is proven by A1–A5 in fixtures | manual: on main after landing, `node apps/indusk-mcp/dist/bin/cli.js checks slow --unless-covered` prints the covering run |
 | A7 | The landing and release steps every project installs name none of dusk's commands or paths | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/steps-name-project-commands.test.ts |
 | A8 | A project that declares its steps gets them named back by `indusk checks show` | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
 | A9 | A project that declares none is told plainly that landing runs no slow tests and release has nothing to publish | Test Phase 1 | Build Phase 2 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
@@ -122,15 +122,16 @@ A plan that lands green is released without running the slow tests again, and th
 - [x] (first as the ADR said: `land.slow_tests`, `covers` with `.claude` and the root configs, a landing check that built the package and ran `checks slow`. Then, by Sandy's decision above, `land.slow_tests` and the landing check were taken out again: dusk declares only its release command, version file, changelog and covered paths, so `checks show` names them and landing waits for the fast suite alone) `.indusk/config.json`: `workflow.steps` (ADR D4's values); `plans.land_checks` gains `node apps/indusk-mcp/dist/bin/cli.js checks slow`
 - [x] (first as the ADR said, with `pnpm build` so the release ran its own `checks`; then, by Sandy's decision above, the slow step left the script entirely — `release-guard.sh`, `npm whoami`, publish, record. `release-script.test.ts`, which pins every step, says why) `apps/indusk-mcp/package.json` `release`: `pnpm -w test:system` becomes `node dist/bin/cli.js checks slow --unless-covered`
 - [x] (skipped, with the row. Attempted at 13:35: `checks slow` ran dusk's system tier for eight minutes and went red on `session-protocol-contract`, a contract against the installed `claude`, which Anthropic's API rate-limited (429) — nothing of this plan's; the command correctly recorded nothing. Then Sandy's decision (2026-10-08): dusk's releases are its own development loop, and the slow tier blocking every landing and release costs more than a patch release, so dusk declares no slow tests and its release runs none — see known-issues.md, Releases. The product behaviour A6 would have shown on this repository is proven by A1–A5 in fixtures) A6: on this branch, `checks slow` green, then `checks slow --unless-covered` skips and names the run; recorded here with its output
-- [ ] `indusk promises confirm release-checks-run-once`
+- [x] (`landing-and-release-name-the-projects-commands` enforced, 2 test files, 2 code sites; `slow-checks-run-once-per-tree` enforced, 1 test file, 3 code sites — after A6's `For` stopped naming the promise it no longer proves on this repository) `indusk promises confirm release-checks-run-once`
 
 #### Build Phase 3 Verification
 
-- [ ] A6 recorded, and the full `pnpm test` and `pnpm test:system` pass from a clean environment
+- [x] (A6 skipped, above. `pnpm test` from `env -i`: indusk-mcp 2046, admin 396, seat-holds 3, all green. `pnpm test:system`, run once at 13:35 as A6's attempt: indusk-mcp 162 of 165 — the three red were `session-protocol-contract`, Anthropic's API rate-limiting the real `claude` (429); admin 55 passed, 1 skipped, one file re-run on a flake. By Sandy's decision the slow tier no longer gates dusk's landing or release, so it is not rerun here) A6 recorded, and the full `pnpm test` and `pnpm test:system` pass from a clean environment
+- [x] Shape — this phase wrote configuration and one script line; nothing to review
 
 #### Build Phase 3 Context
 
-- [ ] root (Key Decisions): release-checks-run-once — the slow tests run once per piece of code; `workflow.steps` holds facts, never logic — always-on because every plan's close and release reads it
+- [x] (one line, 14685 bytes against the 14745 ceiling after shortening the workbench-plans line; the decisions page and its sidebar entry written with it so the pointer resolves) root (Key Decisions): release-checks-run-once — the slow tests run once per piece of code; `workflow.steps` holds facts, never logic — always-on because every plan's close and release reads it
 
 #### Build Phase 3 Document
 
