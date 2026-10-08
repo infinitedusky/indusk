@@ -15,7 +15,7 @@
  *
  * 3) Drain mode (`--drain-pending`, dawn-hook-parity): evaluates every
  *    not-yet-drained record the thin lane queued in
- *    `.indusk/eval/pending.jsonl`, exactly once each. The drained ledger
+ *    the project home's `eval/pending.jsonl`, exactly once each. The drained ledger
  *    (`pending-drained.jsonl`) is written BEFORE each spawn — a crashed
  *    spawn is a logged gap, never a double-eval (the markProcessed
  *    invariant). Each record re-invokes this script in CLI mode with
@@ -204,7 +204,7 @@ if (drainPending) {
 		log: (msg) => syslog(statePath, msg),
 	});
 	process.stderr.write(
-		`📊 Drained ${drained} pending eval(s); ${failed.length} FAILED and remain queued for retry; ${alreadyDrained} already drained. Results land in .indusk/eval/results.log\n`,
+		`📊 Drained ${drained} pending eval(s); ${failed.length} FAILED and remain queued for retry; ${alreadyDrained} already drained. Results land in ${resolve(projectHome(statePath), "eval", "results.log")}\n`,
 	);
 	if (failed.length > 0) {
 		process.stderr.write(

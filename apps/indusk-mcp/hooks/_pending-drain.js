@@ -3,7 +3,7 @@
  *
  * The Dawn thin lane (`atdawn run`) cannot spawn an evaluator — it may run on
  * a machine with no `claude` CLI — so every loop-owned commit is queued in
- * `.indusk/eval/pending.jsonl`. This module evaluates that backlog, exactly
+ * the project home's `eval/pending.jsonl`. This module evaluates that backlog, exactly
  * once per record, from any environment that CAN evaluate.
  *
  * Lifted out of `eval-trigger.js` (dawn-hook-parity cleanup): that hook's job
