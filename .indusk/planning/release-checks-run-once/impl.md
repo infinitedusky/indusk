@@ -100,7 +100,8 @@ A plan that lands green is released without running the slow tests again, and th
 
 - [x] `indusk checks show`: each declared step's tooling, or, for what is not declared, what that means (landing runs no slow tests; release has nothing to publish)
 - [x] (`ensureWorkflowConfig` beside the reader; a fresh project's `update` printed `add: workflow.steps: {}`) `update` adds `workflow: { steps: {} }` through `ensureConfigBlock`
-- [ ] The retrospective's Steps 10 and 11, `verify.md`'s test table and `work.md`'s phase-runs line name what `indusk checks show` prints, never dusk's commands or paths; resync `.claude/skills/`
+- [x] (Steps 10–11 open with `indusk checks show` and use only what it names; a project with no release command records that and stops; the bump goes through a release branch when trunk-guard refuses the edits; before handing over, `checks slow --unless-covered` confirms the release will skip. `release-ritual-skill.test.ts`'s T8 pinned `package.json` as the version file, a dusk path this plan's promise rules out: it now expects "declared version file") The retrospective's Steps 10 and 11, `verify.md`'s test table and `work.md`'s phase-runs line name what `indusk checks show` prints, never dusk's commands or paths; resync `.claude/skills/`
+- [x] Discovered at the package run: `installed-hook-drain.test.ts` and `pending-repo-attribution.test.ts` failed, on `main` too, since the installed hooks were synced to 1.66.0 after its release: they copy `.claude/hooks/` and wrote the pending queue into the checkout, where the 1.66.0 hook no longer reads it. They write it to the project home through `evalDir`
 
 #### Build Phase 2 Verification
 
