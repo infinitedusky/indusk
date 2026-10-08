@@ -264,7 +264,7 @@ describe("deploy", () => {
 		let clock = 0;
 		const { d } = deps(f.fly, home, {
 			now: () => clock,
-			async sleep(ms) {
+			sleep: async (ms: number) => {
 				clock += ms;
 			},
 			async connect(i) {
@@ -309,7 +309,7 @@ describe("deploy", () => {
 		let clock = 0;
 		const { d, printed } = deps(f.fly, home, {
 			now: () => clock,
-			async sleep(ms) {
+			sleep: async (ms: number) => {
 				clock += ms;
 			},
 			async connect(i) {
@@ -330,7 +330,7 @@ describe("deploy", () => {
 		let tries = 0;
 		const { d } = deps(f.fly, home, {
 			now: () => clock,
-			async sleep(ms) {
+			sleep: async (ms: number) => {
 				clock += ms;
 			},
 			async connect(i) {
@@ -387,7 +387,7 @@ describe("deploy", () => {
 		let clock = 0;
 		const { d } = deps(f.fly, home, {
 			now: () => clock,
-			async sleep(ms) {
+			sleep: async (ms: number) => {
 				clock += ms;
 			},
 			async connect(i) {
