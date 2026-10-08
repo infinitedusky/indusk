@@ -31,7 +31,9 @@ describe("T8 — Step 11 is in the retrospective skill", () => {
 		const text = skill();
 		expect(text, "the changelog heading is rolled").toMatch(/\[Unreleased\]/);
 		expect(text, "the commit message the guard greps for").toContain("chore(release):");
-		expect(text, "the version itself").toMatch(/package\.json/);
+		// The project's declared version file (release-checks-run-once: the step
+		// names what `indusk checks show` prints, not dusk's package.json).
+		expect(text, "the version itself").toMatch(/declared version file/);
 	});
 
 	it("says a plan that changed no packaged paths skips it, and records that", () => {
