@@ -16,7 +16,10 @@ export function readWorkflowSteps(checkout: string): WorkflowSteps {
 	const out: WorkflowSteps = {};
 	if (steps.land !== undefined) {
 		const land = section(steps.land, "land");
-		out.land = { slow_tests: text(land.slow_tests, "land.slow_tests") };
+		out.land = {
+			slow_tests: text(land.slow_tests, "land.slow_tests"),
+			install: text(land.install, "land.install"),
+		};
 	}
 	if (steps.release !== undefined) {
 		const release = section(steps.release, "release");

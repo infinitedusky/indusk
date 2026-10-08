@@ -44,6 +44,8 @@ export interface WorkflowSteps {
 	land?: {
 		/** The slow tests, run once per piece of code (`indusk checks slow`). */
 		slow_tests?: string;
+		/** Installs the landed build locally, run after the merge; a project that publishes per plan declares none. */
+		install?: string;
 	};
 	release?: {
 		/** The command that publishes or deploys. */
