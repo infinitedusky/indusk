@@ -50,7 +50,7 @@ None.
 
 - **The always-on server recording incidents itself**, as a pull request to the plan repository: it needs the GitHub connection, which stays with [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md). Until then the server announces, and the developer's admin records.
 - **Multi-developer recording** — who records when two admins watch one project, checkout of incidents, per-person credentials: deferred 2026-10-04 until after the demo.
-- **The server pushing to the laptop**: the admin asks the production Jaeger every 30 seconds instead (the reasons are in the research's decisions); a held connection would be no sooner and would still need the asking after a disconnect.
+- **The server pushing to the laptop**: the admin asks the production Jaeger on its own refresh interval (five seconds by default) instead (the reasons are in the research's decisions); a held connection would be no sooner and would still need the asking after a disconnect.
 - **The bar chart of checks per time bucket** on the promise page (Sandy's design, in `known-issues.md`): plan-cockpit's promise page, step 5 of the demo sequence; this plan keeps the record it will draw from.
 - **A desktop notification or Slack from the laptop**: the agent's inbox, catchup, the admin and the server's Slack are the channels promised here; a desktop channel is the VS Code extension's, step 4.
 
