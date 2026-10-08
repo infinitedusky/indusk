@@ -67,6 +67,8 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 | A23 | Deploy with a Slack webhook on a project whose server already exists sets that webhook on the server and keeps its password | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-fly-deploy-is-one-command | apps/indusk-mcp/src/lib/server/deploy.test.ts |
 | A24 | A second deploy whose stored credential the server rejects does not wait out the five minutes, and ends naming `--rotate` rather than advising the same run again | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-server-is-read-back-before-the-command-ends | apps/indusk-mcp/src/lib/server/deploy.test.ts |
 | A25 | Two projects in folders of the same name keep separate stored credentials: connecting the second leaves what the first reads unchanged | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-project-connects-to-its-server-in-one-command | apps/indusk-mcp/src/lib/server/connect.test.ts |
+| A26 | The machine's secrets file is located in one place, and the production source, `connect` and `deploy` all read and write that one file | Build Phase 6 | Build Phase 6 | planned | unit | lesson: structural-single-definition-test-for-must-agree-invariants | apps/indusk-mcp/src/__tests__/server-single-definition.test.ts |
+| A27 | The repository's Fly reference configuration and the package's template agree on every setting, mount, service and machine, differing only in the app name and the hand-deploy build section | Build Phase 6 | Build Phase 6 | planned | unit | lesson: structural-single-definition-test-for-must-agree-invariants | apps/indusk-mcp/src/__tests__/server-single-definition.test.ts |
 
 ### Deferred Verification
 
@@ -476,6 +478,31 @@ Investigated, with no hypothesis formed: the planner's refusals and step order (
 #### Build Phase 5 Document
 
 - [x] (and a changelog line) `apps/docs/src/reference/cli/server.md`: the refusal for a failed Fly read; `--slack-webhook-env` on an existing server; `--rotate` named when a stored credential is rejected; the credential variable named per project
+
+### Build Phase 6: Cleanup — one secrets path, the image builder in the lib, the two Fly configs held together
+
+**Goal**: decompose what the plan spread across files: the machine secrets file located three times, an image builder living in a command file, and two copies of the Fly configuration that only one of them is checked against. Library/CLI project, no domain extension: the moves are *extract a function or module* and *pin what must agree*.
+
+- [ ] Extract `machineSecrets()` into `lib/server/secrets-file.ts` — `secretsFile(join(induskHome(), "config.env"))` is built in `bin/commands/server.ts` twice and in `lib/promises/sources.ts` once; three copies of where a credential lives is the rule of three, and a fourth reader on a different path would split what `connect` writes from what a promise read finds
+- [ ] Move `buildServerImage` from `bin/commands/server.ts` to `lib/server/image.ts` — a command file parses options and prints; building and pushing the image is work the deploy seam already names (`DeployDeps.buildImage`), and it sits beside `DOCKERFILE_TEMPLATE`'s other consumer there
+- [ ] Pin `docker/fly.always-on.toml` to `templates/server/fly.toml` (A27) — the Dockerfile pair is pinned, the Fly pair is not, and a setting added to one (a port, a mount, `auto_stop_machines`) would leave a hand deploy and `server deploy` building different servers
+- [ ] (reviewed `src/bin/cli.ts`, 1162 lines — left as-is: the plan added one command group in the file's own pattern; every command is registered there, and splitting the registry is not this plan's)
+- [ ] (reviewed `src/lib/config.ts`, 669 lines — left as-is: the plan added one typed block beside the others; the file is the config's one home)
+- [ ] (reviewed `src/lib/server/deploy.test.ts`, 410 lines — left as-is: one module's tests over one fake Fly; splitting would duplicate the fake)
+- [ ] (reviewed the two name slugs — `credentialEnvFor` upper-snake and `defaultAppName` lower-kebab — left as-is: two, not three, with different alphabets for different targets)
+- [ ] (reviewed `src/lib/infra-config.ts` — left as-is: it reads `~/.indusk/config.env` for the retired infra host, from `homedir()` not `INDUSK_HOME`; joining it to `machineSecrets()` would change a retired path's behaviour)
+
+#### Build Phase 6 Verification
+
+- [ ] A26 and A27 pass, A26 red first; the server tests still pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/server-single-definition.test.ts src/lib/server && pnpm exec vitest related src/lib/server/secrets-file.ts src/lib/promises/sources.ts src/bin/commands/server.ts --run`)
+
+#### Build Phase 6 Context
+
+- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`, "Single-definition pins"): `machineSecrets()` and the Fly config pair — `server-single-definition.test.ts`, folded into the existing secrets-file entry so the file does not grow
+
+#### Build Phase 6 Document
+
+- [ ] `apps/docs/src/reference/cli/telemetry-server.md`: `docker/fly.always-on.toml` is pinned to the package's template, as the Dockerfile is
 
 ## Files Affected
 
