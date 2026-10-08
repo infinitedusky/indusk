@@ -78,9 +78,13 @@ function coverage(steps: WorkflowSteps) {
 	return { declared, covers, counted, versionFile };
 }
 
-/** `./apps/x/`, `apps//x` and `apps/x` are one path, as `git ls-files` prints it. */
+/**
+ * `./apps/x/`, `apps//x` and `apps/x` are one path, as `git ls-files` prints
+ * it. `normalize` collapses the separators, so at most one trailing slash is
+ * left; a path's rule, written here, not the Jaeger URL's (A29 pins that one).
+ */
 function normalise(path: string): string {
-	return posix.normalize(path).replace(/^\.\//, "").replace(/\/+$/, "");
+	return posix.normalize(path).replace(/^\.\//, "").replace(/\/$/, "");
 }
 
 /** The version file's content hash with its `version` taken out: a JSON field, or the first `version` line. */
