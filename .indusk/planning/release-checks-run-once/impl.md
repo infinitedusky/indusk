@@ -120,7 +120,7 @@ A plan that lands green is released without running the slow tests again, and th
 ### Build Phase 3: dusk declares its steps
 
 - [x] (`covers` adds `.claude` and the root configs, which the system tier reads; the landing check builds the package first, so it runs this branch's `checks`) `.indusk/config.json`: `workflow.steps` (ADR D4's values); `plans.land_checks` gains `node apps/indusk-mcp/dist/bin/cli.js checks slow`
-- [ ] `apps/indusk-mcp/package.json` `release`: `pnpm -w test:system` becomes `node dist/bin/cli.js checks slow --unless-covered`
+- [x] (with `pnpm build` first, so the release runs its own `checks`; `release-script.test.ts`, which pins every step, updated) `apps/indusk-mcp/package.json` `release`: `pnpm -w test:system` becomes `node dist/bin/cli.js checks slow --unless-covered`
 - [ ] A6: on this branch, `checks slow` green, then `checks slow --unless-covered` skips and names the run; recorded here with its output
 - [ ] `indusk promises confirm release-checks-run-once`
 
