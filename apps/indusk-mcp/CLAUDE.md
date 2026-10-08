@@ -18,9 +18,10 @@ pointer; the pointer holds the story.
   (`lib/shape/impl-blocks.ts`) — `shape/shared-definitions.test.ts`;
   `lib/worktree/layout.ts` — `workbench-repos-single-definition.test.ts`;
   `resolveExecutionRoots` (`lib/worktree/roots.ts`) —
-  `execution-roots-single-definition.test.ts`; `headSha` / `headShaOrNull`
-  (`lib/git.ts`) — `head-sha-single-definition.test.ts`; `ensureConfigBlock`
-  (`lib/config.ts`) — `promises-cleanup.test.ts`; `parseWorktreeList` and the
+  `execution-roots-single-definition.test.ts`; `isOwnProcess`
+  (`lib/process-identity.ts`) — `process-identity-single-definition.test.ts`;
+  `ensureConfigBlock` (`lib/config.ts`) — `promises-cleanup.test.ts`;
+  `parseWorktreeList` and the
   plan-worktree record — `plan-worktrees-single-definition.test.ts`;
   `src/lib/impl-headings.ts` and one trajectory-row parser —
   `impl-headings.test.ts`; the lifecycle (`lib/lifecycle.ts`: positions,
