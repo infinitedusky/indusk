@@ -7,9 +7,10 @@ InDusk runs none for anyone.
 
 - [`server connect`](#server-connect) points the project at a server you run,
   wherever it runs.
-- `server deploy` creates one in your own Fly account and connects it. It is
-  being built; until it lands, the [always-on guide](/guide/always-on#on-fly)
-  has the steps by hand.
+- [`server deploy`](#server-deploy) creates one in your own Fly account and
+  connects it.
+
+The [run your own server](/guide/run-your-own-server) guide walks through both.
 
 ## server connect
 
@@ -73,3 +74,71 @@ Each refusal ends with `Nothing was written: the project still reads what it
 read before.` when the server was the problem.
 
 Nothing the command prints contains the credential.
+
+## server deploy
+
+```bash
+indusk server deploy [--app <name>] [--org <slug>] [--region <code>]
+                     [--slack-webhook-env <NAME>] [--server-version <version>] [--rotate]
+```
+
+Needs the Fly CLI, signed in (`fly auth login`). It runs your `fly`, so
+everything it creates is in your account and on your bill. InDusk holds no Fly
+token.
+
+| Option | Default | What it is |
+|---|---|---|
+| `--app <name>` | `indusk-<project>`, or the app this project recorded | The Fly app name. Fly app names are global. |
+| `--org <slug>` | your only organisation | Needed when your account has several; the refusal lists them. |
+| `--region <code>` | `iad` | Where the machine and its volume live. |
+| `--slack-webhook-env <NAME>` | none | Read the Slack webhook from this variable. Without it, announcements are off: the server records every violation and the admin shows it, and nothing is posted. |
+| `--server-version <version>` | this `indusk`'s version | The server image to run. (`--version` is the CLI's own.) |
+| `--rotate` | off | Set a new server password. |
+
+### What it does, in order
+
+It reads first — who is signed in, your organisations, whether the app exists
+and what it has — and then runs only what is missing:
+
+1. `fly apps create <app> --org <org>`
+2. `fly volumes create indusk_telemetry --size 3 --region <region>`
+3. `fly secrets import --stage`, with the password and webhook on stdin, never
+   on the command line. Only for a new app, with `--rotate`, or when this
+   machine does not hold the project's credential.
+4. `fly deploy --image ghcr.io/infinitedusky/indusk-always-on:<version> --ha=false`
+   with a Fly configuration generated for the app: one machine that never
+   stops, the volume, the two services. It pulls the published image and
+   never builds.
+5. `fly ips allocate-v6` and `fly ips allocate-v4 --yes`. The query port is
+   not 443, so reading it over IPv4 needs a dedicated IPv4, which Fly charges
+   $2 a month for.
+
+Right after the app is created, the project's config records it:
+
+```json
+"server": { "provider": "fly", "app": "indusk-my-project", "org": "personal", "region": "iad" }
+```
+
+Then it runs [`server connect`](#server-connect) against
+`https://<app>.fly.dev:16687` and `https://<app>.fly.dev`, which reads the
+server back before naming it.
+
+Running it again on a project with a server updates it: it redeploys the
+version and creates nothing else.
+
+### When it refuses
+
+Each refusal exits 2 and has created nothing, unless it says otherwise.
+
+| Output | Why |
+|---|---|
+| `The Fly CLI is not installed. Install it (…), run fly auth login, then run this again.` | No `fly` on PATH. |
+| `fly is not signed in. Run fly auth login, then run this again.` | |
+| `Your Fly account has several organisations; name one with --org: …` | |
+| `A Fly app named <app> already exists and is not recorded as this project's server. Choose another name with --app <name>.` | |
+| `This project's server is <app>, recorded in its config. …` | `--app` names a different app from the one recorded. |
+| `` `fly <step>` failed (exit N); nothing after it ran. Its output is above. `` | A Fly call failed; what ran before it stays. |
+| `watcher blind — …` then `The server <app> exists and is recorded in this project's config; run indusk server deploy again to finish connecting.` | The server was created but did not read back. A second run creates nothing and tries the connect again. |
+
+Every line it prints, Fly's own output included, passes through a writer that
+replaces the password and the webhook with `[redacted]`.

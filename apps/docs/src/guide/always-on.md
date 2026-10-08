@@ -87,6 +87,10 @@ forgets every violation it was told about the moment it restarts.
 
 ### On Fly
 
+**`indusk server deploy` does all of this in one command** — see
+[run your own server](/guide/run-your-own-server). The steps below are what it
+runs, and what to run by hand if you prefer.
+
 `docker/fly.always-on.toml` is the reference. These are the steps the first
 deployment actually took (2026-10-04), including what the written version got
 wrong:
