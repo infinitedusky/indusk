@@ -194,13 +194,26 @@ export async function checkLatestVersion(
 	return { latestVersion: fresh, fromCache: false, checkedAt };
 }
 
+/** True when dotted version `a` is newer than `b` (numeric per part; prerelease tags ignored). */
+export function isNewerVersion(a: string, b: string): boolean {
+	const parts = (v: string) =>
+		v
+			.split("-")[0]
+			.split(".")
+			.map((n) => Number.parseInt(n, 10) || 0);
+	const [x, y] = [parts(a), parts(b)];
+	for (let i = 0; i < Math.max(x.length, y.length); i++) {
+		if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) > (y[i] ?? 0);
+	}
+	return false;
+}
+
 /**
- * Pure comparator: returns true when `latest` is a different, presumably
- * newer version than `current`. Intentionally string-equality — pre-1.0
- * semver gymnastics aren't worth it for the notify path; if npm publishes
- * a different string than what's installed, we surface it. The user's
- * `upgrade` command does the actual decision.
+ * Whether `latest` is newer than `current`, by number (small-fixes A16). It
+ * compared strings once, so any different string read as newer — an older
+ * version on npm after a bad publish would have prompted a downgrade. The
+ * user's `upgrade` command does the actual install.
  */
 export function hasNewerVersion(current: string, latest: string | null): boolean {
-	return latest !== null && latest.length > 0 && latest !== current;
+	return latest !== null && latest.length > 0 && isNewerVersion(latest, current);
 }

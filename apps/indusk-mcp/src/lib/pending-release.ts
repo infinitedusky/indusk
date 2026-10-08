@@ -83,19 +83,10 @@ export function registryHasVersion(name: string, version: string): RegistryAnswe
 	}
 }
 
-/** True when dotted version `a` is newer than `b` (numeric per part; prerelease tags ignored). */
-export function isNewerVersion(a: string, b: string): boolean {
-	const parts = (v: string) =>
-		v
-			.split("-")[0]
-			.split(".")
-			.map((n) => Number.parseInt(n, 10) || 0);
-	const [x, y] = [parts(a), parts(b)];
-	for (let i = 0; i < Math.max(x.length, y.length); i++) {
-		if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) > (y[i] ?? 0);
-	}
-	return false;
-}
+// The one version comparison lives with the notice that needed it
+// (small-fixes A16); re-exported here for `upgrade`, which imports it from
+// this module.
+export { isNewerVersion } from "./version-check.js";
 
 /** Whole minutes since the upload, never negative. */
 export function minutesSince(uploadedAt: string, now: Date = new Date()): number {
