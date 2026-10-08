@@ -73,6 +73,32 @@ if (newContent.includes("<!-- skip-gates -->") && gatePolicy !== "strict") {
 // Detect checkbox transition: - [ ] → - [x]
 const oldContent = toolInput.old_string ?? "";
 
+// A plan leaves `draft` only through `indusk plans approve`, which writes the
+// file itself with no tool event (small-fixes A4). A planning session once set
+// its plan `in-progress` by hand and started building, so approve's brief and
+// promise checks never ran. Any tool edit that moves `status:` off `draft`
+// (to anything but `abandoned`) is that hand edit, whoever makes it.
+const statusOf = (text) => text.match(/^status:\s*(\S+)/m)?.[1];
+let fromStatus;
+let toStatus;
+if (event.tool_name === "Edit" && oldContent) {
+	fromStatus = statusOf(oldContent);
+	toStatus = statusOf(newContent);
+} else if (event.tool_name === "Write") {
+	try {
+		fromStatus = statusOf(readFileSync(filePath, "utf-8"));
+	} catch {
+		fromStatus = undefined;
+	}
+	toStatus = statusOf(newContent);
+}
+if (fromStatus === "draft" && toStatus && toStatus !== "draft" && toStatus !== "abandoned") {
+	console.error(
+		`A plan leaves draft only through \`indusk plans approve\`, which runs the brief and promise checks first; this edit sets status: ${toStatus} by hand. Run the approve command instead.\nlesson: a-plan-builds-only-after-approval`,
+	);
+	process.exit(2);
+}
+
 // For Edit tool: check if old_string has unchecked and new_string has checked
 // For Write tool: we need to compare with the file on disk
 let hasCheckboxTransition = false;
@@ -107,6 +133,16 @@ try {
 	fullContent = readFileSync(filePath, "utf-8");
 } catch {
 	process.exit(0);
+}
+
+// No item is checked off on a plan that is not approved (small-fixes A5):
+// building is `/work`'s, after `plans approve`; a draft's checklist is the
+// plan, not progress.
+if (statusOf(fullContent) === "draft") {
+	console.error(
+		"This plan is still a draft: nothing is checked off before `indusk plans approve` has run its brief and promise checks; building is /work's, after approval.\nlesson: a-plan-builds-only-after-approval",
+	);
+	process.exit(2);
 }
 
 // For Edit, apply the edit to get the new full content
