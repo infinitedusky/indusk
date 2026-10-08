@@ -8,9 +8,17 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 - **`workflow.steps.land.install`** (small-fixes): how a project installs the landed build on this machine, run by the retrospective's landing step after the merge and named by `indusk checks show`. Dusk declares `pnpm install:local`, which builds everything a publish builds and links the checkout into the global `indusk`, so landing a plan makes it current with nothing published.
 
+- **A plan builds only after approval** (small-fixes): `check-gates` refuses to tick a checklist item while the impl is `draft`, and refuses an edit that moves the impl out of `draft` by any route but `indusk plans approve`. Lesson `a-plan-builds-only-after-approval`; the planner skill now ends the planning session at the written plan, and its Key Decisions line is the first build phase's Context item.
+
 ### Changed
 
 - **Dusk publishes deliberately, not per plan.** Landing installs the build locally; `pnpm release` is for a server deploy or another machine, and runs the full slow tests itself before publishing. The retrospective's bump step says so for any project that installs locally.
+- **The session panel says how a turn ended** (small-fixes): **Turn done** with the closing text, **Failed** with the error's first line, or **Session ended** with the exit code. It no longer shows the protocol's `subtype`, whose `success` read as if the session had ended well.
+
+### Fixed
+
+- **`indusk ui stop` judges its daemon by its command line, never its port** (small-fixes): the admin daemon's stop and status had the port-based identity check `telemetry stop` was cured of in 1.60 — under load a slow port read as "not ours", and stop skipped its own process and deleted the record. One rule now, `lib/process-identity.ts`, behind both stops; the admin's record carries the `next` binary it was started with as the marker. A daemon still running after SIGTERM and SIGKILL is reported, with a non-zero exit, and its record kept.
+- **The update notice compares versions by number** (small-fixes): it compared strings, so any version on npm other than the installed one, older included, read as newer.
 
 ## [1.67.0] — 2026-10-08
 
