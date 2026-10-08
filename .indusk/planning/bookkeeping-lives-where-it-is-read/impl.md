@@ -183,7 +183,7 @@ Every writer of InDusk's records goes through one resolver: notes people read (`
 
 **Goal**: remove the copies this plan's files grew beside each other: the path hash written twice, three readers of a JSONL log, a private git runner in one bookkeeping file and bare `spawnSync` calls in its neighbour, and three tests reading a home by setting `INDUSK_HOME` on the process. Each item is behaviour-preserving under the tests already green; A20 pins the one new parameter.
 
-- [ ] `roots.ts` exports `pathKey(path)` (the first 8 hex of the sha256 of its real path); `bookkeepingRoots` and `persistent-evaluator.ts`'s session path both use it. The hooks' copy in `_hook-paths.js` stays a copy, since hooks cannot import the package; A11 keeps it equal
+- [x] `roots.ts` exports `pathKey(path)` (the first 8 hex of the sha256 of its real path); `bookkeepingRoots` and `persistent-evaluator.ts`'s session path both use it. The hooks' copy in `_hook-paths.js` stays a copy, since hooks cannot import the package; A11 keeps it equal
 - [ ] `bookkeepingRoots(anyCheckout, home = induskHome())` and `evalDir(anyCheckout, home)` take the InDusk home as an optional argument; `bookkeeping-migration.test.ts`'s `homeOf`, `plans-land.test.ts`'s A16 and the `day-monitor` e2e pass it instead of setting `INDUSK_HOME` on the process (A20)
 - [ ] One JSONL reader for the bookkeeping files: `highlights.ts`'s `readAllHighlights` and `readAllProcessed` and `migrate.ts`'s `rowsOf` are the same loop (read, split, parse, skip the malformed); lift it to `lib/bookkeeping/jsonl.ts` and use it in all three
 - [ ] One synchronous git runner for `lib/bookkeeping/`: `notes.ts`'s private `git()` moves to `lib/bookkeeping/git.ts`, and `migrate.ts`'s six `spawnSync("git", …)` calls use it
