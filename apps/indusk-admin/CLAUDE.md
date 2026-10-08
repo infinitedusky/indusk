@@ -80,7 +80,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
   beside `JaegerUnreachable` — is a state of the read with its own banner,
   never a chip colour); `monitor` is the one time-filled bar segment; a violated row names the
   span's environment or says unknown. Readers import `telemetry/status.ts`,
-  never `daemon.ts` (Turbopack parses its binary).
+  never `daemon.ts` (Turbopack parses its binary). The heard counts come from
+  the home's `heard.jsonl` through the `promises/heard` subpath
+  (`readProjectHeard`), never a second reader; incidents show their age and
+  their owner's Maintenance phase.
 - **Active plans and their boundary records are read from each plan's live
   root** (`worktree/plan-worktrees`); `components/Worktrees.tsx` renders the
   worktree chip, a broken assignment, unassigned worktrees and the record error.
