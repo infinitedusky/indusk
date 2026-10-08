@@ -36,7 +36,9 @@ export function secretsFile(path: string): SecretsFile {
 		set(name, value) {
 			if (!NAME.test(name)) throw new Error(`not a variable name: ${JSON.stringify(name)}`);
 			if (LINE_SEPARATOR.test(value)) {
-				throw new Error(`the value for ${name} holds a line separator, which would add a line to ${path}`);
+				throw new Error(
+					`the value for ${name} holds a line separator, which would add a line to ${path}`,
+				);
 			}
 			const kept = lines().filter((l) => keyOf(l) !== name);
 			while (kept.length > 0 && kept[kept.length - 1] === "") kept.pop();

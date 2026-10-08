@@ -13,7 +13,10 @@ export interface LineWriter {
 
 export const REDACTED = "[redacted]";
 
-export function redactingWriter(sink: (line: string) => void, secrets: readonly string[]): LineWriter {
+export function redactingWriter(
+	sink: (line: string) => void,
+	secrets: readonly string[],
+): LineWriter {
 	// Longest first, so a secret that contains another is replaced whole.
 	const known = secrets.filter((s) => s.length > 0).sort((a, b) => b.length - a.length);
 	return {

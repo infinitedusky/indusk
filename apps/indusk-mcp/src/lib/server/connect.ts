@@ -47,8 +47,14 @@ export async function connect(input: ConnectInput, deps: ConnectDeps): Promise<C
 	if (!config) {
 		throw new Error(`no InDusk config at ${input.projectRoot} — run \`indusk init\` there first`);
 	}
-	deps.out.line(`Reading the server back: a mark through ${input.otlpUrl}, found through ${input.queryUrl} …`);
-	await deps.probe({ queryUrl: input.queryUrl, otlpUrl: input.otlpUrl, credential: input.credential });
+	deps.out.line(
+		`Reading the server back: a mark through ${input.otlpUrl}, found through ${input.queryUrl} …`,
+	);
+	await deps.probe({
+		queryUrl: input.queryUrl,
+		otlpUrl: input.otlpUrl,
+		credential: input.credential,
+	});
 
 	const credentialEnv = credentialEnvFor(input.projectName);
 	deps.secrets.set(credentialEnv, input.credential);
@@ -60,7 +66,9 @@ export async function connect(input: ConnectInput, deps: ConnectDeps): Promise<C
 		},
 	});
 	deps.out.line(`Connected: production reads ${input.queryUrl}.`);
-	deps.out.line(`The credential is stored as ${credentialEnv} in ${deps.secrets.path}; the project names the variable, never the value.`);
+	deps.out.line(
+		`The credential is stored as ${credentialEnv} in ${deps.secrets.path}; the project names the variable, never the value.`,
+	);
 	return { credentialEnv };
 }
 

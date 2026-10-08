@@ -1,0 +1,90 @@
+import { basename, join } from "node:path";
+import { createInterface } from "node:readline";
+import { Writable } from "node:stream";
+import { resolveProjectRoot } from "../../lib/config.js";
+import { WatcherBlind } from "../../lib/promises/probe.js";
+import { JaegerUnreachable } from "../../lib/promises/telemetry.js";
+import { connect, probeServer } from "../../lib/server/connect.js";
+import { redactingWriter } from "../../lib/server/redact.js";
+import { secretsFile } from "../../lib/server/secrets-file.js";
+import { induskHome } from "../../lib/telemetry/status.js";
+
+/**
+ * `indusk server`: give a project its recording server (server-provisioning).
+ * `connect` points the project at one the person runs, anywhere.
+ */
+export interface ServerConnectOptions {
+	queryUrl: string;
+	intake: string;
+	credentialEnv?: string;
+	cwd?: string;
+}
+
+export async function serverConnect(opts: ServerConnectOptions): Promise<void> {
+	const root = resolveProjectRoot(opts.cwd ?? process.cwd());
+	if (!root) {
+		console.error("No InDusk project here: run `indusk init` first, or run this inside one.");
+		process.exitCode = 2;
+		return;
+	}
+	const credential = opts.credentialEnv
+		? process.env[opts.credentialEnv]?.trim()
+		: await promptHidden("Server credential (user:password): ");
+	if (!credential) {
+		console.error(
+			opts.credentialEnv
+				? `${opts.credentialEnv} is not set — export it, or leave out --credential-env to be asked.`
+				: "No credential given.",
+		);
+		process.exitCode = 2;
+		return;
+	}
+	const out = redactingWriter((line) => console.info(line), [credential]);
+	try {
+		await connect(
+			{
+				projectRoot: root,
+				projectName: basename(root),
+				queryUrl: opts.queryUrl,
+				otlpUrl: opts.intake,
+				credential,
+			},
+			{
+				probe: probeServer(basename(root)),
+				secrets: secretsFile(join(induskHome(), "config.env")),
+				out,
+			},
+		);
+	} catch (err) {
+		// Not heard, or not reached: either way the server was not read back, so
+		// nothing was named (A15).
+		if (err instanceof WatcherBlind || err instanceof JaegerUnreachable) {
+			out.line(`${err.message}`);
+			out.line("Nothing was written: the project still reads what it read before.");
+			process.exitCode = 2;
+			return;
+		}
+		out.line(err instanceof Error ? err.message : String(err));
+		process.exitCode = 1;
+	}
+}
+
+/** Ask for a value without echoing it; never an argument, which shell history and `ps` keep. */
+function promptHidden(question: string): Promise<string> {
+	return new Promise((resolve) => {
+		let muted = false;
+		const output = new Writable({
+			write(chunk, _encoding, done) {
+				if (!muted) process.stdout.write(chunk);
+				done();
+			},
+		});
+		const rl = createInterface({ input: process.stdin, output, terminal: true });
+		rl.question(question, (answer) => {
+			rl.close();
+			process.stdout.write("\n");
+			resolve(answer.trim());
+		});
+		muted = true;
+	});
+}

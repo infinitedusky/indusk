@@ -402,6 +402,28 @@ program
 // parent and reading them via `this.optsWithGlobals()` in each subcommand
 // action is the pattern that works for both `indusk ui --port N` (bare) and
 // `indusk ui start --port N` (subcommand). Verified in commander@13.
+const serverCmd = program
+	.command("server")
+	.description("Give this project its recording server: connect one you run, or deploy one on Fly");
+
+serverCmd
+	.command("connect <query-url>")
+	.description(
+		"Point this project at a recording server you run: read it back, then name it as the production source",
+	)
+	.requiredOption(
+		"--intake <otlp-url>",
+		"The server's OTLP/HTTP intake, where a mark is sent to read it back",
+	)
+	.option(
+		"--credential-env <name>",
+		"Read user:password from this environment variable instead of being asked (never pass it as an argument)",
+	)
+	.action(async (queryUrl: string, opts: { intake: string; credentialEnv?: string }) => {
+		const { serverConnect } = await import("./commands/server.js");
+		await serverConnect({ queryUrl, intake: opts.intake, credentialEnv: opts.credentialEnv });
+	});
+
 const uiCmd = program
 	.command("ui")
 	.description("Admin UI daemon lifecycle (start/stop/status)")
