@@ -96,7 +96,8 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
   import { join } from "node:path";
   import { describe, expect, it } from "vitest";
   import { readConfig } from "../config.js";
-  import { readSources } from "../promises/sources.js"; // the one reader of promises.jaeger — confirm the exported name at authoring
+  import { resolveMarkSources, sourceNames } from "../promises/sources.js"; // confirmed at Test Phase 1's review: the reader of promises.jaeger
+  import { jaegerEndpoint } from "../promises/telemetry.js";
   import { WatcherBlind } from "../promises/probe.js";
   import { type ConnectDeps, connect } from "./connect.js";
   import { secretsFile } from "./secrets-file.js";
@@ -110,7 +111,7 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
   }
   function deps(home: string, probed: { queryUrl: string; otlpUrl: string }[] = [], blind = false): ConnectDeps {
     return {
-      async probe(t) { probed.push({ queryUrl: t.queryUrl, otlpUrl: t.otlpUrl }); if (blind) throw new WatcherBlind(t.otlpUrl, t.queryUrl, "nothing came back"); },
+      async probe(t) { probed.push({ queryUrl: t.queryUrl, otlpUrl: t.otlpUrl }); if (blind) throw new WatcherBlind(t.queryUrl, t.otlpUrl, "nothing came back"); }, // (where = the query API, intake)
       secrets: secretsFile(join(home, "config.env")),
       out: { line() {} },
     };
@@ -130,12 +131,21 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
       expect(readFileSync(join(home, "config.env"), "utf-8")).toContain("INDUSK_SERVER_SEAT_HOLDS_CREDENTIAL=indusk:pw-1");
       expect(statSync(join(home, "config.env")).mode & 0o777).toBe(0o600);
     });
-    it("A3 — the next promise read has two sources, and production is the server", async () => {
+    it("A3 — the next promise read has two sources, and production is the server, with no shell restart", async () => {
+      // The production source read its credential from the process environment only (sources.ts resolveProduction);
+      // the shell exported it. Here the variable is NOT in process.env: the read must find it in the secrets file
+      // connect wrote, under INDUSK_HOME, or "the admin shows the server's promises on the next read" is false.
       const { root, home } = project();
+      process.env.INDUSK_HOME = home; // restored in afterEach at authoring
+      delete process.env.INDUSK_SERVER_SEAT_HOLDS_CREDENTIAL;
       await connect({ projectRoot: root, projectName: "seat-holds", ...server }, deps(home));
-      const sources = readSources(root);
-      expect(sources.map((s) => s.name)).toEqual(["local", "production"]);
-      expect(sources[1]?.url).toBe(server.queryUrl);
+      expect(sourceNames(root)).toEqual(["local", "production"]);
+      const production = (await resolveMarkSources(root)).find((s) => s.name === "production");
+      expect(production?.ok, production && !production.ok ? production.error.message : "").toBe(true);
+      if (production?.ok) {
+        expect(production.source.endpoint.queryUrl).toBe(jaegerEndpoint(server.queryUrl).queryUrl);
+        expect(production.source.intakeUrl).toBe(server.otlpUrl);
+      }
     });
     it("A12 — connecting again replaces the source and the stored credential; one of each remains", async () => {
       const { root, home } = project();
@@ -283,7 +293,7 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
     });
     it("A17 — read-back fails: non-zero naming what did not come back, the server recorded, a second run finishes", async () => {
       const f = fakeFly({ whoami: "me", apps: [], volumes: [], ips: [] });
-      const d = deps(f.fly, { async probe(t) { throw new WatcherBlind(t.otlpUrl, t.queryUrl, "nothing came back"); } });
+      const d = deps(f.fly, { async probe(t) { throw new WatcherBlind(t.queryUrl, t.otlpUrl, "nothing came back"); } });
       const err = await deploy(wanted, d).catch((e) => e);
       expect(String(err.message)).toMatch(/watcher blind/); expect(String(err.message)).toMatch(/exists.*run .*again/s);
       // and readConfig(root).server equals { provider: "fly", app: "indusk-seat-holds", org: "personal", region: "iad" }
@@ -324,8 +334,8 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 
 #### Test Phase 1 Verification
 
-- [ ] A18, A19 and A21 are authored, and each red one fails on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/release-script.test.ts src/__tests__/server-guide.test.ts`; A19 by `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/always-on-image.test.ts` on a machine where `docker info` answers)
-- [ ] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims — in particular the exported name of the sources reader for A3, confirmed against `lib/promises/sources.ts`
+- [x] (A18: no image step, no script; A21: no page, nine names missing; A19, through the system config on this machine with Docker 28: no template, no script, so no build and no container — four assertion failures, no load error; the one ENOENT in A18 is a read over the filesystem boundary of a file that does not exist) A18, A19 and A21 are authored, and each red one fails on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/release-script.test.ts src/__tests__/server-guide.test.ts`; A19 by `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/always-on-image.test.ts` on a machine where `docker info` answers)
+- [x] (reviewed: the sources reader is `sourceNames` + `resolveMarkSources`, and A3's body now reads production with the variable absent from the environment — which found that nothing loads `~/.indusk/config.env`, an item added to Build Phase 1; `WatcherBlind` takes `(where, intake, reason)`, corrected in two bodies; `readConfig`, `jaegerEndpoint` and `probeWatcher` exist as named; the deploy bodies compile against the seams Build Phase 2 introduces; A4 and A8 bodies are placeholders that state their real assertions in comments, to be written at Build Phase 3) Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims — in particular the exported name of the sources reader for A3, confirmed against `lib/promises/sources.ts`
 
 ### Build Phase 1: Connect
 
@@ -334,6 +344,7 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 - [ ] `lib/server/redact.ts`: `redactingWriter(sink: (line: string) => void, secrets: string[]): { line(text: string): void }` replacing every secret with `[redacted]`; every line both commands print goes through it
 - [ ] `lib/server/secrets-file.ts`: `secretsFile(path): { set(name, value): void; get(name): string | undefined; path }` over `~/.indusk/config.env` — one `NAME=value` per line, a set replaces the line of that name, the file written durably with mode `0o600`; `lib/infra-config.ts` keeps reading it
 - [ ] `lib/server/connect.ts`: `connect(input: { projectRoot, projectName, queryUrl, otlpUrl, credential }, deps: ConnectDeps)` — probes first through `deps.probe` (the real one is `probeWatcher` with the public addresses), throws `WatcherBlind` unchanged when it does not return and writes nothing; then writes `promises.jaeger` `{ url, otlp_url, credential_env: INDUSK_SERVER_<PROJECT>_CREDENTIAL }` through `ensureConfigBlock`, and the value through the secrets file; a second connect replaces both (A12)
+- [ ] (found at Test Phase 1's review) `lib/promises/sources.ts` `resolveProduction` reads the credential from the process environment only, and nothing loads `~/.indusk/config.env` — the deployed dusk server works because the shell exports its variable. Read the variable from the environment first, else from the secrets file (`secretsFile(join(induskHome(), "config.env")).get(name)`), so a project connected by `server connect` reads production on the next read, in the admin too, with no shell restart (A3); the refusal when neither has it names both places
 - [ ] `bin/commands/server.ts` `serverConnect(opts)` and `server connect <query-url> --intake <otlp-url> [--credential-env NAME]` registered in `bin/cli.ts`; the credential from `--credential-env`'s variable or a hidden prompt, never an argument; exit 2 on `WatcherBlind` with its message
 - [ ] A1, A2, A3, A9 (connect half), A10 (connect half), A12, A15, A16 authored from the register, red first, then green
 
