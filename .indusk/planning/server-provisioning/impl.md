@@ -387,11 +387,11 @@ Two commands under `indusk server` — `connect`, provider-free, and `deploy`, F
 
 #### Build Phase 2 Context
 
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry"): `planDeploy` is pure over a recorded `FlyState` and every Fly write goes through `FlyCli`; a new Fly call is added to the state reader and the planner, never spawned from a command — with the entry compressed to rule + pointer
+- [x] mcp (`apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry"): `planDeploy` is pure over a recorded `FlyState` and every Fly write goes through `FlyCli`; a new Fly call is added to the state reader and the planner, never spawned from a command — with the entry compressed to rule + pointer
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/server.md`: `deploy` — every flag, the order of steps, every refusal and its wording, the `server` config block; `apps/docs/src/guide/run-your-own-server.md` (first version): on Fly in one command, then connect; `apps/docs/src/guide/always-on.md` "On Fly": the hand procedure stays, with a line pointing at the command; changelog: Added `indusk server deploy`
+- [x] (the guide is in the sidebar beside the always-on guide; its "anywhere" section is Build Phase 3's, so A21 stays red until then) `apps/docs/src/reference/cli/server.md`: `deploy` — every flag, the order of steps, every refusal and its wording, the `server` config block; `apps/docs/src/guide/run-your-own-server.md` (first version): on Fly in one command, then connect; `apps/docs/src/guide/always-on.md` "On Fly": the hand procedure stays, with a line pointing at the command; changelog: Added `indusk server deploy`
 
 ### Build Phase 3: The image, published with the release
 
