@@ -537,6 +537,8 @@ Sections: Y-Statement, Context, Decision, Alternatives Considered, Consequences 
 
 Sections: Goal, Scope (In/Out), Boundary Map (optional), **Test Trajectory**, Checklist with phases, Files Affected, Dependencies, Notes.
 
+**The plan ends at approval.** A planning session writes the impl as `draft` and stops there. The only way off `draft` is `indusk plans approve`, which runs the brief and promise checks and writes `approved` itself; the gate hook refuses a status edited by hand, and refuses any item checked off while the plan is a draft (`lesson: a-plan-builds-only-after-approval`). Building is `/work`'s, after approval. The root `CLAUDE.md`'s Key Decisions line for an accepted ADR is written then too, as the first build phase's context item, so approve never meets a change outside `.indusk/`.
+
 Each phase has four required gate sections, plus an optional OTel gate:
 
 | Gate | Purpose |

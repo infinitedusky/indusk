@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+	type DaemonDeps,
 	daemonStart,
 	daemonStatus,
 	daemonStop,
@@ -151,10 +152,17 @@ export async function uiRestart(opts: UiStartOptions): Promise<void> {
  * Stop the admin-ui daemon. Reports whether it was running, the PID it
  * signaled, and whether SIGKILL was required.
  */
-export async function uiStop(): Promise<void> {
+export async function uiStop(deps?: DaemonDeps): Promise<void> {
 	await endRecordedSessions("started by the admin");
-	const result = await daemonStop();
+	const result = await daemonStop(deps);
 	if (!result.stopped) {
+		if (result.signaledPid !== undefined) {
+			console.error(
+				`Admin UI daemon (PID ${result.signaledPid}) would not stop: SIGTERM and SIGKILL were sent and it is still running. Its record is kept.`,
+			);
+			process.exitCode = 1;
+			return;
+		}
 		console.info("Admin UI is not running.");
 		return;
 	}

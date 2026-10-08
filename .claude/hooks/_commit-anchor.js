@@ -19,12 +19,23 @@ import { resolve } from "node:path";
 // stay unmatched. Never String.includes.
 const GIT_OPTIONS =
 	"(?:\\s+(?:-C\\s+\\S+|-c\\s+\\S+|--git-dir(?:=\\S+|\\s+\\S+)|--work-tree(?:=\\S+|\\s+\\S+)|--no-pager|--no-optional-locks|--paginate|-[pP]))*";
-export const COMMIT_RE = new RegExp(
-	`(?:^|[;&|(\\n]|\\x60|(?:^|\\s)-c\\s+["'])\\s*git(${GIT_OPTIONS})\\s+commit(?=$|\\s|[;&|)"'\\x60])`,
-);
 
 /**
- * Which repository the commit lands in: the event cwd, moved by every `cd` in
+ * `git [options] <verb>` in command position, with the same reading as a
+ * commit — `stash-guard.js` asks it for `stash`. `flags` adds `g` for a hook
+ * that judges every occurrence in one command.
+ */
+export function gitVerbRe(verb, flags = "") {
+	return new RegExp(
+		`(?:^|[;&|(\\n]|\\x60|(?:^|\\s)-c\\s+["'])\\s*git(${GIT_OPTIONS})\\s+${verb}(?=$|\\s|[;&|)"'\\x60])`,
+		flags,
+	);
+}
+
+export const COMMIT_RE = gitVerbRe("commit");
+
+/**
+ * Which repository the commit (or any `gitVerbRe` match) lands in: the event cwd, moved by every `cd` in
  * an earlier segment of the same command (in order), then by every `-C <path>`
  * among git's own options. The match begins AT the separator, so the text
  * before it ends with one `&` of `&&` — split on runs of separator characters,

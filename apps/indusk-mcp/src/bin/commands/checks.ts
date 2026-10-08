@@ -87,6 +87,9 @@ export function checksShow(checkout: string): number {
 		land.slow_tests
 			? `  slow tests:    ${land.slow_tests}  (run by indusk checks slow; release skips them when a green run covered the same code)`
 			: "  slow tests:    none declared — landing runs no slow tests (workflow.steps.land.slow_tests)",
+		land.install
+			? `  install:       ${land.install}  (run after the merge, so this machine's indusk is the landed build)`
+			: "  install:       none declared — landing installs nothing; the build reaches this machine by a publish (workflow.steps.land.install)",
 		"Release",
 		release.command
 			? `  command:       ${release.command}`

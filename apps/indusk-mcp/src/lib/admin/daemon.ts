@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } 
 import { createConnection, createServer } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { isOwnProcess, type ProcessDeps, realProcessReads } from "../process-identity.js";
 
 /**
  * The admin-ui daemon: a single long-lived `next start` process that serves
@@ -47,6 +48,12 @@ export interface DaemonMeta {
 	adminDir: string;
 }
 
+/** What stopping and status read and do, given as inputs so the decision is a unit test. */
+export interface DaemonDeps extends ProcessDeps {
+	kill(pid: number, signal: NodeJS.Signals): void;
+	sleep(ms: number): Promise<void>;
+}
+
 export interface DaemonStartOptions {
 	port: number;
 	adminDir: string;
@@ -66,15 +73,19 @@ export async function daemonStart(opts: DaemonStartOptions): Promise<DaemonMeta>
 	// Loopback only (admin-plan-authoring, ADR D2): the admin's routes start the
 	// developer's own `claude`, so they must never be reachable from the
 	// network. Without `-H`, Next listens on every interface.
-	const child = spawn("node", [opts.nextBin, "start", "--port", String(opts.port), "-H", "127.0.0.1"], {
-		cwd: opts.adminDir,
-		detached: true,
-		stdio: ["ignore", logFd, logFd],
-		env: {
-			...process.env,
-			...(opts.projectRoot ? { INDUSK_PROJECT_ROOT: opts.projectRoot } : {}),
+	const child = spawn(
+		"node",
+		[opts.nextBin, "start", "--port", String(opts.port), "-H", "127.0.0.1"],
+		{
+			cwd: opts.adminDir,
+			detached: true,
+			stdio: ["ignore", logFd, logFd],
+			env: {
+				...process.env,
+				...(opts.projectRoot ? { INDUSK_PROJECT_ROOT: opts.projectRoot } : {}),
+			},
 		},
-	});
+	);
 	child.unref();
 
 	if (typeof child.pid !== "number") {
@@ -94,6 +105,11 @@ export async function daemonStart(opts: DaemonStartOptions): Promise<DaemonMeta>
 	return meta;
 }
 
+/**
+ * `stopped: false` with no `signaledPid` is "nothing to stop"; with one, the
+ * daemon was sent SIGTERM then SIGKILL and is still running, and its record
+ * is kept because it is still true (small-fixes A12).
+ */
 export interface DaemonStopResult {
 	stopped: boolean;
 	signaledPid?: number;
@@ -104,12 +120,13 @@ export interface DaemonStopResult {
  * Stop the daemon. SIGTERMs, polls for exit up to 3s, SIGKILLs on timeout,
  * then removes the PID + meta files.
  *
- * Returns `stopped: false` only when there was no daemon to stop (no PID
- * file or a malformed one). A daemon that was already dead on disk but had
- * leftover PID file returns `stopped: true` with the reaped PID — the
- * cleanup itself is work worth reporting.
+ * Returns `stopped: false` when there was no daemon to stop (no PID file or
+ * a malformed one) or, with `signaledPid`, when the daemon survived both
+ * signals. A daemon that was already dead on disk but had a leftover PID
+ * file returns `stopped: true` with the reaped PID — the cleanup itself is
+ * work worth reporting.
  */
-export async function daemonStop(): Promise<DaemonStopResult> {
+export async function daemonStop(deps: DaemonDeps = realDeps): Promise<DaemonStopResult> {
 	const pidFile = pidFilePath();
 	if (!existsSync(pidFile)) return { stopped: false };
 
@@ -120,21 +137,20 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 		return { stopped: false };
 	}
 
-	if (!isAlive(pid)) {
+	if (!deps.alive(pid)) {
 		cleanupFiles();
 		return { stopped: true, signaledPid: pid };
 	}
 
-	// Identity gate: if the PID is alive but the recorded port isn't
-	// listening, the process on that PID isn't our daemon — a crashed
-	// daemon's PID was recycled. Do NOT SIGTERM a stranger; clean up
-	// the stale PID+meta files and return "stopped" so the caller isn't
-	// misled into thinking there was a live daemon to kill.
+	// Identity gate: the PID is alive, but is it still our daemon? After a
+	// crash the OS can recycle the PID to a stranger. Judged by the command
+	// line, never the port (small-fixes A12). A stranger is not signalled:
+	// clean up the stale PID+meta files and return "stopped".
 	const metaFile = metaFilePath();
 	if (existsSync(metaFile)) {
 		try {
 			const meta = JSON.parse(readFileSync(metaFile, "utf-8")) as DaemonMeta;
-			if (!(await verifyIdentity(pid, meta.port))) {
+			if (!verifyIdentity(pid, meta, deps)) {
 				cleanupFiles();
 				return { stopped: true, signaledPid: pid };
 			}
@@ -146,32 +162,40 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 	}
 
 	try {
-		process.kill(pid, "SIGTERM");
+		deps.kill(pid, "SIGTERM");
 	} catch {
 		cleanupFiles();
 		return { stopped: true, signaledPid: pid };
 	}
 
-	// Poll up to 3s (30 × 100ms)
-	for (let i = 0; i < 30; i++) {
-		await sleep(100);
-		if (!isAlive(pid)) {
-			cleanupFiles();
-			return { stopped: true, signaledPid: pid };
-		}
+	if (await waitForExit(pid, 30, deps)) {
+		cleanupFiles();
+		return { stopped: true, signaledPid: pid };
 	}
 
-	// Grace period expired — SIGKILL
+	// Grace period expired — SIGKILL, then look. A process still there after
+	// that would not stop: say so, and keep the record, which is still true.
 	let usedSigkill = false;
 	try {
-		process.kill(pid, "SIGKILL");
+		deps.kill(pid, "SIGKILL");
 		usedSigkill = true;
 	} catch {
-		// Raced with a late natural exit; treat as stopped.
+		// Raced with a late natural exit.
 	}
+	if (await waitForExit(pid, 10, deps)) {
+		cleanupFiles();
+		return { stopped: true, signaledPid: pid, usedSigkill };
+	}
+	return { stopped: false, signaledPid: pid, usedSigkill };
+}
 
-	cleanupFiles();
-	return { stopped: true, signaledPid: pid, usedSigkill };
+/** Whether the process leaves within `tries` × 100 ms. */
+async function waitForExit(pid: number, tries: number, deps: DaemonDeps): Promise<boolean> {
+	for (let i = 0; i < tries; i++) {
+		await deps.sleep(100);
+		if (!deps.alive(pid)) return true;
+	}
+	return false;
 }
 
 export type DaemonStatusResult =
@@ -200,12 +224,12 @@ export async function daemonStatus(): Promise<DaemonStatusResult> {
 		return { running: false };
 	}
 
-	// Identity gate: PID alive AND recorded port listening. After a crash
-	// the OS may recycle the daemon's PID to an unrelated process; without
-	// this check we'd report `running: true` for a stranger and `uiStart`
-	// would refuse to spawn. On mismatch, the PID+meta files are stale —
-	// sweep them so the next call starts clean.
-	if (!(await verifyIdentity(pid, meta.port))) {
+	// Identity gate: PID alive AND its command line ours. After a crash the
+	// OS may recycle the daemon's PID to an unrelated process; without this
+	// check we'd report `running: true` for a stranger and `uiStart` would
+	// refuse to spawn. On mismatch, the PID+meta files are stale — sweep them
+	// so the next call starts clean.
+	if (!verifyIdentity(pid, meta, realDeps)) {
 		cleanupFiles();
 		return { running: false };
 	}
@@ -273,27 +297,26 @@ function isPortFree(port: number): Promise<boolean> {
 	});
 }
 
-function isAlive(pid: number): boolean {
-	try {
-		process.kill(pid, 0);
-		return true;
-	} catch {
-		return false;
-	}
+/**
+ * Whether the recorded PID is still our daemon: alive, a `next` process, and
+ * started when the record says (small-fixes A17). `next start` rewrites its
+ * process title to `next-server (vX)`, so the binary and port flag we passed
+ * are not in its command line, and every Next server on the machine reads
+ * the same; an install renames the package folder aside, so its working
+ * directory moves. Its start time does neither. Never the port: slow to
+ * answer under load (A12). A PID the OS recycled after a crash started
+ * later; the caller treats that as stale.
+ */
+function verifyIdentity(pid: number, meta: DaemonMeta, deps: ProcessDeps): boolean {
+	return isOwnProcess(pid, ["next"], deps, meta.startedAt);
 }
 
-/**
- * Verify the recorded daemon identity beyond bare PID liveness: both
- * `isAlive(pid)` AND `isPortListening(port)` must return true. The port
- * probe is the load-bearing discriminator — after a daemon crash the OS
- * can recycle the PID to an unrelated process (bash, postgres, another
- * vitest), and a PID-only check would then false-positive that stranger
- * as "the daemon is running." The caller treats mismatch as stale.
- */
-async function verifyIdentity(pid: number, port: number): Promise<boolean> {
-	if (!isAlive(pid)) return false;
-	return isPortListening(port);
-}
+/** The real reads and signals; the tests hand in their own. */
+const realDeps: DaemonDeps = {
+	...realProcessReads,
+	kill: (pid, signal) => process.kill(pid, signal),
+	sleep,
+};
 
 function cleanupFiles(): void {
 	const pidFile = pidFilePath();

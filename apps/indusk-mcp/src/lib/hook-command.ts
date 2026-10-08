@@ -22,6 +22,54 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+/**
+ * Every hook a project registers, under its event and matcher, in settings
+ * order (small-fixes A24). `init` builds a new project's hooks from it and
+ * `update` ensures each row in an existing one; a new hook is one row here.
+ * They kept a list each until adding the stash guard meant editing both.
+ */
+export const HOOK_REGISTRATIONS: readonly (readonly [
+	event: string,
+	matcher: string,
+	file: string,
+])[] = [
+	["PreToolUse", "Edit|Write", "check-gates.js"],
+	["PreToolUse", "Edit|Write", "validate-impl-structure.js"],
+	["PreToolUse", "Edit|Write", "claude-md-budget.js"],
+	// No code on trunk: the edit gate here, and its twin on Bash, which judges
+	// `git commit` by what is staged — an edit made through sed or a heredoc
+	// never passes through Edit or Write. One matcher is half a gate.
+	["PreToolUse", "Edit|Write", "trunk-guard.js"],
+	["PreToolUse", "Bash", "trunk-guard.js"],
+	// Worktrees share one stash stack: an unnamed stash or a pop is refused
+	// where another session could be on the other end.
+	["PreToolUse", "Bash", "stash-guard.js"],
+	["PostToolUse", "Edit|Write", "gate-reminder.js"],
+	// Inert unless worktree.shape is "workbench" — a normal-mode project keeps
+	// `.indusk/` inside its own product repo, where auto-committing every edit
+	// would commit half-finished source.
+	["PostToolUse", "Edit|Write", "workbench-sync.js"],
+	["PostToolUse", "Bash", "eval-trigger.js"],
+];
+
+/** `HOOK_REGISTRATIONS` as the settings file's `hooks` object: events, then matcher groups, in table order. */
+export function hookGroups(): Record<
+	string,
+	{ matcher: string; hooks: { type: string; command: string }[] }[]
+> {
+	const out: Record<string, { matcher: string; hooks: { type: string; command: string }[] }[]> = {};
+	for (const [event, matcher, file] of HOOK_REGISTRATIONS) {
+		out[event] ??= [];
+		let group = out[event].find((g) => g.matcher === matcher);
+		if (!group) {
+			group = { matcher, hooks: [] };
+			out[event].push(group);
+		}
+		group.hooks.push({ type: "command", command: hookCommand(file) });
+	}
+	return out;
+}
+
 /** The registered command for a hook file in `.claude/hooks/`. */
 export function hookCommand(name: string): string {
 	return `node "\${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/${name}`;

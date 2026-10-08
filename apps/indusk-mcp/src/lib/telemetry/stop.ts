@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { isOwnProcess, type ProcessDeps } from "../process-identity.js";
 import type { DaemonMeta } from "./status.js";
 
 /**
@@ -12,13 +13,11 @@ import type { DaemonMeta } from "./status.js";
  * or by the same binary from another home, is never signalled. Stop reports
  * stopped only when none of its own is left, and keeps the record otherwise.
  *
- * promise: telemetry-stop-stops-what-it-started
+ * promise: indusk-stops-only-its-own-daemons
  */
 
 /** What stopping reads and does, given as inputs so the decision is a unit test. */
-export interface StopDeps {
-	alive(pid: number): boolean;
-	command(pid: number): string | null;
+export interface StopDeps extends ProcessDeps {
 	kill(pid: number, signal: NodeJS.Signals): void;
 	sleep(ms: number): Promise<void>;
 }
@@ -36,13 +35,6 @@ export interface StopResult {
 const GRACE_MS = 3000;
 const POLL_MS = 100;
 
-/** Whether `pid` is this daemon's process: alive, and running `binary` with `config`. */
-export function isOwnProcess(pid: number, binary: string, config: string, deps: StopDeps): boolean {
-	if (!deps.alive(pid)) return false;
-	const cmd = deps.command(pid);
-	return cmd !== null && cmd.includes(binary) && cmd.includes(config);
-}
-
 export async function stopDaemon(
 	meta: DaemonMeta,
 	home: string,
@@ -57,7 +49,7 @@ export async function stopDaemon(
 		},
 	];
 	const own = recorded
-		.filter((p) => isOwnProcess(p.pid, p.binary, p.config, deps))
+		.filter((p) => isOwnProcess(p.pid, [p.binary, p.config], deps))
 		.map((p) => p.pid);
 	const strangers = recorded
 		.filter((p) => deps.alive(p.pid) && !own.includes(p.pid))

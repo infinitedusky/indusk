@@ -193,17 +193,29 @@ function EventView({
           ) : null}
         </div>
       );
+    // What happened, in the panel's own words — never Claude Code's status
+    // word, which reads `success` beside an API error (small-fixes A7, A8).
+    // promise: a-session-says-how-it-ended
     case "result":
-      return (
-        <p className={ev.ok ? "text-green-700" : "text-red-700"}>
-          {ev.ok ? "Finished" : `Ended: ${ev.subtype}`}
-          {ev.text ? ` — ${ev.text}` : ""}
+      return ev.ok ? (
+        <p className="text-green-700">
+          Turn done{ev.text ? ` — ${ev.text}` : ""}
+        </p>
+      ) : (
+        <p className="text-red-700">
+          Failed —{" "}
+          {ev.text ? ev.text.split("\n")[0] : failedWithoutText(ev.subtype)}
         </p>
       );
     case "exit":
-      return ev.code === 0 || ev.code === null ? null : (
-        <p className="text-red-700">
-          claude exited with code {ev.code}
+      return (
+        <p
+          className={
+            ev.code === 0 || ev.code === null ? "text-gray-500" : "text-red-700"
+          }
+        >
+          Session ended
+          {ev.code === null ? "" : ` (code ${ev.code})`}
           {ev.stderr ? `: ${ev.stderr.slice(-300)}` : ""}
         </p>
       );
@@ -212,6 +224,18 @@ function EventView({
     default:
       return null;
   }
+}
+
+/**
+ * Why a turn failed when Claude Code sent no text: `error_max_turns` and
+ * `error_during_execution` carry only the subtype (small-fixes A22). Said in
+ * words; the raw subtype is the protocol's, not the reader's.
+ */
+function failedWithoutText(subtype: string): string {
+  if (subtype === "error_max_turns") return "the turn limit was reached";
+  if (subtype === "error_during_execution")
+    return "it stopped on an error while running";
+  return "it stopped without a result";
 }
 
 const OTHER = "Other";

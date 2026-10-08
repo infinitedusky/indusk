@@ -2,7 +2,7 @@
 name: telemetry-stop-stops-what-it-started
 kind: state
 lifetime: holds
-state: enforced
+state: retired
 domain: admin
 owner: telemetry-stop-stops-what-it-started
 sites:
@@ -18,3 +18,4 @@ incidents: []
 ## History
 - 2026-10-07 — declared (telemetry-stop-stops-what-it-started), from its planning conversation.
 - 2026-10-07 — enforced, confirmed for telemetry-stop-stops-what-it-started: proven by row A1, row A2, row A3, row A4.
+- 2026-10-08 — retired, confirmed for small-fixes: replaced by `indusk-stops-only-its-own-daemons`.

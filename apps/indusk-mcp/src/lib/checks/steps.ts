@@ -7,6 +7,8 @@ import { type EnsureResult, ensureConfigBlock, readConfig, type WorkflowSteps } 
  * can read is never quietly treated as "not declared".
  *
  * promise: landing-and-release-name-the-projects-commands
+ * promise: dusk-installs-its-own-build — `land.install`, the command landing
+ * runs so this machine's `indusk` is the landed build (small-fixes).
  */
 export function readWorkflowSteps(checkout: string): WorkflowSteps {
 	const steps = (readConfig(checkout) as { workflow?: { steps?: unknown } } | null)?.workflow
@@ -16,7 +18,10 @@ export function readWorkflowSteps(checkout: string): WorkflowSteps {
 	const out: WorkflowSteps = {};
 	if (steps.land !== undefined) {
 		const land = section(steps.land, "land");
-		out.land = { slow_tests: text(land.slow_tests, "land.slow_tests") };
+		out.land = {
+			slow_tests: text(land.slow_tests, "land.slow_tests"),
+			install: text(land.install, "land.install"),
+		};
 	}
 	if (steps.release !== undefined) {
 		const release = section(steps.release, "release");

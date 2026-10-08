@@ -3,7 +3,7 @@ import type { DaemonMeta } from "./status.js";
 import { type StopDeps, stopDaemon } from "./stop.js";
 
 /**
- * promise: telemetry-stop-stops-what-it-started — telemetry-stop A1–A3.
+ * promise: indusk-stops-only-its-own-daemons — telemetry-stop A1–A3.
  *
  * The 1.65.0 release left nine Jaeger and otelcol processes running, each
  * home's record deleted: stop judged its own processes by whether their port

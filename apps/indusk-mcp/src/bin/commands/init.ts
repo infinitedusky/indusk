@@ -9,8 +9,8 @@ import { detectTooling } from "../../lib/detect-tooling.js";
 import {
 	absolutizeHookCommands,
 	ensureHookRegistered,
-	hookCommand,
 	hookFileOf,
+	hookGroups,
 } from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { linkTrunk } from "../../lib/worktree/layout.js";
@@ -1045,43 +1045,8 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		"mcp__indusk__get_skill_versions",
 		"mcp__indusk__get_skill_summaries",
 	];
-	const hookConfig = {
-		PreToolUse: [
-			{
-				matcher: "Edit|Write",
-				hooks: [
-					{ type: "command", command: hookCommand("check-gates.js") },
-					{ type: "command", command: hookCommand("validate-impl-structure.js") },
-					{ type: "command", command: hookCommand("claude-md-budget.js") },
-					// No code on trunk (trunk-guard): the edit gate. Its twin below,
-					// on Bash, judges `git commit` by what is staged — an edit made
-					// through sed or a heredoc never passes through Edit or Write.
-					{ type: "command", command: hookCommand("trunk-guard.js") },
-				],
-			},
-			{
-				matcher: "Bash",
-				hooks: [{ type: "command", command: hookCommand("trunk-guard.js") }],
-			},
-		],
-		PostToolUse: [
-			{
-				matcher: "Edit|Write",
-				hooks: [
-					{ type: "command", command: hookCommand("gate-reminder.js") },
-					// Workbench sync trigger. Inert unless worktree.shape is
-					// "workbench" — a normal-mode project keeps `.indusk/` inside
-					// its own product repo, where auto-committing every edit would
-					// commit half-finished source.
-					{ type: "command", command: hookCommand("workbench-sync.js") },
-				],
-			},
-			{
-				matcher: "Bash",
-				hooks: [{ type: "command", command: hookCommand("eval-trigger.js") }],
-			},
-		],
-	};
+	// Every hook, from the one table `update` reads too (small-fixes A24).
+	const hookConfig = hookGroups();
 
 	if (existsSync(claudeSettingsPath)) {
 		// A project initialized before 1.45 registers the relative form. The

@@ -28,6 +28,8 @@ New plan, on a project's page, takes a type and a name. It starts the plan on it
 
 The panel shows what the session says and the tools it uses, in order. A question appears with its choices; the person picks one per question and answers. A request to use a tool can be allowed or denied. Stop ends the session, and what it already wrote stays written. When the session writes a file, the page refreshes, so the plan appears and grows in the sidebar as it is written.
 
+A turn ends one of three ways, and the panel says which. **Turn done** is a turn that completed, with the session's closing text; the session is still there and takes the next message. **Failed** is a turn that ended in an error, shown with the error's first line. When there is no error text, it says why in words instead: the turn limit was reached, or it stopped on an error while running. The session may still be there. **Session ended** is the process itself exiting, with its exit code, which is the only ending after which nothing more arrives. The panel never shows the protocol's own words for these (its `subtype`, such as `success`), which named the turn and read as if they named the session.
+
 The panel only renders the events the package's protocol produced and sends the person's choices back through the routes. It never reads Claude's output itself.
 
 ## The daemon owns them

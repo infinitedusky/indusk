@@ -127,7 +127,7 @@ describe("T4 — `indusk telemetry stop` shuts down in <3s", () => {
 		30_000,
 	);
 
-	// promise: telemetry-stop-stops-what-it-started — telemetry-stop A4. The
+	// promise: indusk-stops-only-its-own-daemons — telemetry-stop A4. The
 	// 1.65.0 release left nine processes from temporary homes, each with its
 	// record deleted: stop had reported them stopped.
 	it.skipIf(SHOULD_SKIP)(

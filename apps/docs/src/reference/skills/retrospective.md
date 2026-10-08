@@ -231,14 +231,25 @@ if the project declares slow tests, `indusk checks slow`, which records a green
 run so the release on the same code does not repeat it. Then `plans land`
 merges `main` into the branch, runs `plans.land_checks`, merges into `main` with
 `--no-ff`, releases the worktree assignment, and removes the worktree and the
-branch. Afterwards, verify on trunk and record the landing sha in the archived
+branch. It also refuses when the `indusk` running it is installed from the
+plan's worktree, which an install run on the branch does: landing would delete
+the build it runs from, so install from the trunk first. Afterwards, verify on trunk; if the project declares how it installs
+the landed build (`workflow.steps.land.install` — dusk's is `pnpm
+install:local`, which builds what a publish builds and links the checkout into
+the global `indusk`), run that, so the machine's `indusk` is the landed build
+with nothing published; then record the landing sha in the archived
 retrospective. With reviewers, merge the PR instead, then release, remove the
 worktree and delete the branch by hand. See [`indusk plans`](/reference/cli/plans).
 
 ### Step 11: Bump
 
 A project that declares no release command has nothing to bump: the step says
-so, records it, and stops. Otherwise it bumps on main, after the branch is
+so, records it, and stops. A project that installs its own build at landing
+publishes deliberately, not per plan — when a deployed server, another project
+or another machine needs the version — so unless this close is one of those,
+the step says the build is installed and nothing is published, records it, and
+stops; when it is, the project's release command runs its slow tier itself
+before publishing. Otherwise it bumps on main, after the branch is
 merged. Step 10 leaves the agent standing on main, holding the one piece of
 knowledge a later publisher would have to reconstruct: what shipped.
 
@@ -263,9 +274,9 @@ knowledge a later publisher would have to reconstruct: what shipped.
   exemption. When trunk-guard refuses editing the two files on trunk, they are
   edited on a short release branch and trunk is fast-forwarded to it.
 
-It then runs `indusk checks slow --unless-covered`, which should report the
-slow tests covered by landing's green run, and stops. Running the release
-command is the operator's call.
+If the project declares slow tests at landing, it then runs `indusk checks slow
+--unless-covered`, which should report them covered by landing's green run; and
+it stops. Running the release command is the operator's call.
 
 **When it skips.** If nothing the release covers changed since the release commit, the step says
 *"Nothing the release covers changed — the version stays at X.Y.Z"*

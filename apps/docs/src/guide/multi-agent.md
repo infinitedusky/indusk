@@ -148,6 +148,36 @@ f0a99b21  telemetry spike  wtb       plan/telemetry     2026-06-26 22:01:15
 
 **Worktree-per-plan is the default.** Every plan gets its own worktree, created at the start of its impl (`/work`'s Worktree Kickoff step nudges `indusk worktree create {plan-slug}` when you're in the trunk). One plan → one branch → one worktree → PR → merge-and-delete, which makes "no overlap" true by construction — the collision flag above is then just the safety net. Opt a single plan out with `worktree: none` in its impl frontmatter (the natural falsy forms `no` / `off` / `false` work too — a plan that says "no worktree" any reasonable way gets none); no workflow sets that by default. The kickoff is a nudge, not a hard gate — if you proceed in the trunk anyway, the collision flag will tell you when it bites.
 
+## Worktrees share one stash
+
+Worktrees isolate files, but not everything. The stash stack lives in the repository's shared git directory, so every worktree pushes onto and pops from the same list. A bare `git stash pop` in one worktree takes whatever is on top, and that can be another session's work, set aside in another worktree a minute earlier.
+
+So when a repository has more than one worktree, the `stash-guard` hook refuses every stash command that acts on the top of the stack or sets work aside without a name:
+
+| Refused | Allowed |
+|---------|---------|
+| `git stash`, `git stash -u`, `git stash push` with no message | `git stash push -u -m "<unique-tag>"` |
+| `git stash pop`, in any form | `git stash list`, `git stash show` |
+| `git stash apply` with nothing named | `git stash apply <sha>` |
+| `git stash drop` with nothing named | `git stash drop stash@{n}` |
+| `git stash branch <name>` with nothing named (it pops the top) | `git stash branch <name> <sha>` |
+| `git stash clear` | |
+
+The safe ways to set work aside:
+
+```bash
+# a temporary commit: the simplest, and nothing is shared
+git commit -m 'wip: <what>'          # undo later: git reset --soft HEAD~1
+
+# or a tagged stash, restored by its sha
+git stash push -u -m "<unique-tag>"
+git stash list --format='%H %gs'     # note your entry's sha
+git stash apply <sha>
+git stash drop stash@{n}             # find n again by your tag first
+```
+
+`pop` is refused even with an index: another session's push between your `list` and your `pop` moves your entry to a different index. The guard judges the repository the command runs in, following a `cd <worktree> &&` or a `git -C <path>` the same way trunk-guard does. With one worktree nobody else shares the stack, so nothing is refused. `INDUSK_STASH_GUARD=off` overrides the guard for one call. Lesson: `a-stash-never-crosses-worktrees`.
+
 ## Configuration
 
 `.indusk/config.json` carries one field for this system:

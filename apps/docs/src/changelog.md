@@ -4,6 +4,29 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+
+- **`workflow.steps.land.install`** (small-fixes): how a project installs the landed build on this machine, run by the retrospective's landing step after the merge and named by `indusk checks show`. Dusk declares `pnpm install:local`, which builds everything a publish builds and links the checkout into the global `indusk`, so landing a plan makes it current with nothing published.
+
+- **A plan builds only after approval** (small-fixes): `check-gates` refuses to tick a checklist item while the impl is `draft`, and refuses an edit that moves the impl out of `draft` by any route but `indusk plans approve`. Lesson `a-plan-builds-only-after-approval`; the planner skill now ends the planning session at the written plan, and its Key Decisions line is the first build phase's Context item.
+
+- **`stash-guard` hook** (small-fixes): in a repository with more than one worktree, which all share one stash stack, the hook refuses `git stash` with no message, `pop`, and `apply`/`drop` with nothing named, and `clear`. The refusal names the safe ways: a temporary commit, or `stash push -u -m <tag>` followed by `stash apply <sha>`. `indusk update` registers it on Bash. See [Worktrees share one stash](/guide/multi-agent#worktrees-share-one-stash).
+
+### Changed
+
+- **Dusk publishes deliberately, not per plan.** Landing installs the build locally; `pnpm release` is for a server deploy or another machine, and runs the full slow tests itself before publishing. The retrospective's bump step says so for any project that installs locally.
+- **`indusk update` registers every hook `init` does** (small-fixes): both now read one table. Before, `update` only checked some hooks, so a project missing `check-gates`, `validate-impl-structure` or `gate-reminder` stayed without it. Now it gets it.
+- **The session panel says how a turn ended** (small-fixes): **Turn done** with the closing text, **Failed** with the error's first line, or **Session ended** with the exit code. It no longer shows the protocol's `subtype`, whose `success` read as if the session had ended well.
+
+### Fixed
+
+- **`indusk ui stop` knows its daemon by when it started, never by its port** (small-fixes): the admin daemon's stop and status had the port-based identity check `telemetry stop` was cured of in 1.60 — under load a slow port read as "not ours", and stop skipped its own process and deleted the record. One rule now, `lib/process-identity.ts`, behind both stops. The admin's daemon is a `next` process that started when its record says: `next start` renames itself `next-server (vX)`, so the binary and port it was given are not in its command line, and an install moves its working directory, but its start time stays. A daemon still running after SIGTERM and SIGKILL is reported, with a non-zero exit, and its record kept.
+- **The approval gate reads the whole file** (small-fixes): an Edit that moved a draft's status without including the `status:` key, or a frontmatter that wrote `status: "draft"` in quotes, got past it.
+- **`stash-guard` refuses `git stash branch <name>` with no stash named**: it pops the top entry into a new branch.
+- **`indusk plans land` refuses to remove its own build** (small-fixes): when the `indusk` running it is installed from the plan's worktree, which `pnpm install:local` on a plan branch does, landing would delete it mid-run. It says to install from the trunk first.
+- **A failed turn with no text says why** (small-fixes): the session panel showed only "Failed" for a turn that hit its turn limit or stopped on an error, because Claude Code sends no text for those.
+- **The update notice compares versions by number** (small-fixes): it compared strings, so any version on npm other than the installed one, older included, read as newer.
+
 ## [1.67.0] — 2026-10-08
 
 ### Added

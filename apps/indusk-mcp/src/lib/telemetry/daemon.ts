@@ -1,5 +1,5 @@
-import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import { join } from "node:path";
@@ -31,13 +31,12 @@ import { join } from "node:path";
  * (`stop.ts`): a slow port must never make it skip its own processes.
  */
 
+import { realProcessReads } from "../process-identity.js";
 import {
 	cleanupFiles,
 	type DaemonMeta,
-	type DaemonStatusResult,
 	daemonStatus,
 	induskHome,
-	isAlive,
 	isPortListening,
 	metaFilePath,
 	pidFilePath,
@@ -519,8 +518,8 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 	// Ownership is the command line, never the port (telemetry-stop-stops-what-it-started):
 	// a slow port once made stop signal nothing, delete the record and report success.
 	const result = await stopDaemon(meta, induskHome(), {
-		alive: isAlive,
-		command: processCommand,
+		alive: realProcessReads.alive,
+		command: realProcessReads.command,
 		kill: (pid, signal) => process.kill(pid, signal),
 		sleep,
 	});
@@ -531,13 +530,6 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 		signaledOtelcolPid: meta.otelcolPid,
 		stillRunning: result.stillRunning,
 	};
-}
-
-/** A process's command line, or null when it is gone or cannot be read. */
-function processCommand(pid: number): string | null {
-	const r = spawnSync("ps", ["-o", "command=", "-p", String(pid)], { encoding: "utf-8" });
-	const out = r.status === 0 ? r.stdout.trim() : "";
-	return out === "" ? null : out;
 }
 
 export async function daemonRestart(opts: DaemonStartOptions = {}): Promise<DaemonMeta> {

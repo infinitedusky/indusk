@@ -73,6 +73,57 @@ if (newContent.includes("<!-- skip-gates -->") && gatePolicy !== "strict") {
 // Detect checkbox transition: - [ ] → - [x]
 const oldContent = toolInput.old_string ?? "";
 
+// promise: a-plan-builds-only-after-approval
+// A plan leaves `draft` only through `indusk plans approve`, which writes the
+// file itself with no tool event (small-fixes A4). A planning session once set
+// its plan `in-progress` by hand and started building, so approve's brief and
+// promise checks never ran. Any tool edit that moves `status:` off `draft`
+// (to anything but `abandoned`) is that hand edit, whoever makes it.
+//
+// Judged on the whole file before and after, never on the edit's own strings
+// (small-fixes A19): an `old_string` of `draft\ntrajectory: …` moves the
+// status without carrying the `status:` key. The value is the frontmatter's,
+// unquoted — `status: "draft"` is a draft.
+const statusOf = (text) => {
+	const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+	return fm ? /^status:[ \t]*["']?([^"'\s#]+)/m.exec(fm[1])?.[1] : undefined;
+};
+let fromStatus;
+let toStatus;
+let diskContent = null;
+try {
+	diskContent = readFileSync(filePath, "utf-8");
+} catch {
+	// a new file has no status to leave
+}
+/**
+ * The file as this tool call would leave it, or null when it cannot be told
+ * (an Edit whose `old_string` is not in the file). The Edit tool's literal
+ * splice, `replace_all` included — never `String.replace`, whose `$`
+ * patterns substitute (hooks/CLAUDE.md).
+ */
+function applyEdit(disk) {
+	if (event.tool_name === "Write") return newContent;
+	if (event.tool_name !== "Edit" || !oldContent) return null;
+	const at = disk.indexOf(oldContent);
+	if (at === -1) return null;
+	return toolInput.replace_all
+		? disk.split(oldContent).join(newContent)
+		: disk.slice(0, at) + newContent + disk.slice(at + oldContent.length);
+}
+
+if (diskContent !== null) {
+	fromStatus = statusOf(diskContent);
+	const after = applyEdit(diskContent);
+	if (after !== null) toStatus = statusOf(after);
+}
+if (fromStatus === "draft" && toStatus && toStatus !== "draft" && toStatus !== "abandoned") {
+	console.error(
+		`A plan leaves draft only through \`indusk plans approve\`, which runs the brief and promise checks first; this edit sets status: ${toStatus} by hand. Run the approve command instead.\nlesson: a-plan-builds-only-after-approval`,
+	);
+	process.exit(2);
+}
+
 // For Edit tool: check if old_string has unchecked and new_string has checked
 // For Write tool: we need to compare with the file on disk
 let hasCheckboxTransition = false;
@@ -109,15 +160,19 @@ try {
 	process.exit(0);
 }
 
-// For Edit, apply the edit to get the new full content
-let newFullContent;
-if (event.tool_name === "Edit" && oldContent) {
-	newFullContent = fullContent.replace(oldContent, newContent);
-} else if (event.tool_name === "Write") {
-	newFullContent = newContent;
-} else {
-	process.exit(0);
+// No item is checked off on a plan that is not approved (small-fixes A5):
+// building is `/work`'s, after `plans approve`; a draft's checklist is the
+// plan, not progress.
+if (statusOf(fullContent) === "draft") {
+	console.error(
+		"This plan is still a draft: nothing is checked off before `indusk plans approve` has run its brief and promise checks; building is /work's, after approval.\nlesson: a-plan-builds-only-after-approval",
+	);
+	process.exit(2);
 }
+
+// The new full content, the way the tool will write it
+const newFullContent = applyEdit(fullContent);
+if (newFullContent === null) process.exit(0);
 
 // Detect workflow type from content frontmatter
 function detectWorkflow(content) {
