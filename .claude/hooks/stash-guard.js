@@ -15,7 +15,8 @@
  *
  *   - `git stash`, `git stash -u`, `git stash push|save` with no message
  *   - `git stash pop` (any form — an index shifts under concurrent pushes)
- *   - `git stash apply` and `git stash drop` with nothing named
+ *   - `git stash apply`, `git stash drop` and `git stash branch <name>` with
+ *     nothing named (`branch` pops the top into a new branch)
  *   - `git stash clear`
  *
  * and allow the ones that name what they act on: `push -m <tag>`, `list`,
@@ -99,8 +100,13 @@ function unnamed(args) {
 				: "`git stash drop` with nothing named drops the top of a stack every worktree shares";
 		case "clear":
 			return "`git stash clear` empties the stack for every worktree";
+		// `branch <name>` alone pops the top entry into a new branch (A20).
+		case "branch":
+			return rest.filter((t) => !t.startsWith("-")).length >= 2
+				? null
+				: "`git stash branch <name>` with no stash named pops the top of a stack every worktree shares";
 		default:
-			return null; // list, show, branch <name> <stash>, create, store
+			return null; // list, show, create, store
 	}
 }
 
