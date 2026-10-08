@@ -134,7 +134,7 @@ A plan that lands green is released without running the slow tests again, and th
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased: `indusk checks`, `workflow.steps`, release skips a covered slow run
+- [x] `apps/docs/src/changelog.md` Unreleased: `indusk checks`, `workflow.steps`, release skips a covered slow run
 
 ## Files Affected
 
