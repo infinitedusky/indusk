@@ -2440,3 +2440,24 @@ Build Phase 4 verification → cleanup (skip with reason) → /retrospective →
 (empty)
 
 ---
+
+## Session 6b4ce41e — eval: reviewing path normaliser fix a301930c
+
+**Session ID**: 6b4ce41e-726c-4ddb-95c6-6b21b378e2e6
+**Last updated**: 2026-10-08T18:00:09.049Z
+**Branch**: plan/release-checks-run-once
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-checks-run-once
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
