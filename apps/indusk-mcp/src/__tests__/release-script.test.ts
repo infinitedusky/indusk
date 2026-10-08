@@ -34,6 +34,9 @@ describe("A3 — the release publishes without listing every file", () => {
 			// promise: dusk-installs-its-own-build
 			"pnpm -w test:system",
 			"npm whoami",
+			// The server image, before npm (server-provisioning A18).
+			// promise: the-recording-server-runs-from-a-published-image
+			"bash scripts/release-image.sh",
 			"pnpm publish --no-git-checks",
 			"node scripts/record-release.js",
 		]);
@@ -64,7 +67,8 @@ describe("A18 — the release publishes the server image before npm", () => {
 			"utf-8",
 		);
 		expect(script).toMatch(/^set -euo pipefail$/m);
-		expect(script).toContain("ghcr.io/infinitedusky/indusk-always-on:${VERSION}");
+		expect(script).toContain('IMAGE="${INDUSK_IMAGE:-ghcr.io/infinitedusky/indusk-always-on}"');
+		expect(script).toMatch(/VERSION="\$\(node -p 'require\("\.\/package\.json"\)\.version'\)"/);
 		expect(script).toMatch(/docker push "\$\{IMAGE\}:\$\{VERSION\}"/);
 	});
 });
