@@ -1,5 +1,7 @@
+import { join } from "node:path";
 import { readConfig } from "../config.js";
-import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
+import { secretsFile } from "../server/secrets-file.js";
+import { daemonMetaPath, daemonStatus, induskHome } from "../telemetry/status.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
 import { probeWatcher, WatcherBlind } from "./probe.js";
 import type { PromiseEntry, Registry } from "./registry.js";
@@ -166,7 +168,13 @@ function resolveProduction(root: string): MarkSource {
 			`promises.jaeger.url is ${queryUrl ? `not a URL (${JSON.stringify(named.url)})` : "empty"}`,
 		);
 	}
-	const credential = process.env[named.credential_env]?.trim();
+	// The environment first, then the machine's secrets file, where
+	// `indusk server connect` stores it: nothing loads that file into the
+	// environment, so without this a connected project read production only
+	// after a shell that exported the variable (server-provisioning A3).
+	const secrets = secretsFile(join(induskHome(), "config.env"));
+	const credential =
+		process.env[named.credential_env]?.trim() || secrets.get(named.credential_env)?.trim();
 	if (!credential) {
 		// Named but unreadable: refuse against the URL the reader is asking
 		// about, naming the variable they have to set. Falling back to the
@@ -174,7 +182,7 @@ function resolveProduction(root: string): MarkSource {
 		// laptop's traces.
 		throw new JaegerUnreachable(
 			queryUrl,
-			`promises.jaeger names ${named.credential_env} for its credential and that variable is not set`,
+			`promises.jaeger names ${named.credential_env} for its credential and that variable is not set, in the environment or in ${secrets.path}`,
 		);
 	}
 	const intake = named.otlp_url ? normalizeJaegerUrl(named.otlp_url) : "";
