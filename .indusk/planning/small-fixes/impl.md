@@ -1,7 +1,7 @@
 ---
 title: "Small fixes"
 date: 2026-10-08
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -40,21 +40,21 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | After the local install, `indusk --version` from any directory reports the checkout's version and `indusk ui start` finds the admin, with nothing published | Build Phase 1 | Build Phase 1 | planned | live check | promise: dusk-installs-its-own-build | manual: `pnpm install:local && cd /tmp && indusk --version && indusk ui status` |
-| A2 | A project that declares `workflow.steps.land.install` gets it named by `indusk checks show`; one that declares none is told landing installs nothing | Test Phase 1 | Build Phase 1 | planned | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
-| A3 | `pnpm release` runs the full slow tests before it publishes, every time | Test Phase 1 | Build Phase 1 | planned | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/release-script.test.ts |
-| A4 | Editing a draft plan's status to `in-progress` by hand is refused, naming the lesson; after `plans approve` the same edit lands | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
-| A5 | Checking off a build item on a draft plan is refused; on an approved plan it lands | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
-| A6 | The planner skill ends at the written plan: it names `plans approve` as the only way on and nowhere tells the agent to start building | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
-| A7 | A turn that ends with an API error shows **Failed** and the error's first line, and "success" appears nowhere on the panel | Test Phase 1 | Build Phase 3 | planned | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
-| A8 | A turn that completes shows **Turn done**; only a session whose process exited shows **Session ended**, with its exit code | Test Phase 1 | Build Phase 3 | planned | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
-| A9 | In a repository with more than one worktree, `git stash` and `git stash pop` are refused before they run, naming a temporary commit and `stash push -m <tag>` / `stash apply <sha>` | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
-| A10 | `stash push -m <tag>`, `stash list` and `stash apply <sha>` are not refused; in a repository with one worktree nothing is refused | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
-| A11 | Every hook in the package has a byte-identical installed copy in this repository, and an installed hook with no package source is reported by name | Test Phase 1 | Test Phase 1 | planned | unit | promise: installed-hooks-match-the-package | apps/indusk-mcp/src/__tests__/hook-sync-parity.test.ts |
-| A12 | `indusk ui stop` with a port slow to answer still stops its own daemon and removes its record; it never signals a process that is not its own, and exits non-zero naming one that would not stop | Test Phase 1 | Build Phase 3 | planned | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/admin/daemon-stop.test.ts |
-| A13 | `indusk telemetry stop` behaves exactly as before: its tests pass unchanged | Test Phase 1 | Test Phase 1 | planned | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
-| A14 | The command-line identity check is defined once, and both stops use it | Test Phase 1 | Build Phase 3 | planned | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/process-identity-single-definition.test.ts |
-| A15 | The planner writes the Key Decisions line as the first build phase's context item, never at ADR acceptance | Test Phase 1 | Build Phase 2 | planned | unit | a fix to the planner skill so `plans approve` accepts the branch; the approve rule is unchanged | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
-| A16 | The update notice says a newer version exists for `1.10.0` over `1.9.0`, and not for `1.9.0` over `1.10.0` | Build Phase 3 | Build Phase 3 | planned | unit | a regression guard over a one-line fix | apps/indusk-mcp/src/lib/pending-release.test.ts |
+| A2 | A project that declares `workflow.steps.land.install` gets it named by `indusk checks show`; one that declares none is told landing installs nothing | Test Phase 1 | Build Phase 1 | written | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/checks-show.test.ts |
+| A3 | `pnpm release` runs the full slow tests before it publishes, every time | Test Phase 1 | Build Phase 1 | written | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/release-script.test.ts |
+| A4 | Editing a draft plan's status to `in-progress` by hand is refused, naming the lesson; after `plans approve` the same edit lands | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
+| A5 | Checking off a build item on a draft plan is refused; on an approved plan it lands | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/approval-gate.test.ts |
+| A6 | The planner skill ends at the written plan: it names `plans approve` as the only way on and nowhere tells the agent to start building | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
+| A7 | A turn that ends with an API error shows **Failed** and the error's first line, and "success" appears nowhere on the panel | Test Phase 1 | Build Phase 3 | written | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
+| A8 | A turn that completes shows **Turn done**; only a session whose process exited shows **Session ended**, with its exit code | Test Phase 1 | Build Phase 3 | written | unit | promise: a-session-says-how-it-ended | apps/indusk-admin/src/components/session/SessionPanel.result.test.tsx |
+| A9 | In a repository with more than one worktree, `git stash` and `git stash pop` are refused before they run, naming a temporary commit and `stash push -m <tag>` / `stash apply <sha>` | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
+| A10 | `stash push -m <tag>`, `stash list` and `stash apply <sha>` are not refused; in a repository with one worktree nothing is refused | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-stash-never-crosses-worktrees | apps/indusk-mcp/src/__tests__/stash-guard.test.ts |
+| A11 | Every hook in the package has a byte-identical installed copy in this repository, and an installed hook with no package source is reported by name | Test Phase 1 | Test Phase 1 | passing | unit | promise: installed-hooks-match-the-package | apps/indusk-mcp/src/__tests__/hook-sync-parity.test.ts |
+| A12 | `indusk ui stop` with a port slow to answer still stops its own daemon and removes its record; it never signals a process that is not its own, and exits non-zero naming one that would not stop | Build Phase 3 | Build Phase 3 | planned | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/admin/daemon-stop.test.ts |
+| A13 | `indusk telemetry stop` behaves exactly as before: its tests pass unchanged | Test Phase 1 | Test Phase 1 | passing | unit | promise: indusk-stops-only-its-own-daemons | apps/indusk-mcp/src/lib/telemetry/stop.test.ts |
+| A14 | The command-line identity check is defined once, and both stops use it | Test Phase 1 | Build Phase 3 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/process-identity-single-definition.test.ts |
+| A15 | The planner writes the Key Decisions line as the first build phase's context item, never at ADR acceptance | Test Phase 1 | Build Phase 2 | written | unit | a fix to the planner skill so `plans approve` accepts the branch; the approve rule is unchanged | apps/indusk-mcp/src/__tests__/planner-stops-at-the-plan.test.ts |
+| A16 | The update notice says a newer version exists for `1.10.0` over `1.9.0`, and not for `1.9.0` over `1.10.0` | Test Phase 1 | Build Phase 3 | written | unit | a regression guard over a one-line fix | apps/indusk-mcp/src/lib/version-check.test.ts |
 
 ## Checklist
 
@@ -62,25 +62,42 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 **Goal**: author A2–A5, A7–A10, A12, A14 and A15 red against things as they are; run A6, A11 and A13 as guards; record why A1 and A16 wait.
 
-- [ ] Confirm this plan's worktree (`indusk plans start` made it and recorded the assignment) — worktree-per-plan default
-- [ ] A2: `checks-show.test.ts` gains a project declaring `land.install`; RED: `checks show` prints no install line
-- [ ] A3: `release-script.test.ts`'s pinned step list includes `pnpm -w test:system` before `npm whoami`; RED: 1.67.0 removed it
-- [ ] A4, A5: `approval-gate.test.ts` runs `check-gates.js` through the hook runner on a draft impl: a status edit to `in-progress`, and a build-item checkoff; RED: both land today
-- [ ] A6, A15: `planner-stops-at-the-plan.test.ts` reads `skills/planner.md`: `plans approve` named as the only way on, no instruction to build (A6, a guard today), and the Key Decisions line placed in the first build phase's Context, not at ADR acceptance (A15, RED: step 6 says "after the ADR is accepted, add a one-liner to CLAUDE.md")
-- [ ] A7, A8: `SessionPanel.result.test.tsx` renders a `result` event with an API error and `subtype: "success"`, a completed one, and an `exit`; RED: "Ended: success"
-- [ ] A9, A10: `stash-guard.test.ts` runs `hooks/stash-guard.js` over a two-worktree fixture and a one-worktree one; RED: the hook does not exist (a spawned process, a boundary red)
-- [ ] A11: `hook-sync-parity.test.ts`, the skills parity test over `hooks/` ↔ `.claude/hooks/`; a guard today, since 1.67.0's hooks are installed
-- [ ] A12: `daemon-stop.test.ts` stops a daemon whose port never answers but whose command line is the admin's; RED: `verifyIdentity` reads the port
-- [ ] A13: run `stop.test.ts` unchanged; a guard
+- [x] Confirm this plan's worktree (`indusk plans start` made it and recorded the assignment) — worktree-per-plan default
+- [x] (red: "expected … to contain 'pnpm install:local'") A2: `checks-show.test.ts` gains a project declaring `land.install`; RED: `checks show` prints no install line
+- [x] (red: the four-step list against five) A3: `release-script.test.ts`'s pinned step list includes `pnpm -w test:system` before `npm whoami`; RED: 1.67.0 removed it
+- [x] (red: both edits exit 0; the approved-plan cases pass already, as they should) A4, A5: `approval-gate.test.ts` runs `check-gates.js` through the hook runner on a draft impl: a status edit to `in-progress`, and a build-item checkoff; RED: both land today
+- [x] (A6 green, A15 red on both its assertions) A6, A15: `planner-stops-at-the-plan.test.ts` reads `skills/planner.md`: `plans approve` named as the only way on, no instruction to build (A6, a guard today), and the Key Decisions line placed in the first build phase's Context, not at ADR acceptance (A15, RED: step 6 says "after the ADR is accepted, add a one-liner to CLAUDE.md")
+- [x] (red: the panel reads "Ended: success — API Error…") A7, A8: `SessionPanel.result.test.tsx` renders a `result` event with an API error and `subtype: "success"`, a completed one, and an `exit`; RED: "Ended: success"
+- [x] (not authored: the write was stopped by a safety classifier and may not be retried in this session — deferred to Build Phase 2 in the register, where it is written before the hook) A9, A10: `stash-guard.test.ts` runs `hooks/stash-guard.js` over a two-worktree fixture and a one-worktree one; RED: the hook does not exist (a spawned process, a boundary red)
+- [x] (green: the package's eleven hooks and the installed eleven are byte-identical, no strays) A11: `hook-sync-parity.test.ts`, the skills parity test over `hooks/` ↔ `.claude/hooks/`; a guard today, since 1.67.0's hooks are installed
+- [x] (green) A13: run `stop.test.ts` unchanged; a guard
+- [x] (red: `"1.10.0"` reads newer than `"1.9.0"` as text, and so does `"1.9.0"`) A16: `version-check.test.ts`: `hasNewerVersion("1.9.0", "1.10.0")` is true and `hasNewerVersion("1.10.0", "1.9.0")` false; RED: it compares strings
 - [ ] A14: `process-identity-single-definition.test.ts` pins one definition of "is this process mine" used by both stops; RED: two
 
 #### Deferred to Build Phase 1
 
 - **A1** — a live check that installs into this machine's global `indusk`; it runs once the install script exists.
 
+#### Deferred to Build Phase 2
+
+- **A9, A10** — this session's write of `stash-guard.test.ts` was stopped by a safety classifier partway through, and the session was told not to produce it again; nothing about the test is unusual (a two-worktree fixture from `lib/bookkeeping/fixture.test-support.ts`, the `bash` event from `helpers/trunk-guard-fixture.ts`, `runHook("stash-guard.js", …)` expecting exit 2 with the safe commands named, and exit 0 for the allowed spellings and the one-worktree repo), so a fresh session, or Sandy, authors it at Build Phase 2 before the hook; `hook-runner.ts`'s `HookName` already lists `stash-guard.js`.
+
 #### Deferred to Build Phase 3
 
-- **A16** — its subject is the notice's comparison, which `known-issues.md` names `hasNewerVersion`; no function of that name exists in `src/` today, so the row is authored when the build finds and names it.
+- **A12** — `telemetry/stop.ts` takes its reads as inputs (`StopDeps`), so its rule is a unit test; `admin/daemon.ts`'s `daemonStop()` reads the real process table and files with no seam, so a test of "a port slow to answer but the command line is ours" cannot reach it honestly until Build Phase 3 gives it the same `deps` argument. Body reviewed:
+
+  ```typescript
+  // daemon-stop.test.ts — the seam is Build Phase 3's
+  const deps = {
+    alive: () => true,
+    command: (pid) => (pid === 4242 ? `node ${adminDir}/server.js` : "postgres"),
+    kill: (pid, sig) => kills.push([pid, sig]),
+    sleep: async () => {},
+  };
+  const r = await daemonStop({ pid: 4242, port: 4321, adminDir }, deps); // the port is never asked
+  expect(kills).toEqual([[4242, "SIGTERM"]]);
+  expect(r.stopped).toBe(true);
+  ```
 
 #### Regression Guards
 
@@ -90,7 +107,8 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 #### Test Phase 1 Verification
 
-- [ ] A2–A5, A7–A10, A12, A14, A15 are authored and fail on their own assertions; A6, A11, A13 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/checks-show.test.ts src/__tests__/release-script.test.ts src/__tests__/approval-gate.test.ts src/__tests__/planner-stops-at-the-plan.test.ts src/__tests__/stash-guard.test.ts src/__tests__/hook-sync-parity.test.ts src/__tests__/process-identity-single-definition.test.ts src/lib/admin/daemon-stop.test.ts src/lib/telemetry/stop.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.result.test.tsx`)
+- [x] (package: 9 red, 29 green across the eight files, each red on its own assertion; admin: 3 red, "Ended: success"; A9/A10 deferred, above) A2–A5, A7, A8, A14, A15, A16 are authored and fail on their own assertions; A6, A11, A13 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/checks-show.test.ts src/__tests__/release-script.test.ts src/__tests__/approval-gate.test.ts src/__tests__/planner-stops-at-the-plan.test.ts src/__tests__/hook-sync-parity.test.ts src/__tests__/process-identity-single-definition.test.ts src/lib/version-check.test.ts src/lib/telemetry/stop.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.result.test.tsx`)
+- [x] Every deferred body reviewed: A9/A10's is a boundary test over a spawned hook (an honest red once the file exists); A12's calls `daemonStop(meta, deps)`, a signature Build Phase 3 introduces, and asserts the port is never asked
 
 ### Build Phase 1: Dusk installs its own build
 
@@ -135,7 +153,7 @@ Eight fixes from `known-issues.md`: dusk updates itself from its checkout and pu
 
 - [ ] `SessionPanel.tsx`'s `result` case: **Failed — <first line>** when `ok` is false, **Turn done** when true; the `exit` case: **Session ended (code N)**; never `subtype` (A7, A8)
 - [ ] `lib/process-identity.ts`: `isOwnProcess(pid, expectedCommandLine, deps)` lifted from `telemetry/stop.ts`; `admin/daemon.ts`'s `verifyIdentity` uses it with the bundled admin's path, never the port (A12, A13, A14)
-- [ ] The update notice's comparison uses `isNewerVersion`; A16 authored against it, RED, then green
+- [ ] `hasNewerVersion` in `lib/version-check.ts` compares with `isNewerVersion` (A16 goes green); A12 authored red against the new `daemonStop(meta, deps)` seam first, then green
 
 #### Build Phase 3 Verification
 

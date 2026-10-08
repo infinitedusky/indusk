@@ -195,3 +195,5 @@
 {"plan":"release-checks-run-once","phase":2,"kind":"build","sha":"4be2e1c139e3ecd99a87d277f386e30c17e8420c","timestamp":"2026-10-08T17:28:52.656Z"}
 {"plan":"release-checks-run-once","phase":3,"kind":"build","sha":"a67bae6473279b8e84ce8802e79957d0d8ea3f90","timestamp":"2026-10-08T17:34:38.975Z"}
 {"plan":"release-checks-run-once","phase":4,"kind":"build","sha":"33e6d602cd86f342fd6640cdcba6e7c1204ee477","timestamp":"2026-10-08T17:51:23.881Z"}
+{"plan":"small-fixes","phase":1,"kind":"test","sha":"0bb9880626c6bf439f112aba98534d1ed58524f2","timestamp":"2026-10-08T19:37:12.413Z"}
+{"plan":"small-fixes","phase":1,"kind":"build","sha":"0fee4c3878a9b745e3ae6615c8e58d9d3f998e18","timestamp":"2026-10-08T19:41:52.719Z"}
