@@ -156,7 +156,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    ```
    Skip silently on highlight unavailability.
 
-6. **If test plan is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the claude-md skill: `- {decision summary} — see .indusk/planning/{plan}/adr.md`
+6. **If test plan is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. The root `CLAUDE.md`'s Key Decisions line for it (`- {decision summary} — see /decisions/{plan}`, per the claude-md skill) is **not written now**: `plans approve` refuses a branch that changed anything outside `.indusk/` before its build. Instead, give the impl's first build phase a Context item for the Key Decisions line, so it is written with the code.
 
    **When the ADR moves from `proposed` to `accepted`**, write a highlight so the eval agent can turn it into a structured Y-statement episode:
    ```
@@ -250,6 +250,8 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 9. **Always present each document for review** before moving to the next stage. The user signs off on each step.
 
 10. **Approval brings the plan to `main`.** When the person approves the impl, run `indusk plans approve <name>` rather than setting the status by hand: it runs the brief check (and refuses with its message), sets the impl `approved`, and merges the plan's documents and declared promises into `main`, so every other plan sees the promises before any code. The build continues on the same branch. A plan's build reaches `main` only through `indusk plans land`, which refuses a plan that has not been accepted.
+
+    **The planning session ends at the written plan.** It never edits the status by hand and never begins the build: `check-gates.js` refuses a plan leaving `draft` any other way than `plans approve`, and refuses a build item checked off on a plan that is not approved (`lesson: a-plan-builds-only-after-approval`). Building is `/work`'s, after approval.
 
 ## Cross-Referencing Between Plans
 
