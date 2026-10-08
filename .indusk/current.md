@@ -2732,3 +2732,24 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 (empty)
 
 ---
+
+## Session bcf8c12c — eval: scoring commit c6aa91a5 (server deploy --build-from)
+
+**Session ID**: bcf8c12c-dd03-4193-b342-8a4c5f23c485
+**Last updated**: 2026-10-08T22:21:49.106Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
