@@ -330,13 +330,16 @@ Do it in this order, all from the plan's worktree until the merge itself:
 4. **Land** — `indusk plans land {plan-name}`. It refuses a plan that has not been accepted (`indusk plans accept {plan-name}`, Accept in the admin, or a project set to `release.auto_accept`), naming it: a plan's build reaches `main` only once someone, or its workflow, has accepted it. It then merges `main` into the branch, runs `plans.land_checks` from `.indusk/config.json`, merges the branch into `main` with `--no-ff`, releases the assignment, removes the worktree and deletes the branch — and refuses, with nothing done, when the trunk has uncommitted changes on a path the branch touches (step 3). With reviewers instead: push and open the PR, merge it, pull trunk, then `indusk worktree release {plan-name}`, `git worktree remove <worktree-path>` and `git branch -d plan/{plan-name}`.
 5. **Delete the remote branch** if it was pushed — `git push origin --delete plan/{plan-name}`. A worktree left behind is a stale build lock, a stale build output, and a `⚠ collision` in the next `indusk agent list`.
 6. **Verify on trunk** — `git for-each-ref refs/heads/plan/* --no-merged HEAD` no longer lists the plan; `.indusk/planning/archive/{plan-name}/` exists on trunk; `indusk context check-pointers` passes there too (CLAUDE.md pointers were written on the branch and are only now on trunk).
-7. **Record the landing** — append one line to the archived `retrospective.md` on trunk: `Landed on main at <sha>, <date>.` Commit it on trunk. That line is what distinguishes a closed plan from a merged one when the two are read months later.
+7. **Install the landed build**, if the project declares how — `indusk checks show` names it under "install" (`workflow.steps.land.install`; dusk's is `pnpm install:local`, which builds what a publish builds and links the checkout into the global `indusk`). Run it on trunk, then confirm from another directory that `indusk --version` reports the landed version. A project that declares none installs nothing here: its build reaches machines by a publish.
+8. **Record the landing** — append one line to the archived `retrospective.md` on trunk: `Landed on main at <sha>, <date>.` Commit it on trunk. That line is what distinguishes a closed plan from a merged one when the two are read months later.
 
-**The bump is Step 11, not a thing to remember.** It happens on trunk, immediately after this step. Publishing itself stays the operator's call.
+**The bump is Step 11, not a thing to remember.** It happens on trunk, immediately after this step, in a project that publishes per plan. Publishing itself stays the operator's call.
 
 ### Step 11: Bump — the version that describes this tree
 
 A project that declares no release command (`indusk checks show` says "nothing to publish") has nothing to bump: **say so, record it in the retrospective, and stop.** Skipping is a finding, not an absence.
+
+A project that installs its own build (step 7 above ran a `land.install`) publishes deliberately, not per plan: when a deployed server, another project or another machine needs the new version. Unless the person has said this close is one of those, **say that the build is installed and nothing is published, record it in the retrospective, and stop.** When it is, carry on below; the project's release command runs its slow tier itself, before it publishes, since nothing at landing did.
 
 Otherwise: bump on main, after the branch is merged. Step 10 just merged and is standing on main. This is that moment, and it is the only one that knows what shipped.
 
@@ -359,7 +362,7 @@ When a plan genuinely did both, it is a minor. When you cannot tell, it is a min
 
 If trunk-guard refuses editing the version file or the changelog on trunk, make the two edits on a short release branch, commit `chore(release): X.Y.Z` there, and fast-forward trunk to it, so trunk's HEAD is the release commit. Never route around the refusal with a shell write.
 
-**Then stop.** Running the release command is the operator's decision, and a publish usually needs a credential an agent cannot enter. Say that the bump is committed and the tree is ready. Before handing over, run `indusk checks slow --unless-covered`: it should say the slow tests are covered by landing's green run. If it runs them instead, something the release covers changed since landing — say so before the operator finds out the slow way. If the project's release command begins with its own guard script, run that guard alone too, so its refusals are not the first thing the operator sees.
+**Then stop.** Running the release command is the operator's decision, and a publish usually needs a credential an agent cannot enter. Say that the bump is committed and the tree is ready. Before handing over: if the project declares slow tests at landing, run `indusk checks slow --unless-covered` — it should say they are covered by landing's green run, and if it runs them instead, something the release covers changed since landing, so say so before the operator finds out the slow way. If the project's release command begins with its own guard script, run that guard alone too, so its refusals are not the first thing the operator sees.
 
 ## Important
 
