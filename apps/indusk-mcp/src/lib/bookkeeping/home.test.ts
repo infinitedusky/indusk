@@ -13,7 +13,7 @@ import { type Fixture, makeFixture } from "./fixture.test-support.js";
 import { bookkeepingRoots, evalDir } from "./roots.js";
 
 /**
- * promise: indusk-leaves-main-clean — bookkeeping-lives-where-it-is-read A3, A11.
+ * promise: indusk-leaves-main-clean — bookkeeping-lives-where-it-is-read A3, A11, A20.
  * promise: a-highlight-becomes-a-lesson-once — A7, A13, A14, A18.
  * promise: every-commit-evaluated — A10.
  *
@@ -143,6 +143,23 @@ describe("one shared home, read by many at once", () => {
 			expect(readUnprocessedHighlights(sameName.root).map((x) => x.id)).not.toContain(h.id);
 		} finally {
 			for (const c of [sameName, a, b]) c.cleanup();
+		}
+	});
+});
+
+describe("a home given, not taken from the environment", () => {
+	it("A20: resolves a project's home under a given InDusk home without changing the environment, the same as through it", () => {
+		const other = join(f.home, "elsewhere");
+		const before = process.env.INDUSK_HOME;
+		const given = bookkeepingRoots(f.worktree, other);
+		expect(process.env.INDUSK_HOME).toBe(before);
+		expect(given.home.startsWith(join(other, "projects"))).toBe(true);
+		expect(evalDir(f.worktree, other)).toBe(join(given.home, "eval"));
+		process.env.INDUSK_HOME = other;
+		try {
+			expect(bookkeepingRoots(f.worktree)).toEqual(given);
+		} finally {
+			process.env.INDUSK_HOME = before;
 		}
 	});
 });
