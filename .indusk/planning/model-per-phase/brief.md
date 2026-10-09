@@ -1,7 +1,7 @@
 ---
 title: "model-per-phase"
 date: 2026-10-09
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
@@ -21,11 +21,11 @@ workflow: bugfix
 
 ### This plan makes
 
-1. **`each-phase-runs-on-its-model`** (state). Every phase `/work` builds runs on the model the project's config gives its tier — `strong`, `med`, `weak` or `baby` — where the tier is the one its plan names, or its step's default tier when the plan names none, without anyone switching models by hand.
+1. **`each-phase-runs-on-its-model`** (state). Every phase /work builds runs on the model the project's config gives its tier — strong, med, weak or baby — where the tier is the one its plan names, or its step's default tier when the plan names none, without anyone switching models by hand.
 
 2. **`a-model-override-says-why`** (state). An impl that gives a phase a different tier from its step's default says why, or the impl is refused.
 
-3. **`a-struggling-phase-asks-for-a-stronger-model`** (state). A phase whose tests still fail after three attempts on a tier below `strong` stops and names the next tier up to run it on.
+3. **`a-struggling-phase-asks-for-a-stronger-model`** (state). A phase whose tests still fail after three attempts on a tier below strong stops and names the next tier up to run it on.
 
 4. **`a-plan-boundary-names-the-next-session`** (state). Approving a plan, and closing each of its phases, ends by naming the command to run in a new session.
 
