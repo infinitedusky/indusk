@@ -281,7 +281,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 - [x] `apps/indusk-mcp/hooks/_phase-tier.js`: `STEPS` gains `audit`, in `TIER_STEPS` order; `phase-tier-parity.test.ts` gains a case built from `TIER_STEPS` (each step with a tier set), so the next step added to the TS and not the hook fails parity rather than passing (A21)
 - [x] `apps/indusk-mcp/src/lib/lifecycle.ts`: `audit` joins `PlanPosition`, `PLAN_POSITIONS` and `IMPL_DEPENDENT_POSITIONS` between `cleanup` and `review`; `derivePlanPosition` answers `{ position: "audit", awaiting: "cleaned, awaiting /audit" }` when `readiness.missing` includes `audit`, after the cleanup check and before the rows check — the order `nextBuildStep` already takes (A22). Update the lifecycle-parity snapshot only for the `audit` position it adds, and say so in the commit
-- [ ] `apps/indusk-admin`: the plan bar's labels (`components/bars/labels.ts`) and any exhaustive map over `PlanPosition` that `tsc` names gain `audit`; committed separately from the package (A22, admin half)
+- [x] `apps/indusk-admin`: the plan bar's labels (`components/bars/labels.ts`) and any exhaustive map over `PlanPosition` that `tsc` names gain `audit`; committed separately from the package (A22, admin half)
 
 #### Build Phase 6 Verification
 
