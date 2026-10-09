@@ -67,6 +67,8 @@ Added 2026-10-08 with the promise, after Sandy tried the build.
 | A23 | The panel lists every promise in the project with its state; broken promises come first as cards, the latest break first, with the source and symptom; the rest follow by name. | unit |
 | A24 | Opening a promise in the panel shows its tests and the places that keep it, each with its file and the line its token is on; a file that no longer carries the token is listed without a line. | unit |
 | A25 | On the demo app in VS Code, the panel shows the demo's promise, and choosing its telemetry location opens `src/telemetry.ts` at the token's line. | live check |
+| A29 | Below the broken cards, the panel groups promises by the plan that owns them; groups come newest run first, then plans never run by name; within a group, newest run first, then the rest by name. Each broken card names its plan. (Added 2026-10-08 at Sandy's request; it replaces A23's "the rest follow by name".) | unit |
+| A30 | Each health line names the plan that owns each promise. | unit |
 
 ### `the-editor-shows-each-run-as-it-happens` — an activity section adds each run as it arrives
 
