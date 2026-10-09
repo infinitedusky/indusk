@@ -45,16 +45,16 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 | A2 | A line carrying the token of a promise the project does not have says so | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
 | A3 | A line in a test that carries a promise's token shows that the test proves the promise | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
 | A4 | Hovering a marked line shows the promise's sentence, its state for each source, and when it last held or broke | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/hover.test.ts |
-| A5 | With the extension installed, opening the demo app's telemetry file shows its promise on the line that marks it | Build Phase 3 | Build Phase 4 | written | live check | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/e2e/live.e2e.test.ts |
+| A5 | With the extension installed, opening the demo app's telemetry file shows its promise on the line that marks it | Build Phase 3 | Build Phase 4 | passing | live check | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/e2e/live.e2e.test.ts |
 | A6 | For the same project and marks, the editor, the admin and `indusk promises health` give every promise the same state for each source | Build Phase 1 | Build Phase 2 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-windows.test.ts, apps/vscode-extension/src/core/same-health.test.ts |
 | A7 | Promise health is worked out in one place the admin, the CLI and the editor all use; a second copy fails the build | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts |
 | A8 | A break that becomes readable shows within two reads (ten seconds at five) on its line, in the Problems list and in one notification, with no reload | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
 | A9 | A break read again does not notify again; a fixed break clears from the line and the Problems list | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
 | A10 | A source that cannot be read, or reads watcher blind, is shown as such, never "holding"; no line for two cadences reads "not reading" | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
-| A11 | With the demo app running, its fault switch makes the editor show the promise broken within ten seconds | Build Phase 3 | Build Phase 4 | written | live check | promise: a-break-reaches-the-editor | apps/vscode-extension/e2e/live.e2e.test.ts |
+| A11 | With the demo app running, its fault switch makes the editor show the promise broken within ten seconds | Build Phase 3 | Build Phase 4 | passing | live check | promise: a-break-reaches-the-editor | apps/vscode-extension/e2e/live.e2e.test.ts |
 | A12 | The fix action on a broken promise opens a terminal in the project running `claude` whose first message names the promise, its symptom, its trace link and its tests | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/src/core/fix.test.ts |
 | A13 | Where `claude` is not installed, the fix action says how to install it and opens nothing | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/src/core/fix.test.ts |
-| A14 | On the demo break in VS Code, one click starts `claude` with those facts | Build Phase 3 | Build Phase 4 | written | live check | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/e2e/live.e2e.test.ts |
+| A14 | On the demo break in VS Code, one click starts `claude` with those facts | Build Phase 3 | Build Phase 4 | passing | live check | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/e2e/live.e2e.test.ts |
 | A15 | After the extension reads a project, shows a break and runs the fix action, the project's files are exactly as they were | Build Phase 2 | Build Phase 2 | passing | unit | promise: the-editor-only-shows | apps/vscode-extension/src/core/only-shows.test.ts |
 | A16 | The packaged extension installs into VS Code with one `indusk` command, activates in a project with InDusk, and stays inactive in one without | Build Phase 3 | Build Phase 3 | passing | contract | the install path every developer takes; VS Code is not ours | apps/vscode-extension/src/__tests__/install.contract.test.ts |
 
@@ -216,20 +216,21 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 
 **Goal**: the three live checks and Cursor, run once by hand and recorded.
 
-- [ ] A5, A11, A14: `pnpm install:local`, `indusk editor install`, the demo app started (`indusk demo`), `INDUSK_LIVE_EDITOR=1 pnpm exec vitest run --config vitest.e2e.config.ts e2e/live.e2e.test.ts`; record each result and A11's seconds in this file
-- [ ] U1: install into Cursor by hand, open the demo app, confirm the marker and the fix action; record it here
+- [x] (run 2026-10-08 against the demo app from `indusk demo`, VS Code 1.141, the extension from `indusk editor install --extensions-dir`, and this branch's CLI named by `INDUSK_LIVE_EDITOR_COMMAND` instead of `pnpm install:local`, so the machine's `indusk` was left alone. **A5**: `src/telemetry.ts` line 7 ended `a-held-seat-is-released-in-time · not seen` before any run. **A11**: broken (local) **5.3 s** after the late release was marked; 14.9 s after the hold, of which 9.5 s is the demo's own window plus its fault delay. The probe first timed from the hold, which charged the app's deliberate delay to the editor; it now starts the clock when the seat comes free. **A14**: the `Claude — a-held-seat-is-released-in-time` terminal opened with the command sent. The run also needed A16's two launch fixes.) A5, A11, A14: `pnpm install:local`, `indusk editor install`, the demo app started (`indusk demo`), `INDUSK_LIVE_EDITOR=1 pnpm exec vitest run --config vitest.e2e.config.ts e2e/live.e2e.test.ts`; record each result and A11's seconds in this file
+- [x] (scripted, not by hand, 2026-10-08: the same live probe with `INDUSK_LIVE_EDITOR_APP=/Applications/Cursor.app/Contents/MacOS/Cursor` passed. `indusk editor install` found `cursor` and installed into it; the marker read `· broken (local)` on line 7 and Fix with Claude opened its terminal. The break's timing was not measured in Cursor, because the promise was already broken from the VS Code run. Cursor printed `UserNotLoggedInError` for its own account, which did not affect the extension.) U1: install into Cursor by hand, open the demo app, confirm the marker and the fix action; record it here
+- [x] Shape — reviewed the files this phase changed (`e2e/live.e2e.test.ts`, `e2e/live-probe.cjs`) against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 4 Verification
 
-- [ ] A5, A11, A14 pass and are recorded above; the row states set `passing` in the same edit
+- [x] A5, A11, A14 pass and are recorded above; the row states set `passing` in the same edit
 
 #### Build Phase 4 Context
 
-- [ ] current.md (Project, shared): one line — the demo's step 9 is built; how long a break took to reach the editor
+- [x] (committed on main as c62d5c68) current.md (Project, shared): one line — the demo's step 9 is built; how long a break took to reach the editor
 
 #### Build Phase 4 Document
 
-- [ ] the guide: an "Observed" note with A11's seconds and the Cursor result, dated
+- [x] the guide: an "Observed" note with A11's seconds and the Cursor result, dated
 
 ## Files Affected
 
