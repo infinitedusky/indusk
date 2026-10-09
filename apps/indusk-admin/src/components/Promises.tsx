@@ -1,5 +1,6 @@
 "use client";
 
+import { formatAge } from "@infinitedusky/indusk-mcp/promises/age";
 import type { HeardRow } from "@infinitedusky/indusk-mcp/promises/heard";
 import type {
   IncidentEntry,
@@ -446,7 +447,7 @@ function incidentStatus(i: IncidentEntry, now: number): string {
   if (i.status === "fixed")
     return i.fixed ? `fixed ${i.fixed.slice(0, 10)}` : "fixed";
   if (!i.opened) return "open";
-  return `open ${ageLabel(now - Date.parse(i.opened))}`;
+  return `open ${formatAge(now - Date.parse(i.opened))}`;
 }
 
 /** Breaks per promise in the record over the last `windowMs`. */
@@ -474,16 +475,6 @@ function heardLabel(count: number, asOf: string | null): string {
 }
 
 /** `3 days`, `5 hours`, `40 minutes`. */
-function ageLabel(ms: number): string {
-  const plural = (n: number, unit: string) =>
-    `${n} ${unit}${n === 1 ? "" : "s"}`;
-  const days = Math.floor(ms / 86_400_000);
-  if (days >= 1) return plural(days, "day");
-  const hours = Math.floor(ms / 3_600_000);
-  if (hours >= 1) return plural(hours, "hour");
-  return plural(Math.max(0, Math.floor(ms / 60_000)), "minute");
-}
-
 function IncidentsTable({
   incidents,
   promises,

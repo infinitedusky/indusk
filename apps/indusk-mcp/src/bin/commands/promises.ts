@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { formatAge } from "../../lib/promises/age.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { confirmPlan } from "../../lib/promises/confirm.js";
@@ -402,15 +403,4 @@ export function openIncidentLines(open: OpenIncident[]): string[] {
 				i.ownerHasPhase ? "carries its Maintenance phase" : "carries NO Maintenance phase for it"
 			}`,
 	);
-}
-
-/** `3 days`, `5 hours`, `40 minutes`; `an unknown time` when the incident says no `opened`. */
-export function formatAge(ms: number | null): string {
-	if (ms === null || Number.isNaN(ms)) return "an unknown time";
-	const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"}`;
-	const days = Math.floor(ms / 86_400_000);
-	if (days >= 1) return plural(days, "day");
-	const hours = Math.floor(ms / 3_600_000);
-	if (hours >= 1) return plural(hours, "hour");
-	return plural(Math.max(0, Math.floor(ms / 60_000)), "minute");
 }
