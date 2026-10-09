@@ -1,7 +1,7 @@
 ---
 title: "plan-review-subagent — the audit step"
 date: 2026-10-09
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -64,6 +64,8 @@ Every plan is read once before it closes by a reader that did not build it, on t
 | A18 | A workbench plan approved with `indusk plans approve` and built on its repo's plan branch gets its inputs: `plans audit-inputs` exits 0, `implAsApproved` is the impl at the root's `plan(<plan>): approved` commit, and `diff` is the code repo's plan branch against its trunk | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A19 | An impl with `audit: skipped` and `audit_reason` shows the audit among `plans review`'s skipped rituals with its reason, and the admin's review panel words it "Audit skipped", never "Cleanup skipped" | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts, apps/indusk-admin/src/components/session/ReviewPanel.test.tsx |
 | A20 | `isRitualSkipped(impl, ritual)` reads each of the three rituals' skip pair the same way: `<ritual>: skipped` with a non-empty `<ritual>_reason` is a skip with the trimmed reason; a bare flag, an empty or non-string reason, another ritual's pair, or unparsable frontmatter is not — and `isFalsificationSkipped`, `isCleanupSkipped`, `isAuditSkipped` answer exactly as it does | Build Phase 5 | Build Phase 5 | passing | unit | refactor parity: one reader behind the three skip checks, so the next ritual's skip pair cannot drift from the others | apps/indusk-mcp/src/lib/rituals/skip.test.ts |
+| A21 | The hook's tier-config check and the package's agree on every step `TIER_STEPS` names: a config with `workflow.steps.<step>.tier` set for each of them, `audit` included, gets no problem from either copy, and a step added to `TIER_STEPS` without the hook fails the parity test | Build Phase 6 | Build Phase 6 | planned | unit | promise: the-auditor-runs-on-its-tier | apps/indusk-mcp/src/__tests__/phase-tier-parity.test.ts |
+| A22 | A completed impl whose falsification and cleanup are terminal and which has no audit.md and no audit skip sits at position `audit`, `cleaned, awaiting /audit`, not `review`; with audit.md present, or the skip pair, it sits at `review` as before; and `audit` is in `PLAN_POSITIONS` between `cleanup` and `review` | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/lib/lifecycle-review.test.ts |
 
 ## Checklist
 
@@ -270,6 +272,28 @@ Every plan is read once before it closes by a reader that did not build it, on t
 #### Build Phase 5 Document
 
 - [x] (none — internal decomposition: no CLI flag, output, config key or skill text changes; `plans model --step` answers byte-for-byte as before, which A8 pins)
+
+### Build Phase 6: The audit's two fixes — the hook knows the step, the bar waits for it
+
+**Tier**: med
+
+**Goal**: fix the two defects the audit (`audit.md`, written by a fresh reader on claude-opus-5-5) found and Sandy chose to fix before closing (2026-10-09, "Fix both, then close"): setting `workflow.steps.audit.tier` makes the impl validator refuse every impl edit carrying a `**Tier**:` line, because the hook's step list lacks `audit`; and the plan bar puts a cleaned plan with no audit at `review`, so the admin offers Accept before the audit has run.
+
+- [ ] `apps/indusk-mcp/hooks/_phase-tier.js`: `STEPS` gains `audit`, in `TIER_STEPS` order; `phase-tier-parity.test.ts` gains a case built from `TIER_STEPS` (each step with a tier set), so the next step added to the TS and not the hook fails parity rather than passing (A21)
+- [ ] `apps/indusk-mcp/src/lib/lifecycle.ts`: `audit` joins `PlanPosition`, `PLAN_POSITIONS` and `IMPL_DEPENDENT_POSITIONS` between `cleanup` and `review`; `derivePlanPosition` answers `{ position: "audit", awaiting: "cleaned, awaiting /audit" }` when `readiness.missing` includes `audit`, after the cleanup check and before the rows check — the order `nextBuildStep` already takes (A22). Update the lifecycle-parity snapshot only for the `audit` position it adds, and say so in the commit
+- [ ] `apps/indusk-admin`: the plan bar's labels (`components/bars/labels.ts`) and any exhaustive map over `PlanPosition` that `tsc` names gain `audit`; committed separately from the package (A22, admin half)
+
+#### Build Phase 6 Verification
+
+- [ ] A21 and A22 pass — `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/phase-tier-parity.test.ts src/lib/lifecycle-review.test.ts src/lib/lifecycle-derive.test.ts src/__tests__/audit-gate.test.ts`, plus `pnpm exec vitest related` on the changed sources in indusk-mcp and indusk-admin; `tsc --noEmit` and biome clean in both
+
+#### Build Phase 6 Context
+
+- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`, the `_phase-tier.js` entry: its `STEPS` must name every step `TIER_STEPS` names, and the parity test now builds a case from `TIER_STEPS`, so a step added to one and not the other fails
+
+#### Build Phase 6 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/overview.md`, the plan bar row and the paragraph under it: the positions read `cleanup → audit → review`, and a cleaned plan with no audit.md reads `cleaned, awaiting /audit` until the audit is written or skipped
 
 ## Files Affected
 
