@@ -8,6 +8,12 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+falsification: skipped
+falsification_reason: "Test-only repair (Sandy, 2026-10-09: skip all three): three test files, a CLAUDE.md line and a changelog line; no product code changes for a hypothesis to break."
+cleanup: skipped
+cleanup_reason: "Test-only repair (Sandy, 2026-10-09: skip all three): three test files edited in place; nothing new to decompose."
+audit: skipped
+audit_reason: "Test-only repair (Sandy, 2026-10-09: skip all three): no product behaviour changes; the whole system tier passing (A4) is the evidence."
 ---
 
 # system-tests-catch-up

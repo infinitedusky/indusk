@@ -1,7 +1,7 @@
 ---
 title: "system-tests-catch-up — Test Plan"
 date: 2026-10-09
-status: draft
+status: accepted
 ---
 
 # system-tests-catch-up — Test Plan

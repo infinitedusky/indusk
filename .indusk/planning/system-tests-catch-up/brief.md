@@ -1,7 +1,7 @@
 ---
 title: "system-tests-catch-up"
 date: 2026-10-09
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
