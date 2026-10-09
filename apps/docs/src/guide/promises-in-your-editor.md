@@ -44,6 +44,13 @@ The states are the admin's: the editor reads `indusk promises health --json`,
 the line built by the same rule the admin's chips use, every five seconds. A
 break shows within two reads of being readable from its source.
 
+::: info Observed (2026-10-08)
+On the seat-holds demo, a late release showed as `broken (local)` in VS Code
+5.3 seconds after it happened. From pressing **Break it** and holding a seat it
+took 14.9 seconds, 9.5 of them the demo's own hold window and fault delay. In
+Cursor, the same extension showed the marker and opened the Claude terminal.
+:::
+
 ## Fix with Claude
 
 On a broken promise, the light bulb offers **Fix with Claude**. It opens a
