@@ -62,7 +62,12 @@ function idsTakenByOwner(planRoot: string, owner: string, copy: OwnerCopy): Set<
 
 export async function watchPromises(
 	planRoot: string,
-	opts: { source: IncidentSource; now?: Date },
+	opts: {
+		source: IncidentSource;
+		now?: Date;
+		/** The marks read; the real one unless a caller hands in its own (incident-recording). */
+		reads?: typeof readPromiseMarks;
+	},
 ): Promise<WatchResult> {
 	const now = opts.now ?? new Date();
 	const read = readPromises(planRoot);
@@ -79,7 +84,7 @@ export async function watchPromises(
 	// `--source` chooses what is read, not only what is written on the incident
 	// (promise-sources, ADR D6): `deployed` reads production, and is refused
 	// when the project names none; `local`, `smoke` and `desk` read the laptop.
-	const marks = await readPromiseMarks(planRoot, read.registry, {
+	const marks = await (opts.reads ?? readPromiseMarks)(planRoot, read.registry, {
 		now,
 		source: opts.source === "deployed" ? "production" : "local",
 	});

@@ -178,6 +178,18 @@ git stash drop stash@{n}             # find n again by your tag first
 
 `pop` is refused even with an index: another session's push between your `list` and your `pop` moves your entry to a different index. The guard judges the repository the command runs in, following a `cd <worktree> &&` or a `git -C <path>` the same way trunk-guard does. With one worktree nobody else shares the stack, so nothing is refused. `INDUSK_STASH_GUARD=off` overrides the guard for one call. Lesson: `a-stash-never-crosses-worktrees`.
 
+## When a promise breaks
+
+A session that is already running hears about a production break on its next prompt, without waiting for a catchup.
+
+Whatever records the break — the admin's recorder, catchup's `record_breaks`, or `promises watch` by hand — also writes it to the project's **inbox**, a file in the project's home that every checkout of the project shares. The `break-inbox` hook runs on every prompt: it reads the entries no session has been given yet, puts them in front of the agent ("a promise broke in production … `seat-holds` is reopened with `Maintenance — i-…`"), and marks them delivered to that session. So every live session in the project hears each break once, on its own next turn, and never again. A session in another project reads another home and hears nothing.
+
+An incident still open a day later is written to the inbox again as a reminder, once a day, until it is fixed.
+
+A session that starts later is told only what is still true: an incident fixed since its entry was written is not said, and an open incident's break and its reminders are said as one line.
+
+The agent is told the break outranks the roadmap. Fixing it is the reopened plan's Maintenance phase: `indusk worktree create <plan>` works for a plan reopened from the archive, the same as for any other.
+
 ## Configuration
 
 `.indusk/config.json` carries one field for this system:

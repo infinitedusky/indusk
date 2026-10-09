@@ -59,7 +59,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   reads in `lib/project-reader.ts` (config via the `./config` subpath, never
   parsed by hand). Pinned by `cleanup-pins.test.ts`.
 - The label maps are `satisfies Record<…>` over the lifecycle's unions and
-  `lifecycle-render-parity.test.ts` names any member without a renderer. A
+  `lifecycle-render-parity.test.ts` names any member without a renderer;
+  phases are keyed `{kind, number}`, an absent kind a build phase
+  (`/decisions/admin-ui-phase-progress`). A
   plan's type and what it requires come only from the `workflow-types` subpath;
   a component never restates a document list.
 - **Papers** render from the shared parser's `papers` field; `published
@@ -80,7 +82,17 @@ Each entry is a rule and a pointer; the pointer holds the story.
   beside `JaegerUnreachable` — is a state of the read with its own banner,
   never a chip colour); `monitor` is the one time-filled bar segment; a violated row names the
   span's environment or says unknown. Readers import `telemetry/status.ts`,
-  never `daemon.ts` (Turbopack parses its binary).
+  never `daemon.ts` (Turbopack parses its binary). The heard counts come from
+  the home's `heard.jsonl` through the `promises/heard` subpath
+  (`readProjectHeard`), never a second reader; incidents (`IncidentsTable.tsx`)
+  show their age, worded by `promises/age` as the CLI words it, and their
+  owner's Maintenance phase.
+- **The daemon records production breaks** from `src/instrumentation.ts`:
+  one package loop (`admin/recorder-loop`) per registered project that names
+  `promises.jaeger`, every `admin.refresh_ms`, each pass the package's
+  `recordBreaks`; a local-only project gets none, and `ui stop` ends the loops
+  with the process. The admin composes; the writing is the package's. Guarded
+  by `admin-recorder.test.ts` (system tier). — see `/decisions/incident-recording`
 - **Active plans and their boundary records are read from each plan's live
   root** (`worktree/plan-worktrees`); `components/Worktrees.tsx` renders the
   worktree chip, a broken assignment, unassigned worktrees and the record error.

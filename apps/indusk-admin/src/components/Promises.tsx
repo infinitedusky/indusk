@@ -1,5 +1,6 @@
 "use client";
 
+import type { HeardRow } from "@infinitedusky/indusk-mcp/promises/heard";
 import type {
   IncidentEntry,
   PromiseEntry,
@@ -12,6 +13,7 @@ import {
   PROMISE_KIND_LABELS,
   PROMISE_STATE_CHIP,
 } from "@/components/bars/labels";
+import { IncidentsTable } from "@/components/IncidentsTable";
 import {
   GREY,
   HealthChip,
@@ -34,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
+import type { HeardRecord } from "@/lib/promises-reader";
 import type { Strip, TimelineView } from "@/lib/timeline-strip";
 
 /**
@@ -135,7 +138,16 @@ export interface PromisesTableProps {
   timelines?: TimelineView;
   /** The page's own path, e.g. `/p/dusk/promises`, for the window and source switches. */
   timelinePath?: string;
+  /**
+   * What this machine's recorder heard (incident-recording, ADR D6): each
+   * promise's production breaks are counted from it, past the source's
+   * retention and whether or not a page was open. Absent: no count is drawn.
+   */
+  heard?: HeardRecord;
 }
+
+/** The window the page counts heard breaks over: longer than a Jaeger keeps. */
+const HEARD_WINDOW_MS = 30 * 86_400_000;
 
 export function PromisesTable({
   promises,
@@ -145,6 +157,7 @@ export function PromisesTable({
   observed,
   timelines,
   timelinePath,
+  heard,
 }: PromisesTableProps) {
   const [by, setBy] = useState<PromiseGrouping>(initialGroupBy);
   const [showRetired, setShowRetired] = useState(false);
@@ -153,6 +166,21 @@ export function PromisesTable({
     ? promises
     : promises.filter((p) => p.state !== "retired");
   const sources = observed ?? [];
+  // While production cannot be read, a count is as of the last time it was heard.
+  const productionUnread = sources.some(
+    (o) => o.name === "production" && o.unknownSince !== undefined,
+  );
+  const heardCounts = heard
+    ? countHeardSince(heard.rows, HEARD_WINDOW_MS)
+    : null;
+  const heardLabelOf =
+    heard && heardCounts
+      ? (name: string) =>
+          heardLabel(
+            heardCounts.get(name) ?? 0,
+            productionUnread ? heard.lastHeard : null,
+          )
+      : undefined;
   // Retired is grey whatever any source says: one chip, no source.
   const chipsOf = (p: PromiseEntry): SourceChip[] =>
     p.state === "retired"
@@ -232,10 +260,17 @@ export function PromisesTable({
           chipsOf={chipsOf}
           labelled={labelled}
           timelines={timelines}
+          heardLabelOf={heardLabelOf}
         />
       ))}
 
-      {incidents.length > 0 && <IncidentsTable incidents={incidents} />}
+      {incidents.length > 0 && (
+        <IncidentsTable
+          incidents={incidents}
+          promises={promises}
+          planHrefPrefix={planHrefPrefix}
+        />
+      )}
     </section>
   );
 }
@@ -249,6 +284,7 @@ function PromiseGroup({
   chipsOf,
   labelled,
   timelines,
+  heardLabelOf,
 }: {
   groupKey: string;
   rows: PromiseEntry[];
@@ -257,6 +293,8 @@ function PromiseGroup({
   chipsOf: (p: PromiseEntry) => SourceChip[];
   labelled: boolean;
   timelines?: TimelineView;
+  /** Each promise's count from the heard record; absent, no column is drawn. */
+  heardLabelOf?: (name: string) => string;
 }) {
   return (
     <section
@@ -289,6 +327,7 @@ function PromiseGroup({
             <TableHead>sites</TableHead>
             <TableHead>tests</TableHead>
             <TableHead>incidents</TableHead>
+            {heardLabelOf && <TableHead>heard (30 days)</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -329,10 +368,15 @@ function PromiseGroup({
                 <TableCell data-testid="promise-incidents">
                   <PathList paths={p.incidents} />
                 </TableCell>
+                {heardLabelOf && (
+                  <TableCell data-testid="promise-heard" data-promise={p.name}>
+                    {heardLabelOf(p.name)}
+                  </TableCell>
+                )}
               </TableRow>
               {timelines && !timelines.failure && timelines.strips[p.name] && (
                 <TableRow data-testid="promise-timeline-row">
-                  <TableCell colSpan={9}>
+                  <TableCell colSpan={heardLabelOf ? 10 : 9}>
                     {timelines.strips[p.name] === "empty" ? (
                       <TimelineEmpty />
                     ) : (
@@ -394,43 +438,33 @@ function PromiseStateCell({
 }
 
 /** Every incident in the registry, after the promises. */
-function IncidentsTable({ incidents }: { incidents: IncidentEntry[] }) {
-  return (
-    <section
-      className="flex flex-col gap-2"
-      data-testid="promise-incident-list"
-    >
-      <h2 className="text-sm font-semibold text-gray-700">Incidents</h2>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>incident</TableHead>
-            <TableHead>promise</TableHead>
-            <TableHead>source</TableHead>
-            <TableHead>status</TableHead>
-            <TableHead>date</TableHead>
-            <TableHead>symptom</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {incidents.map((i) => (
-            <TableRow key={i.id} data-incident={i.id}>
-              <TableCell>
-                <code className="text-xs">{i.id}</code>
-              </TableCell>
-              <TableCell>
-                <code className="text-xs">{i.promise}</code>
-              </TableCell>
-              <TableCell>{i.source}</TableCell>
-              <TableCell>{i.status}</TableCell>
-              <TableCell>{i.date}</TableCell>
-              <TableCell className="max-w-md">{i.symptom}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </section>
-  );
+/**
+ * How long an incident has been open, or when it was fixed
+ * (incident-recording A12): an open incident is work someone saw and nobody
+ * finished, and its age is what keeps it loud.
+ */
+/** Breaks per promise in the record over the last `windowMs`. */
+function countHeardSince(
+  rows: HeardRow[],
+  windowMs: number,
+): Map<string, number> {
+  const since = Date.now() - windowMs;
+  const out = new Map<string, number>();
+  for (const r of rows) {
+    if (Date.parse(r.at) < since) continue;
+    out.set(r.promise, (out.get(r.promise) ?? 0) + 1);
+  }
+  return out;
+}
+
+/**
+ * A count heard, or none; while production cannot be read, as of the last
+ * time anything was heard — a count the admin could not refresh is never
+ * shown as a fresh zero (A22).
+ */
+function heardLabel(count: number, asOf: string | null): string {
+  const what = count > 0 ? `${count} heard` : "none heard";
+  return asOf ? `${what} · as of ${asOf.replace("T", " ").slice(0, 16)}` : what;
 }
 
 /** A list of paths or ids as code, or a dash for none. */

@@ -202,6 +202,15 @@
 {"plan":"small-fixes","phase":4,"kind":"build","sha":"ab3b44eb810703dcbeeed3b63dd3964de995bcc2","timestamp":"2026-10-08T20:16:25.936Z"}
 {"plan":"small-fixes","phase":5,"kind":"build","sha":"1216b25000cf0cd4dd5bf005a28c02e44c3d8d14","timestamp":"2026-10-08T20:27:56.215Z"}
 {"plan":"small-fixes","phase":6,"kind":"build","sha":"9b493617e61da94f63ad9974079b99a575aed7df","timestamp":"2026-10-08T20:41:23.746Z"}
+{"plan":"incident-recording","phase":1,"kind":"test","sha":"eb0c859321733b2d78840f3a86e0e225956f4f7b","timestamp":"2026-10-08T21:58:00.096Z"}
+{"plan":"incident-recording","phase":1,"kind":"build","sha":"97bc9409c32f9a9ab0125c80882aa5d47dee509c","timestamp":"2026-10-08T22:02:17.004Z"}
+{"plan":"incident-recording","phase":2,"kind":"build","sha":"2a99cccde1d157d7f3fb539980cb2cf111a228b9","timestamp":"2026-10-08T22:10:52.980Z"}
+{"plan":"incident-recording","phase":3,"kind":"build","sha":"f90554446ee7360ddf10eb919769480a5ef821b5","timestamp":"2026-10-08T22:16:27.654Z"}
+{"plan":"incident-recording","phase":4,"kind":"build","sha":"db13c5782f6bf067dcc7756494ffc9dc567265b1","timestamp":"2026-10-08T22:24:30.118Z"}
+{"plan":"incident-recording","phase":5,"kind":"build","sha":"94a05530712307e415b84302acc6ba17fac22f3a","timestamp":"2026-10-08T22:30:14.184Z"}
+{"plan":"incident-recording","phase":7,"kind":"build","sha":"32de503a2ac2c174b87883a2fa44b0d6f2c362fc","timestamp":"2026-10-08T23:51:31.579Z"}
+{"plan":"incident-recording","phase":8,"kind":"build","sha":"76f2178a176628b069e46cfcb60e22134e7fb7c3","timestamp":"2026-10-09T00:01:42.122Z"}
+{"plan":"incident-recording","phase":9,"kind":"build","sha":"6e6f3414b775604515fdaa08bcb2a4f0898a7a24","timestamp":"2026-10-09T00:18:01.682Z"}
 {"plan":"server-provisioning","phase":1,"kind":"test","sha":"85d7ed352c9bbf81181722d4ad12f0cab667b389","timestamp":"2026-10-08T21:53:34.551Z"}
 {"plan":"server-provisioning","phase":1,"kind":"build","sha":"145f659727b3e61ffd879e4a3ea551bd19f601e3","timestamp":"2026-10-08T21:57:03.847Z"}
 {"plan":"server-provisioning","phase":2,"kind":"build","sha":"935be0314b8a90d7765cfa3a5816f8d2a8d3c55c","timestamp":"2026-10-08T22:02:28.401Z"}

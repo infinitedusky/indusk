@@ -37,6 +37,7 @@ What came out of the planning conversation with Sandy on 2026-10-08. The problem
 - **`indusk-leaves-main-clean`**. The recorder commits what it writes; nothing it writes sits uncommitted in a checkout.
 - **`an-incident-names-its-tests`**. The unprompted recorder is `watch`'s own writer, so every incident it opens names the tests that proved the promise.
 - **`a-project-has-one-contract`**. The recorder reads the registry through the same resolver as every other reader, never a copy of its own.
+- **`one-definition-per-shared-rule`**. What this plan wrote twice — an incident's age in the CLI and the admin, the inbox's reading in the library and the hook — ends with one definition, or one port pinned to it (added at cleanup, Build Phase 9).
 
 **Changes**
 

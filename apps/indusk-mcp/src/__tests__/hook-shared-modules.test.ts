@@ -97,3 +97,24 @@ describe("A32 — one reading of where a commit lands, under hooks/", () => {
 		expect(await commitReadingDefiners()).toEqual(["_commit-anchor.js"]);
 	}, 30_000);
 });
+
+/**
+ * incident-recording A33, at cleanup — promise: one-definition-per-shared-rule.
+ * The break inbox's reading — which entries a session has not been given,
+ * which are still open, one per incident — is `lib/promises/inbox.ts`'s rule.
+ * Under `hooks/` it has one port, as every hook-side copy of a library module
+ * does; a hook carrying its own copy is the drift `_trajectory-parser.js` was
+ * extracted to end.
+ */
+describe("A33 — one port of the inbox's reading under hooks/", () => {
+	it("only _inbox.js reads the delivered marks", async () => {
+		const files = await glob("*.js", { cwd: hooksDir, absolute: true });
+		const hits: string[] = [];
+		for (const file of files) {
+			if ((await readFile(file, "utf8")).includes('"inbox-delivered.jsonl"')) {
+				hits.push(relative(hooksDir, file));
+			}
+		}
+		expect(hits.sort()).toEqual(["_inbox.js"]);
+	}, 30_000);
+});

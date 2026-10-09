@@ -358,6 +358,29 @@ cannot be probed is not reported.
 Absence is the rule, not a migration: a project that names nothing reads its
 local daemon and behaves exactly as it did before this existed.
 
+`slack_webhook_env` (optional, beside `jaeger`) is the **name of an
+environment variable** holding a Slack incoming-webhook URL, for the
+laptop's own reminders (below). Absent, reminders go to the agent's inbox
+only; the server's own announcements use the server's secret, not this.
+
+### What a recording pass keeps on this machine
+
+Every pass of the writer leaves, in the project's home (`indusk eval home`
+prints where; machine state, never in the repository):
+
+| File | What it holds |
+|------|---------------|
+| `inbox.jsonl` | one line per incident opened or extended, and per reminder: the promise, the incident, the owner and its Maintenance phase. The prompt hook delivers each to the next turn of a session in the project |
+| `inbox-delivered.jsonl` | the ids already delivered, appended, so delivering never rewrites the inbox the recorder is appending to |
+| `heard.jsonl` | one line per violation the pass recorded — when it happened, the promise, the trace, the incident, the source — never a trace twice. The promise page counts from it, past the source's retention and whether or not a page was open |
+| `announced.json` | when each open incident was last reminded, written after Slack accepts, so a restart never repeats a reminder and a refused post is tried again |
+| `recorder.lock` | one recording pass at a time, across the admin, catchup and `watch` |
+
+**Reminders.** An incident open longer than a day is announced again, once a
+day, until it is fixed: an inbox line always, and a Slack message when
+`slack_webhook_env` names a set variable. Reminders read only the registry,
+so a pass whose source cannot be read still reminds.
+
 Both `status` and `watch` print the Jaeger they read, so nobody has to guess
 whether they are looking at production or at the laptop in front of them. A
 server that cannot be reached — down, wrong URL, refused credentials, or a
@@ -375,8 +398,11 @@ the server itself.
 indusk promises status [--since <duration>]
 ```
 
-Read-only. Reports each promise as the configured Jaeger saw
-it over a window — by default the quiet window (`promises.quiet_window_days`,
+Read-only. It opens with one line per **open incident**, oldest first —
+`open incident <id> — <promise>, open 2 days; <owner> carries its Maintenance
+phase` (or "carries NO Maintenance phase for it") — read from the registry, so
+they are printed even when no Jaeger answers. Then it reports each promise as
+the configured Jaeger saw it over a window — by default the quiet window (`promises.quiet_window_days`,
 7 days), or `--since 90m` / `24h` / `7d`. One block per promise, opening on a
 line that starts with its name:
 
@@ -517,8 +543,33 @@ indusk promises watch [--source local|smoke|deployed]
 
 One monitor pass over the quiet window: for each behaviour promise with a
 violation not yet recorded in any of its incidents, open or extend an
-incident and send the promise's owner back to work. It **writes plan
-documents and commits nothing** — review what it wrote and commit it.
+incident and send the promise's owner back to work. It **commits what it
+wrote** (since incident-recording), in a commit of its own on the checkout
+that holds each file — `chore(indusk): incident <id> — <promise>, recorded by
+watch` — and says which files it committed. An owner being worked in a plan
+worktree gets its Maintenance phase there, left for that plan's session to
+commit. In a workbench whose repo holds its own contract, the incident is
+committed in the repo.
+
+It commits on a **trunk branch only** (`worktree.trunk_guard.branches`,
+default `main` and `master`). Run from a plan worktree, or from a trunk
+checkout left on another branch, it writes the incident and commits nothing,
+says which branch it is on, and the pass is marked broken. A commit that
+cannot be made — another git command holding the index — is not lost: the
+paths wait in the project's home (`pending-commit.json`), and every later pass,
+by any caller, commits them first and is marked broken until it does. The
+inbox entry for the agent is written before the commit, so it does not wait
+on it.
+
+`watch` is one of three callers of the same writer, `recordBreaks`
+(`lib/promises/record.ts`); the admin's recorder and catchup's
+`record_breaks` tool are the others. One lock per project, in the project's
+home (`recorder.lock`), keeps them to one pass at a time, so two callers at
+once make one incident. Every pass marks itself under
+`a-production-break-is-recorded-unasked` — held, or broken with the reason
+when the source could not be read, the watcher was blind, or the incident
+could not be written or committed — so `promises status` reads the recorder
+like any other promise.
 
 | Exit | Meaning |
 |------|---------|

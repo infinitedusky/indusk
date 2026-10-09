@@ -18,7 +18,12 @@ indusk worktree create admin-plan-worktrees
 ```
 
 1. Refuses unless `.indusk/planning/<plan>/` exists on the trunk. A plan is
-   planned on the trunk first; its worktree opens at the first phase.
+   planned on the trunk first; its worktree opens at the first phase. An
+   archived plan (`.indusk/planning/archive/<plan>/`) is accepted while an
+   incident has reopened it — an unchecked Maintenance phase in its impl —
+   and refused otherwise, saying it is archived and that a closed plan reopens
+   when an incident against one of its promises is recorded. `assign` applies
+   the same rule.
 2. Refuses unless the trunk is on a trunk branch — `worktree.trunk_guard.branches`
    in `.indusk/config.json`, default `main` and `master`, the same list the
    trunk guard reads. A plan branch forks from the trunk; a trunk left on
@@ -115,6 +120,7 @@ Every read checks the record against `git worktree list`. Nothing is guessed:
 | Assigned worktree removed without release | The trunk | "assigned worktree `<path>` no longer exists" |
 | Two live assignments (a hand-edited record) | The trunk | Both worktrees, by path |
 | Plan archived on its branch, before the release | The worktree's `archive/<plan>` | "archived in its worktree, awaiting landing" |
+| Archived plan reopened by an incident, assigned | The worktree's `archive/<plan>` | The worktree's name and branch, as for any live plan |
 | Plan folder gone from its worktree | The trunk | "plan folder missing in worktree `<path>`" |
 | A worktree nobody assigned | — | Listed as unassigned |
 | A record that cannot be read | Nothing | An error naming the file |

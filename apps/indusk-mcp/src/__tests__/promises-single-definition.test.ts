@@ -42,3 +42,53 @@ describe("A25 — one promise vocabulary under src/", () => {
 		).toEqual(["lib/tokens.ts"]);
 	});
 });
+
+/**
+ * incident-recording — one writer of incidents. The admin's loop, catchup's
+ * tool and `promises watch` all go through `recordBreaks`; a second caller of
+ * the pass would be a second writer, the collision the lock exists to stop.
+ */
+describe("one writer of incidents", () => {
+	const files = () => globSync("**/*.ts", { cwd: SRC, ignore: IGNORE }).sort();
+	const matching = (re: RegExp) =>
+		files().filter((f) => re.test(readFileSync(join(SRC, f), "utf-8")));
+
+	it("`recordBreaks` is defined once, in lib/promises/record.ts", () => {
+		expect(
+			matching(/export async function recordBreaks\b/),
+			"lesson: structural-single-definition-test-for-must-agree-invariants — one writer, or one break makes two incidents",
+		).toEqual(["lib/promises/record.ts"]);
+	});
+
+	it("only the writer runs the pass", () => {
+		expect(
+			matching(/\bwatchPromises\(/).filter((f) => f !== "lib/promises/watch.ts"),
+			"lesson: structural-single-definition-test-for-must-agree-invariants — a caller of the pass that skips the writer skips its commit and its lock",
+		).toEqual(["lib/promises/record.ts"]);
+	});
+});
+
+/**
+ * incident-recording A32, at cleanup — promise: one-definition-per-shared-rule.
+ * `indusk promises status` and the admin's incidents table say an incident's
+ * age; they said it with two copies of the same eight lines, one per package.
+ * One function, in a module the admin's browser-rendered table can import.
+ */
+describe("A32 — an incident's age is worded once", () => {
+	const ADMIN_SRC = join(SRC, "..", "..", "indusk-admin", "src");
+	const definers = (root: string, prefix: string) =>
+		globSync("**/*.{ts,tsx}", {
+			cwd: root,
+			nodir: true,
+			ignore: [...IGNORE, "**/*.test.tsx", "**/node_modules/**", "**/.next/**"],
+		})
+			.filter((f) => /plural\(days, "day"\)/.test(readFileSync(join(root, f), "utf-8")))
+			.map((f) => `${prefix}${f}`);
+
+	it("the wording lives only in lib/promises/age.ts", () => {
+		expect(
+			[...definers(SRC, ""), ...definers(ADMIN_SRC, "admin:")].sort(),
+			"lesson: structural-single-definition-test-for-must-agree-invariants — two copies of one wording drift apart",
+		).toEqual(["lib/promises/age.ts"]);
+	});
+});

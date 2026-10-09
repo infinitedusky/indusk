@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { formatAge } from "../../lib/promises/age.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { confirmPlan } from "../../lib/promises/confirm.js";
@@ -9,8 +10,10 @@ import {
 	checkPlanContract,
 	formatContract,
 } from "../../lib/promises/contract.js";
+import { type OpenIncident, openIncidents } from "../../lib/promises/health.js";
 import { fixIncident } from "../../lib/promises/incidents.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
+import { recordBreaks } from "../../lib/promises/record.js";
 import { readPromises } from "../../lib/promises/registry.js";
 import {
 	alarmSource,
@@ -20,7 +23,7 @@ import {
 	sourceAdvice,
 } from "../../lib/promises/sources.js";
 import { formatStatus, parseDuration } from "../../lib/promises/status.js";
-import { watchPromises, watchReport } from "../../lib/promises/watch.js";
+import { watchReport } from "../../lib/promises/watch.js";
 import {
 	changePromise,
 	declarePromise,
@@ -73,6 +76,11 @@ export async function promisesStatus(
 		else for (const p of read.problems) console.error(`${p.file}: ${p.problem}`);
 		process.exitCode = 2;
 		return;
+	}
+	// Open incidents first, before any source (incident-recording A11): they
+	// are files, so they are said even when no Jaeger answers.
+	for (const line of openIncidentLines(openIncidents(projectRoot, read.registry))) {
+		console.info(line);
 	}
 	let sinceMs: number | undefined;
 	let window: number | string;
@@ -148,10 +156,11 @@ const WATCH_SOURCES = ["local", "smoke", "deployed"] as const;
 
 /**
  * `indusk promises watch [--source local|smoke|deployed]` (day-monitor, ADR
- * D5–D7). One pass: open or extend an incident per behaviour promise with new
- * violations, and append a Maintenance phase to its owner. Writes plan
- * documents, commits nothing. Exit 0 whether or not anything changed; exit 2
- * when Jaeger or the registry cannot be read.
+ * D5–D7). One pass of the one writer (incident-recording, ADR D1): open or
+ * extend an incident per behaviour promise with new violations, append a
+ * Maintenance phase to its owner, and commit what it wrote, saying so. Exit 0
+ * whether or not anything changed; exit 2 when Jaeger or the registry cannot
+ * be read.
  */
 export async function promisesWatch(
 	projectRoot: string,
@@ -163,11 +172,16 @@ export async function promisesWatch(
 		process.exitCode = 2;
 		return;
 	}
-	let result: Awaited<ReturnType<typeof watchPromises>>;
+	let result: Awaited<ReturnType<typeof recordBreaks>>;
 	try {
-		result = await watchPromises(projectRoot, {
+		result = await recordBreaks(projectRoot, {
+			by: "watch",
 			source: source as (typeof WATCH_SOURCES)[number],
 		});
+		if (result.refused) throw new Error(result.refused);
+		// A pass that could not read or write marked itself broken; the person
+		// running it by hand is told the way they always were.
+		if (result.error) throw result.error;
 	} catch (err) {
 		// The advice has to match the source: telling someone to start a local
 		// daemon when the watch read a deployed server sends them to the wrong
@@ -181,9 +195,12 @@ export async function promisesWatch(
 		process.exitCode = 2;
 		return;
 	}
-	const report = watchReport(result);
+	const report = watchReport({ changes: result.changes, source: result.source });
 	for (const line of report.out) console.info(line);
 	for (const line of report.err) console.error(line);
+	if (result.committed.length > 0) {
+		console.info(`committed ${result.committed.length} file(s): ${result.committed.join(", ")}`);
+	}
 	if (report.exitCode !== 0) process.exitCode = report.exitCode;
 }
 
@@ -372,4 +389,18 @@ export function promisesWithdraw(projectRoot: string, name: string, opts: { plan
 		withdrawPromise(projectRoot, { name, plan: opts.plan });
 		return `${name} withdrawn by ${opts.plan}: it was never in force, and the registry no longer holds it. Take it out of the brief too. ${AFTER_WRITE}`;
 	});
+}
+
+/**
+ * One line per open incident, oldest first: its id, its promise, how long it
+ * has been open, and its owner — with whether the owner carries its
+ * Maintenance phase, since an incident no plan is working is the loudest kind.
+ */
+export function openIncidentLines(open: OpenIncident[]): string[] {
+	return open.map(
+		(i) =>
+			`open incident ${i.id} — ${i.promise}, open ${formatAge(i.ageMs)}; ${i.owner || "no owner"} ${
+				i.ownerHasPhase ? "carries its Maintenance phase" : "carries NO Maintenance phase for it"
+			}`,
+	);
 }

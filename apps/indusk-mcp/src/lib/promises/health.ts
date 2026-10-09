@@ -1,6 +1,8 @@
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { recorded } from "./incidents.js";
 import { type Registry, readPromises } from "./registry.js";
+import { maintenanceIncidentIds, ownerDir } from "./reopen.js";
 import { alarmSource, readSources, type SourceName } from "./sources.js";
 import { type MarkedSpansResult, newestMark, silencePastExpectation } from "./telemetry.js";
 
@@ -91,6 +93,54 @@ export interface PromiseHealthReport {
 	blind?: true;
 	/** Every source, each with its own rows or its own failure. */
 	sources: SourceHealth[];
+	/** Every open incident, with its age — read from the registry, so present whatever the sources did. */
+	openIncidents: OpenIncident[];
+}
+
+/**
+ * An incident someone saw and nobody has finished (incident-recording, ADR
+ * D8): how long it has been open, its owner, and whether the owner carries
+ * its Maintenance phase. An incident whose owner carries none is said so,
+ * never hidden — that is a break no plan is working.
+ *
+ * promise: an-open-incident-stays-loud
+ */
+export interface OpenIncident {
+	id: string;
+	promise: string;
+	owner: string;
+	openedAt: string | null;
+	/** Milliseconds open at `now`; null when the incident says no `opened`. */
+	ageMs: number | null;
+	ownerHasPhase: boolean;
+}
+
+export function openIncidents(root: string, registry: Registry, now = new Date()): OpenIncident[] {
+	return registry.incidents
+		.filter((i) => i.status === "open")
+		.map((i) => {
+			const owner = registry.promises.find((p) => p.name === i.promise)?.owner ?? "";
+			const dir = owner ? ownerDir(root, owner) : null;
+			const impl = dir ? join(dir, "impl.md") : null;
+			const ownerHasPhase =
+				!!impl && existsSync(impl) && maintenanceIncidentIds(readFileSync(impl, "utf-8")).has(i.id);
+			return {
+				id: i.id,
+				promise: i.promise,
+				owner,
+				openedAt: i.opened,
+				ageMs: i.opened ? now.getTime() - Date.parse(i.opened) : null,
+				ownerHasPhase,
+			};
+		})
+		.sort((a, b) => (b.ageMs ?? 0) - (a.ageMs ?? 0));
+}
+
+/** The open incidents of `root`'s registry, or none when it cannot be read. */
+export function openIncidentsAt(root: string, now = new Date()): OpenIncident[] {
+	const read = readPromises(root);
+	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
+	return registry ? openIncidents(root, registry, now) : [];
 }
 
 /**
@@ -127,10 +177,11 @@ export async function promiseHealth(
 			needsAttention: attention(promises),
 		};
 	});
+	const open = openIncidents(root, registry, opts.now);
 	const top = sources.find((s) => s.name === alarm.name);
 	if (top?.ok) {
 		const { source, since, promises, needsAttention } = top;
-		return { source, since, promises, needsAttention, sources };
+		return { source, since, promises, needsAttention, sources, openIncidents: open };
 	}
 	// The alarm source failed beside one that answered: say production's
 	// failure at the top, in the shape a session already reads as "nobody
@@ -144,6 +195,7 @@ export async function promiseHealth(
 		...(alarm.ok ? {} : { error: alarm.error.message }),
 		...(alarm.ok || alarm.kind !== "blind" ? {} : { blind: true as const }),
 		sources,
+		openIncidents: open,
 	};
 }
 

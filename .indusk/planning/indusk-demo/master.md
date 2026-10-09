@@ -23,14 +23,15 @@ subplans:
 
 # Demo — a new project, start to finish
 
-> **Where we are (2026-10-08).** Steps 0–4 are closed: the server, both
-> promise sources, the timeline, the planner's promises, planning and building
-> from the UI, and the demo app. **The next step is
-> [incident-recording](../incident-recording/brief.md)** — the watcher runs by
-> itself and a break announces itself. After it, in order: the VS Code
-> extension, plan-cockpit (stage 1 of the promise UI), the rehearsal. After
-> the launch: server provisioning, then contract-ui (stage 2: the hierarchy
-> above stage 1's pages). The sequence is the one the root
+> **Where we are (2026-10-08).** Steps 0–4 and step 8 are closed: the server,
+> both promise sources, the timeline, the planner's promises, planning and
+> building from the UI, the demo app, and
+> [incident-recording](../archive/incident-recording/retrospective.md) — the
+> admin records a production break unasked (16 s, nothing typed, on the real
+> server) and the running agent hears it. **The next step is the VS Code
+> extension**; after it, in order: plan-cockpit (stage 1 of the promise UI),
+> the rehearsal. After the launch: server provisioning, then contract-ui
+> (stage 2: the hierarchy above stage 1's pages). The sequence is the one the root
 > [master](../master.md)'s "Now — show the promise loop" sets out; this file
 > is its demo-side copy and the one the admin's sidebar reads.
 
@@ -141,7 +142,7 @@ this file now carries it so the sidebar and the numbers agree.
   2026-10-04 decision deferred it because `watch` could be run by hand; the
   demo's script step 6 is the watcher catching a production break on its own,
   which is what the step builds. Its brief is at
-  [incident-recording/brief.md](../incident-recording/brief.md) (draft).
+  [incident-recording/brief.md](../archive/incident-recording/brief.md) (draft).
 - **Two steps are declared and not yet opened**, so they show as queued in the
   sidebar until `/planner` opens each with its brief:
   - **vscode-extension** — promise markers on the code that carries each
@@ -169,7 +170,7 @@ this file now carries it so the sidebar and the numbers agree.
 
 | # | Plan | What it adds to the demo |
 |---|---|---|
-| 8 | [incident-recording](../incident-recording/brief.md) | the watcher runs by itself; a break becomes an incident and announces itself — **next** |
-| 9 | vscode-extension | the break moment in the editor: markers, live health, "fix with Claude" — not opened yet |
+| 8 | [incident-recording](../archive/incident-recording/retrospective.md) | the watcher runs by itself; a break becomes an incident and announces itself — closed 2026-10-08 |
+| 9 | vscode-extension | the break moment in the editor: markers, live health, "fix with Claude" — **next**, not opened yet |
 | 10 | plan-cockpit | stage 1 of the promise UI: the dashboard, the promise page with its proof, the plan page — being opened |
 | 11 | [contract-ui](../contract-ui/brief.md) | stage 2: the home view as the hierarchy above stage 1's pages, statuses derived — after the launch, after plan-premises |
