@@ -139,7 +139,9 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — promise health for the session",
 	it("A20 — /catchup asks for promise health, and open violations come before the roadmap", () => {
 		const skill = readFileSync(CATCHUP_SKILL, "utf-8");
 		expect(skill).toMatch(/promise_health/);
-		expect(skill, "the skill says what to do with the answer").toSatisfy(putsViolationsAheadOfRoadmap);
+		expect(skill, "the skill says what to do with the answer").toSatisfy(
+			putsViolationsAheadOfRoadmap,
+		);
 	});
 
 	it("A20 — the check fails on a skill that puts the roadmap first", () => {
@@ -150,10 +152,12 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — promise health for the session",
 		expect(putsViolationsAheadOfRoadmap(roadmapOutranks)).toBe(false);
 		// and it recognises each wording of the intended order
 		expect(putsViolationsAheadOfRoadmap("Open violations come before the roadmap.")).toBe(true);
-		expect(putsViolationsAheadOfRoadmap("Open violations are listed ahead of the plan.")).toBe(true);
-		expect(putsViolationsAheadOfRoadmap("Open incidents and open violations outrank the roadmap.")).toBe(
+		expect(putsViolationsAheadOfRoadmap("Open violations are listed ahead of the plan.")).toBe(
 			true,
 		);
+		expect(
+			putsViolationsAheadOfRoadmap("Open incidents and open violations outrank the roadmap."),
+		).toBe(true);
 	});
 });
 
