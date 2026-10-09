@@ -13,6 +13,10 @@ import {
 export { isTier, TIERS, type Tier, TierConfigError } from "./tier-names.js";
 
 /**
+ * promise: each-phase-runs-on-its-model — the tier and model a phase is built on.
+ * promise: a-struggling-phase-asks-for-a-stronger-model — `nextTier`.
+ * promise: a-model-override-says-why — `tierRuleProblems`.
+ *
  * Which model a phase is built on (model-per-phase). The config names a model
  * for each tier and a default tier for each step; a phase's impl may name a
  * different tier, with its reason. Pure over its inputs — the config and the

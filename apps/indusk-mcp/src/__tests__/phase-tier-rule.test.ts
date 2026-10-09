@@ -6,7 +6,9 @@ import { runHook } from "./helpers/hook-runner.js";
 import { implText } from "./helpers/plan-fixture.js";
 
 /**
- * promise: a-model-override-says-why — model-per-phase A6, A7.
+ * promise: a-model-override-says-why — model-per-phase A6, A7, A13.
+ * promise: each-phase-runs-on-its-model — A15, A16 (a tier needs a model; a bad config refuses).
+ * promise: a-struggling-phase-asks-for-a-stronger-model — A14 (one tier line, so the escalated one is read).
  *
  * A phase that names a tier other than its step's default says why, and the
  * tier is one of strong, med, weak or baby; otherwise the impl is refused when

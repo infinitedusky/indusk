@@ -8,6 +8,8 @@ import type { TierConfig } from "./tiers.js";
 import { phaseTier, readTierConfig, TierConfigError, tierForPhase } from "./tiers.js";
 
 /**
+ * promise: a-plan-boundary-names-the-next-session
+ *
  * The command that starts the plan's next piece of work, in a new session
  * (model-per-phase). A session that carries one plan's close into the next
  * compacts; the plan holds everything the next session needs, so each boundary

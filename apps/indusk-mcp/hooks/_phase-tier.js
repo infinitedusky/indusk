@@ -1,4 +1,6 @@
 /**
+ * promise: a-model-override-says-why — the validator refuses a tier override with no reason.
+ *
  * The hook-side port of the phase tier line (model-per-phase): `**Tier**:
  * <tier> — <reason>` under a phase heading, and the rule the validator holds it
  * to — a tier that is one of strong, med, weak or baby, and a reason when it
