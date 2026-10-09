@@ -30,15 +30,10 @@ pointer; the pointer holds the story.
   `lifecycle-single-definition.test.ts`. A git primitive belongs in
   `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
   (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
-- **The papers module map**: `lib/papers/summary.ts` owns paper parsing and
-  `plan-parser.ts` re-exports its names so the `planning/plan-parser` subpath
-  holds; `papers/provenance.ts` owns the `published` block's shapes (pinned by
-  key count in `papers/shared-definitions.test.ts`); `lib/git.ts` owns
-  `snapshotPaths` / `restorePaths`; `papers/publish.ts` is the procedure only.
-  A second `data.published as {…}` narrowing under `src/lib` fails the pin.
-  Staleness is derived from `paperContentHash` on every read, never stored;
-  an unknown status reads `malformed`, never a silent draft. — see
-  `/reference/cli/papers`
+- **The papers module map** lives in `src/lib/papers/CLAUDE.md`.
+- `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
+  config pair is pinned — `server-single-definition.test.ts`; a project names
+  a credential's variable, never its value.
 - **A new status or kind word is registered with every status-keyed detector
   in the commit that introduces it** — today `archive-dead.ts`
   (`BLOCKING_STATUSES`) and `plan-tools.ts` (`isActivePlanStatus`); `published`
@@ -143,6 +138,9 @@ pointer; the pointer holds the story.
 
 ## Promises and telemetry
 
+- **`server deploy` decides from a recorded Fly state**: `planDeploy` is pure,
+  every Fly call goes through `FlyCli`, a failed read is refused, never read
+  as empty. — see `/reference/cli/server`
 - The registry is read through one subpath (`promises/registry`) by CLI, MCP
   (`tools/promise-tools.ts`; writes only via `lib/promises/write.ts`) and admin; marks are read through one call, `readPromiseMarks`, against one
   endpoint builder, `jaegerEndpoint` (`lib/promises/telemetry.ts`);
@@ -223,8 +221,10 @@ pointer; the pointer holds the story.
 - **Releases**: `release-guard.sh` refuses dirt on packaged paths, a HEAD that
   is not `chore(release): <version>`, an unmerged packaged `plan/*` branch, and
   an install that does not match the lockfile (`check-install.js`);
-  `record-release.js` writes "published" only on `npm view`'s word. — see
-  `/reference/cli/release`
+  `record-release.js` writes "published" only on `npm view`'s word;
+  `release-image.sh` pushes the server image before `pnpm publish`, so a
+  refused push publishes nothing (needs Docker and `docker login ghcr.io`). —
+  see `/reference/cli/release`
 
 ## Tests
 

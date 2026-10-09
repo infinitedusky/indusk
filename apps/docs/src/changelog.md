@@ -6,6 +6,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Added
 
+- **`indusk server deploy`** (server-provisioning, falsified): a failed Fly read is refused rather than taken for "nothing there"; a webhook given to an existing server is set; a stored credential the server rejects is reported with `--rotate` instead of waited on; credential variables are per project, not per folder name.
+- **`indusk server deploy`** (server-provisioning): creates a project's recording server in your own Fly account through your signed-in `fly` — app, volume, secrets on stdin, the published image, addresses — and connects the project. A second run updates and creates nothing. Without a Slack webhook the server starts with announcements off: it records every violation and the admin shows it. See [Run your own server](/guide/run-your-own-server).
+
+- **`indusk server connect`** (server-provisioning): points a project at a recording server you run, anywhere. It reads the server back first, stores the credential on the machine under a per-project variable, and names the server as the project's production source; nothing is written when the server does not answer. The production source now finds its credential in `~/.indusk/config.env` when the environment does not have it, so a connected project reads production with no shell restart. See [`server`](/reference/cli/server).
+
 - **`workflow.steps.land.install`** (small-fixes): how a project installs the landed build on this machine, run by the retrospective's landing step after the merge and named by `indusk checks show`. Dusk declares `pnpm install:local`, which builds everything a publish builds and links the checkout into the global `indusk`, so landing a plan makes it current with nothing published.
 
 - **A plan builds only after approval** (small-fixes): `check-gates` refuses to tick a checklist item while the impl is `draft`, and refuses an edit that moves the impl out of `draft` by any route but `indusk plans approve`. Lesson `a-plan-builds-only-after-approval`; the planner skill now ends the planning session at the written plan, and its Key Decisions line is the first build phase's Context item.
@@ -13,6 +18,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 - **`stash-guard` hook** (small-fixes): in a repository with more than one worktree, which all share one stash stack, the hook refuses `git stash` with no message, `pop`, and `apply`/`drop` with nothing named, and `clear`. The refusal names the safe ways: a temporary commit, or `stash push -u -m <tag>` followed by `stash apply <sha>`. `indusk update` registers it on Bash. See [Worktrees share one stash](/guide/multi-agent#worktrees-share-one-stash).
 
 ### Changed
+
+- **Every release publishes the recording server's image** (server-provisioning): `pnpm release` builds `ghcr.io/infinitedusky/indusk-always-on:<version>` from the release's own tarball and pushes it before `pnpm publish`; a refused push stops the release with nothing published. The release machine needs Docker and a one-time `docker login ghcr.io`. The image installs a tarball, not npm, so it never waits on npm's publish-time scan. See [Run your own server](/guide/run-your-own-server#anywhere-else-the-published-image).
+- **The recording server starts without a Slack webhook** (server-provisioning): it records every violation and the admin shows it; nothing is posted. Before, a server without one refused to start.
 
 - **Dusk publishes deliberately, not per plan.** Landing installs the build locally; `pnpm release` is for a server deploy or another machine, and runs the full slow tests itself before publishing. The retrospective's bump step says so for any project that installs locally.
 - **`indusk update` registers every hook `init` does** (small-fixes): both now read one table. Before, `update` only checked some hooks, so a project missing `check-gates`, `validate-impl-structure` or `gate-reminder` stayed without it. Now it gets it.

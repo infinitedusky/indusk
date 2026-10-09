@@ -402,6 +402,68 @@ program
 // parent and reading them via `this.optsWithGlobals()` in each subcommand
 // action is the pattern that works for both `indusk ui --port N` (bare) and
 // `indusk ui start --port N` (subcommand). Verified in commander@13.
+const serverCmd = program
+	.command("server")
+	.description("Give this project its recording server: connect one you run, or deploy one on Fly");
+
+serverCmd
+	.command("connect <query-url>")
+	.description(
+		"Point this project at a recording server you run: read it back, then name it as the production source",
+	)
+	.requiredOption(
+		"--intake <otlp-url>",
+		"The server's OTLP/HTTP intake, where a mark is sent to read it back",
+	)
+	.option(
+		"--credential-env <name>",
+		"Read user:password from this environment variable instead of being asked (never pass it as an argument)",
+	)
+	.action(async (queryUrl: string, opts: { intake: string; credentialEnv?: string }) => {
+		const { serverConnect } = await import("./commands/server.js");
+		await serverConnect({ queryUrl, intake: opts.intake, credentialEnv: opts.credentialEnv });
+	});
+
+serverCmd
+	.command("deploy")
+	.description(
+		"Create this project's recording server in your own Fly account and connect it (needs `fly` signed in)",
+	)
+	.option(
+		"--app <name>",
+		"The Fly app name (default: indusk-<project>, or the one this project recorded)",
+	)
+	.option("--org <slug>", "The Fly organisation (needed when your account has several)")
+	.option("--region <code>", "The Fly region (default: iad)")
+	.option(
+		"--slack-webhook-env <name>",
+		"Read the Slack webhook from this environment variable; without it, announcements are off",
+	)
+	.option(
+		"--server-version <version>",
+		"The server version to deploy (default: this indusk's); `--version` is the CLI's own",
+	)
+	.option("--rotate", "Set a new server password")
+	.option(
+		"--build-from <tarball>",
+		"Build the server image from a packed tarball on this machine, for a version no release has published",
+	)
+	.action(
+		async (opts: {
+			app?: string;
+			org?: string;
+			region?: string;
+			slackWebhookEnv?: string;
+			serverVersion?: string;
+			rotate?: boolean;
+			buildFrom?: string;
+		}) => {
+			const { serverDeploy } = await import("./commands/server.js");
+			const { serverVersion, ...rest } = opts;
+			await serverDeploy({ ...rest, version: serverVersion ?? pkg.version });
+		},
+	);
+
 const uiCmd = program
 	.command("ui")
 	.description("Admin UI daemon lifecycle (start/stop/status)")

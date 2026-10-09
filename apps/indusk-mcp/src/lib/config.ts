@@ -165,6 +165,19 @@ export interface InduskConfig {
 	 * Ensured as an empty list on update; never clobbered.
 	 * See `.indusk/planning/day-promises/adr.md` (D5).
 	 */
+	/**
+	 * The recording server `indusk server deploy` made for this project
+	 * (server-provisioning ADR D4): which Fly app, so a second run finds it and
+	 * an app of that name not recorded here is refused as someone else's.
+	 * Written before the read-back, so a failed read-back still leaves a
+	 * second run its identity. No secret: the credential lives on the machine.
+	 */
+	server?: {
+		provider: "fly";
+		app: string;
+		org: string;
+		region: string;
+	};
 	promises?: {
 		domains: string[];
 		/** Days a closed plan's behaviour promises must stay quiet before it leaves `monitor` (day-monitor, ADR D8). Default 7. */

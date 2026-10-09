@@ -28,6 +28,11 @@ export function startPass(settings: ServerSettings): NodeJS.Timeout {
 	);
 	const startedAt = new Date();
 	const staleMs = staleAfterMs(settings.passIntervalMs, settings.watcherStaleMs);
+	if (!settings.slackWebhook) {
+		console.info(
+			"announcements are off: INDUSK_SERVER_SLACK_WEBHOOK is not set. Violations are recorded and read as usual; none is posted.",
+		);
+	}
 	const tick = async (): Promise<void> => {
 		// The heartbeat first (watcher-heartbeat, ADR D2): a pass that reports
 		// violations from a watcher that cannot hear them should say so before
@@ -48,6 +53,7 @@ export function startPass(settings: ServerSettings): NodeJS.Timeout {
 		} catch (err) {
 			console.error(`watcher heartbeat failed: ${(err as Error).message}`);
 		}
+		if (!settings.slackWebhook) return;
 		try {
 			const result = await runPass({
 				volume: settings.volume,

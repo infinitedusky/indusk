@@ -113,7 +113,7 @@ Made after reviewing the script against what is built (Sandy chose each).
 | 2 | [promise-timeline](../archive/promise-timeline/brief.md) | promises holding over time, and the chip rules both break steps end on — closed 2026-10-05 |
 | 3 | [admin-plan-authoring](../archive/admin-plan-authoring/brief.md) | "New plan" and "Build" in the UI, through the CLI — closed 2026-10-06 |
 | 4 | [demo-app-template](../archive/demo-app-template/brief.md) | a working app to promise about, deploy and break — closed 2026-10-07 |
-| 5 | [server-provisioning](../server-provisioning/brief.md) | one command gives a project its server — after the launch (2026-10-08) |
+| 5 | [server-provisioning](../archive/server-provisioning/brief.md) | `indusk server connect` and `server deploy`; the image published with each release — closed 2026-10-08, built ahead of order |
 | 6 | [planner-promises](../archive/planner-promises/brief.md) | the planner asks for promises — closed 2026-10-05 |
 | 7 | demo-rehearsal | record a dry run of the script end to end, fix what it trips on — after step 10 |
 

@@ -169,7 +169,7 @@
 		"test:system": "pnpm run prepublishOnly && node scripts/with-daemon-guard.js vitest run --config vitest.system.config.ts",
 		"prepack": "node scripts/bundle-example.js",
 		"prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js",
-		"release": "bash scripts/release-guard.sh && pnpm -w test:system && npm whoami && npm_config_loglevel=warn pnpm publish --no-git-checks && node scripts/record-release.js"
+		"release": "bash scripts/release-guard.sh && pnpm -w test:system && npm whoami && bash scripts/release-image.sh && npm_config_loglevel=warn pnpm publish --no-git-checks && node scripts/record-release.js"
 	},
 	"publishConfig": {
 		"access": "public"
