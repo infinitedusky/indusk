@@ -29,6 +29,19 @@ export function fixAction(
 				"Claude Code is not installed, so there is nothing to start the fix with. Install it with `npm install -g @anthropic-ai/claude-code`, then try again.",
 		};
 	}
+	// Every fact comes from a span or the registry, and is typed into a
+	// terminal: a control character there is a keystroke (Ctrl-C ends the
+	// quoted line and runs what follows). One line each, control characters gone.
+	b = {
+		...b,
+		promise: oneLine(b.promise),
+		source: oneLine(b.source),
+		sourceLabel: oneLine(b.sourceLabel),
+		statement: oneLine(b.statement),
+		tests: b.tests.map(oneLine),
+		...(b.symptom !== undefined ? { symptom: oneLine(b.symptom) } : {}),
+		...(b.traceId !== undefined ? { traceId: oneLine(b.traceId) } : {}),
+	};
 	const trace = b.traceId ? `${b.sourceLabel.replace(/\/+$/, "")}/trace/${b.traceId}` : null;
 	const prompt = [
 		`The promise \`${b.promise}\` is broken in ${b.source}: "${b.statement}"`,
@@ -78,6 +91,17 @@ export function fixFor(
 		);
 	}
 	return null;
+}
+
+/** The text with line breaks and tabs as spaces and every other control character removed. */
+function oneLine(text: string): string {
+	return (
+		text
+			.replace(/[\r\n\t]+/g, " ")
+			// biome-ignore lint/suspicious/noControlCharactersInRegex: removing them is the point
+			.replace(/[\u0000-\u001f\u007f-\u009f]/g, "")
+			.trim()
+	);
 }
 
 /** One shell word, whatever it holds: single quotes, each embedded one closed and escaped. */
