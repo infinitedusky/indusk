@@ -80,6 +80,7 @@ export function plansModel(
 		if (phase !== undefined && step !== undefined) {
 			throw new PlanCommandRefusal("--phase and --step are alternatives; give one");
 		}
+		// promise: the-auditor-runs-on-its-tier — the audit's model is the step's tier, answered here for the skill.
 		if (step !== undefined) {
 			if (!isTierStep(step)) {
 				throw new PlanCommandRefusal(

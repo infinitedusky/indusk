@@ -5,6 +5,8 @@ import { afterAll, describe, expect, it } from "vitest";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { implText } from "./helpers/plan-fixture.js";
 
+// promise: the-auditor-runs-on-its-tier — plan-review-subagent A8: `plans model --step audit` answers the step's tier and model.
+
 /**
  * promise: each-phase-runs-on-its-model — model-per-phase A15, A16; plan-review-subagent A12; through
  * `indusk plans model`. A config the command cannot read, or a tier it has no
