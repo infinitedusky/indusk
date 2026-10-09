@@ -21,11 +21,11 @@ workflow: bugfix
 
 ### This plan makes
 
-1. **`each-phase-runs-on-its-model`** (state). Every phase `/work` builds runs on the model its plan names for it, or on its step's default from the project's config when the plan names none, without anyone switching models by hand.
+1. **`each-phase-runs-on-its-model`** (state). Every phase `/work` builds runs on the model the project's config gives its tier — `strong`, `med`, `weak` or `baby` — where the tier is the one its plan names, or its step's default tier when the plan names none, without anyone switching models by hand.
 
-2. **`a-model-override-says-why`** (state). An impl that gives a phase a different model from its step's default says why, or the impl is refused.
+2. **`a-model-override-says-why`** (state). An impl that gives a phase a different tier from its step's default says why, or the impl is refused.
 
-3. **`a-struggling-phase-asks-for-a-stronger-model`** (state). A phase whose tests still fail after three attempts on a cheaper model stops and names the stronger model to run it on.
+3. **`a-struggling-phase-asks-for-a-stronger-model`** (state). A phase whose tests still fail after three attempts on a tier below `strong` stops and names the next tier up to run it on.
 
 4. **`a-plan-boundary-names-the-next-session`** (state). Approving a plan, and closing each of its phases, ends by naming the command to run in a new session.
 
@@ -46,4 +46,4 @@ None.
 ### Not promised
 
 - The admin's Build button passing each phase's model: deferred to a follow-up (Sandy, 2026-10-09: the weekend's building is in the terminal).
-- Which model is strongest: config, not a promise; the defaults are the project's to change.
+- Which model each tier is, and each step's default tier: config, not a promise; the project changes them without a plan.
