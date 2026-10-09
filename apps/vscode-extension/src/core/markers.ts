@@ -14,7 +14,12 @@ export interface Marker {
  * (vscode-extension A1–A3, A10). A file the promise lists under its tests
  * proves it; any other file keeps it.
  */
-export function markers(file: { path: string; text: string }, view: View | null): Marker[] {
+export function markers(
+	file: { path: string; text: string },
+	view: View | null,
+	scope: { nested?: string[] } = {},
+): Marker[] {
+	if (!inProject(file.path, scope.nested ?? [])) return [];
 	const out: Marker[] = [];
 	const lines = file.text.split("\n");
 	lines.forEach((text, line) => {
@@ -24,6 +29,16 @@ export function markers(file: { path: string; text: string }, view: View | null)
 		}
 	});
 	return out;
+}
+
+/**
+ * Whether a file, by its path from the project's root, is this project's: not
+ * outside the root, and not inside a nested InDusk project (dusk's
+ * `examples/seat-holds/`), whose promises are its own (vscode-extension A22).
+ */
+function inProject(path: string, nested: string[]): boolean {
+	if (path === ".." || path.startsWith("../") || path.startsWith("/")) return false;
+	return !nested.some((n) => path === n || path.startsWith(`${n}/`));
 }
 
 function describe(

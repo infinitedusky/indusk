@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { createInterface } from "node:readline";
 import * as vscode from "vscode";
 import { fixFor } from "./core/fix.js";
@@ -51,8 +51,12 @@ export function activate(context: vscode.ExtensionContext): void {
 	const diagnostics = vscode.languages.createDiagnosticCollection("indusk");
 	context.subscriptions.push(diagnostics, ...Object.values(decorations));
 
+	// Nested InDusk projects keep their own promises (A22): found once, at activation.
+	let nested: string[] = [];
 	const markersFor = (doc: vscode.TextDocument) =>
-		markers({ path: relative(root, doc.uri.fsPath), text: doc.getText() }, session.view);
+		markers({ path: relative(root, doc.uri.fsPath), text: doc.getText() }, session.view, {
+			nested,
+		});
 
 	const paint = () => {
 		for (const editor of vscode.window.visibleTextEditors) {
@@ -67,6 +71,14 @@ export function activate(context: vscode.ExtensionContext): void {
 			for (const tone of TONES) editor.setDecorations(decorations[tone], byTone[tone] ?? []);
 		}
 	};
+	void vscode.workspace
+		.findFiles(new vscode.RelativePattern(root, "**/.indusk/config.json"), "**/node_modules/**")
+		.then((found) => {
+			nested = found
+				.map((uri) => dirname(dirname(relative(root, uri.fsPath))))
+				.filter((dir) => dir !== ".");
+			paint();
+		});
 
 	const diagnose = async () => {
 		const view = session.view;
