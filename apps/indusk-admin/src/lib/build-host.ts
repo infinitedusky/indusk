@@ -1,5 +1,6 @@
 import {
   autoAccepts,
+  type BuildStepName,
   type RunnerStop,
   readBuildPlan,
   runBuild,
@@ -54,7 +55,7 @@ async function depsFor(project: string, plan: string, state: BuildState) {
     root,
     deps: {
       read: () => readBuildPlan(root, plan),
-      run: (step: "work" | "falsify" | "cleanup" | "retrospective") =>
+      run: (step: BuildStepName) =>
         runStepSession(step, {
           manager: sessionManager(),
           worktree: where.cwd,
