@@ -60,3 +60,5 @@ The plan's rules went to their tiers: the recorder's commit rule to the package'
 ## Release
 
 dusk installs its own build at landing (`pnpm install:local`); nothing is published at this close.
+
+Landed on main at 25d167da, 2026-10-08.
