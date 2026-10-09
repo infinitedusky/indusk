@@ -1,4 +1,11 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runTests } from "@vscode/test-electron";
@@ -9,6 +16,8 @@ import { describe, expect, it } from "vitest";
  * in the plan: `INDUSK_LIVE_EDITOR=1`, the demo app running from `indusk demo`
  * in `INDUSK_LIVE_EDITOR_PROJECT` (its fault switch on: `SEAT_HOLDS_FAULT_TOGGLE=1`),
  * and the extension installed into `INDUSK_LIVE_EDITOR_EXTENSIONS`.
+ * `INDUSK_LIVE_EDITOR_COMMAND` names the `indusk` the extension runs, when the
+ * one on `PATH` is not the build under test.
  *
  * promise: a-promise-shows-where-it-is-kept
  * promise: a-break-reaches-the-editor
@@ -16,7 +25,9 @@ import { describe, expect, it } from "vitest";
  */
 
 const LIVE = process.env.INDUSK_LIVE_EDITOR === "1";
-const VSCODE = "/Applications/Visual Studio Code.app/Contents/MacOS/Code";
+// `INDUSK_LIVE_EDITOR_APP` runs the same checks in another VS Code build, such as Cursor.
+const VSCODE =
+	process.env.INDUSK_LIVE_EDITOR_APP ?? "/Applications/Visual Studio Code.app/Contents/MacOS/Code";
 
 describe.skipIf(!LIVE)("live — the editor on the demo app", () => {
 	it("A5, A11, A14 — the marker, the break within ten seconds, and Fix with Claude", async () => {
@@ -28,6 +39,17 @@ describe.skipIf(!LIVE)("live — the editor on the demo app", () => {
 		) as string;
 		const out = join(tmpdir(), `live-editor-${Date.now()}.json`);
 		process.env.LIVE_OUT = out;
+		// A terminal inside VS Code exports this; the test VS Code would start as Node.
+		delete process.env.ELECTRON_RUN_AS_NODE;
+		// macOS caps a socket path near 103 characters; a worktree path is longer.
+		const userData = mkdtempSync(join(tmpdir(), "live-u-"));
+		if (process.env.INDUSK_LIVE_EDITOR_COMMAND) {
+			mkdirSync(join(userData, "User"), { recursive: true });
+			writeFileSync(
+				join(userData, "User", "settings.json"),
+				JSON.stringify({ "indusk.command": process.env.INDUSK_LIVE_EDITOR_COMMAND }),
+			);
+		}
 		await runTests({
 			vscodeExecutablePath: VSCODE,
 			extensionDevelopmentPath: join(extensions, installed),
@@ -38,6 +60,8 @@ describe.skipIf(!LIVE)("live — the editor on the demo app", () => {
 				"--extensions-dir",
 				extensions,
 				"--disable-extensions",
+				"--user-data-dir",
+				userData,
 			],
 		});
 		const r = JSON.parse(readFileSync(out, "utf-8"));

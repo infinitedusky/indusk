@@ -32,13 +32,26 @@ exports.run = async () => {
 	await fetch(`${url}/hold`, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ seat: 1, who: "a16" }),
+		body: JSON.stringify({ seat: 1, who: "live" }),
 	});
-	const brokeAt = Date.now();
-	for (let i = 0; i < 120; i++) {
+	const heldAt = Date.now();
+	// The break happens when the late release is marked, not at the hold: the
+	// fault holds the release back past its window on purpose. A11's clock
+	// starts there; the total from the hold is recorded beside it.
+	let brokeAt = null;
+	for (let i = 0; i < 240; i++) {
+		if (brokeAt === null) {
+			const seats = await (await fetch(`${url}/seats`)).json();
+			if (seats.seats.find((x) => x.seat === 1)?.state === "free") brokeAt = Date.now();
+		}
 		const mine = ((await markers()) || []).find((x) => x.promise === PROMISE);
 		if (mine && mine.tone === "broken") {
-			out.a11 = { seconds: (Date.now() - brokeAt) / 1000, text: mine.text };
+			const now = Date.now();
+			out.a11 = {
+				seconds: (now - (brokeAt ?? heldAt)) / 1000,
+				fromHold: (now - heldAt) / 1000,
+				text: mine.text,
+			};
 			break;
 		}
 		await sleep(250);
