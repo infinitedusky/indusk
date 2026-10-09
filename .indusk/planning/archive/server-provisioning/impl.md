@@ -8,6 +8,8 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+accepted: 2026-10-09T00:04:17.287Z
+accepted_by: person
 ---
 
 # Server provisioning — run your own recording server, connected in one command
