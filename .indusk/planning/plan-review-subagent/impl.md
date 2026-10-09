@@ -1,7 +1,7 @@
 ---
 title: "plan-review-subagent — the audit step"
 date: 2026-10-09
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -63,6 +63,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 | A17 | The inputs carry the files the plan did not touch: a tracked file the branch never changed appears in the inputs' `tree`, and is absent from `stat` | Build Phase 4 | Build Phase 4 | passing | unit | promise: the-auditor-sees-the-plan-not-the-session | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
 | A18 | A workbench plan approved with `indusk plans approve` and built on its repo's plan branch gets its inputs: `plans audit-inputs` exits 0, `implAsApproved` is the impl at the root's `plan(<plan>): approved` commit, and `diff` is the code repo's plan branch against its trunk | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
 | A19 | An impl with `audit: skipped` and `audit_reason` shows the audit among `plans review`'s skipped rituals with its reason, and the admin's review panel words it "Audit skipped", never "Cleanup skipped" | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts, apps/indusk-admin/src/components/session/ReviewPanel.test.tsx |
+| A20 | `isRitualSkipped(impl, ritual)` reads each of the three rituals' skip pair the same way: `<ritual>: skipped` with a non-empty `<ritual>_reason` is a skip with the trimmed reason; a bare flag, an empty or non-string reason, another ritual's pair, or unparsable frontmatter is not — and `isFalsificationSkipped`, `isCleanupSkipped`, `isAuditSkipped` answer exactly as it does | Build Phase 5 | Build Phase 5 | planned | unit | refactor parity: one reader behind the three skip checks, so the next ritual's skip pair cannot drift from the others | apps/indusk-mcp/src/lib/rituals/skip.test.ts |
 
 ## Checklist
 
@@ -236,6 +237,37 @@ Every plan is read once before it closes by a reader that did not build it, on t
 #### Build Phase 4 Document
 
 - [x] `reference/cli/plans.md`: `plans audit-inputs` gains `tree`, the diff leaves out `.indusk/`, `implAsApproved.path` is `<sha>:<path>`, and a workbench plan's approval is the root's commit; `reference/skills/audit.md`: question 6 reads `tree`, the reader reads the approved impl from its text
+
+### Build Phase 5: Cleanup — one skip-pair reader, one step-tier answer
+
+**Tier**: med
+
+**Goal**: decompose the two places this plan added a third or second copy of logic that already lived elsewhere — the frontmatter skip check and a step's default tier — per the rule of three and "one answer computed in one place". Every other changed file was reviewed and left as-is, with the reason below.
+
+**Scan**: `listOversizedChangedFiles(<worktree>, "main")` flagged `apps/indusk-mcp/src/bin/cli.ts` (1226), `apps/indusk-mcp/src/lib/config.ts` (683), `apps/indusk-mcp/skills/planner.md` and its `.claude/skills` copy (692), the lifecycle-parity snapshot fixture (872), `apps/docs/src/changelog.md` (1035) and `apps/docs/src/reference/skills/retrospective.md` (558). None is new. Every new file — `lib/audit/inputs.ts` (207), `lib/build/step-model.ts` (32), `skills/audit.md` (96) — is under the cap. No domain extension (nextjs/react) changes the moves here: the admin change is one map in one component.
+
+- [ ] Extract `isRitualSkipped(implContent, ritual: "falsification" | "cleanup" | "audit")` and the one `SkipCheck` interface into `apps/indusk-mcp/src/lib/rituals/skip.ts`. `isFalsificationSkipped` (`lib/falsification/skip.ts`), `isCleanupSkipped` and `isAuditSkipped` (`lib/cleanup/gate.ts`) become one-line calls to it and keep their names and exports, so `review.ts`, `gate.ts`, the admin's `planning-reader.ts` and every test change no import. `SkipCheck` is declared once (today it is declared in both `falsification/skip.ts` and `cleanup/gate.ts`); the two old modules re-export it. Basis: the rule of three — this plan wrote the third character-for-character copy of the same parse (`isAuditSkipped`'s doc even says "the shape of `isFalsificationSkipped`", and `isCleanupSkipped`'s says "near-clone"), and the next ritual would write a fourth (A20)
+- [ ] `plans model --step` (`bin/commands/plans.ts`) answers through `buildStepModel(cwd, name, step)` (`lib/build/step-model.ts`) instead of computing `tierForPhase(readTierConfig(cwd), step, undefined)` itself; `plans.ts` drops its `readTierConfig`/`tierForPhase` imports. Basis: the CLI and the admin build answer the same question — a step's default tier — and this plan wrote that expression in both; one function means `plans model --step audit` cannot disagree with the model an admin build's audit runs on. Covered by A8 (the trajectory row asserting `plans model --step audit` answers the step's tier model or `session`, and refuses an unknown step)
+- [ ] (reviewed `apps/indusk-mcp/src/bin/cli.ts` — left as-is: 1226 lines before this plan; it added two `plansCmd` subcommands in the file's existing one-block-per-command pattern. Splitting the CLI's registrations is its own plan, not a by-product of this one)
+- [ ] (reviewed `apps/indusk-mcp/src/lib/config.ts` — left as-is: this plan's change is one line, `audit` in the `WorkflowSteps` type)
+- [ ] (reviewed `apps/indusk-mcp/skills/planner.md` and `.claude/skills/planner/SKILL.md` — left as-is: prose; the change is the `**Tier**:` line instruction (A13) and the `.claude` copy is synced, not edited)
+- [ ] (reviewed `lifecycle-parity.snapshot.json`, `apps/docs/src/changelog.md`, `apps/docs/src/reference/skills/retrospective.md` — left as-is: a generated fixture and two docs pages; length is their nature)
+- [ ] (reviewed `lib/audit/inputs.ts` `isBookkeeping` against `lib/shape/changed.ts` `isNotCode` — left as-is: two copies of a `.indusk/` prefix test serving different rules. Shape's names `.indusk/promises/` on purpose so a narrowing keeps it out (pinned by `promises-detectors.test.ts`); the audit's is the leak rule A15 asserts — a trajectory row asserting the auditor's diff holds no impl change since approval. One shared helper would couple Shape's code-surface rule to the auditor's leak rule, and it is two copies, not three)
+- [ ] (reviewed `lib/audit/inputs.ts` `trajectorySection` against `lib/trajectory/parser.ts` `extractTrajectoryBlock` — left as-is: the parser's is private and returns parsed table and deferred lines without the heading; the auditor needs the section's raw text, heading and its deferred subsection included. Exporting the parser's would not give that)
+- [ ] (reviewed `BuildStepName` in `lib/build/runner.ts`, `TIER_STEPS` in `lib/models/tier-names.ts` and `SESSION_STEPS` in the runner — left as-is: three lists that this plan each extended by `audit`, but they name three things — the steps a build runs, the steps with a tier (`plan` included), the steps the runner runs as a session (`retrospective` excluded). Deriving one from another would encode a coincidence of today's membership)
+- [ ] (reviewed `apps/indusk-admin/src/lib/build-host.ts` `stepModelOption`, `ReviewPanel.tsx` `RITUAL_TITLES`, `lib/build/review.ts`, `next-step.ts`, `next-session.ts`, `runner.ts`, `step-model.ts` — left as-is: each is a single-caller unit or a one-line addition to a list that already had its shape; no copy exists elsewhere)
+
+#### Build Phase 5 Verification
+
+- [ ] A20 passes, and every existing skip test still does unchanged — `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/rituals/skip.test.ts src/lib/falsification/skip.test.ts src/__tests__/cleanup-gate.test.ts src/__tests__/audit-gate.test.ts src/__tests__/plans-review.test.ts src/__tests__/plans-model.test.ts src/lib/build/step-model.test.ts`; admin `pnpm exec vitest run src/components/PlanDetail.skipped-rituals.test.tsx`; `tsc --noEmit` and biome clean in indusk-mcp
+
+#### Build Phase 5 Context
+
+- [ ] (none — internal decomposition: the three skip functions keep their names and modules, and `apps/indusk-mcp/CLAUDE.md` names neither `SkipCheck` nor where a step's tier is computed — `grep -n "SkipCheck\|isCleanupSkipped\|tierForPhase" apps/indusk-mcp/CLAUDE.md` is empty)
+
+#### Build Phase 5 Document
+
+- [ ] (none — internal decomposition: no CLI flag, output, config key or skill text changes; `plans model --step` answers byte-for-byte as before, which A8 pins)
 
 ## Files Affected
 
