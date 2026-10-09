@@ -1,7 +1,7 @@
 ---
 title: "VS Code extension — promises in the editor, the break where the fix happens"
 date: 2026-10-08
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -47,7 +47,7 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 | A4 | Hovering a marked line shows the promise's sentence, its state for each source, and when it last held or broke | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/hover.test.ts |
 | A5 | With the extension installed, opening the demo app's telemetry file shows its promise on the line that marks it | Build Phase 3 | Build Phase 4 | planned | live check | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/e2e/live.e2e.test.ts |
 | A6 | For the same project and marks, the editor, the admin and `indusk promises health` give every promise the same state for each source | Build Phase 1 | Build Phase 2 | planned | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-windows.test.ts |
-| A7 | Promise health is worked out in one place the admin, the CLI and the editor all use; a second copy fails the build | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts |
+| A7 | Promise health is worked out in one place the admin, the CLI and the editor all use; a second copy fails the build | Test Phase 1 | Build Phase 1 | written | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts |
 | A8 | A break that becomes readable shows within two reads (ten seconds at five) on its line, in the Problems list and in one notification, with no reload | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
 | A9 | A break read again does not notify again; a fixed break clears from the line and the Problems list | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
 | A10 | A source that cannot be read, or reads watcher blind, is shown as such, never "holding"; no line for two cadences reads "not reading" | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
@@ -71,8 +71,8 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 
 **Goal**: author the one row whose subject exists today, and register every other row with the body it will have.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create vscode-extension`; made by `indusk plans start` on 2026-10-08 at `dusk-worktrees/vscode-extension`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
-- [ ] A7 in `apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts`: `lib/promises/health.ts` defines `readHealth` and `healthOf`; no file under `apps/indusk-admin/src` or `apps/vscode-extension/src` defines either; the admin's importers name `@infinitedusky/indusk-mcp/promises/health`. RED today: the health lives in the admin and the package has none
+- [x] Create/confirm this plan's worktree (`indusk worktree create vscode-extension`; made by `indusk plans start` on 2026-10-08 at `dusk-worktrees/vscode-extension`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] (red on all three assertions: no `readHealth`/`healthOf` in the package, the admin defines them, five admin files import its own copy) A7 in `apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts`: `lib/promises/health.ts` defines `readHealth` and `healthOf`; no file under `apps/indusk-admin/src` or `apps/vscode-extension/src` defines either; the admin's importers name `@infinitedusky/indusk-mcp/promises/health`. RED today: the health lives in the admin and the package has none
 
 #### Deferred to Build Phase 1
 
@@ -135,14 +135,15 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 
 #### Test Phase 1 Verification
 
-- [ ] A7 is authored and red on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-single-definition.test.ts`)
-- [ ] Every deferred body above reviewed: will it compile at the phase it names, and does it assert what it claims
+- [x] A7 is authored and red on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-single-definition.test.ts`)
+- [x] (reviewed. Found: the package already has `lib/promises/health.ts` — `promiseHealth`, the agents' report behind the `promise_health` MCP tool — so health is computed twice today, not once; Build Phase 1 gains an item to merge the admin's into that file and build the agents' report on it, and A6's body adds the MCP report as a fourth read that must agree. The core bodies compile against the functions Build Phase 2 introduces; A16's needs `@vscode/test-electron`, added in Build Phase 3) Every deferred body above reviewed: will it compile at the phase it names, and does it assert what it claims
 
 ### Build Phase 1: Health in the package, and the CLI that streams it
 
 **Goal**: one health reader, in the package, read by the admin and by a new CLI command.
 
 - [ ] Move `apps/indusk-admin/src/lib/promise-health.ts` → `apps/indusk-mcp/src/lib/promises/health.ts` and `promise-timeline.ts` → `lib/promises/store.ts`; `readAdminRefreshMs` stays in the admin and becomes a parameter (`HealthDeps.cacheMs`); move their tests with them
+- [ ] (found at Test Phase 1's review) `lib/promises/health.ts` already exists: `promiseHealth`, the agents' per-source report behind the `promise_health` MCP tool, computed from the same reads but by its own rules. The admin's `readHealth`/`healthOf` merge into that file rather than beside it, and `promiseHealth` is rebuilt on `healthOf` so the agents' report, the admin and the editor share one rule; A6 adds the MCP report to the reads that must agree
 - [ ] Export `./promises/health` from `apps/indusk-mcp/package.json`; re-point the admin's importers (`app/p/[project]/layout.tsx`, `app/p/[project]/promises/page.tsx`, `components/PromiseHealth.tsx`, `components/bars/labels.ts`) and anything else that imported the two files; the admin's own tests unchanged and green
 - [ ] `indusk promises health --json [--every <seconds>]` in `bin/commands/promises.ts`: one line `{ at, sources: [{ name, ok, reason?, rows: [{ promise, state, lastHeld?, lastBroke?, symptom?, traceUrl?, tests }] }] }` per read; without `--every`, one read and exit 0; with it, a read per period until SIGTERM; a source that fails is `ok: false` with its reason, never dropped
 - [ ] A6 authored from the register, comparing the reader and the CLI (the editor joins in Build Phase 2), red first
