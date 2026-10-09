@@ -15,7 +15,7 @@ Installs the extension that ships inside the `@infinitedusky/indusk-mcp` package
 | VS Code | `code` |
 | Cursor | `cursor` |
 
-It says which editors it installed into. Run it again after updating InDusk to install the extension that came with the update.
+In the dusk repository, where the extension is also built in `apps/vscode-extension/dist/`, it installs whichever of the two is newer. It says which editors it installed into. Run it again after updating InDusk to install the extension that came with the update.
 
 When neither command is on your `PATH`, it says how to get VS Code's: in VS Code, run **Shell Command: Install 'code' command in PATH** from the Command Palette. It exits `2` and installs nothing.
 

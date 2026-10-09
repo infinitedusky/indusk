@@ -79,6 +79,7 @@ Promise health worked out once, in the package; `indusk promises health --json` 
   - reason: Cursor's extension host is not scriptable here, and its compatibility with VS Code's API is Cursor's to keep
   - would require: a scriptable Cursor, or Cursor's own extension test runner
   - mitigation: installed and opened by hand on the demo app in Build Phase 4 and again at demo-rehearsal, each recorded in this plan; `indusk editor install` names Cursor's CLI when it finds it
+  - at close (2026-10-09): the reason did not hold. Cursor's binary runs the same `@vscode/test-electron` probe (`INDUSK_LIVE_EDITOR_APP`), and it passed in Build Phase 4. It stays out of the system tier because it needs a running demo app, as A5, A11 and A14 do. demo-rehearsal has no folder yet; the step is row 7 of the indusk-demo master, whose rehearsal of the demo in Cursor is the second check
 
 ## Checklist
 
