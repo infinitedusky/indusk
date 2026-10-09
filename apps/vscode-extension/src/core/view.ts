@@ -67,8 +67,14 @@ export function stamp(iso: string): string {
  * fix action and the panel's card, so they name the same source (A31).
  */
 export function whereBroken(
-	_view: View | null,
-	_promise: string,
+	view: View | null,
+	promise: string,
 ): { source: Extract<Source, { ok: true }>; row: Row } | null {
+	if (!view) return null;
+	for (const source of sourcesInOrder(view)) {
+		if (!source.ok) continue;
+		const { shown, row } = stateIn(source, promise);
+		if (shown === "broken" && row) return { source, row };
+	}
 	return null;
 }

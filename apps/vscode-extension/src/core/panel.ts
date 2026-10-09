@@ -1,6 +1,6 @@
 import { anyTokenPattern } from "@infinitedusky/indusk-mcp/tokens";
 import { stateOf } from "./markers.js";
-import { sourcesInOrder, stateIn, type View } from "./view.js";
+import { type View, whereBroken } from "./view.js";
 
 /** One place a promise lives: a test that proves it, or code that keeps it. */
 export interface Location {
@@ -127,16 +127,14 @@ function whereItBroke(
 	view: View,
 	name: string,
 ): Pick<PanelPromise, "source" | "brokeAt" | "symptom"> {
-	for (const source of sourcesInOrder(view)) {
-		const { shown, row } = stateIn(source, name);
-		if (shown !== "broken" || !row) continue;
-		return {
-			source: source.name,
-			...(row.lastSeen ? { brokeAt: row.lastSeen } : {}),
-			...(row.symptom ? { symptom: row.symptom } : {}),
-		};
-	}
-	return {};
+	const broke = whereBroken(view, name);
+	if (!broke) return {};
+	const { source, row } = broke;
+	return {
+		source: source.name,
+		...(row.lastSeen ? { brokeAt: row.lastSeen } : {}),
+		...(row.symptom ? { symptom: row.symptom } : {}),
+	};
 }
 
 /** Where `name`'s token is in `path`, from the file's text; no line when it is not there. */

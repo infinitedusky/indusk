@@ -1,4 +1,4 @@
-import { promiseOf, sourcesInOrder, stateIn, type View } from "./view.js";
+import { promiseOf, type View, whereBroken } from "./view.js";
 
 export interface BrokenPromise {
 	promise: string;
@@ -61,24 +61,21 @@ export function fixFor(
 	ctx: { projectRoot: string; claudeOnPath: boolean },
 ): FixAction | null {
 	const p = promiseOf(view, promise);
-	if (!view || !p) return null;
-	for (const source of sourcesInOrder(view)) {
-		const { shown, row } = stateIn(source, promise);
-		if (shown !== "broken" || !row) continue;
-		return fixAction(
-			{
-				promise,
-				source: source.name,
-				sourceLabel: source.label,
-				statement: p.statement,
-				...(row.symptom ? { symptom: row.symptom } : {}),
-				...(row.traceId ? { traceId: row.traceId } : {}),
-				tests: p.tests,
-			},
-			ctx,
-		);
-	}
-	return null;
+	const broke = whereBroken(view, promise);
+	if (!p || !broke) return null;
+	const { source, row } = broke;
+	return fixAction(
+		{
+			promise,
+			source: source.name,
+			sourceLabel: source.label,
+			statement: p.statement,
+			...(row.symptom ? { symptom: row.symptom } : {}),
+			...(row.traceId ? { traceId: row.traceId } : {}),
+			tests: p.tests,
+		},
+		ctx,
+	);
 }
 
 /**
