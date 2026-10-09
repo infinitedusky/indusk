@@ -1,6 +1,8 @@
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
+import { parsePhaseRef } from "../../lib/impl-headings.js";
+import { phaseModel } from "../../lib/models/phase-model.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import {
 	acceptPlan,
@@ -47,6 +49,20 @@ export function plansApprove(cwd: string, name: string): Promise<void> {
 			return `Approved ${a.plan}: its documents are committed at the workbench root (${a.merge.slice(0, 8)}); its build continues on its code branch.`;
 		}
 		return `Approved ${a.plan}: ${a.paths.length} file(s) merged to the trunk at ${a.merge.slice(0, 8)}; its build continues on its branch.`;
+	});
+}
+
+/** `indusk plans model <name> --phase <ref>` — the tier and model a phase is built on, or `session`. */
+export function plansModel(cwd: string, name: string, phase: string): Promise<void> {
+	return planVerb(async () => {
+		const ref = parsePhaseRef(/^\d+$/.test(phase.trim()) ? `Phase ${phase.trim()}` : phase);
+		if (!ref) {
+			throw new PlanCommandRefusal(
+				`--phase must name a phase, like "Build Phase 1", "Test Phase 1" or "1"; got "${phase}"`,
+			);
+		}
+		const answer = await phaseModel(cwd, name, ref);
+		return answer ? `${answer.tier} ${answer.model}` : "session";
 	});
 }
 

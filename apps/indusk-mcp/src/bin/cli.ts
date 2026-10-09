@@ -973,6 +973,20 @@ plansCmd
 	});
 
 plansCmd
+	.command("model <name>")
+	.description(
+		"The tier and model a phase is built on — `<tier> <model>`, or `session` when the project names no model for it",
+	)
+	.requiredOption(
+		"--phase <ref>",
+		'The phase: "Build Phase 1", "Test Phase 1" or a bare build number',
+	)
+	.action(async (name: string, opts: { phase: string }) => {
+		const { plansModel } = await import("./commands/plans.js");
+		await plansModel(process.cwd(), name, opts.phase);
+	});
+
+plansCmd
 	.command("next <name>")
 	.description(
 		"What an unattended build does next: work, falsify, cleanup, a judgement the plan declared, review, or cannot continue",
