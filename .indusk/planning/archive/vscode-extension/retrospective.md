@@ -61,3 +61,7 @@ Shape raised **4** findings across eight build phases: the fix's source choice i
 - **Docs**: the guide, `reference/cli/promises.md`, `reference/cli/editor.md`, the admin overview and the changelog describe what was built, including the panel's grouping and the line's `runs` and `plan`.
 - **Tests**: 31 trajectory rows, all passing; U1 (Cursor) recorded by a scripted run.
 - **Quality**: no recurring lint or type errors suggesting a new Biome rule; the token-grammar trap is guarded by `indusk promises check`, which already runs in `pnpm test`.
+- **Nested-context probe** (`pnpm e2e -- context-tiers`, required because the plan touched CLAUDE.md files): red twice, on different tests each run (A17, then A2, A3 and A17), each because the `claude -p` session it starts did not answer in the asked format or did not write the file. The probe builds its own fixture; nothing this plan changed reaches it. Flagged before release.
+- **Install at landing**: `pnpm install:local` first failed on trunk: `node_modules` linked versions missing from the store (`source-map-js@1.2.2` and others) while `pnpm install` reported it up to date. `pnpm install --frozen-lockfile --force` relinked it, and the install then passed.
+
+Landed on main at 3c669b37, 2026-10-09.
