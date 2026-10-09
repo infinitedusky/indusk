@@ -82,8 +82,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   span's environment or says unknown. Readers import `telemetry/status.ts`,
   never `daemon.ts` (Turbopack parses its binary). The heard counts come from
   the home's `heard.jsonl` through the `promises/heard` subpath
-  (`readProjectHeard`), never a second reader; incidents show their age and
-  their owner's Maintenance phase.
+  (`readProjectHeard`), never a second reader; incidents (`IncidentsTable.tsx`)
+  show their age, worded by `promises/age` as the CLI words it, and their
+  owner's Maintenance phase.
 - **The daemon records production breaks** from `src/instrumentation.ts`:
   one package loop (`admin/recorder-loop`) per registered project that names
   `promises.jaeger`, every `admin.refresh_ms`, each pass the package's

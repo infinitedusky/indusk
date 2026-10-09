@@ -57,7 +57,9 @@ const PROMISES: PromiseEntry[] = [
   },
 ];
 
-function incident(over: Partial<IncidentEntry> & { id: string }): IncidentEntry {
+function incident(
+  over: Partial<IncidentEntry> & { id: string },
+): IncidentEntry {
   return {
     promise: "seat-released",
     source: "deployed",

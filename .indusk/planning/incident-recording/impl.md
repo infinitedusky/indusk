@@ -1,7 +1,7 @@
 ---
 title: "Recording never waits for a person to think of it"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -76,8 +76,8 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 | A29 | A pass run in a checkout that is not on a trunk branch (a plan worktree, or the trunk checked out on a feature branch) commits nothing to that branch: it says which branch and where to run it, and marks itself broken | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-production-break-is-recorded-unasked | apps/indusk-mcp/src/lib/promises/record.test.ts |
 | A30 | A session that starts after an incident was fixed is not told about it: the hook delivers only entries whose incident is still open | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/break-inbox-hook.test.ts |
 | A31 | A session that starts after a break and N daily reminders of the same open incident is told once about that incident, not N+1 times | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/break-inbox-hook.test.ts |
-| A32 | An incident's age is worded by one function, and `indusk promises status` and the admin's incidents table say the same age in the same words | Build Phase 9 | Build Phase 9 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/promises-single-definition.test.ts, apps/indusk-mcp/src/lib/promises/age.test.ts |
-| A33 | The break-inbox hook reads the inbox through `_inbox.js`, the one port of `lib/promises/inbox.ts`, and A18, A30 and A31 still hold through it | Build Phase 9 | Build Phase 9 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/hook-shared-modules.test.ts, apps/indusk-mcp/src/__tests__/break-inbox-hook.test.ts |
+| A32 | An incident's age is worded by one function, and `indusk promises status` and the admin's incidents table say the same age in the same words | Build Phase 9 | Build Phase 9 | passing | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/promises-single-definition.test.ts, apps/indusk-mcp/src/lib/promises/age.test.ts |
+| A33 | The break-inbox hook reads the inbox through `_inbox.js`, the one port of `lib/promises/inbox.ts`, and A18, A30 and A31 still hold through it | Build Phase 9 | Build Phase 9 | passing | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/hook-shared-modules.test.ts, apps/indusk-mcp/src/__tests__/break-inbox-hook.test.ts |
 
 ## Checklist
 
@@ -369,15 +369,16 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 #### Build Phase 9 Verification
 
-- [ ] A32, A33 pass; behaviour parity holds (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises src/__tests__/promises-single-definition.test.ts src/__tests__/hook-shared-modules.test.ts src/__tests__/break-inbox-hook.test.ts src/__tests__/hook-sync-parity.test.ts && cd ../indusk-admin && pnpm exec tsc --noEmit -p . && pnpm exec vitest run src/components/Promises`)
+- [x] (mcp 51/51, admin `tsc` clean and Promises 15/15; biome on this plan's changed files: `Promises.incidents.test.tsx` formatted here, `docs/.vitepress/config.ts` left — it was unformatted on `main` already and this plan's one sidebar line matches its neighbours) A32, A33 pass; behaviour parity holds (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises src/__tests__/promises-single-definition.test.ts src/__tests__/hook-shared-modules.test.ts src/__tests__/break-inbox-hook.test.ts src/__tests__/hook-sync-parity.test.ts && cd ../indusk-admin && pnpm exec tsc --noEmit -p . && pnpm exec vitest run src/components/Promises`)
+- [x] Shape (reviewed `age.ts`, `_inbox.js`, the slimmed `break-inbox.js`, `record-commit.ts`, `record.ts` and `IncidentsTable.tsx` — nothing found: each moved unit kept its body and gained a header naming why it is its own file; `rules.unreadable` was empty)
 
 #### Build Phase 9 Context
 
-- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: `_inbox.js` in the list of ports; admin `CLAUDE.md`: an incident's age comes from `promises/age`
+- [x] `apps/indusk-mcp/hooks/CLAUDE.md`: `_inbox.js` in the list of ports; admin `CLAUDE.md`: an incident's age comes from `promises/age`
 
 #### Build Phase 9 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the incidents table's age is the CLI's wording, from one function; changelog Changed
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the incidents table's age is the CLI's wording, from one function; changelog Changed
 
 ## Files Affected
 

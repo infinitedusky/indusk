@@ -14,7 +14,7 @@ are about keeping the two lanes in step.
   they must exist in `.claude/hooks/` or the importer dies at load
   (`globSync("*.js")` copies them). Each mirrors exactly ONE `src/lib` module
   (`_impl-headings.js`, `_trajectory-parser.js`, `_impl-phases.js`,
-  `_hook-paths.js`), pinned by count — "change the TS and every port together"
+  `_hook-paths.js`, `_inbox.js` ← `lib/promises/inbox.ts`), pinned by count — "change the TS and every port together"
   is checkable by reading two filenames. `check-gates.js` mirrors the terminal
   state set inline, deliberately.
 - **Hook commands are registered by the project root, never relative to the
