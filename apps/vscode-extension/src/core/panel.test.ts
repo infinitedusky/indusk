@@ -88,4 +88,10 @@ describe("the promises panel", () => {
 		expect(html).toContain("&lt;img");
 		expect(html).not.toContain("<b>x</b>");
 	});
+
+	it("A23 — the panel names the project whose promises it lists", () => {
+		const body = panelBody as unknown as (m: unknown, a: string[], project: string) => string;
+		const html = body(panelModel(twoBreaks(), new Map()), [], "seat-holds-<demo>");
+		expect(html).toMatch(/class="project"[^>]*>seat-holds-&lt;demo&gt;</);
+	});
 });
