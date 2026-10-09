@@ -52,11 +52,13 @@ One package module, one CLI verb, one skill, the step in the runner, the readine
 - **A step after cleanup, for interactive plans and admin builds** (Sandy): `workflow.steps.<step>.tier` names its tier; the runner runs it as a step.
 - **The subagent is spawned by a skill, not by the package** (this research): the package cannot call Claude Code's Agent tool; only a session can. So the skill spawns the reviewer, as `/work` spawns a phase; the package supplies what to hand it (`indusk plans review-inputs`, or the chosen name) and checks the result exists.
 
+- **The step is `audit`** (Sandy, 2026-10-09): `/audit`, `audit.md`, `workflow.steps.audit.tier`. `review` stays the admin's acceptance panel.
+- **The reader gets the impl as approved, plus the trajectory table as it stands** (Sandy, 2026-10-09): `git show <approval merge>:…/impl.md` holds the plan before any build and no falsification or cleanup phase; the final table gives each row's end state. The reader's findings are then independent of the builder's, so agreement between them says the cheap tiers' falsify step works and disagreement says what it misses.
+- **The reader is asked a fixed list of questions, not "review this"** (this research, agreed): does each row prove its promise's sentence or something narrower; what does the diff change that no row touches; what does the code do that the brief never promised; which rejected ADR alternative did the code quietly take; which skip reason would you not accept; what else would have to change for each promise to hold (asked with a `--stat` of the whole repository, so the answer can reach outside the diff).
+
 ## Open Questions
 
-- **The step's name**: `audit` or `review`? (Collides with `plans review`.)
-- **The impl as approved vs as it stands**: does the reviewer see the falsify and cleanup phases at all? Seeing their items tells it what the builder already found; not seeing them means it may repeat findings — which is itself information (two independent readers agreeing).
-- Should the admin's acceptance panel show the document? Not promised here; a follow-up.
+- Should the admin's acceptance panel show `audit.md`? Not promised here; a follow-up.
 
 ## Sources
 

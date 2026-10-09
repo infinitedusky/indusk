@@ -1,7 +1,7 @@
 ---
 title: "plan-review-subagent"
 date: 2026-10-09
-status: draft
+status: accepted
 workflow: feature
 ---
 
@@ -9,25 +9,25 @@ workflow: feature
 
 ## Expectations
 
-1. **The review finds things the builder missed, on some plans.**
-   - Measure: findings in the review document that led to a fix, counted over the next five plans closed.
+1. **The audit finds things the builder missed, on some plans.**
+   - Measure: findings in `audit.md` that led to a fix, counted over the next five plans closed.
    - Look: after those five plans close.
 
-2. **A review costs less than the rework it prevents.**
-   - Measure: the usage page for a review against a typical plan's phases, over the same five plans.
+2. **An audit costs less than the rework it prevents.**
+   - Measure: the usage page for an audit against a typical plan's phases, over the same five plans.
    - Look: with expectation 1.
 
 ## Promises
 
 ### This plan makes
 
-1. **`a-plan-is-read-by-a-fresh-reader-before-it-closes`** (state). Before a plan's retrospective, a reader that has not seen the building session reads the plan and writes what it finds to a document in the plan folder, and the retrospective refuses to start until that document exists or the impl says why the review was skipped.
+1. **`a-plan-is-audited-by-a-fresh-reader-before-it-closes`** (state). Before a plan's retrospective, a reader that has not seen the building session reads the plan and writes what it finds to audit.md in the plan folder, and the retrospective refuses to start until that document exists or the impl says why the audit was skipped.
 
-2. **`the-reader-sees-the-plan-not-the-session`** (state). The reader is handed the plan's brief, test plan, ADR and impl, and the diff of the plan's branch against the trunk, and nothing from the session's conversation.
+2. **`the-auditor-sees-the-plan-not-the-session`** (state). The auditor is handed the plan's brief, test plan and ADR, the impl as it was approved with the trajectory table as it stands, and the diff of the plan's branch against the trunk, and nothing from the session's conversation or from the builder's own findings.
 
-3. **`the-reader-runs-on-its-tier`** (state). The reader runs on the model `workflow.steps.<step>.tier` names in the config, with no one switching models by hand; a project that names no tiers runs it on the session's model.
+3. **`the-auditor-runs-on-its-tier`** (state). The auditor runs on the model workflow.steps.audit.tier names in the config, with no one switching models by hand; a project that names no tiers runs it on the session's model.
 
-4. **`a-review-blocks-nothing`** (state). A finding in the review document changes no gate: the retrospective reads that the document exists, never what it says.
+4. **`an-audit-blocks-nothing`** (state). A finding in audit.md changes no gate: the retrospective reads that the document exists, never what it says.
 
 ### Existing promises
 
@@ -48,8 +48,9 @@ None.
 ### Not promised
 
 - Findings blocking the retrospective or acceptance (Sandy, 2026-10-09: advisory).
-- The admin's acceptance panel showing the review document: a follow-up.
-- Which model the reader is: config, not a promise.
+- The admin's acceptance panel showing `audit.md`: a follow-up.
+- Which model the auditor is: config, not a promise.
+- The auditor finding what the plan never touched: it is asked what else each promise needs, with a `--stat` of the whole repository, but its reading is the plan and its diff.
 
 ## Depends On
 
