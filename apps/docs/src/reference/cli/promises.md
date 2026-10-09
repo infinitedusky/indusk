@@ -533,9 +533,23 @@ with `--every 5` and reads each line.
       ]
     },
     { "name": "local", "label": "…/telemetry.json", "ok": false, "reason": "could not be read: …" }
+  ],
+  "runs": [
+    {
+      "promise": "seat-never-double-booked",
+      "source": "production",
+      "outcome": "violated",
+      "at": "2026-10-08T12:20:00.000Z",
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"
+    }
   ]
 }
 ```
+
+The line also names `promises` (every promise with its kind, sentence, tests
+and sites) and `runs`: the newest recorded runs across sources, newest first,
+at most fifty, from the same read as the state. A run carries no symptom; the
+store keeps a run's time, outcome, trace and environment only.
 
 `state` is one of `red`, `fixed`, `green`, `unverified`, `amber` (known
 violated) and `grey` (retired); state and structure promises, which telemetry

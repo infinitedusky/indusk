@@ -64,6 +64,26 @@ took 14.9 seconds, 9.5 of them the demo's own hold window and fault delay. In
 Cursor, the same extension showed the marker and opened the Claude terminal.
 :::
 
+## The promises panel
+
+The InDusk icon in the activity bar, a shield with a check mark, opens the
+**Promises** panel: every promise in the project and its state, without
+opening a file.
+
+- **Broken promises come first, as cards**, the latest break at the top, each
+  with the source it broke in, when, and its symptom. A card's **Fix with
+  Claude** button starts the same fix as the light bulb.
+- **The rest follow by name**, each with its state.
+- **Open any promise** to see its sentence, the **tests** that prove it and
+  where it is **kept**. Each entry opens the file at the line its token is on;
+  one whose file no longer carries the token says so.
+- **Activity** adds each run as it is recorded, newest first: the promise,
+  whether it held or broke, the source and the time. It keeps the latest two
+  hundred.
+
+The panel reads the same line as the markers, every five seconds, and keeps
+open cards and its scroll position across reads.
+
 ## Fix with Claude
 
 On a broken promise, the light bulb offers **Fix with Claude**. It opens a
