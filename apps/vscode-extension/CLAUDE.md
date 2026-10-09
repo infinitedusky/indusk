@@ -14,3 +14,7 @@ Loaded by Claude Code when a file under `apps/vscode-extension/` is read.
   (`promise-health-single-definition.test.ts`)
 - **Tokens come from the package's grammar** (`@infinitedusky/indusk-mcp/tokens`),
   never a second pattern.
+- **Text from spans is untrusted.** A symptom, trace id or source reason was
+  written by whatever sent the span. Before a terminal it goes through
+  `cleanFacts` (one line, no control characters: a control character there is
+  a keystroke); before a hover, through `asText` (Markdown escaped). (A20, A21)
