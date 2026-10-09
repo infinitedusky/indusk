@@ -5,10 +5,9 @@ const vscode = require("vscode");
 
 exports.run = async () => {
 	const ext = vscode.extensions.getExtension("infinitedusky.indusk");
-	for (let i = 0; i < 40 && !(ext && ext.isActive); i++)
-		await new Promise((r) => setTimeout(r, 250));
+	for (let i = 0; i < 40 && !ext?.isActive; i++) await new Promise((r) => setTimeout(r, 250));
 	fs.writeFileSync(
 		process.env.A16_OUT,
-		JSON.stringify({ found: Boolean(ext), active: Boolean(ext && ext.isActive) }),
+		JSON.stringify({ found: Boolean(ext), active: Boolean(ext?.isActive) }),
 	);
 };

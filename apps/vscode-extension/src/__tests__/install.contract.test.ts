@@ -55,6 +55,9 @@ describe.skipIf(!haveVSCode)("A16 — install and activation in a real VS Code",
 		if (!installed) throw new Error(`nothing installed in ${extensionsDir}`);
 		const out = join(workspace, "..", `${workspace.split("/").pop()}.json`);
 		process.env.A16_OUT = out;
+		// A terminal inside VS Code (or Cursor) exports this; it makes the test
+		// VS Code start as plain Node and run the workspace path as a script.
+		delete process.env.ELECTRON_RUN_AS_NODE;
 		await runTests({
 			vscodeExecutablePath: VSCODE,
 			extensionDevelopmentPath: join(extensionsDir, installed),
@@ -65,6 +68,9 @@ describe.skipIf(!haveVSCode)("A16 — install and activation in a real VS Code",
 				"--extensions-dir",
 				extensionsDir,
 				"--disable-extensions",
+				// macOS caps a socket path near 103 characters; a worktree path is longer.
+				"--user-data-dir",
+				mkdtempSync(join(tmpdir(), "a16-u-")),
 			],
 		});
 		return JSON.parse(readFileSync(out, "utf-8"));
