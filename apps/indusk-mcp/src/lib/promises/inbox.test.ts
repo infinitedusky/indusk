@@ -10,6 +10,7 @@ import {
 	recordingProject,
 	TRACE,
 } from "../../__tests__/helpers/record-fixture.js";
+import { appendInbox, undelivered } from "./inbox.js";
 import { recordBreaks } from "./record.js";
 
 /**
@@ -64,5 +65,26 @@ describe("A17 — a recorded break lands in the project's inbox", () => {
 		expect(entries).toHaveLength(2);
 		expect(entries[0].incident).toBe(entries[1].incident);
 		expect(new Set(entries.map((e) => e.id)).size).toBe(2);
+	});
+});
+
+/** Build Phase 8 — promise: a-break-reaches-the-working-agent. The hook's rule, for the extension's reader. */
+describe("A30, A31 — what a later session is told", () => {
+	it("leaves out closed incidents, says one incident once as its newest entry, and marks every entry", () => {
+		const home = mkdtempSync(join(tmpdir(), "inbox-later-"));
+		const now = new Date("2026-10-09T00:00:00Z");
+		const news = (incident: string, kind: "break" | "reminder") => ({
+			kind,
+			promise: "seat-released",
+			incident,
+			owner: "seat-holds",
+			phase: `Maintenance — ${incident}`,
+		});
+		appendInbox(home, [news("i-fixed", "break"), news("i-open", "break")], now);
+		appendInbox(home, [news("i-open", "reminder")], now);
+		const read = undelivered(home, "s-later", { isOpen: (id) => id !== "i-fixed" });
+		expect(read.entries.map((e) => [e.incident, e.kind])).toEqual([["i-open", "reminder"]]);
+		expect(read.ids).toHaveLength(3);
+		rmSync(home, { recursive: true, force: true });
 	});
 });

@@ -38,25 +38,39 @@ export function appendInbox(home: string, news: InboxNews[], now: Date): void {
 }
 
 export interface InboxRead {
+	/** What to say: one entry per incident still open, the newest of its entries. */
 	entries: InboxEntry[];
+	/** Every entry `session` had not been given — said, closed or folded into a newer one — to mark delivered. */
+	ids: string[];
 	/** Lines that could not be read, each with its line number: said, never skipped. */
 	problems: string[];
 }
 
 /**
- * Every entry `session` has not been given yet. Deliveries are marked per
- * session, so every running session hears each break once; a mark with no
- * session counts for every session.
+ * What `session` has not been given yet. Deliveries are marked per session, so
+ * every running session hears each break once; a mark with no session counts
+ * for every session. A session that starts later is told only what is still
+ * true (A30, A31): an entry whose incident `isOpen` says is closed is not said,
+ * and one incident's break and reminders are said once, as the newest. The
+ * break-inbox hook applies the same rule, reading the incident files itself.
  */
-export function undelivered(home: string, session: string): InboxRead {
+export function undelivered(
+	home: string,
+	session: string,
+	opts: { isOpen?: (incident: string) => boolean } = {},
+): InboxRead {
 	const inbox = readLines(join(home, INBOX_FILE));
 	const delivered = new Set(
 		(readLines(join(home, DELIVERED_FILE)).values as { id?: string; session?: string }[])
 			.filter((v) => v.session === undefined || v.session === session)
 			.map((v) => v.id),
 	);
+	const fresh = (inbox.values as InboxEntry[]).filter((e) => !delivered.has(e.id));
+	const isOpen = opts.isOpen ?? (() => true);
+	const open = fresh.filter((e) => isOpen(e.incident));
 	return {
-		entries: (inbox.values as InboxEntry[]).filter((e) => !delivered.has(e.id)),
+		entries: [...new Map(open.map((e) => [e.incident, e])).values()],
+		ids: fresh.map((e) => e.id),
 		problems: inbox.problems,
 	};
 }

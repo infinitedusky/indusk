@@ -14,6 +14,13 @@
  * own next turn. A mark with no session counts for every session. A session
  * in another project reads another home and hears nothing.
  *
+ * A session that starts later has been given nothing, so it is told only what
+ * is still true (incident-recording A30, A31): an entry whose incident file
+ * says it is no longer open is marked delivered and not said, and the
+ * entries for one incident — its break and its daily reminders — are said as
+ * one line, the newest's. An incident file that cannot be found counts as
+ * open: an unknown is said, never dropped.
+ *
  * It runs on every prompt, so it does one small read and exits: nothing to
  * say is an exit 0 with no output. An inbox it cannot read is said on its own
  * line, never skipped — a break that could not be delivered must not look like
@@ -39,8 +46,9 @@ try {
 }
 
 let statePath = null;
+let gitPath = null;
 try {
-	({ statePath } = resolveStateAndGitPaths(event.cwd ?? process.cwd()));
+	({ statePath, gitPath } = resolveStateAndGitPaths(event.cwd ?? process.cwd()));
 } catch {
 	process.exit(0);
 }
@@ -55,15 +63,21 @@ const delivered = new Set(
 		.map((v) => v.id),
 );
 const fresh = inbox.values.filter((e) => e && typeof e.id === "string" && !delivered.has(e.id));
+const open = fresh.filter((e) => incidentIsOpen(e.incident));
+const toSay = [...new Map(open.map((e) => [e.incident, e])).values()];
 
 if (fresh.length === 0 && inbox.problems.length === 0) process.exit(0);
+if (toSay.length === 0 && inbox.problems.length === 0) {
+	markDelivered(fresh);
+	process.exit(0);
+}
 
 const lines = [];
-if (fresh.length > 0) {
+if (toSay.length > 0) {
 	lines.push(
 		"A promise broke in production. It outranks the roadmap: say it before anything else, and work the Maintenance phase named.",
 	);
-	for (const e of fresh) lines.push(`- ${describe(e)}`);
+	for (const e of toSay) lines.push(`- ${describe(e)}`);
 }
 for (const problem of inbox.problems) {
 	lines.push(
@@ -76,13 +90,39 @@ console.info(
 		hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: lines.join("\n") },
 	}),
 );
-if (fresh.length > 0) {
+markDelivered(fresh);
+process.exit(0);
+
+function markDelivered(entries) {
+	if (entries.length === 0) return;
 	appendFileSync(
 		join(home, DELIVERED),
-		`${fresh.map((e) => JSON.stringify({ id: e.id, session })).join("\n")}\n`,
+		`${entries.map((e) => JSON.stringify({ id: e.id, session })).join("\n")}\n`,
 	);
 }
-process.exit(0);
+
+/**
+ * Whether the incident's file still says `open`. The registry is the
+ * project's own `.indusk/promises/`, or, in a workbench, the code repo's.
+ */
+function incidentIsOpen(id) {
+	if (typeof id !== "string" || !/^[\w.-]+$/.test(id)) return true;
+	for (const root of [statePath, gitPath]) {
+		if (!root) continue;
+		const file = join(root, ".indusk", "promises", "incidents", `${id}.md`);
+		if (!existsSync(file)) continue;
+		let text;
+		try {
+			text = readFileSync(file, "utf-8");
+		} catch {
+			return true;
+		}
+		const front = text.match(/^---\n([\s\S]*?)\n---/);
+		const status = front?.[1].match(/^status:\s*["']?([\w-]+)/m)?.[1];
+		return status === undefined || status === "open";
+	}
+	return true;
+}
 
 function describe(e) {
 	const what =
