@@ -11,6 +11,7 @@ import { behaviourPromise, promiseProject } from "./helpers/promises-fixture.js"
  * fetched and nothing waits.
  *
  * promise: the-editor-shows-each-run-as-it-happens
+ * promise: every-promise-is-listed-in-the-editor
  */
 
 const NOW = Date.UTC(2026, 9, 8, 12, 30);
