@@ -99,7 +99,9 @@ describe("A21 — the hook reads every step TIER_STEPS names", () => {
 
 	for (const step of TIER_STEPS) {
 		it(`step ${step} agrees`, () => {
-			expect(tierConfigProblems({ workflow: { tiers: TIERS, steps: { [step]: { tier: "med" } } } })).toEqual([]);
+			expect(
+				tierConfigProblems({ workflow: { tiers: TIERS, steps: { [step]: { tier: "med" } } } }),
+			).toEqual([]);
 		});
 	}
 });
