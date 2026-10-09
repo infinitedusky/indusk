@@ -1,7 +1,7 @@
 ---
 title: "model-per-phase — each phase on its tier's model, each boundary a new session"
 date: 2026-10-09
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -59,8 +59,8 @@ Build each phase on the model its tier names in the config, without anyone switc
 | A14 | A phase with two `**Tier**:` lines is refused naming the phase; `/work`'s escalation replaces the line rather than adding one, so the escalated tier is the one read | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts, apps/indusk-mcp/src/lib/models/tiers.test.ts |
 | A15 | A phase naming a tier the config gives no model for is refused naming the tier — by the validator, and by `plans model` — never answered `session` | Build Phase 3 | Build Phase 3 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts, apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
 | A16 | `plans model` on a project whose tier config is malformed (`workflow.tiers.huge`, `steps.work.tier: huge`) refuses with the key named, exit 1, never a stack trace; the validator refuses the same impl the same way | Build Phase 3 | Build Phase 3 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/__tests__/plans-model.test.ts |
-| A17 | The validator and `plans model` judge the same tier lines and the same config the same way: every case A6, A7 and A13–A16 send gives one answer from the hook's copy and the package's | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-parity.test.ts |
-| A18 | The command a boundary names agrees with what the build decides next: a phase with a blocker names the blocker, not `/work`; a phase waiting on a person names the item; every phase closed with rows still open names those rows, not `/retrospective` | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/lib/models/next-session.test.ts |
+| A17 | The validator and `plans model` judge the same tier lines and the same config the same way: every case A6, A7 and A13–A16 send gives one answer from the hook's copy and the package's | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-parity.test.ts |
+| A18 | The command a boundary names agrees with what the build decides next: a phase with a blocker names the blocker, not `/work`; a phase waiting on a person names the item; every phase closed with rows still open names those rows, not `/retrospective` | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/lib/models/next-session.test.ts |
 
 ## Checklist
 
@@ -207,27 +207,29 @@ Build each phase on the model its tier names in the config, without anyone switc
 
 **Goal**: decompose what this plan grew beside existing code: a second copy of the build's next-step decision, a third copy of reading a plan's impl from its live copy, a hand-written phase label where a helper exists, and a hook port of the tier rule with nothing holding it to its source. Each item is a concrete consolidation or a reasoned leave-as-is.
 
-- [ ] `nextSession` maps `nextBuildStep`'s answer to a command instead of deciding again — `lib/build/next-step.ts` already decides open phase / blocker / judgement / falsify / cleanup / rows / review, and `next-session.ts` re-derives a subset with its own `isOpen`. `work` → `/work <plan>` with the phase's tier and model; `falsify` / `cleanup` → that command; `review` → `/retrospective <plan>`; `judgement` → the item a person must look at; `cannot-continue` → its reason. Delete next-session's `isOpen`. Basis: one definition of a decision; two copies have already diverged (A18). A11's test bodies change to the new signature; its `Asserts` text does not.
-- [ ] One reader for a plan's impl on disk: `readBuildPlan` (`lib/build/read-plan.ts`) also returns the raw `content`, and `phaseModel` (`models/phase-model.ts`) and `nextSessionForPlan` use it rather than each repeating `livePlanCopy` → `join(dir, "impl.md")` → `existsSync` → `readFileSync`. Basis: rule of three (`read-plan.ts`, `phase-model.ts`, `next-session.ts`). `nextSessionForPlan` keeps its fallback to `/work <plan>` for an unreadable plan.
-- [ ] `tiers.ts` and `next-session.ts` call `phaseLabel` (`impl-headings.ts`) instead of spelling `${kind === "test" ? "Test" : "Build"} Phase ${n}` — the helper exists for exactly this. (`_phase-tier.js` keeps its own spelling: hooks cannot import TS, and `_impl-headings.js` has no `phaseLabel`.)
-- [ ] Move `readTiers` from `lib/checks/steps.ts` to `lib/models/tiers.ts`, and drop the re-export. `checks/steps.ts` is the reader for the `checks` command's land and release steps; the tier map belongs with the module that answers which model runs. The steps reader keeps validating `steps.<step>.tier`, since that key lives in its section.
-- [ ] A17: a parity test feeding the same impl bodies and configs to `hooks/_phase-tier.js` (`tierRuleProblems`, `tierConfigProblems`) and to `lib/models/tiers.ts` (`tierRuleProblems`, `readTierConfig`'s refusals), asserting the same problems. Precedent: `test-levels-parity.test.ts`. Basis: the port exists because a hook cannot import TS; nothing yet notices when one copy changes and the other does not.
-- [ ] (reviewed `hooks/validate-impl-structure.js` — left as-is: 940 lines before this plan, which added one 15-line block that calls into `_phase-tier.js` and a one-line fast-path marker; splitting the validator is outside this plan's scope)
-- [ ] (reviewed `src/bin/cli.ts` and `src/bin/commands/plans.ts` — left as-is: two command registrations and two thin command functions in the file's existing one-per-verb pattern)
-- [ ] (reviewed `src/lib/config.ts` — left as-is: 13 lines of type declarations beside the existing `WorkflowSteps`)
-- [ ] (reviewed `skills/work.md`, `.claude/skills/work/SKILL.md`, the changelog and the docs pages — left as-is: prose; the installed skill is the package copy, held equal by `skill-sync-parity.test.ts`)
+- [x] `nextSession` maps `nextBuildStep`'s answer to a command instead of deciding again — `lib/build/next-step.ts` already decides open phase / blocker / judgement / falsify / cleanup / rows / review, and `next-session.ts` re-derives a subset with its own `isOpen`. `work` → `/work <plan>` with the phase's tier and model; `falsify` / `cleanup` → that command; `review` → `/retrospective <plan>`; `judgement` → the item a person must look at; `cannot-continue` → its reason. Delete next-session's `isOpen`. Basis: one definition of a decision; two copies have already diverged (A18). A11's test bodies change to the new signature; its `Asserts` text does not.
+- [x] One reader for a plan's impl on disk: `readBuildPlan` (`lib/build/read-plan.ts`) also returns the raw `content`, and `phaseModel` (`models/phase-model.ts`) and `nextSessionForPlan` use it rather than each repeating `livePlanCopy` → `join(dir, "impl.md")` → `existsSync` → `readFileSync`. Basis: rule of three (`read-plan.ts`, `phase-model.ts`, `next-session.ts`). `nextSessionForPlan` keeps its fallback to `/work <plan>` for an unreadable plan.
+- [x] `tiers.ts` and `next-session.ts` call `phaseLabel` (`impl-headings.ts`) instead of spelling `${kind === "test" ? "Test" : "Build"} Phase ${n}` — the helper exists for exactly this. (`_phase-tier.js` keeps its own spelling: hooks cannot import TS, and `_impl-headings.js` has no `phaseLabel`.)
+- [x] Move `readTiers` from `lib/checks/steps.ts` to `lib/models/tiers.ts`, and drop the re-export. `checks/steps.ts` is the reader for the `checks` command's land and release steps; the tier map belongs with the module that answers which model runs. The steps reader keeps validating `steps.<step>.tier`, since that key lives in its section.
+- [x] A17: a parity test feeding the same impl bodies and configs to `hooks/_phase-tier.js` (`tierRuleProblems`, `tierConfigProblems`) and to `lib/models/tiers.ts` (`tierRuleProblems`, `readTierConfig`'s refusals), asserting the same problems. Precedent: `test-levels-parity.test.ts`. Basis: the port exists because a hook cannot import TS; nothing yet notices when one copy changes and the other does not.
+- [x] (reviewed `hooks/validate-impl-structure.js` — left as-is: 940 lines before this plan, which added one 15-line block that calls into `_phase-tier.js` and a one-line fast-path marker; splitting the validator is outside this plan's scope)
+- [x] (reviewed `src/bin/cli.ts` and `src/bin/commands/plans.ts` — left as-is: two command registrations and two thin command functions in the file's existing one-per-verb pattern)
+- [x] (reviewed `src/lib/config.ts` — left as-is: 13 lines of type declarations beside the existing `WorkflowSteps`)
+- [x] (reviewed `skills/work.md`, `.claude/skills/work/SKILL.md`, the changelog and the docs pages — left as-is: prose; the installed skill is the package copy, held equal by `skill-sync-parity.test.ts`)
 
 #### Build Phase 4 Verification
 
-- [ ] A17 and A18 pass; A1–A16 still do (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/models src/__tests__/phase-tier-rule.test.ts src/__tests__/phase-tier-parity.test.ts src/__tests__/plans-model.test.ts src/__tests__/plans-approve.test.ts && pnpm exec vitest related src/lib/build/read-plan.ts src/lib/checks/steps.ts --run`); tsc and biome clean
+- [x] A17 and A18 pass; A1–A16 still do (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/models src/__tests__/phase-tier-rule.test.ts src/__tests__/phase-tier-parity.test.ts src/__tests__/plans-model.test.ts src/__tests__/plans-approve.test.ts && pnpm exec vitest related src/lib/build/read-plan.ts src/lib/checks/steps.ts --run`); tsc and biome clean
+
+- [x] Shape review of this phase (`next-session.ts`, `phase-model.ts`, `tiers.ts`, the parity test): nothing found. `readBuildPlan` now carries the raw impl text, and the three readers of a plan on disk share it; `_phase-tier.js` gained the unknown-step-key check the parity test found missing.
 
 #### Build Phase 4 Context
 
-- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: add `_phase-tier.js` ← `lib/models/tiers.ts` to the list of `_`-prefixed ports that each mirror one `src/lib` module, held by `phase-tier-parity.test.ts`
+- [x] `apps/indusk-mcp/hooks/CLAUDE.md`: add `_phase-tier.js` ← `lib/models/tiers.ts` to the list of `_`-prefixed ports that each mirror one `src/lib` module, held by `phase-tier-parity.test.ts`
 
 #### Build Phase 4 Document
 
-- [ ] `reference/cli/plans.md`: a `plans next-session <name>` section — what it prints at each point in a plan's life (the next phase with its tier and model, `/falsify`, `/cleanup`, `/retrospective`, a blocker, an item waiting on a person), and that `plans approve` ends with it
+- [x] `reference/cli/plans.md`: a `plans next-session <name>` section — what it prints at each point in a plan's life (the next phase with its tier and model, `/falsify`, `/cleanup`, `/retrospective`, a blocker, an item waiting on a person), and that `plans approve` ends with it
 
 ## Files Affected
 
