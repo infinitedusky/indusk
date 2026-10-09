@@ -1,7 +1,7 @@
 ---
 title: "Clean release build — Test Plan"
 date: 2026-10-09
-status: draft
+status: accepted
 ---
 
 # Clean release build — Test Plan
