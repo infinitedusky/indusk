@@ -132,3 +132,5 @@ other phase recorded "nothing to change".
 - Live runs on Fly: 4 for A8 (3 found defects), 1 for A4
 - A Fly server: about 6 minutes to deploy and connect; about $8 a month by
   Fly's price list (machine $5.70, volume $0.45, dedicated IPv4 $2)
+
+Landed on main at 7a715f89, 2026-10-08.
