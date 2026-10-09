@@ -47,8 +47,8 @@ Rewrite the three system-tier tests the 2026-10-08 changes left behind so they a
 | A1 | The catchup skill's check passes on today's text ("open violations outrank the roadmap") and fails on a skill that puts the roadmap first | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over the catchup half of an-open-incident-stays-loud, worded to the meaning | apps/indusk-mcp/src/__tests__/always-on-health-tool.test.ts |
 | A2 | With the project's server unreachable, a behaviour promise with no incident reads hollow `unverified`, the promise whose break the admin recorded reads `amber`, and no chip reads green | Test Phase 1 | Test Phase 1 | passing | contract | the A17 regression guard, asserting what incident-recording made true | apps/indusk-admin/src/__tests__/http-promise-remote.test.ts |
 | A3 | Production's chip is red while the incident the admin recorded for its break is open, and `fixed` once that incident is fixed with `indusk promises fix` | Test Phase 1 | Test Phase 1 | passing | contract | lesson: a-fixed-break-is-history-not-health | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
-| A4 | Every system-tier test in dusk passes | Test Phase 1 | Build Phase 1 | written | contract | the release's precondition; the repair is done when this holds | apps/indusk-mcp/vitest.system.config.ts, apps/indusk-admin/vitest.system.config.ts, apps/vscode-extension/vitest.system.config.ts |
-| A5 | `indusk editor install`'s extension activates in a project with InDusk and stays inactive in one without when VS Code loads it as an installed extension, with no extension disabled and no development-mode load of ours | Build Phase 1 | Build Phase 1 | written | contract | a regression guard: A16 of vscode-extension proved activation only in development mode, under --disable-extensions (Sandy, 2026-10-09: "are you actually testing what you want to test?") | apps/vscode-extension/src/__tests__/install.contract.test.ts |
+| A4 | Every system-tier test in dusk passes | Test Phase 1 | Build Phase 1 | passing | contract | the release's precondition; the repair is done when this holds | apps/indusk-mcp/vitest.system.config.ts, apps/indusk-admin/vitest.system.config.ts, apps/vscode-extension/vitest.system.config.ts |
+| A5 | `indusk editor install`'s extension activates in a project with InDusk and stays inactive in one without when VS Code loads it as an installed extension, with no extension disabled and no development-mode load of ours | Build Phase 1 | Build Phase 1 | passing | contract | a regression guard: A16 of vscode-extension proved activation only in development mode, under --disable-extensions (Sandy, 2026-10-09: "are you actually testing what you want to test?") | apps/vscode-extension/src/__tests__/install.contract.test.ts |
 
 ## Checklist
 
@@ -81,13 +81,14 @@ Rewrite the three system-tier tests the 2026-10-08 changes left behind so they a
 
 **Tier**: med
 
-- [ ] Run the whole system tier and fix anything else it turns up that the three rewrites did not cover, each as its own item here
+- [x] Run the whole system tier and fix anything else it turns up that the three rewrites did not cover, each as its own item here
+  - 2026-10-09: `pnpm -w test:system` exit 0 after A5; nothing else turned up.
 - [x] A5 (discovered, Sandy 2026-10-09): `apps/vscode-extension/src/__tests__/install.contract.test.ts` launches VS Code with only the temporary `--extensions-dir` holding the installed extension, drops `--disable-extensions`, and points `extensionDevelopmentPath` at a minimal probe extension (in the test's fixtures) whose test reports whether `infinitedusky.indusk` is active — so ours loads as installed, not in development mode, and no "extensions temporarily disabled" window appears
 
 #### Build Phase 1 Verification
 
-- [ ] A4 passes: `pnpm -w test:system` exits 0, with each package's file and test counts recorded here
-- [ ] A5 passes: `cd apps/vscode-extension && node ../indusk-mcp/scripts/with-daemon-guard.js pnpm exec vitest run --config vitest.system.config.ts` — 3/3, and the VS Code log shows no "Loading development extension" line for `infinitedusky.indusk`
+- [x] A4 passes: `pnpm -w test:system` exits 0, with each package's file and test counts recorded here (2026-10-09: indusk-mcp 42 files / 170 tests; indusk-admin 13 files / 56 tests; vscode-extension 1 file / 3 tests; exit 0)
+- [x] A5 passes (2026-10-09: 3/3 in installed mode; the log assertion finds no "Loading development extension" line for infinitedusky.indusk, and `--disable-extensions` is gone from the launch args): `cd apps/vscode-extension && node ../indusk-mcp/scripts/with-daemon-guard.js pnpm exec vitest run --config vitest.system.config.ts` — 3/3, and the VS Code log shows no "Loading development extension" line for `infinitedusky.indusk`
 
 #### Build Phase 1 Context
 
