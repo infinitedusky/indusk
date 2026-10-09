@@ -17,8 +17,8 @@
 import { fencedLineMask, parsePhaseHeading } from "./_impl-headings.js";
 
 const TIERS = ["strong", "med", "weak", "baby"];
-// Every step `readWorkflowSteps` reads: the two it ran before tiers, and the five that carry a default tier.
-const STEPS = ["land", "release", "plan", "work", "falsify", "cleanup", "retrospective"];
+// Every step `readWorkflowSteps` reads: the two it ran before tiers, and the six that carry a default tier.
+const STEPS = ["land", "release", "plan", "work", "falsify", "cleanup", "audit", "retrospective"];
 const TIER_LINE = /^\*\*Tier\*\*:\s*(\S+)(?:\s+[—–-]+\s+(.*\S))?\s*$/;
 
 function phaseTierLines(implBody) {
