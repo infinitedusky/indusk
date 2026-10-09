@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.68.0] — 2026-10-09
+
 ### Added
 
 - **The Promises panel** (vscode-extension): an InDusk icon in the editor's activity bar opens every promise and its state, named for the project the window has open; broken ones first as cards, the rest grouped by plan, most recently run first; each opens to its tests and the code that keeps it, at the token's line; an activity section adds each run as it is recorded. `indusk promises health --json` lines now carry `runs`, and each promise its `plan`.
