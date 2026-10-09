@@ -6,11 +6,15 @@ export const TIERS = ["strong", "med", "weak", "baby"] as const;
 export type Tier = (typeof TIERS)[number];
 
 /** The skill steps that carry a default tier. */
-export const TIER_STEPS = ["plan", "work", "falsify", "cleanup", "retrospective"] as const;
+export const TIER_STEPS = ["plan", "work", "falsify", "cleanup", "audit", "retrospective"] as const;
 export type TierStep = (typeof TIER_STEPS)[number];
 
 export function isTier(value: unknown): value is Tier {
 	return typeof value === "string" && (TIERS as readonly string[]).includes(value);
+}
+
+export function isTierStep(value: unknown): value is TierStep {
+	return typeof value === "string" && (TIER_STEPS as readonly string[]).includes(value);
 }
 
 /** The tier config, or a tier a phase names, cannot be honoured; the message names the cause. */

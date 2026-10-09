@@ -5,7 +5,8 @@ import { buildReview, type Review } from "../../lib/build/review.js";
 import { parsePhaseRef } from "../../lib/impl-headings.js";
 import { nextSessionForPlan } from "../../lib/models/next-session.js";
 import { phaseModel } from "../../lib/models/phase-model.js";
-import { TierConfigError } from "../../lib/models/tier-names.js";
+import { isTierStep, TIER_STEPS, TierConfigError } from "../../lib/models/tier-names.js";
+import { readTierConfig, tierForPhase } from "../../lib/models/tiers.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import {
 	acceptPlan,
@@ -60,9 +61,32 @@ export function plansApprove(cwd: string, name: string): Promise<void> {
 	});
 }
 
-/** `indusk plans model <name> --phase <ref>` — the tier and model a phase is built on, or `session`. */
-export function plansModel(cwd: string, name: string, phase: string): Promise<void> {
+/**
+ * `indusk plans model <name> --phase <ref> | --step <step>` — the tier and model a phase is built on,
+ * or a step's default tier (no phase override), or `session`.
+ */
+export function plansModel(
+	cwd: string,
+	name: string,
+	opts: { phase?: string; step?: string },
+): Promise<void> {
 	return planVerb(async () => {
+		const { phase, step } = opts;
+		if (phase !== undefined && step !== undefined) {
+			throw new PlanCommandRefusal("--phase and --step are alternatives; give one");
+		}
+		if (step !== undefined) {
+			if (!isTierStep(step)) {
+				throw new PlanCommandRefusal(
+					`--step must name a step with a tier (${TIER_STEPS.join(", ")}); got "${step}"`,
+				);
+			}
+			const answer = tierForPhase(readTierConfig(cwd), step, undefined);
+			return answer ? `${answer.tier} ${answer.model}` : "session";
+		}
+		if (phase === undefined) {
+			throw new PlanCommandRefusal("name what to answer for: --phase <ref> or --step <step>");
+		}
 		const ref = parsePhaseRef(/^\d+$/.test(phase.trim()) ? `Phase ${phase.trim()}` : phase);
 		if (!ref) {
 			throw new PlanCommandRefusal(

@@ -46,6 +46,7 @@ export interface WorkflowSteps {
 	work?: StepTier;
 	falsify?: StepTier;
 	cleanup?: StepTier;
+	audit?: StepTier;
 	retrospective?: StepTier;
 	land?: {
 		/** The slow tests, run once per piece of code (`indusk checks slow`). */

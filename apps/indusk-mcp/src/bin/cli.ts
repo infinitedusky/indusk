@@ -975,15 +975,16 @@ plansCmd
 plansCmd
 	.command("model <name>")
 	.description(
-		"The tier and model a phase is built on — `<tier> <model>`, or `session` when the project names no model for it",
+		"The tier and model a phase is built on, or a step runs on — `<tier> <model>`, or `session` when the project names no model for it",
 	)
-	.requiredOption(
-		"--phase <ref>",
-		'The phase: "Build Phase 1", "Test Phase 1" or a bare build number',
+	.option("--phase <ref>", 'The phase: "Build Phase 1", "Test Phase 1" or a bare build number')
+	.option(
+		"--step <step>",
+		"A step's default tier instead of a phase's: plan, work, falsify, cleanup, audit or retrospective",
 	)
-	.action(async (name: string, opts: { phase: string }) => {
+	.action(async (name: string, opts: { phase?: string; step?: string }) => {
 		const { plansModel } = await import("./commands/plans.js");
-		await plansModel(process.cwd(), name, opts.phase);
+		await plansModel(process.cwd(), name, opts);
 	});
 
 plansCmd
