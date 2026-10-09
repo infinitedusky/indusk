@@ -57,7 +57,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 | A10 | An audit.md full of findings leaves readiness passing and `plans next` at `review`; an empty audit.md does the same | Test Phase 1 | Test Phase 1 | passing | unit | promise: an-audit-blocks-nothing | apps/indusk-mcp/src/__tests__/audit-gate.test.ts |
 | A11 | `indusk plans review` prints the same evidence with and without audit.md in the plan folder | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A12 | `plans model <plan> --phase <ref>` answers as before for a config with and without `steps.audit` | Test Phase 1 | Test Phase 1 | written | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/__tests__/plans-model.test.ts |
-| A13 | The planner writes a `**Tier**:` line under every phase it authors: the skill's impl step says so, the planning rules say so, and the impl template carries the line | Test Phase 1 | Build Phase 3 | planned | unit | the step model-per-phase decided ("the planner decides each phase's model when it writes the phase") and never landed — a pin over the skill's text, since prose has no other test | apps/indusk-mcp/src/__tests__/planner-tier-line.test.ts |
+| A13 | The planner writes a `**Tier**:` line under every phase it authors: the skill's impl step says so, the planning rules say so, and the impl template carries the line | Test Phase 1 | Build Phase 3 | written | unit | the step model-per-phase decided ("the planner decides each phase's model when it writes the phase") and never landed — a pin over the skill's text, since prose has no other test | apps/indusk-mcp/src/__tests__/planner-tier-line.test.ts |
 
 ## Checklist
 
