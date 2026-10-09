@@ -1,4 +1,6 @@
-import type { View } from "./view.js";
+import { anyTokenPattern } from "@infinitedusky/indusk-mcp/tokens";
+import { stateOf } from "./markers.js";
+import { sourcesInOrder, stateIn, type View } from "./view.js";
 
 /** One place a promise lives: a test that proves it, or code that keeps it. */
 export interface Location {
@@ -34,6 +36,60 @@ export interface PanelModel {
  * name; each with its tests and sites at the line its token is on. `files`
  * holds the text of each listed file the editor could read.
  */
-export function panelModel(_view: View | null, _files: Map<string, string>): PanelModel {
-	return { broken: [], rest: [], notReading: true };
+export function panelModel(view: View | null, files: Map<string, string>): PanelModel {
+	if (!view) return { broken: [], rest: [], notReading: true };
+	const all = view.line.promises.map((p): PanelPromise => {
+		const { text, tone } = stateOf(p.name, view);
+		return {
+			name: p.name,
+			kind: p.kind,
+			statement: p.statement,
+			state: text,
+			tone,
+			...(tone === "broken" ? whereItBroke(view, p.name) : {}),
+			locations: [
+				...p.tests.map((path) => locate("test", path, p.name, files)),
+				...(p.sites ?? []).map((path) => locate("site", path, p.name, files)),
+			],
+		};
+	});
+	const byName = (a: PanelPromise, b: PanelPromise) => a.name.localeCompare(b.name);
+	return {
+		broken: all
+			.filter((p) => p.tone === "broken")
+			.sort((a, b) => (b.brokeAt ?? "").localeCompare(a.brokeAt ?? "") || byName(a, b)),
+		rest: all.filter((p) => p.tone !== "broken").sort(byName),
+		notReading: view.notReading,
+	};
+}
+
+/** The first source, production leading, where the promise is broken, with its facts. */
+function whereItBroke(
+	view: View,
+	name: string,
+): Pick<PanelPromise, "source" | "brokeAt" | "symptom"> {
+	for (const source of sourcesInOrder(view)) {
+		const { shown, row } = stateIn(source, name);
+		if (shown !== "broken" || !row) continue;
+		return {
+			source: source.name,
+			...(row.lastSeen ? { brokeAt: row.lastSeen } : {}),
+			...(row.symptom ? { symptom: row.symptom } : {}),
+		};
+	}
+	return {};
+}
+
+/** Where `name`'s token is in `path`, from the file's text; no line when it is not there. */
+function locate(
+	kind: Location["kind"],
+	path: string,
+	name: string,
+	files: Map<string, string>,
+): Location {
+	const lines = files.get(path)?.split("\n") ?? [];
+	const line = lines.findIndex((text) =>
+		[...text.matchAll(anyTokenPattern("promise"))].some((m) => m[1] === name),
+	);
+	return { kind, path, line: line === -1 ? null : line };
 }

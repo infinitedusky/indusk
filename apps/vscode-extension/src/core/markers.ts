@@ -46,27 +46,39 @@ function describe(
 	path: string,
 	view: View | null,
 ): { text: string; tone: Marker["tone"] } {
-	if (!view) return { text: `${name} · not reading`, tone: "unknown" };
-	const promise = promiseOf(view, name);
-	if (!promise) return { text: `${name} · not in this project`, tone: "unknown" };
-	if (promise.tests.some((t) => path === t || path.endsWith(`/${t}`))) {
+	if (promiseOf(view, name)?.tests.some((t) => path === t || path.endsWith(`/${t}`))) {
 		return { text: `${name} · proved here`, tone: "proves" };
 	}
-	if (view.notReading) return { text: `${name} · not reading`, tone: "unknown" };
-	if (promise.kind !== "behaviour") return { text: `${name} · watched by the tests`, tone: "ok" };
+	const s = stateOf(name, view);
+	return { text: `${name} · ${s.text}`, tone: s.tone };
+}
+
+/**
+ * A promise's state as the editor words it, wherever it is shown — on its
+ * line or in the panel — so the two can never word it differently.
+ */
+export function stateOf(
+	name: string,
+	view: View | null,
+): { text: string; tone: "broken" | "ok" | "unknown" } {
+	if (!view) return { text: "not reading", tone: "unknown" };
+	const promise = promiseOf(view, name);
+	if (!promise) return { text: "not in this project", tone: "unknown" };
+	if (view.notReading) return { text: "not reading", tone: "unknown" };
+	if (promise.kind !== "behaviour") return { text: "watched by the tests", tone: "ok" };
 	const [first, ...rest] = sourcesInOrder(view);
-	if (!first) return { text: `${name} · not reading`, tone: "unknown" };
+	if (!first) return { text: "not reading", tone: "unknown" };
 	const lead = stateIn(first, name);
 	if (lead.shown === "unreadable" || lead.shown === "watcher blind") {
-		return { text: `${name} · ${first.name} ${lead.shown}`, tone: "unknown" };
+		return { text: `${first.name} ${lead.shown}`, tone: "unknown" };
 	}
-	if (lead.shown === "broken") return { text: `${name} · broken (${first.name})`, tone: "broken" };
+	if (lead.shown === "broken") return { text: `broken (${first.name})`, tone: "broken" };
 	// A break in a later source (local, beside a production that holds) is
-	// still shown on the line: it is the change breaking something before it ships.
+	// still shown: it is the change breaking something before it ships.
 	const later = rest.find((s) => stateIn(s, name).shown === "broken");
-	if (later) return { text: `${name} · ${lead.shown}, broken (${later.name})`, tone: "broken" };
+	if (later) return { text: `${lead.shown}, broken (${later.name})`, tone: "broken" };
 	return {
-		text: `${name} · ${lead.shown}`,
+		text: lead.shown,
 		tone: lead.shown === "holding" || lead.shown === "fixed" ? "ok" : "unknown",
 	};
 }

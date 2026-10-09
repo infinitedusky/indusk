@@ -23,7 +23,7 @@ function twoBreaks(): View {
 		tests: ["src/book.test.ts"],
 		sites: ["src/book.ts"],
 	});
-	const local = l.sources[1] as { rows: Record<string, unknown>[] };
+	const local = l.sources[1] as unknown as { rows: Record<string, unknown>[] };
 	local.rows.push({
 		promise: "seats-booked",
 		state: "red",
@@ -33,7 +33,7 @@ function twoBreaks(): View {
 		traceId: "t-b",
 		tests: ["src/book.test.ts"],
 	});
-	const prod = l.sources[0] as { rows: Record<string, unknown>[] };
+	const prod = l.sources[0] as unknown as { rows: Record<string, unknown>[] };
 	prod.rows.push({
 		promise: "seats-booked",
 		state: "green",
