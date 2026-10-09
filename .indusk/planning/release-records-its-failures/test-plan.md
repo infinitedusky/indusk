@@ -1,7 +1,7 @@
 ---
 title: "release-records-its-failures — Test Plan"
 date: 2026-10-09
-status: draft
+status: accepted
 ---
 
 # release-records-its-failures — Test Plan
