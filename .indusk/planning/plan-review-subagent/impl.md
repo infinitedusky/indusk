@@ -1,7 +1,7 @@
 ---
 title: "plan-review-subagent — the audit step"
 date: 2026-10-09
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -58,6 +58,11 @@ Every plan is read once before it closes by a reader that did not build it, on t
 | A12 | `plans model <plan> --phase <ref>` answers as before for a config with and without `steps.audit` | Test Phase 1 | Build Phase 2 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/__tests__/plans-model.test.ts |
 | A13 | The planner writes a `**Tier**:` line under every phase it authors: the skill's impl step says so, the planning rules say so, and the impl template carries the line | Test Phase 1 | Build Phase 3 | passing | unit | the step model-per-phase decided ("the planner decides each phase's model when it writes the phase") and never landed — a pin over the skill's text, since prose has no other test | apps/indusk-mcp/src/__tests__/planner-tier-line.test.ts |
 | A14 | An admin build runs each step's session on the model its tier names: a `work` step on its phase's model (the phase's `**Tier**:` line, or the work step's default), `falsify`/`cleanup`/`audit`/`retrospective` on their step's default tier; a project with no tiers passes no model, and the session runs on `claude`'s own | Build Phase 2 | Build Phase 2 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/build/step-model.test.ts |
+| A15 | The diff the auditor gets holds none of the impl's changes since approval: a plan whose branch appended a falsification phase and a cleanup phase to its impl yields a `diff` with neither phase's title nor any line under `.indusk/`, while the code file is still there | Build Phase 4 | Build Phase 4 | planned | unit | promise: the-auditor-sees-the-plan-not-the-session | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
+| A16 | The approved impl is named by a path the reader cannot mistake for the working file: `implAsApproved.path` is `<approvedAt>:<plan dir>/impl.md`, and `git show` of that path in the trunk prints `implAsApproved.text`; the working copy's `impl.md` path appears in no field but `trajectoryNow` | Build Phase 4 | Build Phase 4 | planned | unit | promise: the-auditor-sees-the-plan-not-the-session | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
+| A17 | The inputs carry the files the plan did not touch: a tracked file the branch never changed appears in the inputs' `tree`, and is absent from `stat` | Build Phase 4 | Build Phase 4 | planned | unit | promise: the-auditor-sees-the-plan-not-the-session | apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts |
+| A18 | A workbench plan approved with `indusk plans approve` and built on its repo's plan branch gets its inputs: `plans audit-inputs` exits 0, `implAsApproved` is the impl at the root's `plan(<plan>): approved` commit, and `diff` is the code repo's plan branch against its trunk | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes | apps/indusk-mcp/src/__tests__/plans-workbench.test.ts |
+| A19 | An impl with `audit: skipped` and `audit_reason` shows the audit among `plans review`'s skipped rituals with its reason, and the admin's review panel words it "Audit skipped", never "Cleanup skipped" | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts, apps/indusk-admin/src/components/session/ReviewPanel.test.tsx |
 
 ## Checklist
 
@@ -192,6 +197,42 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 - [x] `reference/skills/audit.md` (new): what the auditor gets, the question list, the shape of `audit.md`, the skip pair; `guide/plan-lifecycle.md`: the close-out diagram gains `/audit`; changelog `[Unreleased]`
 
+### Build Phase 4: Falsification — what the auditor is handed, and what the person is shown
+
+**Tier**: med
+
+**Goal**: verify whether the attested state holds against four ways the auditor still sees the builder's notes or cannot be handed the plan at all, and one way a skipped audit is hidden from the person. Each row is one hypothesis; each item the fix it needs.
+
+**Read, not run (A15):** `auditInputs` filters the diff with `isBookkeeping`, which keeps everything under the plan's own folder — so the plan's `impl.md` diff since approval is in `diff`, falsification and cleanup phases and their findings included. A7, the trajectory row asserting the diff keeps the code and drops bookkeeping, pins this: its test asserts `expect(diff).toContain(FALSIFICATION)`. The promise `the-auditor-sees-the-plan-not-the-session` says "nothing … from the builder's own findings", and the ADR chose the impl at the approval merge precisely so the reader would not get them; the diff hands them back.
+
+**Read, not run (A16):** `implAsApproved.path` and `trajectoryNow.path` are both `<plan dir>/impl.md` — the working file. The skill's step 3 tells the reader "to read the files at the paths in the inputs rather than relying on your summary". A reader that obeys opens the current impl, with the falsification and cleanup phases, and the approved text is never read.
+
+**Read, not run (A17):** `stat` is `git diff --stat <trunk>...<branch>` — the files the branch changed, nothing else. The ADR calls it "a repository-wide `--stat`" and the skill's question 6 asks for "files the plan did not touch that a promise depends on" using it. No file the plan did not touch is in it, so question 6 has no input.
+
+**Read, not run (A18):** `auditInputs` goes through `planBranch`, which refuses any plan whose copy is not a worktree ("is not on its own branch"), and `approvalMerge` reads only `--merges`. A workbench plan's approval (`approveWorkbenchPlan`) is a plain commit at the workbench root with subject `plan(<plan>): approved`, and its documents are not in a worktree. Every other plan verb — start, approve, accept, review, land — dispatches through `workbenchPlan`; `audit-inputs` does not, so every workbench plan's audit refuses, and an unattended build stops at it as a blocker.
+
+**Read, not run (A19):** `buildReview`'s `skippedRituals` lists falsification and cleanup skips only; an `audit: skipped` pair is not in `plans review`'s evidence. The admin's `ReviewPanel` words any ritual that is not `falsification` as "Cleanup", so adding `audit` to the list without the panel would mislabel it. An unattended audit that writes the skip pair is invisible to the person accepting the build.
+
+**Not investigated further, and why:** the readiness gate (`isAuditSkipped`/`isAuditComplete` mirror the other two rituals' shape and A1, A2, A10 cover the four cases); the runner's progress check (`fingerprint` includes `readiness.missing`, so an audit that writes `audit.md` counts as progress, and one that does not falls into the existing no-progress stop); a `work` step's model when one session works several phases (`/work` spawns each phase on its own model, so the session's model does not decide the phase's); `approvalMerge`'s prefix match (the `)` in `plan(<name>)` stops one plan's name matching another's, and `impl approved` does not start with `approved`).
+
+- [ ] `lib/audit/inputs.ts`: the diff leaves out every path under `.indusk/` — the plan's documents are handed whole in `documents` and `implAsApproved`, so its folder's diff adds only what the builder wrote after approval; `isBookkeeping` goes. A7's test line `expect(diff).toContain(FALSIFICATION)` asserted the leak as behaviour: it becomes `not.toContain`, and A7's Asserts text drops "other than the plan's own folder" (A15)
+- [ ] `lib/audit/inputs.ts`: `implAsApproved.path` is `<approvedAt>:<plan dir>/impl.md`, the spelling `git show` reads; `skills/audit.md` step 3 says the approved impl is read from that text or with `git show <path>` in the trunk, never from the working file (A16)
+- [ ] `lib/audit/inputs.ts`: a `tree` field — `git ls-tree -r --name-only <branch>` less `.indusk/` — beside `stat`; `skills/audit.md` question 6 and the ADR's D2 name `tree` as the files the plan did not touch, `stat` as the ones it did (A17)
+- [ ] `lib/audit/inputs.ts`: `auditInputs` asks `workbenchPlan` first, as `buildReview` does: documents from `wp.dir`, the approved impl from the latest commit on the root's branch whose subject starts `plan(<plan>): approved` (merge or not — `approvalMerge` takes a `merges` flag), the diff and the tree from `wp.repoTrunk`, `<trunkBranch>...<code.branch>` (A18)
+- [ ] `lib/build/review.ts`: `skippedRituals` gains `{ ritual: "audit", check: isAuditSkipped(implText) }` and its type `"audit"`; `apps/indusk-admin` `ReviewPanel.tsx` (and `PlanDetail.tsx`, `FalsificationSection.tsx` where they word a ritual) name each ritual from one map rather than the falsification-or-else-cleanup ternary — admin change committed separately (A19)
+
+#### Build Phase 4 Verification
+
+- [ ] A15–A19 pass; A5–A7, A10, A11 still do (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/plans-audit-inputs.test.ts src/__tests__/plans-workbench.test.ts src/__tests__/plans-review.test.ts src/__tests__/audit-gate.test.ts && cd ../indusk-admin && pnpm exec vitest run src/components/session/ReviewPanel.test.tsx src/components/PlanDetail.skipped-rituals.test.tsx`); tsc and biome clean on the files changed, in indusk-mcp and indusk-admin
+
+#### Build Phase 4 Context
+
+- [ ] `apps/indusk-mcp/CLAUDE.md`, the `lib/audit/` line: nothing under `.indusk/` reaches the auditor's diff — the plan's documents are handed whole, and the folder's diff since approval is the builder's notes; a field's `path` names where its text was read (`<sha>:<path>` for a committed version), never a working file holding something else
+
+#### Build Phase 4 Document
+
+- [ ] `reference/cli/plans.md`: `plans audit-inputs` gains `tree`, the diff leaves out `.indusk/`, `implAsApproved.path` is `<sha>:<path>`, and a workbench plan's approval is the root's commit; `reference/skills/audit.md`: question 6 reads `tree`, the reader reads the approved impl from its text
+
 ## Files Affected
 
 | File | Change |
@@ -199,7 +240,8 @@ Every plan is read once before it closes by a reader that did not build it, on t
 | `apps/indusk-mcp/src/lib/cleanup/gate.ts` | `isAuditSkipped`, `isAuditComplete`, `audit` in readiness |
 | `apps/indusk-mcp/src/lib/build/{next-step,runner,build-session}.ts` | the `audit` step |
 | `apps/indusk-mcp/src/lib/models/{next-session,tier-names}.ts` | `/audit`; `audit` in `TIER_STEPS` |
-| `apps/indusk-mcp/src/lib/audit/inputs.ts` | new |
+| `apps/indusk-mcp/src/lib/audit/inputs.ts` | new; Build Phase 4: the diff without `.indusk/`, `<sha>:<path>`, `tree`, workbench plans |
+| `apps/indusk-mcp/src/lib/build/review.ts`, `apps/indusk-admin/src/components/{session/ReviewPanel,PlanDetail,FalsificationSection}.tsx` | Build Phase 4: the audit among the skipped rituals |
 | `apps/indusk-mcp/src/bin/{cli,commands/plans}.ts` | `plans audit-inputs`, `plans model --step`, `describeStep` |
 | `apps/indusk-mcp/skills/{audit,retrospective,cleanup,falsify,planner}.md` | the skill; the hand-offs; the planner's tier line |
 | `apps/indusk-mcp/templates/planning/CLAUDE.md`, `apps/indusk-mcp/CLAUDE.md`, `CLAUDE.md` | context |
