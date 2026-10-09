@@ -1,0 +1,14 @@
+/**
+ * The four tiers and the steps that name a default one (model-per-phase). Names
+ * only, so the config reader and `tiers.ts` can both import them.
+ */
+export const TIERS = ["strong", "med", "weak", "baby"] as const;
+export type Tier = (typeof TIERS)[number];
+
+/** The skill steps that carry a default tier. */
+export const TIER_STEPS = ["plan", "work", "falsify", "cleanup", "retrospective"] as const;
+export type TierStep = (typeof TIER_STEPS)[number];
+
+export function isTier(value: unknown): value is Tier {
+	return typeof value === "string" && (TIERS as readonly string[]).includes(value);
+}

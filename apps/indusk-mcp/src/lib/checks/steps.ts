@@ -1,4 +1,5 @@
 import { type EnsureResult, ensureConfigBlock, readConfig, type WorkflowSteps } from "../config.js";
+import { isTier, TIER_STEPS, TIERS, type Tier } from "../models/tier-names.js";
 
 /**
  * A project's declared step tooling, `workflow.steps` (release-checks-run-once
@@ -16,6 +17,21 @@ export function readWorkflowSteps(checkout: string): WorkflowSteps {
 	if (steps === undefined) return {};
 	if (!isObject(steps)) throw new Error("workflow.steps must be an object of steps");
 	const out: WorkflowSteps = {};
+	const known = new Set<string>(["land", "release", ...TIER_STEPS]);
+	for (const key of Object.keys(steps)) {
+		if (!known.has(key)) throw new Error(`workflow.steps.${key} is not a step InDusk reads`);
+	}
+	for (const step of TIER_STEPS) {
+		if (steps[step] === undefined) continue;
+		const tier = section(steps[step], step).tier;
+		if (tier === undefined) continue;
+		if (!isTier(tier)) {
+			throw new Error(
+				`workflow.steps.${step}.tier must be one of ${TIERS.join(", ")}; got ${JSON.stringify(tier)}`,
+			);
+		}
+		out[step] = { tier };
+	}
 	if (steps.land !== undefined) {
 		const land = section(steps.land, "land");
 		out.land = {
@@ -60,6 +76,30 @@ function paths(v: unknown, key: string): string[] | undefined {
 		throw new Error(`workflow.steps.${key} must be a list of paths`);
 	}
 	return v;
+}
+
+/**
+ * `workflow.tiers`, each tier's model alias (model-per-phase). A tier left out
+ * has no model; a key that is not a tier, or a model that is not a non-empty
+ * string, is refused naming it — a mistyped tier would otherwise build every
+ * phase on the session's own model without a word.
+ */
+export function readTiers(checkout: string): Partial<Record<Tier, string>> {
+	const tiers = (readConfig(checkout) as { workflow?: { tiers?: unknown } } | null)?.workflow
+		?.tiers;
+	if (tiers === undefined) return {};
+	if (!isObject(tiers)) throw new Error("workflow.tiers must be an object of tiers");
+	const out: Partial<Record<Tier, string>> = {};
+	for (const [key, model] of Object.entries(tiers)) {
+		if (!isTier(key)) {
+			throw new Error(`workflow.tiers.${key} is not a tier; the tiers are ${TIERS.join(", ")}`);
+		}
+		if (typeof model !== "string" || model.trim() === "") {
+			throw new Error(`workflow.tiers.${key} must be a model alias (a non-empty string)`);
+		}
+		out[key] = model;
+	}
+	return out;
 }
 
 /**

@@ -32,6 +32,7 @@ import {
 	phaseSequence,
 	unterminatedFenceLine,
 } from "./_impl-headings.js";
+import { tierRuleProblems, workDefaultTier } from "./_phase-tier.js";
 import { parseRegister } from "./_register.js";
 import { isTestLevel, TEST_LEVELS } from "./_test-levels.js";
 import { parseTrajectoryFromBody } from "./_trajectory-parser.js";
@@ -355,6 +356,18 @@ if (phases.length === 0 && bodyHasChecklistItems) {
 
 // Validate each phase
 const errors = [];
+
+// A phase's tier is one of the four, and a tier other than the work step's
+// default says why (model-per-phase A6, A7).
+{
+	let config = null;
+	try {
+		config = JSON.parse(readFileSync(`${statePath}/.indusk/config.json`, "utf-8"));
+	} catch {
+		// no config, no default tier: only an unknown tier is refused
+	}
+	errors.push(...tierRuleProblems(body, workDefaultTier(config)));
+}
 for (const phase of phases) {
 	if (!phase.hasImplementation) continue; // Skip phases with no impl items (might be a header-only outline)
 

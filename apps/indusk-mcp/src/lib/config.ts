@@ -41,6 +41,12 @@ export interface VerifyToolConfig {
  * though only landing's slow tests and release are read today.
  */
 export interface WorkflowSteps {
+	/** The default tier each skill step runs on (model-per-phase); `workflow.tiers` names the model. */
+	plan?: StepTier;
+	work?: StepTier;
+	falsify?: StepTier;
+	cleanup?: StepTier;
+	retrospective?: StepTier;
 	land?: {
 		/** The slow tests, run once per piece of code (`indusk checks slow`). */
 		slow_tests?: string;
@@ -59,9 +65,16 @@ export interface WorkflowSteps {
 	};
 }
 
+/** A step's default tier: strong, med, weak or baby. */
+export interface StepTier {
+	tier?: string;
+}
+
 export interface InduskConfig {
 	mode: "full" | "local";
 	workflow?: {
+		/** Each tier's model alias, as Claude Code's Agent `model` accepts it (`opus`, `sonnet`, `haiku`, `fable`). */
+		tiers?: { strong?: string; med?: string; weak?: string; baby?: string };
 		steps?: WorkflowSteps;
 	};
 	verify: {
