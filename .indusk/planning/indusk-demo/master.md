@@ -15,6 +15,7 @@ subplans:
   - demo-app-template
   - incident-recording
   - vscode-extension
+  - display-names
   - plan-cockpit
   - demo-rehearsal
   - server-provisioning
@@ -177,5 +178,6 @@ this file now carries it so the sidebar and the numbers agree.
 |---|---|---|
 | 8 | [incident-recording](../archive/incident-recording/retrospective.md) | the watcher runs by itself; a break becomes an incident and announces itself — closed 2026-10-08 |
 | 9 | [vscode-extension](../archive/vscode-extension/retrospective.md) | the break moment in the editor: markers, the Promises panel, "fix with Claude" — closed 2026-10-09 |
+| 9a | [display-names](../display-names/brief.md) | promises read as words, plans by title with their start, landing and release dates, from one package module plan-cockpit reuses — approved 2026-10-09 |
 | 10 | plan-cockpit | stage 1 of the promise UI: the dashboard, the promise page with its proof, the plan page — being opened |
 | 11 | [contract-ui](../contract-ui/brief.md) | stage 2: the home view as the hierarchy above stage 1's pages, statuses derived — after the launch, after plan-premises |
