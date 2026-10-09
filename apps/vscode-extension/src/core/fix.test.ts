@@ -68,4 +68,29 @@ describe("fix with Claude", () => {
 		expect(both.terminal.command).toContain("broken in production");
 		expect(fixFor(view({ localState: "red" }), "no-such-promise", ctx)).toBeNull();
 	});
+
+	it("A20 — span text reaches the terminal with no control characters and on one line", () => {
+		const a = fixAction(
+			{
+				...broken,
+				symptom: "x\u0003rm -rf ~\nmore\u001b[2J",
+				traceId: "t\u0003\n1",
+				statement: "A seat\nis held.",
+			},
+			{ projectRoot: "/p", claudeOnPath: true },
+		);
+		if (!("terminal" in a)) throw new Error("no terminal");
+		// biome-ignore lint/suspicious/noControlCharactersInRegex: the assertion is about control characters
+		expect(a.terminal.command).not.toMatch(/[\u0000-\u0009\u000b-\u001f\u007f]/);
+		const body = a.terminal.command.slice("claude ".length);
+		const lines = body.split("\n");
+		expect(
+			lines.find((l) => l.includes("Symptom:")),
+			"the symptom on one line",
+		).toContain("rm -rf ~");
+		expect(
+			lines.some((l) => l.trim() === "more"),
+			"nothing from the symptom on a line of its own",
+		).toBe(false);
+	});
 });

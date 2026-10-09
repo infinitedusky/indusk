@@ -55,4 +55,14 @@ describe("markers", () => {
 		expect(h).toMatch(/local: holding/);
 		expect(h).toContain("2026-10-08 12:20");
 	});
+
+	it("A22 — a file outside the project, or inside a nested InDusk project, gets no marker from this one", () => {
+		const scope = { nested: ["examples/seat-holds"] };
+		const call = markers as unknown as (f: unknown, v: unknown, s: unknown) => unknown[];
+		expect(call({ path: "../other/src/x.ts", text: code }, view(), scope)).toEqual([]);
+		expect(
+			call({ path: "examples/seat-holds/src/telemetry.ts", text: code }, view(), scope),
+		).toEqual([]);
+		expect(call({ path: "src/telemetry.ts", text: code }, view(), scope)).toHaveLength(1);
+	});
 });

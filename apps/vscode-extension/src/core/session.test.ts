@@ -62,4 +62,17 @@ describe("session", () => {
 			"seats-held · not reading",
 		);
 	});
+
+	it("A18 — a break is told once while it lasts, across a read that fails and a second violation", () => {
+		let s = startSession(5_000);
+		const first = onLine(s, line({ productionState: "red" }), at(0));
+		expect(first.notify).toHaveLength(1);
+		s = first.session;
+		const failed = onLine(s, line({ productionOk: false }), at(5));
+		expect(failed.notify).toEqual([]);
+		const back = onLine(failed.session, line({ productionState: "red" }), at(10));
+		expect(back.notify, "the same break, read again after a failed read").toEqual([]);
+		const second = onLine(back.session, line({ productionState: "red", traceId: "t-9" }), at(15));
+		expect(second.notify, "another late release while the promise is still broken").toEqual([]);
+	});
 });
