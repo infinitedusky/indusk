@@ -67,3 +67,28 @@ describe("one writer of incidents", () => {
 		).toEqual(["lib/promises/record.ts"]);
 	});
 });
+
+/**
+ * incident-recording A32, at cleanup — promise: one-definition-per-shared-rule.
+ * `indusk promises status` and the admin's incidents table say an incident's
+ * age; they said it with two copies of the same eight lines, one per package.
+ * One function, in a module the admin's browser-rendered table can import.
+ */
+describe("A32 — an incident's age is worded once", () => {
+	const ADMIN_SRC = join(SRC, "..", "..", "indusk-admin", "src");
+	const definers = (root: string, prefix: string) =>
+		globSync("**/*.{ts,tsx}", {
+			cwd: root,
+			nodir: true,
+			ignore: [...IGNORE, "**/*.test.tsx", "**/node_modules/**", "**/.next/**"],
+		})
+			.filter((f) => /plural\(days, "day"\)/.test(readFileSync(join(root, f), "utf-8")))
+			.map((f) => `${prefix}${f}`);
+
+	it("the wording lives only in lib/promises/age.ts", () => {
+		expect(
+			[...definers(SRC, ""), ...definers(ADMIN_SRC, "admin:")].sort(),
+			"lesson: structural-single-definition-test-for-must-agree-invariants — two copies of one wording drift apart",
+		).toEqual(["lib/promises/age.ts"]);
+	});
+});
