@@ -1,7 +1,7 @@
 ---
 title: "VS Code extension — promises in the editor, the break where the fix happens"
 date: 2026-10-08
-status: draft
+status: accepted
 workflow: feature
 ---
 
