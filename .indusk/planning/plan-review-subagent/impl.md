@@ -291,7 +291,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 #### Build Phase 6 Context
 
-- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`, the `_phase-tier.js` entry: its `STEPS` must name every step `TIER_STEPS` names, and the parity test now builds a case from `TIER_STEPS`, so a step added to one and not the other fails
+- [x] `apps/indusk-mcp/hooks/CLAUDE.md`, the `_phase-tier.js` entry: its `STEPS` must name every step `TIER_STEPS` names, and the parity test now builds a case from `TIER_STEPS`, so a step added to one and not the other fails
 
 #### Build Phase 6 Document
 
