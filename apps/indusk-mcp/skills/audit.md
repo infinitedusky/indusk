@@ -24,11 +24,11 @@ The audit is **advisory**. `audit.md` must exist (or the impl must say why the a
    indusk plans audit-inputs {plan}
    ```
 
-   It prints JSON: `documents` (brief, test plan, ADR), `implAsApproved`, `trajectoryNow`, `diff`, `stat`, `approvedAt`. If it refuses because no approval merge is found, history was rewritten: ask the person for the merge sha and rerun with `--approved <sha>`. Do not audit from the working copy's impl instead — it holds the falsification and cleanup phases the reader must not see.
+   It prints JSON: `documents` (brief, test plan, ADR), `implAsApproved`, `trajectoryNow`, `diff`, `stat` (the files the plan changed), `tree` (every tracked file), `approvedAt`. If it refuses because no approval merge is found, history was rewritten: ask the person for the merge sha and rerun with `--approved <sha>`. Do not audit from the working copy's impl instead — it holds the falsification and cleanup phases the reader must not see.
 
 3. **Spawn the reader.** Call the Agent tool with `model` set to the model step 1 named (omit `model` when it printed `session`). The prompt is the inputs plus the questions below, and nothing else: do not paste your conversation, your own notes, `research.md`, `current.md`, or the falsification and cleanup findings. The point of a second reader is that it has not read the first reader's notes.
 
-   Tell the reader to read the files at the paths in the inputs rather than relying on your summary, and to write `.indusk/planning/{plan}/audit.md` (in the plan's worktree) in the shape below.
+   Tell the reader to read the documents at their paths rather than relying on your summary, and to read the approved impl from `implAsApproved.text`, or with `git show <implAsApproved.path>` in the trunk (the path is `<sha>:<file>`, a committed version) — never from the working `impl.md`, which holds the falsification and cleanup phases; `trajectoryNow` is the only field that names the working file. Tell it to write `.indusk/planning/{plan}/audit.md` (in the plan's worktree) in the shape below.
 
 4. **Record the model.** The Agent reports the model it ran on; print it in your reply (`audit ran on claude-…`). If the spawn did not honour the model, say so plainly — do not claim a tier that was not used.
 
@@ -51,7 +51,7 @@ Put these to the reader, verbatim, each as one `##` heading in `audit.md`:
 3. **What does the code do that the brief never promised?** Behaviour present in the diff with no promise, expectation or scope line behind it.
 4. **Which rejected ADR alternative does the code quietly take?** Where the implementation matches something the ADR's Alternatives Considered rejected.
 5. **Which skip reason would you not accept?** Any `skipped` row, `(none needed)` gate, or `*_skipped` frontmatter pair whose reason does not hold.
-6. **What else would have to change for each promise to hold?** Using the `--stat` of the whole tree: files the plan did not touch that a promise depends on.
+6. **What else would have to change for each promise to hold?** Using `tree` (every tracked file) against `stat` (the files the plan changed): files the plan did not touch that a promise depends on.
 
 ## The shape of `audit.md`
 
