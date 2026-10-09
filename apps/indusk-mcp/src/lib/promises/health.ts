@@ -490,6 +490,12 @@ export interface HealthLineRow {
 /** One line of `indusk promises health --json`: every source's state for every promise, or why a source has none. */
 export interface HealthLine {
 	at: string;
+	/**
+	 * Every promise the project has, so a window can name one at its token and
+	 * on hover without reading the registry itself — state and structure
+	 * promises too, which have no row below (telemetry does not watch them).
+	 */
+	promises: { name: string; kind: string; statement: string; tests: string[] }[];
 	sources: (
 		| { name: SourceName; label: string; ok: true; rows: HealthLineRow[] }
 		| { name: SourceName; label: string; ok: false; reason: string; blind?: true }
@@ -504,6 +510,9 @@ export interface HealthLine {
 export function healthLine(registry: Registry, reads: SourceHealthRead[], now: Date): HealthLine {
 	return {
 		at: now.toISOString(),
+		promises: registry.promises
+			.filter((p) => p.state !== "retired")
+			.map((p) => ({ name: p.name, kind: p.kind, statement: p.statement, tests: p.tests ?? [] })),
 		sources: reads.map((read) => {
 			if (!read.ok) {
 				return {
