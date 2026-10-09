@@ -118,3 +118,6 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `violationState` (unrecorded / open / fixed) for chip and timeline;
   incidents record `fixed` via `promises fix`. — see
   `/decisions/promise-timeline`
+- **Admin plan authoring** (moved from the root, 2026-10-08): `plans start →
+  approve → build → accept → land`, through the developer's own `claude`;
+  nothing lands unaccepted. — see `/decisions/admin-plan-authoring`

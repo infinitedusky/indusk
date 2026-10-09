@@ -14,7 +14,7 @@ import { type OpenIncident, openIncidents } from "../../lib/promises/health.js";
 import { fixIncident } from "../../lib/promises/incidents.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
 import { recordBreaks } from "../../lib/promises/record.js";
-import { readPromises } from "../../lib/promises/registry.js";
+import { type Registry, readPromises } from "../../lib/promises/registry.js";
 import {
 	alarmSource,
 	JaegerUnreachable,
@@ -389,6 +389,96 @@ export function promisesWithdraw(projectRoot: string, name: string, opts: { plan
 		withdrawPromise(projectRoot, { name, plan: opts.plan });
 		return `${name} withdrawn by ${opts.plan}: it was never in force, and the registry no longer holds it. Take it out of the brief too. ${AFTER_WRITE}`;
 	});
+}
+
+/**
+ * `indusk promises health --json [--every <seconds>]` (vscode-extension).
+ *
+ * One JSON line per read: every source's state for every promise, by the one
+ * rule the admin's chips use (`promises/health`). Without `--every`, one read
+ * and exit; with it, a read per period until the process is stopped — the
+ * editor runs it once and reads each line.
+ */
+/** What `promises health` reads and how it waits, as inputs (vscode-extension A17). */
+export interface PromisesHealthDeps {
+	readRegistry?: typeof readPromises;
+	readHealth?: (
+		root: string,
+		registry: Registry,
+	) => Promise<import("../../lib/promises/health.js").SourceHealthRead[]>;
+	write?: (text: string) => void;
+	now?: () => Date;
+	/** Runs `tick` every `everyMs` until the reader is stopped. */
+	repeat?: (everyMs: number, tick: () => Promise<void>) => Promise<void>;
+}
+
+function repeatUntilSignal(everyMs: number, tick: () => Promise<void>): Promise<void> {
+	return new Promise<void>((resolve) => {
+		const timer = setInterval(() => {
+			void tick();
+		}, everyMs);
+		const stop = () => {
+			clearInterval(timer);
+			resolve();
+		};
+		process.once("SIGTERM", stop);
+		process.once("SIGINT", stop);
+	});
+}
+
+export async function promisesHealth(
+	projectRoot: string,
+	opts: { json?: boolean; every?: string } = {},
+	deps: PromisesHealthDeps = {},
+): Promise<void> {
+	const readRegistry = deps.readRegistry ?? readPromises;
+	const read = readRegistry(projectRoot);
+	let registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
+	if (!registry) {
+		console.error(`${"missing" in read ? read.missing : projectRoot}: no promise registry`);
+		process.exitCode = 2;
+		return;
+	}
+	let everyMs: number | null = null;
+	if (opts.every !== undefined) {
+		const seconds = Number(opts.every);
+		if (!Number.isFinite(seconds) || seconds < 1) {
+			console.error(`--every "${opts.every}": expected a whole number of seconds, 1 or more`);
+			process.exitCode = 2;
+			return;
+		}
+		everyMs = seconds * 1000;
+	}
+	const { healthLine, readHealth } = await import("../../lib/promises/health.js");
+	const readReads =
+		deps.readHealth ?? ((root: string, reg: Registry) => readHealth(root, reg, { cacheMs: 0 }));
+	const write = deps.write ?? ((text: string) => process.stdout.write(text));
+	const now = deps.now ?? (() => new Date());
+	// The registry is read before every line, not once: an incident marked
+	// fixed, or a promise declared, while the editor is open shows on the next
+	// line. A registry caught mid-edit keeps the last one that read whole.
+	const reread = () => {
+		try {
+			const next = readRegistry(projectRoot);
+			if (next.ok) registry = next.registry;
+		} catch {
+			// keep the last registry that read
+		}
+		return registry as Registry;
+	};
+	const once = async () => {
+		const current = reread();
+		const reads = await readReads(projectRoot, current);
+		write(`${JSON.stringify(healthLine(current, reads, now()))}\n`);
+	};
+	await once();
+	if (everyMs === null) return;
+	// One bad read never ends the reader: the next tick tries again.
+	await (deps.repeat ?? repeatUntilSignal)(everyMs, () =>
+		once().catch((error: unknown) => {
+			console.error(`promises health: ${error instanceof Error ? error.message : String(error)}`);
+		}),
+	);
 }
 
 /**

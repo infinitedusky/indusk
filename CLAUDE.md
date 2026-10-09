@@ -13,6 +13,7 @@ dusk/
 ├── apps/
 │   ├── indusk-mcp/        # InDusk MCP server — CLI, skills, hooks, lessons, extensions (its CLAUDE.md: package rules; hooks/CLAUDE.md: hook rules)
 │   ├── indusk-admin/      # Next.js read-only admin UI (daemon via `indusk ui`; its CLAUDE.md: app rules)
+│   ├── vscode-extension/  # Editor extension, presentation only (its CLAUDE.md: app rules)
 │   └── docs/              # VitePress docs site (guide / reference / decisions / lessons)
 ├── packages/              # telemetry-binaries-* — platform-split jaeger + otelcol
 ├── .claude/skills/        # Installed skills — package-owned, synced from apps/indusk-mcp/skills/
@@ -29,6 +30,7 @@ dusk/
 
 - **indusk-mcp** — the InDusk MCP server + CLI (`init`/`update`/`setup`/`extensions`/`agent`/`plans`/`sync`/`context`/`eval`/`ui`/`telemetry`/`worktree`/`promises`/`papers`/`workbench`), published as `@infinitedusky/indusk-mcp`. Skills (`skills/*.md`), hooks (`hooks/*.js`) and the planning context file (`templates/planning/CLAUDE.md`) are package-owned and installed into projects by `init`/`update`. It also hosts the two Dawn commands: `indusk run <plan>` (a model-agnostic gated loop over a plan's phases) and `indusk verify <plan> --phase N` (phase-boundary verification for work Dawn did not execute; detects, never repairs). Git is the only SCM. — see `/reference/cli/run`, `/reference/cli/verify`
 - **indusk-admin** — Next.js read-only viewer over `.indusk/planning/` + each project's evaluation results, one machine-global daemon (`indusk ui`), reusing indusk-mcp's parsers through workspace subpath exports — never duplicating parsing. — see `/decisions/admin-ui-hosting`
+- **vscode-extension** — markers at each promise's line, the Promises panel, Fix with Claude; reads `indusk promises health --json`, writes nothing; ships in the npm package (`indusk editor install`).
 - **docs** — VitePress site. Every plan contributes pages at close; ADRs publish to `/decisions/*`.
 
 **Context tiers** — a rule reaches you where and when it applies. This file holds design intent and orientation only. A rule a test or hook enforces is delivered by that enforcer: its failure message names the lesson (`lesson: <name>` → `.claude/lessons/<name>.md`), and `list_lessons` reports each lesson **guarded** or **advisory**, derived on every read. A rule relevant in one area lives in that area's `CLAUDE.md` (`.indusk/planning/` — package-owned and shipped; `apps/indusk-admin/`; `apps/indusk-mcp/`; `apps/indusk-mcp/hooks/`), loaded when a file there is read. Operational state lives in `.indusk/current.md`. A new rule goes to the enforcer first, a directory second, here last and with a reason. — see `/guide/context-tiers`
@@ -78,7 +80,6 @@ dusk/
 - InDusk Makeover (2026-07-23): budgets + decay + removal — the 60 KB budget hook + compaction, Graphiti/CGC removed with the lessons rail kept, current.md sweep + dead-draft archive, catchup diet, MCP keep-lists, hub push/pull. Supersedes context-budget. — see `.indusk/planning/archive/indusk-makeover/adr.md`
 - Versioned workbench (1.37.0–1.38.3): the workbench root is a git repo with its own remote and a sync loop; repos declared in `worktree.repos[]` — see `/decisions/versioned-workbench`
 - Dawn workbench execution (6.5): one `resolveExecutionRoots` behind run/verify/cleanup; two roots and a commit cadence per repo in the loop; `codeSha` on the ledger and `repo` on queued evals, absence a rule not a migration; multi-repo still refuses — see `/decisions/dawn-workbench-execution`
-- Writing skill: papers are plan documents (`kind: paper`, never inferred); `/write` prose-only; publish commits in the destination, never pushes — see `.indusk/planning/archive/writing-skill/adr.md`
 - Promises (Day 4a): one markdown file per promise at the plan root, links as declared paths verified by a `promise: <name>` token, per-kind link rule, four states, domains in config, one `lib/promises/` behind CLI/MCP/admin — see `/decisions/day-promises`
 - Monitor (Day 4b): plain-OTel promise mark, no InDusk runtime code; `promises status`/`watch` over local Jaeger; reopen by Maintenance phase; `monitor` from files — see `/decisions/day-monitor`
 - Always-on (Day 4b′): the shipped Jaeger as a server (badger + basic auth, Fly reference); an in-process pass announces each violation once to Slack, failure-safe; detect-and-notify only; a project names its Jaeger, absence = local — see `/decisions/day-always-on`; deployed and smoked on Fly — `/decisions/day-always-on-deploy`
@@ -86,12 +87,12 @@ dusk/
 - Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `/decisions/promise-sources`
 - Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
-- Admin plan authoring: `plans start → approve → build → accept → land`, through the developer's own `claude`; nothing lands unaccepted — see `/decisions/admin-plan-authoring`
 - Workbench plans: documents at the workbench root, code on `plan/<name>` in the named repo; one contract per repo through one resolver — see `/decisions/workbench-plan-authoring`
 - Bookkeeping: notes committed on `main` as written; machine state in `~/.indusk/projects/<id>-<hash>/` (`indusk eval home`); the evaluator's tools named — see `/decisions/bookkeeping-lives-where-it-is-read`
 - Workflow steps: `workflow.steps` names what each step runs, facts never logic; dusk's slow tier never blocks landing or release — see `/decisions/release-checks-run-once`
 - Incident recording: one writer (`recordBreaks`), run by the admin unasked; it commits on the trunk only — see `/decisions/incident-recording`
 - Server provisioning: every recording server is the person's own — `indusk server connect` for one run anywhere, `server deploy` the one-command Fly path, the image published with each release; no hosted service — see `/decisions/server-provisioning`
+- VS Code extension: promise health is worked out once, in the package (`promises/health`); the CLI streams it (`promises health --json`); the editor only shows — see `/decisions/vscode-extension`
 
 ## Known Gotchas
 

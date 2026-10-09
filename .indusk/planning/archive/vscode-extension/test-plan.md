@@ -58,6 +58,28 @@ A `unit` row feeds the editor's rules a file's text, a registry, the health a re
 |----|-----------------------------------|-------|
 | A15 | After the extension reads a project, shows a break and runs the fix action, the project's files are exactly as they were. | unit |
 
+### `every-promise-is-listed-in-the-editor` — a panel lists every promise with its state, broken first
+
+Added 2026-10-08 with the promise, after Sandy tried the build.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
+| A23 | The panel lists every promise in the project with its state; broken promises come first as cards, the latest break first, with the source and symptom; the rest follow by name. | unit |
+| A24 | Opening a promise in the panel shows its tests and the places that keep it, each with its file and the line its token is on; a file that no longer carries the token is listed without a line. | unit |
+| A25 | On the demo app in VS Code, the panel shows the demo's promise, and choosing its telemetry location opens `src/telemetry.ts` at the token's line. | live check |
+| A29 | Below the broken cards, the panel groups promises by the plan that owns them; groups come newest run first, then plans never run by name; within a group, newest run first, then the rest by name. Each broken card names its plan. (Added 2026-10-08 at Sandy's request; it replaces A23's "the rest follow by name".) | unit |
+| A30 | Each health line names the plan that owns each promise. | unit |
+
+### `the-editor-shows-each-run-as-it-happens` — an activity section adds each run as it arrives
+
+Added 2026-10-08 with the promise.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
+| A26 | Each health line names the newest recorded runs of every promise, each with whether it held or broke, its source, its time and its trace; the same run is named the same way on every line. (Not its symptom: the mark store keeps a run's time, outcome, trace and environment only. A broken card shows the symptom its health row carries.) | unit |
+| A27 | The activity section adds only runs it has not shown, newest first, keeps a bounded number, and says when no run has arrived yet. | unit |
+| A28 | On the demo app, holding a seat adds a "held" run to the activity section, and a faulted hold adds a "broke" run. | live check |
+
 ### Not for a promise
 
 | ID | Assertion (user-visible behavior) | Level | Why |

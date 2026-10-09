@@ -1,0 +1,378 @@
+---
+title: "VS Code extension — promises in the editor, the break where the fix happens"
+date: 2026-10-08
+status: completed
+trajectory: required
+test_phases: required
+test_levels: required
+test_purpose: required
+rationale: required
+gate_policy: ask
+accepted: 2026-10-09T14:38:43.432Z
+accepted_by: person
+---
+
+# VS Code extension — promises in the editor, the break where the fix happens
+
+## Goal
+
+Promise health worked out once, in the package; `indusk promises health --json` streaming it; and a VS Code extension, presentation only, that marks each promise at the line that keeps it, shows a break within two five-second reads, and starts the developer's own `claude` on the fix in one click. Decided in the [ADR](adr.md); promised in the [brief](brief.md); proven by the [test plan](test-plan.md)'s 16 assertions.
+
+## Scope
+
+### In Scope
+- `promises/health` in the package (moved from the admin), the admin re-pointed, a single-definition pin
+- `indusk promises health --json [--every <seconds>]`
+- `apps/vscode-extension`: a pure core and a thin VS Code layer; the `.vsix` shipped in the npm package; `indusk editor install` for VS Code and Cursor
+- Docs: the guide, `reference/cli/editor.md`, the promises reference, the admin promises page; the live checks on the demo app
+
+### Out of Scope
+- Recording incidents or reopening plans from the editor; a Marketplace listing; editors other than VS Code and Cursor; promise DevTools
+
+## Boundary Map
+
+| Phase | Produces | Consumes |
+|-------|----------|----------|
+| Test Phase 1 | A7 red; the register | the admin's `promise-health.ts` |
+| Build Phase 1 | `lib/promises/health.ts`, `lib/promises/store.ts`, the `promises/health` subpath, `indusk promises health --json`, the admin re-pointed | `promises/sources`, `promises/telemetry`, `promises/incidents` |
+| Build Phase 2 | `apps/vscode-extension/src/core/` — `markers`, `hover`, `problems`, `notify`, `fixPrompt`, `readSession` | `lib/tokens.ts` (bundled), the health line shape |
+| Build Phase 3 | `apps/vscode-extension/src/extension.ts`, `dist/indusk.vsix`, `editor/indusk.vsix` in the package, `indusk editor install` | the core; `@vscode/vsce`, `@vscode/test-electron`, esbuild |
+| Build Phase 4 | the live record: A5, A11, A14, Cursor | the demo app, VS Code 1.141, Cursor |
+
+## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State | Level | For | Test |
+|----|---------|-------------|-----------|-------|-------|-----|------|
+| A1 | A line carrying a promise's token shows, at the end of the line, the promise's name and its state: holding, broken, not seen, or watched by the tests | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
+| A2 | A line carrying the token of a promise the project does not have says so | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
+| A3 | A line in a test that carries a promise's token shows that the test proves the promise | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
+| A4 | Hovering a marked line shows the promise's sentence, its state for each source, and when it last held or broke | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
+| A5 | With the extension installed, opening the demo app's telemetry file shows its promise on the line that marks it | Build Phase 3 | Build Phase 4 | passing | live check | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/e2e/live.e2e.test.ts |
+| A6 | For the same project and marks, the editor, the admin and `indusk promises health` give every promise the same state for each source | Build Phase 1 | Build Phase 2 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-windows.test.ts, apps/vscode-extension/src/core/same-health.test.ts |
+| A7 | Promise health is worked out in one place the admin, the CLI and the editor all use; a second copy fails the build | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts |
+| A8 | A break that becomes readable shows within two reads (ten seconds at five) on its line, in the Problems list and in one notification, with no reload | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
+| A9 | A break read again does not notify again; a fixed break clears from the line and the Problems list | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
+| A10 | A source that cannot be read, or reads watcher blind, is shown as such, never "holding"; no line for two cadences reads "not reading" | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
+| A11 | With the demo app running, its fault switch makes the editor show the promise broken within ten seconds | Build Phase 3 | Build Phase 4 | passing | live check | promise: a-break-reaches-the-editor | apps/vscode-extension/e2e/live.e2e.test.ts |
+| A12 | The fix action on a broken promise opens a terminal in the project running `claude` whose first message names the promise, its symptom, its trace link and its tests | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/src/core/fix.test.ts |
+| A13 | Where `claude` is not installed, the fix action says how to install it and opens nothing | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/src/core/fix.test.ts |
+| A14 | On the demo break in VS Code, one click starts `claude` with those facts | Build Phase 3 | Build Phase 4 | passing | live check | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/e2e/live.e2e.test.ts |
+| A15 | After the extension reads a project, shows a break and runs the fix action, the project's files are exactly as they were | Build Phase 2 | Build Phase 2 | passing | unit | promise: the-editor-only-shows | apps/vscode-extension/src/core/only-shows.test.ts |
+| A16 | The packaged extension installs into VS Code with one `indusk` command, activates in a project with InDusk, and stays inactive in one without | Build Phase 3 | Build Phase 3 | passing | contract | the install path every developer takes; VS Code is not ours | apps/vscode-extension/src/__tests__/install.contract.test.ts |
+| A17 | While `indusk promises health --every` runs, a break recorded and then marked fixed reads `fixed` on the next line, and a promise declared meanwhile appears; today the registry, its incidents included, is read once at start, so the editor shows the demo's fixed break as broken until the window reloads | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-break-reaches-the-editor | apps/indusk-mcp/src/__tests__/promises-health-every.test.ts |
+| A18 | A break is notified once while it lasts: a production read that fails between two reads of the same break does not notify it again, and a second violation of a promise already broken in that source does not either; today `told` is rebuilt from each line, so either notifies again (with the demo's fault on, a toast every few seconds) | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
+| A19 | When the health reader cannot start or keeps exiting (the command is not found, or an `indusk` without `promises health`), the editor says so with the reason (not found, or the reader's last error line), and the hover agrees with the marker's "not reading"; today a missing command is an unhandled `error` event with no message, the exit message names no reason, and the hover says "not in this project" before the first line | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/reader.test.ts, apps/vscode-extension/src/core/hover.test.ts |
+| A20 | Text from a span (symptom, trace id) and from the registry reaches the terminal with no control characters and on one line: a symptom of `x`, Ctrl-C, `rm -rf ~`, newline types no command; today `sendText` passes Ctrl-C to the terminal, which cancels the quoted line and runs what follows | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/src/core/fix.test.ts |
+| A21 | A hover shows span text as text: a symptom or reason of `[open](https://example.test)` renders as those characters, not a link | Build Phase 5 | Build Phase 5 | passing | unit | promise: the-editor-only-shows | apps/vscode-extension/src/core/hover.test.ts |
+| A23 | The panel lists every promise in the project with its state; broken promises come first as cards, the latest break first, with the source and symptom; the rest follow by name | Build Phase 6 | Build Phase 6 | passing | unit | promise: every-promise-is-listed-in-the-editor | apps/vscode-extension/src/core/panel.test.ts |
+| A24 | Opening a promise in the panel shows its tests and the places that keep it, each with its file and the line its token is on; a file that no longer carries the token is listed without a line | Build Phase 6 | Build Phase 6 | passing | unit | promise: every-promise-is-listed-in-the-editor | apps/vscode-extension/src/core/panel.test.ts |
+| A25 | On the demo app in VS Code, the panel shows the demo's promise, and choosing its telemetry location opens `src/telemetry.ts` at the token's line | Build Phase 6 | Build Phase 6 | passing | live check | promise: every-promise-is-listed-in-the-editor | apps/vscode-extension/e2e/live.e2e.test.ts |
+| A26 | Each health line names the newest recorded runs of every promise, each with whether it held or broke, its source, its time and its trace; the same run is named the same way on every line | Build Phase 6 | Build Phase 6 | passing | unit | promise: the-editor-shows-each-run-as-it-happens | apps/indusk-mcp/src/__tests__/promise-health-runs.test.ts |
+| A27 | The activity section adds only runs it has not shown, newest first, keeps a bounded number, and says when no run has arrived yet | Build Phase 6 | Build Phase 6 | passing | unit | promise: the-editor-shows-each-run-as-it-happens | apps/vscode-extension/src/core/activity.test.ts |
+| A28 | On the demo app, holding a seat adds a "held" run to the activity section, and a faulted hold adds a "broke" run | Build Phase 6 | Build Phase 6 | passing | live check | promise: the-editor-shows-each-run-as-it-happens | apps/vscode-extension/e2e/live.e2e.test.ts |
+| A29 | Below the broken cards, the panel groups promises by the plan that owns them; groups come newest run first, then plans never run by name; within a group, newest run first, then the rest by name; each broken card names its plan | Build Phase 7 | Build Phase 7 | passing | unit | promise: every-promise-is-listed-in-the-editor | apps/vscode-extension/src/core/panel.test.ts |
+| A30 | Each health line names the plan that owns each promise | Build Phase 7 | Build Phase 7 | passing | unit | promise: every-promise-is-listed-in-the-editor | apps/indusk-mcp/src/__tests__/promise-health-runs.test.ts |
+| A31 | Where a broken promise is shown broken — the first source, production leading, and its row — is decided in one place; the fix action and the panel's card take it from there and name the same source | Build Phase 8 | Build Phase 8 | passing | unit | a regression guard: two copies of the rule could name different sources for one break | apps/vscode-extension/src/core/view.test.ts |
+| A22 | A file outside the project, or inside a nested InDusk project (dusk's `examples/seat-holds/`), gets no marker from this project's promises; today opening dusk shows the example's token as "not in this project" | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
+
+### Deferred Verification
+
+- **The same package works in Cursor (U1)**
+  - reason: Cursor's extension host is not scriptable here, and its compatibility with VS Code's API is Cursor's to keep
+  - would require: a scriptable Cursor, or Cursor's own extension test runner
+  - mitigation: installed and opened by hand on the demo app in Build Phase 4 and again at demo-rehearsal, each recorded in this plan; `indusk editor install` names Cursor's CLI when it finds it
+  - at close (2026-10-09): the reason did not hold. Cursor's binary runs the same `@vscode/test-electron` probe (`INDUSK_LIVE_EDITOR_APP`), and it passed in Build Phase 4. It stays out of the system tier because it needs a running demo app, as A5, A11 and A14 do. demo-rehearsal has no folder yet; the step is row 7 of the indusk-demo master, whose rehearsal of the demo in Cursor is the second check
+
+## Checklist
+
+### Test Phase 1: The single-definition pin, red; the rest registered
+
+**Goal**: author the one row whose subject exists today, and register every other row with the body it will have.
+
+- [x] Create/confirm this plan's worktree (`indusk worktree create vscode-extension`; made by `indusk plans start` on 2026-10-08 at `dusk-worktrees/vscode-extension`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+- [x] (red on all three assertions: no `readHealth`/`healthOf` in the package, the admin defines them, five admin files import its own copy) A7 in `apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts`: `lib/promises/health.ts` defines `readHealth` and `healthOf`; no file under `apps/indusk-admin/src` or `apps/vscode-extension/src` defines either; the admin's importers name `@infinitedusky/indusk-mcp/promises/health`. RED today: the health lives in the admin and the package has none
+
+#### Deferred to Build Phase 1
+
+- **A6** — its subject is the package's `readHealth` and the `promises health --json` command, which Build Phase 1 introduces. Body:
+
+  ```typescript
+  // apps/indusk-mcp/src/__tests__/promise-health-windows.test.ts
+  // promise: the-editor-shows-the-same-health-as-the-admin
+  // A fixture project (helpers/promises-fixture.ts) with recorded marks and a fixed clock; the probe and the store's
+  // reads are faked through HealthDeps. Read health three ways — readHealth() directly (what the admin calls),
+  // the CLI's `promises health --json` line (runCli), and the extension core's readSession() fed that line (Build
+  // Phase 2 adds the third; until then the test compares two and is `written`) — and expect every
+  // { source, promise, state } triple to be equal across them.
+  ```
+
+#### Deferred to Build Phase 2
+
+- **A1–A4, A8–A10, A12, A13, A15** — their subjects are the extension core's functions under `apps/vscode-extension/src/core/`, which Build Phase 2 introduces with the app itself. Bodies, as the shapes they assert:
+
+  ```typescript
+  // markers.test.ts — promise: a-promise-shows-where-it-is-kept
+  // markers({ path: "src/telemetry.ts", text: 'span.setAttribute("x") // promise: seats-held\n', registry, health })
+  //   → [{ line: 0, text: "seats-held · broken (production)" }]                                        (A1)
+  // a token naming "no-such-promise" → [{ line: 0, text: "no-such-promise · not in this project" }]       (A2)
+  // the same token in a file the registry lists under `tests:` → "seats-held · proved here"              (A3)
+  // hover.test.ts — hover(line, …) → sentence, "local: holding", "production: broken, last broke 12:04"  (A4)
+
+  // session.test.ts — promise: a-break-reaches-the-editor
+  // a session fed health lines at t=0 (holding) and t=5 s (broken) shows the break on its line, one Problem
+  //   and one notification by the t=5 s line; at t=10 s (still broken) no second notification; at t=15 s
+  //   (holding) the marker and Problem clear                                                           (A8, A9)
+  // a line whose production source is { ok: false, reason: "watcher blind …" } shows "production: watcher blind";
+  //   no line for 10 s shows "not reading"                                                                (A10)
+
+  // fix.test.ts — promise: a-break-opens-a-fix-in-one-click
+  // fixAction(broken row, { claudeOnPath: true }) → { terminal: { cwd: root, command: 'claude "…"' } } whose
+  //   prompt contains the promise name, symptom, trace URL and each test path                             (A12)
+  // with claudeOnPath false → { message: /install Claude Code/ }, no terminal                                (A13)
+
+  // only-shows.test.ts — promise: the-editor-only-shows
+  // a git-initialised fixture project; run readSession over three lines, markers, hover and fixAction;
+  //   `git status --porcelain` is empty afterwards                                                         (A15)
+  ```
+
+#### Deferred to Build Phase 3
+
+- **A16, A5, A11, A14** — A16 needs the packaged `.vsix` and `indusk editor install`, which Build Phase 3 builds; A5, A11 and A14 drive the installed extension against the running demo app, written at Build Phase 3 and run once by hand at Build Phase 4. Bodies:
+
+  ```typescript
+  // install.contract.test.ts — system tier; skipped by name without `code` on PATH
+  // runs `indusk editor install` with VS Code's --extensions-dir pointed at a temp dir; then @vscode/test-electron
+  //   opens a fixture project with .indusk/config.json and one without; expects the extension active in the first
+  //   (its command `indusk.fixWithClaude` registered) and inactive in the second                             (A16)
+
+  // e2e/live.e2e.test.ts — skipped by name without INDUSK_LIVE_EDITOR=1; the demo app started first
+  // opens examples/seat-holds/src/telemetry.ts in VS Code; reads the decorations through the extension's
+  //   test hook; expects the promise's marker (A5); turns the fault switch on; expects broken within 10 s (A11);
+  //   runs the fix action; expects a terminal named "Claude — <promise>" running claude with the facts (A14)
+  ```
+
+#### Test Phase 1 Verification
+
+- [x] A7 is authored and red on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-single-definition.test.ts`)
+- [x] (reviewed. Found: the package already has `lib/promises/health.ts` — `promiseHealth`, the agents' report behind the `promise_health` MCP tool — so health is computed twice today, not once; Build Phase 1 gains an item to merge the admin's into that file and build the agents' report on it, and A6's body adds the MCP report as a fourth read that must agree. The core bodies compile against the functions Build Phase 2 introduces; A16's needs `@vscode/test-electron`, added in Build Phase 3) Every deferred body above reviewed: will it compile at the phase it names, and does it assert what it claims
+
+### Build Phase 1: Health in the package, and the CLI that streams it
+
+**Goal**: one health reader, in the package, read by the admin and by a new CLI command.
+
+- [x] (the store moved without its timeline view: `readTimelineView` draws the admin's strips, so it stays in the admin and reads through `promises/store`; the admin's health and store tests stay beside their shared fake, `__tests__/helpers/fake-source.ts`, re-pointed at the package rather than moved) Move `apps/indusk-admin/src/lib/promise-health.ts` → `apps/indusk-mcp/src/lib/promises/health.ts` and `promise-timeline.ts` → `lib/promises/store.ts`; `readAdminRefreshMs` stays in the admin and becomes a parameter (`HealthDeps.cacheMs`); move their tests with them
+- [x] (the agents' rows are now `reportRows`, exported, each carrying `health` from `healthOf`) (found at Test Phase 1's review) `lib/promises/health.ts` already exists: `promiseHealth`, the agents' per-source report behind the `promise_health` MCP tool, computed from the same reads but by its own rules. The admin's `readHealth`/`healthOf` merge into that file rather than beside it, and `promiseHealth` is rebuilt on `healthOf` so the agents' report, the admin and the editor share one rule; A6 adds the MCP report to the reads that must agree
+- [x] (and `./promises/store`; the page passes its refresh interval as `cacheMs`, the sidebar's layout uses the five-second default, since importing the refresh reader into the layout pulled Node-only config into the project page's browser test; admin tests 62 files, 406 green) Export `./promises/health` from `apps/indusk-mcp/package.json`; re-point the admin's importers (`app/p/[project]/layout.tsx`, `app/p/[project]/promises/page.tsx`, `components/PromiseHealth.tsx`, `components/bars/labels.ts`) and anything else that imported the two files; the admin's own tests unchanged and green
+- [x] (the line is built by `healthLine` in `promises/health`, each read with `cacheMs: 0` so `--every` never repeats a cached read; run on the demo app with no daemon, it printed the local source as could-not-be-read and exited 0) `indusk promises health --json [--every <seconds>]` in `bin/commands/promises.ts`: one line `{ at, sources: [{ name, ok, reason?, rows: [{ promise, state, lastHeld?, lastBroke?, symptom?, traceUrl?, tests }] }] }` per read; without `--every`, one read and exit 0; with it, a read per period until SIGTERM; a source that fails is `ok: false` with its reason, never dropped
+- [x] (red at 45c9c0db on its own assertion; it compares the admin's rule, the CLI's line and the agents' report over one read, and passes now for those three) A6 authored from the register, comparing the reader and the CLI (the editor joins in Build Phase 2), red first
+
+#### Build Phase 1 Verification
+
+- [x] (A6 and A7: 4 green; `vitest related` over the moved files and the command: 5 files, 39 green; admin: 62 files, 406 green) A7 passes; A6 is `written` and passes for the reader and the CLI (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-single-definition.test.ts src/__tests__/promise-health-windows.test.ts && pnpm exec vitest related src/lib/promises/health.ts src/lib/promises/store.ts --run`; `cd ../indusk-admin && pnpm exec vitest related src/app src/components --run`)
+- [x] `pnpm exec tsc --noEmit` clean in both apps
+
+#### Build Phase 1 Context
+
+- [x] (points at the ADR until the retrospective publishes the decisions page; to make room, the "Admin plan authoring" line moved down to the admin's own context file) root (Key Decisions): `- VS Code extension: promise health is worked out once in the package (promises/health); the CLI streams it (promises health --json); the editor only shows — see /decisions/vscode-extension` — always-on because it fixes where health lives for every window, present and future
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+- [x] (folded into the pins list; the redundant pointer to `src/lib/papers/CLAUDE.md` came out to make room, since that file loads by itself) mcp (`apps/indusk-mcp/CLAUDE.md`, single-definition pins): `promises/health` — `promise-health-single-definition.test.ts`, folded into an existing entry so the file does not grow
+
+#### Build Phase 1 Document
+
+- [x] (the admin's health is described in `reference/admin-ui/overview.md`, not a separate promises page; that is where the moved module is named) `reference/cli/promises.md`: `promises health --json`, its line shape and `--every`; `reference/admin-ui/promises.md`: health comes from the package's `promises/health`; changelog: Added `promises health --json`, Changed health moved to the package
+
+### Build Phase 2: The extension's core
+
+**Goal**: everything the editor shows, decided by pure functions over a file, the registry, a health line and a clock.
+
+- [x] (done before the tests, which need the app to run; `type: commonjs` for VS Code's loader; the health line gained a `promises` list so the editor never reads the registry, and the package a `./tokens` subpath) `apps/vscode-extension/` scaffold: `package.json` (`name: indusk`, `publisher: infinitedusky`, `engines.vscode: ^1.90.0`, `activationEvents: ["workspaceContains:.indusk/config.json"]`), `tsconfig.json`, `vitest.config.ts` extending the root's, biome inherited; added to the workspace
+- [x] (a local break beside a production that holds is shown on the line too: "holding, broken (local)") `src/core/markers.ts` — token lines through the package's `lib/tokens.ts` (bundled, never re-spelled); "keeps" or "proves" by the registry's `tests:` paths
+- [x] (the Problems list is `problems(session)` in `session.ts`, beside the breaks it lists, not a file of its own) `src/core/hover.ts`, `src/core/problems.ts`
+- [x] (a reducer — `startSession`, `onLine`, `onTick`, `problems` — rather than one `readSession`, so the extension feeds each line and tick as it arrives) `src/core/session.ts` — `readSession(lines, clock)`: the current state per promise and source, new breaks to notify once, cleared breaks, "not reading" after two cadences without a line
+- [x] (the prompt names incident-recording's `record_breaks` tool and `indusk promises watch`, both on main; it is one single-quoted shell word whatever the symptom holds) `src/core/fix.ts` — the fix action: the prompt (promise, symptom, trace link, tests, and "record the incident with `indusk promises watch` and fix it under its owning plan"), quoted for the shell; the install message when `claude` is absent
+- [x] (red at e5711393, eleven failures on their own calls; green at 48b57d17. A6's editor half is `src/core/same-health.test.ts`: the package cannot import the editor's core, so the extension checks its words against the admin's states over the package's own line) A1–A4, A8–A10, A12, A13, A15 authored from the register, red first; A6 gains the editor's read and goes green
+
+#### Build Phase 2 Verification
+
+- [x] (extension: 5 files, 12 green; the package's half of A6 green) A1–A4, A6, A8–A10, A12, A13, A15 pass (`cd apps/vscode-extension && pnpm exec vitest run`; `cd ../indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-windows.test.ts`)
+- [x] `pnpm exec tsc --noEmit` and biome clean in `apps/vscode-extension`
+
+#### Build Phase 2 Context
+
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+- [x] `apps/vscode-extension/CLAUDE.md` (new, small): the core is pure and every editor rule is tested there; `extension.ts` only applies it; nothing writes to the project; tokens come from the package's grammar
+
+#### Build Phase 2 Document
+
+- [x] (in the guide sidebar beside "Run your own server"; the install section is Build Phase 3's) `guide/promises-in-your-editor.md` (first version): what the markers, hovers, Problems entries and notifications mean; the Mermaid sequence from break to Claude
+
+### Build Phase 3: VS Code, the package, the install
+
+**Goal**: the core applied in VS Code, packaged, shipped in the npm package, installed by one command.
+
+- [x] `src/extension.ts` — activation; the `indusk promises health --json --every 5` child (restarted once, then reported); `TextEditorDecorationType` markers, a `HoverProvider`, a `DiagnosticCollection`, one `showWarningMessage` per new break, a `CodeActionProvider` "Fix with Claude" running `window.createTerminal({ cwd, name: "Claude — <promise>" })` + `sendText`; a test hook exposing the current decorations for the e2e
+- [x] esbuild bundle to `dist/extension.js`; `@vscode/vsce package` to `dist/indusk.vsix` (`pnpm --filter indusk package`); indusk-mcp `prepublishOnly` copies it to `editor/indusk.vsix`, listed in `files`
+- [x] `indusk editor install` (`bin/commands/editor.ts`): `code --install-extension <vsix> --force`, and `cursor …` when Cursor's CLI is found; says which it installed into, and how to get VS Code's `code` command when neither is found
+- [x] A16 authored (system tier); A5, A11, A14 authored in `e2e/live.e2e.test.ts`, `written`, skipped by name without `INDUSK_LIVE_EDITOR=1`
+- [x] Shape: move "which source's break does the fix act on, and with what facts" out of `extension.ts` into the core as `fixFor(view, promise, opts)` in `core/fix.ts`, with a case in `fix.test.ts` — rule: the ADR's pure core / thin layer split (a rule in the VS Code layer has no unit seam)
+- [x] Shape: closing the window kills the health child and its exit handler restarts it; a `stopping` flag set on dispose stops the restart — rule: one reason to change per handler (exit-on-failure vs exit-on-dispose)
+
+#### Build Phase 3 Verification
+
+- [x] (3 of 3 passed, 2026-10-08; two fixes the run found: a VS Code terminal exports `ELECTRON_RUN_AS_NODE`, which starts the test VS Code as plain Node, and a worktree path makes VS Code's socket longer than macOS allows, so the test clears the one and passes a short `--user-data-dir`) A16 passes in the system tier on this machine (`cd apps/vscode-extension && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/install.contract.test.ts`, VS Code 1.141); A5, A11, A14 `written`
+
+#### Build Phase 3 Context
+
+- [x] mcp (`apps/indusk-mcp/CLAUDE.md`, Releases): the `.vsix` is built by `prepublishOnly` and shipped in `editor/`; folded into the existing entry
+
+#### Build Phase 3 Document
+
+- [x] `reference/cli/editor.md` (new); the guide's install section; changelog: Added the VS Code extension and `indusk editor install`
+
+### Build Phase 4: Live on the demo app
+
+**Goal**: the three live checks and Cursor, run once by hand and recorded.
+
+- [x] (run 2026-10-08 against the demo app from `indusk demo`, VS Code 1.141, the extension from `indusk editor install --extensions-dir`, and this branch's CLI named by `INDUSK_LIVE_EDITOR_COMMAND` instead of `pnpm install:local`, so the machine's `indusk` was left alone. **A5**: `src/telemetry.ts` line 7 ended `a-held-seat-is-released-in-time · not seen` before any run. **A11**: broken (local) **5.3 s** after the late release was marked; 14.9 s after the hold, of which 9.5 s is the demo's own window plus its fault delay. The probe first timed from the hold, which charged the app's deliberate delay to the editor; it now starts the clock when the seat comes free. **A14**: the `Claude — a-held-seat-is-released-in-time` terminal opened with the command sent. The run also needed A16's two launch fixes.) A5, A11, A14: `pnpm install:local`, `indusk editor install`, the demo app started (`indusk demo`), `INDUSK_LIVE_EDITOR=1 pnpm exec vitest run --config vitest.e2e.config.ts e2e/live.e2e.test.ts`; record each result and A11's seconds in this file
+- [x] (scripted, not by hand, 2026-10-08: the same live probe with `INDUSK_LIVE_EDITOR_APP=/Applications/Cursor.app/Contents/MacOS/Cursor` passed. `indusk editor install` found `cursor` and installed into it; the marker read `· broken (local)` on line 7 and Fix with Claude opened its terminal. The break's timing was not measured in Cursor, because the promise was already broken from the VS Code run. Cursor printed `UserNotLoggedInError` for its own account, which did not affect the extension.) U1: install into Cursor by hand, open the demo app, confirm the marker and the fix action; record it here
+- [x] Shape — reviewed the files this phase changed (`e2e/live.e2e.test.ts`, `e2e/live-probe.cjs`) against the enabled extensions' craft rules; nothing to change.
+
+#### Build Phase 4 Verification
+
+- [x] A5, A11, A14 pass and are recorded above; the row states set `passing` in the same edit
+
+#### Build Phase 4 Context
+
+- [x] (committed on main as c62d5c68) current.md (Project, shared): one line — the demo's step 9 is built; how long a break took to reach the editor
+
+#### Build Phase 4 Document
+
+- [x] the guide: an "Observed" note with A11's seconds and the Cursor result, dated
+
+### Build Phase 5: Falsification — a reader that never re-reads, breaks told twice, and span text reaching the terminal
+
+**Goal**: verify whether the attested state holds against six failure modes found by reading the code: the health command reading the registry once, so a fixed break stays red; the notification memory forgetting a break across one failed read or a new trace; a reader that cannot start saying nothing useful; span text carrying control characters into the developer's terminal; span text rendered as links in a hover; and promises from a nested project judged against the outer one. Each row captures one hypothesis; each item the fix if it confirms.
+
+Investigated, with no hypothesis formed: the token grammar (lowercase names only, so a CRLF line's `\r` never joins a name); shell quoting of the prompt (single-quoted, embedded quotes closed and escaped, covered by A12); the "proved here" path match; `--every` parsing (refuses below 1 and non-numbers); overlapping reads under `setInterval` (the two-second source timeout keeps a read well inside the five-second cadence); `indusk editor install` finding the `.vsix` (the published package's `editor/`, and `pnpm install:local` runs the `prepublishOnly` that packs it). Not investigated: shells other than POSIX ones in the fix terminal (PowerShell quoting differs; this machine and the demo use zsh), and multi-root workspaces holding two InDusk projects (the extension reads the first; A22's rule keeps the second's files unmarked rather than wrong).
+
+- [x] `promisesHealth` re-reads the registry before each line, keeping the last good one when a read is partial mid-edit; a read that throws is caught and the loop goes on, so one bad read never ends the reader (A17)
+- [x] The session remembers each break by source and promise while it stays broken in a source that read; a source that did not read keeps what it had; a promise that stops being broken is forgotten, so its next break is told (A18)
+- [x] `core/reader.ts`: the reader's lifecycle behind a spawn seam — restart once, then stop with a message naming the reason (`not found` for a spawn error, else the child's last stderr line); `extension.ts` uses it; no restart after dispose. `hover` with no line yet says "not reading", as the marker does (A19)
+- [x] `fixAction` strips control characters from every fact and joins each to one line before quoting (A20)
+- [x] (the signs that make a link, emphasis, code or HTML; line-start signs left, since these texts never start a line — escaping `.` too broke A4's sentence) `hover` escapes Markdown in text from spans and sources (symptom, reason) and in the statement (A21)
+- [x] (the path is already relative to the root, so `markers` takes only the nested roots; the hover and the fix action inherit the scope through the same markers) `markers` takes the project's root and the nested project roots under it; a file outside the root or under a nested root gets no marker. `extension.ts` finds nested roots by `.indusk/config.json` below the root, once at activation (A22)
+- [x] Shape: `fixAction` cleans its facts by reassigning its parameter; a named `cleanFacts(b)` returning a new value says the input is untrusted and keeps the cleaning testable on its own — rule: a name that says what it is for; no hidden mutation of inputs
+- [x] Shape — reviewed the rest of what this phase changed (`promises.ts`'s health command, `core/reader.ts`, `core/session.ts`, `core/hover.ts`, `core/markers.ts`, `extension.ts`); `reader.ts`'s `ended_` was renamed `onEnd` when written; nothing else to change.
+- [x] A4's `Test` cell names `apps/vscode-extension/src/core/markers.test.ts`, where its test lives; it named a `hover.test.ts` that does not exist, which `promises confirm` would refuse at close
+
+#### Build Phase 5 Verification
+
+- [x] (red at 942c9754 and 444a7853, each on its own assertion, after two behaviour-free seams at cc60d859 and b2441dd0; green now: extension core 21, A17 1, the other health-command tests 4; both apps typecheck and biome clean; the extension bundles) A17–A22 pass, each red first against the current code (`cd apps/vscode-extension && pnpm exec vitest run src/core`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promises-health-every.test.ts`); typecheck and biome clean in both apps
+
+#### Build Phase 5 Context
+
+- [x] (7a460f77) `apps/vscode-extension/CLAUDE.md`: text from spans is untrusted — stripped of control characters before a terminal, escaped before Markdown
+
+#### Build Phase 5 Document
+
+- [x] (also: nested projects keep their own promises; the fix terminal and hovers take span text as text) the guide: a fixed break turns `fixed` without a reload; one notification per break; what the editor says when it cannot read; changelog line
+
+### Build Phase 6: The promises panel and its activity
+
+**Goal**: one place in the editor that lists every promise with its state, broken ones first as cards that open to their tests and the code that keeps them, and an activity section that adds each run as it arrives. Added 2026-10-08 after Sandy tried the build; ADR decisions 7 and 8.
+
+- [x] (discovered: `indusk promises check` refused six names — sample tokens spelled in the core's tests since Build Phase 2, and a Build Phase 5 comment reading "by source and promise: told". The tests now build sample lines with the fixture's `site()`; the comment is reworded. Landing runs this check, so it would have stopped there) The registry check passes on this branch
+- [x] Package: each source's health read keeps its newest runs from the store read it already makes; `healthLine` names up to fifty, newest first, as `runs` (A26)
+- [x] (the state's wording moved into `stateOf` in `core/markers.ts`, used by the line markers and the panel alike) `core/panel.ts`: the panel's model from the latest line and each listed file's text: broken cards (latest break first, source, symptom), then the rest by name; each promise's tests and sites with the token's line, or none when the token is gone (A23, A24)
+- [x] (times worded by the caller, so the panel shows local time and the core stays clock-free) `core/activity.ts`: the activity section's runs, adding only unseen ones by trace, time and outcome, newest first, at most two hundred (A27)
+- [x] (the page loads once and each read sends only its body, so open cards and the activity's scroll survive a refresh; an escaping case in `panel.test.ts`) `core/panel-html.ts`: the panel's HTML from the model and the activity, every text escaped, theme colours from VS Code's variables, a strict content security policy with a nonce; a click posts the file and line
+- [x] `extension.ts` + `package.json`: an InDusk view container in the activity bar with the "Promises" webview view; it re-renders on each line, reads the listed files for token lines, opens a posted file at its line, and offers Fix with Claude on a broken card; a test command returns the panel's model and the activity for the live checks
+- [x] (the live checks re-run after the move on a fresh demo: A25 and A28 pass, runs at 03:21:32Z and 03:21:46Z) Shape: move the panel's VS Code wiring (view provider, file reads, opening a location, the activity it keeps) out of `activate` into `src/panel-view.ts`, which `activate` calls with the session's view, the project root and the fix action — rule: one reason to change per unit; `activate` had grown to hold the markers, diagnostics, fix, reader and panel
+- [x] Shape — reviewed the rest of what this phase changed (`core/panel.ts`, `core/panel-html.ts`, `core/activity.ts`, `core/markers.ts`'s `stateOf`, the package's `health.ts` and `editor.ts`); nothing else to change.
+- [x] (added 2026-10-08 after Sandy read dusk's activity as the demo's: the panel did not say whose promises it listed; a case in `panel.test.ts`, red first) The panel names the project the window has open, at its top
+- [x] (discovered: `indusk editor install` preferred the package's `editor/` copy, left by the last `pnpm install:local`, over a newer build of the extension, so the first live run installed the old extension; it now installs whichever is newer) `indusk editor install` installs the newest build of the extension
+- [x] (run 2026-10-08 on a second demo app from `indusk demo`, VS Code 1.141, this branch's CLI. **A25**: the panel listed `a-held-seat-is-released-in-time`; its `src/telemetry.ts` location opened the file with the cursor on line 7, the token's line. **A28**: a "held" run listed 6 s after the probe's own hold (03:17:40Z), a "broke" run 14 s after its faulted hold (03:17:54Z). The first passing run proved nothing for A28: the demo tags no project on its runs, and an untagged run counts for every project, so runs from the earlier demo session satisfied it; the probe now counts only runs after its own holds. A11 was not re-measured: the promise was already broken when the run began. The untagged runs are the demo app's, outside this plan; written into the demo-rehearsal brief) A25 and A28 added to the live probe and run on the demo app; record what they saw
+
+#### Build Phase 6 Verification
+
+- [x] (red at 60be7991 and 20bdeb2c on their own assertions; green: extension core 28, A26 1, tests related to the health module and `editor.ts` 41, A16 3 of 3; both apps and the admin typecheck, biome clean; `indusk promises check` clean after rewording a second comment it read as a token) A23, A24, A26, A27 pass, each red first (`cd apps/vscode-extension && pnpm exec vitest run src/core`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-runs.test.ts`); A25 and A28 pass live; both apps typecheck and biome clean; A16 still passes
+
+#### Build Phase 6 Context
+
+- [x] (20f80100; also: spell no promise token in prose or test text, after the check refused two comments and six sample lines) `apps/vscode-extension/CLAUDE.md`: the panel's model and HTML are core; the webview only renders and posts clicks
+
+#### Build Phase 6 Document
+
+- [x] (also the changelog's `editor install` fix) the guide: "The promises panel" — the cards, opening a promise to its tests and code, the activity section; `reference/cli/promises.md`: the line's `runs`; changelog
+
+### Build Phase 7: Promises grouped by plan
+
+**Goal**: below the broken cards, promises grouped by the plan that owns them, the most recently run first. Added 2026-10-08 at Sandy's request; A29 replaces A23's "the rest follow by name", whose test changes with it.
+
+- [x] Package: each promise on the health line names its owning plan as `plan` (A30)
+- [x] (a promise with no plan groups under "no plan") `core/panel.ts`: the model's `groups` — plan, its promises newest run first, then the rest by name; groups newest run first, then never-run plans by name; a broken card carries its plan. A23's case drops "the rest by name" for the groups (A29)
+- [x] (the live probe reads the groups too) `core/panel-html.ts`: a heading per plan group; a broken card names its plan
+- [x] Shape — reviewed what this phase changed (`core/panel.ts`'s grouping, `core/panel-html.ts`, the line's `plan` in `health.ts`); the ordering rules are named functions (`byPlan`, `byNewestRun`, `lastRunOf`); nothing to change.
+
+#### Build Phase 7 Verification
+
+- [x] (red at 01db2b66 and the commit before it, each on its own assertion; green: extension core 30, A26 and A30 2; both apps typecheck, biome clean; `indusk promises check` clean; the extension packages) A29 and A30 pass, each red first (`cd apps/vscode-extension && pnpm exec vitest run src/core`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-runs.test.ts`); both apps typecheck and biome clean; `indusk promises check` clean
+
+#### Build Phase 7 Context
+
+- [x] (re-read: the panel entry says the model and HTML are core, and the grouping lives in `core/panel.ts`; still true, so no edit) `apps/vscode-extension/CLAUDE.md`: none beyond the panel entry, which already says the model is core — confirm it still reads true
+
+#### Build Phase 7 Document
+
+- [x] the guide's panel section: grouped by plan, newest run first; `reference/cli/promises.md`: the line's `plan`; changelog
+
+### Build Phase 8: Cleanup — one rule for where a promise broke, and the editor's line in its own module
+
+**Goal**: decompose what the plan grew across files: a rule written twice in the extension's core, and a package module holding three units. Each item is an extraction or a reasoned leave-as-is; the new unit gets a row.
+
+Reviewed: every file the plan changed (`git diff --stat main...HEAD`, 65 files) and the six over the 400-line cap. Not reviewed for decomposition: docs pages and tests, whose size is their content.
+
+- [x] Extract `whereBroken(view, name)` into `core/view.ts` — the first source, production leading, where the promise reads broken, with its row; `fixFor` in `core/fix.ts` and `whereItBroke` in `core/panel.ts` take it from there — rule of two with a third reader due (the activity's cards), one rule so the fix and the card cannot name different sources (A31)
+- [x] (`health.ts` 624 → 498 lines, `health-line.ts` 146; `newestRuns` exported for `readHealth`) Extract the editor's line — `HealthLine`, `HealthLineRow`, `HealthLineRun`, `healthLine`, `newestRuns`, `newestFirst` — from `lib/promises/health.ts` into `lib/promises/health-line.ts`, re-exported from `health.ts` so the `./promises/health` subpath and every importer stay as they are — one reason to change per module: the line's format moves with the editor, the state rule with the admin
+- [x] (reviewed `apps/indusk-mcp/src/bin/cli.ts`, 1187 lines — left as-is: one registration block per command, and this plan added two that follow the same shape; a split belongs to a plan about the CLI)
+- [x] (reviewed `apps/indusk-mcp/src/bin/commands/promises.ts`, 465 lines — left as-is: one file per command group is the package's pattern; `promises health` is one cohesive function with its seam)
+- [x] (reviewed `apps/vscode-extension/src/extension.ts`, 255 lines — left as-is: the one VS Code adapter; markers, diagnostics, the fix and the reader are each short and share the session; the panel already moved out at Build Phase 6's Shape)
+- [x] (reviewed the three "newest first" sorts in `health.ts`, `core/panel.ts` and `core/activity.ts` — left as-is: each orders a different shape with a different tie-break; a shared comparator would need a parameter per caller, a worse abstraction than three two-line functions)
+- [x] (reviewed `hover.ts`'s `asText`, `panel-html.ts`'s `esc` and `fix.ts`'s `oneLine` — left as-is: three different targets, Markdown, HTML and a terminal line; not one rule)
+- [x] (reviewed `apps/indusk-admin/src/__tests__/http-promise-health.test.ts`, 473 lines, and the docs pages over the cap — left as-is: the test's size predates the plan, which only re-pointed its imports; docs are their content)
+
+#### Build Phase 8 Verification
+
+- [x] (red at 4bf9d0a3; green: extension core 32, tests related to both health modules 42, A6, A7, A17, A26, A30 7; the package, the admin and the extension typecheck; biome clean; the built CLI prints the line in the demo folder) A31 passes, red first; behaviour parity: `cd apps/vscode-extension && pnpm exec vitest run src/core`, `cd apps/indusk-mcp && pnpm exec vitest related src/lib/promises/health.ts src/lib/promises/health-line.ts --run`, A6 and A7 still green; both apps and the admin typecheck; biome clean
+
+#### Build Phase 8 Context
+
+- [x] (re-read: line 30 pins promise health to the `promises/health` subpath, which still exports everything it did; no edit) `apps/indusk-mcp/CLAUDE.md`: none — the pins list names `promises/health`, whose exports do not change; re-read to confirm, and say so here
+
+#### Build Phase 8 Document
+
+- [x] (re-read: neither the CLI reference nor the admin overview names a module file; the line's shape is unchanged; no edit) none — internal decomposition; `reference/cli/promises.md` describes the line, whose shape does not change; re-read to confirm, and say so here
+
+## Files Affected
+
+| File | Change |
+|------|--------|
+| `apps/indusk-mcp/src/lib/promises/{health,store}.ts` | moved from the admin |
+| `apps/indusk-mcp/package.json` | `./promises/health` export; `editor/` in `files`; `prepublishOnly` copies the `.vsix` |
+| `apps/indusk-mcp/src/bin/commands/{promises,editor}.ts`, `src/bin/cli.ts` | `promises health --json`, `editor install` |
+| `apps/indusk-admin/src/**` | four importers re-pointed; two lib files removed |
+| `apps/vscode-extension/**` | new app |
+| `apps/docs/src/**` | guide, references, changelog |
+| `CLAUDE.md`, `apps/indusk-mcp/CLAUDE.md`, `apps/vscode-extension/CLAUDE.md`, `.indusk/current.md` | context |
+
+## Dependencies
+
+- VS Code 1.141 with `code` on PATH (present); Cursor for U1
+- `@vscode/vsce` and `@vscode/test-electron` (current: 4.0.0, 3.1.0), esbuild (already in the workspace or added)
+- incident-recording landed, so the fix prompt names the command that records a break
+
+## Notes
+
+- A6 spans two phases on purpose: written in Build Phase 1 for the reader and the CLI, green in Build Phase 2 when the editor's read joins.
+- The Key Decisions line is Build Phase 1's Context item, written with the code, since `plans approve` refuses a branch that changed anything outside `.indusk/` before its build.

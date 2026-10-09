@@ -1,3 +1,7 @@
+import {
+  readHealth,
+  redPlans,
+} from "@infinitedusky/indusk-mcp/promises/health";
 import Link from "next/link";
 import { PlanList } from "@/components/PlanList";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
@@ -13,7 +17,6 @@ import {
   readPlanHierarchy,
   readProjectWorktrees,
 } from "@/lib/planning-reader";
-import { readHealth, redPlans } from "@/lib/promise-health";
 import {
   holdingCounts,
   readProjectPromises,

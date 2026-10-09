@@ -130,52 +130,60 @@ describe("A15 — the deployed system's health on the page", () => {
 });
 
 describe("A16 — the page refreshes itself", () => {
-  it("a violation arriving while the page is open turns the promise red without a reload", {
-    timeout: 60_000,
-  }, async () => {
-    const { chromium } = await import("playwright");
-    const browser = await chromium.launch();
-    try {
-      const page = await browser.newPage();
-      await page.goto(`${url}/p/remote/promises`, {
-        waitUntil: "networkidle",
-      });
-      const second = "seat-release-on-timeout";
-      writeFileSync(
-        path.join(root, ".indusk", "promises", `${second}.md`),
-        promiseFile(second, OWNER),
-      );
-      await server.load([
-        {
-          service: "seats-api",
-          name: "release-seat",
-          promise: second,
-          outcome: "violated",
-          symptom: "a held seat stayed held",
-          traceId: newTraceId(),
-          attributes: { "deployment.environment": "production" },
-        },
-      ]);
-      await page
-        .locator(
-          `[data-promise="${second}"] [data-testid="promise-health"][data-health="red"]`,
-        )
-        .waitFor({ timeout: 30_000 });
-    } finally {
-      await browser.close();
-    }
-  });
+  it(
+    "a violation arriving while the page is open turns the promise red without a reload",
+    {
+      timeout: 60_000,
+    },
+    async () => {
+      const { chromium } = await import("playwright");
+      const browser = await chromium.launch();
+      try {
+        const page = await browser.newPage();
+        await page.goto(`${url}/p/remote/promises`, {
+          waitUntil: "networkidle",
+        });
+        const second = "seat-release-on-timeout";
+        writeFileSync(
+          path.join(root, ".indusk", "promises", `${second}.md`),
+          promiseFile(second, OWNER),
+        );
+        await server.load([
+          {
+            service: "seats-api",
+            name: "release-seat",
+            promise: second,
+            outcome: "violated",
+            symptom: "a held seat stayed held",
+            traceId: newTraceId(),
+            attributes: { "deployment.environment": "production" },
+          },
+        ]);
+        await page
+          .locator(
+            `[data-promise="${second}"] [data-testid="promise-health"][data-health="red"]`,
+          )
+          .waitFor({ timeout: 30_000 });
+      } finally {
+        await browser.close();
+      }
+    },
+  );
 });
 
 describe("A17 — the server unreachable", () => {
-  it("every behaviour chip is hollow with health unknown, and none is green", {
-    timeout: 60_000,
-  }, async () => {
-    await server.stop();
-    await sleep(2_500); // past the project's 1s refresh interval
-    const html = await (await fetch(`${url}/p/remote/promises`)).text();
-    expect(healthOf(html, PROMISE)).toBe("unverified");
-    expect(html).not.toContain('data-health="green"');
-    expect(html).toMatch(/health unknown since/i);
-  });
+  it(
+    "every behaviour chip is hollow with health unknown, and none is green",
+    {
+      timeout: 60_000,
+    },
+    async () => {
+      await server.stop();
+      await sleep(2_500); // past the project's 1s refresh interval
+      const html = await (await fetch(`${url}/p/remote/promises`)).text();
+      expect(healthOf(html, PROMISE)).toBe("unverified");
+      expect(html).not.toContain('data-health="green"');
+      expect(html).toMatch(/health unknown since/i);
+    },
+  );
 });

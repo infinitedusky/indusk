@@ -27,10 +27,10 @@ pointer; the pointer holds the story.
   `impl-headings.test.ts`; the lifecycle (`lib/lifecycle.ts`: positions,
   activities, `GATE_STAGES`, `RITUAL_ORDER`, `SEGMENT_STATES`, read by
   `parsePlan`, the retrospective gate and the admin) —
-  `lifecycle-single-definition.test.ts`. A git primitive belongs in
+  `lifecycle-single-definition.test.ts`; promise health, `promises/health`
+  — `promise-health-single-definition.test.ts`. A git primitive belongs in
   `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
   (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
-- **The papers module map** lives in `src/lib/papers/CLAUDE.md`.
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
   config pair is pinned — `server-single-definition.test.ts`; a project names
   a credential's variable, never its value.
@@ -218,13 +218,13 @@ pointer; the pointer holds the story.
   fires `on_disable` BEFORE renaming; `INDUSK_BIN` overrides the bare prefix
   in hook commands (test-critical); package-owned files under `.indusk/` are
   machine-local (`MACHINE_LOCAL_RULES`). — see `/lessons/worktree-config-schema-pointer`
-- **Releases**: `release-guard.sh` refuses dirt on packaged paths, a HEAD that
-  is not `chore(release): <version>`, an unmerged packaged `plan/*` branch, and
-  an install that does not match the lockfile (`check-install.js`);
-  `record-release.js` writes "published" only on `npm view`'s word;
-  `release-image.sh` pushes the server image before `pnpm publish`, so a
-  refused push publishes nothing (needs Docker and `docker login ghcr.io`). —
-  see `/reference/cli/release`
+- **Releases**: `release-guard.sh` refuses dirt on packaged paths, a HEAD not
+  `chore(release): <version>`, an unmerged packaged `plan/*` branch, and an
+  install off the lockfile; `record-release.js` writes "published" only on
+  `npm view`'s word; `release-image.sh` pushes the server image before `pnpm
+  publish` (a refused push publishes nothing; needs `docker login ghcr.io`);
+  `prepublishOnly` packs the editor's `.vsix` into `editor/`. — see
+  `/reference/cli/release`
 
 ## Tests
 

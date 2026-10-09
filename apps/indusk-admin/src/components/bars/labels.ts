@@ -6,11 +6,11 @@ import type {
   SegmentState,
   StageKind,
 } from "@infinitedusky/indusk-mcp/lifecycle";
+import type { PromiseHealth } from "@infinitedusky/indusk-mcp/promises/health";
 import type {
   PromiseKind,
   PromiseState,
 } from "@infinitedusky/indusk-mcp/promises/registry";
-import type { PromiseHealth } from "@/lib/promise-health";
 
 /**
  * A promise's chip: its declared state, and nothing else (day-promises, ADR

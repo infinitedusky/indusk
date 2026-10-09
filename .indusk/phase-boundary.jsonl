@@ -218,3 +218,12 @@
 {"plan":"server-provisioning","phase":4,"kind":"build","sha":"9d3da74f42cd9edfb09007809c7aed424f618c91","timestamp":"2026-10-08T22:20:07.613Z"}
 {"plan":"server-provisioning","phase":5,"kind":"build","sha":"c229aae1635843de184e45d1b4e90ceb1ebe3268","timestamp":"2026-10-08T23:45:53.007Z"}
 {"plan":"server-provisioning","phase":6,"kind":"build","sha":"6781eb026f6f1bdba5c7ca8b51a9e399bc50ca3a","timestamp":"2026-10-08T23:53:17.910Z"}
+{"plan":"vscode-extension","phase":1,"kind":"test","sha":"4066c1bed13c1b20b97a15a589f3968dad6e4327","timestamp":"2026-10-09T00:51:05.761Z"}
+{"plan":"vscode-extension","phase":1,"kind":"build","sha":"ce19db8668cb522cf22bd9e05aa4717e202db1f5","timestamp":"2026-10-09T00:52:00.202Z"}
+{"plan":"vscode-extension","phase":2,"kind":"build","sha":"0583e11c2dda0e75a6aa4791c4948dd56106b7c0","timestamp":"2026-10-09T01:04:21.080Z"}
+{"plan":"vscode-extension","phase":3,"kind":"build","sha":"411a7c41d2d304e8654e4e463a1ec4c7ac4e7534","timestamp":"2026-10-09T01:57:33.727Z"}
+{"plan":"vscode-extension","phase":4,"kind":"build","sha":"54fb7f91c3d63c91f4914ae943e2419d4d1bb24e","timestamp":"2026-10-09T02:05:19.729Z"}
+{"plan":"vscode-extension","phase":5,"kind":"build","sha":"70ef618a88084d615eb0b02ef7ed92ec5fc8664b","timestamp":"2026-10-09T02:56:23.579Z"}
+{"plan":"vscode-extension","phase":6,"kind":"build","sha":"c253f5aafcbacc41b1cee71d9ce7e856e71523c7","timestamp":"2026-10-09T03:09:45.689Z"}
+{"plan":"vscode-extension","phase":7,"kind":"build","sha":"ef99e62db431546c0b874a9bbc355e5012270e5c","timestamp":"2026-10-09T03:34:43.053Z"}
+{"plan":"vscode-extension","phase":8,"kind":"build","sha":"4850c8a3b2d8383103581a5a573286b143435a35","timestamp":"2026-10-09T14:20:42.348Z"}

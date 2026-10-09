@@ -1,3 +1,10 @@
+import {
+  type HealthRow,
+  healthRows,
+  readHealth,
+  ruleFor,
+  type SourceHealthRead,
+} from "@infinitedusky/indusk-mcp/promises/health";
 import { afterEach, describe, expect, it } from "vitest";
 import { fakeSource } from "@/__tests__/helpers/fake-source";
 import {
@@ -5,13 +12,6 @@ import {
   type PromiseFixture,
   promiseRegistry,
 } from "@/__tests__/helpers/promise-registry";
-import {
-  type HealthRow,
-  healthRows,
-  readHealth,
-  ruleFor,
-  type SourceHealthRead,
-} from "@/lib/promise-health";
 
 /**
  * test-kinds A4, A5, A10–A12 — the chips' rules, with runs fed from a list and

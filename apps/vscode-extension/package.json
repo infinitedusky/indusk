@@ -1,0 +1,77 @@
+{
+	"name": "indusk",
+	"displayName": "InDusk \u2014 promises",
+	"description": "Every promise at the line that keeps it, its live health, and one click from a break to Claude fixing it.",
+	"version": "0.1.0",
+	"publisher": "infinitedusky",
+	"private": true,
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.90.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"workspaceContains:.indusk/config.json"
+	],
+	"main": "./dist/extension.js",
+	"type": "commonjs",
+	"scripts": {
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit",
+		"test:system": "node ../indusk-mcp/scripts/with-daemon-guard.js vitest run --config vitest.system.config.ts",
+		"build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node20 --external:vscode --outfile=dist/extension.js",
+		"package": "pnpm run build && vsce package --no-dependencies --allow-missing-repository --skip-license -o dist/indusk.vsix"
+	},
+	"devDependencies": {
+		"@infinitedusky/indusk-mcp": "workspace:*",
+		"@types/node": "^22.0.0",
+		"@types/vscode": "^1.90.0",
+		"typescript": "^5.7.0",
+		"vitest": "^4.1.11",
+		"@vscode/test-electron": "3.1.0",
+		"@vscode/vsce": "4.0.0",
+		"esbuild": "0.28.2"
+	},
+	"contributes": {
+		"commands": [
+			{
+				"command": "indusk.fixWithClaude",
+				"title": "InDusk: Fix with Claude"
+			},
+			{
+				"command": "indusk.openLocation",
+				"title": "InDusk: Open a promise's location"
+			}
+		],
+		"configuration": {
+			"title": "InDusk",
+			"properties": {
+				"indusk.command": {
+					"type": "string",
+					"default": "indusk",
+					"description": "The indusk command to read promise health with."
+				}
+			}
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "indusk",
+					"title": "InDusk",
+					"icon": "media/indusk.svg"
+				}
+			]
+		},
+		"views": {
+			"indusk": [
+				{
+					"type": "webview",
+					"id": "indusk.promises",
+					"name": "Promises"
+				}
+			]
+		}
+	}
+}

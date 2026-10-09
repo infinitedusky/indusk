@@ -1,5 +1,5 @@
+import type { HealthRow } from "@infinitedusky/indusk-mcp/promises/health";
 import { PROMISE_HEALTH_CHIP } from "@/components/bars/labels";
-import type { HealthRow } from "@/lib/promise-health";
 
 /**
  * The observed-health axis of the Promises page (day-monitor, ADR D9), beside

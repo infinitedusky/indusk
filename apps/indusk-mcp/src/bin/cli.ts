@@ -402,6 +402,19 @@ program
 // parent and reading them via `this.optsWithGlobals()` in each subcommand
 // action is the pattern that works for both `indusk ui --port N` (bare) and
 // `indusk ui start --port N` (subcommand). Verified in commander@13.
+const editorCmd = program
+	.command("editor")
+	.description("The InDusk extension for VS Code and Cursor");
+
+editorCmd
+	.command("install")
+	.description("Install the InDusk extension into VS Code, and Cursor when found")
+	.option("--extensions-dir <dir>", "Install into this extensions folder (for tests)")
+	.action(async (opts: { extensionsDir?: string }) => {
+		const { editorInstall } = await import("./commands/editor.js");
+		await editorInstall(opts);
+	});
+
 const serverCmd = program
 	.command("server")
 	.description("Give this project its recording server: connect one you run, or deploy one on Fly");
@@ -1053,6 +1066,18 @@ promisesCmd
 		const opts = this.opts() as { since?: string };
 		const { promisesStatus } = await import("./commands/promises.js");
 		await promisesStatus(rootOrExit(), opts);
+	});
+
+promisesCmd
+	.command("health")
+	.description(
+		"Each promise's state for each source, as the admin shows it — one JSON line per read (the editor reads this)",
+	)
+	.option("--json", "Print JSON lines (the only form, named so a reader can rely on it)")
+	.option("--every <seconds>", "Read again every N seconds until stopped, one line per read")
+	.action(async (opts: { json?: boolean; every?: string }) => {
+		const { promisesHealth } = await import("./commands/promises.js");
+		await promisesHealth(rootOrExit(), opts);
 	});
 
 promisesCmd

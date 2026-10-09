@@ -5,7 +5,7 @@
 	"scripts": {
 		"test": "node apps/indusk-mcp/scripts/with-daemon-guard.js --mark everyday-suite-stays-fast sh -c 'turbo test && pnpm promises:check'",
 		"e2e": "pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp e2e",
-		"test:system": "sh -c 'pnpm --filter @infinitedusky/indusk-mcp test:system; mcp=$?; pnpm --filter indusk-admin test:system; admin=$?; [ $mcp -eq 0 ] && [ $admin -eq 0 ]'",
+		"test:system": "sh -c 'pnpm --filter @infinitedusky/indusk-mcp test:system; mcp=$?; pnpm --filter indusk-admin test:system; admin=$?; pnpm --filter indusk test:system; ext=$?; [ $mcp -eq 0 ] && [ $admin -eq 0 ] && [ $ext -eq 0 ]'",
 		"promises:check": "node apps/indusk-mcp/dist/bin/cli.js promises check",
 		"install:local": "pnpm --filter @infinitedusky/indusk-mcp prepublishOnly && npm install -g ./apps/indusk-mcp",
 		"check": "biome check",
