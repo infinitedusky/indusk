@@ -92,7 +92,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `promises.jaeger`, every `admin.refresh_ms`, each pass the package's
   `recordBreaks`; a local-only project gets none, and `ui stop` ends the loops
   with the process. The admin composes; the writing is the package's. Guarded
-  by `admin-recorder.test.ts` (system tier). — see `/decisions/incident-recording`
+  by `admin-recorder.test.ts` (system tier). An HTTP test whose fixture names a
+  production source (`promises.jaeger`) runs this recorder too: its breaks become
+  incidents and its promises `known-violated`, so assert through the recorder's
+  incidents, never a hand-written one beside them. — see `/decisions/incident-recording`
 - **Active plans and their boundary records are read from each plan's live
   root** (`worktree/plan-worktrees`); `components/Worktrees.tsx` renders the
   worktree chip, a broken assignment, unassigned worktrees and the record error.
