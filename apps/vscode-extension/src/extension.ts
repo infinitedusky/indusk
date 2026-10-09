@@ -1,4 +1,4 @@
-import { type ChildProcess, spawn, spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { createInterface } from "node:readline";
@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import { fixFor } from "./core/fix.js";
 import { hover } from "./core/hover.js";
 import { type Marker, markers } from "./core/markers.js";
+import { type ReaderChild, startReader } from "./core/reader.js";
 import {
 	type Break,
 	onLine,
@@ -125,17 +126,13 @@ export function activate(context: vscode.ExtensionContext): void {
 			});
 	};
 
-	// One long-lived reader; restarted once, then reported.
-	let child: ChildProcess | null = null;
-	let restarts = 0;
-	let stopping = false;
+	// One long-lived reader; restarted once, then reported (core/reader).
 	const command = vscode.workspace.getConfiguration("indusk").get<string>("command") ?? "indusk";
-	const start = () => {
-		child = spawn(command, ["promises", "health", "--json", "--every", String(CADENCE_MS / 1000)], {
-			cwd: root,
-			env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
-		});
-		createInterface({ input: child.stdout as NodeJS.ReadableStream }).on("line", (text) => {
+	const reader = startReader({
+		command,
+		everySeconds: CADENCE_MS / 1000,
+		spawn: (cmd, args) => nodeChild(cmd, args, root),
+		onLine: (text) => {
 			let line: HealthLine;
 			try {
 				line = JSON.parse(text) as HealthLine;
@@ -147,17 +144,11 @@ export function activate(context: vscode.ExtensionContext): void {
 			for (const b of r.notify) tell(b);
 			paint();
 			void diagnose();
-		});
-		child.on("exit", () => {
-			if (stopping) return;
-			if (restarts++ < 1) start();
-			else
-				void vscode.window.showErrorMessage(
-					`InDusk stopped reading promise health (\`${command} promises health\` exited). Reload the window to try again.`,
-				);
-		});
-	};
-	start();
+		},
+		onStopped: (message) => {
+			void vscode.window.showErrorMessage(message);
+		},
+	});
 	const ticker = setInterval(() => {
 		const next = onTick(session, Date.now());
 		if (next !== session) {
@@ -168,12 +159,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		{ dispose: () => clearInterval(ticker) },
-		{
-			dispose: () => {
-				stopping = true;
-				child?.kill();
-			},
-		},
+		{ dispose: () => reader.stop() },
 		vscode.window.onDidChangeVisibleTextEditors(paint),
 		vscode.workspace.onDidChangeTextDocument(paint),
 		vscode.languages.registerHoverProvider(
@@ -218,3 +204,29 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {}
+
+/** A Node child process as the reader sees it: lines in, stderr, exit, error. */
+function nodeChild(command: string, args: string[], cwd: string): ReaderChild {
+	const child = spawn(command, args, {
+		cwd,
+		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
+	});
+	return {
+		onLine: (cb) => {
+			createInterface({ input: child.stdout }).on("line", cb);
+		},
+		onStderr: (cb) => {
+			child.stderr.setEncoding("utf-8");
+			child.stderr.on("data", cb);
+		},
+		onExit: (cb) => {
+			child.on("exit", cb);
+		},
+		onError: (cb) => {
+			child.on("error", cb);
+		},
+		kill: () => {
+			child.kill();
+		},
+	};
+}
