@@ -18,7 +18,7 @@ export class BuildPlanUnreadable extends Error {}
 export async function readBuildPlan(
 	anyCheckout: string,
 	plan: string,
-): Promise<BuildPlan & { dir: string }> {
+): Promise<BuildPlan & { dir: string; content: string }> {
 	const live = await livePlanCopy(anyCheckout, plan);
 	if (!live.ok)
 		throw new BuildPlanUnreadable(
@@ -30,6 +30,7 @@ export async function readBuildPlan(
 	const content = readFileSync(path, "utf-8");
 	return {
 		dir,
+		content,
 		impl: parseImplString(content),
 		trajectory: parseTrajectory(matter(content).content),
 		readiness: checkRetrospectiveReadiness(dir, content),

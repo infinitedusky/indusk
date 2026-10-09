@@ -1,5 +1,6 @@
-import { readTiers, readWorkflowSteps } from "../checks/steps.js";
-import { fencedLineMask, type PhaseRef, parsePhaseHeading } from "../impl-headings.js";
+import { readWorkflowSteps } from "../checks/steps.js";
+import { readConfig } from "../config.js";
+import { fencedLineMask, type PhaseRef, parsePhaseHeading, phaseLabel } from "../impl-headings.js";
 import {
 	isTier,
 	TIER_STEPS,
@@ -10,7 +11,6 @@ import {
 } from "./tier-names.js";
 
 export { isTier, TIERS, type Tier, TierConfigError } from "./tier-names.js";
-export { readTiers };
 
 /**
  * Which model a phase is built on (model-per-phase). The config names a model
@@ -25,6 +25,33 @@ export { readTiers };
 export interface TierConfig {
 	tiers: Partial<Record<Tier, string>>;
 	steps: Partial<Record<TierStep, Tier>>;
+}
+
+/**
+ * `workflow.tiers`, each tier's model alias (model-per-phase). A tier left out
+ * has no model; a key that is not a tier, or a model that is not a non-empty
+ * string, is refused naming it — a mistyped tier would otherwise build every
+ * phase on the session's own model without a word.
+ */
+export function readTiers(checkout: string): Partial<Record<Tier, string>> {
+	const tiers = (readConfig(checkout) as { workflow?: { tiers?: unknown } } | null)?.workflow
+		?.tiers;
+	if (tiers === undefined) return {};
+	if (typeof tiers !== "object" || tiers === null || Array.isArray(tiers))
+		throw new TierConfigError("workflow.tiers must be an object of tiers");
+	const out: Partial<Record<Tier, string>> = {};
+	for (const [key, model] of Object.entries(tiers)) {
+		if (!isTier(key)) {
+			throw new TierConfigError(
+				`workflow.tiers.${key} is not a tier; the tiers are ${TIERS.join(", ")}`,
+			);
+		}
+		if (typeof model !== "string" || model.trim() === "") {
+			throw new TierConfigError(`workflow.tiers.${key} must be a model alias (a non-empty string)`);
+		}
+		out[key] = model;
+	}
+	return out;
 }
 
 /** The project's tiers and each step's default tier, validated; empty when it names none. */
@@ -134,7 +161,7 @@ export function tierRuleProblems(
 	const problems: string[] = [];
 	const seen = new Set<string>();
 	for (const line of phaseTierLines(implBody)) {
-		const label = `${line.ref.kind === "test" ? "Test" : "Build"} Phase ${line.ref.number}`;
+		const label = phaseLabel(line.ref);
 		if (seen.has(label)) {
 			problems.push(
 				`${label}: more than one \`**Tier**:\` line — keep one; an escalation replaces the line`,

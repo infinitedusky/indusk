@@ -19,7 +19,11 @@ async function planVerb(run: () => Promise<string>): Promise<void> {
 	try {
 		console.info(await run());
 	} catch (err) {
-		if (err instanceof PlanCommandRefusal || err instanceof TierConfigError) {
+		if (
+			err instanceof PlanCommandRefusal ||
+			err instanceof TierConfigError ||
+			err instanceof BuildPlanUnreadable
+		) {
 			console.error(`Refused: ${err.message}`);
 			process.exit(1);
 		}

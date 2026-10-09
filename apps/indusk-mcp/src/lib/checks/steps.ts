@@ -1,5 +1,5 @@
 import { type EnsureResult, ensureConfigBlock, readConfig, type WorkflowSteps } from "../config.js";
-import { isTier, TIER_STEPS, TIERS, type Tier, TierConfigError } from "../models/tier-names.js";
+import { isTier, TIER_STEPS, TIERS, TierConfigError } from "../models/tier-names.js";
 
 /**
  * A project's declared step tooling, `workflow.steps` (release-checks-run-once
@@ -78,32 +78,6 @@ function paths(v: unknown, key: string): string[] | undefined {
 		throw new Error(`workflow.steps.${key} must be a list of paths`);
 	}
 	return v;
-}
-
-/**
- * `workflow.tiers`, each tier's model alias (model-per-phase). A tier left out
- * has no model; a key that is not a tier, or a model that is not a non-empty
- * string, is refused naming it — a mistyped tier would otherwise build every
- * phase on the session's own model without a word.
- */
-export function readTiers(checkout: string): Partial<Record<Tier, string>> {
-	const tiers = (readConfig(checkout) as { workflow?: { tiers?: unknown } } | null)?.workflow
-		?.tiers;
-	if (tiers === undefined) return {};
-	if (!isObject(tiers)) throw new TierConfigError("workflow.tiers must be an object of tiers");
-	const out: Partial<Record<Tier, string>> = {};
-	for (const [key, model] of Object.entries(tiers)) {
-		if (!isTier(key)) {
-			throw new TierConfigError(
-				`workflow.tiers.${key} is not a tier; the tiers are ${TIERS.join(", ")}`,
-			);
-		}
-		if (typeof model !== "string" || model.trim() === "") {
-			throw new TierConfigError(`workflow.tiers.${key} must be a model alias (a non-empty string)`);
-		}
-		out[key] = model;
-	}
-	return out;
 }
 
 /**

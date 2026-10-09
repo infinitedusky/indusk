@@ -15,6 +15,8 @@
 import { fencedLineMask, parsePhaseHeading } from "./_impl-headings.js";
 
 const TIERS = ["strong", "med", "weak", "baby"];
+// Every step `readWorkflowSteps` reads: the two it ran before tiers, and the five that carry a default tier.
+const STEPS = ["land", "release", "plan", "work", "falsify", "cleanup", "retrospective"];
 const TIER_LINE = /^\*\*Tier\*\*:\s*(\S+)(?:\s+[—–-]+\s+(.*\S))?\s*$/;
 
 function phaseTierLines(implBody) {
@@ -85,6 +87,10 @@ export function tierConfigProblems(config) {
 		}
 	}
 	for (const [step, section] of Object.entries(workflow?.steps ?? {})) {
+		if (!STEPS.includes(step)) {
+			problems.push(`workflow.steps.${step} is not a step InDusk reads`);
+			continue;
+		}
 		const tier = section?.tier;
 		if (tier !== undefined && !TIERS.includes(tier)) {
 			problems.push(
