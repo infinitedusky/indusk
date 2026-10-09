@@ -82,7 +82,7 @@
 	"context": {
 		"claude_md_budget_bytes": 18432,
 		"nested_claude_md_budget_bytes": 16384,
-		"claude_md_budget_reason": "Lowered from 61440 by context-tiers (2026-10-02): the root now holds design intent only — rules a test or hook enforces travel with the enforcer's lesson token, area rules live in nested CLAUDE.md files. 18432 is the rewritten root (14667 bytes) plus 25%, so the ratchet holds the smaller file with room for a few always-on entries; growth past it means a rule belongs at a lower tier."
+		"claude_md_budget_reason": "Lowered from 61440 by context-tiers (2026-10-02): the root now holds design intent only \u2014 rules a test or hook enforces travel with the enforcer's lesson token, area rules live in nested CLAUDE.md files. 18432 is the rewritten root (14667 bytes) plus 25%, so the ratchet holds the smaller file with room for a few always-on entries; growth past it means a rule belongs at a lower tier."
 	},
 	"workflow": {
 		"steps": {
@@ -105,7 +105,28 @@
 			},
 			"land": {
 				"install": "pnpm install:local"
+			},
+			"plan": {
+				"tier": "strong"
+			},
+			"work": {
+				"tier": "med"
+			},
+			"falsify": {
+				"tier": "strong"
+			},
+			"cleanup": {
+				"tier": "med"
+			},
+			"retrospective": {
+				"tier": "weak"
 			}
+		},
+		"tiers": {
+			"strong": "opus",
+			"med": "sonnet",
+			"weak": "haiku",
+			"baby": "haiku"
 		}
 	}
 }
