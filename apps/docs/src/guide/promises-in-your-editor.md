@@ -38,7 +38,20 @@ That line ends with the promise's name and its state:
 and when it last broke or was last seen.
 
 **A break** also appears in the Problems list, and as one notification the
-first time it is read. Fixed, it clears from both.
+first time it is read. It is not told again while it lasts, however many more
+violations arrive or reads fail in between. Once the break's incident is marked
+fixed, the next read shows `fixed` and clears the Problem, with no reload. A
+later break is told again.
+
+A folder inside your project that is its own InDusk project, such as dusk's
+`examples/seat-holds/`, keeps its own promises: its lines get no marker from
+the outer project.
+
+**When the editor cannot read health**, it says why, once. It names the
+command when it is not found (set `indusk.command` to the right `indusk`), or
+the reader's last error when it keeps stopping, for example an `indusk` too old
+to have `promises health`. Until a first read arrives, markers and hovers say
+`not reading`.
 
 The states are the admin's: the editor reads `indusk promises health --json`,
 the line built by the same rule the admin's chips use, every five seconds. A
@@ -60,6 +73,10 @@ asks Claude to record the break first (the `record_breaks` tool, or
 `indusk promises watch`) and fix it under the plan that owns the promise.
 
 Without Claude Code installed, it says how to install it and opens nothing.
+
+The break's facts come from the span that recorded it, so they are typed into
+the terminal as text only: each on one line, with control characters removed.
+Hovers show them as text too, never as links.
 
 ```mermaid
 sequenceDiagram

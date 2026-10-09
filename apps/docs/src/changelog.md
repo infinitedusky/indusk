@@ -22,6 +22,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
+- **`indusk promises health --every` reads the promise registry before each line** (vscode-extension, falsified): an incident marked fixed, or a promise declared, shows on the next line; before, the registry was read once and a fixed break stayed red until the editor reloaded. One failed read no longer ends the reader.
 - **Promise health is worked out once, in the package** (vscode-extension): the admin's chip rule and its mark store moved to `promises/health` and `promises/store`; the agents' `promise_health` report now carries the same state for each promise.
 - **Every release publishes the recording server's image** (server-provisioning): `pnpm release` builds `ghcr.io/infinitedusky/indusk-always-on:<version>` from the release's own tarball and pushes it before `pnpm publish`; a refused push stops the release with nothing published. The release machine needs Docker and a one-time `docker login ghcr.io`. The image installs a tarball, not npm, so it never waits on npm's publish-time scan. See [Run your own server](/guide/run-your-own-server#anywhere-else-the-published-image).
 - **The recording server starts without a Slack webhook** (server-provisioning): it records every violation and the admin shows it; nothing is posted. Before, a server without one refused to start.
