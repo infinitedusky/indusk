@@ -29,7 +29,6 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 ### Out of Scope
 - The admin showing `audit.md` (follow-up).
-- The admin's Build button passing a model (the model-per-phase follow-up).
 - `RITUAL_ORDER` and the admin's activity names: the audit is a document, not a phase.
 
 ## Boundary Map
@@ -58,6 +57,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 | A11 | `indusk plans review` prints the same evidence with and without audit.md in the plan folder | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A12 | `plans model <plan> --phase <ref>` answers as before for a config with and without `steps.audit` | Test Phase 1 | Build Phase 2 | written | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/__tests__/plans-model.test.ts |
 | A13 | The planner writes a `**Tier**:` line under every phase it authors: the skill's impl step says so, the planning rules say so, and the impl template carries the line | Test Phase 1 | Build Phase 3 | written | unit | the step model-per-phase decided ("the planner decides each phase's model when it writes the phase") and never landed — a pin over the skill's text, since prose has no other test | apps/indusk-mcp/src/__tests__/planner-tier-line.test.ts |
+| A14 | An admin build runs each step's session on the model its tier names: a `work` step on its phase's model (the phase's `**Tier**:` line, or the work step's default), `falsify`/`cleanup`/`audit`/`retrospective` on their step's default tier; a project with no tiers passes no model, and the session runs on `claude`'s own | Build Phase 2 | Build Phase 2 | planned | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/build/step-model.test.ts |
 
 ## Checklist
 
@@ -145,10 +145,12 @@ Every plan is read once before it closes by a reader that did not build it, on t
 - [ ] `bin/commands/plans.ts`, `bin/cli.ts`: `plans audit-inputs <name> [--approved <sha>]` prints the inputs as JSON; `--approved` names the merge by hand when history was rewritten (ADR risk)
 - [ ] `lib/models/tier-names.ts`: `audit` in `TIER_STEPS`; `bin/commands/plans.ts`: `plans model <name> --step <step>` answers `tierForPhase(config, step, undefined)` — the step's default tier, no override; `--step` and `--phase` together are refused
 - [ ] `lib/checks/steps.ts`: nothing to add — `TIER_STEPS` is read there; confirm by A8's "unknown step refused"
+- [ ] Added 2026-10-09 (Sandy: "a plan can have models for the phases and them actually get used" — moved in from Out of Scope): A14 in `lib/build/step-model.test.ts`, authored RED first — `buildStepModel(checkout, plan, step, phase?)` answers the model for a `work` step from `phaseModel` (the phase string `nextBuildStep` gives, parsed to a `PhaseRef`) and for a ritual step from `tierForPhase(config, step, undefined)`; `null` with no tiers
+- [ ] The runner hands the step's phase to `run` (`RunnerDeps.run(step, phase?)`; `runBuild` passes `next.phase` for a `work` step); `build/index` exports `buildStepModel`; the admin's `build-host.ts` resolves it per step and passes `model` to `runStepSession` (already plumbed to `claude --model`), omitting it when `null`. Admin change committed separately from the package change
 
 #### Build Phase 2 Verification
 
-- [ ] A5, A6, A7, A8 pass; A12 still does (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/plans-audit-inputs.test.ts src/__tests__/plans-model.test.ts src/lib/models && pnpm exec vitest related src/lib/audit/inputs.ts src/lib/models/tier-names.ts --run`); tsc and biome clean on the files changed
+- [ ] A5, A6, A7, A8, A12, A14 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/plans-audit-inputs.test.ts src/__tests__/plans-model.test.ts src/lib/models src/lib/build && pnpm exec vitest related src/lib/audit/inputs.ts src/lib/models/tier-names.ts --run`); tsc and biome clean on the files changed, in indusk-mcp and indusk-admin
 
 #### Build Phase 2 Context
 
