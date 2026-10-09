@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { line, site } from "./fixture.js";
 import { panelModel } from "./panel.js";
+import { panelBody } from "./panel-html.js";
 import type { HealthLine, View } from "./view.js";
 
 /**
@@ -76,5 +77,15 @@ describe("the promises panel", () => {
 
 	it("before any health line, the panel says it is not reading", () => {
 		expect(panelModel(null, new Map())).toEqual({ broken: [], rest: [], notReading: true });
+	});
+
+	it("the panel's HTML shows span text as text, never markup", () => {
+		const v = twoBreaks();
+		const local = v.line.sources[1] as unknown as { rows: Record<string, unknown>[] };
+		(local.rows[1] as Record<string, unknown>).symptom = '<img src=x onerror="alert(1)">';
+		const html = panelBody(panelModel(v, new Map()), ["seats-held held (local) · <b>x</b>"]);
+		expect(html).not.toContain("<img");
+		expect(html).toContain("&lt;img");
+		expect(html).not.toContain("<b>x</b>");
 	});
 });
