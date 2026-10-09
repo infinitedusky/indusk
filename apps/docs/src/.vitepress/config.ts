@@ -210,6 +210,7 @@ const config = defineConfig({
 					text: "Decisions",
 					items: [
 						{ text: "Overview", link: "/decisions/" },
+						{ text: "Audit Step — a fresh reader before a plan closes", link: "/decisions/plan-review-subagent" },
 						{ text: "Admin Plan Authoring — plan to release from the admin", link: "/decisions/admin-plan-authoring" },
 						{ text: "Workbench Plan Authoring — plans in workbenches", link: "/decisions/workbench-plan-authoring" },
 						{ text: "Bookkeeping Lives Where It Is Read — notes on main, state in the home", link: "/decisions/bookkeeping-lives-where-it-is-read" },
