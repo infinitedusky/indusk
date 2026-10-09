@@ -29,25 +29,13 @@ export function fixAction(
 				"Claude Code is not installed, so there is nothing to start the fix with. Install it with `npm install -g @anthropic-ai/claude-code`, then try again.",
 		};
 	}
-	// Every fact comes from a span or the registry, and is typed into a
-	// terminal: a control character there is a keystroke (Ctrl-C ends the
-	// quoted line and runs what follows). One line each, control characters gone.
-	b = {
-		...b,
-		promise: oneLine(b.promise),
-		source: oneLine(b.source),
-		sourceLabel: oneLine(b.sourceLabel),
-		statement: oneLine(b.statement),
-		tests: b.tests.map(oneLine),
-		...(b.symptom !== undefined ? { symptom: oneLine(b.symptom) } : {}),
-		...(b.traceId !== undefined ? { traceId: oneLine(b.traceId) } : {}),
-	};
-	const trace = b.traceId ? `${b.sourceLabel.replace(/\/+$/, "")}/trace/${b.traceId}` : null;
+	const f = cleanFacts(b);
+	const trace = f.traceId ? `${f.sourceLabel.replace(/\/+$/, "")}/trace/${f.traceId}` : null;
 	const prompt = [
-		`The promise \`${b.promise}\` is broken in ${b.source}: "${b.statement}"`,
-		b.symptom ? `Symptom: ${b.symptom}` : null,
+		`The promise \`${f.promise}\` is broken in ${f.source}: "${f.statement}"`,
+		f.symptom ? `Symptom: ${f.symptom}` : null,
 		trace ? `Trace: ${trace}` : null,
-		b.tests.length > 0 ? `Tests that prove it: ${b.tests.join(", ")}` : null,
+		f.tests.length > 0 ? `Tests that prove it: ${f.tests.join(", ")}` : null,
 		"",
 		"Record the break first (the `record_breaks` tool, or `indusk promises watch`), then find the cause and fix it under the plan that owns the promise.",
 	]
@@ -56,7 +44,7 @@ export function fixAction(
 	return {
 		terminal: {
 			cwd: ctx.projectRoot,
-			name: `Claude — ${b.promise}`,
+			name: `Claude — ${f.promise}`,
 			command: `claude ${shellQuote(prompt)}`,
 		},
 	};
@@ -91,6 +79,25 @@ export function fixFor(
 		);
 	}
 	return null;
+}
+
+/**
+ * The facts as the terminal may receive them. Every one comes from a span or
+ * the registry and is typed into a terminal, where a control character is a
+ * keystroke (Ctrl-C ends the quoted line and runs what follows): one line
+ * each, control characters gone.
+ */
+function cleanFacts(b: BrokenPromise): BrokenPromise {
+	return {
+		...b,
+		promise: oneLine(b.promise),
+		source: oneLine(b.source),
+		sourceLabel: oneLine(b.sourceLabel),
+		statement: oneLine(b.statement),
+		tests: b.tests.map(oneLine),
+		...(b.symptom !== undefined ? { symptom: oneLine(b.symptom) } : {}),
+		...(b.traceId !== undefined ? { traceId: oneLine(b.traceId) } : {}),
+	};
 }
 
 /** The text with line breaks and tabs as spaces and every other control character removed. */
