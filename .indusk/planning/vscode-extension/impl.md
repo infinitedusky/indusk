@@ -72,6 +72,7 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 **Goal**: author the one row whose subject exists today, and register every other row with the body it will have.
 
 - [x] Create/confirm this plan's worktree (`indusk worktree create vscode-extension`; made by `indusk plans start` on 2026-10-08 at `dusk-worktrees/vscode-extension`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 - [x] (red on all three assertions: no `readHealth`/`healthOf` in the package, the admin defines them, five admin files import its own copy) A7 in `apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts`: `lib/promises/health.ts` defines `readHealth` and `healthOf`; no file under `apps/indusk-admin/src` or `apps/vscode-extension/src` defines either; the admin's importers name `@infinitedusky/indusk-mcp/promises/health`. RED today: the health lives in the admin and the package has none
 
 #### Deferred to Build Phase 1
