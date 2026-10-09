@@ -1,7 +1,7 @@
 ---
 title: "plan-review-subagent — the audit step"
 date: 2026-10-09
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -256,6 +256,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 - [x] (reviewed `lib/audit/inputs.ts` `trajectorySection` against `lib/trajectory/parser.ts` `extractTrajectoryBlock` — left as-is: the parser's is private and returns parsed table and deferred lines without the heading; the auditor needs the section's raw text, heading and its deferred subsection included. Exporting the parser's would not give that)
 - [x] (reviewed `BuildStepName` in `lib/build/runner.ts`, `TIER_STEPS` in `lib/models/tier-names.ts` and `SESSION_STEPS` in the runner — left as-is: three lists that this plan each extended by `audit`, but they name three things — the steps a build runs, the steps with a tier (`plan` included), the steps the runner runs as a session (`retrospective` excluded). Deriving one from another would encode a coincidence of today's membership)
 - [x] (reviewed `apps/indusk-admin/src/lib/build-host.ts` `stepModelOption`, `ReviewPanel.tsx` `RITUAL_TITLES`, `lib/build/review.ts`, `next-step.ts`, `next-session.ts`, `runner.ts`, `step-model.ts` — left as-is: each is a single-caller unit or a one-line addition to a list that already had its shape; no copy exists elsewhere)
+- [x] Shape (`apps/indusk-mcp/src/lib/rituals/skip.ts`, `lib/cleanup/gate.ts`, `lib/falsification/skip.ts`, `bin/commands/plans.ts`) — reviewed, nothing found: `isRitualSkipped` has one reason to change and a name that says what it answers, the two old modules keep their doc and a one-line body, and `plansModel` now has one call where it had an inline expression
 
 #### Build Phase 5 Verification
 
@@ -264,11 +265,11 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 #### Build Phase 5 Context
 
-- [ ] (none — internal decomposition: the three skip functions keep their names and modules, and `apps/indusk-mcp/CLAUDE.md` names neither `SkipCheck` nor where a step's tier is computed — `grep -n "SkipCheck\|isCleanupSkipped\|tierForPhase" apps/indusk-mcp/CLAUDE.md` is empty)
+- [x] (none — internal decomposition: the three skip functions keep their names and modules, and `apps/indusk-mcp/CLAUDE.md` names neither `SkipCheck` nor where a step's tier is computed — `grep -n "SkipCheck\|isCleanupSkipped\|tierForPhase" apps/indusk-mcp/CLAUDE.md` is empty)
 
 #### Build Phase 5 Document
 
-- [ ] (none — internal decomposition: no CLI flag, output, config key or skill text changes; `plans model --step` answers byte-for-byte as before, which A8 pins)
+- [x] (none — internal decomposition: no CLI flag, output, config key or skill text changes; `plans model --step` answers byte-for-byte as before, which A8 pins)
 
 ## Files Affected
 
