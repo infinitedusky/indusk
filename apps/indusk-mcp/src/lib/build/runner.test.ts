@@ -8,6 +8,7 @@ import { type BuildStepName, runBuild, runRelease } from "./runner.js";
 /**
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A11 at the runner, A30's runner half.
  * promise: nothing-ships-until-accepted — admin-plan-authoring A19, A20.
+ * promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes — plan-review-subagent A4.
  *
  * The runner asks `nextBuildStep` after every step and runs a fresh session
  * for each: it stops at review, a declared judgement, or when it cannot
@@ -20,6 +21,7 @@ import { type BuildStepName, runBuild, runRelease } from "./runner.js";
 const ready = (missing: string[] = []): RetrospectiveReadiness => ({
 	falsificationOk: !missing.includes("falsification"),
 	cleanupOk: !missing.includes("cleanup"),
+	auditOk: !missing.includes("audit"),
 	rowsOk: true,
 	nonTerminalRows: [],
 	promisesOk: true,
@@ -114,6 +116,22 @@ describe("A11 — the runner works through phases, falsification and cleanup wit
 			step: "cannot-continue",
 			why: "the last step's session failed: claude exited 1",
 		});
+	});
+});
+
+describe("plan-review-subagent A4 — after cleanup the build runs the audit, then stops at review unasked", () => {
+	it("runs work, falsify, cleanup, audit, then stops at review — accept never called", async () => {
+		const s = scripted([
+			planOf([phase("Seats", false)], ["falsification", "cleanup", "audit"]),
+			planOf([phase("Seats", true)], ["falsification", "cleanup", "audit"]),
+			planOf([phase("Seats", true)], ["cleanup", "audit"]),
+			planOf([phase("Seats", true)], ["audit"]),
+			BUILT,
+		]);
+		const stop = await runBuild({ ...s.deps, autoAccept: false });
+		expect(s.ran).toEqual(["work", "falsify", "cleanup", "audit"]);
+		expect(stop).toEqual({ step: "review" });
+		expect(s.accepted).toEqual([]);
 	});
 });
 
