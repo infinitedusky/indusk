@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { tierRuleProblems as hookRule, tierConfigProblems } from "../../hooks/_phase-tier.js";
+import { TIER_STEPS } from "../lib/models/tier-names.js";
 import { readTierConfig, tierRuleProblems } from "../lib/models/tiers.js";
 
 /**
@@ -69,6 +70,36 @@ describe("A17 — the hook's config check and the package's reader agree", () =>
 			const hook = tierConfigProblems({ workflow });
 			const reader = readerSays(workflow);
 			expect(hook[0] ?? null).toBe(reader);
+		});
+	}
+});
+
+/**
+ * promise: the-auditor-runs-on-its-tier — plan-review-subagent A21.
+ *
+ * Every step `TIER_STEPS` names must be a step the hook reads too: a step added
+ * to the TS and not to the hook would make the impl validator refuse any impl
+ * write once that step's tier is configured.
+ */
+describe("A21 — the hook reads every step TIER_STEPS names", () => {
+	const steps = Object.fromEntries(TIER_STEPS.map((s) => [s, { tier: "med" }]));
+	const workflow = { tiers: TIERS, steps };
+
+	it("the hook reports no problem for a tier set on every step", () => {
+		expect(tierConfigProblems({ workflow })).toEqual([]);
+	});
+
+	it("the package reader accepts the same config", () => {
+		const root = mkdtempSync(join(tmpdir(), "phase-tier-parity-"));
+		roots.push(root);
+		mkdirSync(join(root, ".indusk"), { recursive: true });
+		writeFileSync(join(root, ".indusk", "config.json"), JSON.stringify({ mode: "full", workflow }));
+		expect(() => readTierConfig(root)).not.toThrow();
+	});
+
+	for (const step of TIER_STEPS) {
+		it(`step ${step} agrees`, () => {
+			expect(tierConfigProblems({ workflow: { tiers: TIERS, steps: { [step]: { tier: "med" } } } })).toEqual([]);
 		});
 	}
 });
