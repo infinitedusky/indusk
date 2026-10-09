@@ -414,8 +414,9 @@ export async function promisesHealth(
 	opts: { json?: boolean; every?: string } = {},
 	deps: PromisesHealthDeps = {},
 ): Promise<void> {
-	const read = (deps.readRegistry ?? readPromises)(projectRoot);
-	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
+	const readRegistry = deps.readRegistry ?? readPromises;
+	const read = readRegistry(projectRoot);
+	let registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
 	if (!registry) {
 		console.error(`${"missing" in read ? read.missing : projectRoot}: no promise registry`);
 		process.exitCode = 2;
@@ -436,11 +437,29 @@ export async function promisesHealth(
 		deps.readHealth ?? ((root: string, reg: Registry) => readHealth(root, reg, { cacheMs: 0 }));
 	const write = deps.write ?? ((text: string) => process.stdout.write(text));
 	const now = deps.now ?? (() => new Date());
+	// The registry is read before every line, not once: an incident marked
+	// fixed, or a promise declared, while the editor is open shows on the next
+	// line. A registry caught mid-edit keeps the last one that read whole.
+	const reread = () => {
+		try {
+			const next = readRegistry(projectRoot);
+			if (next.ok) registry = next.registry;
+		} catch {
+			// keep the last registry that read
+		}
+		return registry as Registry;
+	};
 	const once = async () => {
-		const reads = await readReads(projectRoot, registry);
-		write(`${JSON.stringify(healthLine(registry, reads, now()))}\n`);
+		const current = reread();
+		const reads = await readReads(projectRoot, current);
+		write(`${JSON.stringify(healthLine(current, reads, now()))}\n`);
 	};
 	await once();
 	if (everyMs === null) return;
-	await (deps.repeat ?? repeatUntilSignal)(everyMs, once);
+	// One bad read never ends the reader: the next tick tries again.
+	await (deps.repeat ?? repeatUntilSignal)(everyMs, () =>
+		once().catch((error: unknown) => {
+			console.error(`promises health: ${error instanceof Error ? error.message : String(error)}`);
+		}),
+	);
 }
