@@ -82,7 +82,7 @@ Rewrite the three system-tier tests the 2026-10-08 changes left behind so they a
 **Tier**: med
 
 - [ ] Run the whole system tier and fix anything else it turns up that the three rewrites did not cover, each as its own item here
-- [ ] A5 (discovered, Sandy 2026-10-09): `apps/vscode-extension/src/__tests__/install.contract.test.ts` launches VS Code with only the temporary `--extensions-dir` holding the installed extension, drops `--disable-extensions`, and points `extensionDevelopmentPath` at a minimal probe extension (in the test's fixtures) whose test reports whether `infinitedusky.indusk` is active — so ours loads as installed, not in development mode, and no "extensions temporarily disabled" window appears
+- [x] A5 (discovered, Sandy 2026-10-09): `apps/vscode-extension/src/__tests__/install.contract.test.ts` launches VS Code with only the temporary `--extensions-dir` holding the installed extension, drops `--disable-extensions`, and points `extensionDevelopmentPath` at a minimal probe extension (in the test's fixtures) whose test reports whether `infinitedusky.indusk` is active — so ours loads as installed, not in development mode, and no "extensions temporarily disabled" window appears
 
 #### Build Phase 1 Verification
 

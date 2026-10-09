@@ -74,14 +74,13 @@ describe.skipIf(!haveVSCode)("A16 — install and activation in a real VS Code",
 		const userData = mkdtempSync(join(tmpdir(), "a16-u-"));
 		await runTests({
 			vscodeExecutablePath: VSCODE,
-			extensionDevelopmentPath: join(extensionsDir, installed),
+			extensionDevelopmentPath: join(__dirname, "fixtures", "activation-probe-ext"),
 			extensionTestsPath: join(__dirname, "activation-probe.cjs"),
 			launchArgs: [
 				workspace,
 				"--disable-workspace-trust",
 				"--extensions-dir",
 				extensionsDir,
-				"--disable-extensions",
 				// macOS caps a socket path near 103 characters; a worktree path is longer.
 				"--user-data-dir",
 				userData,
