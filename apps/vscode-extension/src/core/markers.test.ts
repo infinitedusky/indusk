@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { line } from "./fixture.js";
+import { line, site } from "./fixture.js";
 import { hover } from "./hover.js";
 import { markers } from "./markers.js";
 
@@ -11,7 +11,7 @@ import { markers } from "./markers.js";
  */
 
 const view = (o = {}) => ({ line: line(o), notReading: false });
-const code = 'span.setAttribute("indusk.promise", "seats-held"); // promise: seats-held\n';
+const code = site("seats-held", 'span.setAttribute("indusk.promise", "seats-held"); ');
 
 describe("markers", () => {
 	it("A1 — a line keeping a promise shows its name and state, production first", () => {
@@ -23,13 +23,13 @@ describe("markers", () => {
 		expect(markers({ path: "src/telemetry.ts", text: code }, view())[0]?.text).toBe(
 			"seats-held · holding",
 		);
-		expect(
-			markers({ path: "src/page.ts", text: "// promise: page-answers\n" }, view())[0]?.text,
-		).toBe("page-answers · watched by the tests");
+		expect(markers({ path: "src/page.ts", text: site("page-answers") }, view())[0]?.text).toBe(
+			"page-answers · watched by the tests",
+		);
 	});
 
 	it("A2 — a token for a promise the project does not have says so", () => {
-		expect(markers({ path: "src/x.ts", text: "\n// promise: no-such-promise\n" }, view())).toEqual([
+		expect(markers({ path: "src/x.ts", text: `\n${site("no-such-promise")}` }, view())).toEqual([
 			{
 				line: 1,
 				promise: "no-such-promise",
@@ -41,7 +41,7 @@ describe("markers", () => {
 
 	it("A3 — a test's token says the test proves the promise", () => {
 		expect(
-			markers({ path: "src/seats.test.ts", text: "// promise: seats-held\n" }, view())[0],
+			markers({ path: "src/seats.test.ts", text: site("seats-held") }, view())[0],
 		).toMatchObject({
 			text: "seats-held · proved here",
 			tone: "proves",

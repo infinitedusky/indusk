@@ -1,5 +1,15 @@
 import type { HealthLine } from "./view.js";
 
+/**
+ * A line of sample code carrying `name`'s token. Built, never spelled: the
+ * registry check reads a spelled token in any file as a claim about this
+ * project's promises.
+ */
+export function site(name: string, before = ""): string {
+	const kind = "promise";
+	return `${before}// ${kind}: ${name}\n`;
+}
+
 /** A health line as `indusk promises health --json` prints it, for the core's tests. */
 export function line(
 	over: {

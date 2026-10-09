@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { line } from "./fixture.js";
+import { line, site } from "./fixture.js";
 import { markers } from "./markers.js";
 import { onLine, onTick, problems, startSession } from "./session.js";
 
@@ -10,7 +10,7 @@ import { onLine, onTick, problems, startSession } from "./session.js";
  * promise: a-break-reaches-the-editor
  */
 
-const code = "// promise: seats-held\n";
+const code = site("seats-held");
 const at = (s: number) => Date.UTC(2026, 9, 8, 12, 30, s);
 
 describe("session", () => {

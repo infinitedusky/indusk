@@ -18,8 +18,8 @@ export interface Session {
 	view: View | null;
 	lastLineAt: number | null;
 	/**
-	 * Breaks already told, by source and promise: told once while the promise
-	 * stays broken there, however many violations or failed reads come between.
+	 * Breaks already told, keyed by source and promise, so each is told once
+	 * while it stays broken there, however many violations or failed reads come between.
 	 */
 	told: Set<string>;
 }

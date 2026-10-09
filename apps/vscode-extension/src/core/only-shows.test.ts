@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { fixAction } from "./fix.js";
-import { line } from "./fixture.js";
+import { line, site } from "./fixture.js";
 import { hover } from "./hover.js";
 import { markers } from "./markers.js";
 import { onLine, onTick, problems, startSession } from "./session.js";
@@ -19,7 +19,7 @@ describe("A15 — the editor only shows", () => {
 	it("after reading, showing a break and building the fix action, the project's files are exactly as they were", () => {
 		const root = mkdtempSync(join(tmpdir(), "only-shows-"));
 		const git = (...a: string[]) => spawnSync("git", a, { cwd: root, encoding: "utf-8" });
-		writeFileSync(join(root, "telemetry.ts"), "// promise: seats-held\n");
+		writeFileSync(join(root, "telemetry.ts"), site("seats-held"));
 		git("init", "-q");
 		git("add", ".");
 		git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "start");
