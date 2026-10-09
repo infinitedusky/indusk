@@ -93,4 +93,17 @@ describe("A26 — the health line names the newest runs", () => {
 			{ promise: "seats-held", source: "local", outcome: "upheld", at: iso(10), traceId: "l-1" },
 		]);
 	});
+
+	it("A30 — each promise on the line names the plan that owns it", () => {
+		const p = promiseProject({
+			promises: [behaviourPromise("seats-held", { owner: "demo", domain: "demo" })],
+			domains: ["demo"],
+		});
+		const read = readPromises(p.planRoot);
+		if (!read.ok) throw new Error("fixture registry did not read");
+		const line = healthLine(read.registry, [], new Date(NOW)) as unknown as {
+			promises: { name: string; plan?: string }[];
+		};
+		expect(line.promises).toEqual([expect.objectContaining({ name: "seats-held", plan: "demo" })]);
+	});
 });
