@@ -78,6 +78,27 @@ function readText(worktree: string, rel: string): AuditText {
 	return { path: rel, text: readFileSync(join(worktree, rel), "utf-8") };
 }
 
+/** The approval merge, named by hand or found by its subject; a refusal when neither is a commit. */
+async function resolveApproval(
+	pb: Awaited<ReturnType<typeof planBranch>>,
+	plan: string,
+	approved: string | undefined,
+): Promise<string> {
+	if (approved !== undefined) {
+		await git(pb.trunk, "cat-file", "-e", `${approved}^{commit}`).catch(() => {
+			throw new AuditInputsRefusal(`--approved ${approved} is not a commit in ${pb.trunk}`);
+		});
+		return approved;
+	}
+	const sha = await approvalMerge(pb.trunk, pb.trunkBranch, plan);
+	if (sha === null) {
+		throw new AuditInputsRefusal(
+			`${plan} has no approval merge on ${pb.trunkBranch} (a merge whose subject starts "plan(${plan}): approved"): an audit of an unapproved plan has no impl "as approved"; if history was rewritten, name the merge with --approved <sha>`,
+		);
+	}
+	return sha;
+}
+
 /** The auditor's inputs for `plan`; `approved` names the approval merge by hand when history was rewritten. */
 export async function auditInputs(
 	checkout: string,
@@ -85,19 +106,7 @@ export async function auditInputs(
 	approved?: string,
 ): Promise<AuditInputs> {
 	const pb = await planBranch(checkout, plan);
-	let sha = approved ?? null;
-	if (sha !== null) {
-		await git(pb.trunk, "cat-file", "-e", `${sha}^{commit}`).catch(() => {
-			throw new AuditInputsRefusal(`--approved ${sha} is not a commit in ${pb.trunk}`);
-		});
-	} else {
-		sha = await approvalMerge(pb.trunk, pb.trunkBranch, plan);
-	}
-	if (sha === null) {
-		throw new AuditInputsRefusal(
-			`${plan} has no approval merge on ${pb.trunkBranch} (a merge whose subject starts "plan(${plan}): approved"): an audit of an unapproved plan has no impl "as approved"; if history was rewritten, name the merge with --approved <sha>`,
-		);
-	}
+	const sha = await resolveApproval(pb, plan, approved);
 
 	const planDir = relative(pb.worktree, pb.dir).split("\\").join("/");
 	const documents: AuditInputs["documents"] = {
