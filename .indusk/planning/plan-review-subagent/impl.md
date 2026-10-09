@@ -99,6 +99,9 @@ Every plan is read once before it closes by a reader that did not build it, on t
 #### Test Phase 1 Verification
 
 - [ ] A1, A2, A3, A5, A6, A7, A8, A13 are authored and each fails on its own assertion; A10, A11, A12 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/audit-gate.test.ts src/lib/models/next-session.test.ts src/__tests__/plans-audit-inputs.test.ts src/__tests__/plans-model.test.ts src/__tests__/plans-review.test.ts src/__tests__/planner-tier-line.test.ts`). The deferred bodies are reviewed: will they compile at the phase they name, and do they assert what they claim?
+  - Run 2026-10-09: A1, A2, A3, A5, A6, A7, A8, A13 each fail on their own assertion (no file fails to load; the CLI-reaching rows get exit 1 or an unknown-command refusal, the gate rows get the wrong `missing`/step). A10 and A11 pass. **A12 does not pass**: the config reader refuses `steps.audit` today ("workflow.steps.audit is not a step InDusk reads"), so the with-`steps.audit` half is red until Build Phase 2 adds `audit` to `TIER_STEPS`; its Passes at is Test Phase 1 and was left as written, so this item stays open and the phase cannot close until that is resolved by a person.
+  - Register, A4: the body compiles at Build Phase 1 only if `ready()` in `runner.test.ts` also gains the `auditOk` field that phase adds to `RetrospectiveReadiness` (otherwise tsc fails on the existing helper, not on A4), and it asserts what it claims (step order ends `audit`, then review, `accept` never called).
+  - Register, A9: it is a description of a live check rather than code, so it cannot fail to compile, and what it records (the model the Agent reports and the `audit.md` written in the fixed shape) is exactly what the row claims; it proves nothing in CI, as the register says.
 
 ### Build Phase 1: The audit as a ritual word
 
