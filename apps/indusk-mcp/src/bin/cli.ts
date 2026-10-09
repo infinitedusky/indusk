@@ -987,6 +987,16 @@ plansCmd
 	});
 
 plansCmd
+	.command("next-session <name>")
+	.description(
+		"The command to run in a new session for the plan's next piece of work, with the next phase's tier and model",
+	)
+	.action(async (name: string) => {
+		const { plansNextSession } = await import("./commands/plans.js");
+		await plansNextSession(process.cwd(), name);
+	});
+
+plansCmd
 	.command("next <name>")
 	.description(
 		"What an unattended build does next: work, falsify, cleanup, a judgement the plan declared, review, or cannot continue",

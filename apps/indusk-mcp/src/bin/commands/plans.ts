@@ -2,6 +2,7 @@ import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
 import { parsePhaseRef } from "../../lib/impl-headings.js";
+import { nextSessionForPlan } from "../../lib/models/next-session.js";
 import { phaseModel } from "../../lib/models/phase-model.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import {
@@ -45,10 +46,11 @@ export function plansStart(
 export function plansApprove(cwd: string, name: string): Promise<void> {
 	return planVerb(async () => {
 		const a = await approvePlan(cwd, name);
+		const next = await nextSessionForPlan(cwd, name);
 		if (a.workbench) {
-			return `Approved ${a.plan}: its documents are committed at the workbench root (${a.merge.slice(0, 8)}); its build continues on its code branch.`;
+			return `Approved ${a.plan}: its documents are committed at the workbench root (${a.merge.slice(0, 8)}); its build continues on its code branch.\n${next}`;
 		}
-		return `Approved ${a.plan}: ${a.paths.length} file(s) merged to the trunk at ${a.merge.slice(0, 8)}; its build continues on its branch.`;
+		return `Approved ${a.plan}: ${a.paths.length} file(s) merged to the trunk at ${a.merge.slice(0, 8)}; its build continues on its branch.\n${next}`;
 	});
 }
 
@@ -64,6 +66,11 @@ export function plansModel(cwd: string, name: string, phase: string): Promise<vo
 		const answer = await phaseModel(cwd, name, ref);
 		return answer ? `${answer.tier} ${answer.model}` : "session";
 	});
+}
+
+/** `indusk plans next-session <name>` — the command to run in a new session, from the plan as it stands. */
+export function plansNextSession(cwd: string, name: string): Promise<void> {
+	return planVerb(() => nextSessionForPlan(cwd, name));
 }
 
 /** `indusk plans accept <name>` — the build may ship. */
