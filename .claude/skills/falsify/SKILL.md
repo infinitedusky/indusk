@@ -114,7 +114,7 @@ For genuinely trivial plans (two-line typo fix, changelog entry, variable rename
 
 ## Output
 
-After falsification comes the **cleanup ritual** (`/cleanup {plan}`) — its twin, which reviews the plan's changed files for decomposition and authors a Cleanup Phase. The close-out sequence is `/work → /falsify → /work → /cleanup → /work → /retrospective`. Hand off to `/cleanup` next, then `/retrospective`.
+After falsification comes the **cleanup ritual** (`/cleanup {plan}`) — its twin, which reviews the plan's changed files for decomposition and authors a Cleanup Phase. The close-out sequence is `/work → /falsify → /work → /cleanup → /work → /audit → /retrospective`. Hand off to `/cleanup` next, then `/audit`, then `/retrospective`.
 
 By the time you hand off to the next ritual, one of these must be true:
 

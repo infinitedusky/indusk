@@ -176,7 +176,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 - [x] `skills/planner.md` step 8: the close-out order gains `/audit`
 - [x] The planner names every phase's tier (A13): `skills/planner.md` step 7 — "every phase carries `**Tier**: <tier>` under its heading, the step's default spelled out or a different tier with its reason; `indusk plans model` answers from it" — the impl template in the same skill carries the line under each phase, and `templates/planning/CLAUDE.md`'s tier rule says *every* phase names one, not *may*
 - [ ] A9, the live check: `/audit` on a scratch plan with `steps.audit.tier: weak` (haiku). Record here the model the Agent reported and that `audit.md` was written in the fixed shape. If the Agent is not honoured for this spawn, record that and keep the skill's `session` path
-- [ ] `indusk update` so `.claude/skills/` takes the package's copies
+- [x] `indusk update` so `.claude/skills/` takes the package's copies
 
 #### Build Phase 3 Verification
 

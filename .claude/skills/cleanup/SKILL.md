@@ -14,7 +14,7 @@ Why this shape: cleanup phases are **visible** (admin UI renders all phases), **
 
 ## Runs after falsification
 
-The close-out sequence is: `/work` → `/falsify` → `/work` → **`/cleanup`** → `/work` → `/retrospective`. Cleanup runs AFTER falsification deliberately — you refactor under the maximal green coverage falsification just hardened. Never restructure code whose correctness hasn't been proven.
+The close-out sequence is: `/work` → `/falsify` → `/work` → **`/cleanup`** → `/work` → `/audit` → `/retrospective`. Cleanup runs AFTER falsification deliberately — you refactor under the maximal green coverage falsification just hardened. Never restructure code whose correctness hasn't been proven.
 
 ## Your scope is inter-file. Local craft is already handled
 
@@ -115,7 +115,7 @@ The retrospective skill's Step 0 gate accepts either a terminal Cleanup Phase (`
 
 ## Output
 
-By the time you hand off to `/retrospective`, one of these must be true:
+By the time you hand off to `/audit` (then `/retrospective`), one of these must be true:
 
 - A Cleanup Phase has been appended to the plan's `impl.md` (extractions + any trajectory rows + gates); `/work` will later close it. Impl status stays `in-progress`.
 - The plan's impl frontmatter contains `cleanup: skipped` + `cleanup_reason` with a real reason.

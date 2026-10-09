@@ -28,11 +28,11 @@ The retrospective skill replaces the freeform "write a retrospective" step with 
 
 Work through these steps in order. Each step is blocking — do not skip ahead.
 
-### Step 0: Ritual Gate — Falsification + Cleanup
+### Step 0: Ritual Gate — Falsification + Cleanup + Audit
 
 **This gate blocks everything below. Do not proceed to Step 1 until it passes.**
 
-Before writing a single word of the retrospective, confirm that the plan has completed **both** closing rituals — falsification **and** cleanup. Each is satisfied either via its phase-authoring flow (a Falsification Phase / a `### Phase N: Cleanup` phase, both terminal in impl.md), via a legacy sidecar log (falsification only), or via an explicit skip-reason frontmatter pair. **Both must pass.** The composed check is `checkRetrospectiveReadiness(planRoot, implContent)` from `@infinitedusky/indusk-mcp/cleanup/gate` (monorepo: `apps/indusk-mcp/src/lib/cleanup/gate.ts`) — it returns `{ passes, missing, nonTerminalRows }`, where `missing` names any unsatisfied ritual and, since dawn-workbench-execution, `rows` when a trajectory row whose `Passes at` phase exists in the document is not terminal (`passing`, `skipped` or `blocked`); `nonTerminalRows` names them. That row check is the condition the text below always described and the code did not perform until workbench-trust-fixes closed with two rows still `written`.
+Before writing a single word of the retrospective, confirm that the plan has completed the closing rituals — falsification, cleanup **and** the audit. Each is satisfied either via its phase-authoring flow (a Falsification Phase / a `### Phase N: Cleanup` phase, both terminal in impl.md), via a legacy sidecar log (falsification only), or via an explicit skip-reason frontmatter pair. **Both must pass.** The composed check is `checkRetrospectiveReadiness(planRoot, implContent)` from `@infinitedusky/indusk-mcp/cleanup/gate` (monorepo: `apps/indusk-mcp/src/lib/cleanup/gate.ts`) — it returns `{ passes, missing, nonTerminalRows }`, where `missing` names any unsatisfied ritual and, since dawn-workbench-execution, `rows` when a trajectory row whose `Passes at` phase exists in the document is not terminal (`passing`, `skipped` or `blocked`); `nonTerminalRows` names them. That row check is the condition the text below always described and the code did not perform until workbench-trust-fixes closed with two rows still `written`.
 
 The same check names `promises` when the plan declared a promise its test rows do not yet prove: no row's `For` cell names it, a row that names it is not `passing`, or the rows name no test file. `unprovenPromises` lists them. A plan does not close holding a promise nothing proves; Step 8a is where each becomes `enforced`.
 
@@ -51,9 +51,14 @@ The **falsification** requirement passes if ANY of the three conditions above ho
 - **Complete:** the plan's impl.md has a terminal `### Phase N: Cleanup` phase — `isCleanupComplete(planRoot)` from `@infinitedusky/indusk-mcp/cleanup/gate` (monorepo: `apps/indusk-mcp/src/lib/cleanup/gate.ts`).
 - **Skip:** the impl's frontmatter contains BOTH `cleanup: skipped` AND `cleanup_reason: "{non-empty text}"` — `isCleanupSkipped(implContent)`.
 
-Cleanup runs AFTER falsification: `/work` → `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`. Evaluate both rituals at once with `checkRetrospectiveReadiness(planRoot, implContent)`. The gate passes only when BOTH requirements are satisfied. If either fails, refuse to run the retrospective and surface this message to the user:
+**Audit** must ALSO pass, by either of:
 
-> **Retrospective blocked: ritual gate not satisfied for `{plan-name}` (missing: `{the `missing` list — falsification, cleanup, rows and/or promises}`).**
+- **Complete:** `audit.md` exists in the plan folder — `isAuditComplete(planRoot)`. The gate reads that the file exists, never what it says: an audit's findings are advisory.
+- **Skip:** the impl's frontmatter contains BOTH `audit: skipped` AND `audit_reason: "{non-empty text}"` — `isAuditSkipped(implContent)`.
+
+Cleanup runs AFTER falsification and the audit after cleanup: `/work` → `/falsify` → `/work` → `/cleanup` → `/work` → `/audit` → `/retrospective`. Evaluate the rituals at once with `checkRetrospectiveReadiness(planRoot, implContent)`. The gate passes only when ALL requirements are satisfied. If either fails, refuse to run the retrospective and surface this message to the user:
+
+> **Retrospective blocked: ritual gate not satisfied for `{plan-name}` (missing: `{the `missing` list — falsification, cleanup, audit, rows and/or promises}`).**
 >
 > Before closing out a plan, run `/falsify {plan-name}` to exercise the bounty-hunting ritual — investigate the code, form specific hypotheses about what should be broken, and author a Falsification Phase in the plan's impl.md capturing the hypothesis tests + fix items. `/work` then picks up the phase and closes it normally; once all impl phases are terminal, this gate passes automatically.
 >
@@ -69,6 +74,13 @@ Cleanup runs AFTER falsification: `/work` → `/falsify` → `/work` → `/clean
 > ```yaml
 > cleanup: skipped
 > cleanup_reason: "why skipping is acceptable for this specific plan"
+> ```
+>
+> If the audit is the missing ritual, run `/audit {plan-name}` — a reader that did not build the plan writes `audit.md` (advisory; nothing reads what it says), or skip it intentionally:
+>
+> ```yaml
+> audit: skipped
+> audit_reason: "why skipping is acceptable for this specific plan"
 > ```
 >
 > The skip-reasons are recorded in the archive and surfaced in retrospectives. Use sparingly — typically only for trivial typo-fix plans where the ritual cost exceeds the discipline value.
