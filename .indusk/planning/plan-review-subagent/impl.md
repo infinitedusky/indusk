@@ -73,7 +73,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 - [x] A5, A6, A7 in `plans-audit-inputs.test.ts`: a plan approved with `indusk plans approve` in the lifecycle fixture, then a commit appending a `### Build Phase 2: Falsification — x` phase to the impl and a code file outside `.indusk/`, then `indusk plans audit-inputs <plan>` read as JSON. RED today: the command does not exist (exit 1, unknown command).
 - [x] A8 and A12 in `plans-model.test.ts`: `--step audit` with `steps.audit.tier: strong` answers `strong opus`; with no tiers, `session`; `--step huge` is refused naming it; `--phase "Build Phase 1"` answers the same with and without `steps.audit` in the config. RED today for A8: `--step` is an unknown option. A12 is green on arrival.
 - [x] A11 in `plans-review.test.ts`: the review's text with and without `audit.md` in the plan folder is identical. Green on arrival.
-- [ ] A13 in `planner-tier-line.test.ts`: `skills/planner.md`'s impl step (7), `templates/planning/CLAUDE.md` and the impl template in `skills/planner.md` each carry `**Tier**:` with the rule that every phase names its tier. RED today: none of the three mentions it.
+- [x] A13 in `planner-tier-line.test.ts`: `skills/planner.md`'s impl step (7), `templates/planning/CLAUDE.md` and the impl template in `skills/planner.md` each carry `**Tier**:` with the rule that every phase names its tier. RED today: none of the three mentions it.
 
 #### Deferred to Build Phase 1
 
