@@ -76,7 +76,7 @@ describe("the promises panel", () => {
 	});
 
 	it("before any health line, the panel says it is not reading", () => {
-		expect(panelModel(null, new Map())).toEqual({ broken: [], rest: [], notReading: true });
+		expect(panelModel(null, new Map())).toMatchObject({ broken: [], groups: [], notReading: true });
 	});
 
 	it("the panel's HTML shows span text as text, never markup", () => {
@@ -93,5 +93,35 @@ describe("the promises panel", () => {
 		const body = panelBody as unknown as (m: unknown, a: string[], project: string) => string;
 		const html = body(panelModel(twoBreaks(), new Map()), [], "seat-holds-<demo>");
 		expect(html).toMatch(/class="project"[^>]*>seat-holds-&lt;demo&gt;</);
+	});
+
+	it("A29 — below the broken cards, promises grouped by plan, newest run first", () => {
+		const l = line({ productionState: "red" }) as HealthLine;
+		const plans: Record<string, string> = { "seats-held": "demo", "page-answers": "demo" };
+		const promises = l.promises as unknown as Record<string, unknown>[];
+		for (const p of promises) p.plan = plans[p.name as string];
+		const add = (name: string, plan: string, lastSeen: string | null) => {
+			promises.push({ name, kind: "behaviour", statement: `${name}.`, tests: [], sites: [], plan });
+			for (const s of l.sources as unknown as { rows: Record<string, unknown>[] }[])
+				s.rows.push({
+					promise: name,
+					state: lastSeen ? "green" : "unverified",
+					lastSeen,
+					violations: 0,
+					tests: [],
+				});
+		};
+		add("seats-booked", "booking", "2026-10-08T12:25:00.000Z");
+		add("seats-quiet", "booking", null);
+		add("seats-paid", "billing", "2026-10-08T12:10:00.000Z");
+		add("audit-trail", "audit", null);
+		const m = panelModel({ line: l, notReading: false }, new Map());
+		expect(m.broken.map((p) => [p.name, p.plan])).toEqual([["seats-held", "demo"]]);
+		expect(m.groups.map((g) => [g.plan, g.promises.map((p) => p.name)])).toEqual([
+			["booking", ["seats-booked", "seats-quiet"]],
+			["billing", ["seats-paid"]],
+			["audit", ["audit-trail"]],
+			["demo", ["page-answers"]],
+		]);
 	});
 });

@@ -22,11 +22,22 @@ export interface PanelPromise {
 	brokeAt?: string;
 	symptom?: string;
 	locations: Location[];
+	/** The plan that owns the promise. */
+	plan?: string;
+	/** Its most recent run in any source, or none. */
+	lastRun?: string;
+}
+
+/** The promises one plan owns, newest run first. */
+export interface PanelGroup {
+	plan: string;
+	promises: PanelPromise[];
 }
 
 export interface PanelModel {
 	broken: PanelPromise[];
 	rest: PanelPromise[];
+	groups: PanelGroup[];
 	notReading: boolean;
 }
 
@@ -37,7 +48,7 @@ export interface PanelModel {
  * holds the text of each listed file the editor could read.
  */
 export function panelModel(view: View | null, files: Map<string, string>): PanelModel {
-	if (!view) return { broken: [], rest: [], notReading: true };
+	if (!view) return { broken: [], rest: [], groups: [], notReading: true };
 	const all = view.line.promises.map((p): PanelPromise => {
 		const { text, tone } = stateOf(p.name, view);
 		return {
@@ -59,6 +70,7 @@ export function panelModel(view: View | null, files: Map<string, string>): Panel
 			.filter((p) => p.tone === "broken")
 			.sort((a, b) => (b.brokeAt ?? "").localeCompare(a.brokeAt ?? "") || byName(a, b)),
 		rest: all.filter((p) => p.tone !== "broken").sort(byName),
+		groups: [],
 		notReading: view.notReading,
 	};
 }
