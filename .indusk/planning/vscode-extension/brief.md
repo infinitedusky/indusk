@@ -31,6 +31,12 @@ workflow: feature
 
 5. **`the-editor-only-shows`** (state). The extension writes nothing to the project; recording and fixing happen through the CLI and the Claude it starts.
 
+6. **`every-promise-is-listed-in-the-editor`** (state). The editor has a panel listing every promise in the project with its state; broken ones come first as cards, the latest break first, and each opens to its tests and the places that keep it, any of which opens the file at that line.
+
+7. **`the-editor-shows-each-run-as-it-happens`** (state). The panel has an activity section that adds each recorded run of a promise as it arrives, newest first, saying whether it held or broke and in which source.
+
+<!-- Promises 6 and 7 added 2026-10-08, after Sandy tried the build: the markers show a promise's state only in a file that is open, and nothing shows runs as they pass. -->
+
 ### Existing promises
 
 **Must not break**
