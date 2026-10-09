@@ -1,7 +1,7 @@
 ---
 title: "system-tests-catch-up"
 date: 2026-10-09
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
