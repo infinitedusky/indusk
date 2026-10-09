@@ -8,9 +8,10 @@ import {
 	planLifecycleProject,
 } from "./helpers/plan-lifecycle-fixture.js";
 import { writePromise } from "./helpers/promises-fixture.js";
+import { git } from "./helpers/test-git.js";
 
 /**
- * promise: the-auditor-sees-the-plan-not-the-session — plan-review-subagent A5, A6, A7.
+ * promise: the-auditor-sees-the-plan-not-the-session — plan-review-subagent A5, A6, A7, A15, A16, A17.
  *
  * `indusk plans audit-inputs <plan>` hands the auditor the plan's brief, test
  * plan and ADR, the impl as it was merged at approval, the trajectory table as
@@ -25,6 +26,7 @@ const SENTENCE = "A held seat is released when its hold runs out.";
 const planDir = `.indusk/planning/${PLAN}`;
 
 const FALSIFICATION = "Falsification — holds that never expire";
+const CLEANUP = "Cleanup — one hold clock";
 
 let p: PlanLifecycleProject;
 let wt: string;
@@ -53,7 +55,7 @@ function approvedAndBuilt(): void {
 	const approve = runCli(p.trunk, ["plans", "approve", PLAN]);
 	expect(approve.code, `${approve.stdout}\n${approve.stderr}`).toBe(0);
 
-	const built = `${implText(PLAN, { rows: [{ state: "passing" }] })}\n### Build Phase 2: ${FALSIFICATION}\n\n- [x] read the expiry from a monotonic clock\n`;
+	const built = `${implText(PLAN, { rows: [{ state: "passing" }] })}\n### Build Phase 2: ${FALSIFICATION}\n\n- [x] read the expiry from a monotonic clock\n\n### Build Phase 3: ${CLEANUP}\n\n- [x] fold the two clocks into one\n`;
 	p.commit(
 		wt,
 		{
@@ -123,9 +125,47 @@ describe.skipIf(SHOULD_SKIP)("indusk plans audit-inputs", () => {
 		approvedAndBuilt();
 		const diff = textOf(inputs().diff);
 		expect(diff).toContain("src/seat-release.ts");
-		expect(diff).toContain(FALSIFICATION);
+		expect(diff).not.toContain(FALSIFICATION);
 		expect(diff).not.toContain("MARK-CURRENT");
 		expect(diff).not.toContain("MARK-OTHER-PLAN");
 		expect(diff).not.toContain(".indusk/promises");
+	});
+
+	it("A15 — the diff holds none of the impl's changes since approval, and no line under .indusk/, while the code is still there", () => {
+		approvedAndBuilt();
+		const diff = textOf(inputs().diff);
+		expect(diff).toContain("src/seat-release.ts");
+		expect(diff).not.toContain(FALSIFICATION);
+		expect(diff).not.toContain(CLEANUP);
+		expect(diff).not.toContain("fold the two clocks into one");
+		expect(diff).not.toContain(".indusk/");
+	});
+
+	it("A16 — the approved impl is named by a path git show reads; the working file's path is the trajectory's alone", () => {
+		approvedAndBuilt();
+		const got = inputs();
+		const approved = got.implAsApproved as { path: string; text: string };
+		const working = `${planDir}/impl.md`;
+		expect(approved.path).toBe(`${got.approvedAt}:${working}`);
+		expect(git(p.trunk, ["show", approved.path])).toBe(approved.text.trimEnd());
+		const { trajectoryNow, ...rest } = got;
+		expect((trajectoryNow as { path: string }).path).toBe(working);
+		const leaves: string[] = [];
+		const walk = (v: unknown): void => {
+			if (typeof v === "string") leaves.push(v);
+			else if (v && typeof v === "object") Object.values(v).forEach(walk);
+		};
+		walk(rest);
+		expect(leaves).not.toContain(working);
+	});
+
+	it("A17 — the tree holds the files the plan did not touch; the stat holds only the ones it did", () => {
+		approvedAndBuilt();
+		const got = inputs();
+		const tree = textOf(got.tree);
+		expect(tree).toContain("README.md");
+		expect(tree).toContain("src/seat-release.ts");
+		expect(tree).not.toContain(".indusk/");
+		expect(textOf(got.stat)).not.toContain("README.md");
 	});
 });

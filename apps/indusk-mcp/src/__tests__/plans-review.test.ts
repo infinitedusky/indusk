@@ -14,6 +14,7 @@ import { testFile, writePromise } from "./helpers/promises-fixture.js";
  * promise: a-review-shows-its-evidence — admin-plan-authoring A15, A16, A17.
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the review's half.
  * promise: a-review-shows-its-evidence — plan-review-subagent A11: audit.md is not review evidence.
+ * promise: a-review-shows-its-evidence — plan-review-subagent A19: a skipped audit is review evidence.
  *
  * When a build stops for review, `indusk plans review <plan>` assembles what
  * the person needs to decide: each promise the plan makes with the passing
@@ -181,6 +182,23 @@ describe.skipIf(SHOULD_SKIP)("indusk plans review", () => {
 		);
 		expect(review().skippedRituals).toEqual([
 			{ ritual: "cleanup", reason: "one small file; nothing to decompose" },
+		]);
+	});
+
+	it("A19 — a skipped audit is shown among the skipped rituals with its reason", () => {
+		// promise: a-review-shows-its-evidence — the audit's skip pair was invisible to the person accepting.
+		p.commit(
+			wt,
+			{
+				[`${planDir}/impl.md`]: IMPL.replace(
+					"test_purpose: required\n",
+					'test_purpose: required\naudit: skipped\naudit_reason: "one file; the diff is the whole plan"\n',
+				),
+			},
+			"audit skipped",
+		);
+		expect(review().skippedRituals).toEqual([
+			{ ritual: "audit", reason: "one file; the diff is the whole plan" },
 		]);
 	});
 
