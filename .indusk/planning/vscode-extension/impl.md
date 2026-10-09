@@ -47,7 +47,7 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 | A4 | Hovering a marked line shows the promise's sentence, its state for each source, and when it last held or broke | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/hover.test.ts |
 | A5 | With the extension installed, opening the demo app's telemetry file shows its promise on the line that marks it | Build Phase 3 | Build Phase 4 | planned | live check | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/e2e/live.e2e.test.ts |
 | A6 | For the same project and marks, the editor, the admin and `indusk promises health` give every promise the same state for each source | Build Phase 1 | Build Phase 2 | written | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-windows.test.ts |
-| A7 | Promise health is worked out in one place the admin, the CLI and the editor all use; a second copy fails the build | Test Phase 1 | Build Phase 1 | written | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts |
+| A7 | Promise health is worked out in one place the admin, the CLI and the editor all use; a second copy fails the build | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts |
 | A8 | A break that becomes readable shows within two reads (ten seconds at five) on its line, in the Problems list and in one notification, with no reload | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
 | A9 | A break read again does not notify again; a fixed break clears from the line and the Problems list | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
 | A10 | A source that cannot be read, or reads watcher blind, is shown as such, never "holding"; no line for two cadences reads "not reading" | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
@@ -151,17 +151,18 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 
 #### Build Phase 1 Verification
 
-- [ ] A7 passes; A6 is `written` and passes for the reader and the CLI (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-single-definition.test.ts src/__tests__/promise-health-windows.test.ts && pnpm exec vitest related src/lib/promises/health.ts src/lib/promises/store.ts --run`; `cd ../indusk-admin && pnpm exec vitest related src/app src/components --run`)
-- [ ] `pnpm exec tsc --noEmit` clean in both apps
+- [x] (A6 and A7: 4 green; `vitest related` over the moved files and the command: 5 files, 39 green; admin: 62 files, 406 green) A7 passes; A6 is `written` and passes for the reader and the CLI (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-single-definition.test.ts src/__tests__/promise-health-windows.test.ts && pnpm exec vitest related src/lib/promises/health.ts src/lib/promises/store.ts --run`; `cd ../indusk-admin && pnpm exec vitest related src/app src/components --run`)
+- [x] `pnpm exec tsc --noEmit` clean in both apps
 
 #### Build Phase 1 Context
 
-- [ ] root (Key Decisions): `- VS Code extension: promise health is worked out once in the package (promises/health); the CLI streams it (promises health --json); the editor only shows — see /decisions/vscode-extension` — always-on because it fixes where health lives for every window, present and future
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`, single-definition pins): `promises/health` — `promise-health-single-definition.test.ts`, folded into an existing entry so the file does not grow
+- [x] (points at the ADR until the retrospective publishes the decisions page; to make room, the "Admin plan authoring" line moved down to the admin's own context file) root (Key Decisions): `- VS Code extension: promise health is worked out once in the package (promises/health); the CLI streams it (promises health --json); the editor only shows — see /decisions/vscode-extension` — always-on because it fixes where health lives for every window, present and future
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+- [x] (folded into the pins list; the redundant pointer to `src/lib/papers/CLAUDE.md` came out to make room, since that file loads by itself) mcp (`apps/indusk-mcp/CLAUDE.md`, single-definition pins): `promises/health` — `promise-health-single-definition.test.ts`, folded into an existing entry so the file does not grow
 
 #### Build Phase 1 Document
 
-- [ ] `reference/cli/promises.md`: `promises health --json`, its line shape and `--every`; `reference/admin-ui/promises.md`: health comes from the package's `promises/health`; changelog: Added `promises health --json`, Changed health moved to the package
+- [x] (the admin's health is described in `reference/admin-ui/overview.md`, not a separate promises page; that is where the moved module is named) `reference/cli/promises.md`: `promises health --json`, its line shape and `--every`; `reference/admin-ui/promises.md`: health comes from the package's `promises/health`; changelog: Added `promises health --json`, Changed health moved to the package
 
 ### Build Phase 2: The extension's core
 
