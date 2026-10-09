@@ -65,6 +65,16 @@ Implementation plans live in `.indusk/planning/{plan-name}/impl.md` as checklist
 
    Shape sits between Verification and Context and is **executor behavior, not plan structure** — there is no `#### Phase N Shape` heading and nothing to add to any impl. It runs after Verification because restructuring code whose correctness is unproven is how a refactor hides a bug.
 
+## Running a Phase on Its Model
+
+Each phase is built on the model its tier names in `.indusk/config.json`, so nobody switches models by hand and the main conversation stays short.
+
+1. **Before each phase**, run `indusk plans model <plan> --phase "<Build Phase N>"` (or `Test Phase N`). It prints `<tier> <model>`, or `session`.
+2. **When it names a model**, hand the phase to an Agent with that `model` (`opus`, `sonnet`, `haiku` or `fable`), passing the plan path and the phase. The subagent catches up from the plan documents, works the phase's checklist under the gate hooks, records the phase start as usual, and returns a compact result: what shipped, which tests are green, any blocker. Claude Code honours the Agent's `model` (observed: an Agent called with `model: "haiku"` reported `claude-haiku-5-5`).
+3. **When it prints `session`**, work the phase in this session, as before. A project that configures no tiers behaves exactly as it did.
+4. **Three misses.** When a phase's verification still fails after three attempts, ask which tier is next (`nextTier(tier, 3)` in `lib/models/tiers.ts`): a tier below `strong` answers the next one up. **Stop and name it**: "Build Phase 2 failed three times on `med`; run it on `strong`", and add `**Tier**: strong — failed three times on med` under the phase heading so the next run takes it. A phase already on `strong` that fails three times is a blocker, as in step 8; name no higher tier.
+5. **Closing a phase**, end by running `indusk plans next-session <plan>` and printing its line. Each boundary starts a new session; the plan holds everything that session needs, and it resumes from the first unchecked item.
+
 ## Test Trajectory — Phase Responsibilities
 
 If the impl has a `## Test Trajectory` table (frontmatter `trajectory: required`), the work skill takes on two additional responsibilities at phase boundaries.
@@ -285,7 +295,7 @@ The hook validates that both `asked:` and `user:` are present with non-empty quo
     - See the document skill for guidance on what to document, where, and how to use Mermaid diagrams
     - If a phase has no document items, that's fine — not every phase produces user-facing documentation
 
-14. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase.
+14. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it, then end with `indusk plans next-session <plan>` (see "Running a Phase on Its Model") — the next phase starts in a new session.
 
 15. **Completion.** When all phases are checked:
     - Update impl status to `completed`
