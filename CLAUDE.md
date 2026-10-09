@@ -37,7 +37,7 @@ dusk/
 
 **MCP servers** (project `.mcp.json` keep-list): **indusk** (dev-system tools), **jaeger** (the local-telemetry daemon's MCP — the promise loop's only backend, local and deployed), **posthog**; dash0 is disabled here (an optional query surface, never a loop dependency). Global keep-list: **playwright** only. Graphiti and codegraphcontext are retired. — see `.indusk/planning/archive/indusk-makeover/adr.md`
 
-**Skills** (process): planner, work, verify, claude-md, document, retrospective, catchup, handoff, falsify, cleanup, highlight, rail-check, git, eval-review, toolbelt, write (prose only, no gates). Each concept has one canonical skill; edit in `apps/indusk-mcp/skills/`, never `.claude/skills/` directly.
+**Skills** (process): planner, work, verify, claude-md, document, retrospective, catchup, handoff, falsify, cleanup, audit, highlight, rail-check, git, eval-review, toolbelt, write (prose only, no gates). Each concept has one canonical skill; edit in `apps/indusk-mcp/skills/`, never `.claude/skills/` directly.
 
 **Agent roles** (three tiers): the **working agent** does the user's task and flags moments via `mcp__indusk__highlight`; the **eval agent** (background, on `git commit` + session end) scores work and materializes durable highlights into **lessons** via `add_lesson`; **infrastructure** (hooks, CLI, validators) enforces invariants. The working agent never materializes highlights itself. — see `.indusk/planning/archive/agent-roles/adr.md`
 
