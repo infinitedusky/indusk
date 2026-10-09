@@ -2,11 +2,15 @@
 name: provisioning-never-prints-a-secret
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: server
 owner: server-provisioning
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/server/redact.ts
+tests:
+  - apps/indusk-mcp/src/lib/server/redact.test.ts
+  - apps/indusk-mcp/src/lib/server/connect.test.ts
+  - apps/indusk-mcp/src/lib/server/deploy.test.ts
 incidents: []
 ---
 
@@ -14,3 +18,4 @@ The server's password and the Slack webhook never appear in either command's out
 
 ## History
 - 2026-10-08 — declared (server-provisioning), from its planning conversation.
+- 2026-10-09 — enforced, confirmed for server-provisioning: proven by row A9, row A10.

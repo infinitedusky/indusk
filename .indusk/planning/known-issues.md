@@ -128,6 +128,26 @@ Each entry says what happens, where it was seen, and what we know so far.
   the record. The fix is `isOwnProcess` with the recorded binary and config,
   as `stop` does. Seen in small-fixes, out of its scope.
 
+- **The first release that publishes the server image is untested past the
+  build.** `scripts/release-image.sh` builds `ghcr.io/infinitedusky/
+  indusk-always-on:<version>` for amd64 and arm64 through its own buildx
+  builder and pushes before `pnpm publish`. On 2026-10-08 the two-architecture
+  build could not run from an agent session: the builder's credential helper
+  is the macOS keychain, which answered "Keychain Error (-60008)" with no
+  screen to ask on. Before that release, run `docker login ghcr.io` with a
+  token that can write packages, in your own terminal; a refused push stops
+  the release with nothing on npm. Until it ships, `server deploy` needs
+  `--build-from`. (server-provisioning)
+
+- **`server deploy` drives Fly's CLI, which changes without notice.** Re-run
+  the live check (`INDUSK_LIVE_FLY=1 INDUSK_LIVE_FLY_ORG=personal pnpm exec
+  vitest run --config vitest.e2e.config.ts e2e/server-live.e2e.test.ts`, about
+  6 minutes and a few cents; destroy `indusk-sp-live` after) at any release
+  that touches `lib/server/` or `templates/server/`. Every refusal names the
+  Fly call and its output, so a changed flag shows which. The three live runs
+  of 2026-10-08 each found a Fly behaviour the unit tests could not.
+  (server-provisioning's deferred verification)
+
 ## Package
 
 - **The package `CLAUDE.md` is 2 bytes under its budget.** The next rule
