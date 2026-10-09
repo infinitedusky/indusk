@@ -1,0 +1,31 @@
+{
+	"name": "indusk",
+	"displayName": "InDusk \u2014 promises",
+	"description": "Every promise at the line that keeps it, its live health, and one click from a break to Claude fixing it.",
+	"version": "0.1.0",
+	"publisher": "infinitedusky",
+	"private": true,
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.90.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"workspaceContains:.indusk/config.json"
+	],
+	"main": "./dist/extension.js",
+	"type": "commonjs",
+	"scripts": {
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@infinitedusky/indusk-mcp": "workspace:*",
+		"@types/node": "^22.0.0",
+		"@types/vscode": "^1.90.0",
+		"typescript": "^5.7.0",
+		"vitest": "^4.1.11"
+	}
+}
