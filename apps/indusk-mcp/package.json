@@ -13,6 +13,7 @@
 		"admin",
 		"examples",
 		"scripts/bundle-admin.js",
+		"editor",
 		"!dist/**/*.test.*",
 		"!dist/__tests__"
 	],
@@ -180,7 +181,7 @@
 		"e2e": "vitest run --config vitest.e2e.config.ts",
 		"test:system": "pnpm run prepublishOnly && node scripts/with-daemon-guard.js vitest run --config vitest.system.config.ts",
 		"prepack": "node scripts/bundle-example.js",
-		"prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js",
+		"prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js && pnpm --filter indusk package && mkdir -p editor && cp ../vscode-extension/dist/indusk.vsix editor/indusk.vsix",
 		"release": "bash scripts/release-guard.sh && pnpm -w test:system && npm whoami && bash scripts/release-image.sh && npm_config_loglevel=warn pnpm publish --no-git-checks && node scripts/record-release.js"
 	},
 	"publishConfig": {

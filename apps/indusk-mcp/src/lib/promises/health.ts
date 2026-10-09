@@ -495,7 +495,7 @@ export interface HealthLine {
 	 * on hover without reading the registry itself — state and structure
 	 * promises too, which have no row below (telemetry does not watch them).
 	 */
-	promises: { name: string; kind: string; statement: string; tests: string[] }[];
+	promises: { name: string; kind: string; statement: string; tests: string[]; sites: string[] }[];
 	sources: (
 		| { name: SourceName; label: string; ok: true; rows: HealthLineRow[] }
 		| { name: SourceName; label: string; ok: false; reason: string; blind?: true }
@@ -512,7 +512,13 @@ export function healthLine(registry: Registry, reads: SourceHealthRead[], now: D
 		at: now.toISOString(),
 		promises: registry.promises
 			.filter((p) => p.state !== "retired")
-			.map((p) => ({ name: p.name, kind: p.kind, statement: p.statement, tests: p.tests ?? [] })),
+			.map((p) => ({
+				name: p.name,
+				kind: p.kind,
+				statement: p.statement,
+				tests: p.tests ?? [],
+				sites: p.sites ?? [],
+			})),
 		sources: reads.map((read) => {
 			if (!read.ok) {
 				return {

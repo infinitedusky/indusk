@@ -402,6 +402,19 @@ program
 // parent and reading them via `this.optsWithGlobals()` in each subcommand
 // action is the pattern that works for both `indusk ui --port N` (bare) and
 // `indusk ui start --port N` (subcommand). Verified in commander@13.
+const editorCmd = program
+	.command("editor")
+	.description("The InDusk extension for VS Code and Cursor");
+
+editorCmd
+	.command("install")
+	.description("Install the InDusk extension into VS Code, and Cursor when found")
+	.option("--extensions-dir <dir>", "Install into this extensions folder (for tests)")
+	.action(async (opts: { extensionsDir?: string }) => {
+		const { editorInstall } = await import("./commands/editor.js");
+		await editorInstall(opts);
+	});
+
 const serverCmd = program
 	.command("server")
 	.description("Give this project its recording server: connect one you run, or deploy one on Fly");
