@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { nextSession } from "./next-session.js";
 
-/** promise: a-plan-boundary-names-the-next-session — model-per-phase A11. */
+/**
+ * promise: a-plan-boundary-names-the-next-session — model-per-phase A11.
+ * promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes — plan-review-subagent A3.
+ */
 
 const impl = (box1: string, box2: string) =>
 	[
@@ -80,5 +83,19 @@ describe("model-per-phase A18 — a boundary agrees with what the build decides 
 		});
 		expect(line).toContain("T3");
 		expect(line).not.toContain("/retrospective");
+	});
+});
+
+describe("plan-review-subagent A3 — the cleanup's close names the audit, then the retrospective", () => {
+	it("with every phase closed and only the audit missing, names /audit", () => {
+		const line = nextSession("demo", impl("x", "x"), { readiness: { missing: ["audit"] } });
+		expect(line).toContain("/audit demo");
+		expect(line).not.toContain("/retrospective");
+	});
+
+	it("once audit.md exists (nothing missing), names /retrospective", () => {
+		const line = nextSession("demo", impl("x", "x"), { readiness: { missing: [] } });
+		expect(line).toContain("/retrospective demo");
+		expect(line).not.toContain("/audit");
 	});
 });
