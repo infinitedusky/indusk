@@ -57,3 +57,5 @@ No recurring lint or type errors during `/work`; no Biome rule is warranted.
 - 90 commits; 58 code/test/docs files changed outside `.indusk/`.
 - 22 trajectory rows, 22 passing.
 - Audit: 23 findings over six questions; 2 fixed before close; the rest carried.
+
+Landed on main at b1844d1d, 2026-10-09.
