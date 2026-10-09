@@ -7,7 +7,7 @@ import { checkRetrospectiveReadiness } from "./gate.js";
  * retrospective skill's text always promised and the code never performed.
  *
  * The fixture is the shape workbench-trust-fixes closed in: both rituals
- * satisfied (skipped here, with reasons), every checkbox ticked, and a row
+ * satisfied (skipped here, with reasons, as is the audit plan-review-subagent added), every checkbox ticked, and a row
  * still `written` in a phase that exists. Eight phase closes passed it, because
  * `checkRetrospectiveReadiness` walked the ritual phases' checkboxes and
  * `auditPlanAtClose` reported `blocked` rows only. Carried into
@@ -23,6 +23,8 @@ falsification: skipped
 falsification_reason: "fixture"
 cleanup: skipped
 cleanup_reason: "fixture"
+audit: skipped
+audit_reason: "fixture"
 ---
 
 # Fixture
