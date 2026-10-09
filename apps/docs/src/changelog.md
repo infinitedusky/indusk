@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.69.0] — 2026-10-09
+
 ### Added
 
 - **Every plan is audited by a fresh reader before it closes** (plan-review-subagent): `/audit` runs after `/cleanup`; a subagent on `workflow.steps.audit.tier`'s model reads the brief, test plan, ADR, the impl as approved, the final trajectory and the branch's diff (`indusk plans audit-inputs`) and writes `audit.md`. `/retrospective` refuses to start without it or `audit: skipped` + `audit_reason`; no gate reads what it says. `indusk plans model <plan> --step audit`. The planner now writes a `**Tier**:` line under every phase. See [`/audit`](/reference/skills/audit).
