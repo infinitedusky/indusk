@@ -1,7 +1,7 @@
 ---
 title: "VS Code extension — promises in the editor, the break where the fix happens"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -70,7 +70,7 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 | A28 | On the demo app, holding a seat adds a "held" run to the activity section, and a faulted hold adds a "broke" run | Build Phase 6 | Build Phase 6 | passing | live check | promise: the-editor-shows-each-run-as-it-happens | apps/vscode-extension/e2e/live.e2e.test.ts |
 | A29 | Below the broken cards, the panel groups promises by the plan that owns them; groups come newest run first, then plans never run by name; within a group, newest run first, then the rest by name; each broken card names its plan | Build Phase 7 | Build Phase 7 | passing | unit | promise: every-promise-is-listed-in-the-editor | apps/vscode-extension/src/core/panel.test.ts |
 | A30 | Each health line names the plan that owns each promise | Build Phase 7 | Build Phase 7 | passing | unit | promise: every-promise-is-listed-in-the-editor | apps/indusk-mcp/src/__tests__/promise-health-runs.test.ts |
-| A31 | Where a broken promise is shown broken — the first source, production leading, and its row — is decided in one place; the fix action and the panel's card take it from there and name the same source | Build Phase 8 | Build Phase 8 | planned | unit | a regression guard: two copies of the rule could name different sources for one break | apps/vscode-extension/src/core/view.test.ts |
+| A31 | Where a broken promise is shown broken — the first source, production leading, and its row — is decided in one place; the fix action and the panel's card take it from there and name the same source | Build Phase 8 | Build Phase 8 | passing | unit | a regression guard: two copies of the rule could name different sources for one break | apps/vscode-extension/src/core/view.test.ts |
 | A22 | A file outside the project, or inside a nested InDusk project (dusk's `examples/seat-holds/`), gets no marker from this project's promises; today opening dusk shows the example's token as "not in this project" | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
 
 ### Deferred Verification
@@ -330,26 +330,26 @@ Investigated, with no hypothesis formed: the token grammar (lowercase names only
 
 Reviewed: every file the plan changed (`git diff --stat main...HEAD`, 65 files) and the six over the 400-line cap. Not reviewed for decomposition: docs pages and tests, whose size is their content.
 
-- [ ] Extract `whereBroken(view, name)` into `core/view.ts` — the first source, production leading, where the promise reads broken, with its row; `fixFor` in `core/fix.ts` and `whereItBroke` in `core/panel.ts` take it from there — rule of two with a third reader due (the activity's cards), one rule so the fix and the card cannot name different sources (A31)
-- [ ] Extract the editor's line — `HealthLine`, `HealthLineRow`, `HealthLineRun`, `healthLine`, `newestRuns`, `newestFirst` — from `lib/promises/health.ts` into `lib/promises/health-line.ts`, re-exported from `health.ts` so the `./promises/health` subpath and every importer stay as they are — one reason to change per module: the line's format moves with the editor, the state rule with the admin
-- [ ] (reviewed `apps/indusk-mcp/src/bin/cli.ts`, 1187 lines — left as-is: one registration block per command, and this plan added two that follow the same shape; a split belongs to a plan about the CLI)
-- [ ] (reviewed `apps/indusk-mcp/src/bin/commands/promises.ts`, 465 lines — left as-is: one file per command group is the package's pattern; `promises health` is one cohesive function with its seam)
-- [ ] (reviewed `apps/vscode-extension/src/extension.ts`, 255 lines — left as-is: the one VS Code adapter; markers, diagnostics, the fix and the reader are each short and share the session; the panel already moved out at Build Phase 6's Shape)
-- [ ] (reviewed the three "newest first" sorts in `health.ts`, `core/panel.ts` and `core/activity.ts` — left as-is: each orders a different shape with a different tie-break; a shared comparator would need a parameter per caller, a worse abstraction than three two-line functions)
-- [ ] (reviewed `hover.ts`'s `asText`, `panel-html.ts`'s `esc` and `fix.ts`'s `oneLine` — left as-is: three different targets, Markdown, HTML and a terminal line; not one rule)
-- [ ] (reviewed `apps/indusk-admin/src/__tests__/http-promise-health.test.ts`, 473 lines, and the docs pages over the cap — left as-is: the test's size predates the plan, which only re-pointed its imports; docs are their content)
+- [x] Extract `whereBroken(view, name)` into `core/view.ts` — the first source, production leading, where the promise reads broken, with its row; `fixFor` in `core/fix.ts` and `whereItBroke` in `core/panel.ts` take it from there — rule of two with a third reader due (the activity's cards), one rule so the fix and the card cannot name different sources (A31)
+- [x] (`health.ts` 624 → 498 lines, `health-line.ts` 146; `newestRuns` exported for `readHealth`) Extract the editor's line — `HealthLine`, `HealthLineRow`, `HealthLineRun`, `healthLine`, `newestRuns`, `newestFirst` — from `lib/promises/health.ts` into `lib/promises/health-line.ts`, re-exported from `health.ts` so the `./promises/health` subpath and every importer stay as they are — one reason to change per module: the line's format moves with the editor, the state rule with the admin
+- [x] (reviewed `apps/indusk-mcp/src/bin/cli.ts`, 1187 lines — left as-is: one registration block per command, and this plan added two that follow the same shape; a split belongs to a plan about the CLI)
+- [x] (reviewed `apps/indusk-mcp/src/bin/commands/promises.ts`, 465 lines — left as-is: one file per command group is the package's pattern; `promises health` is one cohesive function with its seam)
+- [x] (reviewed `apps/vscode-extension/src/extension.ts`, 255 lines — left as-is: the one VS Code adapter; markers, diagnostics, the fix and the reader are each short and share the session; the panel already moved out at Build Phase 6's Shape)
+- [x] (reviewed the three "newest first" sorts in `health.ts`, `core/panel.ts` and `core/activity.ts` — left as-is: each orders a different shape with a different tie-break; a shared comparator would need a parameter per caller, a worse abstraction than three two-line functions)
+- [x] (reviewed `hover.ts`'s `asText`, `panel-html.ts`'s `esc` and `fix.ts`'s `oneLine` — left as-is: three different targets, Markdown, HTML and a terminal line; not one rule)
+- [x] (reviewed `apps/indusk-admin/src/__tests__/http-promise-health.test.ts`, 473 lines, and the docs pages over the cap — left as-is: the test's size predates the plan, which only re-pointed its imports; docs are their content)
 
 #### Build Phase 8 Verification
 
-- [ ] A31 passes, red first; behaviour parity: `cd apps/vscode-extension && pnpm exec vitest run src/core`, `cd apps/indusk-mcp && pnpm exec vitest related src/lib/promises/health.ts src/lib/promises/health-line.ts --run`, A6 and A7 still green; both apps and the admin typecheck; biome clean
+- [x] (red at 4bf9d0a3; green: extension core 32, tests related to both health modules 42, A6, A7, A17, A26, A30 7; the package, the admin and the extension typecheck; biome clean; the built CLI prints the line in the demo folder) A31 passes, red first; behaviour parity: `cd apps/vscode-extension && pnpm exec vitest run src/core`, `cd apps/indusk-mcp && pnpm exec vitest related src/lib/promises/health.ts src/lib/promises/health-line.ts --run`, A6 and A7 still green; both apps and the admin typecheck; biome clean
 
 #### Build Phase 8 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`: none — the pins list names `promises/health`, whose exports do not change; re-read to confirm, and say so here
+- [x] (re-read: line 30 pins promise health to the `promises/health` subpath, which still exports everything it did; no edit) `apps/indusk-mcp/CLAUDE.md`: none — the pins list names `promises/health`, whose exports do not change; re-read to confirm, and say so here
 
 #### Build Phase 8 Document
 
-- [ ] none — internal decomposition; `reference/cli/promises.md` describes the line, whose shape does not change; re-read to confirm, and say so here
+- [x] (re-read: neither the CLI reference nor the admin overview names a module file; the line's shape is unchanged; no edit) none — internal decomposition; `reference/cli/promises.md` describes the line, whose shape does not change; re-read to confirm, and say so here
 
 ## Files Affected
 
