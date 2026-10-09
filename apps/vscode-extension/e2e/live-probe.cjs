@@ -9,7 +9,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const PROMISE = "a-held-seat-is-released-in-time";
 
 exports.run = async () => {
-	const out = { a5: null, a11: null, a14: null };
+	const out = { a5: null, a11: null, a14: null, a25: null, a28: null };
 	const root = vscode.workspace.workspaceFolders[0].uri.fsPath;
 	const doc = await vscode.workspace.openTextDocument(path.join(root, "src", "telemetry.ts"));
 	await vscode.window.showTextDocument(doc);
@@ -24,6 +24,44 @@ exports.run = async () => {
 		await sleep(500);
 	}
 	const url = process.env.DEMO_URL || "http://localhost:8080";
+	const panel = () => vscode.commands.executeCommand("indusk.test.panel");
+	const post = (path, body) =>
+		fetch(`${url}${path}`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(body),
+		});
+
+	// A25: the panel lists the demo's promise; its telemetry location opens the file at the token.
+	{
+		let mine = null;
+		for (let i = 0; i < 40 && !mine; i++) {
+			const p = (await panel()) || { model: { broken: [], rest: [] } };
+			mine = [...p.model.broken, ...p.model.rest].find((x) => x.name === PROMISE) || null;
+			if (!mine) await sleep(500);
+		}
+		const site = mine?.locations.find((l) => l.kind === "site" && l.path === "src/telemetry.ts");
+		if (site) {
+			await vscode.commands.executeCommand("indusk.openLocation", site.path, site.line);
+			const ed = vscode.window.activeTextEditor;
+			out.a25 = {
+				listed: Boolean(mine),
+				opened: ed ? path.relative(root, ed.document.uri.fsPath) : null,
+				line: ed ? ed.selection.active.line : null,
+				tokenLine: site.line,
+			};
+		} else out.a25 = { listed: Boolean(mine), opened: null };
+	}
+
+	// A28 (held): a hold that lapses on time adds a "held" run to the activity section.
+	await post("/fault", { on: false });
+	await post("/hold", { seat: 2, who: "live" });
+	for (let i = 0; i < 120 && !out.a28?.held; i++) {
+		const p = (await panel()) || { activity: [] };
+		const held = p.activity.find((l) => l.startsWith(`${PROMISE} held`));
+		if (held) out.a28 = { held };
+		else await sleep(250);
+	}
 	await fetch(`${url}/fault`, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
@@ -56,11 +94,13 @@ exports.run = async () => {
 		}
 		await sleep(250);
 	}
-	await fetch(`${url}/fault`, {
-		method: "POST",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ on: false }),
-	});
+	// A28 (broke): the faulted hold's late release adds a "broke" run.
+	{
+		const p = (await panel()) || { activity: [] };
+		const broke = p.activity.find((l) => l.startsWith(`${PROMISE} broke`));
+		out.a28 = { ...(out.a28 || {}), broke: broke || null };
+	}
+	await post("/fault", { on: false });
 	await vscode.commands.executeCommand("indusk.fixWithClaude", PROMISE);
 	await sleep(1000);
 	const term = vscode.window.terminals.find((t) => t.name === `Claude — ${PROMISE}`);

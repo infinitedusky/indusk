@@ -22,6 +22,8 @@ import { describe, expect, it } from "vitest";
  * promise: a-promise-shows-where-it-is-kept
  * promise: a-break-reaches-the-editor
  * promise: a-break-opens-a-fix-in-one-click
+ * promise: every-promise-is-listed-in-the-editor
+ * promise: the-editor-shows-each-run-as-it-happens
  */
 
 const LIVE = process.env.INDUSK_LIVE_EDITOR === "1";
@@ -71,5 +73,15 @@ describe.skipIf(!LIVE)("live — the editor on the demo app", () => {
 		);
 		expect(r.a11?.seconds, "A11 — broken within ten seconds").toBeLessThanOrEqual(10);
 		expect(r.a14?.terminal, "A14 — the Claude terminal opened").toBe(true);
+		expect(
+			r.a25,
+			"A25 — the panel lists the promise; its telemetry location opens at the token",
+		).toMatchObject({
+			listed: true,
+			opened: "src/telemetry.ts",
+		});
+		expect(r.a25?.line, "A25 — the cursor on the token's line").toBe(r.a25?.tokenLine);
+		expect(r.a28?.held, "A28 — a run that held, in the activity section").toBeTruthy();
+		expect(r.a28?.broke, "A28 — a run that broke, in the activity section").toBeTruthy();
 	}, 300_000);
 });
