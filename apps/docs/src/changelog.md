@@ -6,7 +6,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Added
 
-- **The Promises panel** (vscode-extension): an InDusk icon in the editor's activity bar opens every promise and its state, broken ones first as cards; each opens to its tests and the code that keeps it, at the token's line; an activity section adds each run as it is recorded. `indusk promises health --json` lines now carry `runs`.
+- **The Promises panel** (vscode-extension): an InDusk icon in the editor's activity bar opens every promise and its state, named for the project the window has open; broken ones first as cards, the rest grouped by plan, most recently run first; each opens to its tests and the code that keeps it, at the token's line; an activity section adds each run as it is recorded. `indusk promises health --json` lines now carry `runs`, and each promise its `plan`.
 - **`indusk editor install` installs the newest build of the extension** — in the dusk repository, a rebuilt extension no longer loses to the copy the last `pnpm install:local` left.
 - **The InDusk extension for VS Code and Cursor** (vscode-extension): each promise's name and state at the end of the line that keeps it, a hover with its sentence and each source, a Problem and one notification per new break, and **Fix with Claude**, which starts your own `claude` in the project with the break's facts. It only shows; it writes nothing. Install it with **`indusk editor install`**. See [Promises in your editor](/guide/promises-in-your-editor).
 - **`indusk promises health --json [--every <seconds>]`** (vscode-extension): each promise's state for each source, as the admin's chips show it, one JSON line per read. See [`promises health`](/reference/cli/promises#promises-health).

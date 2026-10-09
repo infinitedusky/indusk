@@ -546,8 +546,8 @@ with `--every 5` and reads each line.
 }
 ```
 
-The line also names `promises` (every promise with its kind, sentence, tests
-and sites) and `runs`: the newest recorded runs across sources, newest first,
+The line also names `promises` (every promise with its kind, sentence, tests,
+sites and the `plan` that owns it) and `runs`: the newest recorded runs across sources, newest first,
 at most fifty, from the same read as the state. A run carries no symptom; the
 store keeps a run's time, outcome, trace and environment only.
 

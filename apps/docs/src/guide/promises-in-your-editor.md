@@ -73,9 +73,12 @@ of the folder it has open, so a dusk window lists dusk's promises, not the
 demo's.
 
 - **Broken promises come first, as cards**, the latest break at the top, each
-  with the source it broke in, when, and its symptom. A card's **Fix with
-  Claude** button starts the same fix as the light bulb.
-- **The rest follow by name**, each with its state.
+  with its plan, the source it broke in, when, and its symptom. A card's
+  **Fix with Claude** button starts the same fix as the light bulb.
+- **The rest are grouped by the plan that owns them.** The plan whose promises
+  ran most recently comes first; within a plan, the most recently run promise
+  comes first. Plans and promises that have never run, such as the ones the
+  tests watch, follow by name.
 - **Open any promise** to see its sentence, the **tests** that prove it and
   where it is **kept**. Each entry opens the file at the line its token is on;
   one whose file no longer carries the token says so.
