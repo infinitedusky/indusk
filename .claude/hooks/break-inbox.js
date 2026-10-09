@@ -29,12 +29,10 @@
  * Exit 0 always: this hook informs, it never blocks a prompt.
  */
 
-import { appendFileSync, existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { projectHome, resolveStateAndGitPaths } from "./_hook-paths.js";
-
-const INBOX = "inbox.jsonl";
-const DELIVERED = "inbox-delivered.jsonl";
+import { markDelivered, undelivered } from "./_inbox.js";
 
 let input = "";
 for await (const chunk of process.stdin) input += chunk;
@@ -56,19 +54,12 @@ if (!statePath) process.exit(0);
 
 const home = projectHome(statePath);
 const session = typeof event.session_id === "string" ? event.session_id : "";
-const inbox = readLines(join(home, INBOX));
-const delivered = new Set(
-	readLines(join(home, DELIVERED))
-		.values.filter((v) => v && (v.session === undefined || v.session === session))
-		.map((v) => v.id),
-);
-const fresh = inbox.values.filter((e) => e && typeof e.id === "string" && !delivered.has(e.id));
-const open = fresh.filter((e) => incidentIsOpen(e.incident));
-const toSay = [...new Map(open.map((e) => [e.incident, e])).values()];
+const inbox = undelivered(home, session, { isOpen: incidentIsOpen });
+const toSay = inbox.entries;
 
-if (fresh.length === 0 && inbox.problems.length === 0) process.exit(0);
+if (inbox.ids.length === 0 && inbox.problems.length === 0) process.exit(0);
 if (toSay.length === 0 && inbox.problems.length === 0) {
-	markDelivered(fresh);
+	markDelivered(home, inbox.ids, session);
 	process.exit(0);
 }
 
@@ -90,16 +81,8 @@ console.info(
 		hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: lines.join("\n") },
 	}),
 );
-markDelivered(fresh);
+markDelivered(home, inbox.ids, session);
 process.exit(0);
-
-function markDelivered(entries) {
-	if (entries.length === 0) return;
-	appendFileSync(
-		join(home, DELIVERED),
-		`${entries.map((e) => JSON.stringify({ id: e.id, session })).join("\n")}\n`,
-	);
-}
 
 /**
  * Whether the incident's file still says `open`. The registry is the
@@ -133,23 +116,3 @@ function describe(e) {
 }
 
 /** Every JSON line in `path`, and each line that is not JSON, by number. */
-function readLines(path) {
-	if (!existsSync(path)) return { values: [], problems: [] };
-	const values = [];
-	const problems = [];
-	let text;
-	try {
-		text = readFileSync(path, "utf-8");
-	} catch (err) {
-		return { values, problems: [`${path}: ${err.message}`] };
-	}
-	text.split("\n").forEach((line, i) => {
-		if (!line.trim()) return;
-		try {
-			values.push(JSON.parse(line));
-		} catch {
-			problems.push(`${path}:${i + 1} is not JSON`);
-		}
-	});
-	return { values, problems };
-}
