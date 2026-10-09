@@ -38,6 +38,10 @@ are about keeping the two lanes in step.
   diverges from the Edit tool's literal semantics and it stops at the first
   match; use an index-splice (split/join under `replace_all`) and guard an
   empty `old_string`.
+- **`_phase-tier.js` mirrors `lib/models/tiers.ts`** (the tier line, the rule
+  over it, the check over the tier config), held by `phase-tier-parity.test.ts`
+  — the same inputs go to both copies and must get the same answers. Change
+  the TS and the port together.
 - **The validator's "no phase structure touched" fast path is a list of the
   edit shapes that carry structure** — a phase heading, an unchecked item, a
   `**Tier**:` line. A rule over a new line shape adds its marker there, or an

@@ -62,6 +62,16 @@ Refused inside a build step. An unattended build runs each step (work, falsify, 
 
 Prints the tier and model a phase is built on, as `<tier> <model>` (`med sonnet`), or `session` when the project names no model for it. `<ref>` is `Build Phase 1`, `Test Phase 1`, or a bare number for a build phase. The phase's own `**Tier**:` line wins; otherwise the `work` step's default tier from the config applies. `/work` reads this before each phase and hands the phase to a subagent on that model.
 
+### `plans next-session <name>`
+
+Prints the command to run in a new session for the plan's next piece of work, decided the way `plans next` decides it:
+
+- the next open phase: `In a new session, run: /work <name> — next is Build Phase 2, on strong (opus)` (the tier and model appear when the config names them);
+- every phase closed: `/falsify`, then `/cleanup`, then `/retrospective`, in that order;
+- a phase with a `blocker:` line, a phase waiting on a person (a manual or deferred-verification item), or a finished build with trajectory rows still open: the blocker, the item or the rows themselves, instead of a command — there is nothing to start yet.
+
+`plans approve` ends with the same line, and `/work` prints it at each phase close, so a session ends at the plan boundary instead of compacting across plans. It reads the plan from its worktree while it has one, and falls back to `/work <name>` when the plan cannot be read.
+
 ### `plans next <name> [--json]`
 
 What an unattended build does next, read from the plan as it stands — its worktree while it has one. It writes nothing; the build runner asks it after every step, and a person can ask it too.
