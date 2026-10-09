@@ -19,13 +19,17 @@
 	"type": "commonjs",
 	"scripts": {
 		"test": "vitest run",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"test:system": "node ../indusk-mcp/scripts/with-daemon-guard.js vitest run --config vitest.system.config.ts"
 	},
 	"devDependencies": {
 		"@infinitedusky/indusk-mcp": "workspace:*",
 		"@types/node": "^22.0.0",
 		"@types/vscode": "^1.90.0",
 		"typescript": "^5.7.0",
-		"vitest": "^4.1.11"
+		"vitest": "^4.1.11",
+		"@vscode/test-electron": "3.1.0",
+		"@vscode/vsce": "4.0.0",
+		"esbuild": "0.28.2"
 	}
 }
