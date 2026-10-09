@@ -170,6 +170,8 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 7. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
+   **Name every phase's tier.** Every phase carries `**Tier**: <tier>` under its heading, written when you write the phase: the step's default spelled out (`indusk plans model` answers from it), or a different tier with its reason (`**Tier**: strong — edits the readiness gate every plan's close goes through`). A tier other than the default needs its reason, or the impl is refused. The config names the model, not the plan.
+
    **Open Phase 1 with a worktree kickoff item.** Worktree-per-plan is the default (see the `worktree-visibility` ADR): every impl's first phase begins with a checklist item that creates or confirms the plan's own worktree — e.g. `Create/confirm this plan's worktree (indusk worktree create <plan>, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs indusk worktree assign <plan> <path>) — worktree-per-plan default; skip only if worktree: none in frontmatter`. A plan opts out by setting `worktree: none` in the impl frontmatter (no workflow sets it by default — even hotfix gets a worktree). `/work`'s Worktree Kickoff step reads the frontmatter and nudges before code is written; the kickoff item makes the intent explicit in the checklist.
 
    **Derive the Test Trajectory from the test plan.** Every new impl opens with a `## Test Trajectory` table (after `## Boundary Map`, before `## Checklist`) that enumerates the tests the plan commits to. Columns: `ID | Asserts | Writable at | Passes at | State | Level | For | Test`. `Level` is one of the five, from the test plan; set `test_levels: required` in the frontmatter and the hook refuses a row with none or another word. `For` says what the row is for; set `test_purpose: required` and the hook refuses a row that does not say. `Test` names the row's test files. (An impl written with `Kind` and `test_kinds: required` still validates.) Test IDs are conventionally `T`-prefixed (`T1`, `T2`, …); `A`-prefixed IDs (`A1`, …) are also accepted — handy when the trajectory mirrors an acceptance-style test plan. For feature plans, walk the test plan's assertion list — each assertion becomes a trajectory row, with the assertion text becoming the `Asserts` column, the test plan's level its `Level`, and the promise it is grouped under its `For`. Then walk each planned phase and assign `Writable at` / `Passes at`. Every phase's Verification block references test IDs from the trajectory rather than restating the checks. A bugfix or a refactor has no ADR: its rows come from its test plan the same way.
@@ -245,7 +247,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **OTel gate is conditional on `otel.role`.** Read `.indusk/config.json` for the project's `otel.role` field (or use the `shouldEmitOtelGate(projectRoot)` helper from `apps/indusk-mcp/src/lib/config.ts`). The OTel gate fires for projects whose `otel.role` is unset or `"service"` — these are user-facing apps that produce telemetry you want to collect. **Do NOT write `#### Phase N OTel` sections** for projects whose `otel.role` is `"library"`, `"tool"`, or `"none"` — these are libraries, CLIs, or scripts that should never emit telemetry and writing OTel gates for them is friction without value. The `validate-impl-structure` and `check-gates` hooks apply the same rule. The other gates (verify, context, document) always apply regardless of `otel.role`.
 
-8. **If impl is completed** (all items checked off by `/work`), the close-out rituals run before retrospective: `/falsify {plan-name}` then `/cleanup {plan-name}` — each authors a phase (`### Phase N: Falsification` / `### Phase N: Cleanup`) that `/work` executes, and `/retrospective` Step 0 hard-blocks without both terminal-or-skipped. Then invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, confirming the plan's promises (`indusk promises confirm`, which a declared promise no passing row names refuses), and archival. Do not write a freeform retrospective — use the skill. (Bugfix and refactor workflows may skip retrospective for small changes — user's call. A plan that skips it still runs `indusk promises confirm {plan-name}` before it is archived; one archived without it is confirmed later with the same command, or its unkept promise withdrawn.)
+8. **If impl is completed** (all items checked off by `/work`), the close-out rituals run before retrospective: `/falsify {plan-name}` then `/cleanup {plan-name}` — each authors a phase (`### Phase N: Falsification` / `### Phase N: Cleanup`) that `/work` executes — then `/audit {plan-name}`, which has a fresh reader on the `audit` step's tier write `audit.md` (advisory). `/retrospective` Step 0 hard-blocks without falsification and cleanup terminal-or-skipped and `audit.md` present or `audit: skipped` with `audit_reason`. Then invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, confirming the plan's promises (`indusk promises confirm`, which a declared promise no passing row names refuses), and archival. Do not write a freeform retrospective — use the skill. (Bugfix and refactor workflows may skip retrospective for small changes — user's call. A plan that skips it still runs `indusk promises confirm {plan-name}` before it is archived; one archived without it is confirmed later with the same command, or its unkept promise withdrawn.)
 
 9. **Always present each document for review** before moving to the next stage. The user signs off on each step.
 
@@ -548,6 +550,8 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 
 ### Test Phase 1: {Name — e.g. "Author every assertion, RED"}
 
+**Tier**: {tier — the step's default, or another with its reason}
+
 **Goal**: author every test that can honestly be authored now, and record every test that cannot.
 
 - [ ] Author {T1, T2, …} against {the subject}, RED
@@ -575,6 +579,9 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 - [ ] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
 
 ### Build Phase 1: {Name}
+
+**Tier**: {tier — the step's default, or another with its reason}
+
 - [ ] {Task — include code snippets when syntax matters}
   ```typescript
   // Example: function signature that must match this shape

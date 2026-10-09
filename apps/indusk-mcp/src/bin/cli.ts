@@ -975,15 +975,30 @@ plansCmd
 plansCmd
 	.command("model <name>")
 	.description(
-		"The tier and model a phase is built on — `<tier> <model>`, or `session` when the project names no model for it",
+		"The tier and model a phase is built on, or a step runs on — `<tier> <model>`, or `session` when the project names no model for it",
 	)
-	.requiredOption(
-		"--phase <ref>",
-		'The phase: "Build Phase 1", "Test Phase 1" or a bare build number',
+	.option("--phase <ref>", 'The phase: "Build Phase 1", "Test Phase 1" or a bare build number')
+	.option(
+		"--step <step>",
+		"A step's default tier instead of a phase's: plan, work, falsify, cleanup, audit or retrospective",
 	)
-	.action(async (name: string, opts: { phase: string }) => {
+	.action(async (name: string, opts: { phase?: string; step?: string }) => {
 		const { plansModel } = await import("./commands/plans.js");
-		await plansModel(process.cwd(), name, opts.phase);
+		await plansModel(process.cwd(), name, opts);
+	});
+
+plansCmd
+	.command("audit-inputs <name>")
+	.description(
+		"What the auditor is handed, as JSON: the plan's documents, the impl as merged at approval, the trajectory as it stands, the branch's diff and a stat of the whole tree",
+	)
+	.option(
+		"--approved <sha>",
+		"The approval merge, named by hand when history was rewritten and its subject cannot be found",
+	)
+	.action(async (name: string, opts: { approved?: string }) => {
+		const { plansAuditInputs } = await import("./commands/plans.js");
+		await plansAuditInputs(process.cwd(), name, opts.approved);
 	});
 
 plansCmd

@@ -56,18 +56,36 @@ InDusk commits its own notes on `main` as it writes them (`.indusk/current.md` a
 
 Writes `accepted: <time>` and `accepted_by: person` (or `auto`, with `--auto`: a workflow that accepts on its own) to the impl's frontmatter and commits it on the branch.
 
-Refused inside a build step. An unattended build runs each step (work, falsify, cleanup) with `INDUSK_BUILD_STEP` set to the step, and `accept` and `land` refuse under it, naming the step: a build stops at review, and acceptance is the person's. The release session that acceptance starts is not marked, so it lands. This stops a confused session, not a determined one: a session that unsets the variable is not stopped.
+Refused inside a build step. An unattended build runs each step (work, falsify, cleanup, audit) with `INDUSK_BUILD_STEP` set to the step, and `accept` and `land` refuse under it, naming the step: a build stops at review, and acceptance is the person's. The release session that acceptance starts is not marked, so it lands. This stops a confused session, not a determined one: a session that unsets the variable is not stopped.
 
-### `plans model <name> --phase <ref>`
+### `plans model <name> --phase <ref> | --step <step>`
 
-Prints the tier and model a phase is built on, as `<tier> <model>` (`med sonnet`), or `session` when the project names no model for it. `<ref>` is `Build Phase 1`, `Test Phase 1`, or a bare number for a build phase. The phase's own `**Tier**:` line wins; otherwise the `work` step's default tier from the config applies. `/work` reads this before each phase and hands the phase to a subagent on that model.
+`--step <step>` answers a step's default tier instead of a phase's — `plan`, `work`, `falsify`, `cleanup`, `audit` or `retrospective` — with no phase override; `/audit` reads it to pick the auditor's model. `--phase` and `--step` together are refused, as is a step that has no tier, naming it.
+
+With `--phase`, prints the tier and model a phase is built on, as `<tier> <model>` (`med sonnet`), or `session` when the project names no model for it. `<ref>` is `Build Phase 1`, `Test Phase 1`, or a bare number for a build phase. The phase's own `**Tier**:` line wins; otherwise the `work` step's default tier from the config applies. `/work` reads this before each phase and hands the phase to a subagent on that model.
+
+### `plans audit-inputs <name> [--approved <sha>]`
+
+What the auditor is handed, as JSON, read from the plan's worktree and branch (a workbench plan: its documents and approval at the workbench root, its diff and tree from the repo its code file names). It writes nothing. Nothing from the session is in it: no research, no `current.md`, no conversation.
+
+| Field | What it holds |
+|---|---|
+| `documents` | the plan's `brief`, `testPlan` and (when there is one) `adr`, each as `{ path, text }` |
+| `implAsApproved` | the impl as the approval left it, read with `git show`; its `path` is `<sha>:<file>`, the spelling `git show` reads, so it cannot be mistaken for the working file — none of the falsification or cleanup phases appended since, because git holds the impl from before them |
+| `trajectoryNow` | the `## Test Trajectory` section of the impl as it stands, every row in its final state; the only field whose `path` is the working `impl.md` |
+| `diff` | `git diff <merge-base>...<branch>` over the branch's paths, leaving out everything under `.indusk/`: the plan's documents are handed whole, and its folder's diff since approval is the builder's own falsification and cleanup notes |
+| `stat` | `git diff --stat <merge-base>...<branch>`: the files the plan changed |
+| `tree` | `git ls-tree -r --name-only <branch>` less `.indusk/`: every tracked file, including the ones the plan did not touch, for the question of what else each promise needs |
+| `approvedAt` | the approval commit the impl was read at |
+
+The approval is the first-parent merge on the trunk whose subject starts `plan(<name>): approved` — for a workbench plan, the plain commit of that subject on the workbench root's branch, since `plans approve` merges nothing there. A plan with no such commit is refused, naming the plan: an audit of an unapproved plan has no impl "as approved". When history was rewritten and the subject cannot be found, `--approved <sha>` names the merge by hand.
 
 ### `plans next-session <name>`
 
 Prints the command to run in a new session for the plan's next piece of work, decided the way `plans next` decides it:
 
 - the next open phase: `In a new session, run: /work <name> — next is Build Phase 2, on strong (opus)` (the tier and model appear when the config names them);
-- every phase closed: `/falsify`, then `/cleanup`, then `/retrospective`, in that order;
+- every phase closed: `/falsify`, then `/cleanup`, then `/audit`, then `/retrospective`, in that order — `/audit` until the plan folder holds `audit.md` or the impl skips the audit with `audit: skipped` and `audit_reason`;
 - a phase with a `blocker:` line, a phase waiting on a person (a manual or deferred-verification item), or a finished build with trajectory rows still open: the blocker, the item or the rows themselves, instead of a command — there is nothing to start yet.
 
 `plans approve` ends with the same line, and `/work` prints it at each phase close, so a session ends at the plan boundary instead of compacting across plans. It reads the plan from its worktree while it has one, and falls back to `/work <name>` when the plan cannot be read.
@@ -81,8 +99,9 @@ What an unattended build does next, read from the plan as it stands — its work
 | `work` | a phase is open — an impl phase, or a falsification or cleanup phase; names the phase |
 | `falsify` | every phase is closed and no falsification phase or skip exists |
 | `cleanup` | falsification is closed and no cleanup phase or skip exists |
+| `audit` | the cleanup is closed and the plan folder has no `audit.md`, nor does the impl carry `audit: skipped` with an `audit_reason`. The runner runs `/audit <name>` as a step; what `audit.md` says is never read |
 | `judgement` | the open phase's next item is one the plan declared for a person — a Deferred Verification row, a manual or visual check; names the item |
-| `review` | every phase, the falsification and the cleanup are closed. Never `retrospective`: that waits for acceptance |
+| `review` | every phase, the falsification and the cleanup are closed, and the audit written or skipped. Never `retrospective`: that waits for acceptance |
 | `cannot continue` | the open phase has a `blocker:` line; or every phase is closed while a row is not terminal. The runner adds two of its own: the step's session ended in an error after its retries, or two steps in a row made no progress |
 
 Judgement items are recognised by the same rule [`indusk run`](/reference/cli/run) pauses on. With `--json` it prints `{"step": …}` with the phase, item or reason; without, a sentence.
@@ -166,6 +185,7 @@ Absent field → 30-day default. `indusk update` scaffolds the key idempotently.
       "work": { "tier": "med" },
       "falsify": { "tier": "strong" },
       "cleanup": { "tier": "med" },
+      "audit": { "tier": "strong" },
       "retrospective": { "tier": "weak" }
     }
   }
@@ -173,6 +193,8 @@ Absent field → 30-day default. `indusk update` scaffolds the key idempotently.
 ```
 
 `workflow.tiers` maps each tier to a model alias that Claude Code's Agent `model` accepts (`opus`, `sonnet`, `haiku`, `fable`). `workflow.steps.<step>.tier` gives each step's default. Changing a model here changes the next phase built; no plan is edited. A key that is not a tier, or a step InDusk does not read, is refused naming it. With no tiers configured, every phase runs on the session's own model.
+
+A build started from the admin runs each step's session on its tier's model too: a `work` step on its phase's model (the `**Tier**:` line, or the `work` default), `falsify`, `cleanup`, `audit` and `retrospective` on their step's default. With no tiers, no model is passed and the session runs on `claude`'s own. A tier the config has no model for fails the step with that message.
 
 A phase in an impl may name a different tier:
 

@@ -42,6 +42,7 @@ export type PlanPosition =
 	| "executing"
 	| "falsify"
 	| "cleanup"
+	| "audit"
 	| "review"
 	| "accepted"
 	| "retrospective"
@@ -62,6 +63,7 @@ export const PLAN_POSITIONS: readonly PlanPosition[] = [
 	"executing",
 	"falsify",
 	"cleanup",
+	"audit",
 	"review",
 	"accepted",
 	"retrospective",
@@ -97,7 +99,7 @@ export function isFinishedDocumentStatus(status: string): boolean {
 
 /**
  * The positions that exist only because a plan has an impl: it is executed,
- * falsified, cleaned up, reviewed and accepted. A type with no impl — a spike — never
+ * falsified, cleaned up, audited, reviewed and accepted. A type with no impl — a spike — never
  * reaches them, so they read skipped for it rather than pending forever
  * (admin-plan-type, A21).
  */
@@ -105,6 +107,7 @@ export const IMPL_DEPENDENT_POSITIONS: readonly PlanPosition[] = [
 	"executing",
 	"falsify",
 	"cleanup",
+	"audit",
 	"review",
 	"accepted",
 ];
@@ -294,6 +297,9 @@ function resolvePosition(input: DerivePlanPositionInput): {
 			}
 			if (missing.includes("cleanup")) {
 				return { position: "cleanup", awaiting: "falsified, awaiting /cleanup" };
+			}
+			if (missing.includes("audit")) {
+				return { position: "audit", awaiting: "cleaned, awaiting /audit" };
 			}
 			if (missing.includes("rows")) {
 				const rows = readiness.nonTerminalRows.join(", ");

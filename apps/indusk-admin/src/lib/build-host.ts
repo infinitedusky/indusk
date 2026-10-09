@@ -1,5 +1,7 @@
 import {
   autoAccepts,
+  type BuildStepName,
+  buildStepModel,
   type RunnerStop,
   readBuildPlan,
   runBuild,
@@ -45,6 +47,26 @@ export function buildState(project: string, plan: string): BuildState | null {
   return builds().get(key(project, plan)) ?? null;
 }
 
+/**
+ * The `model` option for a step's session: the model its tier names, nothing
+ * when the project names no tiers (the session runs on `claude`'s own). A tier
+ * the config has no model for is the step's error with its message, never a
+ * build on the wrong model without a word.
+ */
+async function stepModelOption(
+  root: string,
+  plan: string,
+  step: BuildStepName,
+  phase: string | undefined,
+): Promise<{ model?: string } | { error: string }> {
+  try {
+    const answer = await buildStepModel(root, plan, step, phase);
+    return answer ? { model: answer.model } : {};
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+}
+
 async function depsFor(project: string, plan: string, state: BuildState) {
   const root = getProjectPath(project);
   if (!root) throw new Error(`no project named ${project}`);
@@ -54,14 +76,18 @@ async function depsFor(project: string, plan: string, state: BuildState) {
     root,
     deps: {
       read: () => readBuildPlan(root, plan),
-      run: (step: "work" | "falsify" | "cleanup" | "retrospective") =>
-        runStepSession(step, {
+      run: async (step: BuildStepName, phase?: string) => {
+        const chosen = await stepModelOption(root, plan, step, phase);
+        if ("error" in chosen) return { error: chosen.error };
+        return runStepSession(step, {
           manager: sessionManager(),
           worktree: where.cwd,
           ...(where.addDirs ? { addDirs: where.addDirs } : {}),
           project,
           plan,
-        }),
+          ...chosen,
+        });
+      },
       accept: async (by: "person" | "auto") => {
         await acceptPlan(root, plan, by);
       },

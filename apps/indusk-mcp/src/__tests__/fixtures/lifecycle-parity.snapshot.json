@@ -6,7 +6,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -22,7 +23,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -38,7 +40,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -50,7 +53,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -64,8 +68,10 @@
     "stageStatus": "",
     "nextStep": "Review retrospective (status: )",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/code-quality-system": {
@@ -76,7 +82,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -89,6 +96,7 @@
       "missing": [
         "falsification",
         "cleanup",
+        "audit",
         "rows"
       ]
     }
@@ -101,7 +109,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -123,7 +132,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -135,7 +145,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -157,7 +168,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -173,6 +185,7 @@
     "readiness": {
       "passes": false,
       "missing": [
+        "audit",
         "rows"
       ]
     }
@@ -182,8 +195,10 @@
     "stageStatus": "completed",
     "nextStep": "Done",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/dawn-ui-plan-grouping": {
@@ -191,8 +206,10 @@
     "stageStatus": "completed",
     "nextStep": "Done",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/dawn-verify": {
@@ -200,8 +217,10 @@
     "stageStatus": "",
     "nextStep": "Review retrospective (status: )",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/dawn-workbench-execution": {
@@ -209,8 +228,10 @@
     "stageStatus": "complete",
     "nextStep": "Done",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/document-skill": {
@@ -221,7 +242,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -239,6 +261,7 @@
       "missing": [
         "falsification",
         "cleanup",
+        "audit",
         "rows"
       ]
     }
@@ -251,7 +274,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -263,7 +287,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -275,6 +300,7 @@
       "passes": false,
       "missing": [
         "cleanup",
+        "audit",
         "rows"
       ]
     }
@@ -286,7 +312,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -303,7 +330,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -315,7 +343,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -326,7 +355,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -339,6 +369,7 @@
       "missing": [
         "falsification",
         "cleanup",
+        "audit",
         "rows"
       ]
     }
@@ -351,7 +382,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -362,7 +394,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -373,7 +406,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -385,7 +419,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -397,7 +432,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -409,7 +445,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -420,7 +457,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -431,7 +469,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -447,7 +486,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -458,7 +498,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -467,8 +508,10 @@
     "stageStatus": "complete",
     "nextStep": "Done",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/indusk-worktree-extension": {
@@ -479,7 +522,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -488,8 +532,10 @@
     "stageStatus": "",
     "nextStep": "Review retrospective (status: )",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/lifecycle-rebalance": {
@@ -497,8 +543,10 @@
     "stageStatus": "completed",
     "nextStep": "Done",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/local-init-mode": {
@@ -509,7 +557,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -522,6 +571,7 @@
       "missing": [
         "falsification",
         "cleanup",
+        "audit",
         "rows"
       ]
     }
@@ -539,7 +589,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -556,7 +607,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -567,7 +619,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -583,7 +636,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -595,7 +649,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -607,7 +662,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -619,7 +675,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -631,7 +688,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -640,8 +698,10 @@
     "stageStatus": "complete",
     "nextStep": "Done",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/tests-first-planning": {
@@ -652,7 +712,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -669,7 +730,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -678,8 +740,10 @@
     "stageStatus": "complete",
     "nextStep": "Done",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/vitepress-extension": {
@@ -690,7 +754,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -712,7 +777,8 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -723,7 +789,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -732,8 +799,10 @@
     "stageStatus": "complete",
     "nextStep": "Done",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/worktree-config-schema-pointer": {
@@ -741,8 +810,10 @@
     "stageStatus": "complete",
     "nextStep": "Done",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "archive/worktree-visibility": {
@@ -752,7 +823,8 @@
     "readiness": {
       "passes": false,
       "missing": [
-        "cleanup"
+        "cleanup",
+        "audit"
       ]
     }
   },
@@ -761,8 +833,10 @@
     "stageStatus": "",
     "nextStep": "Review retrospective (status: )",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   },
   "hook-cwd-independence": {
@@ -789,8 +863,10 @@
     "stageStatus": "complete",
     "nextStep": "Done",
     "readiness": {
-      "passes": true,
-      "missing": []
+      "passes": false,
+      "missing": [
+        "audit"
+      ]
     }
   }
 }

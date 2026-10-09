@@ -2,6 +2,16 @@
 
 import type { Review } from "@infinitedusky/indusk-mcp/build";
 
+/** How each close-out ritual is named when the review says it was skipped. */
+const RITUAL_TITLES: Record<
+  Review["skippedRituals"][number]["ritual"],
+  string
+> = {
+  falsification: "Falsification",
+  cleanup: "Cleanup",
+  audit: "Audit",
+};
+
 /**
  * What a person reads before accepting a built plan (admin-plan-authoring
  * A15–A17, A30): each promise with the tests that prove it, what
@@ -55,8 +65,7 @@ export function ReviewPanel({ review }: { review: Review }) {
       </div>
       {review.skippedRituals.map((r) => (
         <p key={r.ritual} className="text-gray-700">
-          {r.ritual === "falsification" ? "Falsification" : "Cleanup"} skipped:{" "}
-          {r.reason}
+          {RITUAL_TITLES[r.ritual]} skipped: {r.reason}
         </p>
       ))}
       {review.falsification.map((f) => (

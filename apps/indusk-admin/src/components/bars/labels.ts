@@ -113,6 +113,7 @@ export const POSITION_LABELS = {
   executing: "executing",
   falsify: "falsify",
   cleanup: "cleanup",
+  audit: "audit",
   review: "review",
   accepted: "accepted",
   retrospective: "retrospective",

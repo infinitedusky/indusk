@@ -388,6 +388,19 @@ lesson title, or a chat log.
   "Plans this changes" names thirteen existing plans it touches; **none has
   been edited, and the demo's script stands.** Measurements in
   [research](promise-core/research.md).
+- **Closed 2026-10-09** (standalone, opened by Sandy):
+  [plan-review-subagent](archive/plan-review-subagent/retrospective.md) — `/audit`
+  after `/cleanup`. Its own audit found two defects, fixed before close.
+  **Follow-on, not yet a plan — the audit's carried findings** (from its
+  `audit.md`): the brief, test plan and ADR reach the auditor as they stand
+  rather than as approved, and `trajectoryNow` carries rows falsification and
+  cleanup added (the promise `the-auditor-sees-the-plan-not-the-session` leaks
+  through both); `--approved <sha>` accepts any commit; `stat` is not filtered
+  for `.indusk/`; `plans model --step` answers for a plan that does not exist;
+  nothing commits `audit.md`; the admin's `planning-reader.ts` `skippedRituals`
+  omits an audit skip; the admin build resolves the retrospective's model after
+  recording acceptance; `nextBuildStep` answers `audit` before `rows`; and the
+  admin showing `audit.md` (the brief's own follow-up).
 - **Closed 2026-10-08** (sequence step 1 of "Now — show the promise loop"):
   [bookkeeping-lives-where-it-is-read](archive/bookkeeping-lives-where-it-is-read/retrospective.md).
 - **Standalone, brief draft** (2026-10-06):

@@ -1,9 +1,6 @@
-import matter from "gray-matter";
+import { isRitualSkipped, type SkipCheck } from "../rituals/skip.js";
 
-export interface SkipCheck {
-	skipped: boolean;
-	reason: string | null;
-}
+export type { SkipCheck } from "../rituals/skip.js";
 
 /**
  * Parse an impl.md body (the full file content including frontmatter) and
@@ -24,18 +21,5 @@ export interface SkipCheck {
  * parsers; two fields avoid that class of bug entirely.
  */
 export function isFalsificationSkipped(implContent: string): SkipCheck {
-	try {
-		const { data } = matter(implContent);
-		const flag = data.falsification;
-		const reasonRaw = data.falsification_reason;
-
-		if (flag !== "skipped") return { skipped: false, reason: null };
-		if (typeof reasonRaw !== "string") return { skipped: false, reason: null };
-		const reason = reasonRaw.trim();
-		if (!reason) return { skipped: false, reason: null };
-
-		return { skipped: true, reason };
-	} catch {
-		return { skipped: false, reason: null };
-	}
+	return isRitualSkipped(implContent, "falsification");
 }

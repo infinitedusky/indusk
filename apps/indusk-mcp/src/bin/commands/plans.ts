@@ -1,10 +1,12 @@
+import { auditInputs } from "../../lib/audit/inputs.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
+import { buildStepModel } from "../../lib/build/step-model.js";
 import { parsePhaseRef } from "../../lib/impl-headings.js";
 import { nextSessionForPlan } from "../../lib/models/next-session.js";
 import { phaseModel } from "../../lib/models/phase-model.js";
-import { TierConfigError } from "../../lib/models/tier-names.js";
+import { isTierStep, TIER_STEPS, TierConfigError } from "../../lib/models/tier-names.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import {
 	acceptPlan,
@@ -59,9 +61,38 @@ export function plansApprove(cwd: string, name: string): Promise<void> {
 	});
 }
 
-/** `indusk plans model <name> --phase <ref>` — the tier and model a phase is built on, or `session`. */
-export function plansModel(cwd: string, name: string, phase: string): Promise<void> {
+/** The tier and model as `plans model` prints them, or `session` when the project names none. */
+function describeModel(answer: { tier: string; model: string } | null): string {
+	return answer ? `${answer.tier} ${answer.model}` : "session";
+}
+
+/**
+ * `indusk plans model <name> --phase <ref> | --step <step>` — the tier and model a phase is built on,
+ * or a step's default tier (no phase override), or `session`.
+ */
+export function plansModel(
+	cwd: string,
+	name: string,
+	opts: { phase?: string; step?: string },
+): Promise<void> {
 	return planVerb(async () => {
+		const { phase, step } = opts;
+		if (phase !== undefined && step !== undefined) {
+			throw new PlanCommandRefusal("--phase and --step are alternatives; give one");
+		}
+		// promise: the-auditor-runs-on-its-tier — the audit's model is the step's tier, answered here for the skill.
+		if (step !== undefined) {
+			if (!isTierStep(step)) {
+				throw new PlanCommandRefusal(
+					`--step must name a step with a tier (${TIER_STEPS.join(", ")}); got "${step}"`,
+				);
+			}
+			const answer = await buildStepModel(cwd, name, step);
+			return describeModel(answer);
+		}
+		if (phase === undefined) {
+			throw new PlanCommandRefusal("name what to answer for: --phase <ref> or --step <step>");
+		}
 		const ref = parsePhaseRef(/^\d+$/.test(phase.trim()) ? `Phase ${phase.trim()}` : phase);
 		if (!ref) {
 			throw new PlanCommandRefusal(
@@ -69,8 +100,13 @@ export function plansModel(cwd: string, name: string, phase: string): Promise<vo
 			);
 		}
 		const answer = await phaseModel(cwd, name, ref);
-		return answer ? `${answer.tier} ${answer.model}` : "session";
+		return describeModel(answer);
 	});
+}
+
+/** `indusk plans audit-inputs <name>` — what the auditor is handed, as JSON. */
+export function plansAuditInputs(cwd: string, name: string, approved?: string): Promise<void> {
+	return planVerb(async () => JSON.stringify(await auditInputs(cwd, name, approved), null, 2));
 }
 
 /** `indusk plans next-session <name>` — the command to run in a new session, from the plan as it stands. */
@@ -108,10 +144,12 @@ function describeStep(s: BuildStep): string {
 			return "falsify: every phase is closed and the falsification has not run";
 		case "cleanup":
 			return "cleanup: falsification is closed and the cleanup has not run";
+		case "audit":
+			return "audit: the cleanup is closed and no audit.md has been written (or the audit skipped with a reason)";
 		case "judgement":
 			return `judgement: ${s.phase} waits on a person — ${s.item}`;
 		case "review":
-			return "review: built — every phase, the falsification and the cleanup are closed";
+			return "review: built — every phase, the falsification and the cleanup are closed, and the audit written or skipped";
 		case "cannot-continue":
 			return `cannot continue: ${s.why}`;
 	}

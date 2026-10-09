@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
@@ -13,6 +13,8 @@ import { testFile, writePromise } from "./helpers/promises-fixture.js";
 /**
  * promise: a-review-shows-its-evidence — admin-plan-authoring A15, A16, A17.
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the review's half.
+ * promise: a-review-shows-its-evidence — plan-review-subagent A11: audit.md is not review evidence.
+ * promise: a-review-shows-its-evidence — plan-review-subagent A19: a skipped audit is review evidence.
  *
  * When a build stops for review, `indusk plans review <plan>` assembles what
  * the person needs to decide: each promise the plan makes with the passing
@@ -183,6 +185,23 @@ describe.skipIf(SHOULD_SKIP)("indusk plans review", () => {
 		]);
 	});
 
+	it("A19 — a skipped audit is shown among the skipped rituals with its reason", () => {
+		// promise: a-review-shows-its-evidence — the audit's skip pair was invisible to the person accepting.
+		p.commit(
+			wt,
+			{
+				[`${planDir}/impl.md`]: IMPL.replace(
+					"test_purpose: required\n",
+					'test_purpose: required\naudit: skipped\naudit_reason: "one file; the diff is the whole plan"\n',
+				),
+			},
+			"audit skipped",
+		);
+		expect(review().skippedRituals).toEqual([
+			{ ritual: "audit", reason: "one file; the diff is the whole plan" },
+		]);
+	});
+
 	it("A33 — uncommitted work on main where the plan will land is listed; InDusk's own notes are not", () => {
 		mkdirSync(join(p.trunk, "src"), { recursive: true });
 		writeFileSync(join(p.trunk, "src", "seat-release.ts"), "// someone's work in progress\n");
@@ -197,5 +216,19 @@ describe.skipIf(SHOULD_SKIP)("indusk plans review", () => {
 			expect.arrayContaining(["src/seat-release.ts", "src/seat-release.test.ts"]),
 		);
 		expect(paths).not.toContain("README.md");
+	});
+	it("A11 (plan-review-subagent) — the same evidence with and without audit.md in the plan folder", () => {
+		const without = runCli(p.trunk, ["plans", "review", PLAN, "--json"]);
+		expect(without.code, `${without.stdout}\n${without.stderr}`).toBe(0);
+		writeFileSync(
+			join(wt, planDir, "audit.md"),
+			"## Findings\n\n- src/seat-release.ts:1 — a finding\n",
+		);
+		const withAudit = runCli(p.trunk, ["plans", "review", PLAN, "--json"]);
+		expect(withAudit.code, `${withAudit.stdout}\n${withAudit.stderr}`).toBe(0);
+		expect(JSON.parse(withAudit.stdout)).toEqual(JSON.parse(without.stdout));
+		const textWith = runCli(p.trunk, ["plans", "review", PLAN]).stdout;
+		rmSync(join(wt, planDir, "audit.md"));
+		expect(textWith).toBe(runCli(p.trunk, ["plans", "review", PLAN]).stdout);
 	});
 });

@@ -107,10 +107,11 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   workbench root and only its code gets `plan/<name>`, in the repo its
   `code.json` names (`--repo` when there are several). — see
   `/reference/cli/plans`
-- **A phase may carry `**Tier**: <tier> — <reason>`** under its heading
-  (strong, med, weak or baby); omit it and the phase takes its step's default
-  tier from `.indusk/config.json`. A tier other than the default needs its
-  reason, or the impl is refused. The config, not the plan, names the model.
+- **Every phase carries `**Tier**: <tier> — <reason>`** under its heading
+  (strong, med, weak or baby), written when the planner writes the phase: the
+  step's default tier from `.indusk/config.json` spelled out, or a different
+  tier with its reason, or the impl is refused. A phase with no line still
+  takes the step's default. The config, not the plan, names the model.
   `/work` runs each phase as a subagent on `indusk plans model`'s answer, and
   each boundary ends with the command `indusk plans next-session <plan>` names,
   to run in a new session. — see `/reference/cli/plans`
@@ -133,9 +134,12 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   context; merge and delete fast. — see `/reference/skills/work`
 - **Close-out rituals**: `/work` → `/falsify` (authors a Falsification Phase)
   → `/work` → `/cleanup` (authors a Cleanup Phase; its threshold is
-  attention-focus, not a cap) → `/work` → `/retrospective`, whose Step 0 blocks
-  unless both rituals are terminal or skipped with a reason. Ritual phases are
-  detected by titles that START with the ritual word. The retrospective
+  attention-focus, not a cap) → `/work` → `/audit` (a fresh reader writes
+  `audit.md`; advisory) → `/retrospective`, whose Step 0 blocks unless both
+  rituals are terminal or skipped with a reason and `audit.md` exists or the
+  impl carries `audit: skipped` + `audit_reason` — the file's existence is
+  read, never its content. Ritual phases are detected by titles that START
+  with the ritual word. The retrospective
   confirms the plan's promises (`indusk promises confirm <plan>`) before it
   archives; a declared promise no passing row names blocks the close. — see
   `/decisions/falsification-ritual`, `/reference/skills/retrospective`

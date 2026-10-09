@@ -19,6 +19,7 @@ import {
  * promise: a-plan-is-written-on-its-own-branch — workbench-plan-authoring A11, A12.
  * promise: a-review-shows-its-evidence — workbench-plan-authoring A15.
  * promise: nothing-ships-until-accepted — workbench-plan-authoring A16.
+ * promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes — plan-review-subagent A18.
  *
  * A plan in a workbench, through the CLI, in every layout a workbench can
  * declare: its documents at the workbench root, its code on `plan/<name>` in
@@ -152,6 +153,50 @@ describe.skipIf(SHOULD_SKIP).each(LAYOUTS)("a plan in a workbench — %s", (_lab
 		expect(git(repo.dir, ["ls-tree", "-r", "--name-only", "main"])).toContain("src/seat.ts");
 		expect(existsSync(where)).toBe(false);
 		expect(git(repo.dir, ["branch", "--list", `plan/${PLAN}`])).toBe("");
+	});
+
+	it("A18 — an approved, built workbench plan gets its audit inputs: the impl at the root's approval commit, the code repo's branch diff", () => {
+		const wb = withDomain(build());
+		expect(runCli(wb.root, ["plans", "start", "feature", PLAN]).code).toBe(0);
+		writePromise(join(wb.root, ".indusk", "promises"), {
+			name: NAME,
+			kind: "state",
+			state: "declared",
+			domain: DOMAIN,
+			owner: PLAN,
+			statement: SENTENCE,
+		});
+		writeFileSync(
+			join(planDir(wb), "brief.md"),
+			briefText(PLAN, { makes: [{ name: NAME, sentence: SENTENCE }] }),
+		);
+		writeFileSync(join(planDir(wb), "test-plan.md"), "# Test Plan\n");
+		const approvedImpl = implText(PLAN, { status: "draft", rows: [{ state: "planned" }] });
+		writeFileSync(join(planDir(wb), "impl.md"), approvedImpl);
+		const approve = runCli(wb.root, ["plans", "approve", PLAN]);
+		expect(approve.code, out(approve)).toBe(0);
+		const approvedSha = git(wb.root, ["rev-parse", "HEAD"]);
+
+		// The build: code on the repo's plan branch, a finding appended to the impl at the root.
+		commitFile(codeRoot(wb), "src/seat.ts", "export const seat = 1;\n", "the build");
+		writeFileSync(
+			join(planDir(wb), "impl.md"),
+			`${readFileSync(join(planDir(wb), "impl.md"), "utf-8")}\n### Build Phase 2: Falsification — x\n`,
+		);
+		git(wb.root, ["add", "-A"]);
+		git(wb.root, ["commit", "-qm", "falsification"]);
+
+		const r = runCli(wb.root, ["plans", "audit-inputs", PLAN]);
+		expect(r.code, out(r)).toBe(0);
+		const got = JSON.parse(r.stdout) as {
+			implAsApproved: { text: string };
+			diff: string;
+		};
+		expect(got.implAsApproved.text.trimEnd()).toBe(
+			git(wb.root, ["show", `${approvedSha}:.indusk/planning/${PLAN}/impl.md`]),
+		);
+		expect(got.implAsApproved.text).not.toContain("Falsification — x");
+		expect(got.diff).toContain("src/seat.ts");
 	});
 
 	it("A11 — a brief the check refuses is refused with the check's message, and nothing is marked approved", () => {

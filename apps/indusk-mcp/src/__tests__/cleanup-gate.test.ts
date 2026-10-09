@@ -90,7 +90,8 @@ describe("cleanup-ritual T13: retrospective gate requires BOTH rituals", () => {
 
 	it("passes when both falsification and cleanup are satisfied (both skipped)", () => {
 		const { planRoot, content } = planWith(
-			`falsification: skipped\nfalsification_reason: "nothing to falsify"\ncleanup: skipped\ncleanup_reason: "nothing to extract"`,
+			// the audit (plan-review-subagent) is satisfied by its skip pair, so only the two rituals are under test
+			`falsification: skipped\nfalsification_reason: "nothing to falsify"\ncleanup: skipped\ncleanup_reason: "nothing to extract"\naudit: skipped\naudit_reason: "not under test"`,
 			NO_CLEANUP_PHASE,
 		);
 		const r = checkRetrospectiveReadiness(planRoot, content);

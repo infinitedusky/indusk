@@ -50,6 +50,8 @@ export function nextSession(
 			return `In a new session, run: /falsify ${plan}`;
 		case "cleanup":
 			return `In a new session, run: /cleanup ${plan}`;
+		case "audit":
+			return `In a new session, run: /audit ${plan}`;
 		case "review":
 			return `In a new session, run: /retrospective ${plan}`;
 		case "judgement":

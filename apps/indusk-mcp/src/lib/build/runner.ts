@@ -14,12 +14,24 @@ import { type BuildPlan, type BuildStep, nextBuildStep, type StepOutcome } from 
  * promise: a-build-runs-to-review-unasked
  */
 
-export type BuildStepName = "work" | "falsify" | "cleanup" | "retrospective";
+export type BuildStepName = "work" | "falsify" | "cleanup" | "audit" | "retrospective";
+
+/** The steps the runner runs as a session; every other answer stops it. */
+const SESSION_STEPS = ["work", "falsify", "cleanup", "audit"] as const;
+type SessionStep = (typeof SESSION_STEPS)[number];
+
+function isSessionStep(s: BuildStep): s is Extract<BuildStep, { step: SessionStep }> {
+	return (SESSION_STEPS as readonly string[]).includes(s.step);
+}
 
 export interface RunnerDeps {
 	read: () => Promise<BuildPlan>;
-	/** Run one step's session to its end; `error` when it failed after its retries. */
-	run: (step: BuildStepName) => Promise<{ error: string | null }>;
+	/**
+	 * Run one step's session to its end; `error` when it failed after its retries.
+	 * A `work` step also gets the phase it works (as `nextBuildStep` words it), so the
+	 * session can run on that phase's model.
+	 */
+	run: (step: BuildStepName, phase?: string) => Promise<{ error: string | null }>;
 	accept: (by: "person" | "auto") => Promise<void>;
 	onStep?: (update: RunnerUpdate) => void;
 }
@@ -29,7 +41,7 @@ export type RunnerUpdate =
 	| { kind: "stopped"; stop: RunnerStop };
 
 export type RunnerStop =
-	| Exclude<BuildStep, { step: "work" } | { step: "falsify" } | { step: "cleanup" }>
+	| Exclude<BuildStep, { step: SessionStep }>
 	| { step: "released" }
 	| { step: "release-failed"; why: string };
 
@@ -39,7 +51,7 @@ export async function runBuild(deps: RunnerDeps & { autoAccept: boolean }): Prom
 	for (;;) {
 		const before = await deps.read();
 		const next = nextBuildStep(before, { last, previous });
-		if (next.step !== "work" && next.step !== "falsify" && next.step !== "cleanup") {
+		if (!isSessionStep(next)) {
 			if (next.step === "review" && deps.autoAccept) {
 				const release = await runRelease(deps, "auto");
 				const stop: RunnerStop = release.released
@@ -56,7 +68,7 @@ export async function runBuild(deps: RunnerDeps & { autoAccept: boolean }): Prom
 			step: next.step,
 			...("phase" in next ? { detail: next.phase } : {}),
 		});
-		const { error } = await deps.run(next.step);
+		const { error } = await deps.run(next.step, "phase" in next ? next.phase : undefined);
 		const after = await deps.read();
 		previous = last;
 		last = { progressed: fingerprint(after) !== fingerprint(before), error };

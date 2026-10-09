@@ -72,3 +72,32 @@ describe("A31 — a built plan is in review, then accepted", () => {
 		expect(state.awaiting).toMatch(/retrospective/);
 	});
 });
+
+/**
+ * promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes — plan-review-subagent A22.
+ *
+ * A cleaned plan with no audit.md (and no skip) waits at `audit`, not `review`:
+ * the admin must not offer Accept before the audit has run.
+ */
+describe("A22 — a cleaned plan awaits its audit before review", () => {
+	it("audit sits between cleanup and review in PLAN_POSITIONS", () => {
+		const order = [...PLAN_POSITIONS] as string[];
+		expect(order.indexOf("audit")).toBe(order.indexOf("cleanup") + 1);
+		expect(order.indexOf("audit")).toBeLessThan(order.indexOf("review"));
+	});
+
+	it("readiness.missing includes audit: position audit, cleaned, awaiting /audit", () => {
+		const state = derivePlanPosition({
+			summary,
+			impl: impl(),
+			readiness: { ...ready, passes: false, missing: ["audit"] },
+			archived: false,
+		});
+		expect(state).toMatchObject({ position: "audit", awaiting: "cleaned, awaiting /audit" });
+	});
+
+	it("audit not missing: review as before", () => {
+		const state = derivePlanPosition({ summary, impl: impl(), readiness: ready, archived: false });
+		expect(state.position).toBe("review");
+	});
+});

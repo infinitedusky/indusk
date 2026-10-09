@@ -1,0 +1,43 @@
+---
+plan: plan-review-subagent
+audited: 2026-10-09
+model: claude-opus-5-5
+---
+
+# Audit — plan-review-subagent
+
+## Does each row prove its promise's sentence, or something narrower?
+- `apps/indusk-mcp/src/lib/cleanup/gate.ts:110` — `a-plan-is-audited-by-a-fresh-reader-before-it-closes` (rows A1–A4, A18): the rows prove only that a file named `audit.md` exists. Nothing checks who wrote it. A10 (`audit-gate.test.ts`) shows an empty `audit.md` satisfies the gate, so a builder running `touch audit.md` closes it. The promise's "a reader that has not seen the building session reads the plan and writes" has no row behind it.
+- `apps/indusk-mcp/src/__tests__/audit-gate.test.ts` — A1/A2 test `checkRetrospectiveReadiness` and `plans next`, not the retrospective. "The retrospective refuses to start" rests on prose in `skills/retrospective.md` Step 0. The admin's Accept button, which starts the retrospective session, is offered while the audit is still missing (see question 6, `lifecycle.ts:295`). The A1/A2 fixture reaches "falsification and cleanup done" through the skip pairs, never through closed ritual phases.
+- `apps/indusk-mcp/src/lib/audit/inputs.ts:181` — `the-auditor-sees-the-plan-not-the-session` (A5–A7, A15–A17): the brief, test plan and ADR are read from the working copy, not at the approval commit. This plan's ADR was edited after approval (commit 5ca94bae, decision D2 rewritten), and the auditor receives the edited version. No row asserts the documents are as approved.
+- `apps/indusk-mcp/src/lib/audit/inputs.ts:201` — `trajectoryNow` is the working table, rows added after approval included. For this plan that means A13–A20, whose Asserts and For cells are the builder's falsification and cleanup findings (for example A15, "the diff holds none of the impl's changes since approval"). The promise says "nothing … from the builder's own findings". A5's "nothing else" checks only for the absence of research and current.md markers.
+- `apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts` — "nothing from the session's conversation" is not provable in the package. The Agent prompt is composed by the builder's session (`skills/audit.md` step 3), and no row or check constrains what it pastes.
+- `apps/indusk-mcp/src/__tests__/plans-model.test.ts` — `the-auditor-runs-on-its-tier` (A8, A9, A14): A8 proves the lookup `plans model --step audit`, not that the audit runs on that model. The interactive path depends on the skill passing `model` to the Agent, which only A9's one-time live check covers. Setting `workflow.steps.audit.tier` as the promise says also makes the impl validator hook refuse impl writes (question 6, `_phase-tier.js:21`), and no row notices.
+- `apps/indusk-mcp/src/__tests__/audit-gate.test.ts` — `an-audit-blocks-nothing` (A10): holds as worded for readiness and `plans next`. A11 extends it to `plans review`.
+- `apps/indusk-mcp/src/lib/build/review.ts:117` — the must-not-break promise `a-review-shows-its-evidence`: the brief's own clause is "The admin's acceptance panel is unchanged by this plan". A19 asserts the panel now changes, showing "Audit skipped" with its reason. A11 proves only that `audit.md`'s presence changes nothing, which is narrower than the brief's sentence.
+
+## What does the diff change that no row touches?
+- `apps/indusk-admin/src/lib/build-host.ts:80` — every admin build step now resolves a model before running, and a `TierConfigError` turns into the step's error. For the retrospective, `runRelease` records the acceptance first and only then runs the step, so a bad tier config leaves the plan accepted with the release failed. A14 tests `buildStepModel`. No row tests the host's wiring or this ordering.
+- `apps/indusk-mcp/src/bin/commands/plans.ts:89` — `plans model <name> --step <step>` never reads the plan: a misspelled or nonexistent plan name gets an answer, and `--step work` ignores every phase's `**Tier**:` line. The `--phase` + `--step` refusal and the refusal when neither is given are also untested.
+- `apps/indusk-mcp/src/lib/audit/inputs.ts:134` — `--approved <sha>` accepts any commit in the repository, not only an approval of this plan. A sha from the plan branch would hand the auditor an impl that already holds the falsification and cleanup phases. No row exercises `--approved`.
+- `apps/indusk-mcp/src/lib/audit/inputs.ts:162` — `stat` is not filtered for `.indusk/`, unlike `diff` and `tree`. It shows the size of the builder's post-approval impl and current.md churn (here `impl.md | 208`). A7 and A15 check only `diff`.
+- `apps/indusk-mcp/src/lib/audit/inputs.ts:113` — a workbench plan's approval is searched on the root's `HEAD` (whatever is checked out), not a named trunk. A18 covers only the happy path.
+- `apps/indusk-mcp/src/lib/build/next-step.ts:66` — `audit` is answered before `rows` and `promises`, so an unattended build spends the audit (on the strongest configured tier) on a plan that will then stop at `cannot-continue` for non-terminal rows. No row pins this ordering.
+
+## What does the code do that the brief never promised?
+- `apps/indusk-admin/src/lib/build-host.ts:56` — the admin build now passes a model to every step's session (`work` on its phase's tier, the rituals on their step tiers). The approved impl lists "The admin's Build button passing a model (the model-per-phase follow-up)" as out of scope. ADR D5 (`adr.md:48`) still says "the admin needs no change". Row A14 claims it under `each-phase-runs-on-its-model`, a must-not-break promise, not a new one.
+- `apps/indusk-mcp/skills/planner.md:173` — the planner must now write a `**Tier**:` line under every phase, and the planning rules (`templates/planning/CLAUDE.md:110`) say so. No promise or scope line in this plan covers it. A13 calls it model-per-phase's unlanded decision. The shipped rule reads "Every phase carries … or the impl is refused" and then "A phase with no line still takes the step's default", and the validator does not refuse a missing line.
+- `apps/indusk-admin/src/components/session/ReviewPanel.tsx:68` — the acceptance panel shows "Audit skipped: <reason>". The brief says the panel is unchanged and lists the admin showing the audit as a follow-up.
+- `apps/indusk-mcp/src/lib/rituals/skip.ts` — the three skip readers are consolidated into `isRitualSkipped` (A20). A refactor with no promise behind it, behaviour-preserving per A20.
+
+## Which rejected ADR alternative does the code quietly take?
+- nothing
+
+## Which skip reason would you not accept?
+- `.indusk/planning/plan-review-subagent/impl.md` — A9, the live check of the spawn, has the For cell "A8 proves the promise in code". A8 proves only that `plans model --step audit` prints a tier, not that the auditor runs on it. With A9 observed once, nothing re-checks that the skill's Agent call or the admin's session honours the model. The reason overstates what A8 covers.
+
+## What else would have to change for each promise to hold?
+- `apps/indusk-mcp/hooks/_phase-tier.js:21` — the hook's `STEPS` list lacks `audit`, and the file says it must change together with `TIER_STEPS`. With `workflow.steps.audit.tier` set, `tierConfigProblems` reports "workflow.steps.audit is not a step InDusk reads", and `validate-impl-structure.js:374` turns that into an error on any impl write that carries a `**Tier**:` line. This plan's planner change puts that line on every phase. `the-auditor-runs-on-its-tier` cannot be configured without breaking impl writes. `src/__tests__/phase-tier-parity.test.ts` has no `steps.audit` case, so the drift passes.
+- `apps/indusk-mcp/src/lib/lifecycle.ts:295` — `derivePlanPosition` never checks `audit`. A plan with cleanup done and no `audit.md` falls through to position `review` ("built, awaiting review"). `apps/indusk-admin/src/lib/plan-actions.ts:37` then shows the Accept button and hides Build (`canBuild` is false while `inReview`). The person is offered acceptance and a retrospective before the audit, and cannot start a build to run it. This undercuts `a-plan-is-audited-by-a-fresh-reader-before-it-closes` and `a-build-runs-to-review-unasked`.
+- `apps/indusk-admin/src/lib/planning-reader.ts:349` — the admin's own `skippedRituals` lists only falsification and cleanup, so an audit skip never reaches the plan view built there. Its readiness `missing` does carry `audit`, but the position derived from it ignores it (above).
+- `apps/indusk-mcp/skills/audit.md:31` — the reader writes `audit.md` into the worktree, and no step commits it. The gate reads the file from disk, so it passes, but nothing ensures the document reaches the trunk at land. The approved impl never says who commits it.

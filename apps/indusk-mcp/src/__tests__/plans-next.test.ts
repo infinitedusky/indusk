@@ -43,7 +43,13 @@ function phaseText(p: Phase): string {
 	].join("\n");
 }
 
-function project(phases: Phase[], frontmatter: string[] = [], deferred = ""): string {
+/** `audited` writes the plan's audit.md (plan-review-subagent: the audit comes after cleanup, before review). */
+function project(
+	phases: Phase[],
+	frontmatter: string[] = [],
+	deferred = "",
+	audited = false,
+): string {
 	const root = mkdtempSync(join(tmpdir(), "plans-next-"));
 	roots.push(root);
 	initRepoWithCommit(root);
@@ -70,6 +76,7 @@ function project(phases: Phase[], frontmatter: string[] = [], deferred = ""): st
 			...phases.map(phaseText),
 		].join("\n"),
 	);
+	if (audited) writeFileSync(join(root, ".indusk", "planning", PLAN, "audit.md"), "- nothing\n");
 	return root;
 }
 
@@ -91,15 +98,16 @@ const cleanup = (done: boolean): Phase => ({
 
 describe.skipIf(SHOULD_SKIP)("indusk plans next", () => {
 	it("A11 — from the first phase through falsification and cleanup, it works and never asks", () => {
-		const states: Array<[Phase[], string]> = [
+		const states: Array<[Phase[], string, boolean?]> = [
 			[[build(false)], "work"],
 			[[build(true)], "falsify"],
 			[[build(true), falsification(false)], "work"],
 			[[build(true), falsification(true)], "cleanup"],
 			[[build(true), falsification(true), cleanup(false)], "work"],
-			[[build(true), falsification(true), cleanup(true)], "review"],
+			[[build(true), falsification(true), cleanup(true)], "audit"],
+			[[build(true), falsification(true), cleanup(true)], "review", true],
 		];
-		const steps = states.map(([phases]) => next(project(phases)).step);
+		const steps = states.map(([phases, , audited]) => next(project(phases, [], "", audited)).step);
 		expect(steps).toEqual(states.map(([, step]) => step));
 	});
 
@@ -132,6 +140,8 @@ describe.skipIf(SHOULD_SKIP)("indusk plans next", () => {
 				'falsification_reason: "a one-line change"',
 				"cleanup: skipped",
 				'cleanup_reason: "a one-line change"',
+				"audit: skipped",
+				'audit_reason: "a one-line change"',
 			],
 		);
 		const step = next(dir).step;

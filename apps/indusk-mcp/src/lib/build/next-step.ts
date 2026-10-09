@@ -33,6 +33,7 @@ export type BuildStep =
 	| { step: "work"; phase: string }
 	| { step: "falsify" }
 	| { step: "cleanup" }
+	| { step: "audit" }
 	| { step: "judgement"; phase: string; item: string; items: string[] }
 	| { step: "review" }
 	| { step: "cannot-continue"; why: string };
@@ -61,6 +62,8 @@ export function nextBuildStep(
 	const { missing, nonTerminalRows } = plan.readiness;
 	if (missing.includes("falsification")) return { step: "falsify" };
 	if (missing.includes("cleanup")) return { step: "cleanup" };
+	// promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes — read once, after cleanup, before review
+	if (missing.includes("audit")) return { step: "audit" };
 	if (missing.includes("rows")) {
 		return {
 			step: "cannot-continue",

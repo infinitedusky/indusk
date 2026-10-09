@@ -41,7 +41,9 @@ are about keeping the two lanes in step.
 - **`_phase-tier.js` mirrors `lib/models/tiers.ts`** (the tier line, the rule
   over it, the check over the tier config), held by `phase-tier-parity.test.ts`
   — the same inputs go to both copies and must get the same answers. Change
-  the TS and the port together.
+  the TS and the port together. `STEPS` must name every step `TIER_STEPS`
+  names; the parity test builds a case from `TIER_STEPS`, so a step added to
+  one and not the other fails.
 - **The validator's "no phase structure touched" fast path is a list of the
   edit shapes that carry structure** — a phase heading, an unchecked item, a
   `**Tier**:` line. A rule over a new line shape adds its marker there, or an

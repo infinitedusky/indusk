@@ -5,6 +5,7 @@ import { ReviewPanel } from "./ReviewPanel";
 
 /**
  * promise: a-review-shows-its-evidence — admin-plan-authoring A15, A16, A17, the panel's half.
+ * promise: a-review-shows-its-evidence — plan-review-subagent A19, the panel's half.
  *
  * The review the package assembles reaches the person whole: a proven
  * promise with its rows, an unproven one with why, what falsification found
@@ -69,6 +70,26 @@ describe("the review panel shows the evidence", () => {
     expect(text).toContain(
       "Cleanup skipped: one small file; nothing to decompose",
     );
+  });
+});
+
+describe("A19 (plan-review-subagent) — a skipped audit is worded as the audit", () => {
+  it("says Audit skipped with its reason, never Cleanup skipped", async () => {
+    const text =
+      (
+        await render(
+          <ReviewPanel
+            review={{
+              ...review,
+              skippedRituals: [
+                { ritual: "audit", reason: "one file; the diff is the plan" },
+              ],
+            }}
+          />,
+        )
+      ).container.textContent ?? "";
+    expect(text).toContain("Audit skipped: one file; the diff is the plan");
+    expect(text).not.toContain("Cleanup skipped");
   });
 });
 
