@@ -1,8 +1,15 @@
 import { readTiers, readWorkflowSteps } from "../checks/steps.js";
 import { fencedLineMask, type PhaseRef, parsePhaseHeading } from "../impl-headings.js";
-import { isTier, TIER_STEPS, TIERS, type Tier, type TierStep } from "./tier-names.js";
+import {
+	isTier,
+	TIER_STEPS,
+	TIERS,
+	type Tier,
+	TierConfigError,
+	type TierStep,
+} from "./tier-names.js";
 
-export { isTier, TIERS, type Tier } from "./tier-names.js";
+export { isTier, TIERS, type Tier, TierConfigError } from "./tier-names.js";
 export { readTiers };
 
 /**
@@ -70,7 +77,10 @@ export function phaseTier(implBody: string, phase: PhaseRef): PhaseTierLine | un
 
 /**
  * The tier and model a phase of `step` is built on. `null` when the project
- * names no model for it — the session's own model, as before tiers existed.
+ * names no tiers at all — the session's own model, as before tiers existed.
+ * A project that names tiers but none for the tier asked is a
+ * `TierConfigError`: answering the session's model would build the phase on
+ * the wrong one without a word.
  */
 export function tierForPhase(
 	config: TierConfig,
@@ -79,8 +89,14 @@ export function tierForPhase(
 ): { tier: Tier; model: string } | null {
 	const named = override?.tier ?? config.steps[step];
 	if (!isTier(named)) return null;
+	if (Object.keys(config.tiers).length === 0) return null;
 	const model = config.tiers[named];
-	return model === undefined ? null : { tier: named, model };
+	if (model === undefined) {
+		throw new TierConfigError(
+			`the tier ${named} has no model: add workflow.tiers.${named} to the config`,
+		);
+	}
+	return { tier: named, model };
 }
 
 /** The tiers above, nearest first. */
@@ -105,18 +121,36 @@ export function nextTier(tier: Tier, failures: number): Tier | "blocker" | null 
 }
 
 /**
- * Problems with an impl's tier lines: a tier that is not one of the four, and
- * a tier other than the step's default with no reason. Names the phase.
+ * Problems with an impl's tier lines: more than one under a phase, a tier that
+ * is not one of the four, a tier other than the step's default with no
+ * reason, and (when the project names tiers) a tier with no model. Names the
+ * phase.
  */
-export function tierRuleProblems(implBody: string, defaultTier: Tier | undefined): string[] {
+export function tierRuleProblems(
+	implBody: string,
+	defaultTier: Tier | undefined,
+	tiers: Partial<Record<Tier, string>> = {},
+): string[] {
 	const problems: string[] = [];
+	const seen = new Set<string>();
 	for (const line of phaseTierLines(implBody)) {
 		const label = `${line.ref.kind === "test" ? "Test" : "Build"} Phase ${line.ref.number}`;
+		if (seen.has(label)) {
+			problems.push(
+				`${label}: more than one \`**Tier**:\` line — keep one; an escalation replaces the line`,
+			);
+			continue;
+		}
+		seen.add(label);
 		if (!isTier(line.tier)) {
 			problems.push(`${label}: tier "${line.tier}" is not one of ${TIERS.join(", ")}`);
 		} else if (defaultTier !== undefined && line.tier !== defaultTier && line.reason === null) {
 			problems.push(
 				`${label}: tier ${line.tier} differs from the work step's default (${defaultTier}) and gives no reason — write \`**Tier**: ${line.tier} — <reason>\``,
+			);
+		} else if (Object.keys(tiers).length > 0 && tiers[line.tier] === undefined) {
+			problems.push(
+				`${label}: tier ${line.tier} has no model — add workflow.tiers.${line.tier} to the config`,
 			);
 		}
 	}

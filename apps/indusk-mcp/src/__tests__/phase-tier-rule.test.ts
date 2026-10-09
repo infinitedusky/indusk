@@ -19,7 +19,12 @@ afterAll(() => {
 	for (const r of roots) rmSync(r, { recursive: true, force: true });
 });
 
-async function validate(tierLine: string) {
+const TIERS = { strong: "opus", med: "sonnet", weak: "haiku", baby: "haiku" };
+
+async function validate(
+	tierLine: string,
+	opts: { workflow?: unknown; edit?: { from: string } } = {},
+) {
 	const root = mkdtempSync(join(tmpdir(), "phase-tier-"));
 	roots.push(root);
 	const dir = join(root, ".indusk", "planning", "seats");
@@ -28,10 +33,7 @@ async function validate(tierLine: string) {
 		join(root, ".indusk", "config.json"),
 		JSON.stringify({
 			otel: { role: "library" },
-			workflow: {
-				tiers: { strong: "opus", med: "sonnet", weak: "haiku", baby: "haiku" },
-				steps: { work: { tier: "weak" } },
-			},
+			workflow: opts.workflow ?? { tiers: TIERS, steps: { work: { tier: "weak" } } },
 		}),
 	);
 	const impl = implText("seats", { status: "draft", rows: [{ state: "planned" }] }).replace(
@@ -39,6 +41,15 @@ async function validate(tierLine: string) {
 		`### Build Phase 1: Build\n\n${tierLine}\n`,
 	);
 	const path = join(dir, "impl.md");
+	if (opts.edit) {
+		// The file on disk holds the line as it was; the hook is handed only the Edit.
+		writeFileSync(path, impl.replace(tierLine, opts.edit.from));
+		return runHook("validate-impl-structure.js", {
+			tool_name: "Edit",
+			tool_input: { file_path: path, old_string: opts.edit.from, new_string: tierLine },
+			cwd: root,
+		});
+	}
 	writeFileSync(path, impl);
 	return runHook("validate-impl-structure.js", {
 		tool_name: "Write",
@@ -66,5 +77,61 @@ describe("model-per-phase A7 — a reason is enough; an unknown tier is not", ()
 		const r = await validate("**Tier**: huge — x");
 		expect(r.exitCode).not.toBe(0);
 		expect(r.stderr).toContain("huge");
+	});
+});
+
+describe("model-per-phase A13 — an Edit of only the tier line is held to the rule", () => {
+	const from = "**Tier**: strong — rewrites how commands run";
+
+	it("refuses an Edit that drops the reason, naming the phase", async () => {
+		const r = await validate("**Tier**: strong", { edit: { from } });
+		expect(r.exitCode, "an Edit of the tier line alone").not.toBe(0);
+		expect(r.stderr).toMatch(/Build Phase 1/);
+	});
+
+	it("refuses an Edit that names an unknown tier", async () => {
+		const r = await validate("**Tier**: huge — x", { edit: { from } });
+		expect(r.exitCode).not.toBe(0);
+		expect(r.stderr).toContain("huge");
+	});
+
+	it("accepts an Edit that keeps its reason", async () => {
+		const r = await validate("**Tier**: med — simple after all", { edit: { from } });
+		expect(r.exitCode, r.stderr).toBe(0);
+	});
+});
+
+describe("model-per-phase A14 — one tier line per phase", () => {
+	it("refuses a phase with two tier lines, naming it", async () => {
+		const r = await validate("**Tier**: weak\n**Tier**: strong — failed three times on weak");
+		expect(r.exitCode).not.toBe(0);
+		expect(r.stderr).toMatch(/Build Phase 1/);
+		expect(r.stderr).toMatch(/more than one/);
+	});
+});
+
+describe("model-per-phase A15 — a tier needs a model", () => {
+	it("refuses a tier the config has no model for, naming the tier", async () => {
+		const r = await validate("**Tier**: strong — security work", {
+			workflow: { tiers: { med: "sonnet" }, steps: { work: { tier: "med" } } },
+		});
+		expect(r.exitCode).not.toBe(0);
+		expect(r.stderr).toContain("strong");
+		expect(r.stderr).toMatch(/no model/);
+	});
+
+	it("leaves a project that names no tiers alone, as before tiers existed", async () => {
+		const r = await validate("**Tier**: strong — security work", { workflow: { steps: {} } });
+		expect(r.exitCode, r.stderr).toBe(0);
+	});
+});
+
+describe("model-per-phase A16 — the validator reads the config as plans model does", () => {
+	it("refuses an unknown default tier on the work step, naming the key", async () => {
+		const r = await validate("**Tier**: strong", {
+			workflow: { tiers: TIERS, steps: { work: { tier: "huge" } } },
+		});
+		expect(r.exitCode).not.toBe(0);
+		expect(r.stderr).toContain("workflow.steps.work.tier");
 	});
 });

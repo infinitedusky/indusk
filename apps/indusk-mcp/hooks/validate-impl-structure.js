@@ -32,7 +32,7 @@ import {
 	phaseSequence,
 	unterminatedFenceLine,
 } from "./_impl-headings.js";
-import { tierRuleProblems, workDefaultTier } from "./_phase-tier.js";
+import { tierConfigProblems, tierRuleProblems, workDefaultTier } from "./_phase-tier.js";
 import { parseRegister } from "./_register.js";
 import { isTestLevel, TEST_LEVELS } from "./_test-levels.js";
 import { parseTrajectoryFromBody } from "./_trajectory-parser.js";
@@ -221,9 +221,12 @@ if (contractRefusal) {
 const editContent = toolInput.new_string ?? toolInput.content ?? "";
 const hasPhaseHeader = ANY_PHASE_HEADING_LOOSE.test(editContent);
 const hasChecklistItem = /- \[ \]/.test(editContent);
+// A tier line is phase structure too: an Edit of that line alone carries no
+// heading and no item, and would otherwise skip every rule (model-per-phase A13).
+const hasTierLine = /\*\*Tier\*\*:/.test(editContent);
 
 // If the edit doesn't touch phase structure, allow it
-if (!hasPhaseHeader && !hasChecklistItem) {
+if (!hasPhaseHeader && !hasChecklistItem && !hasTierLine) {
 	process.exit(0);
 }
 
@@ -366,7 +369,10 @@ const errors = [];
 	} catch {
 		// no config, no default tier: only an unknown tier is refused
 	}
-	errors.push(...tierRuleProblems(body, workDefaultTier(config)));
+	// A config no one can read is said where it bites — an impl that names a tier —
+	// and not on every impl write in the project.
+	if (/^\*\*Tier\*\*:/m.test(body)) errors.push(...tierConfigProblems(config));
+	errors.push(...tierRuleProblems(body, workDefaultTier(config), config?.workflow?.tiers));
 }
 for (const phase of phases) {
 	if (!phase.hasImplementation) continue; // Skip phases with no impl items (might be a header-only outline)

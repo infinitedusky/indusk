@@ -4,7 +4,7 @@ import { checkRetrospectiveReadiness } from "../cleanup/gate.js";
 import { type ImplPhase, parseImplString } from "../impl-parser-core.js";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
 import type { TierConfig } from "./tiers.js";
-import { phaseTier, readTierConfig, tierForPhase } from "./tiers.js";
+import { phaseTier, readTierConfig, TierConfigError, tierForPhase } from "./tiers.js";
 
 /**
  * The command that starts the plan's next piece of work, in a new session
@@ -25,7 +25,13 @@ export function nextSession(
 	if (open) {
 		const label = `${open.kind === "test" ? "Test" : "Build"} Phase ${open.number}`;
 		const override = phaseTier(implBody, { kind: open.kind, number: open.number });
-		const answer = opts.config ? tierForPhase(opts.config, "work", override) : null;
+		let answer: ReturnType<typeof tierForPhase> = null;
+		try {
+			answer = opts.config ? tierForPhase(opts.config, "work", override) : null;
+		} catch (err) {
+			// a tier the config cannot honour does not stop a boundary from naming its command
+			if (!(err instanceof TierConfigError)) throw err;
+		}
 		const on = answer ? `, on ${answer.tier} (${answer.model})` : "";
 		return `In a new session, run: /work ${plan} — next is ${label}${on}`;
 	}
@@ -50,8 +56,9 @@ export async function nextSessionForPlan(checkout: string, plan: string): Promis
 	let config: TierConfig | undefined;
 	try {
 		config = readTierConfig(checkout);
-	} catch {
+	} catch (err) {
 		// an unreadable tier config does not stop a boundary from naming its command
+		if (!(err instanceof TierConfigError)) throw err;
 	}
 	const { missing } = checkRetrospectiveReadiness(live.copy.dir, content);
 	return nextSession(plan, content, { missing, config });

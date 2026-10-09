@@ -77,3 +77,24 @@ describe("the tier line", () => {
 		);
 	});
 });
+
+describe("model-per-phase A14, A15 — one tier line; a tier needs a model", () => {
+	it("A14 — a phase with two tier lines is a problem naming the phase", () => {
+		const body = "### Build Phase 1: A\n\n**Tier**: weak\n**Tier**: strong — failed three times\n";
+		expect(tierRuleProblems(body, "weak", config.tiers)).toEqual([
+			expect.stringContaining("Build Phase 1"),
+		]);
+		expect(tierRuleProblems(body, "weak", config.tiers)[0]).toMatch(/more than one/);
+	});
+
+	it("A15 — a tier with no model is a problem naming it; tierForPhase throws for it", () => {
+		const body = "### Build Phase 1: A\n\n**Tier**: strong — security\n";
+		const tiers = { med: "sonnet" };
+		expect(tierRuleProblems(body, "med", tiers)[0]).toMatch(/strong.*no model/);
+		expect(() =>
+			tierForPhase({ tiers, steps: { work: "med" } }, "work", { tier: "strong" }),
+		).toThrow(/strong/);
+		expect(tierRuleProblems(body, "med", {})).toEqual([]);
+		expect(tierForPhase({ tiers: {}, steps: {} }, "work", { tier: "strong" })).toBeNull();
+	});
+});

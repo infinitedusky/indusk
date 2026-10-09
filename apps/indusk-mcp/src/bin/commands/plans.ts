@@ -4,6 +4,7 @@ import { buildReview, type Review } from "../../lib/build/review.js";
 import { parsePhaseRef } from "../../lib/impl-headings.js";
 import { nextSessionForPlan } from "../../lib/models/next-session.js";
 import { phaseModel } from "../../lib/models/phase-model.js";
+import { TierConfigError } from "../../lib/models/tier-names.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import {
 	acceptPlan,
@@ -18,7 +19,7 @@ async function planVerb(run: () => Promise<string>): Promise<void> {
 	try {
 		console.info(await run());
 	} catch (err) {
-		if (err instanceof PlanCommandRefusal) {
+		if (err instanceof PlanCommandRefusal || err instanceof TierConfigError) {
 			console.error(`Refused: ${err.message}`);
 			process.exit(1);
 		}

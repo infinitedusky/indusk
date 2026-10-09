@@ -12,3 +12,6 @@ export type TierStep = (typeof TIER_STEPS)[number];
 export function isTier(value: unknown): value is Tier {
 	return typeof value === "string" && (TIERS as readonly string[]).includes(value);
 }
+
+/** The tier config, or a tier a phase names, cannot be honoured; the message names the cause. */
+export class TierConfigError extends Error {}

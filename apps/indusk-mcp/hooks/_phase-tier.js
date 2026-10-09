@@ -37,16 +37,58 @@ function phaseTierLines(implBody) {
 	return out;
 }
 
-/** Problems with an impl's tier lines; `defaultTier` is the work step's, or undefined. */
-export function tierRuleProblems(implBody, defaultTier) {
+/**
+ * Problems with an impl's tier lines: more than one under a phase, an unknown
+ * tier, a tier other than the work step's default with no reason, and (when the
+ * project names tiers) a tier with no model. `tiers` is `workflow.tiers`.
+ */
+export function tierRuleProblems(implBody, defaultTier, tiers = {}) {
 	const problems = [];
+	const seen = new Set();
 	for (const line of phaseTierLines(implBody)) {
 		const label = `${line.ref.kind === "test" ? "Test" : "Build"} Phase ${line.ref.number}`;
+		if (seen.has(label)) {
+			problems.push(
+				`${label}: more than one \`**Tier**:\` line — keep one; an escalation replaces the line`,
+			);
+			continue;
+		}
+		seen.add(label);
 		if (!TIERS.includes(line.tier)) {
 			problems.push(`${label}: tier "${line.tier}" is not one of ${TIERS.join(", ")}`);
 		} else if (defaultTier !== undefined && line.tier !== defaultTier && line.reason === null) {
 			problems.push(
 				`${label}: tier ${line.tier} differs from the work step's default (${defaultTier}) and gives no reason — write \`**Tier**: ${line.tier} — <reason>\``,
+			);
+		} else if (Object.keys(tiers).length > 0 && tiers[line.tier] === undefined) {
+			problems.push(
+				`${label}: tier ${line.tier} has no model — add workflow.tiers.${line.tier} to the config`,
+			);
+		}
+	}
+	return problems;
+}
+
+/**
+ * The tier config the way `readTierConfig` reads it: a tier key that is not a
+ * tier, a model that is not a non-empty string, and a step's default tier that
+ * is not a tier are each a problem naming the key.
+ */
+export function tierConfigProblems(config) {
+	const problems = [];
+	const workflow = config?.workflow;
+	for (const [key, model] of Object.entries(workflow?.tiers ?? {})) {
+		if (!TIERS.includes(key)) {
+			problems.push(`workflow.tiers.${key} is not a tier; the tiers are ${TIERS.join(", ")}`);
+		} else if (typeof model !== "string" || model.trim() === "") {
+			problems.push(`workflow.tiers.${key} must be a model alias (a non-empty string)`);
+		}
+	}
+	for (const [step, section] of Object.entries(workflow?.steps ?? {})) {
+		const tier = section?.tier;
+		if (tier !== undefined && !TIERS.includes(tier)) {
+			problems.push(
+				`workflow.steps.${step}.tier must be one of ${TIERS.join(", ")}; got ${JSON.stringify(tier)}`,
 			);
 		}
 	}
