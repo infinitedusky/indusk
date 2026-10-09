@@ -25,6 +25,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 - `indusk plans model <plan> --step audit`; `audit` in `TIER_STEPS`.
 - The `/audit` skill: spawns the reader on the tier's model with the inputs and a fixed question list; `audit.md` in a fixed shape.
 - The retrospective skill's Step 0 naming the audit.
+- The planner writing a `**Tier**:` line under every phase (model-per-phase decided it and did not land it): the skill's impl step, the planning rules and the impl template.
 
 ### Out of Scope
 - The admin showing `audit.md` (follow-up).
@@ -56,10 +57,13 @@ Every plan is read once before it closes by a reader that did not build it, on t
 | A10 | An audit.md full of findings leaves readiness passing and `plans next` at `review`; an empty audit.md does the same | Test Phase 1 | Test Phase 1 | planned | unit | promise: an-audit-blocks-nothing | apps/indusk-mcp/src/__tests__/audit-gate.test.ts |
 | A11 | `indusk plans review` prints the same evidence with and without audit.md in the plan folder | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-review-shows-its-evidence | apps/indusk-mcp/src/__tests__/plans-review.test.ts |
 | A12 | `plans model <plan> --phase <ref>` answers as before for a config with and without `steps.audit` | Test Phase 1 | Test Phase 1 | planned | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/__tests__/plans-model.test.ts |
+| A13 | The planner writes a `**Tier**:` line under every phase it authors: the skill's impl step says so, the planning rules say so, and the impl template carries the line | Test Phase 1 | Build Phase 3 | planned | unit | the step model-per-phase decided ("the planner decides each phase's model when it writes the phase") and never landed — a pin over the skill's text, since prose has no other test | apps/indusk-mcp/src/__tests__/planner-tier-line.test.ts |
 
 ## Checklist
 
 ### Test Phase 1: The gate, the next step, the inputs and the tier, red over their boundaries
+
+**Tier**: med
 
 **Goal**: author every row that reaches its subject over a boundary today — the CLI (`plans next`, `plans audit-inputs`, `plans model --step`, `plans review`) and the readiness function — and register the two that cannot be.
 
@@ -69,6 +73,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 - [ ] A5, A6, A7 in `plans-audit-inputs.test.ts`: a plan approved with `indusk plans approve` in the lifecycle fixture, then a commit appending a `### Build Phase 2: Falsification — x` phase to the impl and a code file outside `.indusk/`, then `indusk plans audit-inputs <plan>` read as JSON. RED today: the command does not exist (exit 1, unknown command).
 - [ ] A8 and A12 in `plans-model.test.ts`: `--step audit` with `steps.audit.tier: strong` answers `strong opus`; with no tiers, `session`; `--step huge` is refused naming it; `--phase "Build Phase 1"` answers the same with and without `steps.audit` in the config. RED today for A8: `--step` is an unknown option. A12 is green on arrival.
 - [ ] A11 in `plans-review.test.ts`: the review's text with and without `audit.md` in the plan folder is identical. Green on arrival.
+- [ ] A13 in `planner-tier-line.test.ts`: `skills/planner.md`'s impl step (7), `templates/planning/CLAUDE.md` and the impl template in `skills/planner.md` each carry `**Tier**:` with the rule that every phase names its tier. RED today: none of the three mentions it.
 
 #### Deferred to Build Phase 1
 
@@ -93,9 +98,11 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 #### Test Phase 1 Verification
 
-- [ ] A1, A2, A3, A5, A6, A7, A8 are authored and each fails on its own assertion; A10, A11, A12 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/audit-gate.test.ts src/lib/models/next-session.test.ts src/__tests__/plans-audit-inputs.test.ts src/__tests__/plans-model.test.ts src/__tests__/plans-review.test.ts`). The deferred bodies are reviewed: will they compile at the phase they name, and do they assert what they claim?
+- [ ] A1, A2, A3, A5, A6, A7, A8, A13 are authored and each fails on its own assertion; A10, A11, A12 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/audit-gate.test.ts src/lib/models/next-session.test.ts src/__tests__/plans-audit-inputs.test.ts src/__tests__/plans-model.test.ts src/__tests__/plans-review.test.ts src/__tests__/planner-tier-line.test.ts`). The deferred bodies are reviewed: will they compile at the phase they name, and do they assert what they claim?
 
 ### Build Phase 1: The audit as a ritual word
+
+**Tier**: strong — edits the readiness gate every plan's close goes through, and the build runner
 
 **Goal**: the retrospective cannot start without `audit.md` or a reason; `plans next`, `plans next-session` and the build runner all know the step.
 
@@ -121,6 +128,8 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 ### Build Phase 2: The inputs and the tier
 
+**Tier**: med
+
 **Goal**: the package says what the auditor gets, and on which model.
 
 - [ ] `lib/audit/inputs.ts`: `approvalMerge(trunk, plan)` — the first-parent merge on the trunk whose subject starts `plan(<plan>): approved` (`git log --first-parent --merges --format=%H%x00%s`), or null; `auditInputs(checkout, plan)` returns `{ documents: { brief, testPlan, adr? }, implAsApproved, trajectoryNow, diff, stat }` as texts with their paths, the diff `git diff <merge-base>...<branch> -- <branch paths less .indusk/** except the plan's folder>`, the stat `git diff --stat <merge-base>...<branch>`; refuses (`AuditInputsRefusal`) when the approval merge is absent, naming the plan
@@ -142,17 +151,20 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 ### Build Phase 3: The skill, the live check, the docs
 
+**Tier**: med
+
 **Goal**: `/audit` exists and runs the reader; the retrospective asks for it; the docs say so.
 
 - [ ] `skills/audit.md`: run `indusk plans model <plan> --step audit`, then `indusk plans audit-inputs <plan>`; spawn an Agent with that `model` (none when `session`) whose prompt is the inputs and the fixed question list — does each row prove its promise's sentence or something narrower; what does the diff change that no row touches; what does the code do that the brief never promised; which rejected ADR alternative does the code quietly take; which skip reason would you not accept; what else would have to change for each promise to hold (with the `--stat`) — and that writes `audit.md` in the fixed shape (one `##` per question; findings as `- <file>:<line> — <finding>` or `- nothing`); record the model the Agent reports; end with `indusk plans next-session <plan>`. Unattended: the same, without asking
 - [ ] `skills/retrospective.md`: Step 0 names `audit` in the gate text and the refusal, with the skip pair; `skills/cleanup.md` and `skills/falsify.md`: the hand-off line names `/audit` before `/retrospective`
 - [ ] `skills/planner.md` step 8: the close-out order gains `/audit`
+- [ ] The planner names every phase's tier (A13): `skills/planner.md` step 7 — "every phase carries `**Tier**: <tier>` under its heading, the step's default spelled out or a different tier with its reason; `indusk plans model` answers from it" — the impl template in the same skill carries the line under each phase, and `templates/planning/CLAUDE.md`'s tier rule says *every* phase names one, not *may*
 - [ ] A9, the live check: `/audit` on a scratch plan with `steps.audit.tier: weak` (haiku). Record here the model the Agent reported and that `audit.md` was written in the fixed shape. If the Agent is not honoured for this spawn, record that and keep the skill's `session` path
 - [ ] `indusk update` so `.claude/skills/` takes the package's copies
 
 #### Build Phase 3 Verification
 
-- [ ] A9 recorded; A1–A8, A10–A12 still pass; `skill-sync-parity` and `context-tiers-ship` pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/audit-gate.test.ts src/__tests__/plans-audit-inputs.test.ts src/__tests__/plans-model.test.ts src/__tests__/plans-review.test.ts src/lib/models src/lib/build/runner.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/context-tiers-ship.test.ts`); biome clean on the files changed
+- [ ] A9 recorded; A13 passes; A1–A8, A10–A12 still pass; `skill-sync-parity` and `context-tiers-ship` pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/audit-gate.test.ts src/__tests__/plans-audit-inputs.test.ts src/__tests__/plans-model.test.ts src/__tests__/plans-review.test.ts src/__tests__/planner-tier-line.test.ts src/lib/models src/lib/build/runner.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/context-tiers-ship.test.ts`); biome clean on the files changed
 
 #### Build Phase 3 Context
 
@@ -171,7 +183,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 | `apps/indusk-mcp/src/lib/models/{next-session,tier-names}.ts` | `/audit`; `audit` in `TIER_STEPS` |
 | `apps/indusk-mcp/src/lib/audit/inputs.ts` | new |
 | `apps/indusk-mcp/src/bin/{cli,commands/plans}.ts` | `plans audit-inputs`, `plans model --step`, `describeStep` |
-| `apps/indusk-mcp/skills/{audit,retrospective,cleanup,falsify,planner}.md` | the skill; the hand-offs |
+| `apps/indusk-mcp/skills/{audit,retrospective,cleanup,falsify,planner}.md` | the skill; the hand-offs; the planner's tier line |
 | `apps/indusk-mcp/templates/planning/CLAUDE.md`, `apps/indusk-mcp/CLAUDE.md`, `CLAUDE.md` | context |
 | `apps/docs/src/reference/{cli/plans,skills/audit,skills/retrospective}.md`, `guide/plan-lifecycle.md`, `changelog.md` | docs |
 
