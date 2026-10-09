@@ -61,7 +61,8 @@
 			"planning",
 			"gates",
 			"admin",
-			"server"
+			"server",
+			"editor"
 		]
 	},
 	"papers": {
