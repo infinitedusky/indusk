@@ -1,3 +1,4 @@
+// promise: the-editor-shows-each-run-as-it-happens
 /** One recorded run of a promise, as the health line names it. */
 export interface Run {
 	promise: string;

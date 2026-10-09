@@ -1,6 +1,8 @@
 import { anyTokenPattern } from "@infinitedusky/indusk-mcp/tokens";
 import { promiseOf, sourcesInOrder, stateIn, type View } from "./view.js";
 
+// promise: a-promise-shows-where-it-is-kept
+
 export interface Marker {
 	line: number;
 	promise: string;

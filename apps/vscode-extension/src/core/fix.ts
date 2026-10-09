@@ -1,5 +1,7 @@
 import { promiseOf, type View, whereBroken } from "./view.js";
 
+// promise: a-break-opens-a-fix-in-one-click
+
 export interface BrokenPromise {
 	promise: string;
 	source: string;

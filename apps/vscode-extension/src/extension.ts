@@ -19,6 +19,8 @@ import {
 import { type HealthLine, promiseOf } from "./core/view.js";
 import { registerPromisesPanel } from "./panel-view.js";
 
+// promise: the-editor-only-shows
+
 /**
  * The VS Code layer (vscode-extension ADR D3): it runs one
  * `indusk promises health --json --every 5` child, feeds each line to the

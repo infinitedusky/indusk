@@ -1,5 +1,7 @@
 import { type HealthLine, sourcesInOrder, stateIn, type View } from "./view.js";
 
+// promise: a-break-reaches-the-editor
+
 export interface Break {
 	promise: string;
 	source: string;

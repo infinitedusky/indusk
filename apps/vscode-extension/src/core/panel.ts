@@ -2,6 +2,8 @@ import { anyTokenPattern } from "@infinitedusky/indusk-mcp/tokens";
 import { stateOf } from "./markers.js";
 import { type View, whereBroken } from "./view.js";
 
+// promise: every-promise-is-listed-in-the-editor
+
 /** One place a promise lives: a test that proves it, or code that keeps it. */
 export interface Location {
 	kind: "test" | "site";
