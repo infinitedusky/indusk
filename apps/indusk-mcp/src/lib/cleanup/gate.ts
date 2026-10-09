@@ -102,9 +102,42 @@ export function isCleanupComplete(planRoot: string): boolean {
 	return isCleanupPhaseTerminal(readFileSync(implPath, "utf-8"));
 }
 
+/**
+ * Whether the impl opts out of the audit: both `audit: skipped` and a
+ * non-empty `audit_reason`, the shape of `isFalsificationSkipped` — a bare
+ * `audit: skipped` is not a skip.
+ *
+ * promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes
+ */
+export function isAuditSkipped(implContent: string): SkipCheck {
+	try {
+		const { data } = matter(implContent);
+		if (data.audit !== "skipped") return { skipped: false, reason: null };
+		const reasonRaw = data.audit_reason;
+		if (typeof reasonRaw !== "string") return { skipped: false, reason: null };
+		const reason = reasonRaw.trim();
+		if (!reason) return { skipped: false, reason: null };
+		return { skipped: true, reason };
+	} catch {
+		return { skipped: false, reason: null };
+	}
+}
+
+/**
+ * True iff `<planRoot>/audit.md` exists. Its content is never read: an audit
+ * is advisory, and what it says changes no gate.
+ *
+ * promise: an-audit-blocks-nothing
+ */
+export function isAuditComplete(planRoot: string): boolean {
+	return existsSync(join(planRoot, "audit.md"));
+}
+
 export interface RetrospectiveReadiness {
 	falsificationOk: boolean;
 	cleanupOk: boolean;
+	/** audit.md exists, or the impl skips the audit with a reason. */
+	auditOk: boolean;
 	/** Every trajectory row whose phase exists is terminal (passing, skipped, blocked). */
 	rowsOk: boolean;
 	/** The rows that are not, by id — what the skill's refusal names. */
@@ -114,7 +147,7 @@ export interface RetrospectiveReadiness {
 	/** The promises that are not, by name — what the skill's refusal names. */
 	unprovenPromises: string[];
 	passes: boolean;
-	/** What is not yet satisfied (subset of ["falsification", "cleanup", "rows", "promises"]). */
+	/** What is not yet satisfied (subset of ["falsification", "cleanup", "audit", "rows", "promises"]). */
 	missing: string[];
 }
 
@@ -152,7 +185,7 @@ function unprovenPromisesOf(planDirIn: string, implContent: string): string[] {
 /**
  * The composed retrospective Step 0 readiness check: a plan is ready to close
  * only when BOTH rituals are satisfied — each either complete or explicitly
- * skipped — every row is terminal, and every promise it declared is named by
+ * skipped — the audit has been written or skipped with a reason, every row is terminal, and every promise it declared is named by
  * passing rows. This is the single source of truth the retrospective skill's Step 0
  * gate references for the cleanup requirement.
  *
@@ -169,6 +202,7 @@ export function checkRetrospectiveReadiness(
 		isFalsificationSkipped(implContent).skipped ||
 		isFalsificationPhaseTerminal(implContent);
 	const cleanupOk = isCleanupComplete(planRoot) || isCleanupSkipped(implContent).skipped;
+	const auditOk = isAuditComplete(planRoot) || isAuditSkipped(implContent).skipped;
 	// The check the skill's text always promised and the code never performed:
 	// a row left `written` after its phase closed is invisible to the two
 	// ritual walks above, which see checkboxes and not rows.
@@ -180,11 +214,13 @@ export function checkRetrospectiveReadiness(
 	const missing: string[] = [];
 	if (!falsificationOk) missing.push("falsification");
 	if (!cleanupOk) missing.push("cleanup");
+	if (!auditOk) missing.push("audit");
 	if (!rowsOk) missing.push("rows");
 	if (!promisesOk) missing.push("promises");
 	return {
 		falsificationOk,
 		cleanupOk,
+		auditOk,
 		rowsOk,
 		nonTerminalRows,
 		promisesOk,
