@@ -1,7 +1,7 @@
 ---
 title: "plan-review-subagent — the audit step"
 date: 2026-10-09
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
