@@ -2,11 +2,13 @@
 name: the-auditor-sees-the-plan-not-the-session
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: planning
 owner: plan-review-subagent
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/audit/inputs.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/plans-audit-inputs.test.ts
 incidents: []
 ---
 
@@ -14,3 +16,4 @@ The auditor is handed the plan's brief, test plan and ADR, the impl as it was ap
 
 ## History
 - 2026-10-09 — declared (plan-review-subagent), from its planning conversation.
+- 2026-10-09 — enforced, confirmed for plan-review-subagent: proven by row A5, row A6, row A7, row A15, row A16, row A17.
