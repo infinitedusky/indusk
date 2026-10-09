@@ -1,4 +1,10 @@
 import {
+  alarmRead,
+  healthRows,
+  readHealth,
+  ruleFor,
+} from "@infinitedusky/indusk-mcp/promises/health";
+import {
   alarmSource,
   type SourceName,
 } from "@infinitedusky/indusk-mcp/promises/sources";
@@ -10,12 +16,6 @@ import {
 } from "@/components/Promises";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { readAdminRefreshMs } from "@/lib/project-reader";
-import {
-  alarmRead,
-  healthRows,
-  readHealth,
-  ruleFor,
-} from "@/lib/promise-health";
 import { readTimelineView } from "@/lib/promise-timeline";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
@@ -71,7 +71,11 @@ export default async function PerProjectPromisesPage({
   // Observed health (day-monitor, ADR D9), per source (promise-sources, ADR
   // D7): one cached read each; unreachable is said, never drawn green.
   // The alarm source's chip leads: it is the one that raises (ADR D5).
-  const reads = registry ? await readHealth(projectPath, registry) : null;
+  const reads = registry
+    ? await readHealth(projectPath, registry, {
+        cacheMs: readAdminRefreshMs(projectPath),
+      })
+    : null;
   const alarm = reads ? alarmRead(reads) : undefined;
   const health = reads
     ? [...reads].sort((a, b) => Number(b === alarm) - Number(a === alarm))

@@ -1,3 +1,4 @@
+import type { HealthDeps } from "@infinitedusky/indusk-mcp/promises/health";
 import type { Registry } from "@infinitedusky/indusk-mcp/promises/registry";
 import {
   JaegerUnreachable,
@@ -12,7 +13,6 @@ import type {
   TimelineMark,
   TimelineRead,
 } from "@infinitedusky/indusk-mcp/promises/timeline";
-import type { HealthDeps } from "@/lib/promise-health";
 
 /**
  * Sources answered from lists of runs, and a clock the test moves (test-kinds,
@@ -185,7 +185,8 @@ export function fakeSource(opts: {
     });
 
   return {
-    deps: { now: () => clock.now, resolve, read, probe },
+    // The admin's default refresh, which the moved reader now takes as an input.
+    deps: { now: () => clock.now, resolve, read, probe, cacheMs: 5_000 },
     clock,
     add(name, run) {
       const list = runs.get(label(name)) ?? [];
