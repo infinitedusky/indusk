@@ -118,6 +118,8 @@ Every plan is read once before it closes by a reader that did not build it, on t
 - [x] `bin/commands/plans.ts`: `describeStep` words `audit`
 - [x] (discovered) `plans-next.test.ts` (admin-plan-authoring A11, the CLI walk from the first phase to review, and A14, rituals skipped with reasons answer review) answered `review` straight after cleanup: A11's walk now answers `audit` for the cleaned-up plan (it answered `review`) and gains a state after it, the same plan with an audit.md, answering `review`; A14's fixture gains the audit skip pair, its expectation unchanged
 - [x] A4 in `runner.test.ts`, from the register — authored first, as RED (test-first: Writable at Build Phase 1): the runner ran `work, falsify, cleanup` and stopped at review; `ready()` gained `auditOk`
+- [ ] Shape (`apps/indusk-mcp/src/lib/build/runner.ts`) — spell the steps the runner runs as a session once — a `SESSION_STEPS` const that the `SessionStep` type and `isSessionStep` both read — so a fifth step is added in one place, not two. Rule: typescript: `as const` for literal types; one reason to change
+- [x] Shape (`apps/indusk-mcp/src/lib/cleanup/gate.ts`) — reviewed, left as-is: `isAuditSkipped` is the third copy of the two-field skip check (`isCleanupSkipped` beside it, `isFalsificationSkipped` in `falsification/skip.ts`); merging them is cross-file duplication by the rule of three, which /cleanup owns at close, not Shape
 
 #### Build Phase 1 Verification
 
