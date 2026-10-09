@@ -1,7 +1,7 @@
 ---
 title: "VS Code extension — promises in the editor, the break where the fix happens"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -68,8 +68,8 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 | A26 | Each health line names the newest recorded runs of every promise, each with whether it held or broke, its source, its time and its trace; the same run is named the same way on every line | Build Phase 6 | Build Phase 6 | passing | unit | promise: the-editor-shows-each-run-as-it-happens | apps/indusk-mcp/src/__tests__/promise-health-runs.test.ts |
 | A27 | The activity section adds only runs it has not shown, newest first, keeps a bounded number, and says when no run has arrived yet | Build Phase 6 | Build Phase 6 | passing | unit | promise: the-editor-shows-each-run-as-it-happens | apps/vscode-extension/src/core/activity.test.ts |
 | A28 | On the demo app, holding a seat adds a "held" run to the activity section, and a faulted hold adds a "broke" run | Build Phase 6 | Build Phase 6 | passing | live check | promise: the-editor-shows-each-run-as-it-happens | apps/vscode-extension/e2e/live.e2e.test.ts |
-| A29 | Below the broken cards, the panel groups promises by the plan that owns them; groups come newest run first, then plans never run by name; within a group, newest run first, then the rest by name; each broken card names its plan | Build Phase 7 | Build Phase 7 | planned | unit | promise: every-promise-is-listed-in-the-editor | apps/vscode-extension/src/core/panel.test.ts |
-| A30 | Each health line names the plan that owns each promise | Build Phase 7 | Build Phase 7 | planned | unit | promise: every-promise-is-listed-in-the-editor | apps/indusk-mcp/src/__tests__/promise-health-runs.test.ts |
+| A29 | Below the broken cards, the panel groups promises by the plan that owns them; groups come newest run first, then plans never run by name; within a group, newest run first, then the rest by name; each broken card names its plan | Build Phase 7 | Build Phase 7 | passing | unit | promise: every-promise-is-listed-in-the-editor | apps/vscode-extension/src/core/panel.test.ts |
+| A30 | Each health line names the plan that owns each promise | Build Phase 7 | Build Phase 7 | passing | unit | promise: every-promise-is-listed-in-the-editor | apps/indusk-mcp/src/__tests__/promise-health-runs.test.ts |
 | A22 | A file outside the project, or inside a nested InDusk project (dusk's `examples/seat-holds/`), gets no marker from this project's promises; today opening dusk shows the example's token as "not in this project" | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
 
 ### Deferred Verification
@@ -306,21 +306,22 @@ Investigated, with no hypothesis formed: the token grammar (lowercase names only
 
 **Goal**: below the broken cards, promises grouped by the plan that owns them, the most recently run first. Added 2026-10-08 at Sandy's request; A29 replaces A23's "the rest follow by name", whose test changes with it.
 
-- [ ] Package: each promise on the health line names its owning plan as `plan` (A30)
-- [ ] `core/panel.ts`: the model's `groups` — plan, its promises newest run first, then the rest by name; groups newest run first, then never-run plans by name; a broken card carries its plan. A23's case drops "the rest by name" for the groups (A29)
-- [ ] `core/panel-html.ts`: a heading per plan group; a broken card names its plan
+- [x] Package: each promise on the health line names its owning plan as `plan` (A30)
+- [x] (a promise with no plan groups under "no plan") `core/panel.ts`: the model's `groups` — plan, its promises newest run first, then the rest by name; groups newest run first, then never-run plans by name; a broken card carries its plan. A23's case drops "the rest by name" for the groups (A29)
+- [x] (the live probe reads the groups too) `core/panel-html.ts`: a heading per plan group; a broken card names its plan
+- [x] Shape — reviewed what this phase changed (`core/panel.ts`'s grouping, `core/panel-html.ts`, the line's `plan` in `health.ts`); the ordering rules are named functions (`byPlan`, `byNewestRun`, `lastRunOf`); nothing to change.
 
 #### Build Phase 7 Verification
 
-- [ ] A29 and A30 pass, each red first (`cd apps/vscode-extension && pnpm exec vitest run src/core`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-runs.test.ts`); both apps typecheck and biome clean; `indusk promises check` clean
+- [x] (red at 01db2b66 and the commit before it, each on its own assertion; green: extension core 30, A26 and A30 2; both apps typecheck, biome clean; `indusk promises check` clean; the extension packages) A29 and A30 pass, each red first (`cd apps/vscode-extension && pnpm exec vitest run src/core`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-runs.test.ts`); both apps typecheck and biome clean; `indusk promises check` clean
 
 #### Build Phase 7 Context
 
-- [ ] `apps/vscode-extension/CLAUDE.md`: none beyond the panel entry, which already says the model is core — confirm it still reads true
+- [x] (re-read: the panel entry says the model and HTML are core, and the grouping lives in `core/panel.ts`; still true, so no edit) `apps/vscode-extension/CLAUDE.md`: none beyond the panel entry, which already says the model is core — confirm it still reads true
 
 #### Build Phase 7 Document
 
-- [ ] the guide's panel section: grouped by plan, newest run first; `reference/cli/promises.md`: the line's `plan`; changelog
+- [x] the guide's panel section: grouped by plan, newest run first; `reference/cli/promises.md`: the line's `plan`; changelog
 
 ## Files Affected
 
