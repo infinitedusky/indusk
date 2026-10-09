@@ -63,6 +63,7 @@ Rewrite the three system-tier tests the 2026-10-08 changes left behind so they a
 - [x] A3: in `http-promise-timeline-sources.test.ts` A9, stop hand-writing the incident: wait for the incident the admin recorded for `PROD_BREAK` to appear under the fixture's `.indusk/promises/incidents/`, assert production's chip is `red`, fix that incident with `indusk promises fix <id>` (through `runCli`), and assert `fixed`
 - [x] A4: run `pnpm -w test:system` on today's tree and record its result here (red on the three files above before their rewrite)
   - 2026-10-09, run from the worktree after the A1–A3 rewrites: exit 0. indusk-mcp 42 files / 170 tests passed; indusk-admin 13 files / 56 passed; vscode-extension 1 file / 3 passed. No file failed, so the "red before the rewrite" half was not re-run (the three tests were rewritten before the full run).
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Regression Guards
 
