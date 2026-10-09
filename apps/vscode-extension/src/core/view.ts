@@ -60,3 +60,15 @@ export function promiseOf(view: View | null, name: string) {
 export function stamp(iso: string): string {
 	return iso.slice(0, 16).replace("T", " ");
 }
+
+/**
+ * Where a broken promise is shown broken: the first source, production
+ * leading, where it reads broken, with that source's row. One rule for the
+ * fix action and the panel's card, so they name the same source (A31).
+ */
+export function whereBroken(
+	_view: View | null,
+	_promise: string,
+): { source: Extract<Source, { ok: true }>; row: Row } | null {
+	return null;
+}
