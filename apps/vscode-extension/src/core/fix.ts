@@ -1,3 +1,5 @@
+import { promiseOf, sourcesInOrder, stateIn, type View } from "./view.js";
+
 export interface BrokenPromise {
 	promise: string;
 	source: string;
@@ -45,6 +47,37 @@ export function fixAction(
 			command: `claude ${shellQuote(prompt)}`,
 		},
 	};
+}
+
+/**
+ * The fix for `promise` as the editor last read it: the first source, production
+ * leading, where it is broken, with that source's facts. Null when it is broken
+ * nowhere, so the action has nothing to start.
+ */
+export function fixFor(
+	view: View | null,
+	promise: string,
+	ctx: { projectRoot: string; claudeOnPath: boolean },
+): FixAction | null {
+	const p = promiseOf(view, promise);
+	if (!view || !p) return null;
+	for (const source of sourcesInOrder(view)) {
+		const { shown, row } = stateIn(source, promise);
+		if (shown !== "broken" || !row) continue;
+		return fixAction(
+			{
+				promise,
+				source: source.name,
+				sourceLabel: source.label,
+				statement: p.statement,
+				...(row.symptom ? { symptom: row.symptom } : {}),
+				...(row.traceId ? { traceId: row.traceId } : {}),
+				tests: p.tests,
+			},
+			ctx,
+		);
+	}
+	return null;
 }
 
 /** One shell word, whatever it holds: single quotes, each embedded one closed and escaped. */

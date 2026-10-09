@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { fixAction } from "./fix.js";
+import { fixAction, fixFor } from "./fix.js";
+import { line } from "./fixture.js";
 
 /**
  * vscode-extension A12, A13: one action starts the developer's own claude
@@ -52,5 +53,19 @@ describe("fix with Claude", () => {
 				/Claude Code is not installed.*npm install -g @anthropic-ai\/claude-code/s,
 			),
 		});
+	});
+
+	it("A12 — the fix acts on the source where the promise is broken, production first, with that source's facts", () => {
+		const ctx = { projectRoot: "/p", claudeOnPath: true };
+		const view = (over: Parameters<typeof line>[0]) => ({ line: line(over), notReading: false });
+		expect(fixFor(view({}), "seats-held", ctx)).toBeNull();
+		const local = fixFor(view({ localState: "red", traceId: "loc-1" }), "seats-held", ctx);
+		if (!local || !("terminal" in local)) throw new Error("no terminal");
+		expect(local.terminal.command).toContain("broken in local");
+		expect(local.terminal.command).toContain("http://localhost:16686/trace/loc-1");
+		const both = fixFor(view({ localState: "red", productionState: "red" }), "seats-held", ctx);
+		if (!both || !("terminal" in both)) throw new Error("no terminal");
+		expect(both.terminal.command).toContain("broken in production");
+		expect(fixFor(view({ localState: "red" }), "no-such-promise", ctx)).toBeNull();
 	});
 });

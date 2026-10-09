@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { createInterface } from "node:readline";
 import * as vscode from "vscode";
-import { fixAction } from "./core/fix.js";
+import { fixFor } from "./core/fix.js";
 import { hover } from "./core/hover.js";
 import { type Marker, markers } from "./core/markers.js";
 import {
@@ -14,7 +14,7 @@ import {
 	type Session,
 	startSession,
 } from "./core/session.js";
-import { type HealthLine, promiseOf, sourcesInOrder, stateIn } from "./core/view.js";
+import { type HealthLine, promiseOf } from "./core/view.js";
 
 /**
  * The VS Code layer (vscode-extension ADR D3): it runs one
@@ -97,36 +97,21 @@ export function activate(context: vscode.ExtensionContext): void {
 	};
 
 	const fix = (promise: string) => {
-		const view = session.view;
-		const p = promiseOf(view, promise);
-		if (!view || !p) return;
-		for (const source of sourcesInOrder(view)) {
-			const { shown, row } = stateIn(source, promise);
-			if (shown !== "broken" || !row) continue;
-			const action = fixAction(
-				{
-					promise,
-					source: source.name,
-					sourceLabel: source.label,
-					statement: p.statement,
-					...(row.symptom ? { symptom: row.symptom } : {}),
-					...(row.traceId ? { traceId: row.traceId } : {}),
-					tests: p.tests,
-				},
-				{ projectRoot: root, claudeOnPath: spawnSync("which", ["claude"]).status === 0 },
-			);
-			if ("message" in action) {
-				void vscode.window.showErrorMessage(action.message);
-				return;
-			}
-			const terminal = vscode.window.createTerminal({
-				cwd: action.terminal.cwd,
-				name: action.terminal.name,
-			});
-			terminal.show();
-			terminal.sendText(action.terminal.command);
+		const action = fixFor(session.view, promise, {
+			projectRoot: root,
+			claudeOnPath: spawnSync("which", ["claude"]).status === 0,
+		});
+		if (!action) return;
+		if ("message" in action) {
+			void vscode.window.showErrorMessage(action.message);
 			return;
 		}
+		const terminal = vscode.window.createTerminal({
+			cwd: action.terminal.cwd,
+			name: action.terminal.name,
+		});
+		terminal.show();
+		terminal.sendText(action.terminal.command);
 	};
 
 	const tell = (b: Break) => {
@@ -143,6 +128,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	// One long-lived reader; restarted once, then reported.
 	let child: ChildProcess | null = null;
 	let restarts = 0;
+	let stopping = false;
 	const command = vscode.workspace.getConfiguration("indusk").get<string>("command") ?? "indusk";
 	const start = () => {
 		child = spawn(command, ["promises", "health", "--json", "--every", String(CADENCE_MS / 1000)], {
@@ -163,6 +149,7 @@ export function activate(context: vscode.ExtensionContext): void {
 			void diagnose();
 		});
 		child.on("exit", () => {
+			if (stopping) return;
 			if (restarts++ < 1) start();
 			else
 				void vscode.window.showErrorMessage(
@@ -181,7 +168,12 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		{ dispose: () => clearInterval(ticker) },
-		{ dispose: () => child?.kill() },
+		{
+			dispose: () => {
+				stopping = true;
+				child?.kill();
+			},
+		},
 		vscode.window.onDidChangeVisibleTextEditors(paint),
 		vscode.workspace.onDidChangeTextDocument(paint),
 		vscode.languages.registerHoverProvider(
