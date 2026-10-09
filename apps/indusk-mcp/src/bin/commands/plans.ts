@@ -61,6 +61,11 @@ export function plansApprove(cwd: string, name: string): Promise<void> {
 	});
 }
 
+/** The tier and model as `plans model` prints them, or `session` when the project names none. */
+function describeModel(answer: { tier: string; model: string } | null): string {
+	return answer ? `${answer.tier} ${answer.model}` : "session";
+}
+
 /**
  * `indusk plans model <name> --phase <ref> | --step <step>` — the tier and model a phase is built on,
  * or a step's default tier (no phase override), or `session`.
@@ -82,7 +87,7 @@ export function plansModel(
 				);
 			}
 			const answer = tierForPhase(readTierConfig(cwd), step, undefined);
-			return answer ? `${answer.tier} ${answer.model}` : "session";
+			return describeModel(answer);
 		}
 		if (phase === undefined) {
 			throw new PlanCommandRefusal("name what to answer for: --phase <ref> or --step <step>");
@@ -94,7 +99,7 @@ export function plansModel(
 			);
 		}
 		const answer = await phaseModel(cwd, name, ref);
-		return answer ? `${answer.tier} ${answer.model}` : "session";
+		return describeModel(answer);
 	});
 }
 
