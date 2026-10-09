@@ -73,7 +73,7 @@ model: {the model the reader reported}
 (…one `##` per question, in the order above…)
 ```
 
-Under each heading: findings as `- <file>:<line> — <finding>` (a file and line wherever there is one), or the single line `- nothing`. A heading with neither is an unanswered question; send the reader back.
+The heading is the question's text, unnumbered. Under each heading: findings as `- <file>:<line> — <finding>` (a file and line wherever there is one), or the single line `- nothing`. A heading with neither is an unanswered question; send the reader back.
 
 ## Skipping
 

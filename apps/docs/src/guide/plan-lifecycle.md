@@ -6,7 +6,7 @@ This page began as the case for a lifecycle change, and most of it now describes
 
 ## Plans close. Systems don't.
 
-InDusk's plan lifecycle is a straight line: brief → research → ADR → impl → falsify → cleanup → retrospective → **archive**. It ends. The plan is filed and the agent moves on.
+InDusk's plan lifecycle is a straight line: brief → research → ADR → impl → falsify → cleanup → audit → retrospective → **archive**. It ends. The plan is filed and the agent moves on.
 
 That works for a unit of *work*. It fails for a unit of *responsibility*, and the archive shows exactly where:
 
@@ -60,7 +60,7 @@ exist and what their status says. Nothing is happening in a position.
 
 ```
 research → brief → test-plan → adr → impl-approved → executing
-        → falsify → cleanup → retrospective → archived   (→ monitor)
+        → falsify → cleanup → audit → retrospective → archived   (→ monitor)
 ```
 
 `monitor` follows `archived`: a closed plan holding a behaviour promise sits
@@ -100,7 +100,8 @@ stateDiagram-v2
     impl_approved --> executing
     executing --> falsify
     falsify --> cleanup
-    cleanup --> retrospective
+    cleanup --> audit
+    audit --> retrospective
     retrospective --> archived
     archived --> monitor: holds a behaviour promise, inside the quiet window
     monitor --> executing: a violation reopens it (Maintenance phase)

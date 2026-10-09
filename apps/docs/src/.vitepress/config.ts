@@ -111,6 +111,7 @@ const config = defineConfig({
 						{ text: "Retrospective", link: "/reference/skills/retrospective" },
 						{ text: "Onboard", link: "/reference/skills/onboard" },
 						{ text: "Catchup", link: "/reference/skills/catchup" },
+						{ text: "Audit", link: "/reference/skills/audit" },
 						{ text: "Write", link: "/reference/skills/write" },
 						{ text: "Brainstorm: fiction", link: "/reference/skills/brainstorm-fiction" },
 						{ text: "Handoff (deprecated)", link: "/reference/skills/handoff" },
