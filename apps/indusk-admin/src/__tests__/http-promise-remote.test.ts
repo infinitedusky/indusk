@@ -23,6 +23,8 @@ import { makeHome, sleep, startNextDev } from "./helpers/next-dev";
  */
 
 const PROMISE = "seat-never-double-booked";
+// A behaviour promise the fixture never violates, so no incident is ever recorded for it.
+const CLEAN_PROMISE = "seat-count-never-negative";
 const OWNER = "seats-v2";
 const CRED_ENV = "INDUSK_TEST_SERVER_CREDENTIAL";
 
@@ -69,6 +71,10 @@ function project(queryUrl: string, otlpUrl: string): string {
   writeFileSync(
     path.join(root, ".indusk", "promises", `${PROMISE}.md`),
     promiseFile(PROMISE, OWNER),
+  );
+  writeFileSync(
+    path.join(root, ".indusk", "promises", `${CLEAN_PROMISE}.md`),
+    promiseFile(CLEAN_PROMISE, OWNER),
   );
   return root;
 }
@@ -173,7 +179,7 @@ describe("A16 — the page refreshes itself", () => {
 
 describe("A17 — the server unreachable", () => {
   it(
-    "every behaviour chip is hollow with health unknown, and none is green",
+    "a promise with no incident is hollow with health unknown, a recorded break reads amber, and none is green",
     {
       timeout: 60_000,
     },
@@ -181,7 +187,11 @@ describe("A17 — the server unreachable", () => {
       await server.stop();
       await sleep(2_500); // past the project's 1s refresh interval
       const html = await (await fetch(`${url}/p/remote/promises`)).text();
-      expect(healthOf(html, PROMISE)).toBe("unverified");
+      // Never seen: unverified, whatever the server's state.
+      expect(healthOf(html, CLEAN_PROMISE)).toBe("unverified");
+      // The admin's recorder recorded this promise's production break as an
+      // incident (incident-recording), so it is known-violated: amber.
+      expect(healthOf(html, PROMISE)).toBe("amber");
       expect(html).not.toContain('data-health="green"');
       expect(html).toMatch(/health unknown since/i);
     },

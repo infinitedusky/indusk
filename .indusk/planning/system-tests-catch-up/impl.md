@@ -45,7 +45,7 @@ Rewrite the three system-tier tests the 2026-10-08 changes left behind so they a
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | The catchup skill's check passes on today's text ("open violations outrank the roadmap") and fails on a skill that puts the roadmap first | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over the catchup half of an-open-incident-stays-loud, worded to the meaning | apps/indusk-mcp/src/__tests__/always-on-health-tool.test.ts |
-| A2 | With the project's server unreachable, a behaviour promise with no incident reads hollow `unverified`, the promise whose break the admin recorded reads `amber`, and no chip reads green | Test Phase 1 | Test Phase 1 | planned | contract | the A17 regression guard, asserting what incident-recording made true | apps/indusk-admin/src/__tests__/http-promise-remote.test.ts |
+| A2 | With the project's server unreachable, a behaviour promise with no incident reads hollow `unverified`, the promise whose break the admin recorded reads `amber`, and no chip reads green | Test Phase 1 | Test Phase 1 | passing | contract | the A17 regression guard, asserting what incident-recording made true | apps/indusk-admin/src/__tests__/http-promise-remote.test.ts |
 | A3 | Production's chip is red while the incident the admin recorded for its break is open, and `fixed` once that incident is fixed with `indusk promises fix` | Test Phase 1 | Test Phase 1 | planned | contract | lesson: a-fixed-break-is-history-not-health | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
 | A4 | Every system-tier test in dusk passes | Test Phase 1 | Build Phase 1 | planned | contract | the release's precondition; the repair is done when this holds | apps/indusk-mcp/vitest.system.config.ts, apps/indusk-admin/vitest.system.config.ts, apps/vscode-extension/vitest.system.config.ts |
 
@@ -59,7 +59,7 @@ Rewrite the three system-tier tests the 2026-10-08 changes left behind so they a
 
 - [x] Create/confirm this plan's worktree (`indusk worktree create system-tests-catch-up` — already created by `plans start`; confirm `git worktree list`)
 - [x] A1: widen the skill check in `always-on-health-tool.test.ts` to the meaning — open violations (or incidents) placed ahead of / before / outranking the roadmap — and add a negative case: a skill text that lists the roadmap first fails the check
-- [ ] A2: in `http-promise-remote.test.ts` A17, add a behaviour promise with no violation to the fixture; with the server stopped, assert it reads `unverified`, assert `seat-never-double-booked` reads `amber` (its break was recorded, so it is known-violated), and keep "no chip is green" and "health unknown since"
+- [x] A2: in `http-promise-remote.test.ts` A17, add a behaviour promise with no violation to the fixture; with the server stopped, assert it reads `unverified`, assert `seat-never-double-booked` reads `amber` (its break was recorded, so it is known-violated), and keep "no chip is green" and "health unknown since"
 - [ ] A3: in `http-promise-timeline-sources.test.ts` A9, stop hand-writing the incident: wait for the incident the admin recorded for `PROD_BREAK` to appear under the fixture's `.indusk/promises/incidents/`, assert production's chip is `red`, fix that incident with `indusk promises fix <id>` (through `runCli`), and assert `fixed`
 - [ ] A4: run `pnpm -w test:system` on today's tree and record its result here (red on the three files above before their rewrite)
 
