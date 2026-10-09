@@ -150,7 +150,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 - [x] The runner hands the step's phase to `run` (`RunnerDeps.run(step, phase?)`; `runBuild` passes `next.phase` for a `work` step); `build/index` exports `buildStepModel`; the admin's `build-host.ts` resolves it per step and passes `model` to `runStepSession` (already plumbed to `claude --model`), omitting it when `null`. Admin change committed separately from the package change
 - [x] Shape (`apps/indusk-mcp/src/lib/audit/inputs.ts`) — pull the approval lookup out of `auditInputs` into a named `resolveApproval(pb, plan, approved)`, so `auditInputs` reads documents and diff and nothing else. Rule: typescript: one reason to change; a name says what a block is for
 - [x] Shape (`apps/indusk-mcp/src/bin/commands/plans.ts`) — `plansModel` spells `answer ? "<tier> <model>" : "session"` twice; one named `describeModel(answer)`. Rule: typescript: an inline block repeated in one unit is a named function
-- [ ] Shape (`apps/indusk-admin/src/lib/build-host.ts`) — the `run` closure now resolves a model and runs a session; name the first as `stepModelOption(root, plan, step, phase)` returning `{ model } | { error }`. Rule: typescript: one reason to change; the closure stays a wiring line
+- [x] Shape (`apps/indusk-admin/src/lib/build-host.ts`) — the `run` closure now resolves a model and runs a session; name the first as `stepModelOption(root, plan, step, phase)` returning `{ model } | { error }`. Rule: typescript: one reason to change; the closure stays a wiring line
 
 #### Build Phase 2 Verification
 
