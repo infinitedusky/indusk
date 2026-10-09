@@ -69,6 +69,7 @@ const config = defineConfig({
 						{ text: "Promises", link: "/guide/promises" },
 						{ text: "Always On", link: "/guide/always-on" },
 						{ text: "Run your own server", link: "/guide/run-your-own-server" },
+						{ text: "Promises in your editor", link: "/guide/promises-in-your-editor" },
 						{ text: "The Shape Check", link: "/guide/shape" },
 						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 						{ text: "Cleanup Ritual", link: "/guide/cleanup-ritual" },
