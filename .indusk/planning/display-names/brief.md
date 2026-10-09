@@ -21,7 +21,9 @@ workflow: feature
 
 2. **`a-plan-reads-by-its-title`** (state). Wherever the editor names a plan, it shows the plan's title from its brief, the part before the dash, rather than its folder name.
 
-3. **`display-names-are-defined-once`** (structure). How a promise or a plan is named for a person is worked out in one place in the package, which the editor reads and the admin can.
+3. **`a-plan-shows-when-it-shipped`** (state). Wherever the editor names a plan, it shows when the plan started, when it landed, and the release version and date that shipped it, or that it is not released yet.
+
+4. **`display-names-are-defined-once`** (structure). How a promise or a plan is named for a person, and a plan's dates, are worked out in one place in the package, which the editor reads and the admin can.
 
 ### Existing promises
 

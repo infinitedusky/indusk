@@ -1,7 +1,7 @@
 ---
 title: "Display names — promises and plans read as words"
 date: 2026-10-09
-status: proposed
+status: accepted
 ---
 
 # Display names — promises and plans read as words
@@ -47,7 +47,8 @@ The handles are already written as short claims, so most read well once the hyph
 2. **`display.words`** in `.indusk/config.json`, a map from the lowercase word to its spelling, merged over the built-in list.
 3. **On the health line**: each promise gains `title` (its words) and `planTitle`. `healthLine(registry, reads, now, names?)` takes `{ planTitles, words }`; `promises health` builds them each line from the plan parser and the config.
 4. **In the extension**: cards, rows, activity lines and hover headings show `title`; group headings and a card's plan show `planTitle`; the end-of-line marker keeps the handle.
-5. **A8**: a single-definition pin refuses a function turning a handle into words, or a title into its short form, anywhere under the admin or the extension.
+5. **Plan dates (added 2026-10-09 with `a-plan-shows-when-it-shipped`).** `planDates(planDir, changelog)` in the same module reads three facts that exist today: `started`, the brief's `date`; `landed`, the date in the retrospective's `Landed on main at <sha>, <date>.` line; `released`, the version and date of the earliest `## [X.Y.Z] — <date>` changelog section with an entry naming the plan in parentheses, as every entry does (`(vscode-extension)`). They travel on the health line as `planDates` beside `planTitle`, read once per line with the titles. A plan with no landing line has no `landed`; a landed plan in no release has `released: null`, shown as "not released yet". Against: a release ledger the changelog would duplicate, and git history, which a fresh clone has but a published package does not.
+6. **A8**: a single-definition pin refuses a function turning a handle into words, or a title into its short form, anywhere under the admin or the extension.
 
 ## Alternatives Considered
 

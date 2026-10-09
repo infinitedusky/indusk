@@ -29,11 +29,21 @@ This document lists the behavioral assertions that, taken together, mean the fea
 | A6 | A plan with no brief, or a brief with no title, still reads by its folder name. | unit |
 | A7 | Each health line names each promise's plan title alongside the plan, so the editor names plans without reading plan files. | unit |
 
+### `a-plan-shows-when-it-shipped` — a plan shows when it started, landed and was released
+
+Added 2026-10-09 at Sandy's request, after this document was accepted.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
+| A11 | A plan's group in the panel shows the date it started (its brief's date) and the date it landed (its retrospective's landing line). | unit |
+| A12 | A landed plan shows the release that shipped it — the first release whose changelog names the plan — with its version and date; `vscode-extension` shows 1.68.0, 2026-10-09. | unit |
+| A13 | A plan not landed shows only its start date; one landed but in no release yet says "not released yet". | unit |
+
 ### `display-names-are-defined-once` — names for people are worked out in one place
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A8 | How a promise or plan is named for a person is defined once, in the package; a second definition in the admin or the extension fails the build. | unit |
+| A8 | How a promise or plan is named for a person, and a plan's dates, are defined once, in the package; a second definition in the admin or the extension fails the build. | unit |
 
 ### Not for a promise
 
