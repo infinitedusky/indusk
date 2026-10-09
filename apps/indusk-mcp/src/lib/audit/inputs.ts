@@ -147,6 +147,26 @@ async function resolveApproval(
 	return sha;
 }
 
+/** The diff, the stat of what the branch changed and the tree of every tracked file, all without `.indusk/`'s bookkeeping where it would leak. */
+async function codeChanges(
+	code: AuditSource["code"],
+): Promise<Pick<AuditInputs, "diff" | "stat" | "tree">> {
+	const { repo, trunkBranch, branch } = code;
+	const range = `${trunkBranch}...${branch}`;
+	// Nothing under `.indusk/` reaches the diff: the plan's documents are handed whole,
+	// and its folder's diff since approval is the builder's own findings.
+	const paths = (await branchFileChanges(repo, trunkBranch, branch))
+		.map((f) => f.path)
+		.filter((p) => !isBookkeeping(p));
+	const diff = paths.length > 0 ? await git(repo, "diff", range, "--", ...paths) : "";
+	const stat = await git(repo, "diff", "--stat", range);
+	const tree = (await git(repo, "ls-tree", "-r", "--name-only", branch))
+		.split("\n")
+		.filter((p) => p && !isBookkeeping(p))
+		.join("\n");
+	return { diff, stat, tree };
+}
+
 /** The auditor's inputs for `plan`; `approved` names the approval commit by hand when history was rewritten. */
 export async function auditInputs(
 	checkout: string,
@@ -181,19 +201,7 @@ export async function auditInputs(
 		text: trajectorySection(readFileSync(join(docsRoot, implRel), "utf-8")),
 	};
 
-	const { repo, trunkBranch, branch } = src.code;
-	const range = `${trunkBranch}...${branch}`;
-	// Nothing under `.indusk/` reaches the diff: the plan's documents are handed whole above,
-	// and its folder's diff since approval is the builder's own findings.
-	const paths = (await branchFileChanges(repo, trunkBranch, branch))
-		.map((f) => f.path)
-		.filter((p) => !isBookkeeping(p));
-	const diff = paths.length > 0 ? await git(repo, "diff", range, "--", ...paths) : "";
-	const stat = await git(repo, "diff", "--stat", range);
-	const tree = (await git(repo, "ls-tree", "-r", "--name-only", branch))
-		.split("\n")
-		.filter((p) => p && !isBookkeeping(p))
-		.join("\n");
+	const code = await codeChanges(src.code);
 
-	return { plan, approvedAt: sha, documents, implAsApproved, trajectoryNow, diff, stat, tree };
+	return { plan, approvedAt: sha, documents, implAsApproved, trajectoryNow, ...code };
 }

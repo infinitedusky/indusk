@@ -221,6 +221,8 @@ Every plan is read once before it closes by a reader that did not build it, on t
 - [x] `lib/audit/inputs.ts`: `auditInputs` asks `workbenchPlan` first, as `buildReview` does: documents from `wp.dir`, the approved impl from the latest commit on the root's branch whose subject starts `plan(<plan>): approved` (merge or not — `approvalMerge` takes a `merges` flag), the diff and the tree from `wp.repoTrunk`, `<trunkBranch>...<code.branch>` (A18)
 - [x] `lib/build/review.ts`: `skippedRituals` gains `{ ritual: "audit", check: isAuditSkipped(implText) }` and its type `"audit"`; `apps/indusk-admin` `ReviewPanel.tsx` (and `PlanDetail.tsx`, `FalsificationSection.tsx` where they word a ritual) name each ritual from one map rather than the falsification-or-else-cleanup ternary — admin change committed separately (A19)
   - `PlanDetail.tsx` and `FalsificationSection.tsx` word no ritual through that ternary (they pick a ritual's skip by its name and title their own section), so only `ReviewPanel.tsx` changed; the plan page's own `skippedRituals` (`planning-reader.ts`) is a separate list and is untouched.
+- [x] Shape (`apps/indusk-mcp/src/lib/audit/inputs.ts`) — `auditInputs` read the documents, found the approval and ran three git reads for the code; the code reads are now a named `codeChanges(code)` returning `{ diff, stat, tree }`, so `auditInputs` is source, approval, documents, code. Rule: typescript: one reason to change; an inline block is a named function
+- [x] Shape (`apps/indusk-admin/src/components/session/ReviewPanel.tsx`, `apps/indusk-mcp/src/lib/build/review.ts`) — reviewed, left as-is: each is a one-line change to a map and a list that already had their shape
 
 #### Build Phase 4 Verification
 
