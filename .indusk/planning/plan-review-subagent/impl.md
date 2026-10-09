@@ -159,7 +159,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`: `lib/audit/` — the approved impl is found by the approval merge's subject, never by a line in the plan; a rewritten history is named by the refusal and answered with `--approved`
+- [x] `apps/indusk-mcp/CLAUDE.md`: `lib/audit/` — the approved impl is found by the approval merge's subject, never by a line in the plan; a rewritten history is named by the refusal and answered with `--approved`
 
 #### Build Phase 2 Document
 
