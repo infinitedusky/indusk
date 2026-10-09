@@ -53,6 +53,10 @@ Shape raised **1** finding across nine build phases (Build Phase 4: name the inc
 
 No recurring lint or type error suggested a Biome rule; the formatting misses were caught by `biome check --write` per item. No rule added.
 
+## Context
+
+The plan's rules went to their tiers: the recorder's commit rule to the package's `CLAUDE.md`, the daemon's loop and the incidents table to the admin's, `_inbox.js` to the hooks' port list, the reopened-plan rule to the shipped planning file; the root holds one Key Decisions line. Periodic pass: the admin-ui-phase-progress entry moved from the root to the admin's file (its `{kind, number}` keying; the rest was already pinned there and in the package). The promise-timeline entry was moved first, then found moved concurrently by server-provisioning's retrospective, and the duplicate was dropped at the merge.
+
 ## Release
 
 dusk installs its own build at landing (`pnpm install:local`); nothing is published at this close.
