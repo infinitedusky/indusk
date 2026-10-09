@@ -66,18 +66,19 @@ With `--phase`, prints the tier and model a phase is built on, as `<tier> <model
 
 ### `plans audit-inputs <name> [--approved <sha>]`
 
-What the auditor is handed, as JSON, read from the plan's worktree and branch. It writes nothing. Nothing from the session is in it: no research, no `current.md`, no conversation.
+What the auditor is handed, as JSON, read from the plan's worktree and branch (a workbench plan: its documents and approval at the workbench root, its diff and tree from the repo its code file names). It writes nothing. Nothing from the session is in it: no research, no `current.md`, no conversation.
 
 | Field | What it holds |
 |---|---|
 | `documents` | the plan's `brief`, `testPlan` and (when there is one) `adr`, each as `{ path, text }` |
-| `implAsApproved` | the impl as the approval merge left it, read with `git show` — none of the falsification or cleanup phases appended since, because git holds the impl from before them |
-| `trajectoryNow` | the `## Test Trajectory` section of the impl as it stands, every row in its final state |
-| `diff` | `git diff <merge-base>...<branch>` over the branch's paths, leaving out InDusk's bookkeeping: anything under `.indusk/` other than the plan's own folder |
-| `stat` | `git diff --stat` over the whole tree, for the question of what else each promise needs |
-| `approvedAt` | the approval merge the impl was read at |
+| `implAsApproved` | the impl as the approval left it, read with `git show`; its `path` is `<sha>:<file>`, the spelling `git show` reads, so it cannot be mistaken for the working file — none of the falsification or cleanup phases appended since, because git holds the impl from before them |
+| `trajectoryNow` | the `## Test Trajectory` section of the impl as it stands, every row in its final state; the only field whose `path` is the working `impl.md` |
+| `diff` | `git diff <merge-base>...<branch>` over the branch's paths, leaving out everything under `.indusk/`: the plan's documents are handed whole, and its folder's diff since approval is the builder's own falsification and cleanup notes |
+| `stat` | `git diff --stat <merge-base>...<branch>`: the files the plan changed |
+| `tree` | `git ls-tree -r --name-only <branch>` less `.indusk/`: every tracked file, including the ones the plan did not touch, for the question of what else each promise needs |
+| `approvedAt` | the approval commit the impl was read at |
 
-The approval merge is the first-parent merge on the trunk whose subject starts `plan(<name>): approved`. A plan with no such merge is refused, naming the plan: an audit of an unapproved plan has no impl "as approved". When history was rewritten and the subject cannot be found, `--approved <sha>` names the merge by hand.
+The approval is the first-parent merge on the trunk whose subject starts `plan(<name>): approved` — for a workbench plan, the plain commit of that subject on the workbench root's branch, since `plans approve` merges nothing there. A plan with no such commit is refused, naming the plan: an audit of an unapproved plan has no impl "as approved". When history was rewritten and the subject cannot be found, `--approved <sha>` names the merge by hand.
 
 ### `plans next-session <name>`
 

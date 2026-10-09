@@ -231,11 +231,11 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 #### Build Phase 4 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`, the `lib/audit/` line: nothing under `.indusk/` reaches the auditor's diff — the plan's documents are handed whole, and the folder's diff since approval is the builder's notes; a field's `path` names where its text was read (`<sha>:<path>` for a committed version), never a working file holding something else
+- [x] `apps/indusk-mcp/CLAUDE.md`, the `lib/audit/` line: nothing under `.indusk/` reaches the auditor's diff — the plan's documents are handed whole, and the folder's diff since approval is the builder's notes; a field's `path` names where its text was read (`<sha>:<path>` for a committed version), never a working file holding something else
 
 #### Build Phase 4 Document
 
-- [ ] `reference/cli/plans.md`: `plans audit-inputs` gains `tree`, the diff leaves out `.indusk/`, `implAsApproved.path` is `<sha>:<path>`, and a workbench plan's approval is the root's commit; `reference/skills/audit.md`: question 6 reads `tree`, the reader reads the approved impl from its text
+- [x] `reference/cli/plans.md`: `plans audit-inputs` gains `tree`, the diff leaves out `.indusk/`, `implAsApproved.path` is `<sha>:<path>`, and a workbench plan's approval is the root's commit; `reference/skills/audit.md`: question 6 reads `tree`, the reader reads the approved impl from its text
 
 ## Files Affected
 

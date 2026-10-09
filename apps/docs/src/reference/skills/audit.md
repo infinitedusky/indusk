@@ -11,10 +11,10 @@ After `/cleanup`, before `/retrospective`: `/work` → `/falsify` → `/work` �
 [`indusk plans audit-inputs <plan>`](/reference/cli/plans#plans-audit-inputs-name-approved-sha) prints, and the skill passes on, only:
 
 - the brief, the test plan and the ADR;
-- the impl **as it was merged at approval**, so the falsification and cleanup phases the builder appended since are not in it;
+- the impl **as it was merged at approval**, named by a `<sha>:<file>` path the reader opens with `git show` (or reads from the text), never the working file, so the falsification and cleanup phases the builder appended since are not in it;
 - the trajectory table as it stands, every row in its final state;
-- the branch's diff against the trunk, without InDusk's bookkeeping;
-- a `--stat` of the whole tree.
+- the branch's diff against the trunk, without anything under `.indusk/` (the builder's notes live there);
+- a `--stat` of the files the plan changed, and a `tree` of every tracked file.
 
 Nothing from the session's conversation, `research.md`, `current.md`, or the builder's own findings. A second reader that has read the first reader's notes is not a second reader.
 
@@ -29,7 +29,7 @@ Nothing from the session's conversation, `research.md`, `current.md`, or the bui
 3. What does the code do that the brief never promised?
 4. Which rejected ADR alternative does the code quietly take?
 5. Which skip reason would you not accept?
-6. What else would have to change for each promise to hold? (with the `--stat`)
+6. What else would have to change for each promise to hold? (reading `tree` against `stat`: the files the plan did not touch)
 
 ## The Shape of `audit.md`
 
