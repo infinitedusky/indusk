@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -10,14 +10,19 @@ import { fileURLToPath } from "node:url";
  */
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
+/**
+ * The extension to install: the package's copy (`editor/`, what a published
+ * install has), or in the dusk repository the extension app's own build,
+ * whichever is newer — a rebuilt extension must not lose to the copy the last
+ * `pnpm install:local` left.
+ */
 export function vsixPath(): string | null {
-	for (const candidate of [
+	const found = [
 		join(packageRoot, "editor", "indusk.vsix"),
 		join(packageRoot, "..", "vscode-extension", "dist", "indusk.vsix"),
-	]) {
-		if (existsSync(candidate)) return candidate;
-	}
-	return null;
+	].filter((candidate) => existsSync(candidate));
+	if (found.length === 0) return null;
+	return found.reduce((a, b) => (statSync(b).mtimeMs > statSync(a).mtimeMs ? b : a));
 }
 
 export async function editorInstall(opts: { extensionsDir?: string } = {}): Promise<void> {
