@@ -68,7 +68,9 @@ Cursor, the same extension showed the marker and opened the Claude terminal.
 
 The InDusk icon in the activity bar, a shield with a check mark, opens the
 **Promises** panel: every promise in the project and its state, without
-opening a file.
+opening a file. Its top line names the project: each window shows the promises
+of the folder it has open, so a dusk window lists dusk's promises, not the
+demo's.
 
 - **Broken promises come first, as cards**, the latest break at the top, each
   with the source it broke in, when, and its symptom. A card's **Fix with
