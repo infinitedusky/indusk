@@ -80,6 +80,13 @@ row whose phase exists is not terminal, and while the plan declared a
 row that names it is not `passing`, or the rows name no test file. It names
 the rows and the promises.
 
+It also refuses until the plan has been audited: a fresh reader, run by
+`/audit {plan}` after `/cleanup`, has written `audit.md` in the plan folder,
+or the impl frontmatter has BOTH `audit: skipped` AND
+`audit_reason: "{non-empty text}"` — a bare `audit: skipped` is not a skip.
+The refusal names `/audit {plan}`. Only the file's existence is read, never
+what it says: a finding in `audit.md` blocks nothing.
+
 ### Step 1: Write the Retrospective Document
 
 Create `planning/{plan-name}/retrospective.md` with frontmatter and six honest sections:

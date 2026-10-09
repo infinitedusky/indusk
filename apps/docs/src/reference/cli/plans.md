@@ -56,7 +56,7 @@ InDusk commits its own notes on `main` as it writes them (`.indusk/current.md` a
 
 Writes `accepted: <time>` and `accepted_by: person` (or `auto`, with `--auto`: a workflow that accepts on its own) to the impl's frontmatter and commits it on the branch.
 
-Refused inside a build step. An unattended build runs each step (work, falsify, cleanup) with `INDUSK_BUILD_STEP` set to the step, and `accept` and `land` refuse under it, naming the step: a build stops at review, and acceptance is the person's. The release session that acceptance starts is not marked, so it lands. This stops a confused session, not a determined one: a session that unsets the variable is not stopped.
+Refused inside a build step. An unattended build runs each step (work, falsify, cleanup, audit) with `INDUSK_BUILD_STEP` set to the step, and `accept` and `land` refuse under it, naming the step: a build stops at review, and acceptance is the person's. The release session that acceptance starts is not marked, so it lands. This stops a confused session, not a determined one: a session that unsets the variable is not stopped.
 
 ### `plans model <name> --phase <ref>`
 
@@ -67,7 +67,7 @@ Prints the tier and model a phase is built on, as `<tier> <model>` (`med sonnet`
 Prints the command to run in a new session for the plan's next piece of work, decided the way `plans next` decides it:
 
 - the next open phase: `In a new session, run: /work <name> — next is Build Phase 2, on strong (opus)` (the tier and model appear when the config names them);
-- every phase closed: `/falsify`, then `/cleanup`, then `/retrospective`, in that order;
+- every phase closed: `/falsify`, then `/cleanup`, then `/audit`, then `/retrospective`, in that order — `/audit` until the plan folder holds `audit.md` or the impl skips the audit with `audit: skipped` and `audit_reason`;
 - a phase with a `blocker:` line, a phase waiting on a person (a manual or deferred-verification item), or a finished build with trajectory rows still open: the blocker, the item or the rows themselves, instead of a command — there is nothing to start yet.
 
 `plans approve` ends with the same line, and `/work` prints it at each phase close, so a session ends at the plan boundary instead of compacting across plans. It reads the plan from its worktree while it has one, and falls back to `/work <name>` when the plan cannot be read.
@@ -81,8 +81,9 @@ What an unattended build does next, read from the plan as it stands — its work
 | `work` | a phase is open — an impl phase, or a falsification or cleanup phase; names the phase |
 | `falsify` | every phase is closed and no falsification phase or skip exists |
 | `cleanup` | falsification is closed and no cleanup phase or skip exists |
+| `audit` | the cleanup is closed and the plan folder has no `audit.md`, nor does the impl carry `audit: skipped` with an `audit_reason`. The runner runs `/audit <name>` as a step; what `audit.md` says is never read |
 | `judgement` | the open phase's next item is one the plan declared for a person — a Deferred Verification row, a manual or visual check; names the item |
-| `review` | every phase, the falsification and the cleanup are closed. Never `retrospective`: that waits for acceptance |
+| `review` | every phase, the falsification and the cleanup are closed, and the audit written or skipped. Never `retrospective`: that waits for acceptance |
 | `cannot continue` | the open phase has a `blocker:` line; or every phase is closed while a row is not terminal. The runner adds two of its own: the step's session ended in an error after its retries, or two steps in a row made no progress |
 
 Judgement items are recognised by the same rule [`indusk run`](/reference/cli/run) pauses on. With `--json` it prints `{"step": …}` with the phase, item or reason; without, a sentence.

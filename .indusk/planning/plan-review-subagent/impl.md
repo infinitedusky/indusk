@@ -133,7 +133,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 #### Build Phase 1 Document
 
-- [ ] `reference/cli/plans.md`: `plans next` and `plans next-session` answer `audit`; `reference/skills/retrospective.md`: Step 0 names the audit and its skip pair
+- [x] `reference/cli/plans.md`: `plans next` and `plans next-session` answer `audit`; `reference/skills/retrospective.md`: Step 0 names the audit and its skip pair
 
 ### Build Phase 2: The inputs and the tier
 
