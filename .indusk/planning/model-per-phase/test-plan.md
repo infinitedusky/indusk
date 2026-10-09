@@ -1,7 +1,7 @@
 ---
 title: "model-per-phase — Test Plan"
 date: 2026-10-09
-status: draft
+status: accepted
 ---
 
 # model-per-phase — Test Plan
