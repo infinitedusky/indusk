@@ -112,7 +112,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 - [x] `lib/cleanup/gate.ts`: `isAuditSkipped(implContent)` (the shape of `isFalsificationSkipped`: both `audit: skipped` and a non-empty `audit_reason`), `isAuditComplete(planRoot)` (`audit.md` exists), `auditOk` in `RetrospectiveReadiness`, and `audit` in `missing` — after `cleanup`, before `rows`
 - [x] (discovered) Three existing readiness tests whose fixtures meant "every ritual satisfied" now see `audit` missing: `cleanup-gate.test.ts` T13's passing case and `gate-row-terminality.test.ts`'s fixture gain `audit: skipped` + `audit_reason` (their assertions unchanged), and `lifecycle-parity`'s corpus snapshot (admin-ui-phase-progress A13, the guard that the readers' output over the plans on disk does not change) is re-baselined over the same folders, the only change being `audit` added to `missing` in 62 of them (`passes` false in the 14 that passed) — no archived plan has an audit.md
-- [ ] `lib/build/next-step.ts`: `{ step: "audit" }` in `BuildStep`, answered when `missing` holds `audit` and neither `falsification` nor `cleanup`
+- [x] `lib/build/next-step.ts`: `{ step: "audit" }` in `BuildStep`, answered when `missing` holds `audit` and neither `falsification` nor `cleanup`
 - [ ] `lib/models/next-session.ts`: `audit` → `In a new session, run: /audit <plan>`
 - [ ] `lib/build/runner.ts`, `build-session.ts`: `audit` in `BuildStepName`; the runner runs it as it runs `falsify` and `cleanup`; `stepPrompt("audit", plan)` is `/audit <plan>` with the unattended text; `stepEnv` marks it a build step
 - [ ] `bin/commands/plans.ts`: `describeStep` words `audit`
