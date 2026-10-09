@@ -1,7 +1,7 @@
 ---
 title: "model-per-phase — each phase on its tier's model, each boundary a new session"
 date: 2026-10-09
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -48,13 +48,13 @@ Build each phase on the model its tier names in the config, without anyone switc
 | A3 | Changing a tier's model in the config changes the model the next phase is built on, with no plan edited | Build Phase 1 | Build Phase 1 | planned | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
 | A4 | A project whose config names no tiers builds every phase on the session's own model, as today | Build Phase 1 | Build Phase 1 | planned | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
 | A5 | Claude Code runs a phase handed to it on the named model, observed once against the real `claude` | Build Phase 2 | Build Phase 2 | planned | live check | promise: each-phase-runs-on-its-model | .indusk/planning/model-per-phase/impl.md (the result, recorded under Build Phase 2) |
-| A6 | An impl that gives a phase a tier other than its step's default, with no reason, is refused, naming the phase | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
-| A7 | The same impl with a reason is accepted; a tier that is not one of strong, med, weak or baby is refused, naming it | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
+| A6 | An impl that gives a phase a tier other than its step's default, with no reason, is refused, naming the phase | Test Phase 1 | Build Phase 1 | written | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
+| A7 | The same impl with a reason is accepted; a tier that is not one of strong, med, weak or baby is refused, naming it | Test Phase 1 | Build Phase 1 | written | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
 | A8 | A phase whose tests still fail after three attempts on `med` stops and names `strong` as the tier to run it on | Build Phase 1 | Build Phase 2 | planned | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
 | A9 | A phase already on `strong` that fails three times stops as a blocker, as today, naming no higher tier | Build Phase 1 | Build Phase 2 | planned | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
-| A10 | Approving a plan ends by naming `/work <plan>` to run in a new session | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
+| A10 | Approving a plan ends by naming `/work <plan>` to run in a new session | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
 | A11 | Closing a phase ends by naming the command for the next phase, or `/falsify` after the last build phase | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/lib/models/next-session.test.ts |
-| A12 | A phase run on its own tier still records where it began, in the same shape Shape and verify read | Test Phase 1 | Test Phase 1 | planned | unit | promise: phase-boundary-record-never-malformed | apps/indusk-mcp/src/lib/shape/boundary.test.ts |
+| A12 | A phase run on its own tier still records where it began, in the same shape Shape and verify read | Test Phase 1 | Test Phase 1 | passing | unit | promise: phase-boundary-record-never-malformed | apps/indusk-mcp/src/lib/shape/boundary.test.ts |
 
 ## Checklist
 
@@ -62,14 +62,14 @@ Build each phase on the model its tier names in the config, without anyone switc
 
 **Goal**: author the rows that reach their subject through a boundary today: the validator hook as a spawned process, and `plans approve`'s output. Register the rows whose subject is the new `lib/models/` module.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create model-per-phase`; made by `indusk plans start` on 2026-10-09 at `dusk-worktrees/model-per-phase`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
-- [ ] A6 and A7 in `phase-tier-rule.test.ts`: run `hooks/validate-impl-structure.js` on a Write of an impl in a temporary project whose config gives `work` the tier `weak`.
+- [x] Create/confirm this plan's worktree (`indusk worktree create model-per-phase`; made by `indusk plans start` on 2026-10-09 at `dusk-worktrees/model-per-phase`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] A6 and A7 in `phase-tier-rule.test.ts`: run `hooks/validate-impl-structure.js` on a Write of an impl in a temporary project whose config gives `work` the tier `weak`.
   - A phase with `**Tier**: strong` and no reason must be refused.
   - `**Tier**: strong — rewrites how commands run` must be accepted.
   - `**Tier**: huge — x` must be refused.
   - RED today, because the hook accepts all three.
-- [ ] A10 in `plans-approve.test.ts`: the approval message ends with `/work <plan>` in a new session. RED today, because it ends with "its build continues on its branch."
-- [ ] A12 in `boundary.test.ts`: a phase record written with a tier present reads back in today's shape (a regression guard)
+- [x] A10 in `plans-approve.test.ts`: the approval message ends with `/work <plan>` in a new session. RED today, because it ends with "its build continues on its branch."
+- [x] A12 in `boundary.test.ts`: a phase record written with a tier present reads back in today's shape (a regression guard)
 
 #### Deferred to Build Phase 1
 
@@ -104,7 +104,7 @@ Build each phase on the model its tier names in the config, without anyone switc
 
 #### Test Phase 1 Verification
 
-- [ ] A6, A7 and A10 are authored and each fails on its own assertion; A12 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/phase-tier-rule.test.ts src/__tests__/plans-approve.test.ts src/lib/shape/boundary.test.ts`). The deferred bodies are reviewed: will they compile at the phase they name, and do they assert what they claim?
+- [x] A6, A7 and A10 are authored and each fails on its own assertion; A12 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/phase-tier-rule.test.ts src/__tests__/plans-approve.test.ts src/lib/shape/boundary.test.ts`). The deferred bodies are reviewed: will they compile at the phase they name, and do they assert what they claim?
 
 ### Build Phase 1: Tiers in the config, a tier per phase, and the rule
 

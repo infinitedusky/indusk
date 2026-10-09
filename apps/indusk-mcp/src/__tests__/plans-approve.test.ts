@@ -83,6 +83,14 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 		expect(onMain.data.status).toBe("approved");
 	});
 
+	it("A10 — approval ends by naming the command for a new session", () => {
+		writePlan();
+		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		expect(r.code, out(r)).toBe(0);
+		expect(out(r).trim().split("\n").pop()).toContain(`/work ${PLAN}`);
+		expect(out(r)).toMatch(/new session/i);
+	});
+
 	it("A23 — a brief naming a promise the registry does not hold is refused with the contract's message; main unchanged", () => {
 		writePlan({ declare: false });
 		const before = p.mainSha();
