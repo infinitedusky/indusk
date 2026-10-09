@@ -107,6 +107,11 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   workbench root and only its code gets `plan/<name>`, in the repo its
   `code.json` names (`--repo` when there are several). — see
   `/reference/cli/plans`
+- **A phase may carry `**Tier**: <tier> — <reason>`** under its heading
+  (strong, med, weak or baby); omit it and the phase takes its step's default
+  tier from `.indusk/config.json`. A tier other than the default needs its
+  reason, or the impl is refused. The config, not the plan, names the model.
+  — see `/reference/cli/plans`
 - **A Context gate item names its tier and destination** — `guard: <test>
   carries lesson: <name>`, `planning: …` (this file, via its template), an
   area's own `CLAUDE.md`, `current.md: …`, or `root (<section>): … —
