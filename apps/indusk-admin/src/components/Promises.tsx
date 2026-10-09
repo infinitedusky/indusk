@@ -1,6 +1,5 @@
 "use client";
 
-import { formatAge } from "@infinitedusky/indusk-mcp/promises/age";
 import type { HeardRow } from "@infinitedusky/indusk-mcp/promises/heard";
 import type {
   IncidentEntry,
@@ -14,6 +13,7 @@ import {
   PROMISE_KIND_LABELS,
   PROMISE_STATE_CHIP,
 } from "@/components/bars/labels";
+import { IncidentsTable } from "@/components/IncidentsTable";
 import {
   GREY,
   HealthChip,
@@ -443,13 +443,6 @@ function PromiseStateCell({
  * (incident-recording A12): an open incident is work someone saw and nobody
  * finished, and its age is what keeps it loud.
  */
-function incidentStatus(i: IncidentEntry, now: number): string {
-  if (i.status === "fixed")
-    return i.fixed ? `fixed ${i.fixed.slice(0, 10)}` : "fixed";
-  if (!i.opened) return "open";
-  return `open ${formatAge(now - Date.parse(i.opened))}`;
-}
-
 /** Breaks per promise in the record over the last `windowMs`. */
 function countHeardSince(
   rows: HeardRow[],
@@ -472,86 +465,6 @@ function countHeardSince(
 function heardLabel(count: number, asOf: string | null): string {
   const what = count > 0 ? `${count} heard` : "none heard";
   return asOf ? `${what} · as of ${asOf.replace("T", " ").slice(0, 16)}` : what;
-}
-
-/** `3 days`, `5 hours`, `40 minutes`. */
-function IncidentsTable({
-  incidents,
-  promises,
-  planHrefPrefix,
-}: {
-  incidents: IncidentEntry[];
-  promises: PromiseEntry[];
-  planHrefPrefix: string;
-}) {
-  const now = Date.now();
-  const ownerOf = (i: IncidentEntry) =>
-    promises.find((p) => p.name === i.promise)?.owner ?? null;
-  return (
-    <section
-      className="flex flex-col gap-2"
-      data-testid="promise-incident-list"
-    >
-      <h2 className="text-sm font-semibold text-gray-700">Incidents</h2>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>incident</TableHead>
-            <TableHead>promise</TableHead>
-            <TableHead>source</TableHead>
-            <TableHead>status</TableHead>
-            <TableHead>owner</TableHead>
-            <TableHead>date</TableHead>
-            <TableHead>symptom</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {incidents.map((i) => (
-            <TableRow key={i.id} data-incident={i.id}>
-              <TableCell>
-                <code className="text-xs">{i.id}</code>
-              </TableCell>
-              <TableCell>
-                <code className="text-xs">{i.promise}</code>
-              </TableCell>
-              <TableCell>{i.source}</TableCell>
-              <TableCell data-testid="incident-status">
-                {incidentStatus(i, now)}
-              </TableCell>
-              <TableCell>
-                <IncidentOwner
-                  incident={i}
-                  owner={ownerOf(i)}
-                  planHrefPrefix={planHrefPrefix}
-                />
-              </TableCell>
-              <TableCell>{i.date}</TableCell>
-              <TableCell className="max-w-md">{i.symptom}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </section>
-  );
-}
-
-/** An incident's owner: a link naming its Maintenance phase while it is open, the plan's name once fixed. */
-function IncidentOwner({
-  incident,
-  owner,
-  planHrefPrefix,
-}: {
-  incident: IncidentEntry;
-  owner: string | null;
-  planHrefPrefix: string;
-}) {
-  if (!owner) return <span className="text-gray-400">—</span>;
-  if (incident.status !== "open") return <span>{owner}</span>;
-  return (
-    <Link href={`${planHrefPrefix}${owner}`} className="hover:underline">
-      {owner} · Maintenance — {incident.id}
-    </Link>
-  );
 }
 
 /** A list of paths or ids as code, or a dash for none. */
