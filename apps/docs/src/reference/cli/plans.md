@@ -172,7 +172,7 @@ A phase in an impl may name a different tier:
 **Tier**: strong — rewrites how commands run
 ```
 
-The impl validator refuses a tier that is not strong, med, weak or baby, and refuses a tier other than the `work` default that gives no reason.
+The impl validator refuses a tier that is not strong, med, weak or baby, and refuses a tier other than the `work` default that gives no reason. It also refuses a phase with more than one `**Tier**:` line (an escalation replaces the line), and, once the config names any tiers, a tier with no model in `workflow.tiers`. `plans model` refuses the same cases, naming the cause, rather than answering `session`.
 
 ## Relationship to the sweep
 

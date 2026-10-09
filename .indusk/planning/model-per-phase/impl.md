@@ -1,7 +1,7 @@
 ---
 title: "model-per-phase — each phase on its tier's model, each boundary a new session"
 date: 2026-10-09
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -55,10 +55,10 @@ Build each phase on the model its tier names in the config, without anyone switc
 | A10 | Approving a plan ends by naming `/work <plan>` to run in a new session | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
 | A11 | Closing a phase ends by naming the command for the next phase, or `/falsify` after the last build phase | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/lib/models/next-session.test.ts |
 | A12 | A phase run on its own tier still records where it began, in the same shape Shape and verify read | Test Phase 1 | Test Phase 1 | passing | unit | promise: phase-boundary-record-never-malformed | apps/indusk-mcp/src/lib/shape/boundary.test.ts |
-| A13 | An Edit that changes only a phase's `**Tier**:` line — no heading, no checklist item in the edit — is still held to the tier rule: a tier with no reason, or an unknown tier, is refused naming the phase | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
-| A14 | A phase with two `**Tier**:` lines is refused naming the phase; `/work`'s escalation replaces the line rather than adding one, so the escalated tier is the one read | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts, apps/indusk-mcp/src/lib/models/tiers.test.ts |
-| A15 | A phase naming a tier the config gives no model for is refused naming the tier — by the validator, and by `plans model` — never answered `session` | Build Phase 3 | Build Phase 3 | planned | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts, apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
-| A16 | `plans model` on a project whose tier config is malformed (`workflow.tiers.huge`, `steps.work.tier: huge`) refuses with the key named, exit 1, never a stack trace; the validator refuses the same impl the same way | Build Phase 3 | Build Phase 3 | planned | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/__tests__/plans-model.test.ts |
+| A13 | An Edit that changes only a phase's `**Tier**:` line — no heading, no checklist item in the edit — is still held to the tier rule: a tier with no reason, or an unknown tier, is refused naming the phase | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
+| A14 | A phase with two `**Tier**:` lines is refused naming the phase; `/work`'s escalation replaces the line rather than adding one, so the escalated tier is the one read | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts, apps/indusk-mcp/src/lib/models/tiers.test.ts |
+| A15 | A phase naming a tier the config gives no model for is refused naming the tier — by the validator, and by `plans model` — never answered `session` | Build Phase 3 | Build Phase 3 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts, apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
+| A16 | `plans model` on a project whose tier config is malformed (`workflow.tiers.huge`, `steps.work.tier: huge`) refuses with the key named, exit 1, never a stack trace; the validator refuses the same impl the same way | Build Phase 3 | Build Phase 3 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/__tests__/plans-model.test.ts |
 
 ## Checklist
 
@@ -182,22 +182,24 @@ Build each phase on the model its tier names in the config, without anyone switc
 
 **Not investigated further, and why:** the subagent hand-off itself (A5 observed the model once; whether a subagent's edits pass the gate hooks is the autopilot spike's, already verified); `nextSession`'s close-out order (reads `checkRetrospectiveReadiness`, which does not throw, and is covered by A11); the boundary record (A12 guards its shape and a tier is never written into it).
 
-- [ ] `validate-impl-structure.js`: the fast path also runs the rules when the edit's text contains `**Tier**:` (A13)
-- [ ] `tierRuleProblems` (TS and `_phase-tier.js` together): a phase with more than one tier line is refused naming the phase; `skills/work.md` three-miss step says *replace* the phase's tier line, or add one when there is none (A14)
-- [ ] `tierRuleProblems` takes the configured tiers: a tier line naming a tier with no model in `workflow.tiers` is refused naming the tier; `tierForPhase` keeps `null` only for "no tier named anywhere" and throws for a named tier with no model, which `plans model` reports as a refusal (A15)
-- [ ] `plansModel` and `plansNextSession` turn a config error into a `PlanCommandRefusal` (exit 1, message, no trace); `_phase-tier.js`'s `workDefaultTier` refuses an unknown `steps.work.tier` naming the key, as `readWorkflowSteps` does (A16)
+- [x] `validate-impl-structure.js`: the fast path also runs the rules when the edit's text contains `**Tier**:` (A13)
+- [x] `tierRuleProblems` (TS and `_phase-tier.js` together): a phase with more than one tier line is refused naming the phase; `skills/work.md` three-miss step says *replace* the phase's tier line, or add one when there is none (A14)
+- [x] `tierRuleProblems` takes the configured tiers: a tier line naming a tier with no model in `workflow.tiers` is refused naming the tier; `tierForPhase` keeps `null` only for "no tier named anywhere" and throws for a named tier with no model, which `plans model` reports as a refusal (A15)
+- [x] `plansModel` and `plansNextSession` turn a config error into a `PlanCommandRefusal` (exit 1, message, no trace); `_phase-tier.js`'s `workDefaultTier` refuses an unknown `steps.work.tier` naming the key, as `readWorkflowSteps` does (A16)
 
 #### Build Phase 3 Verification
 
-- [ ] A13–A16 pass; A1–A12 still do (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/models src/__tests__/phase-tier-rule.test.ts src/__tests__/plans-model.test.ts src/__tests__/plans-approve.test.ts src/__tests__/hook-shared-modules.test.ts`); tsc and biome clean
+- [x] A13–A16 pass; A1–A12 still do (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/models src/__tests__/phase-tier-rule.test.ts src/__tests__/plans-model.test.ts src/__tests__/plans-approve.test.ts src/__tests__/hook-shared-modules.test.ts`); tsc and biome clean
+
+- [x] Shape review of this phase (`tiers.ts`, `_phase-tier.js`, the steps reader): nothing found. The tier-config error is one class (`TierConfigError`) that the command layer turns into a refusal, so a bug elsewhere is still not reported as one.
 
 #### Build Phase 3 Context
 
-- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: the validator's fast path is a list of the edit shapes that carry structure (a heading, an item, a tier line) — a new rule over a new line shape adds its marker there, or an Edit of that line alone is never checked
+- [x] `apps/indusk-mcp/hooks/CLAUDE.md`: the validator's fast path is a list of the edit shapes that carry structure (a heading, an item, a tier line) — a new rule over a new line shape adds its marker there, or an Edit of that line alone is never checked
 
 #### Build Phase 3 Document
 
-- [ ] `reference/cli/plans.md`: a tier named by a phase must have a model in `workflow.tiers`, or the impl and `plans model` refuse; one tier line per phase
+- [x] `reference/cli/plans.md`: a tier named by a phase must have a model in `workflow.tiers`, or the impl and `plans model` refuse; one tier line per phase
 
 ## Files Affected
 
