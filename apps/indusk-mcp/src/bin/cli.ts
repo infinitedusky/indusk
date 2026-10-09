@@ -987,6 +987,20 @@ plansCmd
 	});
 
 plansCmd
+	.command("audit-inputs <name>")
+	.description(
+		"What the auditor is handed, as JSON: the plan's documents, the impl as merged at approval, the trajectory as it stands, the branch's diff and a stat of the whole tree",
+	)
+	.option(
+		"--approved <sha>",
+		"The approval merge, named by hand when history was rewritten and its subject cannot be found",
+	)
+	.action(async (name: string, opts: { approved?: string }) => {
+		const { plansAuditInputs } = await import("./commands/plans.js");
+		await plansAuditInputs(process.cwd(), name, opts.approved);
+	});
+
+plansCmd
 	.command("next-session <name>")
 	.description(
 		"The command to run in a new session for the plan's next piece of work, with the next phase's tier and model",

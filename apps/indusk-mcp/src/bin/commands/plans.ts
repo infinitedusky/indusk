@@ -1,3 +1,4 @@
+import { auditInputs } from "../../lib/audit/inputs.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
@@ -71,6 +72,11 @@ export function plansModel(cwd: string, name: string, phase: string): Promise<vo
 		const answer = await phaseModel(cwd, name, ref);
 		return answer ? `${answer.tier} ${answer.model}` : "session";
 	});
+}
+
+/** `indusk plans audit-inputs <name>` — what the auditor is handed, as JSON. */
+export function plansAuditInputs(cwd: string, name: string, approved?: string): Promise<void> {
+	return planVerb(async () => JSON.stringify(await auditInputs(cwd, name, approved), null, 2));
 }
 
 /** `indusk plans next-session <name>` — the command to run in a new session, from the plan as it stands. */
