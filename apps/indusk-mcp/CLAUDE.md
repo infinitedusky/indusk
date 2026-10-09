@@ -27,10 +27,10 @@ pointer; the pointer holds the story.
   `impl-headings.test.ts`; the lifecycle (`lib/lifecycle.ts`: positions,
   activities, `GATE_STAGES`, `RITUAL_ORDER`, `SEGMENT_STATES`, read by
   `parsePlan`, the retrospective gate and the admin) —
-  `lifecycle-single-definition.test.ts`. A git primitive belongs in
+  `lifecycle-single-definition.test.ts`; promise health, `promises/health`
+  — `promise-health-single-definition.test.ts`. A git primitive belongs in
   `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
   (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
-- **The papers module map** lives in `src/lib/papers/CLAUDE.md`.
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
   config pair is pinned — `server-single-definition.test.ts`; a project names
   a credential's variable, never its value.
