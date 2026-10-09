@@ -1,7 +1,7 @@
 ---
 title: "VS Code extension — promises in the editor, the break where the fix happens"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -260,11 +260,11 @@ Investigated, with no hypothesis formed: the token grammar (lowercase names only
 
 #### Build Phase 5 Context
 
-- [ ] `apps/vscode-extension/CLAUDE.md`: text from spans is untrusted — stripped of control characters before a terminal, escaped before Markdown
+- [x] (7a460f77) `apps/vscode-extension/CLAUDE.md`: text from spans is untrusted — stripped of control characters before a terminal, escaped before Markdown
 
 #### Build Phase 5 Document
 
-- [ ] the guide: a fixed break turns `fixed` without a reload; one notification per break; what the editor says when it cannot read; changelog line
+- [x] (also: nested projects keep their own promises; the fix terminal and hovers take span text as text) the guide: a fixed break turns `fixed` without a reload; one notification per break; what the editor says when it cannot read; changelog line
 
 ## Files Affected
 
