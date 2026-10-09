@@ -1,6 +1,7 @@
 import {
   autoAccepts,
   type BuildStepName,
+  buildStepModel,
   type RunnerStop,
   readBuildPlan,
   runBuild,
@@ -55,14 +56,24 @@ async function depsFor(project: string, plan: string, state: BuildState) {
     root,
     deps: {
       read: () => readBuildPlan(root, plan),
-      run: (step: BuildStepName) =>
-        runStepSession(step, {
+      run: async (step: BuildStepName, phase?: string) => {
+        // A tier the config has no model for fails the step with its message,
+        // never a build on the session's own model without a word.
+        let answer: Awaited<ReturnType<typeof buildStepModel>>;
+        try {
+          answer = await buildStepModel(root, plan, step, phase);
+        } catch (err) {
+          return { error: (err as Error).message };
+        }
+        return runStepSession(step, {
           manager: sessionManager(),
           worktree: where.cwd,
           ...(where.addDirs ? { addDirs: where.addDirs } : {}),
           project,
           plan,
-        }),
+          ...(answer ? { model: answer.model } : {}),
+        });
+      },
       accept: async (by: "person" | "auto") => {
         await acceptPlan(root, plan, by);
       },
