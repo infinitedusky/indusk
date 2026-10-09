@@ -53,3 +53,5 @@ Shape findings: 0 raised across the four phases, 0 judged wrong by a human. (Sha
 
 - No ADR (bugfix workflow), so no decision page and no Key Decisions line.
 - The convention first went in the root Conventions; the 20 %-under-budget test (`context-tiers-register`) failed at 14,867 B, so it moved down a tier instead: the planning rules (`templates/planning/CLAUDE.md`) carry it, and `/work` itself prints the next-session line at each phase close. Root is back to 14,628 B.
+
+Landed on main at 8c2ac263, 2026-10-09.
