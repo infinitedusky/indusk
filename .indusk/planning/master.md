@@ -85,8 +85,11 @@ launch and for showing at Lazer. In order:
    and one hook table; the workbench items and the restart race stay in known-issues.
 2. **[demo-app-template](demo-app-template/brief.md)** — an app with real
    promises, marked through OTel, and a switch that breaks one on cue.
-3. **[incident-recording](incident-recording/brief.md)** — the watcher runs
-   by itself; a break becomes an incident and announces itself.
+3. **[incident-recording](archive/incident-recording/retrospective.md)** — the watcher runs
+   by itself; a break becomes an incident and announces itself. **closed 2026-10-08**:
+   the admin records a production break unasked, catchup records what it finds,
+   open incidents stay loud, a reopened plan gets a worktree, and the running
+   agent hears the break on its next prompt.
 4. **A VS Code extension** — promise markers on the code that carries each
    promise, live health from telemetry, "fix with Claude" on a break. The
    break moment, where the fix happens. Not created yet.

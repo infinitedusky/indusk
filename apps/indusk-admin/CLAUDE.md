@@ -68,6 +68,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **The Promises page** reads only through the `promises/registry` subpath
   (`lib/promises-reader.ts`, which also derives "holding N"); marks — the
   chips' and the timeline's — come from the store (`lib/promise-timeline.ts`),
+  one `violationState` (unrecorded / open / fixed) deciding both
+  (`/decisions/promise-timeline`),
   which reads only uncovered ranges, never the whole window per request, and re-reads a
   late tail (`lesson: a-store-that-reads-only-what-is-new-must-still-read-what-arrives-late`); the store and the
   health read take `Deps` (clock, resolve, read, probe) and their rules are tested with

@@ -214,6 +214,9 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 		},
 	);
 
+	// Catchup records what it finds through this tool, rather than telling
+	// the person to run `watch`.
+	// promise: catchup-records-what-it-finds
 	server.registerTool(
 		"record_breaks",
 		{

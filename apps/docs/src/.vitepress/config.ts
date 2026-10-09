@@ -300,6 +300,7 @@ const config = defineConfig({
 							text: "Worktree Config Schema Pointer — Lessons",
 							link: "/lessons/worktree-config-schema-pointer",
 						},
+						{ text: "Incident Recording — Lessons", link: "/lessons/incident-recording" },
 						{ text: "Worktree Visibility — Lessons", link: "/lessons/worktree-visibility" },
 						{ text: "Writing Skill — Lessons", link: "/lessons/writing-skill" },
 					],

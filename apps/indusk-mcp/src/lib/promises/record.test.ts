@@ -289,9 +289,9 @@ describe("A26 — in a workbench the writer writes where the contract resolver s
 });
 
 /**
- * Build Phase 8, the falsification of incident-recording — promise:
- * a-production-break-is-recorded-unasked (A27, A29); promise:
- * a-break-reaches-the-working-agent (A28).
+ * Build Phase 8, the falsification of incident-recording.
+ * A27, A29 — promise: a-production-break-is-recorded-unasked
+ * A28 — promise: a-break-reaches-the-working-agent
  *
  * The admin commits every few seconds beside a developer's own git, so a
  * commit that fails once is ordinary: the next pass must finish it, and say

@@ -260,6 +260,7 @@ export async function resolvePlanCopies(anyCheckout: string): Promise<PlanCopies
 	// approved (admin-plan-authoring), and an archived plan reopened by an
 	// incident has only an archived one (incident-recording); in both, its
 	// assignment is how a reader finds it.
+	// promise: a-reopened-plan-can-be-worked
 	const onTrunk = trunkPlans(repo.projectRoot);
 	const branchOnly = record.assignments
 		.filter((a) => !onTrunk.includes(a.plan) && repo.linked.has(canonical(a.path)))

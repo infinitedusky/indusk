@@ -45,6 +45,8 @@ async function writableRepository(anyCheckout: string): Promise<Repository> {
  * An archived plan is assigned only while an incident has reopened it — an
  * open Maintenance phase in its impl, found as `watch` writes it
  * (`ownerDir`); a closed one is refused, saying how a plan reopens.
+ *
+ * promise: a-reopened-plan-can-be-worked
  */
 function requirePlan(repo: Repository, plan: string, worktree?: string): void {
 	if (!isUsableSegment(plan)) {

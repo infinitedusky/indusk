@@ -1,6 +1,6 @@
 # Incident recording — recording never waits for a person
 
-**Decided 2026-10-08.** Full record: [the ADR in the archive](https://github.com/infinitedusky/indusk/tree/main/.indusk/planning/incident-recording/adr.md) (it moves to `archive/` when the plan closes).
+**Decided 2026-10-08.** Full record: [the ADR in the archive](https://github.com/infinitedusky/indusk/tree/main/.indusk/planning/archive/incident-recording/adr.md).
 
 ## What was decided
 
