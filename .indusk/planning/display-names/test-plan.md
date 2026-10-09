@@ -1,7 +1,7 @@
 ---
 title: "Display names — Test Plan"
 date: 2026-10-09
-status: draft
+status: accepted
 ---
 
 # Display names — Test Plan
