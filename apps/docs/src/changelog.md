@@ -4,6 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+
+- **The system tier passes again** (system-tests-catch-up): three tests predated the admin recording production breaks and the catchup skill's rewording, and the VS Code contract test now loads the extension as installed rather than in development mode.
+
 ## [1.69.0] — 2026-10-09
 
 ### Added
