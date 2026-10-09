@@ -17,10 +17,11 @@ import { type BuildPlan, type BuildStep, nextBuildStep, type StepOutcome } from 
 export type BuildStepName = "work" | "falsify" | "cleanup" | "audit" | "retrospective";
 
 /** The steps the runner runs as a session; every other answer stops it. */
-type SessionStep = "work" | "falsify" | "cleanup" | "audit";
+const SESSION_STEPS = ["work", "falsify", "cleanup", "audit"] as const;
+type SessionStep = (typeof SESSION_STEPS)[number];
 
 function isSessionStep(s: BuildStep): s is Extract<BuildStep, { step: SessionStep }> {
-	return s.step === "work" || s.step === "falsify" || s.step === "cleanup" || s.step === "audit";
+	return (SESSION_STEPS as readonly string[]).includes(s.step);
 }
 
 export interface RunnerDeps {
