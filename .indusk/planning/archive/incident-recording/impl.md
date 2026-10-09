@@ -7,6 +7,8 @@ test_phases: required
 test_levels: required
 test_purpose: required
 gate_policy: ask
+accepted: 2026-10-09T00:39:31.235Z
+accepted_by: person
 ---
 
 # Recording never waits for a person to think of it
