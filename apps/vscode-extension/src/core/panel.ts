@@ -36,7 +36,6 @@ export interface PanelGroup {
 
 export interface PanelModel {
 	broken: PanelPromise[];
-	rest: PanelPromise[];
 	groups: PanelGroup[];
 	notReading: boolean;
 }
@@ -48,7 +47,7 @@ export interface PanelModel {
  * holds the text of each listed file the editor could read.
  */
 export function panelModel(view: View | null, files: Map<string, string>): PanelModel {
-	if (!view) return { broken: [], rest: [], groups: [], notReading: true };
+	if (!view) return { broken: [], groups: [], notReading: true };
 	const all = view.line.promises.map((p): PanelPromise => {
 		const { text, tone } = stateOf(p.name, view);
 		return {
@@ -58,21 +57,69 @@ export function panelModel(view: View | null, files: Map<string, string>): Panel
 			state: text,
 			tone,
 			...(tone === "broken" ? whereItBroke(view, p.name) : {}),
+			...("plan" in p && typeof p.plan === "string" ? { plan: p.plan } : {}),
+			...lastRunOf(view, p.name),
 			locations: [
 				...p.tests.map((path) => locate("test", path, p.name, files)),
 				...(p.sites ?? []).map((path) => locate("site", path, p.name, files)),
 			],
 		};
 	});
-	const byName = (a: PanelPromise, b: PanelPromise) => a.name.localeCompare(b.name);
 	return {
 		broken: all
 			.filter((p) => p.tone === "broken")
 			.sort((a, b) => (b.brokeAt ?? "").localeCompare(a.brokeAt ?? "") || byName(a, b)),
-		rest: all.filter((p) => p.tone !== "broken").sort(byName),
-		groups: [],
+		groups: byPlan(all.filter((p) => p.tone !== "broken")),
 		notReading: view.notReading,
 	};
+}
+
+const NO_PLAN = "no plan";
+
+function byName(a: { name: string }, b: { name: string }): number {
+	return a.name.localeCompare(b.name);
+}
+
+/** Newest run first; promises never run after, by name. */
+function byNewestRun(a: PanelPromise, b: PanelPromise): number {
+	if (a.lastRun && b.lastRun) return b.lastRun.localeCompare(a.lastRun) || byName(a, b);
+	if (a.lastRun) return -1;
+	if (b.lastRun) return 1;
+	return byName(a, b);
+}
+
+/**
+ * The promises below the broken cards, grouped by the plan that owns them:
+ * each group newest run first; groups by their newest run, then plans never
+ * run by name (A29).
+ */
+function byPlan(promises: PanelPromise[]): PanelGroup[] {
+	const groups = new Map<string, PanelPromise[]>();
+	for (const p of promises) {
+		const plan = p.plan ?? NO_PLAN;
+		groups.set(plan, [...(groups.get(plan) ?? []), p]);
+	}
+	return [...groups]
+		.map(([plan, list]) => ({ plan, promises: list.sort(byNewestRun) }))
+		.sort((a, b) => {
+			const ra = a.promises[0]?.lastRun;
+			const rb = b.promises[0]?.lastRun;
+			if (ra && rb) return rb.localeCompare(ra) || a.plan.localeCompare(b.plan);
+			if (ra) return -1;
+			if (rb) return 1;
+			return a.plan.localeCompare(b.plan);
+		});
+}
+
+/** A promise's most recent run in any source that read, or nothing. */
+function lastRunOf(view: View, name: string): Pick<PanelPromise, "lastRun"> {
+	let last: string | undefined;
+	for (const source of view.line.sources) {
+		if (!source.ok) continue;
+		const seen = source.rows.find((r) => r.promise === name)?.lastSeen;
+		if (seen && (!last || seen > last)) last = seen;
+	}
+	return last ? { lastRun: last } : {};
 }
 
 /** The first source, production leading, where the promise is broken, with its facts. */

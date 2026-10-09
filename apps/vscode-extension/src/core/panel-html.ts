@@ -17,7 +17,9 @@ export function panelBody(model: PanelModel, activity: string[], project = ""): 
 		model.broken.length > 0
 			? `<h2>Broken</h2>${model.broken.map(card).join("")}`
 			: `<p class="note">Nothing broken.</p>`;
-	const rest = model.rest.length > 0 ? `<h2>Promises</h2>${model.rest.map(row).join("")}` : "";
+	const rest = model.groups
+		.map((g) => `<h2 class="plan">${esc(g.plan)}</h2>${g.promises.map(row).join("")}`)
+		.join("");
 	const runs = `<h2>Activity</h2><ol class="activity">${activity
 		.map((l) => `<li class="${/ broke /.test(l) ? "broke" : "held"}">${esc(l)}</li>`)
 		.join("")}</ol>`;
@@ -26,6 +28,7 @@ export function panelBody(model: PanelModel, activity: string[], project = ""): 
 
 function card(p: PanelPromise): string {
 	const facts = [
+		p.plan ? `plan ${esc(p.plan)}` : "",
 		p.source ? `in ${esc(p.source)}` : "",
 		p.brokeAt ? `last broke ${esc(p.brokeAt.slice(0, 16).replace("T", " "))} UTC` : "",
 	]
@@ -71,6 +74,7 @@ export function panelPage(nonce: string, cspSource: string): string {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
 <style nonce="${nonce}">
 body{font:var(--vscode-font-size) var(--vscode-font-family);color:var(--vscode-foreground);padding:0 8px}
+h2.plan{text-transform:none;letter-spacing:0;font-size:12px;font-weight:600}
 h2{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--vscode-descriptionForeground);margin:14px 0 6px}
 h3{font-size:11px;color:var(--vscode-descriptionForeground);margin:8px 0 2px}
 details{border-radius:4px;margin:0 0 4px}

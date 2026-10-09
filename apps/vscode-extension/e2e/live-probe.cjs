@@ -36,8 +36,11 @@ exports.run = async () => {
 	{
 		let mine = null;
 		for (let i = 0; i < 40 && !mine; i++) {
-			const p = (await panel()) || { model: { broken: [], rest: [] } };
-			mine = [...p.model.broken, ...p.model.rest].find((x) => x.name === PROMISE) || null;
+			const p = (await panel()) || { model: { broken: [], groups: [] } };
+			mine =
+				[...p.model.broken, ...p.model.groups.flatMap((g) => g.promises)].find(
+					(x) => x.name === PROMISE,
+				) || null;
 			if (!mine) await sleep(500);
 		}
 		const site = mine?.locations.find((l) => l.kind === "site" && l.path === "src/telemetry.ts");

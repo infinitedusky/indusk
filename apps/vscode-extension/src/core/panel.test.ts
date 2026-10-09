@@ -56,8 +56,9 @@ describe("the promises panel", () => {
 			tone: "broken",
 		});
 		expect(m.broken[1]).toMatchObject({ source: "production", symptom: "seat 4 held twice" });
-		expect(m.rest.map((p) => p.name)).toEqual(["page-answers"]);
-		expect(m.rest[0]?.state).toBe("watched by the tests");
+		const rest = m.groups.flatMap((g) => g.promises);
+		expect(rest.map((p) => p.name)).toEqual(["page-answers"]);
+		expect(rest[0]?.state).toBe("watched by the tests");
 		expect(m.notReading).toBe(false);
 	});
 
