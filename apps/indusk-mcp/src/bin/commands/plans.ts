@@ -2,11 +2,11 @@ import { auditInputs } from "../../lib/audit/inputs.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
+import { buildStepModel } from "../../lib/build/step-model.js";
 import { parsePhaseRef } from "../../lib/impl-headings.js";
 import { nextSessionForPlan } from "../../lib/models/next-session.js";
 import { phaseModel } from "../../lib/models/phase-model.js";
 import { isTierStep, TIER_STEPS, TierConfigError } from "../../lib/models/tier-names.js";
-import { readTierConfig, tierForPhase } from "../../lib/models/tiers.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import {
 	acceptPlan,
@@ -86,7 +86,7 @@ export function plansModel(
 					`--step must name a step with a tier (${TIER_STEPS.join(", ")}); got "${step}"`,
 				);
 			}
-			const answer = tierForPhase(readTierConfig(cwd), step, undefined);
+			const answer = await buildStepModel(cwd, name, step);
 			return describeModel(answer);
 		}
 		if (phase === undefined) {
