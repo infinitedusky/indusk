@@ -4,6 +4,17 @@ The InDusk extension for VS Code (and Cursor) shows every promise at the line
 that keeps it, with its health, and turns a break into Claude working on the
 fix in one click. It only shows: nothing in your project is written by it.
 
+## Install
+
+```bash
+indusk editor install
+```
+
+The extension ships inside the InDusk package. The command installs it into
+VS Code, and into Cursor when Cursor's `cursor` command is on your `PATH`, and
+says which. Then open a project that uses InDusk: the extension starts only in
+a folder with `.indusk/config.json`. See [`editor`](/reference/cli/editor).
+
 ## What you see
 
 **A marker at the end of every line that carries a promise's token.** A
