@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+
+- **Each phase is built on its tier's model** (model-per-phase): `workflow.tiers` maps strong, med, weak and baby to a model; `workflow.steps.<step>.tier` gives each step's default; a phase may carry `**Tier**: <tier> — <reason>`, and the impl validator refuses a different tier with no reason or a tier that is not one of the four. `indusk plans model <plan> --phase <ref>` prints the tier and model. `/work` hands each phase to a subagent on that model, and after three failed attempts stops and names the next tier up.
+- **Every plan boundary names the next session** (model-per-phase): `indusk plans next-session <plan>`, and `plans approve`, end with the command to run in a new session (`/work`, then `/falsify`, `/cleanup`, `/retrospective`), so a session no longer compacts across plans. See [`plans`](/reference/cli/plans).
+
 ## [1.68.0] — 2026-10-09
 
 ### Added
