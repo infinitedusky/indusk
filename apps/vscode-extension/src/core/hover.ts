@@ -5,8 +5,9 @@ import { promiseOf, sourcesInOrder, stamp, stateIn, type View } from "./view.js"
  * source, and when it last broke or was last seen (vscode-extension A4).
  */
 export function hover(promise: string, view: View | null): string {
+	if (!view) return `**${promise}** — not reading: no promise health has arrived yet.`;
 	const p = promiseOf(view, promise);
-	if (!view || !p) return `**${promise}** — not in this project.`;
+	if (!p) return `**${promise}** — not in this project.`;
 	const lines = [`**${promise}** — ${p.statement}`, ""];
 	if (p.kind !== "behaviour") {
 		lines.push(`Watched by the tests: ${p.tests.join(", ") || "none named"}.`);
