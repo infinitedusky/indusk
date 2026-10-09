@@ -116,6 +116,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 - [x] `lib/models/next-session.ts`: `audit` → `In a new session, run: /audit <plan>`
 - [x] `lib/build/runner.ts`, `build-session.ts`: `audit` in `BuildStepName`; the runner runs it as it runs `falsify` and `cleanup`; `stepPrompt("audit", plan)` is `/audit <plan>` with the unattended text; `stepEnv` marks it a build step — `stepEnv` needed no change (it marks every step but the retrospective); `/work`'s prompt now also says not to run `/audit`; the admin's `build-host.ts` typed `run`'s step as the old four-word union and now takes `BuildStepName`
 - [x] `bin/commands/plans.ts`: `describeStep` words `audit`
+- [x] (discovered) `plans-next.test.ts` (admin-plan-authoring A11, the CLI walk from the first phase to review, and A14, rituals skipped with reasons answer review) answered `review` straight after cleanup: A11's walk gains the `audit` state between cleanup and review, its review state written with an audit.md; A14's fixture gains the audit skip pair. Neither test's existing expectations changed
 - [x] A4 in `runner.test.ts`, from the register — authored first, as RED (test-first: Writable at Build Phase 1): the runner ran `work, falsify, cleanup` and stopped at review; `ready()` gained `auditOk`
 
 #### Build Phase 1 Verification
