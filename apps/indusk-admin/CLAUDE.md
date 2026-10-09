@@ -59,7 +59,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   reads in `lib/project-reader.ts` (config via the `./config` subpath, never
   parsed by hand). Pinned by `cleanup-pins.test.ts`.
 - The label maps are `satisfies Record<…>` over the lifecycle's unions and
-  `lifecycle-render-parity.test.ts` names any member without a renderer. A
+  `lifecycle-render-parity.test.ts` names any member without a renderer;
+  phases are keyed `{kind, number}`, an absent kind a build phase
+  (`/decisions/admin-ui-phase-progress`). A
   plan's type and what it requires come only from the `workflow-types` subpath;
   a component never restates a document list.
 - **Papers** render from the shared parser's `papers` field; `published
@@ -68,8 +70,6 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **The Promises page** reads only through the `promises/registry` subpath
   (`lib/promises-reader.ts`, which also derives "holding N"); marks — the
   chips' and the timeline's — come from the store (`lib/promise-timeline.ts`),
-  one `violationState` (unrecorded / open / fixed) deciding both
-  (`/decisions/promise-timeline`),
   which reads only uncovered ranges, never the whole window per request, and re-reads a
   late tail (`lesson: a-store-that-reads-only-what-is-new-must-still-read-what-arrives-late`); the store and the
   health read take `Deps` (clock, resolve, read, probe) and their rules are tested with
@@ -110,5 +110,11 @@ Each entry is a rule and a pointer; the pointer holds the story.
   renders only through `<Markdown>`; the registry is never auto-pruned
   (`indusk ui prune [--dry-run]` backs up first); `runCli` pins `INDUSK_HOME`
   to a temp dir; malformed files quarantine to `.corrupt.{ISO}.bak`; daemon
-  identity = PID liveness AND port-listening; the scorecard-to-plan join is
-  date-range approximate.
+  identity = PID liveness AND its command line, never its port
+  (`lib/process-identity.ts`); the scorecard-to-plan join is date-range
+  approximate.
+- **Promise timeline** (moved from the root, 2026-10-08): compact sliced reads;
+  an admin store that reads only what is new plus a late tail; one
+  `violationState` (unrecorded / open / fixed) for chip and timeline;
+  incidents record `fixed` via `promises fix`. — see
+  `/decisions/promise-timeline`

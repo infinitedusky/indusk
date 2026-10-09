@@ -37,12 +37,12 @@ roadmap:
   - planner-promises
   - admin-plan-authoring
   - demo-app-template
-  - server-provisioning
-  - incident-recording
   - workbench-watch-provisioning
   - plan-premises
-  - contract-ui
   - promise-core
+# incident-recording, server-provisioning and contract-ui are children of
+# indusk-demo, declared in its master.md (2026-10-08) — one source of truth
+# per link, so they are not repeated here.
 ---
 
 # Master Plan
@@ -83,26 +83,32 @@ launch and for showing at Lazer. In order:
    landing installs the build and publishing is deliberate, a plan builds only after
    approval, the stash guard, the panel's endings, one process identity (by start time)
    and one hook table; the workbench items and the restart race stay in known-issues.
-2. **[demo-app-template](demo-app-template/brief.md)** — an app with real
+2. **[demo-app-template](archive/demo-app-template/brief.md)** — an app with real
    promises, marked through OTel, and a switch that breaks one on cue.
+   **Closed 2026-10-07.**
 3. **[incident-recording](archive/incident-recording/retrospective.md)** — the watcher runs
    by itself; a break becomes an incident and announces itself. **closed 2026-10-08**:
    the admin records a production break unasked, catchup records what it finds,
    open incidents stay loud, a reopened plan gets a worktree, and the running
    agent hears the break on its next prompt.
-4. **A VS Code extension** — promise markers on the code that carries each
+4. **vscode-extension** — promise markers on the code that carries each
    promise, live health from telemetry, "fix with Claude" on a break. The
-   break moment, where the fix happens. Not created yet.
-5. **plan-cockpit** (stage 1 of [contract-ui](contract-ui/brief.md)) —
-   promise views first (dashboard, broken first; the promise page with its
-   proof), then the plan page. Its mockup and draft are in
-   `apps/indusk-admin-mockup/`.
+   break moment, where the fix happens. Declared in the demo, not opened yet.
+5. **plan-cockpit** — stage 1 of the promise UI: the promise dashboard,
+   broken first; the promise page with its proof; the plan page as its two
+   workflows with the decision it is waiting on. The pages. Stage 2 is
+   [contract-ui](contract-ui/brief.md), the hierarchy above those pages,
+   after the launch; the two do not overlap. Mockups and draft briefs in
+   [`research/promise-ui/`](../research/promise-ui/README.md). Being opened.
 6. **Rehearse, record, launch** — "promise-driven development".
+
+Steps 2–6 are the children of [indusk-demo](indusk-demo/master.md), in that
+order, and its master is where their state is kept.
 
 After the launch: the Update button and project-behind notice, rename,
 server provisioning, promise DevTools (a window onto the same telemetry, not
-its own checks), then plan-premises and the contract hierarchy (contract-ui
-stage 2). Dawn 4, 5, 7 and 8 wait for adoption (Stream 3). One source of
+its own checks), then plan-premises and the contract hierarchy (contract-ui,
+stage 2, the demo's last child). Dawn 4, 5, 7 and 8 wait for adoption (Stream 3). One source of
 truth, several windows: the promise files and telemetry, read through the
 package; the editor, the admin and DevTools only show them.
 

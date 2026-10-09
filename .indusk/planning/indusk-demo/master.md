@@ -18,6 +18,7 @@ subplans:
   - plan-cockpit
   - demo-rehearsal
   - server-provisioning
+  - contract-ui
 ---
 
 # Demo — a new project, start to finish
@@ -28,8 +29,9 @@ subplans:
 > [incident-recording](../archive/incident-recording/retrospective.md) — the
 > admin records a production break unasked (16 s, nothing typed, on the real
 > server) and the running agent hears it. **The next step is the VS Code
-> extension**; after it, in order: plan-cockpit, the rehearsal. Server provisioning comes after the
-> launch. The sequence is the one the root
+> extension**; after it, in order: plan-cockpit (stage 1 of the promise UI),
+> the rehearsal. After the launch: server provisioning, then contract-ui
+> (stage 2: the hierarchy above stage 1's pages). The sequence is the one the root
 > [master](../master.md)'s "Now — show the promise loop" sets out; this file
 > is its demo-side copy and the one the admin's sidebar reads.
 
@@ -112,7 +114,7 @@ Made after reviewing the script against what is built (Sandy chose each).
 | 2 | [promise-timeline](../archive/promise-timeline/brief.md) | promises holding over time, and the chip rules both break steps end on — closed 2026-10-05 |
 | 3 | [admin-plan-authoring](../archive/admin-plan-authoring/brief.md) | "New plan" and "Build" in the UI, through the CLI — closed 2026-10-06 |
 | 4 | [demo-app-template](../archive/demo-app-template/brief.md) | a working app to promise about, deploy and break — closed 2026-10-07 |
-| 5 | [server-provisioning](../server-provisioning/brief.md) | one command gives a project its server — after the launch (2026-10-08) |
+| 5 | [server-provisioning](../archive/server-provisioning/brief.md) | `indusk server connect` and `server deploy`; the image published with each release — closed 2026-10-08, built ahead of order |
 | 6 | [planner-promises](../archive/planner-promises/brief.md) | the planner asks for promises — closed 2026-10-05 |
 | 7 | demo-rehearsal | record a dry run of the script end to end, fix what it trips on — after step 10 |
 
@@ -146,20 +148,29 @@ this file now carries it so the sidebar and the numbers agree.
   - **vscode-extension** — promise markers on the code that carries each
     promise, live health from telemetry, "fix with Claude" on a break. The
     break moment, where the fix happens.
-  - **plan-cockpit** — stage 1 of
-    [contract-ui](../contract-ui/brief.md): promise views first (the dashboard,
-    broken first; the promise page with its proof), then the plan page. Its
-    mockup and draft are in `apps/indusk-admin-mockup/`.
+  - **plan-cockpit** — stage 1 of the promise UI: the promise dashboard,
+    broken first and counted in the nav; the promise page with its proof;
+    the plan page as its two workflows with the decision it is waiting on.
+    The pages. Its mockup and draft brief are in
+    [`.indusk/research/promise-ui/`](../../research/promise-ui/README.md).
 - **demo-rehearsal follows plan-cockpit**: the dry run is recorded once the
   views it records exist.
 - **server-provisioning moves after the launch.** The demo's server already
   exists (step 0, deployed on Fly); one command per project is for the people
   the demo brings in, not for the recording. Its brief stays where it is.
-- **Build order is 4 → 8 → 9 → 10 → 7 → 5.** The step numbers stay as they
-  are, because other documents cite them.
+- **contract-ui joins the demo as stage 2 of the promise UI, after the
+  launch**: the home view as the hierarchy — premises above promises above
+  phases — opening onto stage 1's pages and changing nothing inside them;
+  plan documents as drill-down; every hand-set status derived or removed. It
+  waits for plan-premises, which gives it its top level. The two stages do
+  not overlap: a page is stage 1, the arrangement of pages is stage 2; its
+  [brief](../contract-ui/brief.md) says so.
+- **Build order is 4 → 8 → 9 → 10 → 7 → 5 → 11.** The step numbers stay as
+  they are, because other documents cite them.
 
 | # | Plan | What it adds to the demo |
 |---|---|---|
 | 8 | [incident-recording](../archive/incident-recording/retrospective.md) | the watcher runs by itself; a break becomes an incident and announces itself — closed 2026-10-08 |
 | 9 | vscode-extension | the break moment in the editor: markers, live health, "fix with Claude" — **next**, not opened yet |
-| 10 | plan-cockpit | the promise views: dashboard, promise page with its proof, then the plan page — not opened yet |
+| 10 | plan-cockpit | stage 1 of the promise UI: the dashboard, the promise page with its proof, the plan page — being opened |
+| 11 | [contract-ui](../contract-ui/brief.md) | stage 2: the home view as the hierarchy above stage 1's pages, statuses derived — after the launch, after plan-premises |
