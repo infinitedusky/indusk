@@ -17,7 +17,10 @@ export interface Session {
 	cadenceMs: number;
 	view: View | null;
 	lastLineAt: number | null;
-	/** Breaks already notified, by source, promise and trace, so each is told once. */
+	/**
+	 * Breaks already told, by source and promise: told once while the promise
+	 * stays broken there, however many violations or failed reads come between.
+	 */
 	told: Set<string>;
 }
 
@@ -37,10 +40,19 @@ export function onLine(
 ): { session: Session; notify: Break[] } {
 	const view: View = { line, notReading: false };
 	const current = breaks(view);
-	const key = (b: Break) => `${b.source}\0${b.promise}\0${b.traceId}`;
-	const notify = current.filter((b) => !s.told.has(key(b)));
+	const key = (source: string, promise: string) => `${source}\0${promise}`;
+	const notify = current.filter((b) => !s.told.has(key(b.source, b.promise)));
+	// A source that did not read this time keeps what it had told; one that
+	// read keeps only what is still broken, so a mended promise's next break is told.
+	const unread = new Set<string>(line.sources.filter((x) => !x.ok).map((x) => x.name));
+	const kept = [...s.told].filter((k) => unread.has(k.split("\0")[0] as string));
 	return {
-		session: { ...s, view, lastLineAt: now, told: new Set(current.map(key)) },
+		session: {
+			...s,
+			view,
+			lastLineAt: now,
+			told: new Set([...kept, ...current.map((b) => key(b.source, b.promise))]),
+		},
 		notify,
 	};
 }
