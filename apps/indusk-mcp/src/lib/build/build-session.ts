@@ -35,11 +35,13 @@ const UNATTENDED =
 export function stepPrompt(step: BuildStepName, plan: string): string {
 	switch (step) {
 		case "work":
-			return `/work ${plan}\n\n${UNATTENDED} Work the plan's open phases in order until every one is closed, then stop. Do not run /falsify, /cleanup or /retrospective.`;
+			return `/work ${plan}\n\n${UNATTENDED} Work the plan's open phases in order until every one is closed, then stop. Do not run /falsify, /cleanup, /audit or /retrospective.`;
 		case "falsify":
 			return `/falsify ${plan}\n\n${UNATTENDED} End the hunt yourself when you can form no further specific hypothesis; do not wait for confirmation.`;
 		case "cleanup":
 			return `/cleanup ${plan}\n\n${UNATTENDED} End the review yourself when nothing more is warranted; do not wait for confirmation.`;
+		case "audit":
+			return `/audit ${plan}\n\n${UNATTENDED} Write audit.md and end; its findings block nothing, so do not act on them.`;
 		case "retrospective":
 			return `/retrospective ${plan}\n\nThe plan has been accepted. Run the retrospective to the end; it lands the plan with \`indusk plans land ${plan}\`. ${UNATTENDED}`;
 	}

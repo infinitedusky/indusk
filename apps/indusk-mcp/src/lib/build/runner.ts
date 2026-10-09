@@ -14,7 +14,14 @@ import { type BuildPlan, type BuildStep, nextBuildStep, type StepOutcome } from 
  * promise: a-build-runs-to-review-unasked
  */
 
-export type BuildStepName = "work" | "falsify" | "cleanup" | "retrospective";
+export type BuildStepName = "work" | "falsify" | "cleanup" | "audit" | "retrospective";
+
+/** The steps the runner runs as a session; every other answer stops it. */
+type SessionStep = "work" | "falsify" | "cleanup" | "audit";
+
+function isSessionStep(s: BuildStep): s is Extract<BuildStep, { step: SessionStep }> {
+	return s.step === "work" || s.step === "falsify" || s.step === "cleanup" || s.step === "audit";
+}
 
 export interface RunnerDeps {
 	read: () => Promise<BuildPlan>;
@@ -29,7 +36,7 @@ export type RunnerUpdate =
 	| { kind: "stopped"; stop: RunnerStop };
 
 export type RunnerStop =
-	| Exclude<BuildStep, { step: "work" } | { step: "falsify" } | { step: "cleanup" }>
+	| Exclude<BuildStep, { step: SessionStep }>
 	| { step: "released" }
 	| { step: "release-failed"; why: string };
 
@@ -39,7 +46,7 @@ export async function runBuild(deps: RunnerDeps & { autoAccept: boolean }): Prom
 	for (;;) {
 		const before = await deps.read();
 		const next = nextBuildStep(before, { last, previous });
-		if (next.step !== "work" && next.step !== "falsify" && next.step !== "cleanup") {
+		if (!isSessionStep(next)) {
 			if (next.step === "review" && deps.autoAccept) {
 				const release = await runRelease(deps, "auto");
 				const stop: RunnerStop = release.released
