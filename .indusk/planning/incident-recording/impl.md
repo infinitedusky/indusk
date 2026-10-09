@@ -76,6 +76,8 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 | A29 | A pass run in a checkout that is not on a trunk branch (a plan worktree, or the trunk checked out on a feature branch) commits nothing to that branch: it says which branch and where to run it, and marks itself broken | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-production-break-is-recorded-unasked | apps/indusk-mcp/src/lib/promises/record.test.ts |
 | A30 | A session that starts after an incident was fixed is not told about it: the hook delivers only entries whose incident is still open | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/break-inbox-hook.test.ts |
 | A31 | A session that starts after a break and N daily reminders of the same open incident is told once about that incident, not N+1 times | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/break-inbox-hook.test.ts |
+| A32 | An incident's age is worded by one function, and `indusk promises status` and the admin's incidents table say the same age in the same words | Build Phase 9 | Build Phase 9 | planned | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/promises-single-definition.test.ts, apps/indusk-mcp/src/lib/promises/age.test.ts |
+| A33 | The break-inbox hook reads the inbox through `_inbox.js`, the one port of `lib/promises/inbox.ts`, and A18, A30 and A31 still hold through it | Build Phase 9 | Build Phase 9 | planned | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/hook-shared-modules.test.ts, apps/indusk-mcp/src/__tests__/break-inbox-hook.test.ts |
 
 ## Checklist
 
@@ -348,6 +350,34 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 #### Build Phase 8 Document
 
 - [x] `apps/docs/src/decisions/incident-recording.md` and `apps/docs/src/reference/cli/promises.md` (`watch`): a pass commits only on the trunk and finishes what an earlier pass left; `apps/docs/src/guide/multi-agent.md` ("When a promise breaks"): a new session hears each open incident once; changelog Fixed
+
+### Build Phase 9: Cleanup — one age, one inbox port, the writer's commit half, the incidents table
+
+**Goal**: decompose what this plan grew across files: a rule written twice in two packages (an incident's age), a hook carrying an unpinned copy of a library module (the inbox, now with Build Phase 8's delivery rule in both), the writer's commit half sharing a file with the pass, and the incidents table grown inside a 630-line component file. Bases: one definition per shared rule (the admin reuses the package, never a copy), the hooks' one-port-per-module rule (`hooks/CLAUDE.md`), one reason to change per module, and react's one component per file.
+
+**Scanned:** `listOversizedChangedFiles` against `main` flagged `changelog.md` (1012), `reference/cli/promises.md` (741), `Promises.tsx` (630), `bin/commands/promises.ts` (416) and `lib/promises/record.ts` (409, new); 59 files changed, +3562/−79.
+
+- [ ] Extract `formatAge` (`bin/commands/promises.ts`) and `ageLabel` (`indusk-admin/src/components/Promises.tsx`), the same eight lines, into `lib/promises/age.ts` — a module with no filesystem import, because the admin's incidents table renders in browser tests that externalize `node:fs` — exported as `./promises/age`; both callers import it, and `promises-single-definition.test.ts` pins one definition (A32)
+- [ ] Move the break-inbox hook's inbox reading — `readLines`, the per-session delivered set, the open filter and the fold to one entry per incident — into `hooks/_inbox.js`, the port of `lib/promises/inbox.ts`, taking the open check as an argument as `undelivered` does; `break-inbox.js` keeps the event, the incident-file lookup and the output. Add it to `hooks/CLAUDE.md`'s port list and to the count `hook-shared-modules.test.ts` pins; `.claude/hooks/` resynced (A33)
+- [ ] Extract the writer's commit half from `lib/promises/record.ts` into `lib/promises/record-commit.ts`: `commitRecorded`, `recordedPaths`, the pending pair and `PENDING_FILE`, `commitMessage`, `topLevel` — committing on the trunk and finishing what earlier passes left is its own reason to change; `record.ts` keeps the lock, the pass, the machine's record and the mark. Parity: `record.test.ts` unchanged and green
+- [ ] Extract `IncidentsTable`, `IncidentOwner` and `incidentStatus` from `indusk-admin/src/components/Promises.tsx` into `components/IncidentsTable.tsx` — react's one component per file, and the unit this plan grew; `Promises.tsx` imports it. Parity: `Promises.incidents.test.tsx` and `Promises.heard.test.tsx` unchanged and green, and every browser test rendering it mocks what it imports
+- [ ] (reviewed `lib/promises/heard.ts`'s reader — left as-is: it and `inbox.ts`'s `readLines` read JSON lines with deliberately different policies, the heard record a count that skips a torn line, the inbox a delivery that says one; sharing the dozen lines would put a policy flag on a reader to save less than it costs)
+- [ ] (reviewed `bin/commands/promises.ts` — left as-is after `formatAge` moves: one command module, each verb a function, the open-incident lines beside `status` that prints them)
+- [ ] (reviewed `hooks/break-inbox.js`'s `incidentIsOpen` — left as-is: the only implementation of the open check; `undelivered` takes it as an input by design, since the library resolves a registry its own way, so there is no second copy to merge)
+- [ ] (reviewed `lib/admin/recorder-loop.ts`, `apps/indusk-admin/src/instrumentation.ts`, `lib/promises/{inbox,reminders,slack}.ts`, `lib/worktree/plan-worktree-commands.ts`, `lib/worktree/plan-worktrees.ts` — left as-is: each under its cap and one unit; the loop and its composition are split across the package line on purpose, the admin composing and the package writing)
+- [ ] (reviewed `changelog.md` and `reference/cli/promises.md` — left as-is: long by nature, one entry or one command per section)
+
+#### Build Phase 9 Verification
+
+- [ ] A32, A33 pass; behaviour parity holds (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises src/__tests__/promises-single-definition.test.ts src/__tests__/hook-shared-modules.test.ts src/__tests__/break-inbox-hook.test.ts src/__tests__/hook-sync-parity.test.ts && cd ../indusk-admin && pnpm exec tsc --noEmit -p . && pnpm exec vitest run src/components/Promises`)
+
+#### Build Phase 9 Context
+
+- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: `_inbox.js` in the list of ports; admin `CLAUDE.md`: an incident's age comes from `promises/age`
+
+#### Build Phase 9 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the incidents table's age is the CLI's wording, from one function; changelog Changed
 
 ## Files Affected
 
