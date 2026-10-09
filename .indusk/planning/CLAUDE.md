@@ -133,9 +133,12 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   context; merge and delete fast. — see `/reference/skills/work`
 - **Close-out rituals**: `/work` → `/falsify` (authors a Falsification Phase)
   → `/work` → `/cleanup` (authors a Cleanup Phase; its threshold is
-  attention-focus, not a cap) → `/work` → `/retrospective`, whose Step 0 blocks
-  unless both rituals are terminal or skipped with a reason. Ritual phases are
-  detected by titles that START with the ritual word. The retrospective
+  attention-focus, not a cap) → `/work` → `/audit` (a fresh reader writes
+  `audit.md`; advisory) → `/retrospective`, whose Step 0 blocks unless both
+  rituals are terminal or skipped with a reason and `audit.md` exists or the
+  impl carries `audit: skipped` + `audit_reason` — the file's existence is
+  read, never its content. Ritual phases are detected by titles that START
+  with the ritual word. The retrospective
   confirms the plan's promises (`indusk promises confirm <plan>`) before it
   archives; a declared promise no passing row names blocks the close. — see
   `/decisions/falsification-ritual`, `/reference/skills/retrospective`
