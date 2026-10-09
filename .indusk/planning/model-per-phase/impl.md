@@ -1,7 +1,7 @@
 ---
 title: "model-per-phase — each phase on its tier's model, each boundary a new session"
 date: 2026-10-09
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -47,13 +47,13 @@ Build each phase on the model its tier names in the config, without anyone switc
 | A2 | A phase whose plan names a tier is built on the model the config gives that tier | Build Phase 1 | Build Phase 1 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
 | A3 | Changing a tier's model in the config changes the model the next phase is built on, with no plan edited | Build Phase 1 | Build Phase 1 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
 | A4 | A project whose config names no tiers builds every phase on the session's own model, as today | Build Phase 1 | Build Phase 1 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
-| A5 | Claude Code runs a phase handed to it on the named model, observed once against the real `claude` | Build Phase 2 | Build Phase 2 | planned | live check | promise: each-phase-runs-on-its-model | .indusk/planning/model-per-phase/impl.md (the result, recorded under Build Phase 2) |
+| A5 | Claude Code runs a phase handed to it on the named model, observed once against the real `claude` | Build Phase 2 | Build Phase 2 | passing | live check | promise: each-phase-runs-on-its-model | .indusk/planning/model-per-phase/impl.md (the result, recorded under Build Phase 2) |
 | A6 | An impl that gives a phase a tier other than its step's default, with no reason, is refused, naming the phase | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
 | A7 | The same impl with a reason is accepted; a tier that is not one of strong, med, weak or baby is refused, naming it | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
 | A8 | A phase whose tests still fail after three attempts on `med` stops and names `strong` as the tier to run it on | Build Phase 1 | Build Phase 2 | passing | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
 | A9 | A phase already on `strong` that fails three times stops as a blocker, as today, naming no higher tier | Build Phase 1 | Build Phase 2 | passing | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
-| A10 | Approving a plan ends by naming `/work <plan>` to run in a new session | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
-| A11 | Closing a phase ends by naming the command for the next phase, or `/falsify` after the last build phase | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/lib/models/next-session.test.ts |
+| A10 | Approving a plan ends by naming `/work <plan>` to run in a new session | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
+| A11 | Closing a phase ends by naming the command for the next phase, or `/falsify` after the last build phase | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/lib/models/next-session.test.ts |
 | A12 | A phase run on its own tier still records where it began, in the same shape Shape and verify read | Test Phase 1 | Test Phase 1 | passing | unit | promise: phase-boundary-record-never-malformed | apps/indusk-mcp/src/lib/shape/boundary.test.ts |
 
 ## Checklist
@@ -140,26 +140,29 @@ Build each phase on the model its tier names in the config, without anyone switc
 
 **Goal**: nobody switches models or decides when to start a new session; the system does the first and says the second.
 
-- [ ] `lib/models/next-session.ts`: `nextSession(plan, implBody)` returns the next command. That's `/work <plan>` with the open phase's tier, or `/falsify`, `/cleanup` or `/retrospective` in the close-out order.
-- [ ] `indusk plans next-session <plan>` prints it, and the `plans approve` message ends with it
-- [ ] `skills/work.md`:
+- [x] `lib/models/next-session.ts`: `nextSession(plan, implBody)` returns the next command. That's `/work <plan>` with the open phase's tier, or `/falsify`, `/cleanup` or `/retrospective` in the close-out order.
+- [x] `indusk plans next-session <plan>` prints it, and the `plans approve` message ends with it
+- [x] `skills/work.md`:
   - **Running a phase:** before each phase, run `indusk plans model <plan> --phase <ref>`. When it names a model, hand the phase to an Agent with that `model`, passing the plan path and the phase. When it says `session`, work in place, as today. The subagent records the phase start, as today.
   - **Three misses:** after three failed verification attempts, ask `nextTier`. When it names a tier, stop and name it. When it answers `blocker`, flag the blocker, as today.
   - **Closing a phase:** end by printing `indusk plans next-session <plan>`.
-- [ ] A5, a live check: `/work` hands one phase of a scratch plan to an Agent with `model: "haiku"`. Record the model the subagent reports. If it isn't honoured, change the skill to print the `/model` switch instead, and record that here.
-- [ ] Run `indusk update` so `.claude/skills/work.md` takes the package's copy
+- [x] A5, a live check: `/work` hands one phase of a scratch plan to an Agent with `model: "haiku"`. Record the model the subagent reports. If it isn't honoured, change the skill to print the `/model` switch instead, and record that here.
+  - **A5 result (2026-10-09):** an Agent called with `model: "haiku"` reported `claude-haiku-5-5`. The Agent's `model` is honoured, so the skill hands phases to a subagent and does not fall back to printing `/model`.
+- [x] Run `indusk update` so `.claude/skills/work.md` takes the package's copy
 
 #### Build Phase 2 Verification
 
-- [ ] A8–A11 pass and A5 is recorded (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/models/ src/__tests__/plans-approve.test.ts`); tsc and biome clean
+- [x] A8–A11 pass and A5 is recorded (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/models/ src/__tests__/plans-approve.test.ts`); tsc and biome clean
+
+- [x] Shape review of this phase (`next-session.ts`): nothing found; `nextSession` is pure and `nextSessionForPlan` is the one place it meets the disk.
 
 #### Build Phase 2 Context
 
-- [ ] root (Conventions): one line, "phases name a tier, the config names the model; start a new session at each boundary `plans next-session` names". It's always-on because it changes how every session starts and ends.
+- [x] root (Conventions): one line, "phases name a tier, the config names the model; start a new session at each boundary `plans next-session` names". It's always-on because it changes how every session starts and ends.
 
 #### Build Phase 2 Document
 
-- [ ] `reference/skills/work.md`: a phase per subagent on its tier's model, the three-miss escalation, and the next-session line; changelog `[Unreleased]`
+- [x] `reference/skills/work.md`: a phase per subagent on its tier's model, the three-miss escalation, and the next-session line; changelog `[Unreleased]`
 
 ## Files Affected
 
