@@ -1,7 +1,7 @@
 ---
 title: "VS Code extension — Test Plan"
 date: 2026-10-08
-status: draft
+status: accepted
 ---
 
 # VS Code extension — Test Plan
