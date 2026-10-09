@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
-import { isCleanupSkipped } from "../cleanup/gate.js";
+import { isAuditSkipped, isCleanupSkipped } from "../cleanup/gate.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
 import { type ImplPhase, parseImplString } from "../impl-parser-core.js";
 import { RITUAL_ORDER } from "../lifecycle.js";
@@ -57,8 +57,8 @@ export interface Review {
 	/** Changed against the trunk branch since the plan's branch left it; empty when the plan has no worktree. */
 	files: Array<{ path: string; status: string }>;
 	skips: ReviewSkip[];
-	/** Falsification or cleanup skipped by the plan's frontmatter, with the reason given. */
-	skippedRituals: Array<{ ritual: "falsification" | "cleanup"; reason: string }>;
+	/** A close-out ritual (falsification, cleanup, audit) skipped by the plan's frontmatter, with the reason given. */
+	skippedRituals: Array<{ ritual: "falsification" | "cleanup" | "audit"; reason: string }>;
 	/**
 	 * Uncommitted work on the trunk, outside InDusk's own bookkeeping, on paths
 	 * the plan's merge will touch — the person's to sort out before accepting,
@@ -114,6 +114,7 @@ export async function buildReview(anyCheckout: string, plan: string): Promise<Re
 		skippedRituals: [
 			{ ritual: "falsification" as const, check: isFalsificationSkipped(implText) },
 			{ ritual: "cleanup" as const, check: isCleanupSkipped(implText) },
+			{ ritual: "audit" as const, check: isAuditSkipped(implText) },
 		]
 			.filter((r) => r.check.skipped)
 			.map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" })),
