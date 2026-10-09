@@ -1,3 +1,8 @@
+import { bookkeepingRoots } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
+import {
+  type HeardRow,
+  readHeard,
+} from "@infinitedusky/indusk-mcp/promises/heard";
 import {
   type ReadRegistryResult,
   type Registry,
@@ -19,6 +24,26 @@ export type ProjectPromises = ReadRegistryResult;
 
 export function readProjectPromises(projectRoot: string): ProjectPromises {
   return readPromises(projectRoot);
+}
+
+/**
+ * What this machine's recorder heard for the project (incident-recording,
+ * ADR D6), from its home, and when it last heard anything — the promise
+ * page's counts. Read through the package, never a second reader.
+ */
+export function readProjectHeard(projectRoot: string): HeardRecord {
+  const rows = readHeard(bookkeepingRoots(projectRoot).home);
+  const lastHeard = rows.reduce<string | null>(
+    (latest, r) => (latest === null || r.at > latest ? r.at : latest),
+    null,
+  );
+  return { rows, lastHeard };
+}
+
+export interface HeardRecord {
+  rows: HeardRow[];
+  /** The newest violation the record holds, ISO; null when it holds none. */
+  lastHeard: string | null;
 }
 
 /**

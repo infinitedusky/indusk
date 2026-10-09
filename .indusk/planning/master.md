@@ -86,9 +86,11 @@ launch and for showing at Lazer. In order:
 2. **[demo-app-template](archive/demo-app-template/brief.md)** — an app with real
    promises, marked through OTel, and a switch that breaks one on cue.
    **Closed 2026-10-07.**
-3. **[incident-recording](incident-recording/brief.md)** — the watcher runs
-   by itself; a break becomes an incident and announces itself. **Next**
-   (2026-10-08).
+3. **[incident-recording](archive/incident-recording/retrospective.md)** — the watcher runs
+   by itself; a break becomes an incident and announces itself. **closed 2026-10-08**:
+   the admin records a production break unasked, catchup records what it finds,
+   open incidents stay loud, a reopened plan gets a worktree, and the running
+   agent hears the break on its next prompt.
 4. **vscode-extension** — promise markers on the code that carries each
    promise, live health from telemetry, "fix with Claude" on a break. The
    break moment, where the fix happens. Declared in the demo, not opened yet.

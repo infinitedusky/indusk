@@ -58,8 +58,9 @@ by discipline.
 
 ## 3. Hooks enforce what discipline won't
 
-Eight hooks ship. Five are PreToolUse gates that run before a write or a
-command and refuse; three are PostToolUse and act after the fact:
+Nine hooks ship. Five are PreToolUse gates that run before a write or a
+command and refuse; three are PostToolUse and act after the fact; one runs on
+every prompt:
 
 | Hook | Refuses |
 |---|---|
@@ -71,6 +72,7 @@ command and refuse; three are PostToolUse and act after the fact:
 | `eval-trigger` | *(PostToolUse)* — nothing; on every `git commit` it spawns the evaluator that scores the diff, and in a multi-repo workbench it refuses to guess which repo the commit belongs to |
 | `workbench-sync` | *(PostToolUse)* — nothing; commits workbench context after edits |
 | `gate-reminder` | *(PostToolUse, advisory)* — nothing; when an edit closes a phase it puts the next phase's tests-to-author in front of the agent as additional context |
+| `break-inbox` | *(UserPromptSubmit)* — nothing; on every prompt it puts each production break the recorder wrote down since the last turn, and each daily reminder of an incident still open, in front of the agent, once. See [When a promise breaks](/guide/multi-agent#when-a-promise-breaks) |
 
 These are not linting. They block the edit. An agent that wants to mark a phase
 done with a red test simply cannot.

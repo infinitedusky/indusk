@@ -14,7 +14,7 @@ are about keeping the two lanes in step.
   they must exist in `.claude/hooks/` or the importer dies at load
   (`globSync("*.js")` copies them). Each mirrors exactly ONE `src/lib` module
   (`_impl-headings.js`, `_trajectory-parser.js`, `_impl-phases.js`,
-  `_hook-paths.js`), pinned by count — "change the TS and every port together"
+  `_hook-paths.js`, `_inbox.js` ← `lib/promises/inbox.ts`), pinned by count — "change the TS and every port together"
   is checkable by reading two filenames. `check-gates.js` mirrors the terminal
   state set inline, deliberately.
 - **Hook commands are registered by the project root, never relative to the
@@ -54,3 +54,7 @@ are about keeping the two lanes in step.
   lesson on its own line (`lesson: <name>`): its own string, or directly after
   a `\n` — the scan reads nothing else, and `context-tiers-register.test.ts`
   fails any register enforcer row whose file it cannot read.
+- **`break-inbox.js` runs on every prompt** (`UserPromptSubmit`, no matcher):
+  it reads two small files in the project's home (`projectHome` from
+  `_hook-paths.js`) and exits; it never blocks and never grows a second read.
+  Nothing to say is exit 0 with no output.

@@ -1,8 +1,9 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { confirmPlan } from "../lib/promises/confirm.js";
-import { promiseHealth } from "../lib/promises/health.js";
+import { openIncidentsAt, promiseHealth } from "../lib/promises/health.js";
 import { WatcherBlind } from "../lib/promises/probe.js";
+import { recordBreaks } from "../lib/promises/record.js";
 import { readPromises } from "../lib/promises/registry.js";
 import {
 	changePromise,
@@ -199,6 +200,9 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 									// state, so a session can say so rather than "unreachable".
 									...(err instanceof WatcherBlind ? { blind: true } : {}),
 									promises: null,
+									// The incidents are files: nobody could look at Jaeger, and
+									// the open incidents are still loud (incident-recording A10).
+									openIncidents: openIncidentsAt(projectRoot),
 								},
 								null,
 								2,
@@ -207,6 +211,33 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 					],
 				};
 			}
+		},
+	);
+
+	// Catchup records what it finds through this tool, rather than telling
+	// the person to run `watch`.
+	// promise: catchup-records-what-it-finds
+	server.registerTool(
+		"record_breaks",
+		{
+			description:
+				"Record what nobody has recorded: every production violation no incident holds becomes an incident, committed on the trunk, and its owning plan is reopened with a Maintenance phase. The same writer the admin's recorder and `indusk promises watch` use. Call it from catchup when `promise_health` reports unrecorded production violations, and report what it opened. A project that names no production source (`promises.jaeger`) is refused: a local break is work in progress.",
+			inputSchema: {},
+		},
+		async () => {
+			const result = await recordBreaks(projectRoot, { by: "catchup", source: "deployed" });
+			const summary = {
+				opened: result.opened.map(({ id, promise, owner }) => ({ id, promise, owner })),
+				extended: result.extended.map(({ id, promise, owner }) => ({ id, promise, owner })),
+				unowned: result.unowned.map(({ id, promise, owner }) => ({ id, promise, owner })),
+				committed: result.committed,
+				...(result.refused ? { refused: result.refused } : {}),
+				...(result.error ? { error: result.error.message } : {}),
+			};
+			return {
+				...(result.refused || result.error ? { isError: true } : {}),
+				content: [{ type: "text" as const, text: JSON.stringify(summary, null, 2) }],
+			};
 		},
 	);
 }

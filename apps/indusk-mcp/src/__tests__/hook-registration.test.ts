@@ -119,8 +119,9 @@ describe("A24 — init and update register hooks from one table", () => {
 		expect(table, "lib/hook-command.ts exports HOOK_REGISTRATIONS").toBeDefined();
 		expect([...new Set((table ?? []).map(([, , file]) => file))].sort()).toEqual(registered);
 		for (const [event, matcher] of table ?? []) {
-			expect(["PreToolUse", "PostToolUse"]).toContain(event);
-			expect(matcher).toMatch(/^(Edit\|Write|Bash)$/);
+			expect(["PreToolUse", "PostToolUse", "UserPromptSubmit"]).toContain(event);
+			// A prompt hook takes no matcher (incident-recording); a tool hook names one.
+			expect(matcher).toMatch(event === "UserPromptSubmit" ? /^$/ : /^(Edit\|Write|Bash)$/);
 		}
 	});
 

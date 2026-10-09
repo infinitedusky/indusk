@@ -146,11 +146,23 @@ local, and do not put it ahead of the roadmap. A source whose entry says
 `ok: false` is said on its own line — "production could not be reached
 (https://…)" — never left out and never shown as zero.
 
-**Open violations outrank the roadmap.** When the user asks what is next, say
-the unrecorded violations first, by name, before any plan or roadmap item. A
-promise is a commitment the system made and is now breaking; the next feature
-can wait a sentence. Run `indusk promises watch` to record them as incidents,
-which also reopens each owning plan with a Maintenance phase.
+**Record what nobody recorded.** When a production source reports
+unrecorded violations, call `record_breaks` yourself: it records each as an
+incident, commits it on the trunk, and reopens the owning plan with a
+Maintenance phase — the same writer the admin's recorder uses, so it records
+only what the admin did not. Then say what it opened: each incident's id, its
+promise and the plan it reopened. A violation only under `local` is work in
+progress and is not recorded.
+
+**Open incidents and open violations outrank the roadmap.** `promise_health`
+also lists `openIncidents`, each with how long it has been open (`ageMs`) and
+whether its owner carries its Maintenance phase. When the user asks what is
+next, say the open incidents first, each with its age and its owner's phase —
+oldest first, and any whose owner carries no phase named as such — then any
+violations still unrecorded, before any plan or roadmap item. A promise is a
+commitment the system made and is breaking; the next feature can wait a
+sentence. The incidents are files, so they are listed even when no Jaeger can
+be read.
 
 If the tool reports an error, or the top level has `promises: null` with an
 `error` (production could not be read beside a local that answered), say so — "health unknown, Jaeger at X could not
@@ -199,7 +211,7 @@ After completing all steps, present a brief summary to the user:
 - Skills: N installed [list names]
 - Extensions: N enabled [list names]
 - Active plans: [list with current phase] (M inactive omitted)
-- Promises: [N with unrecorded violations, named — or "all quiet" / "health unknown since …"]
+- Promises: [open incidents with their ages and owners' phases; what `record_breaks` opened this catchup; any violations still unrecorded — or "all quiet" / "health unknown since …"]
 
 Ready to pick up. What would you like to do?
 ```

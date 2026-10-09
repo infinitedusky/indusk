@@ -92,7 +92,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   `/reference/admin-ui/overview`
 - **Worktree-per-plan is the default**: Phase 1 opens with `indusk worktree
   create <plan>` (records the assignment; the landing releases it); opt out
-  with `worktree: none` in impl frontmatter. — see `/reference/cli/worktree`
+  with `worktree: none` in impl frontmatter. A plan an incident reopened from
+  the archive is worked the same way, `indusk worktree create <plan>`; a closed
+  plan reopens only through an incident, never through `worktree create`.
+  — see `/reference/cli/worktree`
 - **A plan is written on its own branch, by convention**: `indusk plans start
   <type> <name>` writes its documents in its worktree only; `plans approve`
   checks the brief and merges them to the trunk; `plans land` refuses a plan

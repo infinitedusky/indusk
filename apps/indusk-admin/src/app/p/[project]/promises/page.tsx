@@ -17,7 +17,11 @@ import {
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { readAdminRefreshMs } from "@/lib/project-reader";
 import { readTimelineView } from "@/lib/promise-timeline";
-import { readProjectPromises, registryOf } from "@/lib/promises-reader";
+import {
+  readProjectHeard,
+  readProjectPromises,
+  registryOf,
+} from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 import { parseWindow } from "@/lib/timeline-strip";
 
@@ -127,6 +131,7 @@ export default async function PerProjectPromisesPage({
           observed={observed}
           timelines={timelines}
           timelinePath={`/p/${project}/promises`}
+          heard={readProjectHeard(projectPath)}
         />
       )}
     </div>

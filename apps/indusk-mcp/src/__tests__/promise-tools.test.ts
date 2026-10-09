@@ -22,6 +22,8 @@ const PROMISE_TOOLS = [
 	"withdraw_promise",
 	"confirm_promises",
 	"promise_health",
+	// incident-recording: catchup's recorder, through the one writer.
+	"record_breaks",
 ];
 
 type Register = (server: McpServer, projectRoot: string) => void;
@@ -47,7 +49,7 @@ async function loadPromiseTools(): Promise<Register | null> {
 }
 
 describe("planner-promises A44 — the promise tools have their own module", () => {
-	it("the plan tools are the plan tools, and the promise tools' module registers the seven", async () => {
+	it("the plan tools are the plan tools, and the promise tools' module registers the eight", async () => {
 		expect(names(registerPlanTools)).toEqual(PLAN_TOOLS);
 		const registerPromiseTools = await loadPromiseTools();
 		expect(
@@ -57,7 +59,7 @@ describe("planner-promises A44 — the promise tools have their own module", () 
 		expect(names(registerPromiseTools as Register)).toEqual(PROMISE_TOOLS);
 	});
 
-	it("together they offer exactly the eleven tools the plan tools offered before the move", async () => {
+	it("together they offer exactly the plan tools and the promise tools, nothing lost in the move", async () => {
 		const registerPromiseTools = (await loadPromiseTools()) ?? (() => {});
 		const all = [...names(registerPlanTools), ...names(registerPromiseTools)].sort();
 		expect(all).toEqual([...PLAN_TOOLS, ...PROMISE_TOOLS].sort());
