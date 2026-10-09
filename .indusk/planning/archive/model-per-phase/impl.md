@@ -8,6 +8,8 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+accepted: 2026-10-09T17:10:04.136Z
+accepted_by: person
 ---
 
 # model-per-phase — each phase on its tier's model, each boundary a new session
