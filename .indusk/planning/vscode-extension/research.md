@@ -79,6 +79,9 @@ defaults, each to be corrected if wrong:
   the project, the break's facts in its first message. It does not record the
   incident or reopen the plan itself; Claude does that through the CLI, as the
   incident-recording work defines.
+- **Ten seconds, not a minute** (Sandy, 2026-10-08): the admin reads every
+  five seconds (`admin.refresh_ms`), so the editor does too, and a break shows
+  within two reads of becoming readable from its source.
 - **The editor only shows.** It writes nothing to the project.
 - **Shipped with InDusk as a `.vsix`**, installed by an `indusk` command into
   VS Code and Cursor. The Marketplace waits until after the launch.

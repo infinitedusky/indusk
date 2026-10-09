@@ -11,7 +11,7 @@ workflow: feature
 
 1. **A production break reaches a working fix fast.**
    - Measure: on the rehearsal recording, the time from a production break to `claude` working on it in the editor.
-   - Look: at demo-rehearsal, step 7 of the demo; under a minute expected.
+   - Look: at demo-rehearsal, step 7 of the demo; under fifteen seconds expected, the editor reading every five seconds as the admin does.
 
 2. **Developers see promises while they code, not only when one breaks.**
    - Measure: asked of the first developers who join after the launch, whether the markers changed what they did before a break.
@@ -25,7 +25,7 @@ workflow: feature
 
 2. **`the-editor-shows-the-same-health-as-the-admin`** (structure). A promise's state in the editor is the one the admin and `indusk promises status` report, for each source, from one reader, never computed separately.
 
-3. **`a-break-reaches-the-editor`** (state). A promise broken in production shows in the open editor within a minute, at the line that keeps it, without a reload.
+3. **`a-break-reaches-the-editor`** (state). A broken promise shows in the open editor within ten seconds of the break being readable from its source, at the line that keeps it, without a reload.
 
 4. **`a-break-opens-a-fix-in-one-click`** (state). From a broken promise, one action starts the developer's own `claude` in the project with the promise, its symptom, its trace link and its tests already given.
 
