@@ -10,13 +10,13 @@ After `/cleanup`, before `/retrospective`: `/work` → `/falsify` → `/work` �
 
 [`indusk plans audit-inputs <plan>`](/reference/cli/plans#plans-audit-inputs-name-approved-sha) prints, and the skill passes on, only:
 
-- the brief, the test plan and the ADR;
+- the brief, the test plan and the ADR, as they stand now (not as approved — an ADR edited during the build reaches the reader edited);
 - the impl **as it was merged at approval**, named by a `<sha>:<file>` path the reader opens with `git show` (or reads from the text), never the working file, so the falsification and cleanup phases the builder appended since are not in it;
-- the trajectory table as it stands, every row in its final state;
+- the trajectory table as it stands, every row in its final state — including rows falsification and cleanup added, whose text is the builder's findings;
 - the branch's diff against the trunk, without anything under `.indusk/` (the builder's notes live there);
 - a `--stat` of the files the plan changed, and a `tree` of every tracked file.
 
-Nothing from the session's conversation, `research.md`, `current.md`, or the builder's own findings. A second reader that has read the first reader's notes is not a second reader.
+Nothing from the session's conversation, `research.md` or `current.md`, and none of the falsification and cleanup phases' notes. Two leaks remain, named above: the documents as they stand and the later trajectory rows. A second reader that has read the first reader's notes is not a second reader, so these are the follow-up's to close.
 
 ## The Model
 
