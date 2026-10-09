@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import * as vscode from "vscode";
 import { type Activity, activityLines, addRuns, type Run, startActivity } from "./core/activity.js";
 import { panelModel } from "./core/panel.js";
@@ -43,7 +43,10 @@ export function registerPromisesPanel(
 	const render = async () => {
 		if (!panelView) return;
 		const { model, activity: lines } = await current();
-		void panelView.webview.postMessage({ type: "render", body: panelBody(model, lines) });
+		void panelView.webview.postMessage({
+			type: "render",
+			body: panelBody(model, lines, basename(root)),
+		});
 	};
 	const openLocation = async (path: string, line: number | null) => {
 		const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(join(root, path)));

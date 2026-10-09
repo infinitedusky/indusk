@@ -7,7 +7,11 @@ import type { Location, PanelModel, PanelPromise } from "./panel.js";
  * is escaped: symptoms and reasons come from spans.
  */
 
-export function panelBody(model: PanelModel, activity: string[]): string {
+export function panelBody(model: PanelModel, activity: string[], project = ""): string {
+	// Every window reads its own project's promises; the name says whose they are.
+	const title = project
+		? `<p class="project" title="The project this window has open">${esc(project)}</p>`
+		: "";
 	const reading = model.notReading ? `<p class="note">Not reading: no promise health yet.</p>` : "";
 	const broken =
 		model.broken.length > 0
@@ -17,7 +21,7 @@ export function panelBody(model: PanelModel, activity: string[]): string {
 	const runs = `<h2>Activity</h2><ol class="activity">${activity
 		.map((l) => `<li class="${/ broke /.test(l) ? "broke" : "held"}">${esc(l)}</li>`)
 		.join("")}</ol>`;
-	return `${reading}${broken}${rest}${runs}`;
+	return `${title}${reading}${broken}${rest}${runs}`;
 }
 
 function card(p: PanelPromise): string {
@@ -86,6 +90,7 @@ a{color:var(--vscode-textLink-foreground);text-decoration:none}
 a:hover{text-decoration:underline}
 button{margin:6px;color:var(--vscode-button-foreground);background:var(--vscode-button-background);border:0;padding:4px 10px;border-radius:2px;cursor:pointer}
 .note{color:var(--vscode-descriptionForeground)}
+.project{font-weight:600;font-size:13px;margin:10px 0 0}
 .activity{list-style:none;padding:0;margin:0;max-height:40vh;overflow-y:auto;font-family:var(--vscode-editor-font-family);font-size:12px}
 .activity li{padding:1px 0}
 .activity li.broke{color:var(--vscode-errorForeground)}
