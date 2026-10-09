@@ -1,7 +1,7 @@
 ---
 title: "model-per-phase — each phase on its tier's model, each boundary a new session"
 date: 2026-10-09
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
