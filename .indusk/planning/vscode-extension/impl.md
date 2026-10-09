@@ -247,8 +247,8 @@ Investigated, with no hypothesis formed: the token grammar (lowercase names only
 - [x] `promisesHealth` re-reads the registry before each line, keeping the last good one when a read is partial mid-edit; a read that throws is caught and the loop goes on, so one bad read never ends the reader (A17)
 - [x] The session remembers each break by source and promise while it stays broken in a source that read; a source that did not read keeps what it had; a promise that stops being broken is forgotten, so its next break is told (A18)
 - [x] `core/reader.ts`: the reader's lifecycle behind a spawn seam — restart once, then stop with a message naming the reason (`not found` for a spawn error, else the child's last stderr line); `extension.ts` uses it; no restart after dispose. `hover` with no line yet says "not reading", as the marker does (A19)
-- [ ] `fixAction` strips control characters from every fact and joins each to one line before quoting (A20)
-- [ ] `hover` escapes Markdown in text from spans and sources (symptom, reason) and in the statement (A21)
+- [x] `fixAction` strips control characters from every fact and joins each to one line before quoting (A20)
+- [x] (the signs that make a link, emphasis, code or HTML; line-start signs left, since these texts never start a line — escaping `.` too broke A4's sentence) `hover` escapes Markdown in text from spans and sources (symptom, reason) and in the statement (A21)
 - [ ] `markers` takes the project's root and the nested project roots under it; a file outside the root or under a nested root gets no marker. `extension.ts` finds nested roots by `.indusk/config.json` below the root, once at activation (A22)
 - [ ] A4's `Test` cell names `apps/vscode-extension/src/core/markers.test.ts`, where its test lives; it named a `hover.test.ts` that does not exist, which `promises confirm` would refuse at close
 
