@@ -143,6 +143,14 @@
 			"types": "./dist/lib/promises/timeline.d.ts",
 			"default": "./dist/lib/promises/timeline.js"
 		},
+		"./promises/store": {
+			"types": "./dist/lib/promises/store.d.ts",
+			"default": "./dist/lib/promises/store.js"
+		},
+		"./promises/health": {
+			"types": "./dist/lib/promises/health.d.ts",
+			"default": "./dist/lib/promises/health.js"
+		},
 		"./promises/incidents": {
 			"types": "./dist/lib/promises/incidents.d.ts",
 			"default": "./dist/lib/promises/incidents.js"

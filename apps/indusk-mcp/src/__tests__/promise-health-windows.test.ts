@@ -38,17 +38,18 @@ function mark(
 function fixture() {
 	const p = promiseProject({
 		promises: [
-			behaviourPromise("seats-held", { owner: "demo" }),
-			behaviourPromise("seats-released", { owner: "demo" }),
-			behaviourPromise("seats-quiet", { owner: "demo" }),
-			behaviourPromise("seats-mended", { owner: "demo" }),
+			behaviourPromise("seats-held", { owner: "demo", domain: "demo" }),
+			behaviourPromise("seats-released", { owner: "demo", domain: "demo" }),
+			behaviourPromise("seats-quiet", { owner: "demo", domain: "demo" }),
+			behaviourPromise("seats-mended", { owner: "demo", domain: "demo" }),
 		],
+		domains: ["demo"],
 		incidents: [
-			{
-				...openIncidentSpec("seats-mended", ["t-mended"]),
+			openIncidentSpec("i-2026-10-08-seats-mended", "seats-mended", {
 				status: "fixed",
+				traces: ["t-mended"],
 				fixed: "2026-10-08T12:30:00Z",
-			},
+			}),
 		],
 	});
 	const read = readPromises(p.planRoot);

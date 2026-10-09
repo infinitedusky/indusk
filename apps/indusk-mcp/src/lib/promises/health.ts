@@ -1,7 +1,18 @@
 import { join } from "node:path";
-import { recorded } from "./incidents.js";
+import { recorded, violationState } from "./incidents.js";
+import type { IncidentEntry, PromiseEntry } from "./registry.js";
 import { type Registry, readPromises } from "./registry.js";
-import { alarmSource, readSources, type SourceName } from "./sources.js";
+import {
+	alarmSource,
+	healthWindowMs,
+	probeSources,
+	readSources,
+	type SourceName,
+	type SourceRead,
+	sourceNames,
+	WatcherBlind,
+} from "./sources.js";
+import { asMarkedSpans, readWindow, type StoreDeps } from "./store.js";
 import { type MarkedSpansResult, newestMark, silencePastExpectation } from "./telemetry.js";
 
 /**
@@ -45,6 +56,8 @@ export interface PromiseHealthRow {
 	unrecordedTraces: string[];
 	/** ISO time of the newest mark, or null when nothing was seen. */
 	lastSeen: string | null;
+	/** The promise's state, by the one rule every window uses (`healthOf`). */
+	health: PromiseHealth;
 	/**
 	 * Set when the promise declares `expect_every` and has been silent longer
 	 * — "silent for 3h, expected every 1h" (watcher-heartbeat, ADR D3).
@@ -117,7 +130,7 @@ export async function promiseHealth(
 
 	const sources: SourceHealth[] = reads.map((r) => {
 		if (!r.ok) return { name: r.name, source: r.where, ok: false, kind: r.kind, reason: r.reason };
-		const promises = healthRows(registry, r.marks, opts.now);
+		const promises = reportRows(registry, r.marks, opts.now);
 		return {
 			name: r.name,
 			source: r.marks.queryUrl,
@@ -151,8 +164,12 @@ function attention(rows: PromiseHealthRow[]): string[] {
 	return rows.filter((r) => r.unrecorded > 0 || r.silence).map((r) => r.name);
 }
 
-/** One source's rows: per behaviour promise, what it saw and what nobody recorded. */
-function healthRows(
+/**
+ * One source's rows for the agents' report: per behaviour promise, what it
+ * saw, what nobody recorded, and its state by the same rule the admin's chips
+ * and the editor use (`healthOf`, vscode-extension A6).
+ */
+export function reportRows(
 	registry: Registry,
 	marks: MarkedSpansResult,
 	now: Date | undefined,
@@ -182,7 +199,342 @@ function healthRows(
 			unrecorded: unrecordedTraces.length,
 			unrecordedTraces,
 			lastSeen: newestMark(seen)?.toISOString() ?? null,
+			health:
+				healthOf(
+					promise,
+					{ ok: true, at: (now ?? new Date()).toISOString(), marks },
+					registry.incidents,
+				)?.health ?? "unverified",
 		});
 	}
 	return rows;
+}
+
+/**
+ * Observed health on the Promises page and in the sidebar (day-monitor, ADR
+ * D9).
+ *
+ * One read per source per project (promise-sources, ADR D7) — `local`, and
+ * `production` when the project names one — through the package's reads
+ * (`promises/sources`), with a two-second timeout and cached for the
+ * project's refresh interval so a page and its sidebar share it. A source
+ * that cannot be read says so and remembers when it last succeeded — "health
+ * unknown since …" — and no chip is drawn green; the other source is still
+ * shown. The sidebar's red comes from the alarm source alone.
+ *
+ * Moved from the admin into the package by vscode-extension (A7), so the
+ * admin, `indusk promises health` and the editor read one health. Server-side
+ * only.
+ */
+
+export const PROMISE_HEALTHS = ["red", "fixed", "green", "unverified", "amber", "grey"] as const;
+export type PromiseHealth = (typeof PROMISE_HEALTHS)[number];
+
+export interface HealthRow {
+	health: PromiseHealth;
+	/** Violations in the window; null when telemetry says nothing about this promise. */
+	violations: number | null;
+	/** The query hit its limit: `violations` is a lower bound (day-monitor A30). */
+	atLeast?: boolean;
+	/** ISO time of the newest mark, upheld or violated. */
+	lastSeen: string | null;
+	/**
+	 * Where the newest violation happened, as its span said (day-always-on D6),
+	 * or null when it said nothing. One server holds staging and production, so
+	 * a red row that cannot say which is a red row nobody can act on.
+	 */
+	environment?: string | null;
+	/**
+	 * Set when the promise declares `expect_every` and has been silent longer
+	 * (watcher-heartbeat, ADR D3) — the shared judgment, never restated here.
+	 */
+	silence?: string;
+}
+
+export type HealthRead =
+	| { ok: true; at: string; marks: MarkedSpansResult }
+	| {
+			ok: false;
+			unknownSince: string | null;
+			where: string;
+			/**
+			 * The watcher answered and did not hear (watcher-heartbeat): a probe sent
+			 * to `intake` never came back from `where`. Absent when it could not be
+			 * reached at all.
+			 */
+			blind?: { intake: string };
+	  };
+
+/** One source's read, named: what the page draws a chip and a banner from. */
+export type SourceHealthRead = HealthRead & {
+	name: SourceName;
+	/** Where it read — its query URL, or what was consulted when it could not. */
+	label: string;
+};
+
+const TIMEOUT_MS = 2_000;
+const DEFAULT_CACHE_MS = 5_000;
+const cache = new Map<string, { expires: number; reads: SourceHealthRead[] }>();
+const lastOk = new Map<string, string>();
+
+/**
+ * What the health read reads with: the store's clock and reads, and how it
+ * probes each source's watcher. The real ones by default (test-kinds, ADR D2).
+ */
+export interface HealthDeps extends StoreDeps {
+	probe?: typeof probeSources;
+	/** How long a read is reused — the admin passes its refresh interval. */
+	cacheMs?: number;
+}
+
+export async function readHealth(
+	projectRoot: string,
+	registry: Registry,
+	deps: HealthDeps = {},
+): Promise<SourceHealthRead[]> {
+	const now = deps.now ?? Date.now;
+	const hit = cache.get(projectRoot);
+	if (hit && hit.expires > now()) return hit.reads;
+	let reads: SourceHealthRead[];
+	try {
+		// The watcher is probed every time; the marks come from the store, which
+		// reads only what it has not read (promise-timeline A12). A refresh with
+		// nothing new no longer moves the whole window.
+		const probed = await (deps.probe ?? probeSources)(projectRoot, {
+			timeoutMs: TIMEOUT_MS,
+		});
+		const since = new Date(now() - healthWindowMs(projectRoot, registry));
+		reads = await Promise.all(
+			probed.map(async (p): Promise<SourceHealthRead> => {
+				if (!p.ok) return fromSource(projectRoot, p, now());
+				const w = await readWindow(
+					projectRoot,
+					registry,
+					p.name,
+					since.getTime(),
+					TIMEOUT_MS,
+					deps,
+				);
+				if (!w.ok) {
+					return {
+						name: w.name,
+						label: w.label,
+						ok: false,
+						unknownSince: lastOk.get(`${projectRoot}\0${w.name}`) ?? null,
+						where: w.where,
+					};
+				}
+				return fromSource(
+					projectRoot,
+					{
+						name: p.name,
+						label: p.label,
+						ok: true,
+						marks: asMarkedSpans(w, since),
+					},
+					now(),
+				);
+			}),
+		);
+	} catch (err) {
+		// A health read never takes a page down (day-monitor A26): whatever went
+		// wrong, every source's answer is "unknown since the last good read".
+		reads = sourceNames(projectRoot).map((name) => ({
+			name,
+			label: (err as Error).message,
+			ok: false,
+			unknownSince: lastOk.get(`${projectRoot}\0${name}`) ?? null,
+			where: (err as Error).message,
+		}));
+	}
+	cache.set(projectRoot, {
+		expires: now() + (deps.cacheMs ?? DEFAULT_CACHE_MS),
+		reads,
+	});
+	return reads;
+}
+
+function fromSource(projectRoot: string, r: SourceRead, nowMs: number): SourceHealthRead {
+	const key = `${projectRoot}\0${r.name}`;
+	if (r.ok) {
+		const at = new Date(nowMs).toISOString();
+		lastOk.set(key, at);
+		return { name: r.name, label: r.label, ok: true, at, marks: r.marks };
+	}
+	return {
+		name: r.name,
+		label: r.label,
+		ok: false,
+		unknownSince: lastOk.get(key) ?? null,
+		where: r.where,
+		...(r.error instanceof WatcherBlind ? { blind: { intake: r.error.intake } } : {}),
+	};
+}
+
+/** The read whose red raises the alarm: production when there is one (ADR D5). */
+export function alarmRead(reads: SourceHealthRead[]): SourceHealthRead | undefined {
+	const name = alarmSource(reads.map((r) => r.name));
+	return reads.find((r) => r.name === name);
+}
+
+/**
+ * One promise's chip. Retired is grey and known-violated amber whatever
+ * telemetry says; a behaviour promise is red when violated in the window,
+ * green when seen upheld, hollow "unverified" when not seen or when Jaeger
+ * could not be read. A state or structure promise has no observed health —
+ * its health is the suite's — so it gets no chip (null).
+ */
+/**
+ * How a source's chip judges a promise's violations (promise-timeline, ADR D3).
+ *
+ * - `incidents` — production's, or the only source's: red while any violation
+ *   in the window is unrecorded or its incident open; `fixed` once every one
+ *   of them is fixed. A mended promise is not called broken for a week.
+ * - `newest` — local's, beside a production source: the newest local run
+ *   decides. A local break during development is work in progress; nobody
+ *   records an incident for it, so the incident rule would leave it red for
+ *   the whole window after the fix.
+ */
+export type HealthRule = "incidents" | "newest";
+
+/**
+ * One promise's chip. Retired is grey and known-violated amber whatever
+ * telemetry says, unless a live break makes it red; a behaviour promise is
+ * red, `fixed`, green or hollow "unverified" by its source's rule. A state or
+ * structure promise has no observed health — its health is the suite's — so
+ * it gets no chip (null).
+ */
+export function healthOf(
+	p: PromiseEntry,
+	read: HealthRead | null,
+	incidents: IncidentEntry[] = [],
+	rule: HealthRule = "incidents",
+): HealthRow | null {
+	if (p.state === "retired") return { health: "grey", violations: null, lastSeen: null };
+	const marks = read?.ok ? read.marks.byPromise.get(p.name) : undefined;
+	const violations = marks ? marks.violations.length : null;
+	const newest = newestMark(marks);
+	const lastSeen = newest?.toISOString() ?? null;
+	const red = (): HealthRow => ({
+		health: "red",
+		violations,
+		lastSeen,
+		environment: marks?.violations[0]?.environment ?? null,
+		...(marks?.truncated ? { atLeast: true } : {}),
+	});
+	if (p.kind === "behaviour" && marks && marks.violations.length > 0) {
+		const live =
+			rule === "newest"
+				? newest?.getTime() === marks.violations[0].at.getTime()
+				: marks.violations.some((v) => violationState(v.traceId, incidents) !== "fixed");
+		if (live) return red();
+	}
+	if (p.state === "known-violated") return { health: "amber", violations, lastSeen };
+	if (p.kind !== "behaviour") return null;
+	const silence = read?.ok ? silencePastExpectation(p, read.marks) : null;
+	const quiet = silence ? { silence } : {};
+	if (rule === "incidents" && violations !== null && violations > 0)
+		return { health: "fixed", violations, lastSeen, ...quiet };
+	if (marks?.lastUpheld) return { health: "green", violations, lastSeen, ...quiet };
+	return { health: "unverified", violations, lastSeen, ...quiet };
+}
+
+/** Every promise's row, by name, for the page and the sidebar. */
+export function healthRows(
+	registry: Registry,
+	read: HealthRead | null,
+	rule: HealthRule = "incidents",
+): Record<string, HealthRow> {
+	const out: Record<string, HealthRow> = {};
+	for (const p of registry.promises) {
+		const row = healthOf(p, read, registry.incidents, rule);
+		if (row) out[p.name] = row;
+	}
+	return out;
+}
+
+/**
+ * Plans holding a red promise in the alarm source — the sidebar's roll-up
+ * (A23). A promise red only locally, beside a production that holds it, is
+ * work in progress and does not mark its plan (promise-sources A6).
+ */
+export function redPlans(registry: Registry, reads: SourceHealthRead[]): Set<string> {
+	const rows = healthRows(registry, alarmRead(reads) ?? null);
+	return new Set(
+		registry.promises.filter((p) => rows[p.name]?.health === "red").map((p) => p.owner),
+	);
+}
+
+/**
+ * The rule a source's chip is judged by: `newest` for local when the project
+ * also has production, `incidents` otherwise (ADR D3).
+ */
+export function ruleFor(read: SourceHealthRead, reads: SourceHealthRead[]): HealthRule {
+	return read.name === "local" && reads.some((r) => r.name === "production")
+		? "newest"
+		: "incidents";
+}
+
+/** One promise's row in a `promises health --json` line. */
+export interface HealthLineRow {
+	promise: string;
+	state: PromiseHealth;
+	lastSeen: string | null;
+	violations: number | null;
+	symptom?: string;
+	traceId?: string;
+	environment?: string | null;
+	tests: string[];
+}
+
+/** One line of `indusk promises health --json`: every source's state for every promise, or why a source has none. */
+export interface HealthLine {
+	at: string;
+	sources: (
+		| { name: SourceName; label: string; ok: true; rows: HealthLineRow[] }
+		| { name: SourceName; label: string; ok: false; reason: string; blind?: true }
+	)[];
+}
+
+/**
+ * The line `promises health --json` prints, built from the reads `readHealth`
+ * returns, by the same rule the admin's chips use — the editor reads this, so
+ * it cannot disagree with the admin (vscode-extension A6).
+ */
+export function healthLine(registry: Registry, reads: SourceHealthRead[], now: Date): HealthLine {
+	return {
+		at: now.toISOString(),
+		sources: reads.map((read) => {
+			if (!read.ok) {
+				return {
+					name: read.name,
+					label: read.label,
+					ok: false as const,
+					reason: read.blind
+						? `watcher blind — a probe sent to ${read.blind.intake} did not come back from ${read.where}`
+						: `could not be read: ${read.where}`,
+					...(read.blind ? { blind: true as const } : {}),
+				};
+			}
+			const rule = ruleFor(read, reads);
+			const rows: HealthLineRow[] = [];
+			for (const p of registry.promises) {
+				const row = healthOf(p, read, registry.incidents, rule);
+				if (!row) continue;
+				const newestViolation = read.marks.byPromise.get(p.name)?.violations[0];
+				rows.push({
+					promise: p.name,
+					state: row.health,
+					lastSeen: row.lastSeen,
+					violations: row.violations,
+					...(newestViolation?.symptom ? { symptom: newestViolation.symptom } : {}),
+					...(newestViolation
+						? { traceId: newestViolation.traceId, environment: newestViolation.environment ?? null }
+						: {}),
+					tests: p.tests ?? [],
+				});
+			}
+			return { name: read.name, label: read.label, ok: true as const, rows };
+		}),
+	};
 }
