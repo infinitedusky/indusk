@@ -551,6 +551,16 @@ worktree gets its Maintenance phase there, left for that plan's session to
 commit. In a workbench whose repo holds its own contract, the incident is
 committed in the repo.
 
+It commits on a **trunk branch only** (`worktree.trunk_guard.branches`,
+default `main` and `master`). Run from a plan worktree, or from a trunk
+checkout left on another branch, it writes the incident and commits nothing,
+says which branch it is on, and the pass is marked broken. A commit that
+cannot be made — another git command holding the index — is not lost: the
+paths wait in the project's home (`pending-commit.json`), and every later pass,
+by any caller, commits them first and is marked broken until it does. The
+inbox entry for the agent is written before the commit, so it does not wait
+on it.
+
 `watch` is one of three callers of the same writer, `recordBreaks`
 (`lib/promises/record.ts`); the admin's recorder and catchup's
 `record_breaks` tool are the others. One lock per project, in the project's

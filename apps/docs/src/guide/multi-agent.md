@@ -186,6 +186,8 @@ Whatever records the break — the admin's recorder, catchup's `record_breaks`, 
 
 An incident still open a day later is written to the inbox again as a reminder, once a day, until it is fixed.
 
+A session that starts later is told only what is still true: an incident fixed since its entry was written is not said, and an open incident's break and its reminders are said as one line.
+
 The agent is told the break outranks the roadmap. Fixing it is the reopened plan's Maintenance phase: `indusk worktree create <plan>` works for a plan reopened from the archive, the same as for any other.
 
 ## Configuration

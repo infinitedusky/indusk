@@ -343,11 +343,11 @@ A promise broken in production becomes a committed incident, reopens its plan, a
 
 #### Build Phase 8 Context
 
-- [ ] mcp `CLAUDE.md`'s `recordBreaks` entry: the machine's record is written before the commit; a pass commits what earlier passes left; it commits only on a trunk branch
+- [x] (a new entry beside `watch`'s, the file at 16381 of its 16384 bytes after the registry entry was compressed to its rules — it also named `resolveMarkSource`, which is `resolveMarkSources` now; `context check-pointers` passes) mcp `CLAUDE.md`'s `recordBreaks` entry: the machine's record is written before the commit; a pass commits what earlier passes left; it commits only on a trunk branch
 
 #### Build Phase 8 Document
 
-- [ ] `apps/docs/src/decisions/incident-recording.md` and `apps/docs/src/reference/cli/promises.md` (`watch`): a pass commits only on the trunk and finishes what an earlier pass left; `apps/docs/src/guide/multi-agent.md` ("When a promise breaks"): a new session hears each open incident once; changelog Fixed
+- [x] `apps/docs/src/decisions/incident-recording.md` and `apps/docs/src/reference/cli/promises.md` (`watch`): a pass commits only on the trunk and finishes what an earlier pass left; `apps/docs/src/guide/multi-agent.md` ("When a promise breaks"): a new session hears each open incident once; changelog Fixed
 
 ## Files Affected
 

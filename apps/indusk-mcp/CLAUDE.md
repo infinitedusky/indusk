@@ -143,13 +143,11 @@ pointer; the pointer holds the story.
 
 ## Promises and telemetry
 
-- The registry is read through one subpath (`promises/registry`) by CLI, MCP
-  (`tools/promise-tools.ts`; writes only via `lib/promises/write.ts`) and admin; marks are read through one call, `readPromiseMarks`, against one
-  endpoint builder, `jaegerEndpoint` (`lib/promises/telemetry.ts`);
-  unreachable = exit 2, never zero. A project names its Jaeger in
-  `promises.jaeger` (`url` + `credential_env`, the variable's *name*); absence
-  means the local daemon; `resolveMarkSource` decides. — see
-  `/decisions/day-monitor`
+- One registry subpath (`promises/registry`) for CLI, MCP and admin; writes
+  only via `lib/promises/write.ts`; marks through `readPromiseMarks` and
+  `jaegerEndpoint`; unreachable = exit 2, never zero. `promises.jaeger`
+  (`url` + `credential_env`, a variable's *name*) names a server; absence =
+  the local daemon. — see `/decisions/day-monitor`
 - Where a token may sit is `lib/tokens.ts`; an owner is a plan *directory*,
   never `archive`; link paths pass `isUsableRelPath` before any join; a mark's
   project is `markProjectId` (the shared git directory, never
@@ -158,6 +156,8 @@ pointer; the pointer holds the story.
   (`maintenanceIncidentIds`); `watch` exits 1 for any incident left without
   its owner's phase — opened, extended, or open from an earlier run — and
   retries that reopen every run. — see `/reference/cli/promises`
+- **`recordBreaks` commits on a trunk only**, after the inbox and heard rows;
+  what it could not commit waits in the home's `pending-commit.json`. — see `/decisions/incident-recording`
 - **The always-on pass announces once, and only after Slack accepts**
   (`lib/always-on/pass.ts`). **A string from a marked span is untrusted input
   to a plan document** — `incidents.ts`'s `oneLine` collapses `environment`
