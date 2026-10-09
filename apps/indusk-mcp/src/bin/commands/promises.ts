@@ -11,7 +11,7 @@ import {
 } from "../../lib/promises/contract.js";
 import { fixIncident } from "../../lib/promises/incidents.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
-import { readPromises } from "../../lib/promises/registry.js";
+import { type Registry, readPromises } from "../../lib/promises/registry.js";
 import {
 	alarmSource,
 	JaegerUnreachable,
@@ -382,11 +382,39 @@ export function promisesWithdraw(projectRoot: string, name: string, opts: { plan
  * and exit; with it, a read per period until the process is stopped — the
  * editor runs it once and reads each line.
  */
+/** What `promises health` reads and how it waits, as inputs (vscode-extension A17). */
+export interface PromisesHealthDeps {
+	readRegistry?: typeof readPromises;
+	readHealth?: (
+		root: string,
+		registry: Registry,
+	) => Promise<import("../../lib/promises/health.js").SourceHealthRead[]>;
+	write?: (text: string) => void;
+	now?: () => Date;
+	/** Runs `tick` every `everyMs` until the reader is stopped. */
+	repeat?: (everyMs: number, tick: () => Promise<void>) => Promise<void>;
+}
+
+function repeatUntilSignal(everyMs: number, tick: () => Promise<void>): Promise<void> {
+	return new Promise<void>((resolve) => {
+		const timer = setInterval(() => {
+			void tick();
+		}, everyMs);
+		const stop = () => {
+			clearInterval(timer);
+			resolve();
+		};
+		process.once("SIGTERM", stop);
+		process.once("SIGINT", stop);
+	});
+}
+
 export async function promisesHealth(
 	projectRoot: string,
 	opts: { json?: boolean; every?: string } = {},
+	deps: PromisesHealthDeps = {},
 ): Promise<void> {
-	const read = readPromises(projectRoot);
+	const read = (deps.readRegistry ?? readPromises)(projectRoot);
 	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
 	if (!registry) {
 		console.error(`${"missing" in read ? read.missing : projectRoot}: no promise registry`);
@@ -404,21 +432,15 @@ export async function promisesHealth(
 		everyMs = seconds * 1000;
 	}
 	const { healthLine, readHealth } = await import("../../lib/promises/health.js");
+	const readReads =
+		deps.readHealth ?? ((root: string, reg: Registry) => readHealth(root, reg, { cacheMs: 0 }));
+	const write = deps.write ?? ((text: string) => process.stdout.write(text));
+	const now = deps.now ?? (() => new Date());
 	const once = async () => {
-		const reads = await readHealth(projectRoot, registry, { cacheMs: 0 });
-		process.stdout.write(`${JSON.stringify(healthLine(registry, reads, new Date()))}\n`);
+		const reads = await readReads(projectRoot, registry);
+		write(`${JSON.stringify(healthLine(registry, reads, now()))}\n`);
 	};
 	await once();
 	if (everyMs === null) return;
-	await new Promise<void>((resolve) => {
-		const timer = setInterval(() => {
-			void once();
-		}, everyMs);
-		const stop = () => {
-			clearInterval(timer);
-			resolve();
-		};
-		process.once("SIGTERM", stop);
-		process.once("SIGINT", stop);
-	});
+	await (deps.repeat ?? repeatUntilSignal)(everyMs, once);
 }
