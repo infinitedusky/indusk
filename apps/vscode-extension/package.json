@@ -39,6 +39,10 @@
 			{
 				"command": "indusk.fixWithClaude",
 				"title": "InDusk: Fix with Claude"
+			},
+			{
+				"command": "indusk.openLocation",
+				"title": "InDusk: Open a promise's location"
 			}
 		],
 		"configuration": {
@@ -50,6 +54,24 @@
 					"description": "The indusk command to read promise health with."
 				}
 			}
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "indusk",
+					"title": "InDusk",
+					"icon": "media/indusk.svg"
+				}
+			]
+		},
+		"views": {
+			"indusk": [
+				{
+					"type": "webview",
+					"id": "indusk.promises",
+					"name": "Promises"
+				}
+			]
 		}
 	}
 }

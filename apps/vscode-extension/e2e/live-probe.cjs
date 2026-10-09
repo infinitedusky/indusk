@@ -54,12 +54,18 @@ exports.run = async () => {
 	}
 
 	// A28 (held): a hold that lapses on time adds a "held" run to the activity section.
+	// Only runs after this hold count: the demo tags no project, so runs from
+	// another seat-holds on this machine, or an earlier session, are listed too.
+	const newRun = (p, outcome, since) =>
+		(p.runs || []).find(
+			(r) => r.promise === PROMISE && r.outcome === outcome && Date.parse(r.at) >= since,
+		);
 	await post("/fault", { on: false });
+	const heldFrom = Date.now();
 	await post("/hold", { seat: 2, who: "live" });
 	for (let i = 0; i < 120 && !out.a28?.held; i++) {
-		const p = (await panel()) || { activity: [] };
-		const held = p.activity.find((l) => l.startsWith(`${PROMISE} held`));
-		if (held) out.a28 = { held };
+		const run = newRun((await panel()) || {}, "upheld", heldFrom);
+		if (run) out.a28 = { held: run.at };
 		else await sleep(250);
 	}
 	await fetch(`${url}/fault`, {
@@ -95,10 +101,10 @@ exports.run = async () => {
 		await sleep(250);
 	}
 	// A28 (broke): the faulted hold's late release adds a "broke" run.
-	{
-		const p = (await panel()) || { activity: [] };
-		const broke = p.activity.find((l) => l.startsWith(`${PROMISE} broke`));
-		out.a28 = { ...(out.a28 || {}), broke: broke || null };
+	for (let i = 0; i < 120 && !out.a28?.broke; i++) {
+		const run = newRun((await panel()) || {}, "violated", heldAt);
+		if (run) out.a28 = { ...(out.a28 || {}), broke: run.at };
+		else await sleep(250);
 	}
 	await post("/fault", { on: false });
 	await vscode.commands.executeCommand("indusk.fixWithClaude", PROMISE);
