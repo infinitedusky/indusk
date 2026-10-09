@@ -59,3 +59,4 @@ No recurring lint or type errors during `/work`; no Biome rule is warranted.
 - Audit: 23 findings over six questions; 2 fixed before close; the rest carried.
 
 Landed on main at b1844d1d, 2026-10-09.
+Installed locally with `pnpm install:local` (indusk 1.68.0); nothing published — publishing is deliberate here.
