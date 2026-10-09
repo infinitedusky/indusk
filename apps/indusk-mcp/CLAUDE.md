@@ -108,7 +108,11 @@ pointer; the pointer holds the story.
 - **`lib/audit/`**: the auditor's inputs. The approved impl is found by the
   approval merge's subject (`plan(<plan>): approved`), never by a line in the
   plan; a rewritten history is named by the refusal and answered with
-  `--approved <sha>`. A build step's model is `buildStepModel`
+  `--approved <sha>`. Nothing under `.indusk/` reaches the diff — the plan's
+  documents are handed whole, and the folder's diff since approval is the
+  builder's notes; a field's `path` names where its text was read
+  (`<sha>:<path>` for a committed version), never a working file holding
+  something else. A build step's model is `buildStepModel`
   (`lib/build/step-model.ts`), a tier error failing the step. — see
   `/decisions/plan-review-subagent`
 - **`indusk verify`** (`lib/verify/`): detects and never repairs — premature
