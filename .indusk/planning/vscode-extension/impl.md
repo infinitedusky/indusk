@@ -1,7 +1,7 @@
 ---
 title: "VS Code extension — promises in the editor, the break where the fix happens"
 date: 2026-10-08
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -57,6 +57,12 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 | A14 | On the demo break in VS Code, one click starts `claude` with those facts | Build Phase 3 | Build Phase 4 | passing | live check | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/e2e/live.e2e.test.ts |
 | A15 | After the extension reads a project, shows a break and runs the fix action, the project's files are exactly as they were | Build Phase 2 | Build Phase 2 | passing | unit | promise: the-editor-only-shows | apps/vscode-extension/src/core/only-shows.test.ts |
 | A16 | The packaged extension installs into VS Code with one `indusk` command, activates in a project with InDusk, and stays inactive in one without | Build Phase 3 | Build Phase 3 | passing | contract | the install path every developer takes; VS Code is not ours | apps/vscode-extension/src/__tests__/install.contract.test.ts |
+| A17 | While `indusk promises health --every` runs, a break recorded and then marked fixed reads `fixed` on the next line, and a promise declared meanwhile appears; today the registry, its incidents included, is read once at start, so the editor shows the demo's fixed break as broken until the window reloads | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-break-reaches-the-editor | apps/indusk-mcp/src/__tests__/promises-health-every.test.ts |
+| A18 | A break is notified once while it lasts: a production read that fails between two reads of the same break does not notify it again, and a second violation of a promise already broken in that source does not either; today `told` is rebuilt from each line, so either notifies again (with the demo's fault on, a toast every few seconds) | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
+| A19 | When the health reader cannot start or keeps exiting (the command is not found, or an `indusk` without `promises health`), the editor says so with the reason (not found, or the reader's last error line), and the hover agrees with the marker's "not reading"; today a missing command is an unhandled `error` event with no message, the exit message names no reason, and the hover says "not in this project" before the first line | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/reader.test.ts |
+| A20 | Text from a span (symptom, trace id) and from the registry reaches the terminal with no control characters and on one line: a symptom of `x`, Ctrl-C, `rm -rf ~`, newline types no command; today `sendText` passes Ctrl-C to the terminal, which cancels the quoted line and runs what follows | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/src/core/fix.test.ts |
+| A21 | A hover shows span text as text: a symptom or reason of `[open](https://example.test)` renders as those characters, not a link | Build Phase 5 | Build Phase 5 | planned | unit | promise: the-editor-only-shows | apps/vscode-extension/src/core/hover.test.ts |
+| A22 | A file outside the project, or inside a nested InDusk project (dusk's `examples/seat-holds/`), gets no marker from this project's promises; today opening dusk shows the example's token as "not in this project" | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
 
 ### Deferred Verification
 
@@ -231,6 +237,32 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 #### Build Phase 4 Document
 
 - [x] the guide: an "Observed" note with A11's seconds and the Cursor result, dated
+
+### Build Phase 5: Falsification — a reader that never re-reads, breaks told twice, and span text reaching the terminal
+
+**Goal**: verify whether the attested state holds against six failure modes found by reading the code: the health command reading the registry once, so a fixed break stays red; the notification memory forgetting a break across one failed read or a new trace; a reader that cannot start saying nothing useful; span text carrying control characters into the developer's terminal; span text rendered as links in a hover; and promises from a nested project judged against the outer one. Each row captures one hypothesis; each item the fix if it confirms.
+
+Investigated, with no hypothesis formed: the token grammar (lowercase names only, so a CRLF line's `\r` never joins a name); shell quoting of the prompt (single-quoted, embedded quotes closed and escaped, covered by A12); the "proved here" path match; `--every` parsing (refuses below 1 and non-numbers); overlapping reads under `setInterval` (the two-second source timeout keeps a read well inside the five-second cadence); `indusk editor install` finding the `.vsix` (the published package's `editor/`, and `pnpm install:local` runs the `prepublishOnly` that packs it). Not investigated: shells other than POSIX ones in the fix terminal (PowerShell quoting differs; this machine and the demo use zsh), and multi-root workspaces holding two InDusk projects (the extension reads the first; A22's rule keeps the second's files unmarked rather than wrong).
+
+- [ ] `promisesHealth` re-reads the registry before each line, keeping the last good one when a read is partial mid-edit; a read that throws is caught and the loop goes on, so one bad read never ends the reader (A17)
+- [ ] The session remembers each break by source and promise while it stays broken in a source that read; a source that did not read keeps what it had; a promise that stops being broken is forgotten, so its next break is told (A18)
+- [ ] `core/reader.ts`: the reader's lifecycle behind a spawn seam — restart once, then stop with a message naming the reason (`not found` for a spawn error, else the child's last stderr line); `extension.ts` uses it; no restart after dispose. `hover` with no line yet says "not reading", as the marker does (A19)
+- [ ] `fixAction` strips control characters from every fact and joins each to one line before quoting (A20)
+- [ ] `hover` escapes Markdown in text from spans and sources (symptom, reason) and in the statement (A21)
+- [ ] `markers` takes the project's root and the nested project roots under it; a file outside the root or under a nested root gets no marker. `extension.ts` finds nested roots by `.indusk/config.json` below the root, once at activation (A22)
+- [ ] A4's `Test` cell names `apps/vscode-extension/src/core/markers.test.ts`, where its test lives; it named a `hover.test.ts` that does not exist, which `promises confirm` would refuse at close
+
+#### Build Phase 5 Verification
+
+- [ ] A17–A22 pass, each red first against the current code (`cd apps/vscode-extension && pnpm exec vitest run src/core`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promises-health-every.test.ts`); typecheck and biome clean in both apps
+
+#### Build Phase 5 Context
+
+- [ ] `apps/vscode-extension/CLAUDE.md`: text from spans is untrusted — stripped of control characters before a terminal, escaped before Markdown
+
+#### Build Phase 5 Document
+
+- [ ] the guide: a fixed break turns `fixed` without a reload; one notification per break; what the editor says when it cannot read; changelog line
 
 ## Files Affected
 
