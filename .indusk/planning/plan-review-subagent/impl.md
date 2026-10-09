@@ -129,7 +129,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 #### Build Phase 1 Context
 
 - [x] planning (`templates/planning/CLAUDE.md`, shipped): the close-out is `/falsify` → `/cleanup` → `/audit` → `/retrospective`; `audit.md` or `audit: skipped` + `audit_reason` is what the retrospective's gate reads
-- [ ] root (Key Decisions): one line for the ADR — "Audit step: a fresh subagent on `workflow.steps.audit.tier` reads the approved impl, the final trajectory and the diff, writes `audit.md`; advisory — see `/decisions/plan-review-subagent`" — always-on because it is a Key Decision, as every ADR's line is. The root is at 14,628 B of a 14,745 B ceiling (80 % of the budget, `context-tiers-register` A13), so the same edit compresses one existing Key Decisions line to a rule + pointer to make room; name which in the commit
+- [x] root (Key Decisions): one line for the ADR — "Audit step: a fresh subagent on `workflow.steps.audit.tier` reads the approved impl, the final trajectory and the diff, writes `audit.md`; advisory — see `/decisions/plan-review-subagent`" — always-on because it is a Key Decision, as every ADR's line is. The root is at 14,628 B of a 14,745 B ceiling (80 % of the budget, `context-tiers-register` A13), so the same edit compresses one existing Key Decisions line to a rule + pointer to make room; name which in the commit
 
 #### Build Phase 1 Document
 

@@ -75,7 +75,7 @@ dusk/
 - Workbench setup one-shot (`indusk setup`) — see `.indusk/planning/archive/workbench-setup-command/`
 - Dawn hook parity: invariants + eval rail in the thin lane — loop-owned per-item commits, pending-eval queue with external drain, headless `ask`=pause (ask default both lanes), gate-reminder shed — see `/decisions/dawn-hook-parity`
 - Test phases as structure: `### Test Phase N` + `### Build Phase N` as two sequences; Test Phase 1 mandatory, first, and the register where every deferral is justified. Zero migration via an optional `Build ` prefix — see `/decisions/test-phase-structure`
-- Shape check: per-phase craft review in `/work` (intra-unit) vs `/cleanup` at close (inter-file) — executor behavior, not a gate type (gate vocab is closed in 4 sites and unknown headings fail silently); the executing agent judges against **prose** craft rules the enabled extensions own; findings append as items to the current phase — see `/decisions/lifecycle-rebalance`
+- Shape check: per-phase craft review in `/work` (intra-unit) vs `/cleanup` at close (inter-file) — a step, not a gate type; findings become items in the phase — see `/decisions/lifecycle-rebalance`
 - Dawn verify (component 6, the keystone): read-only phase-boundary verification for work Dawn didn't execute — chained ledger baseline, runner-agnostic red-test detection (files + exit codes, never runner-output parsing), scoped to referenced files; reverting deferred to component 7 — see `/decisions/dawn-verify`
 - InDusk Makeover (2026-07-23): budgets + decay + removal — the 60 KB budget hook + compaction, Graphiti/CGC removed with the lessons rail kept, current.md sweep + dead-draft archive, catchup diet, MCP keep-lists, hub push/pull. Supersedes context-budget. — see `.indusk/planning/archive/indusk-makeover/adr.md`
 - Versioned workbench (1.37.0–1.38.3): the workbench root is a git repo with its own remote and a sync loop; repos declared in `worktree.repos[]` — see `/decisions/versioned-workbench`
@@ -93,6 +93,7 @@ dusk/
 - Incident recording: one writer (`recordBreaks`), run by the admin unasked; it commits on the trunk only — see `/decisions/incident-recording`
 - Server provisioning: every recording server is the person's own — `indusk server connect` for one run anywhere, `server deploy` the one-command Fly path, the image published with each release; no hosted service — see `/decisions/server-provisioning`
 - VS Code extension: promise health is worked out once, in the package (`promises/health`); the CLI streams it (`promises health --json`); the editor only shows — see `/decisions/vscode-extension`
+- Audit step: a fresh subagent on `workflow.steps.audit.tier` reads the approved impl, the final trajectory and the diff, writes `audit.md`; advisory — see `/decisions/plan-review-subagent`
 
 ## Known Gotchas
 
