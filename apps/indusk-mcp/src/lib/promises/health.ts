@@ -251,8 +251,25 @@ export interface HealthRow {
 	silence?: string;
 }
 
+/** One recorded run, as the store holds it: no symptom is kept per run. */
+export interface HealthRun {
+	promise: string;
+	outcome: "upheld" | "violated";
+	at: string;
+	traceId: string;
+}
+
+/** How many runs a line names, newest first (vscode-extension ADR decision 8). */
+export const RUNS_PER_LINE = 50;
+
 export type HealthRead =
-	| { ok: true; at: string; marks: MarkedSpansResult }
+	| {
+			ok: true;
+			at: string;
+			marks: MarkedSpansResult;
+			/** The newest runs this read holds, newest first; absent where nothing listed them. */
+			runs?: HealthRun[];
+	  }
 	| {
 			ok: false;
 			unknownSince: string | null;
@@ -324,7 +341,7 @@ export async function readHealth(
 						where: w.where,
 					};
 				}
-				return fromSource(
+				const read = fromSource(
 					projectRoot,
 					{
 						name: p.name,
@@ -334,6 +351,8 @@ export async function readHealth(
 					},
 					now(),
 				);
+				// The runs come from the same store read as the state: nothing is read twice.
+				return read.ok ? { ...read, runs: newestRuns(w.marks) } : read;
 			}),
 		);
 	} catch (err) {
@@ -487,6 +506,39 @@ export interface HealthLineRow {
 	tests: string[];
 }
 
+/** One run on the line, with the source that recorded it. */
+export interface HealthLineRun extends HealthRun {
+	source: SourceName;
+}
+
+/** The newest runs of every promise in a store read, newest first. */
+function newestRuns(
+	marks: Map<string, { at: string; outcome: string; traceId: string }[]>,
+): HealthRun[] {
+	return [...marks]
+		.flatMap(([promise, list]) =>
+			list.map((m) => ({
+				promise,
+				outcome: m.outcome as HealthRun["outcome"],
+				at: m.at,
+				traceId: m.traceId,
+			})),
+		)
+		.sort(newestFirst)
+		.slice(0, RUNS_PER_LINE);
+}
+
+function newestFirst(
+	a: HealthRun & { source?: string },
+	b: HealthRun & { source?: string },
+): number {
+	return (
+		b.at.localeCompare(a.at) ||
+		(a.source ?? "").localeCompare(b.source ?? "") ||
+		a.traceId.localeCompare(b.traceId)
+	);
+}
+
 /** One line of `indusk promises health --json`: every source's state for every promise, or why a source has none. */
 export interface HealthLine {
 	at: string;
@@ -500,6 +552,8 @@ export interface HealthLine {
 		| { name: SourceName; label: string; ok: true; rows: HealthLineRow[] }
 		| { name: SourceName; label: string; ok: false; reason: string; blind?: true }
 	)[];
+	/** The newest recorded runs across sources, newest first, at most `RUNS_PER_LINE`. */
+	runs: HealthLineRun[];
 }
 
 /**
@@ -551,5 +605,11 @@ export function healthLine(registry: Registry, reads: SourceHealthRead[], now: D
 			}
 			return { name: read.name, label: read.label, ok: true as const, rows };
 		}),
+		runs: reads
+			.flatMap((read) =>
+				read.ok ? (read.runs ?? []).map((r) => ({ ...r, source: read.name })) : [],
+			)
+			.sort(newestFirst)
+			.slice(0, RUNS_PER_LINE),
 	};
 }
