@@ -1,6 +1,10 @@
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
+import { parsePhaseRef } from "../../lib/impl-headings.js";
+import { nextSessionForPlan } from "../../lib/models/next-session.js";
+import { phaseModel } from "../../lib/models/phase-model.js";
+import { TierConfigError } from "../../lib/models/tier-names.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
 import {
 	acceptPlan,
@@ -15,7 +19,11 @@ async function planVerb(run: () => Promise<string>): Promise<void> {
 	try {
 		console.info(await run());
 	} catch (err) {
-		if (err instanceof PlanCommandRefusal) {
+		if (
+			err instanceof PlanCommandRefusal ||
+			err instanceof TierConfigError ||
+			err instanceof BuildPlanUnreadable
+		) {
 			console.error(`Refused: ${err.message}`);
 			process.exit(1);
 		}
@@ -43,11 +51,31 @@ export function plansStart(
 export function plansApprove(cwd: string, name: string): Promise<void> {
 	return planVerb(async () => {
 		const a = await approvePlan(cwd, name);
+		const next = await nextSessionForPlan(cwd, name);
 		if (a.workbench) {
-			return `Approved ${a.plan}: its documents are committed at the workbench root (${a.merge.slice(0, 8)}); its build continues on its code branch.`;
+			return `Approved ${a.plan}: its documents are committed at the workbench root (${a.merge.slice(0, 8)}); its build continues on its code branch.\n${next}`;
 		}
-		return `Approved ${a.plan}: ${a.paths.length} file(s) merged to the trunk at ${a.merge.slice(0, 8)}; its build continues on its branch.`;
+		return `Approved ${a.plan}: ${a.paths.length} file(s) merged to the trunk at ${a.merge.slice(0, 8)}; its build continues on its branch.\n${next}`;
 	});
+}
+
+/** `indusk plans model <name> --phase <ref>` — the tier and model a phase is built on, or `session`. */
+export function plansModel(cwd: string, name: string, phase: string): Promise<void> {
+	return planVerb(async () => {
+		const ref = parsePhaseRef(/^\d+$/.test(phase.trim()) ? `Phase ${phase.trim()}` : phase);
+		if (!ref) {
+			throw new PlanCommandRefusal(
+				`--phase must name a phase, like "Build Phase 1", "Test Phase 1" or "1"; got "${phase}"`,
+			);
+		}
+		const answer = await phaseModel(cwd, name, ref);
+		return answer ? `${answer.tier} ${answer.model}` : "session";
+	});
+}
+
+/** `indusk plans next-session <name>` — the command to run in a new session, from the plan as it stands. */
+export function plansNextSession(cwd: string, name: string): Promise<void> {
+	return planVerb(() => nextSessionForPlan(cwd, name));
 }
 
 /** `indusk plans accept <name>` — the build may ship. */

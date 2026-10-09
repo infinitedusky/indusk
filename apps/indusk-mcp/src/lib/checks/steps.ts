@@ -1,4 +1,5 @@
 import { type EnsureResult, ensureConfigBlock, readConfig, type WorkflowSteps } from "../config.js";
+import { isTier, TIER_STEPS, TIERS, TierConfigError } from "../models/tier-names.js";
 
 /**
  * A project's declared step tooling, `workflow.steps` (release-checks-run-once
@@ -16,6 +17,23 @@ export function readWorkflowSteps(checkout: string): WorkflowSteps {
 	if (steps === undefined) return {};
 	if (!isObject(steps)) throw new Error("workflow.steps must be an object of steps");
 	const out: WorkflowSteps = {};
+	const known = new Set<string>(["land", "release", ...TIER_STEPS]);
+	for (const key of Object.keys(steps)) {
+		if (!known.has(key)) {
+			throw new TierConfigError(`workflow.steps.${key} is not a step InDusk reads`);
+		}
+	}
+	for (const step of TIER_STEPS) {
+		if (steps[step] === undefined) continue;
+		const tier = section(steps[step], step).tier;
+		if (tier === undefined) continue;
+		if (!isTier(tier)) {
+			throw new TierConfigError(
+				`workflow.steps.${step}.tier must be one of ${TIERS.join(", ")}; got ${JSON.stringify(tier)}`,
+			);
+		}
+		out[step] = { tier };
+	}
 	if (steps.land !== undefined) {
 		const land = section(steps.land, "land");
 		out.land = {

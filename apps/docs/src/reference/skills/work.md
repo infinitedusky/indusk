@@ -208,6 +208,10 @@ The agent edits `CLAUDE.md`, adding the line to the Architecture section, then c
 
 The agent writes the docs page following the [Document](/reference/skills/document) skill guidance, then checks the item off.
 
+### Each phase runs on its tier's model
+
+Before a phase, `/work` runs `indusk plans model <plan> --phase "<ref>"`. When the project's config names a model for the phase's tier (the phase's own `**Tier**:` line, else the `work` step's default), the phase goes to a subagent on that model, which works the checklist under the same gate hooks and returns a compact result. When the answer is `session`, the phase runs in place, as before. After three failed verification attempts on a tier below `strong`, `/work` stops and names the next tier up (and writes it as the phase's `**Tier**:` with the reason); on `strong` it flags a blocker. Each phase close ends with `indusk plans next-session <plan>`: the next phase starts in a new session. See [`plans model`](/reference/cli/plans#plans-model-name-phase-ref).
+
 ### 11. Advance
 
 All four gates are complete. The agent calls `advance_plan`:

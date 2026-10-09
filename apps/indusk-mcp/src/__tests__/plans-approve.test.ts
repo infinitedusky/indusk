@@ -15,6 +15,7 @@ import { git } from "./helpers/test-git.js";
 /**
  * promise: a-plan-is-written-on-its-own-branch — admin-plan-authoring A9.
  * promise: a-briefs-promises-are-in-the-registry — admin-plan-authoring A23.
+ * promise: a-plan-boundary-names-the-next-session — model-per-phase A10.
  * promise: nothing-ships-until-accepted — admin-plan-authoring A32, A37, approval's half.
  *
  * Approving a plan brings its documents and declared promises to `main` in
@@ -81,6 +82,14 @@ describe.skipIf(SHOULD_SKIP)("indusk plans approve", () => {
 		expect(impl.data.status).toBe("approved");
 		const onMain = matter(git(p.trunk, ["show", `main:${planDir}/impl.md`]));
 		expect(onMain.data.status).toBe("approved");
+	});
+
+	it("A10 — approval ends by naming the command for a new session", () => {
+		writePlan();
+		const r = runCli(p.trunk, ["plans", "approve", PLAN]);
+		expect(r.code, out(r)).toBe(0);
+		expect(out(r).trim().split("\n").pop()).toContain(`/work ${PLAN}`);
+		expect(out(r)).toMatch(/new session/i);
 	});
 
 	it("A23 — a brief naming a promise the registry does not hold is refused with the contract's message; main unchanged", () => {

@@ -137,3 +137,29 @@ describe("T13 — a resumed phase still scopes from where it first began", () =>
 		expect(changed).toContain("src/first-session.ts");
 	}, 30_000);
 });
+
+describe("model-per-phase A12 — a phase run on its own tier still records its start", () => {
+	it("a record written with a tier present reads back in today's shape", async () => {
+		// promise: phase-boundary-record-never-malformed
+		const root = await makeRepo();
+		roots.push(root);
+		await recordPhaseStart(root, {
+			plan: "demo",
+			phase: 1,
+			kind: "build",
+			sha: "abc1234",
+			at: AT_OPEN,
+			tier: "weak",
+		} as Parameters<typeof recordPhaseStart>[1]);
+
+		const [record] = await readBoundaries(root);
+		expect(record).toEqual({
+			plan: "demo",
+			phase: 1,
+			kind: "build",
+			sha: "abc1234",
+			timestamp: AT_OPEN,
+		});
+		expect(findPhaseStart([record], "demo", { kind: "build", number: 1 })).toEqual(record);
+	});
+});

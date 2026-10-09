@@ -58,6 +58,20 @@ Writes `accepted: <time>` and `accepted_by: person` (or `auto`, with `--auto`: a
 
 Refused inside a build step. An unattended build runs each step (work, falsify, cleanup) with `INDUSK_BUILD_STEP` set to the step, and `accept` and `land` refuse under it, naming the step: a build stops at review, and acceptance is the person's. The release session that acceptance starts is not marked, so it lands. This stops a confused session, not a determined one: a session that unsets the variable is not stopped.
 
+### `plans model <name> --phase <ref>`
+
+Prints the tier and model a phase is built on, as `<tier> <model>` (`med sonnet`), or `session` when the project names no model for it. `<ref>` is `Build Phase 1`, `Test Phase 1`, or a bare number for a build phase. The phase's own `**Tier**:` line wins; otherwise the `work` step's default tier from the config applies. `/work` reads this before each phase and hands the phase to a subagent on that model.
+
+### `plans next-session <name>`
+
+Prints the command to run in a new session for the plan's next piece of work, decided the way `plans next` decides it:
+
+- the next open phase: `In a new session, run: /work <name> — next is Build Phase 2, on strong (opus)` (the tier and model appear when the config names them);
+- every phase closed: `/falsify`, then `/cleanup`, then `/retrospective`, in that order;
+- a phase with a `blocker:` line, a phase waiting on a person (a manual or deferred-verification item), or a finished build with trajectory rows still open: the blocker, the item or the rows themselves, instead of a command — there is nothing to start yet.
+
+`plans approve` ends with the same line, and `/work` prints it at each phase close, so a session ends at the plan boundary instead of compacting across plans. It reads the plan from its worktree while it has one, and falls back to `/work <name>` when the plan cannot be read.
+
 ### `plans next <name> [--json]`
 
 What an unattended build does next, read from the plan as it stands — its worktree while it has one. It writes nothing; the build runner asks it after every step, and a person can ask it too.
@@ -140,6 +154,35 @@ A plan is a dead draft only when **all three** hold:
 ```
 
 Absent field → 30-day default. `indusk update` scaffolds the key idempotently.
+
+## Tiers and models
+
+```json
+{
+  "workflow": {
+    "tiers": { "strong": "opus", "med": "sonnet", "weak": "haiku", "baby": "haiku" },
+    "steps": {
+      "plan": { "tier": "strong" },
+      "work": { "tier": "med" },
+      "falsify": { "tier": "strong" },
+      "cleanup": { "tier": "med" },
+      "retrospective": { "tier": "weak" }
+    }
+  }
+}
+```
+
+`workflow.tiers` maps each tier to a model alias that Claude Code's Agent `model` accepts (`opus`, `sonnet`, `haiku`, `fable`). `workflow.steps.<step>.tier` gives each step's default. Changing a model here changes the next phase built; no plan is edited. A key that is not a tier, or a step InDusk does not read, is refused naming it. With no tiers configured, every phase runs on the session's own model.
+
+A phase in an impl may name a different tier:
+
+```markdown
+### Build Phase 2: Rewrite the command runner
+
+**Tier**: strong — rewrites how commands run
+```
+
+The impl validator refuses a tier that is not strong, med, weak or baby, and refuses a tier other than the `work` default that gives no reason. It also refuses a phase with more than one `**Tier**:` line (an escalation replaces the line), and, once the config names any tiers, a tier with no model in `workflow.tiers`. `plans model` refuses the same cases, naming the cause, rather than answering `session`.
 
 ## Relationship to the sweep
 
