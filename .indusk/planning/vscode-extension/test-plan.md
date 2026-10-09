@@ -74,7 +74,7 @@ Added 2026-10-08 with the promise.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
-| A26 | Each health line names the newest recorded runs of every promise, each with whether it held or broke, its source, its time and, for a break, its symptom; the same run is named the same way on every line. | unit |
+| A26 | Each health line names the newest recorded runs of every promise, each with whether it held or broke, its source, its time and its trace; the same run is named the same way on every line. (Not its symptom: the mark store keeps a run's time, outcome, trace and environment only. A broken card shows the symptom its health row carries.) | unit |
 | A27 | The activity section adds only runs it has not shown, newest first, keeps a bounded number, and says when no run has arrived yet. | unit |
 | A28 | On the demo app, holding a seat adds a "held" run to the activity section, and a faulted hold adds a "broke" run. | live check |
 
