@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
@@ -13,6 +13,7 @@ import { testFile, writePromise } from "./helpers/promises-fixture.js";
 /**
  * promise: a-review-shows-its-evidence — admin-plan-authoring A15, A16, A17.
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the review's half.
+ * promise: a-review-shows-its-evidence — plan-review-subagent A11: audit.md is not review evidence.
  *
  * When a build stops for review, `indusk plans review <plan>` assembles what
  * the person needs to decide: each promise the plan makes with the passing
@@ -197,5 +198,19 @@ describe.skipIf(SHOULD_SKIP)("indusk plans review", () => {
 			expect.arrayContaining(["src/seat-release.ts", "src/seat-release.test.ts"]),
 		);
 		expect(paths).not.toContain("README.md");
+	});
+	it("A11 (plan-review-subagent) — the same evidence with and without audit.md in the plan folder", () => {
+		const without = runCli(p.trunk, ["plans", "review", PLAN, "--json"]);
+		expect(without.code, `${without.stdout}\n${without.stderr}`).toBe(0);
+		writeFileSync(
+			join(wt, planDir, "audit.md"),
+			"## Findings\n\n- src/seat-release.ts:1 — a finding\n",
+		);
+		const withAudit = runCli(p.trunk, ["plans", "review", PLAN, "--json"]);
+		expect(withAudit.code, `${withAudit.stdout}\n${withAudit.stderr}`).toBe(0);
+		expect(JSON.parse(withAudit.stdout)).toEqual(JSON.parse(without.stdout));
+		const textWith = runCli(p.trunk, ["plans", "review", PLAN]).stdout;
+		rmSync(join(wt, planDir, "audit.md"));
+		expect(textWith).toBe(runCli(p.trunk, ["plans", "review", PLAN]).stdout);
 	});
 });
