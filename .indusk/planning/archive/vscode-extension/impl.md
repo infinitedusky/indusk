@@ -8,6 +8,8 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+accepted: 2026-10-09T14:38:43.432Z
+accepted_by: person
 ---
 
 # VS Code extension — promises in the editor, the break where the fix happens
