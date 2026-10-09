@@ -500,6 +500,50 @@ there, and it throws `JaegerUnreachable` instead. A probe
 that came back is trusted for 30 seconds per query URL, within one process. The same subpath exports `newestMark(marks)` (when a promise was last seen: its newest mark, upheld or violated) and `silencePastExpectation(promise, marks)` (the `expect_every` judgment). `promise_health`, `promises status` and the admin read both, so no surface restates either rule. How an application marks a promise is in the
 [promises guide](/guide/promises#marking-a-behaviour-promise).
 
+## `promises health`
+
+```bash
+indusk promises health --json [--every <seconds>]
+```
+
+Each promise's state for each source, as the admin's chips show it, one JSON
+line per read. Without `--every`, one read and exit 0; with it, a read every
+N seconds until the process is stopped. The VS Code extension runs it once
+with `--every 5` and reads each line.
+
+```json
+{
+  "at": "2026-10-08T12:30:00.000Z",
+  "sources": [
+    {
+      "name": "production",
+      "label": "https://my-server.fly.dev:16687",
+      "ok": true,
+      "rows": [
+        {
+          "promise": "seat-never-double-booked",
+          "state": "red",
+          "lastSeen": "2026-10-08T12:20:00.000Z",
+          "violations": 1,
+          "symptom": "seat 4 held twice",
+          "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+          "environment": "production",
+          "tests": ["src/seats.test.ts"]
+        }
+      ]
+    },
+    { "name": "local", "label": "…/telemetry.json", "ok": false, "reason": "could not be read: …" }
+  ]
+}
+```
+
+`state` is one of `red`, `fixed`, `green`, `unverified`, `amber` (known
+violated) and `grey` (retired); state and structure promises, which telemetry
+does not watch, have no row. A source that cannot be read, or reads watcher
+blind, is `ok: false` with its reason, never dropped and never green. The rule
+is the package's `promises/health` — one definition the admin, this command,
+the agents' `promise_health` report and the editor all read.
+
 ## `promises watch`
 
 `--source` says where the run happened, chooses what is read, and is
