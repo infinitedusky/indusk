@@ -249,6 +249,7 @@ const config = defineConfig({
 						{ text: "Promise Sources", link: "/decisions/promise-sources" },
 						{ text: "Promise Timeline", link: "/decisions/promise-timeline" },
 						{ text: "Server Provisioning", link: "/decisions/server-provisioning" },
+						{ text: "VS Code Extension", link: "/decisions/vscode-extension" },
 						{ text: "Test Kinds", link: "/decisions/test-kinds" },
 						{ text: "Planner Promises", link: "/decisions/planner-promises" },
 						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
