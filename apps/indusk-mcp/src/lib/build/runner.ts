@@ -26,8 +26,12 @@ function isSessionStep(s: BuildStep): s is Extract<BuildStep, { step: SessionSte
 
 export interface RunnerDeps {
 	read: () => Promise<BuildPlan>;
-	/** Run one step's session to its end; `error` when it failed after its retries. */
-	run: (step: BuildStepName) => Promise<{ error: string | null }>;
+	/**
+	 * Run one step's session to its end; `error` when it failed after its retries.
+	 * A `work` step also gets the phase it works (as `nextBuildStep` words it), so the
+	 * session can run on that phase's model.
+	 */
+	run: (step: BuildStepName, phase?: string) => Promise<{ error: string | null }>;
 	accept: (by: "person" | "auto") => Promise<void>;
 	onStep?: (update: RunnerUpdate) => void;
 }
@@ -64,7 +68,7 @@ export async function runBuild(deps: RunnerDeps & { autoAccept: boolean }): Prom
 			step: next.step,
 			...("phase" in next ? { detail: next.phase } : {}),
 		});
-		const { error } = await deps.run(next.step);
+		const { error } = await deps.run(next.step, "phase" in next ? next.phase : undefined);
 		const after = await deps.read();
 		previous = last;
 		last = { progressed: fingerprint(after) !== fingerprint(before), error };

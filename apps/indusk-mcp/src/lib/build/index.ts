@@ -22,3 +22,4 @@ export {
 	runBuild,
 	runRelease,
 } from "./runner.js";
+export { buildStepModel } from "./step-model.js";

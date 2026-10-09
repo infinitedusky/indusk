@@ -135,6 +135,32 @@ describe("plan-review-subagent A4 — after cleanup the build runs the audit, th
 	});
 });
 
+describe("plan-review-subagent A14 — the runner hands a work step its phase", () => {
+	it("a work step's run gets the phase nextBuildStep named; a ritual step's gets none", async () => {
+		const asked: Array<[BuildStepName, string | undefined]> = [];
+		const states = [
+			planOf([phase("Seats", false)], ["falsification"]),
+			planOf([phase("Seats", true)], ["falsification"]),
+			BUILT,
+		];
+		let at = 0;
+		await runBuild({
+			read: async () => states[Math.min(at, states.length - 1)],
+			run: async (step, phaseName) => {
+				asked.push([step, phaseName]);
+				at += 1;
+				return { error: null };
+			},
+			accept: async () => {},
+			autoAccept: false,
+		});
+		expect(asked).toEqual([
+			["work", "Build Phase 1: Seats"],
+			["falsify", undefined],
+		]);
+	});
+});
+
 describe("A19 — accepting runs the release workflow", () => {
 	it("acceptance is recorded, then the retrospective runs; nothing else", async () => {
 		const s = scripted([BUILT]);
