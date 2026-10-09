@@ -277,7 +277,7 @@ Investigated, with no hypothesis formed: the token grammar (lowercase names only
 **Goal**: one place in the editor that lists every promise with its state, broken ones first as cards that open to their tests and the code that keeps them, and an activity section that adds each run as it arrives. Added 2026-10-08 after Sandy tried the build; ADR decisions 7 and 8.
 
 - [x] (discovered: `indusk promises check` refused six names — sample tokens spelled in the core's tests since Build Phase 2, and a Build Phase 5 comment reading "by source and promise: told". The tests now build sample lines with the fixture's `site()`; the comment is reworded. Landing runs this check, so it would have stopped there) The registry check passes on this branch
-- [ ] Package: each source's health read keeps its newest runs from the store read it already makes; `healthLine` names up to fifty, newest first, as `runs` (A26)
+- [x] Package: each source's health read keeps its newest runs from the store read it already makes; `healthLine` names up to fifty, newest first, as `runs` (A26)
 - [ ] `core/panel.ts`: the panel's model from the latest line and each listed file's text: broken cards (latest break first, source, symptom), then the rest by name; each promise's tests and sites with the token's line, or none when the token is gone (A23, A24)
 - [ ] `core/activity.ts`: the activity section's runs, adding only unseen ones by trace, time and outcome, newest first, at most two hundred (A27)
 - [ ] `core/panel-html.ts`: the panel's HTML from the model and the activity, every text escaped, theme colours from VS Code's variables, a strict content security policy with a nonce; a click posts the file and line
