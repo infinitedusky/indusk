@@ -163,7 +163,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 #### Build Phase 2 Document
 
-- [ ] `reference/cli/plans.md`: `plans audit-inputs` (what each field is, the refusal, `--approved`) and `plans model --step`; `workflow.steps.audit.tier` in the tiers example
+- [x] `reference/cli/plans.md`: `plans audit-inputs` (what each field is, the refusal, `--approved`) and `plans model --step`; `workflow.steps.audit.tier` in the tiers example
 
 ### Build Phase 3: The skill, the live check, the docs
 

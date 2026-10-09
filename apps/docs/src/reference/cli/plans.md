@@ -58,9 +58,26 @@ Writes `accepted: <time>` and `accepted_by: person` (or `auto`, with `--auto`: a
 
 Refused inside a build step. An unattended build runs each step (work, falsify, cleanup, audit) with `INDUSK_BUILD_STEP` set to the step, and `accept` and `land` refuse under it, naming the step: a build stops at review, and acceptance is the person's. The release session that acceptance starts is not marked, so it lands. This stops a confused session, not a determined one: a session that unsets the variable is not stopped.
 
-### `plans model <name> --phase <ref>`
+### `plans model <name> --phase <ref> | --step <step>`
 
-Prints the tier and model a phase is built on, as `<tier> <model>` (`med sonnet`), or `session` when the project names no model for it. `<ref>` is `Build Phase 1`, `Test Phase 1`, or a bare number for a build phase. The phase's own `**Tier**:` line wins; otherwise the `work` step's default tier from the config applies. `/work` reads this before each phase and hands the phase to a subagent on that model.
+`--step <step>` answers a step's default tier instead of a phase's — `plan`, `work`, `falsify`, `cleanup`, `audit` or `retrospective` — with no phase override; `/audit` reads it to pick the auditor's model. `--phase` and `--step` together are refused, as is a step that has no tier, naming it.
+
+With `--phase`, prints the tier and model a phase is built on, as `<tier> <model>` (`med sonnet`), or `session` when the project names no model for it. `<ref>` is `Build Phase 1`, `Test Phase 1`, or a bare number for a build phase. The phase's own `**Tier**:` line wins; otherwise the `work` step's default tier from the config applies. `/work` reads this before each phase and hands the phase to a subagent on that model.
+
+### `plans audit-inputs <name> [--approved <sha>]`
+
+What the auditor is handed, as JSON, read from the plan's worktree and branch. It writes nothing. Nothing from the session is in it: no research, no `current.md`, no conversation.
+
+| Field | What it holds |
+|---|---|
+| `documents` | the plan's `brief`, `testPlan` and (when there is one) `adr`, each as `{ path, text }` |
+| `implAsApproved` | the impl as the approval merge left it, read with `git show` — none of the falsification or cleanup phases appended since, because git holds the impl from before them |
+| `trajectoryNow` | the `## Test Trajectory` section of the impl as it stands, every row in its final state |
+| `diff` | `git diff <merge-base>...<branch>` over the branch's paths, leaving out InDusk's bookkeeping: anything under `.indusk/` other than the plan's own folder |
+| `stat` | `git diff --stat` over the whole tree, for the question of what else each promise needs |
+| `approvedAt` | the approval merge the impl was read at |
+
+The approval merge is the first-parent merge on the trunk whose subject starts `plan(<name>): approved`. A plan with no such merge is refused, naming the plan: an audit of an unapproved plan has no impl "as approved". When history was rewritten and the subject cannot be found, `--approved <sha>` names the merge by hand.
 
 ### `plans next-session <name>`
 
@@ -167,6 +184,7 @@ Absent field → 30-day default. `indusk update` scaffolds the key idempotently.
       "work": { "tier": "med" },
       "falsify": { "tier": "strong" },
       "cleanup": { "tier": "med" },
+      "audit": { "tier": "strong" },
       "retrospective": { "tier": "weak" }
     }
   }
@@ -174,6 +192,8 @@ Absent field → 30-day default. `indusk update` scaffolds the key idempotently.
 ```
 
 `workflow.tiers` maps each tier to a model alias that Claude Code's Agent `model` accepts (`opus`, `sonnet`, `haiku`, `fable`). `workflow.steps.<step>.tier` gives each step's default. Changing a model here changes the next phase built; no plan is edited. A key that is not a tier, or a step InDusk does not read, is refused naming it. With no tiers configured, every phase runs on the session's own model.
+
+A build started from the admin runs each step's session on its tier's model too: a `work` step on its phase's model (the `**Tier**:` line, or the `work` default), `falsify`, `cleanup`, `audit` and `retrospective` on their step's default. With no tiers, no model is passed and the session runs on `claude`'s own. A tier the config has no model for fails the step with that message.
 
 A phase in an impl may name a different tier:
 
