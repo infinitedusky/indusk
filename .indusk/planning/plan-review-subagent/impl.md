@@ -182,7 +182,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 #### Build Phase 3 Verification
 
 - [x] A9 recorded; A13 passes; A1–A8, A10–A12 still pass; `skill-sync-parity` and `context-tiers-ship` pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/audit-gate.test.ts src/__tests__/plans-audit-inputs.test.ts src/__tests__/plans-model.test.ts src/__tests__/plans-review.test.ts src/__tests__/planner-tier-line.test.ts src/lib/models src/lib/build/runner.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/context-tiers-ship.test.ts`); biome clean on the files changed
-  - Run 2026-10-09: build exit 0; 11 files, 93/93 passed (A1–A8, A10–A13 green, `skill-sync-parity`, `context-tiers-ship`; CLI rows not skipped); A9 recorded above; biome clean on the one `.ts` file changed (`apps/docs/src/.vitepress/config.ts`, the sidebar entry). Shape: skipped — the phase changed no code file but that sidebar line (prose, templates and docs only), so `prepareShapeReview` has nothing to review.
+  - Run 2026-10-09: build exit 0; 11 files, 93/93 passed (A1–A8, A10–A13 green, `skill-sync-parity`, `context-tiers-ship`; CLI rows not skipped); A9 recorded above; biome on the one `.ts` file changed (`apps/docs/src/.vitepress/config.ts`, one sidebar line) reports only formatting differences that were there before (the file is not biome-formatted: spaces and long lines throughout); the added line matches its neighbours. Shape: skipped — the phase changed no code file but that sidebar line (prose, templates and docs only), so `prepareShapeReview` has nothing to review.
 
 #### Build Phase 3 Context
 
