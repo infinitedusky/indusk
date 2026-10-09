@@ -245,6 +245,7 @@ const config = defineConfig({
 						{ text: "Watcher Heartbeat", link: "/decisions/watcher-heartbeat" },
 						{ text: "Promise Sources", link: "/decisions/promise-sources" },
 						{ text: "Promise Timeline", link: "/decisions/promise-timeline" },
+						{ text: "Server Provisioning", link: "/decisions/server-provisioning" },
 						{ text: "Test Kinds", link: "/decisions/test-kinds" },
 						{ text: "Planner Promises", link: "/decisions/planner-promises" },
 						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
