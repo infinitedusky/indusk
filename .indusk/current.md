@@ -15,7 +15,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 **Version**: never hand-copied — read `apps/indusk-mcp/package.json` (published: `npm view @infinitedusky/indusk-mcp version`); history in `apps/docs/src/changelog.md`. `indusk context check-pointers` refuses a literal version claim on this line.
 
-**Now (2026-10-08): the InDusk demo.** The project is [indusk-demo](planning/indusk-demo/master.md) — show a promise breaking and the system catching it. Steps 0–4 are closed. **Next: [incident-recording](planning/incident-recording/brief.md)** (brief draft; open it with `/planner incident-recording`). Then vscode-extension and plan-cockpit (declared, not opened), demo-rehearsal; server-provisioning after the launch. Any agent starting work on dusk starts there unless Sandy says otherwise.
+**Now (2026-10-08): the InDusk demo.** The project is [indusk-demo](planning/indusk-demo/master.md) — show a promise breaking and the system catching it. Steps 0–4 are closed. **Next: [incident-recording](planning/incident-recording/brief.md)** (brief draft; open it with `/planner incident-recording`). Then vscode-extension and plan-cockpit (declared, not opened), demo-rehearsal. **server-provisioning (demo step 5) is built** on `plan/server-provisioning`, ahead of order, and awaits falsify/cleanup/retrospective: `indusk server connect` and `server deploy`; a Fly server is about $8/month (price list) and ~6 min to deploy; the deployed dusk server is unchanged. Any agent starting work on dusk starts there unless Sandy says otherwise.
 
 **In flight** (moved here from the root `CLAUDE.md`'s Current State on 2026-10-02 by context-tiers — operational state lives in this file):
 
@@ -48,6 +48,10 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **Sequence reconciliation (2026-09-14)**: every folder outside the V4 sequence got one fate; the table is in `planning/master.md`.
 
 **Test bed**: `~/code/sandbox/chitin-sportsbook` exercises the dev system end-to-end.
+
+**The project home** (`indusk eval home` prints it; machine state, never in the repo) holds, beside eval and the highlight queue: since incident-recording, `inbox.jsonl` + `inbox-delivered.jsonl` (breaks and reminders for the next prompt), `heard.jsonl` (every production violation the recorder heard), `announced.json` (when each open incident was last reminded) and `recorder.lock` (one recording pass at a time).
+
+**Catchup records** (incident-recording): when `promise_health` reports unrecorded production violations, catchup calls `record_breaks` and its summary's Promises line names what it opened, with the open incidents and their ages ahead of the roadmap.
 
 - 2026-09-15: composable.env removed from dusk (ce.json, env/, scripts, dev dep); Doppler is the env layer. indusk-mcp reads its secrets from `~/.indusk/config.env`, not Doppler — do not map it. **Direction**: indusk-admin will be hosted on a server eventually; keep its Doppler mapping, and create the missing `admin` config in the Doppler `indusk` project when that plan starts (it needs a data source before it needs secrets).
 - 2026-09-16: the admin plan page polls itself every `admin.refresh_ms` (default 5000, floor 1000; `.indusk/config.json`, never written by `update`). **Revisit the default on 2026-09-30** after two weeks of use — too slow to feel live, or loading the daemon? (admin-ui-phase-progress U2.)
@@ -2206,10 +2210,10 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 
 ---
 
-## Session 491b983a — incident-recording — planning
+## Session 491b983a — incident-recording — /work
 
 **Session ID**: 491b983a-364e-47eb-9147-92907ac9d847
-**Last updated**: 2026-10-08T21:15:01.454Z
+**Last updated**: 2026-10-08T21:57:50.734Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
@@ -2380,6 +2384,405 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 **Last updated**: 2026-10-08T20:52:22.187Z
 **Branch**: plan/small-fixes
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/small-fixes
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 790b8d91 — eval: scoring commit 02626142 (incident-recording plan doc)
+
+**Session ID**: 790b8d91-9ee9-4dc7-a5c9-5a65b3debae8
+**Last updated**: 2026-10-08T21:24:26.378Z
+**Branch**: plan/incident-recording
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/incident-recording
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session f53c5a03 — eval: review server-provisioning research+brief commit 0370b315
+
+**Session ID**: f53c5a03-9ff3-476e-b51c-f4adcf319f79
+**Last updated**: 2026-10-08T21:27:10.809Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 28e4967d — eval: server-provisioning commit 7f542a43
+
+**Session ID**: 28e4967d-da37-4d35-89d9-f1418462f5c1
+**Last updated**: 2026-10-08T22:05:31.579Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 29d299b0 — eval: server-provisioning Fly seam commit
+
+**Session ID**: 29d299b0-b9a0-4259-8aeb-62b025c4f68f
+**Last updated**: 2026-10-08T22:05:33.647Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session b8642223 — eval agent: scoring commit 93fc9d1b (planDeploy)
+
+**Session ID**: b8642223-7ed9-4225-9d4c-f5edc8693317
+**Last updated**: 2026-10-08T22:06:46.481Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session ac39a582 — eval: server-provisioning Build Phase 1 closed (connect)
+
+**Session ID**: ac39a582-b9fe-409a-8daa-efe2df9c1053
+**Last updated**: 2026-10-08T22:06:47.517Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session f856aedd — eval: incident-recording A1-A4,A23,A26 red test commit
+
+**Session ID**: f856aedd-e468-4e45-b6f6-f18c22098f0c
+**Last updated**: 2026-10-08T22:07:59.601Z
+**Branch**: plan/incident-recording
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/incident-recording
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session a58b1aa1 — eval agent: scoring commit 935be031
+
+**Session ID**: a58b1aa1-d292-48b3-9669-cbd4f6bcf02b
+**Last updated**: 2026-10-08T22:08:34.936Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 9346cfa1 — eval: scoring commit 65203fda (server block / Fly app)
+
+**Session ID**: 9346cfa1-7dbc-42c4-8e57-321dbee27800
+**Last updated**: 2026-10-08T22:08:58.488Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session fbf3936b — eval agent: scoring commit 6c256cc3 (watch through writer, incidents bookkeeping)
+
+**Session ID**: fbf3936b-75be-49da-939b-a19ad7b7c1a0
+**Last updated**: 2026-10-08T22:09:17.621Z
+**Branch**: plan/incident-recording
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/incident-recording
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 8147cddc — eval agent: evaluating commit 8a66d6cf (incident-recording test phase red)
+
+**Session ID**: 8147cddc-1754-47b9-93b9-aee2e547cec5
+**Last updated**: 2026-10-08T22:09:43.111Z
+**Branch**: plan/incident-recording
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/incident-recording
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 0797c926 — eval: scoring commit 65203fda (server block + Fly config)
+
+**Session ID**: 0797c926-aedb-48d4-9ff1-1103010257cc
+**Last updated**: 2026-10-08T22:09:56.185Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 8ecee494 — eval: incident recording decision page commit
+
+**Session ID**: 8ecee494-5aef-4c03-bf87-99ede45f726f
+**Last updated**: 2026-10-08T22:10:23.878Z
+**Branch**: plan/incident-recording
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/incident-recording
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session e07006c4 — eval: scoring commit 2a99cccd (Build Phase 1 closed, one writer)
+
+**Session ID**: e07006c4-f000-4a86-b61d-3194497b849b
+**Last updated**: 2026-10-08T22:10:42.291Z
+**Branch**: plan/incident-recording
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/incident-recording
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session e4a95fe0 — eval: incident-recording A19 red commit
+
+**Session ID**: e4a95fe0-c72f-4db5-b247-d61d425a8c6c
+**Last updated**: 2026-10-08T22:21:47.737Z
+**Branch**: plan/incident-recording
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/incident-recording
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 388234c1 — eval: Build Phase 3 close — server image published with release
+
+**Session ID**: 388234c1-56dc-475f-8dca-9a010c9f323e
+**Last updated**: 2026-10-08T22:21:47.952Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session bcf8c12c — eval: scoring commit c6aa91a5 (server deploy --build-from)
+
+**Session ID**: bcf8c12c-dd03-4193-b342-8a4c5f23c485
+**Last updated**: 2026-10-08T22:21:49.106Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session c214b80f — eval agent: scoring commit 1216dcef (server provisioning)
+
+**Session ID**: c214b80f-1cee-4362-a7a3-a80d0f5eb056
+**Last updated**: 2026-10-08T22:22:26.244Z
+**Branch**: plan/server-provisioning
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/server-provisioning
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session f22ca8f9 — eval: incident-recording commit f976091e (hooks CLAUDE.md update)
+
+**Session ID**: f22ca8f9-cc3a-4248-856a-09e78406e739
+**Last updated**: 2026-10-08T22:23:23.836Z
+**Branch**: plan/incident-recording
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/incident-recording
 
 ### In Flight
 

@@ -1,79 +1,69 @@
 ---
-title: "Recording and handling never wait for a person to think of it"
-date: 2026-10-02
-status: draft
+title: "Recording never waits for a person to think of it"
+date: 2026-10-08
+status: accepted
 workflow: feature
 ---
 
-# Recording and handling never wait for a person to think of it — Brief
+# Recording never waits for a person to think of it — Brief
 
-*Moved verbatim on 2026-10-02 from [day-always-on-deploy's brief](../archive/day-always-on-deploy/brief.md), where it was written, so each piece can run at its own size; item numbers restarted.*
+What came out of the planning conversation with Sandy on 2026-10-08. The problem, what runs today and the decisions on the way are in [research.md](research.md); the first draft of these items, written 2026-10-02 in day-always-on-deploy's brief, is superseded by this one.
 
-## Problem and direction
+## Expectations
 
-Found during the local smoke on numero-workbench (Sandy, 2026-10-02).
-`indusk promises watch` is one pass, not a watcher: an incident file exists
-only because someone ran it. Between runs a violation sits in Jaeger as
-*unrecorded* — visible to `status`, `promise_health` and Slack, but owning no
-incident and reopening no plan. On a laptop that is a habit; for a deployed
-system broken at three in the morning it means the loop stops at the Slack
-message. The server still never writes to the repository; the gap is that
-nothing else does either unless a person remembers to.
+1. **The demo's step 6 runs with nothing typed between the break and the reopened plan.**
+   - Measure: the rehearsal recording, from the production break to the owner's Maintenance phase on screen; every command typed in that stretch is counted, and the count must be zero.
+   - Look: at the rehearsal (demo step 6 of [the demo master](../indusk-demo/master.md)).
+2. **Incidents get fixed sooner once they stay loud.**
+   - Measure: days from `opened` to `fixed` on every incident opened after this lands, read from the registry, against the two before it (`i-2026-10-03-every-commit-evaluated` took a day; `i-2026-10-05-every-commit-evaluated` was open five days when this plan started).
+   - Look: a month after landing.
 
-1. **Recording runs on a schedule on the always-on instance, through one
-    reviewable writer** (Sandy, 2026-10-02: the schedule runs on the Fly
-    instance). Beside the announce pass, the instance runs
-    `indusk promises watch --source deployed` against its own Jaeger on a
-    timer and lands what it wrote — incidents, the promise's incident list,
-    the owner's Maintenance phase — as a **pull request** to the plan
-    repository. This amends the guide's "the server never writes back": it
-    still never writes to a branch anyone works on and never commits behind a
-    person's back; its only write is a reviewable PR. `watch` is already safe
-    to repeat (a recorded trace is never counted twice; an open incident is
-    extended, not duplicated), so the schedule can be tight — but the PR must
-    be too: one open recording PR per workbench, updated in place, never one
-    per pass.
-2. **Locally, catchup records instead of suggesting.** When `promise_health`
-    reports unrecorded violations, `/catchup` runs `watch` itself and reports
-    what it opened, rather than telling the user to run it.
-3. **An open incident stays loud until it is handled.** Recording is
-    mechanical; fixing is judgement, and stays agent work through the
-    Maintenance phase. What must not happen is an incident that is recorded
-    and then forgotten: catchup, `promise_health` and the admin show each open
-    incident with its age and its owner's Maintenance phase; open incidents
-    rank above the roadmap as unrecorded violations already do; and one open
-    past a threshold is announced again. A session-start hook may guarantee
-    the reading happens; it never does the fixing.
+## Promises
 
-4. **A reopened plan can be worked like any other.** Found 2026-10-03 on the
-    first real incident (`i-2026-10-03-every-commit-evaluated`, reopening the
-    archived `day-monitor`): `indusk worktree create day-monitor` and
-    `indusk worktree assign day-monitor <path>` both refuse — "no plan named
-    day-monitor" — because they look only under `.indusk/planning/`, while
-    `watch` reopens owners in the archive and `list_plans` already counts such
-    a plan as active. The Maintenance phase was worked in a hand-made
-    worktree the admin and plan tools could not see.
+### This plan makes
 
-Open for the test plan: the re-announce threshold.
+1. **`a-production-break-is-recorded-unasked`** (behaviour). While the admin is running, a promise broken in production becomes an incident, committed on the trunk, and reopens the plan that owns it with a Maintenance phase, within a minute and with nobody running a command; a recording pass that cannot read the server or cannot write the incident marks itself broken in the local telemetry.
+2. **`catchup-records-what-it-finds`** (state). When catchup finds a production violation no incident records, it records it itself and reports what it opened, instead of telling the person to run `watch`.
+3. **`an-open-incident-stays-loud`** (state). Every reader — catchup, `promise_health`, `promises status`, the admin — shows each open incident with its age and its owner's Maintenance phase, ahead of the roadmap; one open longer than a day is announced again, once a day, until it is fixed.
+4. **`a-reopened-plan-can-be-worked`** (state). A plan reopened from the archive gets a worktree like any other: `indusk worktree create` and `assign` find it, and the admin and the plan tools read it from there.
+5. **`a-break-reaches-the-working-agent`** (state). A promise broken in production reaches the agent in every running session on the project at its next turn, naming the promise, the incident and the reopened plan, without waiting for a catchup.
+6. **`the-admin-keeps-what-it-heard`** (state). The admin records every production violation its recorder sees, with when it happened and the incident it belongs to, and the promise page shows them counted over time, whether or not a page was open when they happened.
 
-The local half (items 2 and 3) needs nothing deployed and can start first; the
-scheduled recording PR (item 1) needs a deployed instance and the GitHub
-connection from [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md).
+### Existing promises
 
-## Success criteria
+**Must not break**
 
-- A violation on the deployed system becomes an incident and a Maintenance
-  phase in a pull request, opened by the always-on instance's own schedule,
-  without anyone running `watch` by hand.
-- Locally, catchup records unrecorded violations itself and says what it
-  opened.
-- An incident left open past the threshold is announced again, and every
-  reader shows its age.
+- **`the-demo-break-is-caught-locally`**. A break seen only by the local daemon is work in progress: it is never recorded unprompted and reopens nothing (demo step 5). Only a production violation is.
+- **`indusk-leaves-main-clean`**. The recorder commits what it writes; nothing it writes sits uncommitted in a checkout.
+- **`an-incident-names-its-tests`**. The unprompted recorder is `watch`'s own writer, so every incident it opens names the tests that proved the promise.
+- **`a-project-has-one-contract`**. The recorder reads the registry through the same resolver as every other reader, never a copy of its own.
 
-## Depends on
+**Changes**
 
-- [watcher-heartbeat](../watcher-heartbeat/brief.md).
-- For item 1: [day-always-on-deploy](../archive/day-always-on-deploy/brief.md) and
-  [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md).
-- [watch-reopen-collision](../watch-reopen-collision/brief.md) — a scheduled
-  `watch` must not silently fail to reopen an owner.
+None.
+
+**Replaces**
+
+None.
+
+### Not promised
+
+- **The always-on server recording incidents itself**, as a pull request to the plan repository: it needs the GitHub connection, which stays with [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md). Until then the server announces, and the developer's admin records.
+- **Multi-developer recording** — who records when two admins watch one project, checkout of incidents, per-person credentials: deferred 2026-10-04 until after the demo.
+- **The server pushing to the laptop**: the admin asks the production Jaeger on its own refresh interval (five seconds by default) instead (the reasons are in the research's decisions); a held connection would be no sooner and would still need the asking after a disconnect.
+- **The bar chart of checks per time bucket** on the promise page (Sandy's design, in `known-issues.md`): plan-cockpit's promise page, step 5 of the demo sequence; this plan keeps the record it will draw from.
+- **A desktop notification or Slack from the laptop**: the agent's inbox, catchup, the admin and the server's Slack are the channels promised here; a desktop channel is the VS Code extension's, step 4.
+
+## Depends On
+
+- [watcher-heartbeat](../archive/watcher-heartbeat/brief.md) (closed): a recorder must not count a blind watcher's silence as a quiet window.
+- [watch-reopen-collision](../archive/watch-reopen-collision/brief.md) (closed): a scheduled `watch` must not silently fail to reopen an owner.
+- [promise-sources](../archive/promise-sources/brief.md) (closed): the `production` source the recorder reads.
+- [bookkeeping-lives-where-it-is-read](../archive/bookkeeping-lives-where-it-is-read/brief.md) (closed): the trunk bookkeeping commit the recorder extends.
+
+## Blocks
+
+- The demo's step 6 and its rehearsal ([indusk-demo](../indusk-demo/master.md)).
+- The VS Code extension (step 4 of the demo sequence): it reads the agent's inbox and the admin's record rather than Jaeger itself.
+- plan-cockpit (step 5): its bar chart draws from the record this plan keeps.
+- [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md): the server's own recording PR reuses the recorder's writer and commit.
