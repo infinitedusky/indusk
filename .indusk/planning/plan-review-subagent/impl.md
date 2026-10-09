@@ -295,7 +295,7 @@ Every plan is read once before it closes by a reader that did not build it, on t
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`, the plan bar row and the paragraph under it: the positions read `cleanup → audit → review`, and a cleaned plan with no audit.md reads `cleaned, awaiting /audit` until the audit is written or skipped
+- [x] `apps/docs/src/reference/admin-ui/overview.md`, the plan bar row and the paragraph under it: the positions read `cleanup → audit → review`, and a cleaned plan with no audit.md reads `cleaned, awaiting /audit` until the audit is written or skipped
 
 ## Files Affected
 
