@@ -1056,6 +1056,18 @@ promisesCmd
 	});
 
 promisesCmd
+	.command("health")
+	.description(
+		"Each promise's state for each source, as the admin shows it — one JSON line per read (the editor reads this)",
+	)
+	.option("--json", "Print JSON lines (the only form, named so a reader can rely on it)")
+	.option("--every <seconds>", "Read again every N seconds until stopped, one line per read")
+	.action(async (opts: { json?: boolean; every?: string }) => {
+		const { promisesHealth } = await import("./commands/promises.js");
+		await promisesHealth(rootOrExit(), opts);
+	});
+
+promisesCmd
 	.command("fix <incident>")
 	.description(
 		"Close an incident: mark it fixed, record when, and return its promise to enforced when no other incident of it is open. Writes plan documents; commits nothing. Exit 2 naming the id when it is unknown or already fixed.",

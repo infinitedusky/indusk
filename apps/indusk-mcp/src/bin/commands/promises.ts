@@ -373,3 +373,52 @@ export function promisesWithdraw(projectRoot: string, name: string, opts: { plan
 		return `${name} withdrawn by ${opts.plan}: it was never in force, and the registry no longer holds it. Take it out of the brief too. ${AFTER_WRITE}`;
 	});
 }
+
+/**
+ * `indusk promises health --json [--every <seconds>]` (vscode-extension).
+ *
+ * One JSON line per read: every source's state for every promise, by the one
+ * rule the admin's chips use (`promises/health`). Without `--every`, one read
+ * and exit; with it, a read per period until the process is stopped — the
+ * editor runs it once and reads each line.
+ */
+export async function promisesHealth(
+	projectRoot: string,
+	opts: { json?: boolean; every?: string } = {},
+): Promise<void> {
+	const read = readPromises(projectRoot);
+	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
+	if (!registry) {
+		console.error(`${"missing" in read ? read.missing : projectRoot}: no promise registry`);
+		process.exitCode = 2;
+		return;
+	}
+	let everyMs: number | null = null;
+	if (opts.every !== undefined) {
+		const seconds = Number(opts.every);
+		if (!Number.isFinite(seconds) || seconds < 1) {
+			console.error(`--every "${opts.every}": expected a whole number of seconds, 1 or more`);
+			process.exitCode = 2;
+			return;
+		}
+		everyMs = seconds * 1000;
+	}
+	const { healthLine, readHealth } = await import("../../lib/promises/health.js");
+	const once = async () => {
+		const reads = await readHealth(projectRoot, registry, { cacheMs: 0 });
+		process.stdout.write(`${JSON.stringify(healthLine(registry, reads, new Date()))}\n`);
+	};
+	await once();
+	if (everyMs === null) return;
+	await new Promise<void>((resolve) => {
+		const timer = setInterval(() => {
+			void once();
+		}, everyMs);
+		const stop = () => {
+			clearInterval(timer);
+			resolve();
+		};
+		process.once("SIGTERM", stop);
+		process.once("SIGINT", stop);
+	});
+}
