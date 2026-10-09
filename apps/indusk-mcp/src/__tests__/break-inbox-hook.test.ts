@@ -1,4 +1,11 @@
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import {
+	appendFileSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -116,5 +123,46 @@ describe("A18 — the next turn hears every undelivered break, once", () => {
 		expect(r.exitCode, r.stderr).toBe(0);
 		expect(context(r.stdout)).toMatch(/inbox/i);
 		expect(context(r.stdout)).toMatch(/could not|cannot|unreadable/i);
+	});
+});
+
+/**
+ * Build Phase 8, the falsification — promise: a-break-reaches-the-working-agent.
+ *
+ * Delivery is per session, and a session that starts later has been given
+ * nothing: it must not be handed the inbox's whole history. An incident fixed
+ * since is not said (A30); an open incident with a break and its daily
+ * reminders is said once (A31).
+ */
+describe("A30, A31 — a session that starts later hears what is still open, once each", () => {
+	const later = (cwd: string) => ({ ...prompt(cwd), session_id: "s-later" });
+
+	it("A30 — an incident fixed since its entry was written is not said", async () => {
+		const incidents = join(project, ".indusk", "promises", "incidents");
+		mkdirSync(incidents, { recursive: true });
+		writeFileSync(
+			join(incidents, "i-2026-10-08-seat-released.md"),
+			"---\nid: i-2026-10-08-seat-released\npromise: seat-released\nstatus: fixed\n---\n\n## Symptom\n\nlate\n",
+		);
+		const r = await runHook("break-inbox.js", later(project), { env: { INDUSK_HOME: home } });
+		expect(r.exitCode, r.stderr).toBe(0);
+		const said = context(r.stdout);
+		expect(said).toContain("i-2026-10-08-seat-released-2");
+		expect(said).not.toMatch(/i-2026-10-08-seat-released(?!-)/);
+	});
+
+	it("A31 — a break and its reminders for one open incident are said as one line", async () => {
+		for (const id of ["r1", "r2", "r3"]) {
+			appendFileSync(
+				inbox,
+				entry(id, "i-2026-10-08-seat-released-2").replace('"kind":"break"', '"kind":"reminder"'),
+			);
+		}
+		const r = await runHook("break-inbox.js", later(project), { env: { INDUSK_HOME: home } });
+		expect(r.exitCode, r.stderr).toBe(0);
+		const said = context(r.stdout);
+		expect(said.split("\n").filter((l) => l.includes("i-2026-10-08-seat-released-2"))).toHaveLength(
+			1,
+		);
 	});
 });

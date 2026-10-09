@@ -1,4 +1,4 @@
-import { chmodSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -16,6 +16,7 @@ import {
 	answering,
 	incidentsIn,
 	JAEGER,
+	jsonLines,
 	OWNER,
 	PROMISE,
 	recordingProject,
@@ -284,5 +285,74 @@ describe("A26 — in a workbench the writer writes where the contract resolver s
 		expect(incidentsIn(wb.root)).toEqual([]);
 		expect(gitOut(repo, ["status", "--porcelain"])).toBe("");
 		expect(gitOut(repo, ["log", "-1", "--format=%s"])).toMatch(/^chore\(indusk\): incident i-/);
+	});
+});
+
+/**
+ * Build Phase 8, the falsification of incident-recording — promise:
+ * a-production-break-is-recorded-unasked (A27, A29); promise:
+ * a-break-reaches-the-working-agent (A28).
+ *
+ * The admin commits every few seconds beside a developer's own git, so a
+ * commit that fails once is ordinary: the next pass must finish it, and say
+ * the recorder is broken until it does (A27). What the machine keeps for the
+ * agent must not depend on that commit (A28). And recording commits on the
+ * trunk only (A29).
+ */
+describe("A27 — a commit that failed is finished by a later pass", () => {
+	it("marks every pass broken while the incident is uncommitted, and commits it once git is free", async () => {
+		const fx = project();
+		const lock = join(fx.root, ".git", "index.lock");
+		writeFileSync(lock, "");
+		cleanups.push(() => rmSync(lock, { force: true }));
+
+		await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
+		const [file] = incidentsIn(fx.root);
+		expect(file, "the pass wrote no incident").toBeDefined();
+		expect(gitOut(fx.root, ["status", "--porcelain", "-uall"])).toContain(file);
+
+		await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
+		expect(marks.map((m) => m.outcome)).toEqual(["violated", "violated"]);
+
+		rmSync(lock);
+		const r = await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
+		expect(gitOut(fx.root, ["status", "--porcelain"])).toBe("");
+		expect(gitOut(fx.root, ["log", "-1", "--format=%s"])).toMatch(/recorded by admin/);
+		expect(r.committed).toEqual(
+			expect.arrayContaining([expect.stringMatching(/^\.indusk\/promises\/incidents\/i-/)]),
+		);
+		expect(marks.at(-1)).toEqual({ outcome: "upheld" });
+	});
+});
+
+describe("A28 — the machine's record does not wait on the commit", () => {
+	it("a pass whose commit failed still leaves the inbox entry and the heard row, once", async () => {
+		const fx = project();
+		const lock = join(fx.root, ".git", "index.lock");
+		writeFileSync(lock, "");
+		cleanups.push(() => rmSync(lock, { force: true }));
+
+		await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
+		expect(jsonLines(home, "inbox.jsonl").filter((e) => e.kind === "break")).toHaveLength(1);
+		expect(jsonLines(home, "heard.jsonl")).toHaveLength(1);
+
+		rmSync(lock);
+		await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
+		expect(jsonLines(home, "inbox.jsonl").filter((e) => e.kind === "break")).toHaveLength(1);
+		expect(jsonLines(home, "heard.jsonl")).toHaveLength(1);
+	});
+});
+
+describe("A29 — recording commits on the trunk only", () => {
+	it("a checkout on a feature branch gets no commit; the pass names the branch and is marked broken", async () => {
+		const fx = project();
+		git(fx.root, ["checkout", "-q", "-b", "feature"]);
+		const head = gitOut(fx.root, ["rev-parse", "HEAD"]);
+
+		const r = await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
+		expect(gitOut(fx.root, ["rev-parse", "HEAD"])).toBe(head);
+		expect(r.committed).toEqual([]);
+		expect(marks).toEqual([{ outcome: "violated", symptom: expect.stringMatching(/feature/) }]);
+		expect(r.error?.message ?? "").toMatch(/trunk/);
 	});
 });
