@@ -108,10 +108,12 @@ function describeStep(s: BuildStep): string {
 			return "falsify: every phase is closed and the falsification has not run";
 		case "cleanup":
 			return "cleanup: falsification is closed and the cleanup has not run";
+		case "audit":
+			return "audit: the cleanup is closed and no audit.md has been written (or the audit skipped with a reason)";
 		case "judgement":
 			return `judgement: ${s.phase} waits on a person — ${s.item}`;
 		case "review":
-			return "review: built — every phase, the falsification and the cleanup are closed";
+			return "review: built — every phase, the falsification and the cleanup are closed, and the audit written or skipped";
 		case "cannot-continue":
 			return `cannot continue: ${s.why}`;
 	}
