@@ -139,8 +139,27 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — promise health for the session",
 	it("A20 — /catchup asks for promise health, and open violations come before the roadmap", () => {
 		const skill = readFileSync(CATCHUP_SKILL, "utf-8");
 		expect(skill).toMatch(/promise_health/);
-		expect(skill, "the skill says what to do with the answer").toMatch(
-			/open violations?[\s\S]{0,200}(before|ahead of)[\s\S]{0,80}(roadmap|plan)/i,
+		expect(skill, "the skill says what to do with the answer").toSatisfy(putsViolationsAheadOfRoadmap);
+	});
+
+	it("A20 — the check fails on a skill that puts the roadmap first", () => {
+		const roadmapFirst =
+			"Call promise_health. Read the roadmap first and work down it; open violations come after the roadmap.";
+		const roadmapOutranks = "The roadmap outranks open incidents; promise_health is read last.";
+		expect(putsViolationsAheadOfRoadmap(roadmapFirst)).toBe(false);
+		expect(putsViolationsAheadOfRoadmap(roadmapOutranks)).toBe(false);
+		// and it recognises each wording of the intended order
+		expect(putsViolationsAheadOfRoadmap("Open violations come before the roadmap.")).toBe(true);
+		expect(putsViolationsAheadOfRoadmap("Open violations are listed ahead of the plan.")).toBe(true);
+		expect(putsViolationsAheadOfRoadmap("Open incidents and open violations outrank the roadmap.")).toBe(
+			true,
 		);
 	});
 });
+
+/** The meaning, not one phrasing: open violations/incidents placed before, ahead of, or outranking the roadmap. */
+function putsViolationsAheadOfRoadmap(text: string): boolean {
+	return /open (?:incidents?|violations?)[\s\S]{0,200}?(?:outranks?|before|ahead of)[\s\S]{0,80}(?:roadmap|plan)/i.test(
+		text,
+	);
+}
