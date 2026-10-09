@@ -155,6 +155,11 @@ this file now carries it so the sidebar and the numbers agree.
     [`.indusk/research/promise-ui/`](../../research/promise-ui/README.md).
 - **demo-rehearsal follows plan-cockpit**: the dry run is recorded once the
   views it records exist.
+  - For its brief (found 2026-10-08 by vscode-extension's live checks): the
+    seat-holds demo tags no project on its runs, and an untagged run counts
+    for every project, so two demos on one machine, or an old session's demo,
+    show each other's runs and breaks. Rehearse from one demo, or have the
+    demo tag its project.
 - **server-provisioning moves after the launch.** The demo's server already
   exists (step 0, deployed on Fly); one command per project is for the people
   the demo brings in, not for the recording. Its brief stays where it is.
