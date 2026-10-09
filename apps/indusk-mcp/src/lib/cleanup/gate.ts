@@ -8,13 +8,11 @@ import { RITUAL_ORDER } from "../lifecycle.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { readPromises } from "../promises/registry.js";
 import { rowProofs } from "../promises/rows.js";
+import { isRitualSkipped, type SkipCheck } from "../rituals/skip.js";
 import { findNonTerminalRows } from "../trajectory/audit.js";
 import { parseTrajectory } from "../trajectory/parser.js";
 
-export interface SkipCheck {
-	skipped: boolean;
-	reason: string | null;
-}
+export type { SkipCheck } from "../rituals/skip.js";
 
 /**
  * Parse an impl.md's frontmatter and return whether the author has explicitly
@@ -27,17 +25,7 @@ export interface SkipCheck {
  * quoted-YAML-colon fragility that a single `skip-reason:` field would carry.
  */
 export function isCleanupSkipped(implContent: string): SkipCheck {
-	try {
-		const { data } = matter(implContent);
-		if (data.cleanup !== "skipped") return { skipped: false, reason: null };
-		const reasonRaw = data.cleanup_reason;
-		if (typeof reasonRaw !== "string") return { skipped: false, reason: null };
-		const reason = reasonRaw.trim();
-		if (!reason) return { skipped: false, reason: null };
-		return { skipped: true, reason };
-	} catch {
-		return { skipped: false, reason: null };
-	}
+	return isRitualSkipped(implContent, "cleanup");
 }
 
 /**
@@ -110,17 +98,7 @@ export function isCleanupComplete(planRoot: string): boolean {
  * promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes
  */
 export function isAuditSkipped(implContent: string): SkipCheck {
-	try {
-		const { data } = matter(implContent);
-		if (data.audit !== "skipped") return { skipped: false, reason: null };
-		const reasonRaw = data.audit_reason;
-		if (typeof reasonRaw !== "string") return { skipped: false, reason: null };
-		const reason = reasonRaw.trim();
-		if (!reason) return { skipped: false, reason: null };
-		return { skipped: true, reason };
-	} catch {
-		return { skipped: false, reason: null };
-	}
+	return isRitualSkipped(implContent, "audit");
 }
 
 /**

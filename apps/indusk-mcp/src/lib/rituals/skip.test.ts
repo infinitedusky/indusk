@@ -5,7 +5,10 @@ import { isRitualSkipped } from "./skip.js";
 
 type Ritual = "falsification" | "cleanup" | "audit";
 
-const RITUALS: Array<{ ritual: Ritual; wrapper: (impl: string) => ReturnType<typeof isRitualSkipped> }> = [
+const RITUALS: Array<{
+	ritual: Ritual;
+	wrapper: (impl: string) => ReturnType<typeof isRitualSkipped>;
+}> = [
 	{ ritual: "falsification", wrapper: isFalsificationSkipped },
 	{ ritual: "cleanup", wrapper: isCleanupSkipped },
 	{ ritual: "audit", wrapper: isAuditSkipped },
