@@ -41,21 +41,21 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A line carrying a promise's token shows, at the end of the line, the promise's name and its state: holding, broken, not seen, or watched by the tests | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
-| A2 | A line carrying the token of a promise the project does not have says so | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
-| A3 | A line in a test that carries a promise's token shows that the test proves the promise | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
-| A4 | Hovering a marked line shows the promise's sentence, its state for each source, and when it last held or broke | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/hover.test.ts |
+| A1 | A line carrying a promise's token shows, at the end of the line, the promise's name and its state: holding, broken, not seen, or watched by the tests | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
+| A2 | A line carrying the token of a promise the project does not have says so | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
+| A3 | A line in a test that carries a promise's token shows that the test proves the promise | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/markers.test.ts |
+| A4 | Hovering a marked line shows the promise's sentence, its state for each source, and when it last held or broke | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/src/core/hover.test.ts |
 | A5 | With the extension installed, opening the demo app's telemetry file shows its promise on the line that marks it | Build Phase 3 | Build Phase 4 | planned | live check | promise: a-promise-shows-where-it-is-kept | apps/vscode-extension/e2e/live.e2e.test.ts |
-| A6 | For the same project and marks, the editor, the admin and `indusk promises health` give every promise the same state for each source | Build Phase 1 | Build Phase 2 | written | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-windows.test.ts |
+| A6 | For the same project and marks, the editor, the admin and `indusk promises health` give every promise the same state for each source | Build Phase 1 | Build Phase 2 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-windows.test.ts, apps/vscode-extension/src/core/same-health.test.ts |
 | A7 | Promise health is worked out in one place the admin, the CLI and the editor all use; a second copy fails the build | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/promise-health-single-definition.test.ts |
-| A8 | A break that becomes readable shows within two reads (ten seconds at five) on its line, in the Problems list and in one notification, with no reload | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
-| A9 | A break read again does not notify again; a fixed break clears from the line and the Problems list | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
-| A10 | A source that cannot be read, or reads watcher blind, is shown as such, never "holding"; no line for two cadences reads "not reading" | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
+| A8 | A break that becomes readable shows within two reads (ten seconds at five) on its line, in the Problems list and in one notification, with no reload | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
+| A9 | A break read again does not notify again; a fixed break clears from the line and the Problems list | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
+| A10 | A source that cannot be read, or reads watcher blind, is shown as such, never "holding"; no line for two cadences reads "not reading" | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-reaches-the-editor | apps/vscode-extension/src/core/session.test.ts |
 | A11 | With the demo app running, its fault switch makes the editor show the promise broken within ten seconds | Build Phase 3 | Build Phase 4 | planned | live check | promise: a-break-reaches-the-editor | apps/vscode-extension/e2e/live.e2e.test.ts |
-| A12 | The fix action on a broken promise opens a terminal in the project running `claude` whose first message names the promise, its symptom, its trace link and its tests | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/src/core/fix.test.ts |
-| A13 | Where `claude` is not installed, the fix action says how to install it and opens nothing | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/src/core/fix.test.ts |
+| A12 | The fix action on a broken promise opens a terminal in the project running `claude` whose first message names the promise, its symptom, its trace link and its tests | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/src/core/fix.test.ts |
+| A13 | Where `claude` is not installed, the fix action says how to install it and opens nothing | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/src/core/fix.test.ts |
 | A14 | On the demo break in VS Code, one click starts `claude` with those facts | Build Phase 3 | Build Phase 4 | planned | live check | promise: a-break-opens-a-fix-in-one-click | apps/vscode-extension/e2e/live.e2e.test.ts |
-| A15 | After the extension reads a project, shows a break and runs the fix action, the project's files are exactly as they were | Build Phase 2 | Build Phase 2 | planned | unit | promise: the-editor-only-shows | apps/vscode-extension/src/core/only-shows.test.ts |
+| A15 | After the extension reads a project, shows a break and runs the fix action, the project's files are exactly as they were | Build Phase 2 | Build Phase 2 | passing | unit | promise: the-editor-only-shows | apps/vscode-extension/src/core/only-shows.test.ts |
 | A16 | The packaged extension installs into VS Code with one `indusk` command, activates in a project with InDusk, and stays inactive in one without | Build Phase 3 | Build Phase 3 | planned | contract | the install path every developer takes; VS Code is not ours | apps/vscode-extension/src/__tests__/install.contract.test.ts |
 
 ### Deferred Verification
@@ -168,25 +168,26 @@ Promise health worked out once, in the package; `indusk promises health --json` 
 
 **Goal**: everything the editor shows, decided by pure functions over a file, the registry, a health line and a clock.
 
-- [ ] `apps/vscode-extension/` scaffold: `package.json` (`name: indusk`, `publisher: infinitedusky`, `engines.vscode: ^1.90.0`, `activationEvents: ["workspaceContains:.indusk/config.json"]`), `tsconfig.json`, `vitest.config.ts` extending the root's, biome inherited; added to the workspace
-- [ ] `src/core/markers.ts` — token lines through the package's `lib/tokens.ts` (bundled, never re-spelled); "keeps" or "proves" by the registry's `tests:` paths
-- [ ] `src/core/hover.ts`, `src/core/problems.ts`
-- [ ] `src/core/session.ts` — `readSession(lines, clock)`: the current state per promise and source, new breaks to notify once, cleared breaks, "not reading" after two cadences without a line
-- [ ] `src/core/fix.ts` — the fix action: the prompt (promise, symptom, trace link, tests, and "record the incident with `indusk promises watch` and fix it under its owning plan"), quoted for the shell; the install message when `claude` is absent
-- [ ] A1–A4, A8–A10, A12, A13, A15 authored from the register, red first; A6 gains the editor's read and goes green
+- [x] (done before the tests, which need the app to run; `type: commonjs` for VS Code's loader; the health line gained a `promises` list so the editor never reads the registry, and the package a `./tokens` subpath) `apps/vscode-extension/` scaffold: `package.json` (`name: indusk`, `publisher: infinitedusky`, `engines.vscode: ^1.90.0`, `activationEvents: ["workspaceContains:.indusk/config.json"]`), `tsconfig.json`, `vitest.config.ts` extending the root's, biome inherited; added to the workspace
+- [x] (a local break beside a production that holds is shown on the line too: "holding, broken (local)") `src/core/markers.ts` — token lines through the package's `lib/tokens.ts` (bundled, never re-spelled); "keeps" or "proves" by the registry's `tests:` paths
+- [x] (the Problems list is `problems(session)` in `session.ts`, beside the breaks it lists, not a file of its own) `src/core/hover.ts`, `src/core/problems.ts`
+- [x] (a reducer — `startSession`, `onLine`, `onTick`, `problems` — rather than one `readSession`, so the extension feeds each line and tick as it arrives) `src/core/session.ts` — `readSession(lines, clock)`: the current state per promise and source, new breaks to notify once, cleared breaks, "not reading" after two cadences without a line
+- [x] (the prompt names incident-recording's `record_breaks` tool and `indusk promises watch`, both on main; it is one single-quoted shell word whatever the symptom holds) `src/core/fix.ts` — the fix action: the prompt (promise, symptom, trace link, tests, and "record the incident with `indusk promises watch` and fix it under its owning plan"), quoted for the shell; the install message when `claude` is absent
+- [x] (red at e5711393, eleven failures on their own calls; green at 48b57d17. A6's editor half is `src/core/same-health.test.ts`: the package cannot import the editor's core, so the extension checks its words against the admin's states over the package's own line) A1–A4, A8–A10, A12, A13, A15 authored from the register, red first; A6 gains the editor's read and goes green
 
 #### Build Phase 2 Verification
 
-- [ ] A1–A4, A6, A8–A10, A12, A13, A15 pass (`cd apps/vscode-extension && pnpm exec vitest run`; `cd ../indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-windows.test.ts`)
-- [ ] `pnpm exec tsc --noEmit` and biome clean in `apps/vscode-extension`
+- [x] (extension: 5 files, 12 green; the package's half of A6 green) A1–A4, A6, A8–A10, A12, A13, A15 pass (`cd apps/vscode-extension && pnpm exec vitest run`; `cd ../indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-windows.test.ts`)
+- [x] `pnpm exec tsc --noEmit` and biome clean in `apps/vscode-extension`
 
 #### Build Phase 2 Context
 
-- [ ] `apps/vscode-extension/CLAUDE.md` (new, small): the core is pure and every editor rule is tested there; `extension.ts` only applies it; nothing writes to the project; tokens come from the package's grammar
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+- [x] `apps/vscode-extension/CLAUDE.md` (new, small): the core is pure and every editor rule is tested there; `extension.ts` only applies it; nothing writes to the project; tokens come from the package's grammar
 
 #### Build Phase 2 Document
 
-- [ ] `guide/promises-in-your-editor.md` (first version): what the markers, hovers, Problems entries and notifications mean; the Mermaid sequence from break to Claude
+- [x] (in the guide sidebar beside "Run your own server"; the install section is Build Phase 3's) `guide/promises-in-your-editor.md` (first version): what the markers, hovers, Problems entries and notifications mean; the Mermaid sequence from break to Claude
 
 ### Build Phase 3: VS Code, the package, the install
 
