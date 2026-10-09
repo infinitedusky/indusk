@@ -43,15 +43,15 @@ Build each phase on the model its tier names in the config, without anyone switc
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A phase whose plan names no tier is built on the model the config gives the work step's default tier | Build Phase 1 | Build Phase 1 | planned | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
-| A2 | A phase whose plan names a tier is built on the model the config gives that tier | Build Phase 1 | Build Phase 1 | planned | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
-| A3 | Changing a tier's model in the config changes the model the next phase is built on, with no plan edited | Build Phase 1 | Build Phase 1 | planned | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
-| A4 | A project whose config names no tiers builds every phase on the session's own model, as today | Build Phase 1 | Build Phase 1 | planned | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
+| A1 | A phase whose plan names no tier is built on the model the config gives the work step's default tier | Build Phase 1 | Build Phase 1 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
+| A2 | A phase whose plan names a tier is built on the model the config gives that tier | Build Phase 1 | Build Phase 1 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
+| A3 | Changing a tier's model in the config changes the model the next phase is built on, with no plan edited | Build Phase 1 | Build Phase 1 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
+| A4 | A project whose config names no tiers builds every phase on the session's own model, as today | Build Phase 1 | Build Phase 1 | passing | unit | promise: each-phase-runs-on-its-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
 | A5 | Claude Code runs a phase handed to it on the named model, observed once against the real `claude` | Build Phase 2 | Build Phase 2 | planned | live check | promise: each-phase-runs-on-its-model | .indusk/planning/model-per-phase/impl.md (the result, recorded under Build Phase 2) |
-| A6 | An impl that gives a phase a tier other than its step's default, with no reason, is refused, naming the phase | Test Phase 1 | Build Phase 1 | written | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
-| A7 | The same impl with a reason is accepted; a tier that is not one of strong, med, weak or baby is refused, naming it | Test Phase 1 | Build Phase 1 | written | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
-| A8 | A phase whose tests still fail after three attempts on `med` stops and names `strong` as the tier to run it on | Build Phase 1 | Build Phase 2 | planned | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
-| A9 | A phase already on `strong` that fails three times stops as a blocker, as today, naming no higher tier | Build Phase 1 | Build Phase 2 | planned | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
+| A6 | An impl that gives a phase a tier other than its step's default, with no reason, is refused, naming the phase | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
+| A7 | The same impl with a reason is accepted; a tier that is not one of strong, med, weak or baby is refused, naming it | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-model-override-says-why | apps/indusk-mcp/src/__tests__/phase-tier-rule.test.ts |
+| A8 | A phase whose tests still fail after three attempts on `med` stops and names `strong` as the tier to run it on | Build Phase 1 | Build Phase 2 | passing | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
+| A9 | A phase already on `strong` that fails three times stops as a blocker, as today, naming no higher tier | Build Phase 1 | Build Phase 2 | passing | unit | promise: a-struggling-phase-asks-for-a-stronger-model | apps/indusk-mcp/src/lib/models/tiers.test.ts |
 | A10 | Approving a plan ends by naming `/work <plan>` to run in a new session | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/__tests__/plans-approve.test.ts |
 | A11 | Closing a phase ends by naming the command for the next phase, or `/falsify` after the last build phase | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-plan-boundary-names-the-next-session | apps/indusk-mcp/src/lib/models/next-session.test.ts |
 | A12 | A phase run on its own tier still records where it began, in the same shape Shape and verify read | Test Phase 1 | Test Phase 1 | passing | unit | promise: phase-boundary-record-never-malformed | apps/indusk-mcp/src/lib/shape/boundary.test.ts |
@@ -110,29 +110,31 @@ Build each phase on the model its tier names in the config, without anyone switc
 
 **Goal**: the config maps tiers to models and gives each step a default; a phase can name its tier, with its reason; the package answers which model a phase runs on.
 
-- [ ] `config.ts` and `checks/steps.ts`:
+- [x] `config.ts` and `checks/steps.ts`:
   - `workflow.tiers`: `{ strong?, med?, weak?, baby? }`, each a model alias.
   - `workflow.steps.<plan|work|falsify|cleanup|retrospective>.tier`.
   - Anything else is refused, naming the key, as the existing step keys are.
-- [ ] `lib/models/tiers.ts`:
+- [x] `lib/models/tiers.ts`:
   - `readTiers(checkout)`.
   - `phaseTier(implBody, phase)`, which reads the `**Tier**: <tier> — <reason>` line under the phase heading.
   - `tierForPhase(config, step, phaseTier)` returns `{ tier, model } | null`.
   - `nextTier(tier, failures)` returns `"weak" | "med" | "strong" | "blocker" | null`, escalating after 3 failures.
-- [ ] The validator's tier rule in `validate-impl-structure.js`, through the same lib it uses for its other rules. It refuses, naming the phase, a tier that differs from the step's default with no reason, and any tier that isn't one of the four.
-- [ ] `indusk plans model <plan> --phase <ref>` prints `<tier> <model>`, or `session` when no tiers are configured.
+- [x] The validator's tier rule in `validate-impl-structure.js`, through the same lib it uses for its other rules. It refuses, naming the phase, a tier that differs from the step's default with no reason, and any tier that isn't one of the four.
+- [x] `indusk plans model <plan> --phase <ref>` prints `<tier> <model>`, or `session` when no tiers are configured.
 
 #### Build Phase 1 Verification
 
-- [ ] A1–A4, A6, A7 pass; A8 and A9 are written and pass with `nextTier` (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/models/tiers.test.ts src/__tests__/phase-tier-rule.test.ts && pnpm exec vitest related src/lib/config.ts src/lib/checks/steps.ts --run`); tsc and biome clean
+- [x] A1–A4, A6, A7 pass; A8 and A9 are written and pass with `nextTier` (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/models/tiers.test.ts src/__tests__/phase-tier-rule.test.ts && pnpm exec vitest related src/lib/config.ts src/lib/checks/steps.ts --run`); tsc and biome clean
+
+- [x] Shape review of this phase's files (`lib/models/{tier-names,tiers,phase-model}.ts`, `hooks/_phase-tier.js`, the steps reader): nothing found. `tiers.ts` has one subject (which tier and model a phase runs on); the tier-line grammar is duplicated in `_phase-tier.js` by the hook rule (a hook cannot import TS) and noted in both headers.
 
 #### Build Phase 1 Context
 
-- [ ] planning (`templates/planning/CLAUDE.md`, shipped): a phase may carry `**Tier**: <tier> — <reason>`; omit it for the step's default
+- [x] planning (`templates/planning/CLAUDE.md`, shipped): a phase may carry `**Tier**: <tier> — <reason>`; omit it for the step's default
 
 #### Build Phase 1 Document
 
-- [ ] `reference/cli/plans.md`: `plans model`; the `workflow.tiers` and `steps.<step>.tier` keys, with an example config
+- [x] `reference/cli/plans.md`: `plans model`; the `workflow.tiers` and `steps.<step>.tier` keys, with an example config
 
 ### Build Phase 2: `/work` builds each phase on its model, and every boundary names the next session
 

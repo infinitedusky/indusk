@@ -227,3 +227,4 @@
 {"plan":"vscode-extension","phase":6,"kind":"build","sha":"c253f5aafcbacc41b1cee71d9ce7e856e71523c7","timestamp":"2026-10-09T03:09:45.689Z"}
 {"plan":"vscode-extension","phase":7,"kind":"build","sha":"ef99e62db431546c0b874a9bbc355e5012270e5c","timestamp":"2026-10-09T03:34:43.053Z"}
 {"plan":"vscode-extension","phase":8,"kind":"build","sha":"4850c8a3b2d8383103581a5a573286b143435a35","timestamp":"2026-10-09T14:20:42.348Z"}
+{"plan":"model-per-phase","phase":1,"kind":"build","sha":"19629cad557dfaad313b5d1fb0e49cb2853a20fc","timestamp":"2026-10-09T16:37:17.456Z"}
