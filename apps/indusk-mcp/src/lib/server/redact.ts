@@ -6,6 +6,8 @@
  * credential it stores. A provider's own output is printed through it too:
  * Fly can echo what it was sent, and a refusal that quotes its input must not
  * post a password to a terminal someone is screen-sharing.
+ *
+ * promise: provisioning-never-prints-a-secret
  */
 export interface LineWriter {
 	line(text: string): void;

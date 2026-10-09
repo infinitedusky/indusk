@@ -8,6 +8,9 @@ import type { FlyState } from "./fly-state.js";
  * Order matters and is the reference deployment's (day-always-on-deploy):
  * app, volume, secrets, deploy, then addresses — a first deploy has none, and
  * the query port is not 443, so it needs a dedicated IPv4.
+ *
+ * promise: a-second-run-updates-not-duplicates
+ * promise: provisioning-refuses-what-it-cannot-do
  */
 export interface DeployWanted {
 	app: string;

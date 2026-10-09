@@ -18,6 +18,9 @@ import type { SecretsFile } from "./secrets-file.js";
  * *name* of the credential's variable, and the value goes to the machine's
  * secrets file. A server that does not answer is never named; a project that
  * names one reads *watcher blind* forever after.
+ *
+ * promise: a-project-connects-to-its-server-in-one-command
+ * promise: a-server-is-read-back-before-the-command-ends
  */
 export interface ConnectInput {
 	projectRoot: string;

@@ -15,6 +15,8 @@
 #
 # The first push needs `docker login ghcr.io` with a token that can write
 # packages; a refusal says so.
+#
+# promise: the-recording-server-runs-from-a-published-image
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

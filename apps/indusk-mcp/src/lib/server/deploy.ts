@@ -19,6 +19,9 @@ import type { SecretsFile } from "./secrets-file.js";
  * connecting — which reads the server back before naming it. Every line it
  * prints, Fly's output included, goes through a writer that knows the
  * password and the webhook.
+ *
+ * promise: a-fly-deploy-is-one-command
+ * promise: the-recording-server-runs-from-a-published-image
  */
 export const IMAGE = "ghcr.io/infinitedusky/indusk-always-on";
 export const SERVER_USER = "indusk";
