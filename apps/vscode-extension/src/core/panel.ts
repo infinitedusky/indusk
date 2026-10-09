@@ -17,7 +17,7 @@ export interface PanelPromise {
 	/** The state as the markers word it: "broken (production)", "holding", … */
 	state: string;
 	tone: "broken" | "ok" | "unknown";
-	/** For a broken promise: where, when it last broke, and what the span said. */
+	/** Where a broken promise broke, when it last broke, and what the span said. */
 	source?: string;
 	brokeAt?: string;
 	symptom?: string;
