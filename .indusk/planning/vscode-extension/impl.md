@@ -1,7 +1,7 @@
 ---
 title: "VS Code extension — promises in the editor, the break where the fix happens"
 date: 2026-10-08
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -293,11 +293,11 @@ Investigated, with no hypothesis formed: the token grammar (lowercase names only
 
 #### Build Phase 6 Context
 
-- [ ] `apps/vscode-extension/CLAUDE.md`: the panel's model and HTML are core; the webview only renders and posts clicks
+- [x] (20f80100; also: spell no promise token in prose or test text, after the check refused two comments and six sample lines) `apps/vscode-extension/CLAUDE.md`: the panel's model and HTML are core; the webview only renders and posts clicks
 
 #### Build Phase 6 Document
 
-- [ ] the guide: "The promises panel" — the cards, opening a promise to its tests and code, the activity section; `reference/cli/promises.md`: the line's `runs`; changelog
+- [x] (also the changelog's `editor install` fix) the guide: "The promises panel" — the cards, opening a promise to its tests and code, the activity section; `reference/cli/promises.md`: the line's `runs`; changelog
 
 ## Files Affected
 
