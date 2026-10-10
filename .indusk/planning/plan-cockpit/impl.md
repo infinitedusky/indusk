@@ -235,7 +235,7 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the dashboard — standings, grouping, sort, filter, broken first
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the dashboard — standings, grouping, sort, filter, broken first
 
 ### Build Phase 3: The promise page and its fix
 
