@@ -25,6 +25,8 @@ import { toolCaller } from "./helpers/tool-call.js";
  * promise: a-failing-slow-test-breaks-its-promise
  * promise: an-incident-names-its-tests
  * promise: an-open-incident-stays-loud
+ * promise: a-release-runs-as-its-project-declares — A25: a routing error after the publish loses neither the outcome nor the record
+ * promise: a-break-reaches-the-working-agent — A23: a release's incident is committed and reaches the break inbox
  *
  * The fixture: an archived owner plan whose row R1 names the promise and the
  * file the slow run fails, and R2 names another file and no promise. A green
