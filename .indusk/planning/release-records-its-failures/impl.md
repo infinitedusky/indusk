@@ -1,7 +1,7 @@
 ---
 title: "release-records-its-failures"
 date: 2026-10-10
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -288,18 +288,21 @@ gate_policy: ask
 - [x] (reviewed `lib/release/bugfix-plan.ts` — left as-is: one job, a draft bugfix plan opened or extended; its name choice, brief text and commit are private to it and change together; Build Phase 6's Shape kept `chooseName` as one loop on purpose)
 - [x] (reviewed `lib/release/{run,junit,record,announce,suspects}.ts`, `scripts/rerun-system.js`, `lib/promises/watch.ts` — left as-is: each under 140 lines with one job; `watch.ts`'s `ownerReopener` was already made the one reopen path the release and `watch` share)
 - [x] (reviewed the docs pages flagged by size — left as-is: a changelog and two reference pages; length is their nature)
+- [x] Shape (`lib/release/route.ts`, `lib/promises/test-incident.ts`) — reviewed, left as-is: both are verbatim moves with one job each (route.ts 229 lines, test-incident.ts 168); `incidents.ts` fell from 432 to 288, under its cap
 
 #### Build Phase 7 Verification
 
-- [ ] (no tests flip at this phase — reason: refactor) A11, A12, A13, A14, A15, A16, A17, A23, A25, A26, A27 still pass after both moves, and every other release row with them (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts src/__tests__/release-report.test.ts src/__tests__/release-incident.test.ts src/__tests__/release-bugfix-plan.test.ts src/__tests__/release-dusk-declaration.test.ts src/lib/release/junit.test.ts src/lib/promises/test-born-incident.test.ts && pnpm exec vitest related src/lib/promises/incidents.ts src/lib/promises/test-incident.ts src/lib/release/route.ts src/lib/release/settle.ts`); `tsc --noEmit` and biome clean; `indusk promises check` passes (the promise tokens move with the code)
+- [x] (no tests flip at this phase — reason: refactor) A11, A12, A13, A14, A15, A16, A17, A23, A25, A26, A27 still pass after both moves, and every other release row with them (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts src/__tests__/release-report.test.ts src/__tests__/release-incident.test.ts src/__tests__/release-bugfix-plan.test.ts src/__tests__/release-dusk-declaration.test.ts src/lib/release/junit.test.ts src/lib/promises/test-born-incident.test.ts && pnpm exec vitest related src/lib/promises/incidents.ts src/lib/promises/test-incident.ts src/lib/release/route.ts src/lib/release/settle.ts`); `tsc --noEmit` and biome clean; `indusk promises check` passes (the promise tokens move with the code)
+  - 2026-10-10: the item's seven files, 7 files / 36 tests passed; `vitest related` over the four moved modules, 23 files, 133 passed and 2 failed — `src/lib/promises/inbox.test.ts` A17 (2 tests), which fails identically at `67b591b3`, before this phase, so it is not caused by the moves (recorded for the retrospective, not fixed here); `tsc --noEmit` clean in indusk-mcp and indusk-admin (dist rebuilt first); biome clean on the changed files (an unused `healthWindowMs` import elsewhere in `lib/promises` predates the phase); `indusk promises check` passes (72 promises, 3 incidents)
 
 #### Build Phase 7 Context
 
-- [ ] `apps/indusk-mcp/src/lib/promises/CLAUDE.md` and `src/lib/release/CLAUDE.md`: a release's incident is written by `promises/test-incident.ts`; routing is `release/route.ts`, settling `release/settle.ts`
+- [x] `apps/indusk-mcp/src/lib/promises/CLAUDE.md` and `src/lib/release/CLAUDE.md`: a release's incident is written by `promises/test-incident.ts`; routing is `release/route.ts`, settling `release/settle.ts`
 
 #### Build Phase 7 Document
 
-- [ ] `apps/docs/src/reference/cli/release.md`: where routing and the test-born incident live, if the page names modules; otherwise record here that it names none
+- [x] `apps/docs/src/reference/cli/release.md`: where routing and the test-born incident live, if the page names modules; otherwise record here that it names none
+  - 2026-10-10: the page names no source module (its only `.ts` mentions are example test files); nothing to update
 
 ## Files Affected
 
