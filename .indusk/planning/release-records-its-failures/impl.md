@@ -1,7 +1,7 @@
 ---
 title: "release-records-its-failures"
 date: 2026-10-10
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -67,6 +67,11 @@ gate_policy: ask
 | A21 | A non-npm release command declared by a fixture project (a shell command writing a file) is the command that runs | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A22 | A run where more than half the slow test files failed opens no incident and no plan, and the release says the environment failed, naming how many files failed | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-failing-slow-test-breaks-its-promise, promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 | A23 | An incident a release opens is committed on the trunk and appears in the project's break inbox, so a running agent hears it on its next prompt, as an incident the admin records does | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
+| A24 | A JUnit report left from an earlier run is not read: a red slow run that writes no new report, beside an old report naming failures, says "the slow tests failed", names no test and opens nothing; and a fresh report from one package is not mixed with another package's stale one | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-report.test.ts |
+| A25 | When routing a failure throws after the publish (the incidents directory cannot be written), the release still prints its outcome — published, done or not — still appends its `releases.jsonl` line, and says what could not be routed and why | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
+| A26 | Two unclaimed failing files with the same file name in different directories open two bugfix plans, each naming only its own file; neither failure is appended to the other's plan | Build Phase 6 | Build Phase 6 | planned | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
+| A27 | A file failing again after its earlier bugfix plan was archived opens a new plan under a name the archive does not hold, whose brief names the archived plan it follows | Build Phase 6 | Build Phase 6 | planned | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
+| A28 | A failing file whose path holds a space or a shell metacharacter reaches the rerun command as one argument, unchanged, and nothing else is run | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-flake-opens-nothing | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 
 ### Deferred Verification
 
@@ -227,6 +232,41 @@ gate_policy: ask
 #### Build Phase 5 Document
 
 - [x] `reference/skills/retrospective.md` and the retrospective skill's Step 11: the release is `indusk release`; changelog `### Added` entry under `## [Unreleased]`
+
+### Build Phase 6: Falsification — stale reports, a throw after publish, and plan names that collide
+
+**Tier**: med
+
+**Goal**: verify whether the attested state holds against five ways a real release goes wrong that no row covers: a report left from an earlier run read as this run's (A24), a routing error after the publish that loses the outcome and the record (A25), two test files with one name sharing a bugfix plan (A26), a recurring failure colliding with its archived fix plan (A27), and an unquoted file list in the rerun command (A28). Each row is one hypothesis; each item the fix it needs.
+
+**Read, not run (A24):** `settleFromReport` reads every file the `report` glob matches (`junit.ts` `failedFiles`), and nothing removes or dates them. dusk's reports are gitignored files that persist between runs. A slow run that dies before a package writes its report (`test:system` runs `prepublishOnly` first; a crash, a killed run) leaves that package's report from the last run — its failures are routed as this release's: incidents opened and committed, plans started, for tests that may be green now. The environment rule's denominator mixes the two runs too.
+
+**Read, not run (A25):** `releaseCommand` awaits `routeFailures` with no `try`, and only then appends `releases.jsonl` and prints the outcome. `recordTestFailure` writes into `.indusk/promises/incidents/` and `ownerReopener` reads the worktree record; an exception from either (a permission error, a malformed incident file) after a successful publish ends the command with a stack trace: no "release published", no record line — the brief's first expectation counts records that were never written.
+
+**Read, not run (A26):** `bugfixPlanName` keeps only the file's basename. dusk tracks several test files sharing one (`config.test.ts`, `registry.test.ts`, `session.test.ts`, `skip.test.ts` and more, across and within packages). Two such files failing open one `fix-skip` plan; the second is appended to the first's research as if it "failed again", and a later release routes either file's failure there.
+
+**Read, not run (A27):** `startPlan` refuses an open worktree, a trunk folder and an existing branch, but not `archive/<plan>`. A file whose `fix-<stem>` plan landed and is archived starts a second `fix-<stem>`, whose own archival at close collides with the first's folder; and its brief says nothing of the earlier fix, though "it broke again after a fix" is the most useful fact a person could read.
+
+**Read, not run (A28):** `settleFromReport` substitutes `names.join(" ")` into `rerun`, a shell command. A file name with a space splits into two arguments; one with `;`, `$(` or a backtick runs what follows. Test names come from the report the slow command wrote, so this is correctness rather than escalation, but a rerun of the wrong files reports wrong flakes.
+
+**Not investigated further, and why:** the order and outcome rules in `runRelease` (A1–A5 cover every branch of `when` and `done_when`, and the covering-run skip re-checks the key before recording); `routeFailure` (it reads every impl through the shared parser and names unreadable ones); the suspects range (a non-ancestor green `sha` lists more commits than it should, never fewer, and `--no-ff` landings keep the sha an ancestor); `before`-mode incidents committed ahead of a publish moving HEAD off dusk's release commit (dusk declares `after`; the guard is dusk's, not the release step's); the environment rule applied per package report rather than over the whole run (it would change the sentences of `a-failing-slow-test-breaks-its-promise` and `an-unclaimed-failure-opens-a-bugfix-plan`, so it is Sandy's call, raised separately).
+
+- [ ] `lib/release/run.ts` + `settle.ts`: the slow run's start time is passed to settling, and `failedFiles` reads only report files modified at or after it; a red run whose reports are all older reads as "no readable report" (A24). Never delete files the glob matches: a broad glob would delete a project's own files
+- [ ] `bin/commands/release.ts`: routing runs inside a `try`; the release record is appended and the outcome printed whether routing succeeded or threw, and a throw is reported as `no failure routed: <reason>` and recorded on the release line (`routing: "<reason>"`) (A25)
+- [ ] `lib/release/bugfix-plan.ts`: a name already used by an open plan for a different file, or by an archived plan, takes the next free name — `fix-<stem>-<parent dir>` for a different file, `fix-<stem>-2`, `-3`, … after an archived one — and the brief names the plan it would have collided with (`follows archive/fix-<stem>`) (A26, A27); the name for a unique, never-fixed file stays `fix-<stem>`, as A15 asserts
+- [ ] `lib/release/settle.ts`: each file is shell-quoted (single quotes, embedded quotes escaped) before substitution into `{files}` (A28)
+
+#### Build Phase 6 Verification
+
+- [ ] A24, A25, A26, A27, A28 pass, and every earlier row still does (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts src/__tests__/release-report.test.ts src/__tests__/release-incident.test.ts src/__tests__/release-bugfix-plan.test.ts src/__tests__/release-dusk-declaration.test.ts src/lib/release/junit.test.ts && pnpm exec vitest related src/lib/release/run.ts src/lib/release/settle.ts src/lib/release/junit.ts src/lib/release/bugfix-plan.ts src/bin/commands/release.ts`)
+
+#### Build Phase 6 Context
+
+- [ ] `apps/indusk-mcp/src/lib/release/CLAUDE.md`: a report older than the slow run is not this run's and is never read; files from a report reach a shell only quoted; a bugfix plan's name never collides with an open or archived one
+
+#### Build Phase 6 Document
+
+- [ ] `apps/docs/src/reference/cli/release.md`: stale reports are ignored, routing errors are reported without losing the record, and how a bugfix plan is named when its first name is taken
 
 ## Files Affected
 
