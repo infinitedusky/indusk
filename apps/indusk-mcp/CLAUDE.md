@@ -151,21 +151,10 @@ pointer; the pointer holds the story.
 - **`server deploy` decides from a recorded Fly state**: `planDeploy` is pure,
   every Fly call goes through `FlyCli`, a failed read is refused, never read
   as empty. — see `/reference/cli/server`
-- One registry subpath (`promises/registry`) for CLI, MCP and admin; writes
-  only via `lib/promises/write.ts`; marks through `readPromiseMarks` and
-  `jaegerEndpoint`; unreachable = exit 2, never zero. `promises.jaeger`
-  (`url` + `credential_env`, a variable's *name*) names a server; absence =
-  the local daemon. — see `/decisions/day-monitor`
 - Where a token may sit is `lib/tokens.ts`; an owner is a plan *directory*,
   never `archive`; link paths pass `isUsableRelPath` before any join; a mark's
   project is `markProjectId` (the shared git directory, never
   `basename(cwd)`); a health read never throws.
-- **An opened incident never takes an id its owner's Maintenance phases name**
-  (`maintenanceIncidentIds`); `watch` exits 1 for, and retries every run,
-  any incident left without its owner's phase. Evidence: `traces:` or
-  `tests:`+`release:`; readers take both. — see `/reference/cli/promises`
-- **`recordBreaks` commits on a trunk only**, after the inbox and heard rows;
-  what it could not commit waits in the home's `pending-commit.json`. — see `/decisions/incident-recording`
 - **The always-on pass announces once, and only after Slack accepts**
   (`lib/always-on/pass.ts`). **A string from a marked span is untrusted input
   to a plan document** — `incidents.ts`'s `oneLine` collapses `environment`
@@ -228,14 +217,12 @@ pointer; the pointer holds the story.
   fires `on_disable` BEFORE renaming; `INDUSK_BIN` overrides the bare prefix
   in hook commands (test-critical); package-owned files under `.indusk/` are
   machine-local (`MACHINE_LOCAL_RULES`). — see `/lessons/worktree-config-schema-pointer`
-- **Releases**: `release-guard.sh` refuses dirt on packaged paths, a HEAD not
+- **Releases** (`lib/promises/` and `lib/release/` rules live in those folders' `CLAUDE.md`): `release-guard.sh` refuses dirt on packaged paths, a HEAD not
   `chore(release): <version>`, an unmerged packaged `plan/*` branch and an
   install off the lockfile; `record-release.js` writes "published" only on
   `npm view`'s word; `release-image.sh` pushes the image before `pnpm publish`;
   `prepublishOnly` packs the `.vsix`.
-  `lib/release/`: `runRelease` takes commands, clock and reads as inputs;
-  order and completion are declared facts; failures come from the JUnit report, never output.
-  — see `/reference/cli/release`
+  `lib/release/` has its own `CLAUDE.md`. — see `/reference/cli/release`
 
 ## Tests
 
