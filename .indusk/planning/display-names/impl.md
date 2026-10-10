@@ -121,7 +121,7 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 #### Build Phase 1 Document
 
-- [ ] `reference/cli/promises.md`: the line's `title`, `planTitle` and `planDates`, and `display.words` in the project's config
+- [x] `reference/cli/promises.md`: the line's `title`, `planTitle` and `planDates`, and `display.words` in the project's config
 
 ### Build Phase 2: The panel reads them
 
