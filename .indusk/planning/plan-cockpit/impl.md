@@ -223,7 +223,7 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 
 - [x] Rebuild `app/p/[project]/promises/page.tsx` and `components/Promises.tsx` on `readStanding`: the stacked bar of standings with counts; group by state, plan or Path; sort (latest activity, name, plan); filter by sentence, name or plan; broken first, latest break first; each row its sentence in words (`promiseWords`), name, plan title (`planTitle`), tests passing/total, thirty-day held and broke, last activity. Group, sort and filter in the URL's query. Incidents and the per-source timeline kept below
 - [x] The nav's Promises entry with the broken count on every page (`app/p/[project]/layout.tsx`)
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — reviewed promise-dashboard.ts, Promises.tsx, promises/page.tsx, layout.tsx and the fixture's `standingMock` against the enabled extensions' craft rules; nothing to change. Considered and left: `PromisesTable` and its grouping helpers are no longer rendered by the page, but `Promises.test.tsx`, `Promises.heard.test.tsx` and `Promises.incidents.test.tsx` still pin them — retiring them with their tests is the cleanup ritual's call, not this phase's; the held figure counts days without a heard break and is `not seen yet` for a promise nothing has seen, until Build Phase 3's `proofOf` gives the per-day store.
 
 #### Build Phase 2 Verification
 
