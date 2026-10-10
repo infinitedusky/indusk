@@ -11,6 +11,7 @@ import type {
   PromiseKind,
   PromiseState,
 } from "@infinitedusky/indusk-mcp/promises/registry";
+import type { Standing } from "@infinitedusky/indusk-mcp/promises/standing";
 
 /**
  * A promise's chip: its declared state, and nothing else (day-promises, ADR
@@ -231,3 +232,24 @@ export const RITUAL_COPY = {
   RitualWord,
   { title: string; rowsHeading: string; itemsHeading: string }
 >;
+
+/** A promise's standing as the dashboard's bar and chip, and the promise page's banner, draw it. */
+export const STANDING_STYLE = {
+  broken: { bar: "bg-red-600", chip: "border-red-300 bg-red-50 text-red-800" },
+  "being-proven": {
+    bar: "bg-amber-500",
+    chip: "border-amber-300 bg-amber-50 text-amber-800",
+  },
+  declared: {
+    bar: "bg-gray-400",
+    chip: "border-dashed border-gray-400 bg-white text-gray-600",
+  },
+  enforced: {
+    bar: "bg-green-600",
+    chip: "border-green-600 bg-white text-green-700",
+  },
+  retired: {
+    bar: "bg-gray-200",
+    chip: "border-gray-200 bg-gray-50 text-gray-400",
+  },
+} as const satisfies Record<Standing, { bar: string; chip: string }>;

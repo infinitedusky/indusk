@@ -1,5 +1,6 @@
 import type { PlanPosition } from "@infinitedusky/indusk-mcp/lifecycle";
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
+import type { Proof } from "@infinitedusky/indusk-mcp/promises/proof";
 import type {
   IncidentEntry,
   PromiseEntry,
@@ -541,7 +542,215 @@ export function standingMock() {
           health: {},
           tests: { passing: total, total },
           lastActivity: LAST_SEEN[entry.name] ?? null,
+          thirtyDays: PROOFS[entry.name]?.standing.thirtyDays ?? {
+            broke: 0,
+            held: LAST_SEEN[entry.name] ? 30 : null,
+          },
+          lastBreak: broken ? (LAST_SEEN[entry.name] ?? null) : null,
         };
       }),
+  };
+}
+
+// -- a promise's proof (Build Phase 3) -----------------------------------------
+
+/** Thirty UTC days ending 2026-10-10 (the fixture's today), oldest first. */
+function thirtyDays(
+  perDay: Record<string, { held?: number; broken?: number }> = {},
+) {
+  const end = Date.UTC(2026, 9, 10);
+  return Array.from({ length: 30 }, (_, i) => {
+    const day = new Date(end - (29 - i) * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    return {
+      day,
+      held: perDay[day]?.held ?? 0,
+      broken: perDay[day]?.broken ?? 0,
+    };
+  });
+}
+
+/** The day a violation was recorded while no admin page was open (A30). */
+export const HEARD_DAY = "2026-10-08";
+
+const NO_TIME = { lastActivity: null, lastBreak: null } as const;
+
+/**
+ * `promises/proof`'s answer for each promise the page test names: the broken
+ * one whose every test passes (A29), the broken one whose tests are not all
+ * passing, one that holds, and one never seen.
+ */
+export const PROOFS: Record<string, Proof> = {
+  "seat-holds-never-double-book": {
+    standing: {
+      standing: "broken",
+      tests: { passing: 2, total: 2 },
+      health: { local: "red", production: "red" },
+      lastActivity: "2026-10-09T12:00:00.000Z",
+      lastBreak: "2026-10-09T12:00:00.000Z",
+      thirtyDays: { broke: 3, held: 28 },
+    },
+    broken: {
+      promise: "seat-holds-never-double-book",
+      source: "production",
+      sourceLabel: "https://jaeger.example",
+      statement: "Two guests are never given the same seat.",
+      symptom: "seat 4 held twice",
+      traceId: "abc123",
+      tests: ["src/seat-holds-never-double-book.test.ts"],
+    },
+    rows: [
+      {
+        id: "A1",
+        state: "passing",
+        tests: ["src/seats/hold.test.ts"],
+        plan: "alpha-one",
+        archived: false,
+      },
+      {
+        id: "A4",
+        state: "passing",
+        tests: ["src/seats/release.test.ts", "src/seats/race.test.ts"],
+        plan: "old-seat-rework",
+        archived: true,
+      },
+    ],
+    unreadable: [],
+    marks: [
+      {
+        service: "seat-holds",
+        operation: "hold",
+        lastHeld: "2026-10-10T07:00:00.000Z",
+        lastBroken: "2026-10-09T12:00:00.000Z",
+      },
+      {
+        service: "seat-holds",
+        operation: "release",
+        lastHeld: "2026-10-09T07:00:00.000Z",
+        lastBroken: null,
+      },
+    ],
+    seen: true,
+    days: {
+      local: thirtyDays({ "2026-10-09": { held: 4 } }),
+      production: thirtyDays({
+        [HEARD_DAY]: { broken: 2 },
+        "2026-10-09": { held: 1, broken: 1 },
+      }),
+    },
+    unread: {},
+    history: [
+      { at: "2026-09-01", kind: "declared", text: "declared by alpha-one" },
+      {
+        at: "2026-09-12",
+        kind: "confirmed",
+        text: "enforced when alpha-one closed",
+      },
+      { at: "2026-10-10", kind: "incident", text: "INC-7: seat 4 held twice" },
+    ],
+    banner: { testsMissTheCase: true },
+  },
+  "checkout-never-charges-twice": {
+    standing: {
+      standing: "broken",
+      tests: { passing: 1, total: 2 },
+      health: { local: "red" },
+      lastActivity: "2026-10-10T08:00:00.000Z",
+      lastBreak: "2026-10-10T08:00:00.000Z",
+      thirtyDays: { broke: 1, held: 29 },
+    },
+    broken: {
+      promise: "checkout-never-charges-twice",
+      source: "local",
+      sourceLabel: "http://localhost:16686",
+      statement: "A card is charged once per order.",
+      tests: ["src/checkout-never-charges-twice.test.ts"],
+    },
+    rows: [
+      {
+        id: "A2",
+        state: "passing",
+        tests: ["src/checkout/charge.test.ts"],
+        plan: "beta-one",
+        archived: false,
+      },
+      {
+        id: "A3",
+        state: "written",
+        tests: ["src/checkout/retry.test.ts"],
+        plan: "beta-one",
+        archived: false,
+      },
+    ],
+    unreadable: [],
+    marks: [],
+    seen: false,
+    days: { local: thirtyDays({ "2026-10-10": { broken: 1 } }) },
+    unread: {},
+    history: [],
+    banner: { testsMissTheCase: false },
+  },
+  "receipts-arrive-within-a-minute": {
+    standing: {
+      standing: "enforced",
+      tests: { passing: 1, total: 1 },
+      health: { local: "green" },
+      lastActivity: "2026-10-10T09:00:00.000Z",
+      lastBreak: null,
+      thirtyDays: { broke: 0, held: 30 },
+    },
+    broken: null,
+    rows: [
+      {
+        id: "A1",
+        state: "passing",
+        tests: ["src/receipts.test.ts"],
+        plan: "beta-two",
+        archived: false,
+      },
+    ],
+    unreadable: [],
+    marks: [
+      {
+        service: "receipts",
+        operation: "send",
+        lastHeld: "2026-10-10T09:00:00.000Z",
+        lastBroken: null,
+      },
+    ],
+    seen: true,
+    days: { local: thirtyDays({ "2026-10-10": { held: 6 } }) },
+    unread: {},
+    history: [
+      { at: "2026-09-25", kind: "declared", text: "declared by beta-two" },
+    ],
+    banner: { testsMissTheCase: false },
+  },
+  "exports-keep-their-columns": {
+    standing: {
+      standing: "declared",
+      tests: { passing: 0, total: 0 },
+      health: {},
+      ...NO_TIME,
+      thirtyDays: { broke: 0, held: null },
+    },
+    broken: null,
+    rows: [],
+    unreadable: [],
+    marks: [],
+    seen: false,
+    days: { local: thirtyDays() },
+    unread: {},
+    history: [],
+    banner: { testsMissTheCase: false },
+  },
+};
+
+/** `promises/proof` answered from the fixture; a name the registry lacks is null, as the real one answers. */
+export function proofMock() {
+  return {
+    __esModule: true,
+    proofOf: async (_root: string, name: string) => PROOFS[name] ?? null,
   };
 }

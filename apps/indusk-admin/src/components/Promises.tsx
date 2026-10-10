@@ -7,12 +7,12 @@ import type {
   PromiseState,
   RegistryProblem,
 } from "@infinitedusky/indusk-mcp/promises/registry";
-import type { Standing } from "@infinitedusky/indusk-mcp/promises/standing";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import {
   PROMISE_KIND_LABELS,
   PROMISE_STATE_CHIP,
+  STANDING_STYLE,
 } from "@/components/bars/labels";
 import { IncidentsTable } from "@/components/IncidentsTable";
 import {
@@ -544,26 +544,6 @@ export function PromisesEmpty({ dir }: { dir: string }) {
   );
 }
 
-const STANDING_STYLE: Record<Standing, { bar: string; chip: string }> = {
-  broken: { bar: "bg-red-600", chip: "border-red-300 bg-red-50 text-red-800" },
-  "being-proven": {
-    bar: "bg-amber-500",
-    chip: "border-amber-300 bg-amber-50 text-amber-800",
-  },
-  declared: {
-    bar: "bg-gray-400",
-    chip: "border-dashed border-gray-400 bg-white text-gray-600",
-  },
-  enforced: {
-    bar: "bg-green-600",
-    chip: "border-green-600 bg-white text-green-700",
-  },
-  retired: {
-    bar: "bg-gray-200",
-    chip: "border-gray-200 bg-gray-50 text-gray-400",
-  },
-};
-
 export interface PromisesDashboardProps {
   /** Every promise of the project with its standing, unfiltered. */
   rows: DashboardRow[];
@@ -575,6 +555,8 @@ export interface PromisesDashboardProps {
   /** The dashboard's own path, e.g. `/p/dusk/promises`; the controls link back to it. */
   path: string;
   planHrefPrefix: string;
+  /** Route prefix for a promise's own page, e.g. `/p/dusk/promises/`. */
+  promiseHrefPrefix: string;
   /** Observed health per source, for the banners that say a source could not be read. */
   observed?: SourceObserved[];
   timelines?: TimelineView;
@@ -594,6 +576,7 @@ export function PromisesDashboard({
   promises,
   path,
   planHrefPrefix,
+  promiseHrefPrefix,
   observed = [],
   timelines,
 }: PromisesDashboardProps) {
@@ -714,6 +697,7 @@ export function PromisesDashboard({
                 key={r.name}
                 row={r}
                 planHrefPrefix={planHrefPrefix}
+                promiseHrefPrefix={promiseHrefPrefix}
               />
             ))}
           </ul>
@@ -794,9 +778,11 @@ function ControlLinks<K extends string>({
 function DashboardRowItem({
   row,
   planHrefPrefix,
+  promiseHrefPrefix,
 }: {
   row: DashboardRow;
   planHrefPrefix: string;
+  promiseHrefPrefix: string;
 }) {
   return (
     <li
@@ -812,9 +798,13 @@ function DashboardRowItem({
         {STANDING_LABELS[row.standing].toLowerCase()}
       </span>
       <span className="flex min-w-0 flex-1 basis-64 flex-col">
-        <span className="text-sm font-medium text-gray-900">
+        <Link
+          href={`${promiseHrefPrefix}${row.name}`}
+          data-testid="promise-link"
+          className="text-sm font-medium text-gray-900 hover:underline"
+        >
           {row.sentence}
-        </span>
+        </Link>
         <span className="flex flex-wrap gap-x-2 text-xs text-gray-500">
           <code>{row.name}</code>
           <Link

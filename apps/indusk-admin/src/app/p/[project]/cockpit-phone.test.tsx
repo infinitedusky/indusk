@@ -16,7 +16,7 @@ import { PROJECT, resetFixture } from "@/__tests__/helpers/cockpit-fixture";
  *   - the menu button:    `[data-testid="nav-menu-button"]`, `aria-expanded`
  *   - the collapse button:`[data-testid="nav-collapse-button"]`, `aria-expanded`
  *
- * The promise page joins A7's widths in Build Phase 3.
+ * The promise page joined A7's widths in Build Phase 3.
  */
 
 vi.mock("next/link", () => ({
@@ -55,6 +55,9 @@ vi.mock("@infinitedusky/indusk-mcp/promises/standing", async () =>
 vi.mock("@infinitedusky/indusk-mcp/promises/health", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).healthMock(),
 );
+vi.mock("@infinitedusky/indusk-mcp/promises/proof", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).proofMock(),
+);
 vi.mock("@infinitedusky/indusk-mcp/promises/display", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).displayMock(),
 );
@@ -83,16 +86,24 @@ vi.mock("@/lib/promise-timeline", () => ({
 
 import PerProjectLayout from "./layout";
 import PlanPage from "./plan/[name]/page";
+import PromisePage from "./promises/[name]/page";
 import PerProjectPromisesPage from "./promises/page";
 
-async function shell(child: "plan" | "dashboard") {
+async function shell(child: "plan" | "dashboard" | "promise") {
   const params = Promise.resolve({ project: PROJECT });
   const children =
     child === "plan"
       ? await PlanPage({
           params: Promise.resolve({ project: PROJECT, name: "mid-build" }),
         })
-      : await PerProjectPromisesPage({ params });
+      : child === "promise"
+        ? await PromisePage({
+            params: Promise.resolve({
+              project: PROJECT,
+              name: "seat-holds-never-double-book",
+            }),
+          })
+        : await PerProjectPromisesPage({ params });
   const element = await PerProjectLayout({
     children: children as React.ReactNode,
     params,
@@ -151,7 +162,7 @@ describe("A6 — at 400 px the nav is a drawer, closed, opened and closed by the
 });
 
 describe("A7 — at 400 px, with forty plans, no page scrolls sideways", () => {
-  for (const which of ["plan", "dashboard"] as const) {
+  for (const which of ["plan", "dashboard", "promise"] as const) {
     it(`A7 the ${which} page fits 400 px and leaves its content the width of the screen`, async () => {
       await page.viewport(400, 800);
       await shell(which);

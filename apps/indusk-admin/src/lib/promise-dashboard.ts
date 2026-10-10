@@ -1,5 +1,4 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
-import type { HeardRow } from "@infinitedusky/indusk-mcp/promises/heard";
 import type {
   Standing,
   StandingRow,
@@ -68,16 +67,11 @@ export interface DashboardRow {
   lastBreak: string | null;
 }
 
-const WINDOW_DAYS = 30;
-const DAY_MS = 86_400_000;
-
 export interface RowContext {
   planTitles: Record<string, string>;
   /** A promise's name in words: the package's `promiseWords`, handed in so this module stays free of the file readers and loads in the client. */
   sentenceOf: (name: string) => string;
   declarations: Pick<PlanDeclarations, "subplans">;
-  heard: HeardRow[];
-  now: number;
 }
 
 /** The innermost Path whose declared plans include `plan`. */
@@ -91,27 +85,13 @@ function pathOf(
   return null;
 }
 
+/** One row per promise: the package's standing and thirty days, in words, with its plan's title and Path. */
 export function buildRows(
   standing: StandingRow[],
   ctx: RowContext,
 ): DashboardRow[] {
-  const since = ctx.now - WINDOW_DAYS * DAY_MS;
   return standing.map((s) => {
     const name = s.entry.name;
-    const heard = ctx.heard.filter(
-      (h) => h.promise === name && Date.parse(h.at) >= since,
-    );
-    const heardLatest = heard.reduce<string | null>(
-      (latest, h) => (latest === null || h.at > latest ? h.at : latest),
-      null,
-    );
-    const lastBreak =
-      s.standing === "broken" &&
-      s.lastActivity &&
-      (!heardLatest || s.lastActivity > heardLatest)
-        ? s.lastActivity
-        : heardLatest;
-    const brokenDays = new Set(heard.map((h) => h.at.slice(0, 10))).size;
     return {
       name,
       sentence: ctx.sentenceOf(name),
@@ -120,10 +100,10 @@ export function buildRows(
       path: pathOf(ctx.declarations.subplans, s.entry.owner),
       standing: s.standing,
       tests: s.tests,
-      held: s.lastActivity || heard.length ? WINDOW_DAYS - brokenDays : null,
-      broke: heard.length,
+      held: s.thirtyDays.held,
+      broke: s.thirtyDays.broke,
       lastActivity: s.lastActivity,
-      lastBreak,
+      lastBreak: s.lastBreak,
     };
   });
 }

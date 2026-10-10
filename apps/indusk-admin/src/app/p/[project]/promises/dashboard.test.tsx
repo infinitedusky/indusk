@@ -260,3 +260,38 @@ describe("A23 — broken promises are listed first, the latest break first", () 
     ).toBe(false);
   });
 });
+
+describe("A24 — every promise on the dashboard opens its own page", () => {
+  it("A24 each row links to its promise's address", async () => {
+    const root = await dashboard();
+    for (const p of PROMISES) {
+      const row = root.querySelector(
+        `[data-testid="promise-row"][data-promise="${p.name}"]`,
+      );
+      const hrefs = [...(row?.querySelectorAll("a") ?? [])].map((a) =>
+        a.getAttribute("href"),
+      );
+      expect(hrefs, `${p.name}: its page`).toContain(
+        `/p/${PROJECT}/promises/${p.name}`,
+      );
+    }
+  });
+});
+
+describe("the dashboard's thirty days are the package's, not the admin's", () => {
+  it("shows held and broke exactly as promises/standing returned them", async () => {
+    const root = await dashboard();
+    const thirty = (name: string) =>
+      root
+        .querySelector(
+          `[data-testid="promise-row"][data-promise="${name}"] [data-testid="promise-thirty"]`,
+        )
+        ?.textContent?.replace(/\s+/g, " ");
+    // The fixture's standing says 28 held, 3 broke; the readers hand the
+    // admin no heard rows to count, so only the package can have said so.
+    expect(thirty("seat-holds-never-double-book")).toContain(
+      "held 28 · broke 3 of 30 days",
+    );
+    expect(thirty("exports-keep-their-columns")).toContain("not seen yet");
+  });
+});

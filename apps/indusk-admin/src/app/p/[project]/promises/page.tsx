@@ -24,11 +24,7 @@ import { readPlanHierarchy } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
 import { buildRows, parseQuery } from "@/lib/promise-dashboard";
 import { readTimelineView } from "@/lib/promise-timeline";
-import {
-  readProjectHeard,
-  readProjectPromises,
-  registryOf,
-} from "@/lib/promises-reader";
+import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 import { parseWindow } from "@/lib/timeline-strip";
 
@@ -144,8 +140,6 @@ export default async function PerProjectPromisesPage({
     planTitles: planNames.planTitles,
     sentenceOf: (name) => promiseWords(name, planNames.words),
     declarations,
-    heard: readProjectHeard(projectPath).rows,
-    now: Date.now(),
   });
   return (
     <div className="flex flex-col gap-4">
@@ -162,6 +156,7 @@ export default async function PerProjectPromisesPage({
           incidents={registry.incidents}
           path={`/p/${project}/promises`}
           planHrefPrefix={`/p/${project}/plan/`}
+          promiseHrefPrefix={`/p/${project}/promises/`}
           observed={observed}
           timelines={timelines}
         />
