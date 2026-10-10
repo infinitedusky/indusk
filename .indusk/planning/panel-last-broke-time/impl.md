@@ -1,7 +1,7 @@
 ---
 title: "panel-last-broke-time"
 date: 2026-10-10
-status: approved
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -42,9 +42,9 @@ audit_reason: "A display defect found by Sandy reading the panel; its rows prove
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A promise whose newest violation is older than its newest held run shows, in the panel and the hover, "last broke" at the violation's time, not the held run's | Test Phase 1 | Build Phase 1 | written | unit | promise: a-broken-promise-says-when-it-last-broke | apps/vscode-extension/src/core/last-broke.test.ts |
-| A2 | The time reads in the person's time zone with no "UTC" suffix: a violation at 2026-10-09 17:46 UTC reads 1:46 pm on Oct 9 in America/New_York | Test Phase 1 | Build Phase 1 | written | unit | promise: a-broken-promise-says-when-it-last-broke | apps/vscode-extension/src/core/last-broke.test.ts |
-| A3 | Each health line row for a promise with violations carries the newest violation's time | Test Phase 1 | Build Phase 1 | written | unit | promise: a-broken-promise-says-when-it-last-broke | apps/indusk-mcp/src/__tests__/promise-health-names.test.ts |
+| A1 | A promise whose newest violation is older than its newest held run shows, in the panel and the hover, "last broke" at the violation's time, not the held run's | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-broken-promise-says-when-it-last-broke | apps/vscode-extension/src/core/last-broke.test.ts |
+| A2 | The time reads in the person's time zone with no "UTC" suffix: a violation at 2026-10-09 17:46 UTC reads 1:46 pm on Oct 9 in America/New_York | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-broken-promise-says-when-it-last-broke | apps/vscode-extension/src/core/last-broke.test.ts |
+| A3 | Each health line row for a promise with violations carries the newest violation's time | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-broken-promise-says-when-it-last-broke | apps/indusk-mcp/src/__tests__/promise-health-names.test.ts |
 
 ## Checklist
 
@@ -67,19 +67,20 @@ audit_reason: "A display defect found by Sandy reading the panel; its rows prove
 **Tier**: med
 
 - [x] `health-line.ts`: each row with violations gains `lastBroke` (the newest violation's ISO time), beside the `traceId` it already carries
-- [ ] Extension core: the panel and hover's "last broke" read `lastBroke` (falling back to nothing, never to `lastSeen`); "last seen" keeps `lastSeen`; `stamp(iso, timeZone?)` formats in the given time zone, else the machine's, with no "UTC"
+- [x] Extension core: the panel and hover's "last broke" read `lastBroke` (falling back to nothing, never to `lastSeen`); "last seen" keeps `lastSeen`; `stamp(iso, timeZone?)` formats in the given time zone, else the machine's, with no "UTC"
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
-- [ ] A1, A2, A3 pass (the two commands above), plus `pnpm exec vitest related` on the changed sources in both apps; tsc and biome clean
+- [x] A1, A2, A3 pass (the two commands above), plus `pnpm exec vitest related` on the changed sources in both apps; tsc and biome clean
 
 #### Build Phase 1 Context
 
-- [ ] `apps/vscode-extension/CLAUDE.md`: "last broke" is the line's `lastBroke`, never `lastSeen`; times show in local time
+- [x] `apps/vscode-extension/CLAUDE.md`: "last broke" is the line's `lastBroke`, never `lastSeen`; times show in local time
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/guide/promises-in-your-editor.md`: the panel's "last broke" is the newest violation, in your time zone; changelog `### Fixed` under `## [Unreleased]`
+- [x] `apps/docs/src/guide/promises-in-your-editor.md`: the panel's "last broke" is the newest violation, in your time zone; changelog `### Fixed` under `## [Unreleased]`
 
 ## Files Affected
 
