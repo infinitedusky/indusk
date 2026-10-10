@@ -42,9 +42,9 @@ audit_reason: "A display defect found by Sandy reading the panel; its rows prove
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A promise whose newest violation is older than its newest held run shows, in the panel and the hover, "last broke" at the violation's time, not the held run's | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-broken-promise-says-when-it-last-broke | apps/vscode-extension/src/core/last-broke.test.ts |
-| A2 | The time reads in the person's time zone with no "UTC" suffix: a violation at 2026-10-09 17:46 UTC reads 1:46 pm on Oct 9 in America/New_York | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-broken-promise-says-when-it-last-broke | apps/vscode-extension/src/core/last-broke.test.ts |
-| A3 | Each health line row for a promise with violations carries the newest violation's time | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-broken-promise-says-when-it-last-broke | apps/indusk-mcp/src/__tests__/promise-health-names.test.ts |
+| A1 | A promise whose newest violation is older than its newest held run shows, in the panel and the hover, "last broke" at the violation's time, not the held run's | Test Phase 1 | Build Phase 1 | written | unit | promise: a-broken-promise-says-when-it-last-broke | apps/vscode-extension/src/core/last-broke.test.ts |
+| A2 | The time reads in the person's time zone with no "UTC" suffix: a violation at 2026-10-09 17:46 UTC reads 1:46 pm on Oct 9 in America/New_York | Test Phase 1 | Build Phase 1 | written | unit | promise: a-broken-promise-says-when-it-last-broke | apps/vscode-extension/src/core/last-broke.test.ts |
+| A3 | Each health line row for a promise with violations carries the newest violation's time | Test Phase 1 | Build Phase 1 | written | unit | promise: a-broken-promise-says-when-it-last-broke | apps/indusk-mcp/src/__tests__/promise-health-names.test.ts |
 
 ## Checklist
 
