@@ -462,21 +462,52 @@ export function registryClientMock() {
 }
 
 /**
- * The package's display module with its date reads answered from the fixture
- * (the words and titles stay the real, pure ones): `planDates` for one plan
- * folder, `readHealthNames` for the whole project — a nav that asks either
- * gets the same dates.
+ * The package's display module, answered from the fixture. The real module
+ * reads files when it loads, so a browser test cannot import it; this stands
+ * in with the same four functions. `promiseWords` here is only the stand-in's
+ * plain reading (hyphens to spaces, first letter capital) — the tests assert
+ * literal sentences, so a page that names promises by anything else fails.
  */
-export function displayMock(original: Record<string, unknown>) {
+export function displayMock() {
   const planTitles: Record<string, string> = {};
   for (const p of activePlans()) planTitles[p.name] = titleOf(p.name);
   return {
-    ...original,
+    __esModule: true,
+    promiseWords: (name: string) => {
+      const words = name.split("-").join(" ");
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    },
+    planTitle: (title: string | undefined, folder: string) =>
+      title?.split(" — ")[0]?.trim() || folder,
+    displayWords: () => ({}),
     planDates: (planDir: string) => datesOf(planDir.split("/").pop() ?? ""),
     readHealthNames: () => ({
       planTitles,
       planDates: DATES,
       words: {},
     }),
+  };
+}
+
+/** `promises/sources` reads the project's config at import; the page needs only the pure choice of alarm source. */
+export function sourcesMock() {
+  return {
+    __esModule: true,
+    alarmSource: (names: string[]) =>
+      names.includes("production") ? "production" : "local",
+  };
+}
+
+/**
+ * `lib/timeline-strip` reaches `promises/incidents`, which reads files as it
+ * loads; the dashboard draws no timeline from the fixture, so only the window
+ * parse the page makes is answered.
+ */
+export function timelineStripMock() {
+  return {
+    __esModule: true,
+    parseWindow: () => "7d",
+    WINDOWS: { "7d": { ms: 7 * 86_400_000, cells: 84 } },
+    DEFAULT_WINDOW: "7d",
   };
 }

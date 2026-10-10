@@ -73,10 +73,8 @@ vi.mock("@/lib/promises-reader", async () =>
 vi.mock("@infinitedusky/indusk-mcp/promises/health", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).healthMock(),
 );
-vi.mock("@infinitedusky/indusk-mcp/promises/display", async (original) =>
-  (await import("@/__tests__/helpers/cockpit-fixture")).displayMock(
-    (await original()) as Record<string, unknown>,
-  ),
+vi.mock("@infinitedusky/indusk-mcp/promises/display", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).displayMock(),
 );
 vi.mock("@/lib/registry-client", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).registryClientMock(),
