@@ -1,7 +1,7 @@
 ---
 title: "release-records-its-failures"
 date: 2026-10-10
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -271,6 +271,35 @@ gate_policy: ask
 #### Build Phase 6 Document
 
 - [x] `apps/docs/src/reference/cli/release.md`: stale reports are ignored, routing errors are reported without losing the record, and how a bugfix plan is named when its first name is taken
+
+### Build Phase 7: Cleanup — routing in one module, the release's incident in its own
+
+**Tier**: med
+
+**Goal**: decompose the two files where this plan's phases each added a second job, per one-reason-to-change at the module boundary: `settle.ts` reads the report *and* routes failures, and `promises/incidents.ts` writes a watcher's incidents *and* a release's. Each item is a move with behaviour held by the existing rows; every other changed file is recorded as reviewed.
+
+**Scan**: `listOversizedChangedFiles(<worktree>, "main")` flagged `bin/cli.ts` (1236), `lib/config.ts` (699), `lib/promises/registry.ts` (480), `lib/promises/incidents.ts` (432), `apps/docs/src/changelog.md`, `reference/cli/promises.md`, `reference/skills/retrospective.md`. Of the new files none is over the 400 cap; the largest are `settle.ts` (216) and `bugfix-plan.ts` (196). No domain extension (nextjs/react) applies: the plan's code is library and CLI.
+
+- [ ] Move routing out of `lib/release/settle.ts` into `lib/release/route.ts` — `routeFailures`, `routeUnclaimed`, `claimsOf`, `live` and the `RouteFacts` / `RoutedIncident` / `Routed` types join `routeFailure`, whose doc already reads "where a failing slow test goes"; `settle.ts` keeps `settleFromReport` (read, environment rule, rerun, flakes). Basis: Build Phase 2 wrote settling and Build Phase 3 added routing to the same file, so it has two reasons to change; the boundary between "what failed" and "where it goes" is now settled. Update `bin/commands/release.ts`'s imports; no export renamed
+- [ ] Move the release's incident out of `lib/promises/incidents.ts` into `lib/promises/test-incident.ts` — `TestFailure`, `Suspects`, `suspectsBlock`, `recordTestFailure` and their private helpers (`testItems`, `releaseItem`, `withSuspects`, `yamlList`), importing the shared pieces (`newIncidentId`, `ensurePromiseCarries`, `provenBy`, `oneLine`, `IncidentChange`) from `incidents.ts`. Basis: a watcher's trace incidents and a release's test incidents change for different reasons, and Build Phase 3 grew `incidents.ts` past its cap by 163 lines to hold the second. `lib/release/{route,suspects,bugfix-plan}.ts` and `test-born-incident.test.ts` import from the new module. The layering holds: `promises/` imports nothing from `release/`
+- [ ] (reviewed `git add` + `git commit -- <path>` in `bugfix-plan.ts` beside `plans/start.ts`, `plans/plan-branch.ts`, `plans/workbench-plan.ts`, `promises/record-commit.ts` — left as-is: four two-line copies, but each stages differently — one file, a filtered list, relative paths, paths under a home — so a shared helper would take a flag per caller; the plan added one copy, not the pattern)
+- [ ] (reviewed `bin/cli.ts`, `lib/config.ts`, `lib/promises/registry.ts` — left as-is: over their caps before this plan; it added a command registration (10 lines), the new config keys' types (16) and two optional incident fields (12), each in the file's existing shape)
+- [ ] (reviewed `bin/commands/release.ts` — left as-is: 167 lines, one command — run, route, record, print — and Build Phase 6's Shape already named its one inline block, `routeWithoutLosingTheRelease`)
+- [ ] (reviewed `lib/release/bugfix-plan.ts` — left as-is: one job, a draft bugfix plan opened or extended; its name choice, brief text and commit are private to it and change together; Build Phase 6's Shape kept `chooseName` as one loop on purpose)
+- [ ] (reviewed `lib/release/{run,junit,record,announce,suspects}.ts`, `scripts/rerun-system.js`, `lib/promises/watch.ts` — left as-is: each under 140 lines with one job; `watch.ts`'s `ownerReopener` was already made the one reopen path the release and `watch` share)
+- [ ] (reviewed the docs pages flagged by size — left as-is: a changelog and two reference pages; length is their nature)
+
+#### Build Phase 7 Verification
+
+- [ ] (no tests flip at this phase — reason: refactor) A11, A12, A13, A14, A15, A16, A17, A23, A25, A26, A27 still pass after both moves, and every other release row with them (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts src/__tests__/release-report.test.ts src/__tests__/release-incident.test.ts src/__tests__/release-bugfix-plan.test.ts src/__tests__/release-dusk-declaration.test.ts src/lib/release/junit.test.ts src/lib/promises/test-born-incident.test.ts && pnpm exec vitest related src/lib/promises/incidents.ts src/lib/promises/test-incident.ts src/lib/release/route.ts src/lib/release/settle.ts`); `tsc --noEmit` and biome clean; `indusk promises check` passes (the promise tokens move with the code)
+
+#### Build Phase 7 Context
+
+- [ ] `apps/indusk-mcp/src/lib/promises/CLAUDE.md` and `src/lib/release/CLAUDE.md`: a release's incident is written by `promises/test-incident.ts`; routing is `release/route.ts`, settling `release/settle.ts`
+
+#### Build Phase 7 Document
+
+- [ ] `apps/docs/src/reference/cli/release.md`: where routing and the test-born incident live, if the page names modules; otherwise record here that it names none
 
 ## Files Affected
 
