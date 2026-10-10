@@ -23,6 +23,8 @@ import { makeHome, sleep, startNextDev } from "./helpers/next-dev";
  */
 
 const PROMISE = "seat-never-double-booked";
+// A behaviour promise the fixture never violates, so no incident is ever recorded for it.
+const CLEAN_PROMISE = "seat-count-never-negative";
 const OWNER = "seats-v2";
 const CRED_ENV = "INDUSK_TEST_SERVER_CREDENTIAL";
 
@@ -69,6 +71,10 @@ function project(queryUrl: string, otlpUrl: string): string {
   writeFileSync(
     path.join(root, ".indusk", "promises", `${PROMISE}.md`),
     promiseFile(PROMISE, OWNER),
+  );
+  writeFileSync(
+    path.join(root, ".indusk", "promises", `${CLEAN_PROMISE}.md`),
+    promiseFile(CLEAN_PROMISE, OWNER),
   );
   return root;
 }
@@ -130,60 +136,56 @@ describe("A15 — the deployed system's health on the page", () => {
 });
 
 describe("A16 — the page refreshes itself", () => {
-  it(
-    "a violation arriving while the page is open turns the promise red without a reload",
-    {
-      timeout: 60_000,
-    },
-    async () => {
-      const { chromium } = await import("playwright");
-      const browser = await chromium.launch();
-      try {
-        const page = await browser.newPage();
-        await page.goto(`${url}/p/remote/promises`, {
-          waitUntil: "networkidle",
-        });
-        const second = "seat-release-on-timeout";
-        writeFileSync(
-          path.join(root, ".indusk", "promises", `${second}.md`),
-          promiseFile(second, OWNER),
-        );
-        await server.load([
-          {
-            service: "seats-api",
-            name: "release-seat",
-            promise: second,
-            outcome: "violated",
-            symptom: "a held seat stayed held",
-            traceId: newTraceId(),
-            attributes: { "deployment.environment": "production" },
-          },
-        ]);
-        await page
-          .locator(
-            `[data-promise="${second}"] [data-testid="promise-health"][data-health="red"]`,
-          )
-          .waitFor({ timeout: 30_000 });
-      } finally {
-        await browser.close();
-      }
-    },
-  );
+  it("a violation arriving while the page is open turns the promise red without a reload", {
+    timeout: 60_000,
+  }, async () => {
+    const { chromium } = await import("playwright");
+    const browser = await chromium.launch();
+    try {
+      const page = await browser.newPage();
+      await page.goto(`${url}/p/remote/promises`, {
+        waitUntil: "networkidle",
+      });
+      const second = "seat-release-on-timeout";
+      writeFileSync(
+        path.join(root, ".indusk", "promises", `${second}.md`),
+        promiseFile(second, OWNER),
+      );
+      await server.load([
+        {
+          service: "seats-api",
+          name: "release-seat",
+          promise: second,
+          outcome: "violated",
+          symptom: "a held seat stayed held",
+          traceId: newTraceId(),
+          attributes: { "deployment.environment": "production" },
+        },
+      ]);
+      await page
+        .locator(
+          `[data-promise="${second}"] [data-testid="promise-health"][data-health="red"]`,
+        )
+        .waitFor({ timeout: 30_000 });
+    } finally {
+      await browser.close();
+    }
+  });
 });
 
 describe("A17 — the server unreachable", () => {
-  it(
-    "every behaviour chip is hollow with health unknown, and none is green",
-    {
-      timeout: 60_000,
-    },
-    async () => {
-      await server.stop();
-      await sleep(2_500); // past the project's 1s refresh interval
-      const html = await (await fetch(`${url}/p/remote/promises`)).text();
-      expect(healthOf(html, PROMISE)).toBe("unverified");
-      expect(html).not.toContain('data-health="green"');
-      expect(html).toMatch(/health unknown since/i);
-    },
-  );
+  it("a promise with no incident is hollow with health unknown, a recorded break reads amber, and none is green", {
+    timeout: 60_000,
+  }, async () => {
+    await server.stop();
+    await sleep(2_500); // past the project's 1s refresh interval
+    const html = await (await fetch(`${url}/p/remote/promises`)).text();
+    // Never seen: unverified, whatever the server's state.
+    expect(healthOf(html, CLEAN_PROMISE)).toBe("unverified");
+    // The admin's recorder recorded this promise's production break as an
+    // incident (incident-recording), so it is known-violated: amber.
+    expect(healthOf(html, PROMISE)).toBe("amber");
+    expect(html).not.toContain('data-health="green"');
+    expect(html).toMatch(/health unknown since/i);
+  });
 });
