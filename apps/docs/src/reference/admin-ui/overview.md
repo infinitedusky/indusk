@@ -113,7 +113,14 @@ Switching projects via the header does not restart the daemon — the registry r
 
 The resolver applies when the registered path is the top of a git checkout — the project is the repository. A project nested inside a larger repository reads the folder it was registered at, as before.
 
-**`/p/{project}/plan/{name}` (plan detail)** — opens as the overview: three progress lines under the header, then every document section collapsed (admin-ui-phase-progress, 2026-09-16). The lines are a zoom, and each one's label names the level below it:
+**`/p/{project}/plan/{name}` (plan detail)** — under the header and the progress lines, the plan is shown as its two workflows (plan-cockpit):
+
+- **Planning** — the documents the plan's type requires, in order: Research, Brief, Test plan, Decision, Impl. A bugfix lists Brief, Test plan and Impl; a spike lists Research only.
+- **Release** — Build, Falsify, Cleanup, Audit, Review, Release.
+
+Each list has its own count of steps done (`3 of 5`). A step is `done`, `in progress`, `needs you` (a document proposed and waiting to be accepted, or an impl waiting to be approved), `not yet`, `skipped` (the type has no such step, or a ritual was skipped with a reason — the reason is shown, and a skipped step is in neither number of the count) or `missing` (the type requires the document and the plan has moved past it). Every state is read from the plan's documents and where it stands, by the package's `plans/steps` — the same position the plan bar draws — and no control on the page sets one. Today's documents, phases and test rows are under a collapsed **Details**; nothing was removed.
+
+The page opens as the overview: three progress lines under the header, then every document section collapsed (admin-ui-phase-progress, 2026-09-16). The lines are a zoom, and each one's label names the level below it:
 
 | Line | Segments | Active label |
 |---|---|---|
