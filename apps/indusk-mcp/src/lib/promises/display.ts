@@ -98,7 +98,8 @@ export function planDates(
 		/Landed on main at \S+?,\s*(\d{4}-\d{2}-\d{2})/,
 	)?.[1];
 	const landed = line ?? (opts.archived ? archivedLanding(planDir) : null);
-	const released = (landed || opts.archived) && changelog ? releaseOf(basename(planDir), changelog) : null;
+	const released =
+		(landed || opts.archived) && changelog ? releaseOf(basename(planDir), changelog) : null;
 	return { started, landed, released };
 }
 
