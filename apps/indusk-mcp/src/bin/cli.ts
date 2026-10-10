@@ -303,7 +303,7 @@ program
 	)
 	.action(async () => {
 		const { releaseCommand } = await import("./commands/release.js");
-		process.exit(releaseCommand(process.cwd()));
+		process.exit(await releaseCommand(process.cwd()));
 	});
 
 const eval_ = program.command("eval").description("Context evaluation and quality scoring");

@@ -41,6 +41,15 @@ export function findCoveringRun(anyCheckout: string, key: string): GreenRun | nu
 	return runs.at(-1) ?? null;
 }
 
+/** The latest green run recorded for the project, whatever code it covered, or `null` (release-records-its-failures D9). */
+export function latestGreenRun(anyCheckout: string): GreenRun | null {
+	const runs = readJsonl(recordPath(anyCheckout)).filter(
+		(r): r is GreenRun & Record<string, unknown> =>
+			typeof r.key === "string" && typeof r.at === "string" && typeof r.cwd === "string",
+	);
+	return runs.at(-1) ?? null;
+}
+
 /** The commit a checkout is on, for a green run's `sha` and the release record; `unknown` outside git. */
 export function headCommit(checkout: string): string {
 	const head = gitSync(checkout, "rev-parse", "HEAD");

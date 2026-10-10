@@ -10,14 +10,20 @@
 import { spawnSync } from "node:child_process";
 import { gitSync } from "../../lib/bookkeeping/git.js";
 import { codeKey } from "../../lib/checks/key.js";
-import { findCoveringRun, headCommit, recordGreenRun } from "../../lib/checks/record.js";
+import {
+	findCoveringRun,
+	headCommit,
+	latestGreenRun,
+	recordGreenRun,
+} from "../../lib/checks/record.js";
 import { readWorkflowSteps } from "../../lib/checks/steps.js";
 import type { WorkflowSteps } from "../../lib/config.js";
 import { recordOf, recordRelease, releaseVersion } from "../../lib/release/record.js";
 import { type ReleaseOutcome, runRelease } from "../../lib/release/run.js";
-import { settleFromReport } from "../../lib/release/settle.js";
+import { type Routed, routeFailures, settleFromReport } from "../../lib/release/settle.js";
+import { suspectsSince } from "../../lib/release/suspects.js";
 
-export function releaseCommand(checkout: string): number {
+export async function releaseCommand(checkout: string): Promise<number> {
 	let steps: WorkflowSteps;
 	try {
 		steps = readWorkflowSteps(checkout);
@@ -49,16 +55,48 @@ export function releaseCommand(checkout: string): number {
 	}
 
 	const now = new Date();
-	recordRelease(
-		root,
-		recordOf(outcome, { version: releaseVersion(root, steps), commit: headCommit(root), at: now }),
-	);
-	console.info(report(outcome));
+	const version = releaseVersion(root, steps);
+	const commit = headCommit(root);
+	// A claimed failure becomes an incident on its promise (ADR D6, D7); the
+	// rest stay unrouted for the bugfix plan. Routing never changes the outcome.
+	const routed = await routeFailures(root, outcome.recorded, {
+		version,
+		commit,
+		now,
+		suspects: suspectsSince(root, steps, latestGreenRun(root)),
+	});
+	outcome.recorded = { ...outcome.recorded, failed: routed.failed };
+	recordRelease(root, recordOf(outcome, { version, commit, at: now }));
+	console.info(report(outcome, routed));
+	for (const line of routingProblems(routed)) console.error(line);
 	return outcome.done ? 0 : 1;
 }
 
+/** What routing could not do, said rather than swallowed: an owner not reopened, an impl not read, a registry refused. */
+function routingProblems(routed: Routed): string[] {
+	const lines: string[] = [];
+	if (routed.refused) lines.push(`no incident recorded: ${routed.refused}`);
+	if (routed.unreadable.length > 0) {
+		lines.push(
+			`not read while routing — the impl could not be parsed: ${routed.unreadable.join(", ")}`,
+		);
+	}
+	for (const i of routed.incidents) {
+		const r = i.reopen;
+		if (r.reopened || r.reason === "already") continue;
+		let why = "it is not a plan folder";
+		if (r.reason === "collision") {
+			why = `its impl already has "${r.heading}", which this incident did not write`;
+		} else if (r.reason === "copy-problem") {
+			why = `its worktree assignment could not be read: ${r.detail}`;
+		}
+		lines.push(`incident ${i.id}: ${i.owner} was not reopened — ${why}`);
+	}
+	return lines;
+}
+
 /** The lines `indusk release` prints, one fact per line. */
-function report(outcome: ReleaseOutcome): string {
+function report(outcome: ReleaseOutcome, routed: Routed): string {
 	const lines: string[] = [];
 	const { slow } = outcome;
 	if (slow.skipped && slow.covering) {
@@ -79,6 +117,12 @@ function report(outcome: ReleaseOutcome): string {
 	lines.push(outcome.done ? "release done" : "release not done");
 	if (outcome.published && !outcome.done && outcome.openFailures.length) {
 		lines.push(`open failures: ${outcome.openFailures.join(", ")}`);
+	}
+	for (const i of routed.incidents) {
+		lines.push(`recorded: incident ${i.id}`);
+		if (i.reopen.reopened) {
+			lines.push(`  reopened ${i.owner}: Build Phase ${i.reopen.phase}: Maintenance — ${i.id}`);
+		}
 	}
 	lines.push("recorded: releases.jsonl");
 	return lines.join("\n");
