@@ -208,12 +208,12 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 
 #### Build Phase 1 Context
 
-- [ ] root (Key Decisions): "Plan cockpit: the admin is the cockpit — nav by Path, plan page as Planning and Release with its decision, dashboard broken first, a page per promise with its proof; every derived fact from a package module (`promises/standing`, `proof`, `fix`, `plans/steps`, `waiting`, `history`) — see `/decisions/plan-cockpit`" — always-on because stage 2 and the editor must reuse these modules rather than write their own
-- [ ] `apps/indusk-admin/CLAUDE.md`: a fact the cockpit shows is read from a package module; the admin's `lib/` holds only fs-to-props glue — guarded by `cockpit-single-definition.test.ts`
+- [x] root (Key Decisions): "Plan cockpit: the admin is the cockpit — nav by Path, plan page as Planning and Release with its decision, dashboard broken first, a page per promise with its proof; every derived fact from a package module (`promises/standing`, `proof`, `fix`, `plans/steps`, `waiting`, `history`) — see `/decisions/plan-cockpit`" — always-on because stage 2 and the editor must reuse these modules rather than write their own
+- [x] `apps/indusk-admin/CLAUDE.md`: a fact the cockpit shows is read from a package module; the admin's `lib/` holds only fs-to-props glue — guarded by `cockpit-single-definition.test.ts`
 
 #### Build Phase 1 Document
 
-- [ ] The package's subpath reference: `promises/rows`, `promises/standing`, `promises/proof`, `promises/fix`
+- [x] The package's subpath reference: `promises/rows`, `promises/standing`, `promises/proof`, `promises/fix`
 
 ### Build Phase 2: The dashboard, broken first
 
