@@ -240,3 +240,4 @@
 {"plan":"plan-review-subagent","phase":6,"kind":"build","sha":"a49fc364075deb9771d9b51d5227a21a6ae2c57f","timestamp":"2026-10-09T20:10:44.996Z"}
 {"plan":"system-tests-catch-up","phase":1,"kind":"test","sha":"b881f2917cf8f84dfee3cb969b15719925c51cee","timestamp":"2026-10-09T21:08:46.621Z"}
 {"plan":"system-tests-catch-up","phase":1,"kind":"build","sha":"c8ad95091e8b130f1db40aab0de9a0aca47f9e51","timestamp":"2026-10-09T21:22:56.599Z"}
+{"plan":"release-records-its-failures","phase":1,"kind":"test","sha":"612b205fa9bdd3c7faddb4300a51fc05256369de","timestamp":"2026-10-10T04:19:03.402Z"}
