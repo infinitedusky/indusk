@@ -12,6 +12,7 @@ import { PapersSection } from "@/components/PapersSection";
 import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
 import { PhasesSection } from "@/components/PhasesSection";
 import { PlanTypeChip } from "@/components/PlanTypeChip";
+import { PlanWorkflows } from "@/components/PlanWorkflows";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
@@ -116,59 +117,68 @@ export function PlanDetail({
         />
       )}
 
-      {plan.research && (
-        <CollapsibleSection
-          title="Research"
-          defaultOpen={false}
-          persistKey={`plan:${plan.name}:section:research`}
-          copyMarkdown={sectionMarkdown("Research", plan.research.content)}
-        >
-          <Markdown>{plan.research.content}</Markdown>
-        </CollapsibleSection>
-      )}
+      {!isParent && <PlanWorkflows plan={plan} />}
 
-      {plan.brief && (
-        <BriefSection planName={plan.name} content={plan.brief.content} />
-      )}
-
-      {plan.testPlan && (
-        <CollapsibleSection
-          title="Test Plan"
-          defaultOpen={false}
-          persistKey={`plan:${plan.name}:section:test-plan`}
-          copyMarkdown={sectionMarkdown("Test Plan", plan.testPlan.content)}
-        >
-          <Markdown>{plan.testPlan.content}</Markdown>
-        </CollapsibleSection>
-      )}
-
-      {plan.adr && (
-        <CollapsibleSection
-          title="ADR — Goal + Decision"
-          defaultOpen={false}
-          persistKey={`plan:${plan.name}:section:adr`}
-          copyMarkdown={sectionMarkdown(
-            "ADR — Goal + Decision",
-            plan.adr.content,
+      <details className="flex flex-col gap-6" data-testid="plan-details">
+        <summary className="cursor-pointer text-sm font-semibold text-gray-900">
+          Details
+        </summary>
+        <div className="mt-4 flex flex-col gap-6">
+          {plan.research && (
+            <CollapsibleSection
+              title="Research"
+              defaultOpen={false}
+              persistKey={`plan:${plan.name}:section:research`}
+              copyMarkdown={sectionMarkdown("Research", plan.research.content)}
+            >
+              <Markdown>{plan.research.content}</Markdown>
+            </CollapsibleSection>
           )}
-        >
-          <Markdown>{plan.adr.content}</Markdown>
-        </CollapsibleSection>
-      )}
 
-      {plan.papers && plan.papers.length > 0 && (
-        <PapersSection planName={plan.name} papers={plan.papers} />
-      )}
+          {plan.brief && (
+            <BriefSection planName={plan.name} content={plan.brief.content} />
+          )}
 
-      {plan.impl && (
-        <ImplSections
-          plan={plan}
-          promisesHref={promisesHrefFrom(planHrefPrefix)}
-        />
-      )}
-      {!plan.impl && hasAnyDocument && (
-        <FalsificationSection plan={plan} phase={null} />
-      )}
+          {plan.testPlan && (
+            <CollapsibleSection
+              title="Test Plan"
+              defaultOpen={false}
+              persistKey={`plan:${plan.name}:section:test-plan`}
+              copyMarkdown={sectionMarkdown("Test Plan", plan.testPlan.content)}
+            >
+              <Markdown>{plan.testPlan.content}</Markdown>
+            </CollapsibleSection>
+          )}
+
+          {plan.adr && (
+            <CollapsibleSection
+              title="ADR — Goal + Decision"
+              defaultOpen={false}
+              persistKey={`plan:${plan.name}:section:adr`}
+              copyMarkdown={sectionMarkdown(
+                "ADR — Goal + Decision",
+                plan.adr.content,
+              )}
+            >
+              <Markdown>{plan.adr.content}</Markdown>
+            </CollapsibleSection>
+          )}
+
+          {plan.papers && plan.papers.length > 0 && (
+            <PapersSection planName={plan.name} papers={plan.papers} />
+          )}
+
+          {plan.impl && (
+            <ImplSections
+              plan={plan}
+              promisesHref={promisesHrefFrom(planHrefPrefix)}
+            />
+          )}
+          {!plan.impl && hasAnyDocument && (
+            <FalsificationSection plan={plan} phase={null} />
+          )}
+        </div>
+      </details>
     </article>
   );
 }
