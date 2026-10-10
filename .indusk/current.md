@@ -85,6 +85,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-10-07: **1.65.1 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit a7e1639 (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-08: **1.66.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 2e2743d (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-08: **1.67.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 50a4e9a (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-10: **1.70.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit af82a8c (`pnpm release`, recorded by `scripts/record-release.js`).
 
 ---
 
