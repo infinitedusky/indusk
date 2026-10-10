@@ -62,7 +62,8 @@
 			"gates",
 			"admin",
 			"server",
-			"editor"
+			"editor",
+			"scaffold"
 		]
 	},
 	"papers": {
