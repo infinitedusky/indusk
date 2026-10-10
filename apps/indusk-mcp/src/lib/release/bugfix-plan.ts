@@ -88,7 +88,8 @@ function namesFile(open: PlanCopy, file: string): boolean {
  * plan for a different file moves on to `fix-<stem>-<package>`, then
  * `-2`, `-3`…; an archived plan of that name is never reused, and the plan
  * after it follows it. A name held on the trunk with no worktree, or by a
- * `plan/<name>` branch, is skipped too and named in the brief. A plan open for this very file is the one to extend.
+ * `plan/<name>` branch, is skipped too and named in the brief. A plan open
+ * for this very file is the one to extend.
  */
 async function chooseName(
 	trunk: string,
