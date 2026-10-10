@@ -14,6 +14,8 @@ cleanup: skipped
 cleanup_reason: "Test-only repair (Sandy, 2026-10-09: skip all three): three test files edited in place; nothing new to decompose."
 audit: skipped
 audit_reason: "Test-only repair (Sandy, 2026-10-09: skip all three): no product behaviour changes; the whole system tier passing (A4) is the evidence."
+accepted: 2026-10-10T01:17:15.902Z
+accepted_by: person
 ---
 
 # system-tests-catch-up
