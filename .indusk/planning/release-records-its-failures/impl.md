@@ -1,7 +1,7 @@
 ---
 title: "release-records-its-failures"
 date: 2026-10-10
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -256,6 +256,9 @@ gate_policy: ask
 - [x] `lib/release/bugfix-plan.ts`: a name already used by an open plan for a different file, or by an archived plan, takes the next free name — `fix-<stem>-<parent dir>` for a different file, `fix-<stem>-2`, `-3`, … after an archived one — and the brief names the plan it would have collided with (`follows archive/fix-<stem>`) (A26, A27); the name for a unique, never-fixed file stays `fix-<stem>`, as A15 asserts
 - [x] `lib/release/settle.ts`: each file is shell-quoted (single quotes, embedded quotes escaped) before substitution into `{files}` (A28)
 
+- [x] Shape (`apps/indusk-mcp/src/bin/commands/release.ts`) — extract routeWithoutLosingTheRelease out of releaseCommand; the A25 fix left a try/catch building a fallback `Routed` inline in the command that prints and records. Rule: Shape intra-unit: a block doing two jobs wants to be two named things
+- [x] Shape (`apps/indusk-mcp/src/lib/release/bugfix-plan.ts`) — reviewed, left as-is: chooseName is one loop over candidate names with three outcomes (extend, follow an archive, take the free name); splitting it would only thread the candidate state through helpers
+
 #### Build Phase 6 Verification
 
 - [x] A24, A25, A26, A27, A28 pass, and every earlier row still does (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts src/__tests__/release-report.test.ts src/__tests__/release-incident.test.ts src/__tests__/release-bugfix-plan.test.ts src/__tests__/release-dusk-declaration.test.ts src/lib/release/junit.test.ts && pnpm exec vitest related src/lib/release/run.ts src/lib/release/settle.ts src/lib/release/junit.ts src/lib/release/bugfix-plan.ts src/bin/commands/release.ts`)
@@ -263,11 +266,11 @@ gate_policy: ask
 
 #### Build Phase 6 Context
 
-- [ ] `apps/indusk-mcp/src/lib/release/CLAUDE.md`: a report older than the slow run is not this run's and is never read; files from a report reach a shell only quoted; a bugfix plan's name never collides with an open or archived one
+- [x] `apps/indusk-mcp/src/lib/release/CLAUDE.md`: a report older than the slow run is not this run's and is never read; files from a report reach a shell only quoted; a bugfix plan's name never collides with an open or archived one
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/reference/cli/release.md`: stale reports are ignored, routing errors are reported without losing the record, and how a bugfix plan is named when its first name is taken
+- [x] `apps/docs/src/reference/cli/release.md`: stale reports are ignored, routing errors are reported without losing the record, and how a bugfix plan is named when its first name is taken
 
 ## Files Affected
 
