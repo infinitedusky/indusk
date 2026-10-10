@@ -37,7 +37,7 @@ export function settleFromReport(
 		exec(spec.rerun.replaceAll("{files}", names.map(shellQuote).join(" ")));
 		const second = failedFiles(spec.report, root, since);
 		if (second.readable) {
-			still = names.filter((f) => second.files.has(f));
+			still = names.filter((f) => !second.passed.has(f));
 			last = second;
 		}
 	}

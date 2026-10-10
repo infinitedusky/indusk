@@ -15,6 +15,8 @@ export interface FailedFiles {
 	readable: boolean;
 	/** Each failed test file (repo-relative) → the names of its failed cases. */
 	files: Map<string, string[]>;
+	/** Each test file the report(s) carry with no failed case: the only files that passed. */
+	passed: Set<string>;
 	/** How many test files the report(s) carry, failed or not. */
 	total: number;
 }
@@ -77,7 +79,12 @@ function walkSuite(
 	}
 }
 
-const UNREADABLE = (): FailedFiles => ({ readable: false, files: new Map(), total: 0 });
+const UNREADABLE = (): FailedFiles => ({
+	readable: false,
+	files: new Map(),
+	passed: new Set(),
+	total: 0,
+});
 
 /**
  * `since`, when given, is when the slow run began: a report file last modified
@@ -115,6 +122,7 @@ export function failedFiles(
 		}
 		for (const suite of suites) walkSuite(suite, root, out, seen, path);
 	}
+	out.passed = new Set([...seen].filter((f) => !out.files.has(f)));
 	out.total = seen.size;
 	out.readable = true;
 	return out;

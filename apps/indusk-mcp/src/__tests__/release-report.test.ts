@@ -115,7 +115,10 @@ describe.skipIf(SHOULD_SKIP)("indusk release — one rerun, by file", () => {
 			slow: {
 				exit: 1,
 				reports: { [REPORT_PATH]: junitReport({ [CLAIMED_FILE]: ["holds a seat"] }) },
-				rerun: { exit: 0, reports: { [REPORT_PATH]: junitReport({}) } },
+				rerun: {
+					exit: 0,
+					reports: { [REPORT_PATH]: junitReport({}, [...PASSING_FILES, CLAIMED_FILE]) },
+				},
 			},
 		});
 		const r = project.release();
@@ -141,7 +144,12 @@ describe.skipIf(SHOULD_SKIP)("indusk release — one rerun, by file", () => {
 				},
 				rerun: {
 					exit: 1,
-					reports: { [REPORT_PATH]: junitReport({ [CLAIMED_FILE]: ["holds a seat"] }) },
+					reports: {
+						[REPORT_PATH]: junitReport({ [CLAIMED_FILE]: ["holds a seat"] }, [
+							...PASSING_FILES,
+							GUARD_FILE,
+						]),
+					},
 				},
 			},
 		});
@@ -311,7 +319,10 @@ describe.skipIf(SHOULD_SKIP)("indusk release — the rerun takes each file as on
 			slow: {
 				exit: 1,
 				reports: { [REPORT_PATH]: junitReport({ [spaced]: ["a"], [semi]: ["b"] }) },
-				rerun: { exit: 0, reports: { [REPORT_PATH]: junitReport({}) } },
+				rerun: {
+					exit: 0,
+					reports: { [REPORT_PATH]: junitReport({}, [...PASSING_FILES, spaced, semi]) },
+				},
 			},
 		});
 		const r = project.release();
