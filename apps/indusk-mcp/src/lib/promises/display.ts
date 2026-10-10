@@ -30,7 +30,11 @@ export const BUILT_IN_WORDS: Readonly<Record<string, string>> = {
 	adr: "ADR",
 };
 
-/** A handle in words: hyphens as spaces, the first letter capital, product words spelled their way. */
+/**
+ * A handle in words: hyphens as spaces, the first letter capital, product words spelled their way.
+ *
+ * promise: a-promise-reads-as-words
+ */
 export function promiseWords(name: string, words: Record<string, string> = {}): string {
 	const spelled = { ...BUILT_IN_WORDS, ...words };
 	const parts = name.split("-").filter((w) => w !== "");
@@ -43,7 +47,11 @@ export function promiseWords(name: string, words: Record<string, string> = {}): 
 	return out.join(" ");
 }
 
-/** A plan's title: the brief's, up to " — "; its folder name when there is none. */
+/**
+ * A plan's title: the brief's, up to " — "; its folder name when there is none.
+ *
+ * promise: a-plan-reads-by-its-title
+ */
 export function planTitle(title: string | undefined, folder: string): string {
 	const short = title?.split(" — ")[0]?.trim();
 	return short ? short : folder;
@@ -193,6 +201,8 @@ export function landedDate(planDir: string, archived = false): string | null {
  * date (`landedDate`), and the release that shipped it — read from the
  * trunk's release commits when `opts.trunk` has any, else from the changelog
  * (its text), the earliest release naming the plan.
+ *
+ * promise: a-plan-shows-when-it-shipped
  */
 export function planDates(
 	planDir: string,
