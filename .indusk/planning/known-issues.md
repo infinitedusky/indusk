@@ -172,6 +172,17 @@ Each entry says what happens, where it was seen, and what we know so far.
   of 2026-10-08 each found a Fly behaviour the unit tests could not.
   (server-provisioning's deferred verification)
 
+## Tests
+
+- **`apps/indusk-mcp/src/lib/promises/inbox.test.ts` A17 fails on `main`**
+  (seen 2026-10-09 and 2026-10-10, on `main` and on every plan branch alike):
+  "an opened incident adds one entry…" gets 2 entries where it expects 1, and
+  "an extended incident adds another…" gets 3 where it expects 2 — the inbox
+  holds one entry more than the test wrote. Not caused by
+  plan-review-subagent, system-tests-catch-up or release-records-its-failures
+  (each confirmed it red before its own changes). Likely an entry from outside
+  the test's home (a shared home or a leaked fixture) — unconfirmed.
+
 ## Package
 
 - **The package `CLAUDE.md` is 2 bytes under its budget.** The next rule
