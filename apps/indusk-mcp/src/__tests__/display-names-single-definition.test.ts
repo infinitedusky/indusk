@@ -1,6 +1,8 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
+import { closedAt } from "../lib/promises/after-close.js";
+import { planDates } from "../lib/promises/display.js";
 import { REPO_ROOT } from "./helpers/cli.js";
 
 /**
@@ -47,5 +49,37 @@ describe("A8 — display names are defined once, in the package", () => {
 			})
 			.map((path) => relative(REPO_ROOT, path));
 		expect(copies, `a second definition of a display name — ${LESSON}`).toEqual([]);
+	});
+});
+
+describe("A17 — a plan's landing date is worked out once in the package", () => {
+	it("no file under apps/indusk-mcp/src but display.ts reads the 'Landed on main at' line", () => {
+		const readers = sources(join(REPO_ROOT, "apps/indusk-mcp/src"))
+			.filter(
+				(path) =>
+					path !== DISPLAY &&
+					/\/Landed on main at|RegExp\([^)]*Landed on main at/.test(readFileSync(path, "utf-8")),
+			)
+			.map((path) => relative(REPO_ROOT, path));
+		expect(readers, `a second reader of the landing line — ${LESSON}`).toEqual([]);
+	});
+
+	it("the monitor's close date and the editor's landed date agree for every plan here", () => {
+		const planning = join(REPO_ROOT, ".indusk/planning");
+		const disagree: string[] = [];
+		for (const [root, archived] of [
+			[planning, false],
+			[join(planning, "archive"), true],
+		] as const) {
+			if (!existsSync(root)) continue;
+			for (const name of readdirSync(root)) {
+				const dir = join(root, name);
+				if (name === "archive" || !statSync(dir).isDirectory()) continue;
+				const closed = closedAt(dir)?.toISOString().slice(0, 10);
+				const landed = planDates(dir, undefined, { archived }).landed;
+				if (closed && landed && closed !== landed) disagree.push(`${name}: ${closed} vs ${landed}`);
+			}
+		}
+		expect(disagree, `two landing dates for one plan — ${LESSON}`).toEqual([]);
 	});
 });

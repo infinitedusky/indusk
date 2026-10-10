@@ -1,7 +1,9 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { REPO_ROOT } from "../../__tests__/helpers/cli.js";
+import { git, initRepoWithCommit } from "../../__tests__/helpers/test-git.js";
 import { planDates, planTitle, promiseWords, readHealthNames } from "./display.js";
 
 /**
@@ -167,5 +169,64 @@ describe("A15 — a plan with no brief shows when it started", () => {
 			"research.md": "---\ndate: 2026-10-01\n---\n",
 		});
 		expect(planDates(dir).started).toBe("2026-10-08");
+	});
+});
+
+/** A commit on `date`, empty, with `message`; returns its full sha. */
+function commitOn(dir: string, date: string, message: string): string {
+	const at = `${date}T12:00:00Z`;
+	git(dir, ["commit", "-q", "--allow-empty", "-m", message], {
+		GIT_AUTHOR_DATE: at,
+		GIT_COMMITTER_DATE: at,
+	});
+	return git(dir, ["rev-parse", "HEAD"]);
+}
+
+function retro(dir: string, plan: string, text: string): void {
+	const folder = join(dir, ".indusk", "planning", "archive", plan);
+	mkdirSync(folder, { recursive: true });
+	writeFileSync(join(folder, "retrospective.md"), text);
+}
+
+describe("A16 — a plan shows the release that shipped it, whatever the changelog says", () => {
+	it("is the first release commit after the plan's landing commit on the trunk", () => {
+		const dir = mkdtempSync(join(tmpdir(), "display-trunk-"));
+		initRepoWithCommit(dir);
+		const p1 = commitOn(dir, "2026-02-01", "feat: p1 lands");
+		git(dir, ["checkout", "-q", "-b", "plan/p3"]);
+		commitOn(dir, "2026-02-02", "feat: p3 work");
+		git(dir, ["checkout", "-q", "main"]);
+		git(dir, ["merge", "--no-ff", "-q", "-m", "Merge branch 'plan/p3'", "plan/p3"], {
+			GIT_AUTHOR_DATE: "2026-02-03T12:00:00Z",
+			GIT_COMMITTER_DATE: "2026-02-03T12:00:00Z",
+		});
+		commitOn(dir, "2026-02-05", "chore(release): 1.2.0 — the first");
+		const p2 = commitOn(dir, "2026-02-10", "feat: p2 lands");
+		commitOn(dir, "2026-02-11", "chore: unrelated");
+		retro(dir, "p1", `# R\n\nLanded on main at ${p1.slice(0, 7)}, 2026-02-01.\n`);
+		retro(dir, "p2", `# R\n\nLanded on main at ${p2.slice(0, 7)}, 2026-02-10.\n`);
+		retro(dir, "p3", "---\ndate: 2026-02-03\n---\n\n# R\n");
+		mkdirSync(join(dir, "docs"), { recursive: true });
+		writeFileSync(
+			join(dir, "docs", "changelog.md"),
+			"## [1.2.0] — 2026-02-05\n- **Thing** (other): x\n",
+		);
+		mkdirSync(join(dir, ".indusk"), { recursive: true });
+		writeFileSync(
+			join(dir, ".indusk", "config.json"),
+			JSON.stringify({ workflow: { steps: { release: { changelog: "docs/changelog.md" } } } }),
+		);
+		const dates = readHealthNames(dir).planDates;
+		expect(dates.p1.released).toEqual({ version: "1.2.0", date: "2026-02-05" });
+		expect(dates.p3.released).toEqual({ version: "1.2.0", date: "2026-02-05" });
+		expect(dates.p2.landed).toBe("2026-02-10");
+		expect(dates.p2.released).toBeNull();
+	});
+
+	const onDusk = existsSync(join(REPO_ROOT, ".indusk/planning/archive/day-promises"));
+	it.skipIf(!onDusk)("shows day-promises and dawn-verify released on this repository", () => {
+		const dates = readHealthNames(REPO_ROOT).planDates;
+		expect(dates["day-promises"]?.released).not.toBeNull();
+		expect(dates["dawn-verify"]?.released).not.toBeNull();
 	});
 });
