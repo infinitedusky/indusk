@@ -258,7 +258,8 @@ gate_policy: ask
 
 #### Build Phase 6 Verification
 
-- [ ] A24, A25, A26, A27, A28 pass, and every earlier row still does (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts src/__tests__/release-report.test.ts src/__tests__/release-incident.test.ts src/__tests__/release-bugfix-plan.test.ts src/__tests__/release-dusk-declaration.test.ts src/lib/release/junit.test.ts && pnpm exec vitest related src/lib/release/run.ts src/lib/release/settle.ts src/lib/release/junit.ts src/lib/release/bugfix-plan.ts src/bin/commands/release.ts`)
+- [x] A24, A25, A26, A27, A28 pass, and every earlier row still does (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts src/__tests__/release-report.test.ts src/__tests__/release-incident.test.ts src/__tests__/release-bugfix-plan.test.ts src/__tests__/release-dusk-declaration.test.ts src/lib/release/junit.test.ts && pnpm exec vitest related src/lib/release/run.ts src/lib/release/settle.ts src/lib/release/junit.ts src/lib/release/bugfix-plan.ts src/bin/commands/release.ts`)
+  - Recorded 2026-10-10: A24–A28 each red on its own assertion at the test commit (a stale report's `failing:` line read; the second skip file appended to `plan/fix-skip`; the archived name reused; a rerun argument split at the space and `;`; an EACCES stack trace with no outcome and no record), now green: the six files named (`release-run`, `-report`, `-incident`, `-bugfix-plan`, `-dusk-declaration`, `junit.test.ts`) 32 passed of 32; every `release-*.test.ts` 47 passed of 47 in 8 files; `vitest related` over the five changed sources 2 passed; `pnpm exec tsc --noEmit` clean; biome clean on the changed files (one existing warning in `release-script.test.ts`); `indusk promises check` exit 0
 
 #### Build Phase 6 Context
 
