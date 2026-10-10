@@ -13,6 +13,7 @@ import {
   UnassignedWorktrees,
   WorktreeRecordError,
 } from "@/components/Worktrees";
+import { readWaiting } from "@/lib/decisions-reader";
 import {
   readActivePlans,
   readArchivedPlans,
@@ -97,7 +98,11 @@ export default async function PerProjectLayout({
 
   // Each Path's released count: when a release shipped a plan, from the
   // package's `planDates` (display-names), read once for the whole nav.
-  const { planDates } = readHealthNames(projectPath);
+  const { planDates, planTitles } = readHealthNames(projectPath);
+
+  // Needs you: each plan waiting on the person, with the step it waits at —
+  // the package's `planWaiting`, over what the admin holds (ADR decision 2).
+  const waiting = readWaiting(project, active);
 
   return (
     <div className="flex h-full w-full">
@@ -138,6 +143,32 @@ export default async function PerProjectLayout({
             )}
           </NavLink>
         </nav>
+        {waiting.length > 0 && (
+          <nav
+            className="flex flex-col gap-1 border-t border-gray-200 py-3"
+            data-testid="needs-you"
+          >
+            <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+              Needs you
+            </h3>
+            {waiting.map((w) => (
+              <NavLink
+                key={w.plan}
+                href={`/p/${project}/plan/${w.plan}`}
+                data-needs-you={w.plan}
+                className="flex items-baseline justify-between gap-2 rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <span className="truncate">{planTitles[w.plan] ?? w.plan}</span>
+                <span
+                  data-testid="needs-you-step"
+                  className="shrink-0 text-xs text-amber-700"
+                >
+                  {w.step}
+                </span>
+              </NavLink>
+            ))}
+          </nav>
+        )}
         {!worktrees.ok && (
           <WorktreeRecordError
             file={worktrees.file}

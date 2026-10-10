@@ -1,0 +1,108 @@
+// promise: decisions-wait-in-one-place
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render } from "vitest-browser-react";
+import {
+  HISTORY,
+  PROJECT,
+  resetFixture,
+} from "@/__tests__/helpers/cockpit-fixture";
+
+/**
+ * plan-cockpit A14, the page's half: a waiting plan's page shows exactly one
+ * decision card — the one `planWaiting` names for it — above its workflows,
+ * and its *What happened* lists the decisions `plans/history` recorded; a
+ * plan waiting on nothing shows no card. The card's own controls are
+ * `components/cockpit/DecisionCard.test.tsx`'s.
+ */
+
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children: React.ReactNode;
+    [key: string]: unknown;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+vi.mock("next/navigation", () => ({
+  __esModule: true,
+  useRouter: () => ({ refresh: () => {} }),
+  notFound: () => {
+    throw new Error("not found");
+  },
+}));
+vi.mock("@/lib/planning-reader", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).planningReaderMock(),
+);
+vi.mock("@/lib/promises-reader", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).promisesReaderMock(),
+);
+vi.mock("@infinitedusky/indusk-mcp/promises/standing", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).standingMock(),
+);
+vi.mock("@infinitedusky/indusk-mcp/promises/display", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).displayMock(),
+);
+vi.mock("@/lib/registry-client", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).registryClientMock(),
+);
+vi.mock("@/lib/project-reader", () => ({
+  __esModule: true,
+  readAdminRefreshMs: () => 5000,
+}));
+vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
+// What plans wait on and their recorded decisions (plan-cockpit Build Phase 6):
+// the reader reaches the session manager and the history file, so it is mocked.
+vi.mock("@/lib/decisions-reader", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).decisionsReaderMock(),
+);
+
+import PlanPage from "./page";
+
+async function pageFor(name: string) {
+  const element = await PlanPage({
+    params: Promise.resolve({ project: PROJECT, name }),
+  });
+  return (await render(element as React.ReactElement)).container as HTMLElement;
+}
+
+const cards = (root: HTMLElement) =>
+  root.querySelectorAll('[data-testid="decision-card"]');
+
+beforeEach(() => resetFixture());
+
+describe("A14 — a waiting plan's page shows exactly one decision", () => {
+  it("A14 each waiting plan's page has one card, for what it waits on", async () => {
+    for (const [plan, on] of [
+      ["asking-plan", "question"],
+      ["awaiting-approval", "approval"],
+      ["at-review", "review"],
+    ] as const) {
+      const root = await pageFor(plan);
+      expect(cards(root), `cards on ${plan}`).toHaveLength(1);
+      expect(cards(root)[0]?.getAttribute("data-on")).toBe(on);
+    }
+  });
+
+  it("A14 a plan waiting on nothing shows no card", async () => {
+    expect(cards(await pageFor("mid-build"))).toHaveLength(0);
+  });
+
+  it("A17 the page's What happened lists each recorded decision, the answer and when", async () => {
+    const root = await pageFor("at-review");
+    const history = root.querySelector('[data-testid="plan-history"]');
+    const recorded = HISTORY["at-review"]?.[0];
+    expect(history?.textContent).toContain(recorded?.decision);
+    expect(history?.textContent).toContain(recorded?.answer);
+    expect(history?.querySelector("time")?.getAttribute("dateTime")).toBe(
+      recorded?.at,
+    );
+  });
+});

@@ -53,6 +53,11 @@ vi.mock("@/lib/project-reader", () => ({
   readAdminRefreshMs: () => 5000,
 }));
 vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
+// What plans wait on and their recorded decisions (plan-cockpit Build Phase 6):
+// the reader reaches the session manager and the history file, so it is mocked.
+vi.mock("@/lib/decisions-reader", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).decisionsReaderMock(),
+);
 
 import PlanPage from "./page";
 

@@ -4,12 +4,15 @@ import {
 } from "@infinitedusky/indusk-mcp/promises/display";
 import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
 import { notFound } from "next/navigation";
+import { DecisionCard } from "@/components/cockpit/DecisionCard";
+import { PlanHistory } from "@/components/cockpit/PlanHistory";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import type { SubplanEntry } from "@/components/ParentPlanView";
 import { PlanDetail, type PlanHeaderFacts } from "@/components/PlanDetail";
 import { BuildControls } from "@/components/session/BuildControls";
 import { PlanSession } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
+import { readPlanHistory, readWaiting } from "@/lib/decisions-reader";
 import { planActions } from "@/lib/plan-actions";
 import {
   readActivePlans,
@@ -98,14 +101,21 @@ export default async function PlanPage({ params }: PlanPageProps) {
     position: plan.position?.position,
   });
 
+  // The one decision the plan waits on, and what it was answered before
+  // (plan-cockpit, ADR decision 4). Approve and the review's Accept live on
+  // the card while it waits on them, so neither is offered twice.
+  const waiting = plan.archived ? undefined : readWaiting(project, [plan])[0];
+  const history = readPlanHistory(projectPath, name);
+
   return (
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       <TrustNotice project={project} trusted={projectTrusted(projectPath)} />
+      {waiting ? <DecisionCard project={project} waiting={waiting} /> : null}
       <PlanSession
         project={project}
         plan={name}
-        canApprove={actions.canApprove}
+        canApprove={actions.canApprove && waiting?.on !== "approval"}
         canPlan={actions.canPlan}
       />
       {actions.showBuild ? (
@@ -113,9 +123,10 @@ export default async function PlanPage({ params }: PlanPageProps) {
           project={project}
           plan={name}
           canBuild={actions.canBuild}
-          inReview={actions.inReview}
+          inReview={actions.inReview && waiting?.on !== "review"}
         />
       ) : null}
+      <PlanHistory entries={history} />
       <PlanDetail
         plan={plan}
         subplans={subplans}
