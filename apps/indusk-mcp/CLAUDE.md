@@ -229,19 +229,18 @@ pointer; the pointer holds the story.
   in hook commands (test-critical); package-owned files under `.indusk/` are
   machine-local (`MACHINE_LOCAL_RULES`). — see `/lessons/worktree-config-schema-pointer`
 - **Releases**: `release-guard.sh` refuses dirt on packaged paths, a HEAD not
-  `chore(release): <version>`, an unmerged packaged `plan/*` branch, and an
+  `chore(release): <version>`, an unmerged packaged `plan/*` branch and an
   install off the lockfile; `record-release.js` writes "published" only on
-  `npm view`'s word; `release-image.sh` pushes the server image before `pnpm
-  publish` (a refused push publishes nothing; needs `docker login ghcr.io`);
-  `prepublishOnly` packs the editor's `.vsix` into `editor/`. — see
-  `/reference/cli/release`
+  `npm view`'s word; `release-image.sh` pushes the image before `pnpm publish`;
+  `prepublishOnly` packs the `.vsix`.
+  `lib/release/`: `runRelease` takes commands, clock and reads as inputs;
+  order and completion are declared facts. — see `/reference/cli/release`
 
 ## Tests
 
 - commander@13 drops duplicate parent+subcommand options — declare on the
   parent, read via `optsWithGlobals()`. gray-matter on malformed YAML throws in
   Node but returns `data: {}` under vitest — detect malformed structurally.
-  Vitest `passWithNoTests: true` is set per app.
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
   where code lives runs over all four); a promise-bearing project —

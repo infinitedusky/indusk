@@ -119,7 +119,7 @@ gate_policy: ask
 #### Build Phase 1 Context
 
 - [x] root (Key Decisions): `- Release as a declared step: \`indusk release\` runs \`workflow.steps.release\` — slow tests before or after, \`done_when\` — and routes failures from JUnit to incidents or bugfix plans — see \`/decisions/release-records-its-failures\`` — always-on because Key Decisions is the root's index of every ADR
-- [ ] `apps/indusk-mcp/CLAUDE.md`: a `lib/release/` entry — the runner takes its commands, clock and reads as inputs; order and completion are declared facts, never logic
+- [x] `apps/indusk-mcp/CLAUDE.md`: a `lib/release/` entry — the runner takes its commands, clock and reads as inputs; order and completion are declared facts, never logic
 
 #### Build Phase 1 Document
 
