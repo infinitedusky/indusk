@@ -102,7 +102,7 @@ gate_policy: ask
 
 **Tier**: med
 
-- [ ] `lib/checks/steps.ts`: `release.slow_tests` (`command`, `report`, `when: "before" | "after"`, optional `rerun` containing `{files}`) and `release.done_when: "published" | "green"`, each validated as a fact with a message naming the key; `lib/config.ts`'s `WorkflowSteps` type gains them
+- [x] `lib/checks/steps.ts`: `release.slow_tests` (`command`, `report`, `when: "before" | "after"`, optional `rerun` containing `{files}`) and `release.done_when: "published" | "green"`, each validated as a fact with a message naming the key; `lib/config.ts`'s `WorkflowSteps` type gains them
 - [ ] `indusk checks show` prints the slow tests, their `when`, the report and `done_when` under Release
 - [ ] `lib/release/run.ts`: `runRelease(deps)` — deps are `exec(command, cwd) → {code}`, `now()`, the steps, the covering-run lookup — returning `{ published, done, slow: { ran, green, skipped }, recorded }`; order per ADR D1, outcome per D3
 - [ ] `lib/release/record.ts`: append one line per release to `<home>/releases.jsonl` (version from `version_file`, commit, at, published, done, slow result, routed failures, flakes)

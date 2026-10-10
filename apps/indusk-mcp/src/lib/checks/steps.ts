@@ -1,4 +1,10 @@
-import { type EnsureResult, ensureConfigBlock, readConfig, type WorkflowSteps } from "../config.js";
+import {
+	type EnsureResult,
+	ensureConfigBlock,
+	readConfig,
+	type ReleaseSlowTests,
+	type WorkflowSteps,
+} from "../config.js";
 import { isTier, TIER_STEPS, TIERS, TierConfigError } from "../models/tier-names.js";
 
 /**
@@ -48,6 +54,8 @@ export function readWorkflowSteps(checkout: string): WorkflowSteps {
 			version_file: text(release.version_file, "release.version_file"),
 			changelog: text(release.changelog, "release.changelog"),
 			covers: paths(release.covers, "release.covers"),
+			slow_tests: slowTests(release.slow_tests),
+			done_when: oneOf(release.done_when, "release.done_when", ["published", "green"]),
 		};
 	}
 	return out;
@@ -70,6 +78,39 @@ function text(v: unknown, key: string): string | undefined {
 		);
 	}
 	return v;
+}
+
+function oneOf<T extends string>(v: unknown, key: string, words: readonly T[]): T | undefined {
+	if (v === undefined) return undefined;
+	if (typeof v !== "string" || !(words as readonly string[]).includes(v)) {
+		throw new Error(`workflow.steps.${key} must be one of ${words.join(", ")}`);
+	}
+	return v as T;
+}
+
+/** `release.slow_tests`: a command, the report it writes, when it runs, and an optional rerun template. */
+function slowTests(v: unknown): ReleaseSlowTests | undefined {
+	if (v === undefined) return undefined;
+	const slow = section(v, "release.slow_tests");
+	const command = text(slow.command, "release.slow_tests.command");
+	const report = text(slow.report, "release.slow_tests.report");
+	const when = oneOf(slow.when, "release.slow_tests.when", ["before", "after"] as const);
+	if (command === undefined) throw new Error("workflow.steps.release.slow_tests.command is required");
+	if (report === undefined) {
+		throw new Error(
+			"workflow.steps.release.slow_tests.report is required: a path or glob to the JUnit XML the command writes",
+		);
+	}
+	if (when === undefined) {
+		throw new Error("workflow.steps.release.slow_tests.when is required: before or after");
+	}
+	const rerun = text(slow.rerun, "release.slow_tests.rerun");
+	if (rerun !== undefined && !rerun.includes("{files}")) {
+		throw new Error(
+			"workflow.steps.release.slow_tests.rerun must contain {files}, where the failing files go",
+		);
+	}
+	return { command, report, when, ...(rerun === undefined ? {} : { rerun }) };
 }
 
 function paths(v: unknown, key: string): string[] | undefined {
