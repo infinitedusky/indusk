@@ -28,7 +28,8 @@ pointer; the pointer holds the story.
   activities, `GATE_STAGES`, `RITUAL_ORDER`, `SEGMENT_STATES`, read by
   `parsePlan`, the retrospective gate and the admin) —
   `lifecycle-single-definition.test.ts`; promise health, `promises/health`
-  — `promise-health-single-definition.test.ts`. A git primitive belongs in
+  — `promise-health-single-definition.test.ts`; display names and plan dates
+  (`promises/display`) — `display-names-single-definition.test.ts`. A git primitive belongs in
   `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
   (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly

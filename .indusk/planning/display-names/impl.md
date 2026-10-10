@@ -116,8 +116,8 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 #### Build Phase 1 Context
 
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`, the single-definition pins entry): display names and plan dates — `display-names-single-definition.test.ts`; folded into the entry, making room in the file, which is at its budget
-- [ ] root (Key Decisions): "Display names: one `promises/display` module names promises in words, plans by title and dates them; they travel on the health line — see `/decisions/display-names`" — always-on because the admin's next plan must use it rather than write its own
+- [x] mcp (`apps/indusk-mcp/CLAUDE.md`, the single-definition pins entry): display names and plan dates — `display-names-single-definition.test.ts`; folded into the entry, making room in the file, which is at its budget
+- [x] root (Key Decisions): "Display names: one `promises/display` module names promises in words, plans by title and dates them; they travel on the health line — see `/decisions/display-names`" — always-on because the admin's next plan must use it rather than write its own
 
 #### Build Phase 1 Document
 

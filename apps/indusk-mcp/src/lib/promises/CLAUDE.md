@@ -13,5 +13,5 @@ apply to this folder only.
   (`maintenanceIncidentIds`); `watch` exits 1 for, and retries every run,
   any incident left without its owner's phase. Evidence: `traces:` or
   `tests:`+`release:` (a release's incident is written by `test-incident.ts`, never imported by `release/`); readers take both. — see `/reference/cli/promises`
-- **`recordBreaks` commits on a trunk only**, after the inbox and heard rows;
+- **`recordBreaks` is the one writer, run by the admin unasked; it commits on a trunk only**, after the inbox and heard rows;
   what it could not commit waits in the home's `pending-commit.json`. — see `/decisions/incident-recording`
