@@ -296,6 +296,16 @@ checks
 		process.exit(checksSlow(process.cwd(), { unlessCovered: opts.unlessCovered === true }));
 	});
 
+program
+	.command("release")
+	.description(
+		"Run the release the project declares (workflow.steps.release): slow tests before or after the command, the outcome recorded in the project's home",
+	)
+	.action(async () => {
+		const { releaseCommand } = await import("./commands/release.js");
+		process.exit(releaseCommand(process.cwd()));
+	});
+
 const eval_ = program.command("eval").description("Context evaluation and quality scoring");
 
 eval_
