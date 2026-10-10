@@ -2,6 +2,7 @@ import {
   readHealth,
   redPlans,
 } from "@infinitedusky/indusk-mcp/promises/health";
+import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
 import Link from "next/link";
 import { PlanList } from "@/components/PlanList";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
@@ -83,9 +84,15 @@ export default async function PerProjectLayout({
   // (day-monitor, A23) — the same cached read the Promises page makes, red
   // from the alarm source alone (promise-sources, ADR D5).
   const registry = registryOf(promisesRead);
-  const red = registry
-    ? redPlans(registry, await readHealth(projectPath, registry))
-    : new Set<string>();
+  const reads = registry ? await readHealth(projectPath, registry) : null;
+  const red = registry && reads ? redPlans(registry, reads) : new Set<string>();
+  // The nav's count is the dashboard's: the package's standing, from the same
+  // health read (plan-cockpit, ADR decision 2).
+  const brokenCount = reads
+    ? (await readStanding(projectPath, { health: reads })).filter(
+        (s) => s.standing === "broken",
+      ).length
+    : 0;
 
   return (
     <div className="flex h-full w-full">
@@ -111,9 +118,19 @@ export default async function PerProjectLayout({
           </Link>
           <Link
             href={`/p/${project}/promises`}
-            className="rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+            data-testid="nav-promises"
+            className="flex items-center justify-between rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
           >
             Promises
+            {brokenCount > 0 && (
+              <span
+                data-testid="broken-count"
+                title={`${brokenCount} broken`}
+                className="rounded-full bg-red-600 px-2 text-xs font-medium text-white"
+              >
+                {brokenCount}
+              </span>
+            )}
           </Link>
         </nav>
         {!worktrees.ok && (
