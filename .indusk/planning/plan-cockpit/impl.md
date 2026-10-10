@@ -340,7 +340,7 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 #### Build Phase 6 Document
 
 - [x] `apps/docs/src/reference/admin-ui/sessions.md`: Needs you, the decision card, where a reply goes, the recorded history — written: a Decisions section (what a plan waits on as a table of question / approval / review with what accept and the alternative do, Needs you, the card, where a reply goes, the decision route re-reading what waits) and *The recorded history* (the line format, the commit on `main` through the notes writer, staged work left out, the uncommitted-with-reason case, What happened); the route joined the Routes table; `overview.md`'s nav section now names Needs you and links there
-- [ ] `apps/docs/src/decisions/plan-cockpit.md`: the ADR published; changelog: Added — "The admin is the cockpit: plans by Path, each plan's two workflows and the decision it waits on, the promise dashboard with broken promises first, and a page per promise with its proof and a fix."
+- [x] `apps/docs/src/decisions/plan-cockpit.md`: the ADR published; changelog: Added — "The admin is the cockpit: plans by Path, each plan's two workflows and the decision it waits on, the promise dashboard with broken promises first, and a page per promise with its proof and a fix." — written: what was decided (the seven modules as a table, the nav, the card, the record on `main`), the alternatives rejected with why, the tradeoffs accepted, and links to the overview, the promise page and Sessions → Decisions; the changelog's Unreleased gains an Added entry with that sentence
 
 ## Files Affected
 
