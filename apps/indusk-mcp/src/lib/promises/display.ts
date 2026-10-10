@@ -93,7 +93,7 @@ export function planDates(
 	changelog?: string,
 	opts: { archived?: boolean } = {},
 ): PlanDates {
-	const started = frontmatter(read(join(planDir, "brief.md")), "date")?.match(DATE)?.[0] ?? null;
+	const started = firstDate(planDir, STARTING_DOCS);
 	const line = read(join(planDir, "retrospective.md"))?.match(
 		/Landed on main at \S+?,\s*(\d{4}-\d{2}-\d{2})/,
 	)?.[1];
@@ -102,13 +102,21 @@ export function planDates(
 	return { started, landed, released };
 }
 
-/** When an archived plan with no landing line landed: its retrospective's `date`, else its impl's. */
-function archivedLanding(planDir: string): string | null {
-	for (const doc of ["retrospective.md", "impl.md"]) {
+/** The first of `docs`, in order, whose frontmatter carries a `date`. */
+function firstDate(planDir: string, docs: readonly string[]): string | null {
+	for (const doc of docs) {
 		const date = frontmatter(read(join(planDir, doc)), "date")?.match(DATE)?.[0];
 		if (date) return date;
 	}
 	return null;
+}
+
+/** A plan with no brief (a spike, a parent) started with its first lifecycle document. */
+const STARTING_DOCS = ["brief.md", "research.md", "test-plan.md", "adr.md", "impl.md"] as const;
+
+/** When an archived plan with no landing line landed: its retrospective's `date`, else its impl's. */
+function archivedLanding(planDir: string): string | null {
+	return firstDate(planDir, ["retrospective.md", "impl.md"]);
 }
 
 /** `display.words` from the project's config, merged over the built-in words. */
