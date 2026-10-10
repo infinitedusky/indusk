@@ -1,12 +1,9 @@
 // promise: the-nav-fits-a-phone
 import "@/app/globals.css";
-import { page, userEvent } from "vitest/browser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import {
-  PROJECT,
-  resetFixture,
-} from "@/__tests__/helpers/cockpit-fixture";
+import { PROJECT, resetFixture } from "@/__tests__/helpers/cockpit-fixture";
 
 /**
  * plan-cockpit, Test Phase 1: the nav on a phone and on a desktop, rendered
@@ -82,8 +79,8 @@ vi.mock("@/lib/promise-timeline", () => ({
 }));
 
 import PerProjectLayout from "./layout";
-import PerProjectPromisesPage from "./promises/page";
 import PlanPage from "./plan/[name]/page";
+import PerProjectPromisesPage from "./promises/page";
 
 async function shell(child: "plan" | "dashboard") {
   const params = Promise.resolve({ project: PROJECT });
@@ -105,7 +102,10 @@ function nav(): HTMLElement | null {
 }
 function visibleWidth(el: Element): number {
   const r = el.getBoundingClientRect();
-  return Math.max(0, Math.min(r.right, window.innerWidth) - Math.max(r.left, 0));
+  return Math.max(
+    0,
+    Math.min(r.right, window.innerWidth) - Math.max(r.left, 0),
+  );
 }
 
 beforeEach(() => {
@@ -127,15 +127,22 @@ describe("A6 — at 400 px the nav is a drawer, closed, opened and closed by the
     expect(menu, "no menu button at 400 px").not.toBeNull();
     expect(menu?.getAttribute("aria-expanded")).toBe("false");
     expect(nav()?.getAttribute("data-open")).toBe("false");
-    expect(visibleWidth(nav() as Element), "a closed drawer shows nothing").toBe(0);
+    expect(
+      visibleWidth(nav() as Element),
+      "a closed drawer shows nothing",
+    ).toBe(0);
 
     await userEvent.click(menu as HTMLElement);
-    await vi.waitFor(() => expect(nav()?.getAttribute("data-open")).toBe("true"));
+    await vi.waitFor(() =>
+      expect(nav()?.getAttribute("data-open")).toBe("true"),
+    );
     expect(menu?.getAttribute("aria-expanded")).toBe("true");
     expect(visibleWidth(nav() as Element)).toBeGreaterThan(100);
 
     await userEvent.click(menu as HTMLElement);
-    await vi.waitFor(() => expect(nav()?.getAttribute("data-open")).toBe("false"));
+    await vi.waitFor(() =>
+      expect(nav()?.getAttribute("data-open")).toBe("false"),
+    );
     expect(menu?.getAttribute("aria-expanded")).toBe("false");
   });
 });

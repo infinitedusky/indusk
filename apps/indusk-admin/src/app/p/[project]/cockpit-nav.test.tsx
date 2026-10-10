@@ -1,18 +1,14 @@
 // promise: every-plan-is-one-click-away
 // promise: paths-keep-their-order
 // promise: a-plan-can-start-from-the-admin
-import { page } from "vitest/browser";
+
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import {
   activePlanNames,
   BROKEN,
-  displayMock,
-  healthMock,
-  planningReaderMock,
   PROJECT,
-  promisesReaderMock,
-  registryClientMock,
   resetFixture,
 } from "@/__tests__/helpers/cockpit-fixture";
 
@@ -92,10 +88,6 @@ vi.mock("@infinitedusky/indusk-mcp/worktree/repos", () => ({
 import PerProjectLayout from "./layout";
 import PerProjectPage from "./page";
 
-// Keep the fixture's mock factories referenced so a bundler never drops them.
-void [healthMock, planningReaderMock, promisesReaderMock, registryClientMock];
-void displayMock;
-
 const base = `/p/${PROJECT}`;
 
 async function layoutAround(child: React.ReactNode, path: string) {
@@ -136,7 +128,9 @@ describe("A1 — every active plan is in the nav on every page, and the open one
       );
       expect(missing, `plans missing from the nav on ${path}`).toEqual([]);
       expect(
-        nav?.querySelector('a[data-plan-name="mid-build"]')?.getAttribute("href"),
+        nav
+          ?.querySelector('a[data-plan-name="mid-build"]')
+          ?.getAttribute("href"),
       ).toBe(`${base}/plan/mid-build`);
     }
   });
@@ -144,7 +138,9 @@ describe("A1 — every active plan is in the nav on every page, and the open one
   it("A1 marks the open plan current and no other", async () => {
     const root = await layoutAround(planPage, `${base}/plan/beta-one`);
     const current = [
-      ...root.querySelectorAll('[data-testid="cockpit-nav"] [aria-current="page"]'),
+      ...root.querySelectorAll(
+        '[data-testid="cockpit-nav"] [aria-current="page"]',
+      ),
     ].map((el) => el.getAttribute("data-plan-name"));
     expect(current).toContain("beta-one");
     expect(current.every((n) => n === "beta-one")).toBe(true);
@@ -154,9 +150,13 @@ describe("A1 — every active plan is in the nav on every page, and the open one
     const root = await layoutAround(dashboard, `${base}/promises`);
     const nav = root.querySelector('[data-testid="cockpit-nav"]');
     expect(
-      nav?.querySelector('[data-testid="nav-promises"]')?.getAttribute("aria-current"),
+      nav
+        ?.querySelector('[data-testid="nav-promises"]')
+        ?.getAttribute("aria-current"),
     ).toBe("page");
-    expect(nav?.querySelectorAll("a[data-plan-name][aria-current]")).toHaveLength(0);
+    expect(
+      nav?.querySelectorAll("a[data-plan-name][aria-current]"),
+    ).toHaveLength(0);
   });
 });
 
@@ -164,7 +164,9 @@ describe("A2 — Paths and their plans keep the declared order, numbered", () =>
   it("A2 lists the Paths in the roadmap's order", async () => {
     const root = await layoutAround(planPage, `${base}/plan/beta-one`);
     const paths = [
-      ...root.querySelectorAll('[data-testid="cockpit-nav"] [data-testid^="plan-group-"][data-depth="1"]'),
+      ...root.querySelectorAll(
+        '[data-testid="cockpit-nav"] [data-testid^="plan-group-"][data-depth="1"]',
+      ),
     ].map((el) => el.getAttribute("data-testid"));
     expect(paths).toEqual([
       "plan-group-path-alpha",
@@ -212,7 +214,9 @@ describe("A3 — Paths nest as deep as they are declared, and a cycle stops at t
       root.querySelectorAll('[data-testid="plan-group-path-alpha"]'),
     ).toHaveLength(1);
     expect(
-      root.querySelector('[data-testid="plan-group-path-alpha"]')?.getAttribute("data-depth"),
+      root
+        .querySelector('[data-testid="plan-group-path-alpha"]')
+        ?.getAttribute("data-depth"),
     ).toBe("1");
   });
 });
@@ -222,7 +226,9 @@ describe("A4 — each Path shows how many of its plans a release has shipped", (
     const root = await layoutAround(planPage, `${base}/plan/beta-one`);
     const released = (name: string) =>
       root
-        .querySelector(`[data-testid="plan-group-${name}"] [data-testid="path-released"]`)
+        .querySelector(
+          `[data-testid="plan-group-${name}"] [data-testid="path-released"]`,
+        )
         ?.textContent?.trim();
     // beta-one shipped in 1.60.0; beta-two landed but no release has it.
     expect(released("path-beta")).toBe("1/2");
@@ -235,11 +241,17 @@ describe("A5 — a plan no Path declares is still in the nav (regression guard)"
   it("A5 lists undeclared-plan and every filler plan after the Paths", async () => {
     const root = await layoutAround(planPage, `${base}/plan/undeclared-plan`);
     const nav = root.querySelector('[data-testid="cockpit-nav"]') ?? root;
-    expect(nav.querySelector('a[data-plan-name="undeclared-plan"]')).not.toBeNull();
-    expect(nav.querySelector('a[data-plan-name="filler-plan-01"]')).not.toBeNull();
-    expect(nav.querySelector('a[data-plan-name="undeclared-plan"]')?.getAttribute("href")).toBe(
-      `${base}/plan/undeclared-plan`,
-    );
+    expect(
+      nav.querySelector('a[data-plan-name="undeclared-plan"]'),
+    ).not.toBeNull();
+    expect(
+      nav.querySelector('a[data-plan-name="filler-plan-01"]'),
+    ).not.toBeNull();
+    expect(
+      nav
+        .querySelector('a[data-plan-name="undeclared-plan"]')
+        ?.getAttribute("href"),
+    ).toBe(`${base}/plan/undeclared-plan`);
   });
 });
 

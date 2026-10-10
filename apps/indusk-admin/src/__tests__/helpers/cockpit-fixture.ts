@@ -247,7 +247,11 @@ export interface FixtureDates {
   released: { version: string; date: string } | null;
 }
 
-const NONE: FixtureDates = { started: "2026-09-01", landed: null, released: null };
+const NONE: FixtureDates = {
+  started: "2026-09-01",
+  landed: null,
+  released: null,
+};
 
 /** Released: alpha-one, inner-one, beta-one, deep-one. Landed, not released: alpha-two, beta-two. */
 export const DATES: Record<string, FixtureDates> = {
@@ -290,7 +294,7 @@ function promise(
   return {
     name,
     kind: "behaviour",
-    lifetime: "permanent",
+    lifetime: "holds",
     state,
     domain: "booking",
     owner,
@@ -300,7 +304,7 @@ function promise(
     incidents: [],
     aliases: [],
     file: `${name}.md`,
-  } as PromiseEntry;
+  };
 }
 
 export const PROMISES: PromiseEntry[] = [
@@ -386,9 +390,9 @@ export function healthRowsFixture() {
 /** The plans owning a broken promise — `redPlans`' answer. */
 export function redPlansFixture(): Set<string> {
   return new Set(
-    PROMISES.filter((p) =>
-      (BROKEN as readonly string[]).includes(p.name),
-    ).map((p) => p.owner),
+    PROMISES.filter((p) => (BROKEN as readonly string[]).includes(p.name)).map(
+      (p) => p.owner,
+    ),
   );
 }
 
