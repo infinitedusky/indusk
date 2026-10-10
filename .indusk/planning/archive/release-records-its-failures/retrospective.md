@@ -55,3 +55,5 @@ No recurring lint or type errors; no Biome rule is warranted. Shape: 5 findings 
 - 77 commits; 52 files outside `.indusk/`, +3,245 / −67.
 - 29 trajectory rows passing, 1 deferred (A19, the live release).
 - Falsification: 5 hypotheses, all confirmed and fixed. Audit: 24 findings, 2 fixed before close, the rest carried.
+
+Landed on main at 8734a7d8, 2026-10-10. Installed with `pnpm install:local` (after `pnpm install` brought fast-xml-parser into the main checkout).
