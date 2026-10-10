@@ -101,9 +101,21 @@ export function checksShow(checkout: string): number {
 			? `  changelog:     ${release.changelog}`
 			: "  changelog:     none declared — no changelog to roll (workflow.steps.release.changelog)",
 		`  slow tests cover: ${release.covers?.length ? release.covers.join(", ") : "the whole repository but .indusk/"}`,
+		...releaseSlowLines(release),
 	];
 	console.info(lines.join("\n"));
 	return 0;
+}
+
+/** The release's own slow tests and its completion rule, one line per fact. */
+function releaseSlowLines(release: NonNullable<WorkflowSteps["release"]>): string[] {
+	const slow = release.slow_tests;
+	return [
+		slow
+			? `  release slow tests: ${slow.command}  (run ${slow.when} the command by indusk release; report ${slow.report}${slow.rerun ? `; rerun ${slow.rerun}` : ""})`
+			: "  release slow tests: none declared — indusk release runs none (workflow.steps.release.slow_tests)",
+		`  done when:     ${release.done_when ?? "published"}${release.done_when ? "" : "  (default; workflow.steps.release.done_when)"}`,
+	];
 }
 
 /** The declared steps, or `null` after one line on stderr naming what was refused. */
