@@ -119,7 +119,7 @@ function groupsOf(
   );
 }
 
-/** Each promise: its name, its sentence in words, its plan's title — literal, as a person reads them. */
+/** Each promise, by its name, its sentence in words, its plan's title — literal, as a person reads them. */
 const WORDS: Record<string, [sentence: string, planTitle: string]> = {
   "seat-holds-never-double-book": [
     "Seat holds never double book",

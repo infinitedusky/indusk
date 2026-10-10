@@ -23,7 +23,7 @@ export function StartFix({
 }: {
   project: string;
   promise: string;
-  /** The plan that owns the promise: the fix session is recorded against it. */
+  /** The plan that owns the promise; the fix session is recorded against it. */
   plan: string;
 }) {
   const [sessionId, setSessionId] = useState<string | null>(null);

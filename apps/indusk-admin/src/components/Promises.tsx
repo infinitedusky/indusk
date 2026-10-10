@@ -774,7 +774,7 @@ function ControlLinks<K extends string>({
   );
 }
 
-/** One promise: its standing, its sentence in words, its name and plan, its tests, thirty days, last activity. */
+/** One promise, shown as its standing, its sentence in words, its name and plan, its tests, thirty days, last activity. */
 function DashboardRowItem({
   row,
   planHrefPrefix,

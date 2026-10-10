@@ -85,7 +85,7 @@ function pathOf(
   return null;
 }
 
-/** One row per promise: the package's standing and thirty days, in words, with its plan's title and Path. */
+/** One row per promise, from the package's standing and thirty days, in words, with its plan's title and Path. */
 export function buildRows(
   standing: StandingRow[],
   ctx: RowContext,
