@@ -1,7 +1,7 @@
 ---
 title: "evaluator-waits-out-limits — Test Plan"
 date: 2026-10-10
-status: draft
+status: accepted
 ---
 
 # evaluator-waits-out-limits — Test Plan
