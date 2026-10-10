@@ -408,3 +408,75 @@ export function readsFixture() {
 export function titleOf(plan: string): string {
   return TITLES[plan] ?? plan;
 }
+
+// -- module mocks -----------------------------------------------------------
+//
+// Factories for `vi.mock(path, () => …)`: each returns every export the
+// cockpit's layout and pages import from that module (a mock must cover them
+// all — the admin's known gotcha). A page that comes to import another reader
+// adds it here once, for every cockpit test.
+
+export function planningReaderMock() {
+  return {
+    __esModule: true,
+    readActivePlans: async () => activePlans(),
+    readArchivedPlans: async () => archivedPlans(),
+    readProjectWorktrees: async () => ({ ok: true, unassigned: [] }),
+    readPlanHierarchy: () => DECLARATIONS,
+    readPlanMasterContent: async () => null,
+  };
+}
+
+export function promisesReaderMock() {
+  return {
+    __esModule: true,
+    readProjectPromises: () => ({ ok: true, registry: REGISTRY }),
+    registryOf: () => REGISTRY,
+    holdingCount: () => 0,
+    holdingCounts: () => new Map<string, number>(),
+    readProjectHeard: () => ({ rows: [], lastHeard: null }),
+  };
+}
+
+export function healthMock() {
+  return {
+    __esModule: true,
+    readHealth: async () => readsFixture(),
+    alarmRead: (reads: ReturnType<typeof readsFixture>) => reads[0],
+    ruleFor: () => "incidents",
+    healthRows: () => healthRowsFixture(),
+    redPlans: () => redPlansFixture(),
+  };
+}
+
+export function registryClientMock() {
+  return {
+    __esModule: true,
+    readRegistryProjects: () => [
+      { name: PROJECT, path: PROJECT_PATH },
+      { name: "other-proj", path: "/mock/other" },
+    ],
+    getProjectPath: (name: string) => (name === PROJECT ? PROJECT_PATH : null),
+    projectPathExists: () => true,
+  };
+}
+
+/**
+ * The package's display module with its date reads answered from the fixture
+ * (the words and titles stay the real, pure ones): `planDates` for one plan
+ * folder, `readHealthNames` for the whole project — a nav that asks either
+ * gets the same dates.
+ */
+export function displayMock(original: Record<string, unknown>) {
+  const planTitles: Record<string, string> = {};
+  for (const p of activePlans()) planTitles[p.name] = titleOf(p.name);
+  return {
+    ...original,
+    planDates: (planDir: string) => datesOf(planDir.split("/").pop() ?? ""),
+    readHealthNames: () => ({
+      planTitles,
+      planDates: DATES,
+      words: {},
+    }),
+  };
+}
