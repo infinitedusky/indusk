@@ -35,7 +35,9 @@ That line ends with the promise's name and its state:
 | `… · not reading` | No health has arrived for two reads. |
 
 **Hover a marked line** for the promise's sentence, its state in each source,
-and when it last broke or was last seen.
+and when it last broke or was last seen. "Last broke" is the time of the
+promise's newest violation, shown in your own time zone, not the time of its
+newest run; "last seen" is the newest run of any outcome.
 
 **A break** also appears in the Problems list, and as one notification the
 first time it is read. It is not told again while it lasts, however many more

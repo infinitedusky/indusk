@@ -11,6 +11,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ### Fixed
 
 - **A limit refusal waits instead of breaking `every-commit-evaluated`** (evaluator-waits-out-limits): an evaluation the model refuses with `429` (rate limiting, or the weekly limit) is logged as `waiting`, queued in `eval/pending.jsonl`, and tried again by the next commit's trigger before its own; it is no longer a violation. An evaluator answer with no scorecard (a resumed session replying in prose) is asked once more in the same session for the scorecard alone. See [Getting started with eval](/guide/eval#when-the-model-is-not-reachable).
+- **The panel and the hover say a promise last broke when it last broke.** "Last broke" showed the time of the newest run of any outcome, in UTC, so a run that held read as a break. It is now the newest violation's time, carried on the health line as `lastBroke`, in your own time zone. See [Promises in your editor](/guide/promises-in-your-editor).
 
 ## [1.70.0] — 2026-10-10
 

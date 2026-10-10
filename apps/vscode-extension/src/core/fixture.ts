@@ -27,7 +27,12 @@ export function line(
 		lastSeen: "2026-10-08T12:20:00.000Z",
 		violations: state === "red" ? 1 : 0,
 		...(state === "red"
-			? { symptom: "seat 4 held twice", traceId: over.traceId ?? "t-1", environment: "production" }
+			? {
+					symptom: "seat 4 held twice",
+					lastBroke: "2026-10-08T12:20:00.000Z",
+					traceId: over.traceId ?? "t-1",
+					environment: "production",
+				}
 			: {}),
 		tests: ["src/seats.test.ts"],
 	});

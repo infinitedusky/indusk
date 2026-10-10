@@ -18,6 +18,9 @@ Loaded by Claude Code when a file under `apps/vscode-extension/` is read.
   The handle stays on the marker, the click and the fix. (`display-names-single-definition.test.ts`)
 - **Tokens come from the package's grammar** (`@infinitedusky/indusk-mcp/tokens`),
   never a second pattern.
+- **"Last broke" is the line's `lastBroke`, never `lastSeen`.** `lastSeen` is the
+  newest run of any outcome; the newest violation's time is its own field. Times
+  show in the person's time zone (`stamp(iso, timeZone?)`), with no "UTC".
 - **Text from spans is untrusted.** A symptom, trace id or source reason was
   written by whatever sent the span. Before a terminal it goes through
   `cleanFacts` (one line, no control characters: a control character there is

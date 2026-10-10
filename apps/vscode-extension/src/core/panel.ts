@@ -173,7 +173,7 @@ function whereItBroke(
 	const { source, row } = broke;
 	return {
 		source: source.name,
-		...(row.lastSeen ? { brokeAt: row.lastSeen } : {}),
+		...(row.lastBroke ? { brokeAt: row.lastBroke } : {}),
 		...(row.symptom ? { symptom: row.symptom } : {}),
 	};
 }
