@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.70.0] — 2026-10-10
+
 ### Added
 
 - **A release records its failures** (release-records-its-failures): the retrospective's Step 11 names `indusk release` as the release. dusk's `release` script no longer runs the slow tests before publishing; `.indusk/config.json` declares them `after`, with a JUnit report (`apps/*/test-results/system.junit.xml`, written by each app's system config) and a rerun that runs only the files that failed (`scripts/rerun-system.js`). See [`indusk release`](/reference/cli/release).
