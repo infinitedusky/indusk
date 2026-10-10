@@ -590,11 +590,15 @@ turns a handle into words itself:
 - `planTitle`: the owning plan's brief title up to " — ", or the folder name
   when the brief has none.
 - `planDates`: `{ started, landed, released }`. `started` is the brief's
-  `date`; `landed` the date on the retrospective's `Landed on main at <sha>,
-  <date>.` line; `released` the `version` and `date` of the earliest changelog
-  section (the file `workflow.steps.release.changelog` names) whose entry names
-  the plan in parentheses. Each is `null` until it has happened, so a landed
-  plan in no release reads "not released yet".
+  `date`, else the first of the plan's `research.md`, `test-plan.md`, `adr.md`
+  and `impl.md` that has one (a spike has no brief). `landed` is the date on the
+  retrospective's `Landed on main at <sha>, <date>.` line; a plan in `archive/`
+  with no such line (every plan retired before it was written) landed on its
+  retrospective's `date`, else its impl's. `released` is the `version` and
+  `date` of the earliest changelog section (the file
+  `workflow.steps.release.changelog` names) whose entry names the plan in
+  parentheses. Each is `null` until it has happened, so a landed plan in no
+  release reads "not released yet".
 
 A project adds product words, or respells one, in `.indusk/config.json`; the
 lowercase word maps to its spelling and is merged over the built-in list:
