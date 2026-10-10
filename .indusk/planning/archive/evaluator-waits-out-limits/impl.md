@@ -14,6 +14,8 @@ cleanup: skipped
 cleanup_reason: "Changes stay inside evaluator-runner.ts and the eval-trigger hook's existing queue."
 audit: skipped
 audit_reason: "Its promises are narrow and each row tests one directly; the week-after expectation measures it in use."
+accepted: 2026-10-10T21:50:35.166Z
+accepted_by: person
 ---
 
 # evaluator-waits-out-limits
