@@ -1,6 +1,6 @@
 import { anyTokenPattern } from "@infinitedusky/indusk-mcp/tokens";
 import { stateOf } from "./markers.js";
-import { type View, whereBroken } from "./view.js";
+import { titleOf, type View, whereBroken } from "./view.js";
 
 // promise: every-promise-is-listed-in-the-editor
 
@@ -13,7 +13,13 @@ export interface Location {
 }
 
 export interface PanelPromise {
+	/** The handle: what the token spells, what a click and a fix are keyed by. */
 	name: string;
+	/** The promise in words, from the health line; the handle when the line has none. */
+	title: string;
+	/** The plan's brief title, and its dates as the line words them. */
+	planTitle?: string;
+	planWhen?: string;
 	kind: string;
 	statement: string;
 	/** The state as the markers word it: "broken (production)", "holding", … */
@@ -33,6 +39,10 @@ export interface PanelPromise {
 /** The promises one plan owns, newest run first. */
 export interface PanelGroup {
 	plan: string;
+	/** What the group is headed by: the plan's title, its folder when the line has none. */
+	planTitle: string;
+	/** "started …, landed …, released X.Y.Z (date)" or "not released yet"; empty when unknown. */
+	planWhen: string;
 	promises: PanelPromise[];
 }
 
@@ -54,6 +64,9 @@ export function panelModel(view: View | null, files: Map<string, string>): Panel
 		const { text, tone } = stateOf(p.name, view);
 		return {
 			name: p.name,
+			title: titleOf(view, p.name),
+			...("planTitle" in p && p.planTitle ? { planTitle: p.planTitle } : {}),
+			...(p.planDates ? { planWhen: whenWords(p.planDates) } : {}),
 			kind: p.kind,
 			statement: p.statement,
 			state: text,
@@ -77,6 +90,27 @@ export function panelModel(view: View | null, files: Map<string, string>): Panel
 }
 
 const NO_PLAN = "no plan";
+
+/**
+ * A plan's dates in a sentence: what the line says happened, and for a plan
+ * that landed, whether a release carried it. The dates are the package's;
+ * this only words them.
+ */
+function whenWords(d: {
+	started: string | null;
+	landed: string | null;
+	released: { version: string; date: string } | null;
+}): string {
+	const parts: string[] = [];
+	if (d.started) parts.push(`started ${d.started}`);
+	if (d.landed) parts.push(`landed ${d.landed}`);
+	if (d.landed) {
+		parts.push(
+			d.released ? `released ${d.released.version} (${d.released.date})` : "not released yet",
+		);
+	}
+	return parts.join(", ");
+}
 
 function byName(a: { name: string }, b: { name: string }): number {
 	return a.name.localeCompare(b.name);
@@ -102,7 +136,12 @@ function byPlan(promises: PanelPromise[]): PanelGroup[] {
 		groups.set(plan, [...(groups.get(plan) ?? []), p]);
 	}
 	return [...groups]
-		.map(([plan, list]) => ({ plan, promises: list.sort(byNewestRun) }))
+		.map(([plan, list]) => ({
+			plan,
+			planTitle: list.find((p) => p.planTitle)?.planTitle ?? plan,
+			planWhen: list.find((p) => p.planWhen)?.planWhen ?? "",
+			promises: list.sort(byNewestRun),
+		}))
 		.sort((a, b) => {
 			const ra = a.promises[0]?.lastRun;
 			const rb = b.promises[0]?.lastRun;

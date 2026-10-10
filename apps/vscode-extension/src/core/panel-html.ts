@@ -18,7 +18,12 @@ export function panelBody(model: PanelModel, activity: string[], project = ""): 
 			? `<h2>Broken</h2>${model.broken.map(card).join("")}`
 			: `<p class="note">Nothing broken.</p>`;
 	const rest = model.groups
-		.map((g) => `<h2 class="plan">${esc(g.plan)}</h2>${g.promises.map(row).join("")}`)
+		.map(
+			(g) =>
+				`<h2 class="plan">${esc(g.planTitle)}</h2>${
+					g.planWhen ? `<p class="when">${esc(g.planWhen)}</p>` : ""
+				}${g.promises.map(row).join("")}`,
+		)
 		.join("");
 	const runs = `<h2>Activity</h2><ol class="activity">${activity
 		.map((l) => `<li class="${/ broke /.test(l) ? "broke" : "held"}">${esc(l)}</li>`)
@@ -28,14 +33,14 @@ export function panelBody(model: PanelModel, activity: string[], project = ""): 
 
 function card(p: PanelPromise): string {
 	const facts = [
-		p.plan ? `plan ${esc(p.plan)}` : "",
+		p.plan ? `plan ${esc(p.planTitle ?? p.plan)}` : "",
 		p.source ? `in ${esc(p.source)}` : "",
 		p.brokeAt ? `last broke ${esc(p.brokeAt.slice(0, 16).replace("T", " "))} UTC` : "",
 	]
 		.filter(Boolean)
 		.join(" · ");
 	return `<details class="card" data-name="${esc(p.name)}"><summary><span class="name">${esc(
-		p.name,
+		p.title,
 	)}</span><span class="state broken">${esc(p.state)}</span>${
 		facts ? `<span class="facts">${facts}</span>` : ""
 	}${p.symptom ? `<span class="symptom">${esc(p.symptom)}</span>` : ""}</summary>${detail(
@@ -45,7 +50,7 @@ function card(p: PanelPromise): string {
 
 function row(p: PanelPromise): string {
 	return `<details class="row" data-name="${esc(p.name)}"><summary><span class="name">${esc(
-		p.name,
+		p.title,
 	)}</span><span class="state ${p.tone}">${esc(p.state)}</span></summary>${detail(p)}</details>`;
 }
 
@@ -83,6 +88,7 @@ summary::-webkit-details-marker{display:none}
 .card{border:1px solid var(--vscode-errorForeground);background:var(--vscode-inputValidation-errorBackground,transparent)}
 .row summary:hover{background:var(--vscode-list-hoverBackground)}
 .name{font-weight:600}
+.when{margin:0 0 4px;color:var(--vscode-descriptionForeground);font-size:12px}
 .state{color:var(--vscode-descriptionForeground)}
 .state.broken{color:var(--vscode-errorForeground)}
 .state.ok{color:var(--vscode-testing-iconPassed)}

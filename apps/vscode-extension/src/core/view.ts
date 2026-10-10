@@ -56,6 +56,16 @@ export function promiseOf(view: View | null, name: string) {
 	return view?.line.promises.find((p) => p.name === name) ?? null;
 }
 
+/**
+ * A promise's words as the health line carries them; the handle when the line
+ * has none (an older line) or the promise is not in it. The editor never makes
+ * words from a handle itself.
+ */
+export function titleOf(view: View | null, name: string): string {
+	const title = promiseOf(view, name)?.title;
+	return title ? title : name;
+}
+
 /** "2026-10-08 12:20", the way the admin stamps a time. */
 export function stamp(iso: string): string {
 	return iso.slice(0, 16).replace("T", " ");

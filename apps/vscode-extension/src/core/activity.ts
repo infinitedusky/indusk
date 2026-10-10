@@ -43,10 +43,12 @@ function keyOf(r: Run): string {
 export function activityLines(
 	a: Activity,
 	time: (iso: string) => string = (iso) => `${iso.slice(11, 19)} UTC`,
+	/** A promise's words from the health line; the handle when not given. */
+	titleOf: (promise: string) => string = (promise) => promise,
 ): string[] {
 	if (a.runs.length === 0) return ["No runs yet."];
 	return a.runs.map(
 		(r) =>
-			`${r.promise} ${r.outcome === "violated" ? "broke" : "held"} (${r.source}) · ${time(r.at)}`,
+			`${titleOf(r.promise)} ${r.outcome === "violated" ? "broke" : "held"} (${r.source}) · ${time(r.at)}`,
 	);
 }
