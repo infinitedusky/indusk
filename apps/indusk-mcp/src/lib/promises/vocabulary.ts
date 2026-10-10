@@ -36,8 +36,13 @@ export type PromiseState = (typeof PROMISE_STATES)[number];
 export const PROMISE_LIFETIMES = ["holds", "established"] as const;
 export type PromiseLifetime = (typeof PROMISE_LIFETIMES)[number];
 
-/** Where the system was running when the promise broke; `desk` is a finding by reading. */
-export const INCIDENT_SOURCES = ["local", "smoke", "deployed", "desk"] as const;
+/**
+ * Where the system was running when the promise broke; `desk` is a finding by
+ * reading; `release` a slow test still failing after its rerun in `indusk
+ * release` (release-records-its-failures D7), whose evidence is `tests:` and
+ * `release:` where a watcher's is `traces:`.
+ */
+export const INCIDENT_SOURCES = ["local", "smoke", "deployed", "desk", "release"] as const;
 export type IncidentSource = (typeof INCIDENT_SOURCES)[number];
 
 export const INCIDENT_STATUSES = ["open", "fixed"] as const;

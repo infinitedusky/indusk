@@ -22,7 +22,7 @@ import { git } from "./cli.js";
 export type PromiseKind = "behaviour" | "state" | "structure";
 export type PromiseState = "declared" | "enforced" | "known-violated" | "retired";
 export type PromiseLifetime = "holds" | "established";
-export type IncidentSource = "local" | "smoke" | "deployed" | "desk";
+export type IncidentSource = "local" | "smoke" | "deployed" | "desk" | "release";
 
 export interface PromiseSpec {
 	name: string;
@@ -58,6 +58,9 @@ export interface IncidentSpec {
 	opened?: string;
 	lastSeen?: string;
 	traces?: string[];
+	/** release-records-its-failures D7: a release's evidence, in place of `traces`. */
+	tests?: string[];
+	release?: string[];
 	/** promise-timeline D1: when the incident was fixed (ISO). */
 	fixed?: string;
 	/** Frontmatter keys to leave out. */
@@ -222,6 +225,8 @@ export function writeIncident(dir: string, spec: IncidentSpec): string {
 	if (spec.opened !== undefined) frontmatter.opened = spec.opened;
 	if (spec.lastSeen !== undefined) frontmatter.last_seen = spec.lastSeen;
 	if (spec.traces !== undefined) frontmatter.traces = spec.traces;
+	if (spec.tests !== undefined) frontmatter.tests = spec.tests;
+	if (spec.release !== undefined) frontmatter.release = spec.release;
 	if (spec.fixed !== undefined) frontmatter.fixed = spec.fixed;
 	for (const key of spec.omit ?? []) delete frontmatter[key];
 	const omit = new Set(spec.omitSections ?? []);

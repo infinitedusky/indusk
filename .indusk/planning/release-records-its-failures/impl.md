@@ -154,7 +154,7 @@ gate_policy: ask
 **Tier**: strong — changes the incident file's shape, which every reader of incidents (catchup, `promise_health`, `promises status`, the admin, the editor) parses
 
 - [x] `lib/release/route.ts`: `routeFailure(root, file)` reads every impl, active and archived, through `parseTrajectory` and returns the promises the rows naming `file` name, and those rows (ADR D6)
-- [ ] `lib/promises/vocabulary.ts`: `INCIDENT_SOURCES` gains `release`; `check.ts` accepts it
+- [x] `lib/promises/vocabulary.ts`: `INCIDENT_SOURCES` gains `release`; `check.ts` accepts it
 - [ ] `lib/promises/incidents.ts`: `recordTestFailure(registry, promise, failure)` writes `tests:` and `release:` evidence and the suspects, or extends the promise's open incident; through `ensurePromiseCarries` and `reopen.ts` (ADR D7). Every incident reader tolerates an incident with `tests:` and no `traces:` — grep the readers (`recorded`, `violationState`, `health.ts`, `status.ts`, the admin's `IncidentsTable.tsx`, the editor's health line) and add a case for each that reads `traces:`
 - [ ] Suspects: `git log <green sha>..HEAD -- <covers>`; none, said so, when the green run has no `sha` (ADR D9)
 
