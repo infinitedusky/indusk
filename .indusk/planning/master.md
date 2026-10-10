@@ -490,14 +490,15 @@ lesson title, or a chat log.
   own origin only, so a click and the server work it causes on another origin
   land in two traces. The `dash0` extension itself stays shipped, optional,
   disabled here.
-- **Follow-on, not critical — `telemetry-destinations`** (feature, not
-  created; Sandy, 2026-10-10): InDusk always receives the telemetry; beside it
-  a project has any number of other destinations, added and removed freely, as
-  exporters on InDusk's collector (promise
-  `indusk-always-receives-the-telemetry`, structure). Today a scaffolded app
-  reads one endpoint variable, so a vendor replaces InDusk rather than joining
-  it, and the vendor extensions only query. See
-  [its research](browser-telemetry-leftovers/research.md#follow-on-telemetry-destinations-feature-not-critical).
+- **Backlog, not critical —
+  [telemetry-destinations](telemetry-destinations/brief.md)** (feature, brief
+  draft on `plan/telemetry-destinations`, Sandy, 2026-10-10): InDusk always
+  receives the telemetry; beside it a project has any number of other
+  destinations, added and removed freely, as exporters on InDusk's collector
+  (promise `indusk-always-receives-the-telemetry`, structure). Today a
+  scaffolded app reads one endpoint variable, so a vendor replaces InDusk
+  rather than joining it, and the vendor extensions only query. After
+  browser-telemetry-leftovers.
 - **Small, not a step** (2026-09-18, from day-promises' close):
   `apps/indusk-mcp/src/lib/admin/__tests__/daemon-identity.test.ts` assumes
   port 65001 is unbound; the local-telemetry `otelcol` restarted onto it

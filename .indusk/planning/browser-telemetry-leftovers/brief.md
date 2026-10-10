@@ -39,7 +39,7 @@ None.
 
 ### Not promised
 
-- `indusk-always-receives-the-telemetry` — InDusk is always a destination, others are added and removed freely: the follow-on feature plan `telemetry-destinations`, recorded in the master plan.
+- `indusk-always-receives-the-telemetry` — InDusk is always a destination, others are added and removed freely: the backlog feature plan [telemetry-destinations](../telemetry-destinations/brief.md).
 - Browser instrumentation in the seat-holds demo: demo-rehearsal, or the tray work after the launch.
 - The glow on the page when a promise breaks: the tray, after the launch.
 
