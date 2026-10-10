@@ -75,7 +75,8 @@ const PLANNING: ReadonlyArray<{
 const IMPL_PLANNED = new Set(["approved", "in-progress", "completed"]);
 const FINISHED = new Set(["accepted", "complete", "completed"]);
 
-function documentFinished(document: DocumentPosition, status: string | undefined): boolean {
+/** Whether a document's status says its Planning work is done (an impl: approved or later). */
+export function documentFinished(document: DocumentPosition, status: string | undefined): boolean {
 	if (status === undefined) return false;
 	return document === "impl" ? IMPL_PLANNED.has(status) : FINISHED.has(status);
 }
