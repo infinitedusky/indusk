@@ -70,7 +70,7 @@ Failures are read from the declared JUnit report, never from what the command pr
 
 When more than half the report's test files failed, it is the environment, not the code: the release prints the `the environment failed` line, records `environment: {failed, total}`, and nothing else is opened. Exactly half is not.
 
-Otherwise, with `slow_tests.rerun` declared, the failing files are substituted into `{files}` and run once, each single-quoted so a path with a space or a shell character reaches the command as one argument. The report is read again: a file the rerun does not leave failing is a flake, listed under `flakes` on the record and opening nothing; a file still failing is recorded under `failed`.
+Otherwise, with `slow_tests.rerun` declared, the failing files are substituted into `{files}` and run once, each single-quoted so a path with a space or a shell character reaches the command as one argument. The report is read again: a flake must pass on its rerun — a file the rerun's report shows with every case passing is a flake, listed under `flakes` on the record and opening nothing; a file still failing, or one the rerun's report leaves out (it was not run), stays failing and is recorded under `failed`.
 
 ## Routing a failure
 
@@ -128,7 +128,7 @@ A file no promise's row claims (named by no row, or only by rows that name no pr
 
 While that plan is open, the same file failing in a later release adds a section to its `research.md` (tests, release, suspects) instead of opening another.
 
-The name is never one that is taken. If `fix-<name>` is open for a different file (two files called `skip.test.ts` in different packages), the next file takes `fix-<name>-<package>` (the nearest directory that is not `src` or `__tests__`), then `-2`, `-3`. If `fix-<name>` was archived, the new plan takes `-2` and its brief says it follows `archive/fix-<name>`: it broke again after that fix.
+The name is never one that is taken. If `fix-<name>` is open for a different file (two files called `skip.test.ts` in different packages), the next file takes `fix-<name>-<package>` (the nearest directory that is not `src` or `__tests__`), then `-2`, `-3`. A name already held on the trunk (a plan folder with no worktree) or by a leftover `plan/<name>` branch moves on the same way, and the brief names the plan it would have collided with. If `fix-<name>` was archived, the new plan takes `-2` and its brief says it follows `archive/fix-<name>`: it broke again after that fix.
 
 | Line printed | Meaning |
 |---|---|
