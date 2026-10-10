@@ -1,7 +1,7 @@
 ---
 title: "Display names — promises and plans read as words"
 date: 2026-10-09
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -217,20 +217,22 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 **Goal**: fix the two findings the audit (`audit.md`, a fresh reader on claude-opus-5-5) raised and Sandy chose to fix before closing (2026-10-10, "Fix both, then close"): on this repository 79 of 94 landed plans read "not released yet" because a release is found only when a changelog entry names the plan as `(plan-name)` (52 of 347 entries do), breaking `a-plan-shows-when-it-shipped`; and `after-close.ts`'s `closedAt` reads the landing line with its own pattern and fallback, so the monitor and the editor can date one plan's landing two ways.
 
-- [ ] `lib/promises/display.ts`: the shipping release is the first `chore(release): <version>` commit on the trunk's first-parent line after the plan's landing — the landing commit named by the retrospective's `Landed on main at <sha>` line, else the `Merge branch 'plan/<name>'` commit, else the first release dated on or after the landed date — with its version and commit date; read with one `git log --first-parent` per `readHealthNames` call, never one per plan; the changelog lookup stays only as the fallback when the project has no release commits (A12's fixture) (A16)
-- [ ] One landing-date function in the package (`landedDate(planDir, archived)` in `display.ts`, or the existing `closedAt` made the one rule) used by both `planDates` and `lib/promises/after-close.ts`'s `closedAt`; `display-names-single-definition.test.ts` extends its scan to `apps/indusk-mcp/src` for a second "Landed on main at" pattern (A17)
+- [x] `lib/promises/display.ts`: the shipping release is the first `chore(release): <version>` commit on the trunk's first-parent line after the plan's landing — the landing commit named by the retrospective's `Landed on main at <sha>` line, else the `Merge branch 'plan/<name>'` commit, else the first release dated on or after the landed date — with its version and commit date; read with one `git log --first-parent` per `readHealthNames` call, never one per plan; the changelog lookup stays only as the fallback when the project has no release commits (A12's fixture) (A16)
+  - 2026-10-10: `firstParentLogSync` added to `lib/git.ts` (one `git log --first-parent`); `shippedIn` in `display.ts`; `planDates` takes `opts.trunk`.
+- [x] One landing-date function in the package (`landedDate(planDir, archived)` in `display.ts`, or the existing `closedAt` made the one rule) used by both `planDates` and `lib/promises/after-close.ts`'s `closedAt`; `display-names-single-definition.test.ts` extends its scan to `apps/indusk-mcp/src` for a second "Landed on main at" pattern (A17)
 
 #### Build Phase 5 Verification
 
-- [ ] A16 and A17 pass, each red first, and A6, A11–A15 still do (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises/display.test.ts src/__tests__/promise-health-names.test.ts src/__tests__/display-names-single-definition.test.ts && pnpm exec vitest related src/lib/promises/display.ts src/lib/promises/after-close.ts --run`); re-run the measurement and record how many landed plans now show a release (was 15 of 94 landed reading released)
+- [x] A16 and A17 pass, each red first, and A6, A11–A15 still do (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises/display.test.ts src/__tests__/promise-health-names.test.ts src/__tests__/display-names-single-definition.test.ts && pnpm exec vitest related src/lib/promises/display.ts src/lib/promises/after-close.ts --run`); re-run the measurement and record how many landed plans now show a release (was 15 of 94 landed reading released)
+  - 2026-10-10: A16 red (released null; day-promises null), A17 red (after-close.ts second reader), then green. 4 files 27 passed (display, promise-health-names, single-definition, head-sha-single-definition); `vitest related` 70 of 71 files pass, the 2 failures are `inbox.test.ts` A17 (a reminder entry) which fail identically on the unchanged HEAD. tsc, build, biome clean. Measurement: 94 landed, 94 released (was 15); none read "not released yet" because 1.70.0 was released 2026-10-10, after every landing. Oldest plans (landed before the first release commit, 1.36.1) read 1.36.1. `readHealthNames` ~63-67 ms before, ~58-62 ms after (5 warm runs).
 
 #### Build Phase 5 Context
 
-- [ ] `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: the release that shipped a plan is the first release commit after its landing, never a changelog pattern; a plan's landing date has one function
+- [x] `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: the release that shipped a plan is the first release commit after its landing, never a changelog pattern; a plan's landing date has one function
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`, the `planDates` field: the release is read from the trunk's release commits, the changelog only when there are none
+- [x] `apps/docs/src/reference/cli/promises.md`, the `planDates` field: the release is read from the trunk's release commits, the changelog only when there are none
 
 ## Files Affected
 

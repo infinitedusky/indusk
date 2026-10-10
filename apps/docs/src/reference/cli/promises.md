@@ -595,7 +595,11 @@ turns a handle into words itself:
   retrospective's `Landed on main at <sha>, <date>.` line; a plan in `archive/`
   with no such line (every plan retired before it was written) landed on its
   retrospective's `date`, else its impl's. `released` is the `version` and
-  `date` of the earliest changelog section (the file
+  `date` of the first `chore(release): <version>` commit on the trunk's
+  first-parent line after the plan's landing (the commit the retrospective
+  names, else its `Merge branch 'plan/<name>'` commit, else the first release
+  dated on or after the landed date). Only a project with no release commits
+  falls back to the earliest changelog section (the file
   `workflow.steps.release.changelog` names) whose entry names the plan in
   parentheses. Each is `null` until it has happened, so a landed plan in no
   release reads "not released yet".

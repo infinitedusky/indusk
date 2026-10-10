@@ -19,4 +19,5 @@ apply to this folder only.
   an archived plan is landed on its retrospective's `date` (else its impl's),
   and `started` is the first lifecycle document's `date` when there is no brief.
   — see `/reference/cli/promises`
+- **The release that shipped a plan is the first `chore(release):` commit after its landing, never a changelog pattern; a plan's landing date has one function** (`landedDate` in `display.ts`; `closedAt` delegates) — a second reader of the "Landed on main at" line fails `display-names-single-definition.test.ts`. The trunk is read by one `git log` per `readHealthNames` call; the changelog is only the no-release-commits fallback. — see `/reference/cli/promises`
 - **`display.ts` reads a plan document's frontmatter through `gray-matter`, never its own pattern** — the plan page and the editor must name one plan one way; a date YAML parses to a `Date` is turned back into `YYYY-MM-DD`. — see `/reference/cli/promises`
