@@ -27,9 +27,9 @@ workflow: feature
 
 3. **`a-flake-opens-nothing`** (state). A test that fails and then passes when its file is run once more is listed as a flake on the release's record and opens no incident and no plan.
 
-4. **`a-failing-slow-test-breaks-its-promise`** (state). A test still failing after its rerun opens an incident on the promise its plan's row names, or adds to that promise's open incident, and the incident names the test, the release and the commits since the last green run.
+4. **`a-failing-slow-test-breaks-its-promise`** (state). A test still failing after its rerun opens an incident on the promise its plan's row names, or adds to that promise's open incident, and the incident names the test, the release and the commits since the last green run; a run where more than half the test files failed opens nothing and is recorded as one failure of the environment.
 
-5. **`an-unclaimed-failure-opens-a-bugfix-plan`** (state). A test still failing after its rerun that no row's promise claims opens one draft bugfix plan for its file, naming the commits since the last green run, and a later failure of the same file reuses that plan while it is open.
+5. **`an-unclaimed-failure-opens-a-bugfix-plan`** (state). A test still failing after its rerun that no row's promise claims opens one draft bugfix plan for its file, naming the commits since the last green run, and a later failure of the same file reuses that plan while it is open; a run where more than half the test files failed opens no plan.
 
 ### Existing promises
 

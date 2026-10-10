@@ -55,6 +55,7 @@ Most assertions are `unit`: the release's order, its completion, and the routing
 | A15 | A failing file no row names opens one draft bugfix plan whose brief names the file, the failing tests, the release and the commits since the last green slow run | unit |
 | A16 | A failing file named by a row with no promise opens a draft bugfix plan that also names the plan and row that were testing it | unit |
 | A17 | The same file failing in a later release while its bugfix plan is open adds to that plan rather than opening another | unit |
+| A22 | A run where more than half the slow test files failed opens no incident and no plan, and the release says the environment failed, naming how many files failed | unit |
 
 ### `dusk-installs-its-own-build` (changes) — publishing is a deliberate act whose slow tests run after it, and what they find is recorded.
 
@@ -74,4 +75,5 @@ Most assertions are `unit`: the release's order, its completion, and the routing
 
 - A19 is the only assertion that publishes. It is recorded once, against a real release, with its output.
 - A8 is `contract` because the question is about vitest, which dusk does not own: does its JUnit reporter still name failing files the way the reader expects. It runs in the system tier.
+- A22 was added with the ADR's environment rule (2026-10-10); promises 4 and 5 were re-declared to say it.
 - Rerun (A10) is per file, not per test: a test name is not a portable rerun target across runners, a file is.
