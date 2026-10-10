@@ -1,7 +1,7 @@
 ---
 title: "Browser telemetry leftovers — a click and its server work share a trace"
 date: 2026-10-10
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
