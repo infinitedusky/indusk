@@ -60,14 +60,28 @@ export async function releaseCommand(checkout: string): Promise<number> {
 	const commit = headCommit(root);
 	// A claimed failure becomes an incident on its promise (ADR D6, D7); the
 	// rest stay unrouted for the bugfix plan. Routing never changes the outcome.
-	const routed = await routeFailures(root, outcome.recorded, {
-		version,
-		commit,
-		now,
-		suspects: suspectsSince(root, steps, latestGreenRun(root)),
-	});
+	let routing: string | undefined;
+	let routed: Routed;
+	try {
+		routed = await routeFailures(root, outcome.recorded, {
+			version,
+			commit,
+			now,
+			suspects: suspectsSince(root, steps, latestGreenRun(root)),
+		});
+	} catch (err) {
+		// The release has already happened; its outcome and its record do not wait on routing.
+		routing = err instanceof Error ? err.message : String(err);
+		routed = {
+			failed: outcome.recorded.failed,
+			incidents: [],
+			plans: [],
+			planProblems: [],
+			unreadable: [],
+		};
+	}
 	outcome.recorded = { ...outcome.recorded, failed: routed.failed };
-	recordRelease(root, recordOf(outcome, { version, commit, at: now }));
+	recordRelease(root, recordOf(outcome, { version, commit, at: now, routing }));
 	try {
 		await announceIncidents(root, routed.incidents, now);
 	} catch (err) {
@@ -76,6 +90,7 @@ export async function releaseCommand(checkout: string): Promise<number> {
 		);
 	}
 	console.info(report(outcome, routed));
+	if (routing !== undefined) console.error(`no failure routed: ${routing}`);
 	for (const line of routingProblems(routed)) console.error(line);
 	return outcome.done ? 0 : 1;
 }

@@ -22,6 +22,8 @@ export interface ReleaseRecord {
 	failed: FailedFile[];
 	flakes: string[];
 	environment?: { failed: number; total: number };
+	/** Why routing the failures threw, when it did: the release is recorded regardless. */
+	routing?: string;
 }
 
 export function releaseRecordPath(anyCheckout: string): string {
@@ -36,7 +38,7 @@ export function recordRelease(anyCheckout: string, record: ReleaseRecord): void 
 /** The record a finished release leaves. */
 export function recordOf(
 	outcome: ReleaseOutcome,
-	facts: { version: string; commit: string; at: Date },
+	facts: { version: string; commit: string; at: Date; routing?: string },
 ): ReleaseRecord {
 	return {
 		version: facts.version,
@@ -48,6 +50,7 @@ export function recordOf(
 		failed: outcome.recorded.failed,
 		flakes: outcome.recorded.flakes,
 		...(outcome.recorded.environment ? { environment: outcome.recorded.environment } : {}),
+		...(facts.routing === undefined ? {} : { routing: facts.routing }),
 	};
 }
 
