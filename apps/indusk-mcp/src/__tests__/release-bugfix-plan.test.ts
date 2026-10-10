@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -145,3 +146,41 @@ describe.skipIf(SHOULD_SKIP)("indusk release — a bugfix plan's name never coll
 		expect(brief).toContain(ORPHAN_FILE);
 	});
 });
+
+describe.skipIf(SHOULD_SKIP)(
+	"indusk release — a name held on the trunk or by a branch moves on",
+	() => {
+		const expectMovedOn = (
+			p: ReleaseProject,
+			held: string,
+			r: { stdout: string; stderr: string },
+		) => {
+			const out = `stdout:\n${r.stdout}\nstderr:\n${r.stderr}`;
+			const opened = fixPlans(p).filter((b) => b !== "plan/fix-orphan-flow");
+			expect(opened, out).toHaveLength(1);
+			const name = (opened[0] as string).slice("plan/".length);
+			expect(name).toMatch(/^fix-orphan-flow-/);
+			expect(r.stdout, out).toMatch(new RegExp(`^recorded: plan ${name}$`, "m"));
+			expect(r.stdout).not.toMatch(/no bugfix plan opened/);
+			const brief = planDoc(p, `plan/${name}`, "brief.md");
+			expect(brief).toContain(ORPHAN_FILE);
+			expect(brief, "the brief does not name what it would have collided with").toContain(held);
+		};
+
+		it("A30: a fix plan folder on the trunk with no worktree is taken: the failure opens a plan under the next free name that names it", () => {
+			project = routingProject({
+				activePlans: ["fix-orphan-flow"],
+				slow: { exit: 1, reports: { [REPORT_PATH]: junitReport({ [ORPHAN_FILE]: ["abandons"] }) } },
+			});
+			expectMovedOn(project, "fix-orphan-flow", project.release());
+		});
+
+		it("A30: a leftover plan/fix-<stem> branch with no folder or worktree is taken the same way", () => {
+			project = routingProject({
+				slow: { exit: 1, reports: { [REPORT_PATH]: junitReport({ [ORPHAN_FILE]: ["abandons"] }) } },
+			});
+			execFileSync("git", ["branch", "plan/fix-orphan-flow"], { cwd: project.root });
+			expectMovedOn(project, "fix-orphan-flow", project.release());
+		});
+	},
+);

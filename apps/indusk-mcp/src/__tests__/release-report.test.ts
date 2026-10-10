@@ -7,6 +7,7 @@ import {
 	GUARD_FILE,
 	junitReport,
 	ORPHAN_FILE,
+	PASSING_FILES,
 	REPORT_PATH,
 	type ReleaseProject,
 	routingProject,
@@ -155,6 +156,36 @@ describe.skipIf(SHOULD_SKIP)("indusk release — one rerun, by file", () => {
 		const record = project.records().at(-1);
 		expect(record?.failed.map((f) => f.file)).toEqual([CLAIMED_FILE]);
 		expect(record?.flakes).toEqual([GUARD_FILE]);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("indusk release — a flake must pass on its rerun", () => {
+	it("A29: a file the rerun's report shows passing is a flake; one the rerun did not run stays failing and is routed", () => {
+		project = routingProject({
+			slow: {
+				exit: 1,
+				reports: {
+					[REPORT_PATH]: junitReport({
+						[CLAIMED_FILE]: ["holds a seat"],
+						[GUARD_FILE]: ["guards"],
+					}),
+				},
+				// the rerun passes GUARD_FILE and never mentions CLAIMED_FILE
+				rerun: {
+					exit: 0,
+					reports: { [REPORT_PATH]: junitReport({}, [...PASSING_FILES, GUARD_FILE]) },
+				},
+			},
+		});
+		const r = project.release();
+		expect(r.stdout, `stderr:\n${r.stderr}`).toMatch(new RegExp(`^flaky: ${GUARD_FILE}$`, "m"));
+		expect(failingLines(r.stdout)).toEqual([CLAIMED_FILE]);
+		const record = project.records().at(-1);
+		expect(record?.flakes).toEqual([GUARD_FILE]);
+		expect(record?.failed).toEqual([
+			{ file: CLAIMED_FILE, routed: expect.stringMatching(/^incident /) },
+		]);
+		expect(project.incidentFiles()).toHaveLength(1);
 	});
 });
 
