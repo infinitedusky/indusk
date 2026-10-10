@@ -1,7 +1,7 @@
 ---
 title: "Display names — promises and plans read as words"
 date: 2026-10-09
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -177,6 +177,33 @@ The editor names promises in words, plans by their title, and shows each plan's 
 #### Build Phase 3 Document
 
 - [x] `reference/cli/promises.md`, the `planDates` field: where each date comes from, including the two fallbacks
+
+### Build Phase 4: Cleanup — one reader of a plan document's frontmatter
+
+**Tier**: med
+
+**Goal**: remove the one cross-file duplication this plan created — a second reader of plan documents' frontmatter — per "reuse the package's parsers, never duplicate parsing" (the rule the admin and the package already follow). Every other changed file is recorded as reviewed.
+
+**Scan**: `listOversizedChangedFiles(<worktree>, "main")` flagged `apps/docs/src/changelog.md`, `apps/docs/src/reference/cli/promises.md`, `bin/commands/promises.ts` (498, a 4-line touch) and `lib/config.ts` (701, a 2-line touch). The plan's new files — `lib/promises/display.ts` (169), its tests, `core/names.test.ts` — are under the cap. No domain extension (nextjs/react) applies: the editor core is plain TypeScript.
+
+- [ ] `lib/promises/display.ts` reads a plan document's `title` and `date` through the package's existing YAML reader (`gray-matter`, as `plan-parser.ts`'s `parseFrontmatter` does — export a small `readPlanFrontmatter(path)` from `plan-parser.ts` and use it in both, or call `gray-matter` directly if the export would widen `plan-parser`'s surface), replacing its private regex `frontmatter()`. Basis: two readers of the same brief can disagree — a quoted title with a colon, an escaped quote or a folded scalar reads one way through YAML and another through a line regex — and the plan page (plan-parser) and the editor (display) would then name one plan two ways, the exact disagreement `display-names-are-defined-once` exists to prevent. A6, A11, A13, A14, A15 hold behaviour
+- [ ] (reviewed the `sources()` file walker in `display-names-single-definition.test.ts` against the four other `*-single-definition.test.ts` files — left as-is: only `promise-health-single-definition.test.ts` is an identical copy; the other three differ in what they exclude (`__tests__`, `node_modules`, `.tsx`), and folding five pins' scans into one helper would change which files three pins read — a silent weakening risk that belongs in a plan about the pins, not this one)
+- [ ] (reviewed `bin/commands/promises.ts`, `lib/config.ts`, `lib/promises/health-line.ts` — left as-is: 4-, 2- and 17-line touches in each file's existing shape)
+- [ ] (reviewed `apps/vscode-extension/src/core/{panel,panel-html,activity,hover,view}.ts` and `panel-view.ts` — left as-is: each change maps a line field to text in the one place that renders it; `titleOf` in `view.ts` is the one shared lookup the activity and hover use, already extracted)
+- [ ] (reviewed `e2e/live-probe.cjs` — left as-is: the A10 branch follows the probe's existing per-check branches)
+- [ ] (reviewed the docs pages flagged by size — left as-is: a changelog and a reference page)
+
+#### Build Phase 4 Verification
+
+- [ ] (no tests flip at this phase — reason: refactor) A6, A11, A12, A13, A14, A15 and A8 still pass after the reader change (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises/display.test.ts src/__tests__/promise-health-names.test.ts src/__tests__/display-names-single-definition.test.ts && pnpm exec vitest related src/lib/promises/display.ts src/lib/plan-parser.ts --run`); `tsc --noEmit` and biome clean; re-run the archived-plan measurement and record it unchanged (17 not landed, 15 released, 3 no start)
+
+#### Build Phase 4 Context
+
+- [ ] `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: `display.ts` reads plan frontmatter through the package's YAML reader, never its own pattern
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/reference/cli/promises.md`: confirm the `title`/`planDates` text still describes where each value is read from; record here that nothing user-visible changed if so
 
 ## Files Affected
 
