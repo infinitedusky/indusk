@@ -110,7 +110,6 @@ export function PlanDetail({
         holding={holding}
         showType={position !== undefined}
         facts={header}
-        promisesHref={promisesHrefFrom(planHrefPrefix)}
         planHrefPrefix={planHrefPrefix}
       />
 
@@ -311,7 +310,6 @@ function PlanHeader({
   holding = 0,
   showType = false,
   facts,
-  promisesHref,
   planHrefPrefix,
 }: {
   plan: Plan;
@@ -324,7 +322,6 @@ function PlanHeader({
    */
   showType?: boolean;
   facts?: PlanHeaderFacts;
-  promisesHref: string;
   planHrefPrefix: string;
 }) {
   const title = facts?.title && facts.title !== plan.name ? facts.title : null;
@@ -352,11 +349,7 @@ function PlanHeader({
             <WorktreeChip plan={plan} />
             <HoldingBadge count={holding} plan={plan.name} />
           </span>
-          <HeaderFacts
-            facts={facts}
-            promisesHref={promisesHref}
-            planHrefPrefix={planHrefPrefix}
-          />
+          <HeaderFacts facts={facts} planHrefPrefix={planHrefPrefix} />
         </div>
         <div className="flex items-center gap-3">
           <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>
@@ -386,14 +379,13 @@ function datesLine(dates: PlanDates): string {
 
 function HeaderFacts({
   facts,
-  promisesHref,
   planHrefPrefix,
 }: {
   facts?: PlanHeaderFacts;
-  promisesHref: string;
   planHrefPrefix: string;
 }) {
   if (!facts) return null;
+  const promisesHref = promisesHrefFrom(planHrefPrefix);
   const dates = facts.dates ? datesLine(facts.dates) : "";
   const paths = facts.paths ?? [];
   const promises = facts.promises ?? [];
