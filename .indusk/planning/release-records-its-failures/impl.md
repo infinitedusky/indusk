@@ -192,8 +192,9 @@ gate_policy: ask
 
 #### Build Phase 4 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`, the `lib/release/` entry: an unclaimed failure is a draft bugfix plan on its own branch, reused by name while open — never a brief written on the trunk
+- [x] `apps/indusk-mcp/CLAUDE.md`, the `lib/release/` entry: an unclaimed failure is a draft bugfix plan on its own branch, reused by name while open — never a brief written on the trunk
   - Refused 2026-10-10 by `claude-md-budget.js`: the file is 17083 bytes against its 16384 nested budget and the sentence grows it; needs room made in that file first
+  - Done 2026-10-10 a tier lower: the `lib/release/` rules (this one included) moved into a new `apps/indusk-mcp/src/lib/release/CLAUDE.md`, and the three `lib/promises/`-only entries (the registry subpath, incident ids and evidence, `recordBreaks` commits on a trunk) into a new `src/lib/promises/CLAUDE.md`, per `lesson: a-claude-md-past-its-budget-holds-a-rule-that-belongs-lower`; the package file is 16,196 bytes, under budget; `context-tiers-register.test.ts` 6/6 and `indusk context check-pointers` pass
 
 #### Build Phase 4 Document
 
