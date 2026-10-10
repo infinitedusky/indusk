@@ -9,7 +9,6 @@
  * directory that made it, so a session is only resumed from there.
  */
 
-import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { evalDir, pathKey } from "../bookkeeping/roots.js";
@@ -21,7 +20,16 @@ import {
 	RATE_LIMIT_RETRIES,
 	rateLimitDelayMs,
 } from "../session/rate-limit.js";
+import { type ClaudeRun, spawnClaude } from "./claude-run.js";
 import { ingestScorecard } from "./findings.js";
+import {
+	askForScorecard,
+	hasScorecard,
+	isLimitRefusal,
+	isLongLimit,
+	leaveWaiting,
+	noScorecardReason,
+} from "./limits.js";
 import { EvalLogWriter } from "./log-writer.js";
 import {
 	initEvalOtel,
@@ -40,7 +48,7 @@ import {
 	formatParseError,
 	getScorecardQuestions,
 } from "./scorecard-extractor.js";
-import type { EvalErrorEntry, EvalScorecard, EvalUsage } from "./types.js";
+import type { EvalErrorEntry, EvalScorecard, EvalUsage, EvalWaitingEntry } from "./types.js";
 
 interface EvaluatorSession {
 	sessionId: string;
@@ -163,50 +171,6 @@ function evalRateLimitDelayMs(attempt: number): number {
 	);
 }
 
-async function spawnClaude(
-	args: string[],
-	prompt: string,
-	cwd: string,
-): Promise<{ stdout: string; stderr: string; code: number | null }> {
-	return new Promise((resolve) => {
-		const child = spawn("claude", args, {
-			cwd,
-			stdio: ["pipe", "pipe", "pipe"],
-			env: { ...process.env },
-		});
-
-		let stdout = "";
-		let stderr = "";
-		let settled = false;
-		const settle = (code: number | null) => {
-			if (settled) return;
-			settled = true;
-			resolve({ stdout, stderr, code });
-		};
-		// A binary that cannot start (not installed, not executable) raises
-		// `error` and never `close`; unheard, it kills the evaluator before it
-		// can mark the run (day-monitor A25). It is a failed run like any other.
-		child.on("error", (err) => {
-			stderr += `claude could not be started: ${err.message}`;
-			settle(-1);
-		});
-		child.stdin?.on("error", () => {
-			// the child is gone; its exit or spawn error already says why
-		});
-		child.stdin?.write(prompt);
-		child.stdin?.end();
-
-		child.stdout?.on("data", (chunk: Buffer) => {
-			stdout += chunk.toString();
-		});
-		child.stderr?.on("data", (chunk: Buffer) => {
-			stderr += chunk.toString();
-		});
-
-		child.on("close", (code) => settle(code));
-	});
-}
-
 /**
  * Run eval using a persistent session. First call does catchup + eval.
  * Subsequent calls resume the session with just the new change.
@@ -229,7 +193,7 @@ export async function runPersistentEval(opts: {
 	transcriptPath: string;
 	mode: "eval" | "baseline";
 	evalEndpoint?: string;
-}): Promise<EvalScorecard | EvalErrorEntry> {
+}): Promise<EvalScorecard | EvalErrorEntry | EvalWaitingEntry> {
 	const tracer = initEvalOtel(opts.projectRoot);
 	initEvalOtelLogs(opts.projectRoot);
 	const source = process.env.INDUSK_EVAL_SOURCE ?? "commit";
@@ -263,6 +227,14 @@ export async function runPersistentEval(opts: {
 			);
 
 			rootSpan.setAttribute("resumed", session !== null);
+
+			async function waitForLimit(run: ClaudeRun): Promise<EvalWaitingEntry> {
+				rootSpan.setAttribute("scorecard.status", "waiting");
+				const waiting = leaveWaiting(opts, run);
+				await logWriter.append(waiting);
+				logEvalContent("waiting", waiting.message, { "waiting.change_id": opts.changeId });
+				return waiting;
+			}
 
 			// Capture raw stdout so the catch can include a snippet in the error
 			// message — preserves debuggability when JSON parsing fails on the
@@ -348,7 +320,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 					};
 				}
 
-				const claudeResult = await withSpan(
+				let claudeResult = await withSpan(
 					tracer,
 					"eval.spawn_claude",
 					{
@@ -365,7 +337,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 						// again rather than mark the commit ungraded (day-monitor A33).
 						for (
 							let attempt = 1;
-							attempt <= RATE_LIMIT_RETRIES && isRateLimited(spawned);
+							attempt <= RATE_LIMIT_RETRIES && isRateLimited(spawned) && !isLongLimit(spawned);
 							attempt++
 						) {
 							span.setAttribute("rate_limit.retries", attempt);
@@ -389,6 +361,13 @@ Output ONLY the JSON scorecard — no commentary.`;
 				);
 				rawClaudeStdout = claudeResult.stdout;
 
+				// A limit is the model's refusal, not a verdict on the commit: it
+				// waits for a later trigger. Checked before the stale-session branch
+				// below, which would throw away a good session over a refusal.
+				if (isLimitRefusal(claudeResult)) {
+					return await waitForLimit(claudeResult);
+				}
+
 				if (claudeResult.code !== 0) {
 					if (session) {
 						await withSpan(tracer, "eval.clear_stale_session", undefined, () =>
@@ -400,6 +379,27 @@ Output ONLY the JSON scorecard — no commentary.`;
 					throw new Error(
 						claudeExitReason(claudeResult.code, claudeResult.stderr, claudeResult.stdout),
 					);
+				}
+
+				// An answer with no scorecard (a resumed session replied in prose) is
+				// asked once more, in its own session, for the scorecard alone.
+				if (!hasScorecard(claudeResult.stdout)) {
+					const again = await withSpan(tracer, "eval.ask_again", undefined, () =>
+						askForScorecard(claudeResult, session?.sessionId, opts.gitRoot ?? opts.projectRoot),
+					);
+					if (again) {
+						claudeResult = again;
+						rawClaudeStdout = again.stdout;
+						if (isLimitRefusal(again)) {
+							return await waitForLimit(again);
+						}
+						if (again.code !== 0) {
+							throw new Error(claudeExitReason(again.code, again.stderr, again.stdout));
+						}
+					}
+					if (!hasScorecard(claudeResult.stdout)) {
+						throw new Error(noScorecardReason(claudeResult.stdout));
+					}
 				}
 
 				const parsed = await withSpan(tracer, "eval.parse_output", undefined, (span) => {
