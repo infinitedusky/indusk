@@ -1,7 +1,7 @@
 ---
 title: "release-records-its-failures"
 date: 2026-10-10
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -72,8 +72,8 @@ gate_policy: ask
 | A26 | Two unclaimed failing files with the same file name in different directories open two bugfix plans, each naming only its own file; neither failure is appended to the other's plan | Build Phase 6 | Build Phase 6 | passing | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
 | A27 | A file failing again after its earlier bugfix plan was archived opens a new plan under a name the archive does not hold, whose brief names the archived plan it follows | Build Phase 6 | Build Phase 6 | passing | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
 | A28 | A failing file whose path holds a space or a shell metacharacter reaches the rerun command as one argument, unchanged, and nothing else is run | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-flake-opens-nothing | apps/indusk-mcp/src/__tests__/release-report.test.ts |
-| A29 | A failing file that the rerun did not run — absent from the rerun's report — stays failing and is routed, and is never listed as a flake; only a file the rerun's report shows with every case passing is a flake | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-flake-opens-nothing | apps/indusk-mcp/src/__tests__/release-report.test.ts |
-| A30 | An unclaimed failing file whose `fix-<stem>` name is held by a plan folder on the trunk with no worktree, or by a leftover `plan/fix-<stem>` branch, opens a plan under the next free name instead of staying unrouted | Build Phase 8 | Build Phase 8 | planned | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
+| A29 | A failing file that the rerun did not run — absent from the rerun's report — stays failing and is routed, and is never listed as a flake; only a file the rerun's report shows with every case passing is a flake | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-flake-opens-nothing | apps/indusk-mcp/src/__tests__/release-report.test.ts |
+| A30 | An unclaimed failing file whose `fix-<stem>` name is held by a plan folder on the trunk with no worktree, or by a leftover `plan/fix-<stem>` branch, opens a plan under the next free name instead of staying unrouted | Build Phase 8 | Build Phase 8 | passing | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
 
 ### Deferred Verification
 
@@ -312,20 +312,23 @@ gate_policy: ask
 
 **Goal**: fix the two findings the audit (`audit.md`, a fresh reader on claude-opus-5-5) raised and Sandy chose to fix before closing (2026-10-10, "Fix both, then close"): `settleFromReport` counts a file as a flake when it is merely absent from the rerun's report, so a rerun that never ran it hides a real failure; and `chooseName` treats only an archived plan as taken, so a `fix-<stem>` folder on the trunk or a leftover branch makes `startPlan` refuse at every release.
 
-- [ ] `lib/release/junit.ts`: `failedFiles` also returns the files the report shows with no failed case (`passed: Set<string>`); `lib/release/settle.ts`: a file is a flake only when the rerun's report has it in `passed`; a file absent from the rerun's report stays failing (A29)
-- [ ] `lib/release/bugfix-plan.ts`: `chooseName` treats a name as taken when a plan folder of that name is on the trunk without an open worktree, or a `plan/<name>` branch exists, as it already does for an archived one, and takes the next free name, naming in the brief the plan it would have collided with (A30)
+- [x] `lib/release/junit.ts`: `failedFiles` also returns the files the report shows with no failed case (`passed: Set<string>`); `lib/release/settle.ts`: a file is a flake only when the rerun's report has it in `passed`; a file absent from the rerun's report stays failing (A29)
+- [x] `lib/release/bugfix-plan.ts`: `chooseName` treats a name as taken when a plan folder of that name is on the trunk without an open worktree, or a `plan/<name>` branch exists, as it already does for an archived one, and takes the next free name, naming in the brief the plan it would have collided with (A30)
+
+- [x] Shape (`apps/indusk-mcp/src/lib/release/bugfix-plan.ts`) — reviewed, left as-is: chooseName is one loop over a name's possible holders (open plan, archived, trunk or branch), each arm one outcome; the branch probe is its own named helper
 
 #### Build Phase 8 Verification
 
-- [ ] A29 and A30 pass, and every earlier row still does (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts src/__tests__/release-report.test.ts src/__tests__/release-incident.test.ts src/__tests__/release-bugfix-plan.test.ts src/__tests__/release-dusk-declaration.test.ts src/lib/release/junit.test.ts src/lib/promises/test-born-incident.test.ts`)
+- [x] A29 and A30 pass, and every earlier row still does (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts src/__tests__/release-report.test.ts src/__tests__/release-incident.test.ts src/__tests__/release-bugfix-plan.test.ts src/__tests__/release-dusk-declaration.test.ts src/lib/release/junit.test.ts src/lib/promises/test-born-incident.test.ts`)
+  - Recorded 2026-10-10: A29 red at its test commit (the rerun report left out `src/seat-released.test.ts` and the release printed no `failing:` line for it: counted a flake), A30 red twice (`no bugfix plan opened — the branch plan/fix-orphan-flow already exists`, and the same for a trunk folder); now green: the seven files named 39 passed of 39; `pnpm exec tsc --noEmit` clean; biome clean on the changed files; `indusk promises check` exit 0. A9, A10 and A28 setups changed (not their assertions): their rerun report now carries the flaky file passing, since a flake must be shown passing
 
 #### Build Phase 8 Context
 
-- [ ] `apps/indusk-mcp/src/lib/release/CLAUDE.md`: a flake is a file the rerun's report shows passing, never one it leaves out
+- [x] `apps/indusk-mcp/src/lib/release/CLAUDE.md`: a flake is a file the rerun's report shows passing, never one it leaves out
 
 #### Build Phase 8 Document
 
-- [ ] `apps/docs/src/reference/cli/release.md`: a flake must pass on its rerun; a file the rerun did not run stays failing; a plan name held on the trunk or by a branch moves to the next free one
+- [x] `apps/docs/src/reference/cli/release.md`: a flake must pass on its rerun; a file the rerun did not run stays failing; a plan name held on the trunk or by a branch moves to the next free one
 
 ## Files Affected
 
