@@ -15,3 +15,7 @@ apply to this folder only.
   `tests:`+`release:` (a release's incident is written by `test-incident.ts`, never imported by `release/`); readers take both. — see `/reference/cli/promises`
 - **`recordBreaks` is the one writer, run by the admin unasked; it commits on a trunk only**, after the inbox and heard rows;
   what it could not commit waits in the home's `pending-commit.json`. — see `/decisions/incident-recording`
+- **A plan's dates fall back for what older plans never wrote** (`display.ts`):
+  an archived plan is landed on its retrospective's `date` (else its impl's),
+  and `started` is the first lifecycle document's `date` when there is no brief.
+  — see `/reference/cli/promises`
