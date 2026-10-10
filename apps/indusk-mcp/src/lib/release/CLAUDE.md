@@ -11,7 +11,7 @@ Loaded by Claude Code when a file under `src/lib/release/` is read
   (`junit.ts`); one rerun by file when `rerun` is declared; more than half the
   files failing is the environment, and opens nothing. — see `/decisions/dawn-verify`
 - **A failing file routes through the trajectory rows that name it**
-  (`route.ts`): a row's promise gets a test-born incident (`source: release`,
+  (`route.ts` — routing; `settle.ts` — settling): a row's promise gets a test-born incident (`source: release`,
   `tests:` + `release:`), committed on the trunk and put in the break inbox like
   the recorder's; anything else is a draft bugfix plan `fix-<stem>` on its own
   branch, reused while open — never a brief written on the trunk.
