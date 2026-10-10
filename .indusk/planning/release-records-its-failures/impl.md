@@ -253,7 +253,7 @@ gate_policy: ask
 
 - [x] `lib/release/run.ts` + `settle.ts`: the slow run's start time is passed to settling, and `failedFiles` reads only report files modified at or after it; a red run whose reports are all older reads as "no readable report" (A24). Never delete files the glob matches: a broad glob would delete a project's own files
 - [x] `bin/commands/release.ts`: routing runs inside a `try`; the release record is appended and the outcome printed whether routing succeeded or threw, and a throw is reported as `no failure routed: <reason>` and recorded on the release line (`routing: "<reason>"`) (A25)
-- [ ] `lib/release/bugfix-plan.ts`: a name already used by an open plan for a different file, or by an archived plan, takes the next free name — `fix-<stem>-<parent dir>` for a different file, `fix-<stem>-2`, `-3`, … after an archived one — and the brief names the plan it would have collided with (`follows archive/fix-<stem>`) (A26, A27); the name for a unique, never-fixed file stays `fix-<stem>`, as A15 asserts
+- [x] `lib/release/bugfix-plan.ts`: a name already used by an open plan for a different file, or by an archived plan, takes the next free name — `fix-<stem>-<parent dir>` for a different file, `fix-<stem>-2`, `-3`, … after an archived one — and the brief names the plan it would have collided with (`follows archive/fix-<stem>`) (A26, A27); the name for a unique, never-fixed file stays `fix-<stem>`, as A15 asserts
 - [ ] `lib/release/settle.ts`: each file is shell-quoted (single quotes, embedded quotes escaped) before substitution into `{files}` (A28)
 
 #### Build Phase 6 Verification

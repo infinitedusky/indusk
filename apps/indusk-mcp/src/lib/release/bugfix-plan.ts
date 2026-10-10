@@ -1,9 +1,10 @@
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, join, relative } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
+import { getPlanningDir } from "../config.js";
 import { git } from "../git.js";
 import { startPlan } from "../plans/start.js";
 import { type Suspects, suspectsBlock } from "../promises/incidents.js";
-import { resolvePlanCopies } from "../worktree/plan-worktrees.js";
+import { type PlanCopy, resolvePlanCopies } from "../worktree/plan-worktrees.js";
 import type { RoutingRow } from "./route.js";
 
 /**
@@ -46,16 +47,84 @@ export function bugfixPlanName(file: string): string {
 		.replace(/^-+|-+$/g, "")}`;
 }
 
+/** Directories that say nothing about which package a test file belongs to. */
+const GENERIC_DIRS = new Set(["src", "lib", "test", "tests", "__tests__", "spec", "specs", "."]);
+
+/** The nearest directory above `file` that names something: `apps/a/src/__tests__/x.test.ts` → `a`. */
+function packageLabel(file: string): string {
+	for (
+		let dir = dirname(file.replaceAll("\\", "/"));
+		dir !== "." && dir !== "/";
+		dir = dirname(dir)
+	) {
+		const name = basename(dir);
+		if (!GENERIC_DIRS.has(name)) return slug(name);
+	}
+	return "";
+}
+
+const slug = (text: string): string =>
+	text
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "");
+
+/** An open plan's own documents name the file it is for. */
+function namesFile(open: PlanCopy, file: string): boolean {
+	return ["brief.md", "research.md"].some((doc) => {
+		const path = join(open.dir, doc);
+		return existsSync(path) && readFileSync(path, "utf-8").includes(file);
+	});
+}
+
+/**
+ * The plan a failing file goes to (D8). `fix-<stem>` unless taken: an open
+ * plan for a different file moves on to `fix-<stem>-<package>`, then
+ * `-2`, `-3`…; an archived plan of that name is never reused, and the plan
+ * after it follows it. A plan open for this very file is the one to extend.
+ */
+function chooseName(
+	trunk: string,
+	copies: Map<string, PlanCopy>,
+	file: string,
+): { plan: string; open?: PlanCopy; follows?: string } {
+	const base = bugfixPlanName(file);
+	const label = packageLabel(file);
+	let plan = base;
+	let follows: string | undefined;
+	let labelled = false;
+	let seq = 1;
+	for (;;) {
+		const open = copies.get(plan);
+		if (open?.source === "worktree" && !open.archivedInWorktree) {
+			if (namesFile(open, file)) return { plan, open };
+			if (label && !labelled) {
+				labelled = true;
+				plan = `${base}-${label}`;
+				continue;
+			}
+		} else if (
+			open?.source === "worktree" ||
+			existsSync(join(getPlanningDir(trunk), "archive", plan))
+		) {
+			follows ??= plan;
+		} else {
+			return { plan, follows };
+		}
+		seq++;
+		plan = `${base}-${seq}`;
+	}
+}
+
 export async function openOrExtendBugfixPlan(
 	root: string,
 	failure: UnclaimedFailure,
 ): Promise<BugfixPlan> {
-	const plan = bugfixPlanName(failure.file);
 	const copies = await resolvePlanCopies(root);
 	if (!copies.ok)
 		throw new Error(`the worktree record ${copies.file} cannot be read: ${copies.problem}`);
-	const open = copies.copies.get(plan);
-	if (open?.source === "worktree" && !open.archivedInWorktree) {
+	const { plan, open, follows } = chooseName(copies.projectRoot, copies.copies, failure.file);
+	if (open?.source === "worktree") {
 		const research = join(open.dir, "research.md");
 		const header = existsSync(research) ? "" : `# ${plan} — Research\n`;
 		appendFileSync(research, `${header}\n${release(failure)}\n`);
@@ -69,7 +138,10 @@ export async function openOrExtendBugfixPlan(
 
 	const started = await startPlan(root, "bugfix", plan, failure.now);
 	const brief = join(started.worktree, started.document);
-	writeFileSync(brief, `${readFileSync(brief, "utf-8").trimEnd()}\n\n${briefBody(failure)}\n`);
+	writeFileSync(
+		brief,
+		`${readFileSync(brief, "utf-8").trimEnd()}\n\n${briefBody(failure, follows)}\n`,
+	);
 	await commitDoc(
 		started.worktree,
 		brief,
@@ -84,7 +156,7 @@ async function commitDoc(worktree: string, path: string, message: string): Promi
 	await git(worktree, "commit", "-q", "-m", message, "--", rel);
 }
 
-function briefBody(f: UnclaimedFailure): string {
+function briefBody(f: UnclaimedFailure, follows?: string): string {
 	const tested = f.rows.map(
 		(r) =>
 			`- \`${r.plan}\`${r.archived ? " (archived)" : ""}, row \`${r.id}\` — names this file and proves no promise`,
@@ -94,6 +166,12 @@ function briefBody(f: UnclaimedFailure): string {
 		"",
 		`\`${f.file}\` failed in the slow tests of release ${f.release.version} and still failed when run again. No promise's test row names it, so no incident was opened; this plan is where it is fixed.`,
 		"",
+		...(follows
+			? [
+					`It follows \`archive/${follows}\`, the bugfix plan that fixed an earlier failure of this file and was archived: it broke again after that fix.`,
+					"",
+				]
+			: []),
 		...(tested.length > 0 ? ["It was being tested by:", "", ...tested, ""] : []),
 		release(f),
 	].join("\n");
