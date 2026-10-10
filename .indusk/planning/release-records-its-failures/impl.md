@@ -66,6 +66,7 @@ gate_policy: ask
 | A20 | A release whose slow run a green run already covered skips it, as before | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A21 | A non-npm release command declared by a fixture project (a shell command writing a file) is the command that runs | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A22 | A run where more than half the slow test files failed opens no incident and no plan, and the release says the environment failed, naming how many files failed | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-failing-slow-test-breaks-its-promise, promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-report.test.ts |
+| A23 | An incident a release opens is committed on the trunk and appears in the project's break inbox, so a running agent hears it on its next prompt, as an incident the admin records does | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
 
 ### Deferred Verification
 
@@ -178,9 +179,12 @@ gate_policy: ask
 
 - [ ] `lib/release/bugfix-plan.ts`: `openOrExtendBugfixPlan(root, failure)` — `fix-<test-file-stem>` through `startPlan("bugfix", …)`, its brief written `status: draft` with the failing tests, the release, the suspects, and for a promise-less row the plan and row; an open plan of that name gets the failure appended to its research instead (ADR D8)
 - [ ] The runner sends unclaimed failures there and lists each opened or extended plan in its output and on the record
+- [ ] A23 (Sandy, 2026-10-10: "Yes, same as the recorder"): an incident a release opens or extends is committed on the trunk through the recorder's commit path (`lib/promises/record-commit.ts`) and appended to the break inbox (`appendInbox`, `lib/promises/inbox.ts`), as `recordBreaks` does; author A23 red in `release-incident.test.ts` first
+- [ ] Root `CLAUDE.md` back under its budget (Build Phase 1's Key Decisions line pushed it to 14,886 bytes against 14,745; `context-tiers-register.test.ts` A13 fails): move one root entry that applies to one area down to that area's `CLAUDE.md`, per `lesson: a-claude-md-past-its-budget-holds-a-rule-that-belongs-lower` — never trim another entry's words to fit
 
 #### Build Phase 4 Verification
 
+- [ ] A23 passes, and `context-tiers-register.test.ts` passes again (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/release-incident.test.ts src/__tests__/context-tiers-register.test.ts`)
 - [ ] A15, A16, A17 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-bugfix-plan.test.ts && pnpm exec vitest related src/lib/release/bugfix-plan.ts`)
 
 #### Build Phase 4 Context
