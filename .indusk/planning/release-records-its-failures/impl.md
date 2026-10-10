@@ -108,6 +108,8 @@ gate_policy: ask
 - [x] `lib/release/record.ts`: append one line per release to `<home>/releases.jsonl` (version from `version_file`, commit, at, published, done, slow result, routed failures, flakes)
 - [x] `lib/checks/record.ts`: `GreenRun` gains `sha`, written by `checks slow` and by the release's green slow run
 - [x] `bin/commands/release.ts` + `cli.ts`: `indusk release` runs it from the project root, prints the order and the outcome, exits 0 when done
+- [x] Shape (`apps/indusk-mcp/src/lib/release/run.ts`) — reviewed, left as-is: runSlow reads as skip-if-covered, run, record-if-green, settle-if-red, one ordered decision whose seams are already the injected deps (codeKey, coveringRun, recordGreen, settleFailures); splitting it would only thread the outcome through helpers
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
