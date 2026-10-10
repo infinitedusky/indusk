@@ -52,3 +52,5 @@ No recurring lint or type errors; no Biome rule is warranted. Shape: 0 findings 
 - 30 commits; 26 files outside `.indusk/`, +1,035 / −28.
 - 17 trajectory rows passing (A10 live in VS Code).
 - On this repository: landed plans reading a release 15 → 94 of 94; archived plans reading as never landed 80 → 17.
+
+Landed on main at 9cde2117, 2026-10-10. Installed with `pnpm install:local`; nothing published.
