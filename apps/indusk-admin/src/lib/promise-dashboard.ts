@@ -1,5 +1,4 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
-import { promiseWords } from "@infinitedusky/indusk-mcp/promises/display";
 import type { HeardRow } from "@infinitedusky/indusk-mcp/promises/heard";
 import type {
   Standing,
@@ -74,7 +73,8 @@ const DAY_MS = 86_400_000;
 
 export interface RowContext {
   planTitles: Record<string, string>;
-  words: Record<string, string>;
+  /** A promise's name in words: the package's `promiseWords`, handed in so this module stays free of the file readers and loads in the client. */
+  sentenceOf: (name: string) => string;
   declarations: Pick<PlanDeclarations, "subplans">;
   heard: HeardRow[];
   now: number;
@@ -114,7 +114,7 @@ export function buildRows(
     const brokenDays = new Set(heard.map((h) => h.at.slice(0, 10))).size;
     return {
       name,
-      sentence: promiseWords(name, ctx.words),
+      sentence: ctx.sentenceOf(name),
       plan: s.entry.owner,
       planTitle: ctx.planTitles[s.entry.owner] ?? s.entry.owner,
       path: pathOf(ctx.declarations.subplans, s.entry.owner),

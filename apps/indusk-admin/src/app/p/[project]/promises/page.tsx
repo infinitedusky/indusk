@@ -1,4 +1,7 @@
-import { readHealthNames } from "@infinitedusky/indusk-mcp/promises/display";
+import {
+  promiseWords,
+  readHealthNames,
+} from "@infinitedusky/indusk-mcp/promises/display";
 import {
   alarmRead,
   healthRows,
@@ -139,7 +142,7 @@ export default async function PerProjectPromisesPage({
   const declarations = readPlanHierarchy(projectPath);
   const rows = buildRows(standing, {
     planTitles: planNames.planTitles,
-    words: planNames.words,
+    sentenceOf: (name) => promiseWords(name, planNames.words),
     declarations,
     heard: readProjectHeard(projectPath).rows,
     now: Date.now(),
