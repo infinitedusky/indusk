@@ -62,15 +62,15 @@ A slow run that a fully green run already covered is skipped, with the same rule
 
 ## The record
 
-Each release appends one line to `releases.jsonl` in the project's home (the folder [`indusk eval home`](/guide/eval) prints): `version` (from `release.version_file`), `commit`, `at`, `published`, `done`, `slow` (`green`, `red`, `skipped` or `not run`), `failed` and `flakes`. It is what "releases that published on their first run, against all releases" counts.
+Each release appends one line to `releases.jsonl` in the project's home (the folder [`indusk eval home`](/guide/eval) prints): `version` (from `release.version_file`), `commit`, `at`, `published`, `done`, `slow` (`green`, `red`, `skipped` or `not run`), `failed` and `flakes`, plus `routing` when routing the failures threw (the reason; see below). It is what "releases that published on their first run, against all releases" counts.
 
 ## The report, the rerun, the environment
 
-Failures are read from the declared JUnit report, never from what the command printed. Every file matching `slow_tests.report` is read as one report (one per package is fine). A case counts as failed when it has a `failure` or `error` child; its test file is the case's `file`, else its `classname`, else its suite's `file` or `name`, made relative to the repo. A red run whose report is missing or cannot be parsed says `the slow tests failed` and names no test.
+Failures are read from the declared JUnit report, never from what the command printed. Every file matching `slow_tests.report` is read as one report (one per package is fine). A case counts as failed when it has a `failure` or `error` child; its test file is the case's `file`, else its `classname`, else its suite's `file` or `name`, made relative to the repo. A red run whose report is missing or cannot be parsed says `the slow tests failed` and names no test. Only report files modified at or after the moment the slow run began are read: a report left by an earlier run is not this run's, so a run that dies before writing one names nothing rather than routing last week's failures, and a fresh report from one package is never mixed with another package's stale one. Files are never deleted.
 
 When more than half the report's test files failed, it is the environment, not the code: the release prints the `the environment failed` line, records `environment: {failed, total}`, and nothing else is opened. Exactly half is not.
 
-Otherwise, with `slow_tests.rerun` declared, the failing files are substituted space-separated into `{files}` and run once. The report is read again: a file the rerun does not leave failing is a flake, listed under `flakes` on the record and opening nothing; a file still failing is recorded under `failed`.
+Otherwise, with `slow_tests.rerun` declared, the failing files are substituted into `{files}` and run once, each single-quoted so a path with a space or a shell character reaches the command as one argument. The report is read again: a file the rerun does not leave failing is a flake, listed under `flakes` on the record and opening nothing; a file still failing is recorded under `failed`.
 
 ## Routing a failure
 
@@ -128,7 +128,10 @@ A file no promise's row claims (named by no row, or only by rows that name no pr
 
 While that plan is open, the same file failing in a later release adds a section to its `research.md` (tests, release, suspects) instead of opening another.
 
+The name is never one that is taken. If `fix-<name>` is open for a different file (two files called `skip.test.ts` in different packages), the next file takes `fix-<name>-<package>` (the nearest directory that is not `src` or `__tests__`), then `-2`, `-3`. If `fix-<name>` was archived, the new plan takes `-2` and its brief says it follows `archive/fix-<name>`: it broke again after that fix.
+
 | Line printed | Meaning |
 |---|---|
 | `recorded: plan <name>` | A bugfix plan the release opened or extended. The record's `failed` entry reads `routed: "plan <name>"`. |
+| `no failure routed: <reason>` (stderr) | Routing threw after the publish (for example the incidents directory could not be written). The outcome is still printed, the record is still appended with `routing: "<reason>"`, and every failure stays `unrouted`. |
 | `no bugfix plan opened — <file>: …` (stderr) | The plan could not be started (for example its branch already exists with no worktree); the file stays `unrouted`. |
