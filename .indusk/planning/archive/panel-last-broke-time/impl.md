@@ -14,6 +14,8 @@ cleanup: skipped
 cleanup_reason: "A one-field change in two existing files per app; nothing new to decompose."
 audit: skipped
 audit_reason: "A display defect found by Sandy reading the panel; its rows prove the fix directly."
+accepted: 2026-10-10T21:50:27.175Z
+accepted_by: person
 ---
 
 # panel-last-broke-time
