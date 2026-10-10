@@ -335,7 +335,7 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 
 #### Build Phase 6 Context
 
-- [ ] planning (`templates/planning/CLAUDE.md`): `.indusk/plan-history/<plan>.md` is the record of a plan's decisions, written by `plans/history` and committed on `main`, never by hand — see `/decisions/plan-cockpit`
+- [x] planning (`templates/planning/CLAUDE.md`): `.indusk/plan-history/<plan>.md` is the record of a plan's decisions, written by `plans/history` and committed on `main`, never by hand — see `/decisions/plan-cockpit` — done: a Documents rule in the template, copied to `.indusk/planning/CLAUDE.md` (`skill-sync-parity` green). Noticed, not this phase's: `context-tiers-register.test.ts`' root-budget row fails — the root `CLAUDE.md` is 15037 bytes against its 14745.6 ceiling (20 % under 18432) since Build Phase 1's Key Decisions line (e7af4427); this phase left the root untouched
 
 #### Build Phase 6 Document
 
