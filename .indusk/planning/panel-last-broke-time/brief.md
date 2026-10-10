@@ -1,7 +1,7 @@
 ---
 title: "panel-last-broke-time"
 date: 2026-10-10
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
