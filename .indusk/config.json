@@ -101,7 +101,14 @@
 					"vitest.config.ts",
 					"biome.json",
 					"turbo.json"
-				]
+				],
+				"slow_tests": {
+					"command": "pnpm -w test:system",
+					"report": "apps/*/test-results/system.junit.xml",
+					"when": "after",
+					"rerun": "node apps/indusk-mcp/scripts/rerun-system.js {files}"
+				},
+				"done_when": "published"
 			},
 			"land": {
 				"install": "pnpm install:local"
