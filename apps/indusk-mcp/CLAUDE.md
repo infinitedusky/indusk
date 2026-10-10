@@ -234,7 +234,8 @@ pointer; the pointer holds the story.
   `npm view`'s word; `release-image.sh` pushes the image before `pnpm publish`;
   `prepublishOnly` packs the `.vsix`.
   `lib/release/`: `runRelease` takes commands, clock and reads as inputs;
-  order and completion are declared facts. — see `/reference/cli/release`
+  order and completion are declared facts; failures come from the JUnit report, never output.
+  — see `/reference/cli/release`
 
 ## Tests
 
