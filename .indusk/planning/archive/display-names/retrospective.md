@@ -24,6 +24,8 @@ Shipped across a test phase and five build phases: two planned, a falsification 
 - **The audit found the biggest gap.** 79 of 94 landed plans still read "not released yet": a release was found only when a changelog entry named the plan as `(plan-name)`, and only 52 of 347 entries are written that way; the tests passed because their fixture used that exact form. Build Phase 5 reads the release from the trunk's `chore(release):` commits — the first after the plan's landing — and made the landing date one function shared with `after-close.ts`'s `closedAt`, which had its own copy (A16, A17).
 - **A false fact surfaced in the measurement itself.** With release commits as the source, every plan older than the first such commit (1.36.1) read "released 1.36.1" — the earliest release on record, not the one that shipped it. Fixed as discovered work: when the commits cannot place a release and the changelog records older ones, the changelog's history decides (`dawn-verify` 1.36.0, `cleanup-ritual` 1.32.0). 94 of 94 landed plans now show a release.
 
+- **The everyday suite at landing caught one more**: `display.ts`'s product words spelled `"ADR"` inline, which `lifecycle-single-definition.test.ts` A26 forbids outside `workflow-types.ts`; it now reads `DOCUMENT_LABELS.adr`. No phase ran that pin — it runs only in the whole suite, as it did for the previous plan's `rev-parse HEAD`.
+
 ## What We Learned
 
 - **Measure against the real data, not the fixture.** Every date bug in this plan passed its tests and failed on the repository: the fixtures were written in the format the code expected. A one-line script over the repo's own plans found 80, then 79, then the 1.36.1 error, in seconds.
