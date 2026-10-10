@@ -1,4 +1,5 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
+import type { PlanDates } from "@infinitedusky/indusk-mcp/promises/display";
 import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
 import { HoldingBadge } from "@/components/HoldingBadge";
 import { NavLink } from "@/components/NavLink";
@@ -42,7 +43,7 @@ interface PlanListProps {
    * `readHealthNames`), never derived here. A Path counts a plan released when
    * its entry has a `released`.
    */
-  dates?: Record<string, { released: unknown | null }>;
+  dates?: Record<string, PlanDates>;
 }
 
 /** One declared entry of a Path, in the order its master declares it. */
