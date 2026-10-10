@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, utimesSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { SHOULD_SKIP } from "./helpers/cli.js";
 import {
@@ -205,3 +207,90 @@ describe.skipIf(SHOULD_SKIP)(
 		});
 	},
 );
+
+/** A report file already on disk from an earlier run, an hour old. */
+function staleReport(p: ReleaseProject, path: string, xml: string): void {
+	const full = join(p.root, path);
+	mkdirSync(dirname(full), { recursive: true });
+	writeFileSync(full, xml);
+	const hourAgo = new Date(Date.now() - 3_600_000);
+	utimesSync(full, hourAgo, hourAgo);
+}
+
+describe.skipIf(SHOULD_SKIP)("indusk release — a report from an earlier run is not read", () => {
+	it("A24: a red run that writes no report, beside an old report naming failures, names no test and opens nothing", () => {
+		project = routingProject({ slow: { exit: 1 } });
+		staleReport(project, REPORT_PATH, junitReport({ [ORPHAN_FILE]: ["abandons"] }));
+		const r = project.release();
+		expect(r.stdout, `stderr:\n${r.stderr}`).toMatch(/^the slow tests failed$/m);
+		expect(failingLines(r.stdout)).toEqual([]);
+		expect(project.records().at(-1)).toEqual(
+			expect.objectContaining({ slow: "red", failed: [], flakes: [] }),
+		);
+		expect(project.incidentFiles()).toEqual([]);
+		expect(planBranches(project)).toEqual([]);
+	});
+
+	it("A24: a fresh report from one package is not mixed with another package's stale one", () => {
+		project = routingProject({
+			slow: {
+				exit: 1,
+				report: "apps/*/test-results/system.junit.xml",
+				reports: {
+					"apps/admin/test-results/system.junit.xml": junitReport({ [GUARD_FILE]: ["guards"] }, [
+						"src/admin-a.test.ts",
+						"src/admin-b.test.ts",
+						"src/admin-c.test.ts",
+					]),
+				},
+			},
+		});
+		staleReport(
+			project,
+			"apps/mcp/test-results/system.junit.xml",
+			junitReport({ [ORPHAN_FILE]: ["abandons"] }, ["src/mcp-a.test.ts"]),
+		);
+		const r = project.release();
+		expect(failingLines(r.stdout), `stdout:\n${r.stdout}\nstderr:\n${r.stderr}`).toEqual([
+			GUARD_FILE,
+		]);
+		expect(
+			project
+				.records()
+				.at(-1)
+				?.failed.map((f) => f.file),
+		).toEqual([GUARD_FILE]);
+		expect(project.records().at(-1)?.environment).toBeUndefined();
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("indusk release — the rerun takes each file as one argument", () => {
+	const ARGV_RERUN = [
+		'for a in "$@"; do printf \'arg:%s\\n\' "$a" >> "$FIXTURE_DIR/order.log"; done',
+		'while read -r dest src; do mkdir -p "$(dirname "$dest")"; cp "$FIXTURE_DIR/$src" "$dest"; done < "$FIXTURE_DIR/rerun-reports.txt"',
+		'exit "$(cat "$FIXTURE_DIR/rerun.exit")"',
+		"",
+	].join("\n");
+
+	it("A28: a path with a space, and one with a semicolon, each reach the rerun as one unchanged argument and nothing else runs", () => {
+		const spaced = "src/with space.test.ts";
+		const semi = "src/semi;touch injected.flag;.test.ts";
+		project = routingProject({
+			files: { "rerun.sh": ARGV_RERUN },
+			slow: {
+				exit: 1,
+				reports: { [REPORT_PATH]: junitReport({ [spaced]: ["a"], [semi]: ["b"] }) },
+				rerun: { exit: 0, reports: { [REPORT_PATH]: junitReport({}) } },
+			},
+		});
+		const r = project.release();
+		const args = project
+			.orderLog()
+			.filter((l) => l.startsWith("arg:"))
+			.map((l) => l.slice("arg:".length))
+			.sort();
+		expect(args, `stdout:\n${r.stdout}\nstderr:\n${r.stderr}`).toEqual([semi, spaced].sort());
+		expect(existsSync(join(project.root, "injected.flag")), "a path ran as a command").toBe(false);
+		expect(project.records().at(-1)?.flakes.sort()).toEqual([semi, spaced].sort());
+	});
+});

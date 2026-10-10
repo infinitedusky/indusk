@@ -120,6 +120,8 @@ export interface ReleaseRecord {
 	flakes: string[];
 	/** Present only when more than half the report's files failed. */
 	environment?: { failed: number; total: number };
+	/** Present only when routing the failures threw: why nothing was routed. */
+	routing?: string;
 }
 
 export interface ReleaseProject extends PromiseProject {

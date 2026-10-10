@@ -107,3 +107,41 @@ describe.skipIf(SHOULD_SKIP)("indusk release — an unclaimed failure opens a bu
 		expect(r.stdout).toMatch(/^recorded: plan fix-orphan-flow$/m);
 	});
 });
+
+describe.skipIf(SHOULD_SKIP)("indusk release — a bugfix plan's name never collides", () => {
+	it("A26: two unclaimed files with one file name open two plans, each naming only its own file", () => {
+		const a = "apps/a/src/__tests__/skip.test.ts";
+		const b = "apps/b/src/__tests__/skip.test.ts";
+		project = routingProject({
+			files: { [a]: "export const a = 1;\n", [b]: "export const b = 1;\n" },
+			slow: {
+				exit: 1,
+				reports: { [REPORT_PATH]: junitReport({ [a]: ["skips a"], [b]: ["skips b"] }) },
+			},
+		});
+		const r = project.release();
+		const plans = fixPlans(project);
+		expect(plans, `stdout:\n${r.stdout}\nstderr:\n${r.stderr}`).toHaveLength(2);
+		const briefs = plans.map((branch) => planDoc(project, branch, "brief.md"));
+		expect(briefs.filter((t) => t.includes(a))).toHaveLength(1);
+		expect(briefs.filter((t) => t.includes(b))).toHaveLength(1);
+		for (const t of briefs) expect(t.includes(a) && t.includes(b)).toBe(false);
+		const routed = project.records().at(-1)?.failed ?? [];
+		expect(new Set(routed.map((f) => f.routed)).size, "both files routed to one plan").toBe(2);
+	});
+
+	it("A27: a file failing again after its fix plan was archived opens a new plan under another name that names the archived one", () => {
+		project = routingProject({
+			archivedPlans: ["fix-orphan-flow"],
+			slow: { exit: 1, reports: { [REPORT_PATH]: junitReport({ [ORPHAN_FILE]: ["abandons"] }) } },
+		});
+		const r = project.release();
+		const plans = fixPlans(project);
+		expect(plans, `stdout:\n${r.stdout}\nstderr:\n${r.stderr}`).toHaveLength(1);
+		expect(plans[0]).not.toBe("plan/fix-orphan-flow");
+		expect(plans[0]).toMatch(/^plan\/fix-orphan-flow-/);
+		const brief = planDoc(project, plans[0] as string, "brief.md");
+		expect(brief).toContain("archive/fix-orphan-flow");
+		expect(brief).toContain(ORPHAN_FILE);
+	});
+});

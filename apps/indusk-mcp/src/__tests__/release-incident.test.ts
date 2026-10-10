@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import matter from "gray-matter";
@@ -172,3 +172,31 @@ describe.skipIf(SHOULD_SKIP)("indusk release — a failing slow test breaks its 
 		]);
 	});
 });
+
+describe.skipIf(SHOULD_SKIP)(
+	"indusk release — a routing error loses nothing of the release",
+	() => {
+		it("A25: when the incidents directory cannot be written, the outcome is printed, the record is appended and the reason is said", () => {
+			const p = failingSince();
+			const dir = join(p.planRoot, ".indusk", "promises", "incidents");
+			mkdirSync(dir, { recursive: true });
+			chmodSync(dir, 0o555);
+			try {
+				const r = p.release();
+				expect(r.stdout, `stderr:\n${r.stderr}`).toMatch(/^release published$/m);
+				expect(r.stdout).toMatch(/^release done$/m);
+				expect(r.stderr).toMatch(/^no failure routed: .+/m);
+				expect(r.code).toBe(0);
+				const record = p.records().at(-1);
+				expect(record, "no release line was appended").toEqual(
+					expect.objectContaining({ published: true, done: true, slow: "red" }),
+				);
+				expect(typeof record?.routing).toBe("string");
+				expect(record?.routing).not.toBe("");
+				expect(record?.failed.map((f) => f.file)).toEqual([CLAIMED_FILE]);
+			} finally {
+				chmodSync(dir, 0o755);
+			}
+		});
+	},
+);
