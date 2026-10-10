@@ -187,7 +187,7 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 
 **Goal**: everything the dashboard and the promise page show about a promise, computed once in the package; the extension's fix prompt moved in.
 
-- [ ] Export `rowsNaming` as `./promises/rows` in `apps/indusk-mcp/package.json`
+- [x] Export `rowsNaming` as `./promises/rows` in `apps/indusk-mcp/package.json`
 - [ ] `apps/indusk-mcp/src/lib/promises/standing.ts`, exported as `./promises/standing`:
   ```typescript
   type Standing = "broken" | "being-proven" | "declared" | "enforced" | "retired";
