@@ -119,7 +119,7 @@ export async function routeFailures(
 	const incidents: RoutedIncident[] = [];
 	const byFile = new Map<string, string[]>();
 	for (const [name, files] of claims) {
-		// Read again per promise: the incident one promise opened is on disk now.
+		// Read again for each promise, since the incident one opened is on disk now.
 		const read = readPromises(root);
 		const registry = read.ok ? read.registry : first.registry;
 		const promise = live(registry.promises, name);
