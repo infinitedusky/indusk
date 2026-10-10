@@ -276,7 +276,7 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 
 #### Build Phase 4 Verification
 
-- [ ] A1–A8 and A36 pass (`cd apps/indusk-admin && pnpm exec vitest run src/app/p/\[project\]/cockpit-nav.test.tsx src/app/p/\[project\]/cockpit-phone.test.tsx && pnpm exec vitest related src/components/PlanList.tsx src/components/ui/Sidebar.tsx --run`); `PlanList.grouping.test.tsx` updated where it pinned two levels; tsc and biome clean on changed files
+- [x] A1–A8 and A36 pass (`cd apps/indusk-admin && pnpm exec vitest run src/app/p/\[project\]/cockpit-nav.test.tsx src/app/p/\[project\]/cockpit-phone.test.tsx && pnpm exec vitest related src/components/PlanList.tsx src/components/ui/Sidebar.tsx --run`); `PlanList.grouping.test.tsx` updated where it pinned two levels; tsc and biome clean on changed files — ran 2026-10-10: `vitest run cockpit-nav cockpit-phone` 16/16 (A1–A8, A22, A36 and A5; the path-form filter in the command matches nothing in this vitest, the short names do); `vitest related PlanList.tsx Sidebar.tsx` 44/44; the full admin browser project 468 pass, 6 fail, all `workflows.test.tsx` (A9–A12, Build Phase 5); `PlanList.grouping.test.tsx` needed no change — none of its rows pinned two levels (all 32 PlanList tests green untouched); `page.test.tsx` gained mocks for `promises/standing`, `promises/display` and `usePathname` (the layout imports them; it was already failing on the unmocked standing import since Build Phase 2); tsc clean in indusk-admin; biome clean on the five changed files; cleanup-pins, admin-uses-package-commands and lifecycle-render-parity green; A34 stays red on `./plans/*` (Build Phases 5–6)
 
 #### Build Phase 4 Context
 
