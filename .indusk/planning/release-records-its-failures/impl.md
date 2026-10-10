@@ -1,7 +1,7 @@
 ---
 title: "release-records-its-failures"
 date: 2026-10-10
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -52,7 +52,7 @@ gate_policy: ask
 | A5 | A project that declares no release says so and runs nothing | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A6 | The tests recorded as failing are exactly the ones the declared JUnit report marks failed, whatever the command printed, and a report spread over several files (one per package) is read as one | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 | A7 | A red run whose report is missing or unreadable reports "the slow tests failed" with no test named, and opens no incident and no plan | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-report.test.ts |
-| A8 | dusk's slow tests, run with its declared reporter, write a JUnit report whose failed cases name the test files that failed | Test Phase 1 | Build Phase 5 | written | contract | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-junit.contract.test.ts |
+| A8 | dusk's slow tests, run with its declared reporter, write a JUnit report whose failed cases name the test files that failed | Test Phase 1 | Build Phase 5 | passing | contract | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-junit.contract.test.ts |
 | A9 | A file that fails and then passes on its rerun appears on the release's record as a flake and opens nothing | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-flake-opens-nothing | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 | A10 | Only the failing files are run again, and only once; a file still failing after its rerun is recorded as failing | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-flake-opens-nothing | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 | A11 | A failing file named by a row whose `For` names a promise opens an incident on that promise, naming the test, the release version and the commits since the last green slow run | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-failing-slow-test-breaks-its-promise | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
@@ -62,7 +62,7 @@ gate_policy: ask
 | A15 | A failing file no row names opens one draft bugfix plan whose brief names the file, the failing tests, the release and the commits since the last green slow run | Test Phase 1 | Build Phase 4 | passing | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
 | A16 | A failing file named by a row with no promise opens a draft bugfix plan that also names the plan and row that were testing it | Test Phase 1 | Build Phase 4 | passing | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
 | A17 | The same file failing in a later release while its bugfix plan is open adds to that plan rather than opening another | Test Phase 1 | Build Phase 4 | passing | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
-| A18 | dusk's release command no longer runs the slow tests before publishing, and dusk's config declares them `after` with a JUnit report | Test Phase 1 | Build Phase 5 | written | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/release-dusk-declaration.test.ts |
+| A18 | dusk's release command no longer runs the slow tests before publishing, and dusk's config declares them `after` with a JUnit report | Test Phase 1 | Build Phase 5 | passing | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/release-dusk-declaration.test.ts |
 | A20 | A release whose slow run a green run already covered skips it, as before | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A21 | A non-npm release command declared by a fixture project (a shell command writing a file) is the command that runs | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A22 | A run where more than half the slow test files failed opens no incident and no plan, and the release says the environment failed, naming how many files failed | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-failing-slow-test-breaks-its-promise, promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-report.test.ts |
@@ -204,22 +204,29 @@ gate_policy: ask
 
 **Tier**: med
 
-- [ ] `apps/indusk-mcp/package.json`: the `release` script loses `pnpm -w test:system &&`
-- [ ] Each `vitest.system.config.ts` (indusk-mcp, indusk-admin, vscode-extension) adds the `junit` reporter writing `test-results/system.junit.xml` beside the default reporter; `test-results/` is gitignored
-- [ ] `.indusk/config.json`: the ADR D2 block under `workflow.steps.release`, with `rerun` passing the files through `pnpm -w test:system -- --passWithNoTests {files}` (confirm that form reruns only those files in each package)
-- [ ] `indusk promises change dusk-installs-its-own-build --plan release-records-its-failures --statement "After a plan lands, this machine's \`indusk\` is the landed build, installed from the checkout without a publish; publishing is a deliberate act whose slow tests run after it, and what they find is recorded." --reason "the release no longer waits on its slow tests (release-records-its-failures)"`
+- [x] `apps/indusk-mcp/package.json`: the `release` script loses `pnpm -w test:system &&`
+  - Discovered: `release-script.test.ts` A3 (publish-hygiene) pinned the exact step list including `pnpm -w test:system`; the one entry and its comment were removed from that expectation, nothing else weakened.
+- [x] Each `vitest.system.config.ts` (indusk-mcp, indusk-admin, vscode-extension) adds the `junit` reporter writing `test-results/system.junit.xml` beside the default reporter; `test-results/` is gitignored
+  - Done 2026-10-10: `reporters: ["default", "junit"]` and `outputFile: { junit: "test-results/system.junit.xml" }` at the top level of each config's test options; root `.gitignore` carries `test-results/`
+- [x] `.indusk/config.json`: the ADR D2 block under `workflow.steps.release`, with `rerun` passing the files through `pnpm -w test:system -- --passWithNoTests {files}` (confirm that form reruns only those files in each package)
+  - Verified 2026-10-10 that the suggested form does NOT work: root `test:system` is `sh -c '...'` that never reads its arguments (pnpm appends them as `$0`/`$1`; a toy script of the same shape printed them as unread positionals), so `-- --passWithNoTests {files}` would rerun every file. Declared instead `rerun: node apps/indusk-mcp/scripts/rerun-system.js {files}`: groups repo-relative files by `apps/<dir>/`, runs each package's `vitest run --config vitest.system.config.ts <package-relative files>` behind the daemon guard (no package build), skips packages with no failing file, exits non-zero if a rerun does. Run with `apps/indusk-mcp/src/__tests__/release-junit.contract.test.ts`: only that file ran (1 test), 1.2 s wall, `test-results/system.junit.xml` rewritten with just it
+- [x] Discovered: vitest writes JUnit file names relative to the package it ran in (`src/__tests__/x.test.ts`), and `lib/release/junit.ts` read them as repo-relative, so a real report's failing file would match no trajectory row. `junit.ts` now resolves a relative name that is no file at the repo root against the directories above the report (`apps/<dir>/` for `apps/<dir>/test-results/*.xml`); a name that is a file nowhere stays as written (the Phase 2 fixtures). Unit test: `src/lib/release/junit.test.ts` (2), `release-report.test.ts` still 7 of 7
+- [x] `indusk promises change dusk-installs-its-own-build --plan release-records-its-failures --statement "After a plan lands, this machine's \`indusk\` is the landed build, installed from the checkout without a publish; publishing is a deliberate act whose slow tests run after it, and what they find is recorded." --reason "the release no longer waits on its slow tests (release-records-its-failures)"`
+- [x] Shape — reviewed `lib/release/junit.ts` (the new `underReport` is one named step, report-relative name to repo-relative, called at the one place a name is read) and `scripts/rerun-system.js` (group by package, run each, one job); nothing to change.
 
 #### Build Phase 5 Verification
 
-- [ ] A8 and A18 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-dusk-declaration.test.ts && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/release-junit.contract.test.ts`); `indusk checks show` prints the declared release
+- [x] A8 and A18 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-dusk-declaration.test.ts && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/release-junit.contract.test.ts`); `indusk checks show` prints the declared release
+  - Recorded 2026-10-10: A18 2 passed of 2; A8 1 passed of 1 (system config); `checks show` Release section: `command: pnpm release`, `release slow tests: pnpm -w test:system  (run after the command by indusk release; report apps/*/test-results/system.junit.xml; rerun node apps/indusk-mcp/scripts/rerun-system.js {files})`, `done when: published`; all `release-*.test.ts` everyday files plus `lib/release` 43 tests, all passing after the `release-script.test.ts` A3 expectation changed; `tsc --noEmit` clean; biome clean on the changed files (one existing template-string warning in `release-script.test.ts`, not touched); `indusk promises check` clean (72 promises, 3 incidents)
 
 #### Build Phase 5 Context
 
-- [ ] root (Conventions), the "Landing installs, publishing is deliberate" line: a publish is `indusk release`, whose slow tests run after it and record what they find — always-on because every session that might publish reads it
+- [x] root (Conventions), the "Landing installs, publishing is deliberate" line: a publish is `indusk release`, whose slow tests run after it and record what they find — always-on because every session that might publish reads it
+  - Done 2026-10-10: the sentence now reads `(`indusk release`: slow tests after, failures recorded)`; root 14,694 bytes (was 14,687, ceiling 14,745); `context-tiers-register.test.ts` 6/6
 
 #### Build Phase 5 Document
 
-- [ ] `reference/skills/retrospective.md` and the retrospective skill's Step 11: the release is `indusk release`; changelog `### Added` entry under `## [Unreleased]`
+- [x] `reference/skills/retrospective.md` and the retrospective skill's Step 11: the release is `indusk release`; changelog `### Added` entry under `## [Unreleased]`
 
 ## Files Affected
 

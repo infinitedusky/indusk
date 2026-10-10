@@ -255,8 +255,9 @@ so, records it, and stops. A project that installs its own build at landing
 publishes deliberately, not per plan — when a deployed server, another project
 or another machine needs the version — so unless this close is one of those,
 the step says the build is installed and nothing is published, records it, and
-stops; when it is, the project's release command runs its slow tier itself
-before publishing. Otherwise it bumps on main, after the branch is
+stops; when it is, the release is `indusk release`: it runs the project's release
+command and its declared slow tests (after the publish unless the project says
+before), and records what they find as incidents or draft bugfix plans. Otherwise it bumps on main, after the branch is
 merged. Step 10 leaves the agent standing on main, holding the one piece of
 knowledge a later publisher would have to reconstruct: what shipped.
 
@@ -283,7 +284,7 @@ knowledge a later publisher would have to reconstruct: what shipped.
 
 If the project declares slow tests at landing, it then runs `indusk checks slow
 --unless-covered`, which should report them covered by landing's green run; and
-it stops. Running the release command is the operator's call.
+it stops. Running `indusk release` is the operator's call.
 
 **When it skips.** If nothing the release covers changed since the release commit, the step says
 *"Nothing the release covers changed — the version stays at X.Y.Z"*
