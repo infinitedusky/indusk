@@ -43,11 +43,11 @@ A limit refusal waits and is retried instead of breaking `every-commit-evaluated
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A run whose model answers `api_error_status: 429` (rate limiting, or a weekly limit) marks no violation and leaves its commit waiting, recorded in the eval log as waiting, not as an error | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-limited-evaluation-waits | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
-| A2 | The next commit's trigger first evaluates every waiting commit; one that now scores leaves the queue, one refused again stays, and none is evaluated twice | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-limited-evaluation-waits | apps/indusk-mcp/src/__tests__/eval-trigger-waiting.test.ts |
-| A3 | A first answer of prose with no JSON, followed by a scorecard, ends with that scorecard and no violation | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-prose-reply-is-asked-again | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
-| A4 | Two answers with no scorecard end the run failed, the promise marked violated with the second answer as the reason | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-prose-reply-is-asked-again | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
-| A5 | A run that fails for any other reason (a CLI that is not installed, a model that does not exist) still marks the promise violated with its reason | Test Phase 1 | Test Phase 1 | planned | unit | promise: every-commit-evaluated | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
+| A1 | A run whose model answers `api_error_status: 429` (rate limiting, or a weekly limit) marks no violation and leaves its commit waiting, recorded in the eval log as waiting, not as an error | Test Phase 1 | Build Phase 1 | written | unit | promise: a-limited-evaluation-waits | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
+| A2 | The next commit's trigger first evaluates every waiting commit; one that now scores leaves the queue, one refused again stays, and none is evaluated twice | Test Phase 1 | Build Phase 1 | written | unit | promise: a-limited-evaluation-waits | apps/indusk-mcp/src/__tests__/eval-trigger-waiting.test.ts |
+| A3 | A first answer of prose with no JSON, followed by a scorecard, ends with that scorecard and no violation | Test Phase 1 | Build Phase 1 | written | unit | promise: a-prose-reply-is-asked-again | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
+| A4 | Two answers with no scorecard end the run failed, the promise marked violated with the second answer as the reason | Test Phase 1 | Build Phase 1 | written | unit | promise: a-prose-reply-is-asked-again | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
+| A5 | A run that fails for any other reason (a CLI that is not installed, a model that does not exist) still marks the promise violated with its reason | Test Phase 1 | Test Phase 1 | passing | unit | promise: every-commit-evaluated | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
 
 ## Checklist
 
@@ -55,10 +55,11 @@ A limit refusal waits and is retried instead of breaking `every-commit-evaluated
 
 **Tier**: med
 
-- [ ] Confirm this plan's worktree (`git worktree list` shows `plan/evaluator-waits-out-limits`)
-- [ ] A1, A3, A4, A5 in `src/lib/eval/evaluator-limits.test.ts`, driving `runEvaluatorSync` with a fake `claude` (a script on `PATH` or the runner's command seam — read `evaluator-runner.test.ts` for the existing pattern) that answers as each row needs, and reading the eval log and the promise mark (`otel.test.ts` shows how marks are observed)
-- [ ] A2 in `src/__tests__/eval-trigger-waiting.test.ts`, through the hook as `eval-trigger.test`s already run it, with `INDUSK_EVAL_CMD` standing in for the evaluator
-- [ ] Each red row fails on its own assertion, never a load error; A5 passes today (a regression guard); rows set `written`, A5 `passing`
+- [x] Confirm this plan's worktree (`git worktree list` shows `plan/evaluator-waits-out-limits`)
+- [x] A1, A3, A4, A5 in `src/lib/eval/evaluator-limits.test.ts`, driving `runEvaluatorSync` with a fake `claude` (a script on `PATH` or the runner's command seam — read `evaluator-runner.test.ts` for the existing pattern) that answers as each row needs, and reading the eval log and the promise mark (`otel.test.ts` shows how marks are observed)
+- [x] A2 in `src/__tests__/eval-trigger-waiting.test.ts`, through the hook as `eval-trigger.test`s already run it, with `INDUSK_EVAL_CMD` standing in for the evaluator
+- [x] Each red row fails on its own assertion, never a load error; A5 passes today (a regression guard); rows set `written`, A5 `passing`
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Regression Guards
 
@@ -66,7 +67,7 @@ A limit refusal waits and is retried instead of breaking `every-commit-evaluated
 
 #### Test Phase 1 Verification
 
-- [ ] A1, A2, A3, A4 are `written` and red on their assertions, A5 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/eval/evaluator-limits.test.ts src/__tests__/eval-trigger-waiting.test.ts`)
+- [x] A1, A2, A3, A4 are `written` and red on their assertions, A5 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/eval/evaluator-limits.test.ts src/__tests__/eval-trigger-waiting.test.ts`)
 
 ### Build Phase 1: Wait out limits, ask prose once more
 
