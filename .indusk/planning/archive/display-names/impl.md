@@ -8,6 +8,8 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+accepted: 2026-10-10T18:57:08.772Z
+accepted_by: person
 ---
 
 # Display names — promises and plans read as words
