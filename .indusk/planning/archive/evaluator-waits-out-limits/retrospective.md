@@ -14,6 +14,8 @@ date: 2026-10-10
 - **A promise that counts an outside refusal as its own failure stays red for reasons nobody can fix.** A rate limit says nothing about whether commits get scored eventually; treating it as a violation kept the chip red for a week and trained the eye to ignore it.
 - **The path the hook actually runs was not the one the impl named.** The impl pointed at `runEvaluatorSync`; the hook runs `runPersistentEval`. The builder parameterized A1 over both — the row would have passed while the real path stayed broken.
 
+- **The everyday suite at landing caught a tier breach**: `evaluator-limits.test.ts` reads promise marks from an OTLP capture server and waits for them, which `everyday-tests-never-wait` A14 refuses in the everyday tier; it moved to `vitest.tiers.ts` SYSTEM beside `monitor-mark.test.ts`, which observes marks the same way (12/12 there). The third plan in a row where a whole-tree rule test went red only at landing.
+
 ## Follow-on
 
 - **No cap on retries.** Each commit's trigger retries every waiting commit, each spawning a detached evaluator. After a long limit resets, a backlog fans out at once and can hit the rate limit again (they stay queued, so nothing is lost, but quota is spent in a burst). A cap per trigger is the fix.
