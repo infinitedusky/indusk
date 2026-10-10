@@ -66,7 +66,7 @@ audit_reason: "A display defect found by Sandy reading the panel; its rows prove
 
 **Tier**: med
 
-- [ ] `health-line.ts`: each row with violations gains `lastBroke` (the newest violation's ISO time), beside the `traceId` it already carries
+- [x] `health-line.ts`: each row with violations gains `lastBroke` (the newest violation's ISO time), beside the `traceId` it already carries
 - [ ] Extension core: the panel and hover's "last broke" read `lastBroke` (falling back to nothing, never to `lastSeen`); "last seen" keeps `lastSeen`; `stamp(iso, timeZone?)` formats in the given time zone, else the machine's, with no "UTC"
 
 #### Build Phase 1 Verification
