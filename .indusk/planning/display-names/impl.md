@@ -1,7 +1,7 @@
 ---
 title: "Display names — promises and plans read as words"
 date: 2026-10-09
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -54,6 +54,8 @@ The editor names promises in words, plans by their title, and shows each plan's 
 | A13 | A plan not landed shows only its start date; one landed but in no release yet says "not released yet" | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A14 | An archived plan whose retrospective carries no "Landed on main at …" line still reads as landed — it is on main — dated by its retrospective's `date`, and shows the release the changelog names for it; it never reads "started …" alone | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A15 | A plan with no brief (a spike, or a parent whose only document is its research) shows the date it started, from its first lifecycle document's `date` | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A16 | A plan that landed shows the release that actually shipped it — the first release commit on the trunk after its landing — whatever its changelog entry says; a plan landed after the newest release reads "not released yet"; on this repository `day-promises` and `dawn-verify` show their releases, and a project with no release commits falls back to the changelog as before | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A17 | A plan's landing date is worked out once in the package: for every plan, the monitor's close date and the editor's landed date agree, and a second reader of the "Landed on main at" line anywhere under `apps/indusk-mcp/src` fails the single-definition test | Build Phase 5 | Build Phase 5 | planned | unit | promise: display-names-are-defined-once | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
 
 ## Checklist
 
@@ -208,6 +210,27 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 - [x] `apps/docs/src/reference/cli/promises.md`: confirm the `title`/`planDates` text still describes where each value is read from; record here that nothing user-visible changed if so
   - 2026-10-10: confirmed — the `planTitle` and `planDates` text names where each value comes from, which the reader change did not alter; the 124-plan before/after dump showed no difference. Nothing user-visible changed, no edit.
+
+### Build Phase 5: The audit's two fixes — the release that shipped it, one landing date
+
+**Tier**: med
+
+**Goal**: fix the two findings the audit (`audit.md`, a fresh reader on claude-opus-5-5) raised and Sandy chose to fix before closing (2026-10-10, "Fix both, then close"): on this repository 79 of 94 landed plans read "not released yet" because a release is found only when a changelog entry names the plan as `(plan-name)` (52 of 347 entries do), breaking `a-plan-shows-when-it-shipped`; and `after-close.ts`'s `closedAt` reads the landing line with its own pattern and fallback, so the monitor and the editor can date one plan's landing two ways.
+
+- [ ] `lib/promises/display.ts`: the shipping release is the first `chore(release): <version>` commit on the trunk's first-parent line after the plan's landing — the landing commit named by the retrospective's `Landed on main at <sha>` line, else the `Merge branch 'plan/<name>'` commit, else the first release dated on or after the landed date — with its version and commit date; read with one `git log --first-parent` per `readHealthNames` call, never one per plan; the changelog lookup stays only as the fallback when the project has no release commits (A12's fixture) (A16)
+- [ ] One landing-date function in the package (`landedDate(planDir, archived)` in `display.ts`, or the existing `closedAt` made the one rule) used by both `planDates` and `lib/promises/after-close.ts`'s `closedAt`; `display-names-single-definition.test.ts` extends its scan to `apps/indusk-mcp/src` for a second "Landed on main at" pattern (A17)
+
+#### Build Phase 5 Verification
+
+- [ ] A16 and A17 pass, each red first, and A6, A11–A15 still do (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises/display.test.ts src/__tests__/promise-health-names.test.ts src/__tests__/display-names-single-definition.test.ts && pnpm exec vitest related src/lib/promises/display.ts src/lib/promises/after-close.ts --run`); re-run the measurement and record how many landed plans now show a release (was 15 of 94 landed reading released)
+
+#### Build Phase 5 Context
+
+- [ ] `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: the release that shipped a plan is the first release commit after its landing, never a changelog pattern; a plan's landing date has one function
+
+#### Build Phase 5 Document
+
+- [ ] `apps/docs/src/reference/cli/promises.md`, the `planDates` field: the release is read from the trunk's release commits, the changelog only when there are none
 
 ## Files Affected
 
