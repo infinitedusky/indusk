@@ -5,6 +5,7 @@ import {
 	promiseProject,
 } from "../../__tests__/helpers/promises-fixture.js";
 import { healthLine, healthRows, ruleFor, type SourceHealthRead } from "./health.js";
+import type { HeardRow } from "./heard.js";
 import { type PromiseEntry, readPromises } from "./registry.js";
 import type { PlanRow } from "./rows.js";
 import { readStanding, type SourcedHealth, standingOf } from "./standing.js";
@@ -203,5 +204,71 @@ describe("A33 — standing reports the health the CLI and the editor report", ()
 		}
 		expect(standing.find((s) => s.entry.name === "seats-held")?.standing).toBe("broken");
 		expect(standing.find((s) => s.entry.name === "seats-held")?.health.production).toBe("red");
+	});
+});
+
+const heardRow = (promise: string, at: string, source = "production"): HeardRow => ({
+	at,
+	promise,
+	trace: `t-${at}`,
+	incident: "INC-1",
+	source,
+});
+
+describe("the dashboard's thirty days are the package's (plan-cockpit Build Phase 3)", () => {
+	const now = Date.UTC(2026, 9, 10, 12, 0);
+
+	it("counts the breaks heard in thirty days and the days with none, for this promise only", () => {
+		const r = standingOf(
+			entry(),
+			[seen("production", "green", "2026-10-09T10:00:00.000Z")],
+			[],
+			undefined,
+			{
+				now,
+				heard: [
+					heardRow("seats-held", "2026-10-08T09:00:00.000Z"),
+					heardRow("seats-held", "2026-10-08T11:00:00.000Z"),
+					heardRow("seats-held", "2026-10-03T11:00:00.000Z"),
+					heardRow("seats-held", "2026-08-01T11:00:00.000Z"),
+					heardRow("other-promise", "2026-10-08T11:00:00.000Z"),
+				],
+			},
+		);
+		expect(r.thirtyDays).toEqual({ broke: 3, held: 28 });
+	});
+
+	it("a promise nothing has seen or heard has held null, not thirty", () => {
+		expect(standingOf(entry(), [], [], undefined, { now, heard: [] }).thirtyDays).toEqual({
+			broke: 0,
+			held: null,
+		});
+	});
+
+	it("the last break is the newest heard break, or the alarm source's sighting while broken and newer", () => {
+		const heard = [heardRow("seats-held", "2026-10-08T09:00:00.000Z")];
+		const quiet = standingOf(
+			entry(),
+			[seen("local", "green", "2026-10-09T10:00:00.000Z")],
+			[],
+			undefined,
+			{
+				now,
+				heard,
+			},
+		);
+		expect(quiet.lastBreak).toBe("2026-10-08T09:00:00.000Z");
+		const live = standingOf(
+			entry(),
+			[seen("local", "red", "2026-10-10T08:00:00.000Z")],
+			[],
+			undefined,
+			{
+				now,
+				heard,
+			},
+		);
+		expect(live.lastBreak).toBe("2026-10-10T08:00:00.000Z");
+		expect(standingOf(entry(), [], [], undefined, { now, heard: [] }).lastBreak).toBeNull();
 	});
 });

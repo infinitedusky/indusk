@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
-import type { HealthDeps, SourceHealthRead } from "./health.js";
+import type { BrokenPromise } from "./fix.js";
+import { type HealthDeps, healthLine, readHealth, type SourceHealthRead } from "./health.js";
 import { countHeard, type HeardRow, readHeard } from "./heard.js";
 import {
 	type IncidentEntry,
@@ -19,7 +20,7 @@ import {
 	type SourceRead,
 	sourceNames,
 } from "./sources.js";
-import { readStanding } from "./standing.js";
+import { readStanding, type StandingRow } from "./standing.js";
 import { readWindow } from "./store.js";
 
 /**
@@ -71,6 +72,13 @@ export interface ProofEvent {
 }
 
 export interface Proof {
+	/** Where the promise stands, the dashboard's word, with its tests and thirty days. */
+	standing: Pick<
+		StandingRow,
+		"standing" | "tests" | "lastActivity" | "lastBreak" | "thirtyDays" | "health"
+	>;
+	/** The break *Start a fix plan* starts from; null unless the promise is broken in a source. */
+	broken: BrokenPromise | null;
 	rows: PlanRow[];
 	/** Plans whose impl could not be read: "no row names it" must not be what a broken file looks like. */
 	unreadable: string[];
@@ -116,10 +124,23 @@ export async function proofOf(
 		registry,
 	);
 	const marks = marksOf(entry, reads);
-	const standing = (await readStanding(projectRoot, deps)).find((s) => s.entry.name === entry.name);
+	const health = deps.health ?? (await readHealth(projectRoot, registry, deps));
+	const standing = (await readStanding(projectRoot, { ...deps, health })).find(
+		(s) => s.entry.name === entry.name,
+	);
+	if (!standing) return null;
 	const { days, unread } = await daysOf(projectRoot, registry, entry, deps, now());
 
 	return {
+		standing: {
+			standing: standing.standing,
+			tests: standing.tests,
+			lastActivity: standing.lastActivity,
+			lastBreak: standing.lastBreak,
+			thirtyDays: standing.thirtyDays,
+			health: standing.health,
+		},
+		broken: standing.standing === "broken" ? brokenOf(registry, entry, health, now()) : null,
 		rows,
 		unreadable,
 		marks,
@@ -129,11 +150,43 @@ export async function proofOf(
 		history: historyOf(registry, entry),
 		banner: {
 			testsMissTheCase:
-				standing?.standing === "broken" &&
+				standing.standing === "broken" &&
 				rows.length > 0 &&
 				rows.every((r) => r.state === "passing"),
 		},
 	};
+}
+
+/**
+ * The first source, production leading, where the promise reads red, with that
+ * source's newest violation: the facts `fixPrompt` words. Null when it reads
+ * red nowhere (a promise known to be violated, or broken only by incident).
+ */
+function brokenOf(
+	registry: Registry,
+	entry: PromiseEntry,
+	reads: SourceHealthRead[],
+	nowMs: number,
+): BrokenPromise | null {
+	const line = healthLine(registry, reads, new Date(nowMs));
+	const sources = [...line.sources].sort(
+		(a, b) => Number(b.name === "production") - Number(a.name === "production"),
+	);
+	for (const source of sources) {
+		if (!source.ok) continue;
+		const row = source.rows.find((r) => r.promise === entry.name);
+		if (row?.state !== "red") continue;
+		return {
+			promise: entry.name,
+			source: source.name,
+			sourceLabel: source.label,
+			statement: entry.statement,
+			...(row.symptom ? { symptom: row.symptom } : {}),
+			...(row.traceId ? { traceId: row.traceId } : {}),
+			tests: entry.tests,
+		};
+	}
+	return null;
 }
 
 /** Marks grouped by service and operation, in the order first met; a place seen only upheld has no `lastBroken`. */

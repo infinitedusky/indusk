@@ -382,3 +382,21 @@ describe("A30 — what was heard while no page was open", () => {
 		expect((proof?.days.production ?? []).reduce((n, d) => n + d.broken, 0)).toBe(0);
 	});
 });
+
+describe("the page's banner facts come from the package (plan-cockpit Build Phase 3)", () => {
+	it("a broken promise carries its standing and the break the fix starts from: symptom, trace, tests", async () => {
+		const fx = project();
+		const broken = await proofOf(fx.planRoot, PROMISE, deps({ health: healthRead(true) }));
+		expect(broken?.standing.standing).toBe("broken");
+		expect(broken?.broken).toMatchObject({
+			promise: PROMISE,
+			source: "production",
+			symptom: "a held seat was not released",
+			traceId: "t-live",
+		});
+		expect(broken?.broken?.statement).toContain("seat");
+		const holding = await proofOf(fx.planRoot, PROMISE, deps({ health: healthRead(false) }));
+		expect(holding?.standing.standing).not.toBe("broken");
+		expect(holding?.broken).toBeNull();
+	});
+});

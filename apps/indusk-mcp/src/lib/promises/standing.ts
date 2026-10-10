@@ -1,3 +1,4 @@
+import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import {
 	type HealthDeps,
 	type HealthRow,
@@ -7,6 +8,7 @@ import {
 	ruleFor,
 	type SourceHealthRead,
 } from "./health.js";
+import { type HeardRow, readHeard } from "./heard.js";
 import { type PromiseEntry, type Registry, readPromises } from "./registry.js";
 import { type PlanRow, rowsNamingEach } from "./rows.js";
 import { alarmSource, type SourceName } from "./sources.js";
@@ -45,7 +47,24 @@ export interface StandingResult {
 	tests: { passing: number; total: number };
 	/** The newest time any source saw it, ISO; null when none did. */
 	lastActivity: string | null;
+	/** What the last thirty days hold, from what this machine's recorder heard. */
+	thirtyDays: ThirtyDays;
+	/** The newest break: a heard violation, or the alarm source's sighting while broken and newer; null when none. */
+	lastBreak: string | null;
 }
+
+/**
+ * The dashboard's "held N · broke M of 30 days": `broke` is the violations
+ * heard, `held` the days of the thirty without one, and null while the
+ * promise has never been seen or heard (nothing was held, nothing watched).
+ */
+export interface ThirtyDays {
+	broke: number;
+	held: number | null;
+}
+
+const WINDOW_DAYS = 30;
+const DAY_MS = 86_400_000;
 
 export interface StandingRow extends StandingResult {
 	entry: PromiseEntry;
@@ -55,6 +74,8 @@ export interface StandingRow extends StandingResult {
 /** What the health read reads with; `health` hands over reads already made. */
 export interface StandingDeps extends HealthDeps {
 	health?: SourceHealthRead[];
+	/** What the recorder heard; the project's home's record by default. */
+	heard?: HeardRow[];
 }
 
 /**
@@ -67,6 +88,7 @@ export function standingOf(
 	health: SourcedHealth[],
 	rows: PlanRow[],
 	sources: readonly SourceName[] = health.map((h) => h.source),
+	ctx: { heard?: HeardRow[]; now?: number } = {},
 ): StandingResult {
 	const byName: Partial<Record<SourceName, PromiseHealth>> = {};
 	for (const h of health) byName[h.source] = h.health;
@@ -75,11 +97,38 @@ export function standingOf(
 		(latest, h) => (h.lastSeen && (latest === null || h.lastSeen > latest) ? h.lastSeen : latest),
 		null,
 	);
+	const standing = standingFor(entry, byName, tests, sources);
+	const { thirtyDays, lastBreak } = heardOver(entry, standing, newest, ctx);
+	return { standing, health: byName, tests, lastActivity: newest, thirtyDays, lastBreak };
+}
+
+/** The thirty days and the last break, from the breaks heard for this promise (or an earlier name of it). */
+function heardOver(
+	entry: PromiseEntry,
+	standing: Standing,
+	lastActivity: string | null,
+	ctx: { heard?: HeardRow[]; now?: number },
+): { thirtyDays: ThirtyDays; lastBreak: string | null } {
+	const since = (ctx.now ?? Date.now()) - WINDOW_DAYS * DAY_MS;
+	const heard = (ctx.heard ?? []).filter(
+		(h) =>
+			(h.promise === entry.name || entry.aliases.includes(h.promise)) && Date.parse(h.at) >= since,
+	);
+	const heardLatest = heard.reduce<string | null>(
+		(latest, h) => (latest === null || h.at > latest ? h.at : latest),
+		null,
+	);
+	const brokenDays = new Set(heard.map((h) => h.at.slice(0, 10))).size;
+	const lastBreak =
+		standing === "broken" && lastActivity && (!heardLatest || lastActivity > heardLatest)
+			? lastActivity
+			: heardLatest;
 	return {
-		standing: standingFor(entry, byName, tests, sources),
-		health: byName,
-		tests,
-		lastActivity: newest,
+		thirtyDays: {
+			broke: heard.length,
+			held: lastActivity || heard.length ? WINDOW_DAYS - brokenDays : null,
+		},
+		lastBreak,
 	};
 }
 
@@ -110,13 +159,15 @@ export async function readStanding(
 	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
 	if (!registry) return [];
 	const reads = deps.health ?? (await readHealth(projectRoot, registry, deps));
-	return standingRows(projectRoot, registry, reads);
+	const heard = deps.heard ?? readHeard(bookkeepingRoots(projectRoot).home);
+	return standingRows(projectRoot, registry, reads, { heard, now: (deps.now ?? Date.now)() });
 }
 
 function standingRows(
 	projectRoot: string,
 	registry: Registry,
 	reads: SourceHealthRead[],
+	ctx: { heard: HeardRow[]; now: number },
 ): StandingRow[] {
 	const chips = reads.flatMap((r) =>
 		r.ok ? [{ source: r.name, rows: healthRows(registry, r, ruleFor(r, reads)) }] : [],
@@ -128,6 +179,6 @@ function standingRows(
 			c.rows[entry.name] ? [{ ...c.rows[entry.name], source: c.source }] : [],
 		);
 		const rows = named.get(entry.name)?.rows ?? [];
-		return { entry, rows, ...standingOf(entry, health, rows, sources) };
+		return { entry, rows, ...standingOf(entry, health, rows, sources, ctx) };
 	});
 }
