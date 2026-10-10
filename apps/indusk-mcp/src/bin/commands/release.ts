@@ -15,6 +15,7 @@ import { readWorkflowSteps } from "../../lib/checks/steps.js";
 import type { WorkflowSteps } from "../../lib/config.js";
 import { recordOf, recordRelease, releaseVersion } from "../../lib/release/record.js";
 import { type ReleaseOutcome, runRelease } from "../../lib/release/run.js";
+import { settleFromReport } from "../../lib/release/settle.js";
 
 export function releaseCommand(checkout: string): number {
 	let steps: WorkflowSteps;
@@ -27,11 +28,13 @@ export function releaseCommand(checkout: string): number {
 	const top = gitSync(checkout, "rev-parse", "--show-toplevel");
 	const root = top.code === 0 ? top.out : checkout;
 
+	const exec = (command: string) => ({
+		code: spawnSync("sh", ["-c", command], { cwd: root, stdio: "inherit" }).status ?? 1,
+	});
 	const outcome = runRelease({
 		steps,
-		exec: (command) => ({
-			code: spawnSync("sh", ["-c", command], { cwd: root, stdio: "inherit" }).status ?? 1,
-		}),
+		exec,
+		settleFailures: () => settleFromReport(steps, root, exec),
 		now: () => new Date(),
 		codeKey: () => codeKey(root, steps),
 		coveringRun: (key) => findCoveringRun(root, key),
@@ -64,6 +67,14 @@ function report(outcome: ReleaseOutcome): string {
 		);
 	}
 	if (slow.result === "red") lines.push("the slow tests failed");
+	const { environment, failed, flakes } = outcome.recorded;
+	if (environment) {
+		lines.push(
+			`the environment failed: ${environment.failed} of ${environment.total} slow test files failed`,
+		);
+	}
+	for (const f of failed) lines.push(`failing: ${f.file}`);
+	for (const f of flakes) lines.push(`flaky: ${f}`);
 	lines.push(outcome.published ? "release published" : "release not published");
 	lines.push(outcome.done ? "release done" : "release not done");
 	if (outcome.published && !outcome.done && outcome.openFailures.length) {
