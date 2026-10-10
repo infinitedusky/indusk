@@ -192,6 +192,10 @@
 			"types": "./dist/lib/promises/proof.d.ts",
 			"default": "./dist/lib/promises/proof.js"
 		},
+		"./plans/steps": {
+			"types": "./dist/lib/plans/steps.d.ts",
+			"default": "./dist/lib/plans/steps.js"
+		},
 		"./promises/fix": {
 			"types": "./dist/lib/promises/fix.d.ts",
 			"default": "./dist/lib/promises/fix.js"
