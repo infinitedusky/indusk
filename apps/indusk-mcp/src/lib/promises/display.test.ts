@@ -2,10 +2,10 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { planDates, planTitle, promiseWords } from "./display.js";
+import { planDates, planTitle, promiseWords, readHealthNames } from "./display.js";
 
 /**
- * display-names A2, A3, A6, A11, A12, A13: how a handle reads as words, how a
+ * display-names A2, A3, A6, A11, A12, A13, A14, A15: how a handle reads as words, how a
  * plan reads by its title, and a plan's start, landing and release dates.
  *
  * promise: a-promise-reads-as-words
@@ -97,5 +97,75 @@ describe("A13 — a plan not landed, or landed and unreleased", () => {
 			"## [1.67.0] — 2026-10-01\n- x (older)",
 		);
 		expect(dates).toEqual({ started: "2026-10-08", landed: "2026-10-09", released: null });
+	});
+});
+
+/** A plan folder holding the named documents, each with its text. */
+function folderWith(files: Record<string, string>): string {
+	const dir = join(mkdtempSync(join(tmpdir(), "display-")), "my-plan");
+	mkdirSync(dir, { recursive: true });
+	for (const [name, text] of Object.entries(files)) writeFileSync(join(dir, name), text);
+	return dir;
+}
+
+const RETRO_NO_LINE = "---\ndate: 2026-09-10\n---\n\n# Retrospective\n";
+
+describe("A14 — an archived plan with no landing line is still landed", () => {
+	it("dates it by its retrospective and shows the release the changelog names", () => {
+		const dir = folderWith({ "brief.md": BRIEF, "retrospective.md": RETRO_NO_LINE });
+		expect(planDates(dir, CHANGELOG, { archived: true })).toEqual({
+			started: "2026-10-08",
+			landed: "2026-09-10",
+			released: { version: "1.68.0", date: "2026-10-09" },
+		});
+	});
+	it("a landing line, when present, still wins", () => {
+		const dir = folderWith({ "brief.md": BRIEF, "retrospective.md": LANDED });
+		expect(planDates(dir, CHANGELOG, { archived: true }).landed).toBe("2026-10-09");
+	});
+	it("a plan not archived with no landing line is still not landed", () => {
+		const dir = folderWith({ "brief.md": BRIEF, "retrospective.md": RETRO_NO_LINE });
+		expect(planDates(dir, CHANGELOG).landed).toBeNull();
+	});
+	it("reads through readHealthNames for a plan under archive/", () => {
+		const root = mkdtempSync(join(tmpdir(), "display-project-"));
+		const planDir = join(root, ".indusk", "planning", "archive", "my-plan");
+		mkdirSync(planDir, { recursive: true });
+		writeFileSync(join(planDir, "brief.md"), BRIEF);
+		writeFileSync(join(planDir, "retrospective.md"), RETRO_NO_LINE);
+		writeFileSync(
+			join(root, ".indusk", "config.json"),
+			JSON.stringify({
+				workflow: {
+					steps: {
+						release: { command: "x", version_file: "package.json", changelog: "CHANGELOG.md" },
+					},
+				},
+			}),
+		);
+		writeFileSync(join(root, "CHANGELOG.md"), CHANGELOG);
+		expect(readHealthNames(root).planDates["my-plan"]).toEqual({
+			started: "2026-10-08",
+			landed: "2026-09-10",
+			released: { version: "1.68.0", date: "2026-10-09" },
+		});
+	});
+});
+
+describe("A15 — a plan with no brief shows when it started", () => {
+	it("takes the date from its research", () => {
+		const dir = folderWith({ "research.md": "---\ndate: 2026-10-01\n---\n\n# R\n" });
+		expect(planDates(dir).started).toBe("2026-10-01");
+	});
+	it("takes the date from its test plan when nothing earlier exists", () => {
+		const dir = folderWith({ "test-plan.md": "---\ndate: 2026-10-02\n---\n\n# T\n" });
+		expect(planDates(dir).started).toBe("2026-10-02");
+	});
+	it("the brief's date still wins", () => {
+		const dir = folderWith({
+			"brief.md": BRIEF,
+			"research.md": "---\ndate: 2026-10-01\n---\n",
+		});
+		expect(planDates(dir).started).toBe("2026-10-08");
 	});
 });
