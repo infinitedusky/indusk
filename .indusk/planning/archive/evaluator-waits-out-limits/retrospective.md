@@ -28,3 +28,5 @@ No lint or type errors recurred. Shape: 0 findings raised; 2 "left as-is" entrie
 
 - 8 commits; A1–A5 passing; eval, run, hook-parity and single-definition tests green.
 - Expectation 1 (green on days the model is reachable) is read a week after landing.
+
+Landed on main at 943ced01, 2026-10-10. Installed with `pnpm install:local`; nothing published.

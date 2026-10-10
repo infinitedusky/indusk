@@ -22,3 +22,5 @@ No lint or type errors recurred. Shape: 0 findings raised, 0 judged wrong. Falsi
 
 - 10 commits; `health-line.ts` and four extension core files, plus tests, docs and a CLAUDE.md line.
 - A1–A3 passing; extension core 40/40; the package's single-definition and health-line tests 79/79.
+
+Landed on main at 54757bf0, 2026-10-10. Installed with `pnpm install:local`; nothing published.
