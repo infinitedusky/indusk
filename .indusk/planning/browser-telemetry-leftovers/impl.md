@@ -63,7 +63,9 @@ The scaffolded browser instrumentation carries a click's trace to the project's 
 - [x] A1, A2, A3 in `templates/instrumentation.web.test.ts`: before importing the template, replace `window.fetch` with a recorder; stub the env (`vi.stubEnv`) per case and import the template fresh (`vi.resetModules`); a button whose click handler fetches the case's URLs; assert on the recorded request headers, and that a request's `traceparent` trace id is the click span's (read through an in-memory exporter the test registers). RED for A2 and A3 today (no setting, no header cross-origin); A1 passes (Regression Guards)
 - [x] A5, A6, A7 in `src/__tests__/init-browser-telemetry.test.ts`: `init` through `helpers/cli.ts` on three temp projects (a Vite React app's `package.json`, a Next.js app's, a Node service's); read every file it wrote and its stdout. RED for A5 (prints `@dash0/sdk-web`) and A7 (no instructions) today; A6 passes (Regression Guards)
 - [x] A8 in `src/lib/trajectory/audit.test.ts`: a row whose mitigation reads "dashboards in dash0, reviewed by the on-call" is not `telemetry-alert`. RED today
-- [ ] Confirm each red test fails on its own assertion rather than on a missing import
+- [x] Confirm each red test fails on its own assertion rather than on a missing import
+  - Confirmed 2026-10-10: A2 `named origin carries traceparent: expected null not to be null`; A3 `plan-a.dev.example.com carries traceparent: expected null not to be null`; A5 `react-spa: init prints a vendor name: expected ['dash0'] to deeply equal []`; A7 `react-spa: names the setting: expected '  create: src/instrumentation.ts (Rea…' to contain 'VITE_OTEL_PROPAGATE_TO'`; A8 `expected 'telemetry-alert' not to be 'telemetry-alert'`. A1 and A6 pass.
+  - **Finding for Build Phase 1, not in its items:** the shipped `templates/instrumentation.web.ts` throws `provider.addSpanProcessor is not a function` at import against `@opentelemetry/sdk-trace-web` 2.x (what its own install line fetches; the repo uses 2.x throughout), and `process.env.NEXT_PUBLIC_*` throws `process is not defined` in a Vite page when the `VITE_` value is unset. A1 therefore does not "pass today" against the template as shipped: `templates/instrumentation.web.test.ts` carries a marked TEMPORARY SHIM (a no-op `addSpanProcessor` on the provider's prototype) and a `process` stub so the template loads and A1-A3 assert on propagation. Build Phase 1 must fix the template (constructor `spanProcessors`; no bare `process`) and delete the shim.
 
 #### Deferred to Build Phase 1
 
@@ -76,8 +78,10 @@ The scaffolded browser instrumentation carries a click's trace to the project's 
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A3 and A5–A8 authored; A2, A3, A5, A7, A8 fail on their own assertions; A1 and A6 pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/init-browser-telemetry.test.ts src/lib/trajectory/audit.test.ts`)
-- [ ] The deferred entry above reviewed: A4 needs only what Build Phase 1 produces
+- [x] A1–A3 and A5–A8 authored; A2, A3, A5, A7, A8 fail on their own assertions; A1 and A6 pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/init-browser-telemetry.test.ts src/lib/trajectory/audit.test.ts`)
+  - Ran 2026-10-10: templates project 3 tests, 1 passed (A1), 2 failed (A2, A3); node files 16 tests, 13 passed (incl. A6), 3 failed (A5, A7, A8) — failure messages under the confirm item above. `pnpm exec tsc --noEmit` clean; `biome check` clean on the 6 changed files.
+- [x] The deferred entry above reviewed: A4 needs only what Build Phase 1 produces
+  - Reviewed 2026-10-10: A4 is a live check (scaffolded Vite app + separate Node API + local Jaeger), needs the propagation setting and the template load fix from Build Phase 1, and nothing from this phase; it stays deferred. Note A4 also depends on the template fix named above.
 
 ### Build Phase 1: The setting, the truth, the keyword
 
