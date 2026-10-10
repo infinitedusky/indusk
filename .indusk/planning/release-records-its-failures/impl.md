@@ -123,7 +123,7 @@ gate_policy: ask
 
 #### Build Phase 1 Document
 
-- [ ] New `apps/docs/src/reference/cli/release.md` (order, outcome, exit, the record) with the ADR's Mermaid flowchart; sidebar entry; `reference/cli/checks.md` gains the new keys
+- [x] New `apps/docs/src/reference/cli/release.md` (order, outcome, exit, the record) with the ADR's Mermaid flowchart; sidebar entry; `reference/cli/checks.md` gains the new keys
 
 ### Build Phase 2: The report, the rerun, the environment
 
