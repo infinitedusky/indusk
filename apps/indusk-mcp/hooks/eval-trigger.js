@@ -214,6 +214,40 @@ if (drainPending) {
 	process.exit(0);
 }
 
+// ---------------------------------------------------------------------------
+// Waiting commits (evaluator-waits-out-limits): a commit the model refused for
+// a limit waits in the pending queue, marked `waiting`. Each commit's trigger
+// tries them again BEFORE it evaluates the new commit — a refusal costs
+// half a second, so there is no reset time to predict. The drained ledger is
+// written before each retry spawns (no commit is evaluated twice), and a
+// retry the model refuses again takes itself out of it. Commit mode only: the
+// retry re-enters this script in CLI mode, which must not retry in turn.
+// ---------------------------------------------------------------------------
+if (cliSource === null) {
+	try {
+		const { drainPendingEvals } = await import("./_pending-drain.js");
+		syslog(statePath, "retrying waiting commits before the new commit");
+		const { drained, failed } = await drainPendingEvals({
+			statePath,
+			cwd,
+			triggerScript: fileURLToPath(import.meta.url),
+			log: (msg) => syslog(statePath, `waiting commits — ${msg}`),
+			onlyWaiting: true,
+		});
+		if (drained + failed.length > 0) {
+			process.stderr.write(
+				`📊 Retried ${drained + failed.length} waiting eval(s) before this commit; ${failed.length} could not be started and stay queued.\n`,
+			);
+		}
+	} catch (err) {
+		// A retry that cannot run must never keep the new commit from being evaluated.
+		syslog(
+			statePath,
+			`waiting commits — retry failed: ${err instanceof Error ? err.message : String(err)}`,
+		);
+	}
+}
+
 // Get the current commit ID. Runs against gitPath, not statePath — in
 // workbench mode the two differ (statePath = workbench root, whose own git
 // history is plan documents; gitPath = the declared code repo or a worktree).
@@ -465,7 +499,8 @@ import(${JSON.stringify(trunkCommitPath)})
   })
   .then((result) => {
     const hasError = result && result.error;
-    syslog("evaluator completed — " + (hasError ? "error: " + result.message : "scorecard written"));
+    const isWaiting = result && result.waiting;
+    syslog("evaluator completed — " + (hasError ? "error: " + result.message : isWaiting ? "waiting — " + result.message : "scorecard written"));
     process.exit(0);
   })
   .catch(err => {

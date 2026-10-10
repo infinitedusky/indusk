@@ -22,6 +22,12 @@
  *     record was never evaluated, so it is un-drained and stays queued. A
  *     machine that cannot evaluate must never silently empty the backlog —
  *     the queue exists precisely to survive that case.
+ *   - A WAITING record (`waiting: true`, evaluator-waits-out-limits) is a
+ *     commit the model refused for a limit. Its retry's evaluator runs
+ *     detached and exits 0 before the model answers, so a second refusal
+ *     un-drains it from the evaluator's own side (`leaveWaiting` in
+ *     `lib/eval/limits.ts`). Until it scores, or fails for another reason, it
+ *     is never "drained".
  */
 
 import { spawn } from "node:child_process";
@@ -95,16 +101,32 @@ function runOne(record, { cwd, triggerScript }) {
  * evaluator, so a very large backlog still fans out — drain at rail-check
  * cadence rather than letting the queue grow unbounded.
  *
+ * `onlyWaiting` restricts the drain to waiting commits — what a commit's
+ * trigger retries before it evaluates the new commit; the thin lane's records
+ * stay for the explicit drain.
+ *
  * @returns {Promise<{drained: number, failed: string[], alreadyDrained: number}>}
  */
-export async function drainPendingEvals({ statePath, cwd, triggerScript, log }) {
+export async function drainPendingEvals({
+	statePath,
+	cwd,
+	triggerScript,
+	log,
+	onlyWaiting = false,
+}) {
 	// The project's eval folder, under its home (bookkeeping-lives-where-it-is-read D3).
 	const evalDir = resolve(projectHome(statePath), "eval");
 	const drainedPath = resolve(evalDir, "pending-drained.jsonl");
 
 	const pending = readJsonl(resolve(evalDir, "pending.jsonl"));
 	const drainedShas = new Set(readJsonl(drainedPath).map((r) => r.sha));
-	const todo = pending.filter((r) => typeof r.sha === "string" && !drainedShas.has(r.sha));
+	const seen = new Set();
+	const todo = pending.filter((r) => {
+		if (typeof r.sha !== "string" || drainedShas.has(r.sha) || seen.has(r.sha)) return false;
+		if (onlyWaiting && r.waiting !== true) return false;
+		seen.add(r.sha);
+		return true;
+	});
 
 	const failed = [];
 	let drained = 0;
@@ -131,7 +153,7 @@ export async function drainPendingEvals({ statePath, cwd, triggerScript, log }) 
 		}
 	}
 
-	const alreadyDrained = pending.length - todo.length;
+	const alreadyDrained = pending.filter((r) => drainedShas.has(r.sha)).length;
 	log?.(
 		`drain complete — ${drained} drained, ${failed.length} failed (still queued), ${alreadyDrained} already drained`,
 	);
