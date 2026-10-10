@@ -45,6 +45,19 @@ describe.skipIf(!haveVSCode)("A16 — install and activation in a real VS Code",
 		expect(listed.stdout).toContain("infinitedusky.indusk");
 	});
 
+	/** Every log line VS Code wrote under a user-data-dir, joined. */
+	function logsUnder(dir: string): string {
+		const lines: string[] = [];
+		const walk = (d: string) => {
+			for (const e of readdirSync(d, { withFileTypes: true })) {
+				if (e.isDirectory()) walk(join(d, e.name));
+				else if (e.name.endsWith(".log")) lines.push(readFileSync(join(d, e.name), "utf-8"));
+			}
+		};
+		if (existsSync(dir)) walk(dir);
+		return lines.join("\n");
+	}
+
 	async function activeIn(withInDusk: boolean): Promise<{ found: boolean; active: boolean }> {
 		const workspace = mkdtempSync(join(tmpdir(), withInDusk ? "a16-indusk-" : "a16-plain-"));
 		if (withInDusk) {
@@ -58,21 +71,23 @@ describe.skipIf(!haveVSCode)("A16 — install and activation in a real VS Code",
 		// A terminal inside VS Code (or Cursor) exports this; it makes the test
 		// VS Code start as plain Node and run the workspace path as a script.
 		delete process.env.ELECTRON_RUN_AS_NODE;
+		const userData = mkdtempSync(join(tmpdir(), "a16-u-"));
 		await runTests({
 			vscodeExecutablePath: VSCODE,
-			extensionDevelopmentPath: join(extensionsDir, installed),
+			extensionDevelopmentPath: join(__dirname, "fixtures", "activation-probe-ext"),
 			extensionTestsPath: join(__dirname, "activation-probe.cjs"),
 			launchArgs: [
 				workspace,
 				"--disable-workspace-trust",
 				"--extensions-dir",
 				extensionsDir,
-				"--disable-extensions",
 				// macOS caps a socket path near 103 characters; a worktree path is longer.
 				"--user-data-dir",
-				mkdtempSync(join(tmpdir(), "a16-u-")),
+				userData,
 			],
 		});
+		// A5: ours was loaded as an installed extension, never as a development one.
+		expect(logsUnder(userData)).not.toMatch(/Loading development extension.*infinitedusky\.indusk/);
 		return JSON.parse(readFileSync(out, "utf-8"));
 	}
 

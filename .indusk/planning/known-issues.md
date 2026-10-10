@@ -128,6 +128,30 @@ Each entry says what happens, where it was seen, and what we know so far.
   the record. The fix is `isOwnProcess` with the recorded binary and config,
   as `stop` does. Seen in small-fixes, out of its scope.
 
+- **"Telemetry not running" is reported more often than the daemon is down**
+  (Sandy, 2026-10-09). The daemon log is continuous from 2026-10-01 to
+  2026-10-09; its one unclean stop was 2026-10-08 22:05:37–22:06:12 (Jaeger
+  killed with no shutdown line, restarted 35 s later, during vscode-extension's
+  live checks — the killer not identified). The likeliest false "not running"
+  is the `status` port check above, which also deletes the record so every
+  later reader agrees until a restart (moderate confidence; not yet observed —
+  record where the message appears next time). Fix the port check first.
+
+- **The telemetry log is mostly Jaeger failing to trace itself.** Jaeger's own
+  internal tracing exports to the default `localhost:4317`, but the daemon
+  listens on a chosen port (60735 today), so it fails every 10–15 s: 32,147 of
+  `~/.indusk/telemetry.log`'s 77,366 lines since 2026-05-11, 29 MB, burying any
+  real error. The fix is one setting in the generated
+  `telemetry-jaeger.yaml`: turn off `service.telemetry` traces (or point them
+  at the daemon's own OTLP port).
+
+- **The telemetry project registry holds 2,662 dead test projects.**
+  `~/.indusk/telemetry/projects.json` lists 2,676 projects, 14 of which exist;
+  2,076 are `/private/var/folders` temp dirs, mostly registered 2026-09-10 to
+  09-16 (before test-daemons-never-leak), and 4 more on 2026-10-09 — a test
+  still registers into the real home. Needs a prune of paths that no longer
+  exist, and the test that registers found and isolated.
+
 - **The first release that publishes the server image is untested past the
   build.** `scripts/release-image.sh` builds `ghcr.io/infinitedusky/
   indusk-always-on:<version>` for amd64 and arm64 through its own buildx

@@ -1,0 +1,3 @@
+# The declare_promise MCP tool refuses a plan that exists only in a worktree; run the CLI from the worktree instead
+
+The indusk MCP server resolves plans from the main checkout, so `mcp__indusk__declare_promise` refuses a plan whose folder exists only on a plan/<name> branch in a worktree. The CLI run from inside the worktree reads the worktree's own planning folder and works. Observed while accepting the brief of release-records-its-failures (2026-10-09, commit d5bbc72c, which declared five promises). Do not work around it by copying the plan to main. Run the promise declaration through the CLI from the worktree root and commit the resulting .indusk/promises/*.md files on the plan branch.

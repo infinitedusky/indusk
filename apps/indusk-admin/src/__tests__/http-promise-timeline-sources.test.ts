@@ -1,7 +1,8 @@
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { runCli } from "../../../indusk-mcp/src/__tests__/helpers/cli";
 import { newTraceId } from "../../../indusk-mcp/src/__tests__/helpers/local-jaeger";
-import { writeIncident } from "../../../indusk-mcp/src/__tests__/helpers/promises-fixture";
 import {
   CRED_ENV,
   crossedMarks,
@@ -10,6 +11,7 @@ import {
   startTwoSources,
   type TwoSources,
 } from "../../../indusk-mcp/src/__tests__/helpers/two-sources";
+import { UNWRITTEN_ROOT_CAUSE } from "../../../indusk-mcp/src/lib/promises/vocabulary";
 import {
   type DevServer,
   sleep,
@@ -23,7 +25,8 @@ import {
  * broken on the laptop, `seat-released` broken in production.
  *
  *   A10  local's chip follows the newest local run
- *   A9   production's chip is `fixed` once its violation's incident is fixed
+ *   A9   production's chip is red while the incident the admin recorded for
+ *        its violation is open, and `fixed` once `promises fix` closes it
  *   A8   production's strip by default, local's on request; production
  *        stopped → said in place of its strip, local's still drawn
  *
@@ -35,7 +38,6 @@ import {
 
 const LOCAL_BREAK = newTraceId();
 const PROD_BREAK = newTraceId();
-const INCIDENT = "i-2026-10-05-seat-released";
 
 let t: TwoSources;
 let dev: DevServer;
@@ -83,6 +85,41 @@ function incidentsDir(): string {
   return join(t.project.planRoot, ".indusk", "promises", "incidents");
 }
 
+/**
+ * The incident the admin daemon's recorder wrote for `trace` (incident-recording):
+ * its id and file, once one exists under the fixture's incidents directory.
+ */
+function recordedIncident(
+  promise: string,
+  trace: string,
+): { id: string; file: string } | null {
+  const dir = incidentsDir();
+  if (!existsSync(dir)) return null;
+  for (const name of readdirSync(dir)) {
+    if (!name.endsWith(".md")) continue;
+    const file = join(dir, name);
+    const text = readFileSync(file, "utf-8");
+    if (text.includes(`promise: ${promise}`) && text.includes(trace)) {
+      return { id: name.replace(/\.md$/, ""), file };
+    }
+  }
+  return null;
+}
+
+async function waitForRecordedIncident(
+  promise: string,
+  trace: string,
+): Promise<{ id: string; file: string }> {
+  for (let waited = 0; waited < 60_000; waited += 1_000) {
+    const found = recordedIncident(promise, trace);
+    if (found) return found;
+    await sleep(1_000);
+  }
+  throw new Error(
+    `the admin recorded no incident for ${promise} / ${trace} within 60s`,
+  );
+}
+
 beforeAll(async () => {
   t = await startTwoSources(
     crossedMarks({ local: LOCAL_BREAK, production: PROD_BREAK }),
@@ -120,37 +157,31 @@ describe("promise-timeline — chips and strips per source", () => {
     ).toBe("green");
   }, 90_000);
 
-  it("A9 — production's chip is red while its incident is open, and fixed once it is fixed", async () => {
-    writeIncident(incidentsDir(), {
-      id: INCIDENT,
-      promise: RELEASED,
-      source: "deployed",
-      status: "open",
-      opened: new Date(Date.now() - 60_000).toISOString(),
-      lastSeen: new Date(Date.now() - 60_000).toISOString(),
-      traces: [PROD_BREAK],
-    });
-    await sleep(6_000);
+  it("A9 — production's chip is red while the incident the admin recorded is open, and fixed once it is fixed", async () => {
+    // The daemon's recorder, not this test, writes the incident for the break.
+    const incident = await waitForRecordedIncident(RELEASED, PROD_BREAK);
+    await sleep(6_000); // past the health cache
     expect(chip(await page(), RELEASED, "production"), "open incident").toBe(
       "red",
     );
 
-    writeIncident(incidentsDir(), {
-      id: INCIDENT,
-      promise: RELEASED,
-      source: "deployed",
-      status: "fixed",
-      opened: new Date(Date.now() - 60_000).toISOString(),
-      lastSeen: new Date(Date.now() - 60_000).toISOString(),
-      traces: [PROD_BREAK],
-      fixed: new Date().toISOString(),
-    });
+    // The recorder leaves the root cause for a person; `promises fix` refuses
+    // an incident until someone has said what broke.
+    writeFileSync(
+      incident.file,
+      readFileSync(incident.file, "utf-8").replace(
+        UNWRITTEN_ROOT_CAUSE,
+        "The hold was not atomic.",
+      ),
+    );
+    const fix = runCli(t.project.root, ["promises", "fix", incident.id], t.env);
+    expect(fix.code, fix.stdout + fix.stderr).toBe(0);
     await sleep(6_000);
     expect(
       chip(await page(), RELEASED, "production"),
       "lesson: a-fixed-break-is-history-not-health",
     ).toBe("fixed");
-  }, 90_000);
+  }, 120_000);
 
   it("A8 — production's strip by default, local's on request; a stopped source is said, the other still drawn", async () => {
     const byDefault = await page();
