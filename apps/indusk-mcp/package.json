@@ -221,6 +221,7 @@
 		"ajv": "^8.20.0",
 		"commander": "^13.0.0",
 		"falkordb": "^6.6.2",
+		"fast-xml-parser": "^5.11.2",
 		"glob": "^11.0.0",
 		"gray-matter": "^4.0.3",
 		"lucide-react": "^1.8.0",
