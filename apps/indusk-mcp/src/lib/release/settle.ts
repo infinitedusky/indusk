@@ -23,10 +23,11 @@ export function settleFromReport(
 	steps: WorkflowSteps,
 	root: string,
 	exec: (command: string) => { code: number },
+	since?: Date,
 ): SettledFailures {
 	const spec = steps.release?.slow_tests;
 	if (!spec) return { failed: [], flakes: [] };
-	const first = failedFiles(spec.report, root);
+	const first = failedFiles(spec.report, root, since);
 	if (!first.readable || first.files.size === 0) return { failed: [], flakes: [] };
 	if (first.files.size * 2 > first.total) {
 		return {
@@ -40,7 +41,7 @@ export function settleFromReport(
 	let last = first;
 	if (spec.rerun) {
 		exec(spec.rerun.replaceAll("{files}", names.join(" ")));
-		const second = failedFiles(spec.report, root);
+		const second = failedFiles(spec.report, root, since);
 		if (second.readable) {
 			still = names.filter((f) => second.files.has(f));
 			last = second;

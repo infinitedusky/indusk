@@ -57,6 +57,8 @@ export interface SettledFailures {
 export interface SlowRun {
 	command: string;
 	exit: number;
+	/** When the run began: a report older than this is an earlier run's. */
+	startedAt: Date;
 }
 
 export type SlowResult = "green" | "red" | "skipped" | "not run";
@@ -103,8 +105,13 @@ export function runRelease(deps: ReleaseDeps): ReleaseOutcome {
 			outcome.slow = { ran: false, green: true, skipped: true, result: "skipped", covering };
 			return true;
 		}
-		const at = deps.now().toISOString();
-		const run: SlowRun = { command: slowSpec.command, exit: deps.exec(slowSpec.command).code };
+		const started = deps.now();
+		const at = started.toISOString();
+		const run: SlowRun = {
+			command: slowSpec.command,
+			exit: deps.exec(slowSpec.command).code,
+			startedAt: started,
+		};
 		const green = run.exit === 0;
 		outcome.slow = { ran: true, green, skipped: false, result: green ? "green" : "red" };
 		if (green) {

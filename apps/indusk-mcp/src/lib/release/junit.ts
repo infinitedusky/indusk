@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { globSync } from "glob";
@@ -79,9 +79,22 @@ function walkSuite(
 
 const UNREADABLE = (): FailedFiles => ({ readable: false, files: new Map(), total: 0 });
 
-export function failedFiles(reportGlobs: string | string[], root: string): FailedFiles {
+/**
+ * `since`, when given, is when the slow run began: a report file last modified
+ * before it is an earlier run's and is not read (never deleted — a broad glob
+ * would reach a project's own files). Whole seconds, since a filesystem may
+ * truncate a modification time to one.
+ */
+export function failedFiles(
+	reportGlobs: string | string[],
+	root: string,
+	since?: Date,
+): FailedFiles {
 	const out = UNREADABLE();
-	const paths = globSync(reportGlobs, { cwd: root, absolute: true, nodir: true }).sort();
+	const floor = since ? Math.floor(since.getTime() / 1000) * 1000 : undefined;
+	const paths = globSync(reportGlobs, { cwd: root, absolute: true, nodir: true })
+		.filter((path) => floor === undefined || statSync(path).mtimeMs >= floor)
+		.sort();
 	if (paths.length === 0) return out;
 	const seen = new Set<string>();
 	for (const path of paths) {

@@ -41,7 +41,7 @@ export async function releaseCommand(checkout: string): Promise<number> {
 	const outcome = runRelease({
 		steps,
 		exec,
-		settleFailures: () => settleFromReport(steps, root, exec),
+		settleFailures: (slow) => settleFromReport(steps, root, exec, slow.startedAt),
 		now: () => new Date(),
 		codeKey: () => codeKey(root, steps),
 		coveringRun: (key) => findCoveringRun(root, key),
