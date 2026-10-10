@@ -105,17 +105,7 @@ export async function routeFailures(
 		};
 	}
 
-	const unreadable = new Set<string>();
-	const claims = new Map<string, string[]>();
-	for (const { file } of settled.failed) {
-		const route = routeFailure(root, file);
-		for (const plan of route.unreadable) unreadable.add(plan);
-		for (const name of route.promises) {
-			const promise = live(first.registry.promises, name);
-			if (promise) claims.set(promise.name, [...(claims.get(promise.name) ?? []), file]);
-		}
-	}
-
+	const { claims, unreadable } = claimsOf(root, settled.failed, first.registry.promises);
 	const incidents: RoutedIncident[] = [];
 	const byFile = new Map<string, string[]>();
 	for (const [name, files] of claims) {
@@ -147,8 +137,31 @@ export async function routeFailures(
 			return { file, routed: ids ? ids.map((id) => `incident ${id}`).join(", ") : "unrouted" };
 		}),
 		incidents,
-		unreadable: [...unreadable].sort(),
+		unreadable,
 	};
+}
+
+/**
+ * Which live promise claims which failing files: each promise a naming row's
+ * `For` cell names, with every file it claims, and the impls that could not
+ * be read on the way.
+ */
+function claimsOf(
+	root: string,
+	failed: FailedFile[],
+	promises: PromiseEntry[],
+): { claims: Map<string, string[]>; unreadable: string[] } {
+	const unreadable = new Set<string>();
+	const claims = new Map<string, string[]>();
+	for (const { file } of failed) {
+		const route = routeFailure(root, file);
+		for (const plan of route.unreadable) unreadable.add(plan);
+		for (const name of route.promises) {
+			const promise = live(promises, name);
+			if (promise) claims.set(promise.name, [...(claims.get(promise.name) ?? []), file]);
+		}
+	}
+	return { claims, unreadable: [...unreadable].sort() };
 }
 
 /** The registry's live promise a row names, by its name or an earlier one; none when retired or unknown. */

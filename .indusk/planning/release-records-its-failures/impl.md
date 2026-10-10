@@ -157,6 +157,7 @@ gate_policy: ask
 - [x] `lib/promises/vocabulary.ts`: `INCIDENT_SOURCES` gains `release`; `check.ts` accepts it
 - [x] `lib/promises/incidents.ts`: `recordTestFailure(registry, promise, failure)` writes `tests:` and `release:` evidence and the suspects, or extends the promise's open incident; through `ensurePromiseCarries` and `reopen.ts` (ADR D7). Every incident reader tolerates an incident with `tests:` and no `traces:` — grep the readers (`recorded`, `violationState`, `health.ts`, `status.ts`, the admin's `IncidentsTable.tsx`, the editor's health line) and add a case for each that reads `traces:`
 - [x] Suspects: `git log <green sha>..HEAD -- <covers>`; none, said so, when the green run has no `sha` (ADR D9)
+- [x] Shape (`apps/indusk-mcp/src/lib/release/settle.ts`) — extract the claim collection out of routeFailures into claimsOf(root, failed, promises); routeFailures was reading every failing file's rows and recording incidents in one body. Rule: Shape intra-unit: does this unit have one reason to change? A block doing two jobs wants to be two named things
 
 #### Build Phase 3 Verification
 
