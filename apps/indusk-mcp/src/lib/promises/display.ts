@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { readWorkflowSteps } from "../checks/steps.js";
 import { readConfig } from "../config.js";
 import { firstParentLogSync, type TrunkCommit } from "../git.js";
+import { DOCUMENT_LABELS } from "../workflow-types.js";
 import { planFolders } from "./plan-folder.js";
 
 /**
@@ -27,7 +28,7 @@ export const BUILT_IN_WORDS: Readonly<Record<string, string>> = {
 	cli: "CLI",
 	ui: "UI",
 	api: "API",
-	adr: "ADR",
+	adr: DOCUMENT_LABELS.adr,
 };
 
 /**
