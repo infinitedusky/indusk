@@ -7,6 +7,7 @@ import * as approve from "@/app/api/plans/approve/route";
 import * as build from "@/app/api/plans/build/route";
 import * as review from "@/app/api/plans/review/route";
 import * as plans from "@/app/api/plans/route";
+import * as promiseFix from "@/app/api/promises/[name]/fix/route";
 import * as events from "@/app/api/sessions/[id]/events/route";
 import * as reply from "@/app/api/sessions/[id]/reply/route";
 import * as say from "@/app/api/sessions/[id]/say/route";
@@ -36,6 +37,7 @@ const MODULES: Record<string, Record<string, unknown>> = {
   "plans/approve": approve,
   "plans/build": build,
   "plans/review": review,
+  "promises/[name]/fix": promiseFix,
   sessions,
   "sessions/[id]/events": events,
   "sessions/[id]/reply": reply,
