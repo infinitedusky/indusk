@@ -184,6 +184,18 @@
 			"types": "./dist/lib/promises/rows.d.ts",
 			"default": "./dist/lib/promises/rows.js"
 		},
+		"./promises/standing": {
+			"types": "./dist/lib/promises/standing.d.ts",
+			"default": "./dist/lib/promises/standing.js"
+		},
+		"./promises/proof": {
+			"types": "./dist/lib/promises/proof.d.ts",
+			"default": "./dist/lib/promises/proof.js"
+		},
+		"./promises/fix": {
+			"types": "./dist/lib/promises/fix.d.ts",
+			"default": "./dist/lib/promises/fix.js"
+		},
 		"./test-levels": {
 			"types": "./dist/lib/test-levels.d.ts",
 			"default": "./dist/lib/test-levels.js"
