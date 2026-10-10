@@ -21,7 +21,7 @@
 import { spawnSync } from "node:child_process";
 import { gitSync } from "../../lib/bookkeeping/git.js";
 import { codeKey, whyNoKey } from "../../lib/checks/key.js";
-import { findCoveringRun, recordGreenRun } from "../../lib/checks/record.js";
+import { findCoveringRun, headCommit, recordGreenRun } from "../../lib/checks/record.js";
 import { readWorkflowSteps } from "../../lib/checks/steps.js";
 import type { WorkflowSteps } from "../../lib/config.js";
 
@@ -61,7 +61,7 @@ export function checksSlow(checkout: string, opts: { unlessCovered?: boolean }):
 
 	const after = codeKey(root, steps);
 	if (before && after === before) {
-		recordGreenRun(root, { key: before, at, command, cwd: root });
+		recordGreenRun(root, { key: before, at, command, cwd: root, sha: headCommit(root) });
 		console.info("slow tests green: recorded for this code.");
 	} else {
 		console.info(

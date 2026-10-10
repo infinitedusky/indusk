@@ -1,5 +1,6 @@
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { gitSync } from "../bookkeeping/git.js";
 import { readJsonl } from "../bookkeeping/jsonl.js";
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
 
@@ -17,6 +18,8 @@ export interface GreenRun {
 	at: string;
 	command: string;
 	cwd: string;
+	/** The commit the run was made on (release-records-its-failures D9); absent on runs recorded before. */
+	sha?: string;
 }
 
 function recordPath(anyCheckout: string): string {
@@ -36,4 +39,10 @@ export function findCoveringRun(anyCheckout: string, key: string): GreenRun | nu
 			r.key === key && typeof r.at === "string" && typeof r.cwd === "string",
 	);
 	return runs.at(-1) ?? null;
+}
+
+/** The commit a checkout is on, for a green run's `sha` and the release record; `unknown` outside git. */
+export function headCommit(checkout: string): string {
+	const head = gitSync(checkout, "rev-parse", "HEAD");
+	return head.code === 0 ? head.out : "unknown";
 }
