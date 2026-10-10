@@ -1,7 +1,7 @@
 ---
 title: "Plan cockpit"
 date: 2026-10-10
-status: proposed
+status: accepted
 ---
 
 # Plan cockpit
