@@ -46,7 +46,7 @@ The editor names promises in words, plans by their title, and shows each plan's 
 | A5 | The panel's plan group and a broken card's plan read by the brief's title, the part before " — "; `vscode-extension` reads "VS Code extension" | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-plan-reads-by-its-title | apps/vscode-extension/src/core/names.test.ts |
 | A6 | A plan with no brief, or a brief with no title, still reads by its folder name | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A7 | Each health line names each promise's words, its plan's title and its plan's dates, so the editor names plans without reading plan files | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-plan-reads-by-its-title, promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/__tests__/promise-health-names.test.ts |
-| A8 | How a promise or plan is named for a person, and a plan's dates, are defined once, in the package; a second definition in the admin or the extension fails the build | Test Phase 1 | Build Phase 1 | planned | unit | promise: display-names-are-defined-once | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
+| A8 | How a promise or plan is named for a person, and a plan's dates, are defined once, in the package; a second definition in the admin or the extension fails the build | Test Phase 1 | Build Phase 1 | written | unit | promise: display-names-are-defined-once | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
 | A9 | The marker at the end of a code line still shows the promise's handle | Build Phase 2 | Build Phase 2 | planned | unit | a regression guard over a decision in the brief: the marker sits beside the token that spells the handle | apps/vscode-extension/src/core/names.test.ts |
 | A10 | On the dusk project in VS Code, the panel's groups read by plan titles with their dates, and its cards and rows by promise words | Build Phase 2 | Build Phase 2 | planned | live check | the whole story once, against the real editor | apps/vscode-extension/e2e/live.e2e.test.ts |
 | A11 | A plan's group in the panel shows the date it started and the date it landed | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
@@ -59,8 +59,9 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 **Goal**: author the one row whose subject can be reached today without an import, and register the rest with their bodies.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create display-names`; made by `indusk plans start` on 2026-10-09 at `dusk-worktrees/display-names`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
-- [ ] A8 in `apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts`: reads the sources as files; `lib/promises/display.ts` defines `promiseWords`, `planTitle` and `planDates`; no file under `apps/indusk-admin/src` or `apps/vscode-extension/src` defines a function by those names or turns a handle into words with its own `replace(/-/g, " ")`. RED today: the module does not exist
+- [x] Create/confirm this plan's worktree (`indusk worktree create display-names`; made by `indusk plans start` on 2026-10-09 at `dusk-worktrees/display-names`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] A8 in `apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts`: reads the sources as files; `lib/promises/display.ts` defines `promiseWords`, `planTitle` and `planDates`; no file under `apps/indusk-admin/src` or `apps/vscode-extension/src` defines a function by those names or turns a handle into words with its own `replace(/-/g, " ")`. RED today: the module does not exist
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Deferred to Build Phase 1
 
@@ -99,7 +100,7 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 #### Test Phase 1 Verification
 
-- [ ] A8 is authored and fails on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/display-names-single-definition.test.ts`); every deferred body above reviewed: will it compile at the phase it names, and does it assert what it claims?
+- [x] A8 is authored and fails on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/display-names-single-definition.test.ts`); every deferred body above reviewed: will it compile at the phase it names, and does it assert what it claims? — 2026-10-10: A8 red on its own assertion (1 failed, 1 passed of 2: `expected '' to match /export function promiseWords\(/`, no load error); the other 7 deferred rows' bodies reviewed — each names symbols Build Phase 1 introduces and compiles then (`healthLine`'s fourth argument is added there), A1/A4/A5/A9 read fields that exist after Build Phase 1; tsc and biome clean.
 
 ### Build Phase 1: Names and dates in the package, on the line
 
