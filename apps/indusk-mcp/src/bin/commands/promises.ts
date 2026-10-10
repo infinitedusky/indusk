@@ -450,6 +450,7 @@ export async function promisesHealth(
 		everyMs = seconds * 1000;
 	}
 	const { healthLine, readHealth } = await import("../../lib/promises/health.js");
+	const { readHealthNames } = await import("../../lib/promises/display.js");
 	const readReads =
 		deps.readHealth ?? ((root: string, reg: Registry) => readHealth(root, reg, { cacheMs: 0 }));
 	const write = deps.write ?? ((text: string) => process.stdout.write(text));
@@ -469,7 +470,8 @@ export async function promisesHealth(
 	const once = async () => {
 		const current = reread();
 		const reads = await readReads(projectRoot, current);
-		write(`${JSON.stringify(healthLine(current, reads, now()))}\n`);
+		const names = readHealthNames(projectRoot);
+		write(`${JSON.stringify(healthLine(current, reads, now(), names))}\n`);
 	};
 	await once();
 	if (everyMs === null) return;

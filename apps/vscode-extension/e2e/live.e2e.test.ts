@@ -31,6 +31,10 @@ const LIVE = process.env.INDUSK_LIVE_EDITOR === "1";
 const VSCODE =
 	process.env.INDUSK_LIVE_EDITOR_APP ?? "/Applications/Visual Studio Code.app/Contents/MacOS/Code";
 
+// display-names A10: `INDUSK_LIVE_A10=1` runs the probe's names check alone, on
+// `INDUSK_LIVE_EDITOR_PROJECT` (the dusk project), with no demo app.
+const NAMES = process.env.INDUSK_LIVE_A10 === "1";
+
 describe.skipIf(!LIVE)("live — the editor on the demo app", () => {
 	it("A5, A11, A14 — the marker, the break within ten seconds, and Fix with Claude", async () => {
 		const project = process.env.INDUSK_LIVE_EDITOR_PROJECT as string;
@@ -68,6 +72,14 @@ describe.skipIf(!LIVE)("live — the editor on the demo app", () => {
 		});
 		const r = JSON.parse(readFileSync(out, "utf-8"));
 		console.info(`live editor: ${JSON.stringify(r)}`);
+		if (NAMES) {
+			expect(r.a10?.ok, "A10 — the panel read").toBe(true);
+			expect(r.a10.titled, "A10 — groups read by plan titles").toBeGreaterThan(0);
+			expect(r.a10.dated, "A10 — groups carry their start date").toBeGreaterThan(0);
+			expect(r.a10.shipped, "A10 — a shipped plan names its release").toBeGreaterThan(0);
+			expect(r.a10.inWords, "A10 — every card and row reads in words").toBe(r.a10.promises);
+			return;
+		}
 		expect(r.a5?.text, "A5 — the promise's marker on its line").toMatch(
 			/^a-held-seat-is-released-in-time · /,
 		);

@@ -13,5 +13,11 @@ apply to this folder only.
   (`maintenanceIncidentIds`); `watch` exits 1 for, and retries every run,
   any incident left without its owner's phase. Evidence: `traces:` or
   `tests:`+`release:` (a release's incident is written by `test-incident.ts`, never imported by `release/`); readers take both. — see `/reference/cli/promises`
-- **`recordBreaks` commits on a trunk only**, after the inbox and heard rows;
+- **`recordBreaks` is the one writer, run by the admin unasked; it commits on a trunk only**, after the inbox and heard rows;
   what it could not commit waits in the home's `pending-commit.json`. — see `/decisions/incident-recording`
+- **A plan's dates fall back for what older plans never wrote** (`display.ts`):
+  an archived plan is landed on its retrospective's `date` (else its impl's),
+  and `started` is the first lifecycle document's `date` when there is no brief.
+  — see `/reference/cli/promises`
+- **The release that shipped a plan is the first `chore(release):` commit after its landing, never a changelog pattern; a plan's landing date has one function** (`landedDate` in `display.ts`; `closedAt` delegates) — a second reader of the "Landed on main at" line fails `display-names-single-definition.test.ts`. The trunk is read by one `git log` per `readHealthNames` call; the changelog is only the no-release-commits fallback. — see `/reference/cli/promises`
+- **`display.ts` reads a plan document's frontmatter through `gray-matter`, never its own pattern** — the plan page and the editor must name one plan one way; a date YAML parses to a `Date` is turned back into `YYYY-MM-DD`. — see `/reference/cli/promises`

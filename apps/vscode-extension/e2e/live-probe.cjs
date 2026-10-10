@@ -8,7 +8,49 @@ const vscode = require("vscode");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const PROMISE = "a-held-seat-is-released-in-time";
 
+// A10 (display-names): on the dusk project, the panel's groups read by plan
+// titles with their dates, and its cards and rows by promise words. Runs alone,
+// without the demo app, when INDUSK_LIVE_A10=1.
+async function names(root) {
+	const panel = () => vscode.commands.executeCommand("indusk.test.panel");
+	let model = null;
+	for (let i = 0; i < 120; i++) {
+		const p = await panel();
+		if (p?.model && !p.model.notReading && p.model.groups.length > 0) {
+			model = p.model;
+			break;
+		}
+		await sleep(500);
+	}
+	if (!model) return { ok: false, reason: "no groups in the panel" };
+	const promises = [...model.broken, ...model.groups.flatMap((g) => g.promises)];
+	const groups = model.groups.map((g) => ({
+		plan: g.plan,
+		planTitle: g.planTitle,
+		planWhen: g.planWhen,
+	}));
+	return {
+		ok: true,
+		project: path.basename(root),
+		groups: groups.length,
+		// a title, not the folder, wherever the line carried one; dates on a group that has them
+		titled: groups.filter((g) => g.planTitle && g.planTitle !== g.plan).length,
+		dated: groups.filter((g) => /^started \d{4}-\d{2}-\d{2}/.test(g.planWhen)).length,
+		shipped: groups.filter((g) => /released \d+\.\d+\.\d+ \(/.test(g.planWhen)).length,
+		promises: promises.length,
+		// words, not the handle, on every card and row
+		inWords: promises.filter((p) => p.title && p.title !== p.name && !p.title.includes("-")).length,
+		sample: groups.slice(0, 5),
+		sampleTitles: promises.slice(0, 3).map((p) => [p.name, p.title]),
+	};
+}
+
 exports.run = async () => {
+	if (process.env.INDUSK_LIVE_A10 === "1") {
+		const root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+		fs.writeFileSync(process.env.LIVE_OUT, JSON.stringify({ a10: await names(root) }));
+		return;
+	}
 	const out = { a5: null, a11: null, a14: null, a25: null, a28: null };
 	const root = vscode.workspace.workspaceFolders[0].uri.fsPath;
 	const doc = await vscode.workspace.openTextDocument(path.join(root, "src", "telemetry.ts"));

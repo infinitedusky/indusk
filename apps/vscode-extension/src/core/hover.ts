@@ -1,4 +1,4 @@
-import { promiseOf, sourcesInOrder, stamp, stateIn, type View } from "./view.js";
+import { promiseOf, sourcesInOrder, stamp, stateIn, titleOf, type View } from "./view.js";
 
 /**
  * The hover on a marked line: the promise's sentence, its state for each
@@ -8,7 +8,7 @@ export function hover(promise: string, view: View | null): string {
 	if (!view) return `**${promise}** — not reading: no promise health has arrived yet.`;
 	const p = promiseOf(view, promise);
 	if (!p) return `**${promise}** — not in this project.`;
-	const lines = [`**${promise}** — ${asText(p.statement)}`, ""];
+	const lines = [`**${asText(titleOf(view, promise))}** — ${asText(p.statement)}`, ""];
 	if (p.kind !== "behaviour") {
 		lines.push(`Watched by the tests: ${asText(p.tests.join(", ")) || "none named"}.`);
 		return lines.join("\n");

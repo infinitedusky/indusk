@@ -1,10 +1,10 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import matter from "gray-matter";
 import { getPlanningDir } from "../config.js";
 import type { MonitorWindow } from "../lifecycle.js";
 import { type PlanSummary, parsePlan } from "../plan-parser.js";
 import { getQuietWindowDays } from "./config.js";
+import { landedDate } from "./display.js";
 import { recorded } from "./incidents.js";
 import { type Registry, readPromises } from "./registry.js";
 import { openMaintenancePhasesIn } from "./reopen.js";
@@ -35,16 +35,10 @@ export interface AfterClose {
 
 const DAY_MS = 86_400_000;
 
-/** When the plan closed: its retrospective's landing date, else its `date`. Null without a retrospective. */
+/** When the plan closed: the one landing date `display.ts` works out (the retrospective's landing line, else its `date`, else the impl's). */
 export function closedAt(planDir: string): Date | null {
-	const path = join(planDir, "retrospective.md");
-	if (!existsSync(path)) return null;
-	const text = readFileSync(path, "utf-8");
-	const landed = /Landed on main at[^\n]*?(\d{4}-\d{2}-\d{2})/.exec(text)?.[1];
-	if (landed) return new Date(`${landed}T00:00:00Z`);
-	const date = (matter(text).data as { date?: unknown }).date;
-	const d = date instanceof Date ? date : typeof date === "string" ? new Date(date) : null;
-	return d && !Number.isNaN(d.getTime()) ? d : null;
+	const landed = landedDate(planDir, true);
+	return landed ? new Date(`${landed}T00:00:00Z`) : null;
 }
 
 function registryOf(projectRoot: string): Registry | null {

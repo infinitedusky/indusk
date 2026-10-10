@@ -72,10 +72,20 @@ opening a file. Its top line names the project: each window shows the promises
 of the folder it has open, so a dusk window lists dusk's promises, not the
 demo's.
 
+- **Promises read as words, plans by their title.** `a-break-reaches-the-editor`
+  shows as "A break reaches the editor", in the panel, the activity and the
+  hover; the marker at the end of a code line keeps the handle, which is what
+  the token on that line spells. A plan is named by its brief's title, the part
+  before " — ". Product names keep their capitals ("InDusk", "VS Code"); a
+  project adds its own under `display.words` in `.indusk/config.json`.
 - **Broken promises come first, as cards**, the latest break at the top, each
   with its plan, the source it broke in, when, and its symptom. A card's
   **Fix with Claude** button starts the same fix as the light bulb.
-- **The rest are grouped by the plan that owns them.** The plan whose promises
+- **The rest are grouped by the plan that owns them**, each group headed by
+  the plan's title and when it started, landed and shipped: "started 2026-10-08,
+  landed 2026-10-09, released 1.68.0 (2026-10-09)", or "not released yet" for a
+  plan that landed in no release, or only the start date while it is in flight.
+  The plan whose promises
   ran most recently comes first; within a plan, the most recently run promise
   comes first. Plans and promises that have never run, such as the ones the
   tests watch, follow by name.

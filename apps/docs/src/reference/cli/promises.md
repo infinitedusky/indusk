@@ -581,6 +581,38 @@ sites and the `plan` that owns it) and `runs`: the newest recorded runs across s
 at most fifty, from the same read as the state. A run carries no symptom; the
 store keeps a run's time, outcome, trace and environment only.
 
+Each promise also carries the words a window shows, so none reads plan files or
+turns a handle into words itself:
+
+- `title`: the handle as a sentence start, "A Fly deploy is one command" for
+  `a-fly-deploy-is-one-command`. Product names keep their capitals (InDusk,
+  Fly, Jaeger, Claude, VS Code, OTel, MCP, CLI, UI, API, ADR).
+- `planTitle`: the owning plan's brief title up to " — ", or the folder name
+  when the brief has none.
+- `planDates`: `{ started, landed, released }`. `started` is the brief's
+  `date`, else the first of the plan's `research.md`, `test-plan.md`, `adr.md`
+  and `impl.md` that has one (a spike has no brief). `landed` is the date on the
+  retrospective's `Landed on main at <sha>, <date>.` line; a plan in `archive/`
+  with no such line (every plan retired before it was written) landed on its
+  retrospective's `date`, else its impl's. `released` is the `version` and
+  `date` of the first `chore(release): <version>` commit on the trunk's
+  first-parent line after the plan's landing (the commit the retrospective
+  names, else its `Merge branch 'plan/<name>'` commit, else the first release
+  dated on or after the landed date). Only a project with no release commits
+  falls back to the earliest changelog section (the file
+  `workflow.steps.release.changelog` names) whose entry names the plan in
+  parentheses. Each is `null` until it has happened, so a landed plan in no
+  release reads "not released yet".
+
+A project adds product words, or respells one, in `.indusk/config.json`; the
+lowercase word maps to its spelling and is merged over the built-in list:
+
+```json
+{ "display": { "words": { "seatholds": "SeatHolds" } } }
+```
+
+The rule is the package's `promises/display`, which the admin can read too.
+
 `state` is one of `red`, `fixed`, `green`, `unverified`, `amber` (known
 violated) and `grey` (retired); state and structure promises, which telemetry
 does not watch, have no row. A source that cannot be read, or reads watcher

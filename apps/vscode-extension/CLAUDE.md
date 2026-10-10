@@ -13,6 +13,9 @@ Loaded by Claude Code when a file under `apps/vscode-extension/` is read.
   `promises/health` is the one rule, the CLI streams it (`promises health --json`);
   this app maps its states to words.
   (`promise-health-single-definition.test.ts`)
+- **Names and dates come from the line** (`title`, `planTitle`, `planDates`),
+  never made here: the editor words a date, it never turns a handle into words.
+  The handle stays on the marker, the click and the fix. (`display-names-single-definition.test.ts`)
 - **Tokens come from the package's grammar** (`@infinitedusky/indusk-mcp/tokens`),
   never a second pattern.
 - **Text from spans is untrusted.** A symptom, trace id or source reason was

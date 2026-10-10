@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import { type Activity, activityLines, addRuns, type Run, startActivity } from "./core/activity.js";
 import { panelModel } from "./core/panel.js";
 import { panelBody, panelPage } from "./core/panel-html.js";
-import type { View } from "./core/view.js";
+import { titleOf, type View } from "./core/view.js";
 
 /**
  * The promises panel in VS Code (vscode-extension ADR decision 7). The core
@@ -37,7 +37,7 @@ export function registerPromisesPanel(
 	};
 	const current = async () => ({
 		model: panelModel(deps.view(), await readListed()),
-		activity: activityLines(activity, localTime),
+		activity: activityLines(activity, localTime, (name) => titleOf(deps.view(), name)),
 		runs: activity.runs,
 	});
 	const render = async () => {
