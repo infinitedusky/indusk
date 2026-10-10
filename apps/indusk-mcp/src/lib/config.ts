@@ -94,6 +94,8 @@ export interface InduskConfig {
 		tiers?: { strong?: string; med?: string; weak?: string; baby?: string };
 		steps?: WorkflowSteps;
 	};
+	/** Product words that keep their capitals when a promise reads as words (display-names). */
+	display?: { words?: Record<string, string> };
 	verify: {
 		linter?: VerifyToolConfig;
 		testRunner?: VerifyToolConfig;

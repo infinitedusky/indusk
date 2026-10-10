@@ -152,6 +152,10 @@
 			"types": "./dist/lib/promises/store.d.ts",
 			"default": "./dist/lib/promises/store.js"
 		},
+		"./promises/display": {
+			"types": "./dist/lib/promises/display.d.ts",
+			"default": "./dist/lib/promises/display.js"
+		},
 		"./promises/health": {
 			"types": "./dist/lib/promises/health.d.ts",
 			"default": "./dist/lib/promises/health.js"

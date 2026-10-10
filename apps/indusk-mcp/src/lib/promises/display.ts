@@ -1,0 +1,144 @@
+import { existsSync, readFileSync } from "node:fs";
+import { basename, join } from "node:path";
+import { readWorkflowSteps } from "../checks/steps.js";
+import { readConfig } from "../config.js";
+import { planFolders } from "./plan-folder.js";
+
+/**
+ * How a promise or a plan is named for a person, and a plan's dates — worked
+ * out here once (display-names ADR D1–D6). The health line carries the result,
+ * so the editor never turns a handle into words itself and the admin reads
+ * this module rather than writing a third rule.
+ *
+ * promise: display-names-are-defined-once
+ */
+
+/** Product names that keep their capitals when a handle becomes words. */
+export const BUILT_IN_WORDS: Readonly<Record<string, string>> = {
+	indusk: "InDusk",
+	fly: "Fly",
+	jaeger: "Jaeger",
+	claude: "Claude",
+	vscode: "VS Code",
+	otel: "OTel",
+	mcp: "MCP",
+	cli: "CLI",
+	ui: "UI",
+	api: "API",
+	adr: "ADR",
+};
+
+/** A handle in words: hyphens as spaces, the first letter capital, product words spelled their way. */
+export function promiseWords(name: string, words: Record<string, string> = {}): string {
+	const spelled = { ...BUILT_IN_WORDS, ...words };
+	const parts = name.split("-").filter((w) => w !== "");
+	const out = parts.map((w) => spelled[w.toLowerCase()] ?? w);
+	const first = out[0];
+	if (first === undefined) return name;
+	if (spelled[parts[0].toLowerCase()] === undefined) {
+		out[0] = first.charAt(0).toUpperCase() + first.slice(1);
+	}
+	return out.join(" ");
+}
+
+/** A plan's title: the brief's, up to " — "; its folder name when there is none. */
+export function planTitle(title: string | undefined, folder: string): string {
+	const short = title?.split(" — ")[0]?.trim();
+	return short ? short : folder;
+}
+
+/** When a plan started, landed and shipped; `null` for what has not happened. */
+export interface PlanDates {
+	started: string | null;
+	landed: string | null;
+	released: { version: string; date: string } | null;
+}
+
+const DATE = /\d{4}-\d{2}-\d{2}/;
+
+function read(path: string): string | null {
+	return existsSync(path) ? readFileSync(path, "utf-8") : null;
+}
+
+/** A brief's frontmatter value for `key`, unquoted. */
+function frontmatter(text: string | null, key: string): string | undefined {
+	const block = text?.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1];
+	const line = block?.match(new RegExp(`^${key}:\\s*(.*)$`, "m"))?.[1];
+	return line?.trim().replace(/^["']|["']$/g, "") || undefined;
+}
+
+/** The earliest changelog release that names `plan` in parentheses, as every entry does. */
+function releaseOf(plan: string, changelog: string): PlanDates["released"] {
+	const escaped = plan.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const names = new RegExp(`\\((?:[^)\\n]*,\\s*)?${escaped}(?:\\s*,[^)\\n]*)?\\)`);
+	let found: PlanDates["released"] = null;
+	// Newest first in the file, so the last match read is the earliest release.
+	for (const section of changelog.split(/^## /m).slice(1)) {
+		const head = section.match(/^\[([^\]]+)\]\s*—\s*(\d{4}-\d{2}-\d{2})/);
+		if (head && names.test(section)) found = { version: head[1], date: head[2] };
+	}
+	return found;
+}
+
+/**
+ * A plan's dates from three facts already on disk: the brief's `date`, the
+ * retrospective's `Landed on main at <sha>, <date>.` line, and the changelog
+ * (its text) — the earliest release naming the plan.
+ */
+export function planDates(planDir: string, changelog?: string): PlanDates {
+	const started = frontmatter(read(join(planDir, "brief.md")), "date")?.match(DATE)?.[0] ?? null;
+	const landed =
+		read(join(planDir, "retrospective.md"))?.match(
+			/Landed on main at \S+?,\s*(\d{4}-\d{2}-\d{2})/,
+		)?.[1] ?? null;
+	const released = landed && changelog ? releaseOf(basename(planDir), changelog) : null;
+	return { started, landed, released };
+}
+
+/** `display.words` from the project's config, merged over the built-in words. */
+export function displayWords(projectRoot: string): Record<string, string> {
+	let configured: unknown;
+	try {
+		configured = (readConfig(projectRoot) as { display?: { words?: unknown } } | null)?.display
+			?.words;
+	} catch {
+		configured = undefined;
+	}
+	const own: Record<string, string> = {};
+	if (typeof configured === "object" && configured !== null) {
+		for (const [word, spelling] of Object.entries(configured)) {
+			if (typeof spelling === "string" && spelling !== "") own[word.toLowerCase()] = spelling;
+		}
+	}
+	return { ...BUILT_IN_WORDS, ...own };
+}
+
+/** What `healthLine` needs to name things: read once per line from the plan folders, the changelog and the config. */
+export interface HealthNames {
+	planTitles: Record<string, string>;
+	planDates: Record<string, PlanDates>;
+	words: Record<string, string>;
+}
+
+/** The names for a project, from its plan folders (active, then archived) and its declared changelog. */
+export function readHealthNames(projectRoot: string): HealthNames {
+	let changelogPath: string | undefined;
+	try {
+		changelogPath = readWorkflowSteps(projectRoot).release?.changelog;
+	} catch {
+		changelogPath = undefined;
+	}
+	const changelog = changelogPath
+		? (read(join(projectRoot, changelogPath)) ?? undefined)
+		: undefined;
+	const names: HealthNames = { planTitles: {}, planDates: {}, words: displayWords(projectRoot) };
+	for (const folder of planFolders(projectRoot)) {
+		if (folder.plan in names.planTitles) continue;
+		names.planTitles[folder.plan] = planTitle(
+			frontmatter(read(join(folder.dir, "brief.md")), "title"),
+			folder.plan,
+		);
+		names.planDates[folder.plan] = planDates(folder.dir, changelog);
+	}
+	return names;
+}

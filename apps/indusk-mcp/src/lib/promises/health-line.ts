@@ -5,6 +5,7 @@
  * rule with the admin; re-exported from `health.ts`, so the
  * `./promises/health` subpath is unchanged.
  */
+import { type HealthNames, type PlanDates, promiseWords } from "./display.js";
 import {
 	type HealthRun,
 	healthOf,
@@ -77,6 +78,12 @@ export interface HealthLine {
 		sites: string[];
 		/** The plan that owns the promise. */
 		plan: string;
+		/** The handle in words (`promises/display`), so a window never turns one into words itself. */
+		title: string;
+		/** The owning plan's brief title, or its folder when it has none. */
+		planTitle: string;
+		/** When the owning plan started, landed and shipped. */
+		planDates: PlanDates;
 	}[];
 	sources: (
 		| { name: SourceName; label: string; ok: true; rows: HealthLineRow[] }
@@ -91,7 +98,12 @@ export interface HealthLine {
  * returns, by the same rule the admin's chips use — the editor reads this, so
  * it cannot disagree with the admin (vscode-extension A6).
  */
-export function healthLine(registry: Registry, reads: SourceHealthRead[], now: Date): HealthLine {
+export function healthLine(
+	registry: Registry,
+	reads: SourceHealthRead[],
+	now: Date,
+	names?: HealthNames,
+): HealthLine {
 	return {
 		at: now.toISOString(),
 		promises: registry.promises
@@ -103,6 +115,9 @@ export function healthLine(registry: Registry, reads: SourceHealthRead[], now: D
 				tests: p.tests ?? [],
 				sites: p.sites ?? [],
 				plan: p.owner,
+				title: promiseWords(p.name, names?.words),
+				planTitle: names?.planTitles[p.owner] ?? p.owner,
+				planDates: names?.planDates[p.owner] ?? { started: null, landed: null, released: null },
 			})),
 		sources: reads.map((read) => {
 			if (!read.ok) {

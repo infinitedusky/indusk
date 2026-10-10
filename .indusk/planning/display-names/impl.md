@@ -106,9 +106,9 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 **Goal**: one module that names promises and plans and dates plans; the health line carries the result.
 
-- [ ] `apps/indusk-mcp/src/lib/promises/display.ts`: `promiseWords(name, words?)`, `planTitle(title, folder)`, `planDates(planDir, changelog)`, `BUILT_IN_WORDS`; exported as `./promises/display` in `package.json`
-- [ ] `display.words` read from `.indusk/config.json`, merged over the built-in words
-- [ ] `healthLine(registry, reads, now, names?)`: each promise gains `title`, `planTitle` and `planDates`; `promises health` builds `names` each line from the plan folders (active and archived) and the project's declared changelog (`workflow.steps`)
+- [x] `apps/indusk-mcp/src/lib/promises/display.ts`: `promiseWords(name, words?)`, `planTitle(title, folder)`, `planDates(planDir, changelog)`, `BUILT_IN_WORDS`; exported as `./promises/display` in `package.json`
+- [x] `display.words` read from `.indusk/config.json`, merged over the built-in words
+- [x] `healthLine(registry, reads, now, names?)`: each promise gains `title`, `planTitle` and `planDates`; `promises health` builds `names` each line from the plan folders (active and archived) and the project's declared changelog (`workflow.steps`)
 
 #### Build Phase 1 Verification
 
