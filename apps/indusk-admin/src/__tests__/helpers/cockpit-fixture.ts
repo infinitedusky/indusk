@@ -515,3 +515,33 @@ export function timelineStripMock() {
     DEFAULT_WINDOW: "7d",
   };
 }
+
+/**
+ * `promises/standing` reads the registry and every plan's rows from disk as it
+ * loads; a browser test stands in with the same `readStanding`, answered from
+ * the fixture: the two broken promises broken, the declared one declared,
+ * the rest enforced, each with one passing test row.
+ */
+export function standingMock() {
+  return {
+    __esModule: true,
+    readStanding: async () =>
+      PROMISES.map((entry) => {
+        const broken = (BROKEN as readonly string[]).includes(entry.name);
+        const standing = broken
+          ? "broken"
+          : entry.state === "declared"
+            ? "declared"
+            : "enforced";
+        const total = standing === "declared" ? 0 : 1;
+        return {
+          entry,
+          rows: [],
+          standing,
+          health: {},
+          tests: { passing: total, total },
+          lastActivity: LAST_SEEN[entry.name] ?? null,
+        };
+      }),
+  };
+}

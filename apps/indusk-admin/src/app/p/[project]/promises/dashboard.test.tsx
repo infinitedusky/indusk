@@ -60,6 +60,9 @@ vi.mock("@/lib/promises-reader", async () =>
 vi.mock("@infinitedusky/indusk-mcp/promises/health", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).healthMock(),
 );
+vi.mock("@infinitedusky/indusk-mcp/promises/standing", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).standingMock(),
+);
 vi.mock("@infinitedusky/indusk-mcp/promises/display", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).displayMock(),
 );

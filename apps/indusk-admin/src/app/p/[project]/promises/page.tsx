@@ -1,3 +1,4 @@
+import { readHealthNames } from "@infinitedusky/indusk-mcp/promises/display";
 import {
   alarmRead,
   healthRows,
@@ -8,14 +9,17 @@ import {
   alarmSource,
   type SourceName,
 } from "@infinitedusky/indusk-mcp/promises/sources";
+import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import {
+  PromisesDashboard,
   PromisesEmpty,
   PromisesProblems,
-  PromisesTable,
 } from "@/components/Promises";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
+import { readPlanHierarchy } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
+import { buildRows, parseQuery } from "@/lib/promise-dashboard";
 import { readTimelineView } from "@/lib/promise-timeline";
 import {
   readProjectHeard,
@@ -30,17 +34,28 @@ const TIMELINE_TIMEOUT_MS = 2_000;
 
 interface PromisesRouteProps {
   params: Promise<{ project: string }>;
-  /** `?window=24h|7d|30d` and `?source=local|production` (promise-timeline). */
-  searchParams?: Promise<{ window?: string; source?: string }>;
+  /**
+   * `?window=24h|7d|30d` and `?source=local|production` (promise-timeline);
+   * `?group=state|plan|path`, `?sort=activity|name|plan` and `?q=<text>` (the
+   * dashboard, plan-cockpit ADR decision 5).
+   */
+  searchParams?: Promise<{
+    window?: string;
+    source?: string;
+    group?: string;
+    sort?: string;
+    q?: string;
+  }>;
 }
 
 /**
- * Per-project Promises page — `/p/{project}/promises` (day-promises, ADR D8).
+ * Per-project Promises dashboard — `/p/{project}/promises` (day-promises, ADR
+ * D8; plan-cockpit, ADR decision 5).
  *
- * Reads the registry at request time through the one reader and renders
- * declared state, with observed health beside each behaviour promise from the
- * local Jaeger (day-monitor). A malformed entry is an error block naming the
- * file and the field, with every well-formed entry still listed beneath; no
+ * Every promise with where it stands, from the package's `readStanding` — one
+ * health read shared with it — grouped, sorted and filtered by the URL's
+ * query, broken first. A malformed entry is an error block naming the file
+ * and the field, with every well-formed entry still listed beneath; no
  * registry at all is an empty state that says how to create one.
  *
  * Live like the plan page (day-always-on, ADR D8): a violation arriving from
@@ -117,6 +132,18 @@ export default async function PerProjectPromisesPage({
           timeoutMs: TIMELINE_TIMEOUT_MS,
         })
       : undefined;
+  const standing = reads
+    ? await readStanding(projectPath, { health: reads })
+    : [];
+  const planNames = readHealthNames(projectPath);
+  const declarations = readPlanHierarchy(projectPath);
+  const rows = buildRows(standing, {
+    planTitles: planNames.planTitles,
+    words: planNames.words,
+    declarations,
+    heard: readProjectHeard(projectPath).rows,
+    now: Date.now(),
+  });
   return (
     <div className="flex flex-col gap-4">
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
@@ -124,14 +151,16 @@ export default async function PerProjectPromisesPage({
         <PromisesProblems problems={read.problems} />
       )}
       {registry && (
-        <PromisesTable
+        <PromisesDashboard
+          rows={rows}
+          query={parseQuery(query)}
+          pathOrder={Object.keys(declarations.subplans)}
           promises={registry.promises}
           incidents={registry.incidents}
+          path={`/p/${project}/promises`}
           planHrefPrefix={`/p/${project}/plan/`}
           observed={observed}
           timelines={timelines}
-          timelinePath={`/p/${project}/promises`}
-          heard={readProjectHeard(projectPath)}
         />
       )}
     </div>
