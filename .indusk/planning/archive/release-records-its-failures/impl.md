@@ -8,6 +8,8 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+accepted: 2026-10-10T16:06:28.925Z
+accepted_by: person
 ---
 
 # release-records-its-failures
