@@ -2,7 +2,7 @@ import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import { appendInbox } from "../promises/inbox.js";
 import { commitRecorded } from "../promises/record-commit.js";
 import { maintenanceHeadingName } from "../promises/reopen.js";
-import type { RoutedIncident } from "./settle.js";
+import type { RoutedIncident } from "./route.js";
 
 /**
  * What a release does with an incident it opened or extended, as the recorder

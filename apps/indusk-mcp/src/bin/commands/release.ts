@@ -20,8 +20,9 @@ import { readWorkflowSteps } from "../../lib/checks/steps.js";
 import type { WorkflowSteps } from "../../lib/config.js";
 import { announceIncidents } from "../../lib/release/announce.js";
 import { recordOf, recordRelease, releaseVersion } from "../../lib/release/record.js";
+import { type Routed, routeFailures } from "../../lib/release/route.js";
 import { type ReleaseOutcome, runRelease } from "../../lib/release/run.js";
-import { type Routed, routeFailures, settleFromReport } from "../../lib/release/settle.js";
+import { settleFromReport } from "../../lib/release/settle.js";
 import { suspectsSince } from "../../lib/release/suspects.js";
 
 export async function releaseCommand(checkout: string): Promise<number> {
