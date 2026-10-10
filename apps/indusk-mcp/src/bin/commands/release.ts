@@ -60,26 +60,11 @@ export async function releaseCommand(checkout: string): Promise<number> {
 	const commit = headCommit(root);
 	// A claimed failure becomes an incident on its promise (ADR D6, D7); the
 	// rest stay unrouted for the bugfix plan. Routing never changes the outcome.
-	let routing: string | undefined;
-	let routed: Routed;
-	try {
-		routed = await routeFailures(root, outcome.recorded, {
-			version,
-			commit,
-			now,
-			suspects: suspectsSince(root, steps, latestGreenRun(root)),
-		});
-	} catch (err) {
-		// The release has already happened; its outcome and its record do not wait on routing.
-		routing = err instanceof Error ? err.message : String(err);
-		routed = {
-			failed: outcome.recorded.failed,
-			incidents: [],
-			plans: [],
-			planProblems: [],
-			unreadable: [],
-		};
-	}
+	const { routed, routing } = await routeWithoutLosingTheRelease(root, steps, outcome, {
+		version,
+		commit,
+		now,
+	});
 	outcome.recorded = { ...outcome.recorded, failed: routed.failed };
 	recordRelease(root, recordOf(outcome, { version, commit, at: now, routing }));
 	try {
@@ -93,6 +78,34 @@ export async function releaseCommand(checkout: string): Promise<number> {
 	if (routing !== undefined) console.error(`no failure routed: ${routing}`);
 	for (const line of routingProblems(routed)) console.error(line);
 	return outcome.done ? 0 : 1;
+}
+
+/**
+ * Route the failures; a throw is returned as the reason, with every failure
+ * left unrouted — the release has already happened, so its outcome and its
+ * record do not wait on routing.
+ */
+async function routeWithoutLosingTheRelease(
+	root: string,
+	steps: WorkflowSteps,
+	outcome: ReleaseOutcome,
+	facts: { version: string; commit: string; now: Date },
+): Promise<{ routed: Routed; routing?: string }> {
+	try {
+		const suspects = suspectsSince(root, steps, latestGreenRun(root));
+		return { routed: await routeFailures(root, outcome.recorded, { ...facts, suspects }) };
+	} catch (err) {
+		return {
+			routing: err instanceof Error ? err.message : String(err),
+			routed: {
+				failed: outcome.recorded.failed,
+				incidents: [],
+				plans: [],
+				planProblems: [],
+				unreadable: [],
+			},
+		};
+	}
 }
 
 /** What routing could not do, said rather than swallowed: an owner not reopened, an impl not read, a registry refused. */

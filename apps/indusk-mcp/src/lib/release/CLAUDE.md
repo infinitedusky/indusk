@@ -15,3 +15,9 @@ Loaded by Claude Code when a file under `src/lib/release/` is read
   `tests:` + `release:`), committed on the trunk and put in the break inbox like
   the recorder's; anything else is a draft bugfix plan `fix-<stem>` on its own
   branch, reused while open — never a brief written on the trunk.
+- **A report older than the slow run is not this run's, and is never read**
+  (`failedFiles(…, since)`; never deleted, a broad glob would reach a project's
+  own files). **A file name reaches a shell only single-quoted.** **Routing
+  never loses the release:** a throw is `no failure routed: …` on stderr and
+  `routing` on the record. **A bugfix plan's name never collides with an open
+  plan for another file or an archived one** (`bugfix-plan.ts`).
