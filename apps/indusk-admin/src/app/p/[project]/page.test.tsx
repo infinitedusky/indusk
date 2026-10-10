@@ -24,6 +24,7 @@ vi.mock("next/link", () => {
 vi.mock("next/navigation", () => ({
   __esModule: true,
   useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/p/test-project",
   notFound: () => {
     throw new Error("not found");
   },
@@ -71,6 +72,17 @@ vi.mock("@infinitedusky/indusk-mcp/promises/health", () => ({
   readHealth: async () => ({ ok: false, unknownSince: null, where: "mock" }),
   healthRows: () => ({}),
   redPlans: () => new Set<string>(),
+}));
+
+// The layout's nav reads the package's standing (the broken count) and its
+// display module (each Path's released count); both read files as they load.
+vi.mock("@infinitedusky/indusk-mcp/promises/standing", () => ({
+  __esModule: true,
+  readStanding: async () => [],
+}));
+vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
+  __esModule: true,
+  readHealthNames: () => ({ planTitles: {}, planDates: {}, words: {} }),
 }));
 
 // Research reads split out of planning-reader in the dawn-ui-plan-grouping

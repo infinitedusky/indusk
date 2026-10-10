@@ -1,9 +1,10 @@
+import { readHealthNames } from "@infinitedusky/indusk-mcp/promises/display";
 import {
   readHealth,
   redPlans,
 } from "@infinitedusky/indusk-mcp/promises/health";
 import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
-import Link from "next/link";
+import { NavLink } from "@/components/NavLink";
 import { PlanList } from "@/components/PlanList";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
@@ -94,6 +95,10 @@ export default async function PerProjectLayout({
       ).length
     : 0;
 
+  // Each Path's released count: when a release shipped a plan, from the
+  // package's `planDates` (display-names), read once for the whole nav.
+  const { planDates } = readHealthNames(projectPath);
+
   return (
     <div className="flex h-full w-full">
       <Sidebar
@@ -110,13 +115,13 @@ export default async function PerProjectLayout({
         }
       >
         <nav className="flex flex-col gap-1 pb-3">
-          <Link
+          <NavLink
             href={`/p/${project}/scorecards`}
             className="rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
           >
             Scorecards
-          </Link>
-          <Link
+          </NavLink>
+          <NavLink
             href={`/p/${project}/promises`}
             data-testid="nav-promises"
             className="flex items-center justify-between rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
@@ -131,7 +136,7 @@ export default async function PerProjectLayout({
                 {brokenCount}
               </span>
             )}
-          </Link>
+          </NavLink>
         </nav>
         {!worktrees.ok && (
           <WorktreeRecordError
@@ -146,6 +151,7 @@ export default async function PerProjectLayout({
           grouping={hierarchy}
           holding={holding}
           red={red}
+          dates={planDates}
           planHrefPrefix={`/p/${project}/plan/`}
         />
         {worktrees.ok && (
@@ -160,19 +166,21 @@ export default async function PerProjectLayout({
               Research
             </h3>
             {research.map((entry) => (
-              <Link
+              <NavLink
                 key={entry.slug}
                 href={`/p/${project}/research/${entry.slug}`}
                 className="truncate rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
                 title={entry.title ?? entry.slug}
               >
                 {entry.title ?? entry.slug}
-              </Link>
+              </NavLink>
             ))}
           </nav>
         )}
       </Sidebar>
-      <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      <main className="min-w-0 flex-1 overflow-y-auto p-6 max-[759px]:pt-14">
+        {children}
+      </main>
     </div>
   );
 }

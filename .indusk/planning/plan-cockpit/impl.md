@@ -269,8 +269,8 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 
 **Goal**: the mockup's nav on every page.
 
-- [ ] `components/PlanList.tsx` `buildGroups` walks `readPlanDeclarations` recursively: a subplan that is itself a parent opens as a group, to any depth, numbered in declared order; a repeat stops the walk; plans no Path declares listed after the Paths
-- [ ] Each Path's `released/total` from `planDates(...).released` (via `readHealthNames` or `planDates` per plan)
+- [x] `components/PlanList.tsx` `buildGroups` walks `readPlanDeclarations` recursively: a subplan that is itself a parent opens as a group, to any depth, numbered in declared order; a repeat stops the walk; plans no Path declares listed after the Paths — done: `buildGroups` opens each Path through one `open(name, depth, ancestors)` walk (a parent's declared entries numbered 1-up in declared order, a nested parent opening as a Path one level deeper, an ancestor repeat skipped, a plan declared under two parents still under both as `PlanList.root.test.tsx` pins); `NavLink.tsx` (client) marks the open plan `aria-current`
+- [x] Each Path's `released/total` from `planDates(...).released` (via `readHealthNames` or `planDates` per plan) — done: the layout reads `readHealthNames(projectPath).planDates` once and passes `dates` to `PlanList`; a Path's total is the plans (and placeholders) in it and the Paths inside it, released the ones whose `released` is set
 - [ ] `components/ui/Sidebar.tsx`: below 760 px a drawer, closed by default, opened by a menu button; above, a collapsible strip whose state is kept in `localStorage` (read and written in `try`/`catch`); no page wider than the viewport at 400 px
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
