@@ -1,8 +1,8 @@
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { gitSync } from "../bookkeeping/git.js";
 import { readJsonl } from "../bookkeeping/jsonl.js";
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
+import { headShaSyncOrNull } from "../git.js";
 
 /**
  * The record of green slow runs (release-checks-run-once D1–D2), in the
@@ -52,6 +52,5 @@ export function latestGreenRun(anyCheckout: string): GreenRun | null {
 
 /** The commit a checkout is on, for a green run's `sha` and the release record; `unknown` outside git. */
 export function headCommit(checkout: string): string {
-	const head = gitSync(checkout, "rev-parse", "HEAD");
-	return head.code === 0 ? head.out : "unknown";
+	return headShaSyncOrNull(checkout) ?? "unknown";
 }
