@@ -94,6 +94,7 @@ dusk/
 - Server provisioning: every recording server is the person's own — `indusk server connect` for one run anywhere, `server deploy` the one-command Fly path, the image published with each release; no hosted service — see `/decisions/server-provisioning`
 - Audit step: a fresh subagent on `workflow.steps.audit.tier` reads the approved impl, the final trajectory and the diff, writes `audit.md`; advisory — see `/decisions/plan-review-subagent`
 - Display names: one `promises/display` module names promises in words, plans by title and dates them; they travel on the health line — see `/decisions/display-names`
+- Plan cockpit: the admin is the cockpit — nav by Path, plan page as Planning and Release with its decision, dashboard broken first, a page per promise with its proof; every derived fact from a package module (`promises/standing`, `proof`, `fix`, `plans/steps`, `waiting`, `history`) — see `/decisions/plan-cockpit`
 
 ## Known Gotchas
 
