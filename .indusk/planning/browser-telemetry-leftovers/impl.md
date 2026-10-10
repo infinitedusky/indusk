@@ -82,6 +82,7 @@ The scaffolded browser instrumentation carries a click's trace to the project's 
   - Ran 2026-10-10: templates project 3 tests, 1 passed (A1), 2 failed (A2, A3); node files 16 tests, 13 passed (incl. A6), 3 failed (A5, A7, A8) — failure messages under the confirm item above. `pnpm exec tsc --noEmit` clean; `biome check` clean on the 6 changed files.
 - [x] The deferred entry above reviewed: A4 needs only what Build Phase 1 produces
   - Reviewed 2026-10-10: A4 is a live check (scaffolded Vite app + separate Node API + local Jaeger), needs the propagation setting and the template load fix from Build Phase 1, and nothing from this phase; it stays deferred. Note A4 also depends on the template fix named above.
+- [x] Shape (`apps/indusk-mcp/templates/instrumentation.web.test.ts`) — removed an unused runner-request passthrough on the fetch recorder (an earlier hang theory that the real cause, mismatched vitest versions, disproved); rule: a unit does one job, and the recorder's job is recording (one reason to change). Other changed files (`init-browser-telemetry.test.ts`, `audit.test.ts`, the two vitest configs) reviewed, left as-is: each has one named job and a seam the tests already reach.
 
 ### Build Phase 1: The setting, the truth, the keyword
 

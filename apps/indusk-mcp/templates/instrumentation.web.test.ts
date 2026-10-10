@@ -14,11 +14,6 @@ import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const exporter = new InMemorySpanExporter();
-// The test runner talks to its own server over fetch; only the page's requests
-// under test are recorded, everything for the runner goes to the real thing.
-const realFetch = window.fetch.bind(window);
-const isRunnerRequest = (url: string) => /__vitest|\/@(vite|fs|id)\b|\.vite\//.test(url);
-
 type Recorded = { url: string; traceparent: string | null };
 let recorded: Recorded[] = [];
 let imports = 0;
@@ -47,7 +42,6 @@ beforeEach(() => {
 	vi.stubGlobal("process", { env: {} });
 	window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = input instanceof Request ? input.url : String(input);
-		if (isRunnerRequest(url)) return realFetch(input, init);
 		const headers = new Headers(
 			init?.headers ?? (input instanceof Request ? input.headers : undefined),
 		);
