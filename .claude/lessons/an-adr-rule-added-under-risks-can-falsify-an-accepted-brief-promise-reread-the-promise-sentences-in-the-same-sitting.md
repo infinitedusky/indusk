@@ -1,0 +1,5 @@
+# When an ADR adds a rule (even as a Risks mitigation), re-read every accepted brief promise's sentence against it in the same sitting — a mitigation can silently make a promise false
+
+In release-records-its-failures the ADR's Risks section added the environment rule ('when more than half the slow test files fail, open nothing'). The brief had already been accepted, and its promises 4 and 5 ('a test still failing after its rerun opens an incident / a bugfix plan') became untrue as worded. Nothing flagged it at ADR time; it surfaced only when the impl's trajectory rows had to name a promise and the sentence no longer fit. The fix was to withdraw and re-declare both promises under the same names and add row A22 (commit 522996ba).
+
+Rule: when an ADR (or any later document) adds behaviour, including in Risks or Consequences, re-read each promise sentence in the accepted brief against it before accepting the ADR, and re-declare the promise in the same commit if the rule narrows it. Do not leave the contradiction for the rows to find. See `.indusk/planning/release-records-its-failures/retrospective.md` (What We Learned).
