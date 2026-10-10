@@ -8,6 +8,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 - **The Promises panel reads in words** (display-names): promises show as "A break reaches the editor" rather than their handle, on cards, rows, the activity and the hover; plan groups are headed by the plan's title with "started …, landed …, released X.Y.Z (date)" or "not released yet". The marker at the end of a code line keeps the handle. See [Promises in your editor](/guide/promises-in-your-editor).
 
+### Fixed
+
+- **A limit refusal waits instead of breaking `every-commit-evaluated`** (evaluator-waits-out-limits): an evaluation the model refuses with `429` (rate limiting, or the weekly limit) is logged as `waiting`, queued in `eval/pending.jsonl`, and tried again by the next commit's trigger before its own; it is no longer a violation. An evaluator answer with no scorecard (a resumed session replying in prose) is asked once more in the same session for the scorecard alone. See [Getting started with eval](/guide/eval#when-the-model-is-not-reachable).
+
 ## [1.70.0] — 2026-10-10
 
 ### Added
