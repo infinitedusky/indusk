@@ -40,7 +40,7 @@ export function settleFromReport(
 	let still = names;
 	let last = first;
 	if (spec.rerun) {
-		exec(spec.rerun.replaceAll("{files}", names.join(" ")));
+		exec(spec.rerun.replaceAll("{files}", names.map(shellQuote).join(" ")));
 		const second = failedFiles(spec.report, root, since);
 		if (second.readable) {
 			still = names.filter((f) => second.files.has(f));
@@ -53,6 +53,9 @@ export function settleFromReport(
 		tests: Object.fromEntries(still.map((f) => [f, last.files.get(f) ?? first.files.get(f) ?? []])),
 	};
 }
+
+/** One shell word: single-quoted, an embedded quote as `'\''`. */
+const shellQuote = (text: string): string => `'${text.replaceAll("'", "'\\''")}'`;
 
 /** What the release knows when it routes: which release, and what may have caused the failures. */
 export interface RouteFacts {
