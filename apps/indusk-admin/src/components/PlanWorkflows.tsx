@@ -3,8 +3,8 @@ import {
   type StepState,
   stepCount,
 } from "@infinitedusky/indusk-mcp/plans/steps";
-import type { Plan } from "@/lib/planning-reader";
 import { snapshotOf } from "@/lib/plan-snapshot";
+import type { Plan } from "@/lib/planning-reader";
 
 /**
  * The plan page's two workflows: Planning (the documents the plan's type

@@ -11,8 +11,8 @@ import type {
   PromiseEntry,
   Registry,
 } from "@infinitedusky/indusk-mcp/promises/registry";
-import type { Plan } from "@/lib/planning-reader";
 import { snapshotOf } from "@/lib/plan-snapshot";
+import type { Plan } from "@/lib/planning-reader";
 
 /**
  * The cockpit's fixture project (plan-cockpit, Test Phase 1): what the
