@@ -1,8 +1,8 @@
 import {
 	type EnsureResult,
 	ensureConfigBlock,
-	readConfig,
 	type ReleaseSlowTests,
+	readConfig,
 	type WorkflowSteps,
 } from "../config.js";
 import { isTier, TIER_STEPS, TIERS, TierConfigError } from "../models/tier-names.js";
@@ -95,7 +95,8 @@ function slowTests(v: unknown): ReleaseSlowTests | undefined {
 	const command = text(slow.command, "release.slow_tests.command");
 	const report = text(slow.report, "release.slow_tests.report");
 	const when = oneOf(slow.when, "release.slow_tests.when", ["before", "after"] as const);
-	if (command === undefined) throw new Error("workflow.steps.release.slow_tests.command is required");
+	if (command === undefined)
+		throw new Error("workflow.steps.release.slow_tests.command is required");
 	if (report === undefined) {
 		throw new Error(
 			"workflow.steps.release.slow_tests.report is required: a path or glob to the JUnit XML the command writes",

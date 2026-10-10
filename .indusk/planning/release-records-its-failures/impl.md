@@ -45,11 +45,11 @@ gate_policy: ask
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | With slow tests declared `after`, the release command runs first and the slow tests second; when the slow tests go red, the release still reports itself done under `done_when: published` and lists what it recorded | Test Phase 1 | Build Phase 1 | written | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
-| A2 | With slow tests declared `before`, a red slow run stops the release before its command runs, the release reports not published, and the failures are still recorded | Test Phase 1 | Build Phase 1 | written | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
-| A3 | With `done_when: green` and slow tests `after`, a red slow run reports the release published but not done, naming the open failures | Test Phase 1 | Build Phase 1 | written | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
-| A4 | A release command that fails reports the release not published and runs no slow tests after it | Test Phase 1 | Build Phase 1 | written | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
-| A5 | A project that declares no release says so and runs nothing | Test Phase 1 | Build Phase 1 | written | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
+| A1 | With slow tests declared `after`, the release command runs first and the slow tests second; when the slow tests go red, the release still reports itself done under `done_when: published` and lists what it recorded | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
+| A2 | With slow tests declared `before`, a red slow run stops the release before its command runs, the release reports not published, and the failures are still recorded | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
+| A3 | With `done_when: green` and slow tests `after`, a red slow run reports the release published but not done, naming the open failures | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
+| A4 | A release command that fails reports the release not published and runs no slow tests after it | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
+| A5 | A project that declares no release says so and runs nothing | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A6 | The tests recorded as failing are exactly the ones the declared JUnit report marks failed, whatever the command printed, and a report spread over several files (one per package) is read as one | Test Phase 1 | Build Phase 2 | written | unit | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 | A7 | A red run whose report is missing or unreadable reports "the slow tests failed" with no test named, and opens no incident and no plan | Test Phase 1 | Build Phase 2 | written | unit | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 | A8 | dusk's slow tests, run with its declared reporter, write a JUnit report whose failed cases name the test files that failed | Test Phase 1 | Build Phase 5 | written | contract | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-junit.contract.test.ts |
@@ -63,8 +63,8 @@ gate_policy: ask
 | A16 | A failing file named by a row with no promise opens a draft bugfix plan that also names the plan and row that were testing it | Test Phase 1 | Build Phase 4 | written | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
 | A17 | The same file failing in a later release while its bugfix plan is open adds to that plan rather than opening another | Test Phase 1 | Build Phase 4 | written | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
 | A18 | dusk's release command no longer runs the slow tests before publishing, and dusk's config declares them `after` with a JUnit report | Test Phase 1 | Build Phase 5 | written | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/release-dusk-declaration.test.ts |
-| A20 | A release whose slow run a green run already covered skips it, as before | Test Phase 1 | Build Phase 1 | written | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/release-run.test.ts |
-| A21 | A non-npm release command declared by a fixture project (a shell command writing a file) is the command that runs | Test Phase 1 | Build Phase 1 | written | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/release-run.test.ts |
+| A20 | A release whose slow run a green run already covered skips it, as before | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/release-run.test.ts |
+| A21 | A non-npm release command declared by a fixture project (a shell command writing a file) is the command that runs | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A22 | A run where more than half the slow test files failed opens no incident and no plan, and the release says the environment failed, naming how many files failed | Test Phase 1 | Build Phase 2 | written | unit | promise: a-failing-slow-test-breaks-its-promise, promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 
 ### Deferred Verification
@@ -111,7 +111,8 @@ gate_policy: ask
 
 #### Build Phase 1 Verification
 
-- [ ] A1, A2, A3, A4, A5, A20, A21 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts && pnpm exec vitest related src/lib/checks/steps.ts src/lib/checks/record.ts src/lib/release/run.ts src/lib/release/record.ts`)
+- [x] A1, A2, A3, A4, A5, A20, A21 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-run.test.ts && pnpm exec vitest related src/lib/checks/steps.ts src/lib/checks/record.ts src/lib/release/run.ts src/lib/release/record.ts`)
+  - Recorded 2026-10-10: `release-run.test.ts` 7 passed of 7 (A1-A5, A20, A21); `vitest related` over steps.ts, record.ts, run.ts, release/record.ts 59 passed in 6 files; `pnpm exec tsc --noEmit` clean; biome clean on the changed files
 
 #### Build Phase 1 Context
 
