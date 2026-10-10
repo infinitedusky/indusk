@@ -59,14 +59,14 @@ gate_policy: ask
 | A12 | The same file failing in a later release adds to the open incident rather than opening a second | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-failing-slow-test-breaks-its-promise | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
 | A13 | The incident reopens the promise's owning plan with its Maintenance phase and names the rows that were proving it, as an incident from a watcher does | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-failing-slow-test-breaks-its-promise, promise: an-incident-names-its-tests | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
 | A14 | The incident shows in `promises status` and `promise_health` with its age, ahead of the roadmap, as any open incident does | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-failing-slow-test-breaks-its-promise, promise: an-open-incident-stays-loud | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
-| A15 | A failing file no row names opens one draft bugfix plan whose brief names the file, the failing tests, the release and the commits since the last green slow run | Test Phase 1 | Build Phase 4 | written | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
-| A16 | A failing file named by a row with no promise opens a draft bugfix plan that also names the plan and row that were testing it | Test Phase 1 | Build Phase 4 | written | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
-| A17 | The same file failing in a later release while its bugfix plan is open adds to that plan rather than opening another | Test Phase 1 | Build Phase 4 | written | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
+| A15 | A failing file no row names opens one draft bugfix plan whose brief names the file, the failing tests, the release and the commits since the last green slow run | Test Phase 1 | Build Phase 4 | passing | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
+| A16 | A failing file named by a row with no promise opens a draft bugfix plan that also names the plan and row that were testing it | Test Phase 1 | Build Phase 4 | passing | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
+| A17 | The same file failing in a later release while its bugfix plan is open adds to that plan rather than opening another | Test Phase 1 | Build Phase 4 | passing | unit | promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-bugfix-plan.test.ts |
 | A18 | dusk's release command no longer runs the slow tests before publishing, and dusk's config declares them `after` with a JUnit report | Test Phase 1 | Build Phase 5 | written | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/release-dusk-declaration.test.ts |
 | A20 | A release whose slow run a green run already covered skips it, as before | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A21 | A non-npm release command declared by a fixture project (a shell command writing a file) is the command that runs | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A22 | A run where more than half the slow test files failed opens no incident and no plan, and the release says the environment failed, naming how many files failed | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-failing-slow-test-breaks-its-promise, promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-report.test.ts |
-| A23 | An incident a release opens is committed on the trunk and appears in the project's break inbox, so a running agent hears it on its next prompt, as an incident the admin records does | Build Phase 4 | Build Phase 4 | written | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
+| A23 | An incident a release opens is committed on the trunk and appears in the project's break inbox, so a running agent hears it on its next prompt, as an incident the admin records does | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
 
 ### Deferred Verification
 
@@ -181,19 +181,23 @@ gate_policy: ask
 - [x] The runner sends unclaimed failures there and lists each opened or extended plan in its output and on the record
 - [x] A23 (Sandy, 2026-10-10: "Yes, same as the recorder"): an incident a release opens or extends is committed on the trunk through the recorder's commit path (`lib/promises/record-commit.ts`) and appended to the break inbox (`appendInbox`, `lib/promises/inbox.ts`), as `recordBreaks` does; author A23 red in `release-incident.test.ts` first
 - [x] Root `CLAUDE.md` back under its budget (Build Phase 1's Key Decisions line pushed it to 14,886 bytes against 14,745; `context-tiers-register.test.ts` A13 fails): move one root entry that applies to one area down to that area's `CLAUDE.md`, per `lesson: a-claude-md-past-its-budget-holds-a-rule-that-belongs-lower` — never trim another entry's words to fit
+- [x] Shape (`apps/indusk-mcp/src/lib/release/settle.ts`) — extract the unclaimed-file loop out of routeFailures into routeUnclaimed; routeFailures was routing incidents and opening bugfix plans in one body. Rule: Shape intra-unit: does this unit have one reason to change? A block doing two jobs wants to be two named things
 
 #### Build Phase 4 Verification
 
-- [ ] A23 passes, and `context-tiers-register.test.ts` passes again (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/release-incident.test.ts src/__tests__/context-tiers-register.test.ts`)
-- [ ] A15, A16, A17 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-bugfix-plan.test.ts && pnpm exec vitest related src/lib/release/bugfix-plan.ts`)
+- [x] A23 passes, and `context-tiers-register.test.ts` passes again (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/release-incident.test.ts src/__tests__/context-tiers-register.test.ts`)
+  - Recorded 2026-10-10: `release-incident.test.ts` 5 passed of 5 (A11-A14, A23); `context-tiers-register.test.ts` 6 passed of 6 (root CLAUDE.md 14687 bytes against 14745)
+- [x] A15, A16, A17 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-bugfix-plan.test.ts && pnpm exec vitest related src/lib/release/bugfix-plan.ts`)
+  - Recorded 2026-10-10: `release-bugfix-plan.test.ts` 3 passed of 3 (A15-A17); all `release-*.test.ts` everyday files 45 passed, 2 failed, both `release-dusk-declaration.test.ts` A18 (Build Phase 5's row, red as planned); `vitest related` over the changed lib files 132 passed, 2 failed, both in `lib/promises/inbox.test.ts` (red before this phase, as Build Phase 3 recorded); `tsc --noEmit` clean; biome clean on the changed files (one existing unused import in `lib/promises/store.ts`, not touched here); `indusk promises check` clean (72 promises, 3 incidents)
 
 #### Build Phase 4 Context
 
 - [ ] `apps/indusk-mcp/CLAUDE.md`, the `lib/release/` entry: an unclaimed failure is a draft bugfix plan on its own branch, reused by name while open — never a brief written on the trunk
+  - Refused 2026-10-10 by `claude-md-budget.js`: the file is 17083 bytes against its 16384 nested budget and the sentence grows it; needs room made in that file first
 
 #### Build Phase 4 Document
 
-- [ ] `reference/cli/release.md`: the bugfix plan, its name and its reuse
+- [x] `reference/cli/release.md`: the bugfix plan, its name and its reuse
 
 ### Build Phase 5: dusk declares its own release
 

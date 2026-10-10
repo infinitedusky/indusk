@@ -142,11 +142,22 @@ export async function routeFailures(
 		for (const file of files) byFile.set(file, [...(byFile.get(file) ?? []), change.id]);
 	}
 
+	const { failed, plans, planProblems } = await routeUnclaimed(root, settled, byFile, facts);
+	return { failed, incidents, plans, planProblems, unreadable };
+}
+
+/** Each failing file an incident claimed says so; every other one goes to its bugfix plan (D8). */
+async function routeUnclaimed(
+	root: string,
+	settled: SettledFailures,
+	incidentsByFile: Map<string, string[]>,
+	facts: RouteFacts,
+): Promise<{ failed: FailedFile[]; plans: BugfixPlan[]; planProblems: string[] }> {
 	const plans: BugfixPlan[] = [];
 	const planProblems: string[] = [];
 	const failed: FailedFile[] = [];
 	for (const { file } of settled.failed) {
-		const ids = byFile.get(file);
+		const ids = incidentsByFile.get(file);
 		if (ids) {
 			failed.push({ file, routed: ids.map((id) => `incident ${id}`).join(", ") });
 			continue;
@@ -167,7 +178,7 @@ export async function routeFailures(
 			failed.push({ file, routed: "unrouted" });
 		}
 	}
-	return { failed, incidents, plans, planProblems, unreadable };
+	return { failed, plans, planProblems };
 }
 
 /**

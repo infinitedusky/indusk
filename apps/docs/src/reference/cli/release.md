@@ -74,7 +74,7 @@ Otherwise, with `slow_tests.rerun` declared, the failing files are substituted s
 
 ## Routing a failure
 
-Each file still failing is looked up in every plan's trajectory, active and archived: the rows whose `Test` cell names it. Each promise those rows' `For` cells name, live in the registry, claims the file. A file no promise claims stays `unrouted` on the record (a draft bugfix plan, as it lands).
+Each file still failing is looked up in every plan's trajectory, active and archived: the rows whose `Test` cell names it. Each promise those rows' `For` cells name, live in the registry, claims the file. A file no promise claims goes to a draft bugfix plan (below).
 
 A claimed failure becomes an incident on its promise, one per promise with every file it claims:
 
@@ -120,4 +120,15 @@ When the promise already has an open incident, a later release adds to it: its t
 | `  reopened <owner>: Build Phase N: Maintenance — <id>` | The owner gained the incident's Maintenance phase. |
 | `incident <id>: <owner> was not reopened — …` (stderr) | The owner is not a plan folder, already has a heading this incident did not write, or its worktree assignment could not be read. |
 
-The incident is written, not committed: commit it with the rest of the release's bookkeeping.
+The incident is committed on the trunk as the recorder commits one, and an entry naming it is left in the project's break inbox, so a running agent hears it on its next prompt. A release run off the trunk branch leaves the incident uncommitted and says so on stderr (`incident not committed or announced: …`); the inbox entry is still left.
+
+## The bugfix plan for an unclaimed failure
+
+A file no promise's row claims (named by no row, or only by rows that name no promise) opens one draft bugfix plan, started as `indusk plans start bugfix` starts one: `fix-<test file name without .test.ts>` (`src/orphan-flow.test.ts` becomes `fix-orphan-flow`), on its own `plan/fix-…` branch and worktree. Nothing is written on the trunk. Its brief is `status: draft` and names the file, the failing tests, the release, the commits since the last green slow run, and, for a row that tests the file without a promise, that plan and row.
+
+While that plan is open, the same file failing in a later release adds a section to its `research.md` (tests, release, suspects) instead of opening another.
+
+| Line printed | Meaning |
+|---|---|
+| `recorded: plan <name>` | A bugfix plan the release opened or extended. The record's `failed` entry reads `routed: "plan <name>"`. |
+| `no bugfix plan opened — <file>: …` (stderr) | The plan could not be started (for example its branch already exists with no worktree); the file stays `unrouted`. |
