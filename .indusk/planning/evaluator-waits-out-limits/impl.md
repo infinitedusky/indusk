@@ -1,7 +1,7 @@
 ---
 title: "evaluator-waits-out-limits"
 date: 2026-10-10
-status: approved
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -43,10 +43,10 @@ A limit refusal waits and is retried instead of breaking `every-commit-evaluated
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A run whose model answers `api_error_status: 429` (rate limiting, or a weekly limit) marks no violation and leaves its commit waiting, recorded in the eval log as waiting, not as an error | Test Phase 1 | Build Phase 1 | written | unit | promise: a-limited-evaluation-waits | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
-| A2 | The next commit's trigger first evaluates every waiting commit; one that now scores leaves the queue, one refused again stays, and none is evaluated twice | Test Phase 1 | Build Phase 1 | written | unit | promise: a-limited-evaluation-waits | apps/indusk-mcp/src/__tests__/eval-trigger-waiting.test.ts |
-| A3 | A first answer of prose with no JSON, followed by a scorecard, ends with that scorecard and no violation | Test Phase 1 | Build Phase 1 | written | unit | promise: a-prose-reply-is-asked-again | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
-| A4 | Two answers with no scorecard end the run failed, the promise marked violated with the second answer as the reason | Test Phase 1 | Build Phase 1 | written | unit | promise: a-prose-reply-is-asked-again | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
+| A1 | A run whose model answers `api_error_status: 429` (rate limiting, or a weekly limit) marks no violation and leaves its commit waiting, recorded in the eval log as waiting, not as an error | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-limited-evaluation-waits | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
+| A2 | The next commit's trigger first evaluates every waiting commit; one that now scores leaves the queue, one refused again stays, and none is evaluated twice | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-limited-evaluation-waits | apps/indusk-mcp/src/__tests__/eval-trigger-waiting.test.ts |
+| A3 | A first answer of prose with no JSON, followed by a scorecard, ends with that scorecard and no violation | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-prose-reply-is-asked-again | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
+| A4 | Two answers with no scorecard end the run failed, the promise marked violated with the second answer as the reason | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-prose-reply-is-asked-again | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
 | A5 | A run that fails for any other reason (a CLI that is not installed, a model that does not exist) still marks the promise violated with its reason | Test Phase 1 | Test Phase 1 | passing | unit | promise: every-commit-evaluated | apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts |
 
 ## Checklist
@@ -73,22 +73,24 @@ A limit refusal waits and is retried instead of breaking `every-commit-evaluated
 
 **Tier**: med
 
-- [ ] `evaluator-runner.ts`: a claude result with `api_error_status: 429`, or a limit message, is a **waiting** outcome — no violation mark, a `waiting` entry in the eval log, and the commit appended to the queue the hook drains, marked waiting
-- [ ] `eval-trigger.js` (commit mode): before evaluating the new commit, retry the waiting commits once each; a scored one leaves the queue, a refused one stays; the drained-ledger rule (written before each spawn) keeps any commit from being evaluated twice
-- [ ] `evaluator-runner.ts`: an answer with no scorecard is asked once more, in the same session, for "the scorecard JSON only"; a second answer without one fails the run with that answer as the reason
-- [ ] After the fix is installed: `indusk promises fix i-2026-10-05-every-commit-evaluated`, its root cause written ("the model refused for rate limiting; a refusal now waits and is retried, evaluator-waits-out-limits"), and the promise back to `enforced`
+- [x] `evaluator-runner.ts`: a claude result with `api_error_status: 429`, or a limit message, is a **waiting** outcome — no violation mark, a `waiting` entry in the eval log, and the commit appended to the queue the hook drains, marked waiting
+- [x] `eval-trigger.js` (commit mode): before evaluating the new commit, retry the waiting commits once each; a scored one leaves the queue, a refused one stays; the drained-ledger rule (written before each spawn) keeps any commit from being evaluated twice
+- [x] `evaluator-runner.ts`: an answer with no scorecard is asked once more, in the same session, for "the scorecard JSON only"; a second answer without one fails the run with that answer as the reason
+- [x] After the fix is installed: `indusk promises fix i-2026-10-05-every-commit-evaluated`, its root cause written ("the model refused for rate limiting; a refusal now waits and is retried, evaluator-waits-out-limits"), and the promise back to `enforced`
+- [x] Shape (`apps/indusk-mcp/src/lib/eval/evaluator-runner.ts`) — reviewed, left as-is: runEvaluatorBackground (no caller anywhere in src or hooks) keeps its old failure handling; the hook runs runPersistentEval, and runEvaluatorSync, the other live path, now shares limits.ts with it. Touching the dead copy would add a third copy of the same logic.
+- [x] Shape (`apps/indusk-mcp/src/lib/eval/persistent-evaluator.ts`) — reviewed, left as-is: The resume arg list stays inline beside limits.ts resumeArgs: eval-resume-prompt-includes-highlights T7 counts --mcp-config at both spawn sites in this file, and an existing assertion may not change.
 
 #### Build Phase 1 Verification
 
-- [ ] A1–A5 pass (the command above), plus `pnpm exec vitest related src/lib/eval/evaluator-runner.ts --run` and the hook tests; tsc and biome clean; `indusk promises check` passes after the incident is fixed
+- [x] A1–A5 pass (the command above), plus `pnpm exec vitest related src/lib/eval/evaluator-runner.ts --run` and the hook tests; tsc and biome clean; `indusk promises check` passes after the incident is fixed
 
 #### Build Phase 1 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md` (eval agent entry) or `hooks/CLAUDE.md`: a limit refusal is waiting, not failed, and is retried by the next commit's trigger; a reply with no scorecard is asked once more
+- [x] `apps/indusk-mcp/CLAUDE.md` (eval agent entry) or `hooks/CLAUDE.md`: a limit refusal is waiting, not failed, and is retried by the next commit's trigger; a reply with no scorecard is asked once more
 
 #### Build Phase 1 Document
 
-- [ ] The eval page under `apps/docs/src/` (find it: `grep -rl "evaluator" apps/docs/src/guide apps/docs/src/reference`): waiting commits and the one retry; changelog `### Fixed` under `## [Unreleased]`
+- [x] The eval page under `apps/docs/src/` (find it: `grep -rl "evaluator" apps/docs/src/guide apps/docs/src/reference`): waiting commits and the one retry; changelog `### Fixed` under `## [Unreleased]`
 
 ## Files Affected
 
