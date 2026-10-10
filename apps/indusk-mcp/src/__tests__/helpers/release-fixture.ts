@@ -185,18 +185,9 @@ function writeSlow(dir: string, slow: Pick<SlowSpec, "exit" | "reports" | "rerun
 	writeReports(dir, "rerun-reports.txt", "rerun-xml", slow.rerun?.reports ?? {});
 }
 
-export function releaseProject(opts: ReleaseProjectOptions = {}): ReleaseProject {
-	const dir = mkdtempSync(join(tmpdir(), "release-fixture-"));
-	const homeBase = mkdtempSync(join(tmpdir(), "release-home-"));
-	const version = opts.version ?? "1.4.0";
+/** `workflow.steps.release` as the options say, in the ADR D2 shape. */
+function declaredRelease(opts: ReleaseProjectOptions): Record<string, unknown> {
 	const slow = opts.slow === undefined ? {} : opts.slow;
-
-	writeFileSync(
-		join(dir, "release.exit"),
-		`${opts.command === false ? 0 : (opts.command?.exit ?? 0)}\n`,
-	);
-	writeSlow(dir, slow === false ? {} : slow);
-
 	const release: Record<string, unknown> = {
 		version_file: "package.json",
 		changelog: "CHANGELOG.md",
@@ -212,6 +203,22 @@ export function releaseProject(opts: ReleaseProjectOptions = {}): ReleaseProject
 		};
 	}
 	if (opts.doneWhen) release.done_when = opts.doneWhen;
+	return release;
+}
+
+export function releaseProject(opts: ReleaseProjectOptions = {}): ReleaseProject {
+	const dir = mkdtempSync(join(tmpdir(), "release-fixture-"));
+	const homeBase = mkdtempSync(join(tmpdir(), "release-home-"));
+	const version = opts.version ?? "1.4.0";
+	const slow = opts.slow === undefined ? {} : opts.slow;
+
+	writeFileSync(
+		join(dir, "release.exit"),
+		`${opts.command === false ? 0 : (opts.command?.exit ?? 0)}\n`,
+	);
+	writeSlow(dir, slow === false ? {} : slow);
+
+	const release = declaredRelease(opts);
 
 	const { command: _c, slow: _s, doneWhen: _d, version: _v, files, ...rest } = opts;
 	const project = promiseProject({

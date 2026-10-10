@@ -91,6 +91,7 @@ gate_policy: ask
 - [x] A8 in `release-junit.contract.test.ts`, added to `vitest.tiers.ts` `SYSTEM`: runs vitest with dusk's declared system config on a fixture test that fails, and reads the report at the declared path
 - [x] A18 in `release-dusk-declaration.test.ts`: reads `apps/indusk-mcp/package.json`'s `release` script and `.indusk/config.json`'s `release` block
 - [x] Run each file and confirm every row fails on its own assertion (an unknown `release` command's exit and output, a missing report, a script that still names `test:system`), never on a load error; set each row `written`
+- [x] Shape (`apps/indusk-mcp/src/__tests__/helpers/release-fixture.ts`) — extract the release declaration out of releaseProject into declaredRelease(opts); releaseProject was building the config block and the handle in one body. Rule: Shape intra-unit: does this unit have one reason to change? A block doing two jobs wants to be two named things
 
 #### Test Phase 1 Verification
 
