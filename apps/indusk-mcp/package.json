@@ -196,6 +196,14 @@
 			"types": "./dist/lib/plans/steps.d.ts",
 			"default": "./dist/lib/plans/steps.js"
 		},
+		"./plans/waiting": {
+			"types": "./dist/lib/plans/waiting.d.ts",
+			"default": "./dist/lib/plans/waiting.js"
+		},
+		"./plans/history": {
+			"types": "./dist/lib/plans/history.d.ts",
+			"default": "./dist/lib/plans/history.js"
+		},
 		"./promises/fix": {
 			"types": "./dist/lib/promises/fix.d.ts",
 			"default": "./dist/lib/promises/fix.js"

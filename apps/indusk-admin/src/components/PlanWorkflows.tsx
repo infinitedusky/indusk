@@ -1,10 +1,10 @@
 import {
-  type PlanSnapshot,
   planSteps,
   type StepState,
   stepCount,
 } from "@infinitedusky/indusk-mcp/plans/steps";
 import type { Plan } from "@/lib/planning-reader";
+import { snapshotOf } from "@/lib/plan-snapshot";
 
 /**
  * The plan page's two workflows: Planning (the documents the plan's type
@@ -41,22 +41,6 @@ const LABEL: Record<StepState, string> = {
   skipped: "skipped",
   missing: "missing",
 };
-
-/** The page's `Plan` as the package's snapshot — facts only, no derivation. */
-function snapshotOf(plan: Plan): PlanSnapshot {
-  return {
-    workflow: plan.workflow ?? null,
-    position: plan.position,
-    documents: {
-      research: plan.research?.frontmatter,
-      brief: plan.brief?.frontmatter,
-      "test-plan": plan.testPlan?.frontmatter,
-      adr: plan.adr?.frontmatter,
-      impl: plan.impl?.frontmatter,
-    } as PlanSnapshot["documents"],
-    skippedRituals: plan.skippedRituals,
-  };
-}
 
 export function PlanWorkflows({ plan }: { plan: Plan }) {
   const { planning, release } = planSteps(snapshotOf(plan));

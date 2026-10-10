@@ -1,6 +1,7 @@
 // promise: every-plan-is-one-click-away
 // promise: paths-keep-their-order
 // promise: a-plan-can-start-from-the-admin
+// promise: decisions-wait-in-one-place
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page } from "vitest/browser";
@@ -10,6 +11,7 @@ import {
   BROKEN,
   PROJECT,
   resetFixture,
+  WAITING,
 } from "@/__tests__/helpers/cockpit-fixture";
 
 /**
@@ -28,6 +30,10 @@ import {
  *                         `[data-testid="path-released"]` as `released/total`
  *   - a plan's number:    `[data-testid="plan-number"]` inside its link, 1-up
  *                         within its Path
+ *   - Needs you:          `[data-testid="needs-you"]`, one
+ *                         `a[data-needs-you="<plan>"]` per waiting plan, its
+ *                         step in `[data-testid="needs-you-step"]` (Build
+ *                         Phase 6)
  *
  * The readers are mocked from the fixture, the way `plan/[name]/page.test.tsx`
  * mocks them; a layout that reads through another module adds that mock to
@@ -77,6 +83,9 @@ vi.mock("@infinitedusky/indusk-mcp/promises/display", async () =>
 );
 vi.mock("@/lib/registry-client", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).registryClientMock(),
+);
+vi.mock("@/lib/decisions-reader", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).decisionsReaderMock(),
 );
 vi.mock("@/lib/research-reader", () => ({
   __esModule: true,
@@ -273,6 +282,40 @@ describe("A22 — a broken promise is counted in the nav on every page", () => {
         String(BROKEN.length),
       );
     }
+  });
+});
+
+describe("A13 — plans waiting on the person are listed under Needs you, with the step they wait at", () => {
+  it("A13 lists the plan whose agent asked, the one waiting for approval and the one stopped for review, each with its step, on every page", async () => {
+    for (const [child, path] of [
+      [planPage, `${base}/plan/beta-one`],
+      [dashboard, `${base}/promises`],
+    ] as const) {
+      const root = await layoutAround(child, path);
+      const needs = root.querySelector(
+        '[data-testid="cockpit-nav"] [data-testid="needs-you"]',
+      );
+      expect(needs, `no Needs you on ${path}`).not.toBeNull();
+      const listed = [
+        ...(needs?.querySelectorAll("a[data-needs-you]") ?? []),
+      ].map((a) => [
+        a.getAttribute("data-needs-you"),
+        a.querySelector('[data-testid="needs-you-step"]')?.textContent?.trim(),
+      ]);
+      expect(listed).toEqual(WAITING.map(([plan, step]) => [plan, step]));
+      expect(
+        needs
+          ?.querySelector('a[data-needs-you="asking-plan"]')
+          ?.getAttribute("href"),
+      ).toBe(`${base}/plan/asking-plan`);
+    }
+  });
+
+  it("A13 a plan waiting on nothing is not under Needs you", async () => {
+    const root = await layoutAround(planPage, `${base}/plan/mid-build`);
+    const needs = root.querySelector('[data-testid="needs-you"]');
+    expect(needs?.querySelector('a[data-needs-you="mid-build"]')).toBeNull();
+    expect(needs?.querySelector('a[data-needs-you="beta-one"]')).toBeNull();
   });
 });
 

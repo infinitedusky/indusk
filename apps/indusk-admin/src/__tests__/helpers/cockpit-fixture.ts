@@ -1,5 +1,10 @@
 import type { PlanPosition } from "@infinitedusky/indusk-mcp/lifecycle";
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
+import type { DecisionEntry } from "@infinitedusky/indusk-mcp/plans/history";
+import {
+  planWaiting,
+  type WaitingSession,
+} from "@infinitedusky/indusk-mcp/plans/waiting";
 import type { Proof } from "@infinitedusky/indusk-mcp/promises/proof";
 import type {
   IncidentEntry,
@@ -7,6 +12,7 @@ import type {
   Registry,
 } from "@infinitedusky/indusk-mcp/promises/registry";
 import type { Plan } from "@/lib/planning-reader";
+import { snapshotOf } from "@/lib/plan-snapshot";
 
 /**
  * The cockpit's fixture project (plan-cockpit, Test Phase 1): what the
@@ -23,6 +29,9 @@ import type { Plan } from "@/lib/planning-reader";
  *   - `undeclared-plan` is declared nowhere.
  *   - `fix-double-booking` (a bugfix), `mid-build`, `at-review`,
  *     `skipped-ritual` and `adr-flip` carry the plan page's fixtures.
+ *   - `asking-plan` (its planning session has asked a question) and
+ *     `awaiting-approval` (an impl draft) wait on the person, with
+ *     `at-review` (Build Phase 6's Needs you).
  *   - a registry of promises, two of them broken, one with every row passing
  *     (that standing is derived by Build Phase 1's `promises/standing`; here
  *     it is only a promise whose health reads red).
@@ -171,6 +180,16 @@ const PAGE_PLANS: PlanSpec[] = [
     skipped: [{ ritual: "falsification", reason: "a docs-only plan" }],
   },
   {
+    name: "asking-plan",
+    at: "brief",
+    docs: { research: { status: "complete" }, brief: { status: "draft" } },
+  },
+  {
+    name: "awaiting-approval",
+    at: "impl-approved",
+    docs: { ...ALL_DOCS, impl: { status: "draft" } },
+  },
+  {
     name: "adr-flip",
     at: "adr",
     docs: {
@@ -239,6 +258,44 @@ export function changeOnDisk(
     };
   });
 }
+
+// -- what plans wait on (Build Phase 6) ---------------------------------------
+
+/** The running admin session: `asking-plan`'s planning session, which has asked. */
+export const SESSIONS: WaitingSession[] = [
+  {
+    plan: "asking-plan",
+    kind: "planning",
+    question: {
+      requestId: "req-1",
+      questions: [
+        {
+          question: "Which seat map should holds use?",
+          options: [{ label: "The venue's map" }, { label: "Our own grid" }],
+        },
+      ],
+    },
+  },
+];
+
+/** Plans that wait on the person, in nav order, with the step each waits at. */
+export const WAITING = [
+  ["at-review", "Review"],
+  ["asking-plan", "Brief"],
+  ["awaiting-approval", "Impl"],
+] as const;
+
+/** Each plan's recorded decisions. */
+export const HISTORY: Record<string, DecisionEntry[]> = {
+  "at-review": [
+    {
+      decision: "The plan is written. Approve it?",
+      answer: "Approve",
+      by: "person",
+      at: "2026-10-01T09:00:00.000Z",
+    },
+  ],
+};
 
 // -- dates ------------------------------------------------------------------
 
@@ -746,6 +803,19 @@ export const PROOFS: Record<string, Proof> = {
     banner: { testsMissTheCase: false },
   },
 };
+
+/**
+ * The admin's decisions reader, answered from the fixture through the
+ * package's real `planWaiting`: the session above, the plans as they are now.
+ */
+export function decisionsReaderMock() {
+  return {
+    __esModule: true,
+    readWaiting: (_project: string, plans: Plan[]) =>
+      planWaiting({ sessions: SESSIONS, plans: plans.map(snapshotOf) }),
+    readPlanHistory: (_path: string, plan: string) => HISTORY[plan] ?? [],
+  };
+}
 
 /** `promises/proof` answered from the fixture; a name the registry lacks is null, as the real one answers. */
 export function proofMock() {
