@@ -39,7 +39,8 @@ export default defineConfig({
 		include: ["**/*.test.ts"],
 		// End-to-end tests need the real `claude` CLI and a telemetry daemon;
 		// they run with `pnpm e2e` (vitest.e2e.config.ts), never in `pnpm test`.
-		exclude: [...configDefaults.exclude, "e2e/**", ...SYSTEM],
+		// templates/** runs in a browser (vitest.templates.config.ts), not here.
+		exclude: [...configDefaults.exclude, "e2e/**", "templates/**", ...SYSTEM],
 		passWithNoTests: true,
 	},
 });
