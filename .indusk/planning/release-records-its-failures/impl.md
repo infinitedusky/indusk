@@ -166,7 +166,7 @@ gate_policy: ask
 
 #### Build Phase 3 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`, the incidents rule: an incident's evidence is `traces:` (a watcher's) or `tests:` + `release:` (a release's); a reader of incidents handles both
+- [x] `apps/indusk-mcp/CLAUDE.md`, the incidents rule: an incident's evidence is `traces:` (a watcher's) or `tests:` + `release:` (a release's); a reader of incidents handles both
 
 #### Build Phase 3 Document
 

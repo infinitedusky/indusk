@@ -161,9 +161,9 @@ pointer; the pointer holds the story.
   project is `markProjectId` (the shared git directory, never
   `basename(cwd)`); a health read never throws.
 - **An opened incident never takes an id its owner's Maintenance phases name**
-  (`maintenanceIncidentIds`); `watch` exits 1 for any incident left without
-  its owner's phase — opened, extended, or open from an earlier run — and
-  retries that reopen every run. — see `/reference/cli/promises`
+  (`maintenanceIncidentIds`); `watch` exits 1 for, and retries every run,
+  any incident left without its owner's phase. Evidence: `traces:` or
+  `tests:`+`release:`; readers take both. — see `/reference/cli/promises`
 - **`recordBreaks` commits on a trunk only**, after the inbox and heard rows;
   what it could not commit waits in the home's `pending-commit.json`. — see `/decisions/incident-recording`
 - **The always-on pass announces once, and only after Slack accepts**
