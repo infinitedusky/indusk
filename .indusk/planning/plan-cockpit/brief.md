@@ -1,7 +1,7 @@
 ---
 title: "Plan cockpit — the promise dashboard, the promise page and the plan page"
 date: 2026-10-10
-status: draft
+status: accepted
 workflow: feature
 ---
 
