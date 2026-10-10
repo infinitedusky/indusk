@@ -1,7 +1,7 @@
 ---
 title: "Display names — promises and plans read as words"
 date: 2026-10-09
-status: approved
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -39,16 +39,16 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | The promise `a-break-reaches-the-editor` reads "A break reaches the editor" on its card, its row in the panel, its activity lines and the heading of its hover | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-promise-reads-as-words | apps/vscode-extension/src/core/names.test.ts |
+| A1 | The promise `a-break-reaches-the-editor` reads "A break reaches the editor" on its card, its row in the panel, its activity lines and the heading of its hover | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-reads-as-words | apps/vscode-extension/src/core/names.test.ts |
 | A2 | Product names keep their capitals: `a-fly-deploy-is-one-command` reads "A Fly deploy is one command", `indusk-leaves-main-clean` reads "InDusk leaves main clean" | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-reads-as-words | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A3 | A project can name its own product words, and they keep their capitals the same way | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-reads-as-words | apps/indusk-mcp/src/lib/promises/display.test.ts |
-| A4 | Opening a promise in the panel shows its full sentence | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-promise-reads-as-words | apps/vscode-extension/src/core/names.test.ts |
-| A5 | The panel's plan group and a broken card's plan read by the brief's title, the part before " — "; `vscode-extension` reads "VS Code extension" | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-plan-reads-by-its-title | apps/vscode-extension/src/core/names.test.ts |
+| A4 | Opening a promise in the panel shows its full sentence | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-promise-reads-as-words | apps/vscode-extension/src/core/names.test.ts |
+| A5 | The panel's plan group and a broken card's plan read by the brief's title, the part before " — "; `vscode-extension` reads "VS Code extension" | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-plan-reads-by-its-title | apps/vscode-extension/src/core/names.test.ts |
 | A6 | A plan with no brief, or a brief with no title, still reads by its folder name | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A7 | Each health line names each promise's words, its plan's title and its plan's dates, so the editor names plans without reading plan files | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-reads-by-its-title, promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/__tests__/promise-health-names.test.ts |
 | A8 | How a promise or plan is named for a person, and a plan's dates, are defined once, in the package; a second definition in the admin or the extension fails the build | Test Phase 1 | Build Phase 1 | passing | unit | promise: display-names-are-defined-once | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
-| A9 | The marker at the end of a code line still shows the promise's handle | Build Phase 2 | Build Phase 2 | planned | unit | a regression guard over a decision in the brief: the marker sits beside the token that spells the handle | apps/vscode-extension/src/core/names.test.ts |
-| A10 | On the dusk project in VS Code, the panel's groups read by plan titles with their dates, and its cards and rows by promise words | Build Phase 2 | Build Phase 2 | planned | live check | the whole story once, against the real editor | apps/vscode-extension/e2e/live.e2e.test.ts |
+| A9 | The marker at the end of a code line still shows the promise's handle | Build Phase 2 | Build Phase 2 | passing | unit | a regression guard over a decision in the brief: the marker sits beside the token that spells the handle | apps/vscode-extension/src/core/names.test.ts |
+| A10 | On the dusk project in VS Code, the panel's groups read by plan titles with their dates, and its cards and rows by promise words | Build Phase 2 | Build Phase 2 | passing | live check | the whole story once, against the real editor | apps/vscode-extension/e2e/live.e2e.test.ts |
 | A11 | A plan's group in the panel shows the date it started and the date it landed | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A12 | A landed plan shows the release that shipped it — the first release whose changelog names the plan — with its version and date | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A13 | A plan not landed shows only its start date; one landed but in no release yet says "not released yet" | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
@@ -110,6 +110,8 @@ The editor names promises in words, plans by their title, and shows each plan's 
 - [x] `display.words` read from `.indusk/config.json`, merged over the built-in words
 - [x] `healthLine(registry, reads, now, names?)`: each promise gains `title`, `planTitle` and `planDates`; `promises health` builds `names` each line from the plan folders (active and archived) and the project's declared changelog (`workflow.steps`)
 
+- [x] Shape — reviewed `lib/promises/display.ts` and the `health-line.ts` change against the enabled extensions' craft rules: nothing found (one definition each, no handle-to-words copy outside the module, the new line fields typed once through `HealthNames`/`PlanDates`).
+
 #### Build Phase 1 Verification
 
 - [x] A2, A3, A6, A7, A8, A11, A12, A13 pass, each red first (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts src/__tests__/promise-health-names.test.ts src/__tests__/display-names-single-definition.test.ts && pnpm exec vitest related src/lib/promises/health-line.ts --run`); tsc and biome clean — 2026-10-10: red first (stub module: 9 failed on their own assertions); now display.test.ts + promise-health-names + single-definition 12 passed, `vitest related health-line.ts` 56 passed (12 files); tsc clean; biome clean on changed files.
@@ -127,20 +129,21 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 **Goal**: the panel, activity and hover name promises in words and plans by title with their dates; the marker keeps the handle.
 
-- [ ] `core/panel.ts`, `core/panel-html.ts`, `core/activity.ts`, `core/hover.ts`: show `title` and `planTitle`, with the handle and folder as fallbacks; a plan group shows "started …, landed …, released X.Y.Z (date)" or "not released yet"
-- [ ] A10 added to the live probe and run on the dusk project; recorded here
+- [x] `core/panel.ts`, `core/panel-html.ts`, `core/activity.ts`, `core/hover.ts`: show `title` and `planTitle`, with the handle and folder as fallbacks; a plan group shows "started …, landed …, released X.Y.Z (date)" or "not released yet"
+- [x] A10 added to the live probe and run on the dusk project; recorded here — 2026-10-10: `e2e/live-probe.cjs` runs a `names()` check alone under `INDUSK_LIVE_A10=1` (no demo app), asserted by a branch in `e2e/live.e2e.test.ts`. Run in VS Code on this worktree (the extension built from it, `indusk` the worktree's build): passed. 19 plan groups, 16 headed by a title that is not the folder (the other 3 have no brief title, so the folder is the title), all 19 dated ("started …"), 12 naming a release ("released 1.63.0 (2026-10-06)"), 71 of 71 cards and rows in words (e.g. `every-commit-evaluated` reads "Every commit evaluated"); a landed plan in no release reads "started 2026-10-05, landed 2026-10-05, not released yet".
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules: nothing found (the date sentence lives once, in `panel.ts`'s `whenWords`; the words come only from `titleOf` over the line, with the handle as the fallback).
 
 #### Build Phase 2 Verification
 
-- [ ] A1, A4, A5, A9 pass, each red first (`cd apps/vscode-extension && pnpm exec vitest run src/core`); A10 passes live; typecheck and biome clean
+- [x] A1, A4, A5, A9 pass, each red first (`cd apps/vscode-extension && pnpm exec vitest run src/core`); A10 passes live; typecheck and biome clean — 2026-10-10: `names.test.ts` red first, 3 of 6 failed on their own assertions (A1: `expected undefined to be 'A break reaches the editor'`; A5 title: `expected undefined to be 'VS Code extension'`; A5 dates: the body lacked "started 2026-10-08, landed …"). A4, A9 and A1's handle-fallback case were green on first run: the statement and the marker's handle are behaviour the panel already had, so they are regression guards, not red-first. Now `src/core` 11 files / 38 tests passed; A10 passed live (above); `tsc --noEmit` clean; biome clean.
 
 #### Build Phase 2 Context
 
-- [ ] `apps/vscode-extension/CLAUDE.md`: names and dates come from the line; the extension never turns a handle into words itself
+- [x] `apps/vscode-extension/CLAUDE.md`: names and dates come from the line; the extension never turns a handle into words itself
 
 #### Build Phase 2 Document
 
-- [ ] the guide's panel section: promises in words, plans by title and dates; changelog: Changed
+- [x] the guide's panel section: promises in words, plans by title and dates; changelog: Changed
 
 ## Files Affected
 
