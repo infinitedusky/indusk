@@ -40,18 +40,18 @@ The editor names promises in words, plans by their title, and shows each plan's 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | The promise `a-break-reaches-the-editor` reads "A break reaches the editor" on its card, its row in the panel, its activity lines and the heading of its hover | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-promise-reads-as-words | apps/vscode-extension/src/core/names.test.ts |
-| A2 | Product names keep their capitals: `a-fly-deploy-is-one-command` reads "A Fly deploy is one command", `indusk-leaves-main-clean` reads "InDusk leaves main clean" | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-reads-as-words | apps/indusk-mcp/src/lib/promises/display.test.ts |
-| A3 | A project can name its own product words, and they keep their capitals the same way | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-reads-as-words | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A2 | Product names keep their capitals: `a-fly-deploy-is-one-command` reads "A Fly deploy is one command", `indusk-leaves-main-clean` reads "InDusk leaves main clean" | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-reads-as-words | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A3 | A project can name its own product words, and they keep their capitals the same way | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-reads-as-words | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A4 | Opening a promise in the panel shows its full sentence | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-promise-reads-as-words | apps/vscode-extension/src/core/names.test.ts |
 | A5 | The panel's plan group and a broken card's plan read by the brief's title, the part before " — "; `vscode-extension` reads "VS Code extension" | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-plan-reads-by-its-title | apps/vscode-extension/src/core/names.test.ts |
-| A6 | A plan with no brief, or a brief with no title, still reads by its folder name | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
-| A7 | Each health line names each promise's words, its plan's title and its plan's dates, so the editor names plans without reading plan files | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-plan-reads-by-its-title, promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/__tests__/promise-health-names.test.ts |
-| A8 | How a promise or plan is named for a person, and a plan's dates, are defined once, in the package; a second definition in the admin or the extension fails the build | Test Phase 1 | Build Phase 1 | written | unit | promise: display-names-are-defined-once | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
+| A6 | A plan with no brief, or a brief with no title, still reads by its folder name | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A7 | Each health line names each promise's words, its plan's title and its plan's dates, so the editor names plans without reading plan files | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-reads-by-its-title, promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/__tests__/promise-health-names.test.ts |
+| A8 | How a promise or plan is named for a person, and a plan's dates, are defined once, in the package; a second definition in the admin or the extension fails the build | Test Phase 1 | Build Phase 1 | passing | unit | promise: display-names-are-defined-once | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
 | A9 | The marker at the end of a code line still shows the promise's handle | Build Phase 2 | Build Phase 2 | planned | unit | a regression guard over a decision in the brief: the marker sits beside the token that spells the handle | apps/vscode-extension/src/core/names.test.ts |
 | A10 | On the dusk project in VS Code, the panel's groups read by plan titles with their dates, and its cards and rows by promise words | Build Phase 2 | Build Phase 2 | planned | live check | the whole story once, against the real editor | apps/vscode-extension/e2e/live.e2e.test.ts |
-| A11 | A plan's group in the panel shows the date it started and the date it landed | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
-| A12 | A landed plan shows the release that shipped it — the first release whose changelog names the plan — with its version and date | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
-| A13 | A plan not landed shows only its start date; one landed but in no release yet says "not released yet" | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A11 | A plan's group in the panel shows the date it started and the date it landed | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A12 | A landed plan shows the release that shipped it — the first release whose changelog names the plan — with its version and date | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A13 | A plan not landed shows only its start date; one landed but in no release yet says "not released yet" | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
 
 ## Checklist
 
@@ -112,7 +112,7 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 #### Build Phase 1 Verification
 
-- [ ] A2, A3, A6, A7, A8, A11, A12, A13 pass, each red first (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts src/__tests__/promise-health-names.test.ts src/__tests__/display-names-single-definition.test.ts && pnpm exec vitest related src/lib/promises/health-line.ts --run`); tsc and biome clean
+- [x] A2, A3, A6, A7, A8, A11, A12, A13 pass, each red first (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts src/__tests__/promise-health-names.test.ts src/__tests__/display-names-single-definition.test.ts && pnpm exec vitest related src/lib/promises/health-line.ts --run`); tsc and biome clean — 2026-10-10: red first (stub module: 9 failed on their own assertions); now display.test.ts + promise-health-names + single-definition 12 passed, `vitest related health-line.ts` 56 passed (12 files); tsc clean; biome clean on changed files.
 
 #### Build Phase 1 Context
 
