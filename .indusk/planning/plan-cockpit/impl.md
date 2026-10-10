@@ -199,7 +199,7 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
   ```
   health from `promises/health` (`readHealth`, `healthRows`, `alarmRead`) — never recomputed; broken is red from the alarm source
 - [x] `apps/indusk-mcp/src/lib/promises/proof.ts`, exported as `./promises/proof`: `proofOf(projectRoot, name, deps)` → `{ rows, marks, days, history, banner }`; marks grouped by `service` + `operation` from `promises/telemetry`'s `MarkedSpan`s; days from `countHeard` (broken, per source) and the store's `readWindow` (held), thirty one-day buckets; history from the promise file's `## History` and `promises/incidents`
-- [ ] `apps/indusk-mcp/src/lib/promises/fix.ts`, exported as `./promises/fix`: `fixPrompt(broken)` and the `BrokenPromise` shape, moved from `apps/vscode-extension/src/core/fix.ts`; the extension's `fixFor`/`fixAction` import it
+- [x] `apps/indusk-mcp/src/lib/promises/fix.ts`, exported as `./promises/fix`: `fixPrompt(broken)` and the `BrokenPromise` shape, moved from `apps/vscode-extension/src/core/fix.ts`; the extension's `fixFor`/`fixAction` import it
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 1 Verification
