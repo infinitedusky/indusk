@@ -52,14 +52,15 @@ audit_reason: "A display defect found by Sandy reading the panel; its rows prove
 
 **Tier**: med
 
-- [ ] Confirm this plan's worktree (`git worktree list` shows `plan/panel-last-broke-time`)
-- [ ] A1, A2 in `apps/vscode-extension/src/core/last-broke.test.ts` against the core's panel model, panel HTML and hover, with a line row whose `lastSeen` is newer than its violation (the field the fix adds is read as optional, so the test loads today and fails on its assertion); A2 passes the time zone explicitly so it does not depend on the machine's
-- [ ] A3 in `promise-health-names.test.ts`: a row with violations carries `lastBroke` equal to the newest violation's time
-- [ ] Each fails on its own assertion, never a load error; rows set `written`
+- [x] Confirm this plan's worktree (`git worktree list` shows `plan/panel-last-broke-time`)
+- [x] A1, A2 in `apps/vscode-extension/src/core/last-broke.test.ts` against the core's panel model, panel HTML and hover, with a line row whose `lastSeen` is newer than its violation (the field the fix adds is read as optional, so the test loads today and fails on its assertion); A2 passes the time zone explicitly so it does not depend on the machine's
+- [x] A3 in `promise-health-names.test.ts`: a row with violations carries `lastBroke` equal to the newest violation's time
+- [x] Each fails on its own assertion, never a load error; rows set `written`
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Test Phase 1 Verification
 
-- [ ] A1, A2, A3 are `written` and red on their assertions (`cd apps/vscode-extension && pnpm exec vitest run src/core/last-broke.test.ts` and `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-names.test.ts`)
+- [x] A1, A2, A3 are `written` and red on their assertions (`cd apps/vscode-extension && pnpm exec vitest run src/core/last-broke.test.ts` and `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-health-names.test.ts`)
 
 ### Build Phase 1: The line carries the time, the editor shows it
 
