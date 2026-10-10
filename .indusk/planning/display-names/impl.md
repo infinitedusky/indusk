@@ -159,7 +159,7 @@ The editor names promises in words, plans by their title, and shows each plan's 
 
 **Not investigated further, and why:** `promiseWords` (hyphen-split, exact-word lookup; a built-in word cannot match inside another word, and A2/A3 cover capitals and project words); `planTitle` (A6 decides the no-brief fallback is the folder); `releaseOf`'s pattern (it matches the plan as a whole parenthesised list item, and the two changelog mentions it misses, `day-promises` and `test-kinds`, are not written as `(plan)` entries — by the row's own definition not releases); a version bumped and never published (1.69.0) reading as released (A12 defines the release as the changelog's); the cost of re-reading every plan folder each health line (correct, and the cockpit's planning will decide whether to cache).
 
-- [ ] `lib/promises/display.ts` `planDates(planDir, changelog?, opts?: { archived?: boolean })`: with no landing line and `archived`, `landed` is the retrospective's frontmatter `date` (else the impl's `date`), and `released` is looked up whenever the plan is landed or archived; `readHealthNames` passes `folder.archived` (A14)
+- [x] `lib/promises/display.ts` `planDates(planDir, changelog?, opts?: { archived?: boolean })`: with no landing line and `archived`, `landed` is the retrospective's frontmatter `date` (else the impl's `date`), and `released` is looked up whenever the plan is landed or archived; `readHealthNames` passes `folder.archived` (A14)
 - [ ] `planDates`: `started` is the brief's `date`, else the first of `research.md`, `test-plan.md`, `adr.md`, `impl.md` that has one (A15)
 
 #### Build Phase 3 Verification

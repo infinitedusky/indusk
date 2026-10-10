@@ -81,18 +81,34 @@ function releaseOf(plan: string, changelog: string): PlanDates["released"] {
 }
 
 /**
- * A plan's dates from three facts already on disk: the brief's `date`, the
+ * A plan's dates from facts already on disk: the brief's `date`, the
  * retrospective's `Landed on main at <sha>, <date>.` line, and the changelog
- * (its text) — the earliest release naming the plan.
+ * (its text) — the earliest release naming the plan. A plan in `archive/` is on
+ * main by construction, so when it has no landing line (every plan retired
+ * before the line was written) it landed on its retrospective's `date`, else
+ * its impl's.
  */
-export function planDates(planDir: string, changelog?: string): PlanDates {
+export function planDates(
+	planDir: string,
+	changelog?: string,
+	opts: { archived?: boolean } = {},
+): PlanDates {
 	const started = frontmatter(read(join(planDir, "brief.md")), "date")?.match(DATE)?.[0] ?? null;
-	const landed =
-		read(join(planDir, "retrospective.md"))?.match(
-			/Landed on main at \S+?,\s*(\d{4}-\d{2}-\d{2})/,
-		)?.[1] ?? null;
-	const released = landed && changelog ? releaseOf(basename(planDir), changelog) : null;
+	const line = read(join(planDir, "retrospective.md"))?.match(
+		/Landed on main at \S+?,\s*(\d{4}-\d{2}-\d{2})/,
+	)?.[1];
+	const landed = line ?? (opts.archived ? archivedLanding(planDir) : null);
+	const released = (landed || opts.archived) && changelog ? releaseOf(basename(planDir), changelog) : null;
 	return { started, landed, released };
+}
+
+/** When an archived plan with no landing line landed: its retrospective's `date`, else its impl's. */
+function archivedLanding(planDir: string): string | null {
+	for (const doc of ["retrospective.md", "impl.md"]) {
+		const date = frontmatter(read(join(planDir, doc)), "date")?.match(DATE)?.[0];
+		if (date) return date;
+	}
+	return null;
 }
 
 /** `display.words` from the project's config, merged over the built-in words. */
@@ -138,7 +154,7 @@ export function readHealthNames(projectRoot: string): HealthNames {
 			frontmatter(read(join(folder.dir, "brief.md")), "title"),
 			folder.plan,
 		);
-		names.planDates[folder.plan] = planDates(folder.dir, changelog);
+		names.planDates[folder.plan] = planDates(folder.dir, changelog, { archived: folder.archived });
 	}
 	return names;
 }
