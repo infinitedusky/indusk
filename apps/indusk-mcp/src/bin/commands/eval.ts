@@ -11,7 +11,12 @@ import { join } from "node:path";
 import { bookkeepingRoots, evalDir } from "../../lib/bookkeeping/roots.js";
 import { getAllFindings, getUnresolvedFindings, markFinding } from "../../lib/eval/findings.js";
 import { readAllEntries } from "../../lib/eval/log-reader.js";
-import { type EvalScorecard, isScorecard } from "../../lib/eval/types.js";
+import {
+	type EvalScorecard,
+	isErrorEntry,
+	isScorecard,
+	isWaitingEntry,
+} from "../../lib/eval/types.js";
 
 /**
  * Print the project's home — `<INDUSK_HOME>/projects/<id>-<hash>/` — from any
@@ -46,7 +51,8 @@ export async function evalSummary(
 
 	const entries = await readAllEntries(logPath, filterOpts);
 	const scorecards = entries.filter(isScorecard);
-	const errors = entries.filter((e) => !isScorecard(e));
+	const errors = entries.filter(isErrorEntry);
+	const waiting = entries.filter(isWaitingEntry);
 
 	if (entries.length === 0) {
 		console.info("No eval results match the filter criteria.");
@@ -55,7 +61,7 @@ export async function evalSummary(
 
 	if (opts.json) {
 		console.info(
-			JSON.stringify({ scorecards, errors, summary: computeSummary(scorecards) }, null, 2),
+			JSON.stringify({ scorecards, errors, waiting, summary: computeSummary(scorecards) }, null, 2),
 		);
 		return;
 	}
@@ -66,7 +72,7 @@ export async function evalSummary(
 	console.info(`\n📊 Eval Summary`);
 	console.info(`${"─".repeat(50)}`);
 	console.info(
-		`Total evaluations: ${entries.length} (${scorecards.length} scorecards, ${errors.length} errors)`,
+		`Total evaluations: ${entries.length} (${scorecards.length} scorecards, ${errors.length} errors, ${waiting.length} waiting)`,
 	);
 
 	if (scorecards.length > 0) {
@@ -320,6 +326,8 @@ export async function evalBaseline(
 
 	if ("error" in evalResult) {
 		console.error(`Eval failed: ${evalResult.message}`);
+	} else if ("waiting" in evalResult) {
+		console.info(`Eval waiting — ${evalResult.message}`);
 	} else {
 		console.info(`\nBaseline scorecard for ${taskName}:`);
 		console.info(`  Summary: ${evalResult.summary}`);

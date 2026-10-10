@@ -184,8 +184,11 @@ pointer; the pointer holds the story.
   invariants**: the resume prompt includes Step 4; `markProcessed` rejects
   duplicates; no backwards-anchoring phrasing; lessons via `add_lesson`; an old
   session pinned to a deprecated model 404s — delete its state. In a workbench
-  a commit is attributed to the repository that received it. — see
-  `/guide/rail-check`
+  a commit is attributed to the repository that received it. **A limit refusal
+  (`429`, a weekly limit) is *waiting*, not failed** — logged `waiting`, queued
+  in `pending.jsonl`, retried by the next commit's trigger before its own
+  (`lib/eval/limits.ts`); a reply with no scorecard is asked once more in the
+  same session. — see `/guide/rail-check`
 - **Thin-lane eval rail**: the loop queues each commit to a pending-eval JSONL
   (absent = empty); `eval-trigger.js --drain-pending` evaluates each once —
   ledger written before spawn, un-drained on a failed evaluator; records carry

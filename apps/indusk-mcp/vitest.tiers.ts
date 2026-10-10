@@ -34,6 +34,7 @@ export const SYSTEM = [
 	"src/__tests__/cli-bare-ui-cwd-aware.test.ts",
 	"src/__tests__/demo-command.test.ts",
 	"src/__tests__/monitor-mark.test.ts",
+	"src/lib/eval/evaluator-limits.test.ts",
 	"src/__tests__/monitor-plans.test.ts",
 	"src/__tests__/monitor-status.test.ts",
 	"src/__tests__/monitor-watch.test.ts",

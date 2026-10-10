@@ -2,7 +2,7 @@
 id: i-2026-10-05-every-commit-evaluated
 promise: every-commit-evaluated
 source: local
-status: open
+status: fixed
 date: '2026-10-03'
 opened: '2026-10-03T21:01:44Z'
 last_seen: '2026-10-05T03:12:00Z'
@@ -18,6 +18,7 @@ traces:
   - '08d033cd94cc5348bb4e904e560e64f3'
   - '566f2f576251552f35b0ba03c500a325'
   - '8ddb09c5785d807d279ed9a4656cc675'
+fixed: '2026-10-10T21:42:15Z'
 ---
 
 ## Symptom
@@ -60,6 +61,20 @@ that start also exited 1, and the trace does not record why. The violation
 carries the first failure's text. Not reproduced; recorded here so a second
 occurrence is recognised.
 
+**4. The model refused for a limit, and the refusal was counted as a broken
+promise (evaluator-waits-out-limits, 2026-10-10).** The violations kept coming
+after the three fixes above, and every later one has one of two causes, neither
+a fault in the commit. Eleven runs were answered `api_error_status: 429`
+("Server is temporarily limiting requests"), and two on 2026-10-09 were `429`
+"You've hit your weekly limit · resets Oct 13": the three retries of cause 2
+last a minute and a half, a weekly limit outlasts them, and the run was then
+marked violated with the commit never graded. The model refused for rate
+limiting; a refusal now waits and is retried, evaluator-waits-out-limits. The
+other: on 2026-10-09 17:46 UTC a resumed session replied "Noted — th…", prose
+with no JSON at all, so the extractor found nothing and `JSON.parse` failed;
+the same stuck-loop prose as cause 1, which fixing the commit it was handed did
+not remove.
+
 ## Fix
 
 Day-monitor Build Phase 10, 2026-10-05, on `plan/day-monitor`.
@@ -85,3 +100,18 @@ Day-monitor Build Phase 10, 2026-10-05, on `plan/day-monitor`.
 The fixes reach the live evaluator with the next release and `indusk
 update`; until then the installed evaluator still has both defects. The
 quiet window is what confirms them.
+
+- **Cause 4.** evaluator-waits-out-limits, 2026-10-10, on
+  `plan/evaluator-waits-out-limits`. A run the model refuses for a limit
+  (`api_error_status: 429`, or the words of one on a failed run) is a *waiting*
+  outcome, not a violation: it is logged as `waiting` in the eval log, marks
+  nothing, and its commit is queued in `eval/pending.jsonl` with `waiting:
+  true` and taken out of the drained ledger (`lib/eval/limits.ts`
+  `leaveWaiting`). Each later commit's trigger retries the waiting commits
+  before it evaluates its own (`eval-trigger.js`, `_pending-drain.js`); the
+  ledger is written before each retry spawns, so no commit is evaluated twice,
+  and a retry refused again takes itself out of it. A weekly limit is not
+  retried in the run (the 15/45/90 s waits cannot outlast it). An answer with
+  no scorecard is asked once more in the same session for the scorecard JSON
+  only; a second answer without one fails the run with that answer as the
+  reason. Rows A1-A5 (`evaluator-limits.test.ts`, `eval-trigger-waiting.test.ts`).

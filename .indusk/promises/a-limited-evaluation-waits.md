@@ -2,11 +2,14 @@
 name: a-limited-evaluation-waits
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: gates
 owner: evaluator-waits-out-limits
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/eval/limits.ts
+tests:
+  - apps/indusk-mcp/src/lib/eval/evaluator-limits.test.ts
+  - apps/indusk-mcp/src/__tests__/eval-trigger-waiting.test.ts
 incidents: []
 ---
 
@@ -14,3 +17,4 @@ An evaluation the model refuses for a rate or usage limit is not counted as a br
 
 ## History
 - 2026-10-10 — declared (evaluator-waits-out-limits), from its planning conversation.
+- 2026-10-10 — enforced, confirmed for evaluator-waits-out-limits: proven by row A1, row A2.
