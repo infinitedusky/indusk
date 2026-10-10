@@ -2,6 +2,7 @@ import { readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
+import * as decision from "@/app/api/plans/[name]/decision/route";
 import * as accept from "@/app/api/plans/accept/route";
 import * as approve from "@/app/api/plans/approve/route";
 import * as build from "@/app/api/plans/build/route";
@@ -33,6 +34,7 @@ type Handler = (
 
 const MODULES: Record<string, Record<string, unknown>> = {
   plans,
+  "plans/[name]/decision": decision,
   "plans/accept": accept,
   "plans/approve": approve,
   "plans/build": build,

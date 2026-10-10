@@ -11,7 +11,15 @@ import {
   SessionManager,
   type SessionOptions,
 } from "@infinitedusky/indusk-mcp/session";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  vi,
+} from "vitest";
 import { answerDecision, type DecisionDeps } from "./decisions";
 
 /**
@@ -33,9 +41,9 @@ const WORKTREE = "/work/seats-worktrees/seat-holds";
 let dir: string;
 let launched: SessionOptions[];
 let fake: {
-  answer: ReturnType<typeof vi.fn>;
-  say: ReturnType<typeof vi.fn>;
-  decide: ReturnType<typeof vi.fn>;
+  answer: Mock<Session["answer"]>;
+  say: Mock<Session["say"]>;
+  decide: Mock<Session["decide"]>;
 };
 let manager: SessionManager;
 let recorded: DecisionEntry[];
@@ -58,7 +66,11 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), "decisions-"));
   launched = [];
   recorded = [];
-  fake = { answer: vi.fn(), say: vi.fn(), decide: vi.fn() };
+  fake = {
+    answer: vi.fn<Session["answer"]>(),
+    say: vi.fn<Session["say"]>(),
+    decide: vi.fn<Session["decide"]>(),
+  };
   manager = new SessionManager({
     recordPath: join(dir, "admin-sessions.json"),
     start: fakeSession,
