@@ -482,13 +482,22 @@ lesson title, or a chat log.
   test "registered" and "CLI installed", never the token, so a 401 on every
   connect since 2026-09-17 reached only Claude Code's own notice. A health
   check for a remote MCP server must make one authenticated call.
-- **Bugfix, not a step** (Sandy, 2026-09-18, while settling that the loop is
-  self-contained): `indusk init` scaffolds `@dash0/sdk-web` into a React
-  SPA's `src/instrumentation.ts` — a vendor SDK written into a user's
-  application code. Browser instrumentation should be the OpenTelemetry web
-  SDK with an OTLP exporter, endpoint anyone's. Also drop `dash0` from the
-  trajectory audit's telemetry keywords (`lib/trajectory/audit.ts`). The
-  `dash0` extension itself stays shipped, optional, disabled here.
+- **Owned by [browser-telemetry-leftovers](browser-telemetry-leftovers/brief.md)**
+  (bugfix, opened 2026-10-10; was "Bugfix, not a step", Sandy, 2026-09-18).
+  The audit found the scaffold already the OpenTelemetry Web SDK since v1.6.0;
+  what remained is `init` *printing* `@dash0/sdk-web`, `dash0` in the
+  trajectory audit's keywords, and the template sending `traceparent` to its
+  own origin only, so a click and the server work it causes on another origin
+  land in two traces. The `dash0` extension itself stays shipped, optional,
+  disabled here.
+- **Follow-on, not critical — `telemetry-destinations`** (feature, not
+  created; Sandy, 2026-10-10): InDusk always receives the telemetry; beside it
+  a project has any number of other destinations, added and removed freely, as
+  exporters on InDusk's collector (promise
+  `indusk-always-receives-the-telemetry`, structure). Today a scaffolded app
+  reads one endpoint variable, so a vendor replaces InDusk rather than joining
+  it, and the vendor extensions only query. See
+  [its research](browser-telemetry-leftovers/research.md#follow-on-telemetry-destinations-feature-not-critical).
 - **Small, not a step** (2026-09-18, from day-promises' close):
   `apps/indusk-mcp/src/lib/admin/__tests__/daemon-identity.test.ts` assumes
   port 65001 is unbound; the local-telemetry `otelcol` restarted onto it
