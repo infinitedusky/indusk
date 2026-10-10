@@ -25,7 +25,12 @@ export interface HealthLineRow {
 	violations: number | null;
 	symptom?: string;
 	traceId?: string;
-	/** ISO time of the newest violation, apart from `lastSeen` (the newest run of any outcome). */
+	/**
+	 * ISO time of the newest violation — what "last broke" shows — apart from
+	 * `lastSeen` (the newest run of any outcome).
+	 *
+	 * promise: a-broken-promise-says-when-it-last-broke
+	 */
 	lastBroke?: string;
 	environment?: string | null;
 	tests: string[];
