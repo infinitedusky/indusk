@@ -28,11 +28,9 @@ describe("A3 — the release publishes without listing every file", () => {
 	it("keeps every step it ran, in the same order", () => {
 		expect(steps.map((s) => s.replace(/^npm_config_loglevel=warn /, ""))).toEqual([
 			"bash scripts/release-guard.sh",
-			// The slow tier runs before every publish (small-fixes A3): since dusk
-			// installs its own build at landing, a publish is deliberate and rare, and
-			// the wait belongs here, not at landing.
+			// The slow tier no longer runs here: `indusk release` runs it after the
+			// publish and records what it finds (release-records-its-failures D2).
 			// promise: dusk-installs-its-own-build
-			"pnpm -w test:system",
 			"npm whoami",
 			// The server image, before npm (server-provisioning A18).
 			// promise: the-recording-server-runs-from-a-published-image
