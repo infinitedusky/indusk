@@ -39,6 +39,7 @@ export const SYSTEM = [
 	"src/__tests__/monitor-watch.test.ts",
 	"src/__tests__/promise-sources.test.ts",
 	"src/__tests__/promise-timeline-reader.test.ts",
+	"src/__tests__/release-junit.contract.test.ts",
 	"src/__tests__/session-protocol-contract.test.ts",
 	"src/__tests__/telemetry-cli-lifecycle.test.ts",
 	"src/__tests__/telemetry-existing-project-upgrade.test.ts",

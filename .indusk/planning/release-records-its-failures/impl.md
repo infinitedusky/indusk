@@ -88,7 +88,7 @@ gate_policy: ask
 - [x] A6, A7, A9, A10, A22 in `release-report.test.ts`; JUnit fixtures written in vitest's shape (`<testsuite name="<file>">` with `<testcase classname="<file>">` and `<failure>`)
 - [x] A11–A14 in `release-incident.test.ts`: a fixture promise owned by a fixture plan whose row names the failing file; asserts read the incidents directory, the owner's impl (Maintenance phase) and `runCli(["promises", "status"])`
 - [x] A15–A17 in `release-bugfix-plan.test.ts`: asserts read `git branch` and the started plan's brief in its worktree
-- [ ] A8 in `release-junit.contract.test.ts`, added to `vitest.tiers.ts` `SYSTEM`: runs vitest with dusk's declared system config on a fixture test that fails, and reads the report at the declared path
+- [x] A8 in `release-junit.contract.test.ts`, added to `vitest.tiers.ts` `SYSTEM`: runs vitest with dusk's declared system config on a fixture test that fails, and reads the report at the declared path
 - [ ] A18 in `release-dusk-declaration.test.ts`: reads `apps/indusk-mcp/package.json`'s `release` script and `.indusk/config.json`'s `release` block
 - [ ] Run each file and confirm every row fails on its own assertion (an unknown `release` command's exit and output, a missing report, a script that still names `test:system`), never on a load error; set each row `written`
 
