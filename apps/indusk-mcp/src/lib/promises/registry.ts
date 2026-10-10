@@ -93,8 +93,16 @@ export interface IncidentEntry {
 	 * refuses `status: fixed` without it: a timeline band has no end otherwise.
 	 */
 	fixed: string | null;
-	/** The violation trace ids it records. */
+	/** The violation trace ids it records; empty for an incident a release opened. */
 	traces: string[];
+	/**
+	 * A release's evidence (release-records-its-failures D7), in place of
+	 * `traces`: the tests still failing after their rerun, `<file> > <test>`,
+	 * and the releases they failed in, `<version> at <commit>`. Absent on a
+	 * watcher's incident; a reader of incidents handles both shapes.
+	 */
+	tests?: string[];
+	release?: string[];
 	/** Registry-relative file path, e.g. `incidents/i-2026-….md`. */
 	file: string;
 }
@@ -421,6 +429,8 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 			opened: timeOf(d.opened),
 			fixed: timeOf(d.fixed),
 			traces: Array.isArray(d.traces) ? d.traces.map(String) : [],
+			...(Array.isArray(d.tests) ? { tests: d.tests.map(String) } : {}),
+			...(Array.isArray(d.release) ? { release: d.release.map(String) } : {}),
 			file: rel,
 		});
 	}

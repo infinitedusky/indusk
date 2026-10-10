@@ -50,6 +50,8 @@ export interface SettledFailures {
 	failed: FailedFile[];
 	flakes: string[];
 	environment?: { failed: number; total: number };
+	/** The failed tests' names per failing file, from the report: what an incident names; not on the record. */
+	tests?: Record<string, string[]>;
 }
 
 export interface SlowRun {
