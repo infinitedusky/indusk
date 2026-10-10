@@ -107,6 +107,7 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 - [x] A18, A19, A20, A23 in `promises/dashboard.test.tsx`: the promises page from the fixture. RED today: rows read as names, no grouping, no filter, broken not first
 - [x] A34 in `apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts`: reads sources as files; the package exports `promises/rows`, `promises/standing`, `promises/proof`, `promises/fix`, `plans/steps`, `plans/waiting` and `plans/history`, each defining its function; no file under `apps/indusk-admin/src` or `apps/vscode-extension/src` defines `standingOf`, `proofOf`, `fixPrompt`, `planSteps`, `planWaiting` or `appendDecision`, or a fix prompt of its own. RED today: none exist
 - [x] Confirm each red test fails on its own assertion rather than on a missing import
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Deferred to Build Phase 1
 
