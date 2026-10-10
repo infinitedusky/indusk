@@ -170,7 +170,7 @@ gate_policy: ask
 
 #### Build Phase 3 Document
 
-- [ ] `reference/cli/release.md`: routing and the test-born incident; the promises reference page names the `release` source
+- [x] `reference/cli/release.md`: routing and the test-born incident; the promises reference page names the `release` source
 
 ### Build Phase 4: The bugfix plan for an unclaimed failure
 
