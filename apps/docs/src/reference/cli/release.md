@@ -70,4 +70,54 @@ Failures are read from the declared JUnit report, never from what the command pr
 
 When more than half the report's test files failed, it is the environment, not the code: the release prints the `the environment failed` line, records `environment: {failed, total}`, and nothing else is opened. Exactly half is not.
 
-Otherwise, with `slow_tests.rerun` declared, the failing files are substituted space-separated into `{files}` and run once. The report is read again: a file the rerun does not leave failing is a flake, listed under `flakes` on the record and opening nothing; a file still failing is recorded under `failed`. Routing a failure to an incident or a bugfix plan is described here as it lands.
+Otherwise, with `slow_tests.rerun` declared, the failing files are substituted space-separated into `{files}` and run once. The report is read again: a file the rerun does not leave failing is a flake, listed under `flakes` on the record and opening nothing; a file still failing is recorded under `failed`.
+
+## Routing a failure
+
+Each file still failing is looked up in every plan's trajectory, active and archived: the rows whose `Test` cell names it. Each promise those rows' `For` cells name, live in the registry, claims the file. A file no promise claims stays `unrouted` on the record (a draft bugfix plan, as it lands).
+
+A claimed failure becomes an incident on its promise, one per promise with every file it claims:
+
+```markdown
+---
+id: i-2026-10-10-seat-released
+promise: seat-released
+source: release
+status: open
+date: '2026-10-10'
+opened: '2026-10-10T04:43:43Z'
+last_seen: '2026-10-10T04:43:43Z'
+tests:
+  - "src/seat-released.test.ts > holds a seat"
+release:
+  - "1.4.0 at 2dc1394"
+---
+
+## Symptom
+
+Release 1.4.0: src/seat-released.test.ts failed in the slow tests and was still failing when the release recorded it.
+
+## Suspects
+
+Release 1.4.0 (2dc1394) — failing: `src/seat-released.test.ts > holds a seat`.
+
+Commits since the last green slow run (8025898) touching `src`:
+
+- 2dc1394 rewrite the seat release timer
+
+## Proven by
+
+- `seat-holds` row R1 — passing (src/seat-released.test.ts)
+```
+
+The evidence is `tests:` and `release:` where a watcher's incident carries `traces:`. The suspects are `git log <sha>..HEAD` over `release.covers` (the whole repository when it declares none), from the commit the last green slow run was made on; a green run recorded without a commit, or none at all, names none and says why. Opening the incident goes the way a watcher's does: the promise lists it and an `enforced` one turns `known-violated`, and the owning plan gains `### Build Phase N: Maintenance — <id>`. It then shows in `indusk promises status`, `promise_health`, catchup and the admin like any open incident.
+
+When the promise already has an open incident, a later release adds to it: its tests and release are appended, its block goes under `## Suspects`, and `last_seen` moves forward.
+
+| Line printed | Meaning |
+|---|---|
+| `recorded: incident <id>` | An incident the release opened or extended. The record's `failed` entry for the file reads `routed: "incident <id>"`. |
+| `  reopened <owner>: Build Phase N: Maintenance — <id>` | The owner gained the incident's Maintenance phase. |
+| `incident <id>: <owner> was not reopened — …` (stderr) | The owner is not a plan folder, already has a heading this incident did not write, or its worktree assignment could not be read. |
+
+The incident is written, not committed: commit it with the rest of the release's bookkeeping.
