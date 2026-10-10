@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
+import matter from "gray-matter";
 import { readWorkflowSteps } from "../checks/steps.js";
 import { readConfig } from "../config.js";
 import { planFolders } from "./plan-folder.js";
@@ -60,11 +61,24 @@ function read(path: string): string | null {
 	return existsSync(path) ? readFileSync(path, "utf-8") : null;
 }
 
-/** A brief's frontmatter value for `key`, unquoted. */
+/**
+ * A plan document's frontmatter value for `key`, read through the package's
+ * YAML reader (`gray-matter`, as `plan-parser` does) so the plan page and the
+ * editor name one plan one way. Unreadable or malformed text reads as absent.
+ * A date YAML parses to a Date comes back as `YYYY-MM-DD`.
+ */
 function frontmatter(text: string | null, key: string): string | undefined {
-	const block = text?.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1];
-	const line = block?.match(new RegExp(`^${key}:\\s*(.*)$`, "m"))?.[1];
-	return line?.trim().replace(/^["']|["']$/g, "") || undefined;
+	if (text === null) return undefined;
+	let value: unknown;
+	try {
+		value = matter(text).data[key];
+	} catch {
+		return undefined;
+	}
+	if (value instanceof Date) {
+		return Number.isNaN(value.getTime()) ? undefined : value.toISOString().slice(0, 10);
+	}
+	return typeof value === "string" ? value.trim() || undefined : undefined;
 }
 
 /** The earliest changelog release that names `plan` in parentheses, as every entry does. */
