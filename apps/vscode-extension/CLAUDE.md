@@ -10,7 +10,8 @@ Loaded by Claude Code when a file under `apps/vscode-extension/` is read.
 - **The editor only shows.** Nothing here writes to the project; it reads one
   child process's lines and opens a terminal. (`the-editor-only-shows`)
 - **Health comes from the line, never computed here.** The package's
-  `promises/health` is the one rule; this app maps its states to words.
+  `promises/health` is the one rule, the CLI streams it (`promises health --json`);
+  this app maps its states to words.
   (`promise-health-single-definition.test.ts`)
 - **Tokens come from the package's grammar** (`@infinitedusky/indusk-mcp/tokens`),
   never a second pattern.

@@ -180,7 +180,7 @@ gate_policy: ask
 - [x] `lib/release/bugfix-plan.ts`: `openOrExtendBugfixPlan(root, failure)` — `fix-<test-file-stem>` through `startPlan("bugfix", …)`, its brief written `status: draft` with the failing tests, the release, the suspects, and for a promise-less row the plan and row; an open plan of that name gets the failure appended to its research instead (ADR D8)
 - [x] The runner sends unclaimed failures there and lists each opened or extended plan in its output and on the record
 - [x] A23 (Sandy, 2026-10-10: "Yes, same as the recorder"): an incident a release opens or extends is committed on the trunk through the recorder's commit path (`lib/promises/record-commit.ts`) and appended to the break inbox (`appendInbox`, `lib/promises/inbox.ts`), as `recordBreaks` does; author A23 red in `release-incident.test.ts` first
-- [ ] Root `CLAUDE.md` back under its budget (Build Phase 1's Key Decisions line pushed it to 14,886 bytes against 14,745; `context-tiers-register.test.ts` A13 fails): move one root entry that applies to one area down to that area's `CLAUDE.md`, per `lesson: a-claude-md-past-its-budget-holds-a-rule-that-belongs-lower` — never trim another entry's words to fit
+- [x] Root `CLAUDE.md` back under its budget (Build Phase 1's Key Decisions line pushed it to 14,886 bytes against 14,745; `context-tiers-register.test.ts` A13 fails): move one root entry that applies to one area down to that area's `CLAUDE.md`, per `lesson: a-claude-md-past-its-budget-holds-a-rule-that-belongs-lower` — never trim another entry's words to fit
 
 #### Build Phase 4 Verification
 

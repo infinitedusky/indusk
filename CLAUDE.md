@@ -93,7 +93,6 @@ dusk/
 - Workflow steps: `workflow.steps` names what each step runs, facts never logic; dusk's slow tier never blocks landing or release — see `/decisions/release-checks-run-once`
 - Incident recording: one writer (`recordBreaks`), run by the admin unasked; it commits on the trunk only — see `/decisions/incident-recording`
 - Server provisioning: every recording server is the person's own — `indusk server connect` for one run anywhere, `server deploy` the one-command Fly path, the image published with each release; no hosted service — see `/decisions/server-provisioning`
-- VS Code extension: promise health is worked out once, in the package (`promises/health`); the CLI streams it (`promises health --json`); the editor only shows — see `/decisions/vscode-extension`
 - Audit step: a fresh subagent on `workflow.steps.audit.tier` reads the approved impl, the final trajectory and the diff, writes `audit.md`; advisory — see `/decisions/plan-review-subagent`
 
 ## Known Gotchas
