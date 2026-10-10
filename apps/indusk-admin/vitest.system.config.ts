@@ -26,5 +26,7 @@ export default defineConfig({
     environment: "node",
     fileParallelism: false,
     passWithNoTests: false,
+    reporters: ["default", "junit"],
+    outputFile: { junit: "test-results/system.junit.xml" },
   },
 });
