@@ -56,8 +56,10 @@ function walkSuite(suite: Node, root: string, out: FailedFiles, seen: Set<string
 	}
 }
 
+const UNREADABLE = (): FailedFiles => ({ readable: false, files: new Map(), total: 0 });
+
 export function failedFiles(reportGlobs: string | string[], root: string): FailedFiles {
-	const out: FailedFiles = { readable: false, files: new Map(), total: 0 };
+	const out = UNREADABLE();
 	const paths = globSync(reportGlobs, { cwd: root, absolute: true, nodir: true }).sort();
 	if (paths.length === 0) return out;
 	const seen = new Set<string>();
@@ -65,17 +67,17 @@ export function failedFiles(reportGlobs: string | string[], root: string): Faile
 		let doc: Node;
 		try {
 			const xml = readFileSync(path, "utf-8");
-			if (XMLValidator.validate(xml) !== true) return { ...out, files: new Map(), total: 0 };
+			if (XMLValidator.validate(xml) !== true) return UNREADABLE();
 			doc = parser.parse(xml) as Node;
 		} catch {
-			return { ...out, files: new Map(), total: 0 };
+			return UNREADABLE();
 		}
 		const suites = [
 			...list(doc.testsuite),
 			...list(doc.testsuites).flatMap((s) => list(s.testsuite)),
 		];
 		if (suites.length === 0 && list(doc.testsuites).length === 0) {
-			return { ...out, files: new Map(), total: 0 };
+			return UNREADABLE();
 		}
 		for (const suite of suites) walkSuite(suite, root, out, seen);
 	}
