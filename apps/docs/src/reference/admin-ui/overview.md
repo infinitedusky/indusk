@@ -83,10 +83,19 @@ Everything is project-scoped under `/p/{project}/...`. The top-level home at `/`
 **`/p/{project}/` (per-project home)** — sidebar + empty-state main pane. Sidebar structure (top to bottom):
 
 1. **Header** — project name + `<ProjectSwitcher>` to jump between registered projects.
-2. **Scorecards and Promises links** — direct to `/p/{project}/scorecards` and `/p/{project}/promises` (always present).
-3. **Plan list** — one root node (the root `master.md`'s title) with the declared parent groups and every unclaimed plan beneath it (admin-ui-phase-progress, 2026-09-16): active plans in the order declared by `.indusk/planning/master.md` pipeline tables, then "Unordered" for plans not in master. `Archived (N)` stays outside the root, collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`. No root master → no root node, the tree renders flat.
+2. **Scorecards and Promises links** — direct to `/p/{project}/scorecards` and `/p/{project}/promises` (always present). Promises carries the number of broken promises when any are, the same count the dashboard shows. The open page's entry is marked current on every page.
+3. **Plan list** — one root node (the root `master.md`'s title) with the declared Paths and every unclaimed plan beneath it (admin-ui-phase-progress, 2026-09-16): see [The nav](#the-nav). `Archived (N)` stays outside the root, collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`. No root master → no root node, the tree renders flat.
 4. **Unassigned worktrees** — every worktree of the project's repository that holds no plan assignment, with its branch (admin-plan-worktrees, 2026-09-18). Omitted when there are none.
 5. **Research group** — listed slugs from `.indusk/research/` when the directory exists and contains at least one entry; omitted entirely when empty.
+
+### The nav
+
+The nav is on every project page — a plan, the dashboard, a promise — and lists every active plan in the project, so any plan is one click away (plan-cockpit).
+
+- **Paths nest as declared.** A parent plan is a Path; a subplan that is itself a parent opens as a Path inside it, to any depth (`data-depth` 1, 2, 3…). Each Path's plans are numbered 1-up in the order its `master.md` declares them. A master that names its own ancestor stops at the repeat. Plans no Path declares follow the Paths, in the master's order and then under *Unordered*; nothing a declaration says removes a plan.
+- **Released counts.** Each Path shows `released/total`: how many of its plans (including those in the Paths inside it, and declared plans not created yet) a release has shipped, from the package's `planDates` — a plan that landed but is in no release is not counted.
+- **On a phone** (under 760 px) the nav is a drawer: closed, opened by the *Menu* button, closed again by it, by the backdrop or by following a link. It takes no room from the page.
+- **On a desktop** a collapse button folds the rail to a strip. The choice is kept in the browser's `localStorage` (`indusk-admin.nav.collapsed`) and read after the page loads; a browser that blocks storage still gets the open rail.
 
 Switching projects via the header does not restart the daemon — the registry resolves on every request.
 

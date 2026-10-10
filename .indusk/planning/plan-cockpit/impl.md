@@ -280,11 +280,11 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 
 #### Build Phase 4 Context
 
-- [ ] (no rule this phase — nesting follows the planning rule that hierarchy is declared top-down in `master.md`)
+- [x] (no rule this phase — nesting follows the planning rule that hierarchy is declared top-down in `master.md`) — checked: `.indusk/planning/CLAUDE.md` states it ("Plan hierarchy is declared top-down, in frontmatter"), and `apps/indusk-admin/CLAUDE.md` already says the sidebar tree is derived entirely from declarations with grouping in `PlanList.buildGroups`
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the nav — Promises, Needs you, Paths nested as declared with released counts, the phone drawer
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the nav — Promises, Needs you, Paths nested as declared with released counts, the phone drawer — written: Promises (with its broken count), Paths, released counts, the drawer and the strip under "The nav"; Needs you is not described because it arrives in Build Phase 6 (the plan page's waiting list), whose Document item owns `sessions.md`
 
 ### Build Phase 5: The plan page — Planning and Release
 
