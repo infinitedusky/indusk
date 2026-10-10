@@ -1,7 +1,7 @@
 ---
 title: "Display names — promises and plans read as words"
 date: 2026-10-09
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -52,6 +52,8 @@ The editor names promises in words, plans by their title, and shows each plan's 
 | A11 | A plan's group in the panel shows the date it started and the date it landed | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A12 | A landed plan shows the release that shipped it — the first release whose changelog names the plan — with its version and date | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A13 | A plan not landed shows only its start date; one landed but in no release yet says "not released yet" | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A14 | An archived plan whose retrospective carries no "Landed on main at …" line still reads as landed — it is on main — dated by its retrospective's `date`, and shows the release the changelog names for it; it never reads "started …" alone | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A15 | A plan with no brief (a spike, or a parent whose only document is its research) shows the date it started, from its first lifecycle document's `date` | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-plan-shows-when-it-shipped | apps/indusk-mcp/src/lib/promises/display.test.ts |
 
 ## Checklist
 
@@ -144,6 +146,33 @@ The editor names promises in words, plans by their title, and shows each plan's 
 #### Build Phase 2 Document
 
 - [x] the guide's panel section: promises in words, plans by title and dates; changelog: Changed
+
+### Build Phase 3: Falsification — the plans that landed before the landing line, and plans with no brief
+
+**Tier**: med
+
+**Goal**: verify whether the attested dates hold for the plans dusk actually has. Measured on 2026-10-10 against this worktree's 111 archived plans: 80 read as never landed and 35 of those are named in the changelog, so their release is suppressed too (A14); and a plan whose only document is its research shows no start date (A15).
+
+**Read, then measured (A14):** `planDates` takes "landed" only from a retrospective line `Landed on main at <sha>, <date>.`, which the retrospective skill began writing on 2026-09-18 (Step 10.8). Every earlier archived plan has none, so it reads "started …" as if it never landed, and `released` is computed only when `landed` is set, so the release the changelog names is dropped. A plan in `archive/` is on main by construction; its retrospective's frontmatter `date` is the closest fact on disk.
+
+**Read, then measured (A15):** `started` comes only from `brief.md`'s `date`. A spike has no brief by design (its research is its document), and so do parent plans like `promise-core`, `jev-decision-model` and `user-zero` in this repository — their groups show no start date, against `a-plan-shows-when-it-shipped`.
+
+**Not investigated further, and why:** `promiseWords` (hyphen-split, exact-word lookup; a built-in word cannot match inside another word, and A2/A3 cover capitals and project words); `planTitle` (A6 decides the no-brief fallback is the folder); `releaseOf`'s pattern (it matches the plan as a whole parenthesised list item, and the two changelog mentions it misses, `day-promises` and `test-kinds`, are not written as `(plan)` entries — by the row's own definition not releases); a version bumped and never published (1.69.0) reading as released (A12 defines the release as the changelog's); the cost of re-reading every plan folder each health line (correct, and the cockpit's planning will decide whether to cache).
+
+- [ ] `lib/promises/display.ts` `planDates(planDir, changelog?, opts?: { archived?: boolean })`: with no landing line and `archived`, `landed` is the retrospective's frontmatter `date` (else the impl's `date`), and `released` is looked up whenever the plan is landed or archived; `readHealthNames` passes `folder.archived` (A14)
+- [ ] `planDates`: `started` is the brief's `date`, else the first of `research.md`, `test-plan.md`, `adr.md`, `impl.md` that has one (A15)
+
+#### Build Phase 3 Verification
+
+- [ ] A14 and A15 pass, and A11, A12, A13 still do (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts src/__tests__/promise-health-names.test.ts`); re-run the measurement above and record how many archived plans now read as landed and released
+
+#### Build Phase 3 Context
+
+- [ ] `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: a plan's dates fall back for what older plans never wrote — an archived plan is landed (its retrospective's date), and the start is the first lifecycle document's date
+
+#### Build Phase 3 Document
+
+- [ ] `reference/cli/promises.md`, the `planDates` field: where each date comes from, including the two fallbacks
 
 ## Files Affected
 
