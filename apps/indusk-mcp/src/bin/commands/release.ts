@@ -81,6 +81,7 @@ function routingProblems(routed: Routed): string[] {
 			`not read while routing — the impl could not be parsed: ${routed.unreadable.join(", ")}`,
 		);
 	}
+	for (const problem of routed.planProblems) lines.push(`no bugfix plan opened — ${problem}`);
 	for (const i of routed.incidents) {
 		const r = i.reopen;
 		if (r.reopened || r.reason === "already") continue;
@@ -124,6 +125,7 @@ function report(outcome: ReleaseOutcome, routed: Routed): string {
 			lines.push(`  reopened ${i.owner}: Build Phase ${i.reopen.phase}: Maintenance — ${i.id}`);
 		}
 	}
+	for (const p of routed.plans) lines.push(`recorded: plan ${p.plan}`);
 	lines.push("recorded: releases.jsonl");
 	return lines.join("\n");
 }

@@ -263,7 +263,7 @@ function releaseItem(release: TestFailure["release"]): string {
 }
 
 /** One release's block under `## Suspects`: what failed in it, and the commits since the last green run. */
-function suspectsBlock(failure: TestFailure): string {
+export function suspectsBlock(failure: TestFailure): string {
 	const { release, suspects } = failure;
 	const failed = testItems(failure)
 		.map((t) => `\`${oneLine(t)}\``)

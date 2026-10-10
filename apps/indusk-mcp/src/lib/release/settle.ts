@@ -3,6 +3,7 @@ import { type IncidentChange, recordTestFailure, type Suspects } from "../promis
 import { type PromiseEntry, readPromises } from "../promises/registry.js";
 import type { ReopenResult } from "../promises/reopen.js";
 import { ownerReopener } from "../promises/watch.js";
+import { type BugfixPlan, openOrExtendBugfixPlan } from "./bugfix-plan.js";
 import { failedFiles } from "./junit.js";
 import { routeFailure } from "./route.js";
 import type { FailedFile, SettledFailures } from "./run.js";
@@ -71,6 +72,10 @@ export interface Routed {
 	/** Every failing file, with where it went: `incident <id>`, or `unrouted` when no row's promise claims it. */
 	failed: FailedFile[];
 	incidents: RoutedIncident[];
+	/** The draft bugfix plans opened or extended for files no promise claims. */
+	plans: BugfixPlan[];
+	/** A bugfix plan that could not be opened or extended, with why: the file stays `unrouted`. */
+	planProblems: string[];
 	/** Plans whose impl could not be read while routing. */
 	unreadable: string[];
 	/** Why nothing was routed, when the registry could not be read. */
@@ -82,7 +87,7 @@ export interface Routed {
  * promise becomes an incident on each such promise — one per promise, every
  * file it claims in it — opened or extended through `recordTestFailure`, and
  * the owner reopened through the path `watch` uses. A file no promise in the
- * registry claims stays `unrouted`: a bugfix plan's (Build Phase 4).
+ * registry claims goes to a draft bugfix plan, opened or extended (D8).
  *
  * promise: a-failing-slow-test-breaks-its-promise
  */
@@ -91,7 +96,13 @@ export async function routeFailures(
 	settled: SettledFailures,
 	facts: RouteFacts,
 ): Promise<Routed> {
-	const unrouted: Routed = { failed: settled.failed, incidents: [], unreadable: [] };
+	const unrouted: Routed = {
+		failed: settled.failed,
+		incidents: [],
+		plans: [],
+		planProblems: [],
+		unreadable: [],
+	};
 	if (settled.failed.length === 0) return unrouted;
 	const first = readPromises(root);
 	if (!first.ok) {
@@ -131,14 +142,32 @@ export async function routeFailures(
 		for (const file of files) byFile.set(file, [...(byFile.get(file) ?? []), change.id]);
 	}
 
-	return {
-		failed: settled.failed.map(({ file }) => {
-			const ids = byFile.get(file);
-			return { file, routed: ids ? ids.map((id) => `incident ${id}`).join(", ") : "unrouted" };
-		}),
-		incidents,
-		unreadable,
-	};
+	const plans: BugfixPlan[] = [];
+	const planProblems: string[] = [];
+	const failed: FailedFile[] = [];
+	for (const { file } of settled.failed) {
+		const ids = byFile.get(file);
+		if (ids) {
+			failed.push({ file, routed: ids.map((id) => `incident ${id}`).join(", ") });
+			continue;
+		}
+		try {
+			const plan = await openOrExtendBugfixPlan(root, {
+				file,
+				names: settled.tests?.[file] ?? [],
+				rows: routeFailure(root, file).rows,
+				release: { version: facts.version, commit: facts.commit },
+				suspects: facts.suspects,
+				now: facts.now,
+			});
+			if (!plans.some((p) => p.plan === plan.plan)) plans.push(plan);
+			failed.push({ file, routed: `plan ${plan.plan}` });
+		} catch (err) {
+			planProblems.push(`${file}: ${err instanceof Error ? err.message : String(err)}`);
+			failed.push({ file, routed: "unrouted" });
+		}
+	}
+	return { failed, incidents, plans, planProblems, unreadable };
 }
 
 /**
