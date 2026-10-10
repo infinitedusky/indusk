@@ -65,6 +65,40 @@ export function headShaSyncOrNull(root: string): string | null {
 	}
 }
 
+/** One commit on a branch's first-parent line. */
+export interface TrunkCommit {
+	sha: string;
+	/** Committer date, `YYYY-MM-DD`. */
+	date: string;
+	subject: string;
+}
+
+/**
+ * The first-parent line of HEAD, oldest first — one `git log` for a caller
+ * that asks many questions of the trunk (which release shipped each plan).
+ * Null when there is nothing to read: no repository, or an unborn branch.
+ */
+export function firstParentLogSync(root: string): TrunkCommit[] | null {
+	try {
+		const out = execFileSync("git", ["log", "--first-parent", "--format=%H%x1f%cs%x1f%s"], {
+			cwd: root,
+			encoding: "utf-8",
+			maxBuffer: 64 * 1024 * 1024,
+			stdio: ["ignore", "pipe", "ignore"],
+		});
+		return out
+			.split("\n")
+			.filter((line) => line !== "")
+			.map((line) => {
+				const [sha, date, ...subject] = line.split("\x1f");
+				return { sha, date, subject: subject.join("\x1f") };
+			})
+			.reverse();
+	} catch {
+		return null;
+	}
+}
+
 export interface ChangedPaths {
 	/** Committed since `sha`, plus anything modified in the working tree. */
 	tracked: string[];

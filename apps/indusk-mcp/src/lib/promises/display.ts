@@ -3,6 +3,7 @@ import { basename, join } from "node:path";
 import matter from "gray-matter";
 import { readWorkflowSteps } from "../checks/steps.js";
 import { readConfig } from "../config.js";
+import { firstParentLogSync, type TrunkCommit } from "../git.js";
 import { planFolders } from "./plan-folder.js";
 
 /**
@@ -81,7 +82,7 @@ function frontmatter(text: string | null, key: string): string | undefined {
 	return typeof value === "string" ? value.trim() || undefined : undefined;
 }
 
-/** The earliest changelog release that names `plan` in parentheses, as every entry does. */
+/** The earliest changelog release that names `plan` in parentheses — the fallback for a project with no release commits. */
 function releaseOf(plan: string, changelog: string): PlanDates["released"] {
 	const escaped = plan.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	const names = new RegExp(`\\((?:[^)\\n]*,\\s*)?${escaped}(?:\\s*,[^)\\n]*)?\\)`);
@@ -94,26 +95,92 @@ function releaseOf(plan: string, changelog: string): PlanDates["released"] {
 	return found;
 }
 
+/** The trunk's first-parent line, oldest first, read once for every plan. */
+export type Trunk = TrunkCommit[];
+
+const RELEASE_COMMIT = /^chore\(release\): (\S+)/;
+
 /**
- * A plan's dates from facts already on disk: the brief's `date`, the
- * retrospective's `Landed on main at <sha>, <date>.` line, and the changelog
- * (its text) — the earliest release naming the plan. A plan in `archive/` is on
- * main by construction, so when it has no landing line (every plan retired
- * before the line was written) it landed on its retrospective's `date`, else
- * its impl's.
+ * The release that shipped a plan: the first `chore(release): <version>`
+ * commit after its landing on the trunk's first-parent line. The landing
+ * commit is the one the retrospective names; else the plan's
+ * `Merge branch 'plan/<name>'` commit; else, with only a date, the first
+ * release dated on or after it. Null when no release follows (not yet
+ * released) or the landing cannot be placed.
+ */
+function shippedIn(
+	plan: string,
+	landing: { sha?: string; date: string | null },
+	trunk: Trunk,
+): PlanDates["released"] {
+	const at = (c: TrunkCommit) => {
+		const m = RELEASE_COMMIT.exec(c.subject);
+		return m ? { version: m[1], date: c.date } : null;
+	};
+	let from = -1;
+	const sha = landing.sha;
+	if (sha && sha.length >= 7) from = trunk.findIndex((c) => c.sha.startsWith(sha));
+	if (from < 0) {
+		const merge = `Merge branch 'plan/${plan}'`;
+		from = trunk.findIndex((c) => c.subject === merge || c.subject.startsWith(`${merge} `));
+	}
+	if (from >= 0) {
+		for (const c of trunk.slice(from + 1)) {
+			const release = at(c);
+			if (release) return release;
+		}
+		return null;
+	}
+	if (!landing.date) return null;
+	for (const c of trunk) {
+		const release = at(c);
+		if (release && release.date >= landing.date) return release;
+	}
+	return null;
+}
+
+/** The retrospective's `Landed on main at <sha>, <date>.` line — the one place it is read. */
+function landingLine(planDir: string): { sha?: string; date: string } | null {
+	const m = read(join(planDir, "retrospective.md"))?.match(
+		/Landed on main at\s*([0-9a-f]{4,40})?[^\n]*?(\d{4}-\d{2}-\d{2})/i,
+	);
+	return m ? { sha: m[1], date: m[2] } : null;
+}
+
+/**
+ * When a plan landed (`YYYY-MM-DD`): the retrospective's landing line; for a
+ * plan in `archive/` — on main by construction — with no such line (every
+ * plan retired before the line was written), its retrospective's `date`,
+ * else its impl's. The one landing-date rule: `planDates` and the monitor's
+ * `closedAt` both ask here.
+ */
+export function landedDate(planDir: string, archived = false): string | null {
+	return landingLine(planDir)?.date ?? (archived ? archivedLanding(planDir) : null);
+}
+
+/**
+ * A plan's dates from facts already on disk: the brief's `date`, the landing
+ * date (`landedDate`), and the release that shipped it — read from the
+ * trunk's release commits when `opts.trunk` has any, else from the changelog
+ * (its text), the earliest release naming the plan.
  */
 export function planDates(
 	planDir: string,
 	changelog?: string,
-	opts: { archived?: boolean } = {},
+	opts: { archived?: boolean; trunk?: Trunk | null } = {},
 ): PlanDates {
 	const started = firstDate(planDir, STARTING_DOCS);
-	const line = read(join(planDir, "retrospective.md"))?.match(
-		/Landed on main at \S+?,\s*(\d{4}-\d{2}-\d{2})/,
-	)?.[1];
-	const landed = line ?? (opts.archived ? archivedLanding(planDir) : null);
-	const released =
-		(landed || opts.archived) && changelog ? releaseOf(basename(planDir), changelog) : null;
+	const landed = landedDate(planDir, opts.archived);
+	let released: PlanDates["released"] = null;
+	if (landed || opts.archived) {
+		const plan = basename(planDir);
+		released =
+			opts.trunk?.some((c) => RELEASE_COMMIT.test(c.subject)) === true
+				? shippedIn(plan, { sha: landingLine(planDir)?.sha, date: landed }, opts.trunk)
+				: changelog
+					? releaseOf(plan, changelog)
+					: null;
+	}
 	return { started, landed, released };
 }
 
@@ -170,6 +237,7 @@ export function readHealthNames(projectRoot: string): HealthNames {
 	const changelog = changelogPath
 		? (read(join(projectRoot, changelogPath)) ?? undefined)
 		: undefined;
+	const trunk = firstParentLogSync(projectRoot);
 	const names: HealthNames = { planTitles: {}, planDates: {}, words: displayWords(projectRoot) };
 	for (const folder of planFolders(projectRoot)) {
 		if (folder.plan in names.planTitles) continue;
@@ -177,7 +245,10 @@ export function readHealthNames(projectRoot: string): HealthNames {
 			frontmatter(read(join(folder.dir, "brief.md")), "title"),
 			folder.plan,
 		);
-		names.planDates[folder.plan] = planDates(folder.dir, changelog, { archived: folder.archived });
+		names.planDates[folder.plan] = planDates(folder.dir, changelog, {
+			archived: folder.archived,
+			trunk,
+		});
 	}
 	return names;
 }
