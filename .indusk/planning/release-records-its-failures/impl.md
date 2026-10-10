@@ -50,11 +50,11 @@ gate_policy: ask
 | A3 | With `done_when: green` and slow tests `after`, a red slow run reports the release published but not done, naming the open failures | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A4 | A release command that fails reports the release not published and runs no slow tests after it | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A5 | A project that declares no release says so and runs nothing | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-release-runs-as-its-project-declares | apps/indusk-mcp/src/__tests__/release-run.test.ts |
-| A6 | The tests recorded as failing are exactly the ones the declared JUnit report marks failed, whatever the command printed, and a report spread over several files (one per package) is read as one | Test Phase 1 | Build Phase 2 | written | unit | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-report.test.ts |
-| A7 | A red run whose report is missing or unreadable reports "the slow tests failed" with no test named, and opens no incident and no plan | Test Phase 1 | Build Phase 2 | written | unit | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-report.test.ts |
+| A6 | The tests recorded as failing are exactly the ones the declared JUnit report marks failed, whatever the command printed, and a report spread over several files (one per package) is read as one | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-report.test.ts |
+| A7 | A red run whose report is missing or unreadable reports "the slow tests failed" with no test named, and opens no incident and no plan | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 | A8 | dusk's slow tests, run with its declared reporter, write a JUnit report whose failed cases name the test files that failed | Test Phase 1 | Build Phase 5 | written | contract | promise: a-failure-is-read-from-the-report | apps/indusk-mcp/src/__tests__/release-junit.contract.test.ts |
-| A9 | A file that fails and then passes on its rerun appears on the release's record as a flake and opens nothing | Test Phase 1 | Build Phase 2 | written | unit | promise: a-flake-opens-nothing | apps/indusk-mcp/src/__tests__/release-report.test.ts |
-| A10 | Only the failing files are run again, and only once; a file still failing after its rerun is recorded as failing | Test Phase 1 | Build Phase 2 | written | unit | promise: a-flake-opens-nothing | apps/indusk-mcp/src/__tests__/release-report.test.ts |
+| A9 | A file that fails and then passes on its rerun appears on the release's record as a flake and opens nothing | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-flake-opens-nothing | apps/indusk-mcp/src/__tests__/release-report.test.ts |
+| A10 | Only the failing files are run again, and only once; a file still failing after its rerun is recorded as failing | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-flake-opens-nothing | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 | A11 | A failing file named by a row whose `For` names a promise opens an incident on that promise, naming the test, the release version and the commits since the last green slow run | Test Phase 1 | Build Phase 3 | written | unit | promise: a-failing-slow-test-breaks-its-promise | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
 | A12 | The same file failing in a later release adds to the open incident rather than opening a second | Test Phase 1 | Build Phase 3 | written | unit | promise: a-failing-slow-test-breaks-its-promise | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
 | A13 | The incident reopens the promise's owning plan with its Maintenance phase and names the rows that were proving it, as an incident from a watcher does | Test Phase 1 | Build Phase 3 | written | unit | promise: a-failing-slow-test-breaks-its-promise, promise: an-incident-names-its-tests | apps/indusk-mcp/src/__tests__/release-incident.test.ts |
@@ -65,7 +65,7 @@ gate_policy: ask
 | A18 | dusk's release command no longer runs the slow tests before publishing, and dusk's config declares them `after` with a JUnit report | Test Phase 1 | Build Phase 5 | written | unit | promise: dusk-installs-its-own-build | apps/indusk-mcp/src/__tests__/release-dusk-declaration.test.ts |
 | A20 | A release whose slow run a green run already covered skips it, as before | Test Phase 1 | Build Phase 1 | passing | unit | promise: slow-checks-run-once-per-tree | apps/indusk-mcp/src/__tests__/release-run.test.ts |
 | A21 | A non-npm release command declared by a fixture project (a shell command writing a file) is the command that runs | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-and-release-name-the-projects-commands | apps/indusk-mcp/src/__tests__/release-run.test.ts |
-| A22 | A run where more than half the slow test files failed opens no incident and no plan, and the release says the environment failed, naming how many files failed | Test Phase 1 | Build Phase 2 | written | unit | promise: a-failing-slow-test-breaks-its-promise, promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-report.test.ts |
+| A22 | A run where more than half the slow test files failed opens no incident and no plan, and the release says the environment failed, naming how many files failed | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-failing-slow-test-breaks-its-promise, promise: an-unclaimed-failure-opens-a-bugfix-plan | apps/indusk-mcp/src/__tests__/release-report.test.ts |
 
 ### Deferred Verification
 
@@ -129,22 +129,25 @@ gate_policy: ask
 
 **Tier**: med
 
-- [ ] Add `fast-xml-parser` to indusk-mcp's dependencies
-- [ ] `lib/release/junit.ts`: `failedFiles(reportGlobs, root)` → `{ readable, files: Map<file, testNames[]> }`, a testcase's file by `file`, else `classname`, else its suite's `file` or `name`, normalised repo-relative (ADR D4)
-- [ ] Rerun per ADR D5: the failing files substituted into `rerun`'s `{files}`, run once; green-on-rerun files are flakes on the record
-- [ ] The environment rule: when more than half the report's test files failed, open nothing and record one environment failure naming the count (A22)
+- [x] Add `fast-xml-parser` to indusk-mcp's dependencies
+- [x] `lib/release/junit.ts`: `failedFiles(reportGlobs, root)` → `{ readable, files: Map<file, testNames[]> }`, a testcase's file by `file`, else `classname`, else its suite's `file` or `name`, normalised repo-relative (ADR D4)
+- [x] Rerun per ADR D5: the failing files substituted into `rerun`'s `{files}`, run once; green-on-rerun files are flakes on the record
+- [x] The environment rule: when more than half the report's test files failed, open nothing and record one environment failure naming the count (A22)
+
+- [x] Shape (`apps/indusk-mcp/src/lib/release/junit.ts`) — extract the empty unreadable result into UNREADABLE(); failedFiles returned the same literal at three exits. Rule: Shape intra-unit: a repeated literal is a missing name
 
 #### Build Phase 2 Verification
 
-- [ ] A6, A7, A9, A10, A22 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-report.test.ts && pnpm exec vitest related src/lib/release/junit.ts src/lib/release/run.ts`)
+- [x] A6, A7, A9, A10, A22 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/release-report.test.ts && pnpm exec vitest related src/lib/release/junit.ts src/lib/release/run.ts`)
+  - Recorded 2026-10-10: `release-report.test.ts` + `release-run.test.ts` 14 passed of 14 (A6, A7, A9, A10, A22 and A1-A5, A20, A21 still green); `vitest related` finds no unit test (the files are exercised through the CLI tests above); `pnpm exec tsc --noEmit` clean; biome clean on the changed files
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`, the `lib/release/` entry: failures are read from the declared JUnit report, never the runner's output — `lesson:` token if a guard is written for it, else the rule and `/decisions/dawn-verify`
+- [x] `apps/indusk-mcp/CLAUDE.md`, the `lib/release/` entry: failures are read from the declared JUnit report, never the runner's output — `lesson:` token if a guard is written for it, else the rule and `/decisions/dawn-verify`
 
 #### Build Phase 2 Document
 
-- [ ] `reference/cli/release.md`: the report, the rerun, flakes and the environment rule
+- [x] `reference/cli/release.md`: the report, the rerun, flakes and the environment rule
 
 ### Build Phase 3: Routing and the test-born incident
 
