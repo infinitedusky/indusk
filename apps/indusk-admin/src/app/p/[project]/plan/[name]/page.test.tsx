@@ -73,6 +73,15 @@ vi.mock("@/lib/project-reader", () => ({
 
 vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
 
+vi.mock("@infinitedusky/indusk-mcp/promises/standing", () => ({
+  __esModule: true,
+  readStanding: async () => [],
+}));
+vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
+  __esModule: true,
+  promiseWords: (name: string) => name,
+  readHealthNames: () => ({ planTitles: {}, planDates: {}, words: {} }),
+}));
 vi.mock("@/lib/registry-client", () => ({
   __esModule: true,
   getProjectPath: (name: string) =>

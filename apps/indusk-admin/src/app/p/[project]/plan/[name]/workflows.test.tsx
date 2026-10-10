@@ -53,6 +53,12 @@ vi.mock("@/lib/planning-reader", async () =>
 vi.mock("@/lib/promises-reader", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).promisesReaderMock(),
 );
+vi.mock("@infinitedusky/indusk-mcp/promises/standing", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).standingMock(),
+);
+vi.mock("@infinitedusky/indusk-mcp/promises/display", async () =>
+  (await import("@/__tests__/helpers/cockpit-fixture")).displayMock(),
+);
 vi.mock("@/lib/registry-client", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).registryClientMock(),
 );

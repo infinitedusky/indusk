@@ -1,3 +1,4 @@
+import type { PlanDates } from "@infinitedusky/indusk-mcp/promises/display";
 import { PlanBar } from "@/components/bars/PlanBar";
 import {
   activePhaseLabel,
@@ -22,6 +23,23 @@ import { planMarkdown, sectionMarkdown } from "@/lib/markdown-export";
 import { extractPhases, splitPhasesAroundFalsification } from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
 
+/** A promise this plan owns, as the header shows it: its sentence and its tests, both from the package. */
+export interface PlanPromiseChip {
+  name: string;
+  sentence: string;
+  standing: string;
+  tests: { passing: number; total: number };
+}
+
+/** The facts the header adds to the plan's name; every one is read by the package, none worked out here. */
+export interface PlanHeaderFacts {
+  title?: string;
+  dates?: PlanDates;
+  /** The Paths (parent plans) that declare this plan, outermost first. */
+  paths?: string[];
+  promises?: PlanPromiseChip[];
+}
+
 interface PlanDetailProps {
   plan: Plan;
   /**
@@ -39,6 +57,8 @@ interface PlanDetailProps {
   planHrefPrefix?: string;
   /** How many promises this plan holds (owns, not retired) — "holding N" in the header. */
   holding?: number;
+  /** Title, dates, Path and promise chips for the header (plan-cockpit). */
+  header?: PlanHeaderFacts;
 }
 
 /**
@@ -60,6 +80,7 @@ export function PlanDetail({
   masterContent,
   planHrefPrefix = "/plan/",
   holding = 0,
+  header,
 }: PlanDetailProps) {
   const isParent = subplans !== undefined && subplans.length > 0;
   // A plan with no documents at all (a parent whose declarations are missing
@@ -88,6 +109,9 @@ export function PlanDetail({
         plan={plan}
         holding={holding}
         showType={position !== undefined}
+        facts={header}
+        promisesHref={promisesHrefFrom(planHrefPrefix)}
+        planHrefPrefix={planHrefPrefix}
       />
 
       <PlanCopyNotice plan={plan} />
@@ -286,6 +310,9 @@ function PlanHeader({
   plan,
   holding = 0,
   showType = false,
+  facts,
+  promisesHref,
+  planHrefPrefix,
 }: {
   plan: Plan;
   holding?: number;
@@ -296,35 +323,120 @@ function PlanHeader({
    * a master bar, no plan bar, and no document to declare a type in.
    */
   showType?: boolean;
+  facts?: PlanHeaderFacts;
+  promisesHref: string;
+  planHrefPrefix: string;
 }) {
+  const title = facts?.title && facts.title !== plan.name ? facts.title : null;
   return (
     <header
-      className="flex items-center justify-between border-b border-gray-200 pb-3"
+      className="flex flex-col gap-3 border-b border-gray-200 pb-3"
       data-testid="plan-header"
     >
-      <div className="flex flex-col">
-        <h1 className="text-xl font-semibold text-gray-900">{plan.name}</h1>
-        <span className="flex items-center gap-2 text-xs text-gray-500">
-          {plan.archived ? "archived" : "active"}
-          {showType && (
-            <PlanTypeChip
-              workflow={plan.workflow ?? null}
-              declared={plan.workflowDeclared ?? null}
-            />
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <h1 className="text-xl font-semibold text-gray-900">
+            {title ?? plan.name}
+          </h1>
+          {title && (
+            <span className="font-mono text-xs text-gray-500">{plan.name}</span>
           )}
-          <WorktreeChip plan={plan} />
-          <HoldingBadge count={holding} plan={plan.name} />
-        </span>
-      </div>
-      <div className="flex items-center gap-3">
-        <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>
-        <CopyButton
-          text={planMarkdown(plan)}
-          label="Copy whole plan as markdown"
-          data-testid="copy-plan-button"
-        />
+          <span className="flex items-center gap-2 text-xs text-gray-500">
+            {plan.archived ? "archived" : "active"}
+            {showType && (
+              <PlanTypeChip
+                workflow={plan.workflow ?? null}
+                declared={plan.workflowDeclared ?? null}
+              />
+            )}
+            <WorktreeChip plan={plan} />
+            <HoldingBadge count={holding} plan={plan.name} />
+          </span>
+          <HeaderFacts
+            facts={facts}
+            promisesHref={promisesHref}
+            planHrefPrefix={planHrefPrefix}
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>
+          <CopyButton
+            text={planMarkdown(plan)}
+            label="Copy whole plan as markdown"
+            data-testid="copy-plan-button"
+          />
+        </div>
       </div>
     </header>
+  );
+}
+
+/** "started 2026-09-01 · landed 2026-09-20 · released 1.70.0 (2026-10-02)", only what has happened. */
+function datesLine(dates: PlanDates): string {
+  return [
+    dates.started ? `started ${dates.started}` : null,
+    dates.landed ? `landed ${dates.landed}` : null,
+    dates.released
+      ? `released ${dates.released.version} (${dates.released.date})`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function HeaderFacts({
+  facts,
+  promisesHref,
+  planHrefPrefix,
+}: {
+  facts?: PlanHeaderFacts;
+  promisesHref: string;
+  planHrefPrefix: string;
+}) {
+  if (!facts) return null;
+  const dates = facts.dates ? datesLine(facts.dates) : "";
+  const paths = facts.paths ?? [];
+  const promises = facts.promises ?? [];
+  if (!dates && paths.length === 0 && promises.length === 0) return null;
+  return (
+    <div
+      className="mt-2 flex flex-col gap-1 text-xs text-gray-600"
+      data-testid="plan-header-facts"
+    >
+      {dates && <span data-testid="plan-dates">{dates}</span>}
+      {paths.length > 0 && (
+        <span data-testid="plan-path">
+          Path:{" "}
+          {paths.map((path, i) => (
+            <span key={path}>
+              {i > 0 && " › "}
+              <a className="underline" href={`${planHrefPrefix}${path}`}>
+                {path}
+              </a>
+            </span>
+          ))}
+        </span>
+      )}
+      {promises.length > 0 && (
+        <ul className="flex flex-wrap gap-1" data-testid="plan-promises">
+          {promises.map((p) => (
+            <li key={p.name}>
+              <a
+                href={`${promisesHref}/${p.name}`}
+                title={`${p.sentence} — ${p.standing}`}
+                data-standing={p.standing}
+                className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5"
+              >
+                {p.sentence}
+                <span className="text-gray-500">
+                  {p.tests.passing}/{p.tests.total} tests
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
