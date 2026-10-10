@@ -1,7 +1,7 @@
 ---
 title: "Plan cockpit — the promise dashboard, the promise page and the plan page"
 date: 2026-10-10
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
