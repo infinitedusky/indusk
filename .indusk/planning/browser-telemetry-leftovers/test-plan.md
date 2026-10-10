@@ -1,7 +1,7 @@
 ---
 title: "Browser telemetry leftovers — Test Plan"
 date: 2026-10-10
-status: draft
+status: accepted
 ---
 
 # Browser telemetry leftovers — Test Plan
