@@ -57,3 +57,5 @@ No recurring lint or type errors; no Biome rule is warranted. Shape: 5 findings 
 - Falsification: 5 hypotheses, all confirmed and fixed. Audit: 24 findings, 2 fixed before close, the rest carried.
 
 Landed on main at 8734a7d8, 2026-10-10. Installed with `pnpm install:local` (after `pnpm install` brought fast-xml-parser into the main checkout).
+
+**A19, the live check (2026-10-10):** the first `indusk release` published 1.70.0 and ran the slow tests after it: `releases.jsonl` records `{"version":"1.70.0","commit":"c804aaf7","published":true,"done":true,"slow":"green","failed":[],"flakes":[]}`, and the green run was recorded with its commit (`slow-runs.jsonl`, `sha: c804aaf7`), so the next failure names its suspects. Two earlier attempts that day stopped before publishing: `npm whoami` 401 (not logged in) and the ghcr.io push 403 (no Docker login) — both preconditions the `release-preconditions` plan is for. Nothing failed, so no incident or bugfix plan was opened; that half of the routing is still proven only by its unit rows.
