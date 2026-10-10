@@ -25,6 +25,8 @@ export interface HealthLineRow {
 	violations: number | null;
 	symptom?: string;
 	traceId?: string;
+	/** ISO time of the newest violation, apart from `lastSeen` (the newest run of any outcome). */
+	lastBroke?: string;
 	environment?: string | null;
 	tests: string[];
 }
@@ -144,7 +146,11 @@ export function healthLine(
 					violations: row.violations,
 					...(newestViolation?.symptom ? { symptom: newestViolation.symptom } : {}),
 					...(newestViolation
-						? { traceId: newestViolation.traceId, environment: newestViolation.environment ?? null }
+						? {
+								traceId: newestViolation.traceId,
+								lastBroke: newestViolation.at.toISOString(),
+								environment: newestViolation.environment ?? null,
+							}
 						: {}),
 					tests: p.tests ?? [],
 				});
