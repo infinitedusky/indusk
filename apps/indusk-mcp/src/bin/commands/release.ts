@@ -18,6 +18,7 @@ import {
 } from "../../lib/checks/record.js";
 import { readWorkflowSteps } from "../../lib/checks/steps.js";
 import type { WorkflowSteps } from "../../lib/config.js";
+import { announceIncidents } from "../../lib/release/announce.js";
 import { recordOf, recordRelease, releaseVersion } from "../../lib/release/record.js";
 import { type ReleaseOutcome, runRelease } from "../../lib/release/run.js";
 import { type Routed, routeFailures, settleFromReport } from "../../lib/release/settle.js";
@@ -67,6 +68,13 @@ export async function releaseCommand(checkout: string): Promise<number> {
 	});
 	outcome.recorded = { ...outcome.recorded, failed: routed.failed };
 	recordRelease(root, recordOf(outcome, { version, commit, at: now }));
+	try {
+		await announceIncidents(root, routed.incidents, now);
+	} catch (err) {
+		console.error(
+			`incident not committed or announced: ${err instanceof Error ? err.message : String(err)}`,
+		);
+	}
 	console.info(report(outcome, routed));
 	for (const line of routingProblems(routed)) console.error(line);
 	return outcome.done ? 0 : 1;
