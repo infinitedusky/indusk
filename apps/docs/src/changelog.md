@@ -8,6 +8,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 - **The Promises panel reads in words** (display-names): promises show as "A break reaches the editor" rather than their handle, on cards, rows, the activity and the hover; plan groups are headed by the plan's title with "started …, landed …, released X.Y.Z (date)" or "not released yet". The marker at the end of a code line keeps the handle. See [Promises in your editor](/guide/promises-in-your-editor).
 
+### Fixed
+
+- **The panel and the hover say a promise last broke when it last broke.** "Last broke" showed the time of the newest run of any outcome, in UTC, so a run that held read as a break. It is now the newest violation's time, carried on the health line as `lastBroke`, in your own time zone. See [Promises in your editor](/guide/promises-in-your-editor).
+
 ## [1.70.0] — 2026-10-10
 
 ### Added

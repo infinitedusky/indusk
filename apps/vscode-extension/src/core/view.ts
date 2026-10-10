@@ -66,9 +66,25 @@ export function titleOf(view: View | null, name: string): string {
 	return title ? title : name;
 }
 
-/** "2026-10-08 12:20", the way the admin stamps a time. */
-export function stamp(iso: string): string {
-	return iso.slice(0, 16).replace("T", " ");
+/**
+ * "2026-10-08 12:20", the way the admin stamps a time, in `timeZone` (an IANA
+ * name) or else the machine's own: the person reads their own clock, with no
+ * zone suffix. A time that does not parse is shown as it came.
+ */
+export function stamp(iso: string, timeZone?: string): string {
+	const at = new Date(iso);
+	if (Number.isNaN(at.getTime())) return iso;
+	const parts = new Intl.DateTimeFormat("en-CA", {
+		...(timeZone ? { timeZone } : {}),
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		hourCycle: "h23",
+	}).formatToParts(at);
+	const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+	return `${part("year")}-${part("month")}-${part("day")} ${part("hour")}:${part("minute")}`;
 }
 
 /**

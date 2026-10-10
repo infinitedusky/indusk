@@ -248,3 +248,5 @@
 {"plan":"display-names","phase":3,"kind":"build","sha":"c2a1d85831546550f9dcd031ded19d41442bcc79","timestamp":"2026-10-10T18:21:56.000Z"}
 {"plan":"display-names","phase":4,"kind":"build","sha":"ae7da66f3e12c8c14f50d4ca74257f038c9c2800","timestamp":"2026-10-10T18:28:50.644Z"}
 {"plan":"display-names","phase":5,"kind":"build","sha":"bfced78c1d14ca482faea1f3a64843f4d85dd932","timestamp":"2026-10-10T18:46:35.000Z"}
+{"plan":"panel-last-broke-time","phase":1,"kind":"test","sha":"46d5dcf554533813bd6a28aed003b37f3be55d1d","timestamp":"2026-10-10T21:34:54.845Z"}
+{"plan":"panel-last-broke-time","phase":1,"kind":"build","sha":"feab0aeaf40eb73676f66a60e2669dc32ecc8890","timestamp":"2026-10-10T21:36:02.543Z"}
