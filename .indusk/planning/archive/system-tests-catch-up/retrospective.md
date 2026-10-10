@@ -25,3 +25,5 @@ No lint or type errors recurred; no Biome rule is warranted. Shape: 0 findings r
 - 3 test files rewritten, 1 probe extension fixture added, 1 CLAUDE.md line, 1 changelog entry.
 - System tier: indusk-mcp 42 files / 170 tests, indusk-admin 13 / 56, vscode-extension 1 / 3, all passing.
 - Falsification, cleanup and audit skipped with reasons (test-only repair).
+
+Landed on main at 24518255, 2026-10-09. Installed with `pnpm install:local`; nothing published.
