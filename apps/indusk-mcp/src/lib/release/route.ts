@@ -1,10 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, posix } from "node:path";
-import { type IncidentChange, recordTestFailure, type Suspects } from "../promises/incidents.js";
+import type { IncidentChange } from "../promises/incidents.js";
 import { planFolders } from "../promises/plan-folder.js";
 import { type PromiseEntry, readPromises } from "../promises/registry.js";
 import type { ReopenResult } from "../promises/reopen.js";
 import { readImpl } from "../promises/rows.js";
+import { recordTestFailure, type Suspects } from "../promises/test-incident.js";
 import { ownerReopener } from "../promises/watch.js";
 import { type BugfixPlan, openOrExtendBugfixPlan } from "./bugfix-plan.js";
 import type { FailedFile, SettledFailures } from "./run.js";

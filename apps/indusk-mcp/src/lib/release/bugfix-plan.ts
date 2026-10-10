@@ -3,7 +3,7 @@ import { basename, dirname, join, relative } from "node:path";
 import { getPlanningDir } from "../config.js";
 import { git } from "../git.js";
 import { startPlan } from "../plans/start.js";
-import { type Suspects, suspectsBlock } from "../promises/incidents.js";
+import { type Suspects, suspectsBlock } from "../promises/test-incident.js";
 import { type PlanCopy, resolvePlanCopies } from "../worktree/plan-worktrees.js";
 import type { RoutingRow } from "./route.js";
 

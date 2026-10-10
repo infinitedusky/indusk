@@ -1,7 +1,7 @@
 import { gitSync } from "../bookkeeping/git.js";
 import type { GreenRun } from "../checks/record.js";
 import type { WorkflowSteps } from "../config.js";
-import type { Suspects } from "../promises/incidents.js";
+import type { Suspects } from "../promises/test-incident.js";
 
 /**
  * The commits that may have broken the slow tests (release-records-its-failures
