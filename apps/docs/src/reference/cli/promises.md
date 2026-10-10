@@ -54,7 +54,7 @@ A seat is never held by two players at once.
 ---
 id: i-2026-08-26-detector-overtriggers   # equals the file name
 promise: impact-events-are-strikes
-source: smoke                            # local | smoke | deployed | desk
+source: smoke                            # local | smoke | deployed | desk | release
 status: open                             # open | fixed
 date: 2026-08-26
 fixed: '2026-08-28T14:02:00Z'            # when it was fixed; required once status is fixed
@@ -72,7 +72,11 @@ v1 spectral classifier; not scoped yet.
 
 `source` says where the system was running when the promise broke; `desk`
 is a finding by reading, which is different evidence from a run, and a
-reader six months on must not weight them equally.
+reader six months on must not weight them equally. `release` is a slow test
+still failing in [`indusk release`](/reference/cli/release): its evidence is
+`tests:` (`<file> > <test>`) and `release:` (`<version> at <commit>`) where a
+watcher's is `traces:`, and its body adds a `## Suspects` section. Every
+reader of incidents takes both shapes.
 
 ### The token
 

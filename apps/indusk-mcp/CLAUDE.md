@@ -151,21 +151,10 @@ pointer; the pointer holds the story.
 - **`server deploy` decides from a recorded Fly state**: `planDeploy` is pure,
   every Fly call goes through `FlyCli`, a failed read is refused, never read
   as empty. — see `/reference/cli/server`
-- One registry subpath (`promises/registry`) for CLI, MCP and admin; writes
-  only via `lib/promises/write.ts`; marks through `readPromiseMarks` and
-  `jaegerEndpoint`; unreachable = exit 2, never zero. `promises.jaeger`
-  (`url` + `credential_env`, a variable's *name*) names a server; absence =
-  the local daemon. — see `/decisions/day-monitor`
 - Where a token may sit is `lib/tokens.ts`; an owner is a plan *directory*,
   never `archive`; link paths pass `isUsableRelPath` before any join; a mark's
   project is `markProjectId` (the shared git directory, never
   `basename(cwd)`); a health read never throws.
-- **An opened incident never takes an id its owner's Maintenance phases name**
-  (`maintenanceIncidentIds`); `watch` exits 1 for any incident left without
-  its owner's phase — opened, extended, or open from an earlier run — and
-  retries that reopen every run. — see `/reference/cli/promises`
-- **`recordBreaks` commits on a trunk only**, after the inbox and heard rows;
-  what it could not commit waits in the home's `pending-commit.json`. — see `/decisions/incident-recording`
 - **The always-on pass announces once, and only after Slack accepts**
   (`lib/always-on/pass.ts`). **A string from a marked span is untrusted input
   to a plan document** — `incidents.ts`'s `oneLine` collapses `environment`
@@ -228,20 +217,18 @@ pointer; the pointer holds the story.
   fires `on_disable` BEFORE renaming; `INDUSK_BIN` overrides the bare prefix
   in hook commands (test-critical); package-owned files under `.indusk/` are
   machine-local (`MACHINE_LOCAL_RULES`). — see `/lessons/worktree-config-schema-pointer`
-- **Releases**: `release-guard.sh` refuses dirt on packaged paths, a HEAD not
-  `chore(release): <version>`, an unmerged packaged `plan/*` branch, and an
+- **Releases** (`lib/promises/` and `lib/release/` rules live in those folders' `CLAUDE.md`): `release-guard.sh` refuses dirt on packaged paths, a HEAD not
+  `chore(release): <version>`, an unmerged packaged `plan/*` branch and an
   install off the lockfile; `record-release.js` writes "published" only on
-  `npm view`'s word; `release-image.sh` pushes the server image before `pnpm
-  publish` (a refused push publishes nothing; needs `docker login ghcr.io`);
-  `prepublishOnly` packs the editor's `.vsix` into `editor/`. — see
-  `/reference/cli/release`
+  `npm view`'s word; `release-image.sh` pushes the image before `pnpm publish`;
+  `prepublishOnly` packs the `.vsix`.
+  `lib/release/` has its own `CLAUDE.md`. — see `/reference/cli/release`
 
 ## Tests
 
 - commander@13 drops duplicate parent+subcommand options — declare on the
   parent, read via `optsWithGlobals()`. gray-matter on malformed YAML throws in
   Node but returns `data: {}` under vitest — detect malformed structurally.
-  Vitest `passWithNoTests: true` is set per app.
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
   where code lives runs over all four); a promise-bearing project —

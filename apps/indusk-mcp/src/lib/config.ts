@@ -63,7 +63,23 @@ export interface WorkflowSteps {
 		changelog?: string;
 		/** What the slow tests cover; absent = the whole repository but `.indusk/`. */
 		covers?: string[];
+		/** The slow tests the release runs itself, before or after the publish. */
+		slow_tests?: ReleaseSlowTests;
+		/** When the release counts as done: once published, or only once the slow tests are green. */
+		done_when?: ReleaseDoneWhen;
 	};
+}
+
+export type ReleaseDoneWhen = "published" | "green";
+
+/** `workflow.steps.release.slow_tests` (release-records-its-failures D2). */
+export interface ReleaseSlowTests {
+	command: string;
+	/** A path or glob to the JUnit XML the command writes. */
+	report: string;
+	when: "before" | "after";
+	/** A command template taking `{files}`: the failing files, run once more. */
+	rerun?: string;
 }
 
 /** A step's default tier: strong, med, weak or baby. */

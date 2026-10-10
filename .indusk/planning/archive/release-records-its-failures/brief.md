@@ -38,6 +38,7 @@ workflow: feature
 - **`slow-checks-run-once-per-tree`**. The release still skips a slow run a fully green run already covered.
 - **`landing-and-release-name-the-projects-commands`**. The release runs the commands the project declares, never dusk's own paths.
 - **`an-incident-names-its-tests`**. An incident a release opens names its tests like any other.
+- **`a-break-reaches-the-working-agent`**. An incident a release opens is committed and reaches running agents through the break inbox, as the recorder's do (Sandy, 2026-10-10).
 - **`an-open-incident-stays-loud`**. An incident a release opens shows in catchup, `promise_health`, `promises status` and the admin like any other.
 - **`a-release-ships-only-its-own-source`**. The publish this plan reorders still ships only the repository's source.
 

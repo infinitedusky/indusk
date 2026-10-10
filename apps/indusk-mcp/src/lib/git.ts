@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
@@ -41,6 +41,25 @@ export async function headSha(root: string): Promise<string> {
 export async function headShaOrNull(root: string): Promise<string | null> {
 	try {
 		return (await headSha(root)) || null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * HEAD of `root`, synchronously, or null when there is nothing to name — for a
+ * caller whose inputs are synchronous (the release runner's deps, `checks
+ * slow`). The same spelling as `headSha` (A19), not a second one.
+ */
+export function headShaSyncOrNull(root: string): string | null {
+	try {
+		return (
+			execFileSync("git", ["rev-parse", "--verify", "HEAD"], {
+				cwd: root,
+				encoding: "utf-8",
+				stdio: ["ignore", "pipe", "ignore"],
+			}).trim() || null
+		);
 	} catch {
 		return null;
 	}

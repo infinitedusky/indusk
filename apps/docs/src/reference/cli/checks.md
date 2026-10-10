@@ -26,6 +26,8 @@ What each step of a project's workflow runs, in `.indusk/config.json`:
 | `release.version_file` | The file whose `version` the bump changes. |
 | `release.changelog` | The changelog the bump rolls. |
 | `release.covers` | What the slow tests cover (default: the whole repository but `.indusk/`). |
+| `release.slow_tests` | The slow tests [`indusk release`](/reference/cli/release) runs itself: `command`, `report` (a path or glob to the JUnit XML it writes), `when` (`before` or `after` the release command) and an optional `rerun` template containing `{files}`. |
+| `release.done_when` | When the release counts as done: `published` (default) or `green`. |
 
 Every key is optional; `indusk update` adds the section empty. A project that declares nothing still gets an honest workflow: landing runs no slow tests, and there is nothing to publish.
 
@@ -37,7 +39,7 @@ Every key is optional; `indusk update` adds the section empty. A project that de
 indusk checks show
 ```
 
-Names what landing and release run for this project, one line per step, or says what not declaring one means ("none declared — landing runs no slow tests"). The retrospective's landing and release steps use only what it prints.
+Names what landing and release run for this project, one line per step (under Release it also names the release's slow tests, when they run, and `done_when`), or says what not declaring one means ("none declared — landing runs no slow tests"). The retrospective's landing and release steps use only what it prints.
 
 ## `indusk checks slow`
 

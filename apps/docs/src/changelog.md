@@ -4,6 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+
+- **A release records its failures** (release-records-its-failures): the retrospective's Step 11 names `indusk release` as the release. dusk's `release` script no longer runs the slow tests before publishing; `.indusk/config.json` declares them `after`, with a JUnit report (`apps/*/test-results/system.junit.xml`, written by each app's system config) and a rerun that runs only the files that failed (`scripts/rerun-system.js`). See [`indusk release`](/reference/cli/release).
+
 ### Fixed
 
 - **The system tier passes again** (system-tests-catch-up): three tests predated the admin recording production breaks and the catchup skill's rewording, and the VS Code contract test now loads the extension as installed rather than in development mode.

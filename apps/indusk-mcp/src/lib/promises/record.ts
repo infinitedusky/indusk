@@ -36,7 +36,7 @@ import { type WatchChange, watchPromises } from "./watch.js";
 
 export const RECORDER_PROMISE = "a-production-break-is-recorded-unasked";
 
-export type RecordedBy = "admin" | "catchup" | "watch";
+export type RecordedBy = "admin" | "catchup" | "watch" | "release";
 
 export interface PassMark {
 	outcome: "upheld" | "violated";

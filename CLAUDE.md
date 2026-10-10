@@ -48,7 +48,7 @@ dusk/
 - `pnpm test`: parallel, never starts a server or daemon (`INDUSK_SKIP_TELEMETRY_AUTOSTART`); it and `test:system` end failing on one left in a temp home, pass or fail. `test:system`: each package's `vitest.tiers.ts` files, at landing and by `pnpm release`. **E2e**: `pnpm e2e` (needs `claude` + a daemon) — promise loop, always-on server, nested-context probe; run at the close of a plan touching a `CLAUDE.md`.
 - **`.indusk/current.md` is the operational layer**: a `## Project (shared)` region any agent may edit (what is in flight, blockers, what is next) plus per-agent `## Session <short> — <task>` sections, each written only by its own session via `mcp__indusk__update_current_section` (typically at `/handoff`); commit like any file. `merge=union` merges concurrent appends; every mutation goes through the `current.md.lock` file lock. — see `/decisions/multi-agent-coordination`
 - Plans live in `.indusk/planning/{kebab-case}/`; use `/planner` before implementing — don't jump to code. The planning rules load with the plan documents.
-- **Landing installs, publishing is deliberate**: landing runs `pnpm install:local` (`workflow.steps.land.install`), so this machine's `indusk` is the landed build with nothing published; a publish (`pnpm release`, which runs the slow tier first) is for a deployed server or another machine, bumped on main after the merge — the retrospective's Steps 10–11. — see `/reference/skills/retrospective`
+- **Landing installs, publishing is deliberate**: landing runs `pnpm install:local` (`workflow.steps.land.install`), so this machine's `indusk` is the landed build with nothing published; a publish (`indusk release`: slow tests after, failures recorded) is for a deployed server or another machine, bumped on main after the merge — the retrospective's Steps 10–11. — see `/reference/skills/retrospective`
 - Before touching shared code, grep for importers and callers to understand blast radius.
 
 ## Key Decisions
@@ -86,13 +86,13 @@ dusk/
 - Watcher heartbeat: every promise read first probes its Jaeger (a span sent and read back) and says *watcher blind*, never zero; the server beats each pass and tells Slack once each way — see `/decisions/watcher-heartbeat`
 - Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `/decisions/promise-sources`
 - Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
+- Release as a declared step: `indusk release` runs `workflow.steps.release` — slow tests before or after, `done_when` — and routes failures from JUnit to incidents or bugfix plans — see `/decisions/release-records-its-failures`
 - Briefs hold expectations and promises; rows say what they prove; a plan closes with its promises confirmed — see `/decisions/planner-promises`
 - Workbench plans: documents at the workbench root, code on `plan/<name>` in the named repo; one contract per repo through one resolver — see `/decisions/workbench-plan-authoring`
 - Bookkeeping: notes committed on `main` as written; machine state in `~/.indusk/projects/<id>-<hash>/` (`indusk eval home`); the evaluator's tools named — see `/decisions/bookkeeping-lives-where-it-is-read`
 - Workflow steps: `workflow.steps` names what each step runs, facts never logic; dusk's slow tier never blocks landing or release — see `/decisions/release-checks-run-once`
 - Incident recording: one writer (`recordBreaks`), run by the admin unasked; it commits on the trunk only — see `/decisions/incident-recording`
 - Server provisioning: every recording server is the person's own — `indusk server connect` for one run anywhere, `server deploy` the one-command Fly path, the image published with each release; no hosted service — see `/decisions/server-provisioning`
-- VS Code extension: promise health is worked out once, in the package (`promises/health`); the CLI streams it (`promises health --json`); the editor only shows — see `/decisions/vscode-extension`
 - Audit step: a fresh subagent on `workflow.steps.audit.tier` reads the approved impl, the final trajectory and the diff, writes `audit.md`; advisory — see `/decisions/plan-review-subagent`
 
 ## Known Gotchas

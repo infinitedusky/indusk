@@ -21,7 +21,7 @@
 import { spawnSync } from "node:child_process";
 import { gitSync } from "../../lib/bookkeeping/git.js";
 import { codeKey, whyNoKey } from "../../lib/checks/key.js";
-import { findCoveringRun, recordGreenRun } from "../../lib/checks/record.js";
+import { findCoveringRun, headCommit, recordGreenRun } from "../../lib/checks/record.js";
 import { readWorkflowSteps } from "../../lib/checks/steps.js";
 import type { WorkflowSteps } from "../../lib/config.js";
 
@@ -61,7 +61,7 @@ export function checksSlow(checkout: string, opts: { unlessCovered?: boolean }):
 
 	const after = codeKey(root, steps);
 	if (before && after === before) {
-		recordGreenRun(root, { key: before, at, command, cwd: root });
+		recordGreenRun(root, { key: before, at, command, cwd: root, sha: headCommit(root) });
 		console.info("slow tests green: recorded for this code.");
 	} else {
 		console.info(
@@ -101,9 +101,21 @@ export function checksShow(checkout: string): number {
 			? `  changelog:     ${release.changelog}`
 			: "  changelog:     none declared — no changelog to roll (workflow.steps.release.changelog)",
 		`  slow tests cover: ${release.covers?.length ? release.covers.join(", ") : "the whole repository but .indusk/"}`,
+		...releaseSlowLines(release),
 	];
 	console.info(lines.join("\n"));
 	return 0;
+}
+
+/** The release's own slow tests and its completion rule, one line per fact. */
+function releaseSlowLines(release: NonNullable<WorkflowSteps["release"]>): string[] {
+	const slow = release.slow_tests;
+	return [
+		slow
+			? `  release slow tests: ${slow.command}  (run ${slow.when} the command by indusk release; report ${slow.report}${slow.rerun ? `; rerun ${slow.rerun}` : ""})`
+			: "  release slow tests: none declared — indusk release runs none (workflow.steps.release.slow_tests)",
+		`  done when:     ${release.done_when ?? "published"}${release.done_when ? "" : "  (default; workflow.steps.release.done_when)"}`,
+	];
 }
 
 /** The declared steps, or `null` after one line on stderr naming what was refused. */

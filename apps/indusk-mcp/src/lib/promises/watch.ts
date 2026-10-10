@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
 import { type IncidentChange, recordViolations } from "./incidents.js";
-import { readPromises } from "./registry.js";
+import { type PromiseEntry, readPromises } from "./registry.js";
 import { maintenanceIncidentIds, ownerDir, type ReopenResult, reopenOwner } from "./reopen.js";
 import { readPromiseMarks } from "./sources.js";
 import type { IncidentSource } from "./vocabulary.js";
@@ -60,6 +60,32 @@ function idsTakenByOwner(planRoot: string, owner: string, copy: OwnerCopy): Set<
 	return impl && existsSync(impl) ? maintenanceIncidentIds(readFileSync(impl, "utf-8")) : new Set();
 }
 
+/**
+ * How an incident reaches its promise's owner: the ids an opened incident
+ * must not take, and the reopen itself, both against the copy the owner is
+ * being worked in. `watch` and a release's incidents (release-records-its-
+ * failures D7) send an owner back to work through this one path.
+ */
+export interface OwnerReopener {
+	/** The incident ids the owner's Maintenance phases name now. */
+	taken(): Set<string>;
+	reopen(id: string, kind: "opened" | "extended"): ReopenResult;
+}
+
+export async function ownerReopener(
+	planRoot: string,
+	promise: Pick<PromiseEntry, "name" | "owner">,
+): Promise<OwnerReopener> {
+	const copy = await ownerCopy(planRoot, promise.owner);
+	return {
+		taken: () => idsTakenByOwner(planRoot, promise.owner, copy),
+		reopen: (id, kind) =>
+			copy.ok
+				? reopenOwner(planRoot, promise.owner, id, promise.name, copy.liveDir, kind)
+				: { reopened: false, reason: "copy-problem", detail: copy.detail },
+	};
+}
+
 export async function watchPromises(
 	planRoot: string,
 	opts: {
@@ -99,26 +125,20 @@ export async function watchPromises(
 			(i) => i.promise === promise.name && i.status === "open",
 		);
 		if (violations.length === 0 && open.length === 0) continue;
-		const copy = await ownerCopy(planRoot, promise.owner);
-		const reopenFor = (id: string, kind: "opened" | "extended"): ReopenResult =>
-			copy.ok
-				? reopenOwner(planRoot, promise.owner, id, promise.name, copy.liveDir, kind)
-				: { reopened: false, reason: "copy-problem", detail: copy.detail };
-
-		const avoid = idsTakenByOwner(planRoot, promise.owner, copy);
+		const owner = await ownerReopener(planRoot, promise);
 		const change =
 			violations.length > 0
-				? recordViolations(read.registry, promise, violations, opts.source, now, avoid)
+				? recordViolations(read.registry, promise, violations, opts.source, now, owner.taken())
 				: null;
 		if (change) {
-			const reopen = reopenFor(change.id, change.kind);
+			const reopen = owner.reopen(change.id, change.kind);
 			changes.push({ ...change, promise: promise.name, owner: promise.owner, reopen });
 		}
 
 		// An open incident from an earlier run whose owner carries no phase for
 		// it was left unowned by a reopen that failed then. Retry it every run:
 		// a quiet window must still repair it, or say it cannot (A6).
-		const owned = idsTakenByOwner(planRoot, promise.owner, copy);
+		const owned = owner.taken();
 		for (const incident of open) {
 			if (incident.id === change?.id || owned.has(incident.id)) continue;
 			changes.push({
@@ -127,7 +147,7 @@ export async function watchPromises(
 				traces: [],
 				promise: promise.name,
 				owner: promise.owner,
-				reopen: reopenFor(incident.id, "extended"),
+				reopen: owner.reopen(incident.id, "extended"),
 			});
 		}
 	}

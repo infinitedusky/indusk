@@ -34,11 +34,11 @@ export interface IncidentChange {
 	traces: string[];
 }
 
-function iso(d: Date): string {
+export function iso(d: Date): string {
 	return d.toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
-function stringList(v: unknown): string[] {
+export function stringList(v: unknown): string[] {
 	return Array.isArray(v) ? v.map(String) : [];
 }
 
@@ -59,7 +59,7 @@ export function recorded(path: string): { traces: string[]; lastSeen: string | n
  * file once freed its id for the next incident to collide with
  * (watch-reopen-collision).
  */
-function newIncidentId(
+export function newIncidentId(
 	dir: string,
 	promise: string,
 	day: string,
@@ -125,16 +125,25 @@ export function provenBy(planRoot: string, promise: PromiseEntry): string {
 	return lines.join("\n");
 }
 
-function incidentText(o: {
+/** The section of a release's incident that names what may have caused it (ADR D9). */
+export const SUSPECTS = "Suspects";
+
+export function incidentText(o: {
 	id: string;
 	promise: string;
 	source: IncidentSource;
 	opened: string;
 	lastSeen: string;
-	traces: string[];
+	/**
+	 * The evidence keys, as frontmatter lines: a watcher's `traces:`, or a
+	 * release's `tests:` and `release:` (release-records-its-failures D7).
+	 */
+	evidence: string[];
 	symptom: string;
 	/** From the span, when it carried one (day-always-on D6); omitted entirely when it did not. */
 	environment: string | null;
+	/** The commits that may have caused it, when the source can name them (a release's). */
+	suspects?: string;
 	/** The rows that were proving the promise, as `provenBy` writes them. */
 	provenBy: string;
 }): string {
@@ -147,10 +156,10 @@ function incidentText(o: {
 		`date: '${o.opened.slice(0, 10)}'`,
 		`opened: '${o.opened}'`,
 		`last_seen: '${o.lastSeen}'`,
-		"traces:",
-		...o.traces.map((t) => `  - '${t}'`),
+		...o.evidence,
 	];
-	return `---\n${frontmatter.join("\n")}\n---\n\n## Symptom\n\n${oneLine(o.symptom)}\n\n## Proven by\n\n${o.provenBy}\n\n## Root cause\n\n${UNWRITTEN_ROOT_CAUSE}\n\n## Fix\n\n${NOT_YET_FIXED}\n`;
+	const suspects = o.suspects ? `## ${SUSPECTS}\n\n${o.suspects}\n\n` : "";
+	return `---\n${frontmatter.join("\n")}\n---\n\n## Symptom\n\n${oneLine(o.symptom)}\n\n${suspects}## Proven by\n\n${o.provenBy}\n\n## Root cause\n\n${UNWRITTEN_ROOT_CAUSE}\n\n## Fix\n\n${NOT_YET_FIXED}\n`;
 }
 
 /**
@@ -199,7 +208,7 @@ export function recordViolations(
 			source,
 			opened: iso(oldest.at),
 			lastSeen: iso(newest.at),
-			traces: freshIds,
+			evidence: ["traces:", ...freshIds.map((t) => `  - '${t}'`)],
 			symptom: newest.symptom ?? "The span marked the promise violated and carried no symptom.",
 			// The newest violation's environment, and no guess when it has
 			// none: one server holds staging and production, and an incident
@@ -214,7 +223,7 @@ export function recordViolations(
 }
 
 /** An enforced promise with an open incident moves to known-violated, and lists it. */
-function ensurePromiseCarries(registry: Registry, promise: PromiseEntry, id: string): void {
+export function ensurePromiseCarries(registry: Registry, promise: PromiseEntry, id: string): void {
 	const path = join(registry.dir, promise.file);
 	const before = readFileSync(path, "utf-8");
 	let text = before;

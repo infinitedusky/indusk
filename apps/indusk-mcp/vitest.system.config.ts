@@ -18,6 +18,8 @@ process.env.INDUSK_HOME = mkdtempSync(join(tmpdir(), "indusk-system-home-"));
 export default defineConfig({
 	test: {
 		passWithNoTests: false,
+		reporters: ["default", "junit"],
+		outputFile: { junit: "test-results/system.junit.xml" },
 		projects: [
 			{
 				test: {
