@@ -223,6 +223,33 @@ describe("A16 — a plan shows the release that shipped it, whatever the changel
 		expect(dates.p2.released).toBeNull();
 	});
 
+	it("reads the changelog, never the earliest release commit, for a plan landed before the first one", () => {
+		const dir = mkdtempSync(join(tmpdir(), "display-prehistory-"));
+		initRepoWithCommit(dir);
+		const old = commitOn(dir, "2026-01-05", "feat: old lands");
+		const unnamed = commitOn(dir, "2026-01-06", "feat: unnamed lands");
+		commitOn(dir, "2026-02-05", "chore(release): 1.36.1 — the first release commit");
+		retro(dir, "old", `# R\n\nLanded on main at ${old.slice(0, 7)}, 2026-01-05.\n`);
+		retro(dir, "unnamed", `# R\n\nLanded on main at ${unnamed.slice(0, 7)}, 2026-01-06.\n`);
+		retro(dir, "dated", "---\ndate: 2026-01-07\n---\n\n# R\n");
+		mkdirSync(join(dir, "docs"), { recursive: true });
+		writeFileSync(
+			join(dir, "docs", "changelog.md"),
+			"## [1.36.1] — 2026-02-05\n- **Thing** (other): x\n\n## [1.10.0] — 2026-01-10\n- **Old** (old): x\n",
+		);
+		mkdirSync(join(dir, ".indusk"), { recursive: true });
+		writeFileSync(
+			join(dir, ".indusk", "config.json"),
+			JSON.stringify({ workflow: { steps: { release: { changelog: "docs/changelog.md" } } } }),
+		);
+		const dates = readHealthNames(dir).planDates;
+		// Named in the changelog: that release.
+		expect(dates.old.released).toEqual({ version: "1.10.0", date: "2026-01-10" });
+		// Not named: the first changelog release on or after its landing — never 1.36.1, the first commit.
+		expect(dates.unnamed.released).toEqual({ version: "1.10.0", date: "2026-01-10" });
+		expect(dates.dated.released).toEqual({ version: "1.10.0", date: "2026-01-10" });
+	});
+
 	const onDusk = existsSync(join(REPO_ROOT, ".indusk/planning/archive/day-promises"));
 	it.skipIf(!onDusk)("shows day-promises and dawn-verify released on this repository", () => {
 		const dates = readHealthNames(REPO_ROOT).planDates;

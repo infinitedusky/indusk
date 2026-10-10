@@ -106,13 +106,15 @@ const RELEASE_COMMIT = /^chore\(release\): (\S+)/;
  * commit is the one the retrospective names; else the plan's
  * `Merge branch 'plan/<name>'` commit; else, with only a date, the first
  * release dated on or after it. Null when no release follows (not yet
- * released) or the landing cannot be placed.
+ * released) or the landing cannot be placed. `predates` is true when the plan
+ * landed before the trunk's earliest release commit: if releases older than
+ * that commit exist (made without one), the commits cannot say which shipped it.
  */
 function shippedIn(
 	plan: string,
 	landing: { sha?: string; date: string | null },
 	trunk: Trunk,
-): PlanDates["released"] {
+): { release: PlanDates["released"]; predates: boolean; earliest: string | null } {
 	const at = (c: TrunkCommit) => {
 		const m = RELEASE_COMMIT.exec(c.subject);
 		return m ? { version: m[1], date: c.date } : null;
@@ -124,19 +126,47 @@ function shippedIn(
 		const merge = `Merge branch 'plan/${plan}'`;
 		from = trunk.findIndex((c) => c.subject === merge || c.subject.startsWith(`${merge} `));
 	}
+	const firstRelease = trunk.findIndex((c) => at(c) !== null);
+	const earliest = firstRelease >= 0 ? (at(trunk[firstRelease])?.date ?? null) : null;
 	if (from >= 0) {
+		const predates = from < firstRelease;
 		for (const c of trunk.slice(from + 1)) {
 			const release = at(c);
-			if (release) return release;
+			if (release) return { release, predates, earliest };
 		}
-		return null;
+		return { release: null, predates, earliest };
 	}
-	if (!landing.date) return null;
+	if (!landing.date) return { release: null, predates: false, earliest };
+	const predates = earliest !== null && landing.date < earliest;
 	for (const c of trunk) {
 		const release = at(c);
-		if (release && release.date >= landing.date) return release;
+		if (release && release.date >= landing.date) return { release, predates, earliest };
 	}
-	return null;
+	return { release: null, predates, earliest };
+}
+
+/**
+ * The first changelog release dated on or after `date` — the changelog read as
+ * the release history where the trunk's commits do not reach (a release ships
+ * what landed before it; a same-day landing is read as shipped that day).
+ */
+function releaseOnOrAfter(changelog: string, date: string | null): PlanDates["released"] {
+	if (!date) return null;
+	let found: PlanDates["released"] = null;
+	for (const m of changelog.matchAll(/^## \[([^\]]+)\]\s*—\s*(\d{4}-\d{2}-\d{2})/gm)) {
+		if (m[2] >= date && (found === null || m[2] < found.date))
+			found = { version: m[1], date: m[2] };
+	}
+	return found;
+}
+
+/** Whether the changelog records a dated release older than `date`: releases the trunk's commits do not. */
+function changelogHasReleaseBefore(changelog: string | undefined, date: string | null): boolean {
+	if (!changelog || !date) return false;
+	for (const m of changelog.matchAll(/^## \[[^\]]+\]\s*—\s*(\d{4}-\d{2}-\d{2})/gm)) {
+		if (m[1] < date) return true;
+	}
+	return false;
 }
 
 /** The retrospective's `Landed on main at <sha>, <date>.` line — the one place it is read. */
@@ -174,12 +204,20 @@ export function planDates(
 	let released: PlanDates["released"] = null;
 	if (landed || opts.archived) {
 		const plan = basename(planDir);
-		released =
+		const fromCommits =
 			opts.trunk?.some((c) => RELEASE_COMMIT.test(c.subject)) === true
 				? shippedIn(plan, { sha: landingLine(planDir)?.sha, date: landed }, opts.trunk)
-				: changelog
-					? releaseOf(plan, changelog)
-					: null;
+				: null;
+		// The commits cannot place the release when there are none, or when the plan landed before
+		// the earliest one while the changelog records older releases: the changelog decides, else none.
+		const unplaceable =
+			fromCommits === null ||
+			(fromCommits.predates && changelogHasReleaseBefore(changelog, fromCommits.earliest));
+		released = unplaceable
+			? changelog
+				? (releaseOf(plan, changelog) ?? releaseOnOrAfter(changelog, landed))
+				: null
+			: fromCommits.release;
 	}
 	return { started, landed, released };
 }
