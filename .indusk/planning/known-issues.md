@@ -174,6 +174,13 @@ Each entry says what happens, where it was seen, and what we know so far.
 
 ## Tests
 
+- **Landing a plan that adds a dependency breaks `pnpm install:local`.** The
+  branch's worktree had `fast-xml-parser` installed; the main checkout did not,
+  so `install:local` (landing's install step) failed in `prepublishOnly` with
+  "Cannot find module" until `pnpm install --frozen-lockfile` ran on `main`
+  (release-records-its-failures, 2026-10-10). The install step should install
+  dependencies first.
+
 - **`apps/indusk-mcp/src/lib/promises/inbox.test.ts` A17 fails on `main`**
   (seen 2026-10-09 and 2026-10-10, on `main` and on every plan branch alike):
   "an opened incident adds one entry…" gets 2 entries where it expects 1, and
