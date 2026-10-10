@@ -1,10 +1,10 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { registerPromiseTools } from "../tools/promise-tools.js";
-import { SHOULD_SKIP } from "./helpers/cli.js";
+import { git, SHOULD_SKIP } from "./helpers/cli.js";
 import {
 	CLAIMED_FILE,
 	incidentId,
@@ -146,5 +146,29 @@ describe.skipIf(SHOULD_SKIP)("indusk release — a failing slow test breaks its 
 			expect.objectContaining({ id, promise: PROMISE, owner: OWNER, ownerHasPhase: true }),
 		]);
 		expect(typeof open?.[0]?.ageMs).toBe("number");
+	});
+
+	it("A23: an incident a release opens is committed on the trunk and appears in the break inbox", () => {
+		const p = failingSince();
+		p.release();
+		const file = onlyIncident(p);
+		const id = incidentId(file);
+		const rel = `.indusk/promises/incidents/${file}`;
+		const status = git(p.planRoot, ["status", "--porcelain", "--", ".indusk/promises"]).stdout;
+		expect(status.trim(), "the incident and its promise are left uncommitted").toBe("");
+		const log = git(p.planRoot, ["log", "-1", "--format=%s", "--", rel]).stdout;
+		expect(log, "the incident file's last commit").toContain(id);
+		expect(git(p.planRoot, ["branch", "--show-current"]).stdout.trim()).toMatch(/^(main|master)$/);
+
+		const projectHome = p.run(["eval", "home"]).stdout.trim();
+		const inbox = join(projectHome, "inbox.jsonl");
+		expect(existsSync(inbox), `no inbox at ${inbox}`).toBe(true);
+		const entries = readFileSync(inbox, "utf-8")
+			.split("\n")
+			.filter(Boolean)
+			.map((l) => JSON.parse(l) as Record<string, unknown>);
+		expect(entries).toEqual([
+			expect.objectContaining({ kind: "break", promise: PROMISE, incident: id, owner: OWNER }),
+		]);
 	});
 });
