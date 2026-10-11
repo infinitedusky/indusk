@@ -3,6 +3,7 @@ import type { PromiseEntry } from "@infinitedusky/indusk-mcp/promises/registry";
 import Link from "next/link";
 import { STANDING_STYLE } from "@/components/bars/labels";
 import { STANDING_LABELS } from "@/lib/promise-dashboard";
+import { stamp } from "@/lib/stamp";
 import { StartFix } from "./StartFix";
 
 /**
@@ -14,7 +15,6 @@ import { StartFix } from "./StartFix";
  */
 
 /** `2026-10-10T07:00:00.000Z` as `2026-10-10 07:00`. */
-const stamp = (iso: string) => iso.replace("T", " ").slice(0, 16);
 
 export function PromiseBanner({
   proof,

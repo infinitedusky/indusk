@@ -25,6 +25,7 @@ import {
   STANDING_LABELS,
   standingCounts,
 } from "@/lib/promise-dashboard";
+import { stamp } from "@/lib/stamp";
 import type { Strip, TimelineView } from "@/lib/timeline-strip";
 
 /**
@@ -367,9 +368,7 @@ function DashboardRowItem({
           : `held ${row.held} · broke ${row.broke} of 30 days`}
       </span>
       <span className="text-xs text-gray-500" data-testid="promise-activity">
-        {row.lastActivity
-          ? `seen ${row.lastActivity.replace("T", " ").slice(0, 16)}`
-          : "never seen"}
+        {row.lastActivity ? `seen ${stamp(row.lastActivity)}` : "never seen"}
       </span>
     </li>
   );

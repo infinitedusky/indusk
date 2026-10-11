@@ -1,4 +1,5 @@
 import type { DecisionEntry } from "@infinitedusky/indusk-mcp/plans/history";
+import { stamp } from "@/lib/stamp";
 
 /**
  * A plan's *What happened* (plan-cockpit, ADR decision 4): each decision it
@@ -20,8 +21,7 @@ export function PlanHistory({ entries }: { entries: DecisionEntry[] }) {
             data-testid="history-entry"
           >
             <span className="text-xs text-gray-500">
-              <time dateTime={e.at}>{e.at.slice(0, 16).replace("T", " ")}</time>{" "}
-              · {e.by}
+              <time dateTime={e.at}>{stamp(e.at)}</time> · {e.by}
             </span>
             <span className="text-gray-700">{e.decision}</span>
             <span className="font-medium text-gray-900">→ {e.answer}</span>
