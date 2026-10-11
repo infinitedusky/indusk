@@ -1,7 +1,7 @@
 ---
 title: "UI promises — mockups on a DTCG foundation, approved in the cockpit, held by value"
 date: 2026-10-10
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -40,6 +40,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 | Build Phase 3 | `looks/verdict` (pure), `looks/check` (Playwright), `looks/report` (spans); `indusk looks check` | Build Phase 1–2; the local telemetry daemon's mark |
 | Build Phase 4 | admin `/p/[project]/looks`, Approve route through the notes writer, looks in `promises/standing` and the dashboard; the editor reading them | Build Phase 2–3; plan-cockpit's dashboard, standing and notes writer |
 | Build Phase 5 | `.indusk/mockups/admin/` — foundation, devices, screens, mockups; the admin restyled; held | everything above |
+| Build Phase 6 | the falsification fixes: the approval guard reaches Bash and the approve endpoint, an approval binds the mockup shown, the lint's blind properties and functions, coverage by element, declarations bound, unopened states and the dark scheme reported | Build Phase 1–5 |
 
 ## Test Trajectory
 
@@ -72,6 +73,16 @@ An app's look is held by mockups a person approved: every visual value comes fro
 | A25 | The everyday suite runs no look check that opens a browser; the browser checks are in the system tier | Test Phase 1 | Test Phase 1 | passing | unit | promise: everyday-tests-never-wait, promise: everyday-suite-stays-fast | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | A26 | The dashboard still lists every promise, with looks added beside them, none hidden | Build Phase 4 | Build Phase 4 | passing | unit | promise: every-promise-is-listed | apps/indusk-admin/src/app/p/[project]/promises/dashboard-looks.test.tsx |
 | A27 | The demo's fault switch still shows its promise broken | Test Phase 1 | Test Phase 1 | passing | unit | promise: the-demo-break-is-caught-locally | apps/indusk-mcp/src/__tests__/demo-command.test.ts |
+| A28 | An agent's Bash command that writes an app's `approved.json` — a redirect, `tee`, `sed -i`, `cp`/`mv`, `node -e`, `git checkout <ref> --` — is refused by the guard hook, naming the cockpit's Approve | Test Phase 1 | Build Phase 6 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-approval-guard.test.ts |
+| A29 | A POST to the approve route from a client that sets `Host` and `Origin` itself but carries no browser fetch metadata (`Sec-Fetch-Site: same-origin`) is refused, and the guard hook refuses a Bash command that names `/api/looks/` and `approve` | Test Phase 1 | Build Phase 6 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-admin/src/app/p/[project]/looks/looks.test.tsx, apps/indusk-mcp/src/__tests__/looks-approval-guard.test.ts |
+| A30 | Approving a mockup that changed after the page showed it is refused, naming both hashes — an approval binds the mockup the person was shown, as it binds the foundation | Test Phase 1 | Build Phase 6 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/lib/looks/approvals.test.ts, apps/indusk-admin/src/app/p/[project]/looks/looks.test.tsx |
+| A31 | A mockup that defines a token the foundation already defines — `:root { --dusk: #ff00ff }` in its own style — is refused naming file, line and token, and so is an app stylesheet that does so outside the generated file | Test Phase 1 | Build Phase 6 | planned | unit | promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
+| A32 | A raw value behind a CSS function (`rgb(255 0 0)`, `calc(13px * 2)`, `linear-gradient(#f00, #00f)`, the fallback of `var(--dusk, #ff0000)`), in a size or border property the rule did not list (`width`, `border-top`, `border-width`, `font`), or in a custom property a mockup or the app defines, is refused like a hex colour | Test Phase 1 | Build Phase 6 | planned | unit | promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
+| A33 | A mockup that reaches outside itself — `<link rel="stylesheet">`, `@import`, an `<img>` or `url()` that is not a `data:` URI — is refused, because its approval binds only its own bytes | Test Phase 1 | Build Phase 6 | planned | unit | promise: a-mockup-is-approved-by-a-person, promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
+| A34 | A `data-component` named in an approved mockup's comment, script or style covers nothing; a source's `data-component={name}` that is not a literal is listed as an unresolved component, never ignored | Test Phase 1 | Build Phase 6 | planned | unit | promise: every-part-of-the-ui-is-covered | apps/indusk-mcp/src/lib/looks/coverage.test.ts, apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
+| A35 | A change to the declarations the check trusts — a device's size, an `ignore` tag, an app's `sources` — returns the approved mockups to proposed, as a change to the foundation does | Test Phase 1 | Build Phase 6 | planned | unit | promise: a-mockup-is-approved-by-a-person, promise: every-part-of-the-ui-is-covered | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
+| A36 | A screen state whose page does not say it rendered that state is reported unchecked, naming the reason, and is never held | Test Phase 1 | Build Phase 6 | planned | unit | promise: every-part-of-the-ui-is-covered | apps/indusk-mcp/src/lib/looks/check.test.ts, apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
+| A37 | A token whose dark value changed in the app alone is broken under the dark scheme, and a look under a scheme the foundation names is held only when that scheme was opened | Test Phase 1 | Build Phase 6 | planned | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
 
 ### Deferred Verification
 
@@ -387,6 +398,53 @@ An app's look is held by mockups a person approved: every visual value comes fro
 - **Watch out**: the dashboard's looks standing and `looks check` read the project's own checkout, so a plan's look appears on the dashboard once merged. The admin daemon on port 3939 still runs `main`'s bundle; the worktree was served by `next dev -p 3940`.
 - **Assumption**: dark values are written and emitted but never measured — the check opens the light scheme only.
 - **Outside this phase**: `context-tiers-register.test.ts` A13 and `inbox.test.ts` A17 fail as Build Phase 2 and 4 recorded; `http-promise-remote.test.ts` is not biome-formatted on `main`.
+
+### Build Phase 6: Falsification — what an agent, a function or an unopened page gets past
+
+**Tier**: strong — changes the guard hook every agent write passes through, the approval record's shape and the lint's rule; a wrong fix here lets a design be approved or held by nobody
+
+**Goal**: verify whether the attested state holds against an agent that approves its own mockup, a mockup or an app that carries a raw value past the lint, a coverage that counts words rather than elements, a check that says held for what it did not open. Each row in this phase's Verification is a hypothesis that is red today; each item is the fix if it confirms.
+
+**Hunted and found** (the code read, not guessed):
+- **The guard is `Edit|Write` only.** `approvalOf` believes any entry whose hashes are the true ones, and the hashes are `sha256` of files the agent can read; `printf`/`node -e` through Bash writes a record that reads *approved*. The route's `adminOnly` compares `Origin` with `Host`, both of which a `curl` sets (its comment: it is a cross-site guard, not a local-process one).
+- **The record binds the mockup's and foundation's bytes, not what the person was shown nor what the check trusts.** The route sends `foundationHash` only; `screens.json`'s `ignore` (tag names the browser half does not measure) and `sources`, and `devices.json`, are not bound by anything.
+- **The lint's strict list and plugin defaults leave holes** — probed against `stylelint-declaration-strict-value` as configured: `rgb(255 0 0)`, `calc(13px * 2)`, `linear-gradient(#f00, #00f)`, `var(--dusk, #ff0000)`, `border-top: 1px solid #ff0000`, `border-width: 13px`, `width: 13px`, `font: 13px Arial` and `:root { --dusk: #ff00ff }` all pass; only the bare hex is flagged. `tokenFindings` lets a mockup define a name the foundation already defines.
+- **Coverage counts text.** `componentsIn` runs a regex over the mockup's whole source, comments included.
+- **Recorded, not fixed** (Build Phase 5's Forward Intelligence and the lesson `a-value-check-that-says-held-has-not-seen-the-layout`): a state the page ignores measures as held, and the dark scheme is emitted but never opened.
+
+- [ ] **Hook**: `hooks/looks-approval-guard.js` also matches `Bash` (settings matcher `Edit|Write|Bash`): refuses a command whose text names `.indusk/mockups/<app>/approved.json` with a write verb or redirect, or names `/api/looks/` with `approve`; message names the cockpit's Approve. State in the hook's header what it cannot see (an interpreter building the path at run time) — the rule is a tripwire for an agent's ordinary attempt, not a boundary against a user-level process
+- [ ] **Route**: `POST /api/looks/[app]/approve` refuses a request that lacks `Sec-Fetch-Site: same-origin` (set by the browser, not by page script); `adminOnly`'s own comment says what it is for and this route's addition says what it adds
+- [ ] **Approve binds the mockup shown**: `approve(checkout, app, mockup, by, seen)` takes `seen.mockupHash` beside `seen.foundationHash` and refuses a differing one naming both; the Looks page sends the hash of the mockup it rendered, per mockup for a group approval
+- [ ] **Lint, redefinition**: a mockup defining any name in the foundation is `redefined-token`; an app stylesheet may define a foundation name only in the file `looks tokens --out` generated (its header marks it)
+- [ ] **Lint, functions and properties**: configure the strict rule with `ignoreFunctions: false` and pass `var()` on its own; add a pass that refuses a literal colour or `px`/`rem`/`em` length anywhere in a strict property's value, `var()` fallback included; widen the property list to `width`, `height`, `min-*`, `max-*`, `inset`/`top`/`right`/`bottom`/`left`, `border(-side)?(-width)?`, `outline-offset`, `font`; refuse a raw value in a custom property a mockup defines that it does not declare new. Percentages, `vw`/`vh`/`fr`, `0`, `auto` and the keywords stay allowed. Then run `indusk looks lint admin` and `indusk looks lint demo`: every finding the wider rule raises in the admin's own source becomes an item here, mapped onto a token, before the phase closes
+- [ ] **Lint, a mockup is self-contained**: `external-reference` for `<link>`, `@import`, and `src`/`url()` that is not `data:`; a mockup's approval is then the whole of what it draws
+- [ ] **Coverage by element**: parse each mockup's HTML (an HTML parser the dependency tree already holds — `parse5` via stylelint's `postcss-html` — checked first, per the don't-reinvent rule) and read `data-component` off elements; a source's `data-component={…}` that is not a string literal is listed `unresolved component: <file>:<line>`, exit 1 like an uncovered one
+- [ ] **Declarations bound**: an approval entry gains `declarationsHash` over the declared devices, `ignore` and `sources` — not the screens list, which coverage already judges; an entry without it reads proposed. **Decision for the person (gate policy ask)**: the eleven admin approvals Build Phase 5 recorded have none, so they read proposed until a person re-approves them with the Looks page's group approval — recommended, since a declaration the person has not seen is exactly what the field closes; the alternative, reading an absent field as bound to whatever is declared now, keeps the loophole for every old approval
+- [ ] **A state is opened or unchecked**: the measure script reads the page's own answer to which state it rendered (`document.documentElement.dataset.lookState`, set by the app; name final in the lesson's fix); absent or different, the look is `unchecked: the page did not report state <state>` and never held, printed and counted as the lesson's How-to-apply (2) says. The admin sets it for the states it can render and declares the rest unchecked until it can
+- [ ] **The dark scheme is opened**: for a foundation that names dark values, `check` opens each look under `colorScheme: "dark"` too and `verdict` takes the dark approved values; a look names its scheme (`phone/dark`), so spans and the dashboard say which. One scheme not opened is reported, not held
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 6 Verification
+
+- [ ] A28–A37 pass: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-approval-guard.test.ts src/__tests__/looks-cli.test.ts src/lib/looks/approvals.test.ts src/lib/looks/coverage.test.ts src/lib/looks/check.test.ts` and `cd apps/indusk-admin && pnpm exec vitest run src/app/p/\[project\]/looks/looks.test.tsx`; A36 and A37 in the system tier (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-browser.contract.test.ts`); A1–A27 still pass; tsc and biome clean on changed files
+- [ ] Live check: `indusk looks lint admin`, `indusk looks coverage admin` exit 0 and `indusk looks check admin --url …` reports every look held or named unchecked — none held for a state it did not open; recorded here with the commands and the counts
+
+#### Build Phase 6 Context
+
+- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: `looks-approval-guard.js` matches Bash too and is a tripwire against an agent's ordinary attempt, not a boundary against a user-level process — guarded by `looks-approval-guard.test.ts`
+- [ ] `apps/indusk-admin/CLAUDE.md`: the approve route takes the mockup's and the foundation's hashes the page showed, and a browser-set fetch header — guarded by `looks.test.tsx`
+
+#### Build Phase 6 Document
+
+- [ ] `apps/docs/src/reference/cli/looks.md`: the widened rule and its allowed units, `redefined-token`, `external-reference`, `unresolved component`, `unchecked` with its reasons, the dark scheme, what an approval binds
+- [ ] `apps/docs/src/decisions/ui-promises.md` and the ADR: "Approval cannot be faked by an agent" restated to what is enforced — a hook tripwire over Write, Edit and Bash plus hashes bound to what was shown — and the residual named
+- [ ] Changelog: Fixed — "UI promises: an approval binds the mockup the person was shown and what the check trusts, the lint reaches raw values behind functions and in size properties, and a look the check did not open is reported unchecked, not held."
+
+#### Build Phase 6 Summary of the hunt
+
+- **Investigated, held**: the Looks page's mockup frame (`sandbox=""` — no script, opaque origin, so a mockup cannot post to the approve route itself); `approve`'s app name (`isUsableSegment`) and mockup name (looked up, never joined into a path); `readApprovals`' refusal of a malformed record; the lock around the record's write; `checkable`'s refusal when nothing is approved; `markPromise` attributes in `report`.
+- **Not hunted, and why**: Tailwind's namespace reset (`foundation.ts`'s `tailwindTheme`) — Build Phase 5's `translate-x-0` finding is the lesson's and the reset was reworked there; the editor's reader (`looks-health.ts`) — it reads `promises/standing`, which no hypothesis here touches; Style Dictionary's DTCG alias resolution — no alias is used by the admin's foundation, and a DTCG edge in a foundation file is the foundation reader's own tests'; layout and position (a drawer off-screen by design is indistinguishable from one stuck there by a value check; position is mockup-matching's, out of scope here).
+- **Residual, by nature**: nothing an agent can run as the person can be made unforgeable on the person's machine; A28 and A29 raise the bar to a deliberate act and the record is in git, where a forged entry is a visible commit by whoever made it.
 
 ## Files Affected
 
