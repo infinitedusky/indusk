@@ -86,7 +86,7 @@ describe("A34 — HoldingBadge has one server-renderable home", () => {
         /export function HoldingBadge\b/,
       ),
     ).toEqual(["components/HoldingBadge.tsx"]);
-    for (const rel of ["PlanList.tsx", "PlanDetail.tsx"]) {
+    for (const rel of ["PlanList.tsx", "plan/PlanHeader.tsx"]) {
       const source = readFileSync(join(SRC, "components", rel), "utf-8");
       expect(
         source,

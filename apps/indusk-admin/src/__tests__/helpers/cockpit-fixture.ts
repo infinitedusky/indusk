@@ -496,7 +496,6 @@ export function promisesReaderMock() {
     registryOf: () => REGISTRY,
     holdingCount: () => 0,
     holdingCounts: () => new Map<string, number>(),
-    readProjectHeard: () => ({ rows: [], lastHeard: null }),
   };
 }
 
