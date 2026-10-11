@@ -1,4 +1,4 @@
-import type { Finding, LintRule } from "./lint.js";
+import type { Finding, LintRule } from "./lint-types.js";
 
 /**
  * The class half of the no-raw-value rule: a Tailwind utility is a value from
