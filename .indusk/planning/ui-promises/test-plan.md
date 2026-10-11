@@ -1,7 +1,7 @@
 ---
 title: "UI promises — Test Plan"
 date: 2026-10-10
-status: draft
+status: accepted
 ---
 
 # UI promises — Test Plan
