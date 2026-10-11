@@ -103,16 +103,20 @@ open cards and its scroll position across reads.
 
 ## Fix with Claude
 
-On a broken promise, the light bulb offers **Fix with Claude**. It opens a
-terminal in the project running your own `claude`, its first message carrying
-the promise, the symptom, a link to the trace, and the tests that prove it. It
-asks Claude to record the break first (the `record_breaks` tool, or
-`indusk promises watch`) and fix it under the plan that owns the promise.
+On a broken promise, the light bulb offers **Fix with Claude**. In VS Code with
+the Claude Code extension installed, it opens a new Claude Code tab with the
+prompt filled in; you press Enter to send it. In Cursor, or without that
+extension, it opens a terminal in the project running your own `claude` with
+the same prompt as its first message. The prompt carries the promise, the
+symptom, a link to the trace, and the tests that prove it. It asks Claude to
+record the break first (the `record_breaks` tool, or `indusk promises watch`)
+and fix it under the plan that owns the promise.
 
-Without Claude Code installed, it says how to install it and opens nothing.
+With neither the extension nor `claude` on the PATH, it says how to install
+Claude Code and opens nothing.
 
 The break's facts come from the span that recorded it, so they are typed into
-the terminal as text only: each on one line, with control characters removed.
+the terminal or the tab as text only: each on one line, with control characters removed.
 Hovers show them as text too, never as links.
 
 ```mermaid

@@ -1,0 +1,150 @@
+import { describe, expect, it } from "vitest";
+import { derivePlanPosition, type PlanPositionState } from "../lifecycle.js";
+import type { PlanSummary } from "../plan-parser.js";
+import type { PlanSnapshot } from "./steps.js";
+import { planWaiting, type WaitingSession } from "./waiting.js";
+
+// promise: decisions-wait-in-one-place
+
+/**
+ * plan-cockpit A13, the package's half: a plan whose agent asked a question,
+ * a plan waiting for approval and a plan stopped for review each wait on the
+ * person, naming the step they wait at; a plan waiting on nothing does not.
+ * Positions come from the real `derivePlanPosition`, as `steps.test.ts` does.
+ */
+
+function positionOf(stage: PlanSummary["stage"], stageStatus: string): PlanPositionState {
+	return derivePlanPosition({
+		summary: {
+			name: "p",
+			stage,
+			stageStatus,
+			nextStep: "",
+			dependencies: [],
+			documents: ["research", "brief", "test-plan", "adr", "impl"].map((d) => `${d}.md`),
+			workflow: "feature",
+		},
+		impl: null,
+		readiness: { missing: [], nonTerminalRows: [], unprovenPromises: [] } as never,
+		archived: false,
+	});
+}
+
+type Plan = PlanSnapshot & { name: string };
+
+const accepted = { status: "accepted" };
+
+const asking: Plan = {
+	name: "asking",
+	workflow: "feature",
+	position: positionOf("brief", "draft"),
+	documents: { research: { status: "complete" }, brief: { status: "draft" } },
+};
+
+const approval: Plan = {
+	name: "awaiting-approval",
+	workflow: "feature",
+	position: positionOf("impl", "draft"),
+	documents: {
+		research: { status: "complete" },
+		brief: accepted,
+		"test-plan": accepted,
+		adr: accepted,
+		impl: { status: "draft" },
+	},
+};
+
+const review: Plan = {
+	name: "at-review",
+	workflow: "feature",
+	position: positionOf("impl", "in-progress"),
+	documents: {
+		research: { status: "complete" },
+		brief: accepted,
+		"test-plan": accepted,
+		adr: accepted,
+		impl: { status: "in-progress" },
+	},
+};
+
+const building: Plan = { ...review, name: "mid-build" };
+
+const question: WaitingSession = {
+	plan: "asking",
+	kind: "planning",
+	question: {
+		requestId: "req-1",
+		questions: [
+			{
+				question: "Which seat map should holds use?",
+				options: [{ label: "The venue's map" }, { label: "Our own grid" }],
+			},
+		],
+	},
+};
+
+const plans = [asking, approval, review, building];
+const builds = [
+	{ plan: "at-review", stoppedAt: "review" },
+	{ plan: "mid-build", stoppedAt: null },
+];
+
+describe("A13 — what a plan waits on, and the step it waits at", () => {
+	it("A13 a session with a pending question waits on the question, at the plan's current step", () => {
+		const w = planWaiting({ sessions: [question], plans, builds }).find((x) => x.plan === "asking");
+		expect(w).toMatchObject({
+			on: "question",
+			step: "Brief",
+			decision: "Which seat map should holds use?",
+			accept: "The venue's map",
+			alternative: "Our own grid",
+			requestId: "req-1",
+		});
+	});
+
+	it("A13 an impl draft whose other documents are accepted waits on approval, at Impl", () => {
+		const w = planWaiting({ sessions: [], plans, builds }).find(
+			(x) => x.plan === "awaiting-approval",
+		);
+		expect(w).toMatchObject({ on: "approval", step: "Impl", accept: "Approve" });
+		expect(w?.decision).toBeTruthy();
+		expect(w?.alternative).toBeTruthy();
+	});
+
+	it("A13 a build stopped at review waits on review, at Review", () => {
+		const w = planWaiting({ sessions: [], plans, builds }).find((x) => x.plan === "at-review");
+		expect(w).toMatchObject({ on: "review", step: "Review", accept: "Accept" });
+	});
+
+	it("A13 a plan whose position is review waits on review after the admin restarts (no build held)", () => {
+		const atReview: Plan = {
+			...review,
+			position: { ...review.position, position: "review" } as PlanPositionState,
+		};
+		const w = planWaiting({ sessions: [], plans: [atReview], builds: [] });
+		expect(w).toEqual([expect.objectContaining({ plan: "at-review", on: "review" })]);
+	});
+
+	it("A13 a plan waiting on nothing is absent, and each plan appears at most once", () => {
+		const all = planWaiting({ sessions: [question], plans, builds });
+		expect(all.map((w) => w.plan)).toEqual(["asking", "awaiting-approval", "at-review"]);
+		expect(all.find((w) => w.plan === "mid-build")).toBeUndefined();
+	});
+
+	it("A13 a session with no question pending does not make its plan wait", () => {
+		const quiet = { ...question, question: null };
+		expect(
+			planWaiting({ sessions: [quiet], plans: [asking], builds: [] }).map((w) => w.plan),
+		).toEqual([]);
+	});
+
+	it("A13 a question outranks the plan's own approval: one decision per plan", () => {
+		const both = planWaiting({
+			sessions: [{ ...question, plan: "awaiting-approval" }],
+			plans: [approval],
+			builds: [],
+		});
+		expect(both).toHaveLength(1);
+		expect(both[0]?.on).toBe("question");
+	});
+});

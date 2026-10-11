@@ -6,18 +6,19 @@ import {
 } from "@/components/bars/ProgressLines";
 import { CleanupSection } from "@/components/CleanupSection";
 import { FalsificationSection } from "@/components/FalsificationSection";
-import { HoldingBadge } from "@/components/HoldingBadge";
 import { Markdown } from "@/components/Markdown";
 import { PapersSection } from "@/components/PapersSection";
 import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
 import { PhasesSection } from "@/components/PhasesSection";
-import { PlanTypeChip } from "@/components/PlanTypeChip";
-import { Badge } from "@/components/ui/Badge";
-import { statusToBadge } from "@/components/ui/badge-variant";
+import { PlanWorkflows } from "@/components/PlanWorkflows";
+import {
+  PlanHeader,
+  type PlanHeaderFacts,
+  promisesHrefFrom,
+} from "@/components/plan/PlanHeader";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
-import { CopyButton } from "@/components/ui/CopyButton";
-import { PlanCopyNotice, WorktreeChip } from "@/components/Worktrees";
-import { planMarkdown, sectionMarkdown } from "@/lib/markdown-export";
+import { PlanCopyNotice } from "@/components/Worktrees";
+import { sectionMarkdown } from "@/lib/markdown-export";
 import { extractPhases, splitPhasesAroundFalsification } from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
 
@@ -38,6 +39,8 @@ interface PlanDetailProps {
   planHrefPrefix?: string;
   /** How many promises this plan holds (owns, not retired) — "holding N" in the header. */
   holding?: number;
+  /** Title, dates, Path and promise chips for the header (plan-cockpit). */
+  header?: PlanHeaderFacts;
 }
 
 /**
@@ -59,6 +62,7 @@ export function PlanDetail({
   masterContent,
   planHrefPrefix = "/plan/",
   holding = 0,
+  header,
 }: PlanDetailProps) {
   const isParent = subplans !== undefined && subplans.length > 0;
   // A plan with no documents at all (a parent whose declarations are missing
@@ -87,6 +91,8 @@ export function PlanDetail({
         plan={plan}
         holding={holding}
         showType={position !== undefined}
+        facts={header}
+        planHrefPrefix={planHrefPrefix}
       />
 
       <PlanCopyNotice plan={plan} />
@@ -116,69 +122,70 @@ export function PlanDetail({
         />
       )}
 
-      {plan.research && (
-        <CollapsibleSection
-          title="Research"
-          defaultOpen={false}
-          persistKey={`plan:${plan.name}:section:research`}
-          copyMarkdown={sectionMarkdown("Research", plan.research.content)}
-        >
-          <Markdown>{plan.research.content}</Markdown>
-        </CollapsibleSection>
-      )}
+      {!isParent && <PlanWorkflows plan={plan} />}
 
-      {plan.brief && (
-        <BriefSection planName={plan.name} content={plan.brief.content} />
-      )}
-
-      {plan.testPlan && (
-        <CollapsibleSection
-          title="Test Plan"
-          defaultOpen={false}
-          persistKey={`plan:${plan.name}:section:test-plan`}
-          copyMarkdown={sectionMarkdown("Test Plan", plan.testPlan.content)}
-        >
-          <Markdown>{plan.testPlan.content}</Markdown>
-        </CollapsibleSection>
-      )}
-
-      {plan.adr && (
-        <CollapsibleSection
-          title="ADR — Goal + Decision"
-          defaultOpen={false}
-          persistKey={`plan:${plan.name}:section:adr`}
-          copyMarkdown={sectionMarkdown(
-            "ADR — Goal + Decision",
-            plan.adr.content,
+      <details className="flex flex-col gap-6" data-testid="plan-details">
+        <summary className="cursor-pointer text-sm font-semibold text-gray-900">
+          Details
+        </summary>
+        <div className="mt-4 flex flex-col gap-6">
+          {plan.research && (
+            <CollapsibleSection
+              title="Research"
+              defaultOpen={false}
+              persistKey={`plan:${plan.name}:section:research`}
+              copyMarkdown={sectionMarkdown("Research", plan.research.content)}
+            >
+              <Markdown>{plan.research.content}</Markdown>
+            </CollapsibleSection>
           )}
-        >
-          <Markdown>{plan.adr.content}</Markdown>
-        </CollapsibleSection>
-      )}
 
-      {plan.papers && plan.papers.length > 0 && (
-        <PapersSection planName={plan.name} papers={plan.papers} />
-      )}
+          {plan.brief && (
+            <BriefSection planName={plan.name} content={plan.brief.content} />
+          )}
 
-      {plan.impl && (
-        <ImplSections
-          plan={plan}
-          promisesHref={promisesHrefFrom(planHrefPrefix)}
-        />
-      )}
-      {!plan.impl && hasAnyDocument && (
-        <FalsificationSection plan={plan} phase={null} />
-      )}
+          {plan.testPlan && (
+            <CollapsibleSection
+              title="Test Plan"
+              defaultOpen={false}
+              persistKey={`plan:${plan.name}:section:test-plan`}
+              copyMarkdown={sectionMarkdown("Test Plan", plan.testPlan.content)}
+            >
+              <Markdown>{plan.testPlan.content}</Markdown>
+            </CollapsibleSection>
+          )}
+
+          {plan.adr && (
+            <CollapsibleSection
+              title="ADR — Goal + Decision"
+              defaultOpen={false}
+              persistKey={`plan:${plan.name}:section:adr`}
+              copyMarkdown={sectionMarkdown(
+                "ADR — Goal + Decision",
+                plan.adr.content,
+              )}
+            >
+              <Markdown>{plan.adr.content}</Markdown>
+            </CollapsibleSection>
+          )}
+
+          {plan.papers && plan.papers.length > 0 && (
+            <PapersSection planName={plan.name} papers={plan.papers} />
+          )}
+
+          {plan.impl && (
+            <ImplSections
+              plan={plan}
+              promisesHref={promisesHrefFrom(planHrefPrefix)}
+            />
+          )}
+          {!plan.impl && hasAnyDocument && (
+            <FalsificationSection plan={plan} phase={null} />
+          )}
+        </div>
+      </details>
     </article>
   );
-}
-
-/**
- * The project's Promises page, beside its plan pages: a plan is at
- * `<base>/plan/<name>`, the registry at `<base>/promises`.
- */
-function promisesHrefFrom(planHrefPrefix: string): string {
-  return planHrefPrefix.replace(/plan\/$/, "promises");
 }
 
 /**
@@ -269,52 +276,6 @@ function ImplSections({
         />
       )}
     </>
-  );
-}
-
-function PlanHeader({
-  plan,
-  holding = 0,
-  showType = false,
-}: {
-  plan: Plan;
-  holding?: number;
-  /**
-   * Whether the type chip is drawn — true whenever the plan bar is. The bar
-   * can say "this plan declares no type" under itself, and a page that says
-   * so must carry the chip that says it and explains it (A24). A parent has
-   * a master bar, no plan bar, and no document to declare a type in.
-   */
-  showType?: boolean;
-}) {
-  return (
-    <header
-      className="flex items-center justify-between border-b border-gray-200 pb-3"
-      data-testid="plan-header"
-    >
-      <div className="flex flex-col">
-        <h1 className="text-xl font-semibold text-gray-900">{plan.name}</h1>
-        <span className="flex items-center gap-2 text-xs text-gray-500">
-          {plan.archived ? "archived" : "active"}
-          {showType && (
-            <PlanTypeChip
-              workflow={plan.workflow ?? null}
-              declared={plan.workflowDeclared ?? null}
-            />
-          )}
-          <WorktreeChip plan={plan} />
-          <HoldingBadge count={holding} plan={plan.name} />
-        </span>
-      </div>
-      <div className="flex items-center gap-3">
-        <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>
-        <CopyButton
-          text={planMarkdown(plan)}
-          label="Copy whole plan as markdown"
-          data-testid="copy-plan-button"
-        />
-      </div>
-    </header>
   );
 }
 

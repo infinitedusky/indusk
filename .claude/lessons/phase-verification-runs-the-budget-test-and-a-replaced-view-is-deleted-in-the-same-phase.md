@@ -1,0 +1,3 @@
+# A phase that adds a root CLAUDE.md line runs the context-tiers-register budget test in its verification, and a phase that replaces a view deletes the old one — replacement does not retire it
+
+plan-cockpit left the root CLAUDE.md over its lowered budget from Build Phase 1 through six more phases because no phase verification ran the budget test. It also left the dead PromisesTable (~400 lines) in place after its replacement landed; it was found only at cleanup, and its tests were named by active promises, which kept it looking alive. Put `context-tiers-register` in the verification of any phase adding a root line; add a delete-the-old-view item (and re-point its promises' tests) to any phase that replaces a view. Highlight h-20261011-010.

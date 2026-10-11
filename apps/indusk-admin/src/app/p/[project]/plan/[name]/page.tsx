@@ -1,10 +1,19 @@
+import {
+  promiseWords,
+  readHealthNames,
+} from "@infinitedusky/indusk-mcp/promises/display";
+import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
 import { notFound } from "next/navigation";
+import { DecisionCard } from "@/components/cockpit/DecisionCard";
+import { PlanHistory } from "@/components/cockpit/PlanHistory";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import type { SubplanEntry } from "@/components/ParentPlanView";
 import { PlanDetail } from "@/components/PlanDetail";
+import type { PlanHeaderFacts } from "@/components/plan/PlanHeader";
 import { BuildControls } from "@/components/session/BuildControls";
 import { PlanSession } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
+import { readPlanHistory, readWaiting } from "@/lib/decisions-reader";
 import { planActions } from "@/lib/plan-actions";
 import {
   readActivePlans,
@@ -58,7 +67,8 @@ export default async function PlanPage({ params }: PlanPageProps) {
   // (dawn-ui-plan-grouping Phase 3). Missing/corrupt declarations yield an
   // empty list here, and PlanDetail falls back to the standard sections —
   // grouping never hides a plan.
-  const declared = readPlanHierarchy(projectPath).subplans[name] ?? [];
+  const planHierarchy = readPlanHierarchy(projectPath);
+  const declared = planHierarchy.subplans[name] ?? [];
   let subplans: SubplanEntry[] | undefined;
   let masterContent: string | undefined;
   if (declared.length > 0) {
@@ -81,6 +91,8 @@ export default async function PlanPage({ params }: PlanPageProps) {
     name,
   );
 
+  const header = await headerFacts(projectPath, name, planHierarchy);
+
   // What the page offers, one rule for a normal-mode plan (its worktree) and
   // a workbench plan (its code file) — workbench-plan-authoring A10.
   const actions = planActions({
@@ -90,14 +102,21 @@ export default async function PlanPage({ params }: PlanPageProps) {
     position: plan.position?.position,
   });
 
+  // The one decision the plan waits on, and what it was answered before
+  // (plan-cockpit, ADR decision 4). Approve and the review's Accept live on
+  // the card while it waits on them, so neither is offered twice.
+  const waiting = plan.archived ? undefined : readWaiting(project, [plan])[0];
+  const history = readPlanHistory(projectPath, name);
+
   return (
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       <TrustNotice project={project} trusted={projectTrusted(projectPath)} />
+      {waiting ? <DecisionCard project={project} waiting={waiting} /> : null}
       <PlanSession
         project={project}
         plan={name}
-        canApprove={actions.canApprove}
+        canApprove={actions.canApprove && waiting?.on !== "approval"}
         canPlan={actions.canPlan}
       />
       {actions.showBuild ? (
@@ -105,16 +124,70 @@ export default async function PlanPage({ params }: PlanPageProps) {
           project={project}
           plan={name}
           canBuild={actions.canBuild}
-          inReview={actions.inReview}
+          inReview={actions.inReview && waiting?.on !== "review"}
         />
       ) : null}
+      <PlanHistory entries={history} />
       <PlanDetail
         plan={plan}
         subplans={subplans}
         masterContent={masterContent}
         planHrefPrefix={`/p/${project}/plan/`}
         holding={holding}
+        header={header}
       />
     </>
   );
+}
+
+/**
+ * The header's facts, every one from the package: the title and dates from
+ * `promises/display`, the promises this plan owns with their tests from
+ * `promises/standing`, and the Paths that declare it from the declarations.
+ * A promise read that fails leaves the chips out; the page never waits on it.
+ */
+async function headerFacts(
+  projectPath: string,
+  name: string,
+  hierarchy: ReturnType<typeof readPlanHierarchy>,
+): Promise<PlanHeaderFacts> {
+  const names = readHealthNames(projectPath);
+  const rows = await readStanding(projectPath).catch(() => []);
+  return {
+    title: names.planTitles[name],
+    dates: names.planDates[name],
+    paths: pathsOf(hierarchy, name),
+    promises: rows
+      .filter((r) => r.entry.owner === name && r.standing !== "retired")
+      .map((r) => ({
+        name: r.entry.name,
+        sentence: promiseWords(r.entry.name, names.words),
+        standing: r.standing,
+        tests: r.tests,
+      })),
+  };
+}
+
+/**
+ * The Paths a plan sits under, outermost first: its declaring Path, that
+ * Path's, and so on until one the master lists at the top. A repeat in a
+ * hand-written master stops the walk, as it does in the nav.
+ */
+function pathsOf(
+  { subplans, roadmap }: ReturnType<typeof readPlanHierarchy>,
+  name: string,
+): string[] {
+  const parents: string[] = [];
+  const seen = new Set([name]);
+  let current = name;
+  for (;;) {
+    const parent = Object.keys(subplans).find((p) =>
+      subplans[p]?.includes(current),
+    );
+    if (!parent || seen.has(parent)) return parents;
+    seen.add(parent);
+    parents.unshift(parent);
+    if (roadmap.includes(parent)) return parents;
+    current = parent;
+  }
 }

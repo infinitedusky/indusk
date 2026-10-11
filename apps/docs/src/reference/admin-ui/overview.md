@@ -83,10 +83,20 @@ Everything is project-scoped under `/p/{project}/...`. The top-level home at `/`
 **`/p/{project}/` (per-project home)** — sidebar + empty-state main pane. Sidebar structure (top to bottom):
 
 1. **Header** — project name + `<ProjectSwitcher>` to jump between registered projects.
-2. **Scorecards and Promises links** — direct to `/p/{project}/scorecards` and `/p/{project}/promises` (always present).
-3. **Plan list** — one root node (the root `master.md`'s title) with the declared parent groups and every unclaimed plan beneath it (admin-ui-phase-progress, 2026-09-16): active plans in the order declared by `.indusk/planning/master.md` pipeline tables, then "Unordered" for plans not in master. `Archived (N)` stays outside the root, collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`. No root master → no root node, the tree renders flat.
+2. **Scorecards and Promises links** — direct to `/p/{project}/scorecards` and `/p/{project}/promises` (always present). Promises carries the number of broken promises when any are, the same count the dashboard shows. The open page's entry is marked current on every page.
+3. **Plan list** — one root node (the root `master.md`'s title) with the declared Paths and every unclaimed plan beneath it (admin-ui-phase-progress, 2026-09-16): see [The nav](#the-nav). `Archived (N)` stays outside the root, collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`. No root master → no root node, the tree renders flat.
 4. **Unassigned worktrees** — every worktree of the project's repository that holds no plan assignment, with its branch (admin-plan-worktrees, 2026-09-18). Omitted when there are none.
 5. **Research group** — listed slugs from `.indusk/research/` when the directory exists and contains at least one entry; omitted entirely when empty.
+
+### The nav
+
+The nav is on every project page — a plan, the dashboard, a promise — and lists every active plan in the project, so any plan is one click away (plan-cockpit).
+
+- **Needs you** lists each plan waiting on the person — a question its agent asked, approval, or review — with the step it waits at; its page shows the decision card. See [Sessions → Decisions](./sessions#decisions).
+- **Paths nest as declared.** A parent plan is a Path; a subplan that is itself a parent opens as a Path inside it, to any depth (`data-depth` 1, 2, 3…). Each Path's plans are numbered 1-up in the order its `master.md` declares them. A master that names its own ancestor stops at the repeat. Plans no Path declares follow the Paths, in the master's order and then under *Unordered*; nothing a declaration says removes a plan.
+- **Released counts.** Each Path shows `released/total`: how many of its plans (including those in the Paths inside it, and declared plans not created yet) a release has shipped, from the package's `planDates` — a plan that landed but is in no release is not counted.
+- **On a phone** (under 760 px) the nav is a drawer: closed, opened by the *Menu* button, closed again by it, by the backdrop or by following a link. It takes no room from the page.
+- **On a desktop** a collapse button folds the rail to a strip. The choice is kept in the browser's `localStorage` (`indusk-admin.nav.collapsed`) and read after the page loads; a browser that blocks storage still gets the open rail.
 
 Switching projects via the header does not restart the daemon — the registry resolves on every request.
 
@@ -104,7 +114,14 @@ Switching projects via the header does not restart the daemon — the registry r
 
 The resolver applies when the registered path is the top of a git checkout — the project is the repository. A project nested inside a larger repository reads the folder it was registered at, as before.
 
-**`/p/{project}/plan/{name}` (plan detail)** — opens as the overview: three progress lines under the header, then every document section collapsed (admin-ui-phase-progress, 2026-09-16). The lines are a zoom, and each one's label names the level below it:
+**`/p/{project}/plan/{name}` (plan detail)** — under the header and the progress lines, the plan is shown as its two workflows (plan-cockpit):
+
+- **Planning** — the documents the plan's type requires, in order: Research, Brief, Test plan, Decision, Impl. A bugfix lists Brief, Test plan and Impl; a spike lists Research only.
+- **Release** — Build, Falsify, Cleanup, Audit, Review, Release.
+
+Each list has its own count of steps done (`3 of 5`). A step is `done`, `in progress`, `needs you` (a document proposed and waiting to be accepted, or an impl waiting to be approved), `not yet`, `skipped` (the type has no such step, or a ritual was skipped with a reason — the reason is shown, and a skipped step is in neither number of the count) or `missing` (the type requires the document and the plan has moved past it). Every state is read from the plan's documents and where it stands, by the package's `plans/steps` — the same position the plan bar draws — and no control on the page sets one. The header names the plan by its title (the folder name beneath), with when it started, landed and was released, the Path or Paths that declare it (outermost first), and the promises it owns as chips — each its sentence and `passing/total tests`, linking to the promise's page. Today's documents, phases and test rows are under a collapsed **Details**; nothing was removed.
+
+The page opens as the overview: three progress lines under the header, then every document section collapsed (admin-ui-phase-progress, 2026-09-16). The lines are a zoom, and each one's label names the level below it:
 
 | Line | Segments | Active label |
 |---|---|---|
@@ -180,6 +197,16 @@ Missing optional documents are not errors — sections simply don't render.
 **Falsification rendering (1.27.6+)** — when a plan uses the phase-authoring flow from `/falsify` (introduced in 1.27.4), the admin UI automatically detects the falsification phase by scanning for the FIRST phase whose title STARTS with `Falsification` (case-insensitive — the same title-prefix rule the retrospective readiness gate applies, read from the lifecycle's `RITUAL_ORDER`). That phase is hoisted out of the main Phases section and rendered with a dedicated layout: trajectory rows become the Hypotheses table, and checklist items become the Fix items list. Phases authored AFTER the falsification phase — fix-in-scope follow-ups derived from the ritual — render as a distinct "Follow-up Phases" section below. Legacy plans (authored before 1.27.4 with a `falsification.md` log file) continue to render via the log-based path; the two paths are mutually exclusive but both supported, so archives keep rendering correctly.
 
 **`/p/{project}/scorecards` (per-project, 1.27.2+)** — flat table of `{project}`'s scorecards from its `<home>/eval/results.log`, sorted most-recent-first. No project-name column (redundant inside the project namespace). Two empty states, told apart by whether `<home>/eval/` exists: the directory is created by the evaluator's first append, so a project that has never had an evaluated commit has no directory at all and the page says "no evaluations recorded yet — the first evaluated commit creates `<home>/eval/`"; a project with the directory but no scorecards gets the plain "no scorecards recorded yet" line.
+
+**The dashboard** (plan-cockpit, Build Phase 2). The same page now opens as a dashboard over `readStanding`, the package's `promises/standing`: every promise of the registry with where it stands — `broken`, `being proven`, `declared`, `enforced` or `retired` — worked out once in the package, so the dashboard, the nav and `indusk promises status` cannot disagree. At the top a **stacked bar** draws the standings in proportion, with a count beside each. Each promise is a row: its sentence in words (`promiseWords`), its name, its plan's title (a link to the plan), the test rows passing of those written, the last thirty days as days held and violations heard (`not seen yet` for a promise nothing has seen), and when it was last seen. The controls live in the URL, so a view can be linked and survives a reload:
+
+| Query | Values | Does |
+|-------|--------|------|
+| `?group=` | `state` (default), `plan`, `path` | One group per standing, per plan (headed by its title) or per Path (the innermost one declaring the plan; plans no Path declares fall under *No Path*). Every promise is in exactly one group |
+| `?sort=` | `activity` (default), `name`, `plan` | Latest activity puts the most recently seen first; name and plan are alphabetical |
+| `?q=` | text | Keeps promises whose sentence, name or plan contains the text, whatever the case |
+
+**Broken comes first**, whatever the grouping or sort: a group holding a broken promise is listed before one that holds none, and inside a group broken promises lead, the latest break first (a violation the admin heard, else the alarm source's last sighting). The incidents table and the per-source timeline follow beneath the groups. **The nav carries the same count**: the Promises entry in the sidebar shows the number of broken promises on every page of the project, taken from the same `readStanding` and the same health read.
 
 **`/p/{project}/promises` (per-project, day-promises)** — the promise registry (`.indusk/promises/`, see [`indusk promises`](/reference/cli/promises)) as a table, one row per promise: chip, name, statement, kind, domain, owner plan (linked), sites, tests, incidents; grouped **by plan**, **by domain**, **by state** or **by kind** with a button row, every promise exactly once per grouping; retired promises hidden behind a `Show retired (N)` toggle; every incident in a second table below. Read through the package's `promises/registry` subpath on every request — the admin never parses the directory itself.
 

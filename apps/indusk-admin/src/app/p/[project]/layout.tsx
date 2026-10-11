@@ -1,8 +1,11 @@
+import { readHealthNames } from "@infinitedusky/indusk-mcp/promises/display";
 import {
   readHealth,
   redPlans,
 } from "@infinitedusky/indusk-mcp/promises/health";
-import Link from "next/link";
+import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
+import { NeedsYou } from "@/components/cockpit/NeedsYou";
+import { NavLink } from "@/components/NavLink";
 import { PlanList } from "@/components/PlanList";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
@@ -11,6 +14,7 @@ import {
   UnassignedWorktrees,
   WorktreeRecordError,
 } from "@/components/Worktrees";
+import { readWaiting } from "@/lib/decisions-reader";
 import {
   readActivePlans,
   readArchivedPlans,
@@ -83,9 +87,23 @@ export default async function PerProjectLayout({
   // (day-monitor, A23) — the same cached read the Promises page makes, red
   // from the alarm source alone (promise-sources, ADR D5).
   const registry = registryOf(promisesRead);
-  const red = registry
-    ? redPlans(registry, await readHealth(projectPath, registry))
-    : new Set<string>();
+  const reads = registry ? await readHealth(projectPath, registry) : null;
+  const red = registry && reads ? redPlans(registry, reads) : new Set<string>();
+  // The nav's count is the dashboard's: the package's standing, from the same
+  // health read (plan-cockpit, ADR decision 2).
+  const brokenCount = reads
+    ? (await readStanding(projectPath, { health: reads })).filter(
+        (s) => s.standing === "broken",
+      ).length
+    : 0;
+
+  // Each Path's released count: when a release shipped a plan, from the
+  // package's `planDates` (display-names), read once for the whole nav.
+  const { planDates, planTitles } = readHealthNames(projectPath);
+
+  // Needs you: each plan waiting on the person, with the step it waits at —
+  // the package's `planWaiting`, over what the admin holds (ADR decision 2).
+  const waiting = readWaiting(project, active);
 
   return (
     <div className="flex h-full w-full">
@@ -103,19 +121,30 @@ export default async function PerProjectLayout({
         }
       >
         <nav className="flex flex-col gap-1 pb-3">
-          <Link
+          <NavLink
             href={`/p/${project}/scorecards`}
             className="rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
           >
             Scorecards
-          </Link>
-          <Link
+          </NavLink>
+          <NavLink
             href={`/p/${project}/promises`}
-            className="rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+            data-testid="nav-promises"
+            className="flex items-center justify-between rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
           >
             Promises
-          </Link>
+            {brokenCount > 0 && (
+              <span
+                data-testid="broken-count"
+                title={`${brokenCount} broken`}
+                className="rounded-full bg-red-600 px-2 text-xs font-medium text-white"
+              >
+                {brokenCount}
+              </span>
+            )}
+          </NavLink>
         </nav>
+        <NeedsYou project={project} waiting={waiting} titles={planTitles} />
         {!worktrees.ok && (
           <WorktreeRecordError
             file={worktrees.file}
@@ -129,6 +158,7 @@ export default async function PerProjectLayout({
           grouping={hierarchy}
           holding={holding}
           red={red}
+          dates={planDates}
           planHrefPrefix={`/p/${project}/plan/`}
         />
         {worktrees.ok && (
@@ -143,19 +173,21 @@ export default async function PerProjectLayout({
               Research
             </h3>
             {research.map((entry) => (
-              <Link
+              <NavLink
                 key={entry.slug}
                 href={`/p/${project}/research/${entry.slug}`}
                 className="truncate rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
                 title={entry.title ?? entry.slug}
               >
                 {entry.title ?? entry.slug}
-              </Link>
+              </NavLink>
             ))}
           </nav>
         )}
       </Sidebar>
-      <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      <main className="min-w-0 flex-1 overflow-y-auto p-6 max-[759px]:pt-14">
+        {children}
+      </main>
     </div>
   );
 }

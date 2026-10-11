@@ -1,48 +1,47 @@
+import { type BrokenPromise, cleanFacts, fixPrompt } from "@infinitedusky/indusk-mcp/promises/fix";
 import { promiseOf, type View, whereBroken } from "./view.js";
 
-// promise: a-break-opens-a-fix-in-one-click
+export type { BrokenPromise };
 
-export interface BrokenPromise {
-	promise: string;
-	source: string;
-	sourceLabel: string;
-	statement: string;
-	symptom?: string;
-	traceId?: string;
-	tests: string[];
-}
+// promise: a-break-opens-a-fix-in-one-click
+// promise: a-fix-opens-in-the-claude-code-tab
 
 export type FixAction =
+	| { claudeTab: { uri: string } }
 	| { terminal: { cwd: string; name: string; command: string } }
 	| { message: string };
 
+/** What the editor knows about where the fix can open. */
+export interface FixContext {
+	projectRoot: string;
+	claudeOnPath: boolean;
+	/** VS Code itself, as opposed to a fork such as Cursor. */
+	host?: "vscode" | "other";
+	/** The Claude Code extension is installed in this editor. */
+	claudeCodeExtension?: boolean;
+}
+
+/** Claude Code's documented link: a new tab with the prompt filled in, not sent. */
+const CLAUDE_TAB = "vscode://anthropic.claude-code/open?prompt=";
+
 /**
- * "Fix with Claude" (vscode-extension A12, A13): the developer's own `claude`
- * in the project, its first message carrying the break's facts. The editor
- * records nothing; Claude records the break through InDusk and fixes it.
+ * "Fix with Claude" (vscode-extension A12, A13): a new Claude Code tab in VS
+ * Code when the extension is installed, otherwise the developer's own `claude`
+ * in a terminal in the project, its first message carrying the break's facts
+ * (the package's `fixPrompt`, the one wording). The editor records nothing;
+ * Claude records the break through InDusk and fixes it.
  */
-export function fixAction(
-	b: BrokenPromise,
-	ctx: { projectRoot: string; claudeOnPath: boolean },
-): FixAction {
-	if (!ctx.claudeOnPath) {
+export function fixAction(b: BrokenPromise, ctx: FixContext): FixAction {
+	const tab = ctx.host === "vscode" && ctx.claudeCodeExtension;
+	if (!tab && !ctx.claudeOnPath) {
 		return {
 			message:
 				"Claude Code is not installed, so there is nothing to start the fix with. Install it with `npm install -g @anthropic-ai/claude-code`, then try again.",
 		};
 	}
+	const prompt = fixPrompt(b);
+	if (tab) return { claudeTab: { uri: `${CLAUDE_TAB}${encodeURIComponent(prompt)}` } };
 	const f = cleanFacts(b);
-	const trace = f.traceId ? `${f.sourceLabel.replace(/\/+$/, "")}/trace/${f.traceId}` : null;
-	const prompt = [
-		`The promise \`${f.promise}\` is broken in ${f.source}: "${f.statement}"`,
-		f.symptom ? `Symptom: ${f.symptom}` : null,
-		trace ? `Trace: ${trace}` : null,
-		f.tests.length > 0 ? `Tests that prove it: ${f.tests.join(", ")}` : null,
-		"",
-		"Record the break first (the `record_breaks` tool, or `indusk promises watch`), then find the cause and fix it under the plan that owns the promise.",
-	]
-		.filter((l): l is string => l !== null)
-		.join("\n");
 	return {
 		terminal: {
 			cwd: ctx.projectRoot,
@@ -57,11 +56,7 @@ export function fixAction(
  * leading, where it is broken, with that source's facts. Null when it is broken
  * nowhere, so the action has nothing to start.
  */
-export function fixFor(
-	view: View | null,
-	promise: string,
-	ctx: { projectRoot: string; claudeOnPath: boolean },
-): FixAction | null {
+export function fixFor(view: View | null, promise: string, ctx: FixContext): FixAction | null {
 	const p = promiseOf(view, promise);
 	const broke = whereBroken(view, promise);
 	if (!p || !broke) return null;
@@ -77,36 +72,6 @@ export function fixFor(
 			tests: p.tests,
 		},
 		ctx,
-	);
-}
-
-/**
- * The facts as the terminal may receive them. Every one comes from a span or
- * the registry and is typed into a terminal, where a control character is a
- * keystroke (Ctrl-C ends the quoted line and runs what follows): one line
- * each, control characters gone.
- */
-function cleanFacts(b: BrokenPromise): BrokenPromise {
-	return {
-		...b,
-		promise: oneLine(b.promise),
-		source: oneLine(b.source),
-		sourceLabel: oneLine(b.sourceLabel),
-		statement: oneLine(b.statement),
-		tests: b.tests.map(oneLine),
-		...(b.symptom !== undefined ? { symptom: oneLine(b.symptom) } : {}),
-		...(b.traceId !== undefined ? { traceId: oneLine(b.traceId) } : {}),
-	};
-}
-
-/** The text with line breaks and tabs as spaces and every other control character removed. */
-function oneLine(text: string): string {
-	return (
-		text
-			.replace(/[\r\n\t]+/g, " ")
-			// biome-ignore lint/suspicious/noControlCharactersInRegex: removing them is the point
-			.replace(/[\u0000-\u001f\u007f-\u009f]/g, "")
-			.trim()
 	);
 }
 

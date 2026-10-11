@@ -8,7 +8,12 @@ Loaded by Claude Code when a file under `apps/vscode-extension/` is read.
   `src/extension.ts` only applies what the core returns. A rule written in
   `extension.ts` has no test that can reach it. — see `/decisions/vscode-extension`
 - **The editor only shows.** Nothing here writes to the project; it reads one
-  child process's lines and opens a terminal. (`the-editor-only-shows`)
+  child process's lines and opens a terminal or a Claude Code tab. (`the-editor-only-shows`)
+- **Fix with Claude opens a Claude Code tab in VS Code when Claude Code is
+  installed, a terminal otherwise.** The tab is the documented
+  `vscode://anthropic.claude-code/open?prompt=` link: the prompt is filled,
+  never sent. `fixAction` decides from `host` and `claudeCodeExtension`;
+  `extension.ts` only reads them from the editor. (`core/fix-tab.test.ts`)
 - **Health comes from the line, never computed here.** The package's
   `promises/health` is the one rule, the CLI streams it (`promises health --json`);
   this app maps its states to words.

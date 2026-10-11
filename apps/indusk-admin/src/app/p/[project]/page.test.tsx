@@ -24,6 +24,7 @@ vi.mock("next/link", () => {
 vi.mock("next/navigation", () => ({
   __esModule: true,
   useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/p/test-project",
   notFound: () => {
     throw new Error("not found");
   },
@@ -73,6 +74,17 @@ vi.mock("@infinitedusky/indusk-mcp/promises/health", () => ({
   redPlans: () => new Set<string>(),
 }));
 
+// The layout's nav reads the package's standing (the broken count) and its
+// display module (each Path's released count); both read files as they load.
+vi.mock("@infinitedusky/indusk-mcp/promises/standing", () => ({
+  __esModule: true,
+  readStanding: async () => [],
+}));
+vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
+  __esModule: true,
+  readHealthNames: () => ({ planTitles: {}, planDates: {}, words: {} }),
+}));
+
 // Research reads split out of planning-reader in the dawn-ui-plan-grouping
 // cleanup — the layout imports them from research-reader, so the mock follows
 // (a mock must cover every export the layout imports, per the known gotcha).
@@ -82,6 +94,13 @@ vi.mock("@/lib/research-reader", () => ({
 }));
 
 vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
+// What plans wait on and their recorded decisions (plan-cockpit Build Phase 6):
+// the reader reaches the session manager and the history file; nothing waits here.
+vi.mock("@/lib/decisions-reader", () => ({
+  __esModule: true,
+  readWaiting: () => [],
+  readPlanHistory: () => [],
+}));
 
 vi.mock("@/lib/registry-client", () => ({
   __esModule: true,

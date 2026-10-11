@@ -4,6 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+
+- **The admin is the cockpit** (plan-cockpit): plans by Path, each plan's two workflows and the decision it waits on, the promise dashboard with broken promises first, and a page per promise with its proof and a fix. See [the decision](/decisions/plan-cockpit).
+
 ### Fixed
 
 - **A propagation entry covers what it names** (browser-template-claims): an entry with a path (`https://api.example.com/v1`) no longer widens to the whole origin, it covers that path and what is under it; a pattern entry that writes a default port (`https://*.dev.example.com:443`) now matches, as an exact entry already did. A path in an entry is compared as written, so `/Admin` no longer also covers `/admin`. A query or fragment on an entry is ignored for pattern entries too, as it already was for exact ones. The reference no longer says a `.then()` chain follows the click: only a request made synchronously in the handler does. See [OpenTelemetry](/reference/tools/otel).
@@ -11,6 +15,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
+- **Fix with Claude opens a Claude Code tab in VS Code** (fix-opens-claude-tab): with the Claude Code extension installed, the fix opens a new Claude Code tab with the prompt filled in, not sent; in Cursor or without the extension it starts `claude` in a terminal as before. See [Promises in your editor](/guide/promises-in-your-editor#fix-with-claude).
 - **The Promises panel reads in words** (display-names): promises show as "A break reaches the editor" rather than their handle, on cards, rows, the activity and the hover; plan groups are headed by the plan's title with "started …, landed …, released X.Y.Z (date)" or "not released yet". The marker at the end of a code line keeps the handle. See [Promises in your editor](/guide/promises-in-your-editor).
 
 ### Fixed
