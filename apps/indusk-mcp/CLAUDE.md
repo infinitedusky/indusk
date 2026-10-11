@@ -174,6 +174,12 @@ pointer; the pointer holds the story.
   `repo` destination is refused outside a workbench. `indusk papers publish`
   commits in the destination, never pushes by default, pushes last, and never
   lets a git failure escape past a commit it made. — see `/reference/cli/papers`
+- **A look's verdict is decided in `looks/verdict` from values handed to it;
+  the browser only measures** (`looks/check` reads `:root` and computed styles
+  and passes them in). Held or broken, the finding's token or element, and its
+  nearest token are never computed in the browser, the CLI or the admin — a
+  verdict decided where the page runs cannot be read without Chromium. —
+  guarded by `verdict.test.ts`; see `/reference/cli/looks`
 
 ## Eval, agents, skills, extensions
 

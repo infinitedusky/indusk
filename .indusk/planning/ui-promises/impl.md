@@ -277,7 +277,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 #### Build Phase 3 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`: a look's verdict is decided in `looks/verdict` from values handed to it; the browser only measures — guarded by `verdict.test.ts`
+- [x] `apps/indusk-mcp/CLAUDE.md`: a look's verdict is decided in `looks/verdict` from values handed to it; the browser only measures — guarded by `verdict.test.ts`
 
 #### Build Phase 3 Document
 
