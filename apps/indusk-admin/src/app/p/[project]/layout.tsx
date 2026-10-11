@@ -3,7 +3,10 @@ import {
   readHealth,
   redPlans,
 } from "@infinitedusky/indusk-mcp/promises/health";
-import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
+import {
+  readLookStanding,
+  readStanding,
+} from "@infinitedusky/indusk-mcp/promises/standing";
 import { NeedsYou } from "@/components/cockpit/NeedsYou";
 import { NavLink } from "@/components/NavLink";
 import { PlanList } from "@/components/PlanList";
@@ -91,11 +94,17 @@ export default async function PerProjectLayout({
   const red = registry && reads ? redPlans(registry, reads) : new Set<string>();
   // The nav's count is the dashboard's: the package's standing, from the same
   // health read (plan-cockpit, ADR decision 2).
-  const brokenCount = reads
+  // A broken look counts beside them (ui-promises ADR decision 7), from the
+  // package's look standing — the rows the dashboard lists first.
+  const brokenPromises = reads
     ? (await readStanding(projectPath, { health: reads })).filter(
         (s) => s.standing === "broken",
       ).length
     : 0;
+  const brokenLooks = (await readLookStanding(projectPath)).rows.filter(
+    (l) => l.standing === "broken",
+  ).length;
+  const brokenCount = brokenPromises + brokenLooks;
 
   // Each Path's released count: when a release shipped a plan, from the
   // package's `planDates` (display-names), read once for the whole nav.

@@ -11,7 +11,10 @@ import type {
   PromiseKind,
   PromiseState,
 } from "@infinitedusky/indusk-mcp/promises/registry";
-import type { Standing } from "@infinitedusky/indusk-mcp/promises/standing";
+import type {
+  LookStanding,
+  Standing,
+} from "@infinitedusky/indusk-mcp/promises/standing";
 
 /**
  * A promise's chip: its declared state, and nothing else (day-promises, ADR
@@ -259,3 +262,11 @@ export const APPROVAL_STYLE = {
   approved: "border-green-600 bg-white text-green-700",
   proposed: "border-dashed border-gray-400 bg-white text-gray-600",
 } as const satisfies Record<"approved" | "proposed", string>;
+
+/** A look's standing as the dashboard's row draws it (ui-promises ADR decision 7); the word is the package's. */
+export const LOOK_STYLE = {
+  broken: "border-red-300 bg-red-50 text-red-800",
+  held: "border-green-600 bg-white text-green-700",
+  unchecked: "border-gray-300 bg-white text-gray-600",
+  uncovered: "border-dashed border-amber-400 bg-amber-50 text-amber-900",
+} as const satisfies Record<LookStanding, string>;

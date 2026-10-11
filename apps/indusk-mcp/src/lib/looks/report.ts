@@ -1,5 +1,6 @@
 import type { Tracer } from "@opentelemetry/api";
 import { markPromise } from "../promises/mark.js";
+import { LOOK_MARK } from "../promises/vocabulary.js";
 import type { Finding, Verdict } from "./verdict.js";
 
 /**
@@ -52,10 +53,10 @@ export function reportLooks(
 	for (const result of results) {
 		try {
 			const span = tracer.startSpan("indusk.looks.check");
-			span.setAttribute("indusk.look.app", result.app);
-			span.setAttribute("indusk.look.screen", result.screen);
-			span.setAttribute("indusk.look.state", result.state);
-			span.setAttribute("indusk.look.device", result.device);
+			span.setAttribute(LOOK_MARK.app, result.app);
+			span.setAttribute(LOOK_MARK.screen, result.screen);
+			span.setAttribute(LOOK_MARK.state, result.state);
+			span.setAttribute(LOOK_MARK.device, result.device);
 			markPromise(span, {
 				promise: LOOK_PROMISE,
 				outcome: result.verdict.state === "held" ? "upheld" : "violated",

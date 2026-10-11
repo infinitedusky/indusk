@@ -5,9 +5,11 @@ import type {
   PromiseEntry,
   RegistryProblem,
 } from "@infinitedusky/indusk-mcp/promises/registry";
+import type { LookRow } from "@infinitedusky/indusk-mcp/promises/standing";
 import Link from "next/link";
 import { STANDING_STYLE } from "@/components/bars/labels";
 import { IncidentsTable } from "@/components/IncidentsTable";
+import { LooksOnDashboard } from "@/components/looks/LooksOnDashboard";
 import { SourceBanner, type SourceObserved } from "@/components/PromiseHealth";
 import {
   PromiseTimeline,
@@ -102,6 +104,10 @@ export interface PromisesDashboardProps {
   /** Observed health per source, for the banners that say a source could not be read. */
   observed?: SourceObserved[];
   timelines?: TimelineView;
+  /** Each look's standing, `promises/standing`'s; broken ones are listed above the promises. */
+  looks?: LookRow[];
+  /** The Looks page, which the looks' line links to. */
+  looksHref?: string;
 }
 
 /**
@@ -121,6 +127,8 @@ export function PromisesDashboard({
   promiseHrefPrefix,
   observed = [],
   timelines,
+  looks = [],
+  looksHref = "",
 }: PromisesDashboardProps) {
   const shown = filterRows(rows, query.q);
   const groups = groupRows(shown, query, pathOrder);
@@ -168,6 +176,8 @@ export function PromisesDashboard({
           ))}
         </ul>
       </header>
+
+      <LooksOnDashboard looks={looks} href={looksHref} />
 
       <div
         className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm"

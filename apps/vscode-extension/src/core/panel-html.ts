@@ -31,10 +31,21 @@ export function panelBody(
 				}${g.promises.map(row).join("")}`,
 		)
 		.join("");
+	const looks =
+		model.looks.length > 0
+			? `<h2>Looks</h2><ul class="looks">${model.looks
+					.map(
+						(l) =>
+							`<li class="${l.tone}">${esc(l.app)}/${esc(l.look)}${
+								l.device ? ` @ ${esc(l.device)}` : ""
+							} — ${esc(l.word)}${l.symptom ? `<div class="symptom">${esc(l.symptom)}</div>` : ""}</li>`,
+					)
+					.join("")}</ul>`
+			: "";
 	const runs = `<h2>Activity</h2><ol class="activity">${activity
 		.map((l) => `<li class="${/ broke /.test(l) ? "broke" : "held"}">${esc(l)}</li>`)
 		.join("")}</ol>`;
-	return `${title}${reading}${broken}${rest}${runs}`;
+	return `${title}${reading}${broken}${looks}${rest}${runs}`;
 }
 
 function card(p: PanelPromise, timeZone?: string): string {

@@ -1,4 +1,5 @@
 import { anyTokenPattern } from "@infinitedusky/indusk-mcp/tokens";
+import { lookStates, type ShownLook } from "./looks-health.js";
 import { stateOf } from "./markers.js";
 import { titleOf, type View, whereBroken } from "./view.js";
 
@@ -50,6 +51,8 @@ export interface PanelModel {
 	broken: PanelPromise[];
 	groups: PanelGroup[];
 	notReading: boolean;
+	/** Each look on the line, broken first, as the admin's dashboard has it (ui-promises A24). */
+	looks: ShownLook[];
 }
 
 /**
@@ -59,7 +62,7 @@ export interface PanelModel {
  * holds the text of each listed file the editor could read.
  */
 export function panelModel(view: View | null, files: Map<string, string>): PanelModel {
-	if (!view) return { broken: [], groups: [], notReading: true };
+	if (!view) return { broken: [], groups: [], notReading: true, looks: [] };
 	const all = view.line.promises.map((p): PanelPromise => {
 		const { text, tone } = stateOf(p.name, view);
 		return {
@@ -86,6 +89,7 @@ export function panelModel(view: View | null, files: Map<string, string>): Panel
 			.sort((a, b) => (b.brokeAt ?? "").localeCompare(a.brokeAt ?? "") || byName(a, b)),
 		groups: byPlan(all.filter((p) => p.tone !== "broken")),
 		notReading: view.notReading,
+		looks: lookStates(view),
 	};
 }
 

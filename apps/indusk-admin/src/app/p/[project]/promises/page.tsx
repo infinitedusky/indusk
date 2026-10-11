@@ -12,7 +12,10 @@ import {
   alarmSource,
   type SourceName,
 } from "@infinitedusky/indusk-mcp/promises/sources";
-import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
+import {
+  readLookStanding,
+  readStanding,
+} from "@infinitedusky/indusk-mcp/promises/standing";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import {
   PromisesDashboard,
@@ -134,6 +137,11 @@ export default async function PerProjectPromisesPage({
   const standing = reads
     ? await readStanding(projectPath, { health: reads })
     : [];
+  // Looks beside the promises (ui-promises ADR decision 7): each look's
+  // standing from the same package reader the nav counts.
+  const looks = await readLookStanding(projectPath, {
+    cacheMs: readAdminRefreshMs(projectPath),
+  });
   const planNames = readHealthNames(projectPath);
   const declarations = readPlanHierarchy(projectPath);
   const rows = buildRows(standing, {
@@ -159,6 +167,8 @@ export default async function PerProjectPromisesPage({
           promiseHrefPrefix={`/p/${project}/promises/`}
           observed={observed}
           timelines={timelines}
+          looks={looks.rows}
+          looksHref={`/p/${project}/looks`}
         />
       )}
     </div>
