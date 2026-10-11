@@ -2,11 +2,13 @@
 name: a-click-and-its-server-work-share-a-trace
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: scaffold
 owner: browser-telemetry-leftovers
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/templates/instrumentation.web.ts
+tests:
+  - apps/indusk-mcp/templates/instrumentation.web.test.ts
 incidents: []
 ---
 
@@ -14,3 +16,4 @@ In a project `indusk init` instrumented, every request the browser makes to the 
 
 ## History
 - 2026-10-10 — declared (browser-telemetry-leftovers), from its planning conversation.
+- 2026-10-11 — enforced, confirmed for browser-telemetry-leftovers: proven by row A1, row A2, row A3.

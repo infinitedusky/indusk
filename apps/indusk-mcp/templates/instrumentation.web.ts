@@ -135,6 +135,8 @@ const provider = new WebTracerProvider({
 
 provider.register();
 
+// promise: a-click-and-its-server-work-share-a-trace — the click's trace goes to the
+// project's own services: same-origin by default, the named origins and patterns above.
 registerInstrumentations({
 	instrumentations: [
 		new FetchInstrumentation({
