@@ -13,13 +13,15 @@
  *   VITE_OTEL_EXPORTER_OTLP_HEADERS  — auth headers (e.g., "Authorization=Bearer xxx")
  *   VITE_OTEL_PROPAGATE_TO           — origins your API lives on, comma-separated
  *                                      (e.g., "http://localhost:3000,https://*.dev.example.com")
- *                                      each entry is an origin with its scheme
+ *                                      each entry is an origin with its scheme; it may
+ *                                      carry a path, and may write a default port
  *
  * Trace propagation: a request to this page's own origin carries the click's trace
  * (a `traceparent` header). A request to another origin carries it only when that
  * origin is named in OTEL_PROPAGATE_TO; an entry containing `*` is a pattern where
- * `*` matches one or more characters other than "/" and ".". Empty means same-origin
- * only. The API you name must also allow the `traceparent` header in its CORS settings
+ * `*` matches one or more characters other than "/" and ".". An entry with a path covers
+ * that path and what is under it, compared as written; a query or fragment is ignored.
+ * Empty means same-origin only. The API you name must also allow the `traceparent` header in its CORS settings
  * (Access-Control-Allow-Headers), or the browser blocks the request.
  *
  * Install:
@@ -97,7 +99,11 @@ const DEFAULT_PORT: Record<string, string> = { http: "80", https: "443" };
 function parsePropagateTo(list: string): RegExp[] {
 	const patterns: RegExp[] = [];
 	for (const raw of list.split(",")) {
-		const entry = raw.trim().replace(/\/+$/, "");
+		// A query or fragment names no resource a request is matched on: cut it, for every entry.
+		const entry = raw
+			.trim()
+			.replace(/[?#].*$/, "")
+			.replace(/\/+$/, "");
 		if (!entry) continue;
 		if (!ENTRY_WITH_SCHEME.test(entry)) {
 			console.warn(
