@@ -271,4 +271,25 @@ describe("instrumentation.web template", () => {
 			).not.toBe(activeTraceId);
 		}
 	});
+
+	it("T6: a path in an entry is compared as written; host and scheme case do not matter", async () => {
+		for (const entry of ["https://api.example.com/Admin", "https://*.dev.example.com/Admin"]) {
+			vi.stubEnv("VITE_OTEL_PROPAGATE_TO", entry);
+			const host = entry.includes("*") ? "plan-a.dev.example.com" : "api.example.com";
+			const { sent, clickTraceIds } = await clickAndFetch([
+				`https://${host}/Admin/users`,
+				`https://${host}/admin/users`,
+			]);
+			const covered = sent[0].traceparent;
+			expect(covered, `${entry}: /Admin carries traceparent`).not.toBeNull();
+			expect(clickTraceIds).toContain(traceIdOf(covered));
+			expect(sent[1].traceparent, `${entry}: /admin (another resource) carries none`).toBeNull();
+		}
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "HTTPS://API.Example.com");
+		const cased = await clickAndFetch(["https://api.example.com/seats"]);
+		expect(
+			cased.sent[0].traceparent,
+			"scheme and host case in the entry still match",
+		).not.toBeNull();
+	});
 });

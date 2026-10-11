@@ -27,4 +27,13 @@ describe("otel docs claims", () => {
 			expect(asyncFollowClaims(text)).toEqual([]);
 		});
 	}
+
+	it("T7: the guard flags a reworded claim and passes the current wording of the limit", () => {
+		const reworded =
+			"A request from a `.then()` chain follows the click, not only synchronous ones.";
+		expect(asyncFollowClaims(reworded), "a reworded claim is flagged").toHaveLength(1);
+		const limit =
+			"A request made after a native `await`, from a `.then()` callback or from a timer is in its own trace, not the click's.";
+		expect(asyncFollowClaims(limit), "the limit as documented is not a claim").toEqual([]);
+	});
 });
