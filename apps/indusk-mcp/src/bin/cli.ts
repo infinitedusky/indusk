@@ -1105,6 +1105,38 @@ looksCmd
 		await looksLint(rootOrExit(), app);
 	});
 
+looksCmd
+	.command("status <app>")
+	.description(
+		"Each mockup approved or proposed. Approved means approved.json holds the mockup's and the foundation's current hashes; a changed one reads proposed and names the approved version the app is held to.",
+	)
+	.action(async (app: string) => {
+		const { looksStatus } = await import("./commands/looks.js");
+		await looksStatus(rootOrExit(), app);
+	});
+
+looksCmd
+	.command("coverage <app>")
+	.description(
+		"Name every declared screen, state and rendered data-component with no approved mockup. Exit 1 when any is uncovered.",
+	)
+	.action(async (app: string) => {
+		const { looksCoverage } = await import("./commands/looks.js");
+		await looksCoverage(rootOrExit(), app);
+	});
+
+looksCmd
+	.command("approve")
+	.description(
+		"Refused (exit 2): a mockup is approved only by a person, with the cockpit's Approve on the app's Looks page.",
+	)
+	.allowUnknownOption()
+	.allowExcessArguments()
+	.action(async () => {
+		const { looksApprove } = await import("./commands/looks.js");
+		looksApprove();
+	});
+
 const promisesCmd = program
 	.command("promises")
 	.description("The promise registry (.indusk/promises/): what the system commits to, checked");

@@ -222,7 +222,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 - [x] `apps/indusk-mcp/src/lib/looks/approvals.ts`, exported as `./looks/approvals`: `approvalOf(app, mockup)` → `approved` when `approved.json` holds its current hash and the foundation's, else `proposed` (with the last approved version kept as the reference); `approve(root, app, mockup, by)` appends the entry and commits through the notes writer plan-cockpit's `plans/history` uses, only that file
 - [x] `apps/indusk-mcp/src/lib/looks/coverage.ts`, exported as `./looks/coverage`: screens × states without an approved mockup, and `data-component` names rendered without one
-- [ ] `indusk looks status <app>` and `indusk looks coverage <app>`; `indusk looks approve` exits 2 naming the cockpit's Approve
+- [x] `indusk looks status <app>` and `indusk looks coverage <app>`; `indusk looks approve` exits 2 naming the cockpit's Approve
 - [ ] `apps/indusk-mcp/hooks/looks-approval-guard.js`: refuses an agent's Write or Edit to any `.indusk/mockups/*/approved.json`, naming the cockpit's Approve; registered with the other PreToolUse hooks
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
