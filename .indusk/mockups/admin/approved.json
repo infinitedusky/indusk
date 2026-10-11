@@ -76,6 +76,14 @@
 			"foundationHash": "36b807fec8de7d0bba03f7609225d33597688f4bcf3e165a45beee8494f5f810",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-11T14:58:52.128Z"
+		},
+		{
+			"mockup": "dashboard.default",
+			"mockupHash": "066cc3c16542ba9fa34eaccb3c8eaf5e21211da77ff55bea9b3429544b93e17d",
+			"foundationHash": "36b807fec8de7d0bba03f7609225d33597688f4bcf3e165a45beee8494f5f810",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-11T22:51:20.920Z"
 		}
 	]
 }
