@@ -51,3 +51,4 @@ Shape raised **3 findings** across the phases (Build Phases 4, 5 and 6), all fix
 ## Release
 
 Nothing published: `indusk checks show` declares no release command or version file for this project, and landing installs the build. No bump.
+Landed on main at 141870f8, 2026-10-10.
