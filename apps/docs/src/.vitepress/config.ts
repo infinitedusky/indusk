@@ -164,6 +164,7 @@ const config = defineConfig({
 						{ text: "Overview", link: "/reference/admin-ui/overview" },
 						{ text: "CLI Reference", link: "/reference/admin-ui/cli" },
 						{ text: "Sessions", link: "/reference/admin-ui/sessions" },
+						{ text: "Promise page", link: "/reference/admin-ui/promise-page" },
 						{
 							text: "Component Conventions",
 							link: "/reference/admin-ui/component-conventions",
@@ -212,6 +213,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/decisions/" },
 						{ text: "Display Names — promises in words, plans by title, with their dates", link: "/decisions/display-names" },
+						{ text: "Plan Cockpit — the admin as the promise dashboard, the promise page and the plan page", link: "/decisions/plan-cockpit" },
 						{ text: "Release Records Its Failures — the release as a declared step", link: "/decisions/release-records-its-failures" },
 						{ text: "Audit Step — a fresh reader before a plan closes", link: "/decisions/plan-review-subagent" },
 						{ text: "Admin Plan Authoring — plan to release from the admin", link: "/decisions/admin-plan-authoring" },

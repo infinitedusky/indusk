@@ -1,7 +1,8 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
-import Link from "next/link";
+import type { PlanDates } from "@infinitedusky/indusk-mcp/promises/display";
 import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
 import { HoldingBadge } from "@/components/HoldingBadge";
+import { NavLink } from "@/components/NavLink";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
@@ -37,35 +38,55 @@ interface PlanListProps {
   holding?: Map<string, number>;
   /** Plans holding a violated promise (day-monitor): drawn red without being opened. */
   red?: Set<string>;
+  /**
+   * When each plan shipped, by name — the package's `planDates` (via
+   * `readHealthNames`), never derived here. A Path counts a plan released when
+   * its entry has a `released`.
+   */
+  dates?: Record<string, PlanDates>;
 }
 
-/** A parent plan plus its children, resolved against what exists on disk. */
+/** One declared entry of a Path, in the order its master declares it. */
+type PathEntry =
+  | { kind: "plan"; plan: Plan; number: number }
+  | { kind: "path"; group: PlanGroup; number: number }
+  | { kind: "placeholder"; name: string; number: number };
+
+/** A Path: a parent plan with its declared entries, nested as deep as declared. */
 interface PlanGroup {
   parent: Plan;
-  /** Children that exist, in declared order. */
-  children: Plan[];
-  /** Declared names with no plan folder yet — rendered as placeholders. */
-  placeholders: string[];
+  /** 1 for a Path at the top, one more for each Path declared inside it. */
+  depth: number;
+  entries: PathEntry[];
+  /** Plans in this Path and the Paths inside it (placeholders count as not released). */
+  total: number;
+  released: number;
 }
 
 /**
- * Split plans into parent groups and everything else.
+ * Split plans into Paths and everything else.
+ *
+ * promise: paths-keep-their-order
  *
  * The invariant this function exists to protect: **every plan passed in comes
- * back out**, either inside a group or in `rest`. Declarations add structure;
+ * back out**, either inside a Path or in `rest`. Declarations add structure;
  * they never subtract a plan. A declared child with no folder becomes a
  * placeholder rather than silently vanishing, and a parent with no resolvable
- * children is not a group at all — it stays an ordinary plan.
+ * children is not a Path at all — it stays an ordinary plan.
  *
- * Children resolve against active AND archived plans (active wins a name
- * collision) — an archived subplan is finished work and renders with its real
- * status, never as a "not created yet" placeholder (T11). `rest` is the
- * unclaimed ACTIVE plans; archived plans always keep their own section.
+ * A subplan that is itself a parent opens as a Path inside its parent, to any
+ * depth. A master naming its own ancestor stops at the repeat; a plan declared
+ * under two parents appears under both. Children resolve against active
+ * AND archived plans (active wins a name collision) — an archived subplan is
+ * finished work and renders with its real status, never as a "not created
+ * yet" placeholder (T11). `rest` is the unclaimed ACTIVE plans; archived plans
+ * always keep their own section.
  */
 function buildGroups(
   active: Plan[],
   archived: Plan[],
   grouping: PlanDeclarations | undefined,
+  isReleased: (plan: string) => boolean,
 ): {
   root: { name: string; title: string } | null;
   groups: PlanGroup[];
@@ -77,41 +98,76 @@ function buildGroups(
     [...archived, ...active].map((p) => [p.name, p] as const),
   );
   const claimed = new Set<string>();
-  const groups: PlanGroup[] = [];
+  const opened = new Set<string>();
 
-  for (const parentName of Object.keys(grouping.subplans)) {
+  const open = (
+    parentName: string,
+    depth: number,
+    ancestors: readonly string[],
+  ): PlanGroup | null => {
     const parent = byName.get(parentName);
     const declared = grouping.subplans[parentName] ?? [];
-    if (!parent || declared.length === 0) continue;
+    if (!parent || declared.length === 0 || ancestors.includes(parentName)) {
+      return null;
+    }
+    opened.add(parentName);
+    claimed.add(parentName);
+    const lineage = [...ancestors, parentName];
 
-    const children: Plan[] = [];
-    const placeholders: string[] = [];
+    const group: PlanGroup = {
+      parent,
+      depth,
+      entries: [],
+      total: 0,
+      released: 0,
+    };
+    let number = 0;
     for (const childName of declared) {
+      // A master naming its own ancestor stops at the repeat.
+      if (lineage.includes(childName)) continue;
+      const nested = open(childName, depth + 1, lineage);
+      number += 1;
+      if (nested) {
+        group.entries.push({ kind: "path", group: nested, number });
+        group.total += nested.total;
+        group.released += nested.released;
+        continue;
+      }
       const child = byName.get(childName);
       if (child) {
-        children.push(child);
         claimed.add(childName);
+        group.entries.push({ kind: "plan", plan: child, number });
+        group.total += 1;
+        if (isReleased(childName)) group.released += 1;
       } else {
-        placeholders.push(childName);
+        group.entries.push({ kind: "placeholder", name: childName, number });
+        group.total += 1;
       }
     }
+    return group;
+  };
 
-    if (children.length === 0 && placeholders.length === 0) continue;
-    claimed.add(parentName);
-    groups.push({ parent, children, placeholders });
+  // Top-level Paths: the roadmap's, in its declared order (T13), then any other
+  // parent no master declares inside another, in declaration order. A parent
+  // declared inside another opens there — unless declarations are a cycle with
+  // no entry point, which the last pass opens.
+  const parents = Object.keys(grouping.subplans);
+  const declaredInside = new Set(
+    Object.entries(grouping.subplans).flatMap(([parent, kids]) =>
+      kids.filter((k) => k !== parent),
+    ),
+  );
+
+  const groups: PlanGroup[] = [];
+  for (const name of [
+    ...grouping.roadmap,
+    ...parents.filter((p) => !declaredInside.has(p)),
+    ...parents,
+  ]) {
+    if (opened.has(name)) continue;
+    const group = open(name, 1, []);
+    if (group) groups.push(group);
   }
-
-  // Groups follow the roadmap's declared order, not subplans-object iteration
-  // order (T13). Parents the roadmap doesn't list follow after, keeping their
-  // declaration order (sort is stable).
-  const roadmapIndex = new Map(
-    grouping.roadmap.map((name, i) => [name, i] as const),
-  );
-  groups.sort(
-    (a, b) =>
-      (roadmapIndex.get(a.parent.name) ?? Number.MAX_SAFE_INTEGER) -
-      (roadmapIndex.get(b.parent.name) ?? Number.MAX_SAFE_INTEGER),
-  );
 
   return {
     root: grouping.root ?? null,
@@ -140,12 +196,18 @@ export function PlanList({
   grouping,
   holding,
   red,
+  dates,
 }: PlanListProps) {
   if (active.length === 0 && archived.length === 0) {
     return <EmptyPlansSidebarSlot />;
   }
 
-  const { root, groups, rest } = buildGroups(active, archived, grouping);
+  const { root, groups, rest } = buildGroups(
+    active,
+    archived,
+    grouping,
+    (name) => (dates?.[name]?.released ?? null) !== null,
+  );
   const orderedActive = orderByMaster(rest, masterOrder);
   const unordered = rest.filter((p) => !masterOrder.includes(p.name));
 
@@ -242,7 +304,9 @@ export function PlanList({
 }
 
 /**
- * A parent plan with its declared children indented beneath it.
+ * A Path: the parent plan, how many of its plans a release has shipped, and
+ * its declared entries numbered in declared order — a Path declared inside it
+ * opens as a Path inside, indented one level more.
  *
  * Placeholders (declared subplans with no folder yet) render greyed and
  * non-navigable — there is no page to open. Showing them is the point: the
@@ -252,46 +316,85 @@ function PlanGroupSection({
   group,
   prefix,
   red,
+  number,
 }: {
   group: PlanGroup;
   prefix: string;
   red?: Set<string>;
+  number?: number;
 }) {
   return (
     <div
       className="flex flex-col gap-1"
       data-testid={`plan-group-${group.parent.name}`}
       data-parent={group.parent.name}
+      data-depth={group.depth}
     >
-      <ul className="flex flex-col gap-1">
-        <PlanItem
-          plan={group.parent}
-          prefix={prefix}
-          red={red?.has(group.parent.name)}
-        />
-      </ul>
-      <ul className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-2">
-        {group.children.map((plan) => (
+      <div className="flex items-center gap-1">
+        <ul className="flex min-w-0 flex-1 flex-col gap-1">
           <PlanItem
-            key={plan.name}
-            plan={plan}
+            plan={group.parent}
             prefix={prefix}
-            red={red?.has(plan.name)}
+            red={red?.has(group.parent.name)}
+            number={number}
           />
-        ))}
-        {group.placeholders.map((name) => (
-          <li key={name} data-testid={`plan-placeholder-${name}`}>
-            <div
-              className="flex items-center justify-between rounded px-2 py-1.5 text-sm text-gray-400"
-              title="Declared in the parent's master.md — not created yet"
-            >
-              <span className="truncate">{name}</span>
-              <Badge variant="neutral">queued</Badge>
-            </div>
-          </li>
-        ))}
+        </ul>
+        <span
+          data-testid="path-released"
+          title={`${group.released} of ${group.total} released`}
+          className="shrink-0 rounded bg-gray-100 px-1.5 text-xs tabular-nums text-gray-600"
+        >
+          {group.released}/{group.total}
+        </span>
+      </div>
+      <ul className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-2">
+        {group.entries.map((entry) =>
+          entry.kind === "plan" ? (
+            <PlanItem
+              key={entry.plan.name}
+              plan={entry.plan}
+              prefix={prefix}
+              red={red?.has(entry.plan.name)}
+              number={entry.number}
+            />
+          ) : entry.kind === "path" ? (
+            <li key={entry.group.parent.name}>
+              <PlanGroupSection
+                group={entry.group}
+                prefix={prefix}
+                red={red}
+                number={entry.number}
+              />
+            </li>
+          ) : (
+            <li key={entry.name} data-testid={`plan-placeholder-${entry.name}`}>
+              <div
+                className="flex items-center justify-between rounded px-2 py-1.5 text-sm text-gray-400"
+                title="Declared in the parent's master.md — not created yet"
+              >
+                <span className="truncate">
+                  <PlanNumber number={entry.number} />
+                  {entry.name}
+                </span>
+                <Badge variant="neutral">queued</Badge>
+              </div>
+            </li>
+          ),
+        )}
       </ul>
     </div>
+  );
+}
+
+function PlanNumber({ number }: { number?: number }) {
+  if (number === undefined) return null;
+  return (
+    <span
+      data-testid="plan-number"
+      className="mr-1.5 tabular-nums text-xs text-gray-400"
+    >
+      {number}
+    </span>
   );
 }
 
@@ -300,21 +403,26 @@ function PlanItem({
   prefix,
   holding = 0,
   red = false,
+  number,
 }: {
   plan: Plan;
   prefix: string;
   holding?: number;
   red?: boolean;
+  number?: number;
 }) {
   return (
     <li>
-      <Link
+      <NavLink
         href={`${prefix}${plan.name}`}
         className="flex items-center justify-between rounded px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
         data-plan-name={plan.name}
       >
         <span className="flex items-center gap-2 truncate">
-          <span className="truncate">{plan.name}</span>
+          <span className="truncate">
+            <PlanNumber number={number} />
+            {plan.name}
+          </span>
           {plan.malformed && (
             <Badge variant="blocked" data-testid={`malformed-${plan.name}`}>
               malformed
@@ -335,7 +443,7 @@ function PlanItem({
           )}
         </span>
         <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>
-      </Link>
+      </NavLink>
     </li>
   );
 }

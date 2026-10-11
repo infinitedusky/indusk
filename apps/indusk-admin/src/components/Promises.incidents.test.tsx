@@ -24,7 +24,8 @@ vi.mock("next/link", () => {
   return { default: MockLink, __esModule: true };
 });
 
-import { PromisesTable } from "@/components/Promises";
+import { PromisesDashboard } from "@/components/Promises";
+import { parseQuery } from "@/lib/promise-dashboard";
 
 /**
  * incident-recording A12 — promise: an-open-incident-stays-loud.
@@ -103,10 +104,15 @@ function rowFor(container: Element, id: string): HTMLElement {
 describe("A12 — the incidents table shows age and the owner's Maintenance phase", () => {
   it("shows how long the open incident has been open, with a link to its owner's phase", async () => {
     const { container } = await render(
-      <PromisesTable
+      <PromisesDashboard
+        rows={[]}
+        query={parseQuery({})}
+        pathOrder={[]}
         promises={PROMISES}
         incidents={INCIDENTS}
+        path="/p/demo/promises"
         planHrefPrefix={PREFIX}
+        promiseHrefPrefix="/p/demo/promises/"
       />,
     );
     const row = rowFor(container, OPEN);
@@ -120,10 +126,15 @@ describe("A12 — the incidents table shows age and the owner's Maintenance phas
 
   it("shows when a fixed incident was fixed, and no age", async () => {
     const { container } = await render(
-      <PromisesTable
+      <PromisesDashboard
+        rows={[]}
+        query={parseQuery({})}
+        pathOrder={[]}
         promises={PROMISES}
         incidents={INCIDENTS}
+        path="/p/demo/promises"
         planHrefPrefix={PREFIX}
+        promiseHrefPrefix="/p/demo/promises/"
       />,
     );
     const row = rowFor(container, FIXED);

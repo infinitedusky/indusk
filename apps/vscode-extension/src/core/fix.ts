@@ -1,16 +1,9 @@
+import { type BrokenPromise, cleanFacts, fixPrompt } from "@infinitedusky/indusk-mcp/promises/fix";
 import { promiseOf, type View, whereBroken } from "./view.js";
 
-// promise: a-break-opens-a-fix-in-one-click
+export type { BrokenPromise };
 
-export interface BrokenPromise {
-	promise: string;
-	source: string;
-	sourceLabel: string;
-	statement: string;
-	symptom?: string;
-	traceId?: string;
-	tests: string[];
-}
+// promise: a-break-opens-a-fix-in-one-click
 
 export type FixAction =
 	| { terminal: { cwd: string; name: string; command: string } }
@@ -32,17 +25,7 @@ export function fixAction(
 		};
 	}
 	const f = cleanFacts(b);
-	const trace = f.traceId ? `${f.sourceLabel.replace(/\/+$/, "")}/trace/${f.traceId}` : null;
-	const prompt = [
-		`The promise \`${f.promise}\` is broken in ${f.source}: "${f.statement}"`,
-		f.symptom ? `Symptom: ${f.symptom}` : null,
-		trace ? `Trace: ${trace}` : null,
-		f.tests.length > 0 ? `Tests that prove it: ${f.tests.join(", ")}` : null,
-		"",
-		"Record the break first (the `record_breaks` tool, or `indusk promises watch`), then find the cause and fix it under the plan that owns the promise.",
-	]
-		.filter((l): l is string => l !== null)
-		.join("\n");
+	const prompt = fixPrompt(b);
 	return {
 		terminal: {
 			cwd: ctx.projectRoot,
@@ -77,36 +60,6 @@ export function fixFor(
 			tests: p.tests,
 		},
 		ctx,
-	);
-}
-
-/**
- * The facts as the terminal may receive them. Every one comes from a span or
- * the registry and is typed into a terminal, where a control character is a
- * keystroke (Ctrl-C ends the quoted line and runs what follows): one line
- * each, control characters gone.
- */
-function cleanFacts(b: BrokenPromise): BrokenPromise {
-	return {
-		...b,
-		promise: oneLine(b.promise),
-		source: oneLine(b.source),
-		sourceLabel: oneLine(b.sourceLabel),
-		statement: oneLine(b.statement),
-		tests: b.tests.map(oneLine),
-		...(b.symptom !== undefined ? { symptom: oneLine(b.symptom) } : {}),
-		...(b.traceId !== undefined ? { traceId: oneLine(b.traceId) } : {}),
-	};
-}
-
-/** The text with line breaks and tabs as spaces and every other control character removed. */
-function oneLine(text: string): string {
-	return (
-		text
-			.replace(/[\r\n\t]+/g, " ")
-			// biome-ignore lint/suspicious/noControlCharactersInRegex: removing them is the point
-			.replace(/[\u0000-\u001f\u007f-\u009f]/g, "")
-			.trim()
 	);
 }
 

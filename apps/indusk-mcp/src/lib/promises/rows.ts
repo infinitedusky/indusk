@@ -67,6 +67,47 @@ export function rowsNaming(
 	return { rows, unreadable };
 }
 
+/**
+ * `rowsNaming` for many promises at once: each impl is read and parsed once,
+ * not once per promise, which is what a dashboard of every promise needs.
+ * Keyed by promise name; every promise has an entry, empty when no row names it.
+ */
+export function rowsNamingEach(
+	planRoot: string,
+	promises: readonly Pick<PromiseEntry, "name" | "aliases">[],
+): Map<string, { rows: PlanRow[]; unreadable: string[] }> {
+	const out = new Map(
+		promises.map((p) => [p.name, { rows: [] as PlanRow[], unreadable: [] as string[] }]),
+	);
+	const byAlias = new Map(
+		promises.flatMap((p) => [p.name, ...p.aliases].map((n) => [n, p.name] as const)),
+	);
+	for (const folder of planFolders(planRoot)) {
+		const implPath = join(folder.dir, "impl.md");
+		if (!existsSync(implPath)) continue;
+		let parsed: Trajectory;
+		try {
+			parsed = parseTrajectory(matter(readFileSync(implPath, "utf-8")).content);
+		} catch {
+			for (const held of out.values()) held.unreadable.push(folder.plan);
+			continue;
+		}
+		for (const r of parsed.rows) {
+			const named = new Set((r.purpose?.promises ?? []).flatMap((n) => byAlias.get(n) ?? []));
+			for (const name of named) {
+				out.get(name)?.rows.push({
+					id: r.id,
+					state: r.state,
+					tests: r.test ?? [],
+					plan: folder.plan,
+					archived: folder.archived,
+				});
+			}
+		}
+	}
+	return out;
+}
+
 export interface RowProof {
 	promise: PromiseEntry;
 	rows: NamingRow[];

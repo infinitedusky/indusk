@@ -72,7 +72,23 @@ vi.mock("@/lib/project-reader", () => ({
 }));
 
 vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
+// What plans wait on and their recorded decisions (plan-cockpit Build Phase 6):
+// the reader reaches the session manager and the history file; nothing waits here.
+vi.mock("@/lib/decisions-reader", () => ({
+  __esModule: true,
+  readWaiting: () => [],
+  readPlanHistory: () => [],
+}));
 
+vi.mock("@infinitedusky/indusk-mcp/promises/standing", () => ({
+  __esModule: true,
+  readStanding: async () => [],
+}));
+vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
+  __esModule: true,
+  promiseWords: (name: string) => name,
+  readHealthNames: () => ({ planTitles: {}, planDates: {}, words: {} }),
+}));
 vi.mock("@/lib/registry-client", () => ({
   __esModule: true,
   getProjectPath: (name: string) =>

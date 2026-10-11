@@ -214,3 +214,22 @@ describe("A1 — the person replies in their own words, and the panel shows it",
 		expect(() => m.say(id, "   ")).toThrow(/empty/);
 	});
 });
+
+describe("plan-cockpit — the question a session waits on", () => {
+	it("pendingQuestion is the latest question not yet answered, and none once it is answered", () => {
+		const { m, fake } = manager();
+		const { id } = m.start({ ...planning, ...meta });
+		expect(m.pendingQuestion(id)).toBeUndefined();
+		const ev = {
+			type: "question" as const,
+			requestId: "req-1",
+			questions: [{ question: "Which map?", options: [{ label: "A" }, { label: "B" }] }],
+			input: {},
+		};
+		fake.started[0]?.opts.onEvent(ev);
+		expect(m.pendingQuestion(id)).toEqual(ev);
+		m.reply(id, { requestId: "req-1", answers: { "Which map?": "A" } });
+		expect(m.pendingQuestion(id)).toBeUndefined();
+		expect(m.pendingQuestion("no-such-session")).toBeUndefined();
+	});
+});

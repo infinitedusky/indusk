@@ -180,6 +180,34 @@
 			"types": "./dist/lib/promises/incidents.d.ts",
 			"default": "./dist/lib/promises/incidents.js"
 		},
+		"./promises/rows": {
+			"types": "./dist/lib/promises/rows.d.ts",
+			"default": "./dist/lib/promises/rows.js"
+		},
+		"./promises/standing": {
+			"types": "./dist/lib/promises/standing.d.ts",
+			"default": "./dist/lib/promises/standing.js"
+		},
+		"./promises/proof": {
+			"types": "./dist/lib/promises/proof.d.ts",
+			"default": "./dist/lib/promises/proof.js"
+		},
+		"./plans/steps": {
+			"types": "./dist/lib/plans/steps.d.ts",
+			"default": "./dist/lib/plans/steps.js"
+		},
+		"./plans/waiting": {
+			"types": "./dist/lib/plans/waiting.d.ts",
+			"default": "./dist/lib/plans/waiting.js"
+		},
+		"./plans/history": {
+			"types": "./dist/lib/plans/history.d.ts",
+			"default": "./dist/lib/plans/history.js"
+		},
+		"./promises/fix": {
+			"types": "./dist/lib/promises/fix.d.ts",
+			"default": "./dist/lib/promises/fix.js"
+		},
 		"./test-levels": {
 			"types": "./dist/lib/test-levels.d.ts",
 			"default": "./dist/lib/test-levels.js"
