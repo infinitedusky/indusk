@@ -14,6 +14,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
+- **Fix with Claude opens a Claude Code tab in VS Code** (fix-opens-claude-tab): with the Claude Code extension installed, the fix opens a new Claude Code tab with the prompt filled in, not sent; in Cursor or without the extension it starts `claude` in a terminal as before. See [Promises in your editor](/guide/promises-in-your-editor#fix-with-claude).
 - **The Promises panel reads in words** (display-names): promises show as "A break reaches the editor" rather than their handle, on cards, rows, the activity and the hover; plan groups are headed by the plan's title with "started …, landed …, released X.Y.Z (date)" or "not released yet". The marker at the end of a code line keeps the handle. See [Promises in your editor](/guide/promises-in-your-editor).
 
 ### Fixed
