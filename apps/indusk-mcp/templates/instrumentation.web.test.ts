@@ -23,23 +23,11 @@ beforeAll(() => {
 	// own `provider.register()` then no-ops, and its instrumentations trace into
 	// this exporter. Same defaults the template gets (stack context manager, W3C).
 	new WebTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] }).register();
-
-	// TEMPORARY SHIM, remove when the template stops calling it. The template calls
-	// `provider.addSpanProcessor(...)`, which sdk-trace-web 2.x (the version its own
-	// install line fetches) no longer has: imported unshimmed it throws
-	// "provider.addSpanProcessor is not a function" before any assertion runs.
-	// A no-op here lets the template load so A1-A3 assert on propagation, not on
-	// that crash. Build Phase 1 owns the template fix (pass `spanProcessors` to the
-	// constructor) and deletes this shim with it.
-	const proto = WebTracerProvider.prototype as unknown as Record<string, unknown>;
-	proto.addSpanProcessor ??= () => {};
 });
 
 beforeEach(() => {
 	exporter.reset();
 	recorded = [];
-	// Next's bundler inlines process.env.NEXT_PUBLIC_*; a Vite page has no `process`.
-	vi.stubGlobal("process", { env: {} });
 	window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = input instanceof Request ? input.url : String(input);
 		const headers = new Headers(
@@ -52,7 +40,6 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.unstubAllEnvs();
-	vi.unstubAllGlobals();
 	document.body.innerHTML = "";
 });
 
