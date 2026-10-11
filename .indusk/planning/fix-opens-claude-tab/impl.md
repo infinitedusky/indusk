@@ -52,7 +52,7 @@ Fix with Claude opens a Claude Code tab in VS Code when the Claude Code extensio
 
 **Tier**: med
 
-- [ ] Confirm this plan's worktree (`git worktree list` shows `plan/fix-opens-claude-tab`)
+- [x] Confirm this plan's worktree (`git worktree list` shows `plan/fix-opens-claude-tab`)
 - [ ] A1, A2 in `apps/vscode-extension/src/core/fix-tab.test.ts` against `fixAction`, passing the new context fields (`host: "vscode" | "other"`, `claudeCodeExtension: boolean`) — the core ignores unknown fields today, so the file loads and A1 fails on its assertion (it gets a terminal action); A2 passes today for the terminal cases and is the guard that they stay
 - [ ] A1 red on its own assertion; A2's terminal cases recorded as passing today; rows set `written`
 
