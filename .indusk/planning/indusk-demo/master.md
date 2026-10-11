@@ -17,9 +17,11 @@ subplans:
   - vscode-extension
   - display-names
   - plan-cockpit
+  - ui-promises
   - demo-rehearsal
   - server-provisioning
   - contract-ui
+  - mockup-matching
 ---
 
 # Demo — a new project, start to finish
@@ -181,3 +183,15 @@ this file now carries it so the sidebar and the numbers agree.
 | 9a | [display-names](../archive/display-names/retrospective.md) | promises read as words, plans by title with their start, landing and release dates, from one package module plan-cockpit reuses — **closed 2026-10-10**: `promises/display`, dates from the trunk's release commits (94 of 94 landed plans dated) |
 | 10 | plan-cockpit | stage 1 of the promise UI: the dashboard, the promise page with its proof, the plan page — being opened |
 | 11 | [contract-ui](../contract-ui/brief.md) | stage 2: the home view as the hierarchy above stage 1's pages, statuses derived — after the launch, after plan-premises |
+| 10a | [ui-promises](../ui-promises/brief.md) | how the app looks, held: mockups on one token foundation, approved in the cockpit, every part covered, a token broken in the running app caught on the dashboard — approved 2026-10-10, builds after plan-cockpit lands |
+| 12 | [mockup-matching](../mockup-matching/brief.md) | each screen compared pixel for pixel with its approved mockup, one pinned renderer — after the launch |
+
+## Decisions (2026-10-10)
+
+- **ui-promises joins the demo before the rehearsal** (Sandy, 2026-10-10):
+  plan-cockpit passed every test and looked nothing like its mockup — how the
+  app looks had no contract. For the demo to show the power, a look has to be
+  held and a break caught. Plan 1 of 2; the pixel comparison,
+  mockup-matching, comes after the launch. Research and the open-tool survey
+  in [ui-promises/research.md](../ui-promises/research.md).
+- **Build order is 4 → 8 → 9 → 10 → 10a → 7 → 5 → 11 → 12.**
