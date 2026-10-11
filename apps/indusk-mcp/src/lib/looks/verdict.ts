@@ -139,16 +139,34 @@ function rgba(value: string): [number, number, number, number] | null {
 	if (v === "transparent") return [0, 0, 0, 0];
 	if (v.startsWith("#")) return hexToRgb(v);
 	const m = v.match(
-		/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/,
+		/^rgba?\(\s*([\d.]+%?)[\s,]+([\d.]+%?)[\s,]+([\d.]+%?)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/,
 	);
 	if (!m) return null;
+	// A percentage component is a share of 255: `rgb(9.4% …)` is what a CSS
+	// generator may write for #18202b, and the browser computes 24.
+	const channel = (c: string | undefined) =>
+		c?.endsWith("%") ? Math.round((Number.parseFloat(c) / 100) * 255) : Number.parseFloat(c ?? "0");
 	const alpha =
 		m[4] === undefined
 			? 1
 			: m[4].endsWith("%")
 				? Number.parseFloat(m[4]) / 100
 				: Number.parseFloat(m[4]);
-	return [Number(m[1]), Number(m[2]), Number(m[3]), alpha];
+	return [channel(m[1]), channel(m[2]), channel(m[3]), alpha];
+}
+
+/** Any colour in a shadow layer: hex, rgb()/rgba(), hsl()/hsla(). */
+const SHADOW_COLOR = /#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/i;
+
+/**
+ * One shadow layer in the browser's order — colour, then offsets, blur and
+ * spread — whichever order and colour spelling it was written in.
+ */
+function canonShadowLayer(layer: string): string {
+	const color = layer.match(SHADOW_COLOR)?.[0];
+	const rest = (color ? layer.replace(color, " ") : layer).trim().replace(/\s+/g, " ");
+	if (!color) return rest.toLowerCase();
+	return `${canon("color", color)} ${rest.toLowerCase()}`;
 }
 
 /** Canonical spelling: what the browser would compute for the same value. */
@@ -158,10 +176,15 @@ function canon(kind: Kind, value: string): string {
 		case "color": {
 			const c = rgba(v);
 			if (!c) return v.toLowerCase();
-			return c[3] === 1
+			// Alpha to two places: a minifier that writes 0.06 as #…0f has stored
+			// 15/255, and the browser reads it back as 0.06.
+			const alpha = Math.round(c[3] * 100) / 100;
+			return alpha === 1
 				? `rgb(${c[0]}, ${c[1]}, ${c[2]})`
-				: `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${c[3]})`;
+				: `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${alpha})`;
 		}
+		case "shadow":
+			return splitList(v).map(canonShadowLayer).join(", ");
 		case "length": {
 			const m = v.match(/^(-?[\d.]+)(px|rem|em)?$/);
 			if (!m) return v;
@@ -175,10 +198,14 @@ function canon(kind: Kind, value: string): string {
 			return `${Math.round(n * 1000) / 1000}ms`;
 		}
 		case "easing":
-			return v
-				.replace(/\s+/g, " ")
-				.replace(/\s*,\s*/g, ", ")
-				.toLowerCase();
+			return (
+				v
+					// A minifier writes 0.25 as .25; both are the same number.
+					.replace(/(^|[^\d])\.(\d)/g, "$10.$2")
+					.replace(/\s+/g, " ")
+					.replace(/\s*,\s*/g, ", ")
+					.toLowerCase()
+			);
 		case "family":
 			return v
 				.replace(/["']/g, "")
@@ -203,7 +230,8 @@ function isInitial(kind: Kind, canonical: string): boolean {
 		case "easing":
 			return canonical === "ease";
 		case "shadow":
-			return canonical === "none";
+			// A framework's empty ring and inset layers are shadows that draw nothing.
+			return canonical === "none" || canonical === "rgba(0, 0, 0, 0) 0px 0px 0px 0px";
 		case "weight":
 			return canonical === "400" || canonical === "normal";
 		default:
@@ -291,8 +319,22 @@ export function verdict(input: VerdictInput): Verdict {
 		return { name, value, kind, canonical: canon(kind, value) };
 	});
 	const findings: Finding[] = checkTokens(approved, input.runtime);
+	// An element's shadow is judged layer by layer, so each layer of an approved
+	// shadow is a member in its own right.
+	const members = approved.flatMap((a) =>
+		a.kind === "shadow"
+			? [
+					a,
+					...splitList(a.value).map((layer) => ({
+						...a,
+						value: layer,
+						canonical: canon("shadow", layer),
+					})),
+				]
+			: [a],
+	);
 	for (const el of input.elements) {
-		const finding = checkElement(el, approved);
+		const finding = checkElement(el, members);
 		if (finding) findings.push(finding);
 	}
 	return { state: findings.length === 0 ? "held" : "broken", findings };

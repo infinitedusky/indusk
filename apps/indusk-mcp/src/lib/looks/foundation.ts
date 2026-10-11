@@ -145,7 +145,13 @@ export async function readFoundation(appDir: string): Promise<Foundation> {
 }
 
 /** Tailwind namespaces a foundation group lands in, and every namespace the theme resets. */
-const TAILWIND_GROUP: Readonly<Record<string, string>> = { space: "spacing", easing: "ease" };
+// `size` joins `spacing` so `w-nav`, `h-icon` and `max-w-input` read the foundation too.
+const TAILWIND_GROUP: Readonly<Record<string, string>> = {
+	space: "spacing",
+	size: "spacing",
+	easing: "ease",
+};
+// Breakpoints are viewport thresholds, not looks: they stay Tailwind's.
 const TAILWIND_RESET = [
 	"color",
 	"spacing",
@@ -159,30 +165,49 @@ const TAILWIND_RESET = [
 	"ease",
 	"animate",
 	"blur",
-	"breakpoint",
+	"leading",
+	"tracking",
 ];
+
+const GENERATED_HEADER = "/* Generated from foundation.tokens.json — do not edit. */\n";
+
+/**
+ * The dark scheme's values as plain custom properties after the light ones, so
+ * a Tailwind utility reading `var(--color-ink)` follows the scheme without a
+ * variant. Empty when no token names a dark value.
+ */
+function darkBlocks(f: Foundation): string {
+	const dark = f.tokens.filter((t) => t.dark !== undefined);
+	if (dark.length === 0) return "";
+	const lines = dark.map((t) => `${t.name}: ${t.dark};`);
+	const indented = (tabs: string) => lines.map((l) => `${tabs}${l}`).join("\n");
+	return `@media (prefers-color-scheme: dark) {\n\t:root:not([data-theme="light"]) {\n\t\tcolor-scheme: dark;\n${indented("\t\t")}\n\t}\n}\n:root[data-theme="dark"] {\n\tcolor-scheme: dark;\n${indented("\t")}\n}\n`;
+}
+
+/**
+ * A Tailwind app's `@theme` block: the stock theme reset to the foundation.
+ * `static` because Tailwind otherwise emits only the variables a used utility
+ * reads, and a token no utility touches would read as unset to the
+ * running-app check. A mapped group is written under Tailwind's name for its
+ * utilities and, as well, under the foundation's own — the check reads the
+ * latter. Zero is not a step of a scale, but `p-0`, `inset-0` and
+ * `translate-x-0` look it up by name once the stock spacing is reset; without
+ * it they compile to nothing and a nav stays off-screen.
+ */
+function tailwindTheme(f: Foundation): string {
+	const resets = TAILWIND_RESET.map((ns) => `\t--${ns}-*: initial;`);
+	const lines = f.tokens.flatMap((t) => {
+		const [group, ...rest] = t.path;
+		const mapped = TAILWIND_GROUP[group ?? ""];
+		if (!mapped) return [`\t${t.name}: ${t.value};`];
+		return [`\t--${[mapped, ...rest].join("-")}: ${t.value};`, `\t${t.name}: ${t.value};`];
+	});
+	return `@theme static {\n${resets.join("\n")}\n\t--spacing-0: 0px;\n${lines.join("\n")}\n}\n`;
+}
 
 /** The CSS a mockup loads (`:root`), or, for a Tailwind app, an `@theme` block that resets the stock theme to the foundation. */
 export function generateCss(f: Foundation, opts: { tailwind?: boolean } = {}): string {
-	const header = "/* Generated from foundation.tokens.json — do not edit. */\n";
-	const dark = f.tokens.filter((t) => t.dark !== undefined);
-	// Dark values are plain custom properties after the light ones, so a Tailwind
-	// utility reading `var(--color-ink)` follows the scheme without a variant.
-	const darkLines = dark.map((t) => `${t.name}: ${t.dark};`);
-	const darkCss =
-		dark.length === 0
-			? ""
-			: `@media (prefers-color-scheme: dark) {\n\t:root:not([data-theme="light"]) {\n\t\tcolor-scheme: dark;\n${darkLines.map((l) => `\t\t${l}`).join("\n")}\n\t}\n}\n:root[data-theme="dark"] {\n\tcolor-scheme: dark;\n${darkLines.map((l) => `\t${l}`).join("\n")}\n}\n`;
-	if (!opts.tailwind) {
-		const lines = f.tokens.map((t) => `\t${t.name}: ${t.value};`);
-		return `${header}:root {\n${lines.join("\n")}\n}\n${darkCss}`;
-	}
-	const resets = TAILWIND_RESET.map((ns) => `\t--${ns}-*: initial;`);
-	const lines = f.tokens.map((t) => {
-		const [group, ...rest] = t.path;
-		const mapped = TAILWIND_GROUP[group ?? ""];
-		const name = mapped ? `--${[mapped, ...rest].join("-")}` : t.name;
-		return `\t${name}: ${t.value};`;
-	});
-	return `${header}@theme {\n${resets.join("\n")}\n${lines.join("\n")}\n}\n${darkCss}`;
+	if (opts.tailwind) return `${GENERATED_HEADER}${tailwindTheme(f)}${darkBlocks(f)}`;
+	const lines = f.tokens.map((t) => `\t${t.name}: ${t.value};`);
+	return `${GENERATED_HEADER}:root {\n${lines.join("\n")}\n}\n${darkBlocks(f)}`;
 }

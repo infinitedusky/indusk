@@ -1137,6 +1137,18 @@ looksCmd
 	});
 
 looksCmd
+	.command("tokens <app>")
+	.description(
+		"Print an app's foundation as CSS custom properties; --tailwind emits an @theme block that resets the stock theme to the foundation. --out writes it to a file.",
+	)
+	.option("--tailwind", "an @theme block for a Tailwind app")
+	.option("--out <file>", "write to this file, relative to the project root")
+	.action(async (app: string, opts: { tailwind?: boolean; out?: string }) => {
+		const { looksTokens } = await import("./commands/looks.js");
+		await looksTokens(rootOrExit(), app, opts);
+	});
+
+looksCmd
 	.command("approve")
 	.description(
 		"Refused (exit 2): a mockup is approved only by a person, with the cockpit's Approve on the app's Looks page.",

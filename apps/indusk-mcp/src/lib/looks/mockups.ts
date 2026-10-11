@@ -56,6 +56,11 @@ export interface LooksApp {
 	sources: string[];
 	/** The running app's base URL, when `screens.json` declares one; `indusk looks check --url` overrides it. */
 	url?: string;
+	/**
+	 * Element tag names the check does not measure: tooling the framework puts
+	 * on the page in development (`nextjs-portal`), which the app does not draw.
+	 */
+	ignore: string[];
 	mockups: Mockup[];
 }
 
@@ -89,10 +94,12 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 	}
 	const foundation = await readFoundation(dir);
 	const { devices } = await readJson<{ devices?: Device[] }>(join(dir, "devices.json"), {});
-	const declared = await readJson<{ screens?: DeclaredScreen[]; sources?: string[]; url?: string }>(
-		join(dir, "screens.json"),
-		{},
-	);
+	const declared = await readJson<{
+		screens?: DeclaredScreen[];
+		sources?: string[];
+		url?: string;
+		ignore?: string[];
+	}>(join(dir, "screens.json"), {});
 
 	const screensDir = join(dir, "screens");
 	const names = existsSync(screensDir)
@@ -122,6 +129,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		devices: devices ?? [],
 		screens: declared.screens ?? [],
 		sources: declared.sources ?? [],
+		ignore: declared.ignore ?? [],
 		...(declared.url ? { url: declared.url } : {}),
 		mockups,
 	};

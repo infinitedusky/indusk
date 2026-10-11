@@ -1,7 +1,10 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { initEvalOtel, shutdownEvalOtel } from "../../lib/eval/otel.js";
 import { type Approval, approvalOf, readApprovals } from "../../lib/looks/approvals.js";
 import { checkApp } from "../../lib/looks/check.js";
 import { coverageOf } from "../../lib/looks/coverage.js";
+import { generateCss } from "../../lib/looks/foundation.js";
 import { lintApp } from "../../lib/looks/lint.js";
 import { type Mockup, readApp } from "../../lib/looks/mockups.js";
 import { describe, type LookResult, reportLooks } from "../../lib/looks/report.js";
@@ -146,4 +149,33 @@ export function looksApprove(): void {
 		].join("\n"),
 	);
 	process.exitCode = 2;
+}
+
+/**
+ * `indusk looks tokens <app> [--tailwind] [--out <file>]` — the foundation as
+ * CSS: `:root` custom properties for a mockup, or with `--tailwind` an
+ * `@theme` block that resets the stock theme to the foundation so a stock
+ * class has no value to compile. To stdout, or to `--out` (the app's
+ * generated stylesheet, committed beside its source).
+ */
+export async function looksTokens(
+	projectRoot: string,
+	appName: string,
+	opts: { tailwind?: boolean; out?: string },
+): Promise<void> {
+	try {
+		const app = await readApp(projectRoot, appName);
+		const css = generateCss(app.foundation, { tailwind: opts.tailwind === true });
+		if (opts.out) {
+			const file = resolve(projectRoot, opts.out);
+			mkdirSync(dirname(file), { recursive: true });
+			writeFileSync(file, css);
+			console.info(`${appName}: wrote ${opts.out}`);
+		} else {
+			process.stdout.write(css);
+		}
+	} catch (err) {
+		console.error((err as Error).message);
+		process.exitCode = 1;
+	}
 }

@@ -44,10 +44,15 @@ export interface CheckReport {
  * `{ runtime, elements }`: the named custom properties on `:root`, and every
  * measured property of `body` and its descendants, with a selector for each.
  */
-function measureScript(tokenNames: string[], properties: readonly string[]): string {
+function measureScript(
+	tokenNames: string[],
+	properties: readonly string[],
+	ignore: readonly string[],
+): string {
 	return `(() => {
 	const tokenNames = ${JSON.stringify(tokenNames)};
 	const properties = ${JSON.stringify(properties)};
+	const ignored = ${JSON.stringify(ignore.map((t) => t.toUpperCase()))};
 	const rootStyle = getComputedStyle(document.documentElement);
 	const runtime = {};
 	for (const name of tokenNames) {
@@ -64,14 +69,19 @@ function measureScript(tokenNames: string[], properties: readonly string[]): str
 	const elements = [];
 	const nodes = [document.body, ...document.body.querySelectorAll("*")];
 	for (const el of nodes) {
-		if (["SCRIPT", "STYLE", "LINK", "META", "TITLE", "NOSCRIPT"].includes(el.tagName)) continue;
+		if (["SCRIPT", "STYLE", "LINK", "META", "TITLE", "NOSCRIPT", "OPTION", "OPTGROUP"].includes(el.tagName) || ignored.includes(el.tagName)) continue;
 		const style = getComputedStyle(el);
 		const selector = selectorOf(el);
 		for (const property of properties) {
 			// A border that is not drawn has a colour the author never chose.
 			const side = property.match(/^border-(top|right|bottom|left)-color$/);
 			if (side && style.getPropertyValue("border-" + side[1] + "-width") === "0px") continue;
-			const actual = style.getPropertyValue(property).trim();
+			// A margin of \`auto\` is computed to the pixels it resolved to; the
+			// computed value (typed OM) is the keyword the author wrote.
+			const typed = property.startsWith("margin-") && el.computedStyleMap
+				? String(el.computedStyleMap().get(property))
+				: "";
+			const actual = (typed === "auto" ? typed : style.getPropertyValue(property)).trim();
 			if (actual !== "") elements.push({ selector, property, actual });
 		}
 	}
@@ -203,7 +213,7 @@ export async function checkApp(
 	const chromium = await loadChromium();
 	const browser = await launch(chromium);
 	const approved = Object.fromEntries(app.foundation.tokens.map((t) => [t.name, t.value]));
-	const script = measureScript(Object.keys(approved), MEASURED_PROPERTIES);
+	const script = measureScript(Object.keys(approved), MEASURED_PROPERTIES, app.ignore);
 	try {
 		for (const look of checked) {
 			for (const device of app.devices) {

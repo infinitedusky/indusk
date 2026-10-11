@@ -131,4 +131,37 @@ describe("verdict — held and broken by value", () => {
 		expect(v.state).toBe("broken");
 		expect(v.findings[0]?.nearest).toMatch(/^--dusk /);
 	});
+
+	it("reads a shadow by its layers, whichever colour spelling and order wrote them", () => {
+		const approved = {
+			"--shadow-card":
+				"0px 1px 2px 0px rgb(9.4% 12.5% 16.9% / 0.06), 0px 6px 20px 0px rgb(9.4% 12.5% 16.9% / 0.06)",
+		};
+		const v = verdict({
+			approved,
+			// A minifier's spelling of the token, and the browser's computed form on an element,
+			// with a framework's empty layer ahead of it.
+			runtime: {
+				"--shadow-card": "0px 1px 2px 0px #18202b0f, 0px 6px 20px 0px #18202b0f",
+			},
+			elements: [
+				{
+					selector: "div.elevated",
+					property: "box-shadow",
+					actual:
+						"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(24, 32, 43, 0.06) 0px 1px 2px 0px, rgba(24, 32, 43, 0.06) 0px 6px 20px 0px",
+				},
+			],
+		});
+		expect(v.findings).toEqual([]);
+		expect(
+			verdict({
+				approved,
+				runtime: approved,
+				elements: [
+					{ selector: "div", property: "box-shadow", actual: "rgba(0, 0, 0, 0.5) 0px 4px 8px 0px" },
+				],
+			}).state,
+		).toBe("broken");
+	});
 });
