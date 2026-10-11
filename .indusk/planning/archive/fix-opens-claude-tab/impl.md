@@ -14,6 +14,8 @@ cleanup: skipped
 cleanup_reason: "One new action variant in fix.ts and its application in extension.ts; nothing to decompose."
 audit: skipped
 audit_reason: "A tiny plan whose one promise is tested directly by its two unit rows and one live check."
+accepted: 2026-10-11T01:31:15.666Z
+accepted_by: person
 ---
 
 # fix-opens-claude-tab
