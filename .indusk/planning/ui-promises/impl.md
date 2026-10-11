@@ -500,7 +500,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 - [x] (reviewed `apps/indusk-admin/src/components/looks/Looks.tsx` 333 lines — left as-is: five components private to one page, each reached only through props from `LooksBody`; Build Phase 4's Shape already named `OpenMockupView` and `looksSection` apart; one file per component here would scatter a page read top to bottom)
 - [x] (reviewed `verdict.ts` 348 and `check.ts` 323 — left as-is: under the 400 cap and each cohesive; `verdict` is one pure function over canonical forms, `check` is the browser half and nothing else, the split the ADR's decision 6 drew)
 - [x] (reviewed `sha256` in `foundation.ts` and `mockups.ts` — left as-is: two one-line copies, below the rule of three, and a shared `hash.ts` would add an import for a `createHash` call)
-- [ ] (reviewed `cli.ts` 1,305, `commands/promises.ts` 504, `telemetry.ts` 414, `PlanList.tsx` 459, `cockpit-fixture.ts` 853, `changelog.md` — left as-is: over the cap before this plan; this plan added the `looks` command registrations (69 lines), 7, 24, 10 and 28 lines, none a unit of its own)
+- [x] (reviewed `cli.ts` 1,305, `commands/promises.ts` 504, `telemetry.ts` 414, `PlanList.tsx` 459, `cockpit-fixture.ts` 853, `changelog.md` — left as-is: over the cap before this plan; this plan added the `looks` command registrations (69 lines), 7, 24, 10 and 28 lines, none a unit of its own)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 7 Verification
