@@ -1,7 +1,7 @@
 ---
 title: "fix-opens-claude-tab"
 date: 2026-10-10
-status: approved
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -44,7 +44,7 @@ Fix with Claude opens a Claude Code tab in VS Code when the Claude Code extensio
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | In VS Code with Claude Code installed, the fix opens `vscode://anthropic.claude-code/open?prompt=…` whose decoded prompt is exactly the prompt the terminal would have sent — the promise, symptom, trace link and tests — even when `claude` is not on the PATH | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-fix-opens-in-the-claude-code-tab | apps/vscode-extension/src/core/fix-tab.test.ts |
 | A2 | In Cursor, or without the Claude Code extension, the fix starts `claude` in a terminal exactly as before, and with neither the extension nor `claude` on the PATH it says how to install Claude Code | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-fix-opens-in-the-claude-code-tab | apps/vscode-extension/src/core/fix-tab.test.ts |
-| A3 | Clicking Fix with Claude on a broken promise in VS Code opens a Claude Code tab with the prompt filled in | Build Phase 1 | Build Phase 1 | planned | live check | a live check of VS Code and the Claude Code extension, which no unit can reach: Sandy clicks it once and the result is recorded under Build Phase 1 | .indusk/planning/fix-opens-claude-tab/impl.md |
+| A3 | Clicking Fix with Claude on a broken promise in VS Code opens a Claude Code tab with the prompt filled in | Build Phase 1 | Build Phase 1 | skipped | live check | a live check of VS Code and the Claude Code extension, which no unit can reach: Sandy clicks it once and the result is recorded under Build Phase 1 | .indusk/planning/fix-opens-claude-tab/impl.md |
 
 ## Checklist
 
@@ -67,11 +67,14 @@ Fix with Claude opens a Claude Code tab in VS Code when the Claude Code extensio
 
 - [x] `core/fix.ts`: `FixAction` gains `{ claudeTab: { uri: string } }`; `fixAction` returns it when `host === "vscode"` and `claudeCodeExtension`, with the same prompt the terminal command carries, URL-encoded into `vscode://anthropic.claude-code/open?prompt=`; otherwise the terminal action or the install message as before
 - [x] `extension.ts`: pass `host` (`vscode.env.uriScheme === "vscode"`) and `claudeCodeExtension` (`vscode.extensions.getExtension("anthropic.claude-code") !== undefined`); apply `claudeTab` with `vscode.env.openExternal(vscode.Uri.parse(uri))`
-- [ ] A3: Sandy clicks Fix with Claude on a broken promise in VS Code after `indusk editor install` and a window reload; record what opened here
+- [x] Discovered (2026-10-10): `extension.ts` logs each Fix with Claude click to an `InDusk` log output channel — `uriScheme`, `claudeCodeExtension`, `claudeOnPath` and the route taken — so a click that opens the wrong place says why
+- [x] A3: Sandy clicks Fix with Claude on a broken promise in VS Code after `indusk editor install` and a window reload; record what opened here
+  - Skipped 2026-10-10, not observed (Sandy: "next time we'll test it, and if it doesn't open a new tab, then we'll deal with it"). Twice the click opened a terminal: the first ran the old build (the window reloaded at 20:27:32, the install landed at 20:27:42); the second, on the new build, still opened a terminal, cause unknown. The documented link itself works — opened from the shell (`open "vscode://anthropic.claude-code/open?prompt=…"`) it filled a Claude Code tab. Before a third click the promise stopped being broken, so there was nothing to fix. The next real break is the test; the InDusk output channel now logs `uriScheme`, `claudeCodeExtension` and the route on every click, so a terminal names which check failed.
 
 #### Build Phase 1 Verification
 
-- [ ] A1, A2 pass (`cd apps/vscode-extension && pnpm exec vitest run src/core`); A3 recorded; typecheck and biome clean
+- [x] A1, A2 pass (`cd apps/vscode-extension && pnpm exec vitest run src/core`); A3 recorded; typecheck and biome clean
+  - Run 2026-10-10: `src/core` 13 files, 45 tests pass (A1, A2 in `fix-tab.test.ts`, 5/5); `tsc --noEmit` and biome clean on the changed files; the package's tree-scanning rule tests 84/84. A3 recorded as skipped above.
 
 - [x] Shape — reviewed `core/fix.ts` and `extension.ts` by hand against the craft rules; nothing to change. `prepareShapeReview` skipped (Verification not green only because A3, a live check, is still pending), so no tool-recorded review.
 
