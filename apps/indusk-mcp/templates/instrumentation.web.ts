@@ -80,13 +80,16 @@ function parseHeaders(headerStr: string): Record<string, string> {
 	return result;
 }
 
-// "http://localhost:3000,https://*.dev.example.com" → one RegExp per entry, anchored at
-// both ends: the origin, then a path, query, fragment or nothing. An entry without `*`
-// is normalized the way the browser spells a request URL (lower-case host, default port
-// dropped); `*` is one or more characters other than "/" and ".", everything else
-// literal. An entry that does not begin `<scheme>://` can never match a request, so it
-// is dropped with a warning rather than left to do nothing silently.
+// "http://localhost:3000,https://*.dev.example.com/v1" → one RegExp per entry, anchored at
+// both ends: what the entry names, then "/", "?", "#" or nothing — so a path covers
+// itself and what is under it, and nothing beside it (/v1 covers /v1/seats, not /v10).
+// An entry without `*` is normalized the way the browser spells a request URL (lower-case
+// host, default port dropped); `*` is one or more characters other than "/" and ".",
+// everything else literal. A default port written in a pattern entry is optional, as it
+// is in the URL a request carries. An entry that does not begin `<scheme>://` can never
+// match a request, so it is dropped with a warning rather than left to do nothing silently.
 const ENTRY_WITH_SCHEME = /^(?:[a-z][a-z0-9+.-]*|\*):\/\//i;
+const DEFAULT_PORT: Record<string, string> = { http: "80", https: "443" };
 
 function parsePropagateTo(list: string): RegExp[] {
 	const patterns: RegExp[] = [];
@@ -99,22 +102,36 @@ function parsePropagateTo(list: string): RegExp[] {
 			);
 			continue;
 		}
-		const origin = entry.includes("*") ? entry : normalizeOrigin(entry);
-		const source = origin
-			.split("*")
-			.map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
-			.join("[^/.]+");
-		patterns.push(new RegExp(`^${source}(?:[/?#]|$)`, "i"));
+		const named = entry.includes("*") ? entry : normalizeExactEntry(entry);
+		patterns.push(new RegExp(`^${entrySource(named)}(?:[/?#]|$)`, "i"));
 	}
 	return patterns;
 }
 
-function normalizeOrigin(entry: string): string {
+/** An entry with no `*`, spelled the way a request URL is: origin and path, no query or fragment. */
+function normalizeExactEntry(entry: string): string {
 	try {
-		return new URL(entry).origin;
+		const url = new URL(entry);
+		return `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
 	} catch {
 		return entry;
 	}
+}
+
+/** The RegExp source for what an entry names: `*` as a wildcard, a default port as optional. */
+function entrySource(entry: string): string {
+	const literal = (text: string) =>
+		text
+			.split("*")
+			.map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
+			.join("[^/.]+");
+	const parts = /^([^:]+):\/\/([^/?#]*)(.*)$/.exec(entry);
+	if (!parts) return literal(entry);
+	const [, scheme, authority, rest] = parts;
+	const port = /:(\d+)$/.exec(authority);
+	const optionalPort = port !== null && DEFAULT_PORT[scheme.toLowerCase()] === port[1];
+	const host = optionalPort ? authority.slice(0, -port[0].length) : authority;
+	return `${literal(`${scheme}://${host}`)}${optionalPort ? `(?::${port[1]})?` : ""}${literal(rest)}`;
 }
 
 const spanProcessors = [

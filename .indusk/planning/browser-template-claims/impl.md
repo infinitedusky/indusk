@@ -1,7 +1,7 @@
 ---
 title: "Browser template claims — an entry covers what it names"
 date: 2026-10-11
-status: approved
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -38,11 +38,11 @@ A propagation entry sends the click's trace to the requests it names and to no o
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | With an exact entry that names a path (`https://api.example.com/v1`), a request to `/v1/seats` carries the click's trace; requests to `/v2/seats` and `/v10/seats` on the same origin carry none | Test Phase 1 | Build Phase 1 | written | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| T1 | With an exact entry that names a path (`https://api.example.com/v1`), a request to `/v1/seats` carries the click's trace; requests to `/v2/seats` and `/v10/seats` on the same origin carry none | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 | T2 | With a pattern entry that names a path (`https://*.dev.example.com/v1`), a request under `/v1` on a matching host carries the trace and one under `/v2` on the same host carries none | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
-| T3 | With `https://*.dev.example.com:443`, a request to `https://plan-a.dev.example.com/api` carries the trace; with `https://*.dev.example.com:8443`, a request to port 8443 carries it and one to the default port carries none | Test Phase 1 | Build Phase 1 | written | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| T3 | With `https://*.dev.example.com:443`, a request to `https://plan-a.dev.example.com/api` carries the trace; with `https://*.dev.example.com:8443`, a request to port 8443 carries it and one to the default port carries none | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 | T4 | A request made from a `.then()` callback and one from a timer in a click handler are not in the click's trace | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard pinning the documented limit: the template has no async-aware context manager | apps/indusk-mcp/templates/instrumentation.web.test.ts |
-| T5 | The OpenTelemetry reference page and the otel skill do not say that a `.then()` chain, a timer or compiled-down async code follows the click | Test Phase 1 | Build Phase 1 | written | unit | the falsified claim: the reference page said a `.then()` chain compiled below ES2017 follows the click | apps/indusk-mcp/src/__tests__/otel-docs-claims.test.ts |
+| T5 | The OpenTelemetry reference page and the otel skill do not say that a `.then()` chain, a timer or compiled-down async code follows the click | Test Phase 1 | Build Phase 1 | passing | unit | the falsified claim: the reference page said a `.then()` chain compiled below ES2017 follows the click | apps/indusk-mcp/src/__tests__/otel-docs-claims.test.ts |
 
 ## Checklist
 
@@ -74,21 +74,23 @@ A propagation entry sends the click's trace to the requests it names and to no o
 
 **Goal**: an exact entry keeps its path; a pattern entry's default port is optional; the docs state the limit truthfully.
 
-- [ ] `templates/instrumentation.web.ts`: an entry without `*` is normalized through `new URL(entry)` to `origin + pathname` (trailing slash trimmed, path kept); an entry with `*` and an explicit default port (`:443` under `https`, `:80` under `http`) makes the port optional in its pattern; other ports stay literal (T1, T3)
-- [ ] `apps/docs/src/reference/tools/otel.md`: the "A limit" paragraph says only a request made synchronously in the click handler follows the click, and drops the `.then()`/ES2017 clause; the entry rules say an entry with a path covers that path and what is under it, and that a default port may be written or left off for patterns as for exact entries (T5)
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] `templates/instrumentation.web.ts`: an entry without `*` is normalized through `new URL(entry)` to `origin + pathname` (trailing slash trimmed, path kept); an entry with `*` and an explicit default port (`:443` under `https`, `:80` under `http`) makes the port optional in its pattern; other ports stay literal (T1, T3)
+- [x] `apps/docs/src/reference/tools/otel.md`: the "A limit" paragraph says only a request made synchronously in the click handler follows the click, and drops the `.then()`/ES2017 clause; the entry rules say an entry with a path covers that path and what is under it, and that a default port may be written or left off for patterns as for exact entries (T5)
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+  - Reviewed 2026-10-11 (`instrumentation.web.ts`, `otel-docs-claims.test.ts`, the template test): nothing found. The entry compiler split into three named functions with one job each — `parsePropagateTo` (list → patterns, warnings), `normalizeExactEntry` (an entry without `*`, spelled as a request URL), `entrySource` (what an entry names → RegExp source); the docs test's sentence filter is one named function.
 
 #### Build Phase 1 Verification
 
-- [ ] T1–T5 pass; the earlier template rows (the file's existing cases, named A1–A3 and A9–A13 by the earlier plan) still pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/otel-docs-claims.test.ts src/__tests__/init-browser-telemetry.test.ts`); tsc and biome clean on changed files
+- [x] T1–T5 pass; the earlier template rows (the file's existing cases, named A1–A3 and A9–A13 by the earlier plan) still pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/otel-docs-claims.test.ts src/__tests__/init-browser-telemetry.test.ts`); tsc and biome clean on changed files
+  - Ran 2026-10-11: templates project 10 passed, 1 skipped (the earlier plan's A11); `otel-docs-claims` 2/2; `init-browser-telemetry` 4/4; `vitest related` 1 file 2/2; `tsc --noEmit` clean; biome clean on templates and the new test; `indusk promises check` clean.
 
 #### Build Phase 1 Context
 
-- [ ] `apps/indusk-mcp/extensions/otel/skill.md`: an entry with a path covers that path and what is under it; only a request made synchronously in the click handler follows the click
+- [x] `apps/indusk-mcp/extensions/otel/skill.md`: an entry with a path covers that path and what is under it; only a request made synchronously in the click handler follows the click
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/changelog.md`: Fixed — "A propagation entry with a path no longer widens to the whole origin, a pattern entry with a default port matches, and the reference no longer says a `.then()` chain follows the click"
+- [x] `apps/docs/src/changelog.md`: Fixed — "A propagation entry with a path no longer widens to the whole origin, a pattern entry with a default port matches, and the reference no longer says a `.then()` chain follows the click"
 
 ## Files Affected
 
