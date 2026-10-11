@@ -1,7 +1,7 @@
 ---
 title: "fix-opens-claude-tab"
 date: 2026-10-10
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
