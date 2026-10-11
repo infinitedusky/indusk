@@ -279,6 +279,8 @@ function Uncovered({ app }: { app: AppLooks }) {
     ...app.uncovered.screens.map((name) => ({ kind: "screen", name })),
     ...app.uncovered.states.map((name) => ({ kind: "state", name })),
     ...app.uncovered.components.map((name) => ({ kind: "component", name })),
+    // A component named at run time, by where the source names it.
+    ...app.uncovered.unresolved.map((name) => ({ kind: "unresolved", name })),
   ];
   return (
     <section className="flex flex-col gap-1" data-testid="uncovered">

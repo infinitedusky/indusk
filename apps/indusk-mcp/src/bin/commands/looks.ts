@@ -65,7 +65,8 @@ export async function looksStatus(projectRoot: string, appName: string): Promise
 
 /**
  * `indusk looks coverage <app>` — `uncovered screen: <name>`, `uncovered
- * state: <screen>.<state>`, `uncovered component: <name>`. Exit 1 when any is
+ * state: <screen>.<state>`, `uncovered component: <name>`, and `unresolved
+ * component: <file>:<line>` for a name decided at run time. Exit 1 when any is
  * listed, 0 when every part is covered.
  */
 export async function looksCoverage(projectRoot: string, appName: string): Promise<void> {
@@ -76,6 +77,7 @@ export async function looksCoverage(projectRoot: string, appName: string): Promi
 			...c.screens.map((n) => `uncovered screen: ${n}`),
 			...c.states.map((n) => `uncovered state: ${n}`),
 			...c.components.map((n) => `uncovered component: ${n}`),
+			...c.unresolved.map((at) => `unresolved component: ${at}`),
 		];
 		for (const line of lines) console.info(line);
 		if (lines.length > 0) {

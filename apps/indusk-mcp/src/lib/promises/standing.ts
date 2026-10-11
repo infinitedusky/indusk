@@ -324,7 +324,11 @@ export function lookStandingOf(
 			}
 		}
 	}
-	for (const component of coverage.components) {
+	// A name decided at run time is listed by where it is, uncovered like a name no mockup shows.
+	for (const component of [
+		...coverage.components,
+		...coverage.unresolved.map((at) => `unresolved ${at}`),
+	]) {
 		rows.push({
 			app: app.app,
 			look: component,
