@@ -15,6 +15,9 @@ import type { DesignTokens } from "style-dictionary/types";
 
 export const FOUNDATION_FILE = "foundation.tokens.json";
 
+/** The `$extensions` key under which a token names its dark-scheme value. */
+const DARK_EXTENSION = "dev.indusk";
+
 /** DTCG 2025.10 types the foundation may use. A token of another type is refused by name. */
 export const FOUNDATION_TYPES = [
 	"color",
@@ -34,6 +37,13 @@ export interface FoundationToken {
 	type: string;
 	/** The CSS value the token resolves to. */
 	value: string;
+	/**
+	 * The value in a dark colour scheme, from `$extensions["dev.indusk"].dark`
+	 * (a CSS string): DTCG 2025.10 has no modes, so the file names the dark
+	 * value beside the light one. Emitted by `generateCss`; the running-app
+	 * check measures the light scheme and holds only `value`.
+	 */
+	dark?: string;
 }
 
 export interface Foundation {
@@ -121,12 +131,16 @@ export async function readFoundation(appDir: string): Promise<Foundation> {
 		throw new FoundationError(`${file}: ${(err as Error).message}`);
 	}
 
-	const tokens: FoundationToken[] = resolved.allTokens.map((t) => ({
-		name: `--${t.name}`,
-		path: t.path,
-		type: String(t.$type ?? t.type),
-		value: String(t.$value ?? t.value),
-	}));
+	const tokens: FoundationToken[] = resolved.allTokens.map((t) => {
+		const dark = (t.$extensions as Node | undefined)?.[DARK_EXTENSION];
+		return {
+			name: `--${t.name}`,
+			path: t.path,
+			type: String(t.$type ?? t.type),
+			value: String(t.$value ?? t.value),
+			...(isNode(dark) && typeof dark.dark === "string" ? { dark: dark.dark } : {}),
+		};
+	});
 	return { tokens, hash: createHash("sha256").update(bytes).digest("hex") };
 }
 
@@ -151,9 +165,17 @@ const TAILWIND_RESET = [
 /** The CSS a mockup loads (`:root`), or, for a Tailwind app, an `@theme` block that resets the stock theme to the foundation. */
 export function generateCss(f: Foundation, opts: { tailwind?: boolean } = {}): string {
 	const header = "/* Generated from foundation.tokens.json — do not edit. */\n";
+	const dark = f.tokens.filter((t) => t.dark !== undefined);
+	// Dark values are plain custom properties after the light ones, so a Tailwind
+	// utility reading `var(--color-ink)` follows the scheme without a variant.
+	const darkLines = dark.map((t) => `${t.name}: ${t.dark};`);
+	const darkCss =
+		dark.length === 0
+			? ""
+			: `@media (prefers-color-scheme: dark) {\n\t:root:not([data-theme="light"]) {\n\t\tcolor-scheme: dark;\n${darkLines.map((l) => `\t\t${l}`).join("\n")}\n\t}\n}\n:root[data-theme="dark"] {\n\tcolor-scheme: dark;\n${darkLines.map((l) => `\t${l}`).join("\n")}\n}\n`;
 	if (!opts.tailwind) {
 		const lines = f.tokens.map((t) => `\t${t.name}: ${t.value};`);
-		return `${header}:root {\n${lines.join("\n")}\n}\n`;
+		return `${header}:root {\n${lines.join("\n")}\n}\n${darkCss}`;
 	}
 	const resets = TAILWIND_RESET.map((ns) => `\t--${ns}-*: initial;`);
 	const lines = f.tokens.map((t) => {
@@ -162,5 +184,5 @@ export function generateCss(f: Foundation, opts: { tailwind?: boolean } = {}): s
 		const name = mapped ? `--${[mapped, ...rest].join("-")}` : t.name;
 		return `\t${name}: ${t.value};`;
 	});
-	return `${header}@theme {\n${resets.join("\n")}\n${lines.join("\n")}\n}\n`;
+	return `${header}@theme {\n${resets.join("\n")}\n${lines.join("\n")}\n}\n${darkCss}`;
 }
