@@ -302,7 +302,11 @@ VITE_OTEL_PROPAGATE_TO=http://localhost:3000,https://*.dev.example.com
 - An entry without `*` is an exact origin (scheme, host and port).
 - `*` matches one or more characters other than `/` and `.`, so `https://*.dev.example.com` matches `https://plan-a.dev.example.com` and not `https://dev.example.com.evil.test`.
 - Empty means same-origin only. A third-party origin you did not name never receives the header.
+- An entry begins with its scheme (`https://`, or `*://`). One that does not can never match a request, so it is ignored with a console warning naming it; a bare `*` propagates nowhere.
+- Exact entries are compared the way the browser spells a request URL: host case does not matter and a default port (`:443`, `:80`) may be written or left off.
 - The API must allow the `traceparent` header in its CORS settings (`Access-Control-Allow-Headers: traceparent`). `indusk init` prints this for React SPA and Next.js projects; it does not edit your server.
+
+**A limit.** A request made after a native `await` in a click handler is in its own trace, not the click's: browsers have no way yet to carry the click's context across a native `await` (zone.js cannot patch it, and the AsyncContext proposal has not shipped). A request made synchronously in the handler, or from a `.then()` chain compiled below ES2017, follows the click.
 
 ## Connecting to a Backend
 

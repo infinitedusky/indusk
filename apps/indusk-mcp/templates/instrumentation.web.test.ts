@@ -124,7 +124,11 @@ describe("instrumentation.web template", () => {
 		expect(naming.length, "one warning names the scheme-less entry").toBe(1);
 	});
 
-	it("A11: a request made after an await in the click handler is in the click's trace", async () => {
+	// SKIPPED by decision (browser-telemetry-leftovers, Build Phase 2): zone.js does not patch
+	// native async/await, so no context manager the template can install carries the click's
+	// trace across this `await`. Red against the template as shipped; unskip when browsers have
+	// AsyncContext. See the plan's Deferred Verification.
+	it.skip("A11: a request made after an await in the click handler is in the click's trace", async () => {
 		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "http://localhost:3000");
 		const { sent, activeTraceId } = await clickAndFetch(
 			[`${location.origin}/api/ping`, "http://localhost:3000/api/seats"],
