@@ -1,7 +1,12 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { withLock } from "../agents/lock.js";
-import { commitNote, currentMdPath, type NoteCommit } from "../bookkeeping/notes.js";
+import {
+	commitNote,
+	currentMdPath,
+	type NoteCommit,
+	oneLine as subjectLine,
+} from "../bookkeeping/notes.js";
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
 
 /**
@@ -61,7 +66,7 @@ export function appendDecision(
 		const commit = commitNote(
 			bookkeepingRoots(anyCheckout).trunk,
 			[join(HISTORY_DIR, `${plan}.md`)],
-			`chore(indusk): ${plan} — ${clip(oneLine(entry.answer))}`,
+			`chore(indusk): ${plan} — ${subjectLine(entry.answer)}`,
 		);
 		return { entry, commit };
 	});
@@ -114,8 +119,4 @@ function parseLine(line: string): DecisionEntry | null {
 
 function oneLine(text: string): string {
 	return text.replace(/\s+/g, " ").trim();
-}
-
-function clip(text: string): string {
-	return text.length > 72 ? `${text.slice(0, 71)}…` : text;
 }

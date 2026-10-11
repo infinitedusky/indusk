@@ -72,7 +72,8 @@ export function commitCurrentMd(
 
 const CURRENT_MD = join(".indusk", "current.md");
 
-function oneLine(text: string): string {
+/** `text` as one line for a commit subject: whitespace collapsed, clipped at 72. */
+export function oneLine(text: string): string {
 	const line = text.replace(/\s+/g, " ").trim();
 	return line.length > 72 ? `${line.slice(0, 71)}…` : line;
 }
