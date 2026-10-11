@@ -70,6 +70,8 @@ and `style=""` attributes are its CSS, and a `<style>` inside a comment is not.
 Exit 1 on any finding, 0 on none. A missing app or an unreadable foundation
 exits 1 naming the file; it is never a clean app.
 
+**Where each rule lives** (`src/lib/looks/`): the raw-value rule and the properties and units it holds in `lint-values`, the Tailwind class rules in `lint-classes`, the token checks (`undefined-token`, `undeclared-token`, `redefined-token`, `external-reference` in markup) and the orchestration in `lint`; a new rule gets a module of its own, not a place in `lint`.
+
 ## Approval
 
 A mockup is the reference the app is held to only when a person has approved
