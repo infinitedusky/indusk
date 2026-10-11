@@ -131,14 +131,18 @@ export async function looksCheck(
 		reportLooks(results, initEvalOtel(projectRoot), { project: markProjectId(projectRoot) });
 		await shutdownEvalOtel();
 		const broken = results.filter((r) => r.verdict.state === "broken").length;
+		// Unchecked is counted beside held and broken, never folded into either.
+		const notChecked = unchecked.length > 0 ? `, ${unchecked.length} unchecked` : "";
 		if (results.length === 0) {
-			console.error(`${appName}: nothing checked — no approved mockup to hold the app to`);
+			console.error(
+				`${appName}: nothing checked${notChecked} — no approved mockup, or no page said it drew the state`,
+			);
 			process.exitCode = 1;
 		} else if (broken > 0) {
-			console.error(`${broken} of ${results.length} looks broken in ${appName}`);
+			console.error(`${broken} of ${results.length} looks broken in ${appName}${notChecked}`);
 			process.exitCode = 1;
 		} else {
-			console.info(`${appName}: ${results.length} looks held`);
+			console.info(`${appName}: ${results.length} looks held${notChecked}`);
 		}
 	} catch (err) {
 		// A missing driver, browser, URL or app is a refusal, never a held look.

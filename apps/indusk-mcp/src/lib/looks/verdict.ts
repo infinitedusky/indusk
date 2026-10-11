@@ -160,13 +160,20 @@ const SHADOW_COLOR = /#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/i;
 
 /**
  * One shadow layer in the browser's order — colour, then offsets, blur and
- * spread — whichever order and colour spelling it was written in.
+ * spread, each in px, `inset` last — whichever order, colour spelling and
+ * shorthand it was written in: `0 1px 2px` is `0px 1px 2px 0px`, as the
+ * browser computes it (a hand-written dark value, Build Phase 6).
  */
 function canonShadowLayer(layer: string): string {
 	const color = layer.match(SHADOW_COLOR)?.[0];
-	const rest = (color ? layer.replace(color, " ") : layer).trim().replace(/\s+/g, " ");
-	if (!color) return rest.toLowerCase();
-	return `${canon("color", color)} ${rest.toLowerCase()}`;
+	const words = (color ? layer.replace(color, " ") : layer).trim().toLowerCase().split(/\s+/);
+	const inset = words.includes("inset");
+	const lengths = words.filter((w) => w !== "" && w !== "inset").map((w) => canon("length", w));
+	// Blur and spread default to zero once the two offsets are given.
+	while (lengths.length >= 2 && lengths.length < 4) lengths.push("0px");
+	return [color ? canon("color", color) : "", ...lengths, inset ? "inset" : ""]
+		.filter(Boolean)
+		.join(" ");
 }
 
 /** Canonical spelling: what the browser would compute for the same value. */

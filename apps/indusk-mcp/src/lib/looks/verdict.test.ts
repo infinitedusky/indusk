@@ -164,4 +164,21 @@ describe("verdict — held and broken by value", () => {
 			}).state,
 		).toBe("broken");
 	});
+
+	it("reads a shadow written short — `0 1px 2px` — as the browser computes it, `0px 1px 2px 0px`", () => {
+		// The admin's dark --shadow-card, hand-written; found the first time the dark scheme was opened.
+		const dark = "0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25)";
+		const v = verdict({
+			approved: { "--shadow-card": dark },
+			runtime: { "--shadow-card": dark },
+			elements: [
+				{
+					selector: "button.elevated",
+					property: "box-shadow",
+					actual: "rgba(0, 0, 0, 0.3) 0px 1px 2px 0px, rgba(0, 0, 0, 0.25) 0px 6px 20px 0px",
+				},
+			],
+		});
+		expect(v.findings).toEqual([]);
+	});
 });
