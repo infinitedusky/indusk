@@ -1,7 +1,7 @@
 ---
 title: "Browser template claims — an entry covers what it names"
 date: 2026-10-11
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
