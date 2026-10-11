@@ -10,6 +10,8 @@ rationale: required
 gate_policy: ask
 cleanup: skipped
 cleanup_reason: "reviewed all 6 changed files (listOversizedChangedFiles flagged two: changelog.md at 1061 lines is append-only and this plan added one entry, otel.md at 448 lines is a reference page this plan touched in two paragraphs). instrumentation.web.ts is 171 lines and already split into parsePropagateTo, normalizeExactEntry and entrySource, one job each; the two test files are under the cap and each case has one subject; the docs guard's helper and constant live in the one test file that uses them, with no second copy anywhere. Nothing warrants extraction."
+accepted: 2026-10-11T02:45:46.202Z
+accepted_by: person
 ---
 
 # Browser template claims — an entry covers what it names
