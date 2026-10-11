@@ -41,6 +41,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 | Build Phase 4 | admin `/p/[project]/looks`, Approve route through the notes writer, looks in `promises/standing` and the dashboard; the editor reading them | Build Phase 2–3; plan-cockpit's dashboard, standing and notes writer |
 | Build Phase 5 | `.indusk/mockups/admin/` — foundation, devices, screens, mockups; the admin restyled; held | everything above |
 | Build Phase 6 | the falsification fixes: the approval guard reaches Bash and the approve endpoint, an approval binds the mockup shown, the lint's blind properties and functions, coverage by element, declarations bound, unopened states and the dark scheme reported | Build Phase 1–5 |
+| Build Phase 7 | the cleanup: the lint as value, class and token modules, look standing in its own file, the looks tests split by rule | Build Phase 1–6 |
 
 ## Test Trajectory
 
@@ -83,6 +84,8 @@ An app's look is held by mockups a person approved: every visual value comes fro
 | A35 | A change to the declarations the check trusts — a device's size, an `ignore` tag, an app's `sources` — returns the approved mockups to proposed, as a change to the foundation does | Test Phase 1 | Build Phase 6 | passing | unit | promise: a-mockup-is-approved-by-a-person, promise: every-part-of-the-ui-is-covered | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
 | A36 | A screen state whose page does not say it rendered that state is reported unchecked, naming the reason, and is never held | Test Phase 1 | Build Phase 6 | passing | unit | promise: every-part-of-the-ui-is-covered | apps/indusk-mcp/src/lib/looks/check.test.ts, apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
 | A37 | A token whose dark value changed in the app alone is broken under the dark scheme, and a look under a scheme the foundation names is held only when that scheme was opened | Test Phase 1 | Build Phase 6 | passing | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
+| A38 | The lint's findings on the fixture and on the cockpit's own mockups and sources are the same after the rule is decomposed into its own modules — same file, line, value and rule | Test Phase 1 | Build Phase 7 | planned | unit | promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-cli.test.ts, apps/indusk-mcp/src/__tests__/looks-lint-rules.test.ts, apps/indusk-mcp/src/__tests__/looks-admin-foundation.test.ts |
+| A39 | A look's standing read through `promises/standing` is the same after its code moves to its own module — held, broken, unchecked and uncovered, broken first — and the single-definition pin still finds each symbol defined once | Test Phase 1 | Build Phase 7 | planned | unit | promise: a-look-reports-like-any-promise | apps/indusk-mcp/src/lib/promises/look-standing.test.ts, apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts |
 
 ### Deferred Verification
 
@@ -482,6 +485,36 @@ An app's look is held by mockups a person approved: every visual value comes fro
 - **Investigated, held**: the Looks page's mockup frame (`sandbox=""` — no script, opaque origin, so a mockup cannot post to the approve route itself); `approve`'s app name (`isUsableSegment`) and mockup name (looked up, never joined into a path); `readApprovals`' refusal of a malformed record; the lock around the record's write; `checkable`'s refusal when nothing is approved; `markPromise` attributes in `report`.
 - **Not hunted, and why**: Tailwind's namespace reset (`foundation.ts`'s `tailwindTheme`) — Build Phase 5's `translate-x-0` finding is the lesson's and the reset was reworked there; the editor's reader (`looks-health.ts`) — it reads `promises/standing`, which no hypothesis here touches; Style Dictionary's DTCG alias resolution — no alias is used by the admin's foundation, and a DTCG edge in a foundation file is the foundation reader's own tests'; layout and position (a drawer off-screen by design is indistinguishable from one stuck there by a value check; position is mockup-matching's, out of scope here).
 - **Residual, by nature**: nothing an agent can run as the person can be made unforgeable on the person's machine; A28 and A29 raise the bar to a deliberate act and the record is in git, where a forged entry is a visible commit by whoever made it.
+
+### Build Phase 7: Cleanup — the lint's three rules, the looks standing and the tests each in their own file
+
+**Tier**: med — the work step's default; structure-preserving under the green coverage Build Phase 6 hardened
+
+**Goal**: decompose what this plan grew past 400 lines into the units it already contains — `looks/lint.ts` (533) is three rules and an orchestrator, `promises/standing.ts` (461) carries a 276-line look-standing unit beside promise standing, and two test files (472, 505) hold two sections each — per single responsibility, with no behaviour change. Each item is a concrete extraction or a reasoned leave-as-is.
+
+- [ ] Extract the Tailwind class rule from `apps/indusk-mcp/src/lib/looks/lint.ts` (`STOCK_COLORS` … `classFindings`, `CLASS_SOURCE_EXTENSIONS`, about 80 lines, pure) into `lint-classes.ts` — one reason to change (the class vocabulary a theme resets), no shared state
+- [ ] Extract the raw-value rule (`literalIn`, its stylelint plugin and `strictConfig`, `cssFindings`, `findingOf`) into `lint-values.ts`; `Finding`, `LintRule` and `CssBlock` move to `lint-types.ts` so neither extracted module imports `lint.ts` back; `lint.ts` keeps the orchestration and the token-reference checks, and the `./looks/lint` subpath still exports `lintApp`, `Finding` and `literalIn`
+- [ ] Extract the look-standing unit from `apps/indusk-mcp/src/lib/promises/standing.ts` (`LookStanding` … `readLookRuns`, with its cache) into `look-standing.ts` beside it; `standing.ts` re-exports so `@infinitedusky/indusk-mcp/promises/standing` is unchanged for the admin and the editor, and `cockpit-single-definition.test.ts`'s symbol table (`lookStandingOf`, `lookStandingFor`) names the new file
+- [ ] Split `apps/indusk-mcp/src/__tests__/looks-cli.test.ts`: the A31–A34 describes and `mockupWith`/`linesNaming` go to `looks-lint-rules.test.ts`; the helpers both files use (`app`, `run`, `lineOf`, `finding`, `statusLine`, `rawMockup`, `mockupFile`) go to `__tests__/helpers/looks-cli.ts`; the Test cell of rows A31–A34 names the new file (only that cell moves)
+- [ ] Split `apps/indusk-admin/src/app/p/[project]/looks/looks.test.tsx`: the page and request helpers (`looksPage`, `rowOf`, `attrOf`, `sectionOf`, `approveRequest`, `foundationHash`, `mockupHash`, `shown`) go to `looks-test-helpers.ts`, the A29 and A30 describes to `looks-approve-binding.test.tsx`; the Test cell of rows A29 and A30 names it
+- [ ] (reviewed `apps/indusk-admin/src/components/looks/Looks.tsx` 333 lines — left as-is: five components private to one page, each reached only through props from `LooksBody`; Build Phase 4's Shape already named `OpenMockupView` and `looksSection` apart; one file per component here would scatter a page read top to bottom)
+- [ ] (reviewed `verdict.ts` 348 and `check.ts` 323 — left as-is: under the 400 cap and each cohesive; `verdict` is one pure function over canonical forms, `check` is the browser half and nothing else, the split the ADR's decision 6 drew)
+- [ ] (reviewed `sha256` in `foundation.ts` and `mockups.ts` — left as-is: two one-line copies, below the rule of three, and a shared `hash.ts` would add an import for a `createHash` call)
+- [ ] (reviewed `cli.ts` 1,305, `commands/promises.ts` 504, `telemetry.ts` 414, `PlanList.tsx` 459, `cockpit-fixture.ts` 853, `changelog.md` — left as-is: over the cap before this plan; this plan added the `looks` command registrations (69 lines), 7, 24, 10 and 28 lines, none a unit of its own)
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 7 Verification
+
+- [ ] A38, A39 pass and every looks row stays passing: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-cli.test.ts src/__tests__/looks-lint-rules.test.ts src/__tests__/looks-admin-foundation.test.ts src/__tests__/cockpit-single-definition.test.ts src/lib/promises/look-standing.test.ts src/lib/promises/standing.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/app/p/\[project\]/looks`; `vitest related` on the changed files in each package; tsc and biome clean on changed files
+- [ ] `lint.ts`, `standing.ts` and both test files are each under 400 lines: `wc -l` on the five files prints no number over 400 for the plan's own files
+
+#### Build Phase 7 Context
+
+- [ ] `apps/indusk-mcp/CLAUDE.md`: the lint's rules are three modules — values, classes and tokens — and a new rule goes in its own, never into `lint.ts` — guarded by the file-size attention-focus and `looks-lint-rules.test.ts`
+
+#### Build Phase 7 Document
+
+- [ ] `apps/docs/src/reference/cli/looks.md`: one line under the lint section naming where each rule lives (`lint-values`, `lint-classes`, `lint`'s token checks) so a new rule has a home
 
 ## Files Affected
 
