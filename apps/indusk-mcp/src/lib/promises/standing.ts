@@ -1,5 +1,6 @@
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import { type ApprovalEntry, approvalOf, readApprovals } from "../looks/approvals.js";
+import { lookDevice, schemesOf } from "../looks/check.js";
 import { type Coverage, coverageOf } from "../looks/coverage.js";
 import { type LooksApp, readApp } from "../looks/mockups.js";
 import { listApps } from "../looks/overview.js";
@@ -295,7 +296,12 @@ export function lookStandingOf(
 	runs: readonly LookRun[],
 ): LookRow[] {
 	const rows: LookRow[] = [];
-	const devices = app.devices.length > 0 ? app.devices.map((d) => d.name) : [null];
+	// A look is at a device in each scheme the foundation names (`phone`, `phone/dark`):
+	// a scheme not yet opened reads not checked, never held.
+	const devices =
+		app.devices.length > 0
+			? app.devices.flatMap((d) => schemesOf(app).map((scheme) => lookDevice(d.name, scheme)))
+			: [null];
 	for (const screen of app.screens) {
 		for (const state of screen.states) {
 			const look = `${screen.name}.${state}`;

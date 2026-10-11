@@ -174,9 +174,14 @@ describe.skipIf(SHOULD_SKIP)("indusk looks check — the running app held by val
 		const { root, tokens } = await darkProject();
 		writeFileSync(
 			pageFile,
-			pageWith("@media (prefers-color-scheme: dark) { :root { --color-dusk: #000001; } }", "", {
-				tokens,
-			}),
+			pageWith(
+				// The app's own dark block, as specific as the generated one it overrides.
+				'@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --color-dusk: #000001; } }',
+				"",
+				{
+					tokens,
+				},
+			),
 		);
 		const { code, out } = check(root);
 		expect(out).toMatch(/held\s+home\.empty @ phone\s*$/m);

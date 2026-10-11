@@ -170,6 +170,26 @@ async function launch(chromium: Awaited<ReturnType<typeof loadChromium>>): Promi
 	}
 }
 
+/**
+ * The schemes a look is opened under: light, and dark too when the
+ * foundation names a dark value for any token (A37). A scheme the foundation
+ * names is held only once it has been opened and drawn.
+ */
+export function schemesOf(app: LooksApp): Scheme[] {
+	return app.foundation.tokens.some((t) => t.dark !== undefined) ? ["light", "dark"] : ["light"];
+}
+
+/** The name a look is reported under at a device: `phone` in light, `phone/dark` in dark. */
+export const lookDevice = (device: string, scheme: Scheme): string =>
+	scheme === "light" ? device : `${device}/${scheme}`;
+
+/** The foundation's approved values under a scheme: each token's dark value in dark, where it names one. */
+export function approvedValues(app: LooksApp, scheme: Scheme): Record<string, string> {
+	return Object.fromEntries(
+		app.foundation.tokens.map((t) => [t.name, scheme === "dark" ? (t.dark ?? t.value) : t.value]),
+	);
+}
+
 /** Where `screen` in `state` is served: the app's base URL, the screen's path, the state as `?state=`. */
 export function pageUrl(
 	base: string,
@@ -226,12 +246,14 @@ export function checkable(
 async function measure(
 	browser: Browser,
 	device: Device,
+	scheme: Scheme,
 	url: string,
 	script: string,
 ): Promise<Measured> {
 	const context = await browser.newContext({
 		viewport: { width: device.width, height: device.height },
 		deviceScaleFactor: device.pixelRatio,
+		colorScheme: scheme,
 	});
 	try {
 		const page = await context.newPage();
@@ -270,23 +292,28 @@ export async function checkApp(
 
 	const chromium = await loadChromium();
 	const browser = await launch(chromium);
-	const approved = Object.fromEntries(app.foundation.tokens.map((t) => [t.name, t.value]));
-	const script = measureScript(Object.keys(approved), MEASURED_PROPERTIES, app.ignore);
+	const script = measureScript(
+		app.foundation.tokens.map((t) => t.name),
+		MEASURED_PROPERTIES,
+		app.ignore,
+	);
 	try {
 		for (const look of checked) {
 			for (const device of app.devices) {
-				const url = pageUrl(base, look.screen, look.path, look.state);
-				const seen = await measure(browser, device, url, script);
-				const judged = judgeLook({
-					app: app.app,
-					look,
-					device: device.name,
-					scheme: "light",
-					approved,
-					seen,
-				});
-				if ("result" in judged) results.push(judged.result);
-				else unchecked.push(judged.unchecked);
+				for (const scheme of schemesOf(app)) {
+					const url = pageUrl(base, look.screen, look.path, look.state);
+					const seen = await measure(browser, device, scheme, url, script);
+					const judged = judgeLook({
+						app: app.app,
+						look,
+						device: lookDevice(device.name, scheme),
+						scheme,
+						approved: approvedValues(app, scheme),
+						seen,
+					});
+					if ("result" in judged) results.push(judged.result);
+					else unchecked.push(judged.unchecked);
+				}
 			}
 		}
 	} finally {
