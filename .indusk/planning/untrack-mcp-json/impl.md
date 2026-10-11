@@ -1,7 +1,7 @@
 ---
 title: "Untrack .mcp.json — a machine's MCP config is not versioned, and a clone gets its own"
 date: 2026-10-11
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
