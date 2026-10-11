@@ -1,5 +1,4 @@
 import type { PromiseEntry } from "@infinitedusky/indusk-mcp/promises/registry";
-import { standingOf } from "@infinitedusky/indusk-mcp/promises/standing";
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
