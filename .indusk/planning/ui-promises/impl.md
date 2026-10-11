@@ -1,7 +1,7 @@
 ---
 title: "UI promises — mockups on a DTCG foundation, approved in the cockpit, held by value"
 date: 2026-10-10
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -92,9 +92,9 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 **Goal**: author every row reachable through `indusk` as a process today, against a fixture app, and register the rest with their bodies.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create ui-promises`; made by `indusk plans start` on 2026-10-10 at `dusk-worktrees/ui-promises`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
-- [ ] Rebase `plan/ui-promises` onto `main` after plan-cockpit lands — Build Phase 4 consumes its dashboard, `promises/standing` and notes writer; Test Phase 1 itself needs none of it
-- [ ] A fixture app, `apps/indusk-mcp/src/__tests__/fixtures/looks-app/.indusk/mockups/demo/`: `foundation.tokens.json` (DTCG 2025.10: two colours, a spacing scale, a radius, a font, a duration, an easing), `devices.json` (phone 390×844 @3, desktop 1440×900 @2), `screens.json` (`home` with `empty` and `full`; `detail` with `default`), `screens/home.empty.html` clean, `screens/home.full.html` with one raw `13px`, `screens/detail.default.html` using `--undefined-token`, a `screens/home.full.next.html` adding `--new-token` undeclared; `approved.json` with `home.empty` approved at its true hash and one entry at a stale hash; an app stylesheet with a raw `#c2620b`, a component file with `bg-amber-50` and `p-[13px]`, and a rendered-components list carrying `data-component="badge"` that no mockup shows
+- [x] Create/confirm this plan's worktree (`indusk worktree create ui-promises`; made by `indusk plans start` on 2026-10-10 at `dusk-worktrees/ui-promises`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] Rebase `plan/ui-promises` onto `main` after plan-cockpit lands — Build Phase 4 consumes its dashboard, `promises/standing` and notes writer; Test Phase 1 itself needs none of it
+- [x] A fixture app, `apps/indusk-mcp/src/__tests__/fixtures/looks-app/.indusk/mockups/demo/`: `foundation.tokens.json` (DTCG 2025.10: two colours, a spacing scale, a radius, a font, a duration, an easing), `devices.json` (phone 390×844 @3, desktop 1440×900 @2), `screens.json` (`home` with `empty` and `full`; `detail` with `default`), `screens/home.empty.html` clean, `screens/home.full.html` with one raw `13px`, `screens/detail.default.html` using `--undefined-token`, a `screens/home.full.next.html` adding `--new-token` undeclared; `approved.json` with `home.empty` approved at its true hash and one entry at a stale hash; an app stylesheet with a raw `#c2620b`, a component file with `bg-amber-50` and `p-[13px]`, and a rendered-components list carrying `data-component="badge"` that no mockup shows
 - [ ] A1 (status half), A3 (command half), A4, A5, A6, A7, A8, A10, A11, A12 in `apps/indusk-mcp/src/__tests__/looks-cli.test.ts`, each spawning `indusk looks lint | status | coverage | approve` over the fixture and asserting the output it names. RED today on their own assertions: `indusk` has no `looks` command, so every call exits 1 with "unknown command" and the expected lines are absent
 - [ ] A9 in `apps/indusk-mcp/src/__tests__/looks-admin-foundation.test.ts`: runs `indusk looks lint admin` at the repo root and expects exit 0 with no raw value. RED today: no command, and no `.indusk/mockups/admin/`
 - [ ] A25: a case in `everyday-tests-never-wait.test.ts` that fails when any `looks*.contract.test.ts` is missing from `vitest.tiers.ts` `SYSTEM`; passes today, none exists (Regression Guard)
