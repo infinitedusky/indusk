@@ -1,10 +1,9 @@
-import type { Dirent } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
-import { extname, join, relative } from "node:path";
+import { readFile } from "node:fs/promises";
+import { extname, relative } from "node:path";
 import stylelint, { type Config, type Plugin } from "stylelint";
 import strictValue from "stylelint-declaration-strict-value";
 import type { Foundation } from "./foundation.js";
-import type { LooksApp, Mockup } from "./mockups.js";
+import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
 
 /**
  * The no-raw-value rule (ui-promises ADR): every colour, size, space, radius,
@@ -261,23 +260,6 @@ const CLASS_SOURCE_EXTENSIONS = new Set([
 	".mdx",
 ]);
 
-async function sourceFiles(dir: string): Promise<string[]> {
-	const out: string[] = [];
-	let entries: Dirent[];
-	try {
-		entries = await readdir(dir, { withFileTypes: true });
-	} catch {
-		return out;
-	}
-	for (const entry of entries) {
-		if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
-		const path = join(dir, entry.name);
-		if (entry.isDirectory()) out.push(...(await sourceFiles(path)));
-		else out.push(path);
-	}
-	return out.sort();
-}
-
 const namesOf = (f: Foundation) => new Set(f.tokens.map((t) => t.name));
 
 const byPlace = (a: Finding, b: Finding) =>
@@ -303,7 +285,7 @@ async function lintSources(
 	foundation: Set<string>,
 ): Promise<Finding[]> {
 	const findings: Finding[] = [];
-	const paths = (await Promise.all(sourceDirs.map((s) => sourceFiles(join(root, s))))).flat();
+	const paths = await appSourceFiles(root, sourceDirs);
 	const stylesheets: Array<{ file: string; block: CssBlock }> = [];
 	for (const path of paths) {
 		const file = relative(root, path);

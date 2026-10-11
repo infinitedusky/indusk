@@ -200,6 +200,10 @@
 			"types": "./dist/lib/looks/approvals.d.ts",
 			"default": "./dist/lib/looks/approvals.js"
 		},
+		"./looks/coverage": {
+			"types": "./dist/lib/looks/coverage.d.ts",
+			"default": "./dist/lib/looks/coverage.js"
+		},
 		"./promises/standing": {
 			"types": "./dist/lib/promises/standing.d.ts",
 			"default": "./dist/lib/promises/standing.js"

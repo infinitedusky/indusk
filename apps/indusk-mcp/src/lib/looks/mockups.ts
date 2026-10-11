@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
+import { type Dirent, existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { type Foundation, readFoundation } from "./foundation.js";
@@ -120,4 +120,30 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		sources: declared.sources ?? [],
 		mockups,
 	};
+}
+
+async function filesUnder(dir: string): Promise<string[]> {
+	const out: string[] = [];
+	let entries: Dirent[];
+	try {
+		entries = await readdir(dir, { withFileTypes: true });
+	} catch {
+		return out;
+	}
+	for (const entry of entries) {
+		if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
+		const path = join(dir, entry.name);
+		if (entry.isDirectory()) out.push(...(await filesUnder(path)));
+		else out.push(path);
+	}
+	return out;
+}
+
+/**
+ * Every file under the app's declared source directories (`screens.json`
+ * `sources`), absolute and sorted, skipping `node_modules` and dot-folders —
+ * the one walk the lint and the coverage both read.
+ */
+export async function appSourceFiles(root: string, sources: string[]): Promise<string[]> {
+	return (await Promise.all(sources.map((s) => filesUnder(join(root, s))))).flat().sort();
 }
