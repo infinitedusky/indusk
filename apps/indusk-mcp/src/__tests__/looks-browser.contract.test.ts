@@ -1,6 +1,5 @@
+import { type ChildProcess, spawn } from "node:child_process";
 import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { createServer, type Server } from "node:http";
-import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -26,10 +25,11 @@ import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 const FIXTURE = join(__dirname, "fixtures", "looks-app");
 
 let css = "";
-let page = "";
-let server: Server;
+let pageFile = "";
+let server: ChildProcess | undefined;
 let url = "";
 const roots: string[] = [];
+const projects: string[] = [];
 
 /** The page: every visual value is a token of the approved foundation. */
 function pageWith(extraCss = "", buttonCss = ""): string {
@@ -41,29 +41,44 @@ ${extraCss}
 </style></head><body><button class="primary">Go</button></body></html>`;
 }
 
+/**
+ * The page is served from a process of its own: `runCli` blocks this one
+ * (`spawnSync`), so a server in-process would never answer Chromium.
+ */
+const SERVER = `
+const http = require("node:http"), fs = require("node:fs");
+http.createServer((_q, r) => { r.setHeader("content-type", "text/html"); r.end(fs.readFileSync(process.argv[1])); })
+  .listen(0, "127.0.0.1", function () { console.log(this.address().port); });
+`;
+
 beforeAll(async () => {
 	const app = await readApp(FIXTURE, "demo");
 	css = generateCss(app.foundation);
-	server = createServer((_req, res) => {
-		res.setHeader("content-type", "text/html");
-		res.end(page);
+	const dir = mkdtempSync(join(tmpdir(), "looks-browser-page-"));
+	roots.push(dir);
+	pageFile = join(dir, "page.html");
+	writeFileSync(pageFile, pageWith());
+	server = spawn("node", ["-e", SERVER, pageFile], { stdio: ["ignore", "pipe", "inherit"] });
+	const port = await new Promise<string>((ok, fail) => {
+		server?.stdout?.once("data", (d) => ok(String(d).trim()));
+		server?.once("error", fail);
 	});
-	await new Promise<void>((ok) => server.listen(0, "127.0.0.1", ok));
-	url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+	url = `http://127.0.0.1:${port}`;
 });
 
 afterAll(() => {
-	server?.close();
+	server?.kill();
+	for (const r of roots.splice(0)) rmSync(r, { recursive: true, force: true });
 });
 
 afterEach(() => {
-	for (const r of roots.splice(0)) rmSync(r, { recursive: true, force: true });
+	for (const r of projects.splice(0)) rmSync(r, { recursive: true, force: true });
 });
 
 /** The fixture as a project of its own, with the local telemetry mark switched off. */
 function project(): string {
 	const root = mkdtempSync(join(tmpdir(), "looks-browser-"));
-	roots.push(root);
+	projects.push(root);
 	cpSync(FIXTURE, root, { recursive: true });
 	writeFileSync(
 		join(root, ".indusk/config.json"),
@@ -79,7 +94,7 @@ function check(): { code: number; out: string } {
 
 describe.skipIf(SHOULD_SKIP)("indusk looks check — the running app held by value", () => {
 	it("A18: elements rendering with their tokens' approved values are held", () => {
-		page = pageWith();
+		writeFileSync(pageFile, pageWith());
 		const { code, out } = check();
 		expect(out).toMatch(/held\s+home\.empty @ phone/);
 		expect(out).toMatch(/held\s+home\.empty @ desktop/);
@@ -88,7 +103,7 @@ describe.skipIf(SHOULD_SKIP)("indusk looks check — the running app held by val
 	});
 
 	it("A19: a token changed in the app alone breaks the token and every element using it", () => {
-		page = pageWith(":root { --color-dusk: #c2620c; }");
+		writeFileSync(pageFile, pageWith(":root { --color-dusk: #c2620c; }"));
 		const { code, out } = check();
 		expect(code).toBe(1);
 		expect(out).toMatch(/broken\s+home\.empty @ phone/);
@@ -97,9 +112,12 @@ describe.skipIf(SHOULD_SKIP)("indusk looks check — the running app held by val
 	});
 
 	it("A20: a duration or an easing that differs from its approved value is broken like a colour", () => {
-		page = pageWith(
-			"",
-			"transition-duration: 250ms; transition-timing-function: var(--easing-standard);",
+		writeFileSync(
+			pageFile,
+			pageWith(
+				"",
+				"transition-duration: 250ms; transition-timing-function: var(--easing-standard);",
+			),
 		);
 		const { code, out } = check();
 		expect(code).toBe(1);

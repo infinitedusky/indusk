@@ -26,6 +26,8 @@ export interface Device {
 export interface DeclaredScreen {
 	name: string;
 	states: string[];
+	/** Where the running app serves this screen; `/<name>` when not declared. */
+	path?: string;
 }
 
 export interface Mockup {
@@ -52,6 +54,8 @@ export interface LooksApp {
 	screens: DeclaredScreen[];
 	/** Source directories of the running app, relative to the project root. */
 	sources: string[];
+	/** The running app's base URL, when `screens.json` declares one; `indusk looks check --url` overrides it. */
+	url?: string;
 	mockups: Mockup[];
 }
 
@@ -85,7 +89,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 	}
 	const foundation = await readFoundation(dir);
 	const { devices } = await readJson<{ devices?: Device[] }>(join(dir, "devices.json"), {});
-	const declared = await readJson<{ screens?: DeclaredScreen[]; sources?: string[] }>(
+	const declared = await readJson<{ screens?: DeclaredScreen[]; sources?: string[]; url?: string }>(
 		join(dir, "screens.json"),
 		{},
 	);
@@ -118,6 +122,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		devices: devices ?? [],
 		screens: declared.screens ?? [],
 		sources: declared.sources ?? [],
+		...(declared.url ? { url: declared.url } : {}),
 		mockups,
 	};
 }

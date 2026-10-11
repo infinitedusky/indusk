@@ -264,6 +264,9 @@ importers:
       '@infinitedusky/telemetry-binaries-linux-x64':
         specifier: ^1.28.0
         version: 1.28.0
+      playwright-core:
+        specifier: 1.59.1
+        version: 1.59.1
 
   apps/vscode-extension:
     devDependencies:

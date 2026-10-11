@@ -300,6 +300,7 @@
 		"zod": "^4.3.6"
 	},
 	"optionalDependencies": {
+		"playwright-core": "1.59.1",
 		"@infinitedusky/telemetry-binaries-darwin-arm64": "^1.28.0",
 		"@infinitedusky/telemetry-binaries-darwin-x64": "^1.28.0",
 		"@infinitedusky/telemetry-binaries-linux-arm64": "^1.28.0",

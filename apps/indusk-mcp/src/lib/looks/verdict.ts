@@ -138,9 +138,16 @@ function rgba(value: string): [number, number, number, number] | null {
 	const v = value.trim().toLowerCase();
 	if (v === "transparent") return [0, 0, 0, 0];
 	if (v.startsWith("#")) return hexToRgb(v);
-	const m = v.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/);
+	const m = v.match(
+		/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/,
+	);
 	if (!m) return null;
-	const alpha = m[4] === undefined ? 1 : m[4].endsWith("%") ? Number.parseFloat(m[4]) / 100 : Number.parseFloat(m[4]);
+	const alpha =
+		m[4] === undefined
+			? 1
+			: m[4].endsWith("%")
+				? Number.parseFloat(m[4]) / 100
+				: Number.parseFloat(m[4]);
 	return [Number(m[1]), Number(m[2]), Number(m[3]), alpha];
 }
 
@@ -151,7 +158,9 @@ function canon(kind: Kind, value: string): string {
 		case "color": {
 			const c = rgba(v);
 			if (!c) return v.toLowerCase();
-			return c[3] === 1 ? `rgb(${c[0]}, ${c[1]}, ${c[2]})` : `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${c[3]})`;
+			return c[3] === 1
+				? `rgb(${c[0]}, ${c[1]}, ${c[2]})`
+				: `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${c[3]})`;
 		}
 		case "length": {
 			const m = v.match(/^(-?[\d.]+)(px|rem|em)?$/);
@@ -166,7 +175,10 @@ function canon(kind: Kind, value: string): string {
 			return `${Math.round(n * 1000) / 1000}ms`;
 		}
 		case "easing":
-			return v.replace(/\s+/g, " ").replace(/\s*,\s*/g, ", ").toLowerCase();
+			return v
+				.replace(/\s+/g, " ")
+				.replace(/\s*,\s*/g, ", ")
+				.toLowerCase();
 		case "family":
 			return v
 				.replace(/["']/g, "")
@@ -255,7 +267,9 @@ function checkElement(el: MeasuredElement, approved: Approved[]): Finding | null
 	const kind = PROPERTY_KIND[el.property];
 	if (!kind) return null;
 	const parts =
-		kind === "duration" || kind === "easing" || kind === "shadow" ? splitList(el.actual) : [el.actual];
+		kind === "duration" || kind === "easing" || kind === "shadow"
+			? splitList(el.actual)
+			: [el.actual];
 	for (const part of parts) {
 		const canonical = canon(kind, part);
 		if (isInitial(kind, canonical)) continue;
