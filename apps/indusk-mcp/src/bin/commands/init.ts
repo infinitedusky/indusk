@@ -225,6 +225,16 @@ const SIMPLE_ESLINT_RE = /^(npx\s+)?eslint\b/;
 const SIMPLE_NEXT_LINT_RE = /^(npx\s+)?next\s+lint\b/;
 const SIMPLE_PRETTIER_RE = /^(npx\s+)?prettier\b/;
 
+/** What a browser-instrumented project must set for a click's trace to reach an API on another origin. */
+function printPropagationInstructions(setting: string): void {
+	console.info(
+		`  cross-origin API: set ${setting} to the API's origin(s), comma-separated (a * entry is a pattern, e.g. https://*.dev.example.com); same-origin requests need nothing`,
+	);
+	console.info(
+		"  cross-origin API: the API must allow the traceparent header in its CORS settings (Access-Control-Allow-Headers)",
+	);
+}
+
 function isCompoundScript(value: string): boolean {
 	return value.includes("&&") || value.includes("||") || value.includes(";");
 }
@@ -925,7 +935,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				const loggerDir = join(projectRoot, "src");
 				mkdirSync(loggerDir, { recursive: true });
 				cpSync(join(packageRoot, "templates/logger.ts"), loggerTarget);
-				console.info("  create: src/logger.ts");
+				console.info("  create: src/logger.ts (pino logger — OpenTelemetry log transport)");
 			}
 
 			// Client-side browser instrumentation
@@ -948,8 +958,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			console.info(
 				"  wire (client): import './instrumentation.web' in your root client component or layout",
 			);
+			printPropagationInstructions("NEXT_PUBLIC_OTEL_PROPAGATE_TO");
 		} else if (isReactSPA) {
-			// React SPA (Vite) — browser instrumentation via Dash0 Web SDK
+			// React SPA (Vite) — browser instrumentation via the OpenTelemetry Web SDK
 			const srcDir = existsSync(join(projectRoot, "src")) ? join(projectRoot, "src") : projectRoot;
 			const instrTarget = join(srcDir, "instrumentation.ts");
 			if (existsSync(instrTarget) && !force) {
@@ -958,13 +969,14 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				cpSync(join(packageRoot, "templates/instrumentation.web.ts"), instrTarget);
 				const content = readFileSync(instrTarget, "utf-8");
 				writeFileSync(instrTarget, content.replace('"unknown-service"', `"${projectName}"`));
-				console.info("  create: src/instrumentation.ts (React SPA — @dash0/sdk-web)");
+				console.info("  create: src/instrumentation.ts (React SPA — OpenTelemetry Web SDK)");
 			}
 
 			console.info(
 				"  install: pnpm add @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction",
 			);
 			console.info("  wire: import './instrumentation' at the top of your main.tsx or App.tsx");
+			printPropagationInstructions("VITE_OTEL_PROPAGATE_TO");
 		} else {
 			// Node.js — full SDK with auto-instrumentation
 			const srcDir = existsSync(join(projectRoot, "src")) ? join(projectRoot, "src") : projectRoot;

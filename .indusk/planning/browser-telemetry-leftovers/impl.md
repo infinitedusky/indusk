@@ -92,8 +92,8 @@ The scaffolded browser instrumentation carries a click's trace to the project's 
 
 - [x] `templates/instrumentation.web.ts`: read `VITE_OTEL_PROPAGATE_TO` / `NEXT_PUBLIC_OTEL_PROPAGATE_TO`; each comma-separated entry an exact origin, or — when it contains `*` — a RegExp anchored at both ends where `*` matches one or more characters other than `/` and `.`-escaped literals elsewhere; pass the list as `propagateTraceHeaderCorsUrls` to `FetchInstrumentation` (and `XMLHttpRequestInstrumentation` if the template gains it); document the setting and the CORS requirement in the file's header comment
 - [x] `templates/instrumentation.web.ts` loads against what its own install line fetches: span processors passed to `new WebTracerProvider({ spanProcessors })` (`addSpanProcessor` is gone in `@opentelemetry/sdk-trace-web` 2.x), and no bare `process` read in a Vite page (guard `typeof process`); then delete the temporary shim and `process` stub from `templates/instrumentation.web.test.ts`, so A1 passes against the template as shipped (found by Test Phase 1)
-- [ ] `src/bin/commands/init.ts`: the React SPA branch's comment and printed line name the OpenTelemetry Web SDK; both browser branches print the propagation setting and the `traceparent` CORS requirement
-- [ ] `src/lib/trajectory/audit.ts`: `"dash0"` out of `TELEMETRY_KEYWORDS`
+- [x] `src/bin/commands/init.ts`: the React SPA branch's comment and printed line name the OpenTelemetry Web SDK; both browser branches print the propagation setting and the `traceparent` CORS requirement
+- [x] `src/lib/trajectory/audit.ts`: `"dash0"` out of `TELEMETRY_KEYWORDS`
 - [ ] A4, the live check: `indusk init` a Vite React app and a small Node API on separate ports in a temp folder, with this worktree's build; name the API's origin; click; record here the trace id, its root span and the server spans it holds in local Jaeger
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
