@@ -33,7 +33,7 @@ subplans:
 > admin records a production break unasked (16 s, nothing typed, on the real
 > server) and the running agent hears it. **The next step is the VS Code
 > extension**; after it, in order: plan-cockpit (stage 1 of the promise UI),
-> the rehearsal. After the launch: server provisioning, then contract-ui
+> ui-promises (how the app looks, held — added 2026-10-10), the rehearsal. After the launch: server provisioning, then contract-ui
 > (stage 2: the hierarchy above stage 1's pages). The sequence is the one the root
 > [master](../master.md)'s "Now — show the promise loop" sets out; this file
 > is its demo-side copy and the one the admin's sidebar reads.
