@@ -288,6 +288,21 @@ flowchart TD
 | `VITE_OTEL_EXPORTER_OTLP_HEADERS` | Auth headers | Vite apps |
 | `NEXT_PUBLIC_OTEL_EXPORTER_OTLP_ENDPOINT` | Backend URL | Next.js apps |
 | `NEXT_PUBLIC_OTEL_EXPORTER_OTLP_HEADERS` | Auth headers | Next.js apps |
+| `VITE_OTEL_PROPAGATE_TO` | Origins that receive the click's trace | Vite apps |
+| `NEXT_PUBLIC_OTEL_PROPAGATE_TO` | Origins that receive the click's trace | Next.js apps |
+
+### Following a click to an API on another origin
+
+A request to the page's own origin carries the click's trace (a `traceparent` header) with no setting. A request to any other origin carries it only when the origin is named in `*_OTEL_PROPAGATE_TO`: a comma-separated list, where an entry containing `*` is a pattern.
+
+```bash
+VITE_OTEL_PROPAGATE_TO=http://localhost:3000,https://*.dev.example.com
+```
+
+- An entry without `*` is an exact origin (scheme, host and port).
+- `*` matches one or more characters other than `/` and `.`, so `https://*.dev.example.com` matches `https://plan-a.dev.example.com` and not `https://dev.example.com.evil.test`.
+- Empty means same-origin only. A third-party origin you did not name never receives the header.
+- The API must allow the `traceparent` header in its CORS settings (`Access-Control-Allow-Headers: traceparent`). `indusk init` prints this for React SPA and Next.js projects; it does not edit your server.
 
 ## Connecting to a Backend
 

@@ -259,6 +259,7 @@ After instrumenting a service, verify:
 ### React SPA (Vite)
 - `import './instrumentation'` at the top of `main.tsx`
 - Browser env vars use `VITE_` prefix: `VITE_OTEL_EXPORTER_OTLP_ENDPOINT`
+- The browser sends `traceparent` only to its own origin and to the origins or `*` patterns named in `VITE_OTEL_PROPAGATE_TO` / `NEXT_PUBLIC_OTEL_PROPAGATE_TO`; the named API must allow `traceparent` in its CORS settings (`Access-Control-Allow-Headers`), or the browser blocks the request
 
 ### Python
 - Use `opentelemetry-instrument` CLI: `opentelemetry-instrument python your_app.py`
@@ -282,6 +283,7 @@ After instrumenting a service, verify:
 |----------|---------|
 | `VITE_OTEL_EXPORTER_OTLP_ENDPOINT` / `NEXT_PUBLIC_OTEL_EXPORTER_OTLP_ENDPOINT` | Backend URL |
 | `VITE_OTEL_EXPORTER_OTLP_HEADERS` / `NEXT_PUBLIC_OTEL_EXPORTER_OTLP_HEADERS` | Auth headers |
+| `VITE_OTEL_PROPAGATE_TO` / `NEXT_PUBLIC_OTEL_PROPAGATE_TO` | Other origins that receive the click's trace (comma-separated; `*` is a pattern) |
 
 ## During `/work`
 

@@ -4,6 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+
+- **A browser click's trace reaches your API on another origin** (browser-telemetry-leftovers): name the origin in `VITE_OTEL_PROPAGATE_TO` / `NEXT_PUBLIC_OTEL_PROPAGATE_TO` (a `*` entry is a pattern) and the scaffolded browser instrumentation sends the click's `traceparent` there. The template also loads against `@opentelemetry/sdk-trace-web` 2.x and in a Vite page. `indusk init` no longer claims to write a vendor SDK, and prints the setting and the CORS requirement. The trajectory audit no longer counts a vendor's name as a telemetry alert. See [OpenTelemetry](/reference/tools/otel).
+
 ### Changed
 
 - **The Promises panel reads in words** (display-names): promises show as "A break reaches the editor" rather than their handle, on cards, rows, the activity and the hover; plan groups are headed by the plan's title with "started …, landed …, released X.Y.Z (date)" or "not released yet". The marker at the end of a code line keeps the handle. See [Promises in your editor](/guide/promises-in-your-editor).
