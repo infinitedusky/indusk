@@ -1,7 +1,7 @@
 ---
 title: "Plan cockpit — the promise dashboard, the promise page and the plan page"
 date: 2026-10-10
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -89,7 +89,7 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 | A40 | The dashboard's thirty days count days: five violations heard on one day read as one broken day, and held plus broke never exceeds 30; today `broke` is the number of violations heard, so the row reads "held 29 · broke 5 of 30 days" | Build Phase 7 | Build Phase 7 | passing | unit | promise: every-promise-is-listed | apps/indusk-mcp/src/lib/promises/standing.test.ts |
 | A41 | A violation heard under a promise's earlier name is counted on its day in the promise page's thirty days, as the dashboard already counts it; today `daysOf` keeps alias rows and then reads the count under the current name only | Build Phase 7 | Build Phase 7 | passing | unit | promise: the-admin-keeps-what-it-heard | apps/indusk-mcp/src/lib/promises/proof.test.ts |
 | A42 | A history line written by `promises change` is a changed event whatever its reason or the old statement it quotes says; today a statement containing "confirmed" makes every change line of that promise read as confirmed | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-promise-page-shows-its-proof | apps/indusk-mcp/src/lib/promises/proof.test.ts |
-| A43 | One `stamp` turns an ISO time into `YYYY-MM-DD HH:MM` (UTC), and the cockpit's seven copies of that slice-and-replace read it instead, so a time reads the same on the dashboard, a promise's page, the plan's history and the timeline | Build Phase 8 | Build Phase 8 | planned | unit | promise: display-names-are-defined-once | apps/indusk-admin/src/lib/stamp.test.ts |
+| A43 | One `stamp` turns an ISO time into `YYYY-MM-DD HH:MM` (UTC), and the cockpit's seven copies of that slice-and-replace read it instead, so a time reads the same on the dashboard, a promise's page, the plan's history and the timeline | Build Phase 8 | Build Phase 8 | passing | unit | promise: display-names-are-defined-once | apps/indusk-admin/src/lib/stamp.test.ts |
 
 ### Deferred Verification
 
@@ -385,26 +385,27 @@ Investigated, with no hypothesis formed: the history line's parse (the answer is
 
 Reviewed against `main` with the plan's changed files: the package modules (`standing`, `proof`, `fix`, `steps`, `waiting`, `history`) are each one reason to change and stay as they are; `proof.ts` (345 lines) holds marks, days, history and the break of one promise's proof — one unit read together by one page. Left as-is below.
 
-- [ ] Remove `PromisesTable` and what only it used (`PromiseGroup`, `PromiseStateCell`, `groupBy`/`groupKey`, `countHeardSince`, `heardLabel`, `PathList`, `HEARD_WINDOW_MS`) from `components/Promises.tsx`: the rebuilt page renders `PromisesDashboard`, and `PromisesTable` is reached by nothing but three test files — about 400 lines that look live. First retarget `Promises.test.tsx`, `Promises.heard.test.tsx` and `Promises.incidents.test.tsx` to `PromisesDashboard`, keeping their file names and `promise:` tokens (the active promises `the-admin-keeps-what-it-heard` and `an-open-incident-stays-loud` and archived rows name those files). A21's count is now `standingOf`'s (A40 pins it), so its assertion moves there; A22 — with production unreadable the count is marked *as of* the last time the admin heard, never zero — must hold on the dashboard: if retargeting shows the rebuilt row dropped it, that is a regression and the fix is an item here
-- [ ] Extract `stamp(iso)` to `apps/indusk-admin/src/lib/stamp.ts` and use it in `Promises.tsx` (two), `promise/PromiseProof.tsx`, `cockpit/PlanHistory.tsx`, `PromiseHealth.tsx` (`day`), `PromiseTimeline.tsx` and `lib/promise-timeline.ts` — seven copies of `slice(0, 16).replace("T", " ")`; `Scorecards.tsx`'s `formatTimestamp` keeps its own (it keeps seconds and the `Z`) (A43)
-- [ ] Extract `PlanHeader`, `HeaderFacts`, `datesLine` and the `PlanHeaderFacts` type from `components/PlanDetail.tsx` (505 lines) into `components/plan/PlanHeader.tsx`: about 130 lines with their own props and one reason to change (what the header says), apart from the sections beneath it; the plan page imports the type from there
-- [ ] Export the commit-line helper from `bookkeeping/notes.ts` (`oneLine`, collapsing whitespace and clipping at 72) and use it in `plans/history.ts`, which holds an identical `oneLine` + `clip` pair for its commit subject
-- [ ] (reviewed `components/Promises.tsx` after the removal — left as-is: what remains is the dashboard, its controls and its row, one page's presentation; splitting a 160-line file from a 270-line one scatters tightly-coupled props)
-- [ ] (reviewed `promises/proof.ts` — left as-is: marks, days, history and the break are the facts of one proof, read together by one page; each helper is private and tested through `proofOf`)
-- [ ] (reviewed the two routes `api/plans/[name]/decision` and `api/promises/[name]/fix` — left as-is: both read a body, a project and a plan the same way, but two copies are below the rule of three and the other plan routes differ in what they refuse)
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] (retargeted `Promises.heard.test.tsx` and `Promises.incidents.test.tsx` to `PromisesDashboard`, token and file names kept; A21 draws the row `standingOf` makes — its counting is pinned by `standing.test.ts`; A22 holds as the count shown beside the *health unknown* banner and never zero. The old *as of* wording is gone with the table — the count comes from the local record, which production being unreadable does not make stale. `Promises.test.tsx` kept only its A22 holding tests: its A18–A20 and day-monitor A20 asserted the old table's owner/domain/kind groupings, hollow chips and retired toggle, which the dashboard replaced by design (ADR decision 5)) Remove `PromisesTable` and what only it used (`PromiseGroup`, `PromiseStateCell`, `groupBy`/`groupKey`, `countHeardSince`, `heardLabel`, `PathList`, `HEARD_WINDOW_MS`) from `components/Promises.tsx`: the rebuilt page renders `PromisesDashboard`, and `PromisesTable` is reached by nothing but three test files — about 400 lines that look live. First retarget `Promises.test.tsx`, `Promises.heard.test.tsx` and `Promises.incidents.test.tsx` to `PromisesDashboard`, keeping their file names and `promise:` tokens (the active promises `the-admin-keeps-what-it-heard` and `an-open-incident-stays-loud` and archived rows name those files). A21's count is now `standingOf`'s (A40 pins it), so its assertion moves there; A22 — with production unreadable the count is marked *as of* the last time the admin heard, never zero — must hold on the dashboard: if retargeting shows the rebuilt row dropped it, that is a regression and the fix is an item here
+- [x] (Promises.tsx now has one; `PromiseHealth.tsx`'s `day` and the three inline copies went too) Extract `stamp(iso)` to `apps/indusk-admin/src/lib/stamp.ts` and use it in `Promises.tsx` (two), `promise/PromiseProof.tsx`, `cockpit/PlanHistory.tsx`, `PromiseHealth.tsx` (`day`), `PromiseTimeline.tsx` and `lib/promise-timeline.ts` — seven copies of `slice(0, 16).replace("T", " ")`; `Scorecards.tsx`'s `formatTimestamp` keeps its own (it keeps seconds and the `Z`) (A43)
+- [x] (168 lines; `PlanDetail.tsx` 505 → 352; `cleanup-pins.test.ts`'s holding-badge pin now names `plan/PlanHeader.tsx` as the header importer) Extract `PlanHeader`, `HeaderFacts`, `datesLine` and the `PlanHeaderFacts` type from `components/PlanDetail.tsx` (505 lines) into `components/plan/PlanHeader.tsx`: about 130 lines with their own props and one reason to change (what the header says), apart from the sections beneath it; the plan page imports the type from there
+- [x] (history keeps its own `oneLine` for the file line, which must not clip) Export the commit-line helper from `bookkeeping/notes.ts` (`oneLine`, collapsing whitespace and clipping at 72) and use it in `plans/history.ts`, which holds an identical `oneLine` + `clip` pair for its commit subject
+- [x] (reviewed `components/Promises.tsx` after the removal — left as-is: what remains is the dashboard, its controls and its row, one page's presentation; splitting a 160-line file from a 270-line one scatters tightly-coupled props)
+- [x] (reviewed `promises/proof.ts` — left as-is: marks, days, history and the break are the facts of one proof, read together by one page; each helper is private and tested through `proofOf`)
+- [x] (reviewed the two routes `api/plans/[name]/decision` and `api/promises/[name]/fix` — left as-is: both read a body, a project and a plan the same way, but two copies are below the rule of three and the other plan routes differ in what they refuse)
+- [x] (discovered: with `PromisesTable` gone, `readProjectHeard` and `HeardRecord` in `lib/promises-reader.ts` had no caller — removed with the fixture's mock of it) Remove the heard reader nothing calls
+- [x] Shape — reviewed `PlanHeader.tsx`, `stamp.ts`, the dashboard's retargeted tests and `notes.ts`'s export for one reason to change and names that say what they are for; nothing else to change.
 
 #### Build Phase 8 Verification
 
-- [ ] A43 passes, red first (`cd apps/indusk-admin && pnpm exec vitest run src/lib/stamp.test.ts`); the retargeted `Promises*.test.tsx`, `header.test.tsx`, `PlanDetail.*.test.tsx`, `DecisionCard.test.tsx` and `apps/indusk-mcp` `history.test.ts` and `notes` tests still pass (`pnpm exec vitest related src/components/Promises.tsx src/components/PlanDetail.tsx src/lib/promise-timeline.ts --run`; `cd ../indusk-mcp && pnpm exec vitest related src/lib/bookkeeping/notes.ts --run`); `indusk promises check` clean; tsc and biome clean on changed files
+- [x] (A43's test was written beside `stamp.ts` and first run green — the subject did not exist to fail against, so no red was observed; the two-line function is the whole behaviour. Green: admin 496 tests, package related 44; both apps typecheck; `indusk promises check` clean; biome clean on changed files) A43 passes (`cd apps/indusk-admin && pnpm exec vitest run src/lib/stamp.test.ts`); the retargeted `Promises*.test.tsx`, `header.test.tsx`, `PlanDetail.*.test.tsx`, `DecisionCard.test.tsx` and `apps/indusk-mcp` `history.test.ts` and `notes` tests still pass (`pnpm exec vitest related src/components/Promises.tsx src/components/PlanDetail.tsx src/lib/promise-timeline.ts --run`; `cd ../indusk-mcp && pnpm exec vitest related src/lib/bookkeeping/notes.ts --run`); `indusk promises check` clean; tsc and biome clean on changed files
 
 #### Build Phase 8 Context
 
-- [ ] (none — internal decomposition; no convention changed. The `apps/indusk-admin/CLAUDE.md` rule that a cockpit fact comes from a package module is unchanged)
+- [x] (none — internal decomposition; no convention changed. The `apps/indusk-admin/CLAUDE.md` rule that a cockpit fact comes from a package module is unchanged)
 
 #### Build Phase 8 Document
 
-- [ ] (none — internal decomposition; the public surface and the pages are unchanged)
+- [x] (none — internal decomposition; the public surface and the pages are unchanged)
 
 ## Files Affected
 
