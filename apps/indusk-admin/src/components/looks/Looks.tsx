@@ -105,35 +105,57 @@ function AppSection({
         ))}
       </ul>
       {opened && device ? (
-        <section className="flex flex-col gap-2" data-testid="mockup-open">
-          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
-            <span className="font-medium">{opened.name}</span>
-            <span>
-              {device.name} · {device.width} × {device.height}
-            </span>
-            {opened.approval === "proposed" ? (
-              <ApproveMockup
-                project={project}
-                app={app.app}
-                mockup={opened.name}
-                foundationHash={app.foundationHash}
-              />
-            ) : null}
-          </div>
-          <div className="max-w-full overflow-auto">
-            <iframe
-              data-testid="mockup-frame"
-              title={`${opened.name} at ${device.name}`}
-              srcDoc={opened.document}
-              width={device.width}
-              height={device.height}
-              sandbox=""
-              className="block border-0 bg-white shadow-sm"
-            />
-          </div>
-        </section>
+        <OpenMockupView
+          project={project}
+          app={app}
+          mockup={opened}
+          device={device}
+        />
       ) : null}
       <Uncovered app={app} />
+    </section>
+  );
+}
+
+/** One mockup open at one device: its name and size, Approve when it is proposed, and the frame. */
+function OpenMockupView({
+  project,
+  app,
+  mockup,
+  device,
+}: {
+  project: string;
+  app: AppLooks;
+  mockup: MockupView;
+  device: AppLooks["devices"][number];
+}) {
+  return (
+    <section className="flex flex-col gap-2" data-testid="mockup-open">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
+        <span className="font-medium">{mockup.name}</span>
+        <span>
+          {device.name} · {device.width} × {device.height}
+        </span>
+        {mockup.approval === "proposed" ? (
+          <ApproveMockup
+            project={project}
+            app={app.app}
+            mockup={mockup.name}
+            foundationHash={app.foundationHash}
+          />
+        ) : null}
+      </div>
+      <div className="max-w-full overflow-auto">
+        <iframe
+          data-testid="mockup-frame"
+          title={`${mockup.name} at ${device.name}`}
+          srcDoc={mockup.document}
+          width={device.width}
+          height={device.height}
+          sandbox=""
+          className="block border-0 bg-white shadow-sm"
+        />
+      </div>
     </section>
   );
 }
