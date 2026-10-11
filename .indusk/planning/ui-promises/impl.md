@@ -281,7 +281,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/cli/looks.md`: `indusk looks check`, the two checks, what a broken line names
+- [x] `apps/docs/src/reference/cli/looks.md`: `indusk looks check`, the two checks, what a broken line names
 
 ### Build Phase 4: Looks in the cockpit
 

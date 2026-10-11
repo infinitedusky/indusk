@@ -131,3 +131,46 @@ uncovered component: badge
 Only a mockup approved as it is now covers anything. A component name is read
 when written literally — `data-component="badge"`, `'badge'`, `{"badge"}` — not
 when computed. Exit 1 when anything is uncovered, 0 when every part is.
+
+## `indusk looks check <app> [--url <url>]`
+
+Holds the running app to what a person approved, by value, in a real Chromium.
+`--url` is the app's base URL; without it the check uses `url` in the app's
+`screens.json`, and with neither it refuses rather than guess. A screen is
+opened at `<url><path>?state=<state>`, where `path` is the screen's own `path`
+in `screens.json` and otherwise `/<name>`.
+
+For each declared screen state whose mockup is approved — or whose last
+approved version was approved on the foundation as it is now — at each device
+in `devices.json`, the check measures the page and decides two things:
+
+| Check | Held when | A broken line names |
+|-------|-----------|---------------------|
+| Tokens | each foundation token read from `:root` equals its approved value | the token, approved and actual |
+| Elements | each element's colour, length, radius, shadow, font, `transition-duration` and `transition-timing-function` is one of the approved values of its kind | the element, the property, the actual value and the nearest token |
+
+A token changed in the app alone breaks the token and, through every element
+that uses it, each of those elements. A duration or an easing is held to its
+approved value like a colour or a size. The browser's own initial values — a
+zero length, no shadow, no transition, a transparent background — are never a
+break.
+
+```
+held    home.empty @ phone
+broken  home.empty @ desktop
+  token --color-dusk approved #c2620b actual #c2620c
+  element button.primary background-color actual rgb(194, 98, 12) nearest --color-dusk (#c2620b)
+unchecked detail.default — proposed, never approved
+```
+
+A proposed mockup is not checked against (`unchecked`, with the reason). Each
+look is also recorded as a span, one per screen × state × device, carrying a
+promise's mark under `tokens-are-held-exactly` — `upheld` when held,
+`violated` with the first finding as the symptom when broken — so a look reads
+beside promises in the health reader.
+
+Exit 1 on any broken look, and when nothing could be checked: a run that
+checked nothing is not a held look. `playwright-core` is an optional
+dependency; without it, or without Chromium, the command refuses by name and
+says what to install. Because it opens a browser it runs in the system tier,
+never in the everyday suite.
