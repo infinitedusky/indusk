@@ -48,6 +48,13 @@
 			"foundationHash": "36b807fec8de7d0bba03f7609225d33597688f4bcf3e165a45beee8494f5f810",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-11T14:58:30.483Z"
+		},
+		{
+			"mockup": "plan.released",
+			"mockupHash": "fd0e245438ce129144863103dccde90064c759538517165f4de2388d8fb08719",
+			"foundationHash": "36b807fec8de7d0bba03f7609225d33597688f4bcf3e165a45beee8494f5f810",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-11T14:58:45.963Z"
 		}
 	]
 }
