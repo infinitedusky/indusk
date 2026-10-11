@@ -66,7 +66,12 @@ export function mockupDocument(html: string, tokensCss: string): string {
 	return style + html;
 }
 
-function viewOf(app: Awaited<ReturnType<typeof readApp>>, mockup: Mockup, approvals: ApprovalEntry[], css: string): MockupView {
+function viewOf(
+	app: Awaited<ReturnType<typeof readApp>>,
+	mockup: Mockup,
+	approvals: ApprovalEntry[],
+	css: string,
+): MockupView {
 	const approval = approvalOf(app, mockup, approvals);
 	return {
 		name: mockup.name,

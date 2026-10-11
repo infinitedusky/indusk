@@ -1,7 +1,4 @@
-import {
-  approve,
-  approver,
-} from "@infinitedusky/indusk-mcp/looks/approvals";
+import { approve, approver } from "@infinitedusky/indusk-mcp/looks/approvals";
 import type { NextRequest } from "next/server";
 import { getProjectPath } from "@/lib/registry-client";
 import { adminOnly, refuse } from "@/lib/session-host";

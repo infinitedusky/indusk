@@ -203,9 +203,9 @@ describe("the nav — Looks under Promises", () => {
 describe("A26 — every promise is still listed, looks beside them", () => {
   it("A26 lists every promise of the registry and the looks too", async () => {
     const root = await dashboard();
-    const names = [
-      ...root.querySelectorAll('[data-testid="promise-row"]'),
-    ].map((r) => r.getAttribute("data-promise"));
+    const names = [...root.querySelectorAll('[data-testid="promise-row"]')].map(
+      (r) => r.getAttribute("data-promise"),
+    );
     expect(names.sort()).toEqual(PROMISES.map((p) => p.name).sort());
     expect(
       root.querySelectorAll('[data-testid="look-row"]').length,

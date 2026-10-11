@@ -66,9 +66,7 @@ function lookOf(tags: JaegerTag[] | undefined): LookKey | null {
 		state: tag(tags, LOOK_MARK.state),
 		device: tag(tags, LOOK_MARK.device),
 	};
-	return Object.values(parts).every((v) => typeof v === "string")
-		? (parts as LookKey)
-		: null;
+	return Object.values(parts).every((v) => typeof v === "string") ? (parts as LookKey) : null;
 }
 
 /**

@@ -75,16 +75,22 @@ async function open(page: Page, mockup: string, device: string) {
 
 /** The computed background of the mockup's card, read inside the frame. */
 async function cardBackground(page: Page): Promise<string> {
-  const card = page.frameLocator('[data-testid="mockup-frame"]').locator(".card");
+  const card = page
+    .frameLocator('[data-testid="mockup-frame"]')
+    .locator(".card");
   await card.waitFor({ timeout: 10_000 });
   return card.evaluate((el) => getComputedStyle(el).backgroundColor);
 }
 
 describe("A15 — a mockup opened at a reference device is drawn at its size", () => {
   it("A15 home.empty at phone is drawn in a 390 × 844 frame; at desktop, 1440 × 900", async () => {
-    const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+    const page = await browser.newPage({
+      viewport: { width: 1600, height: 1000 },
+    });
     try {
-      const phone = await (await open(page, "home.empty", "phone")).boundingBox();
+      const phone = await (
+        await open(page, "home.empty", "phone")
+      ).boundingBox();
       expect(phone).toMatchObject({ width: 390, height: 844 });
       const desktop = await (
         await open(page, "home.empty", "desktop")

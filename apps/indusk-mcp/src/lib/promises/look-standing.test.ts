@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseMarkedSpan } from "./telemetry.js";
 import { type LookRun, readLookStanding } from "./standing.js";
+import { parseMarkedSpan } from "./telemetry.js";
 
 // promise: a-look-reports-like-any-promise
 // promise: every-part-of-the-ui-is-covered
@@ -15,15 +15,21 @@ import { type LookRun, readLookStanding } from "./standing.js";
 
 const FIXTURE = join(__dirname, "..", "..", "__tests__", "fixtures", "looks-app");
 
-const run = (
-	state: string,
-	device: string,
-	outcome: LookRun["outcome"],
-	at: string,
-): LookRun => ({ app: "demo", screen: "home", state, device, outcome, at, symptom: `${state} ${outcome}` });
+const run = (state: string, device: string, outcome: LookRun["outcome"], at: string): LookRun => ({
+	app: "demo",
+	screen: "home",
+	state,
+	device,
+	outcome,
+	at,
+	symptom: `${state} ${outcome}`,
+});
 
-const find = (rows: { look: string; device: string | null }[], look: string, device: string | null) =>
-	rows.find((r) => r.look === look && r.device === device);
+const find = (
+	rows: { look: string; device: string | null }[],
+	look: string,
+	device: string | null,
+) => rows.find((r) => r.look === look && r.device === device);
 
 describe("readLookStanding — each look's standing", () => {
 	it("an approved look with no run since its approval reads unchecked; one held since, held; one broken, broken and first", async () => {

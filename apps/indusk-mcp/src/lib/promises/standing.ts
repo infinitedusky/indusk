@@ -248,13 +248,6 @@ export interface LookStandingRead {
 	runs: { ok: true } | { ok: false; where: string };
 }
 
-const LOOK_ORDER: Readonly<Record<LookStanding, number>> = {
-	broken: 0,
-	uncovered: 1,
-	unchecked: 2,
-	held: 3,
-};
-
 /**
  * Each look of one app with its standing, from the facts the `looks/` modules
  * give: whether each declared screen state's mockup is approved as it is

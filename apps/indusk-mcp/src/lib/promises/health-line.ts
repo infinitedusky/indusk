@@ -15,8 +15,8 @@ import {
 	type SourceHealthRead,
 } from "./health.js";
 import type { Registry } from "./registry.js";
-import type { LookRow, LookStandingRead } from "./standing.js";
 import type { SourceName } from "./sources.js";
+import type { LookRow, LookStandingRead } from "./standing.js";
 
 /** One promise's row in a `promises health --json` line. */
 export interface HealthLineRow {

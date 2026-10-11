@@ -411,9 +411,7 @@ export interface PromisesHealthDeps {
 	/** Runs `tick` every `everyMs` until the reader is stopped. */
 	repeat?: (everyMs: number, tick: () => Promise<void>) => Promise<void>;
 	/** Each look's standing; `readLookStanding` by default. */
-	readLooks?: (
-		root: string,
-	) => Promise<import("../../lib/promises/standing.js").LookStandingRead>;
+	readLooks?: (root: string) => Promise<import("../../lib/promises/standing.js").LookStandingRead>;
 }
 
 function repeatUntilSignal(everyMs: number, tick: () => Promise<void>): Promise<void> {

@@ -138,9 +138,7 @@ describe("A1 — a mockup an agent drew reads proposed in the cockpit, and nothi
     expect(full, "a proposed mockup shows no check result").not.toMatch(
       /\b(held|broken)\b/,
     );
-    expect(attrOf(rowOf(html, "home.empty"), "data-approval")).toBe(
-      "approved",
-    );
+    expect(attrOf(rowOf(html, "home.empty"), "data-approval")).toBe("approved");
   });
 });
 
@@ -162,7 +160,9 @@ describe("A2 — Approve in the cockpit makes a mockup the reference, recording 
     const entry = entries.at(-1);
     expect(entry).toMatchObject({
       mockup: "home.full",
-      mockupHash: sha256(join(root, ".indusk/mockups/demo/screens/home.full.html")),
+      mockupHash: sha256(
+        join(root, ".indusk/mockups/demo/screens/home.full.html"),
+      ),
       foundationHash: foundationHash(),
       by: PERSON,
     });
@@ -199,7 +199,9 @@ describe("A13 — an uncovered part shows uncovered, never held", () => {
     const html = await looksPage();
     const uncovered = sectionOf(html, "uncovered");
     const names = [
-      ...uncovered.matchAll(/data-testid="uncovered-item"[^>]*data-name="([^"]*)"/g),
+      ...uncovered.matchAll(
+        /data-testid="uncovered-item"[^>]*data-name="([^"]*)"/g,
+      ),
     ].map((m) => m[1]);
     expect(names).toEqual(expect.arrayContaining(["detail", "badge"]));
     expect(uncovered, "nothing uncovered reads held").not.toMatch(/\bheld\b/);
@@ -234,7 +236,9 @@ describe("A14 — each mockup, proposed or approved, opens at the app's referenc
       mockup: "home.full",
       device: "phone",
     });
-    const frame = html.match(/<iframe[^>]*data-testid="mockup-frame"[^>]*>/)?.[0];
+    const frame = html.match(
+      /<iframe[^>]*data-testid="mockup-frame"[^>]*>/,
+    )?.[0];
     expect(frame).toBeDefined();
     expect(attrOf(frame ?? "", "width")).toBe("390");
     expect(attrOf(frame ?? "", "height")).toBe("844");
