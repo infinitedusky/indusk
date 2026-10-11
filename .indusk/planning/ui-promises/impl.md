@@ -453,8 +453,8 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 #### Build Phase 6 Context
 
-- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: `looks-approval-guard.js` matches Bash too and is a tripwire against an agent's ordinary attempt, not a boundary against a user-level process — guarded by `looks-approval-guard.test.ts`
-- [ ] `apps/indusk-admin/CLAUDE.md`: the approve route takes the mockup's and the foundation's hashes the page showed, and a browser-set fetch header — guarded by `looks.test.tsx`
+- [x] `apps/indusk-mcp/hooks/CLAUDE.md`: `looks-approval-guard.js` matches Bash too and is a tripwire against an agent's ordinary attempt, not a boundary against a user-level process — guarded by `looks-approval-guard.test.ts`
+- [x] `apps/indusk-admin/CLAUDE.md`: the approve route takes the mockup's and the foundation's hashes the page showed, and a browser-set fetch header — guarded by `looks.test.tsx`
 
 #### Build Phase 6 Document
 

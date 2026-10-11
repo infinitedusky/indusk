@@ -132,7 +132,11 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **A look's state is read from `promises/standing` and `looks/*`, never
   computed here**: the Looks page reads `looks/overview`, the dashboard and the
   nav's broken count `readLookStanding`, Approve calls `looks/approvals`'
-  `approve` (the person is `approver`, the foundation the one the page showed).
+  `approve` (the person is `approver`; the mockup's and the foundation's
+  hashes the ones the page showed, each mockup's in a group). The approve
+  route also requires the browser-set `Sec-Fetch-Site: same-origin`, which a
+  local process that sets `Host` and `Origin` does not send — guarded by
+  `looks.test.tsx`.
   Guarded by `cockpit-single-definition.test.ts` (`approvalOf`, `coverageOf`,
   `verdict`, `lookStandingOf`). The Looks page tests run in the node project
   (`vitest.tiers.ts` `NODE_PAGES`) against a real fixture project; a listed
