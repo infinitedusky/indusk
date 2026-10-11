@@ -172,6 +172,14 @@ const TAILWIND_RESET = [
 const GENERATED_HEADER = "/* Generated from foundation.tokens.json — do not edit. */\n";
 
 /**
+ * Whether a stylesheet is the one `generateCss` wrote (`indusk looks tokens
+ * --out`): it opens with the generated header. That file is where an app
+ * defines the foundation's names, with their raw values; the lint holds every
+ * other stylesheet to the rule.
+ */
+export const isGeneratedCss = (text: string): boolean => text.startsWith(GENERATED_HEADER);
+
+/**
  * The dark scheme's values as plain custom properties after the light ones, so
  * a Tailwind utility reading `var(--color-ink)` follows the scheme without a
  * variant. Empty when no token names a dark value.

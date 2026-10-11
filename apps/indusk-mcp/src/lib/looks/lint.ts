@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { extname, relative } from "node:path";
 import stylelint, { type Config, type Plugin } from "stylelint";
 import strictValue from "stylelint-declaration-strict-value";
-import type { Foundation } from "./foundation.js";
+import { type Foundation, isGeneratedCss } from "./foundation.js";
 import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
 
 /**
@@ -22,6 +22,7 @@ export type LintRule =
 	| "raw-value"
 	| "undefined-token"
 	| "undeclared-token"
+	| "redefined-token"
 	| "arbitrary-class"
 	| "stock-class";
 
@@ -141,9 +142,12 @@ function tokenReferences(block: CssBlock) {
 }
 
 /**
- * Tokens a unit of CSS defines or uses that nothing defines. A mockup may add a
- * token only by declaring it new; an app's stylesheet may define its own
- * custom properties but may not use one nothing defines.
+ * Tokens a unit of CSS defines or uses that nothing defines, and the
+ * foundation's own names it defines again. A mockup may add a token only by
+ * declaring it new, and may never give a foundation name a value of its own —
+ * the foundation is the one place a value is approved. An app's stylesheet may
+ * define its own custom properties but not a foundation name (the generated
+ * file is not linted at all), and may not use one nothing defines.
  */
 function tokenFindings(
 	file: string,
@@ -154,6 +158,16 @@ function tokenFindings(
 	const findings: Finding[] = [];
 	const refs = blocks.map(tokenReferences);
 	const local = new Set(refs.flatMap((r) => r.defined.map((d) => d.name)));
+	for (const { name, line } of refs.flatMap((r) => r.defined)) {
+		if (!known.foundation.has(name)) continue;
+		findings.push({
+			file,
+			line,
+			value: name,
+			rule: "redefined-token",
+			message: `${name} is the foundation's — change it in foundation.tokens.json, where a person approves it, not here`,
+		});
+	}
 	if (mockup) {
 		for (const { name, line } of refs.flatMap((r) => r.defined)) {
 			if (known.foundation.has(name) || known.declared.has(name)) continue;
@@ -287,17 +301,23 @@ async function lintSources(
 	const findings: Finding[] = [];
 	const paths = await appSourceFiles(root, sourceDirs);
 	const stylesheets: Array<{ file: string; block: CssBlock }> = [];
+	/** The generated foundation file: its names count as defined, its values are the foundation's. */
+	const generated: CssBlock[] = [];
 	for (const path of paths) {
 		const file = relative(root, path);
 		const ext = extname(path);
 		const text = await readFile(path, "utf-8");
-		if (ext === ".css") stylesheets.push({ file, block: { code: text, startLine: 1 } });
-		else if (CLASS_SOURCE_EXTENSIONS.has(ext)) {
+		if (ext === ".css") {
+			if (isGeneratedCss(text)) generated.push({ code: text, startLine: 1 });
+			else stylesheets.push({ file, block: { code: text, startLine: 1 } });
+		} else if (CLASS_SOURCE_EXTENSIONS.has(ext)) {
 			findings.push(...classFindings(file, text, foundation));
 		}
 	}
 	const definedInApp = new Set(
-		stylesheets.flatMap((s) => tokenReferences(s.block).defined.map((d) => d.name)),
+		[...stylesheets.map((s) => s.block), ...generated].flatMap((b) =>
+			tokenReferences(b).defined.map((d) => d.name),
+		),
 	);
 	for (const { file, block } of stylesheets) {
 		findings.push(...(await rawFindings(file, block)));
