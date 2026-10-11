@@ -8,6 +8,8 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+accepted: 2026-10-11T00:56:34.302Z
+accepted_by: person
 ---
 
 # Plan cockpit — the promise dashboard, the promise page and the plan page
