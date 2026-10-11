@@ -14,7 +14,8 @@ workflow: bugfix
 ## Findings
 
 - Its content today: `indusk` (stdio, `indusk serve`, `PROJECT_ROOT: "."`), `jaeger` (http, a port that changes per daemon start), `posthog` (http). Only the jaeger port is machine-specific. No token is in it now; the ignore rule's reason is for projects that add one.
-- **Regeneration machinery already exists.** `init` adds the indusk server with `claude mcp add -s project -e PROJECT_ROOT=.` (`init.ts` ~line 685); `update` re-registers each enabled extension's declared MCP server idempotently (`update.ts` ~line 652); the telemetry start path upserts the `jaeger` entry. Whether a checkout with no `.mcp.json` ends up with all three after one command is **not yet measured**; the plan's first test does that.
+- **Measured 2026-10-11, in a throwaway clone with `.mcp.json` removed:** `indusk update` creates **no** `.mcp.json` (its MCP handling is guarded by the file existing, and the extensions it prints "MCP server setup — see SKILL.md" for have no `add_command`); `indusk init` creates one holding **only** the `indusk` server (it also scaffolds OpenTelemetry files, which is why `init` is the wrong command to tell an existing clone to run). So the second promise is not true today and the plan has to make it true. Which servers a clone should get follows from which extensions it has enabled, and `.indusk/config.json` is itself per machine, so the command can only promise `indusk` plus each *enabled* extension's declared server.
+- **Regeneration machinery that exists.** `init` adds the indusk server with `claude mcp add -s project -e PROJECT_ROOT=.` (`init.ts` ~line 685); `update` re-registers each enabled extension's declared MCP server idempotently (`update.ts` ~line 652); the telemetry start path upserts the `jaeger` entry. Whether a checkout with no `.mcp.json` ends up with all three after one command is **not yet measured**; the plan's first test does that.
 
 ## Decisions
 

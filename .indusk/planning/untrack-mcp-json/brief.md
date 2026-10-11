@@ -1,7 +1,7 @@
 ---
 title: "Untrack .mcp.json — a machine's MCP config is not versioned, and a clone gets its own"
 date: 2026-10-11
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
@@ -30,7 +30,7 @@ What was found and decided is in [research.md](research.md).
 
 **Must not break**
 
-- None found that name `.mcp.json`; `telemetry-stop-stops-what-it-started` is the nearest and is not touched.
+None.
 
 **Changes**
 
