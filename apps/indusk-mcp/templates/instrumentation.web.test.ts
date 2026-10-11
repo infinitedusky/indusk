@@ -292,4 +292,19 @@ describe("instrumentation.web template", () => {
 			"scheme and host case in the entry still match",
 		).not.toBeNull();
 	});
+
+	it("T8: a query or fragment on an entry is ignored, for exact and pattern entries alike", async () => {
+		for (const entry of ["https://api.example.com/v1?x=1", "https://*.dev.example.com/v1#top"]) {
+			vi.stubEnv("VITE_OTEL_PROPAGATE_TO", entry);
+			const host = entry.includes("*") ? "plan-a.dev.example.com" : "api.example.com";
+			const { sent, clickTraceIds } = await clickAndFetch([
+				`https://${host}/v1/seats`,
+				`https://${host}/v2/seats`,
+			]);
+			const covered = sent[0].traceparent;
+			expect(covered, `${entry}: /v1/seats carries traceparent`).not.toBeNull();
+			expect(clickTraceIds).toContain(traceIdOf(covered));
+			expect(sent[1].traceparent, `${entry}: /v2/seats carries none`).toBeNull();
+		}
+	});
 });
