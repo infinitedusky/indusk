@@ -54,9 +54,10 @@ export interface StandingResult {
 }
 
 /**
- * The dashboard's "held N · broke M of 30 days": `broke` is the violations
- * heard, `held` the days of the thirty without one, and null while the
- * promise has never been seen or heard (nothing was held, nothing watched).
+ * The dashboard's "held N · broke M of 30 days": both count days — `broke` the
+ * days with a violation heard (five on one day are one), `held` the rest of
+ * the thirty — so they add to thirty; null while the promise has never been
+ * seen or heard (nothing was held, nothing watched).
  */
 export interface ThirtyDays {
 	broke: number;
@@ -125,7 +126,7 @@ function heardOver(
 			: heardLatest;
 	return {
 		thirtyDays: {
-			broke: heard.length,
+			broke: brokenDays,
 			held: lastActivity || heard.length ? WINDOW_DAYS - brokenDays : null,
 		},
 		lastBreak,

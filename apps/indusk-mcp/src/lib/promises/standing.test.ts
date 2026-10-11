@@ -218,7 +218,7 @@ const heardRow = (promise: string, at: string, source = "production"): HeardRow 
 describe("the dashboard's thirty days are the package's (plan-cockpit Build Phase 3)", () => {
 	const now = Date.UTC(2026, 9, 10, 12, 0);
 
-	it("counts the breaks heard in thirty days and the days with none, for this promise only", () => {
+	it("counts the days with a break heard in thirty days and the days with none, for this promise only", () => {
 		const r = standingOf(
 			entry(),
 			[seen("production", "green", "2026-10-09T10:00:00.000Z")],
@@ -235,7 +235,7 @@ describe("the dashboard's thirty days are the package's (plan-cockpit Build Phas
 				],
 			},
 		);
-		expect(r.thirtyDays).toEqual({ broke: 3, held: 28 });
+		expect(r.thirtyDays).toEqual({ broke: 2, held: 28 });
 	});
 
 	it("a promise nothing has seen or heard has held null, not thirty", () => {
@@ -270,5 +270,24 @@ describe("the dashboard's thirty days are the package's (plan-cockpit Build Phas
 		);
 		expect(live.lastBreak).toBe("2026-10-10T08:00:00.000Z");
 		expect(standingOf(entry(), [], [], undefined, { now, heard: [] }).lastBreak).toBeNull();
+	});
+});
+
+describe("A40 — the thirty days count days", () => {
+	const now = Date.UTC(2026, 9, 10, 12, 0);
+
+	it("five violations heard on one day are one broken day, and held plus broke is thirty", () => {
+		const r = standingOf(
+			entry(),
+			[seen("production", "green", "2026-10-09T10:00:00.000Z")],
+			[],
+			undefined,
+			{
+				now,
+				heard: [1, 2, 3, 4, 5].map((n) => heardRow("seats-held", `2026-10-08T0${n}:00:00.000Z`)),
+			},
+		);
+		expect(r.thirtyDays).toEqual({ broke: 1, held: 29 });
+		expect((r.thirtyDays.held ?? 0) + r.thirtyDays.broke).toBe(30);
 	});
 });

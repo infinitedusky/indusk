@@ -400,3 +400,92 @@ describe("the page's banner facts come from the package (plan-cockpit Build Phas
 		expect(holding?.broken).toBeNull();
 	});
 });
+
+describe("A39 — a break held open by an incident still has its fix", () => {
+	it("a known-violated promise no source reads red carries the incident's symptom and trace as its break", async () => {
+		const fx = promiseProject({
+			archivedPlans: [OWNER],
+			planFiles: {
+				[`archive/${OWNER}/impl.md`]: impl(OWNER, [["A1", "passing", "src/a.test.ts"]]),
+			},
+			promises: [
+				behaviourPromise(PROMISE, { owner: OWNER, domain: "seating", state: "known-violated" }),
+			],
+			incidents: [
+				openIncidentSpec("i-2026-10-09-seat-released", PROMISE, {
+					symptom: "a held seat was not released",
+					traces: ["t-incident"],
+				}),
+			],
+			domains: ["seating"],
+			files: codeFilesFor(PROMISE),
+		});
+		cleanups.push(() => rmSync(fx.root, { recursive: true, force: true }));
+		const proof = await proofOf(fx.planRoot, PROMISE, deps({ health: healthRead(false) }));
+		expect(proof?.standing.standing).toBe("broken");
+		expect(proof?.broken).toMatchObject({
+			promise: PROMISE,
+			source: "production",
+			symptom: "a held seat was not released",
+			traceId: "t-incident",
+		});
+	});
+
+	it("a promise that is not broken still has no break", async () => {
+		const fx = project();
+		const proof = await proofOf(fx.planRoot, PROMISE, deps({ health: healthRead(false) }));
+		expect(proof?.broken).toBeNull();
+	});
+});
+
+describe("A41 — a violation heard under the promise's earlier name", () => {
+	it("is on its day in the thirty days", async () => {
+		const fx = promiseProject({
+			archivedPlans: [OWNER],
+			planFiles: {
+				[`archive/${OWNER}/impl.md`]: impl(OWNER, [["A1", "passing", "src/a.test.ts"]]),
+			},
+			promises: [
+				behaviourPromise(PROMISE, { owner: OWNER, domain: "seating", aliases: ["seat-let-go"] }),
+			],
+			domains: ["seating"],
+			files: codeFilesFor(PROMISE),
+			extraConfig: {
+				promises: {
+					domains: ["seating"],
+					jaeger: { url: "https://j.example", credential_env: "X" },
+				},
+			},
+		});
+		cleanups.push(() => rmSync(fx.root, { recursive: true, force: true }));
+		appendHeard(home, [
+			{ at: day(27), promise: "seat-let-go", trace: "old", incident: "i1", source: "deployed" },
+			{ at: day(27), promise: PROMISE, trace: "new", incident: "i1", source: "deployed" },
+		]);
+		const proof = await proofOf(fx.planRoot, PROMISE, deps());
+		const days = proof?.days.production ?? [];
+		expect(days.find((d) => d.day === "2026-10-07")?.broken).toBe(2);
+	});
+});
+
+describe("A42 — a change line is a change", () => {
+	it("a changed line whose quoted old statement says confirmed is changed, not confirmed", async () => {
+		const raw = HISTORY_PROMISE.replace(
+			"- 2026-10-02 — changed (seat-fixes): now also covers a timed-out hold.",
+			'- 2026-10-02 — changed by seat-fixes: now covers a timed-out hold. It read: "A seat is confirmed released when its player leaves."',
+		);
+		const fx = promiseProject({
+			archivedPlans: [OWNER],
+			planFiles: {
+				[`archive/${OWNER}/impl.md`]: impl(OWNER, [["A1", "passing", "src/a.test.ts"]]),
+			},
+			promises: [{ ...behaviourPromise(PROMISE, { owner: OWNER, domain: "seating" }), raw }],
+			domains: ["seating"],
+			files: codeFilesFor(PROMISE),
+		});
+		cleanups.push(() => rmSync(fx.root, { recursive: true, force: true }));
+		const proof = await proofOf(fx.planRoot, PROMISE, deps());
+		const line = (proof?.history ?? []).find((e) => e.at === "2026-10-02");
+		expect(line?.kind).toBe("changed");
+	});
+});

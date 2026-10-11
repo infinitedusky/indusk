@@ -159,15 +159,15 @@ export async function proofOf(
 
 /**
  * The first source, production leading, where the promise reads red, with that
- * source's newest violation: the facts `fixPrompt` words. Null when it reads
- * red nowhere (a promise known to be violated, or broken only by incident).
+ * source's newest violation: the facts `fixPrompt` words. When it reads red
+ * nowhere (known to be violated, held open by an incident), the incident's.
  */
 function brokenOf(
 	registry: Registry,
 	entry: PromiseEntry,
 	reads: SourceHealthRead[],
 	nowMs: number,
-): BrokenPromise | null {
+): BrokenPromise {
 	const line = healthLine(registry, reads, new Date(nowMs));
 	const sources = [...line.sources].sort(
 		(a, b) => Number(b.name === "production") - Number(a.name === "production"),
@@ -186,7 +186,37 @@ function brokenOf(
 			tests: entry.tests,
 		};
 	}
-	return null;
+	return heldOpenBy(registry, entry, reads);
+}
+
+/**
+ * A promise broken with no source reading red is held open by its incident (an
+ * open incident moves an enforced promise to known-violated, which reads
+ * amber): the break is the newest incident still open, with its symptom and
+ * first trace, in the project's alarm source. Always a break, so a promise the
+ * dashboard counts broken always has its fix.
+ */
+function heldOpenBy(
+	registry: Registry,
+	entry: PromiseEntry,
+	reads: SourceHealthRead[],
+): BrokenPromise {
+	const source = alarmSource(reads.map((r) => r.name));
+	const label = reads.find((r) => r.name === source)?.label ?? source;
+	const open = registry.incidents
+		.filter((i) => i.promise === entry.name && i.status !== "fixed")
+		.sort((a, b) => (b.opened ?? b.date).localeCompare(a.opened ?? a.date))[0];
+	const symptom = open?.symptom.split("\n")[0]?.trim();
+	const traceId = open?.traces[0];
+	return {
+		promise: entry.name,
+		source,
+		sourceLabel: label,
+		statement: entry.statement,
+		...(symptom ? { symptom } : {}),
+		...(traceId ? { traceId } : {}),
+		tests: entry.tests,
+	};
 }
 
 /** Marks grouped by service and operation, in the order first met; a place seen only upheld has no `lastBroken`. */
@@ -233,10 +263,17 @@ async function daysOf(
 	const days: Partial<Record<SourceName, ProofDay[]>> = {};
 	const unread: Partial<Record<SourceName, string>> = {};
 	for (const source of names) {
-		const broken = countHeard(
+		const counted = countHeard(
 			heard.filter((r) => heardSource(r, names) === source),
 			{ since: new Date(start), bucketMs: DAY_MS },
-		).get(entry.name);
+		);
+		// A break heard under an earlier name is this promise's, on its day.
+		const broken = new Map<number, number>();
+		for (const name of [entry.name, ...entry.aliases]) {
+			for (const [bucket, n] of counted.get(name) ?? []) {
+				broken.set(bucket, (broken.get(bucket) ?? 0) + n);
+			}
+		}
 		const held = new Map<number, number>();
 		const window = await readWindow(projectRoot, registry, source, start, TIMEOUT_MS, deps);
 		if (window.ok) {
@@ -253,7 +290,7 @@ async function daysOf(
 			return {
 				day: new Date(t).toISOString().slice(0, 10),
 				held: held.get(t) ?? 0,
-				broken: broken?.get(t) ?? 0,
+				broken: broken.get(t) ?? 0,
 			};
 		});
 	}
@@ -294,10 +331,15 @@ function incidentEvents(i: IncidentEntry): ProofEvent[] {
 	return events;
 }
 
+/**
+ * The event a history line records, read from the words it opens with — the
+ * part before its first colon — and never from its reason or the old statement
+ * a change quotes: a statement saying "confirmed" does not confirm anything.
+ */
 function kindOf(text: string): ProofEvent["kind"] {
-	const first = text.trim().toLowerCase();
-	if (first.startsWith("declared")) return "declared";
-	if (first.startsWith("enforced") || first.includes("confirmed")) return "confirmed";
-	if (first.startsWith("changed")) return "changed";
+	const head = (text.split(":")[0] ?? "").trim().toLowerCase();
+	if (head.startsWith("declared")) return "declared";
+	if (head.startsWith("changed")) return "changed";
+	if (head.startsWith("enforced") || /\bconfirmed for\b/.test(head)) return "confirmed";
 	return "note";
 }
