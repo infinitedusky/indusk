@@ -21,6 +21,8 @@ export default defineConfig({
 			"@opentelemetry/instrumentation-document-load",
 			"@opentelemetry/instrumentation-user-interaction",
 			"@opentelemetry/exporter-trace-otlp-http",
+			"@opentelemetry/context-zone",
+			"zone.js",
 			"@opentelemetry/resources",
 			"@opentelemetry/semantic-conventions",
 		],

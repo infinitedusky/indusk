@@ -9,6 +9,7 @@
 // recorder sees the headers the instrumentation injected. An in-memory exporter
 // on a provider registered first reads the click span back. Requests are
 // recorded, never sent.
+import { context, trace } from "@opentelemetry/api";
 import { InMemorySpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -43,17 +44,24 @@ afterEach(() => {
 	document.body.innerHTML = "";
 });
 
-/** Import the template fresh, click a button whose handler fetches `urls`, return what was sent. */
+/**
+ * Import the template fresh, click a button whose handler fetches `urls`, return what was sent.
+ * With `afterAwait` the handler awaits a microtask first, as real handlers do.
+ */
 async function clickAndFetch(
 	urls: string[],
-): Promise<{ sent: Recorded[]; clickTraceIds: string[] }> {
+	{ afterAwait = false }: { afterAwait?: boolean } = {},
+): Promise<{ sent: Recorded[]; clickTraceIds: string[]; activeTraceId?: string }> {
 	await import(/* @vite-ignore */ `./instrumentation.web.ts?fresh=${++imports}`);
 	const button = document.createElement("button");
 	document.body.append(button);
 	// All fetches start synchronously inside the handler: the stack context manager
 	// does not follow an await, and propagation from a click is about the call made
 	// while the click is the active span.
-	button.addEventListener("click", () => {
+	let activeTraceId: string | undefined;
+	button.addEventListener("click", async () => {
+		activeTraceId = trace.getSpan(context.active())?.spanContext().traceId;
+		if (afterAwait) await Promise.resolve();
 		for (const url of urls) void fetch(url);
 	});
 	button.click();
@@ -65,7 +73,7 @@ async function clickAndFetch(
 		.getFinishedSpans()
 		.filter((s) => s.name === "click")
 		.map((s) => s.spanContext().traceId);
-	return { sent: recorded, clickTraceIds };
+	return { sent: recorded, clickTraceIds, activeTraceId };
 }
 
 const traceIdOf = (traceparent: string | null) => traceparent?.split("-")[1];
@@ -104,5 +112,40 @@ describe("instrumentation.web template", () => {
 			expect(clickTraceIds).toContain(traceIdOf(tp));
 		}
 		expect(by("dev.example.com.evil.test")?.traceparent, "lookalike carries none").toBeNull();
+	});
+
+	it("A9: an exact origin matches the request however the entry is cased or spelled", async () => {
+		for (const entry of ["https://API.Example.com", "https://api.example.com:443"]) {
+			vi.stubEnv("VITE_OTEL_PROPAGATE_TO", entry);
+			const { sent, clickTraceIds } = await clickAndFetch(["https://api.example.com/seats"]);
+			expect(sent[0].traceparent, `entry ${entry} carries traceparent`).not.toBeNull();
+			expect(clickTraceIds).toContain(traceIdOf(sent[0].traceparent));
+		}
+	});
+
+	it("A10: a bare * propagates nowhere, and a scheme-less entry is reported once", async () => {
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "*");
+		const star = await clickAndFetch(["https://api.thirdparty.example/v1/x"]);
+		expect(star.sent[0].traceparent, "bare * sends no traceparent to a third party").toBeNull();
+
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "localhost:3000");
+		await clickAndFetch(["http://localhost:3000/api"]);
+		const naming = warn.mock.calls.filter((c) => String(c[0]).includes("localhost:3000"));
+		warn.mockRestore();
+		expect(naming.length, "one warning names the scheme-less entry").toBe(1);
+	});
+
+	it("A11: a request made after an await in the click handler is in the click's trace", async () => {
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "http://localhost:3000");
+		const { sent, activeTraceId } = await clickAndFetch(
+			[`${location.origin}/api/ping`, "http://localhost:3000/api/seats"],
+			{ afterAwait: true },
+		);
+		expect(activeTraceId, "a click span was active in the handler").toBeDefined();
+		for (const r of sent) {
+			expect(r.traceparent, `${r.url} carries traceparent after await`).not.toBeNull();
+			expect(traceIdOf(r.traceparent)).toBe(activeTraceId);
+		}
 	});
 });
