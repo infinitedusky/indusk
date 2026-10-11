@@ -264,7 +264,11 @@ An app's look is held by mockups a person approved: every visual value comes fro
 - [x] `apps/indusk-mcp/src/lib/looks/report.ts`, exported as `./looks/report`: one span per screen × state × device, held or broken, through the promise mark's attributes
 - [x] `indusk looks check <app> [--url]`
 - [x] Add `looks-browser.contract.test.ts` to `vitest.tiers.ts` `SYSTEM`
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-mcp/src/bin/commands/looks.ts`) — `looksCheck` printed each look's head and findings inline in its loop; named `lookLines(result)` so the check's output grammar has one place, as `statusLine` is for status. Rule: Should this inline block have been a named function or module?
+- [x] Shape (`apps/indusk-mcp/src/lib/looks/check.ts`) — `checkable` spelled the `{ screen, state, path? }` shape inline twice; named `LookTarget`. Rule: Does the name say what it is for, rather than how it works?
+- [x] Shape (`apps/indusk-mcp/src/lib/looks/check.ts`) — reviewed, left as-is: `checkApp` resolves the URL, starts the browser and loops screens x devices in one function because the browser must be closed on every path (`finally`) and the loop is the only thing inside it; splitting would pass the browser through a second function for no seam a test can reach without Chromium (`checkable` and `pageUrl` are the seams, and are named and tested)
+- [x] Shape (`apps/indusk-mcp/src/lib/looks/verdict.ts`) — reviewed, left as-is: `canon`, `isInitial` and `distance` each switch on the value's kind; one table of per-kind behaviour would hide the three questions (spelling, browser default, order) in one object a reader must hold whole
 
 #### Build Phase 3 Verification
 

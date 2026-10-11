@@ -4,7 +4,7 @@ import { checkApp } from "../../lib/looks/check.js";
 import { coverageOf } from "../../lib/looks/coverage.js";
 import { lintApp } from "../../lib/looks/lint.js";
 import { type Mockup, readApp } from "../../lib/looks/mockups.js";
-import { describe, reportLooks } from "../../lib/looks/report.js";
+import { describe, type LookResult, reportLooks } from "../../lib/looks/report.js";
 import { markProjectId } from "../../lib/promises/config.js";
 
 /**
@@ -87,6 +87,12 @@ export async function looksCoverage(projectRoot: string, appName: string): Promi
 	}
 }
 
+/** A look's output: `held|broken <screen>.<state> @ <device>`, then one indented line per finding. */
+function lookLines(r: LookResult): string[] {
+	const head = `${r.verdict.state === "held" ? "held   " : "broken "} ${r.screen}.${r.state} @ ${r.device}`;
+	return [head, ...r.verdict.findings.map((f) => `  ${describe(f)}`)];
+}
+
 /**
  * `indusk looks check <app> [--url]` — opens each declared screen state with
  * an approved mockup at each reference device in Chromium and judges the
@@ -105,12 +111,7 @@ export async function looksCheck(
 	try {
 		const app = await readApp(projectRoot, appName);
 		const { results, unchecked } = await checkApp(app, readApprovals(app), opts.url);
-		for (const r of results) {
-			console.info(
-				`${r.verdict.state === "held" ? "held   " : "broken "} ${r.screen}.${r.state} @ ${r.device}`,
-			);
-			for (const f of r.verdict.findings) console.info(`  ${describe(f)}`);
-		}
+		for (const r of results) for (const line of lookLines(r)) console.info(line);
 		for (const u of unchecked) console.info(`unchecked ${u.mockup} — ${u.reason}`);
 		reportLooks(results, initEvalOtel(projectRoot), { project: markProjectId(projectRoot) });
 		await shutdownEvalOtel();

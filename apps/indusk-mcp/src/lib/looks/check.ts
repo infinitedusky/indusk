@@ -20,6 +20,13 @@ import { MEASURED_PROPERTIES, type MeasuredElement, verdict } from "./verdict.js
 
 export class LooksCheckError extends Error {}
 
+/** One screen state to open: the screen, its state and the path it is served at, when declared. */
+export interface LookTarget {
+	screen: string;
+	state: string;
+	path?: string;
+}
+
 /** A screen state that was not checked, and why. */
 export interface Unchecked {
 	mockup: string;
@@ -119,8 +126,8 @@ export function pageUrl(
 export function checkable(
 	app: LooksApp,
 	approvals: readonly ApprovalEntry[],
-): { checked: { screen: string; state: string; path?: string }[]; unchecked: Unchecked[] } {
-	const checked: { screen: string; state: string; path?: string }[] = [];
+): { checked: LookTarget[]; unchecked: Unchecked[] } {
+	const checked: LookTarget[] = [];
 	const unchecked: Unchecked[] = [];
 	for (const screen of app.screens) {
 		for (const state of screen.states) {
