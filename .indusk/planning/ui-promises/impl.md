@@ -263,7 +263,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 - [x] `apps/indusk-mcp/src/lib/looks/check.ts`, exported as `./looks/check`: `playwright-core` (Apache-2.0) opens each declared screen at each device against the app's configured URL, reads `:root` custom properties and each element's colour, length, radius, shadow, font, `transition-duration` and `transition-timing-function`, and hands them to `verdict`; `playwright-core` an optional dependency, refused by name when absent
 - [x] `apps/indusk-mcp/src/lib/looks/report.ts`, exported as `./looks/report`: one span per screen × state × device, held or broken, through the promise mark's attributes
 - [x] `indusk looks check <app> [--url]`
-- [ ] Add `looks-browser.contract.test.ts` to `vitest.tiers.ts` `SYSTEM`
+- [x] Add `looks-browser.contract.test.ts` to `vitest.tiers.ts` `SYSTEM`
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 3 Verification
