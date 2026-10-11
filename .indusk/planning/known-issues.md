@@ -190,6 +190,13 @@ Each entry says what happens, where it was seen, and what we know so far.
 
 ## Tests
 
+- **Waiting evaluations have no retry cap** (evaluator-waits-out-limits,
+  2026-10-10). Each commit's trigger retries every waiting commit, each
+  spawning a detached evaluator; after a long limit (the weekly one) resets, a
+  backlog fans out at once and can be rate-limited again. Nothing is lost —
+  refused ones stay queued — but quota is spent in a burst. Fix: retry at most
+  a few per trigger, oldest first.
+
 - **Landing a plan that adds a dependency breaks `pnpm install:local`.** The
   branch's worktree had `fast-xml-parser` installed; the main checkout did not,
   so `install:local` (landing's install step) failed in `prepublishOnly` with

@@ -1,4 +1,5 @@
 import type { Location, PanelModel, PanelPromise } from "./panel.js";
+import { stamp } from "./view.js";
 
 /**
  * The promises panel as HTML (vscode-extension ADR decision 7). `panelBody`
@@ -7,7 +8,12 @@ import type { Location, PanelModel, PanelPromise } from "./panel.js";
  * is escaped: symptoms and reasons come from spans.
  */
 
-export function panelBody(model: PanelModel, activity: string[], project = ""): string {
+export function panelBody(
+	model: PanelModel,
+	activity: string[],
+	project = "",
+	timeZone?: string,
+): string {
 	// Every window reads its own project's promises; the name says whose they are.
 	const title = project
 		? `<p class="project" title="The project this window has open">${esc(project)}</p>`
@@ -15,7 +21,7 @@ export function panelBody(model: PanelModel, activity: string[], project = ""): 
 	const reading = model.notReading ? `<p class="note">Not reading: no promise health yet.</p>` : "";
 	const broken =
 		model.broken.length > 0
-			? `<h2>Broken</h2>${model.broken.map(card).join("")}`
+			? `<h2>Broken</h2>${model.broken.map((p) => card(p, timeZone)).join("")}`
 			: `<p class="note">Nothing broken.</p>`;
 	const rest = model.groups
 		.map(
@@ -31,11 +37,11 @@ export function panelBody(model: PanelModel, activity: string[], project = ""): 
 	return `${title}${reading}${broken}${rest}${runs}`;
 }
 
-function card(p: PanelPromise): string {
+function card(p: PanelPromise, timeZone?: string): string {
 	const facts = [
 		p.plan ? `plan ${esc(p.planTitle ?? p.plan)}` : "",
 		p.source ? `in ${esc(p.source)}` : "",
-		p.brokeAt ? `last broke ${esc(p.brokeAt.slice(0, 16).replace("T", " "))} UTC` : "",
+		p.brokeAt ? `last broke ${esc(stamp(p.brokeAt, timeZone))}` : "",
 	]
 		.filter(Boolean)
 		.join(" · ");

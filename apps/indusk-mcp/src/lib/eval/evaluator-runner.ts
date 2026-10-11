@@ -11,14 +11,22 @@ import { join } from "node:path";
 import { evalDir } from "../bookkeeping/roots.js";
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { markProjectId } from "../promises/config.js";
+import { spawnClaude } from "./claude-run.js";
 import { ingestScorecard } from "./findings.js";
+import {
+	askForScorecard,
+	hasScorecard,
+	isLimitRefusal,
+	leaveWaiting,
+	noScorecardReason,
+} from "./limits.js";
 import { EvalLogWriter } from "./log-writer.js";
 import { initEvalOtel, markEvaluation, shutdownEvalOtel, withSpan } from "./otel.js";
 import { evaluatorPermissionArgs } from "./permissions.js";
 import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import { claudeExitReason, extractScorecardJson, formatParseError } from "./scorecard-extractor.js";
-import type { EvalErrorEntry, EvalScorecard } from "./types.js";
+import type { EvalErrorEntry, EvalScorecard, EvalWaitingEntry } from "./types.js";
 
 export interface EvaluatorRunOptions {
 	/**
@@ -196,7 +204,7 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
  */
 export async function runEvaluatorSync(
 	opts: EvaluatorRunOptions,
-): Promise<EvalScorecard | EvalErrorEntry> {
+): Promise<EvalScorecard | EvalErrorEntry | EvalWaitingEntry> {
 	const tracer = initEvalOtel(opts.projectRoot);
 	const source = process.env.INDUSK_EVAL_SOURCE ?? "commit";
 	const projectGroup = getProjectGroupId(opts.projectRoot);
@@ -225,7 +233,7 @@ export async function runEvaluatorSync(
 async function runEvaluatorSyncInner(
 	opts: EvaluatorRunOptions,
 	projectGroup: string,
-): Promise<EvalScorecard | EvalErrorEntry> {
+): Promise<EvalScorecard | EvalErrorEntry | EvalWaitingEntry> {
 	const prompt = buildEvaluatorPrompt({
 		rubric: V1_RUBRIC,
 		changeId: opts.changeId,
@@ -245,105 +253,99 @@ async function runEvaluatorSyncInner(
 		".mcp.json",
 	];
 
-	return new Promise((resolve) => {
-		// cwd = git repo so `git show ${changeId}` resolves; falls back to the
-		// state root for single-repo callers (gitRoot === projectRoot there).
-		const child = spawn("claude", args, {
-			cwd: opts.gitRoot ?? opts.projectRoot,
-			stdio: ["pipe", "pipe", "pipe"],
-			env: { ...process.env },
-		});
+	// cwd = git repo so `git show ${changeId}` resolves; falls back to the
+	// state root for single-repo callers (gitRoot === projectRoot there).
+	const cwd = opts.gitRoot ?? opts.projectRoot;
+	const logWriter = new EvalLogWriter(getEvalLogPath(opts.projectRoot));
+	let stdout = "";
 
-		let stdout = "";
-		let stderr = "";
-		let settled = false;
-		// A binary that cannot start raises `error` and never `close`; unheard,
-		// it kills the evaluator before the run is marked (day-monitor A25).
-		child.on("error", (err) => {
-			stderr += `claude could not be started: ${err.message}`;
-			void finish(-1);
-		});
-		child.stdin?.on("error", () => {
-			// the child is gone; its exit or spawn error already says why
-		});
-		child.stdin?.write(prompt);
-		child.stdin?.end();
+	try {
+		let run = await spawnClaude(args, prompt, cwd);
+		stdout = run.stdout;
 
-		child.stdout?.on("data", (chunk: Buffer) => {
-			stdout += chunk.toString();
-		});
+		// A limit is the model's refusal, not a verdict on the commit: it waits.
+		if (isLimitRefusal(run)) {
+			const waiting = leaveWaiting(opts, run);
+			await logWriter.append(waiting);
+			return waiting;
+		}
+		if (run.code !== 0) {
+			throw new Error(claudeExitReason(run.code, run.stderr, run.stdout));
+		}
 
-		child.stderr?.on("data", (chunk: Buffer) => {
-			stderr += chunk.toString();
-		});
-
-		child.on("close", (code) => void finish(code));
-
-		async function finish(code: number | null): Promise<void> {
-			if (settled) return;
-			settled = true;
-			const logWriter = new EvalLogWriter(getEvalLogPath(opts.projectRoot));
-
-			try {
-				if (code !== 0) {
-					throw new Error(claudeExitReason(code, stderr, stdout));
+		// An answer with no scorecard is asked once more, in its own session.
+		if (!hasScorecard(run.stdout)) {
+			const again = await askForScorecard(run, undefined, cwd);
+			if (again) {
+				run = again;
+				stdout = again.stdout;
+				if (isLimitRefusal(again)) {
+					const waiting = leaveWaiting(opts, again);
+					await logWriter.append(waiting);
+					return waiting;
 				}
-
-				let scorecardText = stdout;
-				let syncUsage: import("./types.js").EvalUsage | undefined;
-				try {
-					const jsonOutput = JSON.parse(stdout);
-					scorecardText = jsonOutput.result ?? jsonOutput.text ?? jsonOutput.content ?? stdout;
-					if (jsonOutput.total_cost_usd !== undefined || jsonOutput.usage) {
-						const u = jsonOutput.usage ?? {};
-						syncUsage = {
-							costUsd: jsonOutput.total_cost_usd ?? 0,
-							inputTokens: u.input_tokens ?? 0,
-							outputTokens: u.output_tokens ?? 0,
-							cacheCreationTokens: u.cache_creation_input_tokens ?? 0,
-							cacheReadTokens: u.cache_read_input_tokens ?? 0,
-							durationMs: jsonOutput.duration_ms ?? 0,
-						};
-					}
-				} catch {
-					// raw JSON
+				if (again.code !== 0) {
+					throw new Error(claudeExitReason(again.code, again.stderr, again.stdout));
 				}
-
-				// Tolerantly extract scorecard JSON — see scorecard-extractor.ts.
-				const extracted = extractScorecardJson(scorecardText);
-				if (extracted !== null) {
-					scorecardText = extracted;
-				}
-
-				const scorecard = JSON.parse(scorecardText.trim()) as EvalScorecard;
-				scorecard.timestamp = new Date().toISOString();
-				if (syncUsage) scorecard.usage = syncUsage;
-				scorecard.telemetryPosted = false;
-
-				if (opts.evalEndpoint) {
-					await postTelemetry(opts.evalEndpoint, scorecard);
-					scorecard.telemetryPosted = true;
-				}
-
-				await logWriter.append(scorecard);
-				ingestScorecard(opts.projectRoot, scorecard);
-				resolve(scorecard);
-			} catch (err) {
-				const errorEntry: EvalErrorEntry = {
-					version: 1,
-					timestamp: new Date().toISOString(),
-					mode: opts.mode,
-					changeId: opts.changeId,
-					error: true,
-					message: stdout
-						? formatParseError(err, stdout)
-						: err instanceof Error
-							? err.message
-							: String(err),
-				};
-				await logWriter.append(errorEntry);
-				resolve(errorEntry);
+			}
+			if (!hasScorecard(run.stdout)) {
+				throw new Error(noScorecardReason(run.stdout));
 			}
 		}
-	});
+
+		let scorecardText = stdout;
+		let syncUsage: import("./types.js").EvalUsage | undefined;
+		try {
+			const jsonOutput = JSON.parse(stdout);
+			scorecardText = jsonOutput.result ?? jsonOutput.text ?? jsonOutput.content ?? stdout;
+			if (jsonOutput.total_cost_usd !== undefined || jsonOutput.usage) {
+				const u = jsonOutput.usage ?? {};
+				syncUsage = {
+					costUsd: jsonOutput.total_cost_usd ?? 0,
+					inputTokens: u.input_tokens ?? 0,
+					outputTokens: u.output_tokens ?? 0,
+					cacheCreationTokens: u.cache_creation_input_tokens ?? 0,
+					cacheReadTokens: u.cache_read_input_tokens ?? 0,
+					durationMs: jsonOutput.duration_ms ?? 0,
+				};
+			}
+		} catch {
+			// raw JSON
+		}
+
+		// Tolerantly extract scorecard JSON — see scorecard-extractor.ts.
+		const extracted = extractScorecardJson(scorecardText);
+		if (extracted !== null) {
+			scorecardText = extracted;
+		}
+
+		const scorecard = JSON.parse(scorecardText.trim()) as EvalScorecard;
+		scorecard.timestamp = new Date().toISOString();
+		if (syncUsage) scorecard.usage = syncUsage;
+		scorecard.telemetryPosted = false;
+
+		if (opts.evalEndpoint) {
+			await postTelemetry(opts.evalEndpoint, scorecard);
+			scorecard.telemetryPosted = true;
+		}
+
+		await logWriter.append(scorecard);
+		ingestScorecard(opts.projectRoot, scorecard);
+		return scorecard;
+	} catch (err) {
+		const errorEntry: EvalErrorEntry = {
+			version: 1,
+			timestamp: new Date().toISOString(),
+			mode: opts.mode,
+			changeId: opts.changeId,
+			error: true,
+			message: stdout
+				? formatParseError(err, stdout)
+				: err instanceof Error
+					? err.message
+					: String(err),
+		};
+		await logWriter.append(errorEntry);
+		return errorEntry;
+	}
 }
