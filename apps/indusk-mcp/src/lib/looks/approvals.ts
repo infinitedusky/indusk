@@ -1,8 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { userInfo } from "node:os";
 import { dirname, join } from "node:path";
 import { withLock } from "../agents/lock.js";
 import { commitNote, currentMdPath, type NoteCommit, oneLine } from "../bookkeeping/notes.js";
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
+import { git } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
 import { type LooksApp, LooksAppError, MOCKUPS_DIR, type Mockup, readApp } from "./mockups.js";
 
@@ -103,22 +105,43 @@ export type ApproveResult =
  * through the notes writer (`commitNote`) — only that file. A mockup already
  * approved as it is gets no second entry. Called by the cockpit's Approve
  * with the person who pressed it; nothing else in the package calls it.
+ *
+ * The foundation has no approval of its own: an entry binds the foundation's
+ * hash with the mockup's, so approving a mockup approves the foundation it is
+ * drawn on. `seen.foundationHash` is the foundation the person was shown; an
+ * approval of any other — one changed on `main` since, or one only a plan
+ * worktree holds — is refused, so a foundation is never approved unseen.
  */
 export async function approve(
 	anyCheckout: string,
 	appName: string,
 	mockupName: string,
 	by: string,
+	seen: { foundationHash?: string } = {},
 ): Promise<ApproveResult> {
 	if (!isUsableSegment(appName)) {
 		return { approved: false, reason: `${JSON.stringify(appName)} is not an app name` };
 	}
 	if (by.trim() === "") return { approved: false, reason: "an approval needs who gave it" };
 	const { trunk } = bookkeepingRoots(anyCheckout);
-	const app = await readApp(trunk, appName);
+	let app: LooksApp;
+	try {
+		app = await readApp(trunk, appName);
+	} catch (err) {
+		return { approved: false, reason: `${(err as Error).message} (read on main)` };
+	}
 	const mockup = app.mockups.find((m) => m.name === mockupName);
 	if (!mockup) {
-		return { approved: false, reason: `${appName} has no mockup ${JSON.stringify(mockupName)}` };
+		return {
+			approved: false,
+			reason: `${appName} has no mockup ${JSON.stringify(mockupName)} on main — a mockup is approved as main holds it`,
+		};
+	}
+	if (seen.foundationHash !== undefined && seen.foundationHash !== app.foundation.hash) {
+		return {
+			approved: false,
+			reason: `the foundation on main is not the one shown (${seen.foundationHash.slice(0, 8)}, main has ${app.foundation.hash.slice(0, 8)}) — open the mockup again and approve what main holds`,
+		};
 	}
 	const lock = `${currentMdPath(anyCheckout)}.lock`;
 	mkdirSync(dirname(lock), { recursive: true });
@@ -147,4 +170,19 @@ export async function approve(
 		);
 		return { approved: true, entry, commit };
 	});
+}
+
+/**
+ * Who an approval is recorded as: the person the project's git knows
+ * (`user.name`), else the account the admin runs as. The admin is the
+ * person's own daemon on their machine, so either is them.
+ */
+export async function approver(root: string): Promise<string> {
+	try {
+		const name = await git(root, "config", "user.name");
+		if (name) return name;
+	} catch {
+		// no git identity configured
+	}
+	return userInfo().username;
 }

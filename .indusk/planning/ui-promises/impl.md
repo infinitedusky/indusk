@@ -304,7 +304,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 **Goal**: mockups open at each device, a person approves them, uncovered parts are named, and a broken look sits on the dashboard first.
 
 - [x] `apps/indusk-admin/src/app/p/[project]/looks/page.tsx`: each app's mockups with their state (approved, proposed, uncovered), a device choice, the mockup in a frame at that device's size; uncovered screens, states and components listed
-- [ ] `POST /api/looks/[app]/approve`: calls `looks/approvals`' `approve` with the person; refuses a mockup whose foundation is not approved
+- [x] `POST /api/looks/[app]/approve`: calls `looks/approvals`' `approve` with the person; refuses a mockup whose foundation is not approved
 - [ ] Looks in `promises/standing` (the one reader): each screen × state × device a row beside promises; the dashboard and the nav's broken count read them; the editor's health reader shows them
 - [ ] The nav gains Looks under Promises
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here

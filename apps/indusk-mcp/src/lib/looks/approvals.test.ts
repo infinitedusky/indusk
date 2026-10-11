@@ -87,6 +87,17 @@ describe("approve — the cockpit's writer", () => {
 		expect(readFileSync(join(f.main, RECORD), "utf-8")).toBe(before);
 	});
 
+	it("refuses an approval of a foundation other than the one main holds, writing nothing", async () => {
+		const before = readFileSync(join(f.main, RECORD), "utf-8");
+		const r = await approve(f.main, "demo", "home.full", "sandy", { foundationHash: "f".repeat(64) });
+		expect(r).toMatchObject({ approved: false, reason: expect.stringMatching(/foundation on main/) });
+		expect(readFileSync(join(f.main, RECORD), "utf-8")).toBe(before);
+		const { app } = await mockupOf("home.full");
+		expect(
+			await approve(f.main, "demo", "home.full", "sandy", { foundationHash: app.foundation.hash }),
+		).toMatchObject({ approved: true });
+	});
+
 	it("refuses an unknown mockup, an app name that leaves the folder, and an approval by nobody", async () => {
 		expect(await approve(f.main, "demo", "nope", "sandy")).toMatchObject({ approved: false });
 		expect(await approve(f.main, "../demo", "home.full", "sandy")).toMatchObject({
