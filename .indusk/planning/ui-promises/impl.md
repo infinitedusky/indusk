@@ -235,7 +235,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: `looks-approval-guard.js` refuses an agent's write to `approved.json`; a mockup is approved only through the cockpit — guarded by `looks-approval-guard.test.ts`
+- [x] `apps/indusk-mcp/hooks/CLAUDE.md`: `looks-approval-guard.js` refuses an agent's write to `approved.json`; a mockup is approved only through the cockpit — guarded by `looks-approval-guard.test.ts`
 
 #### Build Phase 2 Document
 
