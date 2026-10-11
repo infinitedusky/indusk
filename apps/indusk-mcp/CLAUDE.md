@@ -180,6 +180,13 @@ pointer; the pointer holds the story.
   nearest token are never computed in the browser, the CLI or the admin — a
   verdict decided where the page runs cannot be read without Chromium. —
   guarded by `verdict.test.ts`; see `/reference/cli/looks`
+- **The no-raw-value lint is three modules, and a new rule goes in its own**:
+  `lint-values` (the strict list, the stylelint rules, `cssFindings`),
+  `lint-classes` (the Tailwind vocabulary a theme reset changes) and the token
+  checks in `lint`, which also orchestrates; `lint-types` holds the shared
+  shapes so neither imports `lint` back. A rule added to `lint.ts` is the
+  500-line file this split undid — guarded by the file-size attention-focus and
+  `looks-lint-rules.test.ts`; see `/reference/cli/looks`
 
 ## Eval, agents, skills, extensions
 

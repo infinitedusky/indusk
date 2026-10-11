@@ -515,11 +515,11 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 #### Build Phase 7 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`: the lint's rules are three modules — values, classes and tokens — and a new rule goes in its own, never into `lint.ts` — guarded by the file-size attention-focus and `looks-lint-rules.test.ts`
+- [x] `apps/indusk-mcp/CLAUDE.md`: the lint's rules are three modules — values, classes and tokens — and a new rule goes in its own, never into `lint.ts` — guarded by the file-size attention-focus and `looks-lint-rules.test.ts`
 
 #### Build Phase 7 Document
 
-- [ ] `apps/docs/src/reference/cli/looks.md`: one line under the lint section naming where each rule lives (`lint-values`, `lint-classes`, `lint`'s token checks) so a new rule has a home
+- [x] `apps/docs/src/reference/cli/looks.md`: one line under the lint section naming where each rule lives (`lint-values`, `lint-classes`, `lint`'s token checks) so a new rule has a home
 
 ## Files Affected
 
