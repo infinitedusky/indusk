@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { stamp } from "@/lib/stamp";
 import type {
   CellState,
   Strip,
@@ -52,7 +53,7 @@ export function PromiseTimeline({
             data-state={c.state}
             data-from={c.from}
             {...(c.atLeast ? { "data-at-least": "" } : {})}
-            title={`${c.from.slice(0, 16).replace("T", " ")} — ${SAID[c.state]}${c.runs ? ` (${c.atLeast ? "at least " : ""}${c.runs} run${c.runs === 1 ? "" : "s"})` : ""}`}
+            title={`${stamp(c.from)} — ${SAID[c.state]}${c.runs ? ` (${c.atLeast ? "at least " : ""}${c.runs} run${c.runs === 1 ? "" : "s"})` : ""}`}
             className={`h-full flex-1 rounded-[1px] ${CELL[c.state]} ${c.atLeast ? "opacity-70" : ""}`}
           />
         ))}

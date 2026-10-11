@@ -833,3 +833,21 @@ tool read through it; nothing parses the directory itself. Inside the
 package the module has three homes: `registry.ts` reads, `citations.ts`
 scans the code root for tokens (`citedNames`), `check.ts` judges the two
 against each other.
+
+### What the cockpit reads: `promises/rows`, `standing`, `proof`, `fix`
+
+Four more subpaths hold every fact the admin's promise dashboard and promise
+page show about a promise (plan-cockpit). The admin and the editor read them;
+neither computes the fact itself, and `cockpit-single-definition.test.ts`
+fails if either defines one.
+
+| Subpath | Exports | What it answers |
+|---------|---------|-----------------|
+| `promises/rows` | `rowsNaming(planRoot, promise)`, `rowsNamingEach(planRoot, promises)` | The test rows, in any plan active or archived, whose `For` cell names the promise or an earlier name of it: id, state, test files, plan. `rowsNamingEach` reads each impl once for a whole registry. A plan whose impl cannot be read is named in `unreadable`, never skipped |
+| `promises/standing` | `standingOf(entry, health, rows, sources?)`, `readStanding(projectRoot, deps?)` | One word per promise: `broken`, `being-proven`, `declared`, `enforced` or `retired`; each source's chip; the tests passing and in all; the last time any source saw it. *Broken* is red from the alarm source (production when the project names one, otherwise local) or a `known-violated` state; *being proven* is a declared promise whose rows are written and not all passing. Health is never recomputed: each chip is `promises/health`'s `healthRows` by the source's own rule |
+| `promises/proof` | `proofOf(projectRoot, name, deps?)` | What a promise's page shows: the naming rows; each place it was marked (service and operation, last held, last broken, or "never seen"); thirty UTC days per source, held from the store and broken from what this machine's recorder heard (counted whether or not a page was open); the dated history (declared, confirmed, changed, each incident and its fix); and the banner *the tests miss the case* when a promise is broken while every row naming it passes. Null for a name the registry does not hold |
+| `promises/fix` | `fixPrompt(broken)`, `cleanFacts(broken)`, `BrokenPromise` | The first message *Start a fix plan* (admin) and *Fix with Claude* (editor) hand the developer's own `claude`: the promise, where it is broken, its symptom, a link to the trace and its tests. Every fact is cleaned to one line with control characters removed before it reaches a terminal. Moved from the editor |
+
+Every read the last three make is a dependency — the health reads, the store's
+clock and window reader, the marks, the recorder's home — so a test hands them
+in and nothing waits on a Jaeger.

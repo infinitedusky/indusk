@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { isAlive, realProcessReads } from "../process-identity.js";
-import type { SessionKind } from "./protocol.js";
+import type { QuestionEvent, SessionKind } from "./protocol.js";
 import { type Session, type SessionOptions, type StartedEvent, startSession } from "./start.js";
 
 /**
@@ -111,6 +111,21 @@ export class SessionManager {
 	/** The running session's record, if any. */
 	current(): SessionRecord | undefined {
 		return [...this.held.values()][0]?.record;
+	}
+
+	/**
+	 * The question session `id` asked most recently that nobody has answered
+	 * yet, if any — what the cockpit's Needs you and decision card wait on
+	 * (plan-cockpit, ADR decision 4). Answered through `reply`, like the panel's.
+	 */
+	pendingQuestion(id: string): QuestionEvent | undefined {
+		const h = this.held.get(id);
+		if (!h) return undefined;
+		for (let i = h.events.length - 1; i >= 0; i--) {
+			const ev = h.events[i];
+			if (ev?.type === "question" && !h.answered.has(ev.requestId)) return ev;
+		}
+		return undefined;
 	}
 
 	/** Every event so far, then each new one, until the returned function is called. */

@@ -1,5 +1,6 @@
 import type { HealthRow } from "@infinitedusky/indusk-mcp/promises/health";
 import { PROMISE_HEALTH_CHIP } from "@/components/bars/labels";
+import { stamp } from "@/lib/stamp";
 
 /**
  * The observed-health axis of the Promises page (day-monitor, ADR D9), beside
@@ -47,10 +48,6 @@ export function HealthChip({
   );
 }
 
-function day(iso: string): string {
-  return iso.slice(0, 16).replace("T", " ");
-}
-
 /** The line under a behaviour promise's chips: violations in the window and last seen. */
 export function HealthDetail({
   row,
@@ -73,7 +70,7 @@ export function HealthDetail({
     // that carried none says so rather than letting the reader assume.
     parts.push(row.environment ?? "environment unknown");
   }
-  if (row.lastSeen) parts.push(`last seen ${day(row.lastSeen)}`);
+  if (row.lastSeen) parts.push(`last seen ${stamp(row.lastSeen)}`);
   // expect_every (watcher-heartbeat): a silence the promise said was too long.
   if (row.silence) parts.push(`needs attention — ${row.silence}`);
   else if (unknownSince === undefined && row.health === "unverified")

@@ -1,0 +1,3 @@
+# When one fact feeds several surfaces, test the surfaces against each other — each passing against its own fixture can still disagree on the fact
+
+In plan-cockpit a promise's state was read three ways: the standing view treated an open incident (known-violated) as broken, the health reader as amber, and the fix path only knew red — so a broken promise had no fix button. Every module passed its own fixture; the disagreement was found by falsification reading two modules side by side. Rule: when a derived fact (state, standing, severity) is consumed by more than one surface, add a row that feeds one input through all consumers and asserts they agree, or route them through one deriver. Highlight h-20261011-008 (plan-cockpit retrospective).

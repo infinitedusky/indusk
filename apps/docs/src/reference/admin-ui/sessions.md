@@ -51,8 +51,45 @@ The admin daemon, the one `indusk ui` starts, holds the sessions through one `Se
 | `POST /api/sessions/:id/stop` | interrupt and end it |
 | `GET /api/sessions/:id/events` | its events as server-sent events: everything so far, then each new one |
 | `POST /api/trust` | trust a project in Claude Code: `{ project }`, sent by Trust in Claude Code |
+| `POST /api/plans/:name/decision` | answer the decision the plan waits on: `{ project, choice: accept \| alternative \| reply, text? }` (see Decisions) |
 
 The daemon listens on `127.0.0.1` only, and every route, reads included, answers only on the admin's own hosts: `127.0.0.1`, `localhost`, `[::1]` and the Caddy route `indusk.dawn`, on any port. Listening on loopback is not enough by itself. Another site can point its own name at `127.0.0.1` (DNS rebinding), and its page then talks to the daemon with an `Origin` and a `Host` that agree. Checking the host refuses it. Every `POST` is also refused unless its `Origin` is the host the request was sent to, so another site's page in the developer's browser cannot start a session, answer one, or accept a plan.
+
+## Decisions
+
+A plan that waits on you waits in one place. Introduced by plan-cockpit; the decision is `/decisions/plan-cockpit`.
+
+**What a plan waits on** is the package's `plans/waiting`, at most one thing per plan, read on every render from what the admin can see:
+
+| Waiting on | When | Accept does | The alternative |
+|---|---|---|---|
+| a **question** | a session the admin runs for the plan asked (`AskUserQuestion`) and nobody answered (`SessionManager.pendingQuestion`) | answers with the first option, as the panel does | answers with the second option |
+| **approval** | the impl is a `draft` and every document before it that the plan's type requires is accepted | `indusk plans approve` | *Not yet — keep planning*, sent to the agent as words |
+| **review** | the build stopped at review, or the plan stands at review (so it is still listed after the admin restarts) | accepts the plan and starts the release, as the build's Accept does | *Not yet — send it back*, sent to the agent as words |
+
+A question outranks the rest: an agent blocked on an answer is the most urgent thing a plan can wait on. A question asked in a terminal session is not seen here; the cockpit shows what the admin runs.
+
+**Needs you**, in the nav under Promises, lists each waiting plan by title with the step it waits at, and links to its page.
+
+**The decision card**, at the top of a waiting plan's page, shows the decision in words, the step, and three ways to answer: accept, the alternative, or a reply in your own words. For a review, the evidence (`indusk plans review`: each promise with the tests that prove it, what falsification found and fixed, the files changed, every skip) is shown inside the card. While the card offers Approve or Accept, the page does not offer them a second time.
+
+**Where a reply goes.** To a question, your words are its answer. Otherwise they go to the plan's agent: said to the session running for the plan if there is one, or else a new planning session is started for the plan, in its worktree, with the decision and your words as its first message. A reply is never queued, since nothing would read a queue until someone opened a session. If another plan's session is running, the reply is refused, naming it, since one session runs at a time.
+
+Every answer goes through `POST /api/plans/:name/decision`. The route reads what the plan waits on again rather than trusting the page, so an answer to a question already answered, or to a review already accepted, is refused rather than sent somewhere else.
+
+### The recorded history
+
+
+An answer that reached its agent but could not be written to the history is reported as sent, with the reason it was not recorded; it is never reported as a failed answer, because a retry would send it twice. A review accepted once starts its release and the plan stops waiting on review; a second accept while the release runs is refused.
+Every answer that reached its target is recorded by `plans/history` as one dated line in `.indusk/plan-history/<plan>.md`:
+
+```
+- 2026-10-10T10:00:00.000Z — The plan is written. Approve it, …? — answered "Approve" by person
+```
+
+The file is in the main checkout, whichever checkout the admin reads, and each line is committed on `main` as `chore(indusk): <plan> — <answer>` by the same notes writer `current.md` and lessons use. Only that file is committed, so anything you have staged stays staged and out of the commit. When `main` cannot take the commit (the main checkout is on another branch, or a merge, rebase, cherry-pick or revert is in progress), the line stays written and uncommitted, and the route's answer says why. An answer that failed to arrive (a refused approval, say) is not recorded.
+
+The plan's page reads the file back as **What happened**, newest first, so the decisions are still there after the admin restarts. The file is never edited by hand.
 
 ## In a workbench
 

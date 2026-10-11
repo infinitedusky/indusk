@@ -1,0 +1,114 @@
+import {
+  promiseWords,
+  readHealthNames,
+} from "@infinitedusky/indusk-mcp/promises/display";
+import { proofOf } from "@infinitedusky/indusk-mcp/promises/proof";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { LiveRefresh } from "@/components/LiveRefresh";
+import {
+  LastThirtyDays,
+  PromiseBanner,
+  PromiseHistory,
+  PromiseTiles,
+  TestsThatBackIt,
+  WhereItIsWatched,
+  WhereItLives,
+} from "@/components/promise/PromiseProof";
+import { readAdminRefreshMs } from "@/lib/project-reader";
+import { readProjectPromises, registryOf } from "@/lib/promises-reader";
+import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+
+interface PromisePageProps {
+  params: Promise<{ project: string; name: string }>;
+}
+
+/**
+ * A promise's own page — `/p/{project}/promises/{name}` (plan-cockpit, ADR
+ * decision 3): its sentence in words, whether it is broken and what to do,
+ * and what proves it — the tests that name it, where it is watched, thirty
+ * days, its history. Every fact is the package's `proofOf`; this page lays it
+ * out. Live like the dashboard it is opened from.
+ *
+ * The stale-project case is the layout's, as the plan page's is; a name the
+ * registry does not hold is `notFound()`.
+ *
+ * promise: a-promise-page-shows-its-proof
+ */
+export default async function PromisePage({ params }: PromisePageProps) {
+  const { project, name } = await params;
+  const projectPath = getProjectPath(project);
+  if (!projectPath || !projectPathExists(projectPath)) return null;
+
+  const registry = registryOf(readProjectPromises(projectPath));
+  const entry = registry?.promises.find(
+    (p) => p.name === name || p.aliases.includes(name),
+  );
+  const proof = entry
+    ? await proofOf(projectPath, entry.name, {
+        cacheMs: readAdminRefreshMs(projectPath),
+      })
+    : null;
+  if (!registry || !entry || !proof) notFound();
+
+  const names = readHealthNames(projectPath);
+  const sentenceOf = (n: string) => promiseWords(n, names.words);
+  const planHrefPrefix = `/p/${project}/plan/`;
+  const beside = registry.promises.filter(
+    (p) => p.owner === entry.owner && p.name !== entry.name,
+  );
+
+  return (
+    <div className="flex min-w-0 flex-col gap-5" data-testid="promise-page">
+      <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
+      <header className="flex min-w-0 flex-col gap-1">
+        <Link
+          href={`/p/${project}/promises`}
+          className="text-xs text-gray-500 hover:underline"
+        >
+          Promises
+        </Link>
+        <h1 className="break-words text-xl font-semibold text-gray-900">
+          {sentenceOf(entry.name)}
+        </h1>
+        <p className="break-words text-sm text-gray-700">{entry.statement}</p>
+        <p className="flex flex-wrap gap-x-3 text-xs text-gray-500">
+          <code>{entry.name}</code>
+          <Link
+            href={`${planHrefPrefix}${entry.owner}`}
+            className="hover:underline"
+          >
+            {names.planTitles[entry.owner] ?? entry.owner}
+          </Link>
+        </p>
+      </header>
+      <PromiseBanner proof={proof} entry={entry} project={project} />
+      <PromiseTiles proof={proof} />
+      <TestsThatBackIt proof={proof} planHrefPrefix={planHrefPrefix} />
+      <WhereItIsWatched proof={proof} />
+      <LastThirtyDays proof={proof} />
+      {beside.length > 0 && (
+        <section
+          data-testid="proof-same-plan"
+          className="flex min-w-0 flex-col gap-2"
+        >
+          <h2 className="text-sm font-semibold text-gray-700">Same plan</h2>
+          <ul className="flex flex-col gap-1 text-sm">
+            {beside.map((p) => (
+              <li key={p.name} className="min-w-0 break-words">
+                <Link
+                  href={`/p/${project}/promises/${p.name}`}
+                  className="hover:underline"
+                >
+                  {sentenceOf(p.name)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <WhereItLives entry={entry} />
+      <PromiseHistory proof={proof} />
+    </div>
+  );
+}

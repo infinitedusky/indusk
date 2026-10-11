@@ -7,6 +7,7 @@ import {
   readWindow,
   type StoreDeps,
 } from "@infinitedusky/indusk-mcp/promises/store";
+import { stamp } from "./stamp";
 import {
   buildStrip,
   type Strip,
@@ -74,7 +75,6 @@ export async function readTimelineView(
       now,
     });
   }
-  const stamp = (iso: string) => iso.slice(0, 16).replace("T", " ");
   let reach: string | null = null;
   if (Date.parse(w.coveredFrom) > start) {
     reach = `Read back to ${stamp(w.coveredFrom)} so far — older runs are still being read, and each refresh reads further.`;

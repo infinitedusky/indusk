@@ -1,0 +1,3 @@
+# A `promise:` token names one promise per line (a comma list counts only the first), a state promise needs a code site carrying the token as well as its test, and `indusk promises confirm` runs at each phase end
+
+From plan-cockpit's retrospective: a comma-separated `promise: a, b` token silently registered only `a`; a state promise whose only link was its test failed to confirm because no code site carried the token. `indusk promises confirm` writes nothing while it refuses, so it is cheap enough to run at every phase close rather than once at plan close, where the failures arrive all together. Highlight h-20261011-009.
