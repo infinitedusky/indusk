@@ -324,7 +324,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the Looks page, devices, Approve, uncovered, looks on the dashboard
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the Looks page, devices, Approve, uncovered, looks on the dashboard
 
 ### Build Phase 5: The cockpit, held to its mockups
 
