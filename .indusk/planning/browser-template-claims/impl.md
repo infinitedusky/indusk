@@ -78,7 +78,7 @@ A propagation entry sends the click's trace to the requests it names and to no o
 
 #### Build Phase 1 Verification
 
-- [ ] T1–T5 pass; the earlier template rows (the file's cases named T1–T3 and A9–A13 by the earlier plan) still pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/otel-docs-claims.test.ts src/__tests__/init-browser-telemetry.test.ts`); tsc and biome clean on changed files
+- [ ] T1–T5 pass; the earlier template rows (the file's existing cases, named A1–A3 and A9–A13 by the earlier plan) still pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/otel-docs-claims.test.ts src/__tests__/init-browser-telemetry.test.ts`); tsc and biome clean on changed files
 
 #### Build Phase 1 Context
 
@@ -103,4 +103,4 @@ A propagation entry sends the click's trace to the requests it names and to no o
 
 ## Notes
 
-- This plan's rows are T-prefixed because the template test file already carries cases named T1–A13 from `browser-telemetry-leftovers`.
+- This plan's rows are T-prefixed because the template test file already carries cases named A1–A13 from `browser-telemetry-leftovers`.
