@@ -249,3 +249,4 @@
 {"plan":"display-names","phase":4,"kind":"build","sha":"ae7da66f3e12c8c14f50d4ca74257f038c9c2800","timestamp":"2026-10-10T18:28:50.644Z"}
 {"plan":"display-names","phase":5,"kind":"build","sha":"bfced78c1d14ca482faea1f3a64843f4d85dd932","timestamp":"2026-10-10T18:46:35.000Z"}
 {"plan":"browser-telemetry-leftovers","phase":1,"kind":"test","sha":"5f36de69b446a0948c480f5f9fee542c7b1e347f","timestamp":"2026-10-10T21:24:32.811Z"}
+{"plan":"browser-telemetry-leftovers","phase":2,"kind":"build","sha":"4b4f93002f01fc7ca26724f10f806d1b401e4c79","timestamp":"2026-10-11T00:15:31.796Z"}
