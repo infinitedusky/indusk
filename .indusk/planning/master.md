@@ -674,3 +674,13 @@ When a plan's brief or ADR changes materially: find it above, walk its
 2026-09-03 lesson: **a plan that changes the substrate must update
 indusk-v2-dawn/master.md and this file in the same close** — versioned-workbench
 didn't, and Dawn's "where are we" file was wrong for a month.
+- **Backlog, not critical — [instance-ports](instance-ports/brief.md)** (feature,
+  brief draft on `plan/instance-ports`, Sandy, 2026-10-11): each telemetry
+  daemon or demo instance gets its own port from a recorded allocation, and the
+  tracked `.mcp.json` stops being rewritten on every daemon restart — the
+  instance registers its port in Claude Code's per-user local scope instead.
+  Measured on Claude Code 2.1.296 in [research.md](instance-ports/research.md):
+  `${VAR:-default}` works in `url` but only from the process environment (the
+  settings `env` block and `.env` are ignored); a local-scope server shadows
+  the project's entry of the same name. Wanted before running several demos at
+  once.
