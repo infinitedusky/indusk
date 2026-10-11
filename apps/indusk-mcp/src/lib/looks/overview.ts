@@ -1,5 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { gitCommonDirOf } from "../worktree/layout.js";
 import { readRecord } from "../worktree/plan-worktree-record.js";
 import { type ApprovalEntry, approvalOf, readApprovals } from "./approvals.js";
 import { type Coverage, coverageOf } from "./coverage.js";
@@ -124,6 +125,9 @@ export interface LooksCheckout {
  */
 export async function looksCheckouts(projectRoot: string): Promise<LooksCheckout[]> {
 	const out: LooksCheckout[] = [{ plan: null, root: projectRoot, branch: null }];
+	// A project that is not a git checkout has no plan worktrees: its own
+	// checkout is the only one, never a refusal of the whole page.
+	if (!gitCommonDirOf(projectRoot)) return out;
 	const record = await readRecord(projectRoot);
 	if (!record.ok) return out;
 	for (const a of record.assignments) {
