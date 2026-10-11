@@ -1,7 +1,7 @@
 ---
 title: "UI promises — mockups on a DTCG foundation, approved in the cockpit, held by value"
 date: 2026-10-10
-status: proposed
+status: accepted
 ---
 
 # UI promises — mockups on a DTCG foundation, approved in the cockpit, held by value
