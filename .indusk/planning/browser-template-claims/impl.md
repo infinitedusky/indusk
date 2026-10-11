@@ -38,11 +38,11 @@ A propagation entry sends the click's trace to the requests it names and to no o
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| T1 | With an exact entry that names a path (`https://api.example.com/v1`), a request to `/v1/seats` carries the click's trace; requests to `/v2/seats` and `/v10/seats` on the same origin carry none | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
-| T2 | With a pattern entry that names a path (`https://*.dev.example.com/v1`), a request under `/v1` on a matching host carries the trace and one under `/v2` on the same host carries none | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
-| T3 | With `https://*.dev.example.com:443`, a request to `https://plan-a.dev.example.com/api` carries the trace; with `https://*.dev.example.com:8443`, a request to port 8443 carries it and one to the default port carries none | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
-| T4 | A request made from a `.then()` callback and one from a timer in a click handler are not in the click's trace | Test Phase 1 | Test Phase 1 | planned | unit | a regression guard pinning the documented limit: the template has no async-aware context manager | apps/indusk-mcp/templates/instrumentation.web.test.ts |
-| T5 | The OpenTelemetry reference page and the otel skill do not say that a `.then()` chain, a timer or compiled-down async code follows the click | Test Phase 1 | Build Phase 1 | planned | unit | the falsified claim: the reference page said a `.then()` chain compiled below ES2017 follows the click | apps/indusk-mcp/src/__tests__/otel-docs-claims.test.ts |
+| T1 | With an exact entry that names a path (`https://api.example.com/v1`), a request to `/v1/seats` carries the click's trace; requests to `/v2/seats` and `/v10/seats` on the same origin carry none | Test Phase 1 | Build Phase 1 | written | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| T2 | With a pattern entry that names a path (`https://*.dev.example.com/v1`), a request under `/v1` on a matching host carries the trace and one under `/v2` on the same host carries none | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| T3 | With `https://*.dev.example.com:443`, a request to `https://plan-a.dev.example.com/api` carries the trace; with `https://*.dev.example.com:8443`, a request to port 8443 carries it and one to the default port carries none | Test Phase 1 | Build Phase 1 | written | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| T4 | A request made from a `.then()` callback and one from a timer in a click handler are not in the click's trace | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard pinning the documented limit: the template has no async-aware context manager | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| T5 | The OpenTelemetry reference page and the otel skill do not say that a `.then()` chain, a timer or compiled-down async code follows the click | Test Phase 1 | Build Phase 1 | written | unit | the falsified claim: the reference page said a `.then()` chain compiled below ES2017 follows the click | apps/indusk-mcp/src/__tests__/otel-docs-claims.test.ts |
 
 ## Checklist
 
@@ -52,10 +52,11 @@ A propagation entry sends the click's trace to the requests it names and to no o
 
 **Goal**: author T1–T5; T1, T3 and T5 fail on their own assertions today; T2 and T4 pass today (see Regression Guards).
 
-- [ ] Confirm this plan's worktree (`indusk plans start` made it at `dusk-worktrees/browser-template-claims`)
-- [ ] T1–T4 in `templates/instrumentation.web.test.ts`, with the existing `clickAndFetch` helper (a `thenCallback` option for T4's handler shape)
-- [ ] T5 in `src/__tests__/otel-docs-claims.test.ts`: read `apps/docs/src/reference/tools/otel.md` and `apps/indusk-mcp/extensions/otel/skill.md`; fail when a sentence names a `.then()` chain, a timer, `setTimeout` or "ES2017" together with following the click
-- [ ] Confirm each red test fails on its own assertion rather than a missing import
+- [x] Confirm this plan's worktree (`indusk plans start` made it at `dusk-worktrees/browser-template-claims`)
+- [x] T1–T4 in `templates/instrumentation.web.test.ts`, with the existing `clickAndFetch` helper (a `thenCallback` option for T4's handler shape)
+- [x] T5 in `src/__tests__/otel-docs-claims.test.ts`: read `apps/docs/src/reference/tools/otel.md` and `apps/indusk-mcp/extensions/otel/skill.md`; fail when a sentence names a `.then()` chain, a timer, `setTimeout` or "ES2017" together with following the click
+- [x] Confirm each red test fails on its own assertion rather than a missing import
+  - Confirmed 2026-10-11: T1 `/v2/seats carries none: expected '00-…' to be null`; T3 `:443 written in the entry matches a request whose URL leaves it off: expected null not to be null`; T5 (reference page) `expected [ Array(1) ] to deeply equal []`. T2 and T4 pass (Regression Guards). T5 is two cases, one per page: the otel skill page passes today, only the reference page is red.
 
 #### Regression Guards
 
@@ -64,7 +65,8 @@ A propagation entry sends the click's trace to the requests it names and to no o
 
 #### Test Phase 1 Verification
 
-- [ ] T1–T5 authored; T1, T3, T5 red on their own assertions, T2 and T4 pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/otel-docs-claims.test.ts`)
+- [x] T1–T5 authored; T1, T3, T5 red on their own assertions, T2 and T4 pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/otel-docs-claims.test.ts`)
+  - Ran 2026-10-11: templates project 2 failed (T1, T3), 8 passed (incl. T2, T4), 1 skipped (A11 of the earlier plan); node file otel-docs-claims 1 failed (T5, reference page), 1 passed (skill page). `tsc --noEmit` clean; biome clean on the two files.
 
 ### Build Phase 1: The entry rules and the corrected docs
 
