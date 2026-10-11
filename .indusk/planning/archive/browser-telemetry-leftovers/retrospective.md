@@ -53,3 +53,4 @@ Shape raised 1 finding across all phases (Test Phase 1: an unused fetch passthro
 ## Release
 
 Nothing published. This project installs its own build at landing (`pnpm install:local`); a publish is deliberate and not decided here.
+Landed on main at 86ed8bd0, 2026-10-11.
