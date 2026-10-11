@@ -112,14 +112,17 @@ export type ApproveResult =
  * hash with the mockup's, so approving a mockup approves the foundation it is
  * drawn on. `seen.foundationHash` is the foundation the person was shown; an
  * approval of any other — one changed in the checkout since — is refused, so
- * a foundation is never approved unseen.
+ * a foundation is never approved unseen. `seen.mockupHash` is the mockup the
+ * person was shown, refused the same way when the checkout now holds another:
+ * an approval binds what was looked at, not what happens to be on disk when
+ * the request lands (ui-promises Build Phase 6, A30).
  */
 export async function approve(
 	checkout: string,
 	appName: string,
 	mockupName: string,
 	by: string,
-	seen: { foundationHash?: string } = {},
+	seen: { foundationHash?: string; mockupHash?: string } = {},
 ): Promise<ApproveResult> {
 	if (!isUsableSegment(appName)) {
 		return { approved: false, reason: `${JSON.stringify(appName)} is not an app name` };
@@ -136,6 +139,12 @@ export async function approve(
 		return {
 			approved: false,
 			reason: `${appName} has no mockup ${JSON.stringify(mockupName)} in ${checkout} — a mockup is approved as its checkout holds it`,
+		};
+	}
+	if (seen.mockupHash !== undefined && seen.mockupHash !== mockup.hash) {
+		return {
+			approved: false,
+			reason: `${mockupName} in ${checkout} is not the one shown (${seen.mockupHash.slice(0, 8)}, it has ${mockup.hash.slice(0, 8)}) — open the mockup again and approve what it holds`,
 		};
 	}
 	if (seen.foundationHash !== undefined && seen.foundationHash !== app.foundation.hash) {

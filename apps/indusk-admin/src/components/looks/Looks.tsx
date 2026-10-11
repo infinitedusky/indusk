@@ -185,6 +185,7 @@ function OpenMockupView({
             project={project}
             app={app.app}
             mockup={mockup.name}
+            mockupHash={mockup.hash}
             foundationHash={app.foundationHash}
             checkout={checkout}
           />
@@ -240,6 +241,7 @@ function MockupRow({
           type="checkbox"
           value={mockup.name}
           data-select-mockup=""
+          data-mockup-hash={mockup.hash}
           aria-label={`Select ${mockup.name}`}
         />
       ) : null}

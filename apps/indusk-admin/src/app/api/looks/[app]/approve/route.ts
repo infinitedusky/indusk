@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * Approve a mockup (ui-promises ADR decision 3): `{ project, mockup,
- * foundationHash, checkout }`. The package's `approve` records it as the
+ * mockupHash, foundationHash, checkout }`, or a group's `mockups: [{ mockup,
+ * mockupHash }]`. The package's `approve` records it as the
  * person this machine's git names, bound to the mockup's and the foundation's
  * hashes as the checkout holds them, and commits the record on that checkout's
  * branch. `checkout` is the plan whose worktree the page showed, or null for
@@ -17,6 +18,9 @@ export const dynamic = "force-dynamic";
  * never taken as a path. `foundationHash` is the foundation the page showed: a
  * foundation is approved only with a mockup, so an approval of one the person
  * did not see is refused, as is a mockup the checkout does not hold.
+ * `mockupHash` is the mockup the page showed, each one in a group: a mockup
+ * changed since is refused naming both hashes, and one sent without its hash
+ * is refused outright — an approval binds what the person looked at.
  *
  * promise: a-mockup-is-approved-by-a-person
  */
@@ -37,6 +41,19 @@ function fromTheBrowser(request: NextRequest): Response | null {
   );
 }
 
+interface Shown {
+  mockup: string;
+  mockupHash: string;
+}
+
+const isShown = (m: unknown): m is Shown =>
+  typeof m === "object" &&
+  m !== null &&
+  typeof (m as Shown).mockup === "string" &&
+  (m as Shown).mockup !== "" &&
+  typeof (m as Shown).mockupHash === "string" &&
+  (m as Shown).mockupHash !== "";
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ app: string }> },
@@ -49,21 +66,27 @@ export async function POST(
   const body = (await request.json().catch(() => null)) as {
     project?: string;
     mockup?: string;
-    /** A group approval: each named mockup is approved on its own, in order. */
-    mockups?: string[];
+    /** The hash of the mockup the page showed (A30). */
+    mockupHash?: string;
+    /** A group approval: each mockup with the hash the page showed, approved on its own, in order. */
+    mockups?: Array<{ mockup?: string; mockupHash?: string }>;
     foundationHash?: string;
     checkout?: string | null;
   } | null;
-  const names = body?.mockups ?? (body?.mockup ? [body.mockup] : []);
+  const shown = Array.isArray(body?.mockups)
+    ? body.mockups
+    : body?.mockup
+      ? [{ mockup: body.mockup, mockupHash: body.mockupHash }]
+      : [];
   if (
     !body?.project ||
     !body.foundationHash ||
-    names.length === 0 ||
-    names.some((n) => typeof n !== "string" || n === "")
+    shown.length === 0 ||
+    shown.some((m) => !isShown(m))
   )
     return refuse(
       400,
-      "an approval needs the project, the mockup and the foundation it was shown on",
+      "an approval needs the project, each mockup with the hash it was shown at, and the foundation it was shown on",
     );
   const root = getProjectPath(body.project);
   if (!root) return refuse(404, `no project named ${body.project}`);
@@ -77,11 +100,12 @@ export async function POST(
     );
   const by = await approver(root);
   const results = [];
-  for (const mockup of names) {
+  for (const { mockup, mockupHash } of shown as Shown[]) {
     results.push({
       mockup,
       ...(await approve(checkout.root, app, mockup, by, {
         foundationHash: body.foundationHash,
+        mockupHash,
       })),
     });
   }

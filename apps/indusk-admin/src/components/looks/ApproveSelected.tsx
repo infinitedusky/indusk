@@ -9,7 +9,8 @@ import { postJson } from "@/lib/post-json";
  * proposed mockups, one select-all, and one Approve for the selection. It is
  * the same act as Approve on a single mockup — the route records one entry
  * per mockup, each as the person who clicked and each bound to that
- * mockup's own hash — only done for several at once.
+ * mockup's own hash as the page drew it (each checkbox carries it in
+ * `data-mockup-hash`) — only done for several at once.
  *
  * The rows are the server's markup, so the selection lives in the checkboxes
  * themselves (`input[data-select-mockup]` inside this app's section): this
@@ -26,6 +27,17 @@ function boxesOf(app: string): HTMLInputElement[] {
     ),
   );
 }
+
+/** A mockup as the page drew it: its name and the hash its checkbox carries. */
+interface Shown {
+  mockup: string;
+  mockupHash: string;
+}
+
+const shownBy = (box: HTMLInputElement): Shown => ({
+  mockup: box.value,
+  mockupHash: box.dataset.mockupHash ?? "",
+});
 
 interface GroupResult {
   mockup: string;
@@ -48,7 +60,7 @@ export function ApproveSelected({
   /** How many of the app's mockups are proposed — the ones that have a checkbox. */
   proposed: number;
 }) {
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<Shown[]>([]);
   const total = proposed;
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -58,7 +70,7 @@ export function ApproveSelected({
       setSelected(
         boxesOf(app)
           .filter((b) => b.checked)
-          .map((b) => b.value),
+          .map(shownBy),
       );
     document.addEventListener("change", read);
     return () => document.removeEventListener("change", read);
@@ -69,7 +81,7 @@ export function ApproveSelected({
   const selectAll = (checked: boolean) => {
     const all = boxesOf(app);
     for (const b of all) b.checked = checked;
-    setSelected(checked ? all.map((b) => b.value) : []);
+    setSelected(checked ? all.map(shownBy) : []);
   };
 
   const approve = async () => {

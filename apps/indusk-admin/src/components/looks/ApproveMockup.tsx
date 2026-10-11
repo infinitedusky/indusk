@@ -6,8 +6,9 @@ import { postJson } from "@/lib/post-json";
 
 /**
  * Approve (ui-promises ADR decision 3): the one way a mockup becomes the
- * reference. It sends the foundation the person is looking at, so an
- * approval never covers a foundation they did not see; the route records who
+ * reference. It sends the mockup's hash and the foundation's as the page
+ * showed them, so an approval never covers a mockup or a foundation the person
+ * did not see; the route records who
  * and when and commits the record on the branch of the checkout the page
  * showed, and the page reads again.
  *
@@ -17,12 +18,15 @@ export function ApproveMockup({
   project,
   app,
   mockup,
+  mockupHash,
   foundationHash,
   checkout,
 }: {
   project: string;
   app: string;
   mockup: string;
+  /** The hash of the mockup as the page drew it. */
+  mockupHash: string;
   foundationHash: string;
   /** The plan whose worktree is shown; null for the project's own checkout. */
   checkout: string | null;
@@ -36,6 +40,7 @@ export function ApproveMockup({
     const r = await postJson(`/api/looks/${encodeURIComponent(app)}/approve`, {
       project,
       mockup,
+      mockupHash,
       foundationHash,
       checkout,
     });
