@@ -1,7 +1,7 @@
 ---
 title: "Plan cockpit — the promise dashboard, the promise page and the plan page"
 date: 2026-10-10
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -83,6 +83,12 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 | A34 | The cockpit's promise words, plan titles, release dates, standing, proof, fix prompt, steps, waiting and history are each defined once in the package; the admin and the extension define none of them | Test Phase 1 | Build Phase 6 | passing | unit | promise: display-names-are-defined-once | apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts |
 | A35 | A plan stopped for review shows, with its decision, each promise with the passing tests that prove it, what falsification found and fixed, and the files changed; accepting it there accepts the plan | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-review-shows-its-evidence | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx |
 | A36 | A new plan can still be started from the admin under the new nav | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-can-start-from-the-admin | apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
+| A37 | Once a review has been accepted and its release started, the plan no longer waits on review, and a second accept while the release runs is refused rather than starting a second release; today `startRelease` reuses the build's state with its `stop` still at review and has no running guard, so the card keeps offering Accept | Build Phase 7 | Build Phase 7 | planned | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/lib/build-host.release.test.ts |
+| A38 | An answer that reached its agent but could not be written to the plan's history is reported as sent, with the reason it was not recorded, and not as a failed answer; today `answerDecision` lets `record` throw after delivery, the route answers 409, and a retry delivers the answer twice | Build Phase 7 | Build Phase 7 | planned | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/lib/decisions.test.ts |
+| A39 | A promise that is broken only because an incident is open on it (known-violated, no source reading red) shows its symptom and trace on its page with *Start a fix plan*, and the fix route starts the session; today `proofOf` builds the break from red source rows only, so the page offers no fix and the route answers "not broken" | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-break-opens-a-fix-in-one-click | apps/indusk-mcp/src/lib/promises/proof.test.ts, apps/indusk-admin/src/__tests__/promise-fix-route.test.ts |
+| A40 | The dashboard's thirty days count days: five violations heard on one day read as one broken day, and held plus broke never exceeds 30; today `broke` is the number of violations heard, so the row reads "held 29 · broke 5 of 30 days" | Build Phase 7 | Build Phase 7 | planned | unit | promise: every-promise-is-listed | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A41 | A violation heard under a promise's earlier name is counted on its day in the promise page's thirty days, as the dashboard already counts it; today `daysOf` keeps alias rows and then reads the count under the current name only | Build Phase 7 | Build Phase 7 | planned | unit | promise: the-admin-keeps-what-it-heard | apps/indusk-mcp/src/lib/promises/proof.test.ts |
+| A42 | A history line written by `promises change` is a changed event whatever its reason or the old statement it quotes says; today a statement containing "confirmed" makes every change line of that promise read as confirmed | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-promise-page-shows-its-proof | apps/indusk-mcp/src/lib/promises/proof.test.ts |
 
 ### Deferred Verification
 
@@ -341,6 +347,34 @@ The admin becomes the mockup in `research/promise-ui/mockups/plan-cockpit.html`:
 
 - [x] `apps/docs/src/reference/admin-ui/sessions.md`: Needs you, the decision card, where a reply goes, the recorded history — written: a Decisions section (what a plan waits on as a table of question / approval / review with what accept and the alternative do, Needs you, the card, where a reply goes, the decision route re-reading what waits) and *The recorded history* (the line format, the commit on `main` through the notes writer, staged work left out, the uncommitted-with-reason case, What happened); the route joined the Routes table; `overview.md`'s nav section now names Needs you and links there
 - [x] `apps/docs/src/decisions/plan-cockpit.md`: the ADR published; changelog: Added — "The admin is the cockpit: plans by Path, each plan's two workflows and the decision it waits on, the promise dashboard with broken promises first, and a page per promise with its proof and a fix." — written: what was decided (the seven modules as a table, the nav, the card, the record on `main`), the alternatives rejected with why, the tradeoffs accepted, and links to the overview, the promise page and Sessions → Decisions; the changelog's Unreleased gains an Added entry with that sentence
+
+### Build Phase 7: Falsification — a review accepted twice, a break with no fix, and thirty days that do not add up
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds against six failure modes found by reading the built code. Each row in Build Phase 7's Verification captures one hypothesis (red first, against today's code); each item is the fix if it confirms.
+
+Investigated, with no hypothesis formed: the history line's parse (the answer is JSON-quoted, so a quote or ` — answered ` inside it cannot end the field early); the plan name reaching `appendDecision` (one kebab-case segment, refused before anything is written); `commitNote` (`--only` keeps staged work out; a branch other than the trunk, or a merge, rebase or cherry-pick in progress, leaves the line written and uncommitted with the reason); the fix route's `planLocation` for a promise whose owner is archived (resolves to the trunk); `buildGroups` cycles and self-declarations (stop at the repeat); the drawer and collapse (a blocked `localStorage` renders the open rail); `rowsNamingEach` against `rowsNaming` (same rows). Not investigated: the Jaeger and store reads behind `readHealth` and `readWindow` (unchanged by this plan; their failures surface as `unread`), and the browser's behaviour of a layout across soft navigation (the pages that matter carry `LiveRefresh`, which refreshes the layout with them).
+
+- [ ] `startRelease` refuses while a release for the plan is running (as `startBuild` does for a build), and clears the build's `stop` when it starts, so a plan whose release has begun no longer reads as waiting on review; a failed release records its own error and the plan waits again (A37)
+- [ ] `answerDecision` catches a `record` failure after delivery and returns the answer with `commit: { committed: false, reason }`, so the route answers 200 and the card says it was sent and not recorded (A38)
+- [ ] `brokenOf` falls back, when no source reads red, to the promise's newest open incident: its symptom and its trace id, with the project's alarm source named, so `broken` is non-null exactly when `standing` is `broken` (A39)
+- [ ] `thirtyDays.broke` counts the distinct UTC days with a heard violation; `held` is the thirty less those days, shown only once the promise has been seen; the dashboard and the page's tile word them as days (A40)
+- [ ] `daysOf` counts heard rows by the promise's current name and every earlier name together (A41)
+- [ ] `kindOf` reads the event word the line opens with (`declared`, `changed`, `enforced`) and never the reason or the quoted old statement (A42)
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 7 Verification
+
+- [ ] A37–A42 pass, each red first on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/proof.test.ts src/lib/promises/standing.test.ts; cd ../indusk-admin && pnpm exec vitest run src/lib/build-host.release.test.ts src/lib/decisions.test.ts src/__tests__/promise-fix-route.test.ts && pnpm exec vitest related src/lib/build-host.ts src/lib/decisions.ts --run`); `Promises.*.test.tsx` and `DecisionCard.test.tsx` still pass; tsc and biome clean on changed files
+
+#### Build Phase 7 Context
+
+- [ ] `apps/indusk-admin/CLAUDE.md`: a decision the card offers is read again from what the daemon holds after every answer — a started release or build changes what the plan waits on — (or "(none — no convention changed)" with proof)
+
+#### Build Phase 7 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/promise-page.md`: a promise broken by an open incident shows the incident's symptom and trace, and thirty days are counted in days; `sessions.md`: an answer delivered and not recorded says so
 
 ## Files Affected
 
