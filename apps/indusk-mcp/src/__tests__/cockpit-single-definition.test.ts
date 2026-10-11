@@ -17,6 +17,7 @@ import { REPO_ROOT } from "./helpers/cli.js";
  * assertions so each build phase turns its own green.
  *
  * promise: display-names-are-defined-once
+ * promise: a-look-reports-like-any-promise — ui-promises A39 (a look's standing is defined once, in `promises/look-standing`).
  * lesson: structural-single-definition-test-for-must-agree-invariants
  */
 
