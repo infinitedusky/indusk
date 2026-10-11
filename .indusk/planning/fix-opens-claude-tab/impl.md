@@ -42,8 +42,8 @@ Fix with Claude opens a Claude Code tab in VS Code when the Claude Code extensio
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | In VS Code with Claude Code installed, the fix opens `vscode://anthropic.claude-code/open?prompt=…` whose decoded prompt is exactly the prompt the terminal would have sent — the promise, symptom, trace link and tests — even when `claude` is not on the PATH | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-fix-opens-in-the-claude-code-tab | apps/vscode-extension/src/core/fix-tab.test.ts |
-| A2 | In Cursor, or without the Claude Code extension, the fix starts `claude` in a terminal exactly as before, and with neither the extension nor `claude` on the PATH it says how to install Claude Code | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-fix-opens-in-the-claude-code-tab | apps/vscode-extension/src/core/fix-tab.test.ts |
+| A1 | In VS Code with Claude Code installed, the fix opens `vscode://anthropic.claude-code/open?prompt=…` whose decoded prompt is exactly the prompt the terminal would have sent — the promise, symptom, trace link and tests — even when `claude` is not on the PATH | Test Phase 1 | Build Phase 1 | written | unit | promise: a-fix-opens-in-the-claude-code-tab | apps/vscode-extension/src/core/fix-tab.test.ts |
+| A2 | In Cursor, or without the Claude Code extension, the fix starts `claude` in a terminal exactly as before, and with neither the extension nor `claude` on the PATH it says how to install Claude Code | Test Phase 1 | Build Phase 1 | written | unit | promise: a-fix-opens-in-the-claude-code-tab | apps/vscode-extension/src/core/fix-tab.test.ts |
 | A3 | Clicking Fix with Claude on a broken promise in VS Code opens a Claude Code tab with the prompt filled in | Build Phase 1 | Build Phase 1 | planned | live check | a live check of VS Code and the Claude Code extension, which no unit can reach: Sandy clicks it once and the result is recorded under Build Phase 1 | .indusk/planning/fix-opens-claude-tab/impl.md |
 
 ## Checklist
@@ -53,8 +53,8 @@ Fix with Claude opens a Claude Code tab in VS Code when the Claude Code extensio
 **Tier**: med
 
 - [x] Confirm this plan's worktree (`git worktree list` shows `plan/fix-opens-claude-tab`)
-- [ ] A1, A2 in `apps/vscode-extension/src/core/fix-tab.test.ts` against `fixAction`, passing the new context fields (`host: "vscode" | "other"`, `claudeCodeExtension: boolean`) — the core ignores unknown fields today, so the file loads and A1 fails on its assertion (it gets a terminal action); A2 passes today for the terminal cases and is the guard that they stay
-- [ ] A1 red on its own assertion; A2's terminal cases recorded as passing today; rows set `written`
+- [x] A1, A2 in `apps/vscode-extension/src/core/fix-tab.test.ts` against `fixAction`, passing the new context fields (`host: "vscode" | "other"`, `claudeCodeExtension: boolean`) — the core ignores unknown fields today, so the file loads and A1 fails on its assertion (it gets a terminal action); A2 passes today for the terminal cases and is the guard that they stay
+- [x] A1 red on its own assertion; A2's terminal cases recorded as passing today; rows set `written`
 
 #### Test Phase 1 Verification
 
