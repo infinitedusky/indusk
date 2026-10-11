@@ -74,7 +74,7 @@ pass every class in the admin.
 3. **Approval is a committed record bound to a hash.** The cockpit's Approve
    writes `.indusk/mockups/<app>/approved.json` — each entry the mockup, the
    foundation's and the mockup's content hashes, who and when — committed on
-   `main` through the notes writer plan-cockpit's decisions use. A mockup whose
+   the branch of the checkout the person was shown (amended 2026-10-11: a plan's worktree approves on the plan's branch and the approval merges with the mockups; it was `main`) through the notes writer plan-cockpit's decisions use. A mockup whose
    hash does not match its entry reads *proposed*; so does a foundation. A
    PreToolUse hook refuses an agent's write to `approved.json`, the
    infrastructure tier's job; a hand edit by a person is theirs to make.

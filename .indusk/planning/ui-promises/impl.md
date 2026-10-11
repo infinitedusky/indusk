@@ -1,7 +1,7 @@
 ---
 title: "UI promises — mockups on a DTCG foundation, approved in the cockpit, held by value"
 date: 2026-10-10
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -53,7 +53,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 | A6 | The app's styles are held to the same rule — a raw value in its CSS, a stock Tailwind class, an arbitrary Tailwind value — each refused the same way | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
 | A7 | A mockup using a token the foundation does not define is refused, naming the token | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
 | A8 | A later mockup may add a token only by declaring it new; an undeclared one is refused | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
-| A9 | The cockpit's mockups, redrawn on its foundation, pass with no raw value | Test Phase 1 | Build Phase 5 | written | unit | promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-admin-foundation.test.ts |
+| A9 | The cockpit's mockups, redrawn on its foundation, pass with no raw value | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-admin-foundation.test.ts |
 | A10 | A screen the app declares with no approved mockup is reported uncovered, by name | Test Phase 1 | Build Phase 2 | passing | unit | promise: every-part-of-the-ui-is-covered | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
 | A11 | A declared state of a screen with no mockup for that state is reported uncovered | Test Phase 1 | Build Phase 2 | passing | unit | promise: every-part-of-the-ui-is-covered | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
 | A12 | A component the app renders that no approved mockup shows is reported uncovered | Test Phase 1 | Build Phase 2 | passing | unit | promise: every-part-of-the-ui-is-covered | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
@@ -65,7 +65,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 | A18 | An element of the running app that renders with its token's approved value is held | Build Phase 3 | Build Phase 3 | passing | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
 | A19 | A token changed in the app alone, not in the approved foundation, makes the token and every element using it broken | Build Phase 3 | Build Phase 3 | passing | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
 | A20 | A duration or an easing that differs from its approved value is broken like a colour or a size | Build Phase 3 | Build Phase 3 | passing | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
-| A21 | The cockpit end to end: its mockups approved, the admin restyled and held; one token changed in the admin alone, and the dashboard shows it broken | Build Phase 5 | Build Phase 5 | planned | live check | promise: tokens-are-held-exactly | manual: recorded in this impl's Build Phase 5 Verification |
+| A21 | The cockpit end to end: its mockups approved, the admin restyled and held; one token changed in the admin alone, and the dashboard shows it broken | Build Phase 5 | Build Phase 5 | passing | live check | promise: tokens-are-held-exactly | manual: recorded in this impl's Build Phase 5 Verification |
 | A22 | Each run of the look check is recorded held or broken in the local telemetry, the way a promise's run is | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-look-reports-like-any-promise | apps/indusk-mcp/src/lib/looks/report.test.ts |
 | A23 | A broken look is counted in the nav's broken count and listed first on the dashboard beside broken promises | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-look-reports-like-any-promise, promise: broken-promises-come-first | apps/indusk-admin/src/app/p/[project]/promises/dashboard-looks.test.tsx |
 | A24 | The editor shows a look's state as the admin does | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-look-reports-like-any-promise, promise: the-editor-shows-the-same-health-as-the-admin | apps/vscode-extension/src/core/looks-health.test.ts |
@@ -357,21 +357,36 @@ An app's look is held by mockups a person approved: every visual value comes fro
   - Note: eleven mockups (nav 2, dashboard 2, promise 2, plan 3, looks 2), generated once from one stylesheet so the components agree; `indusk looks lint admin` reports no finding in `.indusk/mockups/`. Nineteen `data-component` names: shell, nav, plan-row, badge, view-link, summary-bar, chip, promise-row, button, decision-card, rail-group, step, stat, box, timeline, look-row, device-frame, device-choice, tag.
 - [x] **Pause for a person**: Sandy opens each mockup in the cockpit at each device beside `plan-cockpit.html` and approves it (Deferred Verification U1)
   - Note: Sandy approved all eleven in the cockpit on 2026-10-11 (14:57–14:58, by Sandy Corsillo; `indusk looks status admin` reads eleven approved). Deferred Verification U1 is that approval.
-- [ ] The admin restyled onto the foundation: `globals.css` loads the generated tokens and the reset `@theme`; every component's classes moved onto the foundation; `data-component` on each component the mockups name
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] The admin restyled onto the foundation: `globals.css` loads the generated tokens and the reset `@theme`; every component's classes moved onto the foundation; `data-component` on each component the mockups name
+  - Note: `foundation.generated.css` (from `indusk looks tokens admin --tailwind`) and a token-only `globals.css`; 57 source files moved by a codemod and then by hand (stock palette to the foundation's colours, `0.5`/`1.5` steps to `hair`/`tight`, rings to borders or outlines, arbitrary values to named CSS in `globals.css`); `@tailwindcss/typography` dropped for a `.prose` on the foundation; `data-component` on button, chip, nav, view-link, shell, decision-card, look-row, device-frame, device-choice. Found and fixed on the way, all in the package: tokens unset under Tailwind (`@theme static`, and the foundation's own names beside Tailwind's), a shadow compared as text (now by layer and colour), `.25` against `0.25`, `margin: auto` read as pixels, `<option>` and a dev-only portal measured, and `translate-x-0` compiling to nothing (`--spacing-0`).
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+  - Findings: `generateCss` had grown to dark blocks, the Tailwind theme and the mockup `:root` in one function — split into `darkBlocks` and `tailwindTheme` (rule: one reason to change); output unchanged against the committed generated file. Left as-is: the codemod's whole-file class edits (mechanical, checked by lint, coverage, the check and the admin's 519 tests), and `ApproveSelected` reading the server rows' checkboxes from the DOM — the rows are the server's markup, so the selection is the checkboxes themselves.
 
 #### Build Phase 5 Verification
 
-- [ ] A9 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-admin-foundation.test.ts`); `indusk looks lint admin` and `indusk looks coverage admin` exit 0; `indusk looks check admin` all held
-- [ ] A21, live check: change one colour token in the admin's generated CSS alone, run `indusk looks check admin`, and record here that the dashboard shows it broken naming the token, approved and actual; revert, and record it held
+- [x] A9 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-admin-foundation.test.ts`); `indusk looks lint admin` and `indusk looks coverage admin` exit 0; `indusk looks check admin` all held
+  - Run 2026-10-11: `looks-admin-foundation.test.ts` 2 passed; `indusk looks lint admin` no raw value; `indusk looks coverage admin` every part covered; `indusk looks check admin --url http://localhost:3940` 33 looks held (11 mockups × 3 devices, against `next dev` from this worktree). Admin: 78 files, 519 tests pass; package looks tests pass; tsc clean in both.
+- [x] A21, live check: change one colour token in the admin's generated CSS alone, run `indusk looks check admin`, and record here that the dashboard shows it broken naming the token, approved and actual; revert, and record it held
+  - Run 2026-10-11: `--color-dusk` changed `#c2620b` → `#d07020` in `foundation.generated.css` alone: `indusk looks check admin` reported 33 of 33 looks broken, `token --color-dusk approved #c2620b actual #d07020` and, per element, `color`/`background-color` actual `rgb(208, 112, 32)` nearest `--color-dusk (#c2620b)` (1,200+ findings across the badges, links and bars that use it). Reverted (byte-identical to the generated file): 33 looks held. Not seen: the dashboard itself — the check's spans were emitted, but I read the verdict on the command line, not the dashboard's broken count.
 
 #### Build Phase 5 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: the admin's look is held by `.indusk/mockups/admin/`; a new screen or component needs its mockup approved first — guarded by `looks-admin-foundation.test.ts` and `indusk looks coverage admin`
+- [x] `apps/indusk-admin/CLAUDE.md`: the admin's look is held by `.indusk/mockups/admin/`; a new screen or component needs its mockup approved first — guarded by `looks-admin-foundation.test.ts` and `indusk looks coverage admin`
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/guide/ui-promises.md`: the foundation, mockups, approval, coverage, the check, the cockpit as the worked example, with the Mermaid flow; `apps/docs/src/decisions/ui-promises.md` published; changelog: Added — "UI promises: an app's look is held by mockups a person approves in the cockpit, built on one foundation of design tokens, and the running app is checked against them."
+- [x] `apps/docs/src/guide/ui-promises.md`: the foundation, mockups, approval, coverage, the check, the cockpit as the worked example, with the Mermaid flow; `apps/docs/src/decisions/ui-promises.md` published; changelog: Added — "UI promises: an app's look is held by mockups a person approves in the cockpit, built on one foundation of design tokens, and the running app is checked against them."
+
+#### Build Phase 5 Forward Intelligence
+
+- **Trajectory**: A9 (`looks-admin-foundation.test.ts`, 2 cases) and A21 (live check, recorded under Verification) are `passing`; every row is terminal.
+- **Decision — approval moved to the worktree**: Build Phase 4's "approve against `main`" was reversed on Sandy's instruction (2026-10-11): `approve(checkout, …)` commits on the checkout's own branch; the Looks page reads a chosen checkout (`?checkout=<plan>`). The ADR's decision 3 and the published decision are amended. Group approval (checkboxes, one entry per mockup) was added in the same phase.
+- **Fragile**: the value check does not see layout. `translate-x-0` compiled to nothing once Tailwind's spacing was reset and the nav sat off-screen with 33 looks held; `--spacing-0` in the generated theme is the fix, and the admin's cockpit-phone test is what found it. A restyle is looked at, not only checked.
+- **Fragile**: the cockpit's states are not reachable — the admin ignores `?state=`, so the 11 mockups are checked against the three pages the paths name, and every state of a screen measures the same page. The check says held for a state it did not open.
+- **Watch out**: `foundation.generated.css` is generated; a change to the foundation is a re-approval of every mockup (the hash binds), then `indusk looks tokens admin --tailwind --out apps/indusk-admin/src/app/foundation.generated.css`. Do not edit it by hand.
+- **Watch out**: the dashboard's looks standing and `looks check` read the project's own checkout, so a plan's look appears on the dashboard once merged. The admin daemon on port 3939 still runs `main`'s bundle; the worktree was served by `next dev -p 3940`.
+- **Assumption**: dark values are written and emitted but never measured — the check opens the light scheme only.
+- **Outside this phase**: `context-tiers-register.test.ts` A13 and `inbox.test.ts` A17 fail as Build Phase 2 and 4 recorded; `http-promise-remote.test.ts` is not biome-formatted on `main`.
 
 ## Files Affected
 

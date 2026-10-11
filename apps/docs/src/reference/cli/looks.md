@@ -81,8 +81,12 @@ approved version, which `status` names.
 An agent can draw and propose a mockup; only a person approves one. The
 approval is given in the cockpit, on the app's Looks page, with Approve — the
 admin calls `approve` from `@infinitedusky/indusk-mcp/looks/approvals` with the
-person who pressed it, appends the entry, and commits the record on `main`
-through the same notes writer the plan history uses, only that file.
+person who pressed it, appends the entry, and commits the record on the branch
+of the checkout the page showed — a plan's worktree commits on the plan's
+branch, so the approval merges with the mockups it judges and never goes
+through `main` — through the same notes writer the plan history uses, only
+that file. Several proposed mockups can be selected and approved together:
+each is its own entry, bound to its own hash, as the person who clicked.
 
 Two things refuse every other way in:
 
@@ -95,6 +99,17 @@ Two things refuse every other way in:
 
 A person editing the record by hand is theirs to do — and it holds only when
 its hashes are true.
+
+## `indusk looks tokens <app> [--tailwind] [--out <file>]`
+
+The foundation as CSS: `:root` custom properties for a mockup, with dark-scheme
+values (a token's `$extensions["dev.indusk"].dark`) under
+`prefers-color-scheme: dark` and `[data-theme="dark"]`. With `--tailwind` it
+writes an `@theme static` block that resets Tailwind's stock theme to the
+foundation, so a stock class has nothing to compile to; a token in a mapped
+group (`space`, `size`, `easing`) is written under Tailwind's name and the
+foundation's own. `--out` writes the file, relative to the project root — an
+app commits it beside its source (`apps/indusk-admin/src/app/foundation.generated.css`).
 
 ## `indusk looks status <app>`
 
@@ -162,6 +177,11 @@ broken  home.empty @ desktop
   element button.primary background-color actual rgb(194, 98, 12) nearest --color-dusk (#c2620b)
 unchecked detail.default — proposed, never approved
 ```
+
+Elements the check does not draw are named in `screens.json`'s `ignore` (tag
+names, such as `nextjs-portal` in development); a margin of `auto` is read as
+the keyword, not the pixels it resolved to; a shadow is read layer by layer, in
+whatever colour spelling, and a framework's empty layer is not a break.
 
 A proposed mockup is not checked against (`unchecked`, with the reason). Each
 look is also recorded as a span, one per screen × state × device, carrying a

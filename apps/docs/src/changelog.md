@@ -6,6 +6,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Added
 
+- **UI promises** (ui-promises): an app's look is held by mockups a person approves in the cockpit, built on one foundation of design tokens, and the running app is checked against them. `indusk looks lint | status | coverage | check | tokens`; approval is given on the Looks page, in the checkout its plan is worked in, singly or as a group. The cockpit is the first app held. See [UI promises](/guide/ui-promises) and [the decision](/decisions/ui-promises).
 - **The admin is the cockpit** (plan-cockpit): plans by Path, each plan's two workflows and the decision it waits on, the promise dashboard with broken promises first, and a page per promise with its proof and a fix. See [the decision](/decisions/plan-cockpit).
 
 ### Fixed

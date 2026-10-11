@@ -1,6 +1,7 @@
 {
 	"url": "http://localhost:3939",
 	"sources": ["apps/indusk-admin/src"],
+	"ignore": ["nextjs-portal"],
 	"screens": [
 		{ "name": "nav", "states": ["expanded", "collapsed"], "path": "/p/dusk/promises" },
 		{ "name": "dashboard", "states": ["default", "empty"], "path": "/p/dusk/promises" },
