@@ -190,6 +190,16 @@ describe("A23 — a broken look is counted with the broken promises and listed f
   });
 });
 
+describe("the nav — Looks under Promises", () => {
+  it("the nav links the Looks page, right after Promises", async () => {
+    const root = await nav();
+    const promises = root.querySelector('[data-testid="nav-promises"]');
+    const looks = root.querySelector('[data-testid="nav-looks"]');
+    expect(looks?.getAttribute("href")).toBe(`/p/${PROJECT}/looks`);
+    expect(promises?.nextElementSibling).toBe(looks);
+  });
+});
+
 describe("A26 — every promise is still listed, looks beside them", () => {
   it("A26 lists every promise of the registry and the looks too", async () => {
     const root = await dashboard();

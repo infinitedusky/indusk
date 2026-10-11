@@ -152,6 +152,13 @@ export default async function PerProjectLayout({
               </span>
             )}
           </NavLink>
+          <NavLink
+            href={`/p/${project}/looks`}
+            data-testid="nav-looks"
+            className="rounded py-1 pr-2 pl-5 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Looks
+          </NavLink>
         </nav>
         <NeedsYou project={project} waiting={waiting} titles={planTitles} />
         {!worktrees.ok && (
