@@ -13,7 +13,7 @@ const broken = {
 	source: "production",
 	sourceLabel: "https://x.fly.dev:16687",
 	statement: "A seat is never held by two players at once.",
-	symptom: "it's \"bad\" seat 4 held twice",
+	symptom: 'it\'s "bad" seat 4 held twice',
 	traceId: "4bf92f3577b34da6",
 	tests: ["src/seats.test.ts"],
 };

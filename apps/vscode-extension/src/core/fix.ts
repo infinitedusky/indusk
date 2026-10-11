@@ -1,6 +1,7 @@
 import { promiseOf, type View, whereBroken } from "./view.js";
 
 // promise: a-break-opens-a-fix-in-one-click
+// promise: a-fix-opens-in-the-claude-code-tab
 
 export interface BrokenPromise {
 	promise: string;
@@ -13,19 +14,33 @@ export interface BrokenPromise {
 }
 
 export type FixAction =
+	| { claudeTab: { uri: string } }
 	| { terminal: { cwd: string; name: string; command: string } }
 	| { message: string };
 
+/** What the editor knows about where the fix can open. */
+export interface FixContext {
+	projectRoot: string;
+	claudeOnPath: boolean;
+	/** VS Code itself, as opposed to a fork such as Cursor. */
+	host?: "vscode" | "other";
+	/** The Claude Code extension is installed in this editor. */
+	claudeCodeExtension?: boolean;
+}
+
+/** Claude Code's documented link: a new tab with the prompt filled in, not sent. */
+const CLAUDE_TAB = "vscode://anthropic.claude-code/open?prompt=";
+
 /**
- * "Fix with Claude" (vscode-extension A12, A13): the developer's own `claude`
- * in the project, its first message carrying the break's facts. The editor
- * records nothing; Claude records the break through InDusk and fixes it.
+ * "Fix with Claude" (vscode-extension A12, A13): a new Claude Code tab in VS
+ * Code when the extension is installed, otherwise the developer's own `claude`
+ * in a terminal in the project, its first message carrying the break's facts.
+ * The editor records nothing; Claude records the break through InDusk and
+ * fixes it.
  */
-export function fixAction(
-	b: BrokenPromise,
-	ctx: { projectRoot: string; claudeOnPath: boolean },
-): FixAction {
-	if (!ctx.claudeOnPath) {
+export function fixAction(b: BrokenPromise, ctx: FixContext): FixAction {
+	const tab = ctx.host === "vscode" && ctx.claudeCodeExtension;
+	if (!tab && !ctx.claudeOnPath) {
 		return {
 			message:
 				"Claude Code is not installed, so there is nothing to start the fix with. Install it with `npm install -g @anthropic-ai/claude-code`, then try again.",
@@ -43,6 +58,7 @@ export function fixAction(
 	]
 		.filter((l): l is string => l !== null)
 		.join("\n");
+	if (tab) return { claudeTab: { uri: `${CLAUDE_TAB}${encodeURIComponent(prompt)}` } };
 	return {
 		terminal: {
 			cwd: ctx.projectRoot,
@@ -57,11 +73,7 @@ export function fixAction(
  * leading, where it is broken, with that source's facts. Null when it is broken
  * nowhere, so the action has nothing to start.
  */
-export function fixFor(
-	view: View | null,
-	promise: string,
-	ctx: { projectRoot: string; claudeOnPath: boolean },
-): FixAction | null {
+export function fixFor(view: View | null, promise: string, ctx: FixContext): FixAction | null {
 	const p = promiseOf(view, promise);
 	const broke = whereBroken(view, promise);
 	if (!p || !broke) return null;
