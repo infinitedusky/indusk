@@ -136,7 +136,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   hashes the ones the page showed, each mockup's in a group). The approve
   route also requires the browser-set `Sec-Fetch-Site: same-origin`, which a
   local process that sets `Host` and `Origin` does not send — guarded by
-  `looks.test.tsx`.
+  `looks-approve-binding.test.tsx`.
   Guarded by `cockpit-single-definition.test.ts` (`approvalOf`, `coverageOf`,
   `verdict`, `lookStandingOf`). The Looks page tests run in the node project
   (`vitest.tiers.ts` `NODE_PAGES`) against a real fixture project; a listed

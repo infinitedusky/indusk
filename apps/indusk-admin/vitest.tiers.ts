@@ -36,9 +36,12 @@ export const SYSTEM = [
 /**
  * Page tests that run in the node project, not the browser one: they read and
  * write a real project through the package (the Looks page and its Approve,
- * ui-promises A1, A2, A13, A14), which a browser cannot reach.
+ * ui-promises A1, A2, A13, A14, and A29, A30 in the approve route's own file), which a browser cannot reach.
  */
-export const NODE_PAGES = ["src/app/p/[project]/looks/looks.test.tsx"];
+export const NODE_PAGES = [
+  "src/app/p/[project]/looks/looks.test.tsx",
+  "src/app/p/[project]/looks/looks-approve-binding.test.tsx",
+];
 
 /**
  * A listed path as a glob: `[project]` is a route folder, not a character
