@@ -10,6 +10,8 @@ rationale: required
 gate_policy: ask
 cleanup: skipped
 cleanup_reason: "reviewed all 15 changed files — 12 code and docs, plus the lockfile, the phase-boundary ledger and the impl (listOversizedChangedFiles flagged three: changelog.md 1055 lines and otel.md 448 lines are append-only/reference prose this plan added 4 and 19 lines to; init.ts 1331 lines is a long-standing command function the plan touched with one 10-line helper and four print calls). Templates, tests and audit.ts are under the cap and cohesive: the four env reads in instrumentation.web.ts repeat only because Next inlines literal process.env.NEXT_PUBLIC_* references, so a helper would break the build-time substitution; the A8/A12 audit tests are two cases in one file, below the rule of three; the one new helper (printPropagationInstructions) already serves both browser branches. Nothing warrants extraction."
+accepted: 2026-10-11T00:35:33.591Z
+accepted_by: person
 ---
 
 # Browser telemetry leftovers — a click and its server work share a trace
