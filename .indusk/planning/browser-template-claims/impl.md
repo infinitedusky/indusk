@@ -1,7 +1,7 @@
 ---
 title: "Browser template claims — an entry covers what it names"
 date: 2026-10-11
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -43,6 +43,8 @@ A propagation entry sends the click's trace to the requests it names and to no o
 | T3 | With `https://*.dev.example.com:443`, a request to `https://plan-a.dev.example.com/api` carries the trace; with `https://*.dev.example.com:8443`, a request to port 8443 carries it and one to the default port carries none | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 | T4 | A request made from a `.then()` callback and one from a timer in a click handler are not in the click's trace | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard pinning the documented limit: the template has no async-aware context manager | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 | T5 | The OpenTelemetry reference page and the otel skill do not say that a `.then()` chain, a timer or compiled-down async code follows the click | Test Phase 1 | Build Phase 1 | passing | unit | the falsified claim: the reference page said a `.then()` chain compiled below ES2017 follows the click | apps/indusk-mcp/src/__tests__/otel-docs-claims.test.ts |
+| T6 | With an exact entry `https://api.example.com/Admin` and a pattern entry `https://*.dev.example.com/Admin`, a request to `/Admin` carries the trace and a request to `/admin` (a different resource) carries none; host and scheme case in an entry still do not matter | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| T7 | The docs guard from T5 flags a reworded regression of the falsified claim — "A request from a `.then()` chain follows the click, not only synchronous ones." — and still passes the current wording of the limit | Build Phase 2 | Build Phase 2 | planned | unit | the guard guarding the falsified claim: T5 exempted any sentence containing "no" or "not", so a rewording that kept the claim would pass | apps/indusk-mcp/src/__tests__/otel-docs-claims.test.ts |
 
 ## Checklist
 
@@ -91,6 +93,30 @@ A propagation entry sends the click's trace to the requests it names and to no o
 #### Build Phase 1 Document
 
 - [x] `apps/docs/src/changelog.md`: Fixed — "A propagation entry with a path no longer widens to the whole origin, a pattern entry with a default port matches, and the reference no longer says a `.then()` chain follows the click"
+
+### Build Phase 2: Falsification — path case, the docs guard, the promise's code site
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds against three failure modes found by reading Build Phase 1's code: an entry's path compared case-insensitively (the `i` flag the entry compiler carries from when only hosts were compared), so `/Admin` also covers `/admin`; a docs guard whose "not" exemption lets a reworded claim through; and the promise's code site, which no code names yet, so `indusk promises confirm` would refuse. T6 and T7 are authored red first.
+
+- [ ] T6 and T7 authored red in the two existing test files, each failing on its own assertion (`/admin` carries a traceparent under an entry that names `/Admin`; the reworded sentence is not flagged)
+- [ ] `templates/instrumentation.web.ts`: the entry compiler lower-cases the scheme and authority of an entry (a request URL's are always lower-case) and compiles without the `i` flag, so the path is compared as written (T6)
+- [ ] `src/__tests__/otel-docs-claims.test.ts`: exempt only a sentence that says the request is in its own trace, not in the click's trace, or outside the click; a bare "not" no longer exempts (T7)
+- [ ] `templates/instrumentation.web.ts`: a comment at `parsePropagateTo` saying `promise: a-propagation-entry-covers-what-it-names`, so the promise's code site exists when the plan closes
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 2 Verification
+
+- [ ] T6 and T7 fail on their own assertions first, then pass; T1–T5 and the earlier plan's cases still pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/otel-docs-claims.test.ts`); `indusk promises confirm browser-template-claims` no longer refuses for a missing code site; tsc and biome clean on changed files
+
+#### Build Phase 2 Context
+
+- [ ] `apps/indusk-mcp/extensions/otel/skill.md`: a path in an entry is compared case-sensitively; host and scheme are not
+
+#### Build Phase 2 Document
+
+- [ ] `apps/docs/src/reference/tools/otel.md`: the same sentence beside the path rule; changelog line extended
 
 ## Files Affected
 
