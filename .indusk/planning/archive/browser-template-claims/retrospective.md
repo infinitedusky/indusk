@@ -45,3 +45,4 @@ Shape raised nothing in Build Phases 1–3 and Test Phase 1: 0 findings, 0 judge
 ## Release
 
 Nothing published; this project installs its own build at landing.
+Landed on main at 73f114bf, 2026-10-11.
