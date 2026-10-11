@@ -1,7 +1,11 @@
+import { initEvalOtel, shutdownEvalOtel } from "../../lib/eval/otel.js";
 import { type Approval, approvalOf, readApprovals } from "../../lib/looks/approvals.js";
+import { checkApp } from "../../lib/looks/check.js";
 import { coverageOf } from "../../lib/looks/coverage.js";
 import { lintApp } from "../../lib/looks/lint.js";
 import { type Mockup, readApp } from "../../lib/looks/mockups.js";
+import { describe, reportLooks } from "../../lib/looks/report.js";
+import { markProjectId } from "../../lib/promises/config.js";
 
 /**
  * `indusk looks lint <app>` — every raw value, undefined token and stock class
@@ -78,6 +82,50 @@ export async function looksCoverage(projectRoot: string, appName: string): Promi
 			console.info(`${appName}: every screen, state and component covered by an approved mockup`);
 		}
 	} catch (err) {
+		console.error((err as Error).message);
+		process.exitCode = 1;
+	}
+}
+
+/**
+ * `indusk looks check <app> [--url]` — opens each declared screen state with
+ * an approved mockup at each reference device in Chromium and judges the
+ * running app by value. One `held`/`broken` line per screen state and device,
+ * each finding indented under a broken one (`token <name> approved <v> actual
+ * <v>` or `element <selector> <property> actual <v> nearest <token (v)>`),
+ * then the screen states not checked and why. Each look is also a span.
+ * Exit 1 on any broken look, and when nothing could be checked: a run that
+ * checked nothing must not read as held.
+ */
+export async function looksCheck(
+	projectRoot: string,
+	appName: string,
+	opts: { url?: string },
+): Promise<void> {
+	try {
+		const app = await readApp(projectRoot, appName);
+		const { results, unchecked } = await checkApp(app, readApprovals(app), opts.url);
+		for (const r of results) {
+			console.info(
+				`${r.verdict.state === "held" ? "held   " : "broken "} ${r.screen}.${r.state} @ ${r.device}`,
+			);
+			for (const f of r.verdict.findings) console.info(`  ${describe(f)}`);
+		}
+		for (const u of unchecked) console.info(`unchecked ${u.mockup} — ${u.reason}`);
+		reportLooks(results, initEvalOtel(projectRoot), { project: markProjectId(projectRoot) });
+		await shutdownEvalOtel();
+		const broken = results.filter((r) => r.verdict.state === "broken").length;
+		if (results.length === 0) {
+			console.error(`${appName}: nothing checked — no approved mockup to hold the app to`);
+			process.exitCode = 1;
+		} else if (broken > 0) {
+			console.error(`${broken} of ${results.length} looks broken in ${appName}`);
+			process.exitCode = 1;
+		} else {
+			console.info(`${appName}: ${results.length} looks held`);
+		}
+	} catch (err) {
+		// A missing driver, browser, URL or app is a refusal, never a held look.
 		console.error((err as Error).message);
 		process.exitCode = 1;
 	}
