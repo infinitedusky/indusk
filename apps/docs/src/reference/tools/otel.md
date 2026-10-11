@@ -299,7 +299,7 @@ A `fetch` or `XMLHttpRequest` (so axios too) to the page's own origin carries th
 VITE_OTEL_PROPAGATE_TO=http://localhost:3000,https://*.dev.example.com
 ```
 
-- An entry without `*` is an exact origin (scheme, host and port). An entry that carries a path covers that path and what is under it, so `https://api.example.com/v1` covers `/v1/seats` and not `/v2/seats` or `/v10/seats`; a pattern entry follows the same rule.
+- An entry without `*` is an exact origin (scheme, host and port). An entry that carries a path covers that path and what is under it, so `https://api.example.com/v1` covers `/v1/seats` and not `/v2/seats` or `/v10/seats`; a pattern entry follows the same rule. A path is compared as written, since a server tells `/Admin` from `/admin`; host and scheme case do not matter.
 - `*` matches one or more characters other than `/` and `.`, so `https://*.dev.example.com` matches `https://plan-a.dev.example.com` and not `https://dev.example.com.evil.test`.
 - Empty means same-origin only. A third-party origin you did not name never receives the header.
 - An entry begins with its scheme (`https://`, or `*://`). One that does not can never match a request, so it is ignored with a console warning naming it; a bare `*` propagates nowhere.

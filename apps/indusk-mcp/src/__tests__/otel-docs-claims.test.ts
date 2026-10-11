@@ -9,6 +9,10 @@ import { REPO_ROOT } from "./helpers/cli.js";
 
 const PAGES = ["apps/docs/src/reference/tools/otel.md", "apps/indusk-mcp/extensions/otel/skill.md"];
 
+/** What a sentence says when it states the limit rather than the claim: the request is in its own trace. */
+const SAYS_IT_DOES_NOT_FOLLOW =
+	/\bits own trace\b|\bnot (?:in )?the click's\b|\boutside the click\b|\bdoes not follow the click\b|\bdo not follow the click\b/i;
+
 /** Sentences (split on . ! ? and newlines) that tie a deferred call to following the click. */
 function asyncFollowClaims(text: string): string[] {
 	return text
@@ -17,7 +21,7 @@ function asyncFollowClaims(text: string): string[] {
 		.filter((sentence) =>
 			/\.then\(|\bsetTimeout\b|\btimer\b|\bES20\d\d\b|\bcompiled below\b/i.test(sentence),
 		)
-		.filter((sentence) => !/\b(not|never|no)\b|its own trace|outside the click/i.test(sentence));
+		.filter((sentence) => !SAYS_IT_DOES_NOT_FOLLOW.test(sentence));
 }
 
 describe("otel docs claims", () => {

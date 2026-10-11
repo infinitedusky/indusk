@@ -85,12 +85,15 @@ function parseHeaders(headerStr: string): Record<string, string> {
 // itself and what is under it, and nothing beside it (/v1 covers /v1/seats, not /v10).
 // An entry without `*` is normalized the way the browser spells a request URL (lower-case
 // host, default port dropped); `*` is one or more characters other than "/" and ".",
-// everything else literal. A default port written in a pattern entry is optional, as it
+// everything else literal. Scheme and host are lower-cased and compared as such; a path
+// is compared as written, because a server tells /Admin from /admin. A default port written in a pattern entry is optional, as it
 // is in the URL a request carries. An entry that does not begin `<scheme>://` can never
 // match a request, so it is dropped with a warning rather than left to do nothing silently.
 const ENTRY_WITH_SCHEME = /^(?:[a-z][a-z0-9+.-]*|\*):\/\//i;
 const DEFAULT_PORT: Record<string, string> = { http: "80", https: "443" };
 
+// promise: a-propagation-entry-covers-what-it-names — an entry sends the click's trace to
+// the requests it names and to no others; the rules above are what "names" means.
 function parsePropagateTo(list: string): RegExp[] {
 	const patterns: RegExp[] = [];
 	for (const raw of list.split(",")) {
@@ -103,7 +106,7 @@ function parsePropagateTo(list: string): RegExp[] {
 			continue;
 		}
 		const named = entry.includes("*") ? entry : normalizeExactEntry(entry);
-		patterns.push(new RegExp(`^${entrySource(named)}(?:[/?#]|$)`, "i"));
+		patterns.push(new RegExp(`^${entrySource(named)}(?:[/?#]|$)`));
 	}
 	return patterns;
 }
@@ -131,7 +134,7 @@ function entrySource(entry: string): string {
 	const port = /:(\d+)$/.exec(authority);
 	const optionalPort = port !== null && DEFAULT_PORT[scheme.toLowerCase()] === port[1];
 	const host = optionalPort ? authority.slice(0, -port[0].length) : authority;
-	return `${literal(`${scheme}://${host}`)}${optionalPort ? `(?::${port[1]})?` : ""}${literal(rest)}`;
+	return `${literal(`${scheme}://${host}`.toLowerCase())}${optionalPort ? `(?::${port[1]})?` : ""}${literal(rest)}`;
 }
 
 const spanProcessors = [
