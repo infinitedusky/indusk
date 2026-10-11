@@ -1,6 +1,7 @@
 // promise: a-click-and-its-server-work-share-a-trace
+// promise: a-propagation-entry-covers-what-it-names
 //
-// browser-telemetry-leftovers, A1–A3 and A9–A11 — what the shipped
+// browser-telemetry-leftovers A1–A3 and A9–A13, browser-template-claims T1–T4 — what the shipped
 // browser template (instrumentation.web.ts) does with a click that makes
 // requests. Runs in headless Chromium (vitest.templates.config.ts).
 //
@@ -73,7 +74,11 @@ afterEach(() => {
  */
 async function clickAndFetch(
 	urls: string[],
-	{ afterAwait = false, xhr = false }: { afterAwait?: boolean; xhr?: boolean } = {},
+	{
+		afterAwait = false,
+		xhr = false,
+		later = null,
+	}: { afterAwait?: boolean; xhr?: boolean; later?: "then" | "timer" | null } = {},
 ): Promise<{ sent: Recorded[]; clickTraceIds: string[]; activeTraceId?: string }> {
 	recorded = [];
 	await import(/* @vite-ignore */ `./instrumentation.web.ts?fresh=${++imports}`);
@@ -84,6 +89,15 @@ async function clickAndFetch(
 	let activeTraceId: string | undefined;
 	button.addEventListener("click", async () => {
 		activeTraceId = trace.getSpan(context.active())?.spanContext().traceId;
+		if (later) {
+			// Not an `await`: the request is made from a callback the handler scheduled.
+			const go = () => {
+				for (const url of urls) void fetch(url);
+			};
+			if (later === "then") void Promise.resolve().then(go);
+			else setTimeout(go, 0);
+			return;
+		}
 		if (afterAwait) await Promise.resolve();
 		for (const url of urls) {
 			if (!xhr) {
@@ -198,5 +212,99 @@ describe("instrumentation.web template", () => {
 			by("https://api.thirdparty.example")?.traceparent,
 			"third party carries none",
 		).toBeNull();
+	});
+
+	it("T1: an exact entry that names a path covers that path and what is under it, and nothing else", async () => {
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "https://api.example.com/v1");
+		const { sent, clickTraceIds } = await clickAndFetch([
+			"https://api.example.com/v1/seats",
+			"https://api.example.com/v2/seats",
+			"https://api.example.com/v10/seats",
+		]);
+		const by = (path: string) => sent.find((r) => r.url === `https://api.example.com${path}`);
+		const covered = by("/v1/seats")?.traceparent ?? null;
+		expect(covered, "/v1/seats carries traceparent").not.toBeNull();
+		expect(clickTraceIds).toContain(traceIdOf(covered));
+		expect(by("/v2/seats")?.traceparent, "/v2/seats carries none").toBeNull();
+		expect(by("/v10/seats")?.traceparent, "/v10/seats carries none").toBeNull();
+	});
+
+	it("T2: a pattern entry that names a path covers that path only", async () => {
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "https://*.dev.example.com/v1");
+		const { sent, clickTraceIds } = await clickAndFetch([
+			"https://plan-a.dev.example.com/v1/seats",
+			"https://plan-a.dev.example.com/v2/seats",
+		]);
+		const covered = sent[0].traceparent;
+		expect(covered, "/v1 on a matching host carries traceparent").not.toBeNull();
+		expect(clickTraceIds).toContain(traceIdOf(covered));
+		expect(sent[1].traceparent, "/v2 on the same host carries none").toBeNull();
+	});
+
+	it("T3: a pattern entry's default port may be written or left off; any other port stays literal", async () => {
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "https://*.dev.example.com:443");
+		const defaultPort = await clickAndFetch(["https://plan-a.dev.example.com/api"]);
+		expect(
+			defaultPort.sent[0].traceparent,
+			":443 written in the entry matches a request whose URL leaves it off",
+		).not.toBeNull();
+
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "https://*.dev.example.com:8443");
+		const other = await clickAndFetch([
+			"https://plan-a.dev.example.com:8443/api",
+			"https://plan-a.dev.example.com/api",
+		]);
+		expect(other.sent[0].traceparent, ":8443 request carries traceparent").not.toBeNull();
+		expect(other.sent[1].traceparent, "default-port request carries none").toBeNull();
+	});
+
+	it("T4: a request made from a .then() callback or a timer is not in the click's trace", async () => {
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "http://localhost:3000");
+		for (const later of ["then", "timer"] as const) {
+			const { sent, activeTraceId } = await clickAndFetch(["http://localhost:3000/api/seats"], {
+				later,
+			});
+			expect(activeTraceId, `${later}: a click span was active in the handler`).toBeDefined();
+			expect(
+				traceIdOf(sent[0].traceparent),
+				`${later}: the request is not in the click's trace`,
+			).not.toBe(activeTraceId);
+		}
+	});
+
+	it("T6: a path in an entry is compared as written; host and scheme case do not matter", async () => {
+		for (const entry of ["https://api.example.com/Admin", "https://*.dev.example.com/Admin"]) {
+			vi.stubEnv("VITE_OTEL_PROPAGATE_TO", entry);
+			const host = entry.includes("*") ? "plan-a.dev.example.com" : "api.example.com";
+			const { sent, clickTraceIds } = await clickAndFetch([
+				`https://${host}/Admin/users`,
+				`https://${host}/admin/users`,
+			]);
+			const covered = sent[0].traceparent;
+			expect(covered, `${entry}: /Admin carries traceparent`).not.toBeNull();
+			expect(clickTraceIds).toContain(traceIdOf(covered));
+			expect(sent[1].traceparent, `${entry}: /admin (another resource) carries none`).toBeNull();
+		}
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "HTTPS://API.Example.com");
+		const cased = await clickAndFetch(["https://api.example.com/seats"]);
+		expect(
+			cased.sent[0].traceparent,
+			"scheme and host case in the entry still match",
+		).not.toBeNull();
+	});
+
+	it("T8: a query or fragment on an entry is ignored, for exact and pattern entries alike", async () => {
+		for (const entry of ["https://api.example.com/v1?x=1", "https://*.dev.example.com/v1#top"]) {
+			vi.stubEnv("VITE_OTEL_PROPAGATE_TO", entry);
+			const host = entry.includes("*") ? "plan-a.dev.example.com" : "api.example.com";
+			const { sent, clickTraceIds } = await clickAndFetch([
+				`https://${host}/v1/seats`,
+				`https://${host}/v2/seats`,
+			]);
+			const covered = sent[0].traceparent;
+			expect(covered, `${entry}: /v1/seats carries traceparent`).not.toBeNull();
+			expect(clickTraceIds).toContain(traceIdOf(covered));
+			expect(sent[1].traceparent, `${entry}: /v2/seats carries none`).toBeNull();
+		}
 	});
 });

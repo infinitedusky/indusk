@@ -261,7 +261,8 @@ After instrumenting a service, verify:
 - Browser env vars use `VITE_` prefix: `VITE_OTEL_EXPORTER_OTLP_ENDPOINT`
 - The browser template instruments `fetch` and `XMLHttpRequest` (axios); both send `traceparent` only to its own origin and to the origins or `*` patterns named in `VITE_OTEL_PROPAGATE_TO` / `NEXT_PUBLIC_OTEL_PROPAGATE_TO`; the named API must allow `traceparent` in its CORS settings (`Access-Control-Allow-Headers`), or the browser blocks the request
 - Entries are origins with a scheme (`https://api.example.com`, `https://*.dev.example.com`); one without is ignored with a console warning
-- A request after a native `await` in a click handler is in its own trace, not the click's — the browser cannot carry the click's context across it yet; make the request before the `await`, or accept the separate trace
+- An entry with a path covers that path and what is under it (`https://api.example.com/v1` covers `/v1/seats`, not `/v2`); a default port may be written or left off, for exact and pattern entries alike; the path is compared as written (`/Admin` is not `/admin`), host and scheme case are not; a query or fragment written on an entry is ignored, for exact and pattern entries alike
+- Only a request made synchronously in the click handler is in the click's trace; one after a native `await`, from a `.then()` callback or a timer is in its own trace — make the request before the first `await`, or accept the separate trace
 
 ### Python
 - Use `opentelemetry-instrument` CLI: `opentelemetry-instrument python your_app.py`
