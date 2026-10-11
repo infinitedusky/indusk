@@ -28,7 +28,7 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 
 **Wire it**: Server loads automatically. Client: `import './instrumentation.web'` in your root client component.
 
-**Install**: `pnpm add @vercel/otel pino pino-opentelemetry-transport @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction`
+**Install**: `pnpm add @vercel/otel pino pino-opentelemetry-transport @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-xml-http-request @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction`
 
 ### React SPA (Vite)
 
@@ -38,7 +38,7 @@ Auto-instrumentation, structured logging, and category-based filtering for every
 
 **Wire it**: `import './instrumentation'` at the top of `main.tsx`
 
-**Install**: `pnpm add @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction`
+**Install**: `pnpm add @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-xml-http-request @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction`
 
 ### Python
 
@@ -293,7 +293,7 @@ flowchart TD
 
 ### Following a click to an API on another origin
 
-A request to the page's own origin carries the click's trace (a `traceparent` header) with no setting. A request to any other origin carries it only when the origin is named in `*_OTEL_PROPAGATE_TO`: a comma-separated list, where an entry containing `*` is a pattern.
+A `fetch` or `XMLHttpRequest` (so axios too) to the page's own origin carries the click's trace (a `traceparent` header) with no setting. A request to any other origin carries it only when the origin is named in `*_OTEL_PROPAGATE_TO`: a comma-separated list, where an entry containing `*` is a pattern.
 
 ```bash
 VITE_OTEL_PROPAGATE_TO=http://localhost:3000,https://*.dev.example.com

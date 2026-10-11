@@ -1,7 +1,7 @@
 ---
 title: "Browser telemetry leftovers — a click and its server work share a trace"
 date: 2026-10-10
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,7 +9,7 @@ test_purpose: required
 rationale: required
 gate_policy: ask
 cleanup: skipped
-cleanup_reason: "reviewed all 12 changed files (listOversizedChangedFiles flagged three: changelog.md 1055 lines and otel.md 448 lines are append-only/reference prose this plan added 4 and 19 lines to; init.ts 1331 lines is a long-standing command function the plan touched with one 10-line helper and four print calls). Templates, tests and audit.ts are under the cap and cohesive: the four env reads in instrumentation.web.ts repeat only because Next inlines literal process.env.NEXT_PUBLIC_* references, so a helper would break the build-time substitution; the A8/A12 audit tests are two cases in one file, below the rule of three; the one new helper (printPropagationInstructions) already serves both browser branches. Nothing warrants extraction."
+cleanup_reason: "reviewed all 15 changed files — 12 code and docs, plus the lockfile, the phase-boundary ledger and the impl (listOversizedChangedFiles flagged three: changelog.md 1055 lines and otel.md 448 lines are append-only/reference prose this plan added 4 and 19 lines to; init.ts 1331 lines is a long-standing command function the plan touched with one 10-line helper and four print calls). Templates, tests and audit.ts are under the cap and cohesive: the four env reads in instrumentation.web.ts repeat only because Next inlines literal process.env.NEXT_PUBLIC_* references, so a helper would break the build-time substitution; the A8/A12 audit tests are two cases in one file, below the rule of three; the one new helper (printPropagationInstructions) already serves both browser branches. Nothing warrants extraction."
 ---
 
 # Browser telemetry leftovers — a click and its server work share a trace
@@ -54,8 +54,8 @@ The scaffolded browser instrumentation carries a click's trace to the project's 
 | A10 | With `VITE_OTEL_PROPAGATE_TO=*`, a request to `https://api.thirdparty.example` carries no `traceparent`; with `=localhost:3000` (no scheme) the entry is reported by one `console.warn` naming it, since it can never match | Build Phase 2 | Build Phase 2 | passing | unit | falsification of Build Phase 1: the documented `*` (one or more characters other than `/` and `.`) is compiled so that a bare `*` matches `http:` followed by `/`, i.e. every URL; a scheme-less entry never matches and says nothing | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 | A11 | A click handler that awaits before it fetches (`await Promise.resolve(); fetch(url)`) sends that request in the click's trace, for the same origin and for a named origin | Build Phase 2 | Build Phase 2 | skipped | unit | the case A1–A3 leave out: a handler that awaits before it fetches; skipped by decision and carried in Deferred Verification | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 | A12 | A Deferred Verification row whose mitigation names only "grafana" ("dashboards in grafana, reviewed by the on-call") is not classified as a telemetry alert | Build Phase 2 | Build Phase 2 | passing | unit | falsification of Build Phase 1: A8 removed `dash0` because a vendor's name is not instrumentation; `grafana` is the same kind of word and is still in the list | apps/indusk-mcp/src/lib/trajectory/audit.test.ts |
-| A13 | A click whose handler makes a request through `XMLHttpRequest` (as axios does) to the page's own origin and to a named origin sends it with a `traceparent` in the click's trace, and a request to a third-party origin carries none | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-click-and-its-server-work-share-a-trace — the cold audit found only `fetch` instrumented while the template header and the promise say requests | apps/indusk-mcp/templates/instrumentation.web.test.ts |
-| A14 | `indusk init` on a Node service and on a Python project prints, for every file it created, a line naming that file and the OpenTelemetry SDK in it, and writes no file naming a vendor | Build Phase 3 | Build Phase 3 | planned | unit | promise: init-writes-no-vendor-into-an-app — A5 exempted the Node scaffold from its "names the SDK" half and never ran Python | apps/indusk-mcp/src/__tests__/init-browser-telemetry.test.ts |
+| A13 | A click whose handler makes a request through `XMLHttpRequest` (as axios does) to the page's own origin and to a named origin sends it with a `traceparent` in the click's trace, and a request to a third-party origin carries none | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-click-and-its-server-work-share-a-trace | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| A14 | `indusk init` on a Node service and on a Python project prints, for every file it created, a line naming that file and the OpenTelemetry SDK in it, and writes no file naming a vendor | Build Phase 3 | Build Phase 3 | passing | unit | promise: init-writes-no-vendor-into-an-app | apps/indusk-mcp/src/__tests__/init-browser-telemetry.test.ts |
 
 ## Checklist
 
@@ -166,27 +166,29 @@ The scaffolded browser instrumentation carries a click's trace to the project's 
 
 **Goal**: act on the cold audit's findings that belong to this plan: the template propagates XHR requests (the code did not do what promise 1's sentence says), the Node and Python scaffolds print the SDK they wrote (the second half of promise 2 held for two of four scaffolds), the two promise sentences say what is proven, and the plan's own records are accurate. Findings that are new features go to the backlog, not here. A13 and A14 are authored red first.
 
-- [ ] A13 and A14 authored red in the two existing test files, each failing on its own assertion (XHR carries no traceparent; the Node and Python `create:` lines name no SDK)
-- [ ] `templates/instrumentation.web.ts`: register `XMLHttpRequestInstrumentation` with the same `propagateTraceHeaderCorsUrls` as fetch; header comment and both browser install lines in `init.ts` gain `@opentelemetry/instrumentation-xml-http-request`; devDependency for the template test project (A13)
-- [ ] `src/bin/commands/init.ts`: the Node scaffold's three `create:` lines and the Python scaffold's line name the OpenTelemetry SDK each file uses (A14)
-- [ ] Promise 1's sentence, through `indusk promises change browser-telemetry-leftovers --plan browser-telemetry-leftovers`: every `fetch` or XMLHttpRequest the browser makes in the click's call to the project's own services (own origin, or a named origin or pattern) carries the click's trace; a request made after a native `await` is not promised. The archived brief's Promises section and its Not promised list say the same
-- [ ] Promise 2's sentence, the same way: nothing `indusk init` writes into an application's source names or imports an observability vendor (a destination to send telemetry to), and what it prints names the file and the SDK it wrote. The brief says the same and names `@vercel/otel`, an OpenTelemetry distribution, as not a vendor in this sense
-- [ ] `cleanup_reason` in the frontmatter says what the diff stat shows (15 files: 12 code and docs, plus the lockfile, the phase-boundary ledger and the impl); the retrospective carries A4's trace ids and the A11 owner
-- [ ] The backlog (`.indusk/planning/known-issues.md`): two entries — `update` and `init` leave an existing project on its old browser template; the AsyncContext follow-up for a click's trace across a native `await`
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] A13 and A14 authored red in the two existing test files, each failing on its own assertion (XHR carries no traceparent; the Node and Python `create:` lines name no SDK)
+- [x] `templates/instrumentation.web.ts`: register `XMLHttpRequestInstrumentation` with the same `propagateTraceHeaderCorsUrls` as fetch; header comment and both browser install lines in `init.ts` gain `@opentelemetry/instrumentation-xml-http-request`; devDependency for the template test project (A13)
+- [x] `src/bin/commands/init.ts`: the Node scaffold's three `create:` lines and the Python scaffold's line name the OpenTelemetry SDK each file uses (A14)
+- [x] Promise 1's sentence, through `indusk promises change browser-telemetry-leftovers --plan browser-telemetry-leftovers`: every `fetch` or XMLHttpRequest the browser makes in the click's call to the project's own services (own origin, or a named origin or pattern) carries the click's trace; a request made after a native `await` is not promised. The archived brief's Promises section and its Not promised list say the same
+- [x] Promise 2's sentence, the same way: nothing `indusk init` writes into an application's source names or imports an observability vendor (a destination to send telemetry to), and what it prints names the file and the SDK it wrote. The brief says the same and names `@vercel/otel`, an OpenTelemetry distribution, as not a vendor in this sense
+- [x] `cleanup_reason` in the frontmatter says what the diff stat shows (15 files: 12 code and docs, plus the lockfile, the phase-boundary ledger and the impl); the retrospective carries A4's trace ids and the A11 owner
+- [x] The backlog (`.indusk/planning/known-issues.md`): two entries — `update` and `init` leave an existing project on its old browser template; the AsyncContext follow-up for a click's trace across a native `await`
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+  - Reviewed 2026-10-11 (`instrumentation.web.ts`, `init.ts`, the two test files): nothing found. The install list is now one constant used by both browser branches (it was two copies), the Node file purposes are a named map, and the test's XHR recorder sits beside the fetch recorder as one setup function.
 
 #### Build Phase 3 Verification
 
-- [ ] A13 and A14 pass; A1–A12 still pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/init-browser-telemetry.test.ts src/lib/trajectory/audit.test.ts && pnpm exec vitest related src/bin/commands/init.ts --run`); `indusk promises check` clean after the two sentences change; tsc and biome clean on changed files
-- [ ] The live check once more with an XMLHttpRequest from the Vite page to the Node API: one trace holds `click`, the XHR's `GET` and the API's span; record the trace id here
+- [x] A13 and A14 pass; A1–A12 still pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/init-browser-telemetry.test.ts src/lib/trajectory/audit.test.ts && pnpm exec vitest related src/bin/commands/init.ts --run`); `indusk promises check` clean after the two sentences change; tsc and biome clean on changed files
+- [x] The live check once more with an XMLHttpRequest from the Vite page to the Node API: one trace holds `click`, the XHR's `GET` and the API's span; record the trace id here
+  - Recorded 2026-10-11: XHR from the Vite page to the Node API, `VITE_OTEL_PROPAGATE_TO=http://localhost:3101`, trace `c8ec8e35dd477999567ab3fa05ae539e`: `web` `click` → `web` `GET` → `a4-api` `GET`.
 
 #### Build Phase 3 Context
 
-- [ ] `apps/indusk-mcp/extensions/otel/skill.md`: the browser template instruments `fetch` and `XMLHttpRequest`
+- [x] `apps/indusk-mcp/extensions/otel/skill.md`: the browser template instruments `fetch` and `XMLHttpRequest`
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/tools/otel.md`: the install line, and "fetch and XMLHttpRequest" where the page says requests; changelog line extended
+- [x] `apps/docs/src/reference/tools/otel.md`: the install line, and "fetch and XMLHttpRequest" where the page says requests; changelog line extended
 
 ## Files Affected
 

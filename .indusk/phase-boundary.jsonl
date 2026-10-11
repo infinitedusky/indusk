@@ -250,3 +250,4 @@
 {"plan":"display-names","phase":5,"kind":"build","sha":"bfced78c1d14ca482faea1f3a64843f4d85dd932","timestamp":"2026-10-10T18:46:35.000Z"}
 {"plan":"browser-telemetry-leftovers","phase":1,"kind":"test","sha":"5f36de69b446a0948c480f5f9fee542c7b1e347f","timestamp":"2026-10-10T21:24:32.811Z"}
 {"plan":"browser-telemetry-leftovers","phase":2,"kind":"build","sha":"4b4f93002f01fc7ca26724f10f806d1b401e4c79","timestamp":"2026-10-11T00:15:31.796Z"}
+{"plan":"browser-telemetry-leftovers","phase":3,"kind":"build","sha":"e07b78743bc897e4b7be75b398236f2358dca597","timestamp":"2026-10-11T00:31:48.910Z"}

@@ -15,6 +15,33 @@ type Recorded = { url: string; traceparent: string | null };
 let recorded: Recorded[] = [];
 let imports = 0;
 
+// XMLHttpRequest, recorded like fetch: `send` is replaced by a recorder before the template
+// is imported, so the template's instrumentation wraps it and the headers it injected through
+// `setRequestHeader` are there when the recorder runs. Nothing is sent.
+const realXhr = {
+	open: XMLHttpRequest.prototype.open,
+	setRequestHeader: XMLHttpRequest.prototype.setRequestHeader,
+	send: XMLHttpRequest.prototype.send,
+};
+const xhrState = new WeakMap<XMLHttpRequest, { url: string; traceparent: string | null }>();
+
+function recordXhr() {
+	const proto = XMLHttpRequest.prototype;
+	proto.open = function (this: XMLHttpRequest, method: string, url: string | URL) {
+		xhrState.set(this, { url: String(url), traceparent: null });
+		return (realXhr.open as (...a: unknown[]) => void).call(this, method, url);
+	} as typeof proto.open;
+	proto.setRequestHeader = function (this: XMLHttpRequest, name: string, value: string) {
+		const state = xhrState.get(this);
+		if (state && name.toLowerCase() === "traceparent") state.traceparent = value;
+		return realXhr.setRequestHeader.call(this, name, value);
+	};
+	proto.send = function (this: XMLHttpRequest) {
+		const state = xhrState.get(this);
+		if (state) recorded.push({ url: state.url, traceparent: state.traceparent });
+	};
+}
+
 beforeEach(() => {
 	// Each case starts from an empty API: whichever provider and context manager a
 	// previous case registered are gone, so the template's own `register()` is the only
@@ -23,6 +50,8 @@ beforeEach(() => {
 	context.disable();
 	propagation.disable();
 	recorded = [];
+	Object.assign(XMLHttpRequest.prototype, realXhr);
+	recordXhr();
 	window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = input instanceof Request ? input.url : String(input);
 		const headers = new Headers(
@@ -44,7 +73,7 @@ afterEach(() => {
  */
 async function clickAndFetch(
 	urls: string[],
-	{ afterAwait = false }: { afterAwait?: boolean } = {},
+	{ afterAwait = false, xhr = false }: { afterAwait?: boolean; xhr?: boolean } = {},
 ): Promise<{ sent: Recorded[]; clickTraceIds: string[]; activeTraceId?: string }> {
 	recorded = [];
 	await import(/* @vite-ignore */ `./instrumentation.web.ts?fresh=${++imports}`);
@@ -56,7 +85,15 @@ async function clickAndFetch(
 	button.addEventListener("click", async () => {
 		activeTraceId = trace.getSpan(context.active())?.spanContext().traceId;
 		if (afterAwait) await Promise.resolve();
-		for (const url of urls) void fetch(url);
+		for (const url of urls) {
+			if (!xhr) {
+				void fetch(url);
+				continue;
+			}
+			const req = new XMLHttpRequest();
+			req.open("GET", url);
+			req.send();
+		}
 	});
 	button.click();
 	await vi.waitFor(() => expect(recorded.length).toBe(urls.length));
@@ -139,5 +176,27 @@ describe("instrumentation.web template", () => {
 			expect(r.traceparent, `${r.url} carries traceparent after await`).not.toBeNull();
 			expect(traceIdOf(r.traceparent)).toBe(activeTraceId);
 		}
+	});
+
+	it("A13: requests made through XMLHttpRequest carry the click's trace the way fetch does", async () => {
+		vi.stubEnv("VITE_OTEL_PROPAGATE_TO", "http://localhost:3000");
+		const { sent, clickTraceIds } = await clickAndFetch(
+			[
+				`${location.origin}/api/ping`,
+				"http://localhost:3000/api/seats",
+				"https://api.thirdparty.example/v1/x",
+			],
+			{ xhr: true },
+		);
+		const by = (prefix: string) => sent.find((r) => r.url.startsWith(prefix));
+		for (const prefix of [location.origin, "http://localhost:3000"]) {
+			const tp = by(prefix)?.traceparent ?? null;
+			expect(tp, `${prefix} carries traceparent over XHR`).not.toBeNull();
+			expect(clickTraceIds).toContain(traceIdOf(tp));
+		}
+		expect(
+			by("https://api.thirdparty.example")?.traceparent,
+			"third party carries none",
+		).toBeNull();
 	});
 });

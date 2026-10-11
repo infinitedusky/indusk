@@ -20,7 +20,7 @@ import { git, REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 const VENDORS = ["dash0", "datadog", "newrelic", "honeycomb", "sentry", "posthog"];
 const vendorIn = (text: string) => VENDORS.filter((v) => text.toLowerCase().includes(v));
 
-type Kind = "react-spa" | "nextjs" | "node";
+type Kind = "react-spa" | "nextjs" | "node" | "python";
 
 const made: string[] = [];
 afterEach(() => {
@@ -41,6 +41,9 @@ function project(kind: Kind): string {
 		join(dir, "package.json"),
 		JSON.stringify({ name: `app-${kind}`, version: "0.0.0", dependencies: deps }),
 	);
+	if (kind === "python") {
+		writeFileSync(join(dir, "requirements.txt"), "flask==3.0.0\n");
+	}
 	if (kind === "react-spa") {
 		writeFileSync(join(dir, "vite.config.ts"), "export default {};\n");
 		mkdirSync(join(dir, "src"), { recursive: true });
@@ -122,6 +125,25 @@ describe.skipIf(SHOULD_SKIP)("init-browser-telemetry", () => {
 			expect(text, `${kind}: names the setting`).toContain(settings[kind]);
 			expect(text, `${kind}: says the API must allow traceparent`).toMatch(/traceparent/);
 			expect(text, `${kind}: says it is a CORS setting`).toMatch(/CORS/i);
+		}
+	});
+
+	it("A14: the Node and Python scaffolds say which OpenTelemetry SDK each file created uses, and name no vendor", () => {
+		for (const kind of ["node", "python"] as const) {
+			const dir = project(kind);
+			const r = runCli(dir, ["init"]);
+			expect(r.code, `${kind}: init exit\n${r.stderr}`).toBe(0);
+			const lines = otelLines(r.stdout);
+			const created = lines.filter((l) => /^\s*create:/.test(l));
+			expect(created.length, `${kind}: init created no instrumentation file`).toBeGreaterThan(0);
+			for (const line of created) {
+				const rel = /^\s*create: (\S+)/.exec(line)?.[1] ?? "";
+				expect(line, `${kind}: line names its file`).toContain(rel);
+				expect(line, `${kind}: "${line.trim()}" names the OpenTelemetry SDK`).toMatch(
+					/opentelemetry/i,
+				);
+			}
+			expect(vendorIn(lines.join("\n")), `${kind}: init prints a vendor name`).toEqual([]);
 		}
 	});
 });

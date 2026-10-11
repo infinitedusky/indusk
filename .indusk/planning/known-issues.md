@@ -9,6 +9,22 @@ Each entry says what happens, where it was seen, and what we know so far.
 
 ## Plans
 
+- **An existing project keeps the browser template it was scaffolded with.**
+  Seen 2026-10-11 in the cold audit of browser-telemetry-leftovers: `init`
+  skips a file that exists and `update` has no instrumentation reference, so
+  a project initialised before that plan has no `*_OTEL_PROPAGATE_TO` setting,
+  no XHR instrumentation and the `addSpanProcessor` call that throws against
+  `sdk-trace-web` 2.x. What we know: the template is the project's file once
+  written (people edit it), so a refresh is a diff offered, not an overwrite;
+  the install line changes with it.
+- **A click's trace does not follow a native `await`.** Seen 2026-10-10 in
+  browser-telemetry-leftovers (row A11, `it.skip` in
+  `templates/instrumentation.web.test.ts`; live trace
+  `8b81734602d8b978506ec248620706c5`). zone.js, the only browser context
+  manager, does not patch native `async`/`await`; a handler that awaits
+  before it fetches sends that request in its own trace. Documented in the
+  otel skill. Waits for AsyncContext in the browsers InDusk targets, or a
+  decision to tell users to down-level `await`; then A11 is unskipped.
 - **Renaming a plan strands its session.** Seen 2026-10-06 in the
   workbench-plan-authoring live check: the planner renamed a plan by hand
   with git, and the running session stayed filed under the old name, whose

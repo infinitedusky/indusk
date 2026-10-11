@@ -17,7 +17,7 @@ Two promises from the brief: a click and its server work share a trace in a proj
 - **Live check (A4)**: Vite app + Node API on separate ports, one trace in local Jaeger: `click` → `web GET` → `a4-api GET`.
 - **Falsification (Build Phase 2)**: exact entries are normalized as the browser spells URLs (A9); a bare `*` no longer matches every URL and a scheme-less entry warns (A10); `grafana` out (A12). A11 — a request after a native `await` — cannot pass: zone.js does not patch native `async`/`await`. The user chose to leave the gap honest: the row is `it.skip`, carried in Deferred Verification, and the limit is documented in the otel skill and `reference/tools/otel.md`.
 - **Cleanup**: skipped with reasons; **audit**: written by a cold reader.
-- Diff: 12 code/doc files, +469 / −20 (plus plan documents, lockfile and the phase-boundary ledger).
+- Diff: 12 code/doc files, +469 / −20 before Build Phase 3 (plus plan documents, lockfile and the phase-boundary ledger).
 
 ## Getting to Done
 
@@ -34,16 +34,21 @@ Two promises from the brief: a click and its server work share a trace in a proj
 
 - The brief promised "every request"; the rows proved a synchronous `fetch` in the handler. The async gap and the missing XHR instrumentation were found by falsification and the cold audit, not by the brief. Write the promise from what its rows can prove, or add the widest case as a row before accepting.
 
-## Audit findings left open (advisory, the user's call)
+## Audit findings — what was done (Build Phase 3, 2026-10-11)
 
-- Promise 1's sentence ("every request … promise marks belong to the click") is wider than A1–A3 (+ A4): `FetchInstrumentation` only, so XHR (axios) carries nothing though the template header says "fetch/XHR"; native `await` limit; no row for promise marks or the Next.js build-time inlining of the guarded `process.env` read.
-- A project initialised earlier keeps its old template: `init` skips existing files and `update` does not refresh them.
-- Promise 2's A5 scans only `create:` files in the `[OpenTelemetry]` section, skips the Node scaffold, never runs Python, and does not flag `@vercel/otel`; installed otel/toolbelt skills still name Dash0.
-- A11 has no owner for the AsyncContext follow-up; the audit also noted the cleanup reason says 12 files where the diff stat lists 15 (the extra three are the lockfile, ledger and impl).
+The cold audit's findings were acted on before acceptance rather than left as advisory text.
+
+- **XHR (done):** `XMLHttpRequestInstrumentation` registered with the same propagation list; row A13; install lines and docs updated. Live check: trace `c8ec8e35dd477999567ab3fa05ae539e`, `click` → `web GET` → `a4-api GET`.
+- **Promise sentences (done):** both changed through `indusk promises change`, History keeps the old sentences. Promise 1 now says `fetch` or XMLHttpRequest, in the click's call, and excludes a request after a native `await`; promise 2 says application source, destination vendors, and every scaffold (browser, Node, Python). The brief says the same and lists the two exclusions under Not promised.
+- **Node and Python scaffolds (done):** their printed lines name the OpenTelemetry SDK; row A14 covers both.
+- **`@vercel/otel` (not done, on purpose):** it was not added to the vendor list. It is an OpenTelemetry distribution that exports OTLP anywhere, not a destination; listing it would fail the Next.js scaffold, which this plan did not own. The promise sentence says so.
+- **Records (done):** cleanup reason says 15 files; A4's trace id (`7e25854ea8d7ca2cc00073924854e79d`) is recorded in the impl and here.
+- **Backlog (done):** `known-issues.md` carries the old-template-on-existing-projects entry and the AsyncContext entry that owns A11.
+- **Still open, by design:** no row asserts "promise marks" end to end (the A4 API had none); the Next.js build-time inlining of the guarded `process.env` read is asserted only by comment; the skills installed into `.claude` still name Dash0 (outside application source). Build Phase 3 was not itself falsified or audited by a second reader.
 
 ## Shape numbers
 
-Shape raised 1 finding across all phases (Test Phase 1: an unused fetch passthrough on the test recorder); 0 judged wrong by a human. Build Phase 1 and Build Phase 2: reviewed, nothing found.
+Shape raised 1 finding across all phases (Test Phase 1: an unused fetch passthrough on the test recorder); 0 judged wrong by a human. Build Phases 1, 2 and 3: reviewed, nothing found.
 
 ## Release
 
