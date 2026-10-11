@@ -11,7 +11,8 @@ import type { PlanRow } from "./rows.js";
 import { readStanding, type SourcedHealth, standingOf } from "./standing.js";
 import type { MarkedSpan, MarkedSpansResult } from "./telemetry.js";
 
-// promise: every-promise-is-listed, the-editor-shows-the-same-health-as-the-admin
+// promise: every-promise-is-listed
+// promise: the-editor-shows-the-same-health-as-the-admin
 
 /**
  * plan-cockpit A21 and A33, the package's halves. A21: a promise's standing is

@@ -2,6 +2,7 @@
 // promise: paths-keep-their-order
 // promise: a-plan-can-start-from-the-admin
 // promise: decisions-wait-in-one-place
+// promise: broken-promises-come-first
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page } from "vitest/browser";

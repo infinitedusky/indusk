@@ -66,6 +66,8 @@ interface PlanGroup {
 /**
  * Split plans into Paths and everything else.
  *
+ * promise: paths-keep-their-order
+ *
  * The invariant this function exists to protect: **every plan passed in comes
  * back out**, either inside a Path or in `rest`. Declarations add structure;
  * they never subtract a plan. A declared child with no folder becomes a

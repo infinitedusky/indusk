@@ -15,7 +15,8 @@ import type { SourceRead } from "./sources.js";
 import type { MarkedSpan, MarkedSpansResult } from "./telemetry.js";
 import type { TimelineMark, TimelineRead } from "./timeline.js";
 
-// promise: a-promise-page-shows-its-proof, the-admin-keeps-what-it-heard
+// promise: a-promise-page-shows-its-proof
+// promise: the-admin-keeps-what-it-heard
 
 /**
  * plan-cockpit A25–A30, the package's halves: what a promise's page shows as

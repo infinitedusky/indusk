@@ -36,6 +36,8 @@ function writeCollapsed(collapsed: boolean): void {
  * a collapse button that folds it to a strip; the choice is kept in
  * `localStorage` and read after mount, so the server and the first client
  * render agree and a blocked store still renders the open rail.
+ *
+ * promise: the-nav-fits-a-phone
  */
 export function Sidebar({ header, children, className = "" }: SidebarProps) {
   const pathname = usePathname();

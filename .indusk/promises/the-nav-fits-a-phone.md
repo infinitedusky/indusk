@@ -2,11 +2,13 @@
 name: the-nav-fits-a-phone
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: admin
 owner: plan-cockpit
-sites: []
-tests: []
+sites:
+  - apps/indusk-admin/src/components/ui/Sidebar.tsx
+tests:
+  - 'apps/indusk-admin/src/app/p/[project]/cockpit-phone.test.tsx'
 incidents: []
 ---
 
@@ -14,3 +16,4 @@ Below 760 px wide the nav is a drawer, closed by default, and no page scrolls si
 
 ## History
 - 2026-10-10 — declared (plan-cockpit), from its planning conversation.
+- 2026-10-11 — enforced, confirmed for plan-cockpit: proven by row A6, row A7, row A8.
