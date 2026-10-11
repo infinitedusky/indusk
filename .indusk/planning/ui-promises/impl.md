@@ -224,7 +224,9 @@ An app's look is held by mockups a person approved: every visual value comes fro
 - [x] `apps/indusk-mcp/src/lib/looks/coverage.ts`, exported as `./looks/coverage`: screens × states without an approved mockup, and `data-component` names rendered without one
 - [x] `indusk looks status <app>` and `indusk looks coverage <app>`; `indusk looks approve` exits 2 naming the cockpit's Approve
 - [x] `apps/indusk-mcp/hooks/looks-approval-guard.js`: refuses an agent's Write or Edit to any `.indusk/mockups/*/approved.json`, naming the cockpit's Approve; registered with the other PreToolUse hooks
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [ ] Shape (`apps/indusk-mcp/src/lib/looks/coverage.ts`) — `coverageOf` does two jobs inline — the declared screens and states, and the rendered components; name `uncoveredScreens` and `uncoveredComponents` and have `coverageOf` compose them. Rule: Does this unit have one reason to change?
+- [ ] Shape (`apps/indusk-mcp/src/bin/commands/looks.ts`) — the three-way approved / held-to / never-approved line is an inline branch inside the loop; name it `statusLine(mockup, approval)` so the output grammar has one place. Rule: Should this inline block have been a named function or module?
 
 #### Build Phase 2 Verification
 
