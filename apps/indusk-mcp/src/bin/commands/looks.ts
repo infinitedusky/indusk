@@ -1,7 +1,7 @@
-import { approvalOf, readApprovals } from "../../lib/looks/approvals.js";
+import { type Approval, approvalOf, readApprovals } from "../../lib/looks/approvals.js";
 import { coverageOf } from "../../lib/looks/coverage.js";
 import { lintApp } from "../../lib/looks/lint.js";
-import { readApp } from "../../lib/looks/mockups.js";
+import { type Mockup, readApp } from "../../lib/looks/mockups.js";
 
 /**
  * `indusk looks lint <app>` — every raw value, undefined token and stock class
@@ -27,6 +27,16 @@ export async function looksLint(projectRoot: string, appName: string): Promise<v
 	}
 }
 
+/** `<screen>.<state>  approved|proposed  …` — the status grammar `looks-cli.test.ts` reads. */
+function statusLine(mockup: Mockup, a: Approval): string {
+	if (a.state === "approved") return `${mockup.name}  approved  by ${a.entry.by} at ${a.entry.at}`;
+	if (a.reference) {
+		const { mockupHash, by, at } = a.reference;
+		return `${mockup.name}  proposed  held to ${mockupHash.slice(0, 8)} (approved by ${by} at ${at})`;
+	}
+	return `${mockup.name}  proposed  never approved`;
+}
+
 /**
  * `indusk looks status <app>` — one line per mockup, `<screen>.<state>` then
  * `approved` or `proposed`; a proposed mockup with an approved version names
@@ -38,16 +48,7 @@ export async function looksStatus(projectRoot: string, appName: string): Promise
 		const app = await readApp(projectRoot, appName);
 		const approvals = readApprovals(app);
 		for (const mockup of app.mockups) {
-			const a = approvalOf(app, mockup, approvals);
-			if (a.state === "approved") {
-				console.info(`${mockup.name}  approved  by ${a.entry.by} at ${a.entry.at}`);
-			} else if (a.reference) {
-				console.info(
-					`${mockup.name}  proposed  held to ${a.reference.mockupHash.slice(0, 8)} (approved by ${a.reference.by} at ${a.reference.at})`,
-				);
-			} else {
-				console.info(`${mockup.name}  proposed  never approved`);
-			}
+			console.info(statusLine(mockup, approvalOf(app, mockup, approvals)));
 		}
 	} catch (err) {
 		console.error((err as Error).message);

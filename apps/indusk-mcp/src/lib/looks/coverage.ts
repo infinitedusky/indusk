@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import { type ApprovalEntry, approvalOf } from "./approvals.js";
-import { appSourceFiles, type LooksApp } from "./mockups.js";
+import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
 
 /**
  * Coverage (ui-promises ADR decision 5): every declared screen × state needs a
@@ -46,15 +46,12 @@ export function componentsIn(text: string): Set<string> {
 	return names;
 }
 
-/** What the app declares or renders that no approved mockup covers. */
-export async function coverageOf(
-	root: string,
+/** Declared screens with no approved state, and the missing states of the rest. */
+function uncoveredScreens(
 	app: LooksApp,
-	approvals: readonly ApprovalEntry[],
-): Promise<Coverage> {
-	const approved = app.mockups.filter((m) => approvalOf(app, m, approvals).state === "approved");
+	approved: readonly Mockup[],
+): Pick<Coverage, "screens" | "states"> {
 	const approvedNames = new Set(approved.map((m) => m.name));
-
 	const screens: string[] = [];
 	const states: string[] = [];
 	for (const screen of app.screens) {
@@ -62,14 +59,33 @@ export async function coverageOf(
 		if (missing.length === screen.states.length) screens.push(screen.name);
 		else states.push(...missing.map((s) => `${screen.name}.${s}`));
 	}
+	return { screens, states };
+}
 
+/** `data-component` names in the app's declared sources that no approved mockup shows, sorted. */
+async function uncoveredComponents(
+	root: string,
+	app: LooksApp,
+	approved: readonly Mockup[],
+): Promise<string[]> {
 	const shown = new Set(approved.flatMap((m) => [...componentsIn(m.html)]));
 	const rendered = new Set<string>();
 	for (const file of await appSourceFiles(root, app.sources)) {
 		if (!MARKUP_EXTENSIONS.has(extname(file))) continue;
 		for (const name of componentsIn(await readFile(file, "utf-8"))) rendered.add(name);
 	}
-	const components = [...rendered].filter((n) => !shown.has(n)).sort();
+	return [...rendered].filter((n) => !shown.has(n)).sort();
+}
 
-	return { screens, states, components };
+/** What the app declares or renders that no approved mockup covers. */
+export async function coverageOf(
+	root: string,
+	app: LooksApp,
+	approvals: readonly ApprovalEntry[],
+): Promise<Coverage> {
+	const approved = app.mockups.filter((m) => approvalOf(app, m, approvals).state === "approved");
+	return {
+		...uncoveredScreens(app, approved),
+		components: await uncoveredComponents(root, app, approved),
+	};
 }
