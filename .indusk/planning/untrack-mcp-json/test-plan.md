@@ -1,7 +1,7 @@
 ---
 title: "Untrack .mcp.json — Test Plan"
 date: 2026-10-11
-status: draft
+status: accepted
 ---
 
 # Untrack .mcp.json — Test Plan
