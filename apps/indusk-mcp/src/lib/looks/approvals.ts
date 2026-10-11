@@ -3,7 +3,6 @@ import { userInfo } from "node:os";
 import { dirname, join } from "node:path";
 import { withLock } from "../agents/lock.js";
 import { commitNote, currentMdPath, type NoteCommit, oneLine } from "../bookkeeping/notes.js";
-import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import { git } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
 import { type LooksApp, LooksAppError, MOCKUPS_DIR, type Mockup, readApp } from "./mockups.js";
@@ -100,20 +99,23 @@ export type ApproveResult =
 	| { approved: false; reason: string };
 
 /**
- * Approve `mockupName` as it is in the main checkout now: append an entry
- * bound to its hash and the foundation's, and commit the record on `main`
- * through the notes writer (`commitNote`) — only that file. A mockup already
- * approved as it is gets no second entry. Called by the cockpit's Approve
- * with the person who pressed it; nothing else in the package calls it.
+ * Approve `mockupName` as it is in `checkout` now: append an entry bound to
+ * its hash and the foundation's, and commit the record on the branch that
+ * checkout is on, through the notes writer (`commitNote`) — only that file. An
+ * approval belongs to the work it judges: a plan's worktree approves on the
+ * plan's branch and the record merges with the mockups, never through `main`.
+ * A mockup already approved as it is gets no second entry. Called by the
+ * cockpit's Approve with the person who pressed it, and the checkout the page
+ * showed them; nothing else in the package calls it.
  *
  * The foundation has no approval of its own: an entry binds the foundation's
  * hash with the mockup's, so approving a mockup approves the foundation it is
  * drawn on. `seen.foundationHash` is the foundation the person was shown; an
- * approval of any other — one changed on `main` since, or one only a plan
- * worktree holds — is refused, so a foundation is never approved unseen.
+ * approval of any other — one changed in the checkout since — is refused, so
+ * a foundation is never approved unseen.
  */
 export async function approve(
-	anyCheckout: string,
+	checkout: string,
 	appName: string,
 	mockupName: string,
 	by: string,
@@ -123,27 +125,26 @@ export async function approve(
 		return { approved: false, reason: `${JSON.stringify(appName)} is not an app name` };
 	}
 	if (by.trim() === "") return { approved: false, reason: "an approval needs who gave it" };
-	const { trunk } = bookkeepingRoots(anyCheckout);
 	let app: LooksApp;
 	try {
-		app = await readApp(trunk, appName);
+		app = await readApp(checkout, appName);
 	} catch (err) {
-		return { approved: false, reason: `${(err as Error).message} (read on main)` };
+		return { approved: false, reason: `${(err as Error).message} (read in ${checkout})` };
 	}
 	const mockup = app.mockups.find((m) => m.name === mockupName);
 	if (!mockup) {
 		return {
 			approved: false,
-			reason: `${appName} has no mockup ${JSON.stringify(mockupName)} on main — a mockup is approved as main holds it`,
+			reason: `${appName} has no mockup ${JSON.stringify(mockupName)} in ${checkout} — a mockup is approved as its checkout holds it`,
 		};
 	}
 	if (seen.foundationHash !== undefined && seen.foundationHash !== app.foundation.hash) {
 		return {
 			approved: false,
-			reason: `the foundation on main is not the one shown (${seen.foundationHash.slice(0, 8)}, main has ${app.foundation.hash.slice(0, 8)}) — open the mockup again and approve what main holds`,
+			reason: `the foundation in ${checkout} is not the one shown (${seen.foundationHash.slice(0, 8)}, it has ${app.foundation.hash.slice(0, 8)}) — open the mockup again and approve what it holds`,
 		};
 	}
-	const lock = `${currentMdPath(anyCheckout)}.lock`;
+	const lock = `${currentMdPath(checkout)}.lock`;
 	mkdirSync(dirname(lock), { recursive: true });
 	return withLock(lock, () => {
 		const approvals = readApprovals(app);
@@ -160,13 +161,14 @@ export async function approve(
 		};
 		const rel = approvalsPath(appName);
 		writeFileSync(
-			join(trunk, rel),
+			join(checkout, rel),
 			`${JSON.stringify({ approvals: [...approvals, entry] }, null, "\t")}\n`,
 		);
 		const commit = commitNote(
-			trunk,
+			checkout,
 			[rel],
 			`chore(indusk): looks — ${oneLine(`${appName}/${mockup.name} approved by ${by}`)}`,
+			{ anyBranch: true },
 		);
 		return { approved: true, entry, commit };
 	});

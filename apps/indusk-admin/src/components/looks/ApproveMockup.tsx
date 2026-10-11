@@ -8,7 +8,8 @@ import { postJson } from "@/lib/post-json";
  * Approve (ui-promises ADR decision 3): the one way a mockup becomes the
  * reference. It sends the foundation the person is looking at, so an
  * approval never covers a foundation they did not see; the route records who
- * and when and commits the record on `main`, and the page reads again.
+ * and when and commits the record on the branch of the checkout the page
+ * showed, and the page reads again.
  *
  * promise: a-mockup-is-approved-by-a-person
  */
@@ -17,11 +18,14 @@ export function ApproveMockup({
   app,
   mockup,
   foundationHash,
+  checkout,
 }: {
   project: string;
   app: string;
   mockup: string;
   foundationHash: string;
+  /** The plan whose worktree is shown; null for the project's own checkout. */
+  checkout: string | null;
 }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -33,6 +37,7 @@ export function ApproveMockup({
       project,
       mockup,
       foundationHash,
+      checkout,
     });
     setBusy(false);
     if (!r.ok) {

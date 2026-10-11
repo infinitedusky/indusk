@@ -1,6 +1,7 @@
 import type {
   AppLooks,
   AppLooksRead,
+  LooksCheckout,
   MockupView,
 } from "@infinitedusky/indusk-mcp/looks/overview";
 import { APPROVAL_STYLE } from "@/components/bars/labels";
@@ -28,16 +29,44 @@ export function LooksBody({
   apps,
   path,
   open,
+  checkout = null,
+  checkouts = [],
 }: {
   project: string;
   apps: AppLooksRead[];
   /** The page's own path, for the device links. */
   path: string;
   open: OpenMockup | null;
+  /** The plan whose worktree is read; null for the project's own checkout. */
+  checkout?: string | null;
+  /** Every checkout that can be read; a switch is shown when there is more than one. */
+  checkouts?: LooksCheckout[];
 }) {
   return (
     <section className="flex flex-col gap-6" data-testid="looks">
       <h1 className="text-xl font-semibold text-gray-900">Looks</h1>
+      {checkouts.length > 1 ? (
+        <nav
+          className="flex flex-wrap items-center gap-2 text-sm text-gray-700"
+          data-testid="looks-checkouts"
+          aria-label="Checkout"
+        >
+          <span>Reading</span>
+          {checkouts.map((c) => (
+            <a
+              key={c.plan ?? "own"}
+              href={
+                c.plan ? `${path}?checkout=${encodeURIComponent(c.plan)}` : path
+              }
+              aria-current={c.plan === checkout ? "page" : undefined}
+              title={c.branch ?? undefined}
+              className="rounded px-1.5 text-blue-700 hover:bg-blue-50 aria-[current=page]:bg-blue-100"
+            >
+              {c.plan ?? "this checkout"}
+            </a>
+          ))}
+        </nav>
+      ) : null}
       {apps.length === 0 ? (
         <p className="text-sm text-gray-600" data-testid="looks-empty">
           No looks yet. An app&apos;s look lives in{" "}
@@ -61,6 +90,7 @@ export function LooksBody({
             project={project}
             app={app}
             path={path}
+            checkout={checkout}
             open={open?.app === app.app ? open : null}
           />
         ),
@@ -73,11 +103,13 @@ function AppSection({
   project,
   app,
   path,
+  checkout,
   open,
 }: {
   project: string;
   app: AppLooks;
   path: string;
+  checkout: string | null;
   open: OpenMockup | null;
 }) {
   const opened = open
@@ -100,6 +132,7 @@ function AppSection({
             app={app}
             mockup={m}
             path={path}
+            checkout={checkout}
             current={opened?.name === m.name ? (device?.name ?? null) : null}
           />
         ))}
@@ -110,6 +143,7 @@ function AppSection({
           app={app}
           mockup={opened}
           device={device}
+          checkout={checkout}
         />
       ) : null}
       <Uncovered app={app} />
@@ -123,11 +157,13 @@ function OpenMockupView({
   app,
   mockup,
   device,
+  checkout,
 }: {
   project: string;
   app: AppLooks;
   mockup: MockupView;
   device: AppLooks["devices"][number];
+  checkout: string | null;
 }) {
   return (
     <section className="flex flex-col gap-2" data-testid="mockup-open">
@@ -142,6 +178,7 @@ function OpenMockupView({
             app={app.app}
             mockup={mockup.name}
             foundationHash={app.foundationHash}
+            checkout={checkout}
           />
         ) : null}
       </div>
@@ -164,16 +201,23 @@ function MockupRow({
   app,
   mockup,
   path,
+  checkout,
   current,
 }: {
   app: AppLooks;
   mockup: MockupView;
   path: string;
+  checkout: string | null;
   /** The device it is open at, when it is the open mockup. */
   current: string | null;
 }) {
   const hrefAt = (device: string) =>
-    `${path}?${new URLSearchParams({ app: app.app, mockup: mockup.name, device })}`;
+    `${path}?${new URLSearchParams({
+      app: app.app,
+      mockup: mockup.name,
+      device,
+      ...(checkout ? { checkout } : {}),
+    })}`;
   return (
     <li
       data-testid="mockup-row"

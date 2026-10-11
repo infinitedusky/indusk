@@ -10,6 +10,7 @@ import {
   readFileSync,
   realpathSync,
   rmSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -191,6 +192,102 @@ describe("A2 — Approve in the cockpit makes a mockup the reference, recording 
       /foundation/,
     );
     expect(readFileSync(join(root, RECORD), "utf-8")).toBe(before);
+  });
+});
+
+describe("A2 — approval happens in the checkout the plan is worked in, never through main", () => {
+  /** A plan worktree on `plan/looks` holding a mockup `main` does not, assigned to the plan. */
+  function planWorktree(): string {
+    const tree = join(base, "proj-plan");
+    git("worktree", "add", "-q", "-b", "plan/looks", tree);
+    const screens = ".indusk/mockups/demo/screens";
+    cpSync(
+      join(tree, screens, "detail.default.html"),
+      join(tree, screens, "settings.default.html"),
+    );
+    execFileSync("git", ["add", "-A"], { cwd: tree });
+    execFileSync("git", ["commit", "-qm", "a mockup only the plan holds"], {
+      cwd: tree,
+    });
+    writeFileSync(
+      join(root, ".git", "indusk-plan-worktrees.json"),
+      `${JSON.stringify({
+        version: 1,
+        assignments: [
+          {
+            plan: "looks",
+            path: tree,
+            branch: "plan/looks",
+            at: new Date().toISOString(),
+          },
+        ],
+      })}\n`,
+    );
+    return tree;
+  }
+
+  it("A2 the page reads the plan's worktree when asked, and Approve commits on the plan's branch, leaving main as it was", async () => {
+    const tree = planWorktree();
+    const mainBefore = git("rev-parse", "main");
+
+    expect(await looksPage()).not.toContain('data-mockup="settings.default"');
+    const html = await looksPage({ checkout: "looks" });
+    expect(attrOf(rowOf(html, "settings.default"), "data-approval")).toBe(
+      "proposed",
+    );
+    expect(html).toContain('data-testid="looks-checkouts"');
+
+    const res = await approveRoute(
+      approveRequest({
+        project: PROJECT,
+        mockup: "settings.default",
+        foundationHash: sha256(
+          join(tree, ".indusk/mockups/demo/foundation.tokens.json"),
+        ),
+        checkout: "looks",
+      }),
+      demo,
+    );
+    expect(res.status, await res.clone().text()).toBe(200);
+
+    const onBranch = execFileSync(
+      "git",
+      ["show", "--name-only", "--format=", "HEAD"],
+      {
+        cwd: tree,
+        encoding: "utf-8",
+      },
+    ).trim();
+    expect(onBranch).toBe(RECORD);
+    expect(git("rev-parse", "main")).toBe(mainBefore);
+    const after = await looksPage({ checkout: "looks" });
+    expect(attrOf(rowOf(after, "settings.default"), "data-approval")).toBe(
+      "approved",
+    );
+  });
+
+  it("A2 a plan with no worktree holding mockups is refused, and so is a mockup the own checkout lacks", async () => {
+    planWorktree();
+    const hash = foundationHash();
+    const unknown = await approveRoute(
+      approveRequest({
+        project: PROJECT,
+        mockup: "home.full",
+        foundationHash: hash,
+        checkout: "nope",
+      }),
+      demo,
+    );
+    expect(unknown.status).toBe(404);
+    const missing = await approveRoute(
+      approveRequest({
+        project: PROJECT,
+        mockup: "settings.default",
+        foundationHash: hash,
+      }),
+      demo,
+    );
+    expect(missing.status).toBe(409);
   });
 });
 

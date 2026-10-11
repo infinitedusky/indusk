@@ -1,5 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { readRecord } from "../worktree/plan-worktree-record.js";
 import { type ApprovalEntry, approvalOf, readApprovals } from "./approvals.js";
 import { type Coverage, coverageOf } from "./coverage.js";
 import { generateCss } from "./foundation.js";
@@ -105,4 +106,54 @@ export async function readAppLooks(root: string, appName: string): Promise<AppLo
 /** Every app's looks in the project. */
 export async function readLooks(root: string): Promise<AppLooksRead[]> {
 	return Promise.all(listApps(root).map((app) => readAppLooks(root, app)));
+}
+
+/** A checkout whose looks the cockpit can show and approve in. */
+export interface LooksCheckout {
+	/** The plan whose worktree it is; null for the project's own checkout. */
+	plan: string | null;
+	root: string;
+	branch: string | null;
+}
+
+/**
+ * The checkouts of `projectRoot` the Looks page can read: the project's own,
+ * and each plan worktree assigned to it that holds mockups. A look is drawn,
+ * approved and merged where its plan is worked, so approval is read and
+ * written in one of these, never only on `main` (ui-promises, Build Phase 5).
+ */
+export async function looksCheckouts(projectRoot: string): Promise<LooksCheckout[]> {
+	const out: LooksCheckout[] = [{ plan: null, root: projectRoot, branch: null }];
+	const record = await readRecord(projectRoot);
+	if (!record.ok) return out;
+	for (const a of record.assignments) {
+		if (existsSync(join(a.path, MOCKUPS_DIR)) && listApps(a.path).length > 0) {
+			out.push({ plan: a.plan, root: a.path, branch: a.branch });
+		}
+	}
+	return out;
+}
+
+/**
+ * The checkout to read: the plan named, when it is one of `looksCheckouts`;
+ * with none named, the project's own if it has looks, else the one worktree
+ * that does. A plan that has no such checkout is a problem, named, never a
+ * silent read of another tree.
+ */
+export async function resolveLooksCheckout(
+	projectRoot: string,
+	plan?: string | null,
+): Promise<LooksCheckout | { problem: string }> {
+	const all = await looksCheckouts(projectRoot);
+	if (plan) {
+		return (
+			all.find((c) => c.plan === plan) ?? {
+				problem: `plan ${JSON.stringify(plan)} has no worktree here that holds mockups`,
+			}
+		);
+	}
+	const own = all[0] as LooksCheckout;
+	if (listApps(own.root).length > 0) return own;
+	const others = all.slice(1);
+	return others.length === 1 ? (others[0] as LooksCheckout) : own;
 }

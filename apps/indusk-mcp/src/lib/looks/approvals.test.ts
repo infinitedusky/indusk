@@ -11,7 +11,8 @@ import { LooksAppError, readApp } from "./mockups.js";
  * the admin in Build Phase 4).
  *
  * The fixture app is copied into a main checkout with a plan worktree beside
- * it, so `approve` is seen writing and committing on `main` from either.
+ * it, so `approve` is seen writing and committing in the checkout it is
+ * given — on the plan's branch from the worktree, leaving `main` alone.
  */
 
 const FIXTURE = join(__dirname, "..", "..", "__tests__", "fixtures", "looks-app");
@@ -58,26 +59,41 @@ describe("approvalOf — bound to the mockup's hash and the foundation's", () =>
 });
 
 describe("approve — the cockpit's writer", () => {
-	it("appends an entry bound to the current hashes and commits only the record on main, from a worktree", async () => {
-		writeFileSync(join(f.main, "staged.txt"), "a person's work\n");
-		f.git(f.main, "add", "staged.txt");
+	it("appends an entry bound to the current hashes and commits only the record on the worktree's branch, never on main", async () => {
+		f.git(f.worktree, "merge", "-q", "main");
+		writeFileSync(join(f.worktree, "staged.txt"), "a person's work\n");
+		f.git(f.worktree, "add", "staged.txt");
+		const mainBefore = f.git(f.main, "rev-parse", "main");
 
 		const r = await approve(f.worktree, "demo", "home.full", "sandy");
 		expect(r.approved).toBe(true);
 
-		const { app, mockup } = await mockupOf("home.full");
+		const app = await readApp(f.worktree, "demo");
+		const mockup = app.mockups.find((m) => m.name === "home.full");
+		if (!mockup) throw new Error("no mockup");
 		expect(approvalOf(app, mockup, readApprovals(app)).state).toBe("approved");
-		const entries = JSON.parse(readFileSync(join(f.main, RECORD), "utf-8")).approvals;
+		const entries = JSON.parse(readFileSync(join(f.worktree, RECORD), "utf-8")).approvals;
 		expect(entries.at(-1)).toMatchObject({
 			mockup: "home.full",
 			mockupHash: mockup.hash,
 			foundationHash: app.foundation.hash,
 			by: "sandy",
 		});
-		expect(f.git(f.main, "log", "-1", "--format=%s", "main")).toMatch(/^chore\(indusk\): looks — /);
-		expect(f.git(f.main, "show", "--name-only", "--format=", "main")).toBe(RECORD);
+		expect(f.git(f.worktree, "log", "-1", "--format=%s")).toMatch(/^chore\(indusk\): looks — /);
+		expect(f.git(f.worktree, "show", "--name-only", "--format=", "HEAD")).toBe(RECORD);
 		// What the person had staged stays staged, out of the commit.
-		expect(f.git(f.main, "status", "--porcelain")).toBe("A  staged.txt");
+		expect(f.git(f.worktree, "status", "--porcelain")).toBe("A  staged.txt");
+		// Main is untouched: the approval travels with the branch.
+		expect(f.git(f.main, "rev-parse", "main")).toBe(mainBefore);
+		const onMain = JSON.parse(readFileSync(join(f.main, RECORD), "utf-8")).approvals;
+		expect(onMain.some((e: { mockupHash: string }) => e.mockupHash === mockup.hash)).toBe(false);
+	});
+
+	it("refuses to commit a record on a detached HEAD, leaving the entry written and saying why", async () => {
+		f.git(f.worktree, "merge", "-q", "main");
+		f.git(f.worktree, "checkout", "-q", "--detach");
+		const r = await approve(f.worktree, "demo", "home.full", "sandy");
+		expect(r).toMatchObject({ approved: true, commit: { committed: false } });
 	});
 
 	it("gives a mockup already approved as it is no second entry", async () => {
@@ -87,14 +103,14 @@ describe("approve — the cockpit's writer", () => {
 		expect(readFileSync(join(f.main, RECORD), "utf-8")).toBe(before);
 	});
 
-	it("refuses an approval of a foundation other than the one main holds, writing nothing", async () => {
+	it("refuses an approval of a foundation other than the one the checkout holds, writing nothing", async () => {
 		const before = readFileSync(join(f.main, RECORD), "utf-8");
 		const r = await approve(f.main, "demo", "home.full", "sandy", {
 			foundationHash: "f".repeat(64),
 		});
 		expect(r).toMatchObject({
 			approved: false,
-			reason: expect.stringMatching(/foundation on main/),
+			reason: expect.stringMatching(/foundation in /),
 		});
 		expect(readFileSync(join(f.main, RECORD), "utf-8")).toBe(before);
 		const { app } = await mockupOf("home.full");
