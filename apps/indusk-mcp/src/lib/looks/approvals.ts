@@ -9,8 +9,12 @@ import { type LooksApp, LooksAppError, MOCKUPS_DIR, type Mockup, readApp } from 
 
 /**
  * Approval (ui-promises ADR decision 3): a mockup is the reference only while
- * `approved.json` holds an entry bound to its current content hash and the
- * foundation's. Nothing else makes it approved — an entry for another hash,
+ * `approved.json` holds an entry bound to its current content hash, the
+ * foundation's, and the declarations' the check trusts (devices, `ignore`,
+ * `sources` — `LooksApp.declarationsHash`). Nothing else makes it approved —
+ * an entry for another hash, or one that binds no declarations (every entry
+ * written before Build Phase 6), reads proposed until a person approves it
+ * again. An entry for another hash,
  * copied or hand-written, reads *proposed* by construction, and so does every
  * mockup once the foundation changes. A proposed mockup keeps its last
  * approved entry as the reference the app is held to meanwhile.
@@ -31,6 +35,12 @@ export interface ApprovalEntry {
 	mockupHash: string;
 	/** sha256 of `foundation.tokens.json`'s bytes when it was approved. */
 	foundationHash: string;
+	/**
+	 * The declarations the check trusts when it was approved
+	 * (`LooksApp.declarationsHash`). Absent on an entry from before Build Phase
+	 * 6, which then binds nothing it can be held to and reads proposed.
+	 */
+	declarationsHash?: string;
 	/** Who approved it. */
 	by: string;
 	/** When, as an ISO date-time. */
@@ -47,8 +57,15 @@ const FIELDS = ["mockup", "mockupHash", "foundationHash", "by", "at"] as const;
 function isEntry(v: unknown): v is ApprovalEntry {
 	if (typeof v !== "object" || v === null) return false;
 	const o = v as Record<string, unknown>;
-	return FIELDS.every((k) => typeof o[k] === "string");
+	return (
+		FIELDS.every((k) => typeof o[k] === "string") &&
+		(o.declarationsHash === undefined || typeof o.declarationsHash === "string")
+	);
 }
+
+/** Whether an entry was made on the foundation and the declarations as they are now. */
+export const boundToNow = (app: LooksApp, e: ApprovalEntry): boolean =>
+	e.foundationHash === app.foundation.hash && e.declarationsHash === app.declarationsHash;
 
 /** Where an app's record is, relative to the project root. */
 export const approvalsPath = (app: string) => join(MOCKUPS_DIR, app, APPROVALS_FILE);
@@ -80,16 +97,14 @@ export function readApprovals(app: LooksApp): ApprovalEntry[] {
 	return list;
 }
 
-/** Whether `mockup` is approved as it is now, on the foundation as it is now. */
+/** Whether `mockup` is approved as it is now, on the foundation and the declarations as they are now. */
 export function approvalOf(
 	app: LooksApp,
 	mockup: Mockup,
 	approvals: readonly ApprovalEntry[],
 ): Approval {
 	const mine = approvals.filter((e) => e.mockup === mockup.name);
-	const current = mine.filter(
-		(e) => e.mockupHash === mockup.hash && e.foundationHash === app.foundation.hash,
-	);
+	const current = mine.filter((e) => e.mockupHash === mockup.hash && boundToNow(app, e));
 	if (current.length > 0) return { state: "approved", entry: current[current.length - 1] };
 	return { state: "proposed", reference: mine[mine.length - 1] ?? null };
 }
@@ -165,6 +180,7 @@ export async function approve(
 			mockup: mockup.name,
 			mockupHash: mockup.hash,
 			foundationHash: app.foundation.hash,
+			declarationsHash: app.declarationsHash,
 			by,
 			at: new Date().toISOString(),
 		};

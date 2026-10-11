@@ -1,5 +1,5 @@
 import type { Browser } from "playwright-core";
-import { type ApprovalEntry, approvalOf } from "./approvals.js";
+import { type ApprovalEntry, approvalOf, boundToNow } from "./approvals.js";
 import type { Device, LooksApp } from "./mockups.js";
 import type { LookResult } from "./report.js";
 import { MEASURED_PROPERTIES, type MeasuredElement, verdict } from "./verdict.js";
@@ -129,7 +129,8 @@ export function pageUrl(
 /**
  * The screen states to check: each declared screen x state whose mockup is
  * approved as it is, or whose last approved version was approved on this very
- * foundation (the app is held to it while the mockup is being changed). A
+ * foundation and these declarations (the app is held to it while the mockup is
+ * being changed). A
  * proposed mockup is nothing to check against (A1), and a foundation changed
  * since approval leaves no approved values to hold the app to.
  */
@@ -149,14 +150,15 @@ export function checkable(
 			}
 			const approval = approvalOf(app, mockup, approvals);
 			const heldTo =
-				approval.state === "approved" || approval.reference?.foundationHash === app.foundation.hash;
+				approval.state === "approved" ||
+				(approval.reference !== null && boundToNow(app, approval.reference));
 			if (heldTo) {
 				checked.push({ screen: screen.name, state, ...(screen.path ? { path: screen.path } : {}) });
 			} else {
 				unchecked.push({
 					mockup: name,
 					reason: approval.reference
-						? "the foundation changed since this mockup was approved"
+						? "the foundation or the declarations changed since this mockup was approved"
 						: "proposed, never approved",
 				});
 			}

@@ -1,12 +1,12 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { initEvalOtel, shutdownEvalOtel } from "../../lib/eval/otel.js";
-import { type Approval, approvalOf, readApprovals } from "../../lib/looks/approvals.js";
+import { type Approval, approvalOf, boundToNow, readApprovals } from "../../lib/looks/approvals.js";
 import { checkApp } from "../../lib/looks/check.js";
 import { coverageOf } from "../../lib/looks/coverage.js";
 import { generateCss } from "../../lib/looks/foundation.js";
 import { lintApp } from "../../lib/looks/lint.js";
-import { type Mockup, readApp } from "../../lib/looks/mockups.js";
+import { type LooksApp, type Mockup, readApp } from "../../lib/looks/mockups.js";
 import { describe, type LookResult, reportLooks } from "../../lib/looks/report.js";
 import { markProjectId } from "../../lib/promises/config.js";
 
@@ -34,12 +34,20 @@ export async function looksLint(projectRoot: string, appName: string): Promise<v
 	}
 }
 
-/** `<screen>.<state>  approved|proposed  …` — the status grammar `looks-cli.test.ts` reads. */
-function statusLine(mockup: Mockup, a: Approval): string {
+/**
+ * `<screen>.<state>  approved|proposed  …` — the status grammar
+ * `looks-cli.test.ts` reads. A proposed mockup is held to its last approved
+ * version only while that version's foundation and declarations are the
+ * current ones (`boundToNow`); otherwise the line says nothing is held.
+ */
+function statusLine(app: LooksApp, mockup: Mockup, a: Approval): string {
 	if (a.state === "approved") return `${mockup.name}  approved  by ${a.entry.by} at ${a.entry.at}`;
 	if (a.reference) {
 		const { mockupHash, by, at } = a.reference;
-		return `${mockup.name}  proposed  held to ${mockupHash.slice(0, 8)} (approved by ${by} at ${at})`;
+		const last = `${mockupHash.slice(0, 8)} (approved by ${by} at ${at})`;
+		return boundToNow(app, a.reference)
+			? `${mockup.name}  proposed  held to ${last}`
+			: `${mockup.name}  proposed  last approved ${last} on another foundation or declarations — nothing held`;
 	}
 	return `${mockup.name}  proposed  never approved`;
 }
@@ -55,7 +63,7 @@ export async function looksStatus(projectRoot: string, appName: string): Promise
 		const app = await readApp(projectRoot, appName);
 		const approvals = readApprovals(app);
 		for (const mockup of app.mockups) {
-			console.info(statusLine(mockup, approvalOf(app, mockup, approvals)));
+			console.info(statusLine(app, mockup, approvalOf(app, mockup, approvals)));
 		}
 	} catch (err) {
 		console.error((err as Error).message);

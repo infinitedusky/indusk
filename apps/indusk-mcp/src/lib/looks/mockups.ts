@@ -61,12 +61,40 @@ export interface LooksApp {
 	 * on the page in development (`nextjs-portal`), which the app does not draw.
 	 */
 	ignore: string[];
+	/**
+	 * sha256 of what the check trusts besides the foundation: the reference
+	 * devices, the `ignore` tags and the `sources`. An approval binds it, so a
+	 * change to any of them returns every mockup to proposed (ui-promises Build
+	 * Phase 6, A35). The screens list is not in it — coverage judges that.
+	 */
+	declarationsHash: string;
 	mockups: Mockup[];
 }
 
 export class LooksAppError extends Error {}
 
 const sha256 = (bytes: Buffer | string) => createHash("sha256").update(bytes).digest("hex");
+
+/** JSON with every object's keys sorted, so a reformatted file binds the same declarations. */
+function canonical(value: unknown): string {
+	if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+	if (typeof value === "object" && value !== null) {
+		const entries = Object.entries(value as Record<string, unknown>)
+			.filter(([, v]) => v !== undefined)
+			.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+		return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;
+	}
+	return JSON.stringify(value);
+}
+
+/** The hash an approval binds the declarations by: devices, `ignore` and `sources`, in that shape. */
+export function declarationsHashOf(d: {
+	devices: readonly Device[];
+	ignore: readonly string[];
+	sources: readonly string[];
+}): string {
+	return sha256(canonical({ devices: d.devices, ignore: d.ignore, sources: d.sources }));
+}
 
 async function readJson<T>(file: string, fallback: T): Promise<T> {
 	if (!existsSync(file)) return fallback;
@@ -122,14 +150,18 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		});
 	}
 
+	const facts = {
+		devices: devices ?? [],
+		sources: declared.sources ?? [],
+		ignore: declared.ignore ?? [],
+	};
 	return {
 		app,
 		dir,
 		foundation,
-		devices: devices ?? [],
+		...facts,
+		declarationsHash: declarationsHashOf(facts),
 		screens: declared.screens ?? [],
-		sources: declared.sources ?? [],
-		ignore: declared.ignore ?? [],
 		...(declared.url ? { url: declared.url } : {}),
 		mockups,
 	};
