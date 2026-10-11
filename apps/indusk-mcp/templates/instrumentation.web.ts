@@ -13,6 +13,7 @@
  *   VITE_OTEL_EXPORTER_OTLP_HEADERS  — auth headers (e.g., "Authorization=Bearer xxx")
  *   VITE_OTEL_PROPAGATE_TO           — origins your API lives on, comma-separated
  *                                      (e.g., "http://localhost:3000,https://*.dev.example.com")
+ *                                      each entry is an origin with its scheme
  *
  * Trace propagation: a request to this page's own origin carries the click's trace
  * (a `traceparent` header). A request to another origin carries it only when that
@@ -78,20 +79,40 @@ function parseHeaders(headerStr: string): Record<string, string> {
 }
 
 // "http://localhost:3000,https://*.dev.example.com" → one RegExp per entry, anchored at
-// both ends: the origin, then a path, query, fragment or nothing. `*` is one or more
-// characters other than "/" and "."; everything else is literal.
+// both ends: the origin, then a path, query, fragment or nothing. An entry without `*`
+// is normalized the way the browser spells a request URL (lower-case host, default port
+// dropped); `*` is one or more characters other than "/" and ".", everything else
+// literal. An entry that does not begin `<scheme>://` can never match a request, so it
+// is dropped with a warning rather than left to do nothing silently.
+const ENTRY_WITH_SCHEME = /^(?:[a-z][a-z0-9+.-]*|\*):\/\//i;
+
 function parsePropagateTo(list: string): RegExp[] {
-	return list
-		.split(",")
-		.map((entry) => entry.trim().replace(/\/+$/, ""))
-		.filter(Boolean)
-		.map((entry) => {
-			const source = entry
-				.split("*")
-				.map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
-				.join("[^/.]+");
-			return new RegExp(`^${source}(?:[/?#]|$)`);
-		});
+	const patterns: RegExp[] = [];
+	for (const raw of list.split(",")) {
+		const entry = raw.trim().replace(/\/+$/, "");
+		if (!entry) continue;
+		if (!ENTRY_WITH_SCHEME.test(entry)) {
+			console.warn(
+				`OTEL_PROPAGATE_TO: ignoring "${entry}" — an entry is an origin with its scheme, e.g. https://api.example.com`,
+			);
+			continue;
+		}
+		const origin = entry.includes("*") ? entry : normalizeOrigin(entry);
+		const source = origin
+			.split("*")
+			.map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
+			.join("[^/.]+");
+		patterns.push(new RegExp(`^${source}(?:[/?#]|$)`, "i"));
+	}
+	return patterns;
+}
+
+function normalizeOrigin(entry: string): string {
+	try {
+		return new URL(entry).origin;
+	} catch {
+		return entry;
+	}
 }
 
 const spanProcessors = [

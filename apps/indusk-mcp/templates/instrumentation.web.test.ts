@@ -1,33 +1,27 @@
 // promise: a-click-and-its-server-work-share-a-trace
 //
-// browser-telemetry-leftovers, Test Phase 1: A1, A2, A3 — what the shipped
+// browser-telemetry-leftovers, A1–A3 and A9–A11 — what the shipped
 // browser template (instrumentation.web.ts) does with a click that makes
 // requests. Runs in headless Chromium (vitest.templates.config.ts).
 //
 // How it observes: `window.fetch` is replaced by a recorder BEFORE the template
 // is imported, so the template's FetchInstrumentation wraps the recorder and the
-// recorder sees the headers the instrumentation injected. An in-memory exporter
-// on a provider registered first reads the click span back. Requests are
-// recorded, never sent.
-import { context, trace } from "@opentelemetry/api";
-import { InMemorySpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
-import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+// recorder sees the headers the instrumentation injected. The click's trace id is
+// read from the active span inside the handler. Requests are recorded, never sent.
+import { context, propagation, trace } from "@opentelemetry/api";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const exporter = new InMemorySpanExporter();
 type Recorded = { url: string; traceparent: string | null };
 let recorded: Recorded[] = [];
 let imports = 0;
 
-beforeAll(() => {
-	// Registered before the template so it is the global provider; the template's
-	// own `provider.register()` then no-ops, and its instrumentations trace into
-	// this exporter. Same defaults the template gets (stack context manager, W3C).
-	new WebTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] }).register();
-});
-
 beforeEach(() => {
-	exporter.reset();
+	// Each case starts from an empty API: whichever provider and context manager a
+	// previous case registered are gone, so the template's own `register()` is the only
+	// thing deciding the context manager (A11 depends on that).
+	trace.disable();
+	context.disable();
+	propagation.disable();
 	recorded = [];
 	window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = input instanceof Request ? input.url : String(input);
@@ -52,12 +46,12 @@ async function clickAndFetch(
 	urls: string[],
 	{ afterAwait = false }: { afterAwait?: boolean } = {},
 ): Promise<{ sent: Recorded[]; clickTraceIds: string[]; activeTraceId?: string }> {
+	recorded = [];
 	await import(/* @vite-ignore */ `./instrumentation.web.ts?fresh=${++imports}`);
 	const button = document.createElement("button");
 	document.body.append(button);
-	// All fetches start synchronously inside the handler: the stack context manager
-	// does not follow an await, and propagation from a click is about the call made
-	// while the click is the active span.
+	// The click's trace id is read from inside the handler, where the click span is the
+	// active one; a request is in the click's trace when its traceparent carries that id.
 	let activeTraceId: string | undefined;
 	button.addEventListener("click", async () => {
 		activeTraceId = trace.getSpan(context.active())?.spanContext().traceId;
@@ -66,13 +60,7 @@ async function clickAndFetch(
 	});
 	button.click();
 	await vi.waitFor(() => expect(recorded.length).toBe(urls.length));
-	await vi.waitFor(() =>
-		expect(exporter.getFinishedSpans().some((s) => s.name === "click")).toBe(true),
-	);
-	const clickTraceIds = exporter
-		.getFinishedSpans()
-		.filter((s) => s.name === "click")
-		.map((s) => s.spanContext().traceId);
+	const clickTraceIds = activeTraceId ? [activeTraceId] : [];
 	return { sent: recorded, clickTraceIds, activeTraceId };
 }
 
