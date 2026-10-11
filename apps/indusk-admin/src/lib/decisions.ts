@@ -72,12 +72,22 @@ export async function answerDecision(
 ): Promise<Answered> {
   const answer = answerOf(waiting, choice);
   const reached = await deliver(deps, project, waiting, choice, answer);
-  const { commit } = deps.record({
-    decision: waiting.decision,
-    answer,
-    by: "person",
-    at: (deps.now?.() ?? new Date()).toISOString(),
-  });
+  // The answer has reached its target: a history that cannot be written is
+  // reported beside it, never as a failed answer — a retry would send it twice.
+  let commit: Answered["commit"];
+  try {
+    ({ commit } = deps.record({
+      decision: waiting.decision,
+      answer,
+      by: "person",
+      at: (deps.now?.() ?? new Date()).toISOString(),
+    }));
+  } catch (err) {
+    commit = {
+      committed: false,
+      reason: `the answer was sent but not recorded: ${(err as Error).message}`,
+    };
+  }
   return { answer, ...reached, commit };
 }
 

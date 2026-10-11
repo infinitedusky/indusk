@@ -129,3 +129,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
   only fs-to-props glue, never a second definition. Guarded by
   `apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts`. — see
   `/decisions/plan-cockpit`
+- **A decision's card is read again from what the daemon holds after every
+  answer**: a started release clears the build's stop and a second accept is
+  refused while it runs, and an answer delivered but not recorded is reported
+  sent, never failed. Guarded by `src/lib/build-host.release.test.ts` and
+  `src/lib/decisions.test.ts`. — see `/decisions/plan-cockpit`

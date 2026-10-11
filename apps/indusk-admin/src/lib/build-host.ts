@@ -141,32 +141,53 @@ export async function startBuild(
   return state;
 }
 
-/** Accept a built plan and run the release in the background (A19). */
+/**
+ * Accept a built plan and run the release in the background (A19). Refused
+ * while a build or a release for the plan runs, so a second Accept starts no
+ * second release; the build's recorded stop is cleared when the release starts
+ * — the plan no longer waits on review — and replaced by how the release
+ * ended (plan-cockpit A37).
+ */
 export async function startRelease(
   project: string,
   plan: string,
 ): Promise<BuildState> {
+  const existing = buildState(project, plan);
+  if (existing?.running)
+    throw new Error(`${plan} is already building or releasing`);
   const running = sessionManager().current();
   if (running)
     throw new Error(
       `a session is already running: ${running.kind} for ${running.plan} — stop it first`,
     );
-  const state: BuildState = buildState(project, plan) ?? {
+  const state: BuildState = existing ?? {
     running: false,
     step: null,
     detail: null,
     stop: null,
     release: null,
   };
+  // Held before the first await, so two accepts at once cannot both start.
   state.running = true;
-  const { deps } = await depsFor(project, plan, state);
+  state.stop = null;
   builds().set(key(project, plan), state);
+  let deps: Awaited<ReturnType<typeof depsFor>>["deps"];
+  try {
+    ({ deps } = await depsFor(project, plan, state));
+  } catch (err) {
+    state.running = false;
+    throw err;
+  }
   void runRelease(deps, "person")
     .then((r) => {
       state.release = r;
+      state.stop = r.released
+        ? { step: "released" }
+        : { step: "release-failed", why: r.error ?? "unknown" };
     })
     .catch((err: Error) => {
       state.release = { released: false, error: err.message };
+      state.stop = { step: "release-failed", why: err.message };
     })
     .finally(() => {
       state.running = false;

@@ -281,3 +281,20 @@ describe("A16 — a reply in words reaches the plan's agent, running or not", ()
     expect(recorded).toEqual([]);
   });
 });
+
+describe("A38 — an answer delivered and not recorded is not a failed answer", () => {
+  it("A38 a history that cannot be written still reports the answer sent, with why it was not recorded", async () => {
+    const d = deps({
+      record: () => {
+        throw new Error("the lock on current.md timed out");
+      },
+    });
+    const r = await answerDecision(d, PROJECT, approvalWaiting, {
+      choice: "accept",
+    });
+    expect(d.approve).toHaveBeenCalledTimes(1);
+    expect(r.via).toBe("approve");
+    expect(r.commit.committed).toBe(false);
+    expect(JSON.stringify(r.commit)).toContain("lock on current.md");
+  });
+});
