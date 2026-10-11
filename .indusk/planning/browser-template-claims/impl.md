@@ -1,7 +1,7 @@
 ---
 title: "Browser template claims — an entry covers what it names"
 date: 2026-10-11
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -47,6 +47,7 @@ A propagation entry sends the click's trace to the requests it names and to no o
 | T5 | The OpenTelemetry reference page and the otel skill do not say that a `.then()` chain, a timer or compiled-down async code follows the click | Test Phase 1 | Build Phase 1 | passing | unit | the falsified claim: the reference page said a `.then()` chain compiled below ES2017 follows the click | apps/indusk-mcp/src/__tests__/otel-docs-claims.test.ts |
 | T6 | With an exact entry `https://api.example.com/Admin` and a pattern entry `https://*.dev.example.com/Admin`, a request to `/Admin` carries the trace and a request to `/admin` (a different resource) carries none; host and scheme case in an entry still do not matter | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 | T7 | The docs guard from T5 flags a reworded regression of the falsified claim — "A request from a `.then()` chain follows the click, not only synchronous ones." — and still passes the current wording of the limit | Build Phase 2 | Build Phase 2 | passing | unit | the guard guarding the falsified claim: T5 exempted any sentence containing "no" or "not", so a rewording that kept the claim would pass | apps/indusk-mcp/src/__tests__/otel-docs-claims.test.ts |
+| T8 | An entry that carries a query or a fragment covers what it names the way the same entry without it does, for an exact entry and a pattern entry alike: `https://api.example.com/v1?x=1` and `https://*.dev.example.com/v1?x=1` each cover `/v1/seats` and not `/v2/seats` | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-propagation-entry-covers-what-it-names | apps/indusk-mcp/templates/instrumentation.web.test.ts |
 
 ## Checklist
 
@@ -122,6 +123,29 @@ A propagation entry sends the click's trace to the requests it names and to no o
 #### Build Phase 2 Document
 
 - [x] `apps/docs/src/reference/tools/otel.md`: the same sentence beside the path rule; changelog line extended
+
+### Build Phase 3: The cold audit's one confirmed defect — a query on a pattern entry
+
+**Tier**: med — the work step's default
+
+**Goal**: the promise says an exact entry and a pattern entry treat an entry the same way; the cold audit showed a query or fragment on an entry is dropped for an exact entry and kept literally (so it matches nothing) for a pattern entry. T8 is authored red first. The audit's other findings are recorded in the retrospective, not fixed here.
+
+- [ ] T8 authored red in `templates/instrumentation.web.test.ts`, failing on its own assertion (the pattern entry with `?x=1` covers no request)
+- [ ] `templates/instrumentation.web.ts`: the query and fragment are cut from an entry before it is compiled, for every entry, so an exact entry and a pattern entry agree
+- [ ] `templates/instrumentation.web.ts`: the header comment (the file's top) says an entry is an origin with its scheme, may carry a path, and may write a default port, with the pointer to the rules above `parsePropagateTo`
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 3 Verification
+
+- [ ] T8 fails on its own assertion first, then passes; T1–T7 and the earlier plan's cases still pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/otel-docs-claims.test.ts`); tsc and biome clean on changed files
+
+#### Build Phase 3 Context
+
+- [ ] `apps/indusk-mcp/extensions/otel/skill.md`: a query or fragment written on an entry is ignored, for exact and pattern entries alike
+
+#### Build Phase 3 Document
+
+- [ ] `apps/docs/src/reference/tools/otel.md`: the same sentence beside the path rule; changelog line extended
 
 ## Files Affected
 
