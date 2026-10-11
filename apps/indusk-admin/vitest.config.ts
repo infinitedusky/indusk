@@ -1,7 +1,7 @@
 import path from "node:path";
 import { playwright } from "@vitest/browser-playwright";
 import { configDefaults, defineConfig } from "vitest/config";
-import { SYSTEM } from "./vitest.tiers";
+import { asGlob, NODE_PAGES, SYSTEM } from "./vitest.tiers";
 
 // Tests never auto-start a telemetry daemon (test-daemons-never-leak): any
 // test that runs `init` or `update` against a temporary home made `telemetry
@@ -46,11 +46,15 @@ export default defineConfig({
           name: "node",
           // Node-only tests: lib parsers + audit scripts that touch the filesystem
           // and don't render React. Audit lives at top-level src/__tests__/.
-          include: ["src/lib/**/*.test.ts", "src/__tests__/**/*.test.ts"],
+          include: [
+            "src/lib/**/*.test.ts",
+            "src/__tests__/**/*.test.ts",
+            ...NODE_PAGES.map(asGlob),
+          ],
           // Files that start `next dev` or a Jaeger are the system tier
           // (vitest.tiers.ts, `pnpm test:system`); with them gone, nothing
           // here boots a server, so the files run in parallel (test-kinds).
-          exclude: [...configDefaults.exclude, ...SYSTEM],
+          exclude: [...configDefaults.exclude, ...SYSTEM.map(asGlob)],
           environment: "node",
         },
       },
@@ -65,7 +69,14 @@ export default defineConfig({
           // Browser tests: React component tests under src/. Excludes lib (node)
           // and src/__tests__/ (node-only audits).
           include: ["src/**/*.test.{ts,tsx}"],
-          exclude: ["src/lib/**", "src/__tests__/**"],
+          // A system-tier file or a node page test under src/app/ is not a
+          // browser test either (ui-promises Build Phase 4).
+          exclude: [
+            "src/lib/**",
+            "src/__tests__/**",
+            ...SYSTEM.map(asGlob),
+            ...NODE_PAGES.map(asGlob),
+          ],
           browser: {
             enabled: true,
             provider: playwright(),
