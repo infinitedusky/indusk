@@ -4,6 +4,7 @@ import valueParser from "postcss-value-parser";
 import stylelint, { type Config, type Plugin, type Rule } from "stylelint";
 import strictValue from "stylelint-declaration-strict-value";
 import { type Foundation, isGeneratedCss } from "./foundation.js";
+import { elementsOf } from "./markup.js";
 import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
 
 /**
@@ -26,6 +27,7 @@ export type LintRule =
 	| "undefined-token"
 	| "undeclared-token"
 	| "redefined-token"
+	| "external-reference"
 	| "arbitrary-class"
 	| "stock-class";
 
@@ -140,16 +142,58 @@ const noLiteralRule: Rule<boolean, { exempt?: string[] }> = Object.assign(
 );
 const noLiteral = stylelint.createPlugin(NO_LITERAL, noLiteralRule);
 
-/** The rule for one unit of CSS; `exempt` names the custom properties whose values are not held. */
-function strictConfig(exempt: readonly string[]): Config {
+/**
+ * Whether a reference stays inside the mockup: a `data:` URI, an in-document
+ * fragment (`#gradient`), or the generated `tokens.css` — the foundation,
+ * which the approval binds by its own hash and the cockpit inlines.
+ */
+const isOwn = (url: string) =>
+	/^data:/i.test(url) || url.startsWith("#") || /(^|\/)tokens\.css$/.test(url);
+
+/**
+ * `indusk/no-external-reference`, for a mockup's CSS: an `@import`, or a
+ * `url()` that is not its own. A mockup's approval binds its own bytes, so
+ * what it draws must be all in them. The message is the URL itself.
+ */
+const NO_EXTERNAL = "indusk/no-external-reference";
+const noExternalRule: Rule<boolean> = Object.assign(
+	() => (root: Parameters<ReturnType<Rule>>[0], result: Parameters<ReturnType<Rule>>[1]) => {
+		root.walkAtRules("import", (at) => {
+			const url = valueParser(at.params).nodes.map((n) =>
+				n.type === "function" ? (n.nodes[0]?.value ?? "") : n.type === "string" ? n.value : "",
+			);
+			const target = url.find(Boolean) ?? at.params;
+			if (isOwn(target)) return;
+			stylelint.utils.report({ ruleName: NO_EXTERNAL, result, node: at, message: target });
+		});
+		root.walkDecls((decl) => {
+			valueParser(decl.value).walk((node) => {
+				if (node.type !== "function" || node.value.toLowerCase() !== "url") return;
+				const target = node.nodes[0]?.value ?? "";
+				if (isOwn(target)) return;
+				stylelint.utils.report({ ruleName: NO_EXTERNAL, result, node: decl, message: target });
+			});
+		});
+	},
+	{ ruleName: NO_EXTERNAL, messages: {} },
+);
+const noExternal = stylelint.createPlugin(NO_EXTERNAL, noExternalRule);
+
+/**
+ * The rule for one unit of CSS; `exempt` names the custom properties whose
+ * values are not held, and a mockup's CSS is also held to reaching nothing
+ * outside it.
+ */
+function strictConfig(exempt: readonly string[], mockup: boolean): Config {
 	return {
-		plugins: [strictValue as Plugin, noLiteral],
+		plugins: [strictValue as Plugin, noLiteral, noExternal],
 		rules: {
 			"scale-unlimited/declaration-strict-value": [
 				STRICT_PROPERTIES.map(String),
 				{ ignoreValues: ALLOWED_VALUES, expandShorthand: true, disableFix: true },
 			],
 			[NO_LITERAL]: [true, { exempt: [...exempt] }],
+			...(mockup ? { [NO_EXTERNAL]: true } : {}),
 		},
 	};
 }
@@ -160,18 +204,53 @@ interface CssBlock {
 	startLine: number;
 }
 
-/** The `<style>` blocks and `style=""` attributes of an HTML document. */
+/** The `<style>` elements and `style=""` attributes of an HTML document, as the browser parses it. */
 function cssBlocksOfHtml(html: string): CssBlock[] {
 	const blocks: CssBlock[] = [];
-	const lineAt = (index: number) => html.slice(0, index).split("\n").length;
-	for (const m of html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)) {
-		const open = (m.index ?? 0) + m[0].indexOf(">") + 1;
-		blocks.push({ code: m[1] ?? "", startLine: lineAt(open) });
-	}
-	for (const m of html.matchAll(/\bstyle=(["'])([\s\S]*?)\1/gi)) {
-		blocks.push({ code: `a{${m[2] ?? ""}}`, startLine: lineAt(m.index ?? 0) });
+	for (const el of elementsOf(html)) {
+		if (el.text) blocks.push({ code: el.text.value, startLine: el.text.line });
+		const style = el.attrs.style;
+		if (style !== undefined) blocks.push({ code: `a{${style}}`, startLine: el.attrLine("style") });
 	}
 	return blocks;
+}
+
+/** Attributes that load something into what an element draws; `<a href>` navigates and is not one. */
+const LOADING_ATTRS: Readonly<Record<string, readonly string[]>> = {
+	link: ["href"],
+	use: ["href", "xlink:href"],
+	image: ["href", "xlink:href"],
+	object: ["data"],
+	"*": ["src", "srcset", "poster"],
+};
+
+/**
+ * A mockup's elements that load something from outside it: a `<link>`, an
+ * `<img>`, a `<script src>`, an `<iframe>`, a `<video poster>`. A mockup is
+ * self-contained — its approval binds its own bytes, and what it would load
+ * is outside them.
+ */
+function externalElements(file: string, html: string): Finding[] {
+	const findings: Finding[] = [];
+	for (const el of elementsOf(html)) {
+		for (const attr of [...(LOADING_ATTRS[el.tag] ?? []), ...(LOADING_ATTRS["*"] ?? [])]) {
+			const value = el.attrs[attr];
+			if (value === undefined || value === "") continue;
+			const urls =
+				attr === "srcset" ? value.split(",").map((c) => c.trim().split(/\s+/)[0] ?? "") : [value];
+			for (const url of urls) {
+				if (isOwn(url)) continue;
+				findings.push({
+					file,
+					line: el.attrLine(attr),
+					value: url,
+					rule: "external-reference",
+					message: `<${el.tag} ${attr}="${url}"> reaches outside the mockup — draw it inline, or as a data: URI, so the approval covers it`,
+				});
+			}
+		}
+	}
+	return findings;
 }
 
 /** What follows `property:` in a declaration's source, without the semicolon. */
@@ -185,20 +264,33 @@ function valueOfDeclaration(source: string): string {
 
 /**
  * The raw values in one unit of CSS, one finding per declaration: the two
- * rules may both name the same one, and it is one raw value.
+ * value rules may both name the same one, and it is one raw value. A mockup's
+ * outside references come out of the same run as `external-reference`.
  */
 async function rawFindings(
 	file: string,
 	block: CssBlock,
-	exempt: readonly string[] = [],
+	{ exempt = [], mockup = false }: { exempt?: readonly string[]; mockup?: boolean } = {},
 ): Promise<Finding[]> {
-	const result = await stylelint.lint({ code: block.code, config: strictConfig(exempt) });
+	const result = await stylelint.lint({ code: block.code, config: strictConfig(exempt, mockup) });
 	const lines = block.code.split("\n");
 	const seen = new Set<string>();
-	return (result.results[0]?.warnings ?? []).flatMap((w) => {
-		const at = `${w.line}:${w.column}`;
+	return (result.results[0]?.warnings ?? []).flatMap((w): Finding[] => {
+		const at = `${w.rule === NO_EXTERNAL ? "external" : "raw"}:${w.line}:${w.column}`;
 		if (seen.has(at)) return [];
 		seen.add(at);
+		if (w.rule === NO_EXTERNAL) {
+			const url = w.text.replace(` (${NO_EXTERNAL})`, "");
+			return [
+				{
+					file,
+					line: block.startLine + w.line - 1,
+					value: url,
+					rule: "external-reference",
+					message: `${url} reaches outside the mockup — inline it, or use a data: URI, so the approval covers it`,
+				},
+			];
+		}
 		const declaration =
 			w.endLine === w.line
 				? (lines[w.line - 1] ?? "").slice(w.column - 1, (w.endColumn ?? w.column) - 1)
@@ -209,7 +301,7 @@ async function rawFindings(
 				file,
 				line: block.startLine + w.line - 1,
 				value,
-				rule: "raw-value" as const,
+				rule: "raw-value",
 				message: `raw value ${value} — use a token the foundation defines`,
 			},
 		];
@@ -374,7 +466,9 @@ const byPlace = (a: Finding, b: Finding) =>
 async function lintMockup(mockup: Mockup, foundation: Set<string>): Promise<Finding[]> {
 	const blocks = cssBlocksOfHtml(mockup.html);
 	const raw = await Promise.all(
-		blocks.map((block) => rawFindings(mockup.file, block, mockup.declaresNew)),
+		blocks.map((block) =>
+			rawFindings(mockup.file, block, { exempt: mockup.declaresNew, mockup: true }),
+		),
 	);
 	const tokens = tokenFindings(
 		mockup.file,
@@ -382,7 +476,7 @@ async function lintMockup(mockup: Mockup, foundation: Set<string>): Promise<Find
 		{ foundation, declared: new Set(mockup.declaresNew), elsewhere: new Set() },
 		true,
 	);
-	return [...raw.flat(), ...tokens];
+	return [...raw.flat(), ...tokens, ...externalElements(mockup.file, mockup.html)];
 }
 
 /** The findings of the app's declared source directories: stylesheets, and class names in markup. */
