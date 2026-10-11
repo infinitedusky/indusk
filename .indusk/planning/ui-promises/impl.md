@@ -228,7 +228,8 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 #### Build Phase 2 Verification
 
-- [ ] A3, A4, A10–A12 pass, A1's status half passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-cli.test.ts src/__tests__/looks-approval-guard.test.ts && pnpm exec vitest related src/lib/looks/approvals.ts src/lib/looks/coverage.ts --run`); tsc and biome clean on changed files
+- [x ] A3, A4, A10–A12 pass, A1's status half passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-cli.test.ts src/__tests__/looks-approval-guard.test.ts && pnpm exec vitest related src/lib/looks/approvals.ts src/lib/looks/coverage.ts --run`); tsc and biome clean on changed files
+  - Run 2026-10-11 after `pnpm build`: looks-cli 13 passed (A1 status half, A3 command half and hand edit, A4 both cases, A5–A8, A10–A12), looks-approval-guard 5 passed (A3 hook half); `vitest related` on approvals/coverage ran `approvals.test.ts` and `coverage.test.ts`, 7 passed; related on lint, mockups and hook-command 37 passed; hook-registration, hook-sync-parity, hook-cwd-independence (counts moved to eleven registrations), hooks-record-parity pass. tsc clean; biome clean on changed files, its three warnings in `hook-cwd-independence.test.ts` the file's own `${CLAUDE_PROJECT_DIR}` literals from before this phase. Outside the phase: `context-tiers-register.test.ts` A13 fails at this branch's HEAD before this phase — the root CLAUDE.md is 14,762 bytes against its 14,745.6 lowered budget since Build Phase 1's Key Decision line.
 
 #### Build Phase 2 Context
 
