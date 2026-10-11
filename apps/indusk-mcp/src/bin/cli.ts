@@ -1091,6 +1091,20 @@ papersCmd
 		await papersPublish(rootOrExit(), target, opts);
 	});
 
+const looksCmd = program
+	.command("looks")
+	.description("An app's look (.indusk/mockups/<app>/): the foundation, the mockups, what is held");
+
+looksCmd
+	.command("lint <app>")
+	.description(
+		"Refuse a raw value, an undefined token or a stock class in an app's mockups and declared sources, naming file, line and value. Exit 1 on any finding.",
+	)
+	.action(async (app: string) => {
+		const { looksLint } = await import("./commands/looks.js");
+		await looksLint(rootOrExit(), app);
+	});
+
 const promisesCmd = program
 	.command("promises")
 	.description("The promise registry (.indusk/promises/): what the system commits to, checked");

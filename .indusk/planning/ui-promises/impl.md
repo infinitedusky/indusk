@@ -190,14 +190,14 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 **Goal**: a mockup or an app with a raw value is refused, naming file, line and value.
 
-- [ ] `apps/indusk-mcp/src/lib/looks/foundation.ts`, exported as `./looks/foundation`: read and validate `foundation.tokens.json` (DTCG 2025.10 types used: color, dimension, fontFamily, fontWeight, shadow, duration, cubicBezier); generate the CSS custom properties and, for a Tailwind app, an `@theme` block that resets every namespace to the foundation, with Style Dictionary (`style-dictionary`, Apache-2.0)
+- [x] `apps/indusk-mcp/src/lib/looks/foundation.ts`, exported as `./looks/foundation`: read and validate `foundation.tokens.json` (DTCG 2025.10 types used: color, dimension, fontFamily, fontWeight, shadow, duration, cubicBezier); generate the CSS custom properties and, for a Tailwind app, an `@theme` block that resets every namespace to the foundation, with Style Dictionary (`style-dictionary`, Apache-2.0)
   ```typescript
   function readFoundation(appDir: string): Promise<Foundation>;
   function generateCss(f: Foundation, opts?: { tailwind?: boolean }): string;
   ```
-- [ ] `apps/indusk-mcp/src/lib/looks/mockups.ts`, exported as `./looks/mockups`: `readApp(root, app)` → foundation, devices, screens, mockups (each with its content hash and the tokens it declares new)
-- [ ] `apps/indusk-mcp/src/lib/looks/lint.ts`, exported as `./looks/lint`: stylelint (MIT) with `stylelint-declaration-strict-value` (MIT) over mockup HTML `<style>` and app CSS; tokens used vs defined vs declared new; a source scan for Tailwind arbitrary values and classes outside the generated theme — each finding `{ file, line, value, rule }`
-- [ ] `indusk looks lint <app>` in `src/bin/commands/looks.ts`: prints each finding, exits 1 on any
+- [x] `apps/indusk-mcp/src/lib/looks/mockups.ts`, exported as `./looks/mockups`: `readApp(root, app)` → foundation, devices, screens, mockups (each with its content hash and the tokens it declares new)
+- [x] `apps/indusk-mcp/src/lib/looks/lint.ts`, exported as `./looks/lint`: stylelint (MIT) with `stylelint-declaration-strict-value` (MIT) over mockup HTML `<style>` and app CSS; tokens used vs defined vs declared new; a source scan for Tailwind arbitrary values and classes outside the generated theme — each finding `{ file, line, value, rule }`
+- [x] `indusk looks lint <app>` in `src/bin/commands/looks.ts`: prints each finding, exits 1 on any
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 1 Verification
