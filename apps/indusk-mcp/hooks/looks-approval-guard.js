@@ -35,6 +35,9 @@ const WRITE_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
 const RECORD = /(^|[\\/])\.indusk[\\/]mockups[\\/][^\\/]+[\\/]approved\.json$/i;
 /** The record named anywhere in a command's text. */
 const RECORD_IN_TEXT = /\.indusk[\\/]mockups[\\/][^\s\\/'"`]+[\\/]approved\.json/i;
+/** A redirect whose target is the record: `> path`, `>> path`, `>| path`. */
+const REDIRECT_ONTO_RECORD =
+	/>{1,2}\|?\s*["']?[^\s"']*\.indusk[\\/]mockups[\\/][^\s\\/'"`]+[\\/]approved\.json/i;
 /** The approve route named anywhere in a command's text. */
 const APPROVE_ROUTE = /\/api\/looks\/[^\s'"`]*approve/i;
 
@@ -84,13 +87,7 @@ function wordsOf(segment) {
 /** Whether one segment of a command writes the record it names. */
 function segmentWrites(segment) {
 	if (!RECORD_IN_TEXT.test(segment)) return false;
-	// A redirect whose target is the record: `> path`, `>> path`, `>| path`.
-	if (
-		/>{1,2}\|?\s*["']?[^\s"']*\.indusk[\\/]mockups[\\/][^\s\\/'"`]+[\\/]approved\.json/i.test(
-			segment,
-		)
-	)
-		return true;
+	if (REDIRECT_ONTO_RECORD.test(segment)) return true;
 	const [verb = "", sub = "", ...rest] = wordsOf(segment);
 	const name = verb.split("/").pop() ?? verb;
 	if (name === "sed")

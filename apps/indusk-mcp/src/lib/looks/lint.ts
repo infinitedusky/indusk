@@ -262,12 +262,41 @@ function valueOfDeclaration(source: string): string {
 		.trim();
 }
 
+type Warning = Awaited<ReturnType<typeof stylelint.lint>>["results"][number]["warnings"][number];
+
+/** One stylelint warning as a finding: an outside reference names its URL, a raw value its declaration's value. */
+function findingOf(w: Warning, file: string, block: CssBlock, lines: string[]): Finding {
+	const line = block.startLine + w.line - 1;
+	if (w.rule === NO_EXTERNAL) {
+		const url = w.text.replace(` (${NO_EXTERNAL})`, "");
+		return {
+			file,
+			line,
+			value: url,
+			rule: "external-reference",
+			message: `${url} reaches outside the mockup — inline it, or use a data: URI, so the approval covers it`,
+		};
+	}
+	const declaration =
+		w.endLine === w.line
+			? (lines[w.line - 1] ?? "").slice(w.column - 1, (w.endColumn ?? w.column) - 1)
+			: lines.slice(w.line - 1, w.endLine).join(" ");
+	const value = valueOfDeclaration(declaration);
+	return {
+		file,
+		line,
+		value,
+		rule: "raw-value",
+		message: `raw value ${value} — use a token the foundation defines`,
+	};
+}
+
 /**
- * The raw values in one unit of CSS, one finding per declaration: the two
- * value rules may both name the same one, and it is one raw value. A mockup's
- * outside references come out of the same run as `external-reference`.
+ * The stylesheet findings of one unit of CSS: its raw values, one per
+ * declaration — the two value rules may both name the same one, and it is one
+ * raw value — and, for a mockup, its outside references.
  */
-async function rawFindings(
+async function cssFindings(
 	file: string,
 	block: CssBlock,
 	{ exempt = [], mockup = false }: { exempt?: readonly string[]; mockup?: boolean } = {},
@@ -275,36 +304,11 @@ async function rawFindings(
 	const result = await stylelint.lint({ code: block.code, config: strictConfig(exempt, mockup) });
 	const lines = block.code.split("\n");
 	const seen = new Set<string>();
-	return (result.results[0]?.warnings ?? []).flatMap((w): Finding[] => {
+	return (result.results[0]?.warnings ?? []).flatMap((w) => {
 		const at = `${w.rule === NO_EXTERNAL ? "external" : "raw"}:${w.line}:${w.column}`;
 		if (seen.has(at)) return [];
 		seen.add(at);
-		if (w.rule === NO_EXTERNAL) {
-			const url = w.text.replace(` (${NO_EXTERNAL})`, "");
-			return [
-				{
-					file,
-					line: block.startLine + w.line - 1,
-					value: url,
-					rule: "external-reference",
-					message: `${url} reaches outside the mockup — inline it, or use a data: URI, so the approval covers it`,
-				},
-			];
-		}
-		const declaration =
-			w.endLine === w.line
-				? (lines[w.line - 1] ?? "").slice(w.column - 1, (w.endColumn ?? w.column) - 1)
-				: lines.slice(w.line - 1, w.endLine).join(" ");
-		const value = valueOfDeclaration(declaration);
-		return [
-			{
-				file,
-				line: block.startLine + w.line - 1,
-				value,
-				rule: "raw-value",
-				message: `raw value ${value} — use a token the foundation defines`,
-			},
-		];
+		return [findingOf(w, file, block, lines)];
 	});
 }
 
@@ -467,7 +471,7 @@ async function lintMockup(mockup: Mockup, foundation: Set<string>): Promise<Find
 	const blocks = cssBlocksOfHtml(mockup.html);
 	const raw = await Promise.all(
 		blocks.map((block) =>
-			rawFindings(mockup.file, block, { exempt: mockup.declaresNew, mockup: true }),
+			cssFindings(mockup.file, block, { exempt: mockup.declaresNew, mockup: true }),
 		),
 	);
 	const tokens = tokenFindings(
@@ -507,7 +511,7 @@ async function lintSources(
 		),
 	);
 	for (const { file, block } of stylesheets) {
-		findings.push(...(await rawFindings(file, block)));
+		findings.push(...(await cssFindings(file, block)));
 		findings.push(
 			...tokenFindings(
 				file,

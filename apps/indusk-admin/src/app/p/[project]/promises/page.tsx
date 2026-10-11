@@ -68,6 +68,20 @@ interface PromisesRouteProps {
  * Stale-path handling parallels the scorecards page: an unregistered or
  * deleted project renders `<StaleProjectFailurePage>` (HTTP 200).
  */
+/**
+ * Which dashboard state this page drew, for the look check (ui-promises Build
+ * Phase 6): a registry with promises is the default, one without any the
+ * empty state; no registry reports neither. The nav and a promise's states
+ * are not reported here, so the check reads them unchecked.
+ */
+function dashboardLookState(
+  hasRegistry: boolean,
+  promises: number,
+): string | undefined {
+  if (!hasRegistry) return undefined;
+  return promises > 0 ? "dashboard.default" : "dashboard.empty";
+}
+
 export default async function PerProjectPromisesPage({
   params,
   searchParams,
@@ -152,17 +166,7 @@ export default async function PerProjectPromisesPage({
   return (
     <div
       className="flex flex-col gap-4"
-      // Which dashboard state this page drew, for the look check (ui-promises
-      // Build Phase 6): a registry with promises is the default, one without
-      // any the empty state. The nav and a promise's states are not reported
-      // here, so the check reads them unchecked.
-      data-look-state={
-        registry
-          ? rows.length > 0
-            ? "dashboard.default"
-            : "dashboard.empty"
-          : undefined
-      }
+      data-look-state={dashboardLookState(registry !== null, rows.length)}
     >
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       {!read.ok && "problems" in read && (
