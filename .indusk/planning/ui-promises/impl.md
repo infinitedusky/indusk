@@ -198,19 +198,21 @@ An app's look is held by mockups a person approved: every visual value comes fro
 - [x] `apps/indusk-mcp/src/lib/looks/mockups.ts`, exported as `./looks/mockups`: `readApp(root, app)` → foundation, devices, screens, mockups (each with its content hash and the tokens it declares new)
 - [x] `apps/indusk-mcp/src/lib/looks/lint.ts`, exported as `./looks/lint`: stylelint (MIT) with `stylelint-declaration-strict-value` (MIT) over mockup HTML `<style>` and app CSS; tokens used vs defined vs declared new; a source scan for Tailwind arbitrary values and classes outside the generated theme — each finding `{ file, line, value, rule }`
 - [x] `indusk looks lint <app>` in `src/bin/commands/looks.ts`: prints each finding, exits 1 on any
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-mcp/src/lib/looks/lint.ts`) — `lintApp` was two jobs inline (a mockup's findings, the app sources' findings); named `lintMockup` and `lintSources`, rule: one reason to change per unit
+- [x] Shape (`apps/indusk-mcp/src/lib/looks/foundation.ts`) — reviewed, left as-is: `prepare` validates and normalises in one walk because both need the inherited `$type`; splitting them would walk the tree twice for no seam a test can use
 
 #### Build Phase 1 Verification
 
-- [ ] A5–A8 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-cli.test.ts -t "A5|A6|A7|A8" && pnpm exec vitest related src/lib/looks/*.ts --run`); tsc and biome clean on changed files
+- [x] A5–A8 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-cli.test.ts -t "A5|A6|A7|A8" && pnpm exec vitest related src/lib/looks/*.ts --run`); tsc and biome clean on changed files
 
 #### Build Phase 1 Context
 
-- [ ] root (Key Decisions): "UI promises: an app's look is held by mockups a person approves in the cockpit, on one DTCG foundation, no raw values, held by value in Chromium — see `/decisions/ui-promises`" — always-on because every UI plan from now on draws a mockup against it; if the root is still over its byte budget when this runs, compact first (`/compact-context`)
+- [x] root (Key Decisions): "UI promises: an app's look is held by mockups a person approves in the cockpit, on one DTCG foundation, no raw values, held by value in Chromium — see `/decisions/ui-promises`" — always-on because every UI plan from now on draws a mockup against it; if the root is still over its byte budget when this runs, compact first (`/compact-context`)
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/looks.md`: `indusk looks lint`, the foundation file, the findings
+- [x] `apps/docs/src/reference/cli/looks.md`: `indusk looks lint`, the foundation file, the findings
 
 ### Build Phase 2: Approvals and coverage
 

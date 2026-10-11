@@ -4,7 +4,7 @@ import { extname, join, relative } from "node:path";
 import stylelint, { type Config, type Plugin } from "stylelint";
 import strictValue from "stylelint-declaration-strict-value";
 import type { Foundation } from "./foundation.js";
-import type { LooksApp } from "./mockups.js";
+import type { LooksApp, Mockup } from "./mockups.js";
 
 /**
  * The no-raw-value rule (ui-promises ADR): every colour, size, space, radius,
@@ -283,27 +283,29 @@ const namesOf = (f: Foundation) => new Set(f.tokens.map((t) => t.name));
 const byPlace = (a: Finding, b: Finding) =>
 	a.file.localeCompare(b.file) || a.line - b.line || a.value.localeCompare(b.value);
 
-/** Every raw value, undefined token and stock class in an app's mockups and declared sources. */
-export async function lintApp(root: string, app: LooksApp): Promise<Finding[]> {
-	const foundation = namesOf(app.foundation);
+/** The findings of one mockup: its raw values, and the tokens it uses or adds. */
+async function lintMockup(mockup: Mockup, foundation: Set<string>): Promise<Finding[]> {
+	const blocks = cssBlocksOfHtml(mockup.html);
+	const raw = await Promise.all(blocks.map((block) => rawFindings(mockup.file, block)));
+	const tokens = tokenFindings(
+		mockup.file,
+		blocks,
+		{ foundation, declared: new Set(mockup.declaresNew), elsewhere: new Set() },
+		true,
+	);
+	return [...raw.flat(), ...tokens];
+}
+
+/** The findings of the app's declared source directories: stylesheets, and class names in markup. */
+async function lintSources(
+	root: string,
+	sourceDirs: string[],
+	foundation: Set<string>,
+): Promise<Finding[]> {
 	const findings: Finding[] = [];
-
-	for (const mockup of app.mockups) {
-		const blocks = cssBlocksOfHtml(mockup.html);
-		for (const block of blocks) findings.push(...(await rawFindings(mockup.file, block)));
-		findings.push(
-			...tokenFindings(
-				mockup.file,
-				blocks,
-				{ foundation, declared: new Set(mockup.declaresNew), elsewhere: new Set() },
-				true,
-			),
-		);
-	}
-
-	const sources = (await Promise.all(app.sources.map((s) => sourceFiles(join(root, s))))).flat();
+	const paths = (await Promise.all(sourceDirs.map((s) => sourceFiles(join(root, s))))).flat();
 	const stylesheets: Array<{ file: string; block: CssBlock }> = [];
-	for (const path of sources) {
+	for (const path of paths) {
 		const file = relative(root, path);
 		const ext = extname(path);
 		const text = await readFile(path, "utf-8");
@@ -326,6 +328,13 @@ export async function lintApp(root: string, app: LooksApp): Promise<Finding[]> {
 			),
 		);
 	}
+	return findings;
+}
 
-	return findings.sort(byPlace);
+/** Every raw value, undefined token and stock class in an app's mockups and declared sources. */
+export async function lintApp(root: string, app: LooksApp): Promise<Finding[]> {
+	const foundation = namesOf(app.foundation);
+	const mockups = await Promise.all(app.mockups.map((m) => lintMockup(m, foundation)));
+	const sources = await lintSources(root, app.sources, foundation);
+	return [...mockups.flat(), ...sources].sort(byPlace);
 }
