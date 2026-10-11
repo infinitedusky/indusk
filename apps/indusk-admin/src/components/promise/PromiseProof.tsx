@@ -33,7 +33,7 @@ export function PromiseBanner({
     <section
       data-testid="promise-banner"
       data-standing={standing.standing}
-      className={`flex flex-col gap-2 rounded border px-4 py-3 ${STANDING_STYLE[standing.standing].chip}`}
+      className={`flex flex-col gap-2 rounded-md border px-4 py-3 ${STANDING_STYLE[standing.standing].chip}`}
     >
       <p className="text-sm font-semibold">
         {STANDING_LABELS[standing.standing]}
@@ -94,12 +94,10 @@ export function PromiseTiles({ proof }: { proof: Proof }) {
       {tiles.map(([label, value]) => (
         <div
           key={label}
-          className="min-w-0 rounded border border-gray-200 px-3 py-2"
+          className="min-w-0 rounded-md border border-line px-3 py-2"
         >
-          <dt className="text-xs text-gray-500">{label}</dt>
-          <dd className="break-words text-sm font-medium text-gray-900">
-            {value}
-          </dd>
+          <dt className="text-xs text-ink-faint">{label}</dt>
+          <dd className="break-words text-sm font-medium text-ink">{value}</dd>
         </div>
       ))}
     </dl>
@@ -120,7 +118,7 @@ function Section({
       data-testid={`proof-${id}`}
       className="flex min-w-0 flex-col gap-2"
     >
-      <h2 className="text-sm font-semibold text-gray-700">{title}</h2>
+      <h2 className="text-sm font-semibold text-ink-soft">{title}</h2>
       {children}
     </section>
   );
@@ -128,9 +126,9 @@ function Section({
 
 const Files = ({ files }: { files: string[] }) =>
   files.length === 0 ? (
-    <span className="text-gray-400">—</span>
+    <span className="text-ink-faint">—</span>
   ) : (
-    <ul className="flex flex-col gap-0.5">
+    <ul className="flex flex-col gap-hair">
       {files.map((f) => (
         <li key={f} className="min-w-0 break-all">
           <code className="text-xs">{f}</code>
@@ -149,9 +147,9 @@ export function TestsThatBackIt({
   return (
     <Section id="tests" title="Tests that back it">
       {proof.rows.length === 0 ? (
-        <p className="text-sm text-gray-600">No test row names it.</p>
+        <p className="text-sm text-ink-soft">No test row names it.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-gray-100 rounded border border-gray-200">
+        <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
           {proof.rows.map((r) => (
             <li
               key={`${r.plan}/${r.id}`}
@@ -161,15 +159,13 @@ export function TestsThatBackIt({
               <span className="flex flex-wrap items-baseline gap-x-3">
                 <code className="text-xs font-semibold">{r.id}</code>
                 <span
-                  className={
-                    r.state === "passing" ? "text-green-700" : "text-amber-700"
-                  }
+                  className={r.state === "passing" ? "text-ok" : "text-warn"}
                 >
                   {r.state}
                 </span>
                 <Link
                   href={`${planHrefPrefix}${r.plan}`}
-                  className="text-xs text-gray-500 hover:underline"
+                  className="text-xs text-ink-faint hover:underline"
                 >
                   {r.plan}
                   {r.archived ? " (archived)" : ""}
@@ -181,7 +177,7 @@ export function TestsThatBackIt({
         </ul>
       )}
       {proof.unreadable.length > 0 ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-bad">
           Could not read the tests of {proof.unreadable.join(", ")}: a missing
           row there is not a missing test.
         </p>
@@ -194,11 +190,11 @@ export function WhereItIsWatched({ proof }: { proof: Proof }) {
   return (
     <Section id="marks" title="Where it is watched">
       {proof.marks.length === 0 ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-soft">
           It is not seen yet: no run of it has been marked in any source.
         </p>
       ) : (
-        <ul className="flex flex-col divide-y divide-gray-100 rounded border border-gray-200">
+        <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
           {proof.marks.map((m) => (
             <li
               key={`${m.service}/${m.operation}`}
@@ -209,10 +205,10 @@ export function WhereItIsWatched({ proof }: { proof: Proof }) {
                 <code className="text-xs">{m.service}</code>{" "}
                 <code className="text-xs">{m.operation}</code>
               </span>
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-ink-soft">
                 {m.lastHeld ? `held ${stamp(m.lastHeld)}` : "never held"}
               </span>
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-ink-soft">
                 {m.lastBroken
                   ? `broken ${stamp(m.lastBroken)}`
                   : "never broken"}
@@ -228,8 +224,8 @@ export function WhereItIsWatched({ proof }: { proof: Proof }) {
 function DayBars({ source, days }: { source: string; days: ProofDay[] }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <span className="text-xs text-gray-600">{source}</span>
-      <div className="flex h-8 w-full gap-px">
+      <span className="text-xs text-ink-soft">{source}</span>
+      <div className="flex h-8 w-full gap-hair">
         {days.map((d) => (
           <span
             key={d.day}
@@ -240,11 +236,7 @@ function DayBars({ source, days }: { source: string; days: ProofDay[] }) {
             data-count={d.broken}
             title={`${d.day}: held ${d.held}, broke ${d.broken}`}
             className={`min-w-0 flex-1 rounded-sm ${
-              d.broken > 0
-                ? "bg-red-600"
-                : d.held > 0
-                  ? "bg-green-600"
-                  : "bg-gray-200"
+              d.broken > 0 ? "bg-bad" : d.held > 0 ? "bg-ok" : "bg-idle-wash"
             }`}
           />
         ))}
@@ -261,14 +253,14 @@ export function LastThirtyDays({ proof }: { proof: Proof }) {
         <div key={source} className="flex flex-col gap-1">
           <DayBars source={source} days={days} />
           {proof.unread[source as keyof typeof proof.unread] ? (
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-warn">
               {source}'s held days could not be read:{" "}
               {proof.unread[source as keyof typeof proof.unread]}
             </p>
           ) : null}
         </div>
       ))}
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-ink-faint">
         Red: a break was heard that day. Green: held. Grey: nothing seen.
       </p>
     </Section>
@@ -279,7 +271,7 @@ export function PromiseHistory({ proof }: { proof: Proof }) {
   return (
     <Section id="history" title="History">
       {proof.history.length === 0 ? (
-        <p className="text-sm text-gray-600">Nothing recorded yet.</p>
+        <p className="text-sm text-ink-soft">Nothing recorded yet.</p>
       ) : (
         <ol className="flex flex-col gap-1 text-sm">
           {proof.history.map((e) => (
@@ -288,13 +280,11 @@ export function PromiseHistory({ proof }: { proof: Proof }) {
               data-testid="history-event"
               className="flex min-w-0 flex-wrap gap-x-3"
             >
-              <span className="text-xs text-gray-500">{e.at}</span>
-              <span className="text-xs font-medium text-gray-700">
+              <span className="text-xs text-ink-faint">{e.at}</span>
+              <span className="text-xs font-medium text-ink-soft">
                 {e.kind}
               </span>
-              <span className="min-w-0 break-words text-gray-900">
-                {e.text}
-              </span>
+              <span className="min-w-0 break-words text-ink">{e.text}</span>
             </li>
           ))}
         </ol>
@@ -308,19 +298,19 @@ export function WhereItLives({ entry }: { entry: PromiseEntry }) {
     <Section id="lives" title="Where it lives">
       <dl className="grid gap-2 text-sm md:grid-cols-3">
         <div className="min-w-0">
-          <dt className="text-xs text-gray-500">Its file</dt>
+          <dt className="text-xs text-ink-faint">Its file</dt>
           <dd>
             <Files files={[`.indusk/promises/${entry.file}`]} />
           </dd>
         </div>
         <div className="min-w-0">
-          <dt className="text-xs text-gray-500">Where it is kept in code</dt>
+          <dt className="text-xs text-ink-faint">Where it is kept in code</dt>
           <dd>
             <Files files={entry.sites} />
           </dd>
         </div>
         <div className="min-w-0">
-          <dt className="text-xs text-gray-500">Its tests</dt>
+          <dt className="text-xs text-ink-faint">Its tests</dt>
           <dd>
             <Files files={entry.tests} />
           </dd>

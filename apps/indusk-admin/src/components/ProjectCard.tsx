@@ -26,14 +26,14 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
     <Link
       href={`/p/${project.name}/`}
       data-project-name={project.name}
-      className="block rounded-lg border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="block rounded-lg border border-line bg-surface p-5 transition-shadow hover:elevated focus:outline-2 focus:outline-dusk"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-base font-semibold text-gray-900">
+          <h2 className="truncate text-base font-semibold text-ink">
             {project.name}
           </h2>
-          <p className="mt-1 truncate text-xs text-gray-500">{project.path}</p>
+          <p className="mt-1 truncate text-xs text-ink-faint">{project.path}</p>
         </div>
         <span className="flex items-center gap-1">
           {project.shape ? (
@@ -48,11 +48,11 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
           ) : null}
         </span>
       </div>
-      <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+      <div className="mt-4 flex items-center justify-between text-sm text-ink-soft">
         <span>
           {project.activePlanCount} {label}
         </span>
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-ink-faint">
           last seen {formatRelative(project.lastSeenAt)}
         </span>
       </div>

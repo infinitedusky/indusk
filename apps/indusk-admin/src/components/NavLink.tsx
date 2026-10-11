@@ -21,7 +21,12 @@ export function NavLink({ href, children, ...rest }: NavLinkProps) {
     pathname !== undefined &&
     (pathname === href || pathname.startsWith(`${href}/`));
   return (
-    <Link href={href} aria-current={current ? "page" : undefined} {...rest}>
+    <Link
+      href={href}
+      data-component="view-link"
+      aria-current={current ? "page" : undefined}
+      {...rest}
+    >
       {children}
     </Link>
   );

@@ -59,7 +59,7 @@ export function ApproveMockup({
         {busy ? "Approving…" : "Approve"}
       </Button>
       {problem ? (
-        <span role="alert" className="text-xs text-red-700">
+        <span role="alert" className="text-xs text-bad">
           {problem}
         </span>
       ) : null}

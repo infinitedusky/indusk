@@ -227,7 +227,7 @@ export function PlanList({
 
       {orderedActive.length > 0 && (
         <div className="flex flex-col gap-1">
-          <span className="px-2 text-xs uppercase tracking-wide text-gray-400">
+          <span className="px-2 text-xs uppercase tracking-caps text-ink-faint">
             Active plans
           </span>
           <ul className="flex flex-col gap-1" data-testid="active-plans">
@@ -245,7 +245,7 @@ export function PlanList({
 
       {unordered.length > 0 && (
         <div className="flex flex-col gap-1">
-          <span className="px-2 text-xs uppercase tracking-wide text-gray-400">
+          <span className="px-2 text-xs uppercase tracking-caps text-ink-faint">
             Unordered
           </span>
           <ul className="flex flex-col gap-1" data-testid="unordered-plans">
@@ -268,12 +268,12 @@ export function PlanList({
       {root ? (
         <div className="flex flex-col gap-2" data-testid="plan-tree-root">
           <span
-            className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-600"
+            className="px-2 text-xs font-semibold uppercase tracking-caps text-ink-soft"
             title="The root master — .indusk/planning/master.md"
           >
             {root.title}
           </span>
-          <div className="ml-3 flex flex-col gap-4 border-l border-gray-200 pl-2">
+          <div className="ml-3 flex flex-col gap-4 border-l border-line pl-2">
             {tree}
           </div>
         </div>
@@ -342,12 +342,12 @@ function PlanGroupSection({
         <span
           data-testid="path-released"
           title={`${group.released} of ${group.total} released`}
-          className="shrink-0 rounded bg-gray-100 px-1.5 text-xs tabular-nums text-gray-600"
+          className="shrink-0 rounded-md bg-idle-wash px-tight text-xs tabular-nums text-ink-soft"
         >
           {group.released}/{group.total}
         </span>
       </div>
-      <ul className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-2">
+      <ul className="ml-3 flex flex-col gap-1 border-l border-line pl-2">
         {group.entries.map((entry) =>
           entry.kind === "plan" ? (
             <PlanItem
@@ -369,7 +369,7 @@ function PlanGroupSection({
           ) : (
             <li key={entry.name} data-testid={`plan-placeholder-${entry.name}`}>
               <div
-                className="flex items-center justify-between rounded px-2 py-1.5 text-sm text-gray-400"
+                className="flex items-center justify-between rounded-md px-2 py-tight text-sm text-ink-faint"
                 title="Declared in the parent's master.md — not created yet"
               >
                 <span className="truncate">
@@ -391,7 +391,7 @@ function PlanNumber({ number }: { number?: number }) {
   return (
     <span
       data-testid="plan-number"
-      className="mr-1.5 tabular-nums text-xs text-gray-400"
+      className="mr-tight tabular-nums text-xs text-ink-faint"
     >
       {number}
     </span>
@@ -415,7 +415,7 @@ function PlanItem({
     <li>
       <NavLink
         href={`${prefix}${plan.name}`}
-        className="flex items-center justify-between rounded px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+        className="flex items-center justify-between rounded-md px-2 py-tight text-sm text-ink-soft hover:bg-idle-wash"
         data-plan-name={plan.name}
       >
         <span className="flex items-center gap-2 truncate">
@@ -438,7 +438,7 @@ function PlanItem({
               data-health="red"
               aria-label="holds a promise violated in the window"
               title="holds a promise violated in the window"
-              className="h-2 w-2 shrink-0 rounded-full bg-red-600"
+              className="h-2 w-2 shrink-0 rounded-pill bg-bad"
             />
           )}
         </span>

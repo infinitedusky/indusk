@@ -61,10 +61,10 @@ export default async function PerProjectScorecardsPage({
     const neverEvaluated = !hasEvalDirectory(projectPath);
     return (
       <div className="flex flex-col gap-2" data-testid="scorecards-empty">
-        <h1 className="text-lg font-semibold text-gray-900">
+        <h1 className="text-lg font-semibold text-ink">
           Scorecards — {project}
         </h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-ink-faint">
           {neverEvaluated
             ? "no evaluations recorded yet — the first evaluated commit writes them to the project's home (`indusk eval home`); make a `git commit` inside a Claude Code session to trigger the eval agent."
             : "No eval scorecards recorded for this project yet. Make a `git commit` to trigger the eval agent."}

@@ -47,11 +47,11 @@ export function SessionPanel({
 
   return (
     <section
-      className="flex flex-col gap-2 rounded border border-gray-200 bg-white p-3 text-sm"
+      className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3 text-sm"
       data-testid="session-panel"
     >
       <header className="flex items-center justify-between">
-        <h2 className="font-semibold text-gray-800">Claude session</h2>
+        <h2 className="font-semibold text-ink">Claude session</h2>
         {running ? (
           <Button variant="secondary" size="sm" onClick={onStop}>
             Stop
@@ -61,7 +61,7 @@ export function SessionPanel({
       <ol
         ref={log}
         data-testid="session-log"
-        className="flex max-h-60 flex-col gap-2 overflow-y-auto"
+        className="flex max-h-rail flex-col gap-2 overflow-y-auto"
         onScroll={(e) => {
           const el = e.currentTarget;
           following.current =
@@ -100,7 +100,7 @@ export function SessionPanel({
           }}
         >
           <textarea
-            className="rounded border border-gray-300 p-2"
+            className="rounded-md border border-line p-2"
             rows={3}
             placeholder="Reply to Claude"
             value={draft}
@@ -131,34 +131,34 @@ function EventView({
   switch (ev.type) {
     case "init":
       return (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-ink-faint">
           Claude Code {ev.version} · {ev.model} · {ev.cwd}
         </p>
       );
     case "trusted":
       return (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-ink-faint">
           This worktree is trusted like its project.
         </p>
       );
     case "untrusted":
       return (
-        <p className="text-xs text-amber-700">
+        <p className="text-xs text-warn">
           Claude Code has not trusted {ev.cwd}, so its allow-list is ignored and
           more will be asked.
         </p>
       );
     case "text":
-      return <p className="whitespace-pre-wrap text-gray-800">{ev.text}</p>;
+      return <p className="whitespace-pre-wrap text-ink">{ev.text}</p>;
     case "you":
       return (
-        <p className="whitespace-pre-wrap rounded bg-gray-100 p-2 text-gray-900">
+        <p className="whitespace-pre-wrap rounded-md bg-idle-wash p-2 text-ink">
           {ev.text}
         </p>
       );
     case "tool":
       return (
-        <p className="font-mono text-xs text-gray-500">
+        <p className="font-mono text-xs text-ink-faint">
           {ev.name} {describeInput(ev.input)}
         </p>
       );
@@ -172,8 +172,8 @@ function EventView({
       );
     case "permission":
       return (
-        <div className="rounded border border-amber-300 bg-amber-50 p-2">
-          <p className="text-gray-800">
+        <div className="rounded-md border border-warn bg-warn-wash p-2">
+          <p className="text-ink">
             Claude asks to use <span className="font-semibold">{ev.tool}</span>{" "}
             <span className="font-mono text-xs">{describeInput(ev.input)}</span>
           </p>
@@ -198,11 +198,9 @@ function EventView({
     // promise: a-session-says-how-it-ended
     case "result":
       return ev.ok ? (
-        <p className="text-green-700">
-          Turn done{ev.text ? ` — ${ev.text}` : ""}
-        </p>
+        <p className="text-ok">Turn done{ev.text ? ` — ${ev.text}` : ""}</p>
       ) : (
-        <p className="text-red-700">
+        <p className="text-bad">
           Failed —{" "}
           {ev.text ? ev.text.split("\n")[0] : failedWithoutText(ev.subtype)}
         </p>
@@ -211,7 +209,7 @@ function EventView({
       return (
         <p
           className={
-            ev.code === 0 || ev.code === null ? "text-gray-500" : "text-red-700"
+            ev.code === 0 || ev.code === null ? "text-ink-faint" : "text-bad"
           }
         >
           Session ended
@@ -220,7 +218,7 @@ function EventView({
         </p>
       );
     case "other":
-      return <p className="font-mono text-xs text-gray-400">{ev.text}</p>;
+      return <p className="font-mono text-xs text-ink-faint">{ev.text}</p>;
     default:
       return null;
   }
@@ -278,15 +276,17 @@ function QuestionView({
       };
     });
   return (
-    <div className="rounded border border-blue-300 bg-blue-50 p-2">
+    <div className="rounded-md border border-dusk bg-dusk-wash p-2">
       {questions.map((q) => {
         const picks = chosen[q.question] ?? [];
         return (
           <fieldset key={q.question} className="mb-2">
-            <legend className="font-medium text-gray-900">
+            <legend className="font-medium text-ink">
               {q.question}
               {q.multiSelect ? (
-                <span className="ml-1 text-xs text-gray-500">(choose any)</span>
+                <span className="ml-1 text-xs text-ink-faint">
+                  (choose any)
+                </span>
               ) : null}
             </legend>
             <div className="mt-1 flex flex-col gap-1">
@@ -299,15 +299,15 @@ function QuestionView({
                   type="button"
                   disabled={!open}
                   onClick={() => toggle(q, o.label)}
-                  className={`rounded border px-2 py-1 text-left ${
+                  className={`rounded-md border px-2 py-1 text-left ${
                     picks.includes(o.label)
-                      ? "border-blue-600 bg-white"
+                      ? "border-dusk bg-surface"
                       : "border-transparent"
                   }`}
                 >
                   <span className="font-medium">{o.label}</span>
                   {o.description ? (
-                    <span className="block text-xs text-gray-600">
+                    <span className="block text-xs text-ink-soft">
                       {o.description}
                     </span>
                   ) : null}
@@ -316,7 +316,7 @@ function QuestionView({
               {picks.includes(OTHER) && open ? (
                 <input
                   aria-label="Other answer"
-                  className="rounded border border-gray-300 px-2 py-1"
+                  className="rounded-md border border-line px-2 py-1"
                   value={other[q.question] ?? ""}
                   onChange={(e) =>
                     setOther((prev) => ({

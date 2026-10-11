@@ -115,15 +115,15 @@ export default async function PerProjectLayout({
   const waiting = readWaiting(project, active);
 
   return (
-    <div className="flex h-full w-full">
+    <div data-component="shell" className="flex h-full w-full">
       <Sidebar
         header={
           <div className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between">
-              <span className="truncate text-sm font-semibold text-gray-900">
+              <span className="truncate text-sm font-semibold text-ink">
                 {project}
               </span>
-              <span className="text-xs text-gray-500">project</span>
+              <span className="text-xs text-ink-faint">project</span>
             </div>
             <ProjectSwitcher projects={registered} currentProject={project} />
           </div>
@@ -132,21 +132,21 @@ export default async function PerProjectLayout({
         <nav className="flex flex-col gap-1 pb-3">
           <NavLink
             href={`/p/${project}/scorecards`}
-            className="rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+            className="rounded-md px-2 py-1 text-sm text-ink-soft hover:bg-idle-wash"
           >
             Scorecards
           </NavLink>
           <NavLink
             href={`/p/${project}/promises`}
             data-testid="nav-promises"
-            className="flex items-center justify-between rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+            className="flex items-center justify-between rounded-md px-2 py-1 text-sm text-ink-soft hover:bg-idle-wash"
           >
             Promises
             {brokenCount > 0 && (
               <span
                 data-testid="broken-count"
                 title={`${brokenCount} broken`}
-                className="rounded-full bg-red-600 px-2 text-xs font-medium text-white"
+                className="rounded-pill bg-bad px-2 text-xs font-medium text-surface"
               >
                 {brokenCount}
               </span>
@@ -155,7 +155,7 @@ export default async function PerProjectLayout({
           <NavLink
             href={`/p/${project}/looks`}
             data-testid="nav-looks"
-            className="rounded py-1 pr-2 pl-5 text-sm text-gray-700 hover:bg-gray-100"
+            className="rounded-md py-1 pr-2 pl-5 text-sm text-ink-soft hover:bg-idle-wash"
           >
             Looks
           </NavLink>
@@ -182,17 +182,17 @@ export default async function PerProjectLayout({
         )}
         {research.length > 0 && (
           <nav
-            className="flex flex-col gap-1 pt-3 border-t border-gray-200 mt-3"
+            className="flex flex-col gap-1 pt-3 border-t border-line mt-3"
             data-testid="research-group"
           >
-            <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-caps text-ink-faint">
               Research
             </h3>
             {research.map((entry) => (
               <NavLink
                 key={entry.slug}
                 href={`/p/${project}/research/${entry.slug}`}
-                className="truncate rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+                className="truncate rounded-md px-2 py-1 text-sm text-ink-soft hover:bg-idle-wash"
                 title={entry.title ?? entry.slug}
               >
                 {entry.title ?? entry.slug}
@@ -201,7 +201,7 @@ export default async function PerProjectLayout({
           </nav>
         )}
       </Sidebar>
-      <main className="min-w-0 flex-1 overflow-y-auto p-6 max-[759px]:pt-14">
+      <main className="min-w-0 flex-1 overflow-y-auto p-6 max-[759px]:pt-16">
         {children}
       </main>
     </div>

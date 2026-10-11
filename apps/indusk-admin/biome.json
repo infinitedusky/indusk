@@ -14,7 +14,8 @@
       "!.next",
       "!dist",
       "!build",
-      "!src/app/globals.css"
+      "!src/app/globals.css",
+      "!src/app/foundation.generated.css"
     ]
   },
   "formatter": {

@@ -45,7 +45,7 @@ export function IncidentsTable({
       className="flex flex-col gap-2"
       data-testid="promise-incident-list"
     >
-      <h2 className="text-sm font-semibold text-gray-700">Incidents</h2>
+      <h2 className="text-sm font-semibold text-ink-soft">Incidents</h2>
       <Table>
         <TableHeader>
           <TableRow>
@@ -98,7 +98,7 @@ function IncidentOwner({
   owner: string | null;
   planHrefPrefix: string;
 }) {
-  if (!owner) return <span className="text-gray-400">—</span>;
+  if (!owner) return <span className="text-ink-faint">—</span>;
   if (incident.status !== "open") return <span>{owner}</span>;
   return (
     <Link href={`${planHrefPrefix}${owner}`} className="hover:underline">

@@ -23,7 +23,7 @@ export function WorktreeChip({ plan }: { plan: Plan }) {
     <span
       data-testid="plan-worktree"
       title={`Read from the worktree at ${path} (${branch})`}
-      className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-800"
+      className="inline-flex items-center gap-1 rounded-pill border border-dusk bg-dusk-wash px-2 py-hair text-xs text-dusk"
     >
       <span aria-hidden="true">⎇</span>
       {name}
@@ -37,7 +37,7 @@ export function PlanCopyNotice({ plan }: { plan: Plan }) {
       <div
         role="alert"
         data-testid="plan-copy-error"
-        className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+        className="rounded-md border border-bad bg-bad-wash px-3 py-2 text-sm text-bad"
       >
         The plan-worktree assignment record {plan.copyError.file} cannot be read
         ({plan.copyError.problem}), so which copy of this plan is live is
@@ -49,7 +49,7 @@ export function PlanCopyNotice({ plan }: { plan: Plan }) {
     return (
       <output
         data-testid="plan-copy-archived"
-        className="block rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+        className="block rounded-md border border-line bg-ground px-3 py-2 text-sm text-ink-soft"
       >
         This plan is archived in its worktree {plan.worktree.name}, awaiting
         landing: the retrospective moved it on{" "}
@@ -62,7 +62,7 @@ export function PlanCopyNotice({ plan }: { plan: Plan }) {
     return (
       <output
         data-testid="plan-copy-problem"
-        className="block rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+        className="block rounded-md border border-warn bg-warn-wash px-3 py-2 text-sm text-warn"
       >
         {plan.copyProblem.kind === "gone"
           ? `The ${plan.copyProblem.detail} — showing the trunk copy. Release it with indusk worktree release ${plan.name}, or assign the plan again.`
@@ -74,7 +74,7 @@ export function PlanCopyNotice({ plan }: { plan: Plan }) {
   }
   if (plan.worktree) {
     return (
-      <p data-testid="plan-copy-source" className="text-xs text-gray-500">
+      <p data-testid="plan-copy-source" className="text-xs text-ink-faint">
         Read from the worktree {plan.worktree.name} on{" "}
         <code>{plan.worktree.branch}</code>, where this plan is being worked.
       </p>
@@ -92,21 +92,21 @@ export function UnassignedWorktrees({
   if (worktrees.length === 0) return null;
   return (
     <nav
-      className="flex flex-col gap-1 pt-3 border-t border-gray-200 mt-3"
+      className="flex flex-col gap-1 pt-3 border-t border-line mt-3"
       data-testid="unassigned-worktrees"
     >
-      <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+      <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-caps text-ink-faint">
         Unassigned worktrees
       </h3>
       {worktrees.map((w) => (
         <span
           key={w.path}
-          className="truncate px-2 py-1 text-sm text-gray-700"
+          className="truncate px-2 py-1 text-sm text-ink-soft"
           title={`${w.path} — assign it with indusk worktree assign <plan> ${w.path}`}
         >
           {w.name}
           {w.branch ? (
-            <span className="ml-1 text-xs text-gray-500">{w.branch}</span>
+            <span className="ml-1 text-xs text-ink-faint">{w.branch}</span>
           ) : null}
         </span>
       ))}
@@ -126,7 +126,7 @@ export function WorktreeRecordError({
     <div
       role="alert"
       data-testid="worktree-record-error"
-      className="mb-3 rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-800"
+      className="mb-3 rounded-md border border-bad bg-bad-wash px-2 py-tight text-xs text-bad"
     >
       The plan-worktree assignment record {file} cannot be read ({problem}).
       Plans are listed by name only until it is fixed or removed.

@@ -51,17 +51,17 @@ export function NewPlanForm({
 
   return (
     <form
-      className="flex flex-col gap-2 rounded border border-gray-200 bg-white p-4 text-left text-sm"
+      className="flex flex-col gap-2 rounded-md border border-line bg-surface p-4 text-left text-sm"
       onSubmit={(e) => {
         e.preventDefault();
         void start();
       }}
     >
-      <h2 className="font-semibold text-gray-800">New plan</h2>
+      <h2 className="font-semibold text-ink">New plan</h2>
       <label className="flex flex-col gap-1">
-        <span className="text-gray-600">Type</span>
+        <span className="text-ink-soft">Type</span>
         <select
-          className="rounded border border-gray-300 px-2 py-1"
+          className="rounded-md border border-line px-2 py-1"
           value={type}
           onChange={(e) => setType(e.target.value)}
         >
@@ -73,9 +73,9 @@ export function NewPlanForm({
         </select>
       </label>
       <label className="flex flex-col gap-1">
-        <span className="text-gray-600">Name</span>
+        <span className="text-ink-soft">Name</span>
         <input
-          className="rounded border border-gray-300 px-2 py-1 font-mono"
+          className="rounded-md border border-line px-2 py-1 font-mono"
           value={name}
           placeholder="kebab-case-name"
           onChange={(e) => setName(e.target.value.trim())}
@@ -83,9 +83,9 @@ export function NewPlanForm({
       </label>
       {asksRepo ? (
         <label className="flex flex-col gap-1">
-          <span className="text-gray-600">Repo</span>
+          <span className="text-ink-soft">Repo</span>
           <select
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded-md border border-line px-2 py-1"
             value={repo}
             onChange={(e) => setRepo(e.target.value)}
           >
@@ -97,7 +97,7 @@ export function NewPlanForm({
           </select>
         </label>
       ) : null}
-      {problem ? <p className="text-red-700">{problem}</p> : null}
+      {problem ? <p className="text-bad">{problem}</p> : null}
       <Button
         type="submit"
         disabled={busy || !/^[a-z0-9][a-z0-9-]*$/.test(name)}

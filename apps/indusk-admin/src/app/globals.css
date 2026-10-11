@@ -1,34 +1,147 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
+@import "./foundation.generated.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * The admin's look is held by `.indusk/mockups/admin/` (ui-promises): every
+ * value below is a token of its foundation, generated into
+ * `foundation.generated.css` by `indusk looks tokens admin --tailwind`. A raw
+ * colour, size or font here is refused by `indusk looks lint admin`.
+ */
 
+/* What Tailwind's transition utilities animate with: the foundation's. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --default-transition-duration: var(--duration-fast);
+  --default-transition-timing-function: var(--easing-ease);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-5);
+}
+
+/*
+ * Markdown from plan documents. Typography's `prose` sizes in em, which no
+ * foundation holds; these are the same rules on the foundation's steps.
+ */
+.prose {
+  color: var(--color-ink-soft);
+  font-size: var(--text-md);
+  line-height: var(--leading-5);
+  max-width: 70ch;
+}
+.prose :where(h1, h2, h3, h4) {
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-2);
+}
+.prose h1 {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-6);
+}
+.prose h2 {
+  font-size: var(--text-xl);
+  line-height: var(--leading-5);
+}
+.prose :where(h3, h4) {
+  font-size: var(--text-lg);
+  line-height: var(--leading-4);
+}
+.prose :where(p, ul, ol, pre, blockquote, table) {
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.prose :where(ul, ol) {
+  padding-left: var(--space-5);
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose a {
+  color: var(--color-dusk);
+  text-decoration: underline;
+}
+.prose :where(code) {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--color-idle-wash);
+  border-radius: var(--radius-sm);
+  padding: var(--space-hair) var(--space-1);
+}
+.prose pre {
+  background: var(--color-idle-wash);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  overflow-x: auto;
+}
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+.prose blockquote {
+  border-left: var(--border-2) solid var(--color-line);
+  padding-left: var(--space-3);
+  color: var(--color-ink-faint);
+}
+.prose table {
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.prose :where(th, td) {
+  border-width: var(--border-1);
+  border-style: solid;
+  border-color: var(--color-line);
+  padding: var(--space-1) var(--space-2);
+  text-align: left;
 }
 
 /* <details> blocks in plan documents: a plain-language narrative with the
-   technical detail folded under a "Technical" summary. Typography has no
-   opinion on these, so give the summary an affordance and the block room. */
+   technical detail folded under a "Technical" summary. */
 .prose details {
-  margin: 1em 0;
-  border-left: 2px solid #e5e7eb;
-  padding-left: 0.75em;
+  margin: var(--space-3) 0;
+  border-left: var(--border-2) solid var(--color-line);
+  padding-left: var(--space-3);
 }
 .prose summary {
   cursor: pointer;
-  font-weight: 600;
-  color: #6b7280;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-ink-faint);
+}
+
+/* The page under the header: the viewport less the header's own height. */
+.app-body {
+  height: calc(100vh - var(--space-10));
+}
+
+/* Layout the foundation does not tokenise: viewport-relative sizes and a grid. */
+.fullscreen-diagram {
+  width: 95vw;
+  height: 95vh;
+}
+.diagram-svg svg {
+  display: block;
+  height: auto;
+  max-height: 90%;
+  min-width: 600px;
+  max-width: 90%;
+}
+.stale-facts {
+  grid-template-columns: auto 1fr;
+}
+
+.nav-drawer {
+  max-width: 85vw;
+}
+
+/* A raised surface: the foundation's shadow, alone — Tailwind's shadow utility
+   composes ring and inset layers around it, which are not a token. */
+.elevated {
+  box-shadow: var(--shadow-card);
 }

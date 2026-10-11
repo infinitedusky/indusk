@@ -55,7 +55,7 @@ export function FalsificationSection({
           copyMarkdown={`## Falsification\n\nSkipped: ${skipped.reason}\n`}
         >
           <p
-            className="text-sm text-gray-700"
+            className="text-sm text-ink-soft"
             data-testid="falsification-skipped"
           >
             Skipped: {skipped.reason}
@@ -77,7 +77,7 @@ export function FalsificationSection({
           copyMarkdown={falsificationLogMarkdown(undefined)}
         >
           <p
-            className="text-sm text-gray-500"
+            className="text-sm text-ink-faint"
             data-testid="falsification-empty"
           >
             No falsification ritual run for this plan.
@@ -108,7 +108,7 @@ export function FalsificationSection({
       >
         <div className="flex flex-col gap-2">
           {hypotheses.length === 0 && (
-            <p className="text-sm text-gray-500">No hypotheses logged yet.</p>
+            <p className="text-sm text-ink-faint">No hypotheses logged yet.</p>
           )}
           {hypotheses.length > 0 && (
             <ul
@@ -125,7 +125,7 @@ export function FalsificationSection({
           )}
           {terminator && (
             <div
-              className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+              className="rounded-md border border-line bg-ground px-3 py-2 text-sm text-ink-soft"
               data-testid="falsification-terminator"
             >
               <span className="font-semibold">Terminated:</span>{" "}
@@ -141,18 +141,18 @@ export function FalsificationSection({
 function HypothesisItem({ entry }: { entry: HypothesisEntry }) {
   return (
     <li
-      className="flex flex-col gap-1 rounded border border-gray-200 px-3 py-2"
+      className="flex flex-col gap-1 rounded-md border border-line px-3 py-2"
       data-testid={`hypothesis-${entry.outcome}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold text-gray-900">Hypothesis</span>
+        <span className="text-sm font-semibold text-ink">Hypothesis</span>
         <Badge variant={outcomeToBadge(entry.outcome)}>{entry.outcome}</Badge>
       </div>
-      <p className="text-sm text-gray-700">{entry.hypothesis}</p>
+      <p className="text-sm text-ink-soft">{entry.hypothesis}</p>
       {entry.testPath && (
-        <p className="text-xs text-gray-500 font-mono">{entry.testPath}</p>
+        <p className="text-xs text-ink-faint font-mono">{entry.testPath}</p>
       )}
-      {entry.note && <p className="text-xs text-gray-500">{entry.note}</p>}
+      {entry.note && <p className="text-xs text-ink-faint">{entry.note}</p>}
     </li>
   );
 }

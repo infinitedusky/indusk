@@ -53,11 +53,7 @@ export default async function PerProjectLooksPage({
   const checkout = await resolveLooksCheckout(projectPath, query.checkout);
   if ("problem" in checkout) {
     return (
-      <p
-        role="alert"
-        data-testid="looks-problem"
-        className="text-sm text-red-800"
-      >
+      <p role="alert" data-testid="looks-problem" className="text-sm text-bad">
         {checkout.problem}
       </p>
     );

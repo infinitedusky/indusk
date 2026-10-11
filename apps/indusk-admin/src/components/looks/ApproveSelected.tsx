@@ -98,10 +98,10 @@ export function ApproveSelected({
 
   return (
     <div
-      className="flex flex-wrap items-center gap-3 text-sm text-gray-700"
+      className="flex flex-wrap items-center gap-3 text-sm text-ink-soft"
       data-testid="approve-selected"
     >
-      <label className="flex items-center gap-1.5">
+      <label className="flex items-center gap-tight">
         <input
           type="checkbox"
           data-testid="select-all-proposed"
@@ -119,7 +119,7 @@ export function ApproveSelected({
         {busy ? "Approving…" : `Approve ${selected.length} selected`}
       </Button>
       {problem ? (
-        <span role="alert" className="text-xs text-red-700">
+        <span role="alert" className="text-xs text-bad">
           {problem}
         </span>
       ) : null}

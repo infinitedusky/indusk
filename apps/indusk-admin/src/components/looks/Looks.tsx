@@ -45,10 +45,10 @@ export function LooksBody({
 }) {
   return (
     <section className="flex flex-col gap-6" data-testid="looks">
-      <h1 className="text-xl font-semibold text-gray-900">Looks</h1>
+      <h1 className="text-xl font-semibold text-ink">Looks</h1>
       {checkouts.length > 1 ? (
         <nav
-          className="flex flex-wrap items-center gap-2 text-sm text-gray-700"
+          className="flex flex-wrap items-center gap-2 text-sm text-ink-soft"
           data-testid="looks-checkouts"
           aria-label="Checkout"
         >
@@ -61,7 +61,7 @@ export function LooksBody({
               }
               aria-current={c.plan === checkout ? "page" : undefined}
               title={c.branch ?? undefined}
-              className="rounded px-1.5 text-blue-700 hover:bg-blue-50 aria-[current=page]:bg-blue-100"
+              className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
             >
               {c.plan ?? "this checkout"}
             </a>
@@ -69,7 +69,7 @@ export function LooksBody({
         </nav>
       ) : null}
       {apps.length === 0 ? (
-        <p className="text-sm text-gray-600" data-testid="looks-empty">
+        <p className="text-sm text-ink-soft" data-testid="looks-empty">
           No looks yet. An app&apos;s look lives in{" "}
           <code>.indusk/mockups/&lt;app&gt;/</code>: a foundation, its devices,
           its screens and a mockup per screen and state.
@@ -81,7 +81,7 @@ export function LooksBody({
             key={app.app}
             role="alert"
             data-testid="looks-problem"
-            className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+            className="rounded-md border border-bad bg-bad-wash p-3 text-sm text-bad"
           >
             <span className="font-medium">{app.app}</span>: {app.problem}
           </div>
@@ -125,7 +125,7 @@ function AppSection({
       data-testid="looks-app"
       data-app={app.app}
     >
-      <h2 className="text-base font-semibold text-gray-900">{app.app}</h2>
+      <h2 className="text-base font-semibold text-ink">{app.app}</h2>
       <ApproveSelected
         project={project}
         app={app.app}
@@ -133,7 +133,7 @@ function AppSection({
         checkout={checkout}
         proposed={app.mockups.filter((m) => m.approval === "proposed").length}
       />
-      <ul className="flex flex-col divide-y divide-gray-100 rounded border border-gray-200">
+      <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
         {app.mockups.map((m) => (
           <MockupRow
             key={m.name}
@@ -175,7 +175,7 @@ function OpenMockupView({
 }) {
   return (
     <section className="flex flex-col gap-2" data-testid="mockup-open">
-      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-ink-soft">
         <span className="font-medium">{mockup.name}</span>
         <span>
           {device.name} · {device.width} × {device.height}
@@ -193,12 +193,13 @@ function OpenMockupView({
       <div className="max-w-full overflow-auto">
         <iframe
           data-testid="mockup-frame"
+          data-component="device-frame"
           title={`${mockup.name} at ${device.name}`}
           srcDoc={mockup.document}
           width={device.width}
           height={device.height}
           sandbox=""
-          className="block border-0 bg-white shadow-sm"
+          className="block border-0 bg-surface elevated"
         />
       </div>
     </section>
@@ -229,6 +230,7 @@ function MockupRow({
   return (
     <li
       data-testid="mockup-row"
+      data-component="look-row"
       data-mockup={mockup.name}
       data-approval={mockup.approval}
       className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm"
@@ -241,18 +243,18 @@ function MockupRow({
           aria-label={`Select ${mockup.name}`}
         />
       ) : null}
-      <span className="font-medium text-gray-900">{mockup.name}</span>
+      <span className="font-medium text-ink">{mockup.name}</span>
       <span
-        className={`rounded border px-1.5 text-xs ${APPROVAL_STYLE[mockup.approval]}`}
+        className={`rounded-md border px-tight text-xs ${APPROVAL_STYLE[mockup.approval]}`}
       >
         {mockup.approval}
       </span>
       {mockup.approval === "approved" && mockup.entry ? (
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-ink-faint">
           by {mockup.entry.by}, {stamp(mockup.entry.at)}
         </span>
       ) : null}
-      <span className="ml-auto flex gap-2">
+      <span data-component="device-choice" className="ml-auto flex gap-2">
         {app.devices.map((d) => (
           <a
             key={d.name}
@@ -260,7 +262,7 @@ function MockupRow({
             data-testid="device-link"
             data-device={d.name}
             aria-current={current === d.name ? "page" : undefined}
-            className="rounded px-1.5 text-xs text-blue-700 hover:bg-blue-50 aria-[current=page]:bg-blue-100"
+            className="rounded-md px-tight text-xs text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
           >
             {d.name}
           </a>
@@ -278,9 +280,9 @@ function Uncovered({ app }: { app: AppLooks }) {
   ];
   return (
     <section className="flex flex-col gap-1" data-testid="uncovered">
-      <h3 className="text-sm font-semibold text-gray-700">Uncovered</h3>
+      <h3 className="text-sm font-semibold text-ink-soft">Uncovered</h3>
       {items.length === 0 ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-soft">
           Every declared screen, state and component has an approved mockup.
         </p>
       ) : (
@@ -291,7 +293,7 @@ function Uncovered({ app }: { app: AppLooks }) {
               data-testid="uncovered-item"
               data-kind={i.kind}
               data-name={i.name}
-              className="rounded border border-dashed border-amber-400 bg-amber-50 px-1.5 text-amber-900"
+              className="rounded-md border border-dashed border-warn bg-warn-wash px-tight text-warn"
             >
               {i.kind} {i.name}
             </li>

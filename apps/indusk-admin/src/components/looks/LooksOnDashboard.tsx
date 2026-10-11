@@ -37,7 +37,7 @@ export function LooksOnDashboard({
           data-look={`${l.app}/${l.look}`}
           data-device={l.device ?? ""}
           data-standing={l.standing}
-          className={`flex flex-col gap-0.5 rounded border px-3 py-2 text-sm ${LOOK_STYLE[l.standing]}`}
+          className={`flex flex-col gap-hair rounded-md border px-3 py-2 text-sm ${LOOK_STYLE[l.standing]}`}
         >
           <span>
             <span className="font-medium">
@@ -48,8 +48,8 @@ export function LooksOnDashboard({
           {l.symptom ? <span className="text-xs">{l.symptom}</span> : null}
         </div>
       ))}
-      <p className="text-sm text-gray-700" data-testid="looks-summary">
-        <a href={href} className="font-medium text-blue-700 hover:underline">
+      <p className="text-sm text-ink-soft" data-testid="looks-summary">
+        <a href={href} className="font-medium text-dusk hover:underline">
           Looks
         </a>
         {[...counts.values()].map((c) => (

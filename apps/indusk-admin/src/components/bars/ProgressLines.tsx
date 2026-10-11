@@ -76,7 +76,7 @@ export function ProgressLines({ plan }: { plan: Plan }) {
         >
           <PhaseBar phase={activePhase} />
           {active?.hint ? (
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-warn">
               {active.hint} — the active phase is the first open one in document
               order
             </p>

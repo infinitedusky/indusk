@@ -62,18 +62,20 @@ export function PlanHeader({
   const title = facts?.title && facts.title !== plan.name ? facts.title : null;
   return (
     <header
-      className="flex flex-col gap-3 border-b border-gray-200 pb-3"
+      className="flex flex-col gap-3 border-b border-line pb-3"
       data-testid="plan-header"
     >
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
-          <h1 className="text-xl font-semibold text-gray-900">
+          <h1 className="text-xl font-semibold text-ink">
             {title ?? plan.name}
           </h1>
           {title && (
-            <span className="font-mono text-xs text-gray-500">{plan.name}</span>
+            <span className="font-mono text-xs text-ink-faint">
+              {plan.name}
+            </span>
           )}
-          <span className="flex items-center gap-2 text-xs text-gray-500">
+          <span className="flex items-center gap-2 text-xs text-ink-faint">
             {plan.archived ? "archived" : "active"}
             {showType && (
               <PlanTypeChip
@@ -127,7 +129,7 @@ function HeaderFacts({
   if (!dates && paths.length === 0 && promises.length === 0) return null;
   return (
     <div
-      className="mt-2 flex flex-col gap-1 text-xs text-gray-600"
+      className="mt-2 flex flex-col gap-1 text-xs text-ink-soft"
       data-testid="plan-header-facts"
     >
       {dates && <span data-testid="plan-dates">{dates}</span>}
@@ -152,10 +154,10 @@ function HeaderFacts({
                 href={`${promisesHref}/${p.name}`}
                 title={`${p.sentence} — ${p.standing}`}
                 data-standing={p.standing}
-                className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5"
+                className="inline-flex items-center gap-1 rounded-pill border border-line bg-surface px-2 py-hair"
               >
                 {p.sentence}
-                <span className="text-gray-500">
+                <span className="text-ink-faint">
                   {p.tests.passing}/{p.tests.total} tests
                 </span>
               </a>

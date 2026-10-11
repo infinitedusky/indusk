@@ -81,7 +81,7 @@ export function PlanSession({
           <Button size="sm" onClick={() => void approve()} disabled={busy}>
             {busy ? "Approving…" : "Approve"}
           </Button>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-ink-faint">
             Checks the brief, then brings the plan's documents and promises to
             main; the build continues on its branch.
           </span>
@@ -97,15 +97,13 @@ export function PlanSession({
           >
             Continue planning
           </Button>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-ink-faint">
             Starts a planning session in this plan's worktree.
           </span>
         </div>
       ) : null}
       {problem ? (
-        <pre className="whitespace-pre-wrap text-sm text-red-700">
-          {problem}
-        </pre>
+        <pre className="whitespace-pre-wrap text-sm text-bad">{problem}</pre>
       ) : null}
       {sessionId ? <SessionConnector sessionId={sessionId} /> : null}
     </div>

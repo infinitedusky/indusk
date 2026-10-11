@@ -138,6 +138,17 @@ Each entry is a rule and a pointer; the pointer holds the story.
   (`vitest.tiers.ts` `NODE_PAGES`) against a real fixture project; a listed
   path under `[project]` is escaped (`asGlob`) before vitest globs it. — see
   `/reference/admin-ui/overview`
+- **The admin's look is held by `.indusk/mockups/admin/`**: every colour, size,
+  radius, font and motion value is a token of its foundation, generated into
+  `src/app/foundation.generated.css` by `indusk looks tokens admin --tailwind`
+  (never edited by hand); Tailwind's stock theme is reset to it, so a stock
+  class has no value to compile. A new screen, state or `data-component` needs
+  its mockup approved first. Guarded by `looks-admin-foundation.test.ts`,
+  `indusk looks coverage admin` and `indusk looks check admin`. Two traps: layout
+  is not a token and the value check does not see it (`translate-x-0` once
+  compiled to nothing and left the nav off-screen), so a restyle is also looked
+  at; and the Typography plugin is gone — `.prose` is written on the foundation
+  in `globals.css`. — see `/decisions/ui-promises`
 - **A decision's card is read again from what the daemon holds after every
   answer**: a started release clears the build's stop and a second accept is
   refused while it runs, and an answer delivered but not recorded is reported
