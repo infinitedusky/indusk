@@ -1,7 +1,7 @@
 ---
 title: "UI promises — mockups as the promises for how an app looks"
 date: 2026-10-10
-status: draft
+status: accepted
 workflow: feature
 ---
 
