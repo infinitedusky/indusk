@@ -34,6 +34,12 @@ const MODULES = [
 	["./plans/steps", "src/lib/plans/steps.ts", "planSteps"],
 	["./plans/waiting", "src/lib/plans/waiting.ts", "planWaiting"],
 	["./plans/history", "src/lib/plans/history.ts", "appendDecision"],
+	// ui-promises Build Phase 4: a look's state — approved, covered, held — is
+	// the package's, read by the admin's Looks page and dashboard and the editor.
+	["./looks/approvals", "src/lib/looks/approvals.ts", "approvalOf"],
+	["./looks/coverage", "src/lib/looks/coverage.ts", "coverageOf"],
+	["./looks/verdict", "src/lib/looks/verdict.ts", "verdict"],
+	["./promises/standing", "src/lib/promises/standing.ts", "lookStandingOf"],
 ] as const;
 
 /** Functions only the package may define. */
@@ -44,6 +50,11 @@ const PACKAGE_ONLY = [
 	"planSteps",
 	"planWaiting",
 	"appendDecision",
+	"approvalOf",
+	"coverageOf",
+	"verdict",
+	"lookStandingOf",
+	"lookStandingFor",
 ];
 
 function sources(dir: string): string[] {
@@ -72,7 +83,7 @@ describe("A34 — the cockpit's facts are defined once, in the package", () => {
 		});
 	}
 
-	it("A34 neither the admin nor the editor defines standingOf, proofOf, fixPrompt, planSteps, planWaiting or appendDecision", () => {
+	it("A34 neither the admin nor the editor defines standingOf, proofOf, fixPrompt, planSteps, planWaiting, appendDecision, or a look's approvalOf, coverageOf, verdict, lookStandingOf or lookStandingFor", () => {
 		const names = PACKAGE_ONLY.join("|");
 		const defining = new RegExp(`(function|const|let) (${names})\\b`);
 		const copies = [...sources(ADMIN), ...sources(EDITOR)]

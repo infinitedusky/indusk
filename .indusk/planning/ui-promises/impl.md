@@ -320,7 +320,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 #### Build Phase 4 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a look's state is read from `promises/standing` and `looks/*`, never computed in the admin — guarded by `cockpit-single-definition.test.ts` gaining `approvalOf`, `coverageOf` and `verdict`
+- [x] `apps/indusk-admin/CLAUDE.md`: a look's state is read from `promises/standing` and `looks/*`, never computed in the admin — guarded by `cockpit-single-definition.test.ts` gaining `approvalOf`, `coverageOf` and `verdict`
 
 #### Build Phase 4 Document
 
