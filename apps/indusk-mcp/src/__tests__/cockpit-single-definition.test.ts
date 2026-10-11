@@ -39,7 +39,7 @@ const MODULES = [
 	["./looks/approvals", "src/lib/looks/approvals.ts", "approvalOf"],
 	["./looks/coverage", "src/lib/looks/coverage.ts", "coverageOf"],
 	["./looks/verdict", "src/lib/looks/verdict.ts", "verdict"],
-	["./promises/standing", "src/lib/promises/standing.ts", "lookStandingOf"],
+	["./promises/standing", "src/lib/promises/look-standing.ts", "lookStandingOf"],
 ] as const;
 
 /** Functions only the package may define. */
