@@ -249,6 +249,38 @@ export interface LookStandingRead {
 }
 
 /**
+ * The newest run for one look at one device, no older than `since` (the
+ * approval in force; null when none is). A check against an earlier reference
+ * says nothing about this one.
+ */
+export function newestRunSince(
+	runs: readonly LookRun[],
+	key: { app: string; screen: string; state: string; device: string | null; since: string | null },
+): LookRun | null {
+	return runs
+		.filter(
+			(r) =>
+				r.app === key.app &&
+				r.screen === key.screen &&
+				r.state === key.state &&
+				r.device === key.device &&
+				(key.since === null || r.at >= key.since),
+		)
+		.reduce<LookRun | null>((a, r) => (a === null || r.at > a.at ? r : a), null);
+}
+
+/**
+ * The look rule: broken when its newest counted run broke — the app is held to
+ * the last approved version even while a change waits — else uncovered until
+ * its mockup is approved as it is, else held or, with no run, unchecked.
+ */
+export function lookStandingFor(approved: boolean, newest: LookRun | null): LookStanding {
+	if (newest?.outcome === "violated") return "broken";
+	if (!approved) return "uncovered";
+	return newest ? "held" : "unchecked";
+}
+
+/**
  * Each look of one app with its standing, from the facts the `looks/` modules
  * give: whether each declared screen state's mockup is approved as it is
  * (`approvalOf`), what the app renders that no approved mockup shows
@@ -271,24 +303,14 @@ export function lookStandingOf(
 			const approval = mockup ? approvalOf(app, mockup, approvals) : null;
 			const since = approval?.state === "approved" ? approval.entry.at : null;
 			for (const device of devices) {
-				const newest = runs
-					.filter(
-						(r) =>
-							r.app === app.app &&
-							r.screen === screen.name &&
-							r.state === state &&
-							r.device === device &&
-							(since === null || r.at >= since),
-					)
-					.reduce<LookRun | null>((a, r) => (a === null || r.at > a.at ? r : a), null);
-				const standing: LookStanding =
-					newest?.outcome === "violated"
-						? "broken"
-						: approval?.state !== "approved"
-							? "uncovered"
-							: newest
-								? "held"
-								: "unchecked";
+				const newest = newestRunSince(runs, {
+					app: app.app,
+					screen: screen.name,
+					state,
+					device,
+					since,
+				});
+				const standing = lookStandingFor(approval?.state === "approved", newest);
 				rows.push({
 					app: app.app,
 					look,

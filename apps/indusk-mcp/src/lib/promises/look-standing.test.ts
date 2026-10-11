@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { type LookRun, readLookStanding } from "./standing.js";
+import { type LookRun, lookStandingFor, readLookStanding } from "./standing.js";
 import { parseMarkedSpan } from "./telemetry.js";
 
 // promise: a-look-reports-like-any-promise
@@ -63,6 +63,18 @@ describe("readLookStanding — each look's standing", () => {
 			problems: [],
 			runs: { ok: true },
 		});
+	});
+});
+
+describe("lookStandingFor — the look rule", () => {
+	it("broken first, then uncovered until approved, then held or unchecked", () => {
+		const held = run("empty", "phone", "upheld", "2026-10-11T00:00:00.000Z");
+		const broke = run("empty", "phone", "violated", "2026-10-11T00:00:00.000Z");
+		expect(lookStandingFor(false, broke)).toBe("broken");
+		expect(lookStandingFor(false, held)).toBe("uncovered");
+		expect(lookStandingFor(false, null)).toBe("uncovered");
+		expect(lookStandingFor(true, held)).toBe("held");
+		expect(lookStandingFor(true, null)).toBe("unchecked");
 	});
 });
 
