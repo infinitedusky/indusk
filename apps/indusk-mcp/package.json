@@ -196,6 +196,10 @@
 			"types": "./dist/lib/looks/lint.d.ts",
 			"default": "./dist/lib/looks/lint.js"
 		},
+		"./looks/approvals": {
+			"types": "./dist/lib/looks/approvals.d.ts",
+			"default": "./dist/lib/looks/approvals.js"
+		},
 		"./promises/standing": {
 			"types": "./dist/lib/promises/standing.d.ts",
 			"default": "./dist/lib/promises/standing.js"
