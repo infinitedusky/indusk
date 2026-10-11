@@ -66,7 +66,7 @@ Fix with Claude opens a Claude Code tab in VS Code when the Claude Code extensio
 **Tier**: med
 
 - [x] `core/fix.ts`: `FixAction` gains `{ claudeTab: { uri: string } }`; `fixAction` returns it when `host === "vscode"` and `claudeCodeExtension`, with the same prompt the terminal command carries, URL-encoded into `vscode://anthropic.claude-code/open?prompt=`; otherwise the terminal action or the install message as before
-- [ ] `extension.ts`: pass `host` (`vscode.env.uriScheme === "vscode"`) and `claudeCodeExtension` (`vscode.extensions.getExtension("anthropic.claude-code") !== undefined`); apply `claudeTab` with `vscode.env.openExternal(vscode.Uri.parse(uri))`
+- [x] `extension.ts`: pass `host` (`vscode.env.uriScheme === "vscode"`) and `claudeCodeExtension` (`vscode.extensions.getExtension("anthropic.claude-code") !== undefined`); apply `claudeTab` with `vscode.env.openExternal(vscode.Uri.parse(uri))`
 - [ ] A3: Sandy clicks Fix with Claude on a broken promise in VS Code after `indusk editor install` and a window reload; record what opened here
 
 #### Build Phase 1 Verification

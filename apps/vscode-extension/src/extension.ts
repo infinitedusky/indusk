@@ -117,10 +117,16 @@ export function activate(context: vscode.ExtensionContext): void {
 		const action = fixFor(session.view, promise, {
 			projectRoot: root,
 			claudeOnPath: spawnSync("which", ["claude"]).status === 0,
+			host: vscode.env.uriScheme === "vscode" ? "vscode" : "other",
+			claudeCodeExtension: vscode.extensions.getExtension("anthropic.claude-code") !== undefined,
 		});
 		if (!action) return;
 		if ("message" in action) {
 			void vscode.window.showErrorMessage(action.message);
+			return;
+		}
+		if ("claudeTab" in action) {
+			void vscode.env.openExternal(vscode.Uri.parse(action.claudeTab.uri));
 			return;
 		}
 		const terminal = vscode.window.createTerminal({
