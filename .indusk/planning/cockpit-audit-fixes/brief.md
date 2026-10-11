@@ -1,7 +1,7 @@
 ---
 title: "Cockpit audit fixes — what plan-cockpit's cold audit found"
 date: 2026-10-11
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
@@ -52,10 +52,13 @@ None.
 - Declaring a promise's marks, or running a promise's checks against live data: [promise-devtools](../../research/promise-ui/plans/promise-devtools/brief.md).
 - Anything in the audit's list of other files that would have to change beyond the docs sidebar (fixed at plan-cockpit's close): the extension's packaging of the moved fix module is checked when the extension next releases.
 
-## To settle before accepting
+## Settled by default
 
-- Does the "held" rule above match what you want a dashboard row to say? The strict reading (held = seen upheld, no break) means a promise with no recorded runs shows no held days at all.
-- Is "no session is still writing it" the right test for an impl being finished, or should it be the impl's own status?
+Sandy said these were not answers to give now (2026-10-11): the plan is to be
+approved and left until the cockpit's own use shows what is wrong. Until then:
+
+- **Held** is read strictly — seen upheld that day and not broken; a promise with no recorded runs shows no held days. Revisit when a dashboard row misleads in practice.
+- **A finished impl** is one no running session is writing; the impl's own status is the alternative. Revisit when a plan is offered for approval too early.
 
 ## Depends On
 
