@@ -15,8 +15,8 @@ What was found and decided is in [research.md](research.md).
    - Measure: `git status --short` after `indusk telemetry restart` lists no `.mcp.json`; and commits touching `.mcp.json` on `main` stop (26 so far)
    - Look: the first week after it lands
 
-2. **Someone who clones the repository reaches a working MCP setup with one command.**
-   - Measure: a fresh clone, `indusk update` (or `init`), then `claude mcp list` shows the project's servers
+2. **Someone who clones the repository reaches a working MCP setup for the indusk server with one command.**
+   - Measure: a fresh clone, `indusk update` (or `init`), then `claude mcp list` shows the indusk server
    - Look: the next fresh clone, on another machine
 
 ## Promises
@@ -24,7 +24,7 @@ What was found and decided is in [research.md](research.md).
 ### This plan makes
 
 1. **`the-mcp-config-is-not-tracked`** (structure). `.mcp.json` is not tracked in this repository, and the ignore rule that says so holds.
-2. **`a-clone-without-an-mcp-config-gets-the-keep-list`** (state). In a checkout with no `.mcp.json`, one `indusk` command writes one containing the project's declared MCP servers, and never overwrites a `.mcp.json` that exists.
+2. **`a-clone-without-an-mcp-config-gets-the-keep-list`** (state). In a checkout with no `.mcp.json`, one `indusk` command writes one that names the `indusk` server, and never overwrites a `.mcp.json` that exists.
 
 ### Existing promises
 
@@ -43,6 +43,7 @@ None.
 ### Not promised
 
 - Several telemetry instances at once, each with its own port: the backlog plan `instance-ports`. This plan only stops the file being versioned.
+- Registering other servers (jaeger, posthog) from `indusk update`: jaeger arrives when the `local-telemetry` extension is enabled or the daemon syncs, and posthog needs its token set up by hand; no built-in extension declares a server for `update` to add. A mechanism for that is a separate plan.
 - A tracked `.mcp.json.example`: only if the regeneration test shows the command cannot rebuild the keep-list from what is already tracked (see research).
 
 ## Depends On

@@ -32,7 +32,7 @@ gate_policy: ask
 
 | Phase | Produces | Consumes |
 |-------|----------|----------|
-| Test Phase 1 | T1–T6 authored; T1, T2, T3 red | today's repository, `update`, the daemon sync |
+| Test Phase 1 | T1–T3, T5, T6 authored; T1, T2, T3 red | today's repository, `update`, the daemon sync |
 | Build Phase 1 | the file untracked; `update` creates it; docs | Test Phase 1's tests |
 
 ## Test Trajectory
@@ -42,17 +42,16 @@ gate_policy: ask
 | T1 | `git ls-files .mcp.json` lists nothing in this repository | Test Phase 1 | Build Phase 1 | written | unit | promise: the-mcp-config-is-not-tracked | apps/indusk-mcp/src/__tests__/mcp-config-untracked.test.ts |
 | T2 | `git check-ignore .mcp.json` reports it ignored | Test Phase 1 | Build Phase 1 | written | unit | promise: the-mcp-config-is-not-tracked | apps/indusk-mcp/src/__tests__/mcp-config-untracked.test.ts |
 | T3 | In a checkout with no `.mcp.json`, `indusk update` leaves one that names the `indusk` server | Test Phase 1 | Build Phase 1 | written | unit | promise: a-clone-without-an-mcp-config-gets-the-keep-list | apps/indusk-mcp/src/__tests__/mcp-config-regenerate.test.ts |
-| T4 | In that checkout with an enabled extension that declares an MCP server to add, `indusk update` also leaves that server in the file | Test Phase 1 | Test Phase 1 | blocked | unit | promise: a-clone-without-an-mcp-config-gets-the-keep-list | apps/indusk-mcp/src/__tests__/mcp-config-regenerate.test.ts |
 | T5 | With an existing `.mcp.json` holding a hand-added server, `indusk update` leaves that server and its settings as they were | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-clone-without-an-mcp-config-gets-the-keep-list | apps/indusk-mcp/src/__tests__/mcp-config-regenerate.test.ts |
 | T6 | A daemon restart that moves the jaeger port leaves `git status` clean in a checkout with no tracked `.mcp.json` | Build Phase 1 | Build Phase 1 | planned | unit | a regression guard over the daemon's per-project sync: the churn stops because the file is untracked, and must not come back | apps/indusk-mcp/src/__tests__/mcp-config-untracked.test.ts |
 
 ## Checklist
 
-### Test Phase 1: Author T1–T6 against today's repository and `update`
+### Test Phase 1: Author T1–T3, T5, T6 against today's repository and `update`
 
 **Tier**: med — the work step's default
 
-**Goal**: author T1–T6; T1, T2 and T3 fail on their own assertions today; T4, T5 and T6 are expected to pass today and are regression guards.
+**Goal**: author T1–T3, T5, T6; T1, T2 and T3 fail on their own assertions today; T5 passes today and is a regression guard; T6 is deferred to Build Phase 1 (see the register).
 
 - [x] Confirm this plan's worktree (`indusk plans start` made it at `dusk-worktrees/untrack-mcp-json`)
 - [x] T1, T2 (T6 deferred, see the register) in `src/__tests__/mcp-config-untracked.test.ts`: T1 and T2 shell out to git in the repository root (`ls-files`, `check-ignore`); T6 builds a temp git checkout with `.mcp.json` ignored and untracked, runs the daemon's sync function (`syncAllRegisteredProjectsMcp`, exported or reached through its CLI helper) with a new port against it, and asserts `git status --short` is empty. The file carries `promise: the-mcp-config-is-not-tracked`
@@ -60,7 +59,7 @@ gate_policy: ask
 - [x] Confirm each red test fails on its own assertion rather than on a missing import; if T4 does not pass today, record why under it and move it to Build Phase 1's Passes at with the reason
   - Confirmed 2026-10-11: T1 `` `git ls-files .mcp.json` lists the file: expected '.mcp.json' to be '' ``; T2 `` `git check-ignore .mcp.json` exits 0 when the file is ignored: expected 1 to be +0 ``; T3 `.mcp.json exists after update: expected false to be true`. T5 passes (guard).
   - **T4 cannot be authored as written.** Built-in extension manifests are overwritten from the package on `update`, and none of the package's built-in manifests declares `mcp_server.add_command` (grep over `extensions/*/manifest.json` is empty; posthog and chrome-devtools only carry `setup_instructions`). The extension-registration branch of `update` (`update.ts` ~652) therefore never fires for a built-in, and a fixture extension is either overwritten (built-in name) or handled by the third-party path. So "update adds each enabled extension's declared server" is not something `update` does today, and no row can show it without a new mechanism.
-  - blocker: the second promise's sentence says one command writes the project's *declared MCP servers*; `update` can honestly write only `indusk` (T3) — jaeger arrives with the local-telemetry extension's enable or the daemon's sync, and posthog needs its token set up by hand. The promise must be narrowed, or a mechanism for built-in extensions to declare a server added.
+  - Resolved 2026-10-11 (Sandy: "narrow it"): T4 is retired and the second promise now reads "one `indusk` command writes one that names the `indusk` server, and never overwrites a `.mcp.json` that exists"; the brief, test plan and registry say the same. (was: blocker: the second promise's sentence says one command writes the project's *declared MCP servers*; `update` can honestly write only `indusk` (T3) — jaeger arrives with the local-telemetry extension's enable or the daemon's sync, and posthog needs its token set up by hand. The promise must be narrowed, or a mechanism for built-in extensions to declare a server added.)
   - Also measured: `indusk update` in a checkout whose `local-telemetry` is not yet enabled enables it, **starts a real daemon**, and writes a `.mcp.json` holding only `jaeger`. In the dusk clone, where the extension directories already existed, it wrote nothing. Tests must pin `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`, as T3 and T5 do.
 
 #### Deferred to Build Phase 1
@@ -94,13 +93,13 @@ gate_policy: ask
 **Goal**: the file is untracked, a checkout without one gets one from `indusk update`, and the documentation says so.
 
 - [ ] `src/lib/mcp-config.ts` (new): `ensureMcpJson(projectRoot)` writes `{ mcpServers: { indusk: { type: "stdio", command: "indusk", args: ["serve"], env: { PROJECT_ROOT: "." } } } }` when no `.mcp.json` exists and returns `"created"` or `"present"`; it never reads or rewrites an existing file (T3, T5)
-- [ ] `src/bin/commands/update.ts`: call `ensureMcpJson` before the `5b` migration guard and before the extension registration loop, and print one line (`  created: .mcp.json (indusk server)` or nothing when present), so each enabled extension's `add_command` then adds its server to the new file (T3, T4)
+- [ ] `src/bin/commands/update.ts`: call `ensureMcpJson` before the `5b` migration guard and before the extension registration loop, and print one line (`  created: .mcp.json (indusk server)` or nothing when present), so each enabled extension's `add_command` then adds its server to the new file (T3)
 - [ ] `git rm --cached .mcp.json` in this branch, leaving the working copy; confirm `.gitignore` line 25 still lists it (T1, T2)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 1 Verification
 
-- [ ] T1–T6 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/mcp-config-untracked.test.ts src/__tests__/mcp-config-regenerate.test.ts && pnpm exec vitest related src/bin/commands/update.ts src/lib/mcp-config.ts --run`); tsc and biome clean on changed files; `git ls-files .mcp.json` is empty and `git status --short` shows nothing for `.mcp.json`
+- [ ] T1–T3, T5, T6 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/mcp-config-untracked.test.ts src/__tests__/mcp-config-regenerate.test.ts && pnpm exec vitest related src/bin/commands/update.ts src/lib/mcp-config.ts --run`); tsc and biome clean on changed files; `git ls-files .mcp.json` is empty and `git status --short` shows nothing for `.mcp.json`
 
 #### Build Phase 1 Context
 
@@ -117,7 +116,7 @@ gate_policy: ask
 | `.mcp.json` | untracked (`git rm --cached`) |
 | `apps/indusk-mcp/src/lib/mcp-config.ts` | new — `ensureMcpJson` |
 | `apps/indusk-mcp/src/bin/commands/update.ts` | calls it |
-| `apps/indusk-mcp/src/__tests__/mcp-config-untracked.test.ts`, `mcp-config-regenerate.test.ts` | new — T1–T6 |
+| `apps/indusk-mcp/src/__tests__/mcp-config-untracked.test.ts`, `mcp-config-regenerate.test.ts` | new — T1–T3, T5, T6 |
 | `apps/indusk-mcp/CLAUDE.md`, `apps/docs/src/reference/cli/update.md`, changelog | context and docs |
 
 ## Dependencies
