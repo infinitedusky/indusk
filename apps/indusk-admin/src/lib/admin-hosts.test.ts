@@ -68,7 +68,13 @@ function call(
 ): Promise<Response> {
   const req = new NextRequest(`http://${host}/api/x?project=none&plan=none`, {
     method,
-    headers: { host, origin: `http://${host}` },
+    // As the page's browser sends it: its fetch metadata says same-origin
+    // for the rebound name too, so only the host can refuse that one.
+    headers: {
+      host,
+      origin: `http://${host}`,
+      "sec-fetch-site": "same-origin",
+    },
     ...(method === "POST" ? { body: "{}" } : {}),
   });
   return handler(req, { params: Promise.resolve({ id: "no-such-session" }) });
