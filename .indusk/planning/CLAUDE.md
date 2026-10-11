@@ -42,7 +42,7 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   commands, never edited by hand. An incident
   is closed with `indusk promises fix <id>`, which records when; `check`
   refuses a fixed incident that does not say. — see `/decisions/day-promises`
-- **`.indusk/plan-history/<plan>.md` is the record of a plan's decisions**:
+- **`<plan>.md` in `.indusk`'s `plan-history` folder is the record of a plan's decisions**:
   each answer to what the plan waited on, dated, written by `plans/history`
   (the admin's decision card) and committed on `main`, never by hand. — see
   `/decisions/plan-cockpit`

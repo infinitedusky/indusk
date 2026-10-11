@@ -99,7 +99,7 @@ launch and for showing at Lazer. In order:
    workflows with the decision it is waiting on. The pages. Stage 2 is
    [contract-ui](contract-ui/brief.md), the hierarchy above those pages,
    after the launch; the two do not overlap. Mockups and draft briefs in
-   [`research/promise-ui/`](../research/promise-ui/README.md). Being opened.
+   [`research/promise-ui/`](../research/promise-ui/README.md). **closed 2026-10-10**.
 6. **Rehearse, record, launch** — "promise-driven development".
 
 Steps 2–6 are the children of [indusk-demo](indusk-demo/master.md), in that
