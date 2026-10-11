@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { extname, relative } from "node:path";
-import stylelint, { type Config, type Plugin } from "stylelint";
+import valueParser from "postcss-value-parser";
+import stylelint, { type Config, type Plugin, type Rule } from "stylelint";
 import strictValue from "stylelint-declaration-strict-value";
 import { type Foundation, isGeneratedCss } from "./foundation.js";
 import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
@@ -13,7 +14,9 @@ import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
  * and class checks are the rest of the rule, because a stylesheet linter does
  * not see a Tailwind class.
  *
- * `0`, `auto` and the CSS keywords are not values from a scale and pass.
+ * `0`, `auto`, the CSS keywords, percentages, viewport units and grid
+ * fractions are not values from a scale and pass; a literal colour, length or
+ * duration fails wherever it sits in a value, behind a function included.
  *
  * promise: a-mockup-leaves-nothing-undefined
  */
@@ -36,46 +39,120 @@ export interface Finding {
 	message: string;
 }
 
-/** The properties whose values must be tokens: colour, size, space, radius, shadow, font and motion. */
-const STRICT_PROPERTIES = [
-	"/color$/",
-	"/^(background|fill|stroke|border|outline)$/",
-	"/^(margin|padding)(-.+)?$/",
-	"/^(row-|column-)?gap$/",
-	"/^border(-.+)?-radius$/",
-	"font-size",
-	"line-height",
-	"letter-spacing",
-	"font-family",
-	"font-weight",
-	"/^(box|text)-shadow$/",
-	"/^transition(-.+)?$/",
-	"/^animation-(duration|timing-function|delay)$/",
+/**
+ * The properties whose values must be tokens: colour, size, space, radius,
+ * border, shadow, font and motion. Box sizes and offsets joined in Build
+ * Phase 6 — `width: 13px` is a size like any other — with their allowed
+ * units below.
+ */
+const STRICT_PROPERTIES: readonly RegExp[] = [
+	/color$/,
+	/^(background|fill|stroke|outline)$/,
+	/^border(-(top|right|bottom|left|block|inline)(-(start|end))?)?(-width)?$/,
+	/^(margin|padding)(-.+)?$/,
+	/^(row-|column-)?gap$/,
+	/^border(-.+)?-radius$/,
+	/^(width|height|inline-size|block-size)$/,
+	/^(inset(-.+)?|top|right|bottom|left)$/,
+	/^outline-(width|offset)$/,
+	/^font(-size|-family|-weight)?$/,
+	/^line-height$/,
+	/^letter-spacing$/,
+	/^(box|text)-shadow$/,
+	/^transition(-.+)?$/,
+	/^animation-(duration|timing-function|delay)$/,
 ];
 
-const STRICT_CONFIG: Config = {
-	plugins: [strictValue as Plugin],
-	rules: {
-		"scale-unlimited/declaration-strict-value": [
-			STRICT_PROPERTIES,
-			{
-				ignoreValues: [
-					"0",
-					"auto",
-					"inherit",
-					"initial",
-					"unset",
-					"none",
-					"transparent",
-					"currentColor",
-					// The property a transition names is a keyword, not a value from a scale.
-					"/^(all|opacity|transform|color|background|background-color|border-color|box-shadow|width|height)$/",
-				],
-				disableFix: true,
-			},
-		],
-	},
-} as const;
+const isStrict = (property: string) => STRICT_PROPERTIES.some((re) => re.test(property));
+
+/**
+ * Values that are not from a scale and pass: `0`, `auto`, the CSS-wide
+ * keywords, a share of the container or the viewport, a grid fraction, the
+ * intrinsic sizes.
+ */
+const ALLOWED_VALUES = [
+	"0",
+	"auto",
+	"inherit",
+	"initial",
+	"unset",
+	"none",
+	"transparent",
+	"currentColor",
+	"/^-?(\\d*\\.)?\\d+(%|vw|vh|dvh|svh|lvh|vmin|vmax|fr)$/",
+	"/^(min|max|fit)-content$/",
+	// The property a transition names is a keyword, not a value from a scale.
+	"/^(all|opacity|transform|color|background|background-color|border-color|box-shadow|width|height)$/",
+];
+
+/** A colour written out: `#c2620b`, or a colour function. */
+const HEX = /^#[0-9a-f]{3,8}$/i;
+const COLOR_FUNCTION = /^(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)$/i;
+/** The units of a value from a scale — a length or a duration — written out. */
+const SCALE_UNIT = /^(px|rem|em|ms|s)$/i;
+
+/** The first literal colour, length or duration anywhere in a value — inside functions and `var()` fallbacks too. */
+export function literalIn(value: string): string | undefined {
+	let found: string | undefined;
+	valueParser(value).walk((node) => {
+		if (found !== undefined) return false;
+		if (node.type === "function" && COLOR_FUNCTION.test(node.value)) {
+			found = valueParser.stringify(node);
+			return false;
+		}
+		if (node.type !== "word") return undefined;
+		if (HEX.test(node.value)) found = node.value;
+		const n = valueParser.unit(node.value);
+		if (n && SCALE_UNIT.test(n.unit) && Number(n.number) !== 0) found = node.value;
+		return undefined;
+	});
+	return found;
+}
+
+/**
+ * `indusk/no-literal-value`: the strict-value plugin judges a declaration's
+ * value whole and lets a function through, so `rgb(255 0 0)`, `calc(13px *
+ * 2)`, a gradient's stops and a `var()` fallback pass it. This rule reads
+ * inside every function, for every strict property and every custom
+ * property — a custom property is a value from a scale under another name —
+ * except those the secondary option exempts (the tokens a mockup declares
+ * new, whose values are its proposal).
+ */
+const NO_LITERAL = "indusk/no-literal-value";
+const noLiteralRule: Rule<boolean, { exempt?: string[] }> = Object.assign(
+	(_on: boolean, options: { exempt?: string[] } | undefined) =>
+		(root: Parameters<ReturnType<Rule>>[0], result: Parameters<ReturnType<Rule>>[1]) => {
+			const exempt = new Set(options?.exempt ?? []);
+			root.walkDecls((decl) => {
+				const custom = decl.prop.startsWith("--");
+				if (custom ? exempt.has(decl.prop) : !isStrict(decl.prop)) return;
+				const literal = literalIn(decl.value);
+				if (literal === undefined) return;
+				stylelint.utils.report({
+					ruleName: NO_LITERAL,
+					result,
+					node: decl,
+					message: `raw value ${literal} in ${decl.prop}`,
+				});
+			});
+		},
+	{ ruleName: NO_LITERAL, messages: {} },
+);
+const noLiteral = stylelint.createPlugin(NO_LITERAL, noLiteralRule);
+
+/** The rule for one unit of CSS; `exempt` names the custom properties whose values are not held. */
+function strictConfig(exempt: readonly string[]): Config {
+	return {
+		plugins: [strictValue as Plugin, noLiteral],
+		rules: {
+			"scale-unlimited/declaration-strict-value": [
+				STRICT_PROPERTIES.map(String),
+				{ ignoreValues: ALLOWED_VALUES, expandShorthand: true, disableFix: true },
+			],
+			[NO_LITERAL]: [true, { exempt: [...exempt] }],
+		},
+	};
+}
 
 interface CssBlock {
 	code: string;
@@ -106,22 +183,36 @@ function valueOfDeclaration(source: string): string {
 		.trim();
 }
 
-async function rawFindings(file: string, block: CssBlock): Promise<Finding[]> {
-	const result = await stylelint.lint({ code: block.code, config: STRICT_CONFIG });
+/**
+ * The raw values in one unit of CSS, one finding per declaration: the two
+ * rules may both name the same one, and it is one raw value.
+ */
+async function rawFindings(
+	file: string,
+	block: CssBlock,
+	exempt: readonly string[] = [],
+): Promise<Finding[]> {
+	const result = await stylelint.lint({ code: block.code, config: strictConfig(exempt) });
 	const lines = block.code.split("\n");
-	return (result.results[0]?.warnings ?? []).map((w) => {
+	const seen = new Set<string>();
+	return (result.results[0]?.warnings ?? []).flatMap((w) => {
+		const at = `${w.line}:${w.column}`;
+		if (seen.has(at)) return [];
+		seen.add(at);
 		const declaration =
 			w.endLine === w.line
 				? (lines[w.line - 1] ?? "").slice(w.column - 1, (w.endColumn ?? w.column) - 1)
 				: lines.slice(w.line - 1, w.endLine).join(" ");
 		const value = valueOfDeclaration(declaration);
-		return {
-			file,
-			line: block.startLine + w.line - 1,
-			value,
-			rule: "raw-value",
-			message: `raw value ${value} — use a token the foundation defines`,
-		};
+		return [
+			{
+				file,
+				line: block.startLine + w.line - 1,
+				value,
+				rule: "raw-value" as const,
+				message: `raw value ${value} — use a token the foundation defines`,
+			},
+		];
 	});
 }
 
@@ -282,7 +373,9 @@ const byPlace = (a: Finding, b: Finding) =>
 /** The findings of one mockup: its raw values, and the tokens it uses or adds. */
 async function lintMockup(mockup: Mockup, foundation: Set<string>): Promise<Finding[]> {
 	const blocks = cssBlocksOfHtml(mockup.html);
-	const raw = await Promise.all(blocks.map((block) => rawFindings(mockup.file, block)));
+	const raw = await Promise.all(
+		blocks.map((block) => rawFindings(mockup.file, block, mockup.declaresNew)),
+	);
 	const tokens = tokenFindings(
 		mockup.file,
 		blocks,

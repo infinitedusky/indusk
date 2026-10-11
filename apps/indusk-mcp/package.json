@@ -294,6 +294,8 @@
 		"gray-matter": "^4.0.3",
 		"lucide-react": "^1.8.0",
 		"next": "16.2.4",
+		"parse5": "8.0.1",
+		"postcss-value-parser": "4.2.0",
 		"react": "19.2.4",
 		"react-dom": "19.2.4",
 		"react-markdown": "^10.1.0",
@@ -304,11 +306,11 @@
 		"zod": "^4.3.6"
 	},
 	"optionalDependencies": {
-		"playwright-core": "1.59.1",
 		"@infinitedusky/telemetry-binaries-darwin-arm64": "^1.28.0",
 		"@infinitedusky/telemetry-binaries-darwin-x64": "^1.28.0",
 		"@infinitedusky/telemetry-binaries-linux-arm64": "^1.28.0",
-		"@infinitedusky/telemetry-binaries-linux-x64": "^1.28.0"
+		"@infinitedusky/telemetry-binaries-linux-x64": "^1.28.0",
+		"playwright-core": "1.59.1"
 	},
 	"devDependencies": {
 		"@opentelemetry/instrumentation": "^0.214.0",
