@@ -9,6 +9,8 @@
  * promise: a-break-opens-a-fix-in-one-click
  */
 
+import { normalizeJaegerUrl } from "./telemetry.js";
+
 export interface BrokenPromise {
 	promise: string;
 	source: string;
@@ -27,7 +29,7 @@ export interface BrokenPromise {
  */
 export function fixPrompt(broken: BrokenPromise): string {
 	const f = cleanFacts(broken);
-	const trace = f.traceId ? `${f.sourceLabel.replace(/\/+$/, "")}/trace/${f.traceId}` : null;
+	const trace = f.traceId ? `${normalizeJaegerUrl(f.sourceLabel)}/trace/${f.traceId}` : null;
 	return [
 		`The promise \`${f.promise}\` is broken in ${f.source}: "${f.statement}"`,
 		f.symptom ? `Symptom: ${f.symptom}` : null,

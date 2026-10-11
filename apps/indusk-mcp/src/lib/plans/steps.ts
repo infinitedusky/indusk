@@ -5,7 +5,7 @@ import type {
 	RitualWord,
 	SegmentState,
 } from "../lifecycle.js";
-import { WORKFLOW_DEFINITIONS, type WorkflowType } from "../workflow-types.js";
+import { DOCUMENT_LABELS, WORKFLOW_DEFINITIONS, type WorkflowType } from "../workflow-types.js";
 
 /**
  * A plan's two workflows as lists of steps (plan-cockpit, ADR decision 3):
@@ -31,7 +31,12 @@ import { WORKFLOW_DEFINITIONS, type WorkflowType } from "../workflow-types.js";
  */
 export type StepState = "done" | "current" | "needs-you" | "not-yet" | "skipped" | "missing";
 
-export type PlanningStepName = "Research" | "Brief" | "Test plan" | "Decision" | "Impl";
+/**
+ * A Planning step's name: a document's label in sentence case (`DOCUMENT_LABELS`,
+ * the one place a document is named), except the ADR, which a person knows as
+ * the Decision.
+ */
+export type PlanningStepName = string;
 export type ReleaseStepName = "Build" | "Falsify" | "Cleanup" | "Audit" | "Review" | "Release";
 
 export interface PlanStep<Name extends string> {
@@ -58,6 +63,8 @@ export interface PlanWorkflows {
 	release: PlanStep<ReleaseStepName>[];
 }
 
+const sentenceCase = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
+
 /** The Planning steps in order, each with the document it is and the position that stands for it. */
 const PLANNING: ReadonlyArray<{
 	name: PlanningStepName;
@@ -66,7 +73,7 @@ const PLANNING: ReadonlyArray<{
 }> = [
 	{ name: "Research", document: "research", at: "research" },
 	{ name: "Brief", document: "brief", at: "brief" },
-	{ name: "Test plan", document: "test-plan", at: "test-plan" },
+	{ name: sentenceCase(DOCUMENT_LABELS["test-plan"]), document: "test-plan", at: "test-plan" },
 	{ name: "Decision", document: "adr", at: "adr" },
 	{ name: "Impl", document: "impl", at: "impl-approved" },
 ];
