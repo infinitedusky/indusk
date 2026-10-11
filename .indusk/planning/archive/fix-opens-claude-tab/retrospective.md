@@ -23,3 +23,5 @@ No lint or type errors recurred. Shape: 0 findings raised, 0 judged wrong. Falsi
 ## Metrics
 
 - A1, A2 passing; A3 skipped (not observed). `src/core` 45/45; tree-scanning rule tests 84/84.
+
+Landed on main at b3b433dc, 2026-10-10. Installed with `pnpm install:local` and `indusk editor install`; nothing published.
