@@ -239,7 +239,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/looks.md`: `status`, `coverage`, why `approve` is the cockpit's, the guard hook
+- [x] `apps/docs/src/reference/cli/looks.md`: `status`, `coverage`, why `approve` is the cockpit's, the guard hook
 
 ### Build Phase 3: The running app, held by value
 
