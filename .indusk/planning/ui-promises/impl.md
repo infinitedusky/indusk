@@ -47,7 +47,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | A mockup an agent has drawn reads as proposed, in the status and in the cockpit, and nothing is checked against it | Test Phase 1 | Build Phase 4 | written | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-cli.test.ts, apps/indusk-admin/src/app/p/[project]/looks/looks.test.tsx |
 | A2 | Approving a mockup in the cockpit makes it the reference, recording who approved it and when | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-admin/src/app/p/[project]/looks/looks.test.tsx |
-| A3 | An approval from anywhere but the cockpit's Approve — a command, an agent's write, a hand edit of the record — is refused or reads as not approved | Test Phase 1 | Build Phase 2 | written | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-cli.test.ts, apps/indusk-mcp/hooks/looks-approval-guard.test.ts |
+| A3 | An approval from anywhere but the cockpit's Approve — a command, an agent's write, a hand edit of the record — is refused or reads as not approved | Test Phase 1 | Build Phase 2 | written | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-cli.test.ts, apps/indusk-mcp/src/__tests__/looks-approval-guard.test.ts |
 | A4 | A change to an approved mockup or its foundation returns it to proposed; the app is held to the last approved version meanwhile | Test Phase 1 | Build Phase 2 | written | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
 | A5 | A mockup with a raw colour, size, space, radius, shadow, font or duration is refused, naming file, line and value | Test Phase 1 | Build Phase 1 | written | unit | promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
 | A6 | The app's styles are held to the same rule — a raw value in its CSS, a stock Tailwind class, an arbitrary Tailwind value — each refused the same way | Test Phase 1 | Build Phase 1 | written | unit | promise: a-mockup-leaves-nothing-undefined | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
@@ -100,7 +100,9 @@ An app's look is held by mockups a person approved: every visual value comes fro
 - [x] A25: a case in `everyday-tests-never-wait.test.ts` that fails when any `looks*.contract.test.ts` is missing from `vitest.tiers.ts` `SYSTEM`; passes today, none exists (Regression Guard)
 - [x] A27: confirm `demo-command.test.ts` passes unchanged (Regression Guard)
 - [x] Confirm each red test fails on its own assertion rather than on a missing import
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-mcp/src/__tests__/looks-cli.test.ts`) — name the inline block that writes a one-declaration mockup for the seven raw-value kinds (`rawMockup(declaration)`), so the table reads as data and the template has one place to change. Rule: Should this inline block have been a named function or module?
+- [x] Shape (`apps/indusk-mcp/src/__tests__/looks-cli.test.ts`) — reviewed, left as-is: the undeclared/declared halves of the A8 case stay one test: they assert one toggle (the same mockup, with and without its declaration) and splitting them would copy the setup to prove the second half still refuses the other finding
 
 #### Deferred to Build Phase 2
 
@@ -141,7 +143,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
   ```typescript
   // looks.test.tsx — promise: a-mockup-is-approved-by-a-person, every-part-of-the-ui-is-covered, mockups-render-in-the-cockpit
   // LooksPage({ params: Promise.resolve({ project }) }) over the fixture: home.full reads "proposed"          (A1)
-  // POST /api/looks/demo/approve { mockup: "home.full" } → approved.json gains { by, at, hash }; reads approved (A2)
+  // POST /api/looks/demo/approve { mockup: "home.full" } → approved.json gains { mockup, mockupHash, foundationHash, by, at }; reads approved (A2)
   // detail.default (no mockup for a declared state) and "badge" listed under Uncovered, never Held           (A13)
   // each mockup row offers "phone" and "desktop"                                                             (A14)
 
@@ -170,7 +172,17 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 - [x] A1, A3–A12 authored and each fails on its own assertion; A25 and A27 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-cli.test.ts src/__tests__/looks-admin-foundation.test.ts src/__tests__/everyday-tests-never-wait.test.ts src/__tests__/demo-command.test.ts`); tsc and biome clean on the new files
   - Run 2026-10-10: looks-cli (13) and looks-admin-foundation (2) fail on their own assertions — `expected 1 to be 2`, `expected '' to match /approved/`, an empty finding list; none a load error. `everyday-tests-never-wait` 8 passed with A25. `demo-command.test.ts` is in the system tier, so the default config excludes it and the command above runs nothing for it; A27 was run with `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/demo-command.test.ts`: 2 passed. tsc and biome clean.
-- [ ] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
+- [x] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
+  - Reviewed 2026-10-10. Two corrections, both made in place above. (1) A3's hook-half test was named under `hooks/`, which the package ships (`files` lists `hooks`, with no test exclusion) and where no other hook test lives; it is now `src/__tests__/looks-approval-guard.test.ts`, in the A3 row, the carried body and Build Phase 2's Verification. (2) A2's body asserted an entry `{ by, at, hash }`; the fixture's record — the shape A3 and A4 read — carries `{ mockup, mockupHash, foundationHash, by, at }`, so the body now says that. The rest compile at the phase they name (every named subject is introduced in that phase) and assert what they claim; A17's `nearest: "--space-3 (12px)"` presumes the verdict is handed the foundation's spacing scale, which Build Phase 3's `verdict` input carries.
+
+#### Test Phase 1 Forward Intelligence
+
+- **Fragile**: `fixtures/looks-app/.indusk/mockups/demo/approved.json` binds `home.empty` to the sha256 of `screens/home.empty.html`'s bytes and of `foundation.tokens.json`'s; reformatting either file (biome, an editor) makes A4's baseline read proposed and the case fails for the wrong reason. If the rows in `looks-cli.test.ts` go red in Build Phase 2 on "home.empty reads approved", recompute those two hashes before suspecting the code.
+- **Watch out**: the output grammar the rows read is written in `looks-cli.test.ts`'s header (lint `file:line value`; status `<screen>.<state> approved|proposed` with the approved version's first eight hash characters on a returned mockup; coverage `uncovered screen|state|component: <name>`; `approve` exit 2). A later phase that wants a different shape changes that header and the rows together, not the rows alone.
+- **Watch out**: a new-token declaration is `<meta name="indusk-new-tokens" content="--a, --b">`, chosen here because no document named one; Build Phase 1's `mockups.ts` should read exactly that, or change the fixture's case with it. A raw `0` is not exercised by any fixture file — decide it in Build Phase 1 (this phase's mockups avoid it).
+- **Watch out**: the fixture's `looks-app/.indusk/mockups/demo/approved.json` matches Build Phase 2's guard pattern (`.indusk/mockups/*/approved.json`). The guard refuses an agent's write there, so a Build Phase 2 session cannot edit the fixture's record by tool; the hook test should anchor the pattern or the case should write through the shell. The tests themselves write a copy in a temp directory, which the guard does not see.
+- **Assumption**: the tests run the built `dist/bin/cli.js` as the other CLI-boundary suites do, and do not skip when it is absent — a skipped red row is a green one. `pnpm build` in `apps/indusk-mcp` before running them.
+- **Assumption**: coverage derives rendered components from `data-component` attributes in the app's `sources` (declared in `screens.json`) for this fixture; Build Phase 2 may read a rendered list instead, and then the fixture's `src/Badge.jsx`/`Card.jsx` carry the same names.
 
 ### Build Phase 1: The foundation and the no-raw-value rule
 
@@ -214,7 +226,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 #### Build Phase 2 Verification
 
-- [ ] A3, A4, A10–A12 pass, A1's status half passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-cli.test.ts hooks/looks-approval-guard.test.ts && pnpm exec vitest related src/lib/looks/approvals.ts src/lib/looks/coverage.ts --run`); tsc and biome clean on changed files
+- [ ] A3, A4, A10–A12 pass, A1's status half passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-cli.test.ts src/__tests__/looks-approval-guard.test.ts && pnpm exec vitest related src/lib/looks/approvals.ts src/lib/looks/coverage.ts --run`); tsc and biome clean on changed files
 
 #### Build Phase 2 Context
 

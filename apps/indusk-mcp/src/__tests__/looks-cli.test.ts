@@ -72,6 +72,24 @@ function statusLine(out: string, mockup: string): string {
 	return out.split("\n").find((l) => pattern.test(l)) ?? "";
 }
 
+/** A mockup whose one rule holds `declaration`, loading the generated tokens like the real ones. */
+function rawMockup(declaration: string): string {
+	return [
+		"<!doctype html>",
+		'<html lang="en">',
+		"\t<head>",
+		'\t\t<meta charset="utf-8" />',
+		'\t\t<link rel="stylesheet" href="../tokens.css" />',
+		"\t\t<style>",
+		`\t\t\t.card { ${declaration} }`,
+		"\t\t</style>",
+		"\t</head>",
+		'\t<body><main class="card" data-component="card"></main></body>',
+		"</html>",
+		"",
+	].join("\n");
+}
+
 const mockupFile = (name: string) => `${MOCKUPS}/screens/${name}.html`;
 
 describe("looks lint — a mockup leaves nothing undefined", () => {
@@ -102,23 +120,7 @@ describe("looks lint — a mockup leaves nothing undefined", () => {
 			{ kind: "duration", declaration: "transition: opacity 250ms;", value: "250ms" },
 		];
 		for (const k of kinds) {
-			writeFileSync(
-				join(root, mockupFile(`raw.${k.kind}`)),
-				[
-					"<!doctype html>",
-					'<html lang="en">',
-					"\t<head>",
-					'\t\t<meta charset="utf-8" />',
-					'\t\t<link rel="stylesheet" href="../tokens.css" />',
-					"\t\t<style>",
-					`\t\t\t.card { ${k.declaration} }`,
-					"\t\t</style>",
-					"\t</head>",
-					'\t<body><main class="card" data-component="card"></main></body>',
-					"</html>",
-					"",
-				].join("\n"),
-			);
+			writeFileSync(join(root, mockupFile(`raw.${k.kind}`)), rawMockup(k.declaration));
 		}
 		const { out } = run(root, ["lint", "demo"]);
 		for (const k of kinds) {
