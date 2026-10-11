@@ -462,6 +462,14 @@ describe("A13 — an uncovered part shows uncovered, never held", () => {
   });
 });
 
+describe("the Looks page says which of its states it drew, for the look check", () => {
+  it("reports looks.uncovered while any part is uncovered", async () => {
+    const html = await looksPage();
+    const section = html.match(/<section[^>]*data-testid="looks"[^>]*>/)?.[0];
+    expect(attrOf(section ?? "", "data-look-state")).toBe("looks.uncovered");
+  });
+});
+
 describe("A14 — each mockup, proposed or approved, opens at the app's reference devices", () => {
   it("A14 every mockup row offers phone and desktop, each a link that opens it there", async () => {
     const html = await looksPage();

@@ -19,6 +19,26 @@ import { ApproveSelected } from "./ApproveSelected";
  * promise: mockups-render-in-the-cockpit
  */
 
+/**
+ * Which of the Looks screen's declared states this page drew, for the look
+ * check (`data-look-state`, ui-promises Build Phase 6): `looks.uncovered`
+ * when any app lists an uncovered part, `looks.default` when every one is
+ * covered. A page that cannot be read draws neither.
+ */
+function lookState(apps: AppLooksRead[]): string | undefined {
+  const read = apps.filter((a): a is AppLooks => !("problem" in a));
+  if (read.length !== apps.length) return undefined;
+  const uncovered = read.some(
+    (a) =>
+      a.uncovered.screens.length +
+        a.uncovered.states.length +
+        a.uncovered.components.length +
+        a.uncovered.unresolved.length >
+      0,
+  );
+  return uncovered ? "looks.uncovered" : "looks.default";
+}
+
 export interface OpenMockup {
   app: string;
   mockup: string;
@@ -44,7 +64,11 @@ export function LooksBody({
   checkouts?: LooksCheckout[];
 }) {
   return (
-    <section className="flex flex-col gap-6" data-testid="looks">
+    <section
+      className="flex flex-col gap-6"
+      data-testid="looks"
+      data-look-state={lookState(apps)}
+    >
       <h1 className="text-xl font-semibold text-ink">Looks</h1>
       {checkouts.length > 1 ? (
         <nav

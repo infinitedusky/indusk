@@ -125,7 +125,9 @@ export async function looksCheck(
 		const app = await readApp(projectRoot, appName);
 		const { results, unchecked } = await checkApp(app, readApprovals(app), opts.url);
 		for (const r of results) for (const line of lookLines(r)) console.info(line);
-		for (const u of unchecked) console.info(`unchecked ${u.mockup} — ${u.reason}`);
+		for (const u of unchecked) {
+			console.info(`unchecked ${u.mockup}${u.device ? ` @ ${u.device}` : ""} — ${u.reason}`);
+		}
 		reportLooks(results, initEvalOtel(projectRoot), { project: markProjectId(projectRoot) });
 		await shutdownEvalOtel();
 		const broken = results.filter((r) => r.verdict.state === "broken").length;

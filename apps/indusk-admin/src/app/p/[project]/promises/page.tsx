@@ -150,7 +150,20 @@ export default async function PerProjectPromisesPage({
     declarations,
   });
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      className="flex flex-col gap-4"
+      // Which dashboard state this page drew, for the look check (ui-promises
+      // Build Phase 6): a registry with promises is the default, one without
+      // any the empty state. The nav and a promise's states are not reported
+      // here, so the check reads them unchecked.
+      data-look-state={
+        registry
+          ? rows.length > 0
+            ? "dashboard.default"
+            : "dashboard.empty"
+          : undefined
+      }
+    >
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       {!read.ok && "problems" in read && (
         <PromisesProblems problems={read.problems} />

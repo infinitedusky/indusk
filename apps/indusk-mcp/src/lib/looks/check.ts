@@ -27,9 +27,10 @@ export interface LookTarget {
 	path?: string;
 }
 
-/** A screen state that was not checked, and why. */
+/** A screen state that was not checked, and why; at one device when the page was opened there. */
 export interface Unchecked {
 	mockup: string;
+	device?: string;
 	reason: string;
 }
 
@@ -51,6 +52,16 @@ function measureScript(
 ): string {
 	return `(() => {
 	const tokenNames = ${JSON.stringify(tokenNames)};
+	// Which screen states the page says it drew (A36): \`data-look-state\` on
+	// <html> or on any element, each a space-separated list of <screen>.<state>.
+	const states = [document.documentElement, ...document.querySelectorAll("[data-look-state]")]
+		.flatMap((el) => (el.getAttribute("data-look-state") || "").split(/\\s+/))
+		.filter(Boolean);
+	// Which scheme it drew (A37): a page that pins data-theme says so; else the media query.
+	const theme = document.documentElement.getAttribute("data-theme");
+	const scheme = theme === "dark" || (theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches)
+		? "dark"
+		: "light";
 	const properties = ${JSON.stringify(properties)};
 	const ignored = ${JSON.stringify(ignore.map((t) => t.toUpperCase()))};
 	const rootStyle = getComputedStyle(document.documentElement);
@@ -85,13 +96,58 @@ function measureScript(
 			if (actual !== "") elements.push({ selector, property, actual });
 		}
 	}
-	return { runtime, elements };
+	return { runtime, elements, states, scheme };
 })()`;
 }
 
-interface Measured {
+/** A colour scheme a look is opened under. */
+export type Scheme = "light" | "dark";
+
+/** What the page gave back: the measurements, and what it says it drew. */
+export interface Measured {
 	runtime: Record<string, string>;
 	elements: MeasuredElement[];
+	/** `<screen>.<state>` names the page reported with `data-look-state`. */
+	states: string[];
+	/** The scheme the page drew. */
+	scheme: Scheme;
+}
+
+/**
+ * One look, judged from what the page gave back: unchecked when the page did
+ * not say it drew this screen state, or did not draw the scheme it was opened
+ * under — a value check of a page that is not the state says nothing about
+ * the state (lesson: a-value-check-that-says-held-has-not-seen-the-layout) —
+ * else the verdict on its values. `device` is the name the look is reported
+ * under (`phone`, `phone/dark`).
+ */
+export function judgeLook(input: {
+	app: string;
+	look: LookTarget;
+	device: string;
+	scheme: Scheme;
+	approved: Record<string, string>;
+	seen: Measured;
+}): { result: LookResult } | { unchecked: Unchecked } {
+	const { app, look, device, scheme, approved, seen } = input;
+	const mockup = `${look.screen}.${look.state}`;
+	if (!seen.states.includes(mockup)) {
+		return { unchecked: { mockup, device, reason: `the page did not report state ${look.state}` } };
+	}
+	if (seen.scheme !== scheme) {
+		return {
+			unchecked: { mockup, device, reason: `the page did not render the ${scheme} scheme` },
+		};
+	}
+	return {
+		result: {
+			app,
+			screen: look.screen,
+			state: look.state,
+			device,
+			verdict: verdict({ approved, runtime: seen.runtime, elements: seen.elements }),
+		},
+	};
 }
 
 async function loadChromium(): Promise<typeof import("playwright-core").chromium> {
@@ -221,13 +277,16 @@ export async function checkApp(
 			for (const device of app.devices) {
 				const url = pageUrl(base, look.screen, look.path, look.state);
 				const seen = await measure(browser, device, url, script);
-				results.push({
+				const judged = judgeLook({
 					app: app.app,
-					screen: look.screen,
-					state: look.state,
+					look,
 					device: device.name,
-					verdict: verdict({ approved, runtime: seen.runtime, elements: seen.elements }),
+					scheme: "light",
+					approved,
+					seen,
 				});
+				if ("result" in judged) results.push(judged.result);
+				else unchecked.push(judged.unchecked);
 			}
 		}
 	} finally {
