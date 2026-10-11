@@ -1,0 +1,11 @@
+{
+	"url": "http://localhost:3939",
+	"sources": ["apps/indusk-admin/src"],
+	"screens": [
+		{ "name": "nav", "states": ["expanded", "collapsed"], "path": "/p/dusk/promises" },
+		{ "name": "dashboard", "states": ["default", "empty"], "path": "/p/dusk/promises" },
+		{ "name": "promise", "states": ["broken", "enforced"], "path": "/p/dusk/promises" },
+		{ "name": "plan", "states": ["needs-you", "working", "released"], "path": "/p/dusk/plan/ui-promises" },
+		{ "name": "looks", "states": ["default", "uncovered"], "path": "/p/dusk/looks" }
+	]
+}
