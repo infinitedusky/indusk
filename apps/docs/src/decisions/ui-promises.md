@@ -77,6 +77,12 @@ pass every class in the admin.
    hash does not match its entry reads *proposed*; so does a foundation. A
    PreToolUse hook refuses an agent's write to `approved.json`, the
    infrastructure tier's job; a hand edit by a person is theirs to make.
+   Amended 2026-10-11 (Build Phase 6): an entry also binds the declarations the
+   check trusts (`declarationsHash` over devices, `ignore`, `sources`; an entry
+   without it reads proposed), Approve sends the mockup's hash as well as the
+   foundation's and a differing one is refused, the hook also refuses an
+   agent's Bash write and a shell call to the route, and the route requires
+   the browser's `Sec-Fetch-Site: same-origin`.
 
 4. **No raw values, in two places.** stylelint (MIT) with
    `stylelint-declaration-strict-value` (MIT) refuses a raw colour, length,
@@ -149,7 +155,16 @@ Rejected by the lock-in rule (research, "Tools, against lock-in").
 ### Positive
 - A raw value is refused where it is written, in a mockup or the app.
 - A changed token is caught in the running app on any machine, no pixels.
-- Approval cannot be faked by an agent, and a changed mockup un-approves itself.
+- An agent's ordinary attempt to approve is refused, and a changed mockup un-approves
+  itself. Enforced (Build Phase 6): the guard hook refuses an agent's Write, Edit or
+  Bash write to `approved.json` and a shell call to the approve route; the route
+  answers only a browser on the admin's page (`Sec-Fetch-Site: same-origin`); and an
+  entry binds the hashes of the mockup and the foundation the person was shown and
+  of the declarations the check trusts (devices, `ignore`, `sources`). The residual,
+  by nature: the hook is a tripwire, not a boundary — a script that builds the path
+  passes it, and a process running as the person can send any header. Nothing on the
+  person's machine is unforgeable by something running as them; what holds is that a
+  forged entry must carry the true hashes and lands in git as a visible commit.
 - Every artefact is open: DTCG JSON, HTML, CSS, a JSON approval record, in git.
 
 ### Negative

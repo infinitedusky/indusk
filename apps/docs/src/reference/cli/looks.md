@@ -40,11 +40,32 @@ src/Badge.jsx:3  p-[13px]  arbitrary-class — arbitrary value in p-[13px] — u
 
 | Rule | What it names |
 |------|---------------|
-| `raw-value` | a colour, size, space, radius, shadow, font or motion declaration that is not a token (`0`, `auto` and the CSS keywords pass) |
+| `raw-value` | a colour, size, space, radius, border, shadow, font or motion value that is not a token — the declaration whole, and a literal anywhere inside it: behind a function (`rgb(255 0 0)`, `calc(13px * 2)`, a gradient's stops), in a `var()` fallback, or in a custom property a mockup defines without declaring it new or an app defines outside its generated file |
 | `undefined-token` | `var(--x)` where the foundation defines no `--x` |
 | `undeclared-token` | a mockup defines `--x` and neither the foundation nor the mockup's `indusk-new-tokens` meta has it |
+| `redefined-token` | a mockup, or an app stylesheet other than the generated one, gives a foundation token a value of its own (`:root { --color-dusk: #ff00ff }`) — the foundation is the one place a value is approved |
+| `external-reference` | a mockup reaches outside itself: a `<link href>`, an `@import`, an `<img>`/`<script>`/`<iframe>` `src`, a `srcset`, a `poster`, or a `url()` that is not a `data:` URI or a `#fragment` — its approval binds only its own bytes. The generated `../tokens.css` is the foundation and passes |
 | `stock-class` | a Tailwind colour, spacing step, radius, text size or shadow the foundation's theme does not define |
 | `arbitrary-class` | a Tailwind arbitrary value such as `p-[13px]` |
+
+**The properties held**: colour (`color`, `*-color`, `background`, `fill`,
+`stroke`, `outline`), `margin*`, `padding*`, `gap`, `border` and each side and
+width, `border-*-radius`, `width`, `height`, `inline-size`, `block-size`,
+`inset*`, `top`/`right`/`bottom`/`left`, `outline-width`/`-offset`, `font` and
+its size, family and weight, `line-height`, `letter-spacing`, `box-shadow`,
+`text-shadow`, `transition*`, and an animation's duration, easing and delay.
+A shorthand is judged by its longhands, so `border-left: var(--border-2) solid
+var(--color-line)` passes. `min-*` and `max-*` sizes are not held yet — the
+cockpit's reading measures (`70ch`) have no token.
+
+**What passes**: `0`, `auto`, the CSS-wide keywords, `none`, `transparent`,
+`currentColor`, a percentage, `vw`/`vh` (and `dvh`, `svh`, `lvh`, `vmin`,
+`vmax`), `fr`, `min-`/`max-`/`fit-content`, and arithmetic on tokens
+(`calc(100% - var(--space-4))`). A literal colour (hex or a colour function)
+and a non-zero `px`, `rem`, `em`, `ms` or `s` do not, wherever they sit.
+
+A mockup is read as the browser reads it (`parse5`): its `<style>` elements
+and `style=""` attributes are its CSS, and a `<style>` inside a comment is not.
 
 Exit 1 on any finding, 0 on none. A missing app or an unreadable foundation
 exits 1 naming the file; it is never a clean app.
@@ -61,6 +82,7 @@ it. The record is `.indusk/mockups/<app>/approved.json`:
 			"mockup": "home.empty",
 			"mockupHash": "3293523189dd…",
 			"foundationHash": "ab91330460fb…",
+			"declarationsHash": "65358e9c223f…",
 			"by": "sandy",
 			"at": "2026-10-10T09:00:00.000Z"
 		}
@@ -68,13 +90,24 @@ it. The record is `.indusk/mockups/<app>/approved.json`:
 }
 ```
 
-Each entry is bound to the sha256 of the mockup's bytes and of
-`foundation.tokens.json`'s. A mockup is **approved** while an entry holds both
-of its current hashes; otherwise it is **proposed**. So a change to an
-approved mockup, or to the foundation, returns it to proposed by itself, and
-an entry copied or typed into the record with the wrong hashes approves
-nothing. Until a person approves the change, the app is held to the last
-approved version, which `status` names.
+Each entry is bound to three sha256 hashes: the mockup's bytes, the
+foundation's (`foundation.tokens.json`), and the **declarations** the check
+trusts — the reference devices (`devices.json`), the `ignore` tags and the
+`sources` (`screens.json`), read as key-sorted JSON so reformatting a file
+binds the same. A mockup is **approved** while an entry holds all three
+current hashes; otherwise it is **proposed**. So a change to an approved
+mockup, to the foundation, or to a device's size, an ignored tag or the
+source list returns it to proposed by itself, and an entry copied or typed
+into the record with the wrong hashes approves nothing. An entry that binds no
+declarations — every entry written before they were bound — reads proposed
+until a person approves it again. Until a person approves the change, the app
+is held to the last approved version on the foundation and declarations as
+they are now, which `status` names.
+
+An approval binds **what the person was shown**: Approve sends the hash of the
+mockup the page drew and of the foundation it drew it on, and a mockup or a
+foundation that changed since — on disk between the page's read and the
+press — is refused, naming both hashes.
 
 ### Why `approve` is the cockpit's
 
@@ -88,17 +121,29 @@ through `main` — through the same notes writer the plan history uses, only
 that file. Several proposed mockups can be selected and approved together:
 each is its own entry, bound to its own hash, as the person who clicked.
 
-Two things refuse every other way in:
+What refuses every other way in:
 
 - `indusk looks approve` exits 2 and writes nothing, naming the cockpit's
   Approve. A command an agent can run is not a person's approval.
 - The `looks-approval-guard` hook refuses an agent's Write or Edit to any
-  `.indusk/mockups/<app>/approved.json`, before it lands. It judges the path
-  named, never the file. A write through the shell is out of its sight; there
-  the hash binding is what holds.
+  `.indusk/mockups/<app>/approved.json`, and an agent's Bash command that
+  writes it — a redirect onto it, `tee`, `cp`/`mv`, `sed -i`, an interpreter's
+  `-e`, `git checkout <ref> -- …` — or calls the approve route. It reads the
+  path or the command's text, never the file.
+- The approve route answers only the person's browser on the admin's own
+  page: on top of the admin's host and origin check, it requires
+  `Sec-Fetch-Site: same-origin`, which the browser sets and page script
+  cannot, and which `curl` does not send.
 
-A person editing the record by hand is theirs to do — and it holds only when
-its hashes are true.
+**What this does not make impossible.** The hook is a tripwire for an agent's
+ordinary attempt, not a boundary: a script that builds the path or the URL at
+run time passes it, and a process running as the person can send any header.
+Nothing on the person's machine can be made unforgeable by something running
+as them. What holds past the tripwire is the record itself — an entry reads
+approved only while its hashes are the mockup, foundation and declarations as
+they are — and that the record is in git, where a forged entry is a visible
+commit by whoever made it. A person editing the record by hand is theirs to
+do, and it holds only when its hashes are true.
 
 ## `indusk looks tokens <app> [--tailwind] [--out <file>]`
 
@@ -122,7 +167,9 @@ home.full  proposed  held to 00000000 (approved by sandy at 2026-10-10T09:05:00.
 ```
 
 A proposed mockup with an approved version names that version's first eight
-hash characters: the reference the app is held to meanwhile. Exit 0; a missing
+hash characters: the reference the app is held to meanwhile — or, when that
+version was approved on another foundation or other declarations, says
+`last approved … — nothing held`. Exit 0; a missing
 app or an unreadable record exits 1 naming the file.
 
 ## `indusk looks coverage <app>`
@@ -135,17 +182,22 @@ the app's declared sources, and names what no approved mockup covers:
 uncovered screen: detail
 uncovered state: home.full
 uncovered component: badge
+unresolved component: src/Dynamic.jsx:2
 ```
 
 | Line | When |
 |------|------|
 | `uncovered screen: <name>` | none of the screen's declared states has an approved mockup |
 | `uncovered state: <screen>.<state>` | the screen has an approved state, but not this one |
-| `uncovered component: <name>` | the app renders it and no approved mockup shows it |
+| `uncovered component: <name>` | the app renders it and no approved mockup shows it on an element |
+| `unresolved component: <file>:<line>` | a source's `data-component={…}` is not a string literal, so no mockup can be said to cover it |
 
-Only a mockup approved as it is now covers anything. A component name is read
-when written literally — `data-component="badge"`, `'badge'`, `{"badge"}` — not
-when computed. Exit 1 when anything is uncovered, 0 when every part is.
+Only a mockup approved as it is now covers anything, and only with an element
+that carries the name: a mockup is parsed as HTML, so `data-component="badge"`
+in its comment, script or style is text and covers nothing. A source's name is
+read when written literally — `data-component="badge"`, `'badge'`, `{"badge"}`
+— and listed `unresolved` when computed, never ignored. Exit 1 when anything is
+uncovered or unresolved, 0 when every part is covered.
 
 ## `indusk looks check <app> [--url <url>]`
 
@@ -156,8 +208,25 @@ opened at `<url><path>?state=<state>`, where `path` is the screen's own `path`
 in `screens.json` and otherwise `/<name>`.
 
 For each declared screen state whose mockup is approved — or whose last
-approved version was approved on the foundation as it is now — at each device
-in `devices.json`, the check measures the page and decides two things:
+approved version was approved on the foundation and declarations as they are
+now — at each device in `devices.json`, in each colour scheme, the check opens
+the page and first asks it two questions:
+
+- **Did it draw this state?** The page says which screen states it drew with
+  `data-look-state` — a space-separated list of `<screen>.<state>` names, on
+  `<html>` or on any element (several screens can share one page). A page that
+  does not name the state is `unchecked … — the page did not report state
+  <state>`, never held: a value check of a page that is not the state says
+  nothing about the state. The cockpit reports `dashboard.default`,
+  `dashboard.empty`, `looks.default` and `looks.uncovered`; its nav, promise
+  and plan states are unchecked until it can.
+- **Did it draw this scheme?** When any foundation token names a dark value,
+  each look is opened in light and in dark (`colorScheme: dark`) and reported
+  under `phone` and `phone/dark`. Dark is judged against each token's dark
+  value. A page that pins itself light (`data-theme="light"`) when opened dark
+  is `unchecked … @ phone/dark — the page did not render the dark scheme`.
+
+Then it decides two things:
 
 | Check | Held when | A broken line names |
 |-------|-----------|---------------------|
@@ -175,7 +244,9 @@ held    home.empty @ phone
 broken  home.empty @ desktop
   token --color-dusk approved #c2620b actual #c2620c
   element button.primary background-color actual rgb(194, 98, 12) nearest --color-dusk (#c2620b)
+unchecked home.full @ phone — the page did not report state full
 unchecked detail.default — proposed, never approved
+admin: 12 looks held, 54 unchecked
 ```
 
 Elements the check does not draw are named in `screens.json`'s `ignore` (tag
@@ -183,8 +254,9 @@ names, such as `nextjs-portal` in development); a margin of `auto` is read as
 the keyword, not the pixels it resolved to; a shadow is read layer by layer, in
 whatever colour spelling, and a framework's empty layer is not a break.
 
-A proposed mockup is not checked against (`unchecked`, with the reason). Each
-look is also recorded as a span, one per screen × state × device, carrying a
+A proposed mockup is not checked against (`unchecked`, with the reason), and
+the closing line counts unchecked looks beside held and broken. Each look is
+also recorded as a span, one per screen × state × device and scheme, carrying a
 promise's mark under `tokens-are-held-exactly` — `upheld` when held,
 `violated` with the first finding as the symptom when broken — so a look reads
 beside promises in the health reader.
