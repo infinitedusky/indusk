@@ -216,6 +216,10 @@
 			"types": "./dist/lib/looks/report.d.ts",
 			"default": "./dist/lib/looks/report.js"
 		},
+		"./looks/overview": {
+			"types": "./dist/lib/looks/overview.d.ts",
+			"default": "./dist/lib/looks/overview.js"
+		},
 		"./promises/standing": {
 			"types": "./dist/lib/promises/standing.d.ts",
 			"default": "./dist/lib/promises/standing.js"

@@ -253,3 +253,9 @@ export const STANDING_STYLE = {
     chip: "border-gray-200 bg-gray-50 text-gray-400",
   },
 } as const satisfies Record<Standing, { bar: string; chip: string }>;
+
+/** A mockup's approval as the Looks page's chip draws it (ui-promises ADR decision 3). */
+export const APPROVAL_STYLE = {
+  approved: "border-green-600 bg-white text-green-700",
+  proposed: "border-dashed border-gray-400 bg-white text-gray-600",
+} as const satisfies Record<"approved" | "proposed", string>;
