@@ -22,7 +22,8 @@ import { POST as approveRoute } from "@/app/api/looks/[app]/approve/route";
 import LooksPage from "./page";
 
 /**
- * ui-promises A1 (the cockpit's half), A2, A13, A14: the Looks page over the
+ * ui-promises A1 (the cockpit's half), A2, A13, A14, A29 (the route's half),
+ * A30 (the route's half): the Looks page over the
  * package's looks fixture, read for real — a copy in a git repository on
  * `main`, registered in a temporary InDusk home — and Approve through its
  * route, which writes and commits the record there. Node, not the browser
@@ -114,13 +115,22 @@ function sectionOf(html: string, testId: string): string {
 const sha256 = (file: string) =>
   createHash("sha256").update(readFileSync(file)).digest("hex");
 
-function approveRequest(body: Record<string, unknown>): NextRequest {
+/**
+ * A POST as the admin's page sends it: the browser sets `Origin` and the
+ * fetch metadata (`Sec-Fetch-Site: same-origin`) itself, which page script
+ * cannot. `fetchSite: null` leaves the header out, as `curl` does.
+ */
+function approveRequest(
+  body: Record<string, unknown>,
+  { fetchSite = "same-origin" }: { fetchSite?: string | null } = {},
+): NextRequest {
   return new NextRequest("http://127.0.0.1:3996/api/looks/demo/approve", {
     method: "POST",
     headers: {
       host: "127.0.0.1:3996",
       origin: "http://127.0.0.1:3996",
       "content-type": "application/json",
+      ...(fetchSite ? { "sec-fetch-site": fetchSite } : {}),
     },
     body: JSON.stringify(body),
   });
@@ -129,6 +139,14 @@ function approveRequest(body: Record<string, unknown>): NextRequest {
 const demo = { params: Promise.resolve({ app: "demo" }) };
 const foundationHash = () =>
   sha256(join(root, ".indusk/mockups/demo/foundation.tokens.json"));
+/** The hash of a mockup as the page showed it — its bytes in `tree` (the project's own checkout by default). */
+const mockupHash = (name: string, tree = root) =>
+  sha256(join(tree, `.indusk/mockups/demo/screens/${name}.html`));
+/** A group approval's body entry: each mockup with the hash the page showed. */
+const shown = (name: string) => ({
+  mockup: name,
+  mockupHash: mockupHash(name),
+});
 
 describe("A1 — a mockup an agent drew reads proposed in the cockpit, and nothing is checked against it", () => {
   it("A1 home.full reads proposed; home.empty, approved, reads approved", async () => {
@@ -150,6 +168,7 @@ describe("A2 — Approve in the cockpit makes a mockup the reference, recording 
       approveRequest({
         project: PROJECT,
         mockup: "home.full",
+        mockupHash: mockupHash("home.full"),
         foundationHash: foundationHash(),
       }),
       demo,
@@ -183,6 +202,7 @@ describe("A2 — Approve in the cockpit makes a mockup the reference, recording 
       approveRequest({
         project: PROJECT,
         mockup: "home.full",
+        mockupHash: mockupHash("home.full"),
         foundationHash: "0".repeat(64),
       }),
       demo,
@@ -241,6 +261,7 @@ describe("A2 — approval happens in the checkout the plan is worked in, never t
       approveRequest({
         project: PROJECT,
         mockup: "settings.default",
+        mockupHash: mockupHash("settings.default", tree),
         foundationHash: sha256(
           join(tree, ".indusk/mockups/demo/foundation.tokens.json"),
         ),
@@ -273,6 +294,7 @@ describe("A2 — approval happens in the checkout the plan is worked in, never t
       approveRequest({
         project: PROJECT,
         mockup: "home.full",
+        mockupHash: mockupHash("home.full"),
         foundationHash: hash,
         checkout: "nope",
       }),
@@ -283,6 +305,7 @@ describe("A2 — approval happens in the checkout the plan is worked in, never t
       approveRequest({
         project: PROJECT,
         mockup: "settings.default",
+        mockupHash: "0".repeat(64),
         foundationHash: hash,
       }),
       demo,
@@ -302,7 +325,7 @@ describe("A2 — group approval records one entry per mockup, each as the person
     const res = await approveRoute(
       approveRequest({
         project: PROJECT,
-        mockups: ["home.full", "detail.default"],
+        mockups: [shown("home.full"), shown("detail.default")],
         foundationHash: foundationHash(),
       }),
       demo,
@@ -339,7 +362,10 @@ describe("A2 — group approval records one entry per mockup, each as the person
     const res = await approveRoute(
       approveRequest({
         project: PROJECT,
-        mockups: ["home.full", "nope"],
+        mockups: [
+          shown("home.full"),
+          { mockup: "nope", mockupHash: "0".repeat(64) },
+        ],
         foundationHash: foundationHash(),
       }),
       demo,
@@ -352,6 +378,70 @@ describe("A2 — group approval records one entry per mockup, each as the person
     const refused = results.find((r) => r.mockup === "nope");
     expect(refused?.approved).toBe(false);
     expect(refused?.reason).toMatch(/no mockup/);
+  });
+});
+
+describe("A29 — the approve route answers only a browser on the admin's own page", () => {
+  it("A29 a POST that sets Host and Origin itself but carries no fetch metadata is refused, and nothing is written", async () => {
+    const before = readFileSync(join(root, RECORD), "utf-8");
+    const body = {
+      project: PROJECT,
+      mockup: "home.full",
+      mockupHash: mockupHash("home.full"),
+      foundationHash: foundationHash(),
+    };
+    for (const fetchSite of [null, "cross-site", "same-site", "none"]) {
+      const res = await approveRoute(approveRequest(body, { fetchSite }), demo);
+      expect(res.status, `Sec-Fetch-Site: ${fetchSite}`).toBe(403);
+    }
+    expect(readFileSync(join(root, RECORD), "utf-8")).toBe(before);
+  });
+});
+
+describe("A30 — an approval binds the mockup the person was shown", () => {
+  it("A30 approving a mockup changed since the page showed it is refused, naming both hashes", async () => {
+    const shownHash = mockupHash("home.full");
+    const file = join(root, ".indusk/mockups/demo/screens/home.full.html");
+    writeFileSync(
+      file,
+      `${readFileSync(file, "utf-8")}<!-- changed after the page read it -->\n`,
+    );
+    const before = readFileSync(join(root, RECORD), "utf-8");
+    const res = await approveRoute(
+      approveRequest({
+        project: PROJECT,
+        mockup: "home.full",
+        mockupHash: shownHash,
+        foundationHash: foundationHash(),
+      }),
+      demo,
+    );
+    expect(res.status).toBe(409);
+    const { error } = (await res.json()) as { error: string };
+    expect(error).toContain(shownHash.slice(0, 8));
+    expect(error).toContain(mockupHash("home.full").slice(0, 8));
+    expect(readFileSync(join(root, RECORD), "utf-8")).toBe(before);
+  });
+
+  it("A30 an approval that names no mockup hash is refused", async () => {
+    const res = await approveRoute(
+      approveRequest({
+        project: PROJECT,
+        mockup: "home.full",
+        foundationHash: foundationHash(),
+      }),
+      demo,
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("A30 the page carries each proposed mockup's hash beside its checkbox, for a group approval", async () => {
+    const html = await looksPage();
+    const box =
+      rowOf(html, "home.full").match(
+        /<input[^>]*data-select-mockup[^>]*>/,
+      )?.[0] ?? "";
+    expect(attrOf(box, "data-mockup-hash")).toBe(mockupHash("home.full"));
   });
 });
 

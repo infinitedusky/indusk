@@ -1,14 +1,16 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { approve } from "../lib/looks/approvals.js";
 import { generateCss } from "../lib/looks/foundation.js";
 import { readApp } from "../lib/looks/mockups.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
 /**
- * promise: tokens-are-held-exactly — ui-promises A18, A19, A20.
+ * promise: tokens-are-held-exactly — ui-promises A18, A19, A20, A37.
+ * promise: every-part-of-the-ui-is-covered — ui-promises A36.
  *
  * System tier: `indusk looks check demo --url <page>` drives real Chromium
  * over a small page served from this file. The fixture app's `home.empty` is
@@ -31,10 +33,23 @@ let url = "";
 const roots: string[] = [];
 const projects: string[] = [];
 
-/** The page: every visual value is a token of the approved foundation. */
-function pageWith(extraCss = "", buttonCss = ""): string {
-	return `<!doctype html><html><head><style>
-${css}
+/**
+ * The page: every visual value is a token of the approved foundation. It says
+ * which screen state it rendered (`data-look-state` on `<html>`, A36) unless
+ * told not to, and `htmlAttrs` adds to its root element.
+ */
+function pageWith(
+	extraCss = "",
+	buttonCss = "",
+	{
+		states = "home.empty",
+		htmlAttrs = "",
+		tokens = css,
+	}: { states?: string | null; htmlAttrs?: string; tokens?: string } = {},
+): string {
+	const reported = states === null ? "" : ` data-look-state="${states}"`;
+	return `<!doctype html><html${reported}${htmlAttrs ? ` ${htmlAttrs}` : ""}><head><style>
+${tokens}
 body { margin: 0; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--space-4); }
 button.primary { border: 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-dusk); color: var(--color-paper); font: inherit; ${buttonCss} }
 ${extraCss}
@@ -87,9 +102,29 @@ function project(): string {
 	return root;
 }
 
-function check(): { code: number; out: string } {
-	const r = runCli(project(), ["looks", "check", "demo", "--url", url]);
+function check(root = project()): { code: number; out: string } {
+	const r = runCli(root, ["looks", "check", "demo", "--url", url]);
 	return { code: r.code, out: `${r.stdout}\n${r.stderr}` };
+}
+
+/**
+ * The fixture with dark values beside its colours, `home.empty` approved on
+ * that foundation through the package's own writer — the hashes it binds are
+ * whatever the record binds, computed by the code that reads them.
+ */
+async function darkProject(): Promise<{ root: string; tokens: string }> {
+	const root = project();
+	const file = join(root, ".indusk/mockups/demo/foundation.tokens.json");
+	const tree = JSON.parse(readFileSync(file, "utf-8"));
+	const dark: Record<string, string> = { paper: "#1f1a17", ink: "#faf7f2", dusk: "#e08a3c" };
+	for (const [name, value] of Object.entries(dark)) {
+		tree.color[name].$extensions = { "dev.indusk": { dark: value } };
+	}
+	writeFileSync(file, `${JSON.stringify(tree, null, "\t")}\n`);
+	const r = await approve(root, "demo", "home.empty", "contract");
+	if (!r.approved) throw new Error(r.reason);
+	const app = await readApp(root, "demo");
+	return { root, tokens: generateCss(app.foundation) };
 }
 
 describe.skipIf(SHOULD_SKIP)("indusk looks check — the running app held by value", () => {
@@ -124,5 +159,46 @@ describe.skipIf(SHOULD_SKIP)("indusk looks check — the running app held by val
 		expect(out).toMatch(
 			/element button\.primary\s+transition-duration\s+actual 0\.25s\s+nearest --duration-fast \(200ms\)/,
 		);
+	});
+
+	it("A36: a page that does not say which state it rendered is unchecked, naming why, never held", () => {
+		writeFileSync(pageFile, pageWith("", "", { states: null }));
+		const { code, out } = check();
+		expect(out).toMatch(/unchecked\s+home\.empty @ phone — the page did not report state empty/);
+		expect(out).toMatch(/unchecked\s+home\.empty @ desktop — the page did not report state empty/);
+		expect(out).not.toMatch(/held\s+home\.empty/);
+		expect(code).toBe(1);
+	});
+
+	it("A37: a token whose dark value changed in the app alone is broken under the dark scheme only", async () => {
+		const { root, tokens } = await darkProject();
+		writeFileSync(
+			pageFile,
+			pageWith("@media (prefers-color-scheme: dark) { :root { --color-dusk: #000001; } }", "", {
+				tokens,
+			}),
+		);
+		const { code, out } = check(root);
+		expect(out).toMatch(/held\s+home\.empty @ phone\s*$/m);
+		expect(out).toMatch(/broken\s+home\.empty @ phone\/dark/);
+		expect(out).toMatch(/token --color-dusk\s+approved #e08a3c\s+actual #000001/);
+		expect(code).toBe(1);
+	});
+
+	it("A37: a look under a scheme the foundation names is held only when that scheme was opened", async () => {
+		const { root, tokens } = await darkProject();
+		writeFileSync(pageFile, pageWith("", "", { tokens }));
+		const opened = check(root);
+		expect(opened.out).toMatch(/held\s+home\.empty @ phone\/dark/);
+		expect(opened.code).toBe(0);
+
+		// The page pins itself light: the dark scheme was asked for and never drawn.
+		writeFileSync(pageFile, pageWith("", "", { tokens, htmlAttrs: 'data-theme="light"' }));
+		const pinned = check(root);
+		expect(pinned.out).toMatch(/held\s+home\.empty @ phone\s*$/m);
+		expect(pinned.out).toMatch(
+			/unchecked\s+home\.empty @ phone\/dark — the page did not render the dark scheme/,
+		);
+		expect(pinned.out).not.toMatch(/held\s+home\.empty @ phone\/dark/);
 	});
 });

@@ -8,7 +8,9 @@ import { LooksAppError, readApp } from "./mockups.js";
 /**
  * promise: a-mockup-is-approved-by-a-person — ui-promises A3, A4 (the record's
  * reading) and the writer the cockpit's Approve calls (A2 drives it through
- * the admin in Build Phase 4).
+ * the admin in Build Phase 4); A30 (an approval binds the mockup shown) and
+ * A35 (it binds the declarations the check trusts).
+ * promise: every-part-of-the-ui-is-covered — A35.
  *
  * The fixture app is copied into a main checkout with a plan worktree beside
  * it, so `approve` is seen writing and committing in the checkout it is
@@ -49,6 +51,44 @@ describe("approvalOf — bound to the mockup's hash and the foundation's", () =>
 			state: "proposed",
 			reference: null,
 		});
+	});
+
+	// A35 — the declarations the check trusts are bound like the foundation.
+	const MOCKUPS = ".indusk/mockups/demo";
+	const declarationChanges: Array<[string, string, (text: string) => string]> = [
+		["a device's size", "devices.json", (t) => t.replace('"height": 844', '"height": 600')],
+		[
+			"an ignore tag",
+			"screens.json",
+			(t) => {
+				const o = JSON.parse(t);
+				return JSON.stringify({ ...o, ignore: [...(o.ignore ?? []), "main"] });
+			},
+		],
+		[
+			"the app's sources",
+			"screens.json",
+			(t) => JSON.stringify({ ...JSON.parse(t), sources: ["elsewhere"] }),
+		],
+	];
+	for (const [what, file, change] of declarationChanges) {
+		it(`A35 changing ${what} returns an approved mockup to proposed`, async () => {
+			const empty = await mockupOf("home.empty");
+			expect(approvalOf(empty.app, empty.mockup, readApprovals(empty.app)).state).toBe("approved");
+			const path = join(f.main, MOCKUPS, file);
+			writeFileSync(path, change(readFileSync(path, "utf-8")));
+			const after = await mockupOf("home.empty");
+			expect(approvalOf(after.app, after.mockup, readApprovals(after.app)).state).toBe("proposed");
+		});
+	}
+
+	it("A35 an entry that binds no declarations reads proposed", async () => {
+		const empty = await mockupOf("home.empty");
+		const entries = readApprovals(empty.app).map((e) => {
+			const { declarationsHash: _, ...rest } = e as typeof e & { declarationsHash?: string };
+			return rest;
+		});
+		expect(approvalOf(empty.app, empty.mockup, entries).state).toBe("proposed");
 	});
 
 	it("a record that is not a list of entries is refused, never read as empty", async () => {
@@ -117,6 +157,22 @@ describe("approve — the cockpit's writer", () => {
 		expect(
 			await approve(f.main, "demo", "home.full", "sandy", { foundationHash: app.foundation.hash }),
 		).toMatchObject({ approved: true });
+	});
+
+	// A30
+	it("A30 refuses a mockup changed since the page showed it, naming both hashes, and writes nothing", async () => {
+		const before = readFileSync(join(f.main, RECORD), "utf-8");
+		const { app, mockup } = await mockupOf("home.full");
+		const shown = "e".repeat(64);
+		const r = await approve(f.main, "demo", "home.full", "sandy", {
+			foundationHash: app.foundation.hash,
+			mockupHash: shown,
+		} as { foundationHash: string });
+		expect(r).toMatchObject({ approved: false });
+		const reason = r.approved ? "" : r.reason;
+		expect(reason).toContain(shown.slice(0, 8));
+		expect(reason).toContain(mockup.hash.slice(0, 8));
+		expect(readFileSync(join(f.main, RECORD), "utf-8")).toBe(before);
 	});
 
 	it("refuses an unknown mockup, an app name that leaves the folder, and an approval by nobody", async () => {

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { runHook } from "./helpers/hook-runner.js";
 
 /**
- * ui-promises A3 (hook half) — promise: a-mockup-is-approved-by-a-person.
+ * ui-promises A3 (hook half), A28, A29 (hook half) — promise: a-mockup-is-approved-by-a-person.
  *
  * Only the cockpit's Approve makes a mockup the reference. An agent's Write or
  * Edit to an app's `approved.json` is refused before it lands, naming the
@@ -75,6 +75,79 @@ describe("A3 — an agent's write to approved.json is refused, naming the cockpi
 			tool_input: { command: "git status" },
 			cwd: ROOT,
 		});
+		expect(r.exitCode, r.stderr).toBe(0);
+	});
+});
+
+const bash = (command: string) => ({
+	tool_name: "Bash",
+	tool_input: { command },
+	cwd: ROOT,
+});
+
+/**
+ * ui-promises A28 — an agent's Bash command that writes an app's
+ * `approved.json` is refused, naming the cockpit's Approve. The guard is a
+ * tripwire against an agent's ordinary attempt, read from the command's text;
+ * reading the record stays the agent's.
+ */
+describe("A28 — a Bash command that writes approved.json is refused, naming the cockpit's Approve", () => {
+	const writes: Array<[string, string]> = [
+		["a redirect", `echo '{"approvals":[]}' > ${RECORD}`],
+		["an appending redirect", `printf '%s' "$entry" >> ${RECORD}`],
+		["tee", `printf '{}' | tee .indusk/mockups/admin/approved.json`],
+		["sed -i", `sed -i '' 's/0000/3293/' ${RECORD}`],
+		["cp onto it", `cp /tmp/forged.json ${RECORD}`],
+		["mv onto it", `mv /tmp/forged.json ${join(ROOT, RECORD)}`],
+		["node -e", `node -e "require('fs').writeFileSync('${RECORD}', '{}')"`],
+		["git checkout <ref> --", `git checkout main -- ${RECORD}`],
+		["after a cd", `cd ${ROOT} && cat /tmp/forged.json > ${RECORD}`],
+	];
+	for (const [how, command] of writes) {
+		it(`refuses ${how}`, async () => {
+			const r = await runHook("looks-approval-guard.js", bash(command));
+			expect(r.exitCode, `${command}\n${r.stderr}`).toBe(2);
+			expect(r.stderr).toMatch(/cockpit/i);
+			expect(r.stderr).toMatch(/Approve/);
+		});
+	}
+
+	it("lets the record be read, diffed, staged and committed", async () => {
+		for (const command of [
+			`cat ${RECORD}`,
+			`jq '.approvals | length' ${RECORD}`,
+			`git diff -- ${RECORD}`,
+			`git log --oneline -- .indusk/mockups/admin/approved.json`,
+			`git add ${RECORD} && git commit -m "looks: approvals"`,
+			`grep -c mockupHash ${RECORD}`,
+		]) {
+			const r = await runHook("looks-approval-guard.js", bash(command));
+			expect(r.exitCode, `${command}\n${r.stderr}`).toBe(0);
+		}
+	});
+});
+
+/**
+ * ui-promises A29 (the hook's half) — a Bash command that names the approve
+ * route is refused: the route is the person's, pressed in their browser.
+ */
+describe("A29 — a Bash command naming the approve route is refused", () => {
+	it("refuses a curl to /api/looks/<app>/approve", async () => {
+		const r = await runHook(
+			"looks-approval-guard.js",
+			bash(
+				`curl -s -X POST http://127.0.0.1:3939/api/looks/admin/approve -H 'Origin: http://127.0.0.1:3939' -H 'content-type: application/json' -d '{"project":"dusk","mockup":"nav.expanded"}'`,
+			),
+		);
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toMatch(/cockpit/i);
+	});
+
+	it("lets another admin route be called", async () => {
+		const r = await runHook(
+			"looks-approval-guard.js",
+			bash("curl -s http://127.0.0.1:3939/api/health"),
+		);
 		expect(r.exitCode, r.stderr).toBe(0);
 	});
 });
