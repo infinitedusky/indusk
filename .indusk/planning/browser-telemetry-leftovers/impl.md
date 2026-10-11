@@ -1,7 +1,7 @@
 ---
 title: "Browser telemetry leftovers — a click and its server work share a trace"
 date: 2026-10-10
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -48,6 +48,10 @@ The scaffolded browser instrumentation carries a click's trace to the project's 
 | A6 | No instrumentation template under `apps/indusk-mcp/templates/` names or imports an observability vendor (`dash0`, `datadog`, `newrelic`, `honeycomb`, `sentry`, `posthog`) | Test Phase 1 | Test Phase 1 | passing | unit | promise: init-writes-no-vendor-into-an-app | apps/indusk-mcp/src/__tests__/init-browser-telemetry.test.ts |
 | A7 | For a React SPA and a Next.js app, `indusk init` prints the setting that names an API on another origin (`VITE_OTEL_PROPAGATE_TO` / `NEXT_PUBLIC_OTEL_PROPAGATE_TO`) and that the API must allow the `traceparent` header in its CORS settings | Test Phase 1 | Build Phase 1 | passing | unit | the decision to prefer capability over configuration (research, Decisions): the two places to configure are said, not left to be discovered | apps/indusk-mcp/src/__tests__/init-browser-telemetry.test.ts |
 | A8 | A Deferred Verification row whose mitigation names only a vendor ("dash0") is not classified as a telemetry alert by the trajectory audit | Test Phase 1 | Build Phase 1 | passing | unit | the second half of the backlog entry this plan owns: a vendor's name is not instrumentation | apps/indusk-mcp/src/lib/trajectory/audit.test.ts |
+| A9 | With `VITE_OTEL_PROPAGATE_TO=https://API.Example.com` (mixed case) and, separately, `=https://api.example.com:443` (default port spelled out), a request to `https://api.example.com/seats` — which the browser reports as `https://api.example.com/seats` — carries the click's trace | Build Phase 2 | Build Phase 2 | planned | unit | falsification of Build Phase 1: exact entries are compared as the user typed them, while the request URL arrives normalized (lower-case host, default port dropped) | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| A10 | With `VITE_OTEL_PROPAGATE_TO=*`, a request to `https://api.thirdparty.example` carries no `traceparent`; with `=localhost:3000` (no scheme) the entry is reported by one `console.warn` naming it, since it can never match | Build Phase 2 | Build Phase 2 | planned | unit | falsification of Build Phase 1: the documented `*` (one or more characters other than `/` and `.`) is compiled so that a bare `*` matches `http:` followed by `/`, i.e. every URL; a scheme-less entry never matches and says nothing | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| A11 | A click handler that awaits before it fetches (`await Promise.resolve(); fetch(url)`) sends that request in the click's trace, for the same origin and for a named origin | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-click-and-its-server-work-share-a-trace — the promise is about a click, and real handlers are async; A1–A3 start every fetch synchronously inside the handler, which the stack context manager can follow and an `await` it cannot | apps/indusk-mcp/templates/instrumentation.web.test.ts |
+| A12 | A Deferred Verification row whose mitigation names only "grafana" ("dashboards in grafana, reviewed by the on-call") is not classified as a telemetry alert | Build Phase 2 | Build Phase 2 | planned | unit | falsification of Build Phase 1: A8 removed `dash0` because a vendor's name is not instrumentation; `grafana` is the same kind of word and is still in the list | apps/indusk-mcp/src/lib/trajectory/audit.test.ts |
 
 ## Checklist
 
@@ -112,6 +116,32 @@ The scaffolded browser instrumentation carries a click's trace to the project's 
 #### Build Phase 1 Document
 
 - [x] `apps/docs/src/reference/tools/otel.md`: the propagation setting, its patterns, and the CORS requirement; changelog: Fixed — "`indusk init` no longer claims to write a vendor SDK, and a browser click's trace reaches the project's API on another origin when the origin is named"
+
+### Build Phase 2: Falsification — what the setting does with the entries and the handlers real apps write
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds against four failure modes found by reading Build Phase 1's code: an exact origin spelled the way a person writes it but not the way the browser reports it; an entry that matches more than it says (bare `*`) or never matches and stays silent (no scheme); a click handler that awaits before it fetches; and a second vendor word left in the audit's keyword list. Each trajectory row (A9–A12) captures one hypothesis; each item is the fix the code needs if it confirms. Rows are authored RED at the start of this phase, in the files that already hold A1–A3 and A8.
+
+- [ ] `templates/instrumentation.web.ts`: an entry with no `*` is normalized through `new URL(entry).origin` (lower-case host, default port dropped) before it is compiled; an entry with `*` compiles case-insensitively; (A9)
+- [ ] `templates/instrumentation.web.ts`: an entry must begin `<scheme>://` or `*://`; one that does not is dropped with a single `console.warn` naming the entry and the setting, so a bare `*` propagates nowhere and a scheme-less origin says why it does nothing (A10); the header comment says entries are origins with a scheme
+- [ ] `templates/instrumentation.web.ts`: `provider.register({ contextManager: new ZoneContextManager() })` (`@opentelemetry/context-zone`, which needs `zone.js`), so a fetch after an `await` in a click handler stays in the click's trace (A11); if zone.js proves unable to follow the handler in the test, record that here and move A11 to Deferred Verification with the reason rather than weakening the row
+- [ ] `src/bin/commands/init.ts` and the header comment's Install line: add `@opentelemetry/context-zone zone.js` to both browser install commands; `apps/indusk-mcp` devDependencies gain the same two so the template's test project resolves them
+- [ ] `src/lib/trajectory/audit.ts`: `"grafana"` out of `TELEMETRY_KEYWORDS` (A12)
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 2 Verification
+
+- [ ] A9–A12 authored first and failing on their own assertions, then passing; A1–A8 still pass (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.templates.config.ts && pnpm exec vitest run src/__tests__/init-browser-telemetry.test.ts src/lib/trajectory/audit.test.ts`); tsc and biome clean on changed files
+- [ ] The live check again with the click handler `async () => { await fetch("/warm"); fetch("http://localhost:3101/api/seats") }`: one trace holds `click`, both `GET`s and the API's span; record the trace id here
+
+#### Build Phase 2 Context
+
+- [ ] `apps/indusk-mcp/extensions/otel/skill.md`: entries are origins with a scheme; the browser template installs a zone context manager, so async handlers stay in the click's trace
+
+#### Build Phase 2 Document
+
+- [ ] `apps/docs/src/reference/tools/otel.md`: entries need a scheme and are compared as the browser spells them (case, default port); the install lines gain `@opentelemetry/context-zone zone.js`; changelog line extended
 
 ## Files Affected
 
