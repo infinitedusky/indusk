@@ -283,6 +283,20 @@ An app's look is held by mockups a person approved: every visual value comes fro
 
 - [x] `apps/docs/src/reference/cli/looks.md`: `indusk looks check`, the two checks, what a broken line names
 
+#### Build Phase 3 Forward Intelligence
+
+- **Trajectory**: A17, A18, A19, A20 and A22 are `passing`. A25 still passes with `looks-browser.contract.test.ts` in `SYSTEM`. A18–A20 ran in real Chromium (system tier, `looks-browser.contract.test.ts`, 3 passed); A17 is `verdict.test.ts` (9), A22 is `report.test.ts` (3); `check.test.ts` (4) pins which screen states are opened and the page URL.
+- **Fragile**: `looks-browser.contract.test.ts` serves its page from a child `node` process, not in-process: `runCli` is `spawnSync`, which blocks the test's event loop, so an in-process server never answers Chromium and every case times out at 30 s on `page.goto`. Keep the server out of process.
+- **Fragile**: the contract test passes only because the fixture's `home.empty` is approved at its true hashes (Test Phase 1 Forward Intelligence); `home.full` is also opened, because a proposed mockup whose last approved version was approved on the *current* foundation hash is still checked. Reformatting the fixture's foundation makes both read unchecked and the run exits 1 with "nothing checked".
+- **Watch out**: the verdict knows *kinds* by the shape of the approved value (`#hex`/`rgb(` colour, `12px` length, `200ms` duration, `cubic-bezier(` easing, three digits weight, colour plus digits shadow, else family), not by the foundation's DTCG `$type`. A `fontWeight` written as a name (`bold`) is read as a family and a computed `700` then breaks. Build Phase 5's foundation should write weights as numbers, or `verdict`'s input gains types.
+- **Watch out**: Tailwind v4 emits only the theme variables a page uses, and `generateCss({ tailwind: true })` maps `space.*` to `--spacing-*`. Check (a) reads every foundation token by its foundation name (`--space-3`) off `:root`; an unused token, or a renamed one, reads `(not set)` and breaks. Build Phase 5, restyling the admin, must either emit the foundation `:root` block beside the `@theme` or make `generateCss` write `@theme static`; the check cannot tell "app does not use this token" from "app lost it".
+- **Watch out**: the check exits 1 when it opened nothing (no approved mockup, or a changed foundation). Build Phase 4's watcher pass and dashboard should read that as "unchecked", not "held" or "broken"; the report emits no span for an unchecked state.
+- **Assumption**: an app's screens are reachable at `<url><path|/name>?state=<state>`; `screens.json` gained optional `url` and per-screen `path` (read by `readApp`, not hashed). The admin, which routes `/p/[project]/...`, will need `path` per screen in Build Phase 5.
+- **Assumption**: browser defaults are never breaks (a zero length, `normal`, `none`, `0s`, `ease`, a transparent colour, weight 400) and a border side whose width is 0 has no colour to check. An app that paints with the initial `ease` easing is therefore "held" with no easing token at all.
+- **Assumption**: look spans are filed under the one promise `tokens-are-held-exactly` with `indusk.look.{app,screen,state,device}`; `a-look-reports-like-any-promise` is the *reporting* promise and has no mark of its own. Build Phase 4's `promises/standing` reads looks by the `indusk.look.*` attributes on that promise's marks.
+- **Setup note**: `playwright-core` was added to `optionalDependencies` (1.59.1, same as `playwright`'s) and the lockfile; `pnpm add -O` excluded it on the first try ("failed compatibility check", a pnpm quirk with an importer the lockfile did not know), declaring it by hand and `pnpm install --offline --no-frozen-lockfile` linked it.
+- **Outside this phase**: `context-tiers-register.test.ts` A13 (root `CLAUDE.md` 20 % under budget) still fails as Build Phase 2 recorded.
+
 ### Build Phase 4: Looks in the cockpit
 
 **Tier**: strong — commits on `main` from the admin; a wrong approval holds an app to a design nobody chose
