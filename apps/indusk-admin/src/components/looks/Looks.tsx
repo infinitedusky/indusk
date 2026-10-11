@@ -7,6 +7,7 @@ import type {
 import { APPROVAL_STYLE } from "@/components/bars/labels";
 import { stamp } from "@/lib/stamp";
 import { ApproveMockup } from "./ApproveMockup";
+import { ApproveSelected } from "./ApproveSelected";
 
 /**
  * The Looks page's body (ui-promises ADR decisions 2, 3, 5): each app's
@@ -125,6 +126,13 @@ function AppSection({
       data-app={app.app}
     >
       <h2 className="text-base font-semibold text-gray-900">{app.app}</h2>
+      <ApproveSelected
+        project={project}
+        app={app.app}
+        foundationHash={app.foundationHash}
+        checkout={checkout}
+        proposed={app.mockups.filter((m) => m.approval === "proposed").length}
+      />
       <ul className="flex flex-col divide-y divide-gray-100 rounded border border-gray-200">
         {app.mockups.map((m) => (
           <MockupRow
@@ -225,6 +233,14 @@ function MockupRow({
       data-approval={mockup.approval}
       className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm"
     >
+      {mockup.approval === "proposed" ? (
+        <input
+          type="checkbox"
+          value={mockup.name}
+          data-select-mockup=""
+          aria-label={`Select ${mockup.name}`}
+        />
+      ) : null}
       <span className="font-medium text-gray-900">{mockup.name}</span>
       <span
         className={`rounded border px-1.5 text-xs ${APPROVAL_STYLE[mockup.approval]}`}

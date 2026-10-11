@@ -291,6 +291,70 @@ describe("A2 — approval happens in the checkout the plan is worked in, never t
   });
 });
 
+describe("A2 — group approval records one entry per mockup, each as the person", () => {
+  it("A2 only a proposed mockup has a checkbox; approving several records each bound to its own hash", async () => {
+    const html = await looksPage();
+    expect(rowOf(html, "home.full")).toContain("data-select-mockup");
+    expect(rowOf(html, "detail.default")).toContain("data-select-mockup");
+    expect(rowOf(html, "home.empty")).not.toContain("data-select-mockup");
+    expect(html).toContain('data-testid="approve-selected"');
+
+    const res = await approveRoute(
+      approveRequest({
+        project: PROJECT,
+        mockups: ["home.full", "detail.default"],
+        foundationHash: foundationHash(),
+      }),
+      demo,
+    );
+    expect(res.status, await res.clone().text()).toBe(200);
+    const body = (await res.json()) as {
+      results: Array<{ mockup: string; approved: boolean }>;
+    };
+    expect(body.results.map((r) => [r.mockup, r.approved])).toEqual([
+      ["home.full", true],
+      ["detail.default", true],
+    ]);
+
+    const entries = JSON.parse(readFileSync(join(root, RECORD), "utf-8"))
+      .approvals as Array<Record<string, string>>;
+    const mine = (name: string) =>
+      entries.filter((e) => e.mockup === name).at(-1);
+    expect(mine("home.full")).toMatchObject({
+      by: PERSON,
+      mockupHash: sha256(
+        join(root, ".indusk/mockups/demo/screens/home.full.html"),
+      ),
+    });
+    expect(mine("detail.default")).toMatchObject({
+      by: PERSON,
+      mockupHash: sha256(
+        join(root, ".indusk/mockups/demo/screens/detail.default.html"),
+      ),
+    });
+    expect(git("log", "--format=%s", "-2")).toMatch(/approved by/);
+  });
+
+  it("A2 one refused mockup does not undo the others, and is named", async () => {
+    const res = await approveRoute(
+      approveRequest({
+        project: PROJECT,
+        mockups: ["home.full", "nope"],
+        foundationHash: foundationHash(),
+      }),
+      demo,
+    );
+    expect(res.status).toBe(200);
+    const { results } = (await res.json()) as {
+      results: Array<{ mockup: string; approved: boolean; reason?: string }>;
+    };
+    expect(results.find((r) => r.mockup === "home.full")?.approved).toBe(true);
+    const refused = results.find((r) => r.mockup === "nope");
+    expect(refused?.approved).toBe(false);
+    expect(refused?.reason).toMatch(/no mockup/);
+  });
+});
+
 describe("A13 — an uncovered part shows uncovered, never held", () => {
   it("A13 detail (drawn, never approved) and badge (rendered, in no mockup) are listed under Uncovered", async () => {
     const html = await looksPage();

@@ -33,10 +33,18 @@ export async function POST(
   const body = (await request.json().catch(() => null)) as {
     project?: string;
     mockup?: string;
+    /** A group approval: each named mockup is approved on its own, in order. */
+    mockups?: string[];
     foundationHash?: string;
     checkout?: string | null;
   } | null;
-  if (!body?.project || !body.mockup || !body.foundationHash)
+  const names = body?.mockups ?? (body?.mockup ? [body.mockup] : []);
+  if (
+    !body?.project ||
+    !body.foundationHash ||
+    names.length === 0 ||
+    names.some((n) => typeof n !== "string" || n === "")
+  )
     return refuse(
       400,
       "an approval needs the project, the mockup and the foundation it was shown on",
@@ -51,15 +59,25 @@ export async function POST(
       404,
       `plan ${JSON.stringify(body.checkout)} has no worktree here that holds mockups`,
     );
-  const result = await approve(
-    checkout.root,
-    app,
-    body.mockup,
-    await approver(root),
-    {
-      foundationHash: body.foundationHash,
-    },
+  const by = await approver(root);
+  const results = [];
+  for (const mockup of names) {
+    results.push({
+      mockup,
+      ...(await approve(checkout.root, app, mockup, by, {
+        foundationHash: body.foundationHash,
+      })),
+    });
+  }
+  if (!body.mockups) {
+    const [only] = results;
+    if (!only?.approved) return refuse(409, only?.reason ?? "refused");
+    return Response.json({ entry: only.entry, commit: only.commit });
+  }
+  // A group approval answers for each mockup: one refused does not undo the
+  // ones recorded, and the page says which.
+  return Response.json(
+    { results },
+    { status: results.some((r) => r.approved) ? 200 : 409 },
   );
-  if (!result.approved) return refuse(409, result.reason);
-  return Response.json({ entry: result.entry, commit: result.commit });
 }
