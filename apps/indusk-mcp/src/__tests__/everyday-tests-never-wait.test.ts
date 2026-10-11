@@ -1,6 +1,6 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { glob } from "glob";
 import { describe, expect, it } from "vitest";
@@ -129,6 +129,23 @@ describe("everyday-tests-never-wait", () => {
 		const example = (await packages()).find((p) => p.dir === "examples/seat-holds");
 		expect(example, "examples/seat-holds is one of the packages the guard reads").toBeDefined();
 		if (example) expect(await everydayFiles(example)).toContain("src/seats.test.ts");
+	});
+
+	// promise: everyday-tests-never-wait, everyday-suite-stays-fast — ui-promises A25.
+	// A look check opens Chromium: it is a contract with the browser, so it lives in
+	// the system tier. The generic scan above reads for servers and waits, not for a
+	// browser, so this names the look checks' files directly.
+	it("a looks*.contract.test.ts file is in its package's system tier (ui-promises A25)", async () => {
+		const missing: string[] = [];
+		for (const pkg of await packages()) {
+			const root = join(REPO, pkg.dir);
+			const files = await glob("src/**/looks*.contract.test.ts", { cwd: root, nodir: true });
+			for (const f of files) if (!pkg.system.includes(f)) missing.push(join(pkg.dir, f));
+		}
+		expect(
+			missing.sort(),
+			`These look checks open a browser and are not in their package's vitest.tiers.ts SYSTEM (lesson: everyday-tests-never-wait):\n${missing.join("\n")}`,
+		).toEqual([]);
 	});
 
 	it("a process that runs and exits does not trip the guard (A15)", () => {
