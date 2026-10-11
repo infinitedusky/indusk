@@ -8,9 +8,18 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 - **The admin is the cockpit** (plan-cockpit): plans by Path, each plan's two workflows and the decision it waits on, the promise dashboard with broken promises first, and a page per promise with its proof and a fix. See [the decision](/decisions/plan-cockpit).
 
+### Fixed
+
+- **A browser click's trace reaches your API on another origin** (browser-telemetry-leftovers): name the origin in `VITE_OTEL_PROPAGATE_TO` / `NEXT_PUBLIC_OTEL_PROPAGATE_TO` (a `*` entry is a pattern) and the scaffolded browser instrumentation sends the click's `traceparent` there. The template instruments `XMLHttpRequest` as well as `fetch`, and `init` names the OpenTelemetry SDK for the Node and Python scaffolds too. The template also loads against `@opentelemetry/sdk-trace-web` 2.x and in a Vite page. `indusk init` no longer claims to write a vendor SDK, and prints the setting and the CORS requirement. Origin entries are compared as the browser spells them, an entry with no scheme (or a bare `*`) is ignored with a warning, and a request after a native `await` in a click handler is documented as outside the click's trace. The trajectory audit no longer counts a vendor's name (dash0, grafana) as a telemetry alert. See [OpenTelemetry](/reference/tools/otel).
+
 ### Changed
 
 - **The Promises panel reads in words** (display-names): promises show as "A break reaches the editor" rather than their handle, on cards, rows, the activity and the hover; plan groups are headed by the plan's title with "started …, landed …, released X.Y.Z (date)" or "not released yet". The marker at the end of a code line keeps the handle. See [Promises in your editor](/guide/promises-in-your-editor).
+
+### Fixed
+
+- **A limit refusal waits instead of breaking `every-commit-evaluated`** (evaluator-waits-out-limits): an evaluation the model refuses with `429` (rate limiting, or the weekly limit) is logged as `waiting`, queued in `eval/pending.jsonl`, and tried again by the next commit's trigger before its own; it is no longer a violation. An evaluator answer with no scorecard (a resumed session replying in prose) is asked once more in the same session for the scorecard alone. See [Getting started with eval](/guide/eval#when-the-model-is-not-reachable).
+- **The panel and the hover say a promise last broke when it last broke.** "Last broke" showed the time of the newest run of any outcome, in UTC, so a run that held read as a break. It is now the newest violation's time, carried on the health line as `lastBroke`, in your own time zone. See [Promises in your editor](/guide/promises-in-your-editor).
 
 ## [1.70.0] — 2026-10-10
 

@@ -183,3 +183,29 @@ describe("auditPlanAtClose returns combined findings", () => {
 		expect(result.deferred[0].warning).not.toBeNull();
 	});
 });
+
+describe("A8: a vendor's name is not instrumentation (browser-telemetry-leftovers)", () => {
+	it("A8: a mitigation naming only a vendor ('dash0') is not classified telemetry-alert", () => {
+		const body = withDeferred(`### Deferred Verification
+
+- **Dashboards**
+  - reason: nothing to assert against yet
+  - would require: a live backend
+  - mitigation: dashboards in dash0, reviewed by the on-call`);
+		const findings = auditDeferredMitigations(parseTrajectory(body));
+		expect(findings[0].kind).not.toBe("telemetry-alert");
+	});
+});
+
+describe("A12: a second vendor word is not instrumentation (browser-telemetry-leftovers)", () => {
+	it("A12: a mitigation naming only a vendor ('grafana') is not classified telemetry-alert", () => {
+		const body = withDeferred(`### Deferred Verification
+
+- **Dashboards**
+  - reason: nothing to assert against yet
+  - would require: a live backend
+  - mitigation: dashboards in grafana, reviewed by the on-call`);
+		const findings = auditDeferredMitigations(parseTrajectory(body));
+		expect(findings[0].kind).not.toBe("telemetry-alert");
+	});
+});

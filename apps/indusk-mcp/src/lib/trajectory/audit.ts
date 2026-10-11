@@ -19,7 +19,7 @@ export interface MitigationClassification {
 	warning: string | null;
 }
 
-const TELEMETRY_KEYWORDS = ["alert", "metric", "otel", "dash0", "grafana", "threshold"];
+const TELEMETRY_KEYWORDS = ["alert", "metric", "otel", "threshold"];
 const REVIEW_KEYWORDS = [
 	"weekly",
 	"monthly",

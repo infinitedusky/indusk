@@ -4,7 +4,7 @@ import { promiseOf, sourcesInOrder, stamp, stateIn, titleOf, type View } from ".
  * The hover on a marked line: the promise's sentence, its state for each
  * source, and when it last broke or was last seen (vscode-extension A4).
  */
-export function hover(promise: string, view: View | null): string {
+export function hover(promise: string, view: View | null, timeZone?: string): string {
 	if (!view) return `**${promise}** — not reading: no promise health has arrived yet.`;
 	const p = promiseOf(view, promise);
 	if (!p) return `**${promise}** — not in this project.`;
@@ -15,11 +15,15 @@ export function hover(promise: string, view: View | null): string {
 	}
 	for (const source of sourcesInOrder(view)) {
 		const { shown, row } = stateIn(source, promise);
-		const when = row?.lastSeen
-			? shown === "broken"
-				? `, last broke ${stamp(row.lastSeen)}`
-				: `, last seen ${stamp(row.lastSeen)}`
-			: "";
+		// "last broke" is the newest violation, never the newest run of any outcome.
+		const when =
+			shown === "broken"
+				? row?.lastBroke
+					? `, last broke ${stamp(row.lastBroke, timeZone)}`
+					: ""
+				: row?.lastSeen
+					? `, last seen ${stamp(row.lastSeen, timeZone)}`
+					: "";
 		const why = !source.ok
 			? ` — ${asText(source.reason)}`
 			: row?.symptom && shown === "broken"

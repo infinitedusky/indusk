@@ -2,7 +2,7 @@
 name: every-commit-evaluated
 kind: behaviour
 lifetime: holds
-state: known-violated
+state: enforced
 domain: gates
 owner: day-monitor
 sites:

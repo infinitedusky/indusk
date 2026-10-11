@@ -259,6 +259,9 @@ After instrumenting a service, verify:
 ### React SPA (Vite)
 - `import './instrumentation'` at the top of `main.tsx`
 - Browser env vars use `VITE_` prefix: `VITE_OTEL_EXPORTER_OTLP_ENDPOINT`
+- The browser template instruments `fetch` and `XMLHttpRequest` (axios); both send `traceparent` only to its own origin and to the origins or `*` patterns named in `VITE_OTEL_PROPAGATE_TO` / `NEXT_PUBLIC_OTEL_PROPAGATE_TO`; the named API must allow `traceparent` in its CORS settings (`Access-Control-Allow-Headers`), or the browser blocks the request
+- Entries are origins with a scheme (`https://api.example.com`, `https://*.dev.example.com`); one without is ignored with a console warning
+- A request after a native `await` in a click handler is in its own trace, not the click's — the browser cannot carry the click's context across it yet; make the request before the `await`, or accept the separate trace
 
 ### Python
 - Use `opentelemetry-instrument` CLI: `opentelemetry-instrument python your_app.py`
@@ -282,6 +285,7 @@ After instrumenting a service, verify:
 |----------|---------|
 | `VITE_OTEL_EXPORTER_OTLP_ENDPOINT` / `NEXT_PUBLIC_OTEL_EXPORTER_OTLP_ENDPOINT` | Backend URL |
 | `VITE_OTEL_EXPORTER_OTLP_HEADERS` / `NEXT_PUBLIC_OTEL_EXPORTER_OTLP_HEADERS` | Auth headers |
+| `VITE_OTEL_PROPAGATE_TO` / `NEXT_PUBLIC_OTEL_PROPAGATE_TO` | Other origins that receive the click's trace (comma-separated; `*` is a pattern) |
 
 ## During `/work`
 

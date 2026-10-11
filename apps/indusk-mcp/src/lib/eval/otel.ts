@@ -29,7 +29,7 @@ import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { evalDir } from "../bookkeeping/roots.js";
 import { markPromise } from "../promises/mark.js";
 import { liveOtlpEndpointSync } from "../telemetry/status.js";
-import type { EvalErrorEntry, EvalScorecard } from "./types.js";
+import type { EvalErrorEntry, EvalScorecard, EvalWaitingEntry } from "./types.js";
 
 const TRACER_NAME = "@infinitedusky/indusk-mcp/eval";
 const SERVICE_NAME = "indusk-eval-agent";
@@ -258,9 +258,12 @@ export const EVALUATION_PROMISE = "every-commit-evaluated";
  */
 export function markEvaluation(
 	span: Span,
-	result: EvalScorecard | EvalErrorEntry,
+	result: EvalScorecard | EvalErrorEntry | EvalWaitingEntry,
 	project: string,
 ): void {
+	// A commit the model refused for a limit waits to be evaluated; nothing
+	// was evaluated, so nothing is upheld or violated (a-limited-evaluation-waits).
+	if ("waiting" in result) return;
 	// Every project's evaluator marks this promise under one service name, so
 	// the mark names its project (`markProjectId`) or one project's failed
 	// evaluation would read as another's violation.

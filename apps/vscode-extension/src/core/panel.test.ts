@@ -29,6 +29,7 @@ function twoBreaks(): View {
 		promise: "seats-booked",
 		state: "red",
 		lastSeen: "2026-10-08T12:25:00.000Z",
+		lastBroke: "2026-10-08T12:25:00.000Z",
 		violations: 1,
 		symptom: "seat 2 freed after booking",
 		traceId: "t-b",
