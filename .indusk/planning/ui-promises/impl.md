@@ -475,7 +475,7 @@ An app's look is held by mockups a person approved: every visual value comes fro
 - **Watch out**: the contract page's dark override must be as specific as the generated `:root:not([data-theme="light"])` block — a plain `:root` inside the media query loses to it and the page reads held.
 - **Watch out**: opening the dark scheme found a short-written dark shadow read as broken; `canonShadowLayer` now pads blur and spread. Other hand-written dark values (colours in `hsl()`, named colours) have not been opened against the admin yet — the temp-copy run held only the two reported states.
 - **Assumption**: `ch` is not an allowed unit; it appears only in `max-width`, which is not held. When `looks-min-max-sizes` lands, decide whether a reading measure is a token or a relative unit like `%`.
-- **Outside this phase**: `context-tiers-register.test.ts` A13 (root `CLAUDE.md` 14,762 bytes against 14,745.6) still fails as Build Phase 2 recorded; `inbox.test.ts` A17's hour-dependent case was not run.
+- **Outside this phase**: `context-tiers-register.test.ts` A13 (root `CLAUDE.md` 14,762 bytes against 14,745.6) still fails as Build Phase 2 recorded; `inbox.test.ts` A17's hour-dependent case was not run. `indusk verify ui-promises --phase 6` rejects A23 and A26 (Build Phase 4's `dashboard-looks.test.tsx`): verify runs `npx vitest run <file>` at the repo root, where the root workspace runs a browser-project file in the forks pool (`vitest/browser can be imported only inside the Browser Mode`). The file passes in the admin (`pnpm exec vitest run dashboard-looks`, 5 passed) and neither it nor either config changed this phase; verify's command for a browser-project file is the gap, for a later plan.
 
 #### Build Phase 6 Summary of the hunt
 
