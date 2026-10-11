@@ -79,6 +79,8 @@ Every answer goes through `POST /api/plans/:name/decision`. The route reads what
 
 ### The recorded history
 
+
+An answer that reached its agent but could not be written to the history is reported as sent, with the reason it was not recorded; it is never reported as a failed answer, because a retry would send it twice. A review accepted once starts its release and the plan stops waiting on review; a second accept while the release runs is refused.
 Every answer that reached its target is recorded by `plans/history` as one dated line in `.indusk/plan-history/<plan>.md`:
 
 ```
