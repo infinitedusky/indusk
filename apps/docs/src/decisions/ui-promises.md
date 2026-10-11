@@ -114,8 +114,9 @@ pass every class in the admin.
    span per screen × state × device, held or broken, to the local telemetry
    daemon — the same plain-OTel mark promises use. The one health reader the
    admin and the editor share lists looks beside promises; a broken look is
-   counted and listed first. It runs at landing (the slow tier), on demand, and
-   on the admin's watcher pass when the app's URL answers.
+   counted and listed first. As built it runs on demand (`indusk looks check`);
+   running it at landing and on the admin's watcher pass was decided and not
+   wired — until it is, a drift is caught when someone runs the check.
 
 8. **All of it is one package module.** `lib/looks/` — foundation, mockups,
    approvals, coverage, verdict — exported as subpaths the CLI, the admin and
@@ -177,10 +178,12 @@ Rejected by the lock-in rule (research, "Tools, against lock-in").
 - **Tailwind's namespace reset misses a namespace** and a stock class compiles.
   Mitigation: the membership check in the running app catches the value
   regardless of where it came from.
-- **Declared screens drift from real routes.** Mitigation: the web extension
-  derives routes where it can and reports a route with no declared screen.
-- **The watcher pass costs too much on a large app.** Mitigation: it checks one
-  device per pass and rotates; landing checks them all.
+- **Declared screens drift from real routes.** Planned mitigation, not built:
+  the web extension derives routes and reports a route with no declared screen.
+  As built, coverage reads only the screens `screens.json` declares and the
+  components marked `data-component`; an undeclared route is not reported.
+- **The watcher pass costs too much on a large app** (when it is wired).
+  Mitigation: it checks one device per pass and rotates; landing checks them all.
 
 ## Documentation Plan
 
