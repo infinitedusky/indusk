@@ -253,7 +253,7 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/cli/looks.md`: `<indusk-component>`, `indusk-new-components`, story approvals, a changed component reopening its mockups
+- [x] `apps/docs/src/reference/cli/looks.md`: `<indusk-component>`, `indusk-new-components`, story approvals, a changed component reopening its mockups
 
 ### Build Phase 4: Components in the cockpit
 

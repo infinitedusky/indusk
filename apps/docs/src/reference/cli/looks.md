@@ -51,6 +51,9 @@ src/Badge.jsx:3  p-[13px]  arbitrary-class — arbitrary value in p-[13px] — u
 | `component-outside-file` | when one of those files is the component's own by name (`Badge.tsx` for `badge`), every other file's marker — `component markup outside its file: src/Page.tsx:5 badge`: a screen writing the element out instead of rendering the component |
 | `not-in-catalog` | a marked component the app's `components.json` omits (only when the app has a catalog) |
 | `no-story` | a `<indusk-component name state>` in a mockup naming a state the catalog lists no story for — `no story: badge.warn` |
+| `no-approved-story` | a `<indusk-component>` whose story has no snapshot, or one no person has approved as it is now — `no approved story: badge.warn`, at the reference's line |
+| `component-drawn-in-mockup` | a `data-component` element written in a mockup's source instead of placed by name — `component drawn in mockup: <file>:<line> badge` (only when the app has a catalog; a mockup `screens.json` lists as `uncomposed` is exempt) |
+| `needs-a-story` | a notice, never a failure: a component the mockup declares new (`indusk-new-components`) that has no story yet — `needs a story: pill` |
 
 **The properties held**: colour (`color`, `*-color`, `background`, `fill`,
 `stroke`, `outline`), `margin*`, `padding*`, `gap`, `border` and each side and
@@ -71,10 +74,43 @@ and a non-zero `px`, `rem`, `em`, `ms` or `s` do not, wherever they sit.
 A mockup is read as the browser reads it (`parse5`): its `<style>` elements
 and `style=""` attributes are its CSS, and a `<style>` inside a comment is not.
 
-Exit 1 on any finding, 0 on none. A missing app or an unreadable foundation
-exits 1 naming the file; it is never a clean app.
+Exit 1 on any finding, 0 on none; a notice is listed and fails nothing. A
+missing app or an unreadable foundation exits 1 naming the file; it is never a
+clean app.
 
 **Where each rule lives** (`src/lib/looks/`): the raw-value rule and the properties and units it holds in `lint-values`, the Tailwind class rules in `lint-classes`, the token checks (`undefined-token`, `undeclared-token`, `redefined-token`, `external-reference` in markup) and the orchestration in `lint`; a new rule gets a module of its own, not a place in `lint`.
+
+## Composed mockups
+
+A mockup shows a component by naming it, never by drawing it:
+
+```html
+<meta name="indusk-new-components" content="pill" />
+…
+<indusk-component name="badge" state="broken"></indusk-component>
+<span data-component="pill">New</span>
+```
+
+Before a mockup is linted, shown on the Looks page, hashed for approval or
+checked, `looks/compose` replaces each `<indusk-component name state>` with
+that story's snapshot (`components/<name>.<state>.html`, written by
+`indusk looks stories`); a missing `state` is `default`. So the component a
+person approved is what every mockup shows, and a changed component changes
+every mockup that places it. A mockup that names no component composes to its
+own bytes.
+
+The lint reads a composed mockup part by part: its source, located in its own
+file, and each snapshot it composes, located in the snapshot's, so a finding
+names a real line. A component drawn in a mockup's source is refused unless
+the mockup declares it new in `<meta name="indusk-new-components">` — the
+token rule (`indusk-new-tokens`) one level up — and a declared one is listed as
+needing a story until it has one. A reference to a component or state with no
+approved snapshot is refused.
+
+`screens.json` may list `uncomposed`: mockups drawn before composition existed,
+which still write their components out. They are exempt from `component drawn
+in mockup` until rewritten, and the list only shrinks (the admin's eleven are
+there until they are rewritten to compose their components).
 
 ## Approval
 
@@ -114,6 +150,37 @@ An approval binds **what the person was shown**: Approve sends the hash of the
 mockup the page drew and of the foundation it drew it on, and a mockup or a
 foundation that changed since — on disk between the page's read and the
 press — is refused, naming both hashes.
+
+### Stories, and the components a mockup binds
+
+A story is approved like a mockup, in the same record:
+
+```json
+{ "kind": "story", "story": "badge.ok", "snapshotHash": "e391c44c…",
+  "foundationHash": "7adb7cf5…", "declarationsHash": "18e6e58b…",
+  "by": "sandy", "at": "2026-10-12T09:00:00.000Z" }
+```
+
+It reads approved while an entry holds its snapshot's current hash on the
+foundation and declarations as they are; a snapshot re-rendered from a changed
+component reads proposed until a person approves it again.
+
+A mockup that composes components binds them twice. Its `mockupHash` is the
+hash of the **composed** mockup, so any change to what it shows reopens it.
+Its entry also carries `componentsHash` — the sha256 of the snapshot hashes it
+composes, one per story, sorted and joined by newline — and `components`, each
+story with the snapshot hash it was approved with. When a component changes,
+every approved mockup that composes it reads proposed and `status` names the
+component (`component changed: badge`); a mockup that does not use it stays
+approved. `components` only names what changed; the hashes decide. An entry
+without `componentsHash` binds no component and holds only a mockup that
+composes none, so approvals made before composition still stand.
+
+`approve` refuses a mockup that composes any story not approved as it is now,
+naming it — approve each story first — so approving a screen never approves a
+component nobody looked at on its own. The cockpit sends a story's snapshot
+hash (a story is refused without one) and a mockup's `componentsHash`, each
+refused when the checkout now holds another.
 
 ### Why `approve` is the cockpit's
 
@@ -164,12 +231,16 @@ app commits it beside its source (`apps/indusk-admin/src/app/foundation.generate
 
 ## `indusk looks status <app>`
 
-One line per mockup:
+One line per mockup, then one per story:
 
 ```
 detail.default  proposed  never approved
+home.default  proposed  component changed: badge — held to 81611821 (approved by sandy at 2026-10-12T09:00:00.000Z)
 home.empty  approved  by sandy at 2026-10-10T09:00:00.000Z
 home.full  proposed  held to 00000000 (approved by sandy at 2026-10-10T09:05:00.000Z)
+story badge.broken  proposed  never approved
+story badge.ok  proposed  changed since e391c44c (approved by sandy at 2026-10-12T09:00:00.000Z)
+story card.default  approved  by sandy at 2026-10-12T09:00:00.000Z
 ```
 
 A proposed mockup with an approved version names that version's first eight
@@ -180,7 +251,8 @@ app or an unreadable record exits 1 naming the file.
 
 ## `indusk looks coverage <app>`
 
-Every part of the UI needs an approved mockup. Coverage reads the screens and
+Every part of the UI needs an approved mockup or, for a component state, an
+approved story. Coverage reads the screens and
 states `screens.json` declares, and the `data-component="<name>"` attributes in
 the app's declared sources, and names what no approved mockup covers:
 
@@ -199,6 +271,7 @@ unresolved component: src/Dynamic.jsx:2
 | `unresolved component: <file>:<line>` | a source's `data-component={…}` is not a string literal, so no mockup can be said to cover it |
 | `not in catalog: <name>` | a marked component missing from `components.json` (an app with no catalog reports none) |
 | `no story: <name>.<state>` | a mockup places the state by name and the catalog lists no story for it |
+| `uncovered story: <name>.<state>` | the app has the story's snapshot and no person has approved it as it is now — a component state is covered by its approved story |
 
 Only a mockup approved as it is now covers anything, and only with an element
 that carries the name: a mockup is parsed as HTML, so `data-component="badge"`
