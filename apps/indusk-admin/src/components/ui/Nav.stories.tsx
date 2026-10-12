@@ -11,7 +11,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const rows = (
+const rows = (current: "promises" | "looks") => (
   <>
     <NavGroup label="Needs you" count={1} />
     <PlanRow
@@ -27,19 +27,28 @@ const rows = (
       name="mockup-matching"
       stage="Building · 2 of 5"
     />
-    <ViewLink icon="P" label="Promises" count={1} current />
-    <ViewLink icon="L" label="Looks" count={0} />
+    <ViewLink
+      icon="P"
+      label="Promises"
+      count={1}
+      current={current === "promises"}
+    />
+    <ViewLink icon="L" label="Looks" count={0} current={current === "looks"} />
   </>
 );
 
 export const Expanded: Story = {
-  args: { project: "dusk", summary: "9 plans", children: rows },
+  args: { project: "dusk", summary: "9 plans", children: rows("promises") },
+};
+// The Looks page's nav: the same frame with the Looks view the open one.
+export const LooksCurrent: Story = {
+  args: { project: "dusk", summary: "9 plans", children: rows("looks") },
 };
 export const Collapsed: Story = {
   args: {
     project: "dusk",
     summary: "9 plans",
     collapsed: true,
-    children: rows,
+    children: rows("promises"),
   },
 };

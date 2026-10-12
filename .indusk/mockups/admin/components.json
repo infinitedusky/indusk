@@ -414,6 +414,11 @@
 					"snapshotHash": "dda3c6d55b852604d7d81c84f0d9b5c85ffe73a7b9f2e375cf4853bb2d7381ae"
 				},
 				{
+					"name": "looks-current",
+					"id": "ui-nav--looks-current",
+					"snapshotHash": "bf08348712d80360e5a58802700462e521e629f479be49b0c756062859691659"
+				},
+				{
 					"name": "collapsed",
 					"id": "ui-nav--collapsed",
 					"snapshotHash": "fb43491fb8be6d85095bd3cf737a08a5fbc237e36c03081029fc1833b77b7a0d"
