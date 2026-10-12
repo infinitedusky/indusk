@@ -1,9 +1,6 @@
 import { cpSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import {
-	type PlanLifecycleProject,
-	planLifecycleProject,
-} from "./plan-lifecycle-fixture.js";
+import { type PlanLifecycleProject, planLifecycleProject } from "./plan-lifecycle-fixture.js";
 import { git } from "./test-git.js";
 
 /**

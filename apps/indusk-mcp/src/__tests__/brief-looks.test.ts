@@ -1,0 +1,52 @@
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { parseBriefContract } from "../lib/promises/brief-contract.js";
+import { type BriefAppProject, briefAppProject, briefOf, PLAN } from "./helpers/brief-app.js";
+import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+
+/**
+ * promise: a-brief-lists-its-looks — brief-as-the-contract A1, A3 (and the
+ * guards A2, A22: a brief that says why it has no looks, or was written
+ * before the section, is still approved when its plan touches no interface).
+ *
+ * A brief lists the looks it makes, changes, replaces or must not break, or
+ * says why it has none, and a plan that changes files under an app's interface
+ * with none listed is refused at approval. Through `indusk plans approve` over
+ * the `brief-app` fixture, and through the one reader of a brief's contract.
+ */
+
+let app: BriefAppProject;
+beforeEach(() => {
+	app = briefAppProject("brief-looks");
+});
+afterEach(() => app.cleanup());
+
+const out = (r: { stdout: string; stderr: string }) => `${r.stdout}\n${r.stderr}`;
+
+describe.skipIf(SHOULD_SKIP)("the Looks section at approval", () => {
+	it("A1 a plan that changes files under an app's interface, with no look and no reason, is refused naming what is missing", () => {
+		app.writePlan({ brief: "legacy", impl: "interface" });
+		const before = app.project.mainSha();
+
+		const r = runCli(app.trunk, ["plans", "approve", PLAN]);
+
+		expect(r.code, out(r)).not.toBe(0);
+		expect(out(r)).toContain("src/Card.jsx");
+		expect(out(r)).toMatch(/looks?/i);
+		expect(app.project.mainSha()).toBe(before);
+	});
+});
+
+describe("A3 a look is read as the list it is under", () => {
+	it("makes, must-not-break, changes and replaces each come back as what the brief put them under", () => {
+		const parsed = parseBriefContract(briefOf("looks-listed"));
+
+		expect(parsed.shape).toBe("contract");
+		expect(parsed).toHaveProperty("looks");
+		expect((parsed as { looks?: unknown }).looks).toMatchObject({
+			makes: [{ name: "home.full" }],
+			mustNotBreak: ["home.empty"],
+			changes: [{ name: "detail.default" }],
+			replaces: [{ old: "badge.old", by: "badge.ok" }],
+		});
+	});
+});
