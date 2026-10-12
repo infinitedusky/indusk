@@ -3,7 +3,6 @@
 	"sources": ["apps/indusk-admin/src"],
 	"ignore": ["nextjs-portal"],
 	"uncomposed": ["dashboard.default", "dashboard.empty", "looks.default", "looks.uncovered", "nav.collapsed", "nav.expanded", "plan.needs-you", "plan.released", "plan.working", "promise.broken", "promise.enforced"],
-	"uncatalogued": ["button", "decision-card", "device-choice", "device-frame", "look-row", "nav", "shell", "view-link"],
 	"screens": [
 		{ "name": "nav", "states": ["expanded", "collapsed"], "path": "/p/dusk/promises" },
 		{ "name": "dashboard", "states": ["default", "empty"], "path": "/p/dusk/promises" },
