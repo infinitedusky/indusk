@@ -84,6 +84,8 @@ interface ApproveBody {
     mockupHash?: string;
     componentsHash?: string;
   }>;
+  /** A group of stories, each with the snapshot hash the page showed, approved on its own, in order. */
+  stories?: Array<{ story?: string; snapshotHash?: string }>;
   /** `story`: a component's story, approved by the snapshot hash the page showed. */
   kind?: string;
   story?: string;
@@ -113,6 +115,15 @@ function requestsOf(body: ApproveBody): Request[] | null {
       },
     ];
   }
+  const stories = Array.isArray(body.stories) ? body.stories : [];
+  const storyRequests: Request[] = [];
+  for (const s of stories) {
+    if (!s.story || !s.snapshotHash) return null;
+    storyRequests.push({
+      name: s.story,
+      seen: { kind: "story", snapshotHash: s.snapshotHash, foundationHash },
+    });
+  }
   const shown = Array.isArray(body.mockups)
     ? body.mockups
     : body.mockup
@@ -124,8 +135,11 @@ function requestsOf(body: ApproveBody): Request[] | null {
           },
         ]
       : [];
-  if (shown.length === 0 || !shown.every(isShown)) return null;
-  return shown.map((m) => ({
+  // A group may be stories alone, mockups alone, or both: one request.
+  if (shown.length === 0)
+    return storyRequests.length > 0 ? storyRequests : null;
+  if (!shown.every(isShown)) return null;
+  const mockupRequests: Request[] = shown.map((m) => ({
     name: m.mockup,
     seen: {
       foundationHash,
@@ -133,6 +147,7 @@ function requestsOf(body: ApproveBody): Request[] | null {
       ...(m.componentsHash ? { componentsHash: m.componentsHash } : {}),
     },
   }));
+  return [...mockupRequests, ...storyRequests];
 }
 
 export async function POST(
@@ -171,7 +186,7 @@ export async function POST(
       ...(await approve(checkout.root, app, name, by, seen)),
     });
   }
-  if (!body.mockups) {
+  if (!body.mockups && !body.stories) {
     const [only] = results;
     if (!only?.approved) return refuse(409, only?.reason ?? "refused");
     return Response.json({ entry: only.entry, commit: only.commit });

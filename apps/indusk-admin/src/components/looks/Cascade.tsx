@@ -45,6 +45,16 @@ export function Cascade({
               data-approval={m.approval}
             >
               <header className="flex flex-wrap items-center gap-3 text-sm">
+                {m.approval === "proposed" ? (
+                  <input
+                    type="checkbox"
+                    value={m.name}
+                    data-select-mockup=""
+                    data-mockup-hash={m.hash}
+                    data-components-hash={m.componentsHash}
+                    aria-label={`Select ${m.name}`}
+                  />
+                ) : null}
                 <span className="font-medium text-ink">{m.name}</span>
                 <span
                   className={`rounded-md border px-tight text-xs ${APPROVAL_STYLE[m.approval]}`}
@@ -107,6 +117,15 @@ export function Cascade({
                   data-state={storyLabel(s)}
                 >
                   <header className="flex flex-wrap items-center gap-3 text-sm">
+                    {s.approval === "proposed" ? (
+                      <input
+                        type="checkbox"
+                        value={s.name}
+                        data-select-story=""
+                        data-snapshot-hash={s.hash}
+                        aria-label={`Select ${s.name}`}
+                      />
+                    ) : null}
                     <span className="text-ink">{s.state}</span>
                     <span
                       className={`rounded-md border px-tight text-xs ${APPROVAL_STYLE[s.approval]}`}

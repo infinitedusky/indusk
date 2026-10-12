@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/Button";
 import { postJson } from "@/lib/post-json";
 
 /**
- * Group approval (ui-promises, Build Phase 5): the checkboxes on an app's
- * proposed mockups, one select-all, and one Approve for the selection. It is
- * the same act as Approve on a single mockup — the route records one entry
- * per mockup, each as the person who clicked and each bound to that
- * mockup's own hash as the page drew it (each checkbox carries it in
- * `data-mockup-hash`) — only done for several at once.
+ * Group approval (ui-promises, Build Phase 5; stories added by
+ * storybook-components): the checkboxes on an app's proposed mockups and
+ * stories, one select-all, and one Approve for the selection. It is the same
+ * act as Approve on a single one — one entry per look, each as the person who
+ * clicked and each bound to that look's own hash as the page drew it
+ * (`data-mockup-hash`, `data-snapshot-hash`) — only done for several at once.
  *
  * The rows are the server's markup, so the selection lives in the checkboxes
  * themselves (`input[data-select-mockup]` inside this app's section): this
@@ -23,23 +23,37 @@ import { postJson } from "@/lib/post-json";
 function boxesOf(app: string): HTMLInputElement[] {
   return Array.from(
     document.querySelectorAll<HTMLInputElement>(
-      `[data-testid="looks-app"][data-app="${CSS.escape(app)}"] input[data-select-mockup]`,
+      `[data-testid="looks-app"][data-app="${CSS.escape(app)}"] input[data-select-mockup], [data-testid="looks-app"][data-app="${CSS.escape(app)}"] input[data-select-story]`,
     ),
   );
 }
 
-/** A mockup as the page drew it: its name and the hashes its checkbox carries. */
-interface Shown {
-  mockup: string;
-  mockupHash: string;
-  componentsHash: string;
-}
+/**
+ * A look as the page drew it: a mockup with the hashes its checkbox carries,
+ * or a story with its snapshot hash (`data-select-story`).
+ */
+type Shown =
+  | {
+      kind: "mockup";
+      mockup: string;
+      mockupHash: string;
+      componentsHash: string;
+    }
+  | { kind: "story"; story: string; snapshotHash: string };
 
-const shownBy = (box: HTMLInputElement): Shown => ({
-  mockup: box.value,
-  mockupHash: box.dataset.mockupHash ?? "",
-  componentsHash: box.dataset.componentsHash ?? "",
-});
+const shownBy = (box: HTMLInputElement): Shown =>
+  box.dataset.selectStory !== undefined
+    ? {
+        kind: "story",
+        story: box.value,
+        snapshotHash: box.dataset.snapshotHash ?? "",
+      }
+    : {
+        kind: "mockup",
+        mockup: box.value,
+        mockupHash: box.dataset.mockupHash ?? "",
+        componentsHash: box.dataset.componentsHash ?? "",
+      };
 
 interface GroupResult {
   mockup: string;
@@ -59,7 +73,7 @@ export function ApproveSelected({
   foundationHash: string;
   /** The plan whose worktree is shown; null for the project's own checkout. */
   checkout: string | null;
-  /** How many of the app's mockups are proposed — the ones that have a checkbox. */
+  /** How many of the drawn mockups and stories are proposed — the ones that have a checkbox. */
   proposed: number;
 }) {
   const [selected, setSelected] = useState<Shown[]>([]);
@@ -91,7 +105,27 @@ export function ApproveSelected({
     setProblem(null);
     const r = await postJson<{ results: GroupResult[] }>(
       `/api/looks/${encodeURIComponent(app)}/approve`,
-      { project, mockups: selected, foundationHash, checkout },
+      {
+        project,
+        mockups: selected.flatMap((x) =>
+          x.kind === "mockup"
+            ? [
+                {
+                  mockup: x.mockup,
+                  mockupHash: x.mockupHash,
+                  componentsHash: x.componentsHash,
+                },
+              ]
+            : [],
+        ),
+        stories: selected.flatMap((x) =>
+          x.kind === "story"
+            ? [{ story: x.story, snapshotHash: x.snapshotHash }]
+            : [],
+        ),
+        foundationHash,
+        checkout,
+      },
     );
     setBusy(false);
     const results = r.ok ? r.body.results : [];

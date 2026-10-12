@@ -146,6 +146,47 @@ describe("approving a story", () => {
     });
   });
 
+  it("approves a group of stories each on its own hash: one refused does not undo the ones recorded", async () => {
+    const shownHash = sha256(snapshot("badge.broken"));
+    const res = await approveRoute(
+      approveRequest({
+        project: PROJECT,
+        stories: [
+          { story: "badge.broken", snapshotHash: shownHash },
+          { story: "badge.ok", snapshotHash: "not-what-was-shown" },
+        ],
+        foundationHash: foundationHash(),
+      }),
+      demo,
+    );
+    expect(res.status).toBe(200);
+    const { results } = await res.json();
+    expect(
+      results.map((r: { mockup: string; approved: boolean }) => [
+        r.mockup,
+        r.approved,
+      ]),
+    ).toEqual([
+      ["badge.broken", true],
+      ["badge.ok", false],
+    ]);
+    const record = JSON.parse(readFileSync(join(root, RECORD), "utf-8"));
+    expect(record.approvals.at(-1)).toMatchObject({
+      kind: "story",
+      story: "badge.broken",
+      snapshotHash: shownHash,
+    });
+  });
+
+  it("offers a checkbox on each proposed story, carrying the snapshot hash it drew", async () => {
+    const html = await looksPage({ show: "components" });
+    const row = rowOf(html, "badge.broken");
+    expect(html.slice(html.indexOf(row))).toContain("data-select-story");
+    expect(html).toContain(
+      `data-snapshot-hash="${sha256(snapshot("badge.broken"))}"`,
+    );
+  });
+
   it("refuses a snapshot changed since the page showed it, and one sent without its hash", async () => {
     const shown = sha256(snapshot("badge.broken"));
     edit(snapshot("badge.broken"));

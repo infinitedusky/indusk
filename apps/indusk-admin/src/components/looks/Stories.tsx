@@ -117,6 +117,15 @@ function StoryRow({
       data-state={state}
       className="flex flex-wrap items-center gap-x-3 gap-y-1"
     >
+      {story.approval === "proposed" ? (
+        <input
+          type="checkbox"
+          value={story.name}
+          data-select-story=""
+          data-snapshot-hash={story.hash}
+          aria-label={`Select ${story.name}`}
+        />
+      ) : null}
       {story.id ? (
         <a
           href={hrefAt(story.name)}

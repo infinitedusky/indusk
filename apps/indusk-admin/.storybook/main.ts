@@ -11,7 +11,7 @@ import type { StorybookConfig } from "@storybook/nextjs-vite";
 const config: StorybookConfig = {
   framework: "@storybook/nextjs-vite",
   stories: ["../src/**/*.stories.tsx"],
-  addons: ["@storybook/addon-vitest", "@storybook/addon-themes"],
+  addons: ["@storybook/addon-vitest"],
   core: { disableTelemetry: true },
   features: { componentsManifest: true },
 };

@@ -257,6 +257,13 @@ function AppSection({
         data-app={app.app}
       >
         <h2 className="text-base font-semibold text-ink">{app.app}</h2>
+        <ApproveSelected
+          project={project}
+          app={app.app}
+          foundationHash={app.foundationHash}
+          checkout={checkout}
+          proposed={proposedIn(app, show)}
+        />
         <Cascade
           project={project}
           app={app}
@@ -293,33 +300,29 @@ function AppSection({
           >
             Looks
           </label>
+          <ApproveSelected
+            project={project}
+            app={app.app}
+            foundationHash={app.foundationHash}
+            checkout={checkout}
+            proposed={proposedIn(app, show)}
+          />
           {mockups ? (
-            <>
-              <ApproveSelected
-                project={project}
-                app={app.app}
-                foundationHash={app.foundationHash}
-                checkout={checkout}
-                proposed={
-                  app.mockups.filter((m) => m.approval === "proposed").length
-                }
-              />
-              <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
-                {app.mockups.map((m) => (
-                  <MockupRow
-                    key={m.name}
-                    app={app}
-                    mockup={m}
-                    path={path}
-                    checkout={checkout}
-                    show={show}
-                    current={
-                      opened?.name === m.name ? (device?.name ?? null) : null
-                    }
-                  />
-                ))}
-              </ul>
-            </>
+            <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
+              {app.mockups.map((m) => (
+                <MockupRow
+                  key={m.name}
+                  app={app}
+                  mockup={m}
+                  path={path}
+                  checkout={checkout}
+                  show={show}
+                  current={
+                    opened?.name === m.name ? (device?.name ?? null) : null
+                  }
+                />
+              ))}
+            </ul>
           ) : null}
           {components ? (
             <Components
@@ -480,6 +483,19 @@ function MockupRow({
       </span>
     </li>
   );
+}
+
+/** How many of the drawn looks await approval: the ones that carry a checkbox. */
+function proposedIn(app: AppLooks, show: Show): number {
+  const mockups =
+    show === "components"
+      ? 0
+      : app.mockups.filter((m) => m.approval === "proposed").length;
+  const stories =
+    show === "mockups"
+      ? 0
+      : app.stories.filter((s) => s.approval === "proposed").length;
+  return mockups + stories;
 }
 
 function Uncovered({ app, show }: { app: AppLooks; show: Show }) {

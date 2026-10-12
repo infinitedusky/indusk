@@ -40,6 +40,20 @@ function measure(frame: HTMLIFrameElement): {
   };
 }
 
+/** `match` leaves the scheme to the system, as the admin's own screens do. */
+type Theme = "match" | "light" | "dark";
+const THEMES: Array<[Theme, string]> = [
+  ["match", "Match UI"],
+  ["light", "Light"],
+  ["dark", "Dark"],
+];
+
+/** A story's address with the theme global; a mockup's document pinned to the scheme on its root. */
+const themedSrc = (src: string, theme: Theme) =>
+  theme === "match" ? src : `${src}&globals=theme:${theme}`;
+const themedDoc = (doc: string, theme: Theme) =>
+  theme === "match" ? doc : doc.replace("<html", `<html data-theme="${theme}"`);
+
 export function LookFrame({
   title,
   src,
@@ -60,6 +74,7 @@ export function LookFrame({
 }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [device, setDevice] = useState<string | null>(initialDevice);
+  const [theme, setTheme] = useState<Theme>("match");
   const [fitted, setFitted] = useState<{
     width: number;
     height: number;
@@ -175,13 +190,32 @@ export function LookFrame({
           </span>
         ) : null}
       </fieldset>
+      <fieldset className="flex flex-wrap items-center gap-2 text-xs">
+        <legend className="sr-only">Theme</legend>
+        {THEMES.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            data-testid="frame-theme"
+            data-theme-choice={value}
+            aria-pressed={theme === value}
+            onClick={() => {
+              setFitted(null);
+              setTheme(value);
+            }}
+            className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[pressed=true]:bg-dusk-wash"
+          >
+            {label}
+          </button>
+        ))}
+      </fieldset>
       <div className="max-w-full overflow-auto">
         <iframe
           ref={ref}
           data-testid={testId}
           title={title}
-          src={src}
-          srcDoc={srcDoc}
+          src={src === undefined ? undefined : themedSrc(src, theme)}
+          srcDoc={srcDoc === undefined ? undefined : themedDoc(srcDoc, theme)}
           sandbox={fits ? undefined : ""}
           width={width}
           height={height}
