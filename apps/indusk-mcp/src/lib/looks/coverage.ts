@@ -1,6 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { extname, relative } from "node:path";
-import { type ApprovalEntry, approvalOf } from "./approvals.js";
+import {
+	type ApprovalEntry,
+	approvalOf,
+	readStoryApprovals,
+	storyApprovalOf,
+} from "./approvals.js";
 import { catalogGaps, MARKER_PATTERN, MARKUP_EXTENSIONS } from "./components.js";
 import { elementsOf } from "./markup.js";
 import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
@@ -19,6 +24,12 @@ import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
  * A mockup changed since its approval reads proposed (`approvalOf`), so it
  * covers nothing until a person approves the change.
  *
+ * Components are covered by their stories (storybook-components ADR decision
+ * 8): each story the app has — every state a mockup shows that has a story,
+ * and every other state its component's stories render — is *uncovered* until
+ * a person approves it as its snapshot is now; a state a mockup shows with no
+ * story at all is `noStory`.
+ *
  * promise: every-part-of-the-ui-is-covered
  */
 
@@ -35,6 +46,8 @@ export interface Coverage {
 	notInCatalog: string[];
 	/** `<component>.<state>` a mockup places by name that the catalog lists no story for, sorted. */
 	noStory: string[];
+	/** `<component>.<state>` of each story not approved as its snapshot is now, sorted. */
+	stories: string[];
 }
 
 /** The `data-component` names in a source's markup: `data-component="badge"`, `'badge'` or `{"badge"}`. */
@@ -120,5 +133,16 @@ export async function coverageOf(
 		...(await uncoveredComponents(root, app, approved)),
 		notInCatalog: gaps.notInCatalog.map((c) => c.name).sort(),
 		noStory: [...new Set(gaps.noStory.map((r) => `${r.name}.${r.state}`))].sort(),
+		stories: uncoveredStories(app),
 	};
+}
+
+/** The stories no person has approved as their snapshots are now. */
+function uncoveredStories(app: LooksApp): string[] {
+	if (app.stories.length === 0) return [];
+	const approvals = readStoryApprovals(app);
+	return app.stories
+		.filter((s) => storyApprovalOf(app, s, approvals).state !== "approved")
+		.map((s) => s.name)
+		.sort();
 }

@@ -105,8 +105,9 @@ export async function looksStatus(projectRoot: string, appName: string): Promise
  * state: <screen>.<state>`, `uncovered component: <name>`, and `unresolved
  * component: <file>:<line>` for a name decided at run time; with a catalog,
  * `not in catalog: <name>` for a marked component it omits and `no story:
- * <name>.<state>` for a state a mockup places that no story covers. Exit 1
- * when any is listed, 0 when every part is covered.
+ * <name>.<state>` for a state a mockup places that no story covers; and
+ * `uncovered story: <name>.<state>` for a story no person has approved as it
+ * is. Exit 1 when any is listed, 0 when every part is covered.
  */
 export async function looksCoverage(projectRoot: string, appName: string): Promise<void> {
 	try {
@@ -119,13 +120,16 @@ export async function looksCoverage(projectRoot: string, appName: string): Promi
 			...c.unresolved.map((at) => `unresolved component: ${at}`),
 			...c.notInCatalog.map((n) => `not in catalog: ${n}`),
 			...c.noStory.map((n) => `no story: ${n}`),
+			...c.stories.map((n) => `uncovered story: ${n}`),
 		];
 		for (const line of lines) console.info(line);
 		if (lines.length > 0) {
 			console.error(`${lines.length} uncovered in ${appName}`);
 			process.exitCode = 1;
 		} else {
-			console.info(`${appName}: every screen, state and component covered by an approved mockup`);
+			console.info(
+				`${appName}: every screen, state and component covered by an approved mockup or story`,
+			);
 		}
 	} catch (err) {
 		console.error((err as Error).message);

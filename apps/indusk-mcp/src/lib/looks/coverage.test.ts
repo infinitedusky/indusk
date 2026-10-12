@@ -58,6 +58,7 @@ function appWith(
 		screens: [{ name: "home", states: ["empty"] }],
 		sources: ["src"],
 		ignore: [],
+		stories: [],
 		mockups: [
 			{
 				name: "home.empty",
