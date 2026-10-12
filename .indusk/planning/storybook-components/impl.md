@@ -470,6 +470,8 @@ The admin is built from components defined once, each with an approved story per
 
 - [x] Rebuild the promise page (broken and enforced) from the components, matching `promise.broken` and `promise.enforced`
 - [x] Rebuild the plan page (needs-you, working and released) from the components, matching `plan.needs-you`, `plan.working` and `plan.released`
+- [x] `indusk looks check` opens the app's stories several at a time: a run against the admin took six minutes, 342 of its 354 looks being static stories each opened in turn (discovered at the A20 live check)
+  - Done 2026-10-12: stories open eight at a time (`p-map`), screens one at a time; a look that times out is tried once more, then reported unchecked with the reason, and no longer ends the run (`openWithinTime`, `looks-check-timeout.test.ts`); a story is measured once its first element is drawn (`#storybook-root > *`), not when Storybook marks the body shown — measured then it was empty and held with nothing judged, so `rail-group.current` and `step.needs` held at a different few devices each run. A run against a production build of the admin: 162s (130s screens, 27s stories), down from about six minutes against `next dev`. The 30-second timeouts were `next dev` on a machine with its swap full; the check is run against a production build (`pnpm build && pnpm start -p 3941`) from here. Only-what-changed and one page load per look are a follow-on plan.
 - [ ] **Pause for a person**: Sandy opens each of the admin's screens beside its approved mockup at each reference device and records here whether they match (Deferred Verification U1)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 

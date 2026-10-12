@@ -1,3 +1,4 @@
+import pMap from "p-map";
 import type { Browser } from "playwright-core";
 import {
 	type ApprovalEntry,
@@ -354,6 +355,34 @@ export function checkableStories(
 	return { checked, unchecked };
 }
 
+/** A page that did not load, or a story that did not draw, within its time. */
+class LookTimedOut extends Error {}
+
+const isTimeout = (e: unknown): boolean =>
+	e instanceof LookTimedOut || (e instanceof Error && e.name === "TimeoutError");
+
+/**
+ * Open a look, trying again once when it runs out of time. A look that times
+ * out twice is the reason it was not checked, named — never the end of the
+ * run: one slow page used to throw away every look measured before it. Any
+ * other failure (a page that answers 404) still ends the run, loudly.
+ */
+export async function openWithinTime<T>(
+	open: () => Promise<T>,
+	tries = 2,
+): Promise<T | { timedOut: string }> {
+	for (let attempt = 1; ; attempt++) {
+		try {
+			return await open();
+		} catch (e) {
+			if (!isTimeout(e)) throw e;
+			if (attempt >= tries) {
+				return { timedOut: `timed out ${tries} times: ${(e as Error).message.split("\n")[0]}` };
+			}
+		}
+	}
+}
+
 async function measure(
 	browser: Browser,
 	device: Device,
@@ -378,7 +407,7 @@ async function measure(
 			try {
 				await page.waitForSelector(rendered, { timeout: 30_000 });
 			} catch {
-				throw new LooksCheckError(`${url} did not draw its story within 30s`);
+				throw new LookTimedOut(`${url} did not draw its story within 30s`);
 			}
 		}
 		return (await page.evaluate(script)) as Measured;
@@ -388,9 +417,19 @@ async function measure(
 }
 
 /**
+ * Stories open this many at a time: each is a static file in the served
+ * Storybook, so the app's own server does no rendering for it; in turn, a
+ * run over the admin's 342 story looks took six minutes. Screens stay one at
+ * a time — each is a render by the app's server.
+ */
+const STORIES_AT_ONCE = 8;
+
+/**
  * Open each story in the app's served Storybook at every device and scheme
- * and judge it. The script reads `#storybook-root` only, and waits for the
- * body to say the story has drawn.
+ * and judge it, in the stories' order. The script reads `#storybook-root`
+ * only, and waits for the story's first element: Storybook marks the body
+ * shown before React has drawn, and a story measured then is empty and holds
+ * with nothing judged.
  */
 async function checkStories(
 	browser: Browser,
@@ -406,23 +445,39 @@ async function checkStories(
 		app.ignore,
 		"#storybook-root",
 	);
-	for (const story of stories) {
-		for (const device of app.devices) {
-			for (const scheme of schemesOf(app)) {
-				const url = storyUrl(base, story.id, scheme);
-				const seen = await measure(browser, device, scheme, url, script, "body.sb-show-main");
-				const judged = judgeStory({
-					app: app.app,
-					story,
-					device: lookDevice(device.name, scheme),
-					scheme,
-					approved: approvedValues(app, scheme),
-					seen,
-				});
-				if ("result" in judged) results.push(judged.result);
-				else unchecked.push(judged.unchecked);
+	const opens = stories.flatMap((story) =>
+		app.devices.flatMap((device) => schemesOf(app).map((scheme) => ({ story, device, scheme }))),
+	);
+	const judgements = await pMap(
+		opens,
+		async ({ story, device, scheme }) => {
+			const url = storyUrl(base, story.id, scheme);
+			const seen = await openWithinTime(() =>
+				measure(browser, device, scheme, url, script, "#storybook-root > *"),
+			);
+			if ("timedOut" in seen) {
+				return {
+					unchecked: {
+						mockup: `story ${story.name}`,
+						device: lookDevice(device.name, scheme),
+						reason: seen.timedOut,
+					},
+				};
 			}
-		}
+			return judgeStory({
+				app: app.app,
+				story,
+				device: lookDevice(device.name, scheme),
+				scheme,
+				approved: approvedValues(app, scheme),
+				seen,
+			});
+		},
+		{ concurrency: STORIES_AT_ONCE },
+	);
+	for (const judged of judgements) {
+		if ("result" in judged) results.push(judged.result);
+		else unchecked.push(judged.unchecked);
 	}
 	return { results, unchecked };
 }
@@ -466,7 +521,15 @@ export async function checkApp(
 			for (const device of app.devices) {
 				for (const scheme of schemesOf(app)) {
 					const url = pageUrl(base, look.screen, look.path, look.state);
-					const seen = await measure(browser, device, scheme, url, script);
+					const seen = await openWithinTime(() => measure(browser, device, scheme, url, script));
+					if ("timedOut" in seen) {
+						unchecked.push({
+							mockup: `${look.screen}.${look.state}`,
+							device: lookDevice(device.name, scheme),
+							reason: seen.timedOut,
+						});
+						continue;
+					}
 					const judged = judgeLook({
 						app: app.app,
 						look,
