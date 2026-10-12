@@ -9,7 +9,7 @@ import { runCli } from "./cli.js";
  * the readers of its output.
  */
 
-const FIXTURE = join(__dirname, "..", "fixtures", "looks-app");
+const FIXTURES = join(__dirname, "..", "fixtures");
 export const MOCKUPS = ".indusk/mockups/demo";
 
 const roots: string[] = [];
@@ -19,11 +19,11 @@ export function removeApps(): void {
 	for (const r of roots.splice(0)) rmSync(r, { recursive: true, force: true });
 }
 
-/** A copy of the fixture app as a project of its own, so a case may change it. */
-export function app(): string {
+/** A copy of a fixture app (`looks-app` unless named) as a project of its own, so a case may change it. */
+export function app(fixture = "looks-app"): string {
 	const root = mkdtempSync(join(tmpdir(), "looks-cli-"));
 	roots.push(root);
-	cpSync(FIXTURE, root, { recursive: true });
+	cpSync(join(FIXTURES, fixture), root, { recursive: true });
 	mkdirSync(join(root, ".indusk"), { recursive: true });
 	writeFileSync(join(root, ".indusk/config.json"), JSON.stringify({ mode: "local" }));
 	return root;
