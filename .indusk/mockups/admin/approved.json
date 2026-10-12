@@ -2024,6 +2024,16 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T21:43:23.024Z"
+		},
+		{
+			"kind": "story",
+			"story": "chip.active",
+			"snapshotHash": "1499d36ae87f0decf0073fd1dce3aeb83a0506436ae6ef3e5a5ebe8c03ef2e79",
+			"stylesheetHash": "090fbf26c88aba8de609fc1ec0b32af47ecc440a768232e500244f814017a789",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T21:43:23.250Z"
 		}
 	]
 }
