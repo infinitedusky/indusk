@@ -218,6 +218,7 @@ const config = defineConfig({
 						{ text: "Display Names — promises in words, plans by title, with their dates", link: "/decisions/display-names" },
 						{ text: "Plan Cockpit — the admin as the promise dashboard, the promise page and the plan page", link: "/decisions/plan-cockpit" },
 						{ text: "UI Promises — mockups a person approves, held by value", link: "/decisions/ui-promises" },
+						{ text: "Storybook Components — each component once, a story per state", link: "/decisions/storybook-components" },
 						{ text: "Release Records Its Failures — the release as a declared step", link: "/decisions/release-records-its-failures" },
 						{ text: "Audit Step — a fresh reader before a plan closes", link: "/decisions/plan-review-subagent" },
 						{ text: "Admin Plan Authoring — plan to release from the admin", link: "/decisions/admin-plan-authoring" },

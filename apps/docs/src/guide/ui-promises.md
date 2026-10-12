@@ -37,8 +37,11 @@ resets Tailwind's stock palette, so a stock class has no value to compile to.
 
 A mockup is a plain HTML file, `screens/<screen>.<state>.html`, that loads only
 the generated tokens. The cockpit opens it at each of the app's reference
-devices. Components are marked `data-component="<name>"` in the mockup and in
-the app, so coverage can say which parts of the UI no approved mockup shows.
+devices. Components are marked `data-component="<name>"` in the app, once each,
+and a mockup places them by name rather than drawing them: components and their
+stories come first, then the mockups composed of them, so coverage can say which
+parts of the UI no approved mockup shows. See [Components and
+stories](/guide/components).
 
 ## Approval
 

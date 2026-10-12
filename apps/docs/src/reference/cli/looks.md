@@ -349,8 +349,9 @@ the page and first asks it two questions:
 - **Did it draw this state?** The page says which screen states it drew with
   `data-look-state` — a space-separated list of `<screen>.<state>` names, on
   `<html>` or on any element (several screens can share one page). A page that
-  does not name the state is `unchecked … — the page did not report state
-  <state>`, never held: a value check of a page that is not the state says
+  does not name the state is
+  `unchecked … — the page did not report state <state>`, never held: a value
+  check of a page that is not the state says
   nothing about the state. The cockpit reports `dashboard.default`,
   `dashboard.empty`, `looks.default` and `looks.uncovered`; its nav, promise
   and plan states are unchecked until it can.
