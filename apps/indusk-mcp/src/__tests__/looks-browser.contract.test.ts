@@ -3,7 +3,7 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { approve } from "../lib/looks/approvals.js";
+import { approve } from "../lib/looks/approve.js";
 import { generateCss } from "../lib/looks/foundation.js";
 import { readApp } from "../lib/looks/mockups.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";

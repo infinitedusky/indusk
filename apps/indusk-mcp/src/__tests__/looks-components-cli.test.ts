@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { approve, withdraw } from "../lib/looks/approvals.js";
+import { approve, withdraw } from "../lib/looks/approve.js";
 import { readApp } from "../lib/looks/mockups.js";
 import { readAppLooks } from "../lib/looks/overview.js";
 import {

@@ -2,7 +2,8 @@ import { cpSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
-import { approvalOf, approve, readApprovals, withdraw } from "./approvals.js";
+import { approvalOf, readApprovals } from "./approvals.js";
+import { approve, withdraw } from "./approve.js";
 import { LooksAppError, readApp } from "./mockups.js";
 
 /**
