@@ -475,6 +475,8 @@ async function approveMockup(
 			reason: `${app.app} has no mockup ${JSON.stringify(mockupName)} in ${checkout} — a mockup is approved as its checkout holds it`,
 		};
 	}
+	const missing = componentsHashMissing(mockup, seen);
+	if (missing) return { approved: false, reason: missing };
 	const stale = mockupNotShown(checkout, mockup, seen);
 	if (stale) return { approved: false, reason: stale };
 	return appended(checkout, app, `${mockup.name} approved by ${by}`, (record) => {
@@ -547,6 +549,25 @@ async function approveStory(
 			},
 		};
 	});
+}
+
+/**
+ * Why an Approve of a mockup cannot bind what the person saw, or null when it
+ * can: a mockup that composes components is approved only with the
+ * `componentsHash` the page showed. Its components' stylesheets are inlined
+ * into the document the person sees but are outside `mockupHash`, so without
+ * it a stylesheet changed since the page was drawn would be approved unseen
+ * (Build Phase 9, A34). A mockup that composes none approves on `mockupHash`
+ * alone. The route asks this before it approves anything, so a group with one
+ * such mockup is refused whole.
+ */
+export function componentsHashMissing(
+	mockup: Pick<Mockup, "name" | "uses">,
+	seen: Seen,
+): string | null {
+	if (seen.kind === "story" || mockup.uses.length === 0) return null;
+	if (typeof seen.componentsHash === "string" && seen.componentsHash !== "") return null;
+	return `${mockup.name} composes components and was sent without the componentsHash it was shown at — their stylesheets are outside mockupHash; open the mockup again and approve what it shows`;
 }
 
 /** Why a mockup is not what the person was shown, or null when it is. */
