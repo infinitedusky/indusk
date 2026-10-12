@@ -190,3 +190,17 @@ Each entry is a rule and a pointer; the pointer holds the story.
   its `componentsHash`, through the one approve route. Guarded by
   `looks-components.contract.test.ts` (A18) and `looks-components.test.tsx`.
   — see `/decisions/storybook-components`
+- **A new admin screen's mockup composes existing components and declares
+  any new one; a composed component must draw as its story does**: a mockup
+  places a component by `<indusk-component name state>` and draws none of its
+  markup (`component drawn in mockup`), declares a new one and gets a story, and
+  changing a component's markup or style reopens every mockup that uses it.
+  A component's styles are generated per component into
+  `.indusk/mockups/admin/components/<name>.css` and are **unlayered** — a
+  mockup's own page styles are, and an unlayered rule beats a layered one — so
+  never hand-edit one and never rewrite the generator to layer. A person's
+  Unapprove takes an approval back; an agent's is refused. Guarded by
+  `looks-components-cli.test.ts` (A8, A9, A25–A28) and
+  `composition.contract.test.ts` (A30, which compares a composed component with
+  its story and cannot see a defect inside the component). — see
+  `/guide/components`
