@@ -1,7 +1,7 @@
 ---
 title: "Brief as the contract — looks in the brief, approval of the brief, amendments, the plan page's parts, a plan that starts as a conversation"
 date: 2026-10-12
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -88,7 +88,8 @@ A person works on one document, the brief — promises, expectations and looks �
 
 **Goal**: author every test that can honestly be authored against today's `indusk` commands and components, and record every test whose subject does not exist yet.
 
-- [ ] Confirm this plan's worktree (`indusk plans start` made it; `indusk worktree list` shows `brief-as-the-contract`) — worktree-per-plan default, no `worktree: none` in the frontmatter
+- [x] Confirm this plan's worktree (`indusk plans start` made it; `indusk worktree list` shows `brief-as-the-contract`) — worktree-per-plan default, no `worktree: none` in the frontmatter
+  - Note: `indusk worktree list` refuses outside a workbench; `git worktree list` shows `/Users/the_dusky/code/sandbox/dusk-worktrees/brief-as-the-contract` on `plan/brief-as-the-contract`, and the frontmatter has no `worktree: none`.
 - [ ] `apps/indusk-mcp/src/__tests__/fixtures/brief-app/`: a git project with an app's `.indusk/mockups/demo/` (`screens.json` with `sources`, one approved and one proposed mockup), a plan folder whose impl names a file under those sources in `Files Affected`, and briefs in the three shapes (looks listed, `None — {reason}`, no section)
 - [ ] Author A1, A3, A4, A8, A9, A11, A12 and A18 against the fixture and the existing components, each failing on its own assertion (a refusal that is not given, a field that is not there, a form that asks for a name)
 - [ ] Author A2, A6, A14, A22 and A23, which pass today and are the regression guards
