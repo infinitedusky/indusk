@@ -98,7 +98,7 @@ The admin is built from components defined once, each with an approved story per
 - [x] A2 in `apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts`: `indusk looks coverage admin` at the repo root prints no `unimplemented component:` line. RED today: the line does not exist, so the assertion that each of the nineteen has an implementation fails on the ten unmarked
 - [x] A5 and A13 in `apps/indusk-admin/src/__tests__/storybook.contract.test.ts`, listed in the admin's `vitest.tiers.ts` `SYSTEM`: A5 runs the admin's `storybook` vitest project and expects exit 0 with at least one story; A13 runs `indusk looks stories admin` and reads `.indusk/mockups/admin/components.json` for `badge` with its properties and states. RED today: no `storybook` project, no `stories` command
 - [x] A21: a case in `everyday-tests-never-wait.test.ts` that fails unless the admin's `vitest.tiers.ts` lists a `storybook` project in the system tier and no everyday project includes `*.stories.*`. RED today: no such project
-- [ ] A22, A23, A24: confirm `cockpit-phone.test.tsx`, `dashboard.test.tsx` and `looks-admin-foundation.test.ts` pass unchanged (Regression Guards)
+- [x] A22, A23, A24: confirm `cockpit-phone.test.tsx`, `dashboard.test.tsx` and `looks-admin-foundation.test.ts` pass unchanged (Regression Guards)
 - [ ] Confirm each red test fails on its own assertion rather than on a missing import
 
 #### Deferred to Build Phase 2
