@@ -700,6 +700,43 @@
 					"dark": "0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25)"
 				}
 			}
+		},
+		"ring": {
+			"$value": [
+				{
+					"color": {
+						"colorSpace": "srgb",
+						"components": [
+							0.984,
+							0.933,
+							0.878
+						],
+						"hex": "#fbeee0"
+					},
+					"offsetX": {
+						"value": 0,
+						"unit": "px"
+					},
+					"offsetY": {
+						"value": 0,
+						"unit": "px"
+					},
+					"blur": {
+						"value": 0,
+						"unit": "px"
+					},
+					"spread": {
+						"value": 4,
+						"unit": "px"
+					}
+				}
+			],
+			"$description": "The ring around a step that needs a person: dusk-wash, space-1 wide.",
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "0 0 0 4px #3a2614"
+				}
+			}
 		}
 	},
 	"duration": {

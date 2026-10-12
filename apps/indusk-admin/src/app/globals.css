@@ -177,7 +177,7 @@ body {
 /* A step that needs a person: a ring of the dusk wash round its node, which
    Tailwind's shadow utility would compose with ring layers it does not hold. */
 .halo {
-  box-shadow: 0 0 0 var(--space-1) var(--color-dusk-wash);
+  box-shadow: var(--shadow-ring);
 }
 
 /* Column lists over the foundation's sizes: Tailwind has no class that names

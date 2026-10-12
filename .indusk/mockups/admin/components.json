@@ -648,7 +648,7 @@
 				}
 			],
 			"stylesheet": "components/rail-group.css",
-			"stylesheetHash": "cf4dd62942135d955716197570da2eca6758b3ce77ee47f51f47fca2ea664ad4"
+			"stylesheetHash": "4b903290cb06d70c76454beeeafe3c195d7aabb93b73cf6e713b2d98fb2bf004"
 		},
 		{
 			"name": "shell",
@@ -799,7 +799,7 @@
 				}
 			],
 			"stylesheet": "components/step.css",
-			"stylesheetHash": "bb8912a9f1d86fe121337ce24fabfc04c51cea993b505551503a24dc2d1c121e"
+			"stylesheetHash": "347e90168a0eb8c6156fb94246690a466d81ed73cf0fb3674c31d1a5cad1c7de"
 		},
 		{
 			"name": "summary-bar",
