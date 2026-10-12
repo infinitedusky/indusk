@@ -70,6 +70,71 @@ const isShown = (m: unknown): m is Shown =>
   typeof (m as Shown).mockupHash === "string" &&
   (m as Shown).mockupHash !== "";
 
+/** The request body: what the page showed the person, and where. */
+interface ApproveBody {
+  project?: string;
+  mockup?: string;
+  /** The hash of the mockup the page showed (A30). */
+  mockupHash?: string;
+  /** The snapshots the mockup composed, as the page showed them. */
+  componentsHash?: string;
+  /** A group approval: each mockup with the hash the page showed, approved on its own, in order. */
+  mockups?: Array<{
+    mockup?: string;
+    mockupHash?: string;
+    componentsHash?: string;
+  }>;
+  /** `story`: a component's story, approved by the snapshot hash the page showed. */
+  kind?: string;
+  story?: string;
+  snapshotHash?: string;
+  foundationHash?: string;
+  checkout?: string | null;
+}
+
+/**
+ * What the page showed, as the list `approve` is called with, or null when
+ * the body does not name everything an approval binds: the foundation, and
+ * for each mockup the hash it was shown at (a story: its snapshot's).
+ */
+function requestsOf(body: ApproveBody): Request[] | null {
+  const { foundationHash } = body;
+  if (!foundationHash) return null;
+  if (body.kind === "story") {
+    if (!body.story || !body.snapshotHash) return null;
+    return [
+      {
+        name: body.story,
+        seen: {
+          kind: "story",
+          snapshotHash: body.snapshotHash,
+          foundationHash,
+        },
+      },
+    ];
+  }
+  const shown = Array.isArray(body.mockups)
+    ? body.mockups
+    : body.mockup
+      ? [
+          {
+            mockup: body.mockup,
+            mockupHash: body.mockupHash,
+            componentsHash: body.componentsHash,
+          },
+        ]
+      : [];
+  if (shown.length === 0 || !shown.every(isShown)) return null;
+  return shown.map((m) => ({
+    name: m.mockup,
+    seen: {
+      foundationHash,
+      mockupHash: m.mockupHash,
+      ...(m.componentsHash ? { componentsHash: m.componentsHash } : {}),
+    },
+  }));
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ app: string }> },
@@ -79,50 +144,12 @@ export async function POST(
     fromTheBrowser(request);
   if (refused) return refused;
   const { app } = await params;
-  const body = (await request.json().catch(() => null)) as {
-    project?: string;
-    mockup?: string;
-    /** The hash of the mockup the page showed (A30). */
-    mockupHash?: string;
-    /** The snapshots the mockup composed, as the page showed them. */
-    componentsHash?: string;
-    /** A group approval: each mockup with the hash the page showed, approved on its own, in order. */
-    mockups?: Array<{
-      mockup?: string;
-      mockupHash?: string;
-      componentsHash?: string;
-    }>;
-    /** `story`: a component's story, approved by the snapshot hash the page showed. */
-    kind?: string;
-    story?: string;
-    snapshotHash?: string;
-    foundationHash?: string;
-    checkout?: string | null;
-  } | null;
-  const isStory = body?.kind === "story";
-  const shown = isStory
-    ? []
-    : Array.isArray(body?.mockups)
-      ? body.mockups
-      : body?.mockup
-        ? [
-            {
-              mockup: body.mockup,
-              mockupHash: body.mockupHash,
-              componentsHash: body.componentsHash,
-            },
-          ]
-        : [];
-  if (
-    !body?.project ||
-    !body.foundationHash ||
-    (isStory
-      ? !body.story || !body.snapshotHash
-      : shown.length === 0 || shown.some((m) => !isShown(m)))
-  )
+  const body = (await request.json().catch(() => null)) as ApproveBody | null;
+  const requests = body?.project ? requestsOf(body) : null;
+  if (!body?.project || !requests)
     return refuse(
       400,
-      isStory
+      body?.kind === "story"
         ? "a story's approval needs the project, the story, the snapshot hash it was shown at, and the foundation it was shown on"
         : "an approval needs the project, each mockup with the hash it was shown at, and the foundation it was shown on",
     );
@@ -137,25 +164,6 @@ export async function POST(
       `plan ${JSON.stringify(body.checkout)} has no worktree here that holds mockups`,
     );
   const by = await approver(root);
-  const requests: Request[] = isStory
-    ? [
-        {
-          name: body.story as string,
-          seen: {
-            kind: "story",
-            snapshotHash: body.snapshotHash as string,
-            foundationHash: body.foundationHash,
-          },
-        },
-      ]
-    : (shown as Shown[]).map((m) => ({
-        name: m.mockup,
-        seen: {
-          foundationHash: body.foundationHash,
-          mockupHash: m.mockupHash,
-          ...(m.componentsHash ? { componentsHash: m.componentsHash } : {}),
-        },
-      }));
   const results = [];
   for (const { name, seen } of requests) {
     results.push({
