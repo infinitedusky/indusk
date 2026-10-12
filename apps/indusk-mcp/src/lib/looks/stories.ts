@@ -1,5 +1,4 @@
 import { execFile } from "node:child_process";
-import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -9,12 +8,11 @@ import {
 	CATALOG_FILE,
 	type Catalog,
 	type CatalogComponent,
-	type CatalogProperty,
 	isImplementationFile,
 	scanComponents,
 } from "./components.js";
-import { elementsOf } from "./markup.js";
 import { appSourceFiles, type LooksApp, LooksAppError, readApp } from "./mockups.js";
+import { buildCatalog, manifestIndex, snapshotBytes } from "./stories-catalog.js";
 
 /**
  * The render step (storybook-components ADR decision 3): every story of an
@@ -49,8 +47,6 @@ export interface StoriesResult {
 	/** Snapshot files that no story renders any more, removed. */
 	removed: string[];
 }
-
-const sha256 = (bytes: Buffer | string) => createHash("sha256").update(bytes).digest("hex");
 
 /** The environment of a child that must not believe it is inside the test run that started it. */
 function childEnv(): NodeJS.ProcessEnv {
@@ -148,47 +144,6 @@ async function manifestOf(root: string, app: LooksApp, appDir: string): Promise<
 	return JSON.parse(readFileSync(manifest, "utf-8"));
 }
 
-interface ManifestComponent {
-	reactDocgen?: {
-		props?: Record<
-			string,
-			{
-				required?: boolean;
-				tsType?: { name?: string; raw?: string };
-				description?: string;
-				defaultValue?: { value?: string };
-			}
-		>;
-	};
-	stories?: Array<{ id: string }>;
-}
-
-/** Each story id's component properties and its place among the component's stories. */
-function manifestIndex(manifest: unknown): {
-	properties: Map<string, CatalogProperty[]>;
-	order: Map<string, number>;
-} {
-	const properties = new Map<string, CatalogProperty[]>();
-	const order = new Map<string, number>();
-	const components = (manifest as { components?: Record<string, ManifestComponent> }).components;
-	for (const component of Object.values(components ?? {})) {
-		const props: CatalogProperty[] = Object.entries(component.reactDocgen?.props ?? {}).map(
-			([name, p]) => ({
-				name,
-				type: p.tsType?.raw ?? p.tsType?.name ?? "unknown",
-				...(p.required === undefined ? {} : { required: p.required }),
-				...(p.defaultValue?.value === undefined ? {} : { defaultValue: p.defaultValue.value }),
-				...(p.description ? { description: p.description } : {}),
-			}),
-		);
-		(component.stories ?? []).forEach((story, i) => {
-			properties.set(story.id, props);
-			order.set(story.id, i);
-		});
-	}
-	return { properties, order };
-}
-
 /** The generated Vitest config: the app's stories through the addon-vitest plugin, in Chromium. */
 function vitestConfig(appDir: string, cacheDir: string, mainFile: string): string {
 	return `import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
@@ -248,8 +203,12 @@ export default {
 `;
 }
 
-/** Run every story through the app's Vitest; the markup each rendered, by story id. */
-async function renderAll(appDir: string): Promise<Map<string, string>> {
+/**
+ * Write the generated runner into the app's cache directory — a Vitest config,
+ * and a Storybook `main` and `preview` that wrap the app's own — and return
+ * the directory the stories' markup lands in.
+ */
+function writeRunConfig(appDir: string): { cacheDir: string; outDir: string } {
 	const cacheDir = join(appDir, CACHE);
 	const outDir = join(cacheDir, "out");
 	const mainFile = firstExisting(join(appDir, ".storybook"), MAIN_FILES);
@@ -264,6 +223,12 @@ async function renderAll(appDir: string): Promise<Map<string, string>> {
 		join(cacheDir, ".storybook", "preview.ts"),
 		storybookPreview(outDir, firstExisting(join(appDir, ".storybook"), PREVIEW_FILES)),
 	);
+	return { cacheDir, outDir };
+}
+
+/** Run every story through the app's Vitest; the markup each rendered, by story id. */
+async function renderAll(appDir: string): Promise<Map<string, string>> {
+	const { cacheDir, outDir } = writeRunConfig(appDir);
 
 	const vitest = join(
 		dirname(createRequire(join(appDir, "package.json")).resolve("vitest/package.json")),
@@ -303,10 +268,6 @@ async function renderAll(appDir: string): Promise<Map<string, string>> {
 	return rendered;
 }
 
-/** The first `data-component` a rendered story's markup carries: the component it is a story of. */
-const componentOf = (html: string): string | undefined =>
-	elementsOf(html).find((el) => el.attrs["data-component"])?.attrs["data-component"];
-
 /**
  * Render every story of `appName`, write each state's snapshot under
  * `.indusk/mockups/<app>/components/` and the catalog beside the mockups.
@@ -334,47 +295,20 @@ export async function renderStories(root: string, appName: string): Promise<Stor
 	if (rendered.size === 0) throw new LooksAppError(`${appName} has no stories to render`);
 
 	const snapshotsDir = join(app.dir, SNAPSHOTS_DIR);
-	const byComponent = new Map<string, CatalogComponent>();
-	const writes = new Map<string, { story: string; html: string }>();
-	for (const [id, html] of [...rendered].sort(([a], [b]) => a.localeCompare(b))) {
-		const name = componentOf(html);
-		if (name === undefined) {
-			throw new LooksAppError(
-				`story ${id} renders no data-component element — mark the component's root element, so its snapshot names it`,
-			);
-		}
-		const file = scan.components.get(name)?.[0]?.file;
-		if (file === undefined) {
-			throw new LooksAppError(
-				`story ${id} renders component "${name}", which no file under ${app.sources.join(", ")} marks`,
-			);
-		}
-		const state = id.includes("--") ? id.slice(id.indexOf("--") + 2) : id;
-		const key = `${name}.${state}`;
-		const clash = writes.get(key);
-		if (clash) {
-			throw new LooksAppError(
-				`stories ${clash.story} and ${id} both render ${key} — one story per state`,
-			);
-		}
-		writes.set(key, { story: id, html });
-		const component = byComponent.get(name) ?? {
-			name,
-			file,
-			properties: properties.get(id) ?? [],
-			states: [],
-		};
-		const snapshot = `${html}\n`;
-		component.states.push({ name: state, snapshotHash: sha256(snapshot) });
-		byComponent.set(name, component);
-	}
+	const { components, writes } = buildCatalog({
+		rendered,
+		files: new Map([...scan.components].map(([name, files]) => [name, files[0]?.file ?? ""])),
+		sources: app.sources,
+		properties,
+		order,
+	});
 
 	mkdirSync(snapshotsDir, { recursive: true });
 	const keep = new Set<string>();
 	const snapshots: string[] = [];
-	for (const [key, { html }] of writes) {
+	for (const [key, html] of writes) {
 		const file = join(snapshotsDir, `${key}.html`);
-		writeFileSync(file, `${html}\n`);
+		writeFileSync(file, snapshotBytes(html));
 		keep.add(`${key}.html`);
 		snapshots.push(relative(root, file));
 	}
@@ -386,13 +320,6 @@ export async function renderStories(root: string, appName: string): Promise<Stor
 		}
 	}
 
-	const components = [...byComponent.values()].sort((a, b) => a.name.localeCompare(b.name));
-	// A component's states in the order its stories are written.
-	for (const c of components) {
-		const place = (state: string) =>
-			order.get(writes.get(`${c.name}.${state}`)?.story ?? "") ?? Number.MAX_SAFE_INTEGER;
-		c.states.sort((a, b) => place(a.name) - place(b.name) || a.name.localeCompare(b.name));
-	}
 	const catalog: Catalog = { components };
 	writeFileSync(join(app.dir, CATALOG_FILE), `${JSON.stringify(catalog, null, "\t")}\n`);
 	return { components, snapshots, removed };

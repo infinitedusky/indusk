@@ -50,6 +50,16 @@ function childEnv(): NodeJS.ProcessEnv {
   return env;
 }
 
+/** `indusk looks stories admin`, as a process, with no server running. */
+function renderStories() {
+  return spawnSync("node", [CLI, "looks", "stories", "admin"], {
+    cwd: REPO,
+    encoding: "utf-8",
+    env: childEnv(),
+    timeout: 280_000,
+  });
+}
+
 describe("Storybook in the admin", () => {
   // A5
   it("A5 every story renders its component in a real browser without an error", () => {
@@ -78,12 +88,7 @@ describe("Storybook in the admin", () => {
 
   // A13
   it("A13 the catalog lists the Badge.tsx component with its properties and each state that has a story, read with no server", () => {
-    const run = spawnSync("node", [CLI, "looks", "stories", "admin"], {
-      cwd: REPO,
-      encoding: "utf-8",
-      env: childEnv(),
-      timeout: 280_000,
-    });
+    const run = renderStories();
     expect(
       run.status,
       `indusk looks stories admin must exit 0:\n${run.stdout}\n${run.stderr}`,
@@ -130,13 +135,7 @@ describe("Storybook in the admin", () => {
 
   // A6
   it("A6 a changed component changes its snapshot with no edit to the story", () => {
-    const render = () =>
-      spawnSync("node", [CLI, "looks", "stories", "admin"], {
-        cwd: REPO,
-        encoding: "utf-8",
-        env: childEnv(),
-        timeout: 280_000,
-      });
+    const render = renderStories;
     const component = join(
       REPO,
       "apps/indusk-admin/src/components/ui/Badge.tsx",
