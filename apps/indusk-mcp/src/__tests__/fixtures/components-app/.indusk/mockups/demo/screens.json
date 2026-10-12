@@ -1,0 +1,7 @@
+{
+	"screens": [
+		{ "name": "home", "states": ["default", "empty", "new", "missing"] },
+		{ "name": "detail", "states": ["default"] }
+	],
+	"sources": ["src"]
+}
