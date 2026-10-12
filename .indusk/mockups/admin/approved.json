@@ -1357,6 +1357,15 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T20:07:01.599Z"
+		},
+		{
+			"kind": "story",
+			"story": "chip.planned",
+			"snapshotHash": "3fe7d83f647d3e4eca124d5e6bac99b55870cfcc1ebf33fdd6ff70c80449a372",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T20:07:01.747Z"
 		}
 	]
 }
