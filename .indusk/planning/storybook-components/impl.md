@@ -14,7 +14,7 @@ gate_policy: ask
 
 ## Goal
 
-The admin is built from components defined once, each with an approved story per state rendered to a snapshot, and every mockup is composed of those components by name; a changed component reopens the mockups that use it; Storybook is served by the cockpit and a catalog file lists every component for an agent (ADR decisions 1–9).
+The admin is built from components defined once, each with an approved story per state rendered to a snapshot, and every mockup is composed of those components by name; a changed component reopens the mockups that use it; Storybook is served by the cockpit and a catalog file lists every component for an agent (ADR decisions 1–10).
 
 ## Scope
 
@@ -40,7 +40,7 @@ The admin is built from components defined once, each with an approved story per
 | Build Phase 3 | `looks/compose`, the lint's component rules, story entries and `componentsHash` in `approvals`, coverage of component states; the two promise changes | Build Phase 2's snapshots and catalog |
 | Build Phase 4 | the Looks page's components, stories framed at devices, story Approve; `looks check` over stories; the render promise change | Build Phase 1's `/storybook`, Build Phase 3's approvals |
 | Build Phase 5 | all nineteen components, one file each, with stories and snapshots | Build Phases 1–2 |
-| Build Phase 6 | the eleven mockups rewritten to compose components | Build Phases 3, 5 |
+| Build Phase 6 | the eleven mockups rewritten to compose components; `components.css` (the components' compiled, token-resolved styles) inlined into every composed mockup and bound into `componentsHash` | Build Phases 3, 5 |
 | Build Phase 7 | the nav, the dashboard and the Looks page rebuilt from components | Build Phases 5–6 |
 | Build Phase 8 | the promise and plan pages rebuilt from components; the live check | Build Phases 5–7 |
 
@@ -72,6 +72,8 @@ The admin is built from components defined once, each with an approved story per
 | A22 | The nav still fits a phone after it is rebuilt from components | Test Phase 1 | Test Phase 1 | passing | contract | a regression guard over `the-nav-fits-a-phone`, re-run when the nav is rebuilt | apps/indusk-admin/src/app/p/[project]/cockpit-phone.test.tsx |
 | A23 | The rebuilt dashboard still lists every promise, broken first | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over `every-promise-is-listed` and `broken-promises-come-first`, re-run when the dashboard is rebuilt | apps/indusk-admin/src/app/p/[project]/promises/dashboard.test.tsx |
 | A24 | `indusk looks lint admin` still finds no raw value after the rebuild | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over `a-mockup-leaves-nothing-undefined`, re-run after the mockups and screens change | apps/indusk-mcp/src/__tests__/looks-admin-foundation.test.ts |
+| A25 | A composed mockup opens in the cockpit drawn with its components' styles: the document the frame loads holds a rule for every class its snapshots use, and `indusk looks lint admin` finds no raw value in it | Build Phase 6 | Build Phase 6 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
+| A26 | After an approved component's style changes, every approved mockup that uses it reads proposed naming that component; a mockup that does not use it stays approved | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-changed-component-reopens-its-mockups | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
 
 ### Deferred Verification
 
@@ -336,13 +338,18 @@ The admin is built from components defined once, each with an approved story per
   - Note: each mockup draws only page chrome (header, crumb, section labels, the page's grids, the promise pills, the Looks toolbar and two panes) on the foundation's tokens and places every component by name; `screens.json`'s `uncomposed` list is removed, so the lint's `component drawn in mockup` rule now holds for all eleven. `indusk looks lint admin` (the local build, `node apps/indusk-mcp/dist/bin/cli.js`, not the global `indusk`, which predates story approvals and refuses `approved.json`) reads no finding; all eleven read `proposed`, naming the components that changed.
   - Note (looks.default and looks.uncovered): redrawn to Build Phase 5's two panes — `looks-split` with the list (handle, `look-row` stories) beside a stage (`device-choice`, `device-frame`), the Show/View toolbar above, the phone sheet handle as on the page.
   - Deviation (content, needs acceptance): a story is one fixed rendering, so a mockup shows each component's story content and cannot pass it data. Consequences: the nav's current link is Promises on every screen (the `nav.expanded` story); a plan screen shows one `tag`; `plan.working` and `plan.released` show `rail-group.default` only (no story has their Release steps); the promise screens lose the "Tests that back it" table (a `box` story holds a title and a line, no component holds a table) and the old per-box headings; the dashboard shows 3 and 2 rows. Each is a missing story, not a missing mockup rule.
-  - Deviation (needs acceptance): a composed mockup carries no stylesheet for its components — the snapshots are Tailwind utility markup, `mockupDocument` inlines only `tokens.css`, and embedding the compiled utilities in a mockup fails the lint (858 findings: `--spacing-*`, `--tw-*`, `1px`). Until the cockpit's frame is given the app's compiled component CSS (not written; a package change outside this phase's items), a composed mockup draws its components unstyled and is not worth re-approving by eye.
+  - Deviation (needs acceptance): a composed mockup carries no stylesheet for its components — the snapshots are Tailwind utility markup, `mockupDocument` inlines only `tokens.css`, and embedding the compiled utilities in a mockup fails the lint (858 findings: `--spacing-*`, `--tw-*`, `1px`). Resolved in this phase by ADR decision 10: the items below (A25, A26, `components.css`) are the fix, and the pause follows them; a composed mockup is not worth re-approving by eye before they close.
+- [ ] A25 and A26 in `apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts` (the fixture gains a `components.css`; A26 rewrites a rule in it): authored first, red on their own assertions — the composed document today holds no rule for its components' classes, and a style change reopens nothing (ADR decision 10, added when this phase's rewrite found composed mockups drawn unstyled)
+- [ ] The render step (`indusk looks stories <app>`) writes `.indusk/mockups/<app>/components.css`: the app's compiled rules for exactly the classes the snapshots use, resolved to the foundation's tokens, generated and never edited; `components.json` names it
+- [ ] `mockupDocument` inlines `components.css` after `tokens.css` for a mockup that names components, and `componentsHash` takes its hash, so the lint, the Looks page's frame, the approval and the check all read the same styled document
+- [ ] The value check reads `components.css` by the rule it reads a mockup's own styles by; a raw value in it is a finding naming the class (the 858 findings from embedding the utilities whole — `--spacing-*`, `--tw-*`, `1px` — are what the resolution step removes, not what the lint is loosened to allow)
+- [ ] `indusk promises change mockups-render-in-the-cockpit --plan storybook-components --statement "Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens and, where it names components, with those components' own styles, with nothing to run beside the cockpit." --reason "composed mockups drew their components unstyled"`
 - [ ] **Pause for a person**: Sandy re-approves the eleven composed mockups on the Looks page (each binds its `componentsHash`)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 6 Verification
 
-- [ ] A24 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-admin-foundation.test.ts`); `indusk looks lint admin` no finding; `indusk looks status admin` eleven mockups and every story approved; `indusk looks coverage admin` every part covered
+- [ ] A24, A25 and A26 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-admin-foundation.test.ts src/__tests__/looks-components-cli.test.ts`); a composed mockup opened on the Looks page is drawn styled, read by a person before approving; `indusk looks lint admin` no finding; `indusk looks status admin` eleven mockups and every story approved; `indusk looks coverage admin` every part covered
 
 #### Build Phase 6 Context
 
@@ -405,6 +412,7 @@ The admin is built from components defined once, each with an approved story per
 | `apps/indusk-admin/src/app/**` | screens rebuilt from components; the Looks page's components |
 | `apps/indusk-mcp/src/lib/looks/{components,compose}.ts` | new |
 | `apps/indusk-mcp/src/lib/looks/{approvals,coverage,lint,mockups,check}.ts` | component rules, story approvals, `componentsHash` |
+| `apps/indusk-mcp/src/lib/looks/{stories,overview,lint-values}.ts` | `components.css` written by the render step, inlined by `mockupDocument`, value-checked, bound into `componentsHash` (ADR decision 10) |
 | `apps/indusk-mcp/src/bin/commands/looks.ts` | `indusk looks stories` |
 | `.indusk/mockups/admin/` | `components/`, `components.json`, composed mockups, approvals |
 | `apps/docs/src/**` | guide, reference, decision, changelog |

@@ -53,7 +53,7 @@ Storybook can and cannot do on this stack are in [research.md](research.md).
 
 - **`every-part-of-the-ui-is-covered`**. Every screen the app has, in each declared state, and every component it uses, in each state its mockups show, is covered by an approved mockup or an approved story; whatever is not is reported uncovered, never passed.
 - **`a-mockup-is-approved-by-a-person`**. A mockup or a story, and the foundation it is drawn on, becomes the reference only when a person approves it in the cockpit; an agent can draw and propose one and never approve it.
-- **`mockups-render-in-the-cockpit`**. Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens, with nothing to run beside the cockpit.
+- **`mockups-render-in-the-cockpit`**. Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens and, where it names components, with those components' own styles, with nothing to run beside the cockpit. *(Widened 2026-10-12: the eleven composed mockups drew their components unstyled, found when Build Phase 6 rewrote them; see the ADR's decision 10.)*
 
 **Replaces**
 
@@ -66,6 +66,7 @@ None.
 - Stories running inside the app's own runtime with its real providers (an in-app gallery): not supported by Storybook, and the admin has no auth or wallet to fake; stories render in a static Storybook the cockpit serves (research, "Rendering stories inside the app").
 - Storybook's MCP as something the loop depends on: it is in preview and answers only while a Storybook server runs; it is a convenience over the catalog, not the catalog.
 - Components for seat-holds or any app besides the admin.
+- A composed mockup passing data to a component: a story is one fixed rendering, so a mockup shows each component's story content (the nav's current link is the story's, a plan screen shows one tag). A component needing other content gets another story.
 - A design system as a deliverable: it is what this approach leaves behind, not a separate piece of work.
 
 ## Depends On

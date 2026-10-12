@@ -67,11 +67,13 @@ under the promise it proves. They become the impl's Test Trajectory rows.
 | A16 | A story reads proposed until a person approves it on the Looks page; an agent's write to the record of story approvals is refused, naming the cockpit's Approve | unit |
 | A17 | A story changed after it was approved reads proposed again | unit |
 
-### `mockups-render-in-the-cockpit` (changes) — Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens, with nothing to run beside the cockpit.
+### `mockups-render-in-the-cockpit` (changes) — Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens, with nothing to run beside the cockpit. *(Widened 2026-10-12: a mockup that names components is drawn with their styles.)*
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
 | A18 | Each story opens on the Looks page at each reference device's size, served by the admin itself, with no Storybook server running | contract |
+| A25 | A composed mockup opens in the cockpit drawn with its components' styles: the frame's document holds a rule for every class its snapshots use, and the value check finds no raw value in it | unit |
+| A26 | After an approved component's style changes, every approved mockup that uses it reads proposed naming that component; a mockup that does not use it stays approved | unit |
 
 ### `tokens-are-held-exactly` (must not break)
 

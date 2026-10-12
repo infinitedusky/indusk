@@ -45,7 +45,7 @@ the token rule already proves the shape — a mockup uses only what is defined a
 components), the admin (9 of 19 marked), Storybook on Next 16.2 / React 19.2 /
 Vitest 4.1, the MCP's status, and why stories do not run in the app.
 [brief.md](brief.md) makes five promises and changes three of ui-promises';
-[test-plan.md](test-plan.md) holds 24 assertions. ui-promises' ADR
+[test-plan.md](test-plan.md) holds 26 assertions. ui-promises' ADR
 ([archive](../archive/ui-promises/adr.md)) set the foundation, the approval
 record bound to content hashes, the sandboxed mockup frame, and the value check
 this plan builds on.
@@ -120,6 +120,20 @@ this plan builds on.
    running app is composed as its mockups are. The eleven mockups are rewritten
    to reference components and re-approved by Sandy.
 
+10. **A composed mockup carries its components' styles.** A snapshot is
+   markup whose look comes from the app's compiled utility classes, and a
+   mockup frame is sandboxed with only the foundation's `tokens.css`, so a
+   composed mockup drew its components unstyled. The render step writes
+   `.indusk/mockups/<app>/components.css`, the app's compiled rules for exactly
+   the classes the snapshots use, resolved to the foundation's tokens;
+   `mockupDocument` inlines it after `tokens.css`; the value check reads it by
+   the rule it reads a mockup's own styles by; and its hash joins
+   `componentsHash`, so a changed component style reopens the mockups that use
+   it as a changed snapshot does. The stylesheet is generated, never written
+   by hand. *(Added 2026-10-12, found in Build Phase 6 when the eleven composed
+   mockups were rewritten: decisions 4 and 6 composed the markup and not the
+   look. Sandy asked that it be a visible part of the plan, not a patch.)*
+
 ## Alternatives Considered
 
 ### Detect instead of compose
@@ -153,6 +167,11 @@ if this is revisited.
 Rejected as a dependency: preview, versioned with an 11 that is reworking it,
 and answers only while a Storybook server runs. It is offered over the catalog
 file, not instead of it.
+
+### Link the app's own stylesheet from the mockup frame
+Rejected: the frame is `sandbox=""` and a mockup is hashed as bytes, so a
+linked sheet would change what a person approved with nothing reopening it;
+inlining a generated, hashed sheet keeps the mockup self-contained.
 
 ### One mockup file per component, drawn by hand
 Rejected: the approved artefact would be a drawing of the component, not the
