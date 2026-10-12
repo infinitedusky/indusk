@@ -6,7 +6,7 @@ state: enforced
 domain: admin
 owner: plan-cockpit
 sites:
-  - apps/indusk-admin/src/components/ui/Sidebar.tsx
+  - apps/indusk-admin/src/components/cockpit/CockpitFrame.tsx
 tests:
   - 'apps/indusk-admin/src/app/p/[project]/cockpit-phone.test.tsx'
 incidents: []

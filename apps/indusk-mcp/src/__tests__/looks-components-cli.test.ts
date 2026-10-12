@@ -262,7 +262,7 @@ describe("every part of the UI is covered", () => {
 		expect(after).not.toMatch(/uncovered story: badge\.ok/);
 		expect(linesWith(after, "no story: badge.warn"), after).not.toEqual([]);
 	});
-	// A15's file and promise: a component no mockup names is covered by its stories.
+	// A15 — a component no mockup names is covered by its stories.
 	it("A15 a component no mockup names is covered once each of its stories is approved, and uncovered while one is not", async () => {
 		const root = app();
 		writeFileSync(
