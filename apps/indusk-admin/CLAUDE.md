@@ -166,3 +166,13 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `public/storybook/`, which the admin serves at `/storybook/index.html`.
   Guarded by `everyday-tests-never-wait.test.ts` (A21). — see
   `/decisions/storybook-components`
+- **A component is one file whose root carries `data-component`; a screen
+  never carries a component's marker**: a name marked in two files, or a
+  screen writing a component's element out beside its own file, is refused by
+  `indusk looks lint admin` (`duplicate component`, `component markup outside
+  its file`). Read `.indusk/mockups/admin/components.json` — each component's
+  file, properties and states, written by `indusk looks stories admin` — before
+  writing one; a marked component with no story is listed in `screens.json`
+  `uncatalogued` until it has, and the list only shrinks. Guarded by
+  `looks-components-cli.test.ts` (A1, A3, A14) and `component-reuse-audit.test.ts`.
+  — see `/decisions/storybook-components`

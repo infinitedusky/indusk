@@ -210,7 +210,7 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a component is one file whose root carries `data-component`; a screen never carries a component's marker; `components.json` is the catalog to read before writing a component — guarded by `looks-components-cli.test.ts` (A1, A3, A14)
+- [x] `apps/indusk-admin/CLAUDE.md`: a component is one file whose root carries `data-component`; a screen never carries a component's marker; `components.json` is the catalog to read before writing a component — guarded by `looks-components-cli.test.ts` (A1, A3, A14)
 
 #### Build Phase 2 Document
 
