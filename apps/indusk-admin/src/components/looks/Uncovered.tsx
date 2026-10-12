@@ -25,6 +25,8 @@ export function Uncovered({ app, show }: { app: AppLooks; show: Show }) {
     ...app.uncovered.noStory.map((name) => ({ kind: "no story", name })),
     // A component named at run time, by where the source names it.
     ...app.uncovered.unresolved.map((name) => ({ kind: "unresolved", name })),
+    // A component a mockup names that no source file implements.
+    ...app.uncovered.unimplemented.map((name) => ({ kind: "unimplemented", name })),
   ];
   // Screens and their states are the mockups' side; the rest are the components'.
   const ofMockups = (kind: string) => kind === "screen" || kind === "state";
