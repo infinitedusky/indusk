@@ -102,7 +102,7 @@ The admin is built from components defined once, each with an approved story per
 - **The components are cut along the right boundaries (test plan U2)**
   - reason: a design judgement
   - would require: a person looking at each component
-  - mitigation: Sandy approves each component's stories on the Looks page in Build Phase 5; a component that cannot be reused across the mockups in Build Phase 6 is split or merged there
+  - mitigation: Sandy approves each component's stories on the Looks page in Build Phase 5; a component that cannot be reused across the mockups in Build Phase 6 is split or merged there. Done: all 57 stories approved (Build Phase 5, again after Build Phase 9). Ongoing: brief expectation 2 (the next screen is built mostly from existing components) is read at mockup-matching (plan 3 of 4), the next plan that draws a mockup; a boundary that cannot be reused shows there as a new component beside an old one
 
 ## Checklist
 
