@@ -2134,6 +2134,16 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T21:43:25.097Z"
+		},
+		{
+			"kind": "story",
+			"story": "chip.writable",
+			"snapshotHash": "9d9b70ff4bea71efeaca6c676e403cb4d534efa3a0417c11fdaa5e5ca6d6a1fb",
+			"stylesheetHash": "090fbf26c88aba8de609fc1ec0b32af47ecc440a768232e500244f814017a789",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T21:43:25.272Z"
 		}
 	]
 }
