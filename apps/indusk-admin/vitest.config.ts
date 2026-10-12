@@ -1,7 +1,8 @@
 import path from "node:path";
+import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "@vitest/browser-playwright";
 import { configDefaults, defineConfig } from "vitest/config";
-import { asGlob, NODE_PAGES, SYSTEM } from "./vitest.tiers";
+import { asGlob, NODE_PAGES, SYSTEM, SYSTEM_TIER_ENV } from "./vitest.tiers";
 
 // Tests never auto-start a telemetry daemon (test-daemons-never-leak): any
 // test that runs `init` or `update` against a temporary home made `telemetry
@@ -15,6 +16,34 @@ process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART = "1";
 // installed globally, not the code under test — which is also why the switch
 // above did nothing until it was here (test-daemons-never-leak).
 process.env.INDUSK_BIN ??= `node ${path.resolve(__dirname, "../indusk-mcp/dist/bin/cli.js")}`;
+
+/**
+ * The `storybook` project: every story rendered in Chromium (storybook-
+ * components A5). It is the system tier's (`SYSTEM_PROJECTS`), so `pnpm test`
+ * does not define it; a run the system tier started (`vitest.system.config.ts`
+ * raises the variable, and A5's child inherits it) does.
+ */
+const storybookProjects = process.env[SYSTEM_TIER_ENV]
+  ? [
+      {
+        resolve: { alias: { "@": path.resolve(__dirname, "src") } },
+        plugins: [
+          storybookTest({
+            configDir: path.resolve(__dirname, ".storybook"),
+          }),
+        ],
+        test: {
+          name: "storybook",
+          browser: {
+            enabled: true,
+            provider: playwright(),
+            headless: true,
+            instances: [{ browser: "chromium" }],
+          },
+        },
+      },
+    ]
+  : [];
 
 /**
  * Two test environments:
@@ -85,6 +114,7 @@ export default defineConfig({
           },
         },
       },
+      ...storybookProjects,
     ],
   },
 });

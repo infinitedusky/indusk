@@ -1,10 +1,11 @@
 import path from "node:path";
 import { configDefaults, defineConfig } from "vitest/config";
-import { asGlob, SYSTEM } from "./vitest.tiers";
+import { asGlob, SYSTEM, SYSTEM_TIER_ENV } from "./vitest.tiers";
 
 // As in vitest.config.ts: no test auto-starts a telemetry daemon, and
 // extension hooks run the CLI under test, not a global install.
 process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART = "1";
+process.env[SYSTEM_TIER_ENV] = "1";
 process.env.INDUSK_BIN ??= `node ${path.resolve(__dirname, "../indusk-mcp/dist/bin/cli.js")}`;
 
 /**

@@ -37,6 +37,17 @@ export const SYSTEM = [
 ];
 
 /**
+ * Vitest projects that belong to the system tier: they render in Chromium
+ * against a built Storybook and are never part of `pnpm test`
+ * (storybook-components A21; `everyday-tests-never-wait.test.ts` reads this
+ * list and the everyday config). `vitest.system.config.ts` raises
+ * `SYSTEM_TIER_ENV`, which is what lets `vitest.config.ts` define them for a
+ * run the system tier started (A5 spawns `vitest run --project storybook`).
+ */
+export const SYSTEM_PROJECTS = ["storybook"];
+export const SYSTEM_TIER_ENV = "INDUSK_ADMIN_SYSTEM_TIER";
+
+/**
  * Page tests that run in the node project, not the browser one: they read and
  * write a real project through the package (the Looks page and its Approve,
  * ui-promises A1, A2, A13, A14, and A29, A30 in the approve route's own file), which a browser cannot reach.
