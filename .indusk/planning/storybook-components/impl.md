@@ -480,7 +480,8 @@ The admin is built from components defined once, each with an approved story per
 
 - [x] A20, live check: `indusk looks check admin` against the admin daemon reads every checked look held; one colour token changed in the admin alone (a throwaway copy) shows broken on the dashboard naming the token, approved and actual; reverted, held — recorded here
   - Run 2026-10-12 against a production build of this branch (`pnpm build && pnpm start -p 3941`), not the daemon: the daemon runs main's landed build, and `next dev` timed out under memory pressure. Held: 354 looks held, 54 unchecked (states the pages do not report), 150s. `--color-ok` changed in `foundation.generated.css` alone, `#1f7a4d` → `#ff00aa`, rebuilt: 177 of 354 broken — every light-scheme look; dark has its own value — the dashboard reading `token --color-ok approved #1f7a4d actual #f0a`. Reverted, rebuilt: 354 held, 54 unchecked. A20's State is `passing`.
-- [ ] A22–A24 still pass; the admin's everyday suite and both packages' looks tests pass; `indusk looks coverage admin` every part covered; tsc and biome clean on changed files
+- [x] A22–A24 still pass; the admin's everyday suite and both packages' looks tests pass; `indusk looks coverage admin` every part covered; tsc and biome clean on changed files
+  - Run 2026-10-12 after the ring token and Sandy's re-approvals: the admin's everyday suite 82 files, 560 tests (A22 `cockpit-phone`, A23 `dashboard` among them); the package's looks tests 19 files, 141 (A24 `looks-admin-foundation`, A9, the new `looks-check-timeout` and `looks-lint-shadow`); `indusk looks coverage admin` every screen, state and component covered; `indusk looks lint admin` no raw value, no undefined token; tsc clean in both packages; biome clean on the 18 changed files.
 
 #### Build Phase 8 Context
 
