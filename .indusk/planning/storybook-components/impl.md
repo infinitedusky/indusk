@@ -181,7 +181,7 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: Storybook in the admin, `/storybook`, how to run it locally
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: Storybook in the admin, `/storybook`, how to run it locally
 
 ### Build Phase 2: One file per component, stories rendered to snapshots, the catalog
 

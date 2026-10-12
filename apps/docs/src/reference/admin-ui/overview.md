@@ -257,6 +257,21 @@ That spawns the detached daemon, writes pid/port/log to `~/.indusk/admin-ui.*`, 
 
 See [CLI reference](./cli) for `start`, `stop`, `status`, flags, exit codes, env vars, and port behavior.
 
+## Storybook
+
+The admin's components have stories, rendered by Storybook (`@storybook/nextjs-vite`, config in `apps/indusk-admin/.storybook/`), and the admin serves the built Storybook itself at `/storybook/index.html` (one story at `/storybook/iframe.html?id=<story>`), so no second server runs. A story is `src/**/*.stories.tsx`, one export per state of the component beside it.
+
+To work on stories locally, from `apps/indusk-admin/`:
+
+```bash
+pnpm exec storybook dev -p 6006      # live Storybook
+pnpm build:storybook                 # static build into public/storybook/ (git-ignored; `pnpm build` runs it before `next build`)
+pnpm exec vitest run --config vitest.system.config.ts src/__tests__/storybook.contract.test.ts -t A5
+                                     # every story renders in Chromium without an error
+```
+
+Story tests belong to the system tier: the `storybook` vitest project is defined only for a run the system config started, so `pnpm test` never renders a story. Chromium comes from `pnpm exec playwright install chromium`. `next` stays at 16.2.x until [storybookjs#36720](https://github.com/storybookjs/storybook/issues/36720).
+
 ## Upgrading from 1.26.0
 
 1.26.0 shipped the broken per-project model (`indusk ui` in each project spawned its own `next dev`). 1.27.0 is a **breaking change**: run once per project to register, then start the daemon once globally.
