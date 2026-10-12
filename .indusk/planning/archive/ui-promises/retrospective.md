@@ -112,3 +112,11 @@ Where reality differed from the plan:
 ## Release
 
 Landing installs (`pnpm install:local`); nothing is published by this close.
+
+## After landing
+
+- Expectation 2 read on the landed build, 2026-10-11: the admin daemon (port 3939) held 12 looks, 54 unchecked; a throwaway copy of the landed admin with `--color-dusk` changed to `#d07020` alone checked 6 of 12 broken, and the **dashboard listed the six broken looks first**, each naming `token --color-dusk approved #c2620b actual #d07020`; checked against the daemon again, 12 held. Reading it needed the local telemetry daemon restarted — the one running since 2026-10-02 belonged to the old published install, its collector down.
+- Found on the way, not this plan's: `impl-corpus.test.ts` A4 and `registry-leak-scan.test.ts` A22 fail on `main` since browser-template-claims landed; the real registry holds 2,662 leaked `ma-init-*`/`demo-workbench-*` test homes; `day-monitor.e2e.test.ts` A24 expects an evaluator message that changed.
+- Release: landing installed the build (`pnpm install:local`); nothing published, no bump — this project publishes deliberately.
+
+Landed on main at 7b2a91dd, 2026-10-11.
