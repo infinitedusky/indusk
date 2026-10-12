@@ -82,6 +82,13 @@ export interface Story {
 	html: string;
 	/** sha256 of the file's bytes: a story approval is bound to it. */
 	hash: string;
+	/**
+	 * sha256 of its component's stylesheet (`components/<component>.css`), or
+	 * null when the component has none. A story's approval binds it beside the
+	 * snapshot: a rule changed by name in the app's CSS changes how the
+	 * component draws and leaves its markup byte-identical (Build Phase 9, A31).
+	 */
+	stylesheetHash: string | null;
 }
 
 /**
@@ -221,8 +228,8 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		uncomposed?: string[];
 	}>(join(dir, "screens.json"), {});
 
-	const stories = await readStories(dir, join(MOCKUPS_DIR, app));
 	const styles = await readStyles(dir, join(MOCKUPS_DIR, app));
+	const stories = await readStories(dir, join(MOCKUPS_DIR, app), styles);
 	const snapshots = new Map<string, SnapshotBytes>(stories.map((s) => [s.name, s]));
 
 	const screensDir = join(dir, "screens");
@@ -275,8 +282,13 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 	};
 }
 
-/** The snapshots in `<app>/components/`, sorted by name; none when the app has no stories. */
-async function readStories(dir: string, rel: string): Promise<Story[]> {
+/** The snapshots in `<app>/components/`, sorted by name, each with its component's stylesheet hash; none when the app has no stories. */
+async function readStories(
+	dir: string,
+	rel: string,
+	styles: readonly ComponentStyle[],
+): Promise<Story[]> {
+	const sheetOf = new Map(styles.map((s) => [s.component, s.hash] as const));
 	const componentsDir = join(dir, "components");
 	if (!existsSync(componentsDir)) return [];
 	const files = (await readdir(componentsDir)).filter((f) => f.endsWith(".html")).sort();
@@ -293,6 +305,7 @@ async function readStories(dir: string, rel: string): Promise<Story[]> {
 			file: join(rel, "components", fileName),
 			html: bytes.toString("utf-8"),
 			hash: sha256(bytes),
+			stylesheetHash: sheetOf.get(name.slice(0, dot)) ?? null,
 		});
 	}
 	return stories;

@@ -13,6 +13,7 @@
  * against:
  *
  *   story    { kind: "story", story: "<component>.<state>", snapshotHash,
+ *              stylesheetHash (when its component has a stylesheet),
  *              foundationHash, declarationsHash, by, at }
  *   mockup   today's entry + componentsHash (`componentsHashOf`: the sha256 of
  *            the sorted snapshot hashes of the components it composes, joined
@@ -38,10 +39,22 @@ const bound = {
 	by,
 	at,
 };
-const snapshot = (name: string) => {
+const storyOf = (name: string) => {
 	const s = app.stories.find((x) => x.name === name);
 	if (!s) throw new Error(`fixture has no snapshot ${name}`);
-	return s.hash;
+	return s;
+};
+const snapshot = (name: string) => storyOf(name).hash;
+/** A story's entry: its snapshot, and its component's stylesheet when it has one. */
+const story = (name: string) => {
+	const s = storyOf(name);
+	return {
+		kind: "story",
+		story: name,
+		snapshotHash: s.hash,
+		...(s.stylesheetHash === null ? {} : { stylesheetHash: s.stylesheetHash }),
+		...bound,
+	};
 };
 const mockup = (name: string) => {
 	const m = app.mockups.find((x) => x.name === name);
@@ -54,8 +67,8 @@ writeFileSync(
 	`${JSON.stringify(
 		{
 			approvals: [
-				{ kind: "story", story: "badge.ok", snapshotHash: snapshot("badge.ok"), ...bound },
-				{ kind: "story", story: "card.default", snapshotHash: snapshot("card.default"), ...bound },
+				story("badge.ok"),
+				story("card.default"),
 				mockup("home.default"),
 				mockup("detail.default"),
 			],

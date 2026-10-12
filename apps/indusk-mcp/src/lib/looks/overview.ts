@@ -61,6 +61,8 @@ export interface StoryView {
 	entry: StoryApprovalEntry | null;
 	/** sha256 of the snapshot as it is now; a story's Approve sends back the one the person saw. */
 	hash: string;
+	/** sha256 of its component's stylesheet as it is now, or null when it has none; sent back with `hash`. */
+	stylesheetHash: string | null;
 }
 
 export interface AppLooks {
@@ -149,6 +151,7 @@ function storiesOf(
 			approval: approval.state,
 			entry: approval.state === "approved" ? approval.entry : approval.reference,
 			hash: story.hash,
+			stylesheetHash: story.stylesheetHash,
 		};
 	});
 }

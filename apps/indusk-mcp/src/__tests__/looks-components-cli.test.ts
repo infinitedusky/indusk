@@ -247,6 +247,7 @@ describe("every part of the UI is covered", () => {
 			kind: "story",
 			story: "badge.broken",
 			snapshotHash: sha256(readFileSync(join(root, MOCKUPS, "components/badge.broken.html"))),
+			stylesheetHash: sha256(readFileSync(join(root, MOCKUPS, "components/badge.css"))),
 			foundationHash: demo.foundation.hash,
 			declarationsHash: demo.declarationsHash,
 			by: "sandy",
@@ -397,6 +398,7 @@ describe("a person takes an approval back", { timeout: 30_000 }, () => {
 		const story2 = await approve(root, "demo", "badge.ok", "Sandy Tester", {
 			kind: "story",
 			snapshotHash: badge.hash,
+			stylesheetHash: badge.stylesheetHash ?? undefined,
 			foundationHash,
 		});
 		expect(story2.approved, JSON.stringify(story2)).toBe(true);

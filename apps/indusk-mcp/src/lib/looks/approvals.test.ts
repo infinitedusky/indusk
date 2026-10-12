@@ -229,6 +229,7 @@ describe("approve — a mockup reopened by a changed component", () => {
 		const story = await approve(g.main, "demo", "badge.ok", "sandy", {
 			kind: "story",
 			snapshotHash: before.story.hash,
+			stylesheetHash: before.story.stylesheetHash ?? undefined,
 			foundationHash: before.app.foundation.hash,
 		});
 		expect(story).toMatchObject({ approved: true });
@@ -265,6 +266,7 @@ describe("approve — a mockup reopened by a changed component", () => {
 		await approve(g.main, "demo", "badge.ok", "sandy", {
 			kind: "story",
 			snapshotHash: story.hash,
+			stylesheetHash: story.stylesheetHash ?? undefined,
 			foundationHash: app.foundation.hash,
 		});
 		const stale = await approve(g.main, "demo", "home.default", "sandy", {

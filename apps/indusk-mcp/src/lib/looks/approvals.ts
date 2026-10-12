@@ -113,6 +113,13 @@ export interface StoryApprovalEntry {
 	story: string;
 	/** sha256 of the snapshot's bytes when it was approved. */
 	snapshotHash: string;
+	/**
+	 * sha256 of its component's stylesheet when it was approved (Build Phase 9,
+	 * A31). Absent on an entry from before, which binds no sheet: it holds only
+	 * a story whose component has none, so a story whose component has one
+	 * reads proposed until a person approves it again.
+	 */
+	stylesheetHash?: string;
 	foundationHash: string;
 	declarationsHash?: string;
 	by: string;
@@ -155,7 +162,9 @@ function isStoryEntry(v: unknown): v is StoryApprovalEntry {
 		["story", "snapshotHash", "foundationHash", "by", "at"].every(
 			(k) => typeof o[k] === "string",
 		) &&
-		(o.declarationsHash === undefined || typeof o.declarationsHash === "string")
+		["declarationsHash", "stylesheetHash"].every(
+			(k) => o[k] === undefined || typeof o[k] === "string",
+		)
 	);
 }
 
@@ -323,18 +332,25 @@ function componentsChanged(
 }
 
 /**
- * Whether a story is approved as its snapshot is now, on the foundation and
- * the declarations as they are now. A snapshot re-rendered from a changed
- * component reads proposed until a person approves it again.
+ * Whether a story is approved as it draws now — its snapshot and its
+ * component's stylesheet as they are — on the foundation and the declarations
+ * as they are now. A snapshot re-rendered from a changed component, or a
+ * stylesheet changed under unchanged markup, reads proposed until a person
+ * approves it again.
  */
 export function storyApprovalOf(
 	app: LooksApp,
-	story: Pick<Story, "name" | "hash">,
+	story: Pick<Story, "name" | "hash" | "stylesheetHash">,
 	approvals: readonly StoryApprovalEntry[],
 	withdrawals: readonly WithdrawnEntry[] = [],
 ): StoryApproval {
 	const mine = approvals.filter((e) => e.story === story.name);
-	const current = mine.filter((e) => e.snapshotHash === story.hash && boundToNow(app, e));
+	const current = mine.filter(
+		(e) =>
+			e.snapshotHash === story.hash &&
+			(e.stylesheetHash ?? null) === story.stylesheetHash &&
+			boundToNow(app, e),
+	);
 	if (current.length > 0) return { state: "approved", entry: current[current.length - 1] };
 	const reference = mine[mine.length - 1] ?? null;
 	const withdrawn = reference
@@ -354,10 +370,15 @@ export function unapprovedUses(
 	mockup: Pick<Mockup, "uses">,
 	approvals: readonly StoryApprovalEntry[],
 ): ComponentUse[] {
+	const sheetOf = new Map(app.styles.map((s) => [s.component, s.hash] as const));
 	return mockup.uses.filter(
 		(u) =>
 			u.snapshotHash === null ||
-			storyApprovalOf(app, { name: u.story, hash: u.snapshotHash }, approvals).state !== "approved",
+			storyApprovalOf(
+				app,
+				{ name: u.story, hash: u.snapshotHash, stylesheetHash: sheetOf.get(u.name) ?? null },
+				approvals,
+			).state !== "approved",
 	);
 }
 
@@ -368,12 +389,13 @@ export type ApproveResult =
 /**
  * What the person was shown, sent back with Approve. For a mockup: the
  * foundation, the composed mockup's hash and its `componentsHash`. For a story
- * (`kind: "story"`): the foundation and the snapshot's hash, which a story's
- * approval cannot go without.
+ * (`kind: "story"`): the foundation, the snapshot's hash, which a story's
+ * approval cannot go without, and its component's stylesheet hash, which it
+ * cannot go without when the component has a stylesheet.
  */
 export type Seen =
 	| { kind?: "mockup"; foundationHash?: string; mockupHash?: string; componentsHash?: string }
-	| { kind: "story"; snapshotHash: string; foundationHash?: string };
+	| { kind: "story"; snapshotHash: string; stylesheetHash?: string; foundationHash?: string };
 
 const short = (hash: string) => hash.slice(0, 8);
 
@@ -494,6 +516,8 @@ async function approveStory(
 	}
 	const stale = storyNotShown(checkout, story, seen.snapshotHash);
 	if (stale) return { approved: false, reason: stale };
+	const sheet = sheetNotShown(checkout, story, seen.stylesheetHash);
+	if (sheet) return { approved: false, reason: sheet };
 	return appended(checkout, app, `story ${story.name} approved by ${by}`, (record) => {
 		const now = storyApprovalOf(app, story, standingOf(record).stories);
 		if (now.state === "approved") return { held: now.entry };
@@ -502,6 +526,7 @@ async function approveStory(
 				kind: "story",
 				story: story.name,
 				snapshotHash: story.hash,
+				...(story.stylesheetHash === null ? {} : { stylesheetHash: story.stylesheetHash }),
 				foundationHash: app.foundation.hash,
 				declarationsHash: app.declarationsHash,
 				by,
@@ -540,6 +565,28 @@ function storyNotShown(
 	return shown === story.hash
 		? null
 		: `${story.name} in ${checkout} is not the snapshot shown (${short(shown)}, it has ${short(story.hash)}) — open the story again and ${act} what it holds`;
+}
+
+/**
+ * Why a story's stylesheet is not the one the person was shown, or null when
+ * it is: a component with a stylesheet is approved only with the sheet's hash
+ * sent back, refused when absent or different, so a sheet is never approved
+ * unseen; a component with none is approved with none sent.
+ */
+function sheetNotShown(
+	checkout: string,
+	story: Pick<Story, "name" | "component" | "stylesheetHash">,
+	shown: string | undefined,
+): string | null {
+	const sent = shown === undefined || shown === "" ? null : shown;
+	if (sent === story.stylesheetHash) return null;
+	if (story.stylesheetHash === null) {
+		return `${story.component} has no stylesheet in ${checkout}, but one was shown — open the story again and approve what it holds`;
+	}
+	if (sent === null) {
+		return `a story is approved with the stylesheetHash it was shown at — ${story.component}.css is part of how ${story.name} draws`;
+	}
+	return `${story.component}.css in ${checkout} is not the stylesheet shown (${short(sent)}, it has ${short(story.stylesheetHash)}) — open the story again and approve what it holds`;
 }
 
 /** What the person was shown, sent back with Unapprove: the same hashes Approve binds. */
