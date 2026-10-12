@@ -425,12 +425,12 @@ The admin is built from components defined once, each with an approved story per
 
 - [x] Rebuild the nav (expanded and collapsed) from the components, matching `nav.expanded` and `nav.collapsed`
 - [x] Rebuild the dashboard (default and empty) from the components, matching `dashboard.default` and `dashboard.empty`
-- [ ] Rebuild the Looks page (default and uncovered) from the components, matching `looks.default` and `looks.uncovered`
-- [ ] The Looks page can list unapproved looks first or only: a Show option for unapproved (proposed or withdrawn) beside Mockups, Components and Uncovered, and the list sorted proposed and withdrawn before approved (Sandy asked while approving; found in Build Phase 6)
-- [ ] The Looks page says which checkout it is reading and how many looks are proposed in each checkout (Sandy could not find where to approve because the default reads the main checkout, where nothing was proposed; found in Build Phase 6)
+- [x] Rebuild the Looks page (default and uncovered) from the components, matching `looks.default` and `looks.uncovered`
+- [x] The Looks page can list unapproved looks first or only: a Show option for unapproved (proposed or withdrawn) beside Mockups, Components and Uncovered, and the list sorted proposed and withdrawn before approved (Sandy asked while approving; found in Build Phase 6)
+- [x] The Looks page says which checkout it is reading and how many looks are proposed in each checkout (Sandy could not find where to approve because the default reads the main checkout, where nothing was proposed; found in Build Phase 6)
 - [ ] `PlanRow` gains a current state with a story, so the three `plan.*` mockups show their plan current in the nav (they show no plan row current because `PlanRow` has none; found in Build Phase 6; changing the component reopens the mockups that use it)
-- [ ] The Looks page's list draws each row with `LookRow` in the same list column the mockups carry (346px: `--size-side` + `--size-badge` + `--space-4`); the live page still draws its own rows. A named list-width foundation token would read better than the calc, but it reopens the foundation and every approval, so it is added only with Sandy's approval
-- [ ] A look's name is shown whole beside its chip on the page, as in `looks.default` and `looks.uncovered` (Build Phase 6 fixed `LookRow` and the mockups; the page's own rows still truncate)
+- [x] The Looks page's list draws each row with `LookRow` in the same list column the mockups carry (346px: `--size-side` + `--size-badge` + `--space-4`); the live page still draws its own rows. A named list-width foundation token would read better than the calc, but it reopens the foundation and every approval, so it is added only with Sandy's approval
+- [x] A look's name is shown whole beside its chip on the page, as in `looks.default` and `looks.uncovered` (Build Phase 6 fixed `LookRow` and the mockups; the page's own rows still truncate)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 7 Verification

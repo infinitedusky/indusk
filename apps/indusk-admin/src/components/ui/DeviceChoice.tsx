@@ -1,9 +1,16 @@
+import type { ButtonHTMLAttributes } from "react";
+
 export interface DeviceChoiceProps {
   /** The reference devices, by name. */
   devices: readonly string[];
   /** The one the look is open at. */
   value: string;
   onChange?: (device: string) => void;
+  /** What a segment says to a test, by device: its `data-*` attributes. */
+  optionProps?: (
+    device: string,
+  ) => ButtonHTMLAttributes<HTMLButtonElement> &
+    Record<`data-${string}`, string>;
   className?: string;
 }
 
@@ -15,6 +22,7 @@ export function DeviceChoice({
   devices,
   value,
   onChange,
+  optionProps,
   className = "",
 }: DeviceChoiceProps) {
   return (
@@ -28,6 +36,7 @@ export function DeviceChoice({
           type="button"
           aria-pressed={device === value}
           onClick={() => onChange?.(device)}
+          {...optionProps?.(device)}
           className={`rounded-md px-3 py-1 text-sm leading-3 ${
             device === value ? "bg-ink text-surface" : "text-ink-soft"
           }`}

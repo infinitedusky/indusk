@@ -31,6 +31,7 @@ export function Uncovered({ app, show }: { app: AppLooks; show: Show }) {
   const items = all.filter(
     (i) =>
       show === "all" ||
+      show === "unapproved" ||
       (show === "mockups" ? ofMockups(i.kind) : !ofMockups(i.kind)),
   );
   return (

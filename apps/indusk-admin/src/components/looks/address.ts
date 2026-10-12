@@ -4,8 +4,21 @@
  * choosing another.
  */
 
-/** Which looks the page draws: only mockups, only components, or both. */
-export type Show = "all" | "mockups" | "components";
+/**
+ * Which looks the page draws: only mockups, only components, or both — and
+ * `unapproved` draws both, only the ones no person has approved as they are
+ * now (proposed, or withdrawn by a person).
+ */
+export type Show = "all" | "unapproved" | "mockups" | "components";
+
+/** The looks to draw, the ones waiting for a person first; with `unapproved`, only those. */
+export function unapprovedFirst<
+  T extends { approval: "approved" | "proposed" },
+>(looks: T[], show: Show): T[] {
+  const waiting = looks.filter((l) => l.approval === "proposed");
+  if (show === "unapproved") return waiting;
+  return [...waiting, ...looks.filter((l) => l.approval !== "proposed")];
+}
 
 /** The page's address with its choices kept: show, view and the checkout read. */
 export function hrefOf(

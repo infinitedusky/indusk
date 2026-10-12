@@ -195,6 +195,29 @@ describe("A2 — approval happens in the checkout the plan is worked in, never t
     );
   });
 
+  it("the page says which checkout it reads and how many looks are proposed in each", async () => {
+    planWorktree();
+    const proposedIn = (html: string) =>
+      html.match(/data-select-mockup/g)?.length ?? 0;
+    const own = await looksPage();
+    const plan = await looksPage({ checkout: "looks" });
+    // the plan's worktree holds one proposed look the project's own does not
+    expect(proposedIn(plan)).toBe(proposedIn(own) + 1);
+
+    const reading = (html: string) =>
+      sectionOf(html, "looks-reading").replace(/<[^>]*>/g, "");
+    expect(reading(own)).toContain("project checkout");
+    expect(reading(own)).toContain(`${proposedIn(own)} proposed`);
+    expect(reading(plan)).toContain("plan looks");
+    expect(reading(plan)).toContain(`${proposedIn(plan)} proposed`);
+
+    // each checkout in the choice carries its own count
+    const choice = sectionOf(own, "looks-checkouts").replace(/<[^>]*>/g, "");
+    expect(choice).toContain(`project checkout`);
+    expect(choice).toContain(`${proposedIn(own)} proposed`);
+    expect(choice).toContain(`plan looks · ${proposedIn(plan)} proposed`);
+  });
+
   it("A2 a plan with no worktree holding mockups is refused, and so is a mockup the own checkout lacks", async () => {
     planWorktree();
     const hash = foundationHash();
@@ -345,5 +368,38 @@ describe("A14 — each mockup, proposed or approved, opens at the app's referenc
     expect(frame).toBeDefined();
     expect(attrOf(frame ?? "", "width")).toBe("390");
     expect(attrOf(frame ?? "", "height")).toBe("844");
+  });
+});
+
+describe("the list puts the looks waiting for a person first, or shows only them", () => {
+  /** The mockups' names in the order the page lists them, with their approval. */
+  const listed = (html: string) =>
+    [
+      ...html.matchAll(
+        /data-testid="mockup-row"[^>]*data-mockup="([^"]*)"[^>]*data-approval="([^"]*)"/g,
+      ),
+    ].map((m) => [m[1], m[2]]);
+
+  it("lists proposed mockups before approved ones", async () => {
+    const approvals = listed(await looksPage()).map(([, a]) => a);
+    expect(approvals).toContain("proposed");
+    expect(approvals).toContain("approved");
+    expect(approvals.lastIndexOf("proposed")).toBeLessThan(
+      approvals.indexOf("approved"),
+    );
+  });
+
+  it("Show: Unapproved lists only the proposed mockups, and still lists what is uncovered", async () => {
+    const html = await looksPage({ show: "unapproved" });
+    const approvals = listed(html).map(([, a]) => a);
+    expect(approvals.length).toBeGreaterThan(0);
+    expect(approvals.every((a) => a === "proposed")).toBe(true);
+    expect(html).toContain('data-testid="uncovered"');
+  });
+
+  it("offers Unapproved beside All, Mockups and Components, and keeps it when another choice is made", async () => {
+    const html = await looksPage({ show: "unapproved" });
+    expect(sectionOf(html, "looks-show")).toContain("Unapproved");
+    expect(html).toMatch(/href="[^"]*show=unapproved[^"]*view=cascade/);
   });
 });

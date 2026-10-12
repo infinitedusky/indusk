@@ -11,7 +11,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const rows = (current: "promises" | "looks") => (
+const rows = (current: "promises" | "looks" | "plan") => (
   <>
     <NavGroup label="Needs you" count={1} />
     <PlanRow
@@ -19,6 +19,7 @@ const rows = (current: "promises" | "looks") => (
       state="needs"
       name="ui-promises"
       stage="Approve the cockpit mockups"
+      current={current === "plan"}
     />
     <NavGroup label="In flight" count={1} />
     <PlanRow
@@ -43,6 +44,10 @@ export const Expanded: Story = {
 // The Looks page's nav: the same frame with the Looks view the open one.
 export const LooksCurrent: Story = {
   args: { project: "dusk", summary: "9 plans", children: rows("looks") },
+};
+// A plan's page: the same frame with that plan's row the open one.
+export const PlanCurrent: Story = {
+  args: { project: "dusk", summary: "9 plans", children: rows("plan") },
 };
 export const Collapsed: Story = {
   args: {

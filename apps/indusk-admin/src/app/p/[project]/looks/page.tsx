@@ -1,5 +1,5 @@
 import {
-  looksCheckouts,
+  countedCheckouts,
   readLooks,
   resolveLooksCheckout,
 } from "@infinitedusky/indusk-mcp/looks/overview";
@@ -80,12 +80,14 @@ export default async function PerProjectLooksPage({
       openStory={openStory}
       view={query.view === "cascade" ? "cascade" : "list"}
       show={
-        query.show === "mockups" || query.show === "components"
+        query.show === "mockups" ||
+        query.show === "components" ||
+        query.show === "unapproved"
           ? query.show
           : "all"
       }
       checkout={checkout.plan}
-      checkouts={await looksCheckouts(projectPath)}
+      checkouts={await countedCheckouts(projectPath)}
     />
   );
 }

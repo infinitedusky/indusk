@@ -2,6 +2,7 @@ import type { AppLooks } from "@infinitedusky/indusk-mcp/looks/overview";
 import { APPROVAL_STYLE } from "@/components/bars/labels";
 import { stamp } from "@/lib/stamp";
 import { ApproveMockup, ApproveStory } from "./ApproveMockup";
+import { type Show, unapprovedFirst } from "./address";
 import { LookFrame } from "./LookFrame";
 import { byComponent, storyFrameSrc, storyLabel } from "./Stories";
 import { UnapproveMockup, UnapproveStory } from "./Unapprove";
@@ -21,6 +22,7 @@ export function Cascade({
   checkout,
   mockups,
   components,
+  show,
 }: {
   project: string;
   app: AppLooks;
@@ -29,7 +31,10 @@ export function Cascade({
   mockups: boolean;
   /** Draw the components' stories. */
   components: boolean;
+  /** Which looks: the unapproved ones alone, or every one with them first. */
+  show: Show;
 }) {
+  const stories = unapprovedFirst(app.stories, show);
   // A mockup is a whole screen: it opens at the largest device.
   const mockupDevice = [...app.devices].sort((a, b) => b.width - a.width)[0];
   return (
@@ -37,7 +42,7 @@ export function Cascade({
       {mockups ? (
         <section className="flex flex-col gap-6" data-testid="cascade-mockups">
           <h3 className="text-sm font-semibold text-ink-soft">Looks</h3>
-          {app.mockups.map((m) => (
+          {unapprovedFirst(app.mockups, show).map((m) => (
             <article
               key={m.name}
               className="flex flex-col gap-2"
@@ -105,13 +110,13 @@ export function Cascade({
           ))}
         </section>
       ) : null}
-      {components && app.stories.length > 0 ? (
+      {components && stories.length > 0 ? (
         <section
           className="flex flex-col gap-6"
           data-testid="cascade-components"
         >
           <h3 className="text-sm font-semibold text-ink-soft">Components</h3>
-          {byComponent(app.stories).map(([component, stories]) => (
+          {byComponent(stories).map(([component, ofComponent]) => (
             <div
               key={component}
               className="flex flex-col gap-4"
@@ -119,7 +124,7 @@ export function Cascade({
               data-name={component}
             >
               <h4 className="text-sm font-medium text-ink">{component}</h4>
-              {stories.map((s) => (
+              {ofComponent.map((s) => (
                 <article
                   key={s.name}
                   className="flex flex-col gap-2"

@@ -2,11 +2,12 @@ import type {
   AppLooks,
   StoryView,
 } from "@infinitedusky/indusk-mcp/looks/overview";
-import { APPROVAL_STYLE } from "@/components/bars/labels";
+import { LookRow } from "@/components/ui/LookRow";
 import { stamp } from "@/lib/stamp";
 import { ApproveStory } from "./ApproveMockup";
-import { hrefOf, type Show } from "./address";
+import { hrefOf, type Show, unapprovedFirst } from "./address";
 import { LookFrame } from "./LookFrame";
+import { OpenLookRow } from "./OpenLookRow";
 import { UnapproveStory } from "./Unapprove";
 
 /**
@@ -63,7 +64,8 @@ export function Components({
   /** The story open, when one is. */
   current: string | null;
 }) {
-  if (app.stories.length === 0) return null;
+  const stories = unapprovedFirst(app.stories, show);
+  if (stories.length === 0) return null;
   const hrefAt = (story: string) =>
     hrefOf(path, { app: app.app, story, show, view: "list", checkout });
   return (
@@ -73,35 +75,36 @@ export function Components({
       data-app={app.app}
     >
       <h3 className="text-sm font-semibold text-ink-soft">Components</h3>
-      <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
-        {byComponent(app.stories).map(([component, stories]) => (
-          <li
+      <div className="looks-rows shrink-0 overflow-hidden rounded-md border border-line bg-surface">
+        {byComponent(stories).map(([component, ofComponent]) => (
+          <div
             key={component}
             data-testid="component"
             data-name={component}
-            className="flex flex-col gap-1 px-3 py-2 text-sm"
+            className="border-t border-line first:border-t-0"
           >
-            <span className="font-medium text-ink">{component}</span>
-            <ul className="flex flex-col gap-1">
-              {stories.map((s) => (
-                <StoryRow
-                  key={s.name}
-                  project={project}
-                  checkout={checkout}
-                  app={app}
-                  story={s}
-                  hrefAt={hrefAt}
-                  current={current === s.name}
-                />
-              ))}
-            </ul>
-          </li>
+            <span className="block px-4 pt-3 text-sm font-medium text-ink">
+              {component}
+            </span>
+            {ofComponent.map((s) => (
+              <StoryRow
+                key={s.name}
+                project={project}
+                checkout={checkout}
+                app={app}
+                story={s}
+                hrefAt={hrefAt}
+                current={current === s.name}
+              />
+            ))}
+          </div>
         ))}
-      </ul>
+      </div>
     </section>
   );
 }
 
+/** One story in the list: a `LookRow` for its name, chip and Open, then what a person does with it. A story approved once and changed since reads proposed on the chip and `changed` here. */
 function StoryRow({
   project,
   checkout,
@@ -119,60 +122,69 @@ function StoryRow({
 }) {
   const state = storyLabel(story);
   return (
-    <li
+    <div
       data-testid="story-row"
       data-story={story.name}
       data-approval={story.approval}
       data-state={state}
-      className="flex flex-wrap items-center gap-x-3 gap-y-1"
+      className="border-t border-line first:border-t-0"
     >
-      {story.approval === "proposed" ? (
-        <input
-          type="checkbox"
-          value={story.name}
-          data-select-story=""
-          data-snapshot-hash={story.hash}
-          aria-label={`Select ${story.name}`}
-        />
-      ) : null}
       {story.id ? (
-        <a
+        <OpenLookRow
+          name={story.name}
+          approval={story.approval}
           href={hrefAt(story.name)}
-          data-testid="story-link"
-          aria-current={current ? "page" : undefined}
-          className="rounded-md text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
-        >
-          {story.state}
-        </a>
-      ) : (
-        <span className="text-ink">{story.state}</span>
-      )}
-      <span
-        className={`rounded-md border px-tight text-xs ${APPROVAL_STYLE[story.approval]}`}
-      >
-        {state}
-      </span>
-      {story.approval === "approved" && story.entry ? (
-        <span className="text-xs text-ink-faint">
-          by {story.entry.by}, {stamp(story.entry.at)}
-        </span>
-      ) : null}
-      {story.approval === "approved" ? (
-        <UnapproveStory
-          project={project}
-          app={app.app}
-          story={story.name}
-          snapshotHash={story.hash}
-          foundationHash={app.foundationHash}
-          checkout={checkout}
         />
-      ) : null}
-      {story.id ? null : (
-        <span className="ml-auto text-xs text-warn">
-          no Storybook id — run indusk looks stories {app.app}
-        </span>
+      ) : (
+        <LookRow name={story.name} approval={story.approval} />
       )}
-    </li>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-3 text-xs text-ink-soft">
+        {story.approval === "proposed" ? (
+          <input
+            type="checkbox"
+            value={story.name}
+            data-select-story=""
+            data-snapshot-hash={story.hash}
+            aria-label={`Select ${story.name}`}
+          />
+        ) : null}
+        {story.id ? (
+          <a
+            href={hrefAt(story.name)}
+            data-testid="story-link"
+            aria-current={current ? "page" : undefined}
+            className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
+          >
+            {story.state}
+          </a>
+        ) : (
+          <span className="text-ink">{story.state}</span>
+        )}
+        {state === "changed" ? (
+          <span className="text-warn">changed since approved</span>
+        ) : null}
+        {story.approval === "approved" && story.entry ? (
+          <span className="text-ink-faint">
+            by {story.entry.by}, {stamp(story.entry.at)}
+          </span>
+        ) : null}
+        {story.approval === "approved" ? (
+          <UnapproveStory
+            project={project}
+            app={app.app}
+            story={story.name}
+            snapshotHash={story.hash}
+            foundationHash={app.foundationHash}
+            checkout={checkout}
+          />
+        ) : null}
+        {story.id ? null : (
+          <span className="ml-auto text-warn">
+            no Storybook id — run indusk looks stories {app.app}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 

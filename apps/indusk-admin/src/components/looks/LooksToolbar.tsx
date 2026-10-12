@@ -1,4 +1,4 @@
-import type { LooksCheckout } from "@infinitedusky/indusk-mcp/looks/overview";
+import type { CountedCheckout } from "@infinitedusky/indusk-mcp/looks/overview";
 import { hrefOf, type Show } from "./address";
 
 /**
@@ -10,6 +10,7 @@ import { hrefOf, type Show } from "./address";
 
 const SHOWS: Array<[Show, string]> = [
   ["all", "All"],
+  ["unapproved", "Unapproved"],
   ["mockups", "Mockups"],
   ["components", "Components"],
 ];
@@ -61,6 +62,13 @@ function ChoiceLink({
   );
 }
 
+/** How a checkout is named: the plan whose worktree it is, or the project's own. */
+function checkoutName(plan: string | null, branch: string | null): string {
+  return plan
+    ? `plan ${plan}`
+    : `project checkout${branch ? ` (${branch})` : ""}`;
+}
+
 export function LooksToolbar({
   path,
   show,
@@ -73,8 +81,9 @@ export function LooksToolbar({
   view: "list" | "cascade";
   /** The plan whose worktree is read; null for the project's own checkout. */
   checkout: string | null;
-  checkouts: LooksCheckout[];
+  checkouts: CountedCheckout[];
 }) {
+  const reading = checkouts.find((c) => c.plan === checkout);
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
       <Choice label="Show" testId="looks-show">
@@ -99,6 +108,24 @@ export function LooksToolbar({
           </ChoiceLink>
         ))}
       </Choice>
+      <p
+        className="text-sm text-ink-soft"
+        data-testid="looks-reading"
+        data-checkout={checkout ?? ""}
+      >
+        Reading{" "}
+        <b className="font-medium text-ink">
+          {checkoutName(checkout, reading?.branch ?? null)}
+        </b>
+        {reading ? (
+          <>
+            {" "}
+            ·{" "}
+            <span data-testid="looks-reading-proposed">{reading.proposed}</span>{" "}
+            proposed
+          </>
+        ) : null}
+      </p>
       {checkouts.length > 1 ? (
         <Choice
           label="Read from"
@@ -112,9 +139,7 @@ export function LooksToolbar({
               current={c.plan === checkout}
               title={c.branch ?? undefined}
             >
-              {c.plan
-                ? `plan ${c.plan}`
-                : `project checkout${c.branch ? ` (${c.branch})` : ""}`}
+              {checkoutName(c.plan, c.branch)} · {c.proposed} proposed
             </ChoiceLink>
           ))}
         </Choice>

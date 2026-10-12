@@ -33,3 +33,13 @@ export const Released: Story = {
     stage: "Landed",
   },
 };
+// The plan that is open: the row ringed in the dusk colour, as the nav draws it on that plan's page.
+export const Current: Story = {
+  args: {
+    initials: "UP",
+    state: "needs",
+    name: "ui-promises",
+    stage: "Approve the cockpit mockups",
+    current: true,
+  },
+};

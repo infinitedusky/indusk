@@ -1,17 +1,18 @@
 import type {
   AppLooks,
   AppLooksRead,
-  LooksCheckout,
+  CountedCheckout,
   MockupView,
 } from "@infinitedusky/indusk-mcp/looks/overview";
-import { APPROVAL_STYLE } from "@/components/bars/labels";
+import { LookRow } from "@/components/ui/LookRow";
 import { stamp } from "@/lib/stamp";
 import { ApproveMockup } from "./ApproveMockup";
 import { ApproveSelected } from "./ApproveSelected";
-import { hrefOf, type Show } from "./address";
+import { hrefOf, type Show, unapprovedFirst } from "./address";
 import { Cascade } from "./Cascade";
 import { LookFrame } from "./LookFrame";
 import { LooksToolbar } from "./LooksToolbar";
+import { OpenLookRow } from "./OpenLookRow";
 import { Components, type OpenStory, OpenStoryView } from "./Stories";
 import { UnapproveMockup } from "./Unapprove";
 import { proposedIn, Uncovered } from "./Uncovered";
@@ -78,7 +79,7 @@ export function LooksBody({
   /** The plan whose worktree is read; null for the project's own checkout. */
   checkout?: string | null;
   /** Every checkout that can be read; a switch is shown when there is more than one. */
-  checkouts?: LooksCheckout[];
+  checkouts?: CountedCheckout[];
 }) {
   return (
     <section
@@ -183,6 +184,7 @@ function AppSection({
           checkout={checkout}
           mockups={mockups}
           components={components}
+          show={show}
         />
         <Uncovered app={app} show={show} />
       </section>
@@ -221,8 +223,8 @@ function AppSection({
             proposed={proposedIn(app, show)}
           />
           {mockups ? (
-            <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
-              {app.mockups.map((m) => (
+            <div className="looks-rows shrink-0 overflow-hidden rounded-md border border-line bg-surface">
+              {unapprovedFirst(app.mockups, show).map((m) => (
                 <MockupRow
                   key={m.name}
                   project={project}
@@ -236,7 +238,7 @@ function AppSection({
                   }
                 />
               ))}
-            </ul>
+            </div>
           ) : null}
           {components ? (
             <Components
@@ -334,6 +336,7 @@ function OpenMockupView({
   );
 }
 
+/** One mockup in the list: a `LookRow` for its name, chip and Open, then what a person does with it — select it, take its approval back, open it at a device. */
 function MockupRow({
   project,
   app,
@@ -361,64 +364,70 @@ function MockupRow({
       view: "list",
       checkout,
     });
+  const first = app.devices[0];
   return (
-    <li
+    <div
       data-testid="mockup-row"
       data-mockup={mockup.name}
       data-approval={mockup.approval}
-      className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm"
+      className="border-t border-line first:border-t-0"
     >
-      {mockup.approval === "proposed" ? (
-        <input
-          type="checkbox"
-          value={mockup.name}
-          data-select-mockup=""
-          data-mockup-hash={mockup.hash}
-          data-components-hash={mockup.componentsHash}
-          aria-label={`Select ${mockup.name}`}
+      {first ? (
+        <OpenLookRow
+          name={mockup.name}
+          approval={mockup.approval}
+          href={hrefAt(first.name)}
         />
-      ) : null}
-      <span className="font-medium text-ink">{mockup.name}</span>
-      <span
-        className={`rounded-md border px-tight text-xs ${APPROVAL_STYLE[mockup.approval]}`}
-      >
-        {mockup.approval}
-      </span>
-      {mockup.componentsChanged.length > 0 ? (
-        <span className="text-xs text-warn" data-testid="components-changed">
-          component changed: {mockup.componentsChanged.join(", ")}
+      ) : (
+        <LookRow name={mockup.name} approval={mockup.approval} />
+      )}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-3 text-xs text-ink-soft">
+        {mockup.approval === "proposed" ? (
+          <input
+            type="checkbox"
+            value={mockup.name}
+            data-select-mockup=""
+            data-mockup-hash={mockup.hash}
+            data-components-hash={mockup.componentsHash}
+            aria-label={`Select ${mockup.name}`}
+          />
+        ) : null}
+        {mockup.componentsChanged.length > 0 ? (
+          <span className="text-warn" data-testid="components-changed">
+            component changed: {mockup.componentsChanged.join(", ")}
+          </span>
+        ) : null}
+        {mockup.approval === "approved" && mockup.entry ? (
+          <span className="text-ink-faint">
+            by {mockup.entry.by}, {stamp(mockup.entry.at)}
+          </span>
+        ) : null}
+        {mockup.approval === "approved" ? (
+          <UnapproveMockup
+            project={project}
+            app={app.app}
+            mockup={mockup.name}
+            mockupHash={mockup.hash}
+            componentsHash={mockup.componentsHash}
+            foundationHash={app.foundationHash}
+            checkout={checkout}
+          />
+        ) : null}
+        <span className="ml-auto flex gap-2">
+          {app.devices.map((d) => (
+            <a
+              key={d.name}
+              href={hrefAt(d.name)}
+              data-testid="device-link"
+              data-device={d.name}
+              aria-current={current === d.name ? "page" : undefined}
+              className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
+            >
+              {d.name}
+            </a>
+          ))}
         </span>
-      ) : null}
-      {mockup.approval === "approved" && mockup.entry ? (
-        <span className="text-xs text-ink-faint">
-          by {mockup.entry.by}, {stamp(mockup.entry.at)}
-        </span>
-      ) : null}
-      {mockup.approval === "approved" ? (
-        <UnapproveMockup
-          project={project}
-          app={app.app}
-          mockup={mockup.name}
-          mockupHash={mockup.hash}
-          componentsHash={mockup.componentsHash}
-          foundationHash={app.foundationHash}
-          checkout={checkout}
-        />
-      ) : null}
-      <span className="ml-auto flex gap-2">
-        {app.devices.map((d) => (
-          <a
-            key={d.name}
-            href={hrefAt(d.name)}
-            data-testid="device-link"
-            data-device={d.name}
-            aria-current={current === d.name ? "page" : undefined}
-            className="rounded-md px-tight text-xs text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
-          >
-            {d.name}
-          </a>
-        ))}
-      </span>
-    </li>
+      </div>
+    </div>
   );
 }

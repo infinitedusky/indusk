@@ -1,7 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { DeviceChoice } from "@/components/ui/DeviceChoice";
+import { DeviceFrame } from "@/components/ui/DeviceFrame";
 import { useFittedFrame } from "./useFittedFrame";
+
+/** The choice that returns a story to its component's own size. */
+const FIT = "Fit";
 
 /**
  * A look drawn at its own size, with the reference devices to choose from
@@ -76,28 +81,20 @@ export function LookFrame({
   const height = fits
     ? (fitted?.height ?? chosen?.height ?? 120)
     : (chosen?.height ?? devices[0]?.height ?? 600);
-  const options: Array<{ name: string | null; label: string }> = [
-    ...(fits ? [{ name: null, label: "Fit" }] : []),
-    ...devices.map((d) => ({ name: d.name, label: d.name })),
-  ];
+  const options = [...(fits ? [FIT] : []), ...devices.map((d) => d.name)];
 
   return (
     <div className="flex flex-col gap-2" data-testid={`${testId}-box`}>
-      <fieldset className="flex flex-wrap items-center gap-2 text-xs">
-        <legend className="sr-only">Device</legend>
-        {options.map((o) => (
-          <button
-            key={o.label}
-            type="button"
-            data-testid="frame-device"
-            data-device={o.name ?? "fit"}
-            aria-pressed={device === o.name}
-            onClick={() => choose(o.name)}
-            className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[pressed=true]:bg-dusk-wash"
-          >
-            {o.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <DeviceChoice
+          devices={options}
+          value={device ?? FIT}
+          onChange={(name) => choose(name === FIT ? null : name)}
+          optionProps={(name) => ({
+            "data-testid": "frame-device",
+            "data-device": name === FIT ? "fit" : name,
+          })}
+        />
         {chosen ? (
           <span className="text-ink-faint">
             {chosen.width} × {fits ? height : chosen.height}
@@ -107,7 +104,7 @@ export function LookFrame({
             {fitted.width} × {fitted.height}
           </span>
         ) : null}
-      </fieldset>
+      </div>
       <fieldset className="flex flex-wrap items-center gap-2 text-xs">
         <legend className="sr-only">Theme</legend>
         {THEMES.map(([value, label]) => (
@@ -127,7 +124,10 @@ export function LookFrame({
           </button>
         ))}
       </fieldset>
-      <div className="max-w-full overflow-auto">
+      <DeviceFrame
+        className="max-w-full overflow-auto"
+        style={{ height: "auto", justifyItems: "start" }}
+      >
         <iframe
           ref={ref}
           data-testid={testId}
@@ -140,7 +140,7 @@ export function LookFrame({
           onLoad={fits ? start : undefined}
           className="block border-0 bg-surface elevated"
         />
-      </div>
+      </DeviceFrame>
     </div>
   );
 }

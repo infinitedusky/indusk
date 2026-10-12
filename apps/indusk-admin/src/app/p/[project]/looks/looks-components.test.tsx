@@ -302,3 +302,31 @@ describe("A29 — Unapprove is offered on what is approved, never on what is pro
     );
   });
 });
+
+describe("the components list puts stories waiting for a person first, or shows only them", () => {
+  const order = (html: string) =>
+    [
+      ...html.matchAll(
+        /data-testid="story-row"[^>]*data-story="([^"]*)"[^>]*data-approval="([^"]*)"/g,
+      ),
+    ].map((m) => [m[1], m[2]]);
+
+  it("lists the proposed story before the approved one", async () => {
+    const rows = order(await looksPage({ show: "components" }));
+    expect(rows.map(([name]) => name).indexOf("badge.broken")).toBeLessThan(
+      rows.map(([name]) => name).indexOf("badge.ok"),
+    );
+  });
+
+  it("Show: Unapproved lists the proposed story and not the approved one", async () => {
+    const rows = order(await looksPage({ show: "unapproved" }));
+    expect(rows.map(([name]) => name)).toContain("badge.broken");
+    expect(rows.map(([name]) => name)).not.toContain("badge.ok");
+  });
+
+  it("the cascade shows the same choice", async () => {
+    const html = await looksPage({ show: "unapproved", view: "cascade" });
+    expect(html).toContain('data-story="badge.broken"');
+    expect(html).not.toContain('data-story="badge.ok"');
+  });
+});
