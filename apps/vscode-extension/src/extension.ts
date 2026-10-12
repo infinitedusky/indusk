@@ -113,14 +113,26 @@ export function activate(context: vscode.ExtensionContext): void {
 		for (const [uri, list] of found) diagnostics.set(vscode.Uri.parse(uri), list);
 	};
 
+	const fixLog = vscode.window.createOutputChannel("InDusk", { log: true });
+	context.subscriptions.push(fixLog);
 	const fix = (promise: string) => {
-		const action = fixFor(session.view, promise, {
+		const ctx = {
 			projectRoot: root,
 			claudeOnPath: spawnSync("which", ["claude"]).status === 0,
-		});
+			host: vscode.env.uriScheme === "vscode" ? ("vscode" as const) : ("other" as const),
+			claudeCodeExtension: vscode.extensions.getExtension("anthropic.claude-code") !== undefined,
+		};
+		const action = fixFor(session.view, promise, ctx);
+		fixLog.info(
+			`fix ${promise}: uriScheme=${vscode.env.uriScheme} claudeCodeExtension=${ctx.claudeCodeExtension} claudeOnPath=${ctx.claudeOnPath} -> ${action ? Object.keys(action)[0] : "nothing broken"}`,
+		);
 		if (!action) return;
 		if ("message" in action) {
 			void vscode.window.showErrorMessage(action.message);
+			return;
+		}
+		if ("claudeTab" in action) {
+			void vscode.env.openExternal(vscode.Uri.parse(action.claudeTab.uri));
 			return;
 		}
 		const terminal = vscode.window.createTerminal({

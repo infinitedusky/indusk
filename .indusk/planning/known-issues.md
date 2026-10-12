@@ -190,6 +190,18 @@ Each entry says what happens, where it was seen, and what we know so far.
 
 ## Tests
 
+- **Fix with Claude opening a Claude Code tab is not yet seen working**
+  (fix-opens-claude-tab, 2026-10-10, row A3 skipped). On the new build the
+  click still opened a terminal once, cause unknown; the same link opened from
+  the shell filled a Claude Code tab. At the next real break, click Fix with
+  Claude in VS Code and read the `InDusk` output channel's log line
+  (`uriScheme`, `claudeCodeExtension`, route) to see which check failed.
+- **Two everyday tests red on `main` from the browser-telemetry work**
+  (seen 2026-10-10): `impl-corpus.test.ts` A4 (the `browser-template-claims`
+  impl does not validate) and `registry-leak-scan.test.ts` A22
+  (`init-browser-telemetry.test.ts` spawns a registry-writing command without
+  `INDUSK_HOME`, so it can write the real registry).
+
 - **Waiting evaluations have no retry cap** (evaluator-waits-out-limits,
   2026-10-10). Each commit's trigger retries every waiting commit, each
   spawning a detached evaluator; after a long limit (the weekly one) resets, a

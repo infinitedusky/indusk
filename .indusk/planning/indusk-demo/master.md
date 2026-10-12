@@ -22,6 +22,7 @@ subplans:
   - server-provisioning
   - contract-ui
   - mockup-matching
+  - cockpit-audit-fixes
 ---
 
 # Demo — a new project, start to finish
@@ -181,10 +182,11 @@ this file now carries it so the sidebar and the numbers agree.
 | 8 | [incident-recording](../archive/incident-recording/retrospective.md) | the watcher runs by itself; a break becomes an incident and announces itself — closed 2026-10-08 |
 | 9 | [vscode-extension](../archive/vscode-extension/retrospective.md) | the break moment in the editor: markers, the Promises panel, "fix with Claude" — closed 2026-10-09 |
 | 9a | [display-names](../archive/display-names/retrospective.md) | promises read as words, plans by title with their start, landing and release dates, from one package module plan-cockpit reuses — **closed 2026-10-10**: `promises/display`, dates from the trunk's release commits (94 of 94 landed plans dated) |
-| 10 | plan-cockpit | stage 1 of the promise UI: the dashboard, the promise page with its proof, the plan page — being opened |
+| 10 | [plan-cockpit](../archive/plan-cockpit/retrospective.md) | stage 1 of the promise UI: the dashboard, the promise page with its proof, the plan page — closed 2026-10-10 |
 | 11 | [contract-ui](../contract-ui/brief.md) | stage 2: the home view as the hierarchy above stage 1's pages, statuses derived — after the launch, after plan-premises |
 | 10a | [ui-promises](../archive/ui-promises/retrospective.md) | how the app looks, held: mockups on one token foundation, approved in the cockpit, every part covered, a token broken in the running app caught — **closed 2026-10-11**: `lib/looks/`, `indusk looks`, the admin restyled and held (12 looks held, 54 unchecked: only the dashboard and Looks pages report their state) |
 | 12 | [mockup-matching](../mockup-matching/brief.md) | each screen compared pixel for pixel with its approved mockup, one pinned renderer — after the launch |
+| 13 | [cockpit-audit-fixes](../cockpit-audit-fixes/brief.md) | what plan-cockpit's cold audit found: thirty days that say only what was seen, every question answered, approval for a finished plan, the innermost Path — after the UI plans, a bugfix |
 
 ## Decisions (2026-10-10)
 

@@ -299,14 +299,14 @@ A `fetch` or `XMLHttpRequest` (so axios too) to the page's own origin carries th
 VITE_OTEL_PROPAGATE_TO=http://localhost:3000,https://*.dev.example.com
 ```
 
-- An entry without `*` is an exact origin (scheme, host and port).
+- An entry without `*` is an exact origin (scheme, host and port). An entry that carries a path covers that path and what is under it, so `https://api.example.com/v1` covers `/v1/seats` and not `/v2/seats` or `/v10/seats`; a pattern entry follows the same rule. A path is compared as written, since a server tells `/Admin` from `/admin`; host and scheme case do not matter. A query or fragment on an entry is ignored, exact and pattern alike.
 - `*` matches one or more characters other than `/` and `.`, so `https://*.dev.example.com` matches `https://plan-a.dev.example.com` and not `https://dev.example.com.evil.test`.
 - Empty means same-origin only. A third-party origin you did not name never receives the header.
 - An entry begins with its scheme (`https://`, or `*://`). One that does not can never match a request, so it is ignored with a console warning naming it; a bare `*` propagates nowhere.
-- Exact entries are compared the way the browser spells a request URL: host case does not matter and a default port (`:443`, `:80`) may be written or left off.
+- Entries are compared the way the browser spells a request URL, exact and pattern alike: host case does not matter and a default port (`:443` under `https`, `:80` under `http`) may be written or left off. Any other port is literal.
 - The API must allow the `traceparent` header in its CORS settings (`Access-Control-Allow-Headers: traceparent`). `indusk init` prints this for React SPA and Next.js projects; it does not edit your server.
 
-**A limit.** A request made after a native `await` in a click handler is in its own trace, not the click's: browsers have no way yet to carry the click's context across a native `await` (zone.js cannot patch it, and the AsyncContext proposal has not shipped). A request made synchronously in the handler, or from a `.then()` chain compiled below ES2017, follows the click.
+**A limit.** Only a request made synchronously in the click handler is in the click's trace. A request made after a native `await`, from a `.then()` callback or from a timer is in its own trace, not the click's: the template installs no context manager that carries the click across an asynchronous hop (zone.js cannot patch native `async`/`await`, and the AsyncContext proposal has not shipped). Make the request before the first `await`, or accept the separate trace.
 
 ## Connecting to a Backend
 
