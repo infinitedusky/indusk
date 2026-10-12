@@ -743,6 +743,19 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T15:34:42.374Z"
+		},
+		{
+			"mockup": "nav.expanded",
+			"mockupHash": "eea6b798eca0104b247ae02ee074555dc793f7760d608f64d765b1e00df4476f",
+			"componentsHash": "93fb96eef72f3daca62f31bc18479d7561220c41dfe5a9af7b61122e07eaec76",
+			"components": {
+				"nav.expanded": "dda3c6d55b852604d7d81c84f0d9b5c85ffe73a7b9f2e375cf4853bb2d7381ae",
+				"nav.css": "6949b9207b340c62f9dd8f7e6a83620a677f674d2a45e6f8bab063e2dc38da88"
+			},
+			"foundationHash": "36b807fec8de7d0bba03f7609225d33597688f4bcf3e165a45beee8494f5f810",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T15:34:42.553Z"
 		}
 	]
 }
