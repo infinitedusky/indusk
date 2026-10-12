@@ -17,6 +17,9 @@ process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART = "1";
 // above did nothing until it was here (test-daemons-never-leak).
 process.env.INDUSK_BIN ??= `node ${path.resolve(__dirname, "../indusk-mcp/dist/bin/cli.js")}`;
 
+/** The `@/` alias every project shares. */
+const resolve = { alias: { "@": path.resolve(__dirname, "src") } };
+
 /**
  * The `storybook` project: every story rendered in Chromium (storybook-
  * components A5). It is the system tier's (`SYSTEM_PROJECTS`), so `pnpm test`
@@ -26,7 +29,7 @@ process.env.INDUSK_BIN ??= `node ${path.resolve(__dirname, "../indusk-mcp/dist/b
 const storybookProjects = process.env[SYSTEM_TIER_ENV]
   ? [
       {
-        resolve: { alias: { "@": path.resolve(__dirname, "src") } },
+        resolve,
         plugins: [
           storybookTest({
             configDir: path.resolve(__dirname, ".storybook"),
@@ -57,20 +60,12 @@ const storybookProjects = process.env[SYSTEM_TIER_ENV]
  * Both projects share the `@/` alias and `passWithNoTests: true`.
  */
 export default defineConfig({
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-    },
-  },
+  resolve,
   test: {
     passWithNoTests: true,
     projects: [
       {
-        resolve: {
-          alias: {
-            "@": path.resolve(__dirname, "src"),
-          },
-        },
+        resolve,
         test: {
           name: "node",
           // Node-only tests: lib parsers + audit scripts that touch the filesystem
@@ -88,11 +83,7 @@ export default defineConfig({
         },
       },
       {
-        resolve: {
-          alias: {
-            "@": path.resolve(__dirname, "src"),
-          },
-        },
+        resolve,
         test: {
           name: "browser",
           // Browser tests: React component tests under src/. Excludes lib (node)

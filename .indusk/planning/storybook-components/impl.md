@@ -167,7 +167,8 @@ The admin is built from components defined once, each with an approved story per
 - [x] `storybook build --output-dir public/storybook` in the admin's build (`build:storybook`, run before `next build`); `public/storybook/` git-ignored; `bundle-admin.js` already copies `public/`, so the bundled admin serves `/storybook/index.html` and `/storybook/iframe.html`
 - [x] `src/components/ui/Badge.stories.tsx`: one story per badge state the mockups show (read the eleven mockups' badge variants), named for the state
   - Finding: the mockups name two components that `Badge.tsx` could be: `badge` (a plan's initials square with a status dot; states `needs`, `working`, `released`) and `chip` (the pill; states `declared`, `proving`, `enforced`, `broken`, `active`). `Badge.tsx` marks its element `data-component="chip"` and its eight variants draw the `chip` colours (passing = enforced, blocked = broken, skipped = proving, written = active, planned/neutral = declared); it draws no `badge`. The stories are named for its eight variants. Consequence for A13 (the catalog lists `badge` with a story state and a snapshot): A13 fails after Build Phase 2 unless `badge` gets its own component file, or Build Phase 5 renames the marker; the marker is unchanged here, and Build Phases 2 and 5 reconcile (the plan lists `chip` separately).
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-admin/vitest.config.ts`) — name the `@` alias once (`const alias`) instead of writing `{ "@": path.resolve(__dirname, "src") }` at the top level and in each of the three projects. Rule: should this inline block have been a named value — the same object written four times in one file, one added by this phase
 
 #### Build Phase 1 Verification
 
