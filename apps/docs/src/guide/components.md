@@ -84,10 +84,26 @@ story is a missing story, not a missing mockup rule.
 ## Approval, and taking it back
 
 A person approves, never an agent. In the cockpit's Looks page, **Show:
-Components** lists each component's stories; each is approved against its
-snapshot hash. A mockup is approved against its own hash and its
-`componentsHash`, so it can only be approved while every component it names has
-an approved story.
+Components** lists each component's stories. A story is approved against what
+draws it: its snapshot's hash and its component's stylesheet's hash. A rule
+changed in the app's CSS can change how a component looks while its markup
+stays byte for byte the same, so the stylesheet is bound beside the snapshot,
+and a changed stylesheet makes the story read proposed.
+
+The story a person approves is the one they see. The Looks page draws each
+story from its snapshot, in the checkout the page is reading (a plan's
+worktree included), on the foundation's tokens and the component's stylesheet,
+exactly as a composed mockup draws it. It does not frame the admin's own
+`/storybook` build, which may be older or from another branch; `/storybook`
+stays for browsing and for `indusk looks check`.
+
+A mockup is approved against its own hash and its `componentsHash`, which
+holds its components' snapshots and stylesheets. Both are required: a mockup
+that composes components is refused when Approve leaves `componentsHash` out,
+because the stylesheets it shows are not in the mockup's own hash. A mockup is
+approved only while every story it composes is approved as it is now. Approving
+a group that holds a mockup and the stories it composes records the stories
+first, then the mockup, so one **Approve N selected** settles both.
 
 **Unapprove** is the way back, and it is also a person's: the button appears on
 an approved mockup or story and not on a proposed one, and it sends the hash the
@@ -96,8 +112,11 @@ person; the record keeps its whole history, and approving it again makes it read
 approved. An agent's `indusk looks unapprove` is refused, naming the cockpit.
 
 A component's markup or style changing makes its story read proposed and every
-approved mockup that uses it read proposed too, naming the component. A mockup
-that does not use it stays approved.
+approved mockup that uses it read proposed too, naming the component. So does
+a person's Unapprove of a story: each mockup composing it reads proposed,
+`component changed: <name>`, in the status, the coverage and the lint alike,
+and reads approved again once the story is approved. A mockup that does not
+use it stays approved.
 
 ## The catalog
 
