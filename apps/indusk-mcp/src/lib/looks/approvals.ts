@@ -268,6 +268,8 @@ export function readRecord(app: LooksApp): unknown[] {
  * as they stand, read from the record when not given: the lint refuses a
  * mockup composing an unapproved story (`no approved story`), and every other
  * reader agrees with it through here (Build Phase 9, A32).
+ *
+ * promise: a-changed-component-reopens-its-mockups
  */
 export function approvalOf(
 	app: LooksApp,
