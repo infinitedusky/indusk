@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { extname, relative } from "node:path";
 import { type Foundation, isGeneratedCss } from "./foundation.js";
 import { CLASS_SOURCE_EXTENSIONS, classFindings } from "./lint-classes.js";
+import { componentFindings } from "./lint-components.js";
 import type { CssBlock, Finding } from "./lint-types.js";
 import { cssFindings, isOwn } from "./lint-values.js";
 import { elementsOf } from "./markup.js";
@@ -207,12 +208,16 @@ async function lintSources(
 	return findings;
 }
 
-/** Every raw value, undefined token and stock class in an app's mockups and declared sources. */
+/**
+ * Every raw value, undefined token and stock class in an app's mockups and
+ * declared sources, and the component rules of `lint-components`.
+ */
 export async function lintApp(root: string, app: LooksApp): Promise<Finding[]> {
 	const foundation = namesOf(app.foundation);
 	const mockups = await Promise.all(app.mockups.map((m) => lintMockup(m, foundation)));
 	const sources = await lintSources(root, app.sources, foundation);
-	return [...mockups.flat(), ...sources].sort(byPlace);
+	const components = await componentFindings(root, app);
+	return [...mockups.flat(), ...sources, ...components].sort(byPlace);
 }
 
 export type { Finding, LintRule } from "./lint-types.js";

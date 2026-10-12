@@ -54,6 +54,21 @@ export type Approval =
 
 const FIELDS = ["mockup", "mockupHash", "foundationHash", "by", "at"] as const;
 
+/**
+ * A story's entry (`kind: "story"`, storybook-components): the record holds
+ * these beside the mockups'. They are read by Build Phase 3's story approvals;
+ * until then `readApprovals` recognises one so a record that holds stories is
+ * not refused as malformed, and returns only the mockups' entries.
+ */
+function isStoryEntry(v: unknown): boolean {
+	if (typeof v !== "object" || v === null) return false;
+	const o = v as Record<string, unknown>;
+	return (
+		o.kind === "story" &&
+		["story", "snapshotHash", "foundationHash", "by", "at"].every((k) => typeof o[k] === "string")
+	);
+}
+
 function isEntry(v: unknown): v is ApprovalEntry {
 	if (typeof v !== "object" || v === null) return false;
 	const o = v as Record<string, unknown>;
@@ -77,6 +92,11 @@ export const approvalsPath = (app: string) => join(MOCKUPS_DIR, app, APPROVALS_F
  * any more than like "everything approved".
  */
 export function readApprovals(app: LooksApp): ApprovalEntry[] {
+	return readRecord(app).filter(isEntry);
+}
+
+/** Every entry of the record, mockups' and stories', validated; the writer keeps them all. */
+function readRecord(app: LooksApp): unknown[] {
 	const file = join(app.dir, APPROVALS_FILE);
 	if (!existsSync(file)) return [];
 	let parsed: unknown;
@@ -90,7 +110,7 @@ export function readApprovals(app: LooksApp): ApprovalEntry[] {
 		throw new LooksAppError(`${file} has no "approvals" list`);
 	}
 	list.forEach((entry, i) => {
-		if (!isEntry(entry)) {
+		if (!isEntry(entry) && !isStoryEntry(entry)) {
 			throw new LooksAppError(`${file}: approvals[${i}] is not { ${FIELDS.join(", ")} }`);
 		}
 	});
@@ -171,7 +191,8 @@ export async function approve(
 	const lock = `${currentMdPath(checkout)}.lock`;
 	mkdirSync(dirname(lock), { recursive: true });
 	return withLock(lock, () => {
-		const approvals = readApprovals(app);
+		const record = readRecord(app);
+		const approvals = record.filter(isEntry);
 		const now = approvalOf(app, mockup, approvals);
 		if (now.state === "approved") {
 			return { approved: true, entry: now.entry, commit: { committed: true } };
@@ -187,7 +208,7 @@ export async function approve(
 		const rel = approvalsPath(appName);
 		writeFileSync(
 			join(checkout, rel),
-			`${JSON.stringify({ approvals: [...approvals, entry] }, null, "\t")}\n`,
+			`${JSON.stringify({ approvals: [...record, entry] }, null, "\t")}\n`,
 		);
 		const commit = commitNote(
 			checkout,

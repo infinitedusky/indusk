@@ -5,7 +5,11 @@ export type LintRule =
 	| "redefined-token"
 	| "external-reference"
 	| "arbitrary-class"
-	| "stock-class";
+	| "stock-class"
+	| "duplicate-component"
+	| "component-outside-file"
+	| "no-story"
+	| "not-in-catalog";
 
 export interface Finding {
 	/** Relative to the project root. */
