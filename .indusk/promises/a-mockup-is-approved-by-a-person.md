@@ -22,9 +22,10 @@ tests:
 incidents: []
 ---
 
-A mockup or a story, and the foundation it is drawn on, becomes the reference only when a person approves it in the cockpit; an agent can draw and propose one and never approve it.
+A mockup or a story, and the foundation it is drawn on, becomes the reference only when a person approves it in the cockpit, and stops being one when a person takes the approval back there; an agent can draw and propose one and never approve it or take it back.
 
 ## History
 - 2026-10-11 — declared (ui-promises), from its planning conversation.
 - 2026-10-12 — enforced, confirmed for ui-promises: proven by row A1, row A2, row A3, row A4, row A28, row A29, row A30, row A33, row A35.
 - 2026-10-12 — changed by storybook-components: stories are approved like mockups. It read: "A mockup, and the foundation it defines, becomes the reference only when a person approves it in the cockpit; an agent can draw and propose one and never approve it." Owned before by ui-promises; storybook-components takes it over.
+- 2026-10-12 — changed by storybook-components: an approval made by mistake had no way back. It read: "A mockup or a story, and the foundation it is drawn on, becomes the reference only when a person approves it in the cockpit; an agent can draw and propose one and never approve it."
