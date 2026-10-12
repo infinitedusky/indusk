@@ -178,6 +178,15 @@ export interface CatalogComponent {
 	file: string;
 	properties: CatalogProperty[];
 	states: CatalogState[];
+	/**
+	 * The component's stylesheet, `components/<name>.css`, relative to the
+	 * app's mockups folder: the compiled rules of the classes its snapshots use,
+	 * resolved to the foundation's tokens (ADR decision 10). Absent in a catalog
+	 * written before stylesheets, and on a component with no rendered class.
+	 */
+	stylesheet?: string;
+	/** sha256 of that file's bytes. */
+	stylesheetHash?: string;
 }
 
 export interface Catalog {

@@ -39,7 +39,9 @@
 					"id": "ui-planbadge--released",
 					"snapshotHash": "070b75990ca2eea91ac042324db4768e897a93f4d6af7d36b9653e69a8630010"
 				}
-			]
+			],
+			"stylesheet": "components/badge.css",
+			"stylesheetHash": "56f80a1c532d7a388cca9142673c9fa6386bf38ef9b6580a78dea2b051c5689d"
 		},
 		{
 			"name": "box",
@@ -69,7 +71,9 @@
 					"id": "ui-box--default",
 					"snapshotHash": "7402034edd33d3fd922a411764e777346806db20f31f6cd3bc4657f2e925cf2f"
 				}
-			]
+			],
+			"stylesheet": "components/box.css",
+			"stylesheetHash": "9109c4e211ae9b0cf3f2da0a11cdcfc29056af5f1a5cbcb5b748b71a05e42bfb"
 		},
 		{
 			"name": "button",
@@ -105,7 +109,9 @@
 					"id": "ui-button--yes",
 					"snapshotHash": "93fac0656e7c4033b3c25bf08c7420fd21a1e6e720ccea4315375538efc0f325"
 				}
-			]
+			],
+			"stylesheet": "components/button.css",
+			"stylesheetHash": "0f53d0f11f9a3564eefd0138a44fc85fd8ce7a48c4ccee99b29b24f6d88b3abb"
 		},
 		{
 			"name": "chip",
@@ -190,7 +196,9 @@
 					"id": "ui-badge--active",
 					"snapshotHash": "1499d36ae87f0decf0073fd1dce3aeb83a0506436ae6ef3e5a5ebe8c03ef2e79"
 				}
-			]
+			],
+			"stylesheet": "components/chip.css",
+			"stylesheetHash": "3c6858d659b0f229d026d6f2275d98d54ed00500512d1d97308acca4672d6072"
 		},
 		{
 			"name": "decision-card",
@@ -248,7 +256,9 @@
 					"id": "ui-decisioncard--alert",
 					"snapshotHash": "a990826ab239bc94e414cc39333f94e54d6278e6320a075f31d21632ae90e5fc"
 				}
-			]
+			],
+			"stylesheet": "components/decision-card.css",
+			"stylesheetHash": "94460b9f78817dc58e4aa340e4c944e2d62cf08b24676c0b7a8fc5dbc69d782a"
 		},
 		{
 			"name": "device-choice",
@@ -284,7 +294,9 @@
 					"id": "ui-devicechoice--default",
 					"snapshotHash": "c4d8698990a2d4beb5400aa09bc19d0e3717ec0cf826462ac854c86fa8ab2bbc"
 				}
-			]
+			],
+			"stylesheet": "components/device-choice.css",
+			"stylesheetHash": "d6846da6298358d96bb8f8a7d79048a58eab3b5e54f778003c52784ebf4dbf0e"
 		},
 		{
 			"name": "device-frame",
@@ -309,7 +321,9 @@
 					"id": "ui-deviceframe--default",
 					"snapshotHash": "6552fc782d0151defa1028cf3b6cd8b2301108692faa44f573e51d979dbbd687"
 				}
-			]
+			],
+			"stylesheet": "components/device-frame.css",
+			"stylesheetHash": "f1a0af50dece61b6120ea3e1ab7a70ac23ae11fcd0bcf804375da1662ed11cbe"
 		},
 		{
 			"name": "look-row",
@@ -354,7 +368,9 @@
 					"id": "ui-lookrow--uncovered",
 					"snapshotHash": "884bcfe1843ee6045837284fb040286677c223b636217025513d2d5f84471ca0"
 				}
-			]
+			],
+			"stylesheet": "components/look-row.css",
+			"stylesheetHash": "51bf2ae15dfc34b1fbe155219f560c68dde3ef0430815e8f05c718e389748568"
 		},
 		{
 			"name": "nav",
@@ -402,7 +418,9 @@
 					"id": "ui-nav--collapsed",
 					"snapshotHash": "fb43491fb8be6d85095bd3cf737a08a5fbc237e36c03081029fc1833b77b7a0d"
 				}
-			]
+			],
+			"stylesheet": "components/nav.css",
+			"stylesheetHash": "6949b9207b340c62f9dd8f7e6a83620a677f674d2a45e6f8bab063e2dc38da88"
 		},
 		{
 			"name": "plan-row",
@@ -459,7 +477,9 @@
 					"id": "ui-planrow--released",
 					"snapshotHash": "386505b3dd3ca21eceefd37d11c175a41c438d72aad5fab6637dfbd7f9ce58b0"
 				}
-			]
+			],
+			"stylesheet": "components/plan-row.css",
+			"stylesheetHash": "0912fbd862ffa4288371df33d84b6d37714d654c3ef359befe9472af307cfdf5"
 		},
 		{
 			"name": "promise-row",
@@ -537,7 +557,9 @@
 					"id": "ui-promiserow--empty",
 					"snapshotHash": "0fba184d8a78eba12720c6fd61cb418951102a333bf1f51fcb95facbb99d1d81"
 				}
-			]
+			],
+			"stylesheet": "components/promise-row.css",
+			"stylesheetHash": "1ae40722b58298e38e1ba2611468d810b8ee4c38451883e035c16a8c1703c498"
 		},
 		{
 			"name": "rail-group",
@@ -585,7 +607,9 @@
 					"id": "ui-railgroup--current",
 					"snapshotHash": "025252cd2657e8238ef3d0bc0287678edde159d0e4b9d73457e9f9720f0547bd"
 				}
-			]
+			],
+			"stylesheet": "components/rail-group.css",
+			"stylesheetHash": "709bc8bb407c66342be8aee00532d71c89d2e2784fc332c569f1d4c56d80fa9a"
 		},
 		{
 			"name": "shell",
@@ -622,7 +646,9 @@
 					"id": "ui-shell--collapsed",
 					"snapshotHash": "61a045eeb90503962bb425a274c890717ee26cba3d3b3b7b5de945b802bd88b9"
 				}
-			]
+			],
+			"stylesheet": "components/shell.css",
+			"stylesheetHash": "8948168bdf2f82ff116a7bcc04852ca76f12c54e449738c8ab62c0531725642b"
 		},
 		{
 			"name": "stat",
@@ -673,7 +699,9 @@
 					"id": "ui-stat--bad",
 					"snapshotHash": "41184063e2d931c5c0cc66e102fed8dd46d00dda2bcbc0daf01ef73f13f3a7fc"
 				}
-			]
+			],
+			"stylesheet": "components/stat.css",
+			"stylesheetHash": "4f01dbc822f5557d67a0cf8e6a42d4b60f8711b062a30d7dd1e71187ea261ff9"
 		},
 		{
 			"name": "step",
@@ -730,7 +758,9 @@
 					"id": "ui-step--waiting",
 					"snapshotHash": "e1b554c8cbe66ad54a7cb4434402f56d0dbf4469bc07e18fb75502ff481860ab"
 				}
-			]
+			],
+			"stylesheet": "components/step.css",
+			"stylesheetHash": "29fef2f057243572aa6a921885ec7a65560c77c0cf0a02d3ede65e21f43d3029"
 		},
 		{
 			"name": "summary-bar",
@@ -760,7 +790,9 @@
 					"id": "ui-summarybar--default",
 					"snapshotHash": "cc2b4bb6af4d593b8d0f89566c4a687d006ca768156b8e6802332d97da26d911"
 				}
-			]
+			],
+			"stylesheet": "components/summary-bar.css",
+			"stylesheetHash": "2cbf514e84ee2158f9a2c278d47b75e31e56c8df575fdc71d301bbcd33953eb3"
 		},
 		{
 			"name": "tag",
@@ -779,7 +811,9 @@
 					"id": "ui-tag--default",
 					"snapshotHash": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2"
 				}
-			]
+			],
+			"stylesheet": "components/tag.css",
+			"stylesheetHash": "36966d567e336a69f4466d9c9d719d30b6dc7cea5481726bf6423129b50d9742"
 		},
 		{
 			"name": "timeline",
@@ -803,7 +837,9 @@
 					"id": "ui-timeline--default",
 					"snapshotHash": "95d42b3bf92781f16b1a26f362f49a7fa5b41a4b6b392521ef4b99bc5dc2fb37"
 				}
-			]
+			],
+			"stylesheet": "components/timeline.css",
+			"stylesheetHash": "59b30fa0f11a37cf5e26b3d1143fb197312f60526be5c5133620aeeb59883acd"
 		},
 		{
 			"name": "view-link",
@@ -851,7 +887,9 @@
 					"id": "ui-viewlink--current",
 					"snapshotHash": "f16dd9a38469efa400cb6d19e966eb8da585b323790adccc09a1d427d737d908"
 				}
-			]
+			],
+			"stylesheet": "components/view-link.css",
+			"stylesheetHash": "0b4350f01613828d3b919a487a725032ec0ae806c1c9612f663894074458256c"
 		}
 	]
 }

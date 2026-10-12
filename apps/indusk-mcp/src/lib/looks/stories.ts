@@ -1,9 +1,11 @@
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
+import { classesOf, componentStylesheet } from "./component-styles.js";
 import {
 	CATALOG_FILE,
 	type Catalog,
@@ -35,6 +37,8 @@ import { buildCatalog, manifestIndex, snapshotBytes } from "./stories-catalog.js
 const run = promisify(execFile);
 
 export const SNAPSHOTS_DIR = "components";
+/** The app's compiled CSS, written beside the stories' markup while they render. */
+const APP_CSS = "_app.css";
 const CACHE = join("node_modules", ".cache", "indusk-looks");
 const SB_MANIFEST = join("manifests", "components.json");
 const MAIN_FILES = ["main.ts", "main.mts", "main.js", "main.mjs"];
@@ -197,6 +201,20 @@ export default {
 				${JSON.stringify(`${outDir}/`)} + context.id + ".html",
 				context.canvasElement.innerHTML,
 			);
+			// The app's compiled CSS as the build wrote it: a <style> element's own text
+			// when it has one (the dev server's), else the rules the browser parsed.
+			const css = [...document.styleSheets]
+				.flatMap((sheet) => {
+					const owner = sheet.ownerNode as HTMLElement | null;
+					if (owner instanceof HTMLStyleElement && owner.textContent) return [owner.textContent];
+					try {
+						return [[...sheet.cssRules].map((rule) => rule.cssText).join("\\n")];
+					} catch {
+						return [];
+					}
+				})
+				.join("\\n");
+			await server.commands.writeFile(${JSON.stringify(`${outDir}/`)} + "${APP_CSS}", css);
 		},
 	],
 };
@@ -226,8 +244,8 @@ function writeRunConfig(appDir: string): { cacheDir: string; outDir: string } {
 	return { cacheDir, outDir };
 }
 
-/** Run every story through the app's Vitest; the markup each rendered, by story id. */
-async function renderAll(appDir: string): Promise<Map<string, string>> {
+/** Run every story through the app's Vitest; the markup each rendered, by story id, and the app's compiled CSS. */
+async function renderAll(appDir: string): Promise<{ rendered: Map<string, string>; css: string }> {
 	const { cacheDir, outDir } = writeRunConfig(appDir);
 
 	const vitest = join(
@@ -255,9 +273,11 @@ async function renderAll(appDir: string): Promise<Map<string, string>> {
 	if (failure) throw new LooksAppError(`a story did not render in ${appDir}:\n${failure}`);
 
 	const rendered = new Map<string, string>();
+	let css = "";
 	if (existsSync(outDir)) {
 		for (const file of await readdir(outDir)) {
-			if (file.endsWith(".html")) {
+			if (file === APP_CSS) css = readFileSync(join(outDir, file), "utf-8");
+			else if (file.endsWith(".html")) {
 				rendered.set(
 					file.slice(0, -".html".length),
 					readFileSync(join(outDir, file), "utf-8").trim(),
@@ -265,7 +285,7 @@ async function renderAll(appDir: string): Promise<Map<string, string>> {
 			}
 		}
 	}
-	return rendered;
+	return { rendered, css };
 }
 
 /**
@@ -287,7 +307,7 @@ export async function renderStories(root: string, appName: string): Promise<Stor
 	}
 
 	const { properties, order } = manifestIndex(await manifestOf(root, app, appDir));
-	const rendered = await renderAll(appDir);
+	const { rendered, css } = await renderAll(appDir);
 	const missing = [...order.keys()].filter((id) => !rendered.has(id));
 	if (missing.length > 0) {
 		throw new LooksAppError(`story did not render to a snapshot: ${missing.join(", ")}`);
@@ -312,9 +332,30 @@ export async function renderStories(root: string, appName: string): Promise<Stor
 		keep.add(`${key}.html`);
 		snapshots.push(relative(root, file));
 	}
+	// Each component's stylesheet: the compiled rules of the classes its snapshots use.
+	const classesByComponent = new Map<string, Set<string>>();
+	for (const [key, html] of writes) {
+		const name = key.slice(0, key.indexOf("."));
+		const set = classesByComponent.get(name) ?? new Set<string>();
+		for (const c of classesOf(html)) set.add(c);
+		classesByComponent.set(name, set);
+	}
+	for (const c of components) {
+		const sheet = componentStylesheet(
+			css,
+			classesByComponent.get(c.name) ?? new Set(),
+			app.foundation,
+		);
+		const file = join(snapshotsDir, `${c.name}.css`);
+		writeFileSync(file, sheet);
+		keep.add(`${c.name}.css`);
+		snapshots.push(relative(root, file));
+		c.stylesheet = `${SNAPSHOTS_DIR}/${c.name}.css`;
+		c.stylesheetHash = createHash("sha256").update(sheet).digest("hex");
+	}
 	const removed: string[] = [];
 	for (const file of await readdir(snapshotsDir)) {
-		if (file.endsWith(".html") && !keep.has(file)) {
+		if (/\.(html|css)$/.test(file) && !keep.has(file)) {
 			rmSync(join(snapshotsDir, file));
 			removed.push(relative(root, join(snapshotsDir, file)));
 		}
