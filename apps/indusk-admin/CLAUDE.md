@@ -204,3 +204,13 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `composition.contract.test.ts` (A30, which compares a composed component with
   its story and cannot see a defect inside the component). — see
   `/guide/components`
+- **A page composes components and passes them data as props; it renders no
+  component's markup itself**: the nav is `Shell` and `Nav` with `PlanRow` and
+  `ViewLink` (a row or link given an `href` is drawn as a link, so the page
+  hands it where to go), the dashboard `SummaryBar` and `PromiseRow`, the Looks
+  list `LookRow` with `DeviceChoice` and `DeviceFrame` at the stage. A piece a
+  test must find (`data-testid`) goes in a wrapper or in a slot the component
+  takes (`stage`, `count`, `evals`, `toggleProps`, `optionProps`), never into
+  the component's markup, which would reopen every mockup that uses it. Guarded
+  by `looks-components-cli.test.ts` (A3) through `component-reuse-audit.test.ts`.
+  — see `/reference/admin-ui/overview`

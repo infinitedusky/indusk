@@ -16,7 +16,7 @@ The InDusk admin UI (`apps/indusk-admin/`) follows a load-bearing component-reus
 | `Badge` | `src/components/ui/Badge.tsx` | `passing`, `blocked`, `skipped`, `planned`, `writable`, `written`, `unknown`, `neutral` |
 | `Table` | `src/components/ui/Table.tsx` | `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell` |
 | `CollapsibleSection` | `src/components/ui/CollapsibleSection.tsx` | accepts `headerRight` slot for badges/counts |
-| `Sidebar` | `src/components/ui/Sidebar.tsx` | accepts `header` slot |
+| `CockpitFrame` | `src/components/cockpit/CockpitFrame.tsx` | the frame: `Shell`, `Nav`, the phone drawer and the desktop collapse; takes `project`, `summary`, `nav` |
 
 The `Badge` variant set deliberately mirrors the trajectory state lifecycle from `apps/indusk-mcp/src/lib/trajectory/parser.ts` (`planned → writable → written → passing → skipped/blocked`). Mapping a trajectory row's `State` cell to a Badge is one prop pass.
 

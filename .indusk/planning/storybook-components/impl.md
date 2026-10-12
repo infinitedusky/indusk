@@ -441,11 +441,11 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 7 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a page composes components and passes data as props; it renders no component's markup itself — guarded by `looks-components-cli.test.ts` (A3) through `component-reuse-audit.test.ts`
+- [x] `apps/indusk-admin/CLAUDE.md`: a page composes components and passes data as props; it renders no component's markup itself — guarded by `looks-components-cli.test.ts` (A3) through `component-reuse-audit.test.ts`
 
 #### Build Phase 7 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the rebuilt nav, dashboard and Looks page
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the rebuilt nav, dashboard and Looks page
 
 ### Build Phase 8: The promise and plan pages rebuilt; the cockpit checked
 
