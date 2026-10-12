@@ -1,7 +1,7 @@
 ---
 title: "Storybook components"
 date: 2026-10-12
-status: proposed
+status: accepted
 ---
 
 # Storybook components
