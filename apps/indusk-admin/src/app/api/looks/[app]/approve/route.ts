@@ -4,10 +4,9 @@ import {
   componentsHashesMissing,
   type Seen,
 } from "@infinitedusky/indusk-mcp/looks/approve";
-import { looksCheckouts } from "@infinitedusky/indusk-mcp/looks/overview";
 import type { NextRequest } from "next/server";
-import { getProjectPath } from "@/lib/registry-client";
-import { adminOnly, fromTheBrowser, refuse } from "@/lib/session-host";
+import { refuse } from "@/lib/session-host";
+import { type LooksBody, readLooksRequest } from "../request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,8 +55,7 @@ const isShown = (m: unknown): m is Shown =>
   (m as Shown).mockupHash !== "";
 
 /** The request body: what the page showed the person, and where. */
-interface ApproveBody {
-  project?: string;
+interface ApproveBody extends LooksBody {
   mockup?: string;
   /** The hash of the mockup the page showed (A30). */
   mockupHash?: string;
@@ -82,7 +80,6 @@ interface ApproveBody {
   /** The story's component's stylesheet as the page showed it; absent when it has none. */
   stylesheetHash?: string;
   foundationHash?: string;
-  checkout?: string | null;
 }
 
 /**
@@ -155,33 +152,18 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ app: string }> },
 ): Promise<Response> {
-  const refused =
-    adminOnly(request, "a mockup is approved only from the admin's own page") ??
-    fromTheBrowser(
-      request,
+  const read = await readLooksRequest<ApproveBody, Request[]>(request, params, {
+    adminMessage: "a mockup is approved only from the admin's own page",
+    browserMessage:
       "a mockup is approved only by a person, with Approve on the cockpit's Looks page in their browser",
-    );
-  if (refused) return refused;
-  const { app } = await params;
-  const body = (await request.json().catch(() => null)) as ApproveBody | null;
-  const requests = body?.project ? requestsOf(body) : null;
-  if (!body?.project || !requests)
-    return refuse(
-      400,
+    subjectOf: requestsOf,
+    incomplete: (body) =>
       body?.kind === "story"
         ? "a story's approval needs the project, the story, the snapshot hash it was shown at, and the foundation it was shown on"
         : "an approval needs the project, each mockup with the hash it was shown at, and the foundation it was shown on",
-    );
-  const root = getProjectPath(body.project);
-  if (!root) return refuse(404, `no project named ${body.project}`);
-  const checkout = (await looksCheckouts(root)).find(
-    (c) => c.plan === (body.checkout ?? null),
-  );
-  if (!checkout)
-    return refuse(
-      404,
-      `plan ${JSON.stringify(body.checkout)} has no worktree here that holds mockups`,
-    );
+  });
+  if (read instanceof Response) return read;
+  const { app, body, root, checkout, subject: requests } = read;
   const incomplete = await componentsHashesMissing(
     checkout.root,
     app,

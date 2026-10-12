@@ -3,10 +3,9 @@ import {
   type SeenWithdrawal,
   withdraw,
 } from "@infinitedusky/indusk-mcp/looks/approve";
-import { looksCheckouts } from "@infinitedusky/indusk-mcp/looks/overview";
 import type { NextRequest } from "next/server";
-import { getProjectPath } from "@/lib/registry-client";
-import { adminOnly, fromTheBrowser, refuse } from "@/lib/session-host";
+import { refuse } from "@/lib/session-host";
+import { type LooksBody, readLooksRequest } from "../request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,8 +24,7 @@ export const dynamic = "force-dynamic";
  * promise: a-mockup-is-approved-by-a-person
  */
 
-interface UnapproveBody {
-  project?: string;
+interface UnapproveBody extends LooksBody {
   mockup?: string;
   mockupHash?: string;
   componentsHash?: string;
@@ -34,7 +32,6 @@ interface UnapproveBody {
   story?: string;
   snapshotHash?: string;
   foundationHash?: string;
-  checkout?: string | null;
 }
 
 /** What is taken back and what the page showed, or null when the body names less than that. */
@@ -67,34 +64,19 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ app: string }> },
 ): Promise<Response> {
-  const refused =
-    adminOnly(
-      request,
-      "an approval is taken back only from the admin's own page",
-    ) ??
-    fromTheBrowser(
-      request,
+  const read = await readLooksRequest<
+    UnapproveBody,
+    NonNullable<ReturnType<typeof subjectOf>>
+  >(request, params, {
+    adminMessage: "an approval is taken back only from the admin's own page",
+    browserMessage:
       "an approval is taken back only by a person, with Unapprove on the cockpit's Looks page in their browser",
-    );
-  if (refused) return refused;
-  const { app } = await params;
-  const body = (await request.json().catch(() => null)) as UnapproveBody | null;
-  const subject = body?.project ? subjectOf(body) : null;
-  if (!body?.project || !subject)
-    return refuse(
-      400,
+    subjectOf,
+    incomplete: () =>
       "taking an approval back needs the project, the mockup or story with the hash it was shown at, and the foundation it was shown on",
-    );
-  const root = getProjectPath(body.project);
-  if (!root) return refuse(404, `no project named ${body.project}`);
-  const checkout = (await looksCheckouts(root)).find(
-    (c) => c.plan === (body.checkout ?? null),
-  );
-  if (!checkout)
-    return refuse(
-      404,
-      `plan ${JSON.stringify(body.checkout)} has no worktree here that holds mockups`,
-    );
+  });
+  if (read instanceof Response) return read;
+  const { app, root, checkout, subject } = read;
   const result = await withdraw(
     checkout.root,
     app,
