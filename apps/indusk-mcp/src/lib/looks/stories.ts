@@ -116,16 +116,36 @@ function buildOutput(appDir: string): string {
 const newest = (files: string[]): number =>
 	files.reduce((t, f) => Math.max(t, statSync(f).mtimeMs), 0);
 
-/** The components manifest, built first when it is missing or older than a story or a component. */
+/** A source file the Storybook build reads: a story, a component's implementation, or a stylesheet. */
+const isBuildInput = (root: string, file: string): boolean =>
+	/\.stories\.[cm]?[jt]sx?$/.test(file) ||
+	/\.css$/.test(file) ||
+	isImplementationFile(relative(root, file));
+
+/**
+ * Whether the app's Storybook build at `manifest` is older than what it is
+ * built from: missing, or older than any story, component or stylesheet under
+ * the app's sources, or any file in its `.storybook/`. A stylesheet counts as
+ * surely as a component: `/storybook` and `indusk looks check` draw from the
+ * build, and a rule changed in `globals.css` changes how every story draws
+ * (Build Phase 9, A36).
+ */
+export async function storybookBuildIsStale(
+	root: string,
+	app: Pick<LooksApp, "sources">,
+	appDir: string,
+	manifest: string,
+): Promise<boolean> {
+	if (!existsSync(manifest)) return true;
+	const sources = (await appSourceFiles(root, app.sources)).filter((f) => isBuildInput(root, f));
+	const config = await appSourceFiles(appDir, [".storybook"]);
+	return statSync(manifest).mtimeMs < newest([...sources, ...config]);
+}
+
+/** The components manifest, built first when the build is older than what it is built from (`storybookBuildIsStale`). */
 async function manifestOf(root: string, app: LooksApp, appDir: string): Promise<unknown> {
 	const manifest = join(buildOutput(appDir), SB_MANIFEST);
-	const sources = (await appSourceFiles(root, app.sources)).filter(
-		(f) => /\.stories\.[cm]?[jt]sx?$/.test(f) || isImplementationFile(relative(root, f)),
-	);
-	const config = [...MAIN_FILES, ...PREVIEW_FILES]
-		.map((n) => join(appDir, ".storybook", n))
-		.filter((f) => existsSync(f));
-	if (!existsSync(manifest) || statSync(manifest).mtimeMs < newest([...sources, ...config])) {
+	if (await storybookBuildIsStale(root, app, appDir, manifest)) {
 		try {
 			await run("pnpm", ["run", "build:storybook"], {
 				cwd: appDir,
