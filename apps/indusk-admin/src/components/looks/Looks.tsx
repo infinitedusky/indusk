@@ -70,7 +70,7 @@ export function LooksBody({
 }) {
   return (
     <section
-      className="flex flex-col gap-6"
+      className="looks-page flex flex-col gap-4 overflow-y-auto"
       data-testid="looks"
       data-look-state={lookState(apps)}
     >
@@ -159,59 +159,94 @@ function AppSection({
     : null;
   return (
     <section
-      className="flex flex-col gap-3"
+      className="flex min-h-0 flex-1 flex-col gap-3"
       data-testid="looks-app"
       data-app={app.app}
     >
       <h2 className="text-base font-semibold text-ink">{app.app}</h2>
-      <ApproveSelected
-        project={project}
-        app={app.app}
-        foundationHash={app.foundationHash}
-        checkout={checkout}
-        proposed={app.mockups.filter((m) => m.approval === "proposed").length}
-      />
-      <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
-        {app.mockups.map((m) => (
-          <MockupRow
-            key={m.name}
+      <div className="looks-split grid min-h-0 flex-1 gap-4">
+        <input
+          type="checkbox"
+          id={`looks-sheet-${app.app}`}
+          className="looks-sheet-toggle"
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+        <div
+          className="looks-list flex min-h-0 flex-col gap-3 overflow-y-auto"
+          data-testid="looks-list"
+        >
+          <label
+            htmlFor={`looks-sheet-${app.app}`}
+            className="looks-sheet-handle text-sm font-medium"
+          >
+            Looks
+          </label>
+          <ApproveSelected
+            project={project}
+            app={app.app}
+            foundationHash={app.foundationHash}
+            checkout={checkout}
+            proposed={
+              app.mockups.filter((m) => m.approval === "proposed").length
+            }
+          />
+          <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
+            {app.mockups.map((m) => (
+              <MockupRow
+                key={m.name}
+                app={app}
+                mockup={m}
+                path={path}
+                checkout={checkout}
+                current={
+                  opened?.name === m.name ? (device?.name ?? null) : null
+                }
+              />
+            ))}
+          </ul>
+          <Components
             app={app}
-            mockup={m}
             path={path}
             checkout={checkout}
-            current={opened?.name === m.name ? (device?.name ?? null) : null}
+            current={
+              story && storyDevice
+                ? { story: story.name, device: storyDevice.name }
+                : null
+            }
           />
-        ))}
-      </ul>
-      {opened && device ? (
-        <OpenMockupView
-          project={project}
-          app={app}
-          mockup={opened}
-          device={device}
-          checkout={checkout}
-        />
-      ) : null}
-      <Components
-        app={app}
-        path={path}
-        checkout={checkout}
-        current={
-          story && storyDevice
-            ? { story: story.name, device: storyDevice.name }
-            : null
-        }
-      />
-      {story && storyDevice ? (
-        <OpenStoryView
-          project={project}
-          app={app}
-          story={story}
-          device={storyDevice}
-          checkout={checkout}
-        />
-      ) : null}
-      <Uncovered app={app} />
+          <Uncovered app={app} />
+        </div>
+        <div
+          className="looks-stage flex min-h-0 flex-col gap-3 overflow-auto"
+          data-testid="looks-stage"
+        >
+          {opened && device ? (
+            <OpenMockupView
+              project={project}
+              app={app}
+              mockup={opened}
+              device={device}
+              checkout={checkout}
+            />
+          ) : null}
+          {story && storyDevice ? (
+            <OpenStoryView
+              project={project}
+              app={app}
+              story={story}
+              device={storyDevice}
+              checkout={checkout}
+            />
+          ) : null}
+          {!(opened && device) && !(story && storyDevice) ? (
+            <p className="text-sm text-ink-soft" data-testid="stage-empty">
+              Choose a mockup or a story and a device; it stays here while the
+              list scrolls.
+            </p>
+          ) : null}
+        </div>
+      </div>
     </section>
   );
 }
