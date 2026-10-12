@@ -8,6 +8,8 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+accepted: 2026-10-12T00:45:59.906Z
+accepted_by: person
 ---
 
 # UI promises — mockups on a DTCG foundation, approved in the cockpit, held by value
