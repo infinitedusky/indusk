@@ -11,10 +11,11 @@
  */
 export type Show = "all" | "unapproved" | "mockups" | "components";
 
-/** The looks to draw, the ones waiting for a person first; with `unapproved`, only those. */
-export function unapprovedFirst<
-  T extends { approval: "approved" | "proposed" },
->(looks: T[], show: Show): T[] {
+/** The looks a list draws: the ones waiting for a person first; with `unapproved`, only those. */
+export function looksListed<T extends { approval: "approved" | "proposed" }>(
+  looks: T[],
+  show: Show,
+): T[] {
   const waiting = looks.filter((l) => l.approval === "proposed");
   if (show === "unapproved") return waiting;
   return [...waiting, ...looks.filter((l) => l.approval !== "proposed")];

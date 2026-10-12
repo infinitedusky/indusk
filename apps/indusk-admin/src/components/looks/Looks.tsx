@@ -8,7 +8,7 @@ import { LookRow } from "@/components/ui/LookRow";
 import { stamp } from "@/lib/stamp";
 import { ApproveMockup } from "./ApproveMockup";
 import { ApproveSelected } from "./ApproveSelected";
-import { hrefOf, type Show, unapprovedFirst } from "./address";
+import { hrefOf, looksListed, type Show } from "./address";
 import { Cascade } from "./Cascade";
 import { LookFrame } from "./LookFrame";
 import { LooksToolbar } from "./LooksToolbar";
@@ -224,7 +224,7 @@ function AppSection({
           />
           {mockups ? (
             <div className="looks-rows shrink-0 overflow-hidden rounded-md border border-line bg-surface">
-              {unapprovedFirst(app.mockups, show).map((m) => (
+              {looksListed(app.mockups, show).map((m) => (
                 <MockupRow
                   key={m.name}
                   project={project}

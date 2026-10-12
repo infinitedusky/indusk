@@ -431,7 +431,9 @@ The admin is built from components defined once, each with an approved story per
 - [x] `PlanRow` gains a current state with a story, so the three `plan.*` mockups show their plan current in the nav (they show no plan row current because `PlanRow` has none; found in Build Phase 6; changing the component reopens the mockups that use it)
 - [x] The Looks page's list draws each row with `LookRow` in the same list column the mockups carry (346px: `--size-side` + `--size-badge` + `--space-4`); the live page still draws its own rows. A named list-width foundation token would read better than the calc, but it reopens the foundation and every approval, so it is added only with Sandy's approval
 - [x] A look's name is shown whole beside its chip on the page, as in `looks.default` and `looks.uncovered` (Build Phase 6 fixed `LookRow` and the mockups; the page's own rows still truncate)
+- [x] Shape finding: `unapprovedFirst` (address.ts) both sorted and filtered, so its name said half of what it did; renamed `looksListed`
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+  - Reviewed by reading the changed files on 2026-10-12, but Shape records itself only after Verification is green, and Verification waits on Sandy's approvals (see Build Phase 7 Verification). Left for `/cleanup` (inter-file): the mockup row and the story row repeat the checkbox, "by", Unapprove strip (`Looks.tsx`, `Stories.tsx`); `Looks.tsx` is over 400 lines; the per-project `layout.tsx` composes the nav inline and wants a `ProjectNav`.
 
 #### Build Phase 7 Verification
 

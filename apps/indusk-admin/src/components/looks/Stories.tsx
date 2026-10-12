@@ -5,7 +5,7 @@ import type {
 import { LookRow } from "@/components/ui/LookRow";
 import { stamp } from "@/lib/stamp";
 import { ApproveStory } from "./ApproveMockup";
-import { hrefOf, type Show, unapprovedFirst } from "./address";
+import { hrefOf, looksListed, type Show } from "./address";
 import { LookFrame } from "./LookFrame";
 import { OpenLookRow } from "./OpenLookRow";
 import { UnapproveStory } from "./Unapprove";
@@ -64,7 +64,7 @@ export function Components({
   /** The story open, when one is. */
   current: string | null;
 }) {
-  const stories = unapprovedFirst(app.stories, show);
+  const stories = looksListed(app.stories, show);
   if (stories.length === 0) return null;
   const hrefAt = (story: string) =>
     hrefOf(path, { app: app.app, story, show, view: "list", checkout });
