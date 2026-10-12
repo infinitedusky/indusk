@@ -217,3 +217,9 @@ To mockup-matching (plan 3 of 4), from U1 and the audit:
 
 Not this plan's: `src/lib/promises/inbox.test.ts` fails two tests in this
 worktree, with no file under `lib/promises/inbox` changed here.
+
+## Release
+
+This machine runs the landed build (`pnpm install:local`, 1.70.0); nothing is published. Publishing is deliberate, through `indusk release`. The regenerated admin bundle (`apps/indusk-mcp/admin/next.config.ts`, `package.json`) is left modified on trunk for that release commit: trunk-guard refuses it as a code commit, as with `f95bbcec`.
+
+Landed on main at bc5102d8, 2026-10-12.
