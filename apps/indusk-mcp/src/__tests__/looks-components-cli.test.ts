@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { readApp } from "../lib/looks/mockups.js";
+import { readAppLooks } from "../lib/looks/overview.js";
 import {
 	app as copyOf,
 	finding,
@@ -25,6 +26,8 @@ import {
  * promise: an-agent-can-find-every-component — A14.
  * promise: every-part-of-the-ui-is-covered — A15.
  * promise: a-mockup-is-approved-by-a-person — A16, A17.
+ * promise: mockups-render-in-the-cockpit — A25 (a composed mockup carries its components' styles).
+ * promise: a-changed-component-reopens-its-mockups — A26 (a changed style).
  *
  * Each is red today on its own assertion: the commands run over the fixture
  * and the component lines below are absent. The output these rows read is the
@@ -152,6 +155,44 @@ describe("a changed component reopens its mockups", () => {
 		expect(home, out).toMatch(/proposed/);
 		expect(home).toContain("component changed: badge");
 		// detail.default composes the card alone.
+		expect(statusLine(out, "detail.default"), out).toMatch(/approved/);
+	});
+});
+
+describe("a composed mockup carries its components' styles", () => {
+	// A25
+	it("A25 the document the cockpit frames holds each named component's rules, and the value check finds no raw value in them", async () => {
+		const root = app();
+		const looks = await readAppLooks(root, "demo");
+		if ("problem" in looks) throw new Error(looks.problem);
+		const home = looks.mockups.find((m) => m.name === "home.default");
+		expect(home?.document).toContain('[data-component="badge"] { letter-spacing: var(--space-1); }');
+		// detail.default composes the card alone: it takes no badge rule.
+		const detail = looks.mockups.find((m) => m.name === "detail.default");
+		expect(detail?.document).not.toContain('[data-component="badge"] {');
+		const { out } = run(root, ["lint", "demo"]);
+		expect(linesWith(out, "badge.css", "raw-value"), out).toEqual([]);
+	});
+
+	it("A25 a raw value in a component's stylesheet is a finding naming the file and the value", () => {
+		const root = app();
+		const file = join(root, MOCKUPS, "components", "badge.css");
+		writeFileSync(file, '[data-component="badge"] { letter-spacing: 7px; }\n');
+		const { out } = run(root, ["lint", "demo"]);
+		expect(linesWith(out, "badge.css", "7px"), out.slice(0, 600)).not.toEqual([]);
+	});
+});
+
+describe("a changed component style reopens its mockups", () => {
+	// A26
+	it("A26 a changed stylesheet reopens the mockups that use the component, naming it; the others stay approved", () => {
+		const root = app();
+		const file = join(root, MOCKUPS, "components", "badge.css");
+		writeFileSync(file, readFileSync(file, "utf-8").replace("var(--space-1)", "var(--space-3)"));
+		const { out } = run(root, ["status", "demo"]);
+		const home = statusLine(out, "home.default");
+		expect(home, out).toMatch(/proposed/);
+		expect(home).toContain("component changed: badge");
 		expect(statusLine(out, "detail.default"), out).toMatch(/approved/);
 	});
 });

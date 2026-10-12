@@ -124,12 +124,14 @@ this plan builds on.
    markup whose look comes from the app's compiled utility classes, and a
    mockup frame is sandboxed with only the foundation's `tokens.css`, so a
    composed mockup drew its components unstyled. The render step writes
-   `.indusk/mockups/<app>/components.css`, the app's compiled rules for exactly
-   the classes the snapshots use, resolved to the foundation's tokens;
-   `mockupDocument` inlines it after `tokens.css`; the value check reads it by
-   the rule it reads a mockup's own styles by; and its hash joins
-   `componentsHash`, so a changed component style reopens the mockups that use
-   it as a changed snapshot does. The stylesheet is generated, never written
+   `.indusk/mockups/<app>/components/<name>.css` for each component, the app's
+   compiled rules for exactly the classes that component's snapshots use,
+   resolved to the foundation's tokens; `mockupDocument` inlines, after
+   `tokens.css`, the stylesheet of each component the mockup names; the value
+   check reads each by the rule it reads a mockup's own styles by; and its hash
+   joins that component's entry in `componentsHash`, so a changed component
+   style reopens the mockups that use it, naming the component, as a changed
+   snapshot does. The stylesheet is generated, never written
    by hand. *(Added 2026-10-12, found in Build Phase 6 when the eleven composed
    mockups were rewritten: decisions 4 and 6 composed the markup and not the
    look. Sandy asked that it be a visible part of the plan, not a patch.)*
