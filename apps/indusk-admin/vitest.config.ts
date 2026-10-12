@@ -38,7 +38,7 @@ const storybookProjects = process.env[SYSTEM_TIER_ENV]
             enabled: true,
             provider: playwright(),
             headless: true,
-            instances: [{ browser: "chromium" }],
+            instances: [{ browser: "chromium" as const }],
           },
         },
       },

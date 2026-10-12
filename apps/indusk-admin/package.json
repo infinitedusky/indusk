@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm build:storybook && next build",
+    "build:storybook": "storybook build --output-dir public/storybook --disable-telemetry",
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
