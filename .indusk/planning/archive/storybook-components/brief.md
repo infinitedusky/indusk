@@ -52,8 +52,10 @@ Storybook can and cannot do on this stack are in [research.md](research.md).
 **Changes**
 
 - **`every-part-of-the-ui-is-covered`**. Every screen the app has, in each declared state, and every component it uses, in each state its mockups show, is covered by an approved mockup or an approved story; whatever is not is reported uncovered, never passed.
-- **`a-mockup-is-approved-by-a-person`**. A mockup or a story, and the foundation it is drawn on, becomes the reference only when a person approves it in the cockpit, and stops being one when a person takes the approval back there; an agent can draw and propose one and never approve it or take it back. *(Widened 2026-10-12: Sandy approved a look by mistake and the record had no way back.)*
-- **`mockups-render-in-the-cockpit`**. Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens and, where it names components, with those components' own styles, with nothing to run beside the cockpit. *(Widened 2026-10-12: the eleven composed mockups drew their components unstyled, found when Build Phase 6 rewrote them; see the ADR's decision 10.)*
+- **`a-mockup-is-approved-by-a-person`**. A mockup or a story, and the foundation it is drawn on, becomes the reference only when a person approves it in the cockpit, and stops being one when a person takes the approval back there; an agent can draw and propose one and never approve it or take it back.
+- **`mockups-render-in-the-cockpit`**. Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens and, where it names components, with those components' own styles, with nothing to run beside the cockpit.
+
+*Widened 2026-10-12: `a-mockup-is-approved-by-a-person` because Sandy approved a look by mistake and the record had no way back; `mockups-render-in-the-cockpit` because the eleven composed mockups drew their components unstyled, found when Build Phase 6 rewrote them (the ADR's decision 10).*
 
 **Replaces**
 

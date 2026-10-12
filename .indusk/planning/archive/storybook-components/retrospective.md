@@ -180,6 +180,24 @@ Where reality differed from the plan:
   behaviour) were Sandy's recorded calls in the working impl, which the reader
   is deliberately not shown. The rest are carried below.
 
+- **Everyday suite at close:** 2,632 passed, 6 failed. Two failures were
+  this plan's, both in promises-cli row A15, which runs `indusk promises check`
+  at the repo root:
+  - `the-nav-fits-a-phone` still named the removed `Sidebar.tsx` as its site.
+  - A test comment, `// A15's file and promise: a component…`, read as a token
+    for a promise named `a`.
+
+  Both are fixed. The other four also fail on `main` and are not this plan's:
+  `impl-corpus` A4, `plan-worktrees-cli` A13 (`?? .mcp.json`),
+  `registry-leak-scan` A22, and `inbox` A17.
+- **Confirming the promises** refused three times:
+  - The brief's two widening notes were parsed as part of the changed
+    promises' sentences. They now sit in a paragraph under the list.
+  - No code carried `a-changed-component-reopens-its-mockups`. Now
+    `approvalOf` does.
+
+  All eight promises are confirmed.
+
 ## Carried forward
 
 To mockup-matching (plan 3 of 4), from U1 and the audit:
