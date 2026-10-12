@@ -161,7 +161,7 @@ The admin is built from components defined once, each with an approved story per
 
 **Tier**: med — the work step's default
 
-- [ ] Add `storybook@10.6.x`, `@storybook/nextjs-vite`, `@storybook/addon-vitest` and `@storybook/addon-themes` to `apps/indusk-admin` (exact versions, at least two weeks old); pin `next` at `16.2.x` with a comment naming storybookjs#36720
+- [x] Add `storybook@10.6.x`, `@storybook/nextjs-vite`, `@storybook/addon-vitest` and `@storybook/addon-themes` to `apps/indusk-admin` (exact versions, at least two weeks old); pin `next` at `16.2.x` with a comment naming storybookjs#36720
 - [ ] `.storybook/main.ts` (`framework: "@storybook/nextjs-vite"`, `features: { componentsManifest: true }`, stories `src/**/*.stories.tsx`) and `.storybook/preview.ts` (imports `src/app/globals.css`; `parameters.nextjs.appDirectory: true`; light/dark through `withThemeByDataAttribute` on `data-theme`, matching the generated foundation)
 - [ ] A `storybook` project in `apps/indusk-admin/vitest.tiers.ts` via `storybookTest({ configDir: ".storybook" })`, browser mode on Playwright, listed in the system tier; excluded from every everyday project
 - [ ] `storybook build --output-dir public/storybook` in the admin's build (`build:storybook`, run before `next build`); `public/storybook/` git-ignored; `bundle-admin.js` already copies `public/`, so the bundled admin serves `/storybook/index.html` and `/storybook/iframe.html`
