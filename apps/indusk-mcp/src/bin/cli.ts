@@ -1137,6 +1137,16 @@ looksCmd
 	});
 
 looksCmd
+	.command("stories <app>")
+	.description(
+		"Render each story of the app's Storybook to a snapshot (.indusk/mockups/<app>/components/<name>.<state>.html) and write components.json, the catalog of every component with its properties and states. Exit 1 when a story cannot render, naming it.",
+	)
+	.action(async (app: string) => {
+		const { looksStories } = await import("./commands/looks.js");
+		await looksStories(rootOrExit(), app);
+	});
+
+looksCmd
 	.command("tokens <app>")
 	.description(
 		"Print an app's foundation as CSS custom properties; --tailwind emits an @theme block that resets the stock theme to the foundation. --out writes it to a file.",

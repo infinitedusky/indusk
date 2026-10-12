@@ -1,0 +1,56 @@
+{
+	"components": [
+		{
+			"name": "chip",
+			"file": "apps/indusk-admin/src/components/ui/Badge.tsx",
+			"properties": [
+				{
+					"name": "variant",
+					"type": "| \"passing\"\n| \"blocked\"\n| \"skipped\"\n| \"planned\"\n| \"writable\"\n| \"written\"\n| \"unknown\"\n| \"neutral\"",
+					"required": false,
+					"defaultValue": "\"neutral\""
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "passing",
+					"snapshotHash": "5cd34c0566924a0b813a4ce461871f23b932dabadc04223d3e5d0201a39acac9"
+				},
+				{
+					"name": "blocked",
+					"snapshotHash": "23beeeef9da56a49ebd691183f2aefd4dcf7991318d390f7ab83c58ebcf339b6"
+				},
+				{
+					"name": "skipped",
+					"snapshotHash": "57d1558c9bccf2898501c5877294063f0aa7b7ead7415ceed551fa092c1736ac"
+				},
+				{
+					"name": "planned",
+					"snapshotHash": "e80bece7944cb33edabf89b2657e0c183be318322e1ac655029001a72aa56df6"
+				},
+				{
+					"name": "writable",
+					"snapshotHash": "091f6b4198d6e3951eb6f285f66f49043262f46317b5c44472b096d80ce05ec4"
+				},
+				{
+					"name": "written",
+					"snapshotHash": "4adcbb5491218815fc46b9b7afd19e4b462b913a7dca46e618490d4a514feecb"
+				},
+				{
+					"name": "unknown",
+					"snapshotHash": "66b78a19ba484e72c920797e41d90fb5a5f66406249667fd238a24beaeb19dc8"
+				},
+				{
+					"name": "neutral",
+					"snapshotHash": "db31e424394301ae2982dabebc5ffb37d0ede92666c997f6ca097a7782bbe18f"
+				}
+			]
+		}
+	]
+}

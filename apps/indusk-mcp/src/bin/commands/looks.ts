@@ -74,8 +74,10 @@ export async function looksStatus(projectRoot: string, appName: string): Promise
 /**
  * `indusk looks coverage <app>` — `uncovered screen: <name>`, `uncovered
  * state: <screen>.<state>`, `uncovered component: <name>`, and `unresolved
- * component: <file>:<line>` for a name decided at run time. Exit 1 when any is
- * listed, 0 when every part is covered.
+ * component: <file>:<line>` for a name decided at run time; with a catalog,
+ * `not in catalog: <name>` for a marked component it omits and `no story:
+ * <name>.<state>` for a state a mockup places that no story covers. Exit 1
+ * when any is listed, 0 when every part is covered.
  */
 export async function looksCoverage(projectRoot: string, appName: string): Promise<void> {
 	try {
@@ -86,6 +88,8 @@ export async function looksCoverage(projectRoot: string, appName: string): Promi
 			...c.states.map((n) => `uncovered state: ${n}`),
 			...c.components.map((n) => `uncovered component: ${n}`),
 			...c.unresolved.map((at) => `unresolved component: ${at}`),
+			...c.notInCatalog.map((n) => `not in catalog: ${n}`),
+			...c.noStory.map((n) => `no story: ${n}`),
 		];
 		for (const line of lines) console.info(line);
 		if (lines.length > 0) {
@@ -191,6 +195,31 @@ export async function looksTokens(
 			process.stdout.write(css);
 		}
 	} catch (err) {
+		console.error((err as Error).message);
+		process.exitCode = 1;
+	}
+}
+
+/**
+ * `indusk looks stories <app>` — render every story of the app's Storybook to
+ * a snapshot (`.indusk/mockups/<app>/components/<name>.<state>.html`) and
+ * write the catalog (`components.json`) an agent reads before it writes a
+ * component. One line per component with its file and states. Exit 1 when a
+ * story cannot be rendered, naming it.
+ */
+export async function looksStories(projectRoot: string, appName: string): Promise<void> {
+	try {
+		const { renderStories } = await import("../../lib/looks/stories.js");
+		const result = await renderStories(projectRoot, appName);
+		for (const c of result.components) {
+			console.info(`${c.name}  ${c.file}  ${c.states.map((s) => s.name).join(", ")}`);
+		}
+		for (const file of result.removed) console.info(`removed ${file} — no story renders it`);
+		console.info(
+			`${appName}: ${result.snapshots.length} snapshots for ${result.components.length} components, catalog in .indusk/mockups/${appName}/components.json`,
+		);
+	} catch (err) {
+		// A story that cannot render, a missing Storybook or browser, is a refusal, never a catalog.
 		console.error((err as Error).message);
 		process.exitCode = 1;
 	}
