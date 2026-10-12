@@ -261,6 +261,7 @@ uncovered screen: detail
 uncovered state: home.full
 uncovered component: badge
 unresolved component: src/Dynamic.jsx:2
+unimplemented component: ghost
 ```
 
 | Line | When |
@@ -269,6 +270,7 @@ unresolved component: src/Dynamic.jsx:2
 | `uncovered state: <screen>.<state>` | the screen has an approved state, but not this one |
 | `uncovered component: <name>` | the app renders it and no approved mockup shows it on an element |
 | `unresolved component: <file>:<line>` | a source's `data-component={…}` is not a string literal, so no mockup can be said to cover it |
+| `unimplemented component: <name>` | a mockup (read composed) places or declares new a `data-component` that no non-test, non-story file in the app's sources marks |
 | `not in catalog: <name>` | a marked component missing from `components.json` (an app with no catalog reports none) |
 | `no story: <name>.<state>` | a mockup places the state by name and the catalog lists no story for it |
 | `uncovered story: <name>.<state>` | the app has the story's snapshot and no person has approved it as it is now — a component state is covered by its approved story |
@@ -405,7 +407,12 @@ the closing line counts unchecked looks beside held and broken. Each look is
 also recorded as a span, one per screen × state × device and scheme, carrying a
 promise's mark under `tokens-are-held-exactly` — `upheld` when held,
 `violated` with the first finding as the symptom when broken — so a look reads
-beside promises in the health reader.
+beside promises in the health reader. A story's span carries
+`indusk.look.kind = story` beside `indusk.look.app`, `screen`, `state` and
+`device` (the screen is the component's name); a screen's span carries no
+`kind`. A look's standing counts only runs of its own kind, so a held story
+`nav.expanded` never stands for a broken screen `nav.expanded`; a run recorded
+without `kind` reads as a screen's.
 
 Exit 1 on any broken look, and when nothing could be checked: a run that
 checked nothing is not a held look. `playwright-core` is an optional
