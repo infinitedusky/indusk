@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  * mockupHash, componentsHash?, foundationHash, checkout }`, or a group's
  * `mockups: [{ mockup, mockupHash, componentsHash? }]`; or a story
  * (storybook-components ADR decision 5): `{ project, kind: "story", story,
- * snapshotHash, foundationHash, checkout }`. The package's `approve` records it as the
+ * snapshotHash, stylesheetHash?, foundationHash, checkout }`. The package's `approve` records it as the
  * person this machine's git names, bound to the mockup's and the foundation's
  * hashes as the checkout holds them, and commits the record on that checkout's
  * branch. `checkout` is the plan whose worktree the page showed, or null for
@@ -28,8 +28,9 @@ export const dynamic = "force-dynamic";
  * changed since is refused naming both hashes, and one sent without its hash
  * is refused outright — an approval binds what the person looked at.
  * `componentsHash` is the snapshots the mockup composed as the page showed
- * them, `snapshotHash` the story's snapshot: each refused when the checkout
- * now holds another, and a story sent without its hash is refused outright.
+ * them, `snapshotHash` the story's snapshot and `stylesheetHash` its
+ * component's stylesheet: each refused when the checkout now holds another,
+ * and a story sent without its snapshot hash is refused outright.
  *
  * promise: a-mockup-is-approved-by-a-person
  */
@@ -68,11 +69,17 @@ interface ApproveBody {
     componentsHash?: string;
   }>;
   /** A group of stories, each with the snapshot hash the page showed, approved on its own, in order. */
-  stories?: Array<{ story?: string; snapshotHash?: string }>;
+  stories?: Array<{
+    story?: string;
+    snapshotHash?: string;
+    stylesheetHash?: string;
+  }>;
   /** `story`: a component's story, approved by the snapshot hash the page showed. */
   kind?: string;
   story?: string;
   snapshotHash?: string;
+  /** The story's component's stylesheet as the page showed it; absent when it has none. */
+  stylesheetHash?: string;
   foundationHash?: string;
   checkout?: string | null;
 }
@@ -93,6 +100,9 @@ function requestsOf(body: ApproveBody): Request[] | null {
         seen: {
           kind: "story",
           snapshotHash: body.snapshotHash,
+          ...(body.stylesheetHash
+            ? { stylesheetHash: body.stylesheetHash }
+            : {}),
           foundationHash,
         },
       },
@@ -104,7 +114,12 @@ function requestsOf(body: ApproveBody): Request[] | null {
     if (!s.story || !s.snapshotHash) return null;
     storyRequests.push({
       name: s.story,
-      seen: { kind: "story", snapshotHash: s.snapshotHash, foundationHash },
+      seen: {
+        kind: "story",
+        snapshotHash: s.snapshotHash,
+        ...(s.stylesheetHash ? { stylesheetHash: s.stylesheetHash } : {}),
+        foundationHash,
+      },
     });
   }
   const shown = Array.isArray(body.mockups)
