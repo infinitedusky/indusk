@@ -47,6 +47,8 @@ export interface Coverage {
 	unresolved: string[];
 	/** Marked in the app's sources and missing from `components.json`; none when the app has no catalog. */
 	notInCatalog: string[];
+	/** Named by a mockup (composed references and declared-new names) and marked by no non-test file in the app's sources, sorted. */
+	unimplemented: string[];
 	/** `<component>.<state>` a mockup places by name that the catalog lists no story for, sorted. */
 	noStory: string[];
 	/** `<component>.<state>` of each story not approved as its snapshot is now, sorted. */
@@ -133,6 +135,18 @@ async function uncoveredComponents(
 	return { components: [...rendered].filter((n) => !shown.has(n)).sort(), unresolved };
 }
 
+/**
+ * Component names the app's mockups (read composed) place that no
+ * implementation file marks — a mockup asking for what the app does not have.
+ */
+function unimplementedComponents(
+	app: LooksApp,
+	implemented: ReadonlyMap<string, unknown>,
+): string[] {
+	const named = new Set(app.mockups.flatMap((m) => [...markedComponentsOf(m.html)]));
+	return [...named].filter((n) => !implemented.has(n)).sort();
+}
+
 /** What the app declares or renders that no approved mockup covers. */
 export async function coverageOf(
 	root: string,
@@ -144,6 +158,7 @@ export async function coverageOf(
 	return {
 		...uncoveredScreens(app, approved),
 		...(await uncoveredComponents(root, app, approved)),
+		unimplemented: unimplementedComponents(app, gaps.scan.components),
 		notInCatalog: gaps.notInCatalog.map((c) => c.name).sort(),
 		noStory: [...new Set(gaps.noStory.map((r) => `${r.name}.${r.state}`))].sort(),
 		stories: uncoveredStories(app),

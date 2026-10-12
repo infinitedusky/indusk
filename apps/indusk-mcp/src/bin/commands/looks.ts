@@ -111,7 +111,8 @@ export async function looksStatus(projectRoot: string, appName: string): Promise
 /**
  * `indusk looks coverage <app>` — `uncovered screen: <name>`, `uncovered
  * state: <screen>.<state>`, `uncovered component: <name>`, and `unresolved
- * component: <file>:<line>` for a name decided at run time; with a catalog,
+ * component: <file>:<line>` for a name decided at run time; `unimplemented
+ * component: <name>` for a component a mockup names that no file marks; with a catalog,
  * `not in catalog: <name>` for a marked component it omits and `no story:
  * <name>.<state>` for a state a mockup places that no story covers; and
  * `uncovered story: <name>.<state>` for a story no person has approved as it
@@ -126,6 +127,7 @@ export async function looksCoverage(projectRoot: string, appName: string): Promi
 			...c.states.map((n) => `uncovered state: ${n}`),
 			...c.components.map((n) => `uncovered component: ${n}`),
 			...c.unresolved.map((at) => `unresolved component: ${at}`),
+			...c.unimplemented.map((n) => `unimplemented component: ${n}`),
 			...c.notInCatalog.map((n) => `not in catalog: ${n}`),
 			...c.noStory.map((n) => `no story: ${n}`),
 			...c.stories.map((n) => `uncovered story: ${n}`),
