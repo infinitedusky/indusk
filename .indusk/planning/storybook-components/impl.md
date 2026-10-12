@@ -237,7 +237,10 @@ The admin is built from components defined once, each with an approved story per
 - [x] `indusk promises change a-mockup-is-approved-by-a-person --plan storybook-components --statement "A mockup or a story, and the foundation it is drawn on, becomes the reference only when a person approves it in the cockpit; an agent can draw and propose one and never approve it." --reason "stories are approved like mockups"`
 - [x] A12 in `apps/indusk-mcp/src/lib/looks/approvals.test.ts`: a mockup reopened by a changed snapshot, approved again with the new `componentsHash`, reads approved
   - Note: authored red before the first implementation item (the test-first gate asks for it there, `60fc5d32`), against the request shape this phase settled: a story approved with `{ kind: "story", snapshotHash, foundationHash }`, then the mockup with `{ mockupHash, componentsHash, foundationHash }`. Two companion cases beside it (not trajectory rows): the mockup is refused while its changed story is unapproved, naming `badge.ok`, writing nothing; a stale `componentsHash` and a story sent without its snapshot hash are refused.
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-mcp/src/lib/looks/approvals.ts`) — `appendEntry` learned "already approved, write nothing" from `next` returning an entry the record already holds (`record.includes(entry)`), an identity protocol nothing names; `next` now returns `{ held }` or `{ add }`. Rule: does the name say what it is for, rather than how it works
+- [x] Shape (`apps/indusk-mcp/src/lib/looks/lint-components.ts`) — reviewed, left as-is: `drawnComponents` lists both a drawn component and a declared one that needs a story: two outcomes of the one declared-new rule, read from one meta tag, so they change together
+- [x] Shape (`apps/indusk-mcp/src/lib/looks/approvals.ts`) — reviewed, left as-is: now ~430 lines holding the record reader, the mockup and story approval reads and the writer; the writer is three named functions over one `appendEntry`, and a cut between mockup and story approvals is inter-file, /cleanup's call once Build Phase 4's route is the second caller
 
 #### Build Phase 3 Verification
 

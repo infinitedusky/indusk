@@ -376,17 +376,19 @@ async function approveMockup(
 	}
 	return appendEntry(checkout, app, `${mockup.name} approved by ${by}`, (approvals) => {
 		const now = approvalOf(app, mockup, approvals.filter(isEntry));
-		if (now.state === "approved") return now.entry;
+		if (now.state === "approved") return { held: now.entry };
 		const components: Record<string, string> = {};
 		for (const u of mockup.uses) if (u.snapshotHash !== null) components[u.story] = u.snapshotHash;
 		return {
-			mockup: mockup.name,
-			mockupHash: mockup.hash,
-			...(mockup.uses.length > 0 ? { componentsHash: mockup.componentsHash, components } : {}),
-			foundationHash: app.foundation.hash,
-			declarationsHash: app.declarationsHash,
-			by,
-			at: new Date().toISOString(),
+			add: {
+				mockup: mockup.name,
+				mockupHash: mockup.hash,
+				...(mockup.uses.length > 0 ? { componentsHash: mockup.componentsHash, components } : {}),
+				foundationHash: app.foundation.hash,
+				declarationsHash: app.declarationsHash,
+				by,
+				at: new Date().toISOString(),
+			},
 		};
 	});
 }
@@ -419,36 +421,40 @@ async function approveStory(
 	}
 	return appendEntry(checkout, app, `story ${story.name} approved by ${by}`, (approvals) => {
 		const now = storyApprovalOf(app, story, approvals.filter(isStoryEntry));
-		if (now.state === "approved") return now.entry;
+		if (now.state === "approved") return { held: now.entry };
 		return {
-			kind: "story",
-			story: story.name,
-			snapshotHash: story.hash,
-			foundationHash: app.foundation.hash,
-			declarationsHash: app.declarationsHash,
-			by,
-			at: new Date().toISOString(),
+			add: {
+				kind: "story",
+				story: story.name,
+				snapshotHash: story.hash,
+				foundationHash: app.foundation.hash,
+				declarationsHash: app.declarationsHash,
+				by,
+				at: new Date().toISOString(),
+			},
 		};
 	});
 }
 
 /**
- * Under the record's lock, ask `next` for the entry to add given the record as
- * it is; when it returns one already there (approved as it is), write
- * nothing. Otherwise append it and commit only the record.
+ * Under the record's lock, ask `next` what the record as it is calls for: the
+ * entry that already `held` it approved as it is, and nothing is written; or
+ * an entry to `add`, appended with only the record committed.
  */
 async function appendEntry<E extends ApprovalEntry | StoryApprovalEntry>(
 	checkout: string,
 	app: LooksApp,
 	subject: string,
-	next: (record: unknown[]) => E,
+	next: (record: unknown[]) => { held: E } | { add: E },
 ): Promise<ApproveResult> {
 	const lock = `${currentMdPath(checkout)}.lock`;
 	mkdirSync(dirname(lock), { recursive: true });
 	return withLock(lock, () => {
 		const record = readRecord(app);
-		const entry = next(record);
-		if (record.includes(entry)) return { approved: true, entry, commit: { committed: true } };
+		const decided = next(record);
+		if ("held" in decided)
+			return { approved: true, entry: decided.held, commit: { committed: true } };
+		const entry = decided.add;
 		const rel = approvalsPath(app.app);
 		writeFileSync(
 			join(checkout, rel),
