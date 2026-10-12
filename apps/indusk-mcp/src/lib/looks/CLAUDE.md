@@ -25,3 +25,8 @@ pointer; the pointer holds the story.
   the write side (the catalog, the sheet) and the read side alike — never a
   local `createHash`, so a hash written and a hash read cannot drift. Guarded
   by `stories.test.ts` (A37).
+- **A story's check span carries `indusk.look.kind = story`, and a look's
+  standing counts only runs of its own kind**: a story's span shares a screen's
+  app, name, state and device (`nav.expanded`), so without the kind a held
+  story would stand for a broken screen. A span with no kind is a screen's, so
+  no recorded run needs rewriting. Guarded by `look-standing.test.ts` (A41).
