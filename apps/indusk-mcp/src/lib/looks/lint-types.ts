@@ -1,5 +1,6 @@
 export type LintRule =
 	| "raw-value"
+	| "shadow-not-token"
 	| "undefined-token"
 	| "undeclared-token"
 	| "redefined-token"

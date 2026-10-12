@@ -114,6 +114,38 @@ const noLiteralRule: Rule<boolean, { exempt?: string[] }> = Object.assign(
 const noLiteral = stylelint.createPlugin(NO_LITERAL, noLiteralRule);
 
 /**
+ * `indusk/shadow-is-a-token`: the value check judges a shadow whole — each
+ * layer must equal a shadow token's — so a shadow assembled from other tokens
+ * (`0 0 0 var(--space-1) var(--color-dusk-wash)`) passes the rules above part
+ * by part and breaks at the live check. Each layer is one `var(--shadow-…)`,
+ * or the value is a keyword. A custom property is not judged here: declaring
+ * `--shadow-new` is how a shadow is proposed.
+ */
+const SHADOW_TOKEN = "indusk/shadow-is-a-token";
+const SHADOW_KEYWORDS = new Set(["none", "inherit", "initial", "unset"]);
+const isShadowToken = (layer: string) => /^var\(\s*--shadow-[\w-]+\s*\)$/.test(layer.trim());
+const shadowTokenRule: Rule<boolean> = Object.assign(
+	() => (root: Parameters<ReturnType<Rule>>[0], result: Parameters<ReturnType<Rule>>[1]) => {
+		root.walkDecls(/^(box|text)-shadow$/, (decl) => {
+			const value = decl.value.trim();
+			if (SHADOW_KEYWORDS.has(value.toLowerCase())) return;
+			const layers = valueParser(value).nodes.reduce<string[]>(
+				(acc, n) => {
+					if (n.type === "div" && n.value === ",") acc.push("");
+					else acc[acc.length - 1] += valueParser.stringify(n);
+					return acc;
+				},
+				[""],
+			);
+			if (layers.every(isShadowToken)) return;
+			stylelint.utils.report({ ruleName: SHADOW_TOKEN, result, node: decl, message: value });
+		});
+	},
+	{ ruleName: SHADOW_TOKEN, messages: {} },
+);
+const shadowToken = stylelint.createPlugin(SHADOW_TOKEN, shadowTokenRule);
+
+/**
  * Whether a reference stays inside the mockup: a `data:` URI, an in-document
  * fragment (`#gradient`), or the generated `tokens.css` — the foundation,
  * which the approval binds by its own hash and the cockpit inlines.
@@ -157,13 +189,14 @@ const noExternal = stylelint.createPlugin(NO_EXTERNAL, noExternalRule);
  */
 function strictConfig(exempt: readonly string[], mockup: boolean): Config {
 	return {
-		plugins: [strictValue as Plugin, noLiteral, noExternal],
+		plugins: [strictValue as Plugin, noLiteral, noExternal, shadowToken],
 		rules: {
 			"scale-unlimited/declaration-strict-value": [
 				STRICT_PROPERTIES.map(String),
 				{ ignoreValues: ALLOWED_VALUES, expandShorthand: true, disableFix: true },
 			],
 			[NO_LITERAL]: [true, { exempt: [...exempt] }],
+			[SHADOW_TOKEN]: true,
 			...(mockup ? { [NO_EXTERNAL]: true } : {}),
 		},
 	};
@@ -193,6 +226,16 @@ function findingOf(w: Warning, file: string, block: CssBlock, lines: string[]): 
 			message: `${url} reaches outside the mockup — inline it, or use a data: URI, so the approval covers it`,
 		};
 	}
+	if (w.rule === SHADOW_TOKEN) {
+		const value = w.text.replace(` (${SHADOW_TOKEN})`, "");
+		return {
+			file,
+			line,
+			value,
+			rule: "shadow-not-token",
+			message: `shadow ${value} is assembled, not a token — the live check judges a shadow whole; declare it as a --shadow- token and use var()`,
+		};
+	}
 	const declaration =
 		w.endLine === w.line
 			? (lines[w.line - 1] ?? "").slice(w.column - 1, (w.endColumn ?? w.column) - 1)
@@ -219,9 +262,16 @@ export async function cssFindings(
 ): Promise<Finding[]> {
 	const result = await stylelint.lint({ code: block.code, config: strictConfig(exempt, mockup) });
 	const lines = block.code.split("\n");
+	const warnings = result.results[0]?.warnings ?? [];
+	// An assembled shadow is named as one, not also as a raw value.
+	const shadows = new Set(
+		warnings.filter((w) => w.rule === SHADOW_TOKEN).map((w) => `${w.line}:${w.column}`),
+	);
 	const seen = new Set<string>();
-	return (result.results[0]?.warnings ?? []).flatMap((w) => {
-		const at = `${w.rule === NO_EXTERNAL ? "external" : "raw"}:${w.line}:${w.column}`;
+	return warnings.flatMap((w) => {
+		const position = `${w.line}:${w.column}`;
+		if (w.rule !== SHADOW_TOKEN && w.rule !== NO_EXTERNAL && shadows.has(position)) return [];
+		const at = `${w.rule === NO_EXTERNAL ? "external" : w.rule === SHADOW_TOKEN ? "shadow" : "raw"}:${position}`;
 		if (seen.has(at)) return [];
 		seen.add(at);
 		return [findingOf(w, file, block, lines)];
