@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { type Dirent, existsSync } from "node:fs";
+import { type Dirent, existsSync, readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { type ComponentUse, compose, type SnapshotBytes } from "./compose.js";
@@ -200,13 +200,24 @@ export function declarationsHashOf(d: {
 	return sha256(canonical({ devices: d.devices, ignore: d.ignore, sources: d.sources }));
 }
 
-async function readJson<T>(file: string, fallback: T): Promise<T> {
-	if (!existsSync(file)) return fallback;
+const parseJson = <T>(file: string, text: string): T => {
 	try {
-		return JSON.parse(await readFile(file, "utf-8")) as T;
+		return JSON.parse(text) as T;
 	} catch (err) {
 		throw new LooksAppError(`${file} is not valid JSON: ${(err as Error).message}`);
 	}
+};
+
+/** A package JSON file, or `fallback` when it is absent; a file that is not JSON is a `LooksAppError` naming it. */
+export async function readJson<T>(file: string, fallback: T): Promise<T> {
+	if (!existsSync(file)) return fallback;
+	return parseJson<T>(file, await readFile(file, "utf-8"));
+}
+
+/** `readJson` for the readers that are synchronous (the catalog, the approvals record). */
+export function readJsonSync<T>(file: string, fallback: T): T {
+	if (!existsSync(file)) return fallback;
+	return parseJson<T>(file, readFileSync(file, "utf-8"));
 }
 
 /** The names in the mockup's `<meta name="indusk-new-tokens" content="--a, --b">`, or `indusk-new-components`. */

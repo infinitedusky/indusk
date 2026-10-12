@@ -1,7 +1,7 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, extname, join, relative } from "node:path";
-import { appSourceFiles, type LooksApp, LooksAppError } from "./mockups.js";
+import { appSourceFiles, type LooksApp, LooksAppError, readJsonSync } from "./mockups.js";
 
 /**
  * Components as the app's source and its catalog hold them (storybook-
@@ -197,12 +197,7 @@ export interface Catalog {
 export function readCatalog(app: LooksApp): Catalog | null {
 	const file = join(app.dir, CATALOG_FILE);
 	if (!existsSync(file)) return null;
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(readFileSync(file, "utf-8"));
-	} catch (err) {
-		throw new LooksAppError(`${file} is not valid JSON: ${(err as Error).message}`);
-	}
+	const parsed = readJsonSync<unknown>(file, null);
 	const list = (parsed as { components?: unknown } | null)?.components;
 	const valid =
 		Array.isArray(list) &&

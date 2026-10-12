@@ -1,4 +1,3 @@
-import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ComponentUse } from "./compose.js";
 import {
@@ -7,6 +6,7 @@ import {
 	LooksAppError,
 	MOCKUPS_DIR,
 	type Mockup,
+	readJsonSync,
 	type Story,
 } from "./mockups.js";
 
@@ -243,13 +243,7 @@ export function standingOf(record: readonly unknown[]): {
 /** Every entry of the record, mockups' and stories', validated; the writer keeps them all. */
 export function readRecord(app: LooksApp): unknown[] {
 	const file = join(app.dir, APPROVALS_FILE);
-	if (!existsSync(file)) return [];
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(readFileSync(file, "utf-8"));
-	} catch (err) {
-		throw new LooksAppError(`${file} is not valid JSON: ${(err as Error).message}`);
-	}
+	const parsed = readJsonSync<unknown>(file, { approvals: [] });
 	const list = (parsed as { approvals?: unknown } | null)?.approvals;
 	if (!Array.isArray(list)) {
 		throw new LooksAppError(`${file} has no "approvals" list`);
