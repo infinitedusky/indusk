@@ -41,6 +41,8 @@ For projects using the published package:
 
 `.mcp.json` lists the MCP servers Claude Code connects to on this machine. It holds values that differ per machine (the telemetry daemon's `jaeger` port is rewritten on every daemon start), so it is **not versioned**: `init` adds it to `.gitignore`, and a fresh clone has none. Run `indusk update` and it writes one naming the `indusk` server; other servers are added by their extensions' own setup (the `local-telemetry` extension adds `jaeger` when it is enabled, and the daemon keeps its port current). A file that exists is never rewritten by `update`.
 
+A new plan worktree (`plans start`, `worktree create`) gets a copy of the trunk's `.mcp.json`, because git no longer carries it there. Anything that creates the file, including the telemetry daemon's port sync, creates it with the `indusk` server in it.
+
 If you pull a commit that untracks `.mcp.json` from a repository that used to version it, git removes the file from your working tree on that pull. Run `indusk update` once to write a fresh one.
 
 ### Init Options

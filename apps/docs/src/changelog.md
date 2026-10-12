@@ -6,7 +6,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Fixed
 
-- **`.mcp.json` is no longer versioned** (untrack-mcp-json): it holds per-machine values (the telemetry daemon's `jaeger` port rewrote it on every start, 26 commits' worth), and `init` already ignored it; this repository had tracked it since the initial scaffold. `indusk update` now writes one naming the `indusk` server when a checkout has none, and never touches one that exists. **After pulling this, run `indusk update` once:** git removes the file from your working tree on that pull. See [the MCP server reference](/reference/tools/indusk-mcp).
+- **`.mcp.json` is no longer versioned** (untrack-mcp-json): it holds per-machine values (the telemetry daemon's `jaeger` port rewrote it on every start, 26 commits' worth), and `init` already ignored it; this repository had tracked it since the initial scaffold. `indusk update` now writes one naming the `indusk` server when a checkout has none, and never touches one that exists. **After pulling this, run `indusk update` once:** git removes the file from your working tree on that pull. New plan worktrees get a copy of the trunk's file, and a file the daemon's sync creates now names the `indusk` server too. See [the MCP server reference](/reference/tools/indusk-mcp).
 
 ### Added
 

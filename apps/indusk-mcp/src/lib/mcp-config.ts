@@ -1,4 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
@@ -35,8 +36,54 @@ export function writeMcpJson(projectPath: string, data: McpJson): void {
 	writeFileSync(join(projectPath, MCP_JSON), `${JSON.stringify(data, null, 2)}\n`);
 }
 
-/** Point the `jaeger` entry at the daemon's live MCP port, creating the entry if missing. */
+/** Whether an `indusk` binary is on the PATH: the installed form of the server, else `npx`. */
+function hasGlobalIndusk(): boolean {
+	const probe = spawnSync(process.platform === "win32" ? "where" : "which", ["indusk"], {
+		stdio: "ignore",
+	});
+	return probe.status === 0;
+}
+
+/**
+ * Write a `.mcp.json` naming the `indusk` server when a checkout has none. A file
+ * that exists is never read, merged or rewritten: it is the person's.
+ * `globalBinary` mirrors `init`: the installed `indusk`, else `npx`; left out, it is
+ * looked up on the PATH.
+ */
+export function ensureMcpJson(
+	projectPath: string,
+	opts: { globalBinary?: boolean } = {},
+): "created" | "present" {
+	if (existsSync(join(projectPath, MCP_JSON))) return "present";
+	const globalBinary = opts.globalBinary ?? hasGlobalIndusk();
+	const indusk: McpServerEntry = globalBinary
+		? { type: "stdio", command: "indusk", args: ["serve"], env: { PROJECT_ROOT: "." } }
+		: {
+				type: "stdio",
+				command: "npx",
+				args: ["--yes", "@infinitedusky/indusk-mcp", "serve"],
+				env: { PROJECT_ROOT: "." },
+			};
+	writeMcpJson(projectPath, { mcpServers: { indusk } });
+	return "created";
+}
+
+/**
+ * Give a new checkout of a project (a plan worktree) its own `.mcp.json`: a copy of
+ * the source checkout's when it has one, else the default. Git no longer carries the
+ * file, so a worktree has none until this runs. Never overwrites one that exists.
+ */
+export function provisionMcpJson(fromProject: string, toProject: string): void {
+	const target = join(toProject, MCP_JSON);
+	if (existsSync(target)) return;
+	const source = join(fromProject, MCP_JSON);
+	if (existsSync(source)) copyFileSync(source, target);
+	else ensureMcpJson(toProject);
+}
+
+/** Point the `jaeger` entry at the daemon's live MCP port, creating the file (and entry) if missing. */
 export function upsertJaegerEntry(projectPath: string, mcpPort: number): void {
+	ensureMcpJson(projectPath);
 	const data = readMcpJson(projectPath);
 	data.mcpServers = data.mcpServers ?? {};
 	data.mcpServers.jaeger = {
@@ -53,26 +100,4 @@ export function removeJaegerEntry(projectPath: string): void {
 		delete data.mcpServers.jaeger;
 		writeMcpJson(projectPath, data);
 	}
-}
-
-/**
- * Write a `.mcp.json` naming the `indusk` server when a checkout has none. A file
- * that exists is never read, merged or rewritten: it is the person's.
- * `globalBinary` mirrors `init`: the installed `indusk`, else `npx`.
- */
-export function ensureMcpJson(
-	projectPath: string,
-	opts: { globalBinary: boolean },
-): "created" | "present" {
-	if (existsSync(join(projectPath, MCP_JSON))) return "present";
-	const indusk: McpServerEntry = opts.globalBinary
-		? { type: "stdio", command: "indusk", args: ["serve"], env: { PROJECT_ROOT: "." } }
-		: {
-				type: "stdio",
-				command: "npx",
-				args: ["--yes", "@infinitedusky/indusk-mcp", "serve"],
-				env: { PROJECT_ROOT: "." },
-			};
-	writeMcpJson(projectPath, { mcpServers: { indusk } });
-	return "created";
 }

@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { git } from "../git.js";
+import { provisionMcpJson } from "../mcp-config.js";
 import { isUsableSegment } from "../path-segment.js";
 import { openMaintenancePhasesIn, ownerDir } from "../promises/reopen.js";
 import { currentTrunkBranch } from "../trunk-branch.js";
@@ -184,6 +185,8 @@ export async function createPlanWorktree(
 	} catch (err) {
 		throw new PlanWorktreeRefusal(`git worktree add failed: ${(err as Error).message.trim()}`);
 	}
+	// The MCP config is per machine and untracked, so git did not bring it along.
+	provisionMcpJson(repo.projectRoot, created);
 	opts.seed?.(canonical(created));
 	const assignment = await assignPlan(repo.projectRoot, plan, created);
 	return { assignment, created: canonical(created) };

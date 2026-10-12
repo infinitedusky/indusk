@@ -92,13 +92,9 @@ function run(cmd: string, opts?: { timeout?: number }): string {
 	}
 }
 
-/** Write the project's `.mcp.json` when it has none, and say so; the binary form mirrors `init`. */
+/** Write the project's `.mcp.json` when it has none, and say so. */
 function ensureProjectMcpJson(projectRoot: string): void {
-	let globalBinary = false;
-	try {
-		globalBinary = run("which indusk", { timeout: 5000 }) !== "";
-	} catch {}
-	if (ensureMcpJson(projectRoot, { globalBinary }) === "created") {
+	if (ensureMcpJson(projectRoot) === "created") {
 		console.info("  created: .mcp.json (indusk server)");
 	}
 }
