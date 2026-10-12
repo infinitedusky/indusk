@@ -3,7 +3,7 @@
 // promise: a-mockup-is-approved-by-a-person — A39 (the two routes read a request the same way)
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { withdraw } from "@infinitedusky/indusk-mcp/looks/approvals";
+import { withdraw } from "@infinitedusky/indusk-mcp/looks/approve";
 import { readAppLooks } from "@infinitedusky/indusk-mcp/looks/overview";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {

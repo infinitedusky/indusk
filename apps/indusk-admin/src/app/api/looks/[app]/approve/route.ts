@@ -3,7 +3,7 @@ import {
   approver,
   componentsHashesMissing,
   type Seen,
-} from "@infinitedusky/indusk-mcp/looks/approvals";
+} from "@infinitedusky/indusk-mcp/looks/approve";
 import { looksCheckouts } from "@infinitedusky/indusk-mcp/looks/overview";
 import type { NextRequest } from "next/server";
 import { getProjectPath } from "@/lib/registry-client";

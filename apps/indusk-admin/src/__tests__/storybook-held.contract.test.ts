@@ -93,7 +93,7 @@ afterAll(async () => {
 /** Approve every story as the cockpit does: through the package, with what the page showed. */
 async function approveEveryStory() {
   const { readApp } = await import("@infinitedusky/indusk-mcp/looks/mockups");
-  const { approve } = await import("@infinitedusky/indusk-mcp/looks/approvals");
+  const { approve } = await import("@infinitedusky/indusk-mcp/looks/approve");
   const app = await readApp(project, "admin");
   expect(app.stories.length, "the admin has stories").toBeGreaterThan(0);
   for (const story of app.stories) {
