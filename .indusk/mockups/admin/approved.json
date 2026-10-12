@@ -1984,6 +1984,16 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T21:43:22.289Z"
+		},
+		{
+			"kind": "story",
+			"story": "badge.working",
+			"snapshotHash": "d48c2d2c7d6eafed8de8089196913e1d683a4344c0eb5b601c6d911aa124841a",
+			"stylesheetHash": "6b8d07724dd190d27712e23ef8639fbc1832dedc32204167976bea148bf65797",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T21:43:22.468Z"
 		}
 	]
 }
