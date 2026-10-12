@@ -13,7 +13,14 @@ import {
 import { readCatalog } from "./components.js";
 import { type Coverage, coverageOf } from "./coverage.js";
 import { generateCss } from "./foundation.js";
-import { type ComponentStyle, type Device, MOCKUPS_DIR, type Mockup, readApp } from "./mockups.js";
+import {
+	type ComponentStyle,
+	type Device,
+	MOCKUPS_DIR,
+	type Mockup,
+	readApp,
+	type Story,
+} from "./mockups.js";
 
 /**
  * What the cockpit's Looks page shows (ui-promises ADR decisions 2, 3, 5):
@@ -63,6 +70,12 @@ export interface StoryView {
 	hash: string;
 	/** sha256 of its component's stylesheet as it is now, or null when it has none; sent back with `hash`. */
 	stylesheetHash: string | null;
+	/**
+	 * The snapshot as a page the cockpit frames (`storyDocument`): the story a
+	 * person approves is the one drawn from these bytes, in the checkout the
+	 * page reads — never the admin's own Storybook build (Build Phase 9, A35).
+	 */
+	document: string;
 }
 
 export interface AppLooks {
@@ -133,9 +146,30 @@ function viewOf(
 	};
 }
 
+/**
+ * A story's snapshot as a page the cockpit can draw on its own, built as
+ * `mockupDocument` builds a composed mockup: the foundation's tokens, then its
+ * component's stylesheet, then the snapshot's markup inside a
+ * `#storybook-root`, where the frame measures the component it holds. What is
+ * drawn is exactly what the hashes an Approve sends were read from.
+ */
+export function storyDocument(
+	story: Pick<Story, "component" | "html">,
+	tokensCss: string,
+	styles: readonly Pick<ComponentStyle, "component" | "css">[],
+): string {
+	const page = `<!doctype html>\n<html>\n<head><meta charset="utf-8"></head>\n<body><div id="storybook-root">${story.html}</div></body>\n</html>\n`;
+	return mockupDocument(
+		page,
+		tokensCss,
+		styles.filter((s) => s.component === story.component),
+	);
+}
+
 function storiesOf(
 	app: Awaited<ReturnType<typeof readApp>>,
 	approvals: StoryApprovalEntry[],
+	css: string,
 ): StoryView[] {
 	const ids = new Map<string, string>();
 	for (const c of readCatalog(app)?.components ?? []) {
@@ -152,6 +186,7 @@ function storiesOf(
 			entry: approval.state === "approved" ? approval.entry : approval.reference,
 			hash: story.hash,
 			stylesheetHash: story.stylesheetHash,
+			document: storyDocument(story, css, app.styles),
 		};
 	});
 }
@@ -167,7 +202,7 @@ export async function readAppLooks(root: string, appName: string): Promise<AppLo
 			devices: app.devices,
 			foundationHash: app.foundation.hash,
 			mockups: app.mockups.map((m) => viewOf(app, m, approvals, css)),
-			stories: storiesOf(app, readStoryApprovals(app)),
+			stories: storiesOf(app, readStoryApprovals(app), css),
 			uncovered: await coverageOf(root, app, approvals),
 		};
 	} catch (err) {
