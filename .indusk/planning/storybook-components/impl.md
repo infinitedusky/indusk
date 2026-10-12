@@ -438,6 +438,8 @@ The admin is built from components defined once, each with an approved story per
 #### Build Phase 7 Verification
 
 - [ ] A22 and A23 pass (`cd apps/indusk-admin && pnpm exec vitest run src/app/p/\[project\]/cockpit-phone.test.tsx src/app/p/\[project\]/promises/dashboard.test.tsx src/app/p/\[project\]/promises/dashboard-looks.test.tsx`); A1–A3 pass on the admin (`indusk looks coverage admin`, `indusk looks lint admin` no component finding); `indusk looks check admin` no broken look; the admin's everyday suite passes; tsc and biome clean on changed files
+  - Run 2026-10-12, not yet closable: A22 and A23 pass (cockpit-phone, dashboard, dashboard-looks: 21 tests); `indusk looks check admin` against the cockpit reads 342 looks held, none broken (56 unchecked: the states the page does not report, and the two new stories); the admin's everyday suite passes (82 files, 560 tests); tsc and biome are clean on the changed files in both packages; A1 to A3 pass (`looks-components-cli`, `looks-admin-components`, `component-reuse-audit`).
+  - **Waiting on Sandy**: `indusk looks coverage admin` lists the stories `nav.plan-current` and `plan-row.current` as uncovered, and `indusk looks lint admin` refuses the three plan mockups for naming an unapproved story (`no-approved-story`), which also holds the regression guard `looks-admin-foundation.test.ts` (A24) red. Approving the two stories on the Looks page, then the three reopened `plan.*` mockups, closes it. Then record Shape and check this item.
 
 #### Build Phase 7 Context
 
