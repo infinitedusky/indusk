@@ -388,6 +388,46 @@ async function measure(
 }
 
 /**
+ * Open each story in the app's served Storybook at every device and scheme
+ * and judge it. The script reads `#storybook-root` only, and waits for the
+ * body to say the story has drawn.
+ */
+async function checkStories(
+	browser: Browser,
+	app: LooksApp,
+	base: string,
+	stories: readonly StoryTarget[],
+): Promise<CheckReport> {
+	const results: LookResult[] = [];
+	const unchecked: Unchecked[] = [];
+	const script = measureScript(
+		app.foundation.tokens.map((t) => t.name),
+		MEASURED_PROPERTIES,
+		app.ignore,
+		"#storybook-root",
+	);
+	for (const story of stories) {
+		for (const device of app.devices) {
+			for (const scheme of schemesOf(app)) {
+				const url = storyUrl(base, story.id, scheme);
+				const seen = await measure(browser, device, scheme, url, script, "body.sb-show-main");
+				const judged = judgeStory({
+					app: app.app,
+					story,
+					device: lookDevice(device.name, scheme),
+					scheme,
+					approved: approvedValues(app, scheme),
+					seen,
+				});
+				if ("result" in judged) results.push(judged.result);
+				else unchecked.push(judged.unchecked);
+			}
+		}
+	}
+	return { results, unchecked };
+}
+
+/**
  * Open every checkable screen state, and every checkable story in the app's
  * served Storybook, at every device of `app` and judge each. `baseUrl` is
  * `--url`, else the app's own `url`; with neither the check is refused rather
@@ -440,37 +480,9 @@ export async function checkApp(
 				}
 			}
 		}
-		const storyScript = measureScript(
-			app.foundation.tokens.map((t) => t.name),
-			MEASURED_PROPERTIES,
-			app.ignore,
-			"#storybook-root",
-		);
-		for (const story of stories.checked) {
-			for (const device of app.devices) {
-				for (const scheme of schemesOf(app)) {
-					const url = storyUrl(base, story.id, scheme);
-					const seen = await measure(
-						browser,
-						device,
-						scheme,
-						url,
-						storyScript,
-						"body.sb-show-main",
-					);
-					const judged = judgeStory({
-						app: app.app,
-						story,
-						device: lookDevice(device.name, scheme),
-						scheme,
-						approved: approvedValues(app, scheme),
-						seen,
-					});
-					if ("result" in judged) results.push(judged.result);
-					else unchecked.push(judged.unchecked);
-				}
-			}
-		}
+		const found = await checkStories(browser, app, base, stories.checked);
+		results.push(...found.results);
+		unchecked.push(...found.unchecked);
 	} finally {
 		await browser.close();
 	}
