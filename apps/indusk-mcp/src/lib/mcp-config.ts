@@ -44,6 +44,7 @@ function hasGlobalIndusk(): boolean {
 	return probe.status === 0;
 }
 
+// promise: a-clone-without-an-mcp-config-gets-the-keep-list
 /**
  * Write a `.mcp.json` naming the `indusk` server when a checkout has none. A file
  * that exists is never read, merged or rewritten: it is the person's.
