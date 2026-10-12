@@ -1,7 +1,7 @@
 ---
 title: "Untrack .mcp.json — a machine's MCP config is not versioned, and a clone gets its own"
 date: 2026-10-11
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -44,6 +44,8 @@ gate_policy: ask
 | T3 | In a checkout with no `.mcp.json`, `indusk update` leaves one that names the `indusk` server | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-clone-without-an-mcp-config-gets-the-keep-list | apps/indusk-mcp/src/__tests__/mcp-config-regenerate.test.ts |
 | T5 | With an existing `.mcp.json` holding a hand-added server, `indusk update` leaves that server and its settings as they were | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-clone-without-an-mcp-config-gets-the-keep-list | apps/indusk-mcp/src/__tests__/mcp-config-regenerate.test.ts |
 | T6 | A daemon restart that moves the jaeger port leaves `git status` clean in a checkout with no tracked `.mcp.json` | Build Phase 1 | Build Phase 1 | passing | unit | a regression guard over the daemon's per-project sync: the churn stops because the file is untracked, and must not come back | apps/indusk-mcp/src/__tests__/mcp-config-untracked.test.ts |
+| T7 | With a registered project that has no `.mcp.json`, pointing its jaeger entry at a port leaves a file that names both the `indusk` and the `jaeger` server | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-clone-without-an-mcp-config-gets-the-keep-list | apps/indusk-mcp/src/__tests__/mcp-config-regenerate.test.ts |
+| T8 | A plan worktree made by `indusk worktree create` from a checkout that has a `.mcp.json` has one too, with the same servers | Build Phase 2 | Build Phase 2 | planned | unit | falsification of Build Phase 1: a tracked file reached every worktree for free; an untracked one reaches none, and the default workflow gives every plan its own worktree | apps/indusk-mcp/src/__tests__/mcp-config-worktree.test.ts |
 
 ## Checklist
 
@@ -110,6 +112,29 @@ gate_policy: ask
 #### Build Phase 1 Document
 
 - [x] `apps/docs/src/reference/cli/update.md` (or the page that documents `indusk update`): the new line and the rule; changelog: Fixed — ".mcp.json is no longer tracked. After pulling, run `indusk update` once: git removes the file from your working tree on that pull, and `update` writes a fresh one"
+
+### Build Phase 2: Falsification — the file the tooling creates, and the checkouts it never reaches
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds against two failure modes found by reading Build Phase 1's code. (1) The daemon's sync creates `.mcp.json` too (`upsertJaegerEntry` writes `{ mcpServers: {} }` plus `jaeger` when the file is missing), so after the untracking pull deletes the file, the next daemon restart can leave one holding only `jaeger`; `ensureMcpJson` then sees it "present" and `indusk update` never adds the `indusk` server — the very flow the changelog tells people to run. (2) The tracked file reached every plan worktree for free; an untracked one reaches none, and `createPlanWorktree` (behind `plans start` and `worktree create`) is a plain `git worktree add`, so every new plan's Claude Code session starts with no indusk or jaeger server. T7 and T8 are authored red first.
+
+- [ ] T7 and T8 authored red, each failing on its own assertion (a file with only `jaeger`; a worktree with no `.mcp.json`)
+- [ ] `src/lib/mcp-config.ts`: `upsertJaegerEntry` creates a missing file through `ensureMcpJson` (binary form detected inside, `which indusk`) before it writes the jaeger entry, so a file the tooling creates always names `indusk` (T7); `ensureMcpJson`'s `globalBinary` becomes optional and defaults to that detection
+- [ ] `src/lib/worktree/plan-worktree-commands.ts`: after `git worktree add`, `createPlanWorktree` copies the trunk's `.mcp.json` into the new worktree when the trunk has one and the worktree does not, else calls `ensureMcpJson`; never overwrites a file the worktree has (T8)
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 2 Verification
+
+- [ ] T7 and T8 fail on their own assertions first, then pass; T1–T3, T5, T6 still pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/mcp-config-untracked.test.ts src/__tests__/mcp-config-regenerate.test.ts src/__tests__/mcp-config-worktree.test.ts && pnpm exec vitest related src/lib/mcp-config.ts src/lib/worktree/plan-worktree-commands.ts --run`); tsc and biome clean on changed files; no telemetry process left running
+
+#### Build Phase 2 Context
+
+- [ ] `apps/indusk-mcp/CLAUDE.md`: the rule's last sentence says `createPlanWorktree` gives a new worktree its own `.mcp.json` (copied from the trunk), and that anything that creates the file creates it through `ensureMcpJson`
+
+#### Build Phase 2 Document
+
+- [ ] `apps/docs/src/reference/tools/indusk-mcp.md`: one sentence in "`.mcp.json` is per machine": a new plan worktree gets a copy of the trunk's file; changelog entry extended
 
 ## Files Affected
 
