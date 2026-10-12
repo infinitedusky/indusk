@@ -1022,6 +1022,25 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T16:02:09.023Z"
+		},
+		{
+			"mockup": "plan.working",
+			"mockupHash": "3e1b3f300f24617fb75b9ac6fdacf67e078d318dd7d2d4139f5c1d3dbf370b00",
+			"componentsHash": "60614f056c37cddcb5b9a8fcbe58f139e458fb2c61fa931f52831edceaf52432",
+			"components": {
+				"nav.expanded": "dda3c6d55b852604d7d81c84f0d9b5c85ffe73a7b9f2e375cf4853bb2d7381ae",
+				"tag.default": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2",
+				"rail-group.default": "8d77a848575c43ed4f8be05977424076fc2c5e4e11d9410344ad2f81939fedb0",
+				"decision-card.working": "10820004f9c6776dae0142091004eb7869b642a3de3da5d7bff108142f7ffc90",
+				"decision-card.css": "f524512e5face4aada9c350e02e8d72fce81ba1b1b12264f26b967a0c95216c4",
+				"nav.css": "3e58b69ca4f3ed44c1625cb3f2fa018b672b1bc1a6b51e5912cfeb0a3f0772f2",
+				"rail-group.css": "cf4dd62942135d955716197570da2eca6758b3ce77ee47f51f47fca2ea664ad4",
+				"tag.css": "30d7bf10c27edc0deecf29411b623d76dc69248619af47401101eaa7500bba2c"
+			},
+			"foundationHash": "36b807fec8de7d0bba03f7609225d33597688f4bcf3e165a45beee8494f5f810",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T16:02:09.208Z"
 		}
 	]
 }
