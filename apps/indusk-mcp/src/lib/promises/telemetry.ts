@@ -56,6 +56,8 @@ export interface LookKey {
 	screen: string;
 	state: string;
 	device: string;
+	/** `story` for a component story's run; absent for a screen's. */
+	kind?: "story";
 }
 
 /** The look a span names, when it names all four parts; null otherwise. */
@@ -66,7 +68,10 @@ function lookOf(tags: JaegerTag[] | undefined): LookKey | null {
 		state: tag(tags, LOOK_MARK.state),
 		device: tag(tags, LOOK_MARK.device),
 	};
-	return Object.values(parts).every((v) => typeof v === "string") ? (parts as LookKey) : null;
+	if (!Object.values(parts).every((v) => typeof v === "string")) return null;
+	return tag(tags, LOOK_MARK.kind) === "story"
+		? { ...(parts as LookKey), kind: "story" }
+		: (parts as LookKey);
 }
 
 /**

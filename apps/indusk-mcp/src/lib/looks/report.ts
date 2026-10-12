@@ -59,6 +59,7 @@ export function reportLooks(
 			span.setAttribute(LOOK_MARK.screen, result.screen);
 			span.setAttribute(LOOK_MARK.state, result.state);
 			span.setAttribute(LOOK_MARK.device, result.device);
+			if (result.kind === "story") span.setAttribute(LOOK_MARK.kind, "story");
 			markPromise(span, {
 				promise: LOOK_PROMISE,
 				outcome: result.verdict.state === "held" ? "upheld" : "violated",
