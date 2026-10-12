@@ -30,6 +30,8 @@ import {
  * promise: a-mockup-is-approved-by-a-person — A16, A17, A27, A28 (a person takes an approval back).
  * promise: mockups-render-in-the-cockpit — A25 (a composed mockup carries its components' styles).
  * promise: a-changed-component-reopens-its-mockups — A26 (a changed style).
+ * promise: a-mockup-is-approved-by-a-person — A31 (a story's approval binds its stylesheet).
+ * promise: a-mockup-composes-approved-components — A32 (an Unapproved story reopens its mockups).
  *
  * Each is red today on its own assertion: the commands run over the fixture
  * and the component lines below are absent. The output these rows read is the
@@ -65,6 +67,18 @@ const linesWith = (out: string, ...parts: string[]) =>
 function storyLine(out: string, story: string): string {
 	const pattern = new RegExp(`^\\s*story ${story.replace(/\./g, "\\.")}\\s+(approved|proposed)\\b`);
 	return out.split("\n").find((l) => pattern.test(l)) ?? "";
+}
+
+/** The copy as a git project, so the commit the writer makes can be read back. */
+function project(): string {
+	const root = app();
+	const git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf-8" });
+	git("init", "-q", "-b", "main");
+	git("config", "user.name", "Sandy Tester");
+	git("config", "user.email", "sandy@example.com");
+	git("add", "-A");
+	git("commit", "-qm", "the components fixture");
+	return root;
 }
 
 /** Replace a story's snapshot in the copy, as a changed component re-rendered would. */
@@ -312,17 +326,6 @@ describe("a story is approved by a person", () => {
 
 // Each case spawns the CLI several times; a loaded suite needs more than the default 5s.
 describe("a person takes an approval back", { timeout: 30_000 }, () => {
-	/** The copy as a git project, so the commit the writer makes can be read back. */
-	function project(): string {
-		const root = app();
-		const git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf-8" });
-		git("init", "-q", "-b", "main");
-		git("config", "user.name", "Sandy Tester");
-		git("config", "user.email", "sandy@example.com");
-		git("add", "-A");
-		git("commit", "-qm", "the components fixture");
-		return root;
-	}
 	const lastCommitFiles = (root: string) =>
 		execFileSync("git", ["show", "--name-only", "--format=", "HEAD"], {
 			cwd: root,
@@ -451,5 +454,80 @@ describe("a person takes an approval back", { timeout: 30_000 }, () => {
 			expect(refused.out).toContain("Unapprove");
 		}
 		expect(readFileSync(record, "utf-8"), "the refusal writes nothing").toBe(before);
+	});
+});
+
+// Each case spawns the CLI and writes the record through the cockpit's writer.
+describe("what a story's approval binds, and what keeps a mockup approved", { timeout: 30_000 }, () => {
+	// A31
+	it("A31 a component whose stylesheet changes while its markup does not reads its stories proposed, and a mockup composing it is refused until the story is approved again", async () => {
+		const root = project();
+		const sheet = join(root, MOCKUPS, "components", "badge.css");
+		writeFileSync(sheet, readFileSync(sheet, "utf-8").replace("var(--space-1)", "var(--space-3)"));
+		const out = run(root, ["status", "demo"]).out;
+		expect(storyLine(out, "badge.ok"), out).toMatch(/proposed/);
+		expect(storyLine(out, "card.default"), "a story with no changed sheet stays approved").toMatch(
+			/approved/,
+		);
+
+		const held = await readApp(root, "demo");
+		const home = held.mockups.find((m) => m.name === "home.default");
+		const badge = held.stories.find((s) => s.name === "badge.ok");
+		if (!home || !badge) throw new Error("the fixture has no home.default or badge.ok");
+		const foundationHash = held.foundation.hash;
+		const shown = {
+			foundationHash,
+			mockupHash: home.hash,
+			componentsHash: home.componentsHash,
+		};
+		const refused = await approve(root, "demo", "home.default", "Sandy Tester", shown);
+		expect(refused.approved, JSON.stringify(refused)).toBe(false);
+		expect(refused.approved ? "" : refused.reason).toContain("badge.ok");
+
+		const story = await approve(root, "demo", "badge.ok", "Sandy Tester", {
+			kind: "story",
+			snapshotHash: badge.hash,
+			stylesheetHash: sha256(readFileSync(sheet)),
+			foundationHash,
+		});
+		expect(story.approved, JSON.stringify(story)).toBe(true);
+		const mockup = await approve(root, "demo", "home.default", "Sandy Tester", shown);
+		expect(mockup.approved, JSON.stringify(mockup)).toBe(true);
+		const after = run(root, ["status", "demo"]).out;
+		expect(storyLine(after, "badge.ok"), after).toMatch(/approved/);
+		expect(statusLine(after, "home.default"), after).toMatch(/approved/);
+	});
+
+	// A32
+	it("A32 an approved mockup that composes a story a person has Unapproved reads proposed, naming that component, in status and coverage", async () => {
+		const root = project();
+		const held = await readApp(root, "demo");
+		const badge = held.stories.find((s) => s.name === "badge.ok");
+		if (!badge) throw new Error("the fixture has no badge.ok");
+		const before = run(root, ["status", "demo"]).out;
+		expect(statusLine(before, "home.default"), before).toMatch(/approved/);
+
+		const taken = await withdraw(root, "demo", "badge.ok", "Sandy Tester", "story", {
+			foundationHash: held.foundation.hash,
+			snapshotHash: badge.hash,
+		});
+		expect(taken.withdrawn, JSON.stringify(taken)).toBe(true);
+
+		const out = run(root, ["status", "demo"]).out;
+		const home = statusLine(out, "home.default");
+		expect(home, out).toMatch(/proposed/);
+		expect(home).toContain("component changed: badge");
+		// detail.default composes the card alone.
+		expect(statusLine(out, "detail.default"), out).toMatch(/approved/);
+
+		const coverage = run(root, ["coverage", "demo"]).out;
+		expect(
+			coverage.split("\n").filter((l) => /uncovered (screen: home$|state: home\.default$)/.test(l.trim())),
+			coverage,
+		).not.toEqual([]);
+		expect(linesWith(coverage, "uncovered story: badge.ok"), coverage).not.toEqual([]);
+		// The lint already refuses it: the three readers agree.
+		const lint = run(root, ["lint", "demo"]).out;
+		expect(linesWith(lint, "no approved story: badge.ok"), lint.slice(0, 600)).not.toEqual([]);
 	});
 });
