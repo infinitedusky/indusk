@@ -26,6 +26,11 @@ import { fencedLineMask } from "../impl-headings.js";
  * - {what was chosen not to promise}
  * ```
  *
+ * A brief may also carry `## Looks`, in the same shape (brief-as-the-contract
+ * ADR D1): `### This plan makes`, `### Existing looks` with the same three
+ * labels, or `None — {reason}`. Each entry is a look's name, a mockup
+ * (`home.full`) or a story (`badge.ok`). No section reads as `looks: null`.
+ *
  * A brief with no `## Promises` heading is `legacy` and nothing here applies
  * to it. Prose between the parts is allowed and ignored; lines inside a code
  * fence are not read at all.
@@ -51,6 +56,19 @@ export interface BriefMade {
 	sentence: string;
 }
 
+/** What a brief's `## Looks` section says: the Promises shape, with looks for promises. */
+export interface BriefLooks {
+	makes: Array<{ name: string; sentence: string }>;
+	mustNotBreak: string[];
+	changes: Array<{ name: string; sentence: string }>;
+	replaces: Array<{ old: string; by: string }>;
+	/**
+	 * The reason given with `None — {reason}`: `""` when the section says
+	 * `None` and gives no reason, `null` when it does not say it has none.
+	 */
+	none: string | null;
+}
+
 export interface BriefContract {
 	shape: "contract";
 	expectations: BriefExpectation[];
@@ -63,6 +81,8 @@ export interface BriefContract {
 	mustNotBreak: string[];
 	changes: Array<{ name: string; sentence: string }>;
 	replaces: Array<{ old: string; by: string }>;
+	/** The `## Looks` section; null when the brief has none. */
+	looks: BriefLooks | null;
 	/** Lines in the contract's sections that are not in its shape. */
 	problems: string[];
 }
@@ -197,14 +217,19 @@ function readExpectations(lines: Line[]): Pick<BriefContract, "expectations" | "
 	return { expectations, noExpectations: null };
 }
 
-function readMakes(lines: Line[], problems: string[], read: Set<number>): BriefMade[] {
+function readMakes(
+	lines: Line[],
+	problems: string[],
+	read: Set<number>,
+	noun = "promise",
+): BriefMade[] {
 	const makes: BriefMade[] = [];
 	for (const item of items(lines, ENTRY)) {
 		read.add(item.n);
 		const m = /^\*\*`([^`]+)`\*\*\s*(?:\(([^)]*)\))?[.:]?\s*(.*)$/.exec(item.text);
 		if (!m) {
 			problems.push(
-				`line ${item.n}: under "This plan makes", an entry does not start with the promise's name as **\`name\`** (kind). — "${item.text}"`,
+				`line ${item.n}: under "This plan makes", an entry does not start with the ${noun}'s name as **\`name\`** (kind). — "${item.text}"`,
 			);
 			continue;
 		}
@@ -217,6 +242,7 @@ function readExisting(
 	lines: Line[],
 	problems: string[],
 	read: Set<number>,
+	noun = "promise",
 ): Pick<BriefContract, "mustNotBreak" | "changes" | "replaces"> {
 	const out = {
 		mustNotBreak: [] as string[],
@@ -234,7 +260,7 @@ function readExisting(
 		const list = label[1].toLowerCase() as ListKey;
 		if (!/^:?\s*$/.test(label[2])) {
 			problems.push(
-				`line ${line.n}: the label **${LISTS[list]}** must be on its own line, with its promises listed under it — "${line.text.trim()}"`,
+				`line ${line.n}: the label **${LISTS[list]}** must be on its own line, with its ${noun}s listed under it — "${line.text.trim()}"`,
 			);
 		}
 		groups.push({ list, lines: [] });
@@ -248,14 +274,14 @@ function readExisting(
 				// entry no list holds, and nothing would check it.
 				if (named) {
 					problems.push(
-						`line ${item.n}: \`${named[1]}\` is named under "Existing promises" but under none of **Must not break**, **Changes** or **Replaces**`,
+						`line ${item.n}: \`${named[1]}\` is named under "Existing ${noun}s" but under none of **Must not break**, **Changes** or **Replaces**`,
 					);
 				}
 				continue;
 			}
 			if (!named) {
 				problems.push(
-					`line ${item.n}: under **${LISTS[group.list]}**, an entry does not start with a promise's name as **\`name\`** — "${item.text}"`,
+					`line ${item.n}: under **${LISTS[group.list]}**, an entry does not start with a ${noun}'s name as **\`name\`** — "${item.text}"`,
 				);
 				continue;
 			}
@@ -284,8 +310,8 @@ function readExisting(
  * "### Existing promises". Either way the promise would be checked by
  * nothing, which is the failure this reader exists to prevent.
  */
-function unreadLines(promises: Line[], read: Set<number>): string[] {
-	const existing = new Set((section(promises, 3, "Existing promises") ?? []).map((l) => l.n));
+function unreadLines(promises: Line[], read: Set<number>, noun = "promise"): string[] {
+	const existing = new Set((section(promises, 3, `Existing ${noun}s`) ?? []).map((l) => l.n));
 	const notPromised = new Set((section(promises, 3, "Not promised") ?? []).map((l) => l.n));
 	const out: string[] = [];
 	for (const line of promises) {
@@ -293,18 +319,55 @@ function unreadLines(promises: Line[], read: Set<number>): string[] {
 		const label = LABEL.exec(line.text);
 		if (label && !existing.has(line.n)) {
 			out.push(
-				`line ${line.n}: the label **${LISTS[label[1].toLowerCase() as ListKey]}** is not under "### Existing promises", so nothing reads the promises listed under it`,
+				`line ${line.n}: the label **${LISTS[label[1].toLowerCase() as ListKey]}** is not under "### Existing ${noun}s", so nothing reads the ${noun}s listed under it`,
 			);
 			continue;
 		}
 		const named = NAMES_A_PROMISE.exec(line.text);
 		if (named && !read.has(line.n)) {
 			out.push(
-				`line ${line.n}: \`${named[1]}\` is written in the Promises section, but no list reads it — an entry goes under "### This plan makes", or under one of the three labels in "### Existing promises"`,
+				`line ${line.n}: \`${named[1]}\` is written in the ${noun === "promise" ? "Promises" : "Looks"} section, but no list reads it — an entry goes under "### This plan makes", or under one of the three labels in "### Existing ${noun}s"`,
 			);
 		}
 	}
 	return out;
+}
+
+/**
+ * The `## Looks` section, read as the Promises section is. `null` when the
+ * brief has no such heading. The section must say what it lists, or say
+ * `None — {reason}`: a heading with neither is a problem, because a Looks
+ * section read as empty is a check that passes having checked nothing.
+ */
+function readLooks(lines: Line[], problems: string[]): BriefLooks | null {
+	const looks = section(lines, 2, "Looks");
+	if (looks === null) return null;
+	const read = new Set<number>();
+	const makesLines = section(looks, 3, "This plan makes");
+	const makes = (makesLines === null ? [] : readMakes(makesLines, problems, read, "look")).map(
+		({ name, sentence }) => ({ name, sentence }),
+	);
+	const existing = readExisting(section(looks, 3, "Existing looks") ?? [], problems, read, "look");
+	problems.push(...unreadLines(looks, read, "look"));
+	let none: string | null = null;
+	for (const line of looks) {
+		const found = NONE.exec(line.text.trim());
+		if (found) {
+			none = (found[1] ?? "").trim();
+			break;
+		}
+	}
+	const listed =
+		makes.length +
+		existing.mustNotBreak.length +
+		existing.changes.length +
+		existing.replaces.length;
+	if (listed === 0 && none === null) {
+		problems.push(
+			'"## Looks" lists no look and does not say it has none — list each under "### This plan makes" or "### Existing looks", or write "None — {reason}"',
+		);
+	}
+	return { makes, ...existing, none };
 }
 
 /** Read a brief's contract. `legacy` when it has no `## Promises` heading and none of the parts beneath it. */
@@ -316,14 +379,16 @@ export function parseBriefContract(text: string): ParsedBrief {
 		.filter((_, i) => !fenced[i]);
 
 	const promises = section(lines, 2, "Promises");
+	const lookLines = new Set((section(lines, 2, "Looks") ?? []).map((l) => l.n));
 	if (promises === null) {
 		// A brief written in the new parts without the heading that holds them
 		// is out of shape, not one written before the parts existed.
 		const newParts = lines.filter(
 			(l) =>
-				/^##\s+Expectations\s*$/i.test(l.text) ||
-				/^###\s+This plan makes\s*$/i.test(l.text) ||
-				LABEL.test(l.text),
+				!lookLines.has(l.n) &&
+				(/^##\s+Expectations\s*$/i.test(l.text) ||
+					/^###\s+This plan makes\s*$/i.test(l.text) ||
+					LABEL.test(l.text)),
 		);
 		if (newParts.length === 0) return { shape: "legacy" };
 		return {
@@ -333,6 +398,7 @@ export function parseBriefContract(text: string): ParsedBrief {
 			mustNotBreak: [],
 			changes: [],
 			replaces: [],
+			looks: null,
 			problems: [
 				`line ${newParts[0].n}: the brief is written in the parts of a contract but has no "## Promises" heading above them, so none of its promises is read — add "## Promises" above "### This plan makes"`,
 			],
@@ -350,11 +416,13 @@ export function parseBriefContract(text: string): ParsedBrief {
 	const made = makes === null ? [] : readMakes(makes, problems, read);
 	const existing = readExisting(section(promises, 3, "Existing promises") ?? [], problems, read);
 	problems.push(...unreadLines(promises, read));
+	const looks = readLooks(lines, problems);
 	return {
 		shape: "contract",
 		...readExpectations(section(lines, 2, "Expectations") ?? []),
 		makes: made,
 		...existing,
+		looks,
 		problems,
 	};
 }
