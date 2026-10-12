@@ -39,6 +39,9 @@ export const SYSTEM = [
   // check over the stories, in Chromium.
   "src/app/p/[project]/looks/looks-components.contract.test.ts",
   "src/__tests__/storybook-held.contract.test.ts",
+  // A composed mockup draws each component as its story does (storybook-
+  // components A30): computed values compared in Chromium, mockup against story.
+  "src/__tests__/composition.contract.test.ts",
 ];
 
 /**
