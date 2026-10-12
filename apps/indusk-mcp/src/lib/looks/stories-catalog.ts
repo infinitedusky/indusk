@@ -1,7 +1,6 @@
-import { createHash } from "node:crypto";
 import type { CatalogComponent, CatalogProperty } from "./components.js";
 import { elementsOf } from "./markup.js";
-import { LooksAppError } from "./mockups.js";
+import { LooksAppError, snapshotHash } from "./mockups.js";
 
 /**
  * What the render step decides once Storybook has rendered: which component
@@ -117,7 +116,7 @@ export function buildCatalog(input: CatalogInput): {
 		component.states.push({
 			name: state,
 			id,
-			snapshotHash: createHash("sha256").update(snapshotBytes(html)).digest("hex"),
+			snapshotHash: snapshotHash(snapshotBytes(html)),
 		});
 		byComponent.set(name, component);
 	}

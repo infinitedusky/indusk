@@ -1,5 +1,4 @@
 import { execFile } from "node:child_process";
-import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -13,7 +12,13 @@ import {
 	isImplementationFile,
 	scanComponents,
 } from "./components.js";
-import { appSourceFiles, type LooksApp, LooksAppError, readApp } from "./mockups.js";
+import {
+	appSourceFiles,
+	type LooksApp,
+	LooksAppError,
+	readApp,
+	stylesheetHash,
+} from "./mockups.js";
 import { buildCatalog, manifestIndex, snapshotBytes } from "./stories-catalog.js";
 
 /**
@@ -347,7 +352,7 @@ function writeStylesheets(args: {
 		writeFileSync(file, sheet);
 		written.push(relative(root, file));
 		c.stylesheet = `${SNAPSHOTS_DIR}/${c.name}.css`;
-		c.stylesheetHash = createHash("sha256").update(sheet).digest("hex");
+		c.stylesheetHash = stylesheetHash(sheet);
 	}
 	return written;
 }

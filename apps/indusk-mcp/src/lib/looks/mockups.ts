@@ -152,7 +152,14 @@ export interface LooksApp {
 
 export class LooksAppError extends Error {}
 
-const sha256 = (bytes: Buffer | string) => createHash("sha256").update(bytes).digest("hex");
+/** The one place a looks hash is computed: sha256 of the bytes, hex. */
+export const sha256 = (bytes: Buffer | string) => createHash("sha256").update(bytes).digest("hex");
+
+/** A story's snapshot hash, written to the catalog and read from the file by this one function. */
+export const snapshotHash = (bytes: Buffer | string) => sha256(bytes);
+
+/** A component's stylesheet hash, written beside its sheet and read from the file by this one function. */
+export const stylesheetHash = (css: Buffer | string) => sha256(css);
 
 /**
  * The hash a mockup approval binds its components by: sha256 of the snapshot
@@ -304,7 +311,7 @@ async function readStories(
 			state: name.slice(dot + 1),
 			file: join(rel, "components", fileName),
 			html: bytes.toString("utf-8"),
-			hash: sha256(bytes),
+			hash: snapshotHash(bytes),
 			stylesheetHash: sheetOf.get(name.slice(0, dot)) ?? null,
 		});
 	}
@@ -324,7 +331,7 @@ async function readStyles(dir: string, rel: string): Promise<ComponentStyle[]> {
 			component,
 			file: join(rel, "components", fileName),
 			css: bytes.toString("utf-8"),
-			hash: sha256(bytes),
+			hash: stylesheetHash(bytes),
 			key: fileName,
 		});
 	}
