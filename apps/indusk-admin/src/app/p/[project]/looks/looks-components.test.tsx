@@ -1,6 +1,8 @@
 // promise: mockups-render-in-the-cockpit — the components list and a story's frame.
 // promise: a-mockup-is-approved-by-a-person — a story is approved by its snapshot hash,
-// and a person takes an approval back (A29).
+// and a person takes an approval back (A29); the story frame is the snapshot a person
+// approves, drawn from the selected checkout (A35).
+import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readAppLooks } from "@infinitedusky/indusk-mcp/looks/overview";
@@ -8,7 +10,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   approveRequest,
   attrOf,
+  base,
   demo,
+  git,
   foundationHash,
   looksPage,
   PROJECT,
@@ -328,5 +332,75 @@ describe("the components list puts stories waiting for a person first, or shows 
     const html = await looksPage({ show: "unapproved", view: "cascade" });
     expect(html).toContain('data-story="badge.broken"');
     expect(html).not.toContain('data-story="badge.ok"');
+  });
+});
+
+describe("A35 — the story a person approves is the snapshot they were shown", () => {
+  const MARK = "HAND-EDITED-IN-THE-PLAN";
+
+  /** A plan worktree on `plan/looks`, assigned to the plan, whose `badge.broken` snapshot was edited by hand. */
+  function planWorktree(): string {
+    const tree = join(base, "proj-plan");
+    git("worktree", "add", "-q", "-b", "plan/looks", tree);
+    // The fixture's catalog carries no Storybook ids; the plan's gets the same ones as main's.
+    writeFileSync(join(tree, CATALOG), readFileSync(join(root, CATALOG)));
+    const file = join(tree, ".indusk/mockups/demo/components/badge.broken.html");
+    writeFileSync(
+      file,
+      readFileSync(file, "utf-8").replace(/>([^<]*)</, `>${MARK}<`),
+    );
+    execFileSync("git", ["add", "-A"], { cwd: tree });
+    execFileSync("git", ["commit", "-qm", "a snapshot edited by hand"], {
+      cwd: tree,
+    });
+    writeFileSync(
+      join(root, ".git", "indusk-plan-worktrees.json"),
+      `${JSON.stringify({
+        version: 1,
+        assignments: [
+          {
+            plan: "looks",
+            path: tree,
+            branch: "plan/looks",
+            at: new Date().toISOString(),
+          },
+        ],
+      })}\n`,
+    );
+    return tree;
+  }
+
+  /** The story frame's opening tag. */
+  const frameOf = (html: string): string => {
+    const at = html.indexOf('data-testid="story-frame"');
+    expect(at, "no story frame").toBeGreaterThan(-1);
+    return html.slice(html.lastIndexOf("<", at), html.indexOf(">", at) + 1);
+  };
+
+  it("A35 the frame loads a document drawn from the selected checkout's snapshot, its component's stylesheet and the foundation's tokens, never the admin's own /storybook build", async () => {
+    planWorktree();
+    const frame = frameOf(
+      await looksPage({
+        checkout: "looks",
+        app: "demo",
+        story: "badge.broken",
+        device: "phone",
+      }),
+    );
+    expect(frame, "the hand edit in the plan's checkout is drawn").toContain(
+      MARK,
+    );
+    expect(frame).toContain("data-foundation");
+    expect(frame).toContain('data-component-style=&quot;badge&quot;');
+    expect(frame, "not the admin's own Storybook build").not.toContain(
+      "/storybook/iframe.html",
+    );
+
+    // The project's own checkout draws its own snapshot, without the plan's edit.
+    const own = frameOf(
+      await looksPage({ app: "demo", story: "badge.broken", device: "phone" }),
+    );
+    expect(own).not.toContain(MARK);
+    expect(own).toContain("data-foundation");
   });
 });
