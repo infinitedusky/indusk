@@ -1,7 +1,9 @@
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import * as approvals from "../lib/looks/approvals.js";
 import { readApp } from "../lib/looks/mockups.js";
 import { readAppLooks } from "../lib/looks/overview.js";
 import {
@@ -25,7 +27,7 @@ import {
  * promise: a-changed-component-reopens-its-mockups — A11.
  * promise: an-agent-can-find-every-component — A14.
  * promise: every-part-of-the-ui-is-covered — A15.
- * promise: a-mockup-is-approved-by-a-person — A16, A17.
+ * promise: a-mockup-is-approved-by-a-person — A16, A17, A27, A28 (a person takes an approval back).
  * promise: mockups-render-in-the-cockpit — A25 (a composed mockup carries its components' styles).
  * promise: a-changed-component-reopens-its-mockups — A26 (a changed style).
  *
@@ -46,6 +48,8 @@ import {
  *             `proposed  component changed: <name>`
  *   coverage  uncovered story: <name>.<state>
  *   approve   exit 2, naming the cockpit's Approve
+ *   unapprove exit 2, naming the cockpit's Unapprove
+ *   status    a withdrawn look reads `proposed  withdrawn by <name>`
  */
 
 afterEach(removeApps);
@@ -267,5 +271,161 @@ describe("a story is approved by a person", () => {
 		const { out } = run(root, ["status", "demo"]);
 		expect(storyLine(out, "badge.ok"), out).toMatch(/proposed/);
 		expect(storyLine(out, "card.default"), "an unchanged story stays approved").toMatch(/approved/);
+	});
+});
+
+describe("a person takes an approval back", () => {
+	type Seen = {
+		foundationHash?: string;
+		mockupHash?: string;
+		componentsHash?: string;
+		snapshotHash?: string;
+	};
+	type Withdraw = (
+		checkout: string,
+		app: string,
+		name: string,
+		by: string,
+		kind: "mockup" | "story",
+		seen?: Seen,
+	) => Promise<{ withdrawn: boolean; reason?: string }>;
+	// Looked up by name so a missing export is this case's assertion, not a load error.
+	const withdraw = (approvals as unknown as { withdraw?: Withdraw }).withdraw;
+
+	/** The copy as a git project, so the commit the writer makes can be read back. */
+	function project(): string {
+		const root = app();
+		const git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf-8" });
+		git("init", "-q", "-b", "main");
+		git("config", "user.name", "Sandy Tester");
+		git("config", "user.email", "sandy@example.com");
+		git("add", "-A");
+		git("commit", "-qm", "the components fixture");
+		return root;
+	}
+	const lastCommitFiles = (root: string) =>
+		execFileSync("git", ["show", "--name-only", "--format=", "HEAD"], {
+			cwd: root,
+			encoding: "utf-8",
+		})
+			.split("\n")
+			.filter(Boolean);
+
+	// A27
+	it("A27 an Unapprove makes an approved mockup or story read proposed, withdrawn by them, keeps the history, leaves the others, and an Approve makes it approved again", async () => {
+		expect(typeof withdraw, "approvals.ts exports withdraw").toBe("function");
+		if (!withdraw) return;
+		const root = project();
+		const record = join(root, MOCKUPS, "approved.json");
+		const entries = () => (JSON.parse(readFileSync(record, "utf-8")) as { approvals: unknown[] }).approvals;
+		const before = entries();
+		const held = await readApp(root, "demo");
+		const home = held.mockups.find((m) => m.name === "home.default");
+		const badge = held.stories.find((s) => s.name === "badge.ok");
+		if (!home || !badge) throw new Error("the fixture has no home.default or badge.ok");
+		const foundationHash = held.foundation.hash;
+
+		// A mockup.
+		const mockup = await withdraw(root, "demo", "home.default", "Sandy Tester", "mockup", {
+			foundationHash,
+			mockupHash: home.hash,
+			componentsHash: home.componentsHash,
+		});
+		expect(mockup.withdrawn, JSON.stringify(mockup)).toBe(true);
+		let out = run(root, ["status", "demo"]).out;
+		const line = statusLine(out, "home.default");
+		expect(line, out).toMatch(/proposed/);
+		expect(line).toContain("withdrawn by Sandy Tester");
+		expect(line, "a withdrawn look is held to no reference").not.toContain("held to");
+		expect(statusLine(out, "detail.default"), "the others stay approved").toMatch(/approved/);
+		expect(storyLine(out, "badge.ok")).toMatch(/approved/);
+		expect(lastCommitFiles(root), "only the record is committed").toEqual([
+			`${MOCKUPS}/approved.json`,
+		]);
+
+		// The record keeps its history: what was there is still there, the withdrawal appended.
+		const after = entries();
+		expect(after.slice(0, before.length)).toEqual(before);
+		expect(after.at(-1)).toMatchObject({
+			kind: "withdrawn",
+			subject: "mockup",
+			name: "home.default",
+			by: "Sandy Tester",
+		});
+
+		// A story.
+		const story = await withdraw(root, "demo", "badge.ok", "Sandy Tester", "story", {
+			foundationHash,
+			snapshotHash: badge.hash,
+		});
+		expect(story.withdrawn, JSON.stringify(story)).toBe(true);
+		out = run(root, ["status", "demo"]).out;
+		expect(storyLine(out, "badge.ok"), out).toMatch(/proposed/);
+		expect(storyLine(out, "badge.ok")).toContain("withdrawn by Sandy Tester");
+		expect(storyLine(out, "card.default"), "an unwithdrawn story stays approved").toMatch(/approved/);
+
+		// Approving again reads approved: the later approval counts, the earlier one never did.
+		const story2 = await approvals.approve(root, "demo", "badge.ok", "Sandy Tester", {
+			kind: "story",
+			snapshotHash: badge.hash,
+			foundationHash,
+		});
+		expect(story2.approved, JSON.stringify(story2)).toBe(true);
+		const mockup2 = await approvals.approve(root, "demo", "home.default", "Sandy Tester", {
+			foundationHash,
+			mockupHash: home.hash,
+			componentsHash: home.componentsHash,
+		});
+		expect(mockup2.approved, JSON.stringify(mockup2)).toBe(true);
+		out = run(root, ["status", "demo"]).out;
+		expect(statusLine(out, "home.default"), out).toMatch(/approved/);
+		expect(statusLine(out, "home.default")).not.toContain("withdrawn");
+		expect(storyLine(out, "badge.ok"), out).toMatch(/approved/);
+	});
+
+	it("A27 withdrawing what is not approved, or what is not what was shown, is refused and writes nothing", async () => {
+		expect(typeof withdraw, "approvals.ts exports withdraw").toBe("function");
+		if (!withdraw) return;
+		const root = project();
+		const record = join(root, MOCKUPS, "approved.json");
+		const before = readFileSync(record, "utf-8");
+		const held = await readApp(root, "demo");
+		const broken = held.stories.find((s) => s.name === "badge.broken");
+		const home = held.mockups.find((m) => m.name === "home.default");
+		if (!broken || !home) throw new Error("the fixture has no badge.broken or home.default");
+		const foundationHash = held.foundation.hash;
+
+		const proposed = await withdraw(root, "demo", "badge.broken", "Sandy Tester", "story", {
+			foundationHash,
+			snapshotHash: broken.hash,
+		});
+		expect(proposed.withdrawn).toBe(false);
+		expect(proposed.reason).toMatch(/not approved/);
+
+		const stale = await withdraw(root, "demo", "home.default", "Sandy Tester", "mockup", {
+			foundationHash,
+			mockupHash: "0".repeat(64),
+			componentsHash: home.componentsHash,
+		});
+		expect(stale.withdrawn).toBe(false);
+		expect(stale.reason).toMatch(/not what was shown/);
+		expect(readFileSync(record, "utf-8"), "a refusal writes nothing").toBe(before);
+	});
+
+	// A28
+	it("A28 the command line's unapprove is refused, naming the cockpit's Unapprove, and writes nothing", () => {
+		const root = app();
+		const record = join(root, MOCKUPS, "approved.json");
+		const before = readFileSync(record, "utf-8");
+		for (const args of [
+			["unapprove", "demo", "home.default"],
+			["unapprove", "demo", "badge.ok"],
+		]) {
+			const refused = run(root, args);
+			expect(refused.code, refused.out).toBe(2);
+			expect(refused.out).toMatch(/cockpit/i);
+			expect(refused.out).toContain("Unapprove");
+		}
+		expect(readFileSync(record, "utf-8"), "the refusal writes nothing").toBe(before);
 	});
 });
