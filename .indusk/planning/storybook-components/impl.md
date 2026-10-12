@@ -553,7 +553,7 @@ Evidence found while hunting:
 
 #### Build Phase 9 Context
 
-- [ ] `apps/indusk-mcp/src/lib/looks/CLAUDE.md`: a story's approval binds its snapshot and its component's stylesheet, and a mockup is approved only while every story it composes is — guarded by `looks-components-cli.test.ts` (A31, A32)
+- [x] `apps/indusk-mcp/src/lib/looks/CLAUDE.md`: a story's approval binds its snapshot and its component's stylesheet, and a mockup is approved only while every story it composes is — guarded by `looks-components-cli.test.ts` (A31, A32)
 
 #### Build Phase 9 Document
 
