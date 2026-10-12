@@ -11,6 +11,8 @@ import { LooksAppError, readApp } from "./mockups.js";
  * the admin in Build Phase 4); A30 (an approval binds the mockup shown) and
  * A35 (it binds the declarations the check trusts).
  * promise: every-part-of-the-ui-is-covered — A35.
+ * promise: a-mockup-is-approved-by-a-person — storybook-components A38 (the
+ * record and its reading apart from the write side the admin's routes call).
  *
  * The fixture app is copied into a main checkout with a plan worktree beside
  * it, so `approve` is seen writing and committing in the checkout it is
@@ -343,5 +345,56 @@ describe("approve — a composed mockup needs the componentsHash it was shown at
 				mockupHash: empty.hash,
 			}),
 		).toMatchObject({ approved: true });
+	});
+});
+
+describe("the record and its reading are one subpath, the write side another", () => {
+	// A38
+	it("A38 ./looks/approvals exports no write; ./looks/approve exports approve, withdraw, approver and componentsHashesMissing; the admin's routes import the write side from it only", async () => {
+		const pkg = JSON.parse(
+			readFileSync(join(__dirname, "..", "..", "..", "package.json"), "utf-8"),
+		) as {
+			exports: Record<string, unknown>;
+		};
+		expect(Object.keys(pkg.exports), "the write side has its own subpath").toContain(
+			"./looks/approve",
+		);
+
+		const reading = Object.keys(await import("./approvals.js"));
+		for (const name of ["approve", "withdraw", "approver"]) {
+			expect(reading, `${name} is the write side`).not.toContain(name);
+		}
+		expect(reading).toEqual(expect.arrayContaining(["readApprovals", "approvalOf", "standingOf"]));
+
+		const writePath = "./approve.js";
+		const writing = Object.keys(
+			await import(/* @vite-ignore */ writePath).catch(() => ({}) as Record<string, unknown>),
+		);
+		expect(writing).toEqual(
+			expect.arrayContaining(["approve", "withdraw", "approver", "componentsHashesMissing"]),
+		);
+
+		const routes = join(
+			__dirname,
+			"..",
+			"..",
+			"..",
+			"..",
+			"indusk-admin",
+			"src",
+			"app",
+			"api",
+			"looks",
+			"[app]",
+		);
+		for (const route of ["approve", "unapprove"]) {
+			const source = readFileSync(join(routes, route, "route.ts"), "utf-8");
+			expect(source, `${route} route imports its write from ./looks/approve`).toMatch(
+				/from "@infinitedusky\/indusk-mcp\/looks\/approve";/,
+			);
+			expect(source, `${route} route takes nothing written from ./looks/approvals`).not.toMatch(
+				/\/looks\/approvals"/,
+			);
+		}
 	});
 });

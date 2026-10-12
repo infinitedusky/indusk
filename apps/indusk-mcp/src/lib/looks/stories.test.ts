@@ -3,6 +3,8 @@ import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
+	readFileSync,
+	readdirSync,
 	rmSync,
 	utimesSync,
 	writeFileSync,
@@ -10,10 +12,12 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { readApp } from "./mockups.js";
 import { renderStories } from "./stories.js";
 
 /**
  * promise: mockups-render-in-the-cockpit — storybook-components A36.
+ * promise: a-mockup-is-approved-by-a-person — storybook-components A37.
  *
  * The render step rebuilds the app's Storybook (`build:storybook`) when the
  * build is older than what it is built from. `/storybook` and `indusk looks
@@ -106,5 +110,37 @@ describe("the render step rebuilds a Storybook older than its sources", { timeou
 		const fresh = project({ component: now - 300, built: now - 100, css: now - 200 });
 		await renderStories(fresh.root, "demo").catch(() => undefined);
 		expect(existsSync(fresh.ran), "a build newer than its sources is kept").toBe(false);
+	});
+});
+
+describe("a looks hash is computed by one function each way", () => {
+	// A37
+	it("A37 the hashes written to components.json equal the ones read, and no module but mockups.ts calls createHash", async () => {
+		const root = mkdtempSync(join(tmpdir(), "looks-hash-"));
+		roots.push(root);
+		cpSync(COMPONENTS, root, { recursive: true });
+		const app = await readApp(root, "demo");
+		const catalog = JSON.parse(readFileSync(join(root, MOCKUPS, "components.json"), "utf-8")) as {
+			components: {
+				name: string;
+				states: { name: string; snapshotHash: string }[];
+				stylesheetHash?: string;
+			}[];
+		};
+		for (const c of catalog.components) {
+			for (const s of c.states) {
+				const story = app.stories.find((x) => x.name === `${c.name}.${s.name}`);
+				expect(story?.hash, `${c.name}.${s.name} written vs read`).toBe(s.snapshotHash);
+			}
+			const sheet = app.styles.find((x) => x.component === c.name);
+			expect(sheet?.hash, `${c.name}.css written vs read`).toBe(c.stylesheetHash);
+		}
+
+		const here = __dirname;
+		const callers = readdirSync(here)
+			.filter((f) => f.endsWith(".ts") && !f.includes(".test"))
+			.filter((f) => /createHash\(/.test(readFileSync(join(here, f), "utf-8")))
+			.sort();
+		expect(callers, "the one place a looks hash is computed").toEqual(["mockups.ts"]);
 	});
 });
