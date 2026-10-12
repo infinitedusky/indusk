@@ -249,7 +249,7 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 3 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`: a mockup is read composed (`looks/compose`) everywhere it is linted, shown, hashed or checked; its approval binds `componentsHash` — guarded by `looks-components-cli.test.ts` (A11)
+- [x] `apps/indusk-mcp/src/lib/looks/CLAUDE.md` (a new nested file; `apps/indusk-mcp/CLAUDE.md` is over its 16 KB budget on main — user chose this, 2026-10-12): a mockup is read composed (`looks/compose`) everywhere it is linted, shown, hashed or checked; its approval binds `componentsHash` — guarded by `looks-components-cli.test.ts` (A11)
 
 #### Build Phase 3 Document
 
