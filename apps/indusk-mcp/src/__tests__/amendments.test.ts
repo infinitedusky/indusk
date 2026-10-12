@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
@@ -176,5 +176,37 @@ describe.skipIf(SHOULD_SKIP)("an amendment waits for the person", () => {
 		expect(review.code, review.stderr).toBe(0);
 		expect(review.stdout).toContain(SENTENCE);
 		expect(review.stdout).toContain(now);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("a change that is not an amendment", () => {
+	it("A14 an impl item reworded, a note added and an item checked off with a note after approval wait for nobody", async () => {
+		const reworded = "- [ ] release the seat when its hold runs out, from a monotonic clock";
+		const reword = await runHook(
+			"check-gates.js",
+			{
+				tool_name: "Edit",
+				tool_input: { file_path: impl, old_string: ITEM, new_string: reworded },
+				cwd: app.wt,
+			},
+			{ cwd: app.wt },
+		);
+		expect(reword.exitCode, reword.stderr).toBe(0);
+		writeFileSync(impl, readFileSync(impl, "utf-8").replace(ITEM, reworded));
+
+		const note =
+			"- [x] release the seat when its hold runs out, from a monotonic clock\n  - Note: the timer reads the monotonic clock, not the wall clock";
+		const checked = await runHook(
+			"check-gates.js",
+			{
+				tool_name: "Edit",
+				tool_input: { file_path: impl, old_string: reworded, new_string: note },
+				cwd: app.wt,
+			},
+			{ cwd: app.wt },
+		);
+		expect(checked.exitCode, checked.stderr).toBe(0);
+		writeFileSync(impl, readFileSync(impl, "utf-8").replace(reworded, note));
+		expect(readFileSync(impl, "utf-8")).toContain("the timer reads the monotonic clock");
 	});
 });

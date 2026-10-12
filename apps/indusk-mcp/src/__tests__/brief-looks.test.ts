@@ -4,9 +4,10 @@ import { type BriefAppProject, briefAppProject, briefOf, PLAN } from "./helpers/
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
 /**
- * promise: a-brief-lists-its-looks — brief-as-the-contract A1, A3 (and the
- * guards A2, A22: a brief that says why it has no looks, or was written
- * before the section, is still approved when its plan touches no interface).
+ * promise: a-brief-lists-its-looks — brief-as-the-contract A1, A3, and the
+ * guards A2 and A22 (a brief that says why it has no looks, or was written
+ * before the section, is still approved when its plan touches no interface;
+ * A22 is a regression guard over every plan already written).
  *
  * A brief lists the looks it makes, changes, replaces or must not break, or
  * says why it has none, and a plan that changes files under an app's interface
@@ -33,6 +34,18 @@ describe.skipIf(SHOULD_SKIP)("the Looks section at approval", () => {
 		expect(out(r)).toContain("src/Card.jsx");
 		expect(out(r)).toMatch(/looks?/i);
 		expect(app.project.mainSha()).toBe(before);
+	});
+
+	it("A2 a brief that says why it has no looks is approved when its plan changes nothing under an app's interface", () => {
+		app.writePlan({ brief: "none", impl: "internal" });
+		const r = runCli(app.trunk, ["plans", "approve", PLAN]);
+		expect(r.code, out(r)).toBe(0);
+	});
+
+	it("A22 a brief written before the Looks section is approved when its plan changes nothing under an app's interface", () => {
+		app.writePlan({ brief: "legacy", impl: "internal" });
+		const r = runCli(app.trunk, ["plans", "approve", PLAN]);
+		expect(r.code, out(r)).toBe(0);
 	});
 });
 

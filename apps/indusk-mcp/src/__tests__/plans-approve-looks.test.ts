@@ -1,15 +1,19 @@
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { approve } from "../lib/looks/approve.js";
 import { APP, type BriefAppProject, briefAppProject, PLAN, PLAN_DIR } from "./helpers/brief-app.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { git } from "./helpers/test-git.js";
 
 /**
  * promise: a-plan-is-approved-with-its-looks-approved — brief-as-the-contract A8.
  * promise: approval-is-of-the-brief — brief-as-the-contract A9.
+ *
+ * A23, a regression guard (the form goes, the command stays): `indusk plans
+ * start` works as before.
  *
  * `indusk plans approve` over the `brief-app` fixture: a plan is approved only
  * after the looks its brief makes are approved in its worktree's record, and
@@ -67,5 +71,20 @@ describe.skipIf(SHOULD_SKIP)("approval is of the brief", () => {
 		expect(edited).not.toBe(approvedText);
 		expect(recorded().approved_brief).toBe(sha256(approvedText));
 		expect(recorded().approved_brief).not.toBe(sha256(readFileSync(brief, "utf-8")));
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("starting a plan from the terminal", () => {
+	it("A23 `indusk plans start` makes the plan's branch, worktree and draft brief as before", () => {
+		const r = runCli(app.trunk, ["plans", "start", "feature", "phone-nav"]);
+		expect(r.code, out(r)).toBe(0);
+
+		const wt = app.project.worktreeOf("phone-nav");
+		expect(existsSync(wt), `no worktree at ${wt}`).toBe(true);
+		expect(git(wt, ["branch", "--show-current"])).toBe("plan/phone-nav");
+		const brief = matter(
+			readFileSync(join(wt, ".indusk", "planning", "phone-nav", "brief.md"), "utf-8"),
+		);
+		expect(brief.data).toMatchObject({ status: "draft", workflow: "feature" });
 	});
 });
