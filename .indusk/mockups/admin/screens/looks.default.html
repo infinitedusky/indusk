@@ -50,7 +50,8 @@
 			.choices b.on { background: var(--color-dusk-wash); }
 			.looks-app { display: grid; gap: var(--space-3); }
 			.looks-app h2 { font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-semibold); }
-			.looks-split { display: grid; gap: var(--space-4); align-items: start; }
+			.looks-split { display: grid; grid-template-columns: var(--size-side) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+			.looks-sheet-toggle, .looks-sheet-handle { display: none; }
 			.looks-list { display: flex; flex-direction: column; gap: var(--space-3); }
 			.looks-rows { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-md); overflow: hidden; }
 			.looks-stage { display: flex; flex-direction: column; gap: var(--space-3); }
@@ -62,6 +63,11 @@
 			  .stagebody, .pcols { grid-template-columns: minmax(0, 1fr); }
 			  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 			  .phead { display: none; }
+			  .looks-split { grid-template-columns: minmax(0, 1fr); }
+			  .looks-list { position: fixed; inset-inline: 0; bottom: 0; z-index: 20; max-height: 70vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: var(--color-surface); box-shadow: var(--shadow-card); transform: translateY(calc(100% - var(--space-10))); }
+			  .looks-sheet-handle { position: sticky; top: 0; display: flex; height: var(--space-10); align-items: center; justify-content: center; background: var(--color-surface); color: var(--color-dusk); cursor: pointer; }
+			  .looks-sheet-toggle:checked ~ .looks-list { transform: translateY(0); }
+			  .looks-stage { padding-bottom: var(--space-10); }
 			  .title { font-size: var(--text-3xl); line-height: var(--leading-7); }
 			}
 		</style>
