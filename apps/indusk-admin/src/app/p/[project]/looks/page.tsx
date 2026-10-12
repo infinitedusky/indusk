@@ -20,6 +20,7 @@ interface LooksRouteProps {
     mockup?: string;
     story?: string;
     device?: string;
+    view?: string;
     checkout?: string;
   }>;
 }
@@ -54,8 +55,12 @@ export default async function PerProjectLooksPage({
       ? { app: query.app, mockup: query.mockup, device: query.device }
       : null;
   const openStory: OpenStory | null =
-    query.app && query.story && query.device
-      ? { app: query.app, story: query.story, device: query.device }
+    query.app && query.story
+      ? {
+          app: query.app,
+          story: query.story,
+          device: query.device ?? null,
+        }
       : null;
   const checkout = await resolveLooksCheckout(projectPath, query.checkout);
   if ("problem" in checkout) {
@@ -72,6 +77,7 @@ export default async function PerProjectLooksPage({
       path={`/p/${project}/looks`}
       open={open}
       openStory={openStory}
+      view={query.view === "cascade" ? "cascade" : "list"}
       checkout={checkout.plan}
       checkouts={await looksCheckouts(projectPath)}
     />

@@ -178,8 +178,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   — see `/decisions/storybook-components`
 - **Stories are shown from the served `/storybook`, never from a Storybook dev
   server, and approved by their snapshot hash**: the Looks page frames
-  `/storybook/iframe.html?id=<id>` (the id is in `components.json`) at each
-  device, a story's Approve sends the snapshot hash it showed and a mockup's
+  `/storybook/iframe.html?id=<id>` (the id is in `components.json`) at the
+  component's own size, a device chosen only on request, in a list-and-stage
+  view or a cascade; a story's Approve sends the snapshot hash it showed and a mockup's
   its `componentsHash`, through the one approve route. Guarded by
   `looks-components.contract.test.ts` (A18) and `looks-components.test.tsx`.
   — see `/decisions/storybook-components`

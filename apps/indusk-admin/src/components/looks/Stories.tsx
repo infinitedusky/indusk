@@ -5,6 +5,7 @@ import type {
 import { APPROVAL_STYLE } from "@/components/bars/labels";
 import { stamp } from "@/lib/stamp";
 import { ApproveStory } from "./ApproveMockup";
+import { LookFrame } from "./LookFrame";
 
 /**
  * An app's components on the Looks page (storybook-components ADR decisions 3,
@@ -17,11 +18,11 @@ import { ApproveStory } from "./ApproveMockup";
  * promise: mockups-render-in-the-cockpit
  */
 
-/** The story open at one device, from `?story=<name>&device=<device>`. */
+/** The story open, from `?story=<name>`; `device` is the width it opens at, else its own size. */
 export interface OpenStory {
   app: string;
   story: string;
-  device: string;
+  device: string | null;
 }
 
 /** Where a story is served from: the admin's own static Storybook build. */
@@ -29,10 +30,14 @@ export const storyFrameSrc = (id: string): string =>
   `/storybook/iframe.html?${new URLSearchParams({ id, viewMode: "story" })}`;
 
 /** `changed` is a story approved once whose snapshot has since differed. */
-const label = (s: StoryView): "approved" | "proposed" | "changed" =>
+export const storyLabel = (
+  s: StoryView,
+): "approved" | "proposed" | "changed" =>
   s.approval === "approved" ? "approved" : s.entry ? "changed" : "proposed";
 
-function byComponent(stories: StoryView[]): Array<[string, StoryView[]]> {
+export function byComponent(
+  stories: StoryView[],
+): Array<[string, StoryView[]]> {
   const groups = new Map<string, StoryView[]>();
   for (const s of stories) {
     groups.set(s.component, [...(groups.get(s.component) ?? []), s]);
@@ -49,15 +54,14 @@ export function Components({
   app: AppLooks;
   path: string;
   checkout: string | null;
-  /** The story and device open, when one is. */
-  current: { story: string; device: string } | null;
+  /** The story open, when one is. */
+  current: string | null;
 }) {
   if (app.stories.length === 0) return null;
-  const hrefAt = (story: string, device: string) =>
+  const hrefAt = (story: string) =>
     `${path}?${new URLSearchParams({
       app: app.app,
       story,
-      device,
       ...(checkout ? { checkout } : {}),
     })}`;
   return (
@@ -83,7 +87,7 @@ export function Components({
                   app={app}
                   story={s}
                   hrefAt={hrefAt}
-                  current={current?.story === s.name ? current.device : null}
+                  current={current === s.name}
                 />
               ))}
             </ul>
@@ -102,10 +106,10 @@ function StoryRow({
 }: {
   app: AppLooks;
   story: StoryView;
-  hrefAt: (story: string, device: string) => string;
-  current: string | null;
+  hrefAt: (story: string) => string;
+  current: boolean;
 }) {
-  const state = label(story);
+  const state = storyLabel(story);
   return (
     <li
       data-testid="story-row"
@@ -114,7 +118,18 @@ function StoryRow({
       data-state={state}
       className="flex flex-wrap items-center gap-x-3 gap-y-1"
     >
-      <span className="text-ink">{story.state}</span>
+      {story.id ? (
+        <a
+          href={hrefAt(story.name)}
+          data-testid="story-link"
+          aria-current={current ? "page" : undefined}
+          className="rounded-md text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
+        >
+          {story.state}
+        </a>
+      ) : (
+        <span className="text-ink">{story.state}</span>
+      )}
       <span
         className={`rounded-md border px-tight text-xs ${APPROVAL_STYLE[story.approval]}`}
       >
@@ -125,22 +140,7 @@ function StoryRow({
           by {story.entry.by}, {stamp(story.entry.at)}
         </span>
       ) : null}
-      {story.id ? (
-        <span className="ml-auto flex gap-2">
-          {app.devices.map((d) => (
-            <a
-              key={d.name}
-              href={hrefAt(story.name, d.name)}
-              data-testid="story-device-link"
-              data-device={d.name}
-              aria-current={current === d.name ? "page" : undefined}
-              className="rounded-md px-tight text-xs text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
-            >
-              {d.name}
-            </a>
-          ))}
-        </span>
-      ) : (
+      {story.id ? null : (
         <span className="ml-auto text-xs text-warn">
           no Storybook id — run indusk looks stories {app.app}
         </span>
@@ -149,7 +149,7 @@ function StoryRow({
   );
 }
 
-/** One story open at one device: its name and size, Approve unless it is approved, and the frame. */
+/** One story open: its name, Approve unless it is approved, and the frame at its own size. */
 export function OpenStoryView({
   project,
   app,
@@ -160,16 +160,14 @@ export function OpenStoryView({
   project: string;
   app: AppLooks;
   story: StoryView;
-  device: AppLooks["devices"][number];
+  /** The device it opens at; null is the component's own size. */
+  device: AppLooks["devices"][number] | null;
   checkout: string | null;
 }) {
   return (
     <section className="flex flex-col gap-2" data-testid="story-open">
       <div className="flex flex-wrap items-center gap-3 text-sm text-ink-soft">
         <span className="font-medium">{story.name}</span>
-        <span>
-          {device.name} · {device.width} × {device.height}
-        </span>
         {story.approval === "proposed" ? (
           <ApproveStory
             project={project}
@@ -181,18 +179,15 @@ export function OpenStoryView({
           />
         ) : null}
       </div>
-      <div className="max-w-full overflow-auto">
-        {story.id ? (
-          <iframe
-            data-testid="story-frame"
-            title={`${story.name} at ${device.name}`}
-            src={storyFrameSrc(story.id)}
-            width={device.width}
-            height={device.height}
-            className="block border-0 bg-surface elevated"
-          />
-        ) : null}
-      </div>
+      {story.id ? (
+        <LookFrame
+          testId="story-frame"
+          title={story.name}
+          src={storyFrameSrc(story.id)}
+          devices={app.devices}
+          initialDevice={device?.name ?? null}
+        />
+      ) : null}
     </section>
   );
 }

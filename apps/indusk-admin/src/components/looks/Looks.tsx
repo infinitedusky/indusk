@@ -8,6 +8,8 @@ import { APPROVAL_STYLE } from "@/components/bars/labels";
 import { stamp } from "@/lib/stamp";
 import { ApproveMockup } from "./ApproveMockup";
 import { ApproveSelected } from "./ApproveSelected";
+import { Cascade } from "./Cascade";
+import { LookFrame } from "./LookFrame";
 import { Components, type OpenStory, OpenStoryView } from "./Stories";
 
 /**
@@ -53,6 +55,7 @@ export function LooksBody({
   path,
   open,
   openStory = null,
+  view = "list",
   checkout = null,
   checkouts = [],
 }: {
@@ -63,6 +66,8 @@ export function LooksBody({
   open: OpenMockup | null;
   /** The story open in its frame, when one is. */
   openStory?: OpenStory | null;
+  /** `list` is the list beside a stage; `cascade` draws every look, one after another. */
+  view?: "list" | "cascade";
   /** The plan whose worktree is read; null for the project's own checkout. */
   checkout?: string | null;
   /** Every checkout that can be read; a switch is shown when there is more than one. */
@@ -75,6 +80,26 @@ export function LooksBody({
       data-look-state={lookState(apps)}
     >
       <h1 className="text-xl font-semibold text-ink">Looks</h1>
+      <nav
+        className="flex flex-wrap items-center gap-2 text-sm text-ink-soft"
+        data-testid="looks-views"
+        aria-label="View"
+      >
+        <span>View</span>
+        {(["list", "cascade"] as const).map((v) => (
+          <a
+            key={v}
+            href={`${path}?${new URLSearchParams({
+              ...(v === "cascade" ? { view: v } : {}),
+              ...(checkout ? { checkout } : {}),
+            })}`}
+            aria-current={view === v ? "page" : undefined}
+            className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
+          >
+            {v}
+          </a>
+        ))}
+      </nav>
       {checkouts.length > 1 ? (
         <nav
           className="flex flex-wrap items-center gap-2 text-sm text-ink-soft"
@@ -123,6 +148,7 @@ export function LooksBody({
             checkout={checkout}
             open={open?.app === app.app ? open : null}
             openStory={openStory?.app === app.app ? openStory : null}
+            view={view}
           />
         ),
       )}
@@ -137,6 +163,7 @@ function AppSection({
   checkout,
   open,
   openStory,
+  view,
 }: {
   project: string;
   app: AppLooks;
@@ -144,6 +171,7 @@ function AppSection({
   checkout: string | null;
   open: OpenMockup | null;
   openStory: OpenStory | null;
+  view: "list" | "cascade";
 }) {
   const opened = open
     ? (app.mockups.find((m) => m.name === open.mockup) ?? null)
@@ -154,9 +182,22 @@ function AppSection({
   const story = openStory
     ? (app.stories.find((s) => s.name === openStory.story) ?? null)
     : null;
-  const storyDevice = openStory
+  const storyDevice = openStory?.device
     ? (app.devices.find((d) => d.name === openStory.device) ?? null)
     : null;
+  if (view === "cascade") {
+    return (
+      <section
+        className="flex flex-col gap-3"
+        data-testid="looks-app"
+        data-app={app.app}
+      >
+        <h2 className="text-base font-semibold text-ink">{app.app}</h2>
+        <Cascade project={project} app={app} checkout={checkout} />
+        <Uncovered app={app} />
+      </section>
+    );
+  }
   return (
     <section
       className="flex min-h-0 flex-1 flex-col gap-3"
@@ -209,11 +250,7 @@ function AppSection({
             app={app}
             path={path}
             checkout={checkout}
-            current={
-              story && storyDevice
-                ? { story: story.name, device: storyDevice.name }
-                : null
-            }
+            current={story?.name ?? null}
           />
           <Uncovered app={app} />
         </div>
@@ -230,7 +267,7 @@ function AppSection({
               checkout={checkout}
             />
           ) : null}
-          {story && storyDevice ? (
+          {story ? (
             <OpenStoryView
               project={project}
               app={app}
@@ -239,10 +276,9 @@ function AppSection({
               checkout={checkout}
             />
           ) : null}
-          {!(opened && device) && !(story && storyDevice) ? (
+          {!(opened && device) && !story ? (
             <p className="text-sm text-ink-soft" data-testid="stage-empty">
-              Choose a mockup or a story and a device; it stays here while the
-              list scrolls.
+              Choose a mockup or a story; it stays here while the list scrolls.
             </p>
           ) : null}
         </div>
@@ -269,9 +305,6 @@ function OpenMockupView({
     <section className="flex flex-col gap-2" data-testid="mockup-open">
       <div className="flex flex-wrap items-center gap-3 text-sm text-ink-soft">
         <span className="font-medium">{mockup.name}</span>
-        <span>
-          {device.name} · {device.width} × {device.height}
-        </span>
         {mockup.approval === "proposed" ? (
           <ApproveMockup
             project={project}
@@ -284,17 +317,13 @@ function OpenMockupView({
           />
         ) : null}
       </div>
-      <div className="max-w-full overflow-auto">
-        <iframe
-          data-testid="mockup-frame"
-          title={`${mockup.name} at ${device.name}`}
-          srcDoc={mockup.document}
-          width={device.width}
-          height={device.height}
-          sandbox=""
-          className="block border-0 bg-surface elevated"
-        />
-      </div>
+      <LookFrame
+        testId="mockup-frame"
+        title={mockup.name}
+        srcDoc={mockup.document}
+        devices={app.devices}
+        initialDevice={device.name}
+      />
     </section>
   );
 }

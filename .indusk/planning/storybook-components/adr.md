@@ -96,8 +96,13 @@ this plan builds on.
 6. **The cockpit serves Storybook.** `storybook build` runs in the admin's
    build; its output is served by the admin at `/storybook` (copied into the
    bundled admin by `bundle-admin.js`, as `public/` is). The Looks page lists
-   components beside screens, frames each story's `iframe.html` at each
-   reference device, and approves its snapshot. Nothing runs beside the admin.
+   components beside screens, frames each story's `iframe.html` at its
+   component's own size — a reference device is chosen on request, and sets
+   the frame's width — and approves its snapshot. The page has two views: a
+   list scrolling beside a stable stage, and a cascade drawing every look one
+   after another with Approve beside each. Nothing runs beside the admin.
+   *(Amended 2026-10-12 at Sandy's direction while approving Build Phase 5: a
+   story framed at each device's full size showed a badge in a blank screen.)*
 
 7. **The catalog is a file.** The render step writes
    `.indusk/mockups/<app>/components.json` — each component's name, file,

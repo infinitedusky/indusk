@@ -28,9 +28,10 @@ import {
  *
  * A7 opens the package's components fixture's `home.default`, which names
  * `badge` in state `ok`, and reads the frame: the element drawn is the
- * snapshot's, not a reference. A18 opens each story of this repo's admin at
- * each of its reference devices: the frame is the device's size and holds the
- * story, served from the admin's own `/storybook` with no Storybook server.
+ * snapshot's, not a reference. A18 opens each story of this repo's admin: the
+ * frame is the size of its component, and choosing a reference device sets the
+ * frame to the device's width — served from the admin's own `/storybook` with
+ * no Storybook server.
  */
 
 const ADMIN = resolve(__dirname, "../../../../..");
@@ -112,8 +113,8 @@ interface Catalog {
   components: Array<{ name: string; states: Array<{ name: string }> }>;
 }
 
-describe("A18 — each story opens on the Looks page at each device, served by the admin", () => {
-  it("A18 every story of the admin is framed at every reference device's size", async () => {
+describe("A18 — each story opens on the Looks page at its component's size, and at each device's width on request, served by the admin", () => {
+  it("A18 every story of the admin is framed to its component, and takes each reference device's width when chosen", async () => {
     const devices = JSON.parse(
       readFileSync(join(REPO, ".indusk/mockups/admin/devices.json"), "utf-8"),
     ).devices as Array<{ name: string; width: number; height: number }>;
@@ -133,27 +134,68 @@ describe("A18 — each story opens on the Looks page at each device, served by t
     });
     try {
       for (const story of stories) {
+        await goto(
+          page,
+          REPO_PROJECT,
+          `app=admin&story=${encodeURIComponent(story)}`,
+        );
+        const frame = page.locator('[data-testid="story-frame"]');
+        await frame.waitFor({ timeout: 30_000 });
+        expect(
+          await frame.getAttribute("src"),
+          `${story}: the frame is the admin's own /storybook`,
+        ).toMatch(/^\/storybook\/iframe\.html\?id=[^&]+&viewMode=story/);
+        const component = page
+          .frameLocator('[data-testid="story-frame"]')
+          .locator("#storybook-root > *")
+          .first();
+        await component.waitFor({ timeout: 30_000 });
+        // The frame is fitted once the story has drawn: no wider or taller
+        // than its component and the padding around it.
+        await expect
+          .poll(
+            async () => {
+              const f = await frame.boundingBox();
+              const c = await component.boundingBox();
+              if (!f || !c) return "no box";
+              // The component's box is the page's; the frame's own origin
+              // is subtracted to read it as the story document does.
+              const left = c.x - f.x;
+              const top = c.y - f.y;
+              const wide = left + c.width + left;
+              const tall = top + c.height + top;
+              // A component that fills its viewport (the shell) is drawn as
+              // tall as the frame it is given, so it reaches the frame's
+              // bottom edge; the frame is then its content's height, read at
+              // a one-pixel viewport, and is not compared to the box.
+              const fillsFrame = c.y + c.height >= f.y + f.height - 2;
+              return Math.abs(f.width - wide) <= 2 &&
+                (Math.abs(f.height - tall) <= 2 || fillsFrame)
+                ? "fitted"
+                : `frame ${f.width}x${f.height}, component ${wide}x${tall}`;
+            },
+            {
+              message: `${story}: the frame is its component's size`,
+              timeout: 10_000,
+            },
+          )
+          .toBe("fitted");
         for (const device of devices) {
-          await goto(
-            page,
-            REPO_PROJECT,
-            `app=admin&story=${encodeURIComponent(story)}&device=${device.name}`,
-          );
-          const frame = page.locator('[data-testid="story-frame"]');
-          await frame.waitFor({ timeout: 30_000 });
-          expect(
-            await frame.getAttribute("src"),
-            `${story}: the frame is the admin's own /storybook`,
-          ).toMatch(/^\/storybook\/iframe\.html\?id=[^&]+&viewMode=story/);
-          expect(
-            await frame.boundingBox(),
-            `${story} at ${device.name}`,
-          ).toMatchObject({ width: device.width, height: device.height });
-          await page
-            .frameLocator('[data-testid="story-frame"]')
-            .locator("[data-component]")
-            .first()
-            .waitFor({ timeout: 30_000 });
+          // The page is drawn before it is hydrated, and a click before then
+          // is lost; choosing the same device again is the same choice.
+          await expect
+            .poll(
+              async () => {
+                await page
+                  .locator(
+                    `[data-testid="frame-device"][data-device="${device.name}"]`,
+                  )
+                  .click();
+                return (await frame.boundingBox())?.width;
+              },
+              { message: `${story} at ${device.name}`, timeout: 15_000 },
+            )
+            .toBe(device.width);
         }
       }
     } finally {

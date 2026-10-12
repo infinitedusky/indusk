@@ -66,7 +66,7 @@ describe("the components list", () => {
   });
 });
 
-describe("a story opened at a device", () => {
+describe("a story opened", () => {
   it("is framed from the admin's own /storybook, with Approve while it is proposed", async () => {
     const html = await looksPage({
       app: "demo",
