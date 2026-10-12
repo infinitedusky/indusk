@@ -1,0 +1,9 @@
+# A live-check row that names a surface ('the dashboard shows it') is observed on that surface, not on a proxy — a CLI verdict is recorded as the proxy half, and a manual row records a run, not a standing
+
+**The rule.** When a row's assertion names where something must be seen (the dashboard, the editor panel, the nav count), the live check reads that surface. A command-line verdict or a span in the daemon is evidence of the mechanism, not of the surface; record it as such and leave the row's surface half open (a Deferred Verification entry with its reason and mitigation) until the surface has been read. A manual live-check row also records a run at a moment, not a standing: when later work changes what the row depended on, the row's State does not change by itself, so re-read it.
+
+**Why.** ui-promises A21 asserted 'one token changed in the admin alone, and the dashboard shows it broken'. Build Phase 5 recorded it `passing` from `indusk looks check admin` and noted 'not seen: the dashboard itself'. Build Phase 6 then bound `declarationsHash` into each approval, which turned the cockpit from 33 held to nothing held, and A21 stayed `passing`. At the retrospective the dashboard could not show looks from a worktree at all (it reads the project's own checkout). The audit and retrospective flagged both (`.indusk/planning/archive/ui-promises/`).
+
+**How to apply.** Write a surface-naming row's Test cell as the surface, not the CLI; if the surface cannot be reached in the phase, split the row (mechanism passes here, surface at landing) rather than ticking one. After any phase that changes what an approval, baseline or reference means, re-read every manual row that relied on the old meaning.
+
+Related: `live-check-belongs-to-the-last-phase-that-changes-its-subject`, `a-live-check-rejects-evidence-older-than-its-own-action`.
