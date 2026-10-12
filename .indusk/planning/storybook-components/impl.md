@@ -488,11 +488,11 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 8 Context
 
-- [ ] `.indusk/current.md`: the admin is built from its components and composed mockups; the next screen starts from `components.json`
+- [x] `.indusk/current.md`: the admin is built from its components and composed mockups; the next screen starts from `components.json`
 
 #### Build Phase 8 Document
 
-- [ ] `apps/docs/src/decisions/storybook-components.md` published from the ADR; `apps/docs/src/guide/ui-promises.md` names components before matching; sidebar entries for the guide and the decision; changelog: Added — "Components and stories: each component the admin's mockups name is implemented once with a story per state; mockups place components by name; a changed component reopens the mockups that use it; Storybook is served by the cockpit."
+- [x] `apps/docs/src/decisions/storybook-components.md` published from the ADR; `apps/docs/src/guide/ui-promises.md` names components before matching; sidebar entries for the guide and the decision; changelog: Added — "Components and stories: each component the admin's mockups name is implemented once with a story per state; mockups place components by name; a changed component reopens the mockups that use it; Storybook is served by the cockpit."
 
 ## Files Affected
 
