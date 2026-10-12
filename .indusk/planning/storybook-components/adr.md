@@ -132,7 +132,12 @@ this plan builds on.
    joins that component's entry in `componentsHash`, so a changed component
    style reopens the mockups that use it, naming the component, as a changed
    snapshot does. The stylesheet is generated, never written
-   by hand. *(Added 2026-10-12, found in Build Phase 6 when the eleven composed
+   by hand, and emitted **unlayered**: a mockup carries its own unlayered
+   resets (`button { padding: 0 }`), and an unlayered rule beats every layered
+   one whatever its specificity, so Tailwind's `@layer utilities` wrapper made
+   the components lose to the mockup around them. A composed component must
+   draw as its story does; a browser comparison of the two (A30) holds that,
+   not the presence of the rules. *(Added 2026-10-12, found in Build Phase 6 when the eleven composed
    mockups were rewritten: decisions 4 and 6 composed the markup and not the
    look. Sandy asked that it be a visible part of the plan, not a patch.)*
 

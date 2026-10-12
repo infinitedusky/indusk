@@ -75,6 +75,7 @@ under the promise it proves. They become the impl's Test Trajectory rows.
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
 | A18 | Each story opens on the Looks page at each reference device's size, served by the admin itself, with no Storybook server running | contract |
+| A30 | Every component a mockup places is drawn as its story draws it: in a real browser the composed mockup's computed padding, margin, border, background, font and size on the component's root and each descendant equal the story's, for every mockup and every component it names; a difference fails naming the mockup, the component, the element and the property | contract |
 | A25 | A composed mockup opens in the cockpit drawn with its components' styles: the frame's document holds a rule for every class its snapshots use, and the value check finds no raw value in it | unit |
 | A26 | After an approved component's style changes, every approved mockup that uses it reads proposed naming that component; a mockup that does not use it stays approved | unit |
 
