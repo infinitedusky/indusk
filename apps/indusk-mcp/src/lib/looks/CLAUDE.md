@@ -15,3 +15,13 @@ pointer; the pointer holds the story.
   sends `componentsHash`, never optional). `approvalOf` reads the story
   approvals, so status, coverage, the check and the overview agree with the
   lint. Guarded by `looks-components-cli.test.ts` (A31, A32).
+- **`approvals.ts` is the record and its reading; `approve.ts` is the write
+  side**: `approve` and `withdraw` (with `approver`) live in `approve.ts`,
+  behind the `./looks/approve` subpath, and only the admin's two routes import
+  it; everything that reads a look's state imports `approvals.ts`, which
+  exports no write. Guarded by `approvals.test.ts` (A38).
+- **Every looks hash is computed in `mockups.ts`**: `sha256`, and
+  `snapshotHash` / `stylesheetHash` for the two a story is bound by, called on
+  the write side (the catalog, the sheet) and the read side alike — never a
+  local `createHash`, so a hash written and a hash read cannot drift. Guarded
+  by `stories.test.ts` (A37).
