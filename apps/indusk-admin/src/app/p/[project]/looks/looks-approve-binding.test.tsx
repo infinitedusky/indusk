@@ -131,7 +131,10 @@ describe("Build Phase 9 — a composed mockup's approval through the route", () 
     const snapshot = join(root, MOCKUPS, "components", "badge.ok.html");
     writeFileSync(
       snapshot,
-      readFileSync(snapshot, "utf-8").replace("var(--space-2)", "var(--space-3)"),
+      readFileSync(snapshot, "utf-8").replace(
+        "var(--space-2)",
+        "var(--space-3)",
+      ),
     );
     const { mockup } = await shownOf("home.default");
     expect(mockup.approval).toBe("proposed");
@@ -174,11 +177,18 @@ describe("Build Phase 9 — a composed mockup's approval through the route", () 
   it("A34 a composed mockup sent with its mockupHash and without its componentsHash is refused, single and in a group, naming the missing hash", async () => {
     const { looks, mockup } = await shownOf("home.default");
     // Taken back first, so an Approve would have something to write.
-    const taken = await withdraw(root, "demo", "home.default", PERSON, "mockup", {
-      foundationHash: looks.foundationHash,
-      mockupHash: mockup.hash,
-      componentsHash: mockup.componentsHash,
-    });
+    const taken = await withdraw(
+      root,
+      "demo",
+      "home.default",
+      PERSON,
+      "mockup",
+      {
+        foundationHash: looks.foundationHash,
+        mockupHash: mockup.hash,
+        componentsHash: mockup.componentsHash,
+      },
+    );
     expect(taken.withdrawn, JSON.stringify(taken)).toBe(true);
     const before = readFileSync(join(root, RECORD), "utf-8");
 

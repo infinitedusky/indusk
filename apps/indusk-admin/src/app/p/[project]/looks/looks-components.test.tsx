@@ -12,8 +12,8 @@ import {
   attrOf,
   base,
   demo,
-  git,
   foundationHash,
+  git,
   looksPage,
   PROJECT,
   RECORD,
@@ -116,7 +116,9 @@ describe("a story opened", () => {
       device: "phone",
     });
     expect(html).toContain('data-testid="story-frame"');
-    expect(html).toContain('data-testid="story-frame" title="badge.broken" srcDoc="');
+    expect(html).toContain(
+      'data-testid="story-frame" title="badge.broken" srcDoc="',
+    );
     expect(html).not.toContain('src="/storybook/iframe.html');
     expect(html).toContain('width="390"');
     expect(html).toContain('data-testid="approve-story"');
@@ -355,7 +357,10 @@ describe("A35 — the story a person approves is the snapshot they were shown", 
     git("worktree", "add", "-q", "-b", "plan/looks", tree);
     // The fixture's catalog carries no Storybook ids; the plan's gets the same ones as main's.
     writeFileSync(join(tree, CATALOG), readFileSync(join(root, CATALOG)));
-    const file = join(tree, ".indusk/mockups/demo/components/badge.broken.html");
+    const file = join(
+      tree,
+      ".indusk/mockups/demo/components/badge.broken.html",
+    );
     writeFileSync(
       file,
       readFileSync(file, "utf-8").replace(/>([^<]*)</, `>${MARK}<`),
@@ -402,7 +407,7 @@ describe("A35 — the story a person approves is the snapshot they were shown", 
       MARK,
     );
     expect(frame).toContain("data-foundation");
-    expect(frame).toContain('data-component-style=&quot;badge&quot;');
+    expect(frame).toContain("data-component-style=&quot;badge&quot;");
     expect(frame, "not the admin's own Storybook build").not.toContain(
       "/storybook/iframe.html",
     );
