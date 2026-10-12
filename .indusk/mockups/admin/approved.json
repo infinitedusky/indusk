@@ -1182,6 +1182,26 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T17:47:13.374Z"
+		},
+		{
+			"mockup": "plan.needs-you",
+			"mockupHash": "5ba64433fbd84b615c04e7f447d56c9d4e14205b758fca03ec5299b41d479e16",
+			"componentsHash": "8bf52b534830bb1ca12fce8a49e51520a61b88cd8e048c1b67f97c1b447a8349",
+			"components": {
+				"nav.plan-current": "21cb8f858566fa837fe2c86be7c19e09977615b8129c70500d2d2dcb96b50e41",
+				"tag.default": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2",
+				"rail-group.default": "8d77a848575c43ed4f8be05977424076fc2c5e4e11d9410344ad2f81939fedb0",
+				"rail-group.current": "025252cd2657e8238ef3d0bc0287678edde159d0e4b9d73457e9f9720f0547bd",
+				"decision-card.ask": "9ed28254276ac8e0473d2a46840450e97a139eaad17b24827dbdab65865f53ba",
+				"decision-card.css": "f524512e5face4aada9c350e02e8d72fce81ba1b1b12264f26b967a0c95216c4",
+				"nav.css": "3e58b69ca4f3ed44c1625cb3f2fa018b672b1bc1a6b51e5912cfeb0a3f0772f2",
+				"rail-group.css": "cf4dd62942135d955716197570da2eca6758b3ce77ee47f51f47fca2ea664ad4",
+				"tag.css": "30d7bf10c27edc0deecf29411b623d76dc69248619af47401101eaa7500bba2c"
+			},
+			"foundationHash": "36b807fec8de7d0bba03f7609225d33597688f4bcf3e165a45beee8494f5f810",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T17:48:37.003Z"
 		}
 	]
 }
