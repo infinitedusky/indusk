@@ -8,6 +8,8 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+accepted: 2026-10-12T22:40:09.530Z
+accepted_by: person
 ---
 
 # Storybook components
