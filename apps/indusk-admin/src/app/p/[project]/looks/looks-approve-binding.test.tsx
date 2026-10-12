@@ -2,7 +2,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { POST as approveRoute } from "@/app/api/looks/[app]/approve/route";
 import {
   approveRequest,
   attrOf,
@@ -16,7 +15,8 @@ import {
   rowOf,
   setUpProject,
   tearDownProject,
-} from "./looks-test-helpers";
+} from "@/__tests__/helpers/looks-page";
+import { POST as approveRoute } from "@/app/api/looks/[app]/approve/route";
 
 /**
  * ui-promises A29 and A30, the approve route's half: the route answers only a

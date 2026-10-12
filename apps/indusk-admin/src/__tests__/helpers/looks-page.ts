@@ -14,7 +14,7 @@ import { NextRequest } from "next/server";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect } from "vitest";
 import { writeRegistry } from "@/__tests__/helpers/next-dev";
-import LooksPage from "./page";
+import LooksPage from "@/app/p/[project]/looks/page";
 
 /**
  * What `looks.test.tsx` and `looks-approve-binding.test.tsx` share: the
@@ -25,7 +25,7 @@ import LooksPage from "./page";
 
 const FIXTURE = resolve(
   __dirname,
-  "../../../../../../indusk-mcp/src/__tests__/fixtures/looks-app",
+  "../../../../indusk-mcp/src/__tests__/fixtures/looks-app",
 );
 export const PROJECT = "looks-proj";
 export const RECORD = ".indusk/mockups/demo/approved.json";

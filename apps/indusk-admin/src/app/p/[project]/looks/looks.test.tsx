@@ -5,7 +5,6 @@ import { execFileSync } from "node:child_process";
 import { cpSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { POST as approveRoute } from "@/app/api/looks/[app]/approve/route";
 import {
   approveRequest,
   attrOf,
@@ -25,7 +24,8 @@ import {
   sha256,
   shown,
   tearDownProject,
-} from "./looks-test-helpers";
+} from "@/__tests__/helpers/looks-page";
+import { POST as approveRoute } from "@/app/api/looks/[app]/approve/route";
 
 /**
  * ui-promises A1 (the cockpit's half), A2, A13, A14: the Looks page over the
@@ -43,7 +43,7 @@ import {
  * app and shown by no mockup; devices `phone` and `desktop`.
  *
  * A29 and A30, the approve route's half, are in `looks-approve-binding.test.tsx`;
- * the fixture project and the page and request helpers are in `looks-test-helpers.ts`.
+ * the fixture project and the page and request helpers are in `__tests__/helpers/looks-page.ts`.
  *
  * What the rows read:
  *   - a mockup:    `[data-testid="mockup-row"][data-mockup="<name>"]` with
