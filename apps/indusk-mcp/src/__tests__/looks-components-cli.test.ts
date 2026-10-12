@@ -32,6 +32,7 @@ import {
  * promise: a-changed-component-reopens-its-mockups — A26 (a changed style).
  * promise: a-mockup-is-approved-by-a-person — A31 (a story's approval binds its stylesheet).
  * promise: a-mockup-composes-approved-components — A32 (an Unapproved story reopens its mockups).
+ * promise: a-component-has-one-implementation — A40 (a component a mockup names with none is reported).
  *
  * Each is red today on its own assertion: the commands run over the fixture
  * and the component lines below are absent. The output these rows read is the
@@ -535,5 +536,21 @@ describe("what a story's approval binds, and what keeps a mockup approved", {
 		// The lint already refuses it: the three readers agree.
 		const lint = run(root, ["lint", "demo"]).out;
 		expect(linesWith(lint, "no approved story: badge.ok"), lint.slice(0, 600)).not.toEqual([]);
+	});
+});
+
+describe("a component a mockup names with no implementation is reported", () => {
+	// A40
+	it("A40 coverage prints `unimplemented component: ghost` for a mockup naming a component no file marks, and exits 1", () => {
+		const root = app();
+		writeFileSync(
+			join(root, MOCKUPS, "screens/home.ghost.html"),
+			'<!doctype html>\n<html lang="en"><head><meta charset="utf-8" /><title>home — ghost</title></head>\n<body><span data-component="ghost">boo</span></body></html>\n',
+		);
+		const { code, out } = run(root, ["coverage", "demo"]);
+		expect(linesWith(out, "unimplemented component: ghost"), out).not.toEqual([]);
+		expect(code).toBe(1);
+		// badge and card are marked in src/, so they are not reported.
+		expect(out).not.toMatch(/unimplemented component: (badge|card)\b/);
 	});
 });
