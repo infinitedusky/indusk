@@ -274,9 +274,12 @@ async function story(
     `${origin}/storybook/iframe.html?id=${encodeURIComponent(id)}&viewMode=story`,
     { waitUntil: "load", timeout: 60_000 },
   );
-  await page.waitForSelector(`#storybook-root [data-component="${name}"]`, {
-    timeout: 30_000,
-  });
+  await page.waitForSelector(
+    `#storybook-root [data-component=${JSON.stringify(name)}]`,
+    {
+      timeout: 30_000,
+    },
+  );
   await page.evaluate(() => document.fonts.ready);
   if (siblings) {
     // A story draws its component alone, so `:first-child` and `:last-child`
@@ -284,7 +287,7 @@ async function story(
     // the root show which of its values depend on where it is placed.
     await page.evaluate((component) => {
       const root = document.querySelector(
-        `#storybook-root [data-component="${component}"]`,
+        `#storybook-root [data-component=${JSON.stringify(component)}]`,
       );
       if (!root) return;
       root.before(document.createElement("span"));

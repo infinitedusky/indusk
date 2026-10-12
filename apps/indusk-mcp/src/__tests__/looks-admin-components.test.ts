@@ -1,24 +1,26 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { readApp } from "../lib/looks/mockups.js";
 import { REPO_ROOT, runCli } from "./helpers/cli.js";
 
 /**
  * promise: a-component-has-one-implementation — storybook-components A2.
  *
  * Every component the admin's approved mockups name has an implementation in
- * the admin; one with none is reported by name. The nineteen are read from the
- * mockups themselves — a `data-component` element, or an `<indusk-component
- * name>` once Build Phase 6 composes them — and an implementation is a
- * non-test, non-story file under `apps/indusk-admin/src` whose element carries
- * that `data-component`.
+ * the admin; one with none is reported by name. The names are read from the
+ * mockups *composed* (`readApp`: each `<indusk-component>` replaced by its
+ * snapshot, so a component a snapshot nests is named too), as the lint, the
+ * check and coverage read them — not from the mockups' source, which after
+ * Build Phase 6 names thirteen and draws the rest only through snapshots. An
+ * implementation is a non-test, non-story file under `apps/indusk-admin/src`
+ * whose element carries that `data-component`.
  *
  * Two assertions: the CLI's `unimplemented component: <name>` lines are
  * exactly the components with no implementation (red today: the line does not
  * exist and ten are unmarked), and none is left (red until Build Phase 5).
  */
 
-const MOCKUPS = join(REPO_ROOT, ".indusk/mockups/admin/screens");
 const ADMIN_SRC = join(REPO_ROOT, "apps/indusk-admin/src");
 
 function walk(dir: string): string[] {
@@ -28,13 +30,11 @@ function walk(dir: string): string[] {
 	});
 }
 
-/** The component names the admin's mockups name, sorted. */
-function mockupComponents(): string[] {
+/** The component names the admin's mockups name, composed, sorted. */
+async function mockupComponents(): Promise<string[]> {
 	const names = new Set<string>();
-	for (const file of readdirSync(MOCKUPS).filter((f) => f.endsWith(".html"))) {
-		const html = readFileSync(join(MOCKUPS, file), "utf-8");
-		for (const m of html.matchAll(/\bdata-component\s*=\s*["']([^"']+)["']/g)) names.add(m[1]);
-		for (const m of html.matchAll(/<indusk-component\b[^>]*\bname\s*=\s*["']([^"']+)["']/g)) {
+	for (const mockup of (await readApp(REPO_ROOT, "admin")).mockups) {
+		for (const m of mockup.html.matchAll(/\bdata-component\s*=\s*["']([^"']+)["']/g)) {
 			names.add(m[1]);
 		}
 	}
@@ -56,9 +56,12 @@ function implemented(): Set<string> {
 }
 
 describe("the admin implements every component its mockups name", () => {
-	it("A2 each of the mockups' components has an implementation; one with none is reported by name", () => {
-		const named = mockupComponents();
-		expect(named, "the admin's mockups name nineteen components").toHaveLength(19);
+	it("A2 each of the mockups' components has an implementation; one with none is reported by name", async () => {
+		const named = await mockupComponents();
+		// Not a count: the mockups name what they place, and which components
+		// those are is the mockups' to change; coverage reports a component
+		// none of them shows. An empty read would pass for the wrong reason.
+		expect(named.length, "the admin's mockups name components").toBeGreaterThan(0);
 		const have = implemented();
 		const missing = named.filter((n) => !have.has(n));
 
