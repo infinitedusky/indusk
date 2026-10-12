@@ -243,8 +243,13 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (CLI boundary)", () => {
 			type: "command",
 			command: 'node "${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/stash-guard.js',
 		};
-		pre.find((e) => e.matcher === "Edit|Write")?.hooks?.push(guard);
-		pre.push({ matcher: "Bash", hooks: [guard, stash] });
+		// ui-promises: and the looks approval guard, on Edit|Write after it and on Bash before the stash guard.
+		const looks = {
+			type: "command",
+			command: guard.command.replace("trunk-guard.js", "looks-approval-guard.js"),
+		};
+		pre.find((e) => e.matcher === "Edit|Write")?.hooks?.push(guard, looks);
+		pre.push({ matcher: "Bash", hooks: [guard, looks, stash] });
 		// incident-recording: and the break inbox, on every prompt, with no matcher.
 		(expected.hooks as Record<string, unknown>).UserPromptSubmit = [
 			{
@@ -271,7 +276,8 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (CLI boundary)", () => {
 		const commands = hookCommands(JSON.parse(afterFirst) as Settings);
 		expect(commands).toContain(custom.command);
 		// six rewritten + the trunk guard's two registrations + the stash guard's one + the break inbox
-		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(10);
+		// + the looks approval guard's two registrations
+		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(12);
 		expect(commands.filter((c) => RELATIVE_COMMAND.test(c))).toHaveLength(0);
 
 		expect(runCli(dir, ["update"], ENV()).code).toBe(0);
@@ -346,9 +352,10 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (falsification)", () => {
 
 		const commands = hookCommands(readSettings(dir));
 		expect(commands.filter((c) => RELATIVE_COMMAND.test(c))).toEqual([]);
-		// six legacy hooks rewritten + trunk-guard under two matchers + stash-guard + break-inbox = ten, each once
-		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(10);
-		expect(commands).toHaveLength(10);
-		expect(new Set(commands.map((c) => c)).size, "a command registered twice").toBe(9);
+		// six legacy hooks rewritten + trunk-guard under two matchers + stash-guard + break-inbox
+		// + looks-approval-guard under two matchers = twelve, each once per matcher
+		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(12);
+		expect(commands).toHaveLength(12);
+		expect(new Set(commands.map((c) => c)).size, "a command registered twice").toBe(10);
 	});
 });

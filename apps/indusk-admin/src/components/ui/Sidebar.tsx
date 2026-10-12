@@ -69,7 +69,7 @@ export function Sidebar({ header, children, className = "" }: SidebarProps) {
         aria-controls="cockpit-nav"
         aria-label={open ? "Close navigation" : "Open navigation"}
         onClick={() => setOpen((v) => !v)}
-        className="fixed left-2 top-2 z-50 rounded border border-gray-200 bg-white px-2 py-1 text-sm text-gray-700 shadow-sm min-[760px]:hidden"
+        className="fixed left-2 top-2 z-50 rounded-md border border-line bg-surface px-2 py-1 text-sm text-ink-soft elevated min-[760px]:hidden"
       >
         {open ? "Close" : "Menu"}
       </button>
@@ -79,21 +79,22 @@ export function Sidebar({ header, children, className = "" }: SidebarProps) {
           tabIndex={-1}
           aria-hidden="true"
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-30 bg-black/30 min-[760px]:hidden"
+          className="fixed inset-0 z-30 bg-ink/30 min-[760px]:hidden"
         />
       )}
       <aside
         id="cockpit-nav"
+        data-component="nav"
         data-testid="cockpit-nav"
         data-open={open ? "true" : "false"}
         data-collapsed={collapsed ? "true" : "false"}
-        className={`fixed inset-y-0 left-0 z-40 flex h-screen w-72 max-w-[85vw] flex-shrink-0 flex-col border-r border-gray-200 bg-white ${
+        className={`fixed inset-y-0 left-0 z-40 flex h-screen w-nav nav-drawer flex-shrink-0 flex-col border-r border-line bg-surface ${
           open ? "translate-x-0" : "-translate-x-full"
         } min-[760px]:static min-[760px]:max-w-none min-[760px]:translate-x-0 ${
-          collapsed ? "min-[760px]:w-12" : ""
+          collapsed ? "min-[760px]:w-10" : ""
         } ${className}`}
       >
-        <div className="hidden flex-shrink-0 justify-end border-b border-gray-200 px-2 py-1 min-[760px]:flex">
+        <div className="hidden flex-shrink-0 justify-end border-b border-line px-2 py-1 min-[760px]:flex">
           <button
             type="button"
             data-testid="nav-collapse-button"
@@ -101,7 +102,7 @@ export function Sidebar({ header, children, className = "" }: SidebarProps) {
             aria-controls="cockpit-nav-body"
             aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
             onClick={toggleCollapsed}
-            className="rounded px-2 text-sm text-gray-500 hover:bg-gray-100"
+            className="rounded-md px-2 text-sm text-ink-faint hover:bg-idle-wash"
           >
             {collapsed ? "»" : "«"}
           </button>
@@ -113,7 +114,7 @@ export function Sidebar({ header, children, className = "" }: SidebarProps) {
           }`}
         >
           {header ? (
-            <div className="flex-shrink-0 border-b border-gray-200 px-4 py-3 max-[759px]:pt-12">
+            <div className="flex-shrink-0 border-b border-line px-4 py-3 max-[759px]:pt-10">
               {header}
             </div>
           ) : null}

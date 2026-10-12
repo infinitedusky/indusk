@@ -42,14 +42,14 @@ export function StageList({ stages }: { stages: Stage[] }) {
           data-stage={stage.kind}
           data-state={stage.state}
           title={stage.proof ?? `${stage.checked} of ${stage.total}`}
-          className={`rounded border px-1.5 py-0.5 text-[10px] leading-4 ${CHIP_CLASS[stage.state]}`}
+          className={`rounded-md border px-tight py-hair text-2xs leading-4 ${CHIP_CLASS[stage.state]}`}
         >
           <span className="font-medium">{STAGE_LABEL[stage.kind]}</span>{" "}
           <span>
             {stage.checked} of {stage.total}
           </span>
           {stage.proof ? (
-            <span className="ml-1 inline-block max-w-[12rem] truncate align-bottom text-amber-700">
+            <span className="ml-1 inline-block max-w-input truncate align-bottom text-warn">
               {stage.proof}
             </span>
           ) : null}

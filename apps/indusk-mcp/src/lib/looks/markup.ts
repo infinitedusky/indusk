@@ -1,0 +1,67 @@
+import { type DefaultTreeAdapterMap, parse } from "parse5";
+
+/**
+ * A mockup read as the browser reads it: elements, their attributes and the
+ * lines they sit on, parsed by `parse5` (the WHATWG parser). The lint reads a
+ * mockup's styles and outside references from here, and the coverage its
+ * `data-component` names, so a name in a comment, a script or a style is
+ * text, never an element (ui-promises Build Phase 6, A33, A34).
+ *
+ * promise: every-part-of-the-ui-is-covered
+ */
+
+type Node = DefaultTreeAdapterMap["node"];
+type Element = DefaultTreeAdapterMap["element"];
+
+export interface MarkupElement {
+	/** Lower-case tag name. */
+	tag: string;
+	attrs: Readonly<Record<string, string>>;
+	/** The 1-based line the element's start tag is on. */
+	line: number;
+	/** The 1-based line an attribute is on; the element's own when it has none. */
+	attrLine(name: string): number;
+	/** For `<style>`: its text and the line that text starts on. */
+	text?: { value: string; line: number };
+}
+
+const isElement = (n: Node): n is Element => "tagName" in n;
+
+function childrenOf(n: Node): Node[] {
+	if (isElement(n) && n.tagName === "template") {
+		return (n as DefaultTreeAdapterMap["template"]).content.childNodes;
+	}
+	return "childNodes" in n ? n.childNodes : [];
+}
+
+function textOf(el: Element): { value: string; line: number } | undefined {
+	const texts = el.childNodes.filter((c) => c.nodeName === "#text") as Array<
+		DefaultTreeAdapterMap["textNode"]
+	>;
+	if (texts.length === 0) return undefined;
+	return {
+		value: texts.map((t) => t.value).join(""),
+		line: texts[0]?.sourceCodeLocation?.startLine ?? el.sourceCodeLocation?.startLine ?? 1,
+	};
+}
+
+/** Every element of an HTML document, in document order, `<template>` contents included. */
+export function elementsOf(html: string): MarkupElement[] {
+	const out: MarkupElement[] = [];
+	const visit = (n: Node) => {
+		if (isElement(n)) {
+			const loc = n.sourceCodeLocation;
+			const line = loc?.startLine ?? 1;
+			out.push({
+				tag: n.tagName,
+				attrs: Object.fromEntries(n.attrs.map((a) => [a.name, a.value])),
+				line,
+				attrLine: (name) => loc?.attrs?.[name]?.startLine ?? line,
+				...(n.tagName === "style" ? { text: textOf(n) } : {}),
+			});
+		}
+		for (const child of childrenOf(n)) visit(child);
+	};
+	visit(parse(html, { sourceCodeLocationInfo: true }));
+	return out;
+}

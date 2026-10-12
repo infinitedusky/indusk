@@ -5,9 +5,11 @@ import type {
   PromiseEntry,
   RegistryProblem,
 } from "@infinitedusky/indusk-mcp/promises/registry";
+import type { LookRow } from "@infinitedusky/indusk-mcp/promises/standing";
 import Link from "next/link";
 import { STANDING_STYLE } from "@/components/bars/labels";
 import { IncidentsTable } from "@/components/IncidentsTable";
+import { LooksOnDashboard } from "@/components/looks/LooksOnDashboard";
 import { SourceBanner, type SourceObserved } from "@/components/PromiseHealth";
 import {
   PromiseTimeline,
@@ -44,14 +46,14 @@ export function PromisesProblems({
     <div
       role="alert"
       data-testid="promises-problems"
-      className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+      className="rounded-md border border-bad bg-bad-wash px-3 py-2 text-sm text-bad"
     >
       <p className="font-medium">
         {problems.length === 1
           ? "One registry entry could not be read:"
           : `${problems.length} registry entries could not be read:`}
       </p>
-      <ul className="mt-1 flex flex-col gap-0.5">
+      <ul className="mt-1 flex flex-col gap-hair">
         {problems.map((p) => (
           <li key={p.file}>
             <code className="text-xs">.indusk/promises/{p.file}</code> —{" "}
@@ -59,7 +61,7 @@ export function PromisesProblems({
           </li>
         ))}
       </ul>
-      <p className="mt-1 text-red-700">
+      <p className="mt-1 text-bad">
         Run <code>indusk promises check</code> for the same list on the command
         line. The well-formed entries are listed below.
       </p>
@@ -71,12 +73,12 @@ export function PromisesProblems({
 export function PromisesEmpty({ dir }: { dir: string }) {
   return (
     <section className="flex flex-col gap-2" data-testid="promises-empty">
-      <h1 className="text-xl font-semibold text-gray-900">Promises</h1>
-      <p className="text-sm text-gray-600">
+      <h1 className="text-xl font-semibold text-ink">Promises</h1>
+      <p className="text-sm text-ink-soft">
         This project has no promise registry yet: nothing under{" "}
         <code>.indusk/promises/</code> (looked at <code>{dir}</code>).
       </p>
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-ink-soft">
         Write one markdown file per promise there, declare its domain under{" "}
         <code>promises.domains</code> in <code>.indusk/config.json</code>, and
         run <code>indusk promises check</code>. The file shapes and every
@@ -102,6 +104,10 @@ export interface PromisesDashboardProps {
   /** Observed health per source, for the banners that say a source could not be read. */
   observed?: SourceObserved[];
   timelines?: TimelineView;
+  /** Each look's standing, `promises/standing`'s; broken ones are listed above the promises. */
+  looks?: LookRow[];
+  /** The Looks page, which the looks' line links to. */
+  looksHref?: string;
 }
 
 /**
@@ -121,6 +127,8 @@ export function PromisesDashboard({
   promiseHrefPrefix,
   observed = [],
   timelines,
+  looks = [],
+  looksHref = "",
 }: PromisesDashboardProps) {
   const shown = filterRows(rows, query.q);
   const groups = groupRows(shown, query, pathOrder);
@@ -139,9 +147,9 @@ export function PromisesDashboard({
   return (
     <section className="flex flex-col gap-4" data-testid="promises">
       <header className="flex flex-col gap-2">
-        <h1 className="text-xl font-semibold text-gray-900">Promises</h1>
+        <h1 className="text-xl font-semibold text-ink">Promises</h1>
         <div
-          className="flex h-3 w-full overflow-hidden rounded bg-gray-100"
+          className="flex h-3 w-full overflow-hidden rounded-md bg-idle-wash"
           data-testid="standing-bar"
           role="img"
           aria-label={counts
@@ -157,17 +165,19 @@ export function PromisesDashboard({
             />
           ))}
         </div>
-        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-700">
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-soft">
           {counts.map((c) => (
             <li key={c.standing} data-testid="standing-count">
               <span
-                className={`mr-1 inline-block h-2 w-2 rounded-full ${STANDING_STYLE[c.standing].bar}`}
+                className={`mr-1 inline-block h-2 w-2 rounded-pill ${STANDING_STYLE[c.standing].bar}`}
               />
               {c.count} {STANDING_LABELS[c.standing].toLowerCase()}
             </li>
           ))}
         </ul>
       </header>
+
+      <LooksOnDashboard looks={looks} href={looksHref} />
 
       <div
         className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm"
@@ -194,7 +204,7 @@ export function PromisesDashboard({
             defaultValue={query.q}
             placeholder="Filter by sentence, name or plan"
             aria-label="Filter promises"
-            className="w-64 max-w-full rounded border border-gray-300 px-2 py-1"
+            className="w-rail max-w-full rounded-md border border-line px-2 py-1"
           />
           <Button size="sm" variant="secondary" type="submit">
             Filter
@@ -207,7 +217,7 @@ export function PromisesDashboard({
       ))}
 
       {groups.length === 0 && (
-        <p className="text-sm text-gray-600" data-testid="promises-none">
+        <p className="text-sm text-ink-soft" data-testid="promises-none">
           No promise matches “{query.q}”.
         </p>
       )}
@@ -218,7 +228,7 @@ export function PromisesDashboard({
           data-testid="promise-group"
           data-group={g.key}
         >
-          <h2 className="text-sm font-semibold text-gray-700">
+          <h2 className="text-sm font-semibold text-ink-soft">
             {query.group === "plan" ? (
               <Link
                 href={`${planHrefPrefix}${g.key}`}
@@ -229,11 +239,11 @@ export function PromisesDashboard({
             ) : (
               g.heading
             )}
-            <span className="ml-2 font-normal text-gray-400">
+            <span className="ml-2 font-regular text-ink-faint">
               {g.rows.length}
             </span>
           </h2>
-          <ul className="flex flex-col divide-y divide-gray-100 rounded border border-gray-200">
+          <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
             {g.rows.map((r) => (
               <DashboardRowItem
                 key={r.name}
@@ -253,8 +263,8 @@ export function PromisesDashboard({
         >
           <TimelineControls timelines={timelines} path={path} />
           {timelineRows.map((r) => (
-            <div key={r.name} className="flex flex-col gap-0.5">
-              <code className="text-xs text-gray-600">{r.name}</code>
+            <div key={r.name} className="flex flex-col gap-hair">
+              <code className="text-xs text-ink-soft">{r.name}</code>
               {strips[r.name] === "empty" ? (
                 <TimelineEmpty />
               ) : (
@@ -296,17 +306,17 @@ function ControlLinks<K extends string>({
       className="flex items-center gap-1"
       data-control={label.toLowerCase()}
     >
-      <span className="text-gray-500">{label}</span>
+      <span className="text-ink-faint">{label}</span>
       {options.map((o) => (
         <Link
           key={o.key}
           href={hrefFor(o.key)}
           aria-current={o.key === current ? "true" : undefined}
           data-option={o.key}
-          className={`rounded px-2 py-0.5 ${
+          className={`rounded-md px-2 py-hair ${
             o.key === current
-              ? "bg-gray-900 text-white"
-              : "text-gray-700 hover:bg-gray-100"
+              ? "bg-ink text-surface"
+              : "text-ink-soft hover:bg-idle-wash"
           }`}
         >
           {o.label}
@@ -335,19 +345,19 @@ function DashboardRowItem({
       id={`promise-${row.name}`}
     >
       <span
-        className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-xs font-medium ${STANDING_STYLE[row.standing].chip}`}
+        className={`inline-flex shrink-0 items-center rounded-pill border px-2 py-hair text-xs font-medium ${STANDING_STYLE[row.standing].chip}`}
       >
         {STANDING_LABELS[row.standing].toLowerCase()}
       </span>
-      <span className="flex min-w-0 flex-1 basis-64 flex-col">
+      <span className="flex min-w-0 flex-1 basis-rail flex-col">
         <Link
           href={`${promiseHrefPrefix}${row.name}`}
           data-testid="promise-link"
-          className="text-sm font-medium text-gray-900 hover:underline"
+          className="text-sm font-medium text-ink hover:underline"
         >
           {row.sentence}
         </Link>
-        <span className="flex flex-wrap gap-x-2 text-xs text-gray-500">
+        <span className="flex flex-wrap gap-x-2 text-xs text-ink-faint">
           <code>{row.name}</code>
           <Link
             href={`${planHrefPrefix}${row.plan}`}
@@ -357,17 +367,17 @@ function DashboardRowItem({
           </Link>
         </span>
       </span>
-      <span className="text-xs text-gray-600" data-testid="promise-tests">
+      <span className="text-xs text-ink-soft" data-testid="promise-tests">
         {row.tests.total === 0
           ? "no tests"
           : `${row.tests.passing}/${row.tests.total} tests passing`}
       </span>
-      <span className="text-xs text-gray-600" data-testid="promise-thirty">
+      <span className="text-xs text-ink-soft" data-testid="promise-thirty">
         {row.held === null
           ? "not seen yet"
           : `held ${row.held} · broke ${row.broke} of 30 days`}
       </span>
-      <span className="text-xs text-gray-500" data-testid="promise-activity">
+      <span className="text-xs text-ink-faint" data-testid="promise-activity">
         {row.lastActivity ? `seen ${stamp(row.lastActivity)}` : "never seen"}
       </span>
     </li>

@@ -410,6 +410,8 @@ export interface PromisesHealthDeps {
 	now?: () => Date;
 	/** Runs `tick` every `everyMs` until the reader is stopped. */
 	repeat?: (everyMs: number, tick: () => Promise<void>) => Promise<void>;
+	/** Each look's standing; `readLookStanding` by default. */
+	readLooks?: (root: string) => Promise<import("../../lib/promises/standing.js").LookStandingRead>;
 }
 
 function repeatUntilSignal(everyMs: number, tick: () => Promise<void>): Promise<void> {
@@ -451,6 +453,7 @@ export async function promisesHealth(
 	}
 	const { healthLine, readHealth } = await import("../../lib/promises/health.js");
 	const { readHealthNames } = await import("../../lib/promises/display.js");
+	const { readLookStanding } = await import("../../lib/promises/standing.js");
 	const readReads =
 		deps.readHealth ?? ((root: string, reg: Registry) => readHealth(root, reg, { cacheMs: 0 }));
 	const write = deps.write ?? ((text: string) => process.stdout.write(text));
@@ -471,7 +474,10 @@ export async function promisesHealth(
 		const current = reread();
 		const reads = await readReads(projectRoot, current);
 		const names = readHealthNames(projectRoot);
-		write(`${JSON.stringify(healthLine(current, reads, now(), names))}\n`);
+		// Looks ride the same line (ui-promises A24): the editor shows the
+		// standing the admin's dashboard reads, from the same reader.
+		const looks = await (deps.readLooks ?? readLookStanding)(projectRoot);
+		write(`${JSON.stringify(healthLine(current, reads, now(), names, looks))}\n`);
 	};
 	await once();
 	if (everyMs === null) return;

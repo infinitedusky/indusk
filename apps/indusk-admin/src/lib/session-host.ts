@@ -46,6 +46,12 @@ export function sameOrigin(
  * makes `Origin` and `Host` agree, so `sameOrigin` alone lets it through),
  * and a request that changes something also came from the admin's page. A
  * refusal to return, or null to go on.
+ *
+ * It is a cross-site guard, against another site's page in the person's
+ * browser — not a guard against a process on this machine, which sets `Host`
+ * and `Origin` to whatever it likes. A route that must answer only the
+ * person's own browser asks for more on top (the looks approve route's
+ * `Sec-Fetch-Site`).
  */
 export function adminOnly(
   request: Request,

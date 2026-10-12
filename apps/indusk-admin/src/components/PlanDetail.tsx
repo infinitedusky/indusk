@@ -125,7 +125,7 @@ export function PlanDetail({
       {!isParent && <PlanWorkflows plan={plan} />}
 
       <details className="flex flex-col gap-6" data-testid="plan-details">
-        <summary className="cursor-pointer text-sm font-semibold text-gray-900">
+        <summary className="cursor-pointer text-sm font-semibold text-ink">
           Details
         </summary>
         <div className="mt-4 flex flex-col gap-6">
@@ -218,7 +218,7 @@ function ImplSections({
         <div
           role="alert"
           data-testid="boundary-error"
-          className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+          className="rounded-md border border-bad bg-bad-wash px-3 py-2 text-sm text-bad"
         >
           The phase-boundary record could not be read, so no phase is marked
           active: {plan.boundaryError}
@@ -261,7 +261,7 @@ function ImplSections({
                 persistKey={`plan:${plan.name}:section:cleanup`}
                 copyMarkdown={`## Cleanup\n\nSkipped: ${r.reason}\n`}
               >
-                <p className="text-sm text-gray-700">Skipped: {r.reason}</p>
+                <p className="text-sm text-ink-soft">Skipped: {r.reason}</p>
               </CollapsibleSection>
             </section>
           ))}
@@ -282,7 +282,7 @@ function ImplSections({
 function MalformedBanner() {
   return (
     <div
-      className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+      className="rounded-md border border-bad bg-bad-wash px-3 py-2 text-sm text-bad"
       data-testid="malformed-banner"
     >
       ⚠ This plan has malformed YAML frontmatter. Some sections may be missing
@@ -324,10 +324,10 @@ function RawDocumentsSection({
       className="flex flex-col gap-2"
       data-testid="raw-documents-section"
     >
-      <h2 className="text-base font-semibold text-gray-900">
+      <h2 className="text-base font-semibold text-ink">
         Raw documents (malformed frontmatter)
       </h2>
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-ink-faint">
         These files couldn't be parsed. Showing the raw markdown so you can
         diagnose. Fix the YAML frontmatter and refresh.
       </p>
@@ -339,7 +339,7 @@ function RawDocumentsSection({
             defaultOpen={false}
           >
             <pre
-              className="overflow-x-auto rounded bg-gray-50 p-3 text-xs font-mono text-gray-800 whitespace-pre-wrap"
+              className="overflow-x-auto rounded-md bg-ground p-3 text-xs font-mono text-ink whitespace-pre-wrap"
               data-testid={`raw-${filename}`}
             >
               {raw}

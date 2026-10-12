@@ -232,6 +232,7 @@ export function activePlanNames(): string[] {
 /** Put the fixture back as it was built. */
 export function resetFixture(): void {
   plans = initialSpecs().map(build);
+  looks = [];
 }
 
 /**
@@ -605,7 +606,34 @@ export function standingMock() {
           lastBreak: broken ? (LAST_SEEN[entry.name] ?? null) : null,
         };
       }),
+    readLookStanding: async () => ({
+      rows: looks,
+      problems: [],
+      runs: { ok: true as const },
+    }),
   };
+}
+
+// -- looks (ui-promises, Build Phase 4) ----------------------------------------
+
+/** One look's row, as `promises/standing`'s `readLookStanding` returns it. */
+export interface FixtureLook {
+  app: string;
+  look: string;
+  kind: "screen" | "component";
+  device: string | null;
+  standing: "broken" | "held" | "unchecked" | "uncovered";
+  word: string;
+  at: string | null;
+  symptom: string | null;
+}
+
+/** No looks by default: a project without mockups, as every cockpit test before ui-promises assumed. */
+let looks: FixtureLook[] = [];
+
+/** The looks the next read returns; `resetFixture` puts them back to none. */
+export function setLooks(next: FixtureLook[]): void {
+  looks = next;
 }
 
 // -- a promise's proof (Build Phase 3) -----------------------------------------

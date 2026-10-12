@@ -79,6 +79,11 @@ vi.mock("@infinitedusky/indusk-mcp/promises/health", () => ({
 vi.mock("@infinitedusky/indusk-mcp/promises/standing", () => ({
   __esModule: true,
   readStanding: async () => [],
+  readLookStanding: async () => ({
+    rows: [],
+    problems: [],
+    runs: { ok: true },
+  }),
 }));
 vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
   __esModule: true,

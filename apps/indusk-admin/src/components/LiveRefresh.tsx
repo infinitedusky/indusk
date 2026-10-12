@@ -54,7 +54,7 @@ export function LiveRefresh({ intervalMs }: { intervalMs: number }) {
       <p
         role="status"
         data-testid="refresh-failed"
-        className="text-xs text-red-700"
+        className="text-xs text-bad"
       >
         refresh failed — reload the page to resume
       </p>
@@ -64,7 +64,7 @@ export function LiveRefresh({ intervalMs }: { intervalMs: number }) {
     <p
       role="status"
       data-testid="last-updated"
-      className="text-xs text-gray-400"
+      className="text-xs text-ink-faint"
       data-interval-ms={intervalMs}
     >
       {updatedAt

@@ -34,7 +34,19 @@ export function panelBody(
 	const runs = `<h2>Activity</h2><ol class="activity">${activity
 		.map((l) => `<li class="${/ broke /.test(l) ? "broke" : "held"}">${esc(l)}</li>`)
 		.join("")}</ol>`;
-	return `${title}${reading}${broken}${rest}${runs}`;
+	return `${title}${reading}${broken}${looksSection(model)}${rest}${runs}`;
+}
+
+/** Each look on the line, broken first, with the package's word and what a broken one saw; nothing when there are none. */
+function looksSection(model: PanelModel): string {
+	if (model.looks.length === 0) return "";
+	const items = model.looks.map(
+		(l) =>
+			`<li class="${l.tone}">${esc(l.app)}/${esc(l.look)}${l.device ? ` @ ${esc(l.device)}` : ""} — ${esc(l.word)}${
+				l.symptom ? `<div class="symptom">${esc(l.symptom)}</div>` : ""
+			}</li>`,
+	);
+	return `<h2>Looks</h2><ul class="looks">${items.join("")}</ul>`;
 }
 
 function card(p: PanelPromise, timeZone?: string): string {

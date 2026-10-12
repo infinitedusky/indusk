@@ -25,12 +25,12 @@ const MARK: Record<StepState, string> = {
 };
 
 const STYLE: Record<StepState, string> = {
-  done: "text-green-700",
-  current: "font-medium text-blue-700",
-  "needs-you": "font-medium text-amber-700",
-  "not-yet": "text-gray-400",
-  skipped: "text-gray-400 line-through",
-  missing: "text-red-700",
+  done: "text-ok",
+  current: "font-medium text-dusk",
+  "needs-you": "font-medium text-warn",
+  "not-yet": "text-ink-faint",
+  skipped: "text-ink-faint line-through",
+  missing: "text-bad",
 };
 
 const LABEL: Record<StepState, string> = {
@@ -67,13 +67,13 @@ function WorkflowList({
   const { done, total } = stepCount(steps);
   return (
     <section
-      className="rounded-md border border-gray-200 p-3"
+      className="rounded-md border border-line p-3"
       data-testid={`workflow-${which}`}
     >
-      <h2 className="mb-2 flex items-baseline justify-between text-sm font-semibold text-gray-900">
+      <h2 className="mb-2 flex items-baseline justify-between text-sm font-semibold text-ink">
         {title}
         <span
-          className="text-xs font-normal text-gray-500"
+          className="text-xs font-regular text-ink-faint"
           data-testid="workflow-count"
         >
           {done} of {total}
@@ -91,7 +91,7 @@ function WorkflowList({
               {MARK[step.state]}
             </span>
             <span>{step.name}</span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-ink-faint">
               {LABEL[step.state]}
               {step.reason ? ` — ${step.reason}` : ""}
             </span>

@@ -15,20 +15,20 @@ export function ProjectGrid({ projects, notFound = [] }: ProjectGridProps) {
   if (projects.length === 0 && notFound.length === 0) {
     return (
       <div
-        className="flex h-full flex-col items-center justify-center text-center text-gray-500"
+        className="flex h-full flex-col items-center justify-center text-center text-ink-faint"
         data-testid="project-grid-empty"
       >
-        <h1 className="text-lg font-semibold text-gray-700">
+        <h1 className="text-lg font-semibold text-ink-soft">
           No projects registered yet
         </h1>
         <p className="mt-2 max-w-md text-sm">
           Run{" "}
-          <code className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs">
+          <code className="rounded-md bg-idle-wash px-tight py-hair font-mono text-xs">
             indusk init
           </code>{" "}
           inside a project to register it. Already-registered projects move to
           the front via{" "}
-          <code className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs">
+          <code className="rounded-md bg-idle-wash px-tight py-hair font-mono text-xs">
             indusk update
           </code>
           .
@@ -41,8 +41,8 @@ export function ProjectGrid({ projects, notFound = [] }: ProjectGridProps) {
     <div className="mx-auto max-w-5xl p-2">
       <div className="mb-4 flex items-end justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Projects</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-xl font-semibold text-ink">Projects</h1>
+          <p className="text-sm text-ink-faint">
             Every project registered in{" "}
             <code className="font-mono text-xs">~/.indusk/projects.json</code>.
           </p>
@@ -58,7 +58,7 @@ export function ProjectGrid({ projects, notFound = [] }: ProjectGridProps) {
       </div>
       {notFound.length > 0 ? (
         <details
-          className="mt-4 text-xs text-gray-500"
+          className="mt-4 text-xs text-ink-faint"
           data-testid="project-not-found"
         >
           <summary className="cursor-pointer">
@@ -66,7 +66,7 @@ export function ProjectGrid({ projects, notFound = [] }: ProjectGridProps) {
             exist; <code className="font-mono">indusk ui prune</code> removes
             them
           </summary>
-          <ul className="mt-1 flex flex-col gap-0.5 pl-4">
+          <ul className="mt-1 flex flex-col gap-hair pl-4">
             {notFound.map((name) => (
               <li key={name} className="font-mono">
                 {name}

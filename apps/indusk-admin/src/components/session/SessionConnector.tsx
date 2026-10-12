@@ -46,7 +46,7 @@ export function SessionConnector({ sessionId }: { sessionId: string }) {
 
   return (
     <div className="flex flex-col gap-1">
-      {problem ? <p className="text-sm text-red-700">{problem}</p> : null}
+      {problem ? <p className="text-sm text-bad">{problem}</p> : null}
       <SessionPanel
         events={events}
         running={running}

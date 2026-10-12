@@ -15,10 +15,10 @@ import type {
  */
 
 const CELL: Record<CellState, string> = {
-  red: "bg-red-600",
-  purple: "bg-purple-600",
-  green: "bg-green-600",
-  empty: "bg-gray-100",
+  red: "bg-bad",
+  purple: "bg-ink-soft",
+  green: "bg-ok",
+  empty: "bg-idle-wash",
 };
 
 const SAID: Record<CellState, string> = {
@@ -38,9 +38,9 @@ export function PromiseTimeline({
   strip: Strip;
 }) {
   return (
-    <div className="flex w-full flex-col gap-0.5">
+    <div className="flex w-full flex-col gap-hair">
       <div
-        className="flex h-3 w-full gap-px"
+        className="flex h-3 w-full gap-hair"
         data-testid="promise-timeline"
         data-promise={promise}
         data-source={source}
@@ -54,12 +54,12 @@ export function PromiseTimeline({
             data-from={c.from}
             {...(c.atLeast ? { "data-at-least": "" } : {})}
             title={`${stamp(c.from)} — ${SAID[c.state]}${c.runs ? ` (${c.atLeast ? "at least " : ""}${c.runs} run${c.runs === 1 ? "" : "s"})` : ""}`}
-            className={`h-full flex-1 rounded-[1px] ${CELL[c.state]} ${c.atLeast ? "opacity-70" : ""}`}
+            className={`h-full flex-1 rounded-xs ${CELL[c.state]} ${c.atLeast ? "opacity-70" : ""}`}
           />
         ))}
       </div>
       {strip.bands.length > 0 && (
-        <div className="relative h-1.5 w-full">
+        <div className="relative h-tight w-full">
           {strip.bands.map((b) => (
             <span
               key={b.incident}
@@ -75,10 +75,7 @@ export function PromiseTimeline({
         </div>
       )}
       {strip.openBreak && (
-        <span
-          className="text-xs font-medium text-red-700"
-          data-testid="open-break"
-        >
+        <span className="text-xs font-medium text-bad" data-testid="open-break">
           {strip.openBreak}
         </span>
       )}
@@ -89,7 +86,7 @@ export function PromiseTimeline({
 /** A behaviour promise no run marks: said, never drawn as an empty strip that reads as healthy. */
 export function TimelineEmpty() {
   return (
-    <span className="text-xs text-gray-500" data-testid="timeline-empty">
+    <span className="text-xs text-ink-faint" data-testid="timeline-empty">
       no runs mark this promise
     </span>
   );
@@ -116,9 +113,7 @@ function SwitchLink({
       href={href}
       aria-current={current ? "true" : undefined}
       className={
-        current
-          ? "font-semibold text-gray-900"
-          : "text-blue-700 hover:underline"
+        current ? "font-semibold text-ink" : "text-dusk hover:underline"
       }
     >
       {children}
@@ -146,7 +141,7 @@ export function TimelineControls({
   return (
     <div className="flex flex-col gap-1" data-testid="timeline-controls">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-gray-600">History:</span>
+        <span className="text-ink-soft">History:</span>
         {(Object.keys(WINDOW_LABELS) as WindowKey[]).map((w) => (
           <SwitchLink
             key={w}
@@ -158,7 +153,7 @@ export function TimelineControls({
         ))}
         {timelines.sources.length > 1 && (
           <>
-            <span className="ml-4 text-gray-600">Source:</span>
+            <span className="ml-4 text-ink-soft">Source:</span>
             {timelines.sources.map((s) => (
               <SwitchLink
                 key={s}
@@ -172,13 +167,13 @@ export function TimelineControls({
         )}
       </div>
       {timelines.reach && (
-        <p className="text-xs text-gray-500" data-testid="timeline-reach">
+        <p className="text-xs text-ink-faint" data-testid="timeline-reach">
           {timelines.reach}
         </p>
       )}
       {timelines.failure && (
         <p
-          className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+          className="rounded-md border border-line bg-ground px-3 py-2 text-sm text-ink-soft"
           data-testid="timeline-failure"
         >
           {timelines.failure}

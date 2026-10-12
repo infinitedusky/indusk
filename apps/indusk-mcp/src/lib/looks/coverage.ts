@@ -1,0 +1,130 @@
+import { readFile } from "node:fs/promises";
+import { extname, relative } from "node:path";
+import { type ApprovalEntry, approvalOf } from "./approvals.js";
+import { elementsOf } from "./markup.js";
+import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
+
+/**
+ * Coverage (ui-promises ADR decision 5): every declared screen × state needs a
+ * mockup approved as it is now, and every `data-component` name the app
+ * renders must appear on an element of one. What is missing is listed
+ * *uncovered* — never passed, never left out. A screen with no approved state
+ * at all is one uncovered screen, not a list of its states. A mockup is read
+ * as the browser reads it (`looks/markup`): a name in its comment, script or
+ * style is text and covers nothing. A source whose `data-component` is not a
+ * literal names no component the coverage can judge, so it is listed
+ * *unresolved* at its file and line, and fails like an uncovered one.
+ *
+ * A mockup changed since its approval reads proposed (`approvalOf`), so it
+ * covers nothing until a person approves the change.
+ *
+ * promise: every-part-of-the-ui-is-covered
+ */
+
+export interface Coverage {
+	/** Declared screens none of whose states has an approved mockup. */
+	screens: string[];
+	/** `<screen>.<state>` with no approved mockup, for screens that have at least one. */
+	states: string[];
+	/** `data-component` names the app's sources render that no approved mockup shows. */
+	components: string[];
+	/** `<file>:<line>` of each source `data-component` whose name is not a literal. */
+	unresolved: string[];
+}
+
+const MARKUP_EXTENSIONS = new Set([
+	".jsx",
+	".tsx",
+	".js",
+	".ts",
+	".html",
+	".vue",
+	".svelte",
+	".astro",
+	".mdx",
+]);
+
+/** The `data-component` names in a source's markup: `data-component="badge"`, `'badge'` or `{"badge"}`. */
+export function componentsIn(text: string): Set<string> {
+	const names = new Set<string>();
+	for (const m of text.matchAll(/\bdata-component\s*=\s*\{?\s*["'`]([^"'`\s]+)["'`]/g)) {
+		names.add(m[1]);
+	}
+	return names;
+}
+
+/**
+ * The 1-based lines of a source where `data-component` is given an expression
+ * that is not a string literal (`{name}`, `{\`${kind}-row\`}`): the name is
+ * decided at run time, so no mockup can be said to cover it.
+ */
+export function unresolvedIn(text: string): number[] {
+	const lines: number[] = [];
+	text.split("\n").forEach((line, i) => {
+		for (const m of line.matchAll(/\bdata-component\s*=\s*\{\s*([^}]*)\}/g)) {
+			const expr = (m[1] ?? "").trim();
+			if (!/^(["'])[^"'\s]+\1$|^`[^`$\s]+`$/.test(expr)) lines.push(i + 1);
+		}
+	});
+	return lines;
+}
+
+/** The `data-component` names a mockup draws: on its elements, never in its text. */
+export function mockupComponents(html: string): Set<string> {
+	const names = new Set<string>();
+	for (const el of elementsOf(html)) {
+		const name = el.attrs["data-component"];
+		if (name) names.add(name);
+	}
+	return names;
+}
+
+/** Declared screens with no approved state, and the missing states of the rest. */
+function uncoveredScreens(
+	app: LooksApp,
+	approved: readonly Mockup[],
+): Pick<Coverage, "screens" | "states"> {
+	const approvedNames = new Set(approved.map((m) => m.name));
+	const screens: string[] = [];
+	const states: string[] = [];
+	for (const screen of app.screens) {
+		const missing = screen.states.filter((s) => !approvedNames.has(`${screen.name}.${s}`));
+		if (missing.length === screen.states.length) screens.push(screen.name);
+		else states.push(...missing.map((s) => `${screen.name}.${s}`));
+	}
+	return { screens, states };
+}
+
+/**
+ * `data-component` names in the app's declared sources that no approved
+ * mockup shows, sorted, and the places a source names one at run time.
+ */
+async function uncoveredComponents(
+	root: string,
+	app: LooksApp,
+	approved: readonly Mockup[],
+): Promise<Pick<Coverage, "components" | "unresolved">> {
+	const shown = new Set(approved.flatMap((m) => [...mockupComponents(m.html)]));
+	const rendered = new Set<string>();
+	const unresolved: string[] = [];
+	for (const file of await appSourceFiles(root, app.sources)) {
+		if (!MARKUP_EXTENSIONS.has(extname(file))) continue;
+		const text = await readFile(file, "utf-8");
+		for (const name of componentsIn(text)) rendered.add(name);
+		for (const line of unresolvedIn(text)) unresolved.push(`${relative(root, file)}:${line}`);
+	}
+	return { components: [...rendered].filter((n) => !shown.has(n)).sort(), unresolved };
+}
+
+/** What the app declares or renders that no approved mockup covers. */
+export async function coverageOf(
+	root: string,
+	app: LooksApp,
+	approvals: readonly ApprovalEntry[],
+): Promise<Coverage> {
+	const approved = app.mockups.filter((m) => approvalOf(app, m, approvals).state === "approved");
+	return {
+		...uncoveredScreens(app, approved),
+		...(await uncoveredComponents(root, app, approved)),
+	};
+}

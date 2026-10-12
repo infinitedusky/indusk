@@ -29,7 +29,7 @@ pointer; the pointer holds the story.
   `parsePlan`, the retrospective gate and the admin) —
   `lifecycle-single-definition.test.ts`; promise health, `promises/health`
   — `promise-health-single-definition.test.ts`; display names and plan dates
-  (`promises/display`) — `display-names-single-definition.test.ts`. A git primitive belongs in
+  (`promises/display`, travelling on the health line; see `/decisions/display-names`) — `display-names-single-definition.test.ts`. A git primitive belongs in
   `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
   (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
@@ -184,6 +184,19 @@ pointer; the pointer holds the story.
   `repo` destination is refused outside a workbench. `indusk papers publish`
   commits in the destination, never pushes by default, pushes last, and never
   lets a git failure escape past a commit it made. — see `/reference/cli/papers`
+- **A look's verdict is decided in `looks/verdict` from values handed to it;
+  the browser only measures** (`looks/check` reads `:root` and computed styles
+  and passes them in). Held or broken, the finding's token or element, and its
+  nearest token are never computed in the browser, the CLI or the admin — a
+  verdict decided where the page runs cannot be read without Chromium. —
+  guarded by `verdict.test.ts`; see `/reference/cli/looks`
+- **The no-raw-value lint is three modules, and a new rule goes in its own**:
+  `lint-values` (the strict list, the stylelint rules, `cssFindings`),
+  `lint-classes` (the Tailwind vocabulary a theme reset changes) and the token
+  checks in `lint`, which also orchestrates; `lint-types` holds the shared
+  shapes so neither imports `lint` back. A rule added to `lint.ts` is the
+  500-line file this split undid — guarded by the file-size attention-focus and
+  `looks-lint-rules.test.ts`; see `/reference/cli/looks`
 
 ## Eval, agents, skills, extensions
 

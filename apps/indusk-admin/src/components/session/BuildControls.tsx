@@ -93,38 +93,36 @@ export function BuildControls({
           <Button size="sm" onClick={() => void post("build")}>
             Build
           </Button>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-ink-faint">
             Works the phases, then falsification and cleanup, without asking;
             stops at review.
           </span>
         </div>
       ) : null}
       {running && state?.step ? (
-        <p className="text-gray-700">
+        <p className="text-ink-soft">
           Running: {state.step}
           {state.detail ? ` — ${state.detail}` : ""}
         </p>
       ) : null}
       {!running && state?.stop ? (
-        <p className="text-gray-700">{describeStop(state.stop)}</p>
+        <p className="text-ink-soft">{describeStop(state.stop)}</p>
       ) : null}
       {state?.release ? (
-        <p
-          className={state.release.released ? "text-green-700" : "text-red-700"}
-        >
+        <p className={state.release.released ? "text-ok" : "text-bad"}>
           {state.release.released
             ? "Released."
             : `The release stopped: ${state.release.error}`}
         </p>
       ) : null}
-      {problem ? <p className="text-red-700">{problem}</p> : null}
+      {problem ? <p className="text-bad">{problem}</p> : null}
       {inReview && review ? <ReviewPanel review={review} /> : null}
       {inReview && !running ? (
         <div className="flex items-center gap-2">
           <Button size="sm" onClick={() => void post("accept")}>
             Accept
           </Button>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-ink-faint">
             Runs the retrospective, which lands the plan on main.
           </span>
         </div>
