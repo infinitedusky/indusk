@@ -5,7 +5,7 @@ import { readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
-import { classesOf, componentStylesheet } from "./component-styles.js";
+import { classesOf, componentStylesheet, markedComponentsOf } from "./component-styles.js";
 import {
 	CATALOG_FILE,
 	type Catalog,
@@ -332,19 +332,24 @@ export async function renderStories(root: string, appName: string): Promise<Stor
 		keep.add(`${key}.html`);
 		snapshots.push(relative(root, file));
 	}
-	// Each component's stylesheet: the compiled rules of the classes its snapshots use.
+	// Each component's stylesheet: the compiled rules of the classes its snapshots use, and the rules on its markers.
 	const classesByComponent = new Map<string, Set<string>>();
+	const marksByComponent = new Map<string, Set<string>>();
 	for (const [key, html] of writes) {
 		const name = key.slice(0, key.indexOf("."));
 		const set = classesByComponent.get(name) ?? new Set<string>();
 		for (const c of classesOf(html)) set.add(c);
 		classesByComponent.set(name, set);
+		const marks = marksByComponent.get(name) ?? new Set<string>();
+		for (const m of markedComponentsOf(html)) marks.add(m);
+		marksByComponent.set(name, marks);
 	}
 	for (const c of components) {
 		const sheet = componentStylesheet(
 			css,
 			classesByComponent.get(c.name) ?? new Set(),
 			app.foundation,
+			marksByComponent.get(c.name) ?? new Set(),
 		);
 		const file = join(snapshotsDir, `${c.name}.css`);
 		writeFileSync(file, sheet);

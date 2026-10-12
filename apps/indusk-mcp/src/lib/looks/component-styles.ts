@@ -31,6 +31,22 @@ export function classesOf(html: string): Set<string> {
 	return classes;
 }
 
+/** The component names the markup's elements are marked with (`data-component`), nested ones included. */
+export function markedComponentsOf(html: string): Set<string> {
+	const names = new Set<string>();
+	for (const el of elementsOf(html)) {
+		const name = el.attrs["data-component"];
+		if (name) names.add(name);
+	}
+	return names;
+}
+
+const MARK_IN_SELECTOR = /\[data-component=["']?([\w-]+)["']?\]/g;
+
+/** The component names a selector is anchored on: `[data-component="decision-card"] p` -> decision-card. */
+const selectorMarks = (selector: string): string[] =>
+	[...selector.matchAll(MARK_IN_SELECTOR)].map((m) => m[1] as string);
+
 const CLASS_IN_SELECTOR = /\.((?:\\[0-9a-fA-F]{1,6}\s?|\\.|[\w-])+)/g;
 
 const unescapeCss = (s: string): string =>
@@ -43,8 +59,8 @@ function selectorClasses(selector: string): string[] {
 	return [...selector.matchAll(CLASS_IN_SELECTOR)].map((m) => unescapeCss(m[1] as string));
 }
 
-/** Wrappers a utility rule sits in that are kept around it. */
-const WRAPPERS = new Set(["layer", "media", "supports", "container"]);
+/** Wrappers a utility rule sits in that are kept around it. A `@layer` is not one: see `keepUtilities`. */
+const WRAPPERS = new Set(["media", "supports", "container"]);
 
 /** Tailwind's theme namespace for a foundation group, and the foundation's name behind each theme name. */
 const THEME_GROUP: Readonly<Record<string, string>> = {
@@ -141,21 +157,38 @@ function resolveValue(
 	return failed ? null : parsed.toString();
 }
 
-/** The rules of `nodes` that name only `classes`, inside the wrappers they sit in. */
-function keepUtilities(nodes: readonly ChildNode[], classes: ReadonlySet<string>): ChildNode[] {
+/**
+ * The rules of `nodes` that name only `classes`, inside the wrappers they sit
+ * in — except a `@layer`, which is dropped and its rules kept in place, in the
+ * order the build wrote them: the sheet is unlayered, because a mockup's own
+ * page styles are, and an unlayered rule beats every layered one whatever its
+ * specificity (ADR decision 10, amended 2026-10-12). Among themselves the
+ * rules keep the source order, which is what the layers' order gave them.
+ */
+function keepUtilities(
+	nodes: readonly ChildNode[],
+	classes: ReadonlySet<string>,
+	marks: ReadonlySet<string>,
+): ChildNode[] {
 	const out: ChildNode[] = [];
 	for (const node of nodes) {
 		if (node.type === "rule") {
 			const kept = node.selectors.filter((s) => {
 				const used = selectorClasses(s);
-				return used.length > 0 && used.every((c) => classes.has(c));
+				if (used.length > 0) return used.every((c) => classes.has(c));
+				// No class: a rule the app writes on the component's own marker
+				// (`[data-component="decision-card"] p`), part of how it draws.
+				const anchors = selectorMarks(s);
+				return anchors.length > 0 && anchors.every((m) => marks.has(m));
 			});
 			if (kept.length === 0) continue;
 			const copy = node.clone();
 			copy.selectors = kept;
 			out.push(copy);
+		} else if (node.type === "atrule" && node.name === "layer" && node.nodes) {
+			out.push(...keepUtilities(node.nodes, classes, marks));
 		} else if (node.type === "atrule" && WRAPPERS.has(node.name) && node.nodes) {
-			const inner = keepUtilities(node.nodes, classes);
+			const inner = keepUtilities(node.nodes, classes, marks);
 			if (inner.length === 0) continue;
 			const copy = node.clone({ nodes: [] });
 			copy.append(inner);
@@ -240,7 +273,8 @@ function animationNames(nodes: readonly ChildNode[]): Set<string> {
 }
 
 /**
- * The app's compiled rules for `classes`, in the order the build wrote them,
+ * The app's compiled rules for `classes` — and the rules the app writes on the
+ * component markers in `marks`, which name no class — in the order the build wrote them,
  * with the build's variables resolved to the foundation's tokens. Empty (just
  * the header) when none of the classes has a rule.
  */
@@ -248,6 +282,7 @@ export function componentStylesheet(
 	appCss: string,
 	classes: ReadonlySet<string>,
 	foundation: Foundation,
+	marks: ReadonlySet<string> = new Set(),
 ): string {
 	const root = postcss.parse(appCss);
 	const initial = new Map<string, string>();
@@ -259,7 +294,7 @@ export function componentStylesheet(
 	const ctx: Context = { foundation, names: themeNames(foundation), initial };
 
 	const out = postcss.root();
-	const kept = keepUtilities(root.nodes, classes);
+	const kept = keepUtilities(root.nodes, classes, marks);
 	out.append(kept);
 
 	const used = animationNames(kept);

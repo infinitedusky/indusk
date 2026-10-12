@@ -135,7 +135,9 @@ this plan builds on.
    by hand, and emitted **unlayered**: a mockup carries its own unlayered
    resets (`button { padding: 0 }`), and an unlayered rule beats every layered
    one whatever its specificity, so Tailwind's `@layer utilities` wrapper made
-   the components lose to the mockup around them. A composed component must
+   the components lose to the mockup around them. The sheet also carries the
+   rules the app writes on a component's own marker (`[data-component="x"] p`),
+   which name no class and are part of how it draws. A composed component must
    draw as its story does; a browser comparison of the two (A30) holds that,
    not the presence of the rules. *(Added 2026-10-12, found in Build Phase 6 when the eleven composed
    mockups were rewritten: decisions 4 and 6 composed the markup and not the

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { classesOf, componentStylesheet, STYLESHEET_HEADER } from "./component-styles.js";
+import {
+	classesOf,
+	componentStylesheet,
+	markedComponentsOf,
+	STYLESHEET_HEADER,
+} from "./component-styles.js";
 import type { Foundation } from "./foundation.js";
 
 /**
@@ -50,13 +55,19 @@ const COMPILED = `
 	}
 	.hover\\:text-ink:hover { color: var(--color-ink); }
 	.max-\\[759px\\]\\:hidden { display: none; }
+	@media (width >= 48rem) { .md\\:px-2 { padding-inline: var(--spacing-2); } }
 }
+[data-component="badge"] p { color: var(--color-ink); max-width: 64ch; }
+[data-component="badge"][data-tone="alert"] p { color: var(--color-ink); }
+[data-component="other"] p { color: var(--color-ink); }
+p { margin: 0; }
 .pulse { animation: pulse var(--duration-fast) var(--easing-ease) infinite; }
 @keyframes pulse { 50% { opacity: 0.3; } }
 @keyframes unused { to { opacity: 0; } }
 `;
 
-const sheet = (classes: string[]) => componentStylesheet(COMPILED, new Set(classes), foundation);
+const sheet = (classes: string[], marks: string[] = []) =>
+	componentStylesheet(COMPILED, new Set(classes), foundation, new Set(marks));
 
 describe("componentStylesheet", () => {
 	it("keeps the rules of exactly the classes given, and nothing the build wrote around them", () => {
@@ -103,9 +114,37 @@ describe("componentStylesheet", () => {
 		expect(css).not.toContain("unused");
 	});
 
+	it("keeps a rule the app writes on a component's own marker, which names no class", () => {
+		// `[data-component="decision-card"] p { color: … }` in the app's stylesheet
+		// is part of how the component draws; the story shows it, so a mockup must.
+		const css = sheet(["px-2"], ["badge"]);
+		expect(css).toContain('[data-component="badge"] p');
+		expect(css).toContain('[data-component="badge"][data-tone="alert"] p');
+		expect(css).not.toContain('[data-component="other"]');
+		expect(css).not.toMatch(/^p \{/m);
+		expect(sheet(["px-2"])).not.toContain("data-component");
+	});
+
+	it("is unlayered, rules in the order the build wrote them, wrappers that are not layers kept", () => {
+		// A mockup's own page styles are unlayered, and an unlayered rule beats
+		// every layered one whatever its specificity (ADR decision 10).
+		const css = sheet(["px-2", "text-ink", "md:px-2"]);
+		expect(css).not.toContain("@layer");
+		expect(css).toContain("@media (width >= 48rem)");
+		expect(css.indexOf(".px-2")).toBeLessThan(css.indexOf(".text-ink"));
+		expect(css.indexOf(".text-ink")).toBeLessThan(css.indexOf(".md\\:px-2"));
+	});
+
 	it("is the header alone when no class has a rule, and the same bytes every time", () => {
 		expect(sheet(["nothing"])).toBe(STYLESHEET_HEADER);
 		expect(sheet(["px-2", "text-ink"])).toBe(sheet(["text-ink", "px-2"]));
+	});
+});
+
+describe("markedComponentsOf", () => {
+	it("reads every component marker in the markup, nested ones included", () => {
+		const html = '<nav data-component="nav"><button data-component="plan-row"></button></nav>';
+		expect([...markedComponentsOf(html)].sort()).toEqual(["nav", "plan-row"]);
 	});
 });
 
