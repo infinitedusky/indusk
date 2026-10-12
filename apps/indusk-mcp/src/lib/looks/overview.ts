@@ -10,7 +10,7 @@ import {
 	type StoryApprovalEntry,
 	storyApprovalOf,
 } from "./approvals.js";
-import { readCatalog } from "./components.js";
+import { storybookIds } from "./components.js";
 import { type Coverage, coverageOf } from "./coverage.js";
 import { generateCss } from "./foundation.js";
 import {
@@ -171,10 +171,7 @@ function storiesOf(
 	approvals: StoryApprovalEntry[],
 	css: string,
 ): StoryView[] {
-	const ids = new Map<string, string>();
-	for (const c of readCatalog(app)?.components ?? []) {
-		for (const s of c.states) if (s.id) ids.set(`${c.name}.${s.name}`, s.id);
-	}
+	const ids = storybookIds(app);
 	return app.stories.map((story) => {
 		const approval = storyApprovalOf(app, story, approvals);
 		return {

@@ -7,7 +7,7 @@ import {
 	type StoryApprovalEntry,
 	storyApprovalOf,
 } from "./approvals.js";
-import { readCatalog } from "./components.js";
+import { storybookIds } from "./components.js";
 import type { Device, LooksApp } from "./mockups.js";
 import type { LookResult } from "./report.js";
 import { MEASURED_PROPERTIES, type MeasuredElement, verdict } from "./verdict.js";
@@ -321,10 +321,7 @@ export function checkableStories(
 	app: LooksApp,
 	approvals: readonly StoryApprovalEntry[],
 ): { checked: StoryTarget[]; unchecked: Unchecked[] } {
-	const ids = new Map<string, string>();
-	for (const c of readCatalog(app)?.components ?? []) {
-		for (const s of c.states) if (s.id) ids.set(`${c.name}.${s.name}`, s.id);
-	}
+	const ids = storybookIds(app);
 	const checked: StoryTarget[] = [];
 	const unchecked: Unchecked[] = [];
 	for (const story of app.stories) {

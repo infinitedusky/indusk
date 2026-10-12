@@ -193,6 +193,15 @@ export interface Catalog {
 	components: CatalogComponent[];
 }
 
+/** Each story's Storybook id (`<component>.<state>` -> id) from the catalog; empty when the app has none or a state has no id. */
+export function storybookIds(app: LooksApp): Map<string, string> {
+	const ids = new Map<string, string>();
+	for (const c of readCatalog(app)?.components ?? []) {
+		for (const s of c.states) if (s.id) ids.set(`${c.name}.${s.name}`, s.id);
+	}
+	return ids;
+}
+
 /** The catalog an app's render step wrote; null when it has none. A catalog that is not one is refused. */
 export function readCatalog(app: LooksApp): Catalog | null {
 	const file = join(app.dir, CATALOG_FILE);
