@@ -14,7 +14,7 @@ gate_policy: ask
 
 ## Goal
 
-The admin is built from components defined once, each with an approved story per state rendered to a snapshot, and every mockup is composed of those components by name; a changed component reopens the mockups that use it; Storybook is served by the cockpit and a catalog file lists every component for an agent (ADR decisions 1–10).
+The admin is built from components defined once, each with an approved story per state rendered to a snapshot, and every mockup is composed of those components by name; a changed component reopens the mockups that use it; Storybook is served by the cockpit and a catalog file lists every component for an agent (ADR decisions 1–11).
 
 ## Scope
 
@@ -74,6 +74,9 @@ The admin is built from components defined once, each with an approved story per
 | A24 | `indusk looks lint admin` still finds no raw value after the rebuild | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over `a-mockup-leaves-nothing-undefined`, re-run after the mockups and screens change | apps/indusk-mcp/src/__tests__/looks-admin-foundation.test.ts |
 | A25 | A composed mockup opens in the cockpit drawn with its components' styles: the document the frame loads holds a rule for every class its snapshots use, and `indusk looks lint admin` finds no raw value in it | Build Phase 6 | Build Phase 6 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
 | A26 | After an approved component's style changes, every approved mockup that uses it reads proposed naming that component; a mockup that does not use it stays approved | Build Phase 6 | Build Phase 6 | written | unit | promise: a-changed-component-reopens-its-mockups | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
+| A27 | A person's Unapprove makes an approved mockup or story read proposed, as withdrawn by them, with the record keeping its history; the others stay approved, and approving it again makes it read approved | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
+| A28 | An agent cannot take an approval back: the command line's `unapprove` is refused, naming the cockpit's Unapprove | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
+| A29 | The Looks page offers Unapprove on an approved mockup and on an approved story, and not on a proposed one; it sends the shown hash like Approve | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-admin/src/app/p/[project]/looks/looks-components.test.tsx |
 
 ### Deferred Verification
 
@@ -349,6 +352,10 @@ The admin is built from components defined once, each with an approved story per
 - [x] The value check reads each `components/<name>.css` by the rule it reads a mockup's own styles by; a raw value in it is a finding naming the class (the 858 findings from embedding the utilities whole — `--spacing-*`, `--tw-*`, `1px` — are what the resolution step removes, not what the lint is loosened to allow)
   - Note: `lint.ts` reads every `components/<name>.css` through `cssFindings` (mockup rules: raw values, outside references) and `tokenFindings` (an undefined or redefined token), located in the stylesheet's own file and line. The finding names the file, line and raw value, not the class: the line shows it in a generated file. A25's raw-value case passes; `indusk looks lint admin` over the real sheets reads no finding.
 - [x] `indusk promises change mockups-render-in-the-cockpit --plan storybook-components --statement "Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens and, where it names components, with those components' own styles, with nothing to run beside the cockpit." --reason "composed mockups drew their components unstyled"`
+- [ ] A27, A28 in `looks-components-cli.test.ts` and A29 in `looks-components.test.tsx`: authored first, red on their own assertions (ADR decision 11, added when Sandy approved a look by mistake and the record had no way back)
+- [ ] `withdraw(checkout, app, name, by, kind)` in `looks/approvals.ts`: appends a `withdrawn` entry under the record's lock and commits only the record through the notes writer; `approvalOf` and `storyApprovalOf` ignore any approval earlier than the subject's latest withdrawal, and the record's reader accepts the entry; status says `withdrawn by <name>`
+- [ ] The cockpit's route and button: an Unapprove route beside Approve, and an Unapprove button on an approved mockup and on an approved story (Looks page list, cascade and open view) that sends the shown hash; `indusk looks unapprove` refuses, naming the cockpit
+- [ ] `indusk promises change a-mockup-is-approved-by-a-person --plan storybook-components --statement "<the brief's widened statement>" --reason "an approval made by mistake had no way back"`
 - [ ] **Pause for a person**: Sandy re-approves the eleven composed mockups on the Looks page (each binds its `componentsHash`)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
@@ -356,7 +363,7 @@ The admin is built from components defined once, each with an approved story per
 
 - Note (checks run before the pause, none checked off): A24, A25 and A26 pass (`looks-admin-foundation`, `looks-components-cli`, `src/lib/looks`: 84 tests); `indusk looks lint admin` no finding; `indusk looks status admin` reads every story approved (the snapshots did not change) and the eleven mockups proposed, each naming its components; `indusk looks coverage admin` reads 24 uncovered, all because the mockups are proposed until Sandy approves them. The admin's `storybook.contract.test.ts` (A5, A13) passes; `looks-components.contract.test.ts` could not start its own `next dev` — a `next dev` (pid 99735, started 09:14 today) already holds this directory.
 
-- [ ] A24, A25 and A26 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-admin-foundation.test.ts src/__tests__/looks-components-cli.test.ts`); a composed mockup opened on the Looks page is drawn styled, read by a person before approving; `indusk looks lint admin` no finding; `indusk looks status admin` eleven mockups and every story approved; `indusk looks coverage admin` every part covered
+- [ ] A24–A28 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-admin-foundation.test.ts src/__tests__/looks-components-cli.test.ts`) and A29 (`cd apps/indusk-admin && pnpm exec vitest run src/app/p/\[project\]/looks/looks-components.test.tsx`); a composed mockup opened on the Looks page is drawn styled, read by a person before approving; `indusk looks lint admin` no finding; `indusk looks status admin` eleven mockups and every story approved; `indusk looks coverage admin` every part covered
 
 #### Build Phase 6 Context
 

@@ -45,7 +45,7 @@ the token rule already proves the shape — a mockup uses only what is defined a
 components), the admin (9 of 19 marked), Storybook on Next 16.2 / React 19.2 /
 Vitest 4.1, the MCP's status, and why stories do not run in the app.
 [brief.md](brief.md) makes five promises and changes three of ui-promises';
-[test-plan.md](test-plan.md) holds 26 assertions. ui-promises' ADR
+[test-plan.md](test-plan.md) holds 29 assertions. ui-promises' ADR
 ([archive](../archive/ui-promises/adr.md)) set the foundation, the approval
 record bound to content hashes, the sandboxed mockup frame, and the value check
 this plan builds on.
@@ -135,6 +135,18 @@ this plan builds on.
    by hand. *(Added 2026-10-12, found in Build Phase 6 when the eleven composed
    mockups were rewritten: decisions 4 and 6 composed the markup and not the
    look. Sandy asked that it be a visible part of the plan, not a patch.)*
+
+11. **A person can take an approval back.** The cockpit's Unapprove, on an
+   approved mockup or story, appends a `{ kind: "withdrawn", subject, name, by,
+   at }` entry to the same record; the record stays append-only and its history
+   is the git history. A mockup or story reads proposed (never approved, no
+   reference to be held to) after its latest withdrawal until a person approves
+   it again, and an approval made earlier than a withdrawal never counts. Like
+   Approve it is written only by the cockpit's route, through the notes writer,
+   and the guard hook refuses an agent's write; `indusk looks unapprove` exists
+   only to refuse, naming the cockpit. *(Added 2026-10-12: Sandy approved a
+   look by mistake; deleting the entry from the record by hand is what the
+   guard exists to stop, and there was no other way back.)*
 
 ## Alternatives Considered
 

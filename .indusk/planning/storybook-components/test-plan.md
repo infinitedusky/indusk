@@ -60,12 +60,15 @@ under the promise it proves. They become the impl's Test Trajectory rows.
 |----|-----------------------------------|-------|
 | A15 | Coverage reports a component state with no approved story as uncovered, and passes once its story is approved | unit |
 
-### `a-mockup-is-approved-by-a-person` (changes) — A mockup or a story … becomes the reference only when a person approves it in the cockpit; an agent can draw and propose one and never approve it.
+### `a-mockup-is-approved-by-a-person` (changes) — A mockup or a story … becomes the reference only when a person approves it in the cockpit, and stops being one when a person takes the approval back; an agent can draw and propose one and never approve it or take it back. *(Widened 2026-10-12.)*
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
 | A16 | A story reads proposed until a person approves it on the Looks page; an agent's write to the record of story approvals is refused, naming the cockpit's Approve | unit |
 | A17 | A story changed after it was approved reads proposed again | unit |
+| A27 | A person's Unapprove makes an approved mockup or story read proposed, as withdrawn by them, with the record keeping its history; the others stay approved, and approving it again makes it read approved | unit |
+| A28 | An agent cannot take an approval back: the command line's `unapprove` is refused naming the cockpit's Unapprove | unit |
+| A29 | The Looks page offers Unapprove on an approved mockup and on an approved story, and not on a proposed one; it sends the shown hash like Approve | unit |
 
 ### `mockups-render-in-the-cockpit` (changes) — Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens, with nothing to run beside the cockpit. *(Widened 2026-10-12: a mockup that names components is drawn with their styles.)*
 
