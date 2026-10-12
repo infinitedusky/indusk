@@ -92,7 +92,6 @@ dusk/
 - Workflow steps: `workflow.steps` names what each step runs, facts never logic; dusk's slow tier never blocks landing or release — see `/decisions/release-checks-run-once`
 - Server provisioning: every recording server is the person's own — `indusk server connect` for one run anywhere, `server deploy` the one-command Fly path, the image published with each release; no hosted service — see `/decisions/server-provisioning`
 - Audit step: a fresh subagent on `workflow.steps.audit.tier` reads the approved impl, the final trajectory and the diff, writes `audit.md`; advisory — see `/decisions/plan-review-subagent`
-- Plan cockpit: the admin is the cockpit; every fact it shows comes from one package module (`promises/standing`, `proof`, `fix`; `plans/steps`, `waiting`, `history`) — see `/decisions/plan-cockpit`
 - UI promises: an app's look is held by mockups a person approves in the cockpit, on one DTCG foundation, no raw values, held by value in Chromium — see `/decisions/ui-promises`
 - Storybook components: each component one file with a story per state rendered to a snapshot; mockups compose components by name; a changed component reopens its mockups; Storybook served by the cockpit — see `/decisions/storybook-components`
 
