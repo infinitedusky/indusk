@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { dirname, join, relative, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
 import { classesOf, componentStylesheet, markedComponentsOf } from "./component-styles.js";
 import {
@@ -289,6 +289,50 @@ async function renderAll(appDir: string): Promise<{ rendered: Map<string, string
 }
 
 /**
+ * Each component's stylesheet, `components/<name>.css`: the app's compiled
+ * rules for the classes its snapshots use and for its own markers, resolved to
+ * the foundation's tokens (ADR decision 10). Names each file on its component
+ * in the catalog (`stylesheet`, `stylesheetHash`) and returns the paths written,
+ * relative to `root`.
+ */
+function writeStylesheets(args: {
+	root: string;
+	app: LooksApp;
+	css: string;
+	components: CatalogComponent[];
+	writes: ReadonlyMap<string, string>;
+	snapshotsDir: string;
+}): string[] {
+	const { root, app, css, components, writes, snapshotsDir } = args;
+	const classesByComponent = new Map<string, Set<string>>();
+	const marksByComponent = new Map<string, Set<string>>();
+	for (const [key, html] of writes) {
+		const name = key.slice(0, key.indexOf("."));
+		const classes = classesByComponent.get(name) ?? new Set<string>();
+		for (const c of classesOf(html)) classes.add(c);
+		classesByComponent.set(name, classes);
+		const marks = marksByComponent.get(name) ?? new Set<string>();
+		for (const m of markedComponentsOf(html)) marks.add(m);
+		marksByComponent.set(name, marks);
+	}
+	const written: string[] = [];
+	for (const c of components) {
+		const sheet = componentStylesheet(
+			css,
+			classesByComponent.get(c.name) ?? new Set(),
+			app.foundation,
+			marksByComponent.get(c.name) ?? new Set(),
+		);
+		const file = join(snapshotsDir, `${c.name}.css`);
+		writeFileSync(file, sheet);
+		written.push(relative(root, file));
+		c.stylesheet = `${SNAPSHOTS_DIR}/${c.name}.css`;
+		c.stylesheetHash = createHash("sha256").update(sheet).digest("hex");
+	}
+	return written;
+}
+
+/**
  * Render every story of `appName`, write each state's snapshot under
  * `.indusk/mockups/<app>/components/` and the catalog beside the mockups.
  * Refuses by name: a marked name in two files (the scan's finding), a story
@@ -332,31 +376,9 @@ export async function renderStories(root: string, appName: string): Promise<Stor
 		keep.add(`${key}.html`);
 		snapshots.push(relative(root, file));
 	}
-	// Each component's stylesheet: the compiled rules of the classes its snapshots use, and the rules on its markers.
-	const classesByComponent = new Map<string, Set<string>>();
-	const marksByComponent = new Map<string, Set<string>>();
-	for (const [key, html] of writes) {
-		const name = key.slice(0, key.indexOf("."));
-		const set = classesByComponent.get(name) ?? new Set<string>();
-		for (const c of classesOf(html)) set.add(c);
-		classesByComponent.set(name, set);
-		const marks = marksByComponent.get(name) ?? new Set<string>();
-		for (const m of markedComponentsOf(html)) marks.add(m);
-		marksByComponent.set(name, marks);
-	}
-	for (const c of components) {
-		const sheet = componentStylesheet(
-			css,
-			classesByComponent.get(c.name) ?? new Set(),
-			app.foundation,
-			marksByComponent.get(c.name) ?? new Set(),
-		);
-		const file = join(snapshotsDir, `${c.name}.css`);
-		writeFileSync(file, sheet);
-		keep.add(`${c.name}.css`);
-		snapshots.push(relative(root, file));
-		c.stylesheet = `${SNAPSHOTS_DIR}/${c.name}.css`;
-		c.stylesheetHash = createHash("sha256").update(sheet).digest("hex");
+	for (const file of writeStylesheets({ root, app, css, components, writes, snapshotsDir })) {
+		keep.add(basename(file));
+		snapshots.push(file);
 	}
 	const removed: string[] = [];
 	for (const file of await readdir(snapshotsDir)) {
