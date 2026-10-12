@@ -1,7 +1,8 @@
 // promise: a-mockup-is-approved-by-a-person — A34 (a composed mockup needs its componentsHash)
 // promise: a-changed-component-reopens-its-mockups — A33 (a group approves stories, then mockups)
+// promise: a-mockup-is-approved-by-a-person — A39 (the two routes read a request the same way)
 import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { withdraw } from "@infinitedusky/indusk-mcp/looks/approvals";
 import { readAppLooks } from "@infinitedusky/indusk-mcp/looks/overview";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -23,6 +24,7 @@ import {
   tearDownProject,
 } from "@/__tests__/helpers/looks-page";
 import { POST as approveRoute } from "@/app/api/looks/[app]/approve/route";
+import { POST as unapproveRoute } from "@/app/api/looks/[app]/unapprove/route";
 
 /**
  * ui-promises A29 and A30, the approve route's half: the route answers only a
@@ -219,5 +221,38 @@ describe("Build Phase 9 — a composed mockup's approval through the route", () 
       "componentsHash",
     );
     expect(readFileSync(join(root, RECORD), "utf-8")).toBe(before);
+  });
+});
+
+describe("A39 — the two routes read a request the same way", () => {
+  const story = {
+    project: PROJECT,
+    kind: "story",
+    story: "badge.ok",
+    foundationHash: "x",
+  };
+
+  it("A39 a checkout with no worktree holding mockups is a 404 with the same text from both, a story body without snapshotHash a 400 from both, and neither route looks the checkout up itself", async () => {
+    const gone = { ...story, snapshotHash: "x", checkout: "no-such-plan" };
+    const a = await approveRoute(approveRequest(gone), demo);
+    const u = await unapproveRoute(approveRequest(gone), demo);
+    expect(a.status).toBe(404);
+    expect(u.status).toBe(404);
+    expect(((await u.json()) as { error: string }).error).toBe(
+      ((await a.json()) as { error: string }).error,
+    );
+
+    for (const route of [approveRoute, unapproveRoute]) {
+      const res = await route(approveRequest(story), demo);
+      expect(res.status).toBe(400);
+    }
+
+    const routes = resolve(__dirname, "../../../api/looks/[app]");
+    for (const route of ["approve", "unapprove"]) {
+      expect(
+        readFileSync(join(routes, route, "route.ts"), "utf-8"),
+        `${route} reads its request through ../request`,
+      ).not.toMatch(/looksCheckouts|request\.json\(\)/);
+    }
   });
 });
