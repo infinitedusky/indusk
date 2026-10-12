@@ -150,8 +150,27 @@ const namesOf = (f: Foundation) => new Set(f.tokens.map((t) => t.name));
 const byPlace = (a: Finding, b: Finding) =>
 	a.file.localeCompare(b.file) || a.line - b.line || a.value.localeCompare(b.value);
 
-/** The findings of one mockup: its raw values, and the tokens it uses or adds. */
-async function lintMockup(mockup: Mockup, foundation: Set<string>): Promise<Finding[]> {
+/**
+ * What the no-raw-value rule reads of a mockup: a file and its markup. A
+ * mockup is linted as composed, part by part — its own source, located in its
+ * file, and each snapshot it composes, located in the snapshot's — so a
+ * finding names the line that holds it, not a line of the composed page.
+ */
+type MockupPart = Pick<Mockup, "file" | "declaresNew"> & { html: string };
+
+/** The parts of the app's composed mockups: each mockup's source, and each snapshot one composes, once. */
+function mockupParts(app: LooksApp): MockupPart[] {
+	const composed = new Set(app.mockups.flatMap((m) => m.uses.map((u) => u.story)));
+	return [
+		...app.mockups.map((m) => ({ file: m.file, html: m.source, declaresNew: m.declaresNew })),
+		...app.stories
+			.filter((s) => composed.has(s.name))
+			.map((s) => ({ file: s.file, html: s.html, declaresNew: [] })),
+	];
+}
+
+/** The findings of one mockup part: its raw values, and the tokens it uses or adds. */
+async function lintMockup(mockup: MockupPart, foundation: Set<string>): Promise<Finding[]> {
 	const blocks = cssBlocksOfHtml(mockup.html);
 	const raw = await Promise.all(
 		blocks.map((block) =>
@@ -209,12 +228,12 @@ async function lintSources(
 }
 
 /**
- * Every raw value, undefined token and stock class in an app's mockups and
- * declared sources, and the component rules of `lint-components`.
+ * Every raw value, undefined token and stock class in an app's composed
+ * mockups and declared sources, and the component rules of `lint-components`.
  */
 export async function lintApp(root: string, app: LooksApp): Promise<Finding[]> {
 	const foundation = namesOf(app.foundation);
-	const mockups = await Promise.all(app.mockups.map((m) => lintMockup(m, foundation)));
+	const mockups = await Promise.all(mockupParts(app).map((m) => lintMockup(m, foundation)));
 	const sources = await lintSources(root, app.sources, foundation);
 	const components = await componentFindings(root, app);
 	return [...mockups.flat(), ...sources, ...components].sort(byPlace);

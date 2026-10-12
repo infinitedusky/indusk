@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, extname, join, relative } from "node:path";
-import { elementsOf } from "./markup.js";
 import { appSourceFiles, type LooksApp, LooksAppError } from "./mockups.js";
 
 /**
@@ -16,6 +15,8 @@ import { appSourceFiles, type LooksApp, LooksAppError } from "./mockups.js";
  * promise: a-component-has-one-implementation
  * promise: an-agent-can-find-every-component
  */
+
+export { type ComponentReference, componentReferences } from "./compose.js";
 
 /** The file the render step writes beside an app's mockups. */
 export const CATALOG_FILE = "components.json";
@@ -212,24 +213,6 @@ export function readCatalog(app: LooksApp): Catalog | null {
 	return parsed as Catalog;
 }
 
-export interface ComponentReference {
-	name: string;
-	state: string;
-	/** 1-based line of the `<indusk-component>` element. */
-	line: number;
-}
-
-/** The components a mockup places by name: `<indusk-component name="badge" state="ok">`. A missing state is `default`. */
-export function componentReferences(html: string): ComponentReference[] {
-	return elementsOf(html)
-		.filter((el) => el.tag === "indusk-component" && el.attrs.name)
-		.map((el) => ({
-			name: el.attrs.name as string,
-			state: el.attrs.state || "default",
-			line: el.line,
-		}));
-}
-
 export interface CatalogGaps {
 	scan: ComponentScan;
 	/** Implemented and marked in the app, with no entry in the catalog. */
@@ -259,8 +242,8 @@ export async function catalogGaps(root: string, app: LooksApp): Promise<CatalogG
 		catalog.components.flatMap((c) => c.states.map((s) => `${c.name}.${s.name}`)),
 	);
 	const noStory = app.mockups.flatMap((m) =>
-		componentReferences(m.html)
-			.filter((r) => !states.has(`${r.name}.${r.state}`))
+		m.uses
+			.filter((r) => !states.has(r.story))
 			.map((r) => ({ name: r.name, state: r.state, file: m.file, line: r.line })),
 	);
 	return { scan, notInCatalog, noStory };

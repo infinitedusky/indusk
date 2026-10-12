@@ -19,6 +19,9 @@ export interface MarkupElement {
 	attrs: Readonly<Record<string, string>>;
 	/** The 1-based line the element's start tag is on. */
 	line: number;
+	/** Offsets of the whole element in the source, start tag to end tag: what `looks/compose` replaces. */
+	start: number;
+	end: number;
 	/** The 1-based line an attribute is on; the element's own when it has none. */
 	attrLine(name: string): number;
 	/** For `<style>`: its text and the line that text starts on. */
@@ -56,6 +59,8 @@ export function elementsOf(html: string): MarkupElement[] {
 				tag: n.tagName,
 				attrs: Object.fromEntries(n.attrs.map((a) => [a.name, a.value])),
 				line,
+				start: loc?.startOffset ?? 0,
+				end: loc?.endOffset ?? 0,
 				attrLine: (name) => loc?.attrs?.[name]?.startLine ?? line,
 				...(n.tagName === "style" ? { text: textOf(n) } : {}),
 			});

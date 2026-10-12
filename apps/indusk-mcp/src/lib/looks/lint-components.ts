@@ -1,3 +1,4 @@
+import { readStoryApprovals, unapprovedUses } from "./approvals.js";
 import { catalogGaps } from "./components.js";
 import type { Finding } from "./lint-types.js";
 import type { LooksApp } from "./mockups.js";
@@ -6,15 +7,19 @@ import type { LooksApp } from "./mockups.js";
  * The component half of the lint (storybook-components ADR decisions 2 and 7):
  * a component name implemented in two files, a screen that writes a
  * component's element out itself, a component the catalog does not list, and
- * a state a mockup places that no story covers. The facts are `looks/components`'s;
+ * a state a mockup places that no story covers, and a component a mockup names
+ * with no approved snapshot to compose. The facts are `looks/components`' and
+ * `looks/approvals`';
  * this turns them into findings in the lint's one grammar.
  *
  * promise: a-component-has-one-implementation
  * promise: every-component-state-has-a-story
  * promise: an-agent-can-find-every-component
+ * promise: a-mockup-composes-approved-components
  */
 export async function componentFindings(root: string, app: LooksApp): Promise<Finding[]> {
 	const gaps = await catalogGaps(root, app);
+	const stories = readStoryApprovals(app);
 	return [
 		...gaps.scan.findings.map(
 			(f): Finding => ({
@@ -42,6 +47,17 @@ export async function componentFindings(root: string, app: LooksApp): Promise<Fi
 				rule: "no-story",
 				message: `no story: ${r.name}.${r.state}`,
 			}),
+		),
+		...app.mockups.flatMap((m) =>
+			unapprovedUses(app, m, stories).map(
+				(u): Finding => ({
+					file: m.file,
+					line: u.line,
+					value: u.story,
+					rule: "no-approved-story",
+					message: `no approved story: ${u.story} — a mockup composes approved components; approve its story on the cockpit's Looks page, or declare the component new and draw it`,
+				}),
+			),
 		),
 	];
 }

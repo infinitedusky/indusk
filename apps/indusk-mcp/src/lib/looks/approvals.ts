@@ -5,7 +5,15 @@ import { withLock } from "../agents/lock.js";
 import { commitNote, currentMdPath, type NoteCommit, oneLine } from "../bookkeeping/notes.js";
 import { git } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
-import { type LooksApp, LooksAppError, MOCKUPS_DIR, type Mockup, readApp } from "./mockups.js";
+import type { ComponentUse } from "./compose.js";
+import {
+	type LooksApp,
+	LooksAppError,
+	MOCKUPS_DIR,
+	type Mockup,
+	readApp,
+	type Story,
+} from "./mockups.js";
 
 /**
  * Approval (ui-promises ADR decision 3): a mockup is the reference only while
@@ -55,17 +63,38 @@ export type Approval =
 const FIELDS = ["mockup", "mockupHash", "foundationHash", "by", "at"] as const;
 
 /**
- * A story's entry (`kind: "story"`, storybook-components): the record holds
- * these beside the mockups'. They are read by Build Phase 3's story approvals;
- * until then `readApprovals` recognises one so a record that holds stories is
- * not refused as malformed, and returns only the mockups' entries.
+ * A story's entry (storybook-components ADR decision 5): a story is approved
+ * like a mockup, in the same record, bound to its snapshot's hash and to the
+ * foundation and declarations as they were. `readApprovals` returns the
+ * mockups' entries and `readStoryApprovals` these.
+ *
+ * promise: a-mockup-is-approved-by-a-person
  */
-function isStoryEntry(v: unknown): boolean {
+export interface StoryApprovalEntry {
+	kind: "story";
+	/** `badge.ok` — the snapshot's name. */
+	story: string;
+	/** sha256 of the snapshot's bytes when it was approved. */
+	snapshotHash: string;
+	foundationHash: string;
+	declarationsHash?: string;
+	by: string;
+	at: string;
+}
+
+export type StoryApproval =
+	| { state: "approved"; entry: StoryApprovalEntry }
+	| { state: "proposed"; reference: StoryApprovalEntry | null };
+
+function isStoryEntry(v: unknown): v is StoryApprovalEntry {
 	if (typeof v !== "object" || v === null) return false;
 	const o = v as Record<string, unknown>;
 	return (
 		o.kind === "story" &&
-		["story", "snapshotHash", "foundationHash", "by", "at"].every((k) => typeof o[k] === "string")
+		["story", "snapshotHash", "foundationHash", "by", "at"].every(
+			(k) => typeof o[k] === "string",
+		) &&
+		(o.declarationsHash === undefined || typeof o.declarationsHash === "string")
 	);
 }
 
@@ -78,8 +107,11 @@ function isEntry(v: unknown): v is ApprovalEntry {
 	);
 }
 
-/** Whether an entry was made on the foundation and the declarations as they are now. */
-export const boundToNow = (app: LooksApp, e: ApprovalEntry): boolean =>
+/** Whether an entry, a mockup's or a story's, was made on the foundation and the declarations as they are now. */
+export const boundToNow = (
+	app: LooksApp,
+	e: Pick<ApprovalEntry, "foundationHash" | "declarationsHash">,
+): boolean =>
 	e.foundationHash === app.foundation.hash && e.declarationsHash === app.declarationsHash;
 
 /** Where an app's record is, relative to the project root. */
@@ -93,6 +125,11 @@ export const approvalsPath = (app: string) => join(MOCKUPS_DIR, app, APPROVALS_F
  */
 export function readApprovals(app: LooksApp): ApprovalEntry[] {
 	return readRecord(app).filter(isEntry);
+}
+
+/** The story entries of an app's record, oldest first; refused like `readApprovals` when the record is not one. */
+export function readStoryApprovals(app: LooksApp): StoryApprovalEntry[] {
+	return readRecord(app).filter(isStoryEntry);
 }
 
 /** Every entry of the record, mockups' and stories', validated; the writer keeps them all. */
@@ -127,6 +164,40 @@ export function approvalOf(
 	const current = mine.filter((e) => e.mockupHash === mockup.hash && boundToNow(app, e));
 	if (current.length > 0) return { state: "approved", entry: current[current.length - 1] };
 	return { state: "proposed", reference: mine[mine.length - 1] ?? null };
+}
+
+/**
+ * Whether a story is approved as its snapshot is now, on the foundation and
+ * the declarations as they are now. A snapshot re-rendered from a changed
+ * component reads proposed until a person approves it again.
+ */
+export function storyApprovalOf(
+	app: LooksApp,
+	story: Pick<Story, "name" | "hash">,
+	approvals: readonly StoryApprovalEntry[],
+): StoryApproval {
+	const mine = approvals.filter((e) => e.story === story.name);
+	const current = mine.filter((e) => e.snapshotHash === story.hash && boundToNow(app, e));
+	if (current.length > 0) return { state: "approved", entry: current[current.length - 1] };
+	return { state: "proposed", reference: mine[mine.length - 1] ?? null };
+}
+
+/**
+ * The components a mockup names that have no approved snapshot: no snapshot
+ * at all, or one no person has approved as it is now. A mockup is composed of
+ * approved components only, so each of these is refused by the lint (`no
+ * approved story`) and blocks the mockup's approval.
+ */
+export function unapprovedUses(
+	app: LooksApp,
+	mockup: Pick<Mockup, "uses">,
+	approvals: readonly StoryApprovalEntry[],
+): ComponentUse[] {
+	return mockup.uses.filter(
+		(u) =>
+			u.snapshotHash === null ||
+			storyApprovalOf(app, { name: u.story, hash: u.snapshotHash }, approvals).state !== "approved",
+	);
 }
 
 export type ApproveResult =

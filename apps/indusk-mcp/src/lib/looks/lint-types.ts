@@ -9,7 +9,8 @@ export type LintRule =
 	| "duplicate-component"
 	| "component-outside-file"
 	| "no-story"
-	| "not-in-catalog";
+	| "not-in-catalog"
+	| "no-approved-story";
 
 export interface Finding {
 	/** Relative to the project root. */

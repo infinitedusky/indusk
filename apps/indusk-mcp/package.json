@@ -200,6 +200,10 @@
 			"types": "./dist/lib/looks/components.d.ts",
 			"default": "./dist/lib/looks/components.js"
 		},
+		"./looks/compose": {
+			"types": "./dist/lib/looks/compose.d.ts",
+			"default": "./dist/lib/looks/compose.js"
+		},
 		"./looks/stories": {
 			"types": "./dist/lib/looks/stories.d.ts",
 			"default": "./dist/lib/looks/stories.js"

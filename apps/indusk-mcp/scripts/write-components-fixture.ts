@@ -10,26 +10,23 @@
  *   cd apps/indusk-mcp && pnpm exec tsx scripts/write-components-fixture.ts
  *
  * The entry shapes are the contract `looks-components-cli.test.ts` is written
- * against, and Build Phase 3 builds to:
+ * against:
  *
  *   story    { kind: "story", story: "<component>.<state>", snapshotHash,
  *              foundationHash, declarationsHash, by, at }
- *   mockup   today's entry + componentsHash, the sha256 of the sorted snapshot
- *            hashes of the components it composes joined by newline; its
- *            `mockupHash` is the hash of the mockup's source bytes. If Build
- *            Phase 3 hashes the composed mockup instead, regenerate with this
- *            script rather than editing the record.
+ *   mockup   today's entry + componentsHash (`componentsHashOf`: the sha256 of
+ *            the sorted snapshot hashes of the components it composes, joined
+ *            by newline); its `mockupHash` is the hash of the mockup composed
+ *            (`looks/compose`), as Build Phase 3 decided — what is shown is
+ *            what is bound. Every hash is read from `readApp`, never computed
+ *            here.
  */
-import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { readApp } from "../src/lib/looks/mockups.js";
 
 const ROOT = resolve(import.meta.dirname, "../src/__tests__/fixtures/components-app");
 const APP = ".indusk/mockups/demo";
-const sha256 = (bytes: Buffer | string) => createHash("sha256").update(bytes).digest("hex");
-const snapshot = (name: string) =>
-	sha256(readFileSync(join(ROOT, APP, "components", `${name}.html`)));
 
 const app = await readApp(ROOT, "demo");
 const by = "sandy";
@@ -40,11 +37,15 @@ const bound = {
 	by,
 	at,
 };
-const componentsHash = (names: string[]) => sha256(names.map(snapshot).sort().join("\n"));
-const mockupHash = (name: string) => {
+const snapshot = (name: string) => {
+	const s = app.stories.find((x) => x.name === name);
+	if (!s) throw new Error(`fixture has no snapshot ${name}`);
+	return s.hash;
+};
+const mockup = (name: string) => {
 	const m = app.mockups.find((x) => x.name === name);
 	if (!m) throw new Error(`fixture has no mockup ${name}`);
-	return m.hash;
+	return { mockup: m.name, mockupHash: m.hash, componentsHash: m.componentsHash, ...bound };
 };
 
 writeFileSync(
@@ -54,18 +55,8 @@ writeFileSync(
 			approvals: [
 				{ kind: "story", story: "badge.ok", snapshotHash: snapshot("badge.ok"), ...bound },
 				{ kind: "story", story: "card.default", snapshotHash: snapshot("card.default"), ...bound },
-				{
-					mockup: "home.default",
-					mockupHash: mockupHash("home.default"),
-					componentsHash: componentsHash(["badge.ok", "card.default"]),
-					...bound,
-				},
-				{
-					mockup: "detail.default",
-					mockupHash: mockupHash("detail.default"),
-					componentsHash: componentsHash(["card.default"]),
-					...bound,
-				},
+				mockup("home.default"),
+				mockup("detail.default"),
 			],
 		},
 		null,
