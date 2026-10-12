@@ -282,7 +282,7 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 4 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: stories are shown from the served `/storybook`, never from a Storybook dev server, and approved by their snapshot hash — guarded by `looks-components.contract.test.ts` (A18)
+- [x] `apps/indusk-admin/CLAUDE.md`: stories are shown from the served `/storybook`, never from a Storybook dev server, and approved by their snapshot hash — guarded by `looks-components.contract.test.ts` (A18)
 
 #### Build Phase 4 Document
 
