@@ -103,6 +103,14 @@ this plan builds on.
    after another with Approve beside each. Nothing runs beside the admin.
    *(Amended 2026-10-12 at Sandy's direction while approving Build Phase 5: a
    story framed at each device's full size showed a badge in a blank screen.)*
+   *(Amended 2026-10-12, Build Phase 9 falsification: the Looks page frames a
+   story from its snapshot, as the checkout the page reads holds it, drawn as
+   `mockupDocument` draws a composed mockup — the foundation's tokens, then the
+   component's stylesheet — not from the admin's `/storybook` build. Approve
+   binds the selected checkout's snapshot and stylesheet hashes; a frame drawn
+   from another build — the landed daemon's, or one older than a hand-edited
+   snapshot — is not what the hash binds. `/storybook` stays for browsing and
+   for `indusk looks check`.)*
 
 7. **The catalog is a file.** The render step writes
    `.indusk/mockups/<app>/components.json` — each component's name, file,
