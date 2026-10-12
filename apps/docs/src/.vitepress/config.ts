@@ -71,6 +71,7 @@ const config = defineConfig({
 						{ text: "Run your own server", link: "/guide/run-your-own-server" },
 						{ text: "Promises in your editor", link: "/guide/promises-in-your-editor" },
 						{ text: "UI Promises", link: "/guide/ui-promises" },
+						{ text: "Components and Stories", link: "/guide/components" },
 						{ text: "The Shape Check", link: "/guide/shape" },
 						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 						{ text: "Cleanup Ritual", link: "/guide/cleanup-ritual" },
