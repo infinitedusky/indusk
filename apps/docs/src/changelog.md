@@ -4,6 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+
+- **`.mcp.json` is no longer versioned** (untrack-mcp-json): it holds per-machine values (the telemetry daemon's `jaeger` port rewrote it on every start, 26 commits' worth), and `init` already ignored it; this repository had tracked it since the initial scaffold. `indusk update` now writes one naming the `indusk` server when a checkout has none, and never touches one that exists. **After pulling this, run `indusk update` once:** git removes the file from your working tree on that pull. New plan worktrees get a copy of the trunk's file, and a file the daemon's sync creates now names the `indusk` server too. See [the MCP server reference](/reference/tools/indusk-mcp).
+
 ### Added
 
 - **UI promises** (ui-promises): an app's look is held by mockups a person approves in the cockpit, built on one foundation of design tokens, and the running app is checked against them. `indusk looks lint | status | coverage | check | tokens`; approval is given on the Looks page, in the checkout its plan is worked in, singly or as a group. The cockpit is the first app held. See [UI promises](/guide/ui-promises) and [the decision](/decisions/ui-promises).

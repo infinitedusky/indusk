@@ -275,3 +275,6 @@
 {"plan":"browser-template-claims","phase":3,"kind":"build","sha":"9986b859a6cd3f6672fbc280bcdf37143b22e25b","timestamp":"2026-10-11T02:44:16.694Z"}
 {"plan":"fix-opens-claude-tab","phase":1,"kind":"test","sha":"52fc10bb81942f5dd76cd36f88bb97b68ab04980","timestamp":"2026-10-11T00:16:45.185Z"}
 {"plan":"fix-opens-claude-tab","phase":1,"kind":"build","sha":"3ab99b240ba02e450876931edf9a63724a61668d","timestamp":"2026-10-11T00:17:20.566Z"}
+{"plan":"untrack-mcp-json","phase":1,"kind":"test","sha":"34fa70551ff6c54a4afb974c47de6d235ee47e2a","timestamp":"2026-10-11T22:10:32.554Z"}
+{"plan":"untrack-mcp-json","phase":1,"kind":"build","sha":"5d2dbb60620b6098966401a37077cf624d06c0b4","timestamp":"2026-10-12T00:38:14.262Z"}
+{"plan":"untrack-mcp-json","phase":2,"kind":"build","sha":"bf6533cc65404dfceca4f4571a20cb2034e2bb18","timestamp":"2026-10-12T00:46:15.728Z"}

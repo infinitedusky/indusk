@@ -162,6 +162,16 @@ pointer; the pointer holds the story.
   and `symptom`; a credential with a line separator is refused by name. The
   image is built from `docker/`, installing the *published* package; the Fly
   reference never auto-stops. — see `/decisions/day-always-on`
+- **`.mcp.json` is per machine and untracked** (`.gitignore` carries it): `indusk update`
+  writes one naming the `indusk` server when a checkout has none and never touches one
+  that exists (`lib/mcp-config.ts`); the daemon's sync edits only the local copy's
+  `jaeger` port. Pulling the commit that untracked it deletes the file from a clone's
+  working tree once — run `indusk update`. A test of `update` pins
+  `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`: without it `update` on a project lacking
+  `local-telemetry` starts a real daemon. A new plan worktree gets a copy of the
+  trunk's file (`createPlanWorktree` → `provisionMcpJson`), since git no longer brings
+  it; anything that creates the file creates it through `ensureMcpJson`, so a file
+  the daemon's sync made still names `indusk`.
 - The local daemon is native Jaeger + otelcol (`indusk telemetry *`; jaeger_mcp
   in each project's `.mcp.json`) — see `.indusk/planning/archive/local-telemetry/adr.md`.
   Jaeger v2 is an OTel Collector distribution; self-metrics off via

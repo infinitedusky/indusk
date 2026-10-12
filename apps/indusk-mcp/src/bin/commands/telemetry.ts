@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { removeJaegerEntry, upsertJaegerEntry } from "../../lib/mcp-config.js";
 import {
 	daemonRestart,
 	daemonStart,
@@ -8,61 +8,6 @@ import {
 	isPortListening,
 } from "../../lib/telemetry/daemon.js";
 import { deregisterProject, readRegistry, registerProject } from "../../lib/telemetry/registry.js";
-
-/**
- * Read/write a project's `.mcp.json`, adding or removing the `jaeger` MCP
- * server pointer. This is how the agent gets access to Jaeger's bundled
- * MCP server (8 tools: search_traces, get_trace_topology, get_span_details,
- * get_services, etc.) without needing a dedicated indusk-mcp wrapper.
- *
- * Follows the dash0 pattern — extension enable writes an entry, disable
- * removes it. Daemon restart (which may auto-bump the mcpPort) refreshes
- * every registered project's entry.
- */
-interface McpServerEntry {
-	type?: string;
-	url?: string;
-	command?: string;
-	args?: string[];
-	[k: string]: unknown;
-}
-interface McpJson {
-	mcpServers?: Record<string, McpServerEntry>;
-}
-
-function readMcpJson(projectPath: string): McpJson {
-	const p = join(projectPath, ".mcp.json");
-	if (!existsSync(p)) return { mcpServers: {} };
-	try {
-		return JSON.parse(readFileSync(p, "utf-8")) as McpJson;
-	} catch {
-		return { mcpServers: {} };
-	}
-}
-
-function writeMcpJson(projectPath: string, data: McpJson): void {
-	writeFileSync(join(projectPath, ".mcp.json"), `${JSON.stringify(data, null, 2)}\n`);
-}
-
-function upsertJaegerEntry(projectPath: string, mcpPort: number): void {
-	const data = readMcpJson(projectPath);
-	data.mcpServers = data.mcpServers ?? {};
-	data.mcpServers.jaeger = {
-		type: "http",
-		url: `http://localhost:${mcpPort}/mcp`,
-	};
-	writeMcpJson(projectPath, data);
-}
-
-function removeJaegerEntry(projectPath: string): void {
-	const p = join(projectPath, ".mcp.json");
-	if (!existsSync(p)) return;
-	const data = readMcpJson(projectPath);
-	if (data.mcpServers?.jaeger) {
-		delete data.mcpServers.jaeger;
-		writeMcpJson(projectPath, data);
-	}
-}
 
 /**
  * Re-write the `jaeger` MCP server entry across every registered project's
