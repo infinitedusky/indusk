@@ -62,6 +62,12 @@ export interface LooksApp {
 	 */
 	ignore: string[];
 	/**
+	 * Components the app marks that have no story yet, so the catalog does not
+	 * list them: exempt from `not in catalog` until they do. Declared in
+	 * `screens.json` and only ever shortened (storybook-components Build Phase 2).
+	 */
+	uncatalogued: string[];
+	/**
 	 * sha256 of what the check trusts besides the foundation: the reference
 	 * devices, the `ignore` tags and the `sources`. An approval binds it, so a
 	 * change to any of them returns every mockup to proposed (ui-promises Build
@@ -127,6 +133,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		sources?: string[];
 		url?: string;
 		ignore?: string[];
+		uncatalogued?: string[];
 	}>(join(dir, "screens.json"), {});
 
 	const screensDir = join(dir, "screens");
@@ -162,6 +169,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		...facts,
 		declarationsHash: declarationsHashOf(facts),
 		screens: declared.screens ?? [],
+		uncatalogued: declared.uncatalogued ?? [],
 		...(declared.url ? { url: declared.url } : {}),
 		mockups,
 	};

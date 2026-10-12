@@ -196,6 +196,14 @@
 			"types": "./dist/lib/looks/lint.d.ts",
 			"default": "./dist/lib/looks/lint.js"
 		},
+		"./looks/components": {
+			"types": "./dist/lib/looks/components.d.ts",
+			"default": "./dist/lib/looks/components.js"
+		},
+		"./looks/stories": {
+			"types": "./dist/lib/looks/stories.d.ts",
+			"default": "./dist/lib/looks/stories.js"
+		},
 		"./looks/approvals": {
 			"types": "./dist/lib/looks/approvals.d.ts",
 			"default": "./dist/lib/looks/approvals.js"

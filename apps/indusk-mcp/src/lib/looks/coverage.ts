@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { extname, relative } from "node:path";
 import { type ApprovalEntry, approvalOf } from "./approvals.js";
+import { catalogGaps, MARKER_PATTERN, MARKUP_EXTENSIONS } from "./components.js";
 import { elementsOf } from "./markup.js";
 import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
 
@@ -30,26 +31,16 @@ export interface Coverage {
 	components: string[];
 	/** `<file>:<line>` of each source `data-component` whose name is not a literal. */
 	unresolved: string[];
+	/** Marked in the app's sources and missing from `components.json`; none when the app has no catalog. */
+	notInCatalog: string[];
+	/** `<component>.<state>` a mockup places by name that the catalog lists no story for, sorted. */
+	noStory: string[];
 }
-
-const MARKUP_EXTENSIONS = new Set([
-	".jsx",
-	".tsx",
-	".js",
-	".ts",
-	".html",
-	".vue",
-	".svelte",
-	".astro",
-	".mdx",
-]);
 
 /** The `data-component` names in a source's markup: `data-component="badge"`, `'badge'` or `{"badge"}`. */
 export function componentsIn(text: string): Set<string> {
 	const names = new Set<string>();
-	for (const m of text.matchAll(/\bdata-component\s*=\s*\{?\s*["'`]([^"'`\s]+)["'`]/g)) {
-		names.add(m[1]);
-	}
+	for (const m of text.matchAll(MARKER_PATTERN)) names.add(m[1] as string);
 	return names;
 }
 
@@ -123,8 +114,11 @@ export async function coverageOf(
 	approvals: readonly ApprovalEntry[],
 ): Promise<Coverage> {
 	const approved = app.mockups.filter((m) => approvalOf(app, m, approvals).state === "approved");
+	const gaps = await catalogGaps(root, app);
 	return {
 		...uncoveredScreens(app, approved),
 		...(await uncoveredComponents(root, app, approved)),
+		notInCatalog: gaps.notInCatalog.map((c) => c.name).sort(),
+		noStory: [...new Set(gaps.noStory.map((r) => `${r.name}.${r.state}`))].sort(),
 	};
 }
