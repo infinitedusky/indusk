@@ -1994,6 +1994,16 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T21:43:22.468Z"
+		},
+		{
+			"kind": "story",
+			"story": "box.default",
+			"snapshotHash": "7402034edd33d3fd922a411764e777346806db20f31f6cd3bc4657f2e925cf2f",
+			"stylesheetHash": "eb9661970939a51d17e5182027d0f7772b41a60fe6328136669d8e50a78b4c57",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T21:43:22.647Z"
 		}
 	]
 }
