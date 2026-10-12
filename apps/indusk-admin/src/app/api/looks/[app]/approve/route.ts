@@ -145,7 +145,9 @@ function requestsOf(body: ApproveBody): Request[] | null {
       ...(m.componentsHash ? { componentsHash: m.componentsHash } : {}),
     },
   }));
-  return [...mockupRequests, ...storyRequests];
+  // Stories first: a mockup is approved only once each story it composes is,
+  // so a group holding both records the stories and then the mockups (A33).
+  return [...storyRequests, ...mockupRequests];
 }
 
 export async function POST(
