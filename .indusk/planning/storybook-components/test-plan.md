@@ -1,7 +1,7 @@
 ---
 title: "Storybook components — Test Plan"
 date: 2026-10-12
-status: draft
+status: accepted
 ---
 
 # Storybook components — Test Plan
