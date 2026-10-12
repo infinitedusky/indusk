@@ -7,17 +7,8 @@ workflow: feature
 
 # Looks check speed — Brief
 
-Found at storybook-components' live check (Build Phase 8, 2026-10-12).
-`indusk looks check` opens every approved look at every reference device in
-both colour schemes, each in a fresh browser context: 354 page loads for the
-admin today. Against `next dev` on a loaded machine a run took about six
-minutes and a single 30-second timeout threw the whole run away; runs also
-disagreed, because a story was measured before it had drawn. storybook-components
-fixed what was a defect (stories eight at a time, a timed-out look reported
-unchecked rather than ending the run, a story measured once drawn: 162s
-against a production build). What is left is design: the cost grows with
-every look × device × scheme, so an app with 60 components in 4 states is
-about 1,440 loads, about eleven minutes as built.
+Why, and what storybook-components already fixed, are in
+[research.md](research.md).
 
 ## Expectations
 
@@ -54,12 +45,6 @@ about 1,440 loads, about eleven minutes as built.
 
 - Pixel comparison: [mockup-matching](../mockup-matching/brief.md).
 - Making the admin's own pages render faster under `next dev`.
-
-## Open questions
-
-- Does resizing a page in place give the same computed values as a fresh load at that size? It does for media queries; a component that measures itself on mount (`LookFrame.tsx`) may not. The research step checks this before the ADR.
-- Where is the last result kept: next to the approvals in `.indusk/mockups/<app>/` (committed, shared), or in machine state (`~/.indusk/projects/…`)? A committed result lets a reviewer trust it without rerunning; a stale one is the risk.
-- How many looks per production pass, and how often: a cost the person deploying sets, with a default.
 
 ## Depends On
 
