@@ -557,7 +557,7 @@ Evidence found while hunting:
 
 #### Build Phase 9 Document
 
-- [ ] `apps/docs/src/guide/components.md` and `apps/docs/src/reference/admin-ui/overview.md`: what a story's approval binds, a story's Unapprove reopening its mockups, group Approve's order, and the story frame drawn from the checkout's snapshot
+- [x] `apps/docs/src/guide/components.md` and `apps/docs/src/reference/admin-ui/overview.md`: what a story's approval binds, a story's Unapprove reopening its mockups, group Approve's order, and the story frame drawn from the checkout's snapshot
 
 #### Build Phase 9 Falsification summary
 
