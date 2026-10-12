@@ -176,6 +176,12 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `uncatalogued` until it has, and the list only shrinks. Guarded by
   `looks-components-cli.test.ts` (A1, A3, A14) and `component-reuse-audit.test.ts`.
   — see `/decisions/storybook-components`
+- **A component a mockup names is one file, with a story per state, and
+  presentational**: its root carries `data-component="<name>"`, a second
+  marker anywhere is a finding, data arrives as props. Nineteen in
+  `components/ui/`, listed in `/reference/admin-ui/component-conventions`.
+  Guarded by `looks-components-cli.test.ts` (A1, A3) and
+  `looks-admin-components.test.ts` (A2).
 - **Stories are shown from the served `/storybook`, never from a Storybook dev
   server, and approved by their snapshot hash**: the Looks page frames
   `/storybook/iframe.html?id=<id>` (the id is in `components.json`) at the

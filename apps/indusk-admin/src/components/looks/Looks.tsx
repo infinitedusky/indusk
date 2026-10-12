@@ -11,7 +11,9 @@ import { ApproveSelected } from "./ApproveSelected";
 import { hrefOf, type Show } from "./address";
 import { Cascade } from "./Cascade";
 import { LookFrame } from "./LookFrame";
+import { LooksToolbar } from "./LooksToolbar";
 import { Components, type OpenStory, OpenStoryView } from "./Stories";
+import { proposedIn, Uncovered } from "./Uncovered";
 
 /**
  * The Looks page's body (ui-promises ADR decisions 2, 3, 5): each app's
@@ -42,59 +44,6 @@ function lookState(apps: AppLooksRead[]): string | undefined {
       0,
   );
   return uncovered ? "looks.uncovered" : "looks.default";
-}
-
-const SHOWS: Array<[Show, string]> = [
-  ["all", "All"],
-  ["mockups", "Mockups"],
-  ["components", "Components"],
-];
-
-function Choice({
-  label,
-  testId,
-  hint,
-  children,
-}: {
-  label: string;
-  testId: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <nav
-      className="flex flex-wrap items-center gap-2 text-sm text-ink-soft"
-      data-testid={testId}
-      aria-label={label}
-      title={hint}
-    >
-      <span>{label}</span>
-      {children}
-    </nav>
-  );
-}
-
-function ChoiceLink({
-  href,
-  current,
-  title,
-  children,
-}: {
-  href: string;
-  current: boolean;
-  title?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      aria-current={current ? "page" : undefined}
-      title={title}
-      className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
-    >
-      {children}
-    </a>
-  );
 }
 
 export interface OpenMockup {
@@ -137,50 +86,13 @@ export function LooksBody({
       data-look-state={lookState(apps)}
     >
       <h1 className="text-xl font-semibold text-ink">Looks</h1>
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-        <Choice label="Show" testId="looks-show">
-          {SHOWS.map(([value, text]) => (
-            <ChoiceLink
-              key={value}
-              href={hrefOf(path, { show: value, view, checkout })}
-              current={show === value}
-            >
-              {text}
-            </ChoiceLink>
-          ))}
-        </Choice>
-        <Choice label="View" testId="looks-views">
-          {(["list", "cascade"] as const).map((v) => (
-            <ChoiceLink
-              key={v}
-              href={hrefOf(path, { show, view: v, checkout })}
-              current={view === v}
-            >
-              {v}
-            </ChoiceLink>
-          ))}
-        </Choice>
-        {checkouts.length > 1 ? (
-          <Choice
-            label="Read from"
-            testId="looks-checkouts"
-            hint="Which checkout's files are read: the project's own, or the worktree of a plan whose looks are being worked there. Not a filter — the same mockups and components are read from each."
-          >
-            {checkouts.map((c) => (
-              <ChoiceLink
-                key={c.plan ?? "own"}
-                href={hrefOf(path, { show, view, checkout: c.plan })}
-                current={c.plan === checkout}
-                title={c.branch ?? undefined}
-              >
-                {c.plan
-                  ? `plan ${c.plan}`
-                  : `project checkout${c.branch ? ` (${c.branch})` : ""}`}
-              </ChoiceLink>
-            ))}
-          </Choice>
-        ) : null}
-      </div>
+      <LooksToolbar
+        path={path}
+        show={show}
+        view={view}
+        checkout={checkout}
+        checkouts={checkouts}
+      />
       {apps.length === 0 ? (
         <p className="text-sm text-ink-soft" data-testid="looks-empty">
           No looks yet. An app&apos;s look lives in{" "}
@@ -482,63 +394,5 @@ function MockupRow({
         ))}
       </span>
     </li>
-  );
-}
-
-/** How many of the drawn looks await approval: the ones that carry a checkbox. */
-function proposedIn(app: AppLooks, show: Show): number {
-  const mockups =
-    show === "components"
-      ? 0
-      : app.mockups.filter((m) => m.approval === "proposed").length;
-  const stories =
-    show === "mockups"
-      ? 0
-      : app.stories.filter((s) => s.approval === "proposed").length;
-  return mockups + stories;
-}
-
-function Uncovered({ app, show }: { app: AppLooks; show: Show }) {
-  const all = [
-    ...app.uncovered.screens.map((name) => ({ kind: "screen", name })),
-    ...app.uncovered.states.map((name) => ({ kind: "state", name })),
-    ...app.uncovered.components.map((name) => ({ kind: "component", name })),
-    // A story no person has approved as its snapshot is now, and a state a
-    // mockup shows that has no story at all.
-    ...app.uncovered.stories.map((name) => ({ kind: "story", name })),
-    ...app.uncovered.noStory.map((name) => ({ kind: "no story", name })),
-    // A component named at run time, by where the source names it.
-    ...app.uncovered.unresolved.map((name) => ({ kind: "unresolved", name })),
-  ];
-  // Screens and their states are the mockups' side; the rest are the components'.
-  const ofMockups = (kind: string) => kind === "screen" || kind === "state";
-  const items = all.filter(
-    (i) =>
-      show === "all" ||
-      (show === "mockups" ? ofMockups(i.kind) : !ofMockups(i.kind)),
-  );
-  return (
-    <section className="flex flex-col gap-1" data-testid="uncovered">
-      <h3 className="text-sm font-semibold text-ink-soft">Uncovered</h3>
-      {items.length === 0 ? (
-        <p className="text-sm text-ink-soft">
-          Every declared screen, state and component has an approved mockup.
-        </p>
-      ) : (
-        <ul className="flex flex-wrap gap-2 text-sm">
-          {items.map((i) => (
-            <li
-              key={`${i.kind}:${i.name}`}
-              data-testid="uncovered-item"
-              data-kind={i.kind}
-              data-name={i.name}
-              className="rounded-md border border-dashed border-warn bg-warn-wash px-tight text-warn"
-            >
-              {i.kind} {i.name}
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
   );
 }

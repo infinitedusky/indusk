@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useFittedFrame } from "./useFittedFrame";
 
 /**
  * A look drawn at its own size, with the reference devices to choose from
@@ -16,28 +17,6 @@ export interface FrameDevice {
   name: string;
   width: number;
   height: number;
-}
-
-/** The size a story's component takes at the frame's current width, padding included. */
-function measure(frame: HTMLIFrameElement): {
-  width: number;
-  height: number;
-} | null {
-  const doc = frame.contentDocument;
-  const el = doc?.querySelector("#storybook-root")?.firstElementChild;
-  // `instanceof` would compare against this window's classes, not the frame's.
-  if (!doc || !el) return null;
-  // A component that fills its viewport (`min-height: 100vh`) is read at a
-  // one-pixel viewport, synchronously and before any paint, so its own content
-  // sets the height rather than the frame's last one.
-  const previous = frame.style.height;
-  frame.style.height = "1px";
-  const r = el.getBoundingClientRect();
-  frame.style.height = previous;
-  return {
-    width: Math.max(1, Math.ceil(r.right + r.left)),
-    height: Math.max(1, Math.ceil(r.bottom + r.top)),
-  };
 }
 
 /** `match` leaves the scheme to the system, as the admin's own screens do. */
@@ -75,77 +54,16 @@ export function LookFrame({
   const ref = useRef<HTMLIFrameElement>(null);
   const [device, setDevice] = useState<string | null>(initialDevice);
   const [theme, setTheme] = useState<Theme>("match");
-  const [fitted, setFitted] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
   const fits = src !== undefined;
   const chosen = devices.find((d) => d.name === device) ?? null;
   const widest = Math.max(1, ...devices.map((d) => d.width));
 
-  const fit = useCallback(() => {
-    if (ref.current) setFitted(measure(ref.current));
-  }, []);
-
-  // A story is measured when it loads and whenever its component changes size
-  // (fonts and images settle after the load). A component that sizes itself by
-  // the frame's own height would never settle, so the watch ends after a few
-  // changes.
-  const watching = useRef<ResizeObserver | null>(null);
-  const watch = useCallback(() => {
-    watching.current?.disconnect();
-    const frame = ref.current;
-    const el =
-      frame?.contentDocument?.querySelector(
-        "#storybook-root",
-      )?.firstElementChild;
-    if (!frame || !el) return;
-    let changes = 0;
-    const observer = new ResizeObserver(() => {
-      changes += 1;
-      if (changes > 6) {
-        observer.disconnect();
-        return;
-      }
-      fit();
-    });
-    observer.observe(el);
-    watching.current = observer;
-  }, [fit]);
-
-  // Storybook draws the story after the frame's load, so the component is
-  // waited for, briefly, before it is measured and watched. The frame's load
-  // can come before this page hydrates, so the wait also starts on mount.
-  const waiting = useRef<ReturnType<typeof setInterval> | null>(null);
-  const start = useCallback(() => {
-    if (waiting.current) clearInterval(waiting.current);
-    let tries = 0;
-    waiting.current = setInterval(() => {
-      tries += 1;
-      const drawn =
-        ref.current?.contentDocument?.querySelector(
-          "#storybook-root",
-        )?.firstElementChild;
-      if (drawn || tries > 100) {
-        if (waiting.current) clearInterval(waiting.current);
-        fit();
-        watch();
-      }
-    }, 50);
-  }, [fit, watch]);
-
-  useEffect(() => {
-    if (fits) start();
-    return () => {
-      watching.current?.disconnect();
-      if (waiting.current) clearInterval(waiting.current);
-    };
-  }, [fits, start]);
+  const { fitted, start, refit, forget } = useFittedFrame(ref, fits);
 
   const choose = (name: string | null) => {
     setDevice(name);
-    setFitted(null);
-    if (fits) setTimeout(fit, 100);
+    forget();
+    if (fits) setTimeout(refit, 100);
   };
 
   // The width a story is drawn at: the device's, or — until it is measured —
@@ -200,7 +118,7 @@ export function LookFrame({
             data-theme-choice={value}
             aria-pressed={theme === value}
             onClick={() => {
-              setFitted(null);
+              forget();
               setTheme(value);
             }}
             className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[pressed=true]:bg-dusk-wash"

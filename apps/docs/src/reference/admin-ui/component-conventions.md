@@ -22,6 +22,43 @@ The `Badge` variant set deliberately mirrors the trajectory state lifecycle from
 
 The string→variant maps themselves are shared, not per-component: `src/components/ui/badge-variant.ts` exports `statusToBadge` (free-form frontmatter status → variant) and `stateToBadge` (trajectory state → variant). A new status convention is mapped in exactly one place — don't re-derive a variant inline.
 
+## The components the mockups name
+
+Every component an approved mockup names is implemented **once**, in one file whose root element carries its `data-component="<name>"` marker, with **a story per state** the mockups show (`*.stories.tsx` beside it). Nineteen exist, each presentational — data arrives as props, nothing is read inside — so a screen composes them and a story renders them the same way.
+
+| Component | File | Stories (states) |
+|-----------|------|------------------|
+| `badge` | `src/components/ui/PlanBadge.tsx` | needs, working, released |
+| `box` | `src/components/ui/Box.tsx` | default |
+| `button` | `src/components/ui/Button.tsx` | default, yes |
+| `chip` | `src/components/ui/Badge.tsx` | passing, blocked, skipped, planned, writable, written, unknown, neutral, declared, proving, enforced, broken, active |
+| `decision-card` | `src/components/ui/DecisionCard.tsx` | ask, working, released, alert |
+| `device-choice` | `src/components/ui/DeviceChoice.tsx` | default |
+| `device-frame` | `src/components/ui/DeviceFrame.tsx` | default |
+| `look-row` | `src/components/ui/LookRow.tsx` | approved, proposed, uncovered |
+| `nav` | `src/components/ui/Nav.tsx` | expanded, collapsed |
+| `plan-row` | `src/components/ui/PlanRow.tsx` | needs, working, released |
+| `promise-row` | `src/components/ui/PromiseRow.tsx` | broken, proving, enforced, declared, empty |
+| `rail-group` | `src/components/ui/RailGroup.tsx` | default, current |
+| `shell` | `src/components/ui/Shell.tsx` | default, collapsed |
+| `stat` | `src/components/ui/Stat.tsx` | default, ok, bad |
+| `step` | `src/components/ui/Step.tsx` | done, working, needs, waiting |
+| `summary-bar` | `src/components/ui/SummaryBar.tsx` | default |
+| `tag` | `src/components/ui/Tag.tsx` | default |
+| `timeline` | `src/components/ui/Timeline.tsx` | default |
+| `view-link` | `src/components/ui/ViewLink.tsx` | default, current |
+
+Two names differ from their files because the file's name was taken first: the mockups' `chip` is `Badge.tsx` (the pill the trajectory states use), and the mockups' `badge` — the plan's lettered badge — is `PlanBadge.tsx`.
+
+A story's name is `<component>.<state>`. The render step (`indusk looks stories admin`) writes each story's snapshot and `.indusk/mockups/admin/components.json`, the catalog an agent reads to find what exists. A story is approved by a person on the Looks page, bound to its snapshot hash; changing a component changes its snapshot, so the story reads **changed** and every mockup that composes it reopens.
+
+### Add a component
+
+1. Create `src/components/ui/<Name>.tsx` with the marker on its root and its data as props; no other file renders that marker (a second marker is a `duplicate component` finding).
+2. Create `<Name>.stories.tsx` with one story per state; use the foundation's tokens, never a raw value (`indusk looks lint admin`).
+3. Run `indusk looks stories admin`, then approve the new stories on the Looks page (**Show: Components**, select all, **Approve**).
+4. Place it in a mockup with `<indusk-component name="<name>" state="<state>">`; the mockup reads proposed until approved again.
+
 ## The discipline
 
 **No inline JSX for primitive concerns.** Anywhere a primitive exists, use it.
