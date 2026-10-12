@@ -14,9 +14,11 @@ import { UnapproveStory } from "./Unapprove";
  * An app's components on the Looks page (storybook-components ADR decisions 3,
  * 5, 6): each component's stories by state — approved, proposed, or changed
  * (approved once, its snapshot differs now) — a link per reference device, and
- * the open story framed from the Storybook the admin itself serves at
- * `/storybook`: nothing runs beside the cockpit. Every fact is the package's
- * (`looks/overview`); this only draws it.
+ * the open story framed from its snapshot as the selected checkout holds it
+ * (`StoryView.document`), the bytes its Approve's hashes were read from: the
+ * admin's own `/storybook` build stays for browsing and for `indusk looks
+ * check` (Build Phase 9, A35). Every fact is the package's (`looks/overview`);
+ * this only draws it.
  *
  * promise: mockups-render-in-the-cockpit
  */
@@ -27,10 +29,6 @@ export interface OpenStory {
   story: string;
   device: string | null;
 }
-
-/** Where a story is served from: the admin's own static Storybook build. */
-export const storyFrameSrc = (id: string): string =>
-  `/storybook/iframe.html?${new URLSearchParams({ id, viewMode: "story" })}`;
 
 /** `changed` is a story approved once whose snapshot has since differed. */
 export const storyLabel = (
@@ -229,15 +227,14 @@ export function OpenStoryView({
           />
         )}
       </div>
-      {story.id ? (
-        <LookFrame
-          testId="story-frame"
-          title={story.name}
-          src={storyFrameSrc(story.id)}
-          devices={app.devices}
-          initialDevice={device?.name ?? null}
-        />
-      ) : null}
+      <LookFrame
+        testId="story-frame"
+        title={story.name}
+        srcDoc={story.document}
+        fitted
+        devices={app.devices}
+        initialDevice={device?.name ?? null}
+      />
     </section>
   );
 }

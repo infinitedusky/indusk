@@ -109,16 +109,15 @@ describe("what is shown: mockups, components, or both", () => {
 });
 
 describe("a story opened", () => {
-  it("is framed from the admin's own /storybook, with Approve while it is proposed", async () => {
+  it("is framed from its snapshot's document (Build Phase 9, A35), with Approve while it is proposed", async () => {
     const html = await looksPage({
       app: "demo",
       story: "badge.broken",
       device: "phone",
     });
     expect(html).toContain('data-testid="story-frame"');
-    expect(html).toContain(
-      'src="/storybook/iframe.html?id=components-badge--broken&amp;viewMode=story"',
-    );
+    expect(html).toContain('data-testid="story-frame" title="badge.broken" srcDoc="');
+    expect(html).not.toContain('src="/storybook/iframe.html');
     expect(html).toContain('width="390"');
     expect(html).toContain('data-testid="approve-story"');
   });

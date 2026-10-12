@@ -141,10 +141,16 @@ describe("A18 — each story opens on the Looks page at its component's size, an
         );
         const frame = page.locator('[data-testid="story-frame"]');
         await frame.waitFor({ timeout: 30_000 });
+        // Build Phase 9 (A35): the frame is the story's snapshot as the
+        // checkout holds it, drawn by the admin itself — not its /storybook build.
         expect(
           await frame.getAttribute("src"),
-          `${story}: the frame is the admin's own /storybook`,
-        ).toMatch(/^\/storybook\/iframe\.html\?id=[^&]+&viewMode=story/);
+          `${story}: the frame loads no Storybook build`,
+        ).toBeNull();
+        expect(
+          await frame.getAttribute("srcdoc"),
+          `${story}: the frame is the snapshot's document`,
+        ).toContain('id="storybook-root"');
         const component = page
           .frameLocator('[data-testid="story-frame"]')
           .locator("#storybook-root > *")

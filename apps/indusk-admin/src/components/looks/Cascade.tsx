@@ -4,7 +4,7 @@ import { stamp } from "@/lib/stamp";
 import { ApproveMockup, ApproveStory } from "./ApproveMockup";
 import { looksListed, type Show } from "./address";
 import { LookFrame } from "./LookFrame";
-import { byComponent, storyFrameSrc, storyLabel } from "./Stories";
+import { byComponent, storyLabel } from "./Stories";
 import { UnapproveMockup, UnapproveStory } from "./Unapprove";
 
 /**
@@ -175,19 +175,14 @@ export function Cascade({
                       />
                     )}
                   </header>
-                  {s.id ? (
-                    <LookFrame
-                      testId="story-frame"
-                      title={s.name}
-                      src={storyFrameSrc(s.id)}
-                      devices={app.devices}
-                      initialDevice={null}
-                    />
-                  ) : (
-                    <p className="text-xs text-warn">
-                      no Storybook id — run indusk looks stories {app.app}
-                    </p>
-                  )}
+                  <LookFrame
+                    testId="story-frame"
+                    title={s.name}
+                    srcDoc={s.document}
+                    fitted
+                    devices={app.devices}
+                    initialDevice={null}
+                  />
                 </article>
               ))}
             </div>

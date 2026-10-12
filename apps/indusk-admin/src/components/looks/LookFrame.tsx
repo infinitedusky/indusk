@@ -11,9 +11,10 @@ const FIT = "Fit";
 /**
  * A look drawn at its own size, with the reference devices to choose from
  * (storybook-components ADR decision 6): the thing a person approves is drawn
- * as it is, not behind a link. A story is served by the admin's own
- * `/storybook`, so its frame can be read and is fitted to the component it
- * holds; a mockup is a sandboxed document whose size is its device's. Choosing
+ * as it is, not behind a link. A story is its snapshot's document, drawn from
+ * the checkout the page reads (Build Phase 9, A35); its frame may be read by
+ * the page (`allow-same-origin`, no scripts) and is fitted to the component it
+ * holds. A mockup is a sandboxed document whose size is its device's. Choosing
  * a device sets the frame's width to the device's and fits the height; "Fit"
  * returns to the component's own size.
  */
@@ -42,15 +43,18 @@ export function LookFrame({
   title,
   src,
   srcDoc,
+  fitted: fitsDoc = false,
   devices,
   initialDevice,
   testId,
 }: {
   title: string;
-  /** A story's address under the admin's own origin; fitted to its component. */
+  /** An address under the admin's own origin; fitted to its component. */
   src?: string;
-  /** A mockup's document; drawn at a device's size, sandboxed. */
+  /** A look's document: a mockup's, drawn at a device's size; or a story's, when `fitted`. */
   srcDoc?: string;
+  /** `srcDoc` is a story's: fitted to the component it holds, readable by the page, never scripted. */
+  fitted?: boolean;
   devices: FrameDevice[];
   /** The device it opens at; `null` is the component's own size (stories only). */
   initialDevice: string | null;
@@ -59,7 +63,7 @@ export function LookFrame({
   const ref = useRef<HTMLIFrameElement>(null);
   const [device, setDevice] = useState<string | null>(initialDevice);
   const [theme, setTheme] = useState<Theme>("match");
-  const fits = src !== undefined;
+  const fits = src !== undefined || fitsDoc;
   const chosen = devices.find((d) => d.name === device) ?? null;
   const widest = Math.max(1, ...devices.map((d) => d.width));
 
@@ -134,7 +138,9 @@ export function LookFrame({
           title={title}
           src={src === undefined ? undefined : themedSrc(src, theme)}
           srcDoc={srcDoc === undefined ? undefined : themedDoc(srcDoc, theme)}
-          sandbox={fits ? undefined : ""}
+          sandbox={
+            src !== undefined ? undefined : fits ? "allow-same-origin" : ""
+          }
           width={width}
           height={height}
           onLoad={fits ? start : undefined}
