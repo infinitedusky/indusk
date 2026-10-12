@@ -93,7 +93,8 @@ A person works on one document, the brief — promises, expectations and looks �
 - [x] `apps/indusk-mcp/src/__tests__/fixtures/brief-app/`: a git project with an app's `.indusk/mockups/demo/` (`screens.json` with `sources`, one approved and one proposed mockup), a plan folder whose impl names a file under those sources in `Files Affected`, and briefs in the three shapes (looks listed, `None — {reason}`, no section)
 - [x] Author A1, A3, A4, A8, A9, A11, A12 and A18 against the fixture and the existing components, each failing on its own assertion (a refusal that is not given, a field that is not there, a form that asks for a name)
 - [x] Author A2, A6, A14, A22 and A23, which pass today and are the regression guards
-- [ ] Confirm each red fails on its assertion rather than on a missing import
+- [x] Confirm each red fails on its assertion rather than on a missing import
+  - Result: each red read, none a load error. A1 and A8: `plans approve` exits 0 where the test expects a refusal (`expected +0 not to be +0`). A3: `parseBriefContract` returns no `looks` property (`expected {...} to have property "looks"`). A4: the approved entry has no `plan` (`expected undefined to be 'x'`). A9: the impl has no `approved_brief` (`expected undefined to be '<sha256>'`). A11 (three parts) and A12: `check-gates.js` exits 0 where the test expects 2 (`expected +0 to be 2`). A18: the entry still renders the name input (`expected [ <input> ] to have a length of +0 but got 1`). Guards A2, A6, A14, A22 and A23 pass. Subjects are reached over the CLI, a spawned hook, the filesystem and symbols that exist (`parseBriefContract`, `approve`, `readApp`); no import is of a file this plan creates.
 
 #### Deferred to Build Phase 2
 
