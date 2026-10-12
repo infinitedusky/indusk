@@ -450,7 +450,14 @@ export async function checkApp(
 			for (const device of app.devices) {
 				for (const scheme of schemesOf(app)) {
 					const url = storyUrl(base, story.id, scheme);
-					const seen = await measure(browser, device, scheme, url, storyScript, "body.sb-show-main");
+					const seen = await measure(
+						browser,
+						device,
+						scheme,
+						url,
+						storyScript,
+						"body.sb-show-main",
+					);
 					const judged = judgeStory({
 						app: app.app,
 						story,
