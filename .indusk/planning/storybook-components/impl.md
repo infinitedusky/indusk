@@ -49,7 +49,7 @@ The admin is built from components defined once, each with an approved story per
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | A component name marked on two different implementations in the app's source is refused, naming both files | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
-| A2 | Every component the admin's approved mockups name has an implementation in the admin; one with none is reported by name | Test Phase 1 | Build Phase 5 | written | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts |
+| A2 | Every component the admin's approved mockups name has an implementation in the admin; one with none is reported by name | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts |
 | A3 | A screen that writes out a component's marked element outside the component's own file is refused, naming the file and line | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
 | A4 | A component state a mockup shows with no story for it is reported, naming the component and the state | Test Phase 1 | Build Phase 2 | passing | unit | promise: every-component-state-has-a-story | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
 | A5 | Every story in the admin renders its component in a real browser without an error | Test Phase 1 | Build Phase 1 | passing | contract | promise: every-component-state-has-a-story | apps/indusk-admin/src/__tests__/storybook.contract.test.ts |
@@ -307,21 +307,26 @@ The admin is built from components defined once, each with an approved story per
   - Note: `Looks.tsx` `AppSection` draws `looks-list` and `looks-stage`; the named classes are in `globals.css` (`looks-page`, `looks-split`, the sheet's handle is a checkbox and label, so no client script). `looks.default` and `looks.uncovered` still show the old single-column layout — Build Phase 6 must redraw them to this layout before Sandy re-approves, and Build Phase 7 matches the page to them. Run `pnpm exec next dev` from a cleared `.next/dev` after editing `globals.css` if a served stylesheet looks stale.
 - [x] A story is framed at its component's own size, a reference device chosen on request; the Looks page has a list-and-stage view and a cascade view (`?view=cascade`) drawing every mockup and story one after another, each with its device choice and Approve (Sandy's direction while approving)
   - Note: A18's `Asserts` changed at Sandy's direction — it asserted the frame was each device's full size; it now asserts the frame is its component's size and takes a device's width when chosen (`LookFrame.tsx`, a client component that measures the same-origin story frame; a viewport-filling component such as the shell is read at a one-pixel viewport). ADR decision 6 amended with the reason. `indusk looks check` still opens each approved story at each device; whether it should check one size for a component that does not depend on width is left for Build Phase 8's live check. The cascade is `Cascade.tsx`; no new row — covered by `looks-components.test.tsx`'s view cases only if added later, so A18 is the guard for the frame.
-- [ ] **Pause for a person**: Sandy approves each component's stories on the Looks page (Deferred Verification U2)
+- [x] **Pause for a person**: Sandy approves each component's stories on the Looks page (Deferred Verification U2)
+  - Result: Sandy approved all 54 stories on the Looks page (2026-10-12, group approval of stories); `looks status admin` reads every one approved.
   - Note (checks that need no approval, run before the pause): A2 passes (`looks-admin-components.test.ts`, with `looks-admin-foundation` A24 and `looks-components-cli` — 3 files, 14 tests); A5, A6, A13 pass in the system tier (3 tests); A7, A18 (54 stories x 3 devices) and A19 pass in the system tier; the admin's everyday suite passes (80 files, 534 tests, including A22 the phone nav and A23 the dashboard); `indusk looks lint admin` reads no raw value; tsc clean and biome clean on the changed admin files. `indusk looks status admin` reads the 54 stories `proposed`, never approved — Sandy's to approve on the Looks page (an agent never writes `approved.json`); `indusk looks coverage admin` lists them uncovered until then.
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-admin/src/components/looks/Looks.tsx`) — grew to 544 lines holding the page body, the three-choice toolbar and the Uncovered list beside the mockup rows and open-mockup view; the toolbar (`Choice`, `ChoiceLink`, the Show/View/Read-from links) becomes `LooksToolbar.tsx` and the Uncovered list with `proposedIn` becomes `Uncovered.tsx`. Rule: does this unit have one reason to change — each is a second job with its own reason (a new choice; a new uncovered kind)
+- [x] Shape (`apps/indusk-admin/src/components/looks/LookFrame.tsx`) — the frame component also held the measuring, the wait for Storybook to draw, and the size watcher; those become `useFittedFrame.ts`, a hook with a seam a test can reach. Rule: should this inline block have been a named function or module
+- [x] Shape — reviewed the nineteen component files and their stories, left as-is: each is one marked root with props, presentational, and a story per state; the shared class strings repeated across `PlanRow`, `Step` and `PromiseRow` are cross-file and are `/cleanup`'s to count
 
 #### Build Phase 5 Verification
 
-- [ ] A2 passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/looks-admin-components.test.ts`); A5 and A13 still pass with nineteen components (`cd apps/indusk-admin && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/storybook.contract.test.ts`); `indusk looks status admin` lists every story approved; tsc and biome clean on changed files
+- [x] A2 passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/looks-admin-components.test.ts`); A5 and A13 still pass with nineteen components (`cd apps/indusk-admin && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/storybook.contract.test.ts`); `indusk looks status admin` lists every story approved; tsc and biome clean on changed files
+  - Result: first attempt green — `pnpm build` clean; A2 1 test; A5, A6, A13 (`storybook.contract.test.ts`) and A7, A18, A19 in the admin's system tier after the last component change; `indusk looks status admin` lists all 54 stories approved and the 11 mockups approved; `looks coverage admin` every part covered; `looks lint admin` no raw value; tsc clean in both packages; biome clean on every file this phase changed (its remaining findings are `LiveRefresh.tsx`'s, untouched). The admin's everyday suite: 80 files, 539 tests.
 
 #### Build Phase 5 Context
 
-- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md` is the area rule, so `apps/indusk-admin/CLAUDE.md` points at it: one file per component, a story per state, presentational — guarded by A1, A3 and A2
+- [x] `apps/docs/src/reference/admin-ui/component-conventions.md` is the area rule, so `apps/indusk-admin/CLAUDE.md` points at it: one file per component, a story per state, presentational — guarded by A1, A3 and A2
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md`: the nineteen components, one file each, stories, how to add one
+- [x] `apps/docs/src/reference/admin-ui/component-conventions.md`: the nineteen components, one file each, stories, how to add one
 
 ### Build Phase 6: The mockups composed of the components
 
