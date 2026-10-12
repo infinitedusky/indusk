@@ -360,6 +360,17 @@ the page and first asks it two questions:
   value. A page that pins itself light (`data-theme="light"`) when opened dark
   is `unchecked … @ phone/dark — the page did not render the dark scheme`.
 
+**Stories.** Each approved story of `components.json` (or one held to its last
+approved version on an unchanged foundation) is opened too, in the Storybook
+the app's server serves at `/storybook`:
+`<url>/storybook/iframe.html?id=<id>&viewMode=story&globals=theme:<scheme>`,
+at each device and scheme. The story's id is the catalog's; a story with none is
+`unchecked story <name> — no Storybook id in the catalog`, and an unapproved one
+`unchecked story <name> — proposed, never approved`. A story's page reports no
+state — the URL names it — so only the scheme is asked; the values are read from
+the story's root (`#storybook-root`), not the frame around it. Reported
+`held|broken story <component>.<state> @ <device>`, as a screen is.
+
 Then it decides two things:
 
 | Check | Held when | A broken line names |

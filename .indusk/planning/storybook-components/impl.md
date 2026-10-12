@@ -286,7 +286,7 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: components on the Looks page, story approval, a changed component's reopened mockups
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: components on the Looks page, story approval, a changed component's reopened mockups
 
 ### Build Phase 5: Every component, one file each, with its stories
 
