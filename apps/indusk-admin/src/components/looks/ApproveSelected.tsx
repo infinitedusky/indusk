@@ -28,15 +28,17 @@ function boxesOf(app: string): HTMLInputElement[] {
   );
 }
 
-/** A mockup as the page drew it: its name and the hash its checkbox carries. */
+/** A mockup as the page drew it: its name and the hashes its checkbox carries. */
 interface Shown {
   mockup: string;
   mockupHash: string;
+  componentsHash: string;
 }
 
 const shownBy = (box: HTMLInputElement): Shown => ({
   mockup: box.value,
   mockupHash: box.dataset.mockupHash ?? "",
+  componentsHash: box.dataset.componentsHash ?? "",
 });
 
 interface GroupResult {

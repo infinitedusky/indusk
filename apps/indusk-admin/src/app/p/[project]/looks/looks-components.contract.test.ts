@@ -1,5 +1,7 @@
 // promise: a-mockup-composes-approved-components — A7.
 // promise: mockups-render-in-the-cockpit — A18.
+
+import { spawnSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
@@ -8,7 +10,6 @@ import {
   realpathSync,
   rmSync,
 } from "node:fs";
-import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { type Browser, chromium, type Page } from "playwright";
@@ -82,10 +83,7 @@ async function goto(page: Page, project: string, query: string) {
 describe("A7 — a mockup that names a component shows its approved snapshot", () => {
   it("A7 home.default shows the badge.ok snapshot where it names the badge", async () => {
     const snapshot = readFileSync(
-      join(
-        FIXTURE,
-        ".indusk/mockups/demo/components/badge.ok.html",
-      ),
+      join(FIXTURE, ".indusk/mockups/demo/components/badge.ok.html"),
       "utf-8",
     );
     const text = snapshot.replace(/<[^>]*>/g, "").trim();
@@ -120,7 +118,10 @@ describe("A18 — each story opens on the Looks page at each device, served by t
       readFileSync(join(REPO, ".indusk/mockups/admin/devices.json"), "utf-8"),
     ).devices as Array<{ name: string; width: number; height: number }>;
     const catalog = JSON.parse(
-      readFileSync(join(REPO, ".indusk/mockups/admin/components.json"), "utf-8"),
+      readFileSync(
+        join(REPO, ".indusk/mockups/admin/components.json"),
+        "utf-8",
+      ),
     ) as Catalog;
     const stories = catalog.components.flatMap((c) =>
       c.states.map((s) => `${c.name}.${s.name}`),

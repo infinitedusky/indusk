@@ -1,4 +1,8 @@
-import { approve, approver } from "@infinitedusky/indusk-mcp/looks/approvals";
+import {
+  approve,
+  approver,
+  type Seen,
+} from "@infinitedusky/indusk-mcp/looks/approvals";
 import { looksCheckouts } from "@infinitedusky/indusk-mcp/looks/overview";
 import type { NextRequest } from "next/server";
 import { getProjectPath } from "@/lib/registry-client";
@@ -9,8 +13,10 @@ export const dynamic = "force-dynamic";
 
 /**
  * Approve a mockup (ui-promises ADR decision 3): `{ project, mockup,
- * mockupHash, foundationHash, checkout }`, or a group's `mockups: [{ mockup,
- * mockupHash }]`. The package's `approve` records it as the
+ * mockupHash, componentsHash?, foundationHash, checkout }`, or a group's
+ * `mockups: [{ mockup, mockupHash, componentsHash? }]`; or a story
+ * (storybook-components ADR decision 5): `{ project, kind: "story", story,
+ * snapshotHash, foundationHash, checkout }`. The package's `approve` records it as the
  * person this machine's git names, bound to the mockup's and the foundation's
  * hashes as the checkout holds them, and commits the record on that checkout's
  * branch. `checkout` is the plan whose worktree the page showed, or null for
@@ -21,6 +27,9 @@ export const dynamic = "force-dynamic";
  * `mockupHash` is the mockup the page showed, each one in a group: a mockup
  * changed since is refused naming both hashes, and one sent without its hash
  * is refused outright — an approval binds what the person looked at.
+ * `componentsHash` is the snapshots the mockup composed as the page showed
+ * them, `snapshotHash` the story's snapshot: each refused when the checkout
+ * now holds another, and a story sent without its hash is refused outright.
  *
  * promise: a-mockup-is-approved-by-a-person
  */
@@ -44,6 +53,13 @@ function fromTheBrowser(request: NextRequest): Response | null {
 interface Shown {
   mockup: string;
   mockupHash: string;
+  componentsHash?: string;
+}
+
+/** One thing the page showed, as `approve` takes it: its name and what was seen. */
+interface Request {
+  name: string;
+  seen: Seen;
 }
 
 const isShown = (m: unknown): m is Shown =>
@@ -68,25 +84,47 @@ export async function POST(
     mockup?: string;
     /** The hash of the mockup the page showed (A30). */
     mockupHash?: string;
+    /** The snapshots the mockup composed, as the page showed them. */
+    componentsHash?: string;
     /** A group approval: each mockup with the hash the page showed, approved on its own, in order. */
-    mockups?: Array<{ mockup?: string; mockupHash?: string }>;
+    mockups?: Array<{
+      mockup?: string;
+      mockupHash?: string;
+      componentsHash?: string;
+    }>;
+    /** `story`: a component's story, approved by the snapshot hash the page showed. */
+    kind?: string;
+    story?: string;
+    snapshotHash?: string;
     foundationHash?: string;
     checkout?: string | null;
   } | null;
-  const shown = Array.isArray(body?.mockups)
-    ? body.mockups
-    : body?.mockup
-      ? [{ mockup: body.mockup, mockupHash: body.mockupHash }]
-      : [];
+  const isStory = body?.kind === "story";
+  const shown = isStory
+    ? []
+    : Array.isArray(body?.mockups)
+      ? body.mockups
+      : body?.mockup
+        ? [
+            {
+              mockup: body.mockup,
+              mockupHash: body.mockupHash,
+              componentsHash: body.componentsHash,
+            },
+          ]
+        : [];
   if (
     !body?.project ||
     !body.foundationHash ||
-    shown.length === 0 ||
-    shown.some((m) => !isShown(m))
+    (isStory
+      ? !body.story || !body.snapshotHash
+      : shown.length === 0 || shown.some((m) => !isShown(m)))
   )
     return refuse(
       400,
-      "an approval needs the project, each mockup with the hash it was shown at, and the foundation it was shown on",
+      isStory
+        ? "a story's approval needs the project, the story, the snapshot hash it was shown at, and the foundation it was shown on"
+        : "an approval needs the project, each mockup with the hash it was shown at, and the foundation it was shown on",
     );
   const root = getProjectPath(body.project);
   if (!root) return refuse(404, `no project named ${body.project}`);
@@ -99,14 +137,30 @@ export async function POST(
       `plan ${JSON.stringify(body.checkout)} has no worktree here that holds mockups`,
     );
   const by = await approver(root);
+  const requests: Request[] = isStory
+    ? [
+        {
+          name: body.story as string,
+          seen: {
+            kind: "story",
+            snapshotHash: body.snapshotHash as string,
+            foundationHash: body.foundationHash,
+          },
+        },
+      ]
+    : (shown as Shown[]).map((m) => ({
+        name: m.mockup,
+        seen: {
+          foundationHash: body.foundationHash,
+          mockupHash: m.mockupHash,
+          ...(m.componentsHash ? { componentsHash: m.componentsHash } : {}),
+        },
+      }));
   const results = [];
-  for (const { mockup, mockupHash } of shown as Shown[]) {
+  for (const { name, seen } of requests) {
     results.push({
-      mockup,
-      ...(await approve(checkout.root, app, mockup, by, {
-        foundationHash: body.foundationHash,
-        mockupHash,
-      })),
+      mockup: name,
+      ...(await approve(checkout.root, app, name, by, seen)),
     });
   }
   if (!body.mockups) {

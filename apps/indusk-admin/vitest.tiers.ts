@@ -60,6 +60,7 @@ export const SYSTEM_TIER_ENV = "INDUSK_ADMIN_SYSTEM_TIER";
 export const NODE_PAGES = [
   "src/app/p/[project]/looks/looks.test.tsx",
   "src/app/p/[project]/looks/looks-approve-binding.test.tsx",
+  "src/app/p/[project]/looks/looks-components.test.tsx",
 ];
 
 /**

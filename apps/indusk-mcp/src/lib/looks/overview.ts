@@ -2,7 +2,15 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { gitCommonDirOf } from "../worktree/layout.js";
 import { readRecord } from "../worktree/plan-worktree-record.js";
-import { type ApprovalEntry, approvalOf, readApprovals } from "./approvals.js";
+import {
+	type ApprovalEntry,
+	approvalOf,
+	readApprovals,
+	readStoryApprovals,
+	type StoryApprovalEntry,
+	storyApprovalOf,
+} from "./approvals.js";
+import { readCatalog } from "./components.js";
 import { type Coverage, coverageOf } from "./coverage.js";
 import { generateCss } from "./foundation.js";
 import { type Device, MOCKUPS_DIR, type Mockup, readApp } from "./mockups.js";
@@ -27,8 +35,32 @@ export interface MockupView {
 	entry: ApprovalEntry | null;
 	/** sha256 of the mockup's bytes as they are now. */
 	hash: string;
+	/** `componentsHashOf` the snapshots it composes: what a mockup's Approve sends back with `hash`. */
+	componentsHash: string;
+	/** The components whose snapshots changed since the mockup was approved; empty unless it reads proposed for that reason. */
+	componentsChanged: string[];
 	/** The mockup as a standalone page, its tokens stylesheet replaced by the foundation's CSS inline. */
 	document: string;
+}
+
+/**
+ * One story of the app's components (storybook-components ADR decisions 3, 5,
+ * 6): its snapshot's hash, whether a person has approved it as it is, and the
+ * Storybook id the cockpit frames it from. A story `proposed` with an `entry`
+ * is a changed one: approved once, its snapshot differs now.
+ */
+export interface StoryView {
+	/** `badge.ok` — the snapshot's name. */
+	name: string;
+	component: string;
+	state: string;
+	/** The Storybook story id; null when the catalog lists none (render it again). */
+	id: string | null;
+	approval: "approved" | "proposed";
+	/** The entry in force when approved; the last one when proposed; null when never approved. */
+	entry: StoryApprovalEntry | null;
+	/** sha256 of the snapshot as it is now; a story's Approve sends back the one the person saw. */
+	hash: string;
 }
 
 export interface AppLooks {
@@ -37,6 +69,8 @@ export interface AppLooks {
 	/** sha256 of the foundation as it is now; Approve sends back the one the person saw. */
 	foundationHash: string;
 	mockups: MockupView[];
+	/** Every story with a snapshot, by name. */
+	stories: StoryView[];
 	uncovered: Coverage;
 }
 
@@ -82,8 +116,32 @@ function viewOf(
 		approval: approval.state,
 		entry: approval.state === "approved" ? approval.entry : approval.reference,
 		hash: mockup.hash,
+		componentsHash: mockup.componentsHash,
+		componentsChanged: approval.state === "proposed" ? (approval.componentsChanged ?? []) : [],
 		document: mockupDocument(mockup.html, css),
 	};
+}
+
+function storiesOf(
+	app: Awaited<ReturnType<typeof readApp>>,
+	approvals: StoryApprovalEntry[],
+): StoryView[] {
+	const ids = new Map<string, string>();
+	for (const c of readCatalog(app)?.components ?? []) {
+		for (const s of c.states) if (s.id) ids.set(`${c.name}.${s.name}`, s.id);
+	}
+	return app.stories.map((story) => {
+		const approval = storyApprovalOf(app, story, approvals);
+		return {
+			name: story.name,
+			component: story.component,
+			state: story.state,
+			id: ids.get(story.name) ?? null,
+			approval: approval.state,
+			entry: approval.state === "approved" ? approval.entry : approval.reference,
+			hash: story.hash,
+		};
+	});
 }
 
 /** One app's looks; an app that cannot be read is its problem, named, never left out. */
@@ -97,6 +155,7 @@ export async function readAppLooks(root: string, appName: string): Promise<AppLo
 			devices: app.devices,
 			foundationHash: app.foundation.hash,
 			mockups: app.mockups.map((m) => viewOf(app, m, approvals, css)),
+			stories: storiesOf(app, readStoryApprovals(app)),
 			uncovered: await coverageOf(root, app, approvals),
 		};
 	} catch (err) {

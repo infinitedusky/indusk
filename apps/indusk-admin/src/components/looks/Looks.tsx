@@ -8,6 +8,7 @@ import { APPROVAL_STYLE } from "@/components/bars/labels";
 import { stamp } from "@/lib/stamp";
 import { ApproveMockup } from "./ApproveMockup";
 import { ApproveSelected } from "./ApproveSelected";
+import { Components, type OpenStory, OpenStoryView } from "./Stories";
 
 /**
  * The Looks page's body (ui-promises ADR decisions 2, 3, 5): each app's
@@ -33,6 +34,7 @@ function lookState(apps: AppLooksRead[]): string | undefined {
       a.uncovered.screens.length +
         a.uncovered.states.length +
         a.uncovered.components.length +
+        a.uncovered.stories.length +
         a.uncovered.unresolved.length >
       0,
   );
@@ -50,6 +52,7 @@ export function LooksBody({
   apps,
   path,
   open,
+  openStory = null,
   checkout = null,
   checkouts = [],
 }: {
@@ -58,6 +61,8 @@ export function LooksBody({
   /** The page's own path, for the device links. */
   path: string;
   open: OpenMockup | null;
+  /** The story open in its frame, when one is. */
+  openStory?: OpenStory | null;
   /** The plan whose worktree is read; null for the project's own checkout. */
   checkout?: string | null;
   /** Every checkout that can be read; a switch is shown when there is more than one. */
@@ -117,6 +122,7 @@ export function LooksBody({
             path={path}
             checkout={checkout}
             open={open?.app === app.app ? open : null}
+            openStory={openStory?.app === app.app ? openStory : null}
           />
         ),
       )}
@@ -130,18 +136,26 @@ function AppSection({
   path,
   checkout,
   open,
+  openStory,
 }: {
   project: string;
   app: AppLooks;
   path: string;
   checkout: string | null;
   open: OpenMockup | null;
+  openStory: OpenStory | null;
 }) {
   const opened = open
     ? (app.mockups.find((m) => m.name === open.mockup) ?? null)
     : null;
   const device = open
     ? (app.devices.find((d) => d.name === open.device) ?? null)
+    : null;
+  const story = openStory
+    ? (app.stories.find((s) => s.name === openStory.story) ?? null)
+    : null;
+  const storyDevice = openStory
+    ? (app.devices.find((d) => d.name === openStory.device) ?? null)
     : null;
   return (
     <section
@@ -178,6 +192,25 @@ function AppSection({
           checkout={checkout}
         />
       ) : null}
+      <Components
+        app={app}
+        path={path}
+        checkout={checkout}
+        current={
+          story && storyDevice
+            ? { story: story.name, device: storyDevice.name }
+            : null
+        }
+      />
+      {story && storyDevice ? (
+        <OpenStoryView
+          project={project}
+          app={app}
+          story={story}
+          device={storyDevice}
+          checkout={checkout}
+        />
+      ) : null}
       <Uncovered app={app} />
     </section>
   );
@@ -210,6 +243,7 @@ function OpenMockupView({
             app={app.app}
             mockup={mockup.name}
             mockupHash={mockup.hash}
+            componentsHash={mockup.componentsHash}
             foundationHash={app.foundationHash}
             checkout={checkout}
           />
@@ -266,6 +300,7 @@ function MockupRow({
           value={mockup.name}
           data-select-mockup=""
           data-mockup-hash={mockup.hash}
+          data-components-hash={mockup.componentsHash}
           aria-label={`Select ${mockup.name}`}
         />
       ) : null}
@@ -275,6 +310,11 @@ function MockupRow({
       >
         {mockup.approval}
       </span>
+      {mockup.componentsChanged.length > 0 ? (
+        <span className="text-xs text-warn" data-testid="components-changed">
+          component changed: {mockup.componentsChanged.join(", ")}
+        </span>
+      ) : null}
       {mockup.approval === "approved" && mockup.entry ? (
         <span className="text-xs text-ink-faint">
           by {mockup.entry.by}, {stamp(mockup.entry.at)}
@@ -303,6 +343,10 @@ function Uncovered({ app }: { app: AppLooks }) {
     ...app.uncovered.screens.map((name) => ({ kind: "screen", name })),
     ...app.uncovered.states.map((name) => ({ kind: "state", name })),
     ...app.uncovered.components.map((name) => ({ kind: "component", name })),
+    // A story no person has approved as its snapshot is now, and a state a
+    // mockup shows that has no story at all.
+    ...app.uncovered.stories.map((name) => ({ kind: "story", name })),
+    ...app.uncovered.noStory.map((name) => ({ kind: "no story", name })),
     // A component named at run time, by where the source names it.
     ...app.uncovered.unresolved.map((name) => ({ kind: "unresolved", name })),
   ];

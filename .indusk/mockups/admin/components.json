@@ -20,34 +20,42 @@
 			"states": [
 				{
 					"name": "passing",
+					"id": "ui-badge--passing",
 					"snapshotHash": "5cd34c0566924a0b813a4ce461871f23b932dabadc04223d3e5d0201a39acac9"
 				},
 				{
 					"name": "blocked",
+					"id": "ui-badge--blocked",
 					"snapshotHash": "23beeeef9da56a49ebd691183f2aefd4dcf7991318d390f7ab83c58ebcf339b6"
 				},
 				{
 					"name": "skipped",
+					"id": "ui-badge--skipped",
 					"snapshotHash": "57d1558c9bccf2898501c5877294063f0aa7b7ead7415ceed551fa092c1736ac"
 				},
 				{
 					"name": "planned",
+					"id": "ui-badge--planned",
 					"snapshotHash": "e80bece7944cb33edabf89b2657e0c183be318322e1ac655029001a72aa56df6"
 				},
 				{
 					"name": "writable",
+					"id": "ui-badge--writable",
 					"snapshotHash": "091f6b4198d6e3951eb6f285f66f49043262f46317b5c44472b096d80ce05ec4"
 				},
 				{
 					"name": "written",
+					"id": "ui-badge--written",
 					"snapshotHash": "4adcbb5491218815fc46b9b7afd19e4b462b913a7dca46e618490d4a514feecb"
 				},
 				{
 					"name": "unknown",
+					"id": "ui-badge--unknown",
 					"snapshotHash": "66b78a19ba484e72c920797e41d90fb5a5f66406249667fd238a24beaeb19dc8"
 				},
 				{
 					"name": "neutral",
+					"id": "ui-badge--neutral",
 					"snapshotHash": "db31e424394301ae2982dabebc5ffb37d0ede92666c997f6ca097a7782bbe18f"
 				}
 			]

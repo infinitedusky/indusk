@@ -27,6 +27,11 @@ const FIXTURE = resolve(
   __dirname,
   "../../../../indusk-mcp/src/__tests__/fixtures/looks-app",
 );
+/** The package's components fixture: an app with stories, a catalog and a composed mockup. */
+export const COMPONENTS_FIXTURE = resolve(
+  __dirname,
+  "../../../../indusk-mcp/src/__tests__/fixtures/components-app",
+);
 export const PROJECT = "looks-proj";
 export const RECORD = ".indusk/mockups/demo/approved.json";
 export const PERSON = "Sandy Tester";
@@ -43,11 +48,20 @@ export function git(...args: string[]): string {
 
 /** Build the fixture project; each test file calls it from `beforeEach`. */
 export function setUpProject(): void {
+  buildProject(FIXTURE);
+}
+
+/** The same project built from the components fixture (stories, a catalog, a composed mockup). */
+export function setUpComponentsProject(): void {
+  buildProject(COMPONENTS_FIXTURE);
+}
+
+function buildProject(fixture: string): void {
   base = realpathSync(mkdtempSync(join(tmpdir(), "admin-looks-")));
   root = join(base, "proj");
   const home = join(base, "home");
   mkdirSync(home, { recursive: true });
-  cpSync(FIXTURE, root, { recursive: true });
+  cpSync(fixture, root, { recursive: true });
   mkdirSync(join(root, ".indusk", "planning"), { recursive: true });
   git("init", "-q", "-b", "main");
   git("config", "user.name", PERSON);
