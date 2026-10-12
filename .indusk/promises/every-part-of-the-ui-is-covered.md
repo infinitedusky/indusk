@@ -4,7 +4,7 @@ kind: state
 lifetime: holds
 state: enforced
 domain: gates
-owner: ui-promises
+owner: storybook-components
 sites:
   - apps/indusk-mcp/src/lib/looks/coverage.ts
   - apps/indusk-mcp/src/lib/looks/markup.ts
@@ -19,8 +19,9 @@ tests:
 incidents: []
 ---
 
-Every screen the app has, in each declared state, and every component it uses, is covered by an approved mockup; whatever is not is reported uncovered, never passed.
+Every screen the app has, in each declared state, and every component it uses, in each state its mockups show, is covered by an approved mockup or an approved story; whatever is not is reported uncovered, never passed.
 
 ## History
 - 2026-10-11 — declared (ui-promises), from its planning conversation.
 - 2026-10-12 — enforced, confirmed for ui-promises: proven by row A10, row A11, row A12, row A13, row A34, row A35, row A36.
+- 2026-10-12 — changed by storybook-components: components are covered by their stories. It read: "Every screen the app has, in each declared state, and every component it uses, is covered by an approved mockup; whatever is not is reported uncovered, never passed." Owned before by ui-promises; storybook-components takes it over.
