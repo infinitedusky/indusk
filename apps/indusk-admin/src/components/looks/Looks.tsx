@@ -13,6 +13,7 @@ import { Cascade } from "./Cascade";
 import { LookFrame } from "./LookFrame";
 import { LooksToolbar } from "./LooksToolbar";
 import { OpenLookRow } from "./OpenLookRow";
+import { SelectBox } from "./SelectBox";
 import { Components, type OpenStory, OpenStoryView } from "./Stories";
 import { UnapproveMockup } from "./Unapprove";
 import { proposedIn, Uncovered } from "./Uncovered";
@@ -382,16 +383,7 @@ function MockupRow({
         <LookRow name={mockup.name} approval={mockup.approval} />
       )}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-3 text-xs text-ink-soft">
-        {mockup.approval === "proposed" ? (
-          <input
-            type="checkbox"
-            value={mockup.name}
-            data-select-mockup=""
-            data-mockup-hash={mockup.hash}
-            data-components-hash={mockup.componentsHash}
-            aria-label={`Select ${mockup.name}`}
-          />
-        ) : null}
+        {mockup.approval === "proposed" ? <SelectBox mockup={mockup} /> : null}
         {mockup.componentsChanged.length > 0 ? (
           <span className="text-warn" data-testid="components-changed">
             component changed: {mockup.componentsChanged.join(", ")}

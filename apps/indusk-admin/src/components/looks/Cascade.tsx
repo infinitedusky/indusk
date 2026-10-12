@@ -4,6 +4,7 @@ import { stamp } from "@/lib/stamp";
 import { ApproveMockup, ApproveStory } from "./ApproveMockup";
 import { looksListed, type Show } from "./address";
 import { LookFrame } from "./LookFrame";
+import { SelectBox } from "./SelectBox";
 import { byComponent, storyLabel } from "./Stories";
 import { UnapproveMockup, UnapproveStory } from "./Unapprove";
 
@@ -51,16 +52,7 @@ export function Cascade({
               data-approval={m.approval}
             >
               <header className="flex flex-wrap items-center gap-3 text-sm">
-                {m.approval === "proposed" ? (
-                  <input
-                    type="checkbox"
-                    value={m.name}
-                    data-select-mockup=""
-                    data-mockup-hash={m.hash}
-                    data-components-hash={m.componentsHash}
-                    aria-label={`Select ${m.name}`}
-                  />
-                ) : null}
+                {m.approval === "proposed" ? <SelectBox mockup={m} /> : null}
                 <span className="font-medium text-ink">{m.name}</span>
                 <span
                   className={`rounded-md border px-tight text-xs ${APPROVAL_STYLE[m.approval]}`}
@@ -133,16 +125,7 @@ export function Cascade({
                   data-state={storyLabel(s)}
                 >
                   <header className="flex flex-wrap items-center gap-3 text-sm">
-                    {s.approval === "proposed" ? (
-                      <input
-                        type="checkbox"
-                        value={s.name}
-                        data-select-story=""
-                        data-snapshot-hash={s.hash}
-                        data-stylesheet-hash={s.stylesheetHash ?? ""}
-                        aria-label={`Select ${s.name}`}
-                      />
-                    ) : null}
+                    {s.approval === "proposed" ? <SelectBox story={s} /> : null}
                     <span className="text-ink">{s.state}</span>
                     <span
                       className={`rounded-md border px-tight text-xs ${APPROVAL_STYLE[s.approval]}`}

@@ -7,6 +7,7 @@ import { ApproveStory } from "./ApproveMockup";
 import { hrefOf, looksListed, type Show } from "./address";
 import { LookFrame } from "./LookFrame";
 import { OpenLookRow } from "./OpenLookRow";
+import { SelectBox } from "./SelectBox";
 import { UnapproveStory } from "./Unapprove";
 
 /**
@@ -133,16 +134,7 @@ function StoryRow({
         href={hrefAt(story.name)}
       />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-3 text-xs text-ink-soft">
-        {story.approval === "proposed" ? (
-          <input
-            type="checkbox"
-            value={story.name}
-            data-select-story=""
-            data-snapshot-hash={story.hash}
-            data-stylesheet-hash={story.stylesheetHash ?? ""}
-            aria-label={`Select ${story.name}`}
-          />
-        ) : null}
+        {story.approval === "proposed" ? <SelectBox story={story} /> : null}
         <a
           href={hrefAt(story.name)}
           data-testid="story-link"
