@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { upsertJaegerEntry } from "../lib/mcp-config.js";
 import { git, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
 const made: string[] = [];
@@ -59,5 +60,19 @@ describe.skipIf(SHOULD_SKIP)("indusk update and the MCP config", () => {
 			type: "http",
 			url: "http://localhost:9/mcp",
 		});
+	});
+});
+
+describe("a file the tooling creates names the indusk server", () => {
+	it("T7: pointing a project's jaeger entry at a port, with no .mcp.json, leaves one naming indusk and jaeger", () => {
+		const dir = checkout();
+		upsertJaegerEntry(dir, 60734);
+		const config = JSON.parse(readFileSync(join(dir, ".mcp.json"), "utf-8")) as {
+			mcpServers?: Record<string, unknown>;
+		};
+		expect(Object.keys(config.mcpServers ?? {}).sort(), "the file names both servers").toEqual([
+			"indusk",
+			"jaeger",
+		]);
 	});
 });
