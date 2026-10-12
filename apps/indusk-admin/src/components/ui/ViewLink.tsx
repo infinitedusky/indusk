@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { ButtonOrLink } from "./ButtonOrLink";
 
 export interface ViewLinkProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
@@ -6,9 +7,11 @@ export interface ViewLinkProps
   icon: ReactNode;
   label: string;
   /** What the view is counting — broken promises, uncovered looks; hidden at zero by the caller. */
-  count?: number;
+  count?: ReactNode;
   /** The view that is open. */
   current?: boolean;
+  /** Where the view is. A link when given, a button when not. */
+  href?: string;
 }
 
 /**
@@ -21,6 +24,7 @@ export function ViewLink({
   label,
   count,
   current = false,
+  href,
   className = "",
   ...rest
 }: ViewLinkProps) {
@@ -32,8 +36,8 @@ export function ViewLink({
     .filter(Boolean)
     .join(" ");
   return (
-    <button
-      type="button"
+    <ButtonOrLink
+      href={href}
       data-component="view-link"
       aria-current={current ? "page" : undefined}
       className={classes}
@@ -48,6 +52,6 @@ export function ViewLink({
           {count}
         </span>
       )}
-    </button>
+    </ButtonOrLink>
   );
 }

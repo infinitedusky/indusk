@@ -423,7 +423,7 @@ The admin is built from components defined once, each with an approved story per
 
 **Tier**: med — the work step's default
 
-- [ ] Rebuild the nav (expanded and collapsed) from the components, matching `nav.expanded` and `nav.collapsed`
+- [x] Rebuild the nav (expanded and collapsed) from the components, matching `nav.expanded` and `nav.collapsed`
 - [ ] Rebuild the dashboard (default and empty) from the components, matching `dashboard.default` and `dashboard.empty`
 - [ ] Rebuild the Looks page (default and uncovered) from the components, matching `looks.default` and `looks.uncovered`
 - [ ] The Looks page can list unapproved looks first or only: a Show option for unapproved (proposed or withdrawn) beside Mockups, Components and Uncovered, and the list sorted proposed and withdrawn before approved (Sandy asked while approving; found in Build Phase 6)

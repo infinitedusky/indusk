@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 export interface NavProps {
   project: string;
@@ -6,6 +6,9 @@ export interface NavProps {
   summary?: string;
   /** Folded to the rail: names and counts hidden, marks kept. */
   collapsed?: boolean;
+  /** What the collapse button does and says to a test: its click, `aria-expanded`. */
+  toggleProps?: ButtonHTMLAttributes<HTMLButtonElement> &
+    Record<`data-${string}`, string>;
   /** Plan groups, plan rows and view links. */
   children: ReactNode;
   className?: string;
@@ -20,6 +23,7 @@ export function Nav({
   project,
   summary,
   collapsed = false,
+  toggleProps,
   children,
   className = "",
 }: NavProps) {
@@ -40,7 +44,13 @@ export function Nav({
         <button
           type="button"
           aria-label={collapsed ? "Expand" : "Collapse"}
-          className="grid size-icon place-items-center rounded-lg border border-line bg-surface text-ink-soft"
+          {...toggleProps}
+          className={[
+            "grid size-icon place-items-center rounded-lg border border-line bg-surface text-ink-soft",
+            toggleProps?.className,
+          ]
+            .filter(Boolean)
+            .join(" ")}
         >
           <svg
             width="16"

@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { ButtonOrLink } from "./ButtonOrLink";
 import { PlanBadge, type PlanBadgeState } from "./PlanBadge";
 
 export interface PlanRowProps
@@ -7,9 +8,11 @@ export interface PlanRowProps
   state: PlanBadgeState;
   name: string;
   /** Where the plan stands in words: "Approve the cockpit mockups", "Building · 2 of 5". */
-  stage: string;
+  stage: ReactNode;
   /** The plan that is open. */
   current?: boolean;
+  /** Where the row goes. A link when given, a button when not. */
+  href?: string;
 }
 
 /**
@@ -23,12 +26,13 @@ export function PlanRow({
   name,
   stage,
   current = false,
+  href,
   className = "",
   ...rest
 }: PlanRowProps) {
   return (
-    <button
-      type="button"
+    <ButtonOrLink
+      href={href}
       data-component="plan-row"
       aria-current={current ? "page" : undefined}
       className={`nav-mark cols-plan-row grid w-full items-center gap-2 rounded-lg border p-tight text-left ${
@@ -47,6 +51,6 @@ export function PlanRow({
           {stage}
         </span>
       </span>
-    </button>
+    </ButtonOrLink>
   );
 }

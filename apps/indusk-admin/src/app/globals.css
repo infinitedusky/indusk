@@ -120,6 +120,14 @@ body {
   height: calc(100vh - var(--space-10));
 }
 
+/* The cockpit's frame is the page under the header and not a screen taller
+   than it: the nav and the page scroll inside it, each on its own. */
+.app-body [data-component="shell"] {
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
 /* Layout the foundation does not tokenise: viewport-relative sizes and a grid. */
 .fullscreen-diagram {
   width: 95vw;
