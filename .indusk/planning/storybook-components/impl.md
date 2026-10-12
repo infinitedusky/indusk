@@ -477,7 +477,8 @@ The admin is built from components defined once, each with an approved story per
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 - [x] Shape finding (`apps/indusk-admin/src/components/promise/PromiseProof.tsx`): the header comment said four tiles; the page shows three `Stat`s (tests, held, broken) since the rebuild — rule: a comment says what the code does
 - [x] Shape (`promise/[name]/page.tsx`, `plan/[name]/page.tsx`, `plan/PlanStatusCard.tsx`, `cockpit/DecisionCard.tsx`, `PlanWorkflows.tsx`, `mcp lib/looks/check.ts`, `lint-values.ts`) — reviewed, left as-is: each composes components and passes props or holds one rule; `openWithinTime` and the shadow rule each have a seam their tests reach. The three tiles sit in a four-column grid, as the approved `promise.*` mockups draw them — for Sandy's side-by-side check, not a craft finding.
-- [ ] **Review for Sandy**: A12's test (`workflows.test.tsx`, a step has no control that could set it) now excludes `button[data-component="step"]`, because the approved mockup draws a Step as a button; the Step carries no handler, but the test can no longer tell a Step button with one from one without. Keep, or make Step a non-button element?
+- [x] **Review for Sandy**: A12's test (`workflows.test.tsx`, a step has no control that could set it) now excludes `button[data-component="step"]`, because the approved mockup draws a Step as a button; the Step carries no handler, but the test can no longer tell a Step button with one from one without. Keep, or make Step a non-button element?
+  - Kept, 2026-10-12. Sandy: "Steps need to get added in a workflow builder of some sort. For right now though, I don't really care." A Step stays the mockup's button; a step becoming editable belongs to a future workflow builder, where A12's rule would be revisited.
 
 #### Build Phase 8 Verification
 
