@@ -227,6 +227,15 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T13:09:38.127Z"
+		},
+		{
+			"kind": "story",
+			"story": "chip.active",
+			"snapshotHash": "1499d36ae87f0decf0073fd1dce3aeb83a0506436ae6ef3e5a5ebe8c03ef2e79",
+			"foundationHash": "36b807fec8de7d0bba03f7609225d33597688f4bcf3e165a45beee8494f5f810",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T13:09:38.324Z"
 		}
 	]
 }
