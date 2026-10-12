@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import type { ApprovalEntry } from "./approvals.js";
 import { componentsIn, coverageOf } from "./coverage.js";
-import type { LooksApp } from "./mockups.js";
+import { componentsHashOf, type LooksApp } from "./mockups.js";
 
 /**
  * promise: every-part-of-the-ui-is-covered — ui-promises A12's reading of a
@@ -64,9 +64,14 @@ function appWith(
 				screen: "home",
 				state: "empty",
 				file: ".indusk/mockups/demo/screens/home.empty.html",
+				source: mockupHtml,
 				html: mockupHtml,
 				hash: "m",
+				// It composes no component: the hash an entry without one binds.
+				uses: [],
+				componentsHash: componentsHashOf([]),
 				declaresNew: [],
+				declaresNewComponents: [],
 			},
 		],
 	} as unknown as LooksApp;

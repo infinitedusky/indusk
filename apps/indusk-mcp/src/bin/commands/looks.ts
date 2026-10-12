@@ -1,7 +1,15 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { initEvalOtel, shutdownEvalOtel } from "../../lib/eval/otel.js";
-import { type Approval, approvalOf, boundToNow, readApprovals } from "../../lib/looks/approvals.js";
+import {
+	type Approval,
+	approvalOf,
+	boundToNow,
+	readApprovals,
+	readStoryApprovals,
+	type StoryApproval,
+	storyApprovalOf,
+} from "../../lib/looks/approvals.js";
 import { checkApp } from "../../lib/looks/check.js";
 import { coverageOf } from "../../lib/looks/coverage.js";
 import { generateCss } from "../../lib/looks/foundation.js";
@@ -47,18 +55,33 @@ function statusLine(app: LooksApp, mockup: Mockup, a: Approval): string {
 	if (a.reference) {
 		const { mockupHash, by, at } = a.reference;
 		const last = `${mockupHash.slice(0, 8)} (approved by ${by} at ${at})`;
+		const changed = a.componentsChanged
+			? `component changed: ${a.componentsChanged.join(", ")} — `
+			: "";
 		return boundToNow(app, a.reference)
-			? `${mockup.name}  proposed  held to ${last}`
-			: `${mockup.name}  proposed  last approved ${last} on another foundation or declarations — nothing held`;
+			? `${mockup.name}  proposed  ${changed}held to ${last}`
+			: `${mockup.name}  proposed  ${changed}last approved ${last} on another foundation or declarations — nothing held`;
 	}
 	return `${mockup.name}  proposed  never approved`;
+}
+
+/** `story <name>.<state>  approved|proposed  …` — a story's line, after the mockups'. */
+function storyLine(name: string, a: StoryApproval): string {
+	if (a.state === "approved") return `story ${name}  approved  by ${a.entry.by} at ${a.entry.at}`;
+	if (a.reference) {
+		const { snapshotHash, by, at } = a.reference;
+		return `story ${name}  proposed  changed since ${snapshotHash.slice(0, 8)} (approved by ${by} at ${at})`;
+	}
+	return `story ${name}  proposed  never approved`;
 }
 
 /**
  * `indusk looks status <app>` — one line per mockup, `<screen>.<state>` then
  * `approved` or `proposed`; a proposed mockup with an approved version names
  * that version's first eight hash characters, the reference the app is held
- * to meanwhile.
+ * to meanwhile, and `component changed: <name>` when a component it composes
+ * changed. Then one line per story, `story <name>.<state>` then `approved`
+ * or `proposed`.
  */
 export async function looksStatus(projectRoot: string, appName: string): Promise<void> {
 	try {
@@ -66,6 +89,10 @@ export async function looksStatus(projectRoot: string, appName: string): Promise
 		const approvals = readApprovals(app);
 		for (const mockup of app.mockups) {
 			console.info(statusLine(app, mockup, approvalOf(app, mockup, approvals)));
+		}
+		const stories = readStoryApprovals(app);
+		for (const story of app.stories) {
+			console.info(storyLine(story.name, storyApprovalOf(app, story, stories)));
 		}
 	} catch (err) {
 		console.error((err as Error).message);
