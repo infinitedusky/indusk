@@ -12,8 +12,9 @@ import { markProjectId } from "../../lib/promises/config.js";
 
 /**
  * `indusk looks lint <app>` — every raw value, undefined token and stock class
- * in an app's mockups and declared sources, one per line as
- * `<file>:<line> <value> — <message>`. Exit 1 on any, 0 on none.
+ * in an app's mockups and declared sources, and the component rules, one per
+ * line as `<file>:<line> <value> — <message>`. Exit 1 on any finding, 0 on
+ * none; a notice (`needs a story`) is listed and fails nothing.
  */
 export async function looksLint(projectRoot: string, appName: string): Promise<void> {
 	try {
@@ -21,8 +22,9 @@ export async function looksLint(projectRoot: string, appName: string): Promise<v
 		const findings = await lintApp(projectRoot, app);
 		for (const f of findings)
 			console.info(`${f.file}:${f.line}  ${f.value}  ${f.rule} — ${f.message}`);
-		if (findings.length > 0) {
-			console.error(`${findings.length} finding${findings.length === 1 ? "" : "s"} in ${appName}`);
+		const failing = findings.filter((f) => !f.notice).length;
+		if (failing > 0) {
+			console.error(`${failing} finding${failing === 1 ? "" : "s"} in ${appName}`);
 			process.exitCode = 1;
 		} else {
 			console.info(`${appName}: no raw value, no undefined token`);
