@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { Nav, NavGroup } from "./Nav";
+import { PlanRow } from "./PlanRow";
 import { ViewLink } from "./ViewLink";
 
 const meta = {
@@ -12,7 +13,20 @@ type Story = StoryObj<typeof meta>;
 
 const rows = (
   <>
-    <NavGroup label="Views" count={2} />
+    <NavGroup label="Needs you" count={1} />
+    <PlanRow
+      initials="UP"
+      state="needs"
+      name="ui-promises"
+      stage="Approve the cockpit mockups"
+    />
+    <NavGroup label="In flight" count={1} />
+    <PlanRow
+      initials="MM"
+      state="working"
+      name="mockup-matching"
+      stage="Building · 2 of 5"
+    />
     <ViewLink icon="P" label="Promises" count={1} current />
     <ViewLink icon="L" label="Looks" count={0} />
   </>

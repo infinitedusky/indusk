@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { Nav } from "./Nav";
+import { PlanRow } from "./PlanRow";
 import { Shell } from "./Shell";
 import { ViewLink } from "./ViewLink";
 
@@ -13,6 +14,12 @@ type Story = StoryObj<typeof meta>;
 
 const nav = (collapsed: boolean) => (
   <Nav project="dusk" summary="9 plans" collapsed={collapsed}>
+    <PlanRow
+      initials="UP"
+      state="needs"
+      name="ui-promises"
+      stage="Approve the cockpit mockups"
+    />
     <ViewLink icon="P" label="Promises" count={1} current />
   </Nav>
 );
