@@ -236,26 +236,21 @@ export const RITUAL_COPY = {
   { title: string; rowsHeading: string; itemsHeading: string }
 >;
 
-/** A promise's standing as the dashboard's bar and chip, and the promise page's banner, draw it. */
-export const STANDING_STYLE = {
-  broken: { bar: "bg-bad", chip: "border-bad bg-bad-wash text-bad" },
-  "being-proven": {
-    bar: "bg-warn",
-    chip: "border-warn bg-warn-wash text-warn",
-  },
-  declared: {
-    bar: "bg-ink-faint",
-    chip: "border-dashed border-ink-faint bg-surface text-ink-soft",
-  },
-  enforced: {
-    bar: "bg-ok",
-    chip: "border-ok bg-surface text-ok",
-  },
-  retired: {
-    bar: "bg-idle-wash",
-    chip: "border-line bg-ground text-ink-faint",
-  },
-} as const satisfies Record<Standing, { bar: string; chip: string }>;
+/**
+ * A promise's standing as the chip and the dashboard's row draw it: they have
+ * four states, so a retired promise reads as declared (the mockups'
+ * `chip` and `promise-row`).
+ */
+export const STANDING_BADGE = {
+  broken: "broken",
+  "being-proven": "proving",
+  declared: "declared",
+  enforced: "enforced",
+  retired: "declared",
+} as const satisfies Record<
+  Standing,
+  "declared" | "proving" | "enforced" | "broken"
+>;
 
 /** A mockup's approval as the Looks page's chip draws it (ui-promises ADR decision 3). */
 export const APPROVAL_STYLE = {

@@ -1,7 +1,12 @@
 import type { Proof, ProofDay } from "@infinitedusky/indusk-mcp/promises/proof";
 import type { PromiseEntry } from "@infinitedusky/indusk-mcp/promises/registry";
 import Link from "next/link";
-import { STANDING_STYLE } from "@/components/bars/labels";
+import { STANDING_BADGE } from "@/components/bars/labels";
+import { Badge } from "@/components/ui/Badge";
+import { Box } from "@/components/ui/Box";
+import { DecisionCard } from "@/components/ui/DecisionCard";
+import { Stat } from "@/components/ui/Stat";
+import { Timeline, type TimelineItem } from "@/components/ui/Timeline";
 import { STANDING_LABELS } from "@/lib/promise-dashboard";
 import { stamp } from "@/lib/stamp";
 import { StartFix } from "./StartFix";
@@ -13,8 +18,6 @@ import { StartFix } from "./StartFix";
  *
  * promise: a-promise-page-shows-its-proof
  */
-
-/** `2026-10-10T07:00:00.000Z` as `2026-10-10 07:00`. */
 
 export function PromiseBanner({
   proof,
@@ -33,33 +36,42 @@ export function PromiseBanner({
     <section
       data-testid="promise-banner"
       data-standing={standing.standing}
-      className={`flex flex-col gap-2 rounded-md border px-4 py-3 ${STANDING_STYLE[standing.standing].chip}`}
+      className="flex flex-col gap-3"
     >
-      <p className="text-sm font-semibold">
-        {STANDING_LABELS[standing.standing]}
-        {standing.standing === "broken" && standing.lastBreak
-          ? ` — last broken ${stamp(standing.lastBreak)}`
-          : ""}
-      </p>
-      {proof.banner.testsMissTheCase ? (
-        <p className="text-sm">
-          Every test that names it passes: the tests miss the case that breaks
-          it.
-        </p>
-      ) : null}
-      {broken?.symptom ? (
-        <p className="min-w-0 break-words text-sm">Symptom: {broken.symptom}</p>
-      ) : null}
-      {trace ? (
-        <p className="min-w-0 break-all text-sm">
-          Trace:{" "}
-          <a href={trace} className="underline">
-            {trace}
-          </a>
-        </p>
-      ) : null}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-ink-faint">
+        <Badge variant={STANDING_BADGE[standing.standing]}>
+          {STANDING_LABELS[standing.standing]}
+        </Badge>
+        {standing.standing === "broken" && standing.lastBreak ? (
+          <span>last broken {stamp(standing.lastBreak)}</span>
+        ) : null}
+        <span>
+          {standing.lastActivity
+            ? `seen ${stamp(standing.lastActivity)}`
+            : "not seen yet"}
+        </span>
+      </div>
       {broken ? (
-        <StartFix project={project} promise={entry.name} plan={entry.owner} />
+        <DecisionCard tone="alert">
+          {proof.banner.testsMissTheCase ? (
+            <p>
+              Every test that names it passes: the tests miss the case that
+              breaks it.
+            </p>
+          ) : null}
+          {broken.symptom ? (
+            <p className="min-w-0 break-words">Symptom: {broken.symptom}</p>
+          ) : null}
+          {trace ? (
+            <p className="min-w-0 break-all">
+              Trace:{" "}
+              <a href={trace} className="underline">
+                {trace}
+              </a>
+            </p>
+          ) : null}
+          <StartFix project={project} promise={entry.name} plan={entry.owner} />
+        </DecisionCard>
       ) : null}
     </section>
   );
@@ -67,40 +79,34 @@ export function PromiseBanner({
 
 export function PromiseTiles({ proof }: { proof: Proof }) {
   const { standing } = proof;
-  const tiles: Array<[label: string, value: string]> = [
-    ["Standing", STANDING_LABELS[standing.standing]],
-    [
-      "Tests",
-      standing.tests.total === 0
-        ? "none name it"
-        : `${standing.tests.passing}/${standing.tests.total} passing`,
-    ],
-    [
-      "Last seen",
-      standing.lastActivity ? stamp(standing.lastActivity) : "not seen yet",
-    ],
-    [
-      "Last 30 days",
-      standing.thirtyDays.held === null
-        ? "not seen yet"
-        : `held ${standing.thirtyDays.held} · broke ${standing.thirtyDays.broke}`,
-    ],
-  ];
+  const { held, broke } = standing.thirtyDays;
   return (
-    <dl
-      className="grid grid-cols-2 gap-2 md:grid-cols-4"
+    <div
+      className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-4"
       data-testid="promise-tiles"
     >
-      {tiles.map(([label, value]) => (
-        <div
-          key={label}
-          className="min-w-0 rounded-md border border-line px-3 py-2"
-        >
-          <dt className="text-xs text-ink-faint">{label}</dt>
-          <dd className="break-words text-sm font-medium text-ink">{value}</dd>
-        </div>
-      ))}
-    </dl>
+      <Stat
+        label="Tests"
+        value={
+          standing.tests.total === 0
+            ? "none"
+            : `${standing.tests.passing}/${standing.tests.total}`
+        }
+        note={standing.tests.total === 0 ? "none name it" : "passing"}
+      />
+      <Stat
+        label="Held"
+        value={held === null ? "–" : String(held)}
+        note={held === null ? "not seen yet" : "last 30 days"}
+        tone={held ? "ok" : undefined}
+      />
+      <Stat
+        label="Broken"
+        value={held === null ? "–" : String(broke)}
+        note={held === null ? "not seen yet" : "last 30 days"}
+        tone={broke ? "bad" : undefined}
+      />
+    </div>
   );
 }
 
@@ -114,13 +120,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section
-      data-testid={`proof-${id}`}
-      className="flex min-w-0 flex-col gap-2"
-    >
-      <h2 className="text-sm font-semibold text-ink-soft">{title}</h2>
+    <Box data-testid={`proof-${id}`} title={title}>
       {children}
-    </section>
+    </Box>
   );
 }
 
@@ -267,27 +269,22 @@ export function LastThirtyDays({ proof }: { proof: Proof }) {
   );
 }
 
+const EVENT_TONE: Partial<
+  Record<Proof["history"][number]["kind"], "good" | "bad">
+> = { incident: "bad", fixed: "good", confirmed: "good" };
+
 export function PromiseHistory({ proof }: { proof: Proof }) {
+  const items: TimelineItem[] = proof.history.map((e) => ({
+    when: e.at,
+    what: `${e.kind}: ${e.text}`,
+    tone: EVENT_TONE[e.kind],
+  }));
   return (
     <Section id="history" title="History">
-      {proof.history.length === 0 ? (
+      {items.length === 0 ? (
         <p className="text-sm text-ink-soft">Nothing recorded yet.</p>
       ) : (
-        <ol className="flex flex-col gap-1 text-sm">
-          {proof.history.map((e) => (
-            <li
-              key={`${e.at}/${e.kind}/${e.text}`}
-              data-testid="history-event"
-              className="flex min-w-0 flex-wrap gap-x-3"
-            >
-              <span className="text-xs text-ink-faint">{e.at}</span>
-              <span className="text-xs font-medium text-ink-soft">
-                {e.kind}
-              </span>
-              <span className="min-w-0 break-words text-ink">{e.text}</span>
-            </li>
-          ))}
-        </ol>
+        <Timeline items={items} />
       )}
     </Section>
   );

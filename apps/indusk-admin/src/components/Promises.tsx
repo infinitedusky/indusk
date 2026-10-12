@@ -7,6 +7,7 @@ import type {
 } from "@infinitedusky/indusk-mcp/promises/registry";
 import type { LookRow } from "@infinitedusky/indusk-mcp/promises/standing";
 import Link from "next/link";
+import { STANDING_BADGE } from "@/components/bars/labels";
 import { IncidentsTable } from "@/components/IncidentsTable";
 import { LooksOnDashboard } from "@/components/looks/LooksOnDashboard";
 import { SourceBanner, type SourceObserved } from "@/components/PromiseHealth";
@@ -315,18 +316,6 @@ function ControlLinks<K extends string>({
   );
 }
 
-/** What each standing is drawn as on a row: the row has four, a retired promise reads as declared. */
-const ROW_STANDING: Record<
-  DashboardRow["standing"],
-  "declared" | "proving" | "enforced" | "broken"
-> = {
-  broken: "broken",
-  "being-proven": "proving",
-  declared: "declared",
-  enforced: "enforced",
-  retired: "declared",
-};
-
 /** The bar's four segments from the dashboard's counts; the retired are not on it. */
 function summaryCounts(rows: DashboardRow[]): SummaryCounts {
   const of = (standing: DashboardRow["standing"]) =>
@@ -363,7 +352,7 @@ function DashboardRowItem({
     >
       <PromiseRow
         href={`${promiseHrefPrefix}${row.name}`}
-        standing={ROW_STANDING[row.standing]}
+        standing={STANDING_BADGE[row.standing]}
         says={row.sentence}
         slug={
           <>

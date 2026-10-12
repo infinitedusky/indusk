@@ -208,6 +208,12 @@ body {
 .cols-timeline {
   grid-template-columns: var(--size-nav-rail) var(--size-node) minmax(0, 1fr);
 }
+.cols-promise-page {
+  grid-template-columns: minmax(0, 1fr) var(--size-side);
+}
+.cols-plan-stage {
+  grid-template-columns: var(--size-rail) minmax(0, 1fr);
+}
 @media (max-width: 759px) {
   .cols-shell,
   .cols-shell-rail {
@@ -215,6 +221,10 @@ body {
   }
   .cols-promise-row {
     grid-template-columns: var(--size-dot-lg) minmax(0, 1fr) auto;
+  }
+  .cols-promise-page,
+  .cols-plan-stage {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
