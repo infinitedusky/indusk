@@ -675,6 +675,21 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T15:34:41.539Z"
+		},
+		{
+			"mockup": "dashboard.empty",
+			"mockupHash": "646761cafe05c08bfcbf10e040239d0d5eec5ae2e78d97b54abc32f4c6015af1",
+			"componentsHash": "2522332ec7a415558675517a18b2f423a9c2b3719915d432c053fb4aea609726",
+			"components": {
+				"nav.expanded": "dda3c6d55b852604d7d81c84f0d9b5c85ffe73a7b9f2e375cf4853bb2d7381ae",
+				"promise-row.empty": "0fba184d8a78eba12720c6fd61cb418951102a333bf1f51fcb95facbb99d1d81",
+				"nav.css": "6949b9207b340c62f9dd8f7e6a83620a677f674d2a45e6f8bab063e2dc38da88",
+				"promise-row.css": "1ae40722b58298e38e1ba2611468d810b8ee4c38451883e035c16a8c1703c498"
+			},
+			"foundationHash": "36b807fec8de7d0bba03f7609225d33597688f4bcf3e165a45beee8494f5f810",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T15:34:41.754Z"
 		}
 	]
 }
