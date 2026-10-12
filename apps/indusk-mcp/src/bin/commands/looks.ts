@@ -7,6 +7,7 @@ import {
 	boundToNow,
 	readApprovals,
 	readStoryApprovals,
+	readWithdrawals,
 	type StoryApproval,
 	storyApprovalOf,
 } from "../../lib/looks/approvals.js";
@@ -52,6 +53,9 @@ export async function looksLint(projectRoot: string, appName: string): Promise<v
  */
 function statusLine(app: LooksApp, mockup: Mockup, a: Approval): string {
 	if (a.state === "approved") return `${mockup.name}  approved  by ${a.entry.by} at ${a.entry.at}`;
+	if (a.withdrawn) {
+		return `${mockup.name}  proposed  withdrawn by ${a.withdrawn.by} at ${a.withdrawn.at} — nothing held until a person approves it again`;
+	}
 	if (a.reference) {
 		const { mockupHash, by, at } = a.reference;
 		const last = `${mockupHash.slice(0, 8)} (approved by ${by} at ${at})`;
@@ -68,6 +72,9 @@ function statusLine(app: LooksApp, mockup: Mockup, a: Approval): string {
 /** `story <name>.<state>  approved|proposed  …` — a story's line, after the mockups'. */
 function storyLine(name: string, a: StoryApproval): string {
 	if (a.state === "approved") return `story ${name}  approved  by ${a.entry.by} at ${a.entry.at}`;
+	if (a.withdrawn) {
+		return `story ${name}  proposed  withdrawn by ${a.withdrawn.by} at ${a.withdrawn.at} — nothing held until a person approves it again`;
+	}
 	if (a.reference) {
 		const { snapshotHash, by, at } = a.reference;
 		return `story ${name}  proposed  changed since ${snapshotHash.slice(0, 8)} (approved by ${by} at ${at})`;
@@ -87,12 +94,13 @@ export async function looksStatus(projectRoot: string, appName: string): Promise
 	try {
 		const app = await readApp(projectRoot, appName);
 		const approvals = readApprovals(app);
+		const withdrawals = readWithdrawals(app);
 		for (const mockup of app.mockups) {
-			console.info(statusLine(app, mockup, approvalOf(app, mockup, approvals)));
+			console.info(statusLine(app, mockup, approvalOf(app, mockup, approvals, withdrawals)));
 		}
 		const stories = readStoryApprovals(app);
 		for (const story of app.stories) {
-			console.info(storyLine(story.name, storyApprovalOf(app, story, stories)));
+			console.info(storyLine(story.name, storyApprovalOf(app, story, stories, withdrawals)));
 		}
 	} catch (err) {
 		console.error((err as Error).message);

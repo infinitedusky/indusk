@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import * as approvals from "../lib/looks/approvals.js";
+import { approve, withdraw } from "../lib/looks/approvals.js";
 import { readApp } from "../lib/looks/mockups.js";
 import { readAppLooks } from "../lib/looks/overview.js";
 import {
@@ -170,7 +170,9 @@ describe("a composed mockup carries its components' styles", () => {
 		const looks = await readAppLooks(root, "demo");
 		if ("problem" in looks) throw new Error(looks.problem);
 		const home = looks.mockups.find((m) => m.name === "home.default");
-		expect(home?.document).toContain('[data-component="badge"] { letter-spacing: var(--space-1); }');
+		expect(home?.document).toContain(
+			'[data-component="badge"] { letter-spacing: var(--space-1); }',
+		);
 		// detail.default composes the card alone: it takes no badge rule.
 		const detail = looks.mockups.find((m) => m.name === "detail.default");
 		expect(detail?.document).not.toContain('[data-component="badge"] {');
@@ -275,23 +277,6 @@ describe("a story is approved by a person", () => {
 });
 
 describe("a person takes an approval back", () => {
-	type Seen = {
-		foundationHash?: string;
-		mockupHash?: string;
-		componentsHash?: string;
-		snapshotHash?: string;
-	};
-	type Withdraw = (
-		checkout: string,
-		app: string,
-		name: string,
-		by: string,
-		kind: "mockup" | "story",
-		seen?: Seen,
-	) => Promise<{ withdrawn: boolean; reason?: string }>;
-	// Looked up by name so a missing export is this case's assertion, not a load error.
-	const withdraw = (approvals as unknown as { withdraw?: Withdraw }).withdraw;
-
 	/** The copy as a git project, so the commit the writer makes can be read back. */
 	function project(): string {
 		const root = app();
@@ -313,11 +298,10 @@ describe("a person takes an approval back", () => {
 
 	// A27
 	it("A27 an Unapprove makes an approved mockup or story read proposed, withdrawn by them, keeps the history, leaves the others, and an Approve makes it approved again", async () => {
-		expect(typeof withdraw, "approvals.ts exports withdraw").toBe("function");
-		if (!withdraw) return;
 		const root = project();
 		const record = join(root, MOCKUPS, "approved.json");
-		const entries = () => (JSON.parse(readFileSync(record, "utf-8")) as { approvals: unknown[] }).approvals;
+		const entries = () =>
+			(JSON.parse(readFileSync(record, "utf-8")) as { approvals: unknown[] }).approvals;
 		const before = entries();
 		const held = await readApp(root, "demo");
 		const home = held.mockups.find((m) => m.name === "home.default");
@@ -362,16 +346,23 @@ describe("a person takes an approval back", () => {
 		out = run(root, ["status", "demo"]).out;
 		expect(storyLine(out, "badge.ok"), out).toMatch(/proposed/);
 		expect(storyLine(out, "badge.ok")).toContain("withdrawn by Sandy Tester");
-		expect(storyLine(out, "card.default"), "an unwithdrawn story stays approved").toMatch(/approved/);
+		expect(storyLine(out, "card.default"), "an unwithdrawn story stays approved").toMatch(
+			/approved/,
+		);
+		// Every reader goes through the same view: coverage reports it, the lint refuses what composes it.
+		const coverage = run(root, ["coverage", "demo"]).out;
+		expect(linesWith(coverage, "uncovered story: badge.ok"), coverage).not.toEqual([]);
+		const lint = run(root, ["lint", "demo"]).out;
+		expect(linesWith(lint, "no approved story: badge.ok"), lint.slice(0, 600)).not.toEqual([]);
 
 		// Approving again reads approved: the later approval counts, the earlier one never did.
-		const story2 = await approvals.approve(root, "demo", "badge.ok", "Sandy Tester", {
+		const story2 = await approve(root, "demo", "badge.ok", "Sandy Tester", {
 			kind: "story",
 			snapshotHash: badge.hash,
 			foundationHash,
 		});
 		expect(story2.approved, JSON.stringify(story2)).toBe(true);
-		const mockup2 = await approvals.approve(root, "demo", "home.default", "Sandy Tester", {
+		const mockup2 = await approve(root, "demo", "home.default", "Sandy Tester", {
 			foundationHash,
 			mockupHash: home.hash,
 			componentsHash: home.componentsHash,
@@ -384,8 +375,6 @@ describe("a person takes an approval back", () => {
 	});
 
 	it("A27 withdrawing what is not approved, or what is not what was shown, is refused and writes nothing", async () => {
-		expect(typeof withdraw, "approvals.ts exports withdraw").toBe("function");
-		if (!withdraw) return;
 		const root = project();
 		const record = join(root, MOCKUPS, "approved.json");
 		const before = readFileSync(record, "utf-8");

@@ -37,6 +37,13 @@ import {
  * pressed it. The command line refuses (`indusk looks approve` exits 2) and
  * the guard hook refuses an agent's Write or Edit to the record.
  *
+ * A person can take an approval back (storybook-components ADR decision 11):
+ * `withdraw`, the cockpit's Unapprove, appends a `withdrawn` entry to the same
+ * append-only record. A mockup or story reads proposed, holding no reference,
+ * after its latest withdrawal until a person approves it again; an approval
+ * earlier than a withdrawal never counts. Every reader of the record goes
+ * through that view (`readApprovals`, `readStoryApprovals`, `standingOf`).
+ *
  * promise: a-mockup-is-approved-by-a-person
  */
 
@@ -82,7 +89,13 @@ export type Approval =
 	 * components whose snapshots differ from the ones the reference bound,
 	 * sorted; absent when none did.
 	 */
-	| { state: "proposed"; reference: ApprovalEntry | null; componentsChanged?: string[] };
+	| {
+			state: "proposed";
+			reference: ApprovalEntry | null;
+			componentsChanged?: string[];
+			/** The Unapprove that ended the last approval, when no approval has followed it. */
+			withdrawn?: WithdrawnEntry;
+	  };
 
 const FIELDS = ["mockup", "mockupHash", "foundationHash", "by", "at"] as const;
 
@@ -108,7 +121,31 @@ export interface StoryApprovalEntry {
 
 export type StoryApproval =
 	| { state: "approved"; entry: StoryApprovalEntry }
-	| { state: "proposed"; reference: StoryApprovalEntry | null };
+	| { state: "proposed"; reference: StoryApprovalEntry | null; withdrawn?: WithdrawnEntry };
+
+/**
+ * A person's Unapprove (ADR decision 11): the record's entry that ends every
+ * approval of `name` made before it. Append-only — nothing it ends is removed.
+ */
+export interface WithdrawnEntry {
+	kind: "withdrawn";
+	subject: "mockup" | "story";
+	/** The mockup's name, or the story's (`badge.ok`). */
+	name: string;
+	/** Who took it back. */
+	by: string;
+	at: string;
+}
+
+function isWithdrawn(v: unknown): v is WithdrawnEntry {
+	if (typeof v !== "object" || v === null) return false;
+	const o = v as Record<string, unknown>;
+	return (
+		o.kind === "withdrawn" &&
+		(o.subject === "mockup" || o.subject === "story") &&
+		["name", "by", "at"].every((k) => typeof o[k] === "string")
+	);
+}
 
 function isStoryEntry(v: unknown): v is StoryApprovalEntry {
 	if (typeof v !== "object" || v === null) return false;
@@ -158,12 +195,45 @@ export const approvalsPath = (app: string) => join(MOCKUPS_DIR, app, APPROVALS_F
  * any more than like "everything approved".
  */
 export function readApprovals(app: LooksApp): ApprovalEntry[] {
-	return readRecord(app).filter(isEntry);
+	return standingOf(readRecord(app)).mockups;
 }
 
 /** The story entries of an app's record, oldest first; refused like `readApprovals` when the record is not one. */
 export function readStoryApprovals(app: LooksApp): StoryApprovalEntry[] {
-	return readRecord(app).filter(isStoryEntry);
+	return standingOf(readRecord(app)).stories;
+}
+
+/** The latest Unapprove of each mockup and story the record holds; refused like `readApprovals`. */
+export function readWithdrawals(app: LooksApp): WithdrawnEntry[] {
+	return standingOf(readRecord(app)).withdrawn;
+}
+
+/**
+ * The record as it stands (ADR decision 11): each approval that no later
+ * Unapprove of the same mockup or story ended, oldest first, and the latest
+ * Unapprove of each. Order is the record's own — append-only — never a clock.
+ */
+export function standingOf(record: readonly unknown[]): {
+	mockups: ApprovalEntry[];
+	stories: StoryApprovalEntry[];
+	withdrawn: WithdrawnEntry[];
+} {
+	const latest = new Map<string, number>();
+	const key = (subject: string, name: string) => `${subject}:${name}`;
+	record.forEach((e, i) => {
+		if (isWithdrawn(e)) latest.set(key(e.subject, e.name), i);
+	});
+	const stands = (subject: string, name: string, i: number) =>
+		(latest.get(key(subject, name)) ?? -1) < i;
+	return {
+		mockups: record.filter(
+			(e, i): e is ApprovalEntry => isEntry(e) && stands("mockup", e.mockup, i),
+		),
+		stories: record.filter(
+			(e, i): e is StoryApprovalEntry => isStoryEntry(e) && stands("story", e.story, i),
+		),
+		withdrawn: [...latest.values()].map((i) => record[i] as WithdrawnEntry),
+	};
 }
 
 /** Every entry of the record, mockups' and stories', validated; the writer keeps them all. */
@@ -181,7 +251,7 @@ function readRecord(app: LooksApp): unknown[] {
 		throw new LooksAppError(`${file} has no "approvals" list`);
 	}
 	list.forEach((entry, i) => {
-		if (!isEntry(entry) && !isStoryEntry(entry)) {
+		if (!isEntry(entry) && !isStoryEntry(entry) && !isWithdrawn(entry)) {
 			throw new LooksAppError(`${file}: approvals[${i}] is not { ${FIELDS.join(", ")} }`);
 		}
 	});
@@ -192,12 +262,16 @@ function readRecord(app: LooksApp): unknown[] {
  * Whether `mockup` is approved as it is now — composed as it is now, of the
  * snapshots it composes now — on the foundation and the declarations as they
  * are now. A proposed mockup whose reference bound other snapshots names the
- * components that changed.
+ * components that changed. `approvals` is the record as it stands
+ * (`readApprovals` / `standingOf`): an approval a later Unapprove ended is not
+ * in it, so the mockup holds no reference; `withdrawals` only says who took it
+ * back.
  */
 export function approvalOf(
 	app: LooksApp,
 	mockup: Pick<Mockup, "name" | "hash" | "componentsHash" | "uses" | "styles">,
 	approvals: readonly ApprovalEntry[],
+	withdrawals: readonly WithdrawnEntry[] = [],
 ): Approval {
 	const mine = approvals.filter((e) => e.mockup === mockup.name);
 	const current = mine.filter(
@@ -209,10 +283,14 @@ export function approvalOf(
 	if (current.length > 0) return { state: "approved", entry: current[current.length - 1] };
 	const reference = mine[mine.length - 1] ?? null;
 	const changed = reference ? componentsChanged(mockup, reference) : [];
+	const withdrawn = reference
+		? undefined
+		: withdrawals.find((w) => w.subject === "mockup" && w.name === mockup.name);
 	return {
 		state: "proposed",
 		reference,
 		...(changed.length > 0 ? { componentsChanged: changed } : {}),
+		...(withdrawn ? { withdrawn } : {}),
 	};
 }
 
@@ -253,11 +331,16 @@ export function storyApprovalOf(
 	app: LooksApp,
 	story: Pick<Story, "name" | "hash">,
 	approvals: readonly StoryApprovalEntry[],
+	withdrawals: readonly WithdrawnEntry[] = [],
 ): StoryApproval {
 	const mine = approvals.filter((e) => e.story === story.name);
 	const current = mine.filter((e) => e.snapshotHash === story.hash && boundToNow(app, e));
 	if (current.length > 0) return { state: "approved", entry: current[current.length - 1] };
-	return { state: "proposed", reference: mine[mine.length - 1] ?? null };
+	const reference = mine[mine.length - 1] ?? null;
+	const withdrawn = reference
+		? undefined
+		: withdrawals.find((w) => w.subject === "story" && w.name === story.name);
+	return { state: "proposed", reference, ...(withdrawn ? { withdrawn } : {}) };
 }
 
 /**
@@ -359,18 +442,8 @@ async function approveMockup(
 			reason: `${app.app} has no mockup ${JSON.stringify(mockupName)} in ${checkout} — a mockup is approved as its checkout holds it`,
 		};
 	}
-	const changed: Array<[string, string | undefined, string]> = [
-		["", seen.mockupHash, mockup.hash],
-		["'s components", seen.componentsHash, mockup.componentsHash],
-	];
-	for (const [what, shown, held] of changed) {
-		if (shown !== undefined && shown !== held) {
-			return {
-				approved: false,
-				reason: `${mockupName}${what} in ${checkout} is not what was shown (${short(shown)}, it has ${short(held)}) — open the mockup again and approve what it holds`,
-			};
-		}
-	}
+	const stale = mockupNotShown(checkout, mockup, seen);
+	if (stale) return { approved: false, reason: stale };
 	const unapproved = unapprovedUses(app, mockup, readStoryApprovals(app));
 	if (unapproved.length > 0) {
 		const stories = [...new Set(unapproved.map((u) => u.story))].join(", ");
@@ -379,8 +452,8 @@ async function approveMockup(
 			reason: `${mockupName} composes ${stories}, with no approved story — approve each story first, then the mockup`,
 		};
 	}
-	return appendEntry(checkout, app, `${mockup.name} approved by ${by}`, (approvals) => {
-		const now = approvalOf(app, mockup, approvals.filter(isEntry));
+	return appended(checkout, app, `${mockup.name} approved by ${by}`, (record) => {
+		const now = approvalOf(app, mockup, standingOf(record).mockups);
 		if (now.state === "approved") return { held: now.entry };
 		const components: Record<string, string> = {};
 		for (const u of mockup.uses) if (u.snapshotHash !== null) components[u.story] = u.snapshotHash;
@@ -419,14 +492,10 @@ async function approveStory(
 			reason: `a story is approved with the snapshot hash it was shown at`,
 		};
 	}
-	if (seen.snapshotHash !== story.hash) {
-		return {
-			approved: false,
-			reason: `${storyName} in ${checkout} is not the snapshot shown (${short(seen.snapshotHash)}, it has ${short(story.hash)}) — open the story again and approve what it holds`,
-		};
-	}
-	return appendEntry(checkout, app, `story ${story.name} approved by ${by}`, (approvals) => {
-		const now = storyApprovalOf(app, story, approvals.filter(isStoryEntry));
+	const stale = storyNotShown(checkout, story, seen.snapshotHash);
+	if (stale) return { approved: false, reason: stale };
+	return appended(checkout, app, `story ${story.name} approved by ${by}`, (record) => {
+		const now = storyApprovalOf(app, story, standingOf(record).stories);
 		if (now.state === "approved") return { held: now.entry };
 		return {
 			add: {
@@ -442,24 +511,181 @@ async function approveStory(
 	});
 }
 
+/** Why a mockup is not what the person was shown, or null when it is. */
+function mockupNotShown(
+	checkout: string,
+	mockup: Pick<Mockup, "name" | "hash" | "componentsHash">,
+	seen: { mockupHash?: string; componentsHash?: string },
+	act = "approve",
+): string | null {
+	const changed: Array<[string, string | undefined, string]> = [
+		["", seen.mockupHash, mockup.hash],
+		["'s components", seen.componentsHash, mockup.componentsHash],
+	];
+	for (const [what, shown, held] of changed) {
+		if (shown !== undefined && shown !== held) {
+			return `${mockup.name}${what} in ${checkout} is not what was shown (${short(shown)}, it has ${short(held)}) — open the mockup again and ${act} what it holds`;
+		}
+	}
+	return null;
+}
+
+/** Why a story's snapshot is not the one the person was shown, or null when it is. */
+function storyNotShown(
+	checkout: string,
+	story: Pick<Story, "name" | "hash">,
+	shown: string,
+	act = "approve",
+): string | null {
+	return shown === story.hash
+		? null
+		: `${story.name} in ${checkout} is not the snapshot shown (${short(shown)}, it has ${short(story.hash)}) — open the story again and ${act} what it holds`;
+}
+
+/** What the person was shown, sent back with Unapprove: the same hashes Approve binds. */
+export interface SeenWithdrawal {
+	foundationHash?: string;
+	mockupHash?: string;
+	componentsHash?: string;
+	snapshotHash?: string;
+}
+
+export type WithdrawResult =
+	| { withdrawn: true; entry: WithdrawnEntry; commit: NoteCommit }
+	| { withdrawn: false; reason: string };
+
 /**
- * Under the record's lock, ask `next` what the record as it is calls for: the
- * entry that already `held` it approved as it is, and nothing is written; or
- * an entry to `add`, appended with only the record committed.
+ * Take an approval back (ADR decision 11): append a `withdrawn` entry for a
+ * mockup or a story that is approved as `checkout` holds it now, and commit
+ * only the record through the notes writer, as `approve` does. The record
+ * keeps every entry it had; the subject reads proposed, with no reference,
+ * until a person approves it again. Called by the cockpit's Unapprove with the
+ * person who pressed it and the hashes the page showed, refused the way
+ * Approve refuses them when the checkout now holds something else. A subject
+ * that is not approved as it is — proposed, never approved, withdrawn already
+ * — is refused: there is no approval in force to take back.
  */
-async function appendEntry<E extends ApprovalEntry | StoryApprovalEntry>(
+export async function withdraw(
+	checkout: string,
+	appName: string,
+	name: string,
+	by: string,
+	kind: "mockup" | "story",
+	seen: SeenWithdrawal = {},
+): Promise<WithdrawResult> {
+	const refuse = (reason: string): WithdrawResult => ({ withdrawn: false, reason });
+	if (!isUsableSegment(appName)) return refuse(`${JSON.stringify(appName)} is not an app name`);
+	if (by.trim() === "") return refuse("taking an approval back needs who did it");
+	let app: LooksApp;
+	try {
+		app = await readApp(checkout, appName);
+	} catch (err) {
+		return refuse(`${(err as Error).message} (read in ${checkout})`);
+	}
+	if (seen.foundationHash !== undefined && seen.foundationHash !== app.foundation.hash) {
+		return refuse(
+			`the foundation in ${checkout} is not the one shown (${short(seen.foundationHash)}, it has ${short(app.foundation.hash)}) — open it again and act on what it holds`,
+		);
+	}
+	if (kind === "story") {
+		const story = app.stories.find((s) => s.name === name);
+		if (!story) return refuse(`${app.app} has no story ${JSON.stringify(name)} in ${checkout}`);
+		if (typeof seen.snapshotHash !== "string" || seen.snapshotHash === "") {
+			return refuse("a story is taken back with the snapshot hash it was shown at");
+		}
+		const stale = storyNotShown(checkout, story, seen.snapshotHash, "take back");
+		if (stale) return refuse(stale);
+		return takeBack({
+			checkout,
+			app,
+			label: `story ${name}`,
+			subject: "story",
+			name,
+			by,
+			approved: (record) =>
+				storyApprovalOf(app, story, standingOf(record).stories).state === "approved",
+		});
+	}
+	const mockup = app.mockups.find((m) => m.name === name);
+	if (!mockup) return refuse(`${app.app} has no mockup ${JSON.stringify(name)} in ${checkout}`);
+	const stale = mockupNotShown(checkout, mockup, seen, "take back");
+	if (stale) return refuse(stale);
+	return takeBack({
+		checkout,
+		app,
+		label: name,
+		subject: "mockup",
+		name,
+		by,
+		approved: (record) => approvalOf(app, mockup, standingOf(record).mockups).state === "approved",
+	});
+}
+
+/** Append the Unapprove when `approved` says the record holds an approval in force; refuse when it does not. */
+async function takeBack({
+	checkout,
+	app,
+	label,
+	subject,
+	name,
+	by,
+	approved,
+}: {
+	checkout: string;
+	app: LooksApp;
+	label: string;
+	subject: "mockup" | "story";
+	name: string;
+	by: string;
+	approved: (record: unknown[]) => boolean;
+}): Promise<WithdrawResult> {
+	const done = await appendEntry<WithdrawnEntry>(
+		checkout,
+		app,
+		`${label} withdrawn by ${by}`,
+		(record) =>
+			approved(record)
+				? { add: { kind: "withdrawn", subject, name, by, at: new Date().toISOString() } }
+				: { refuse: `${label} is not approved as it is, so there is no approval to take back` },
+	);
+	return "refused" in done
+		? { withdrawn: false, reason: done.refused }
+		: { withdrawn: true, entry: done.entry, commit: done.commit };
+}
+
+/** `appendEntry` for an approval: an entry already `held` is a success with nothing written. */
+async function appended(
 	checkout: string,
 	app: LooksApp,
 	subject: string,
-	next: (record: unknown[]) => { held: E } | { add: E },
+	next: (
+		record: unknown[],
+	) => { held: ApprovalEntry | StoryApprovalEntry } | { add: ApprovalEntry | StoryApprovalEntry },
 ): Promise<ApproveResult> {
+	const done = await appendEntry(checkout, app, subject, next);
+	// `next` above never refuses, so the entry is always there.
+	if ("refused" in done) return { approved: false, reason: done.refused };
+	return { approved: true, entry: done.entry, commit: done.commit };
+}
+
+/**
+ * Under the record's lock, ask `next` what the record as it is calls for: the
+ * entry that already `held` it as it is, and nothing is written; an entry to
+ * `add`, appended with only the record committed; or a `refuse`.
+ */
+async function appendEntry<E extends ApprovalEntry | StoryApprovalEntry | WithdrawnEntry>(
+	checkout: string,
+	app: LooksApp,
+	subject: string,
+	next: (record: unknown[]) => { held: E } | { add: E } | { refuse: string },
+): Promise<{ entry: E; commit: NoteCommit } | { refused: string }> {
 	const lock = `${currentMdPath(checkout)}.lock`;
 	mkdirSync(dirname(lock), { recursive: true });
 	return withLock(lock, () => {
 		const record = readRecord(app);
 		const decided = next(record);
-		if ("held" in decided)
-			return { approved: true, entry: decided.held, commit: { committed: true } };
+		if ("refuse" in decided) return { refused: decided.refuse };
+		if ("held" in decided) return { entry: decided.held, commit: { committed: true } };
 		const entry = decided.add;
 		const rel = approvalsPath(app.app);
 		writeFileSync(
@@ -472,7 +698,7 @@ async function appendEntry<E extends ApprovalEntry | StoryApprovalEntry>(
 			`chore(indusk): looks — ${oneLine(`${app.app}/${subject}`)}`,
 			{ anyBranch: true },
 		);
-		return { approved: true, entry, commit };
+		return { entry, commit };
 	});
 }
 
