@@ -1,6 +1,6 @@
 # UI promises — mockups on a DTCG foundation, approved in the cockpit, held by value
 
-**Decided 2026-10-10.** Full ADR: `.indusk/planning/ui-promises/adr.md` (archived to `.indusk/planning/archive/ui-promises/adr.md` when the plan closes).
+**Decided 2026-10-10.** Full ADR: `.indusk/planning/archive/ui-promises/adr.md`.
 
 **Amended 2026-10-11.** Decision 3 said the record is committed on `main`. It is committed on the branch of the checkout the person was shown — a plan's worktree commits on the plan's branch — so an approval is made where the work is and merges with it. A person can approve several proposed mockups at once; each is its own entry.
 

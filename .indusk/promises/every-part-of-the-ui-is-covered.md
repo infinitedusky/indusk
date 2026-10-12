@@ -2,11 +2,20 @@
 name: every-part-of-the-ui-is-covered
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: gates
 owner: ui-promises
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/looks/coverage.ts
+  - apps/indusk-mcp/src/lib/looks/markup.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/looks-cli.test.ts
+  - 'apps/indusk-admin/src/app/p/[project]/looks/looks.test.tsx'
+  - apps/indusk-mcp/src/lib/looks/coverage.test.ts
+  - apps/indusk-mcp/src/__tests__/looks-lint-rules.test.ts
+  - apps/indusk-mcp/src/lib/looks/approvals.test.ts
+  - apps/indusk-mcp/src/lib/looks/check.test.ts
+  - apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts
 incidents: []
 ---
 
@@ -14,3 +23,4 @@ Every screen the app has, in each declared state, and every component it uses, i
 
 ## History
 - 2026-10-11 — declared (ui-promises), from its planning conversation.
+- 2026-10-12 — enforced, confirmed for ui-promises: proven by row A10, row A11, row A12, row A13, row A34, row A35, row A36.
