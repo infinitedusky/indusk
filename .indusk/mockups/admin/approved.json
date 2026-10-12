@@ -182,6 +182,15 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T13:09:36.862Z"
+		},
+		{
+			"kind": "story",
+			"story": "badge.released",
+			"snapshotHash": "070b75990ca2eea91ac042324db4768e897a93f4d6af7d36b9653e69a8630010",
+			"foundationHash": "36b807fec8de7d0bba03f7609225d33597688f4bcf3e165a45beee8494f5f810",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T13:09:37.104Z"
 		}
 	]
 }
