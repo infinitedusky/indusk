@@ -1,7 +1,7 @@
 ---
 title: "Storybook components — the approved mockups as components, one implementation each, a story per state"
 date: 2026-10-12
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -45,6 +45,7 @@ The admin is built from components defined once, each with an approved story per
 | Build Phase 8 | the promise and plan pages rebuilt from components; the live check | Build Phases 5–7 |
 | Build Phase 9 | Falsification: a story bound to its stylesheet; a mockup that composes an unapproved story reads proposed; group Approve in dependency order; `componentsHash` required on Approve; the story frame drawn from the checkout's snapshot; the Storybook build refreshed by CSS | Build Phases 3, 4, 6 |
 | Build Phase 10 | Cleanup: one hash function per looks hash; `looks/approve` (the write side) split from `looks/approvals` (the record and its reading); one request reader for the approve and unapprove routes; one POST hook and one shown-body builder for the Looks page's buttons; one decision block and one select box for mockup and story rows; catalog and markup lookups in their own modules | Build Phases 2–9 |
+| Build Phase 11 | Audit fixes: `indusk looks coverage` reports a component the mockups name with no implementation (`unimplemented component: <name>`); a story's check span carries `indusk.look.kind = story`, and a screen's look standing never counts a story's run | Build Phases 2, 4 |
 
 ## Test Trajectory
 
@@ -89,6 +90,8 @@ The admin is built from components defined once, each with an approved story per
 | A37 | A story's snapshot and its component's stylesheet are hashed by one function each, on the render side and the read side: after `renderStories` over the fixture, every `snapshotHash` in `components.json` equals `readStories`' hash of that story, and every stylesheet hash written equals `readStyles`' — and no other module under `lib/looks` calls `createHash` | Build Phase 10 | Build Phase 10 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/lib/looks/stories.test.ts |
 | A38 | The package's `./looks/approvals` subpath exports the record and its reading and no write (`approve`, `withdraw`, `approver` absent); `./looks/approve` exports those three and `componentsHashesMissing`; the admin's two routes import the write side only from `./looks/approve` | Build Phase 10 | Build Phase 10 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
 | A39 | The approve and unapprove routes read a request the same way: a checkout with no worktree holding mockups is answered 404 with the same text by both, and a story body without `snapshotHash` is answered 400 by both | Build Phase 10 | Build Phase 10 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-admin/src/app/p/[project]/looks/looks-approve-binding.test.tsx |
+| A40 | A component a mockup names with no implementation in the app is reported by `indusk looks coverage` as `unimplemented component: <name>` and the command exits 1: in the fixture, a mockup naming `ghost` (no file marks `ghost`) reads `unimplemented component: ghost` — so A2's comparison can fail | Build Phase 11 | Build Phase 11 | planned | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
+| A41 | A story's check run never stands for a screen's: a story's span carries `indusk.look.kind = story`, the run read back keeps it, and a screen `nav.expanded @ phone` whose newest screen run broke reads broken although a later held run of the story `nav.expanded @ phone` exists | Build Phase 11 | Build Phase 11 | planned | unit | promise: a-look-reports-like-any-promise | apps/indusk-mcp/src/lib/promises/look-standing.test.ts |
 
 ### Deferred Verification
 
@@ -610,6 +613,28 @@ Evidence found while hunting:
 #### Build Phase 10 Document
 
 - [x] `apps/docs/src/reference/cli/looks.md`: the admin calls `approve` and `withdraw` from `@infinitedusky/indusk-mcp/looks/approve` (today it names `looks/approvals`)
+
+### Build Phase 11: Audit fixes — a missing implementation is reported, a story's run is told from a screen's
+
+**Tier**: med — two contained fixes, each with its row
+
+**Goal**: close the two defects the audit found and Sandy chose to fix before closing (2026-10-12): row A2 (every component the admin's mockups name has an implementation, a missing one reported by name) could not fail, because nothing prints the `unimplemented component:` line its test reads; and a story's check span carries the same app, screen, state and device as a screen's, so a held story `nav.expanded` can stand for a broken screen `nav.expanded` on the dashboard and in the nav's broken count (audit: "What does the diff change that no row touches?").
+
+- [ ] `coverageOf` gains `unimplemented`: each component name a mockup places (composed references and declared-new names) that no non-test file in the app's sources marks; `indusk looks coverage` prints `unimplemented component: <name>` for each and counts it uncovered; the Looks page's Uncovered list shows them beside the rest
+- [ ] `LOOK_MARK` gains `kind` (`indusk.look.kind`); `reportLooks` sets it to `story` on a story's span and leaves it off a screen's; the run reader (`parseMarkedSpan` and the look-run read in `look-standing.ts`) carries it; `newestRunSince` and every look-standing match count only runs of the look's own kind, a run without the attribute being a screen's (absence is a rule, so no recorded run needs rewriting)
+- [ ] Re-run A2 against the admin: it passes because `missing` is empty and coverage prints nothing, and with A40 the same comparison is now shown to fail when one is missing
+
+#### Build Phase 11 Verification
+
+- [ ] A40 and A41 pass, each red first on its own assertion (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/looks-components-cli.test.ts src/lib/promises/look-standing.test.ts src/__tests__/looks-admin-components.test.ts`); A2, A4, A14, A15 still pass; `node apps/indusk-mcp/dist/bin/cli.js looks coverage admin` prints no `unimplemented component:` line; `looks status admin` still reads 68 approved; tsc and biome clean on changed files
+
+#### Build Phase 11 Context
+
+- [ ] `apps/indusk-mcp/src/lib/looks/CLAUDE.md`: a story's check span carries `indusk.look.kind = story` and a look's standing counts only runs of its own kind — guarded by A41
+
+#### Build Phase 11 Document
+
+- [ ] `apps/docs/src/reference/cli/looks.md`: `looks coverage` lists `unimplemented component: <name>`; the look mark's `kind` attribute in the telemetry it emits
 
 ## Files Affected
 
