@@ -1,7 +1,7 @@
 ---
 title: "Brief as the contract — looks in the brief, approval of the brief, amendments, the plan page's parts, a plan that starts as a conversation"
 date: 2026-10-12
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
