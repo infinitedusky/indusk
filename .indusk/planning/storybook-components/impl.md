@@ -1,7 +1,7 @@
 ---
 title: "Storybook components — the approved mockups as components, one implementation each, a story per state"
 date: 2026-10-12
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
