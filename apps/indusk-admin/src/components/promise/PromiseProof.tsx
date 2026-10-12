@@ -13,7 +13,7 @@ import { StartFix } from "./StartFix";
 
 /**
  * The pieces of a promise's page (plan-cockpit, ADR decision 3): the banner,
- * four tiles, and the sections that show what proves the promise — every fact
+ * three tiles (tests, held, broken), and the sections that show what proves the promise — every fact
  * from the package's `proofOf`, none worked out here.
  *
  * promise: a-promise-page-shows-its-proof
