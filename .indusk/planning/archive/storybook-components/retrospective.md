@@ -110,7 +110,8 @@ Where reality differed from the plan:
     dashboard. Story spans now carry `indusk.look.kind`.
 - **Not run during the build:** A7, A18 and A19 boot their own `next dev`, and
   the dev server Sandy approved through held `.next/` the whole time. They are
-  owed at landing with the slow tier.
+  owed at landing. Run at landing, 2026-10-12, with the cockpit stopped: all
+  three pass (A18 alone took 221 s).
 
 ## What We Learned
 
