@@ -177,6 +177,17 @@ export async function readLooks(root: string): Promise<AppLooksRead[]> {
 	return Promise.all(listApps(root).map((app) => readAppLooks(root, app)));
 }
 
+/** How many looks await a person in `apps`: each mockup and story reading proposed, withdrawn ones included. */
+export function proposedCount(apps: AppLooksRead[]): number {
+	let count = 0;
+	for (const app of apps) {
+		if ("problem" in app) continue;
+		count += app.mockups.filter((m) => m.approval === "proposed").length;
+		count += app.stories.filter((s) => s.approval === "proposed").length;
+	}
+	return count;
+}
+
 /** A checkout whose looks the cockpit can show and approve in. */
 export interface LooksCheckout {
 	/** The plan whose worktree it is; null for the project's own checkout. */
@@ -204,6 +215,22 @@ export async function looksCheckouts(projectRoot: string): Promise<LooksCheckout
 		}
 	}
 	return out;
+}
+
+/** A checkout and how many looks wait for a person in it. */
+export interface CountedCheckout extends LooksCheckout {
+	proposed: number;
+}
+
+/**
+ * `looksCheckouts`, each with its count of proposed looks: a person approves
+ * where the proposals are, and the default checkout is not always it.
+ */
+export async function countedCheckouts(projectRoot: string): Promise<CountedCheckout[]> {
+	const all = await looksCheckouts(projectRoot);
+	return Promise.all(
+		all.map(async (c) => ({ ...c, proposed: proposedCount(await readLooks(c.root)) })),
+	);
 }
 
 /**
