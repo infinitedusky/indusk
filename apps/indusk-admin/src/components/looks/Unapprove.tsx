@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { postJson } from "@/lib/post-json";
+import { mockupBody, type Shown, storyBody } from "./shown";
+import { useLooksPost } from "./useLooksPost";
 
 /**
  * Unapprove (storybook-components ADR decision 11): a person takes back an
@@ -15,14 +15,6 @@ import { postJson } from "@/lib/post-json";
  * promise: a-mockup-is-approved-by-a-person
  */
 
-interface Shown {
-  project: string;
-  app: string;
-  foundationHash: string;
-  /** The plan whose worktree is shown; null for the project's own checkout. */
-  checkout: string | null;
-}
-
 function UnapproveButton({
   app,
   body,
@@ -30,28 +22,12 @@ function UnapproveButton({
   data,
 }: {
   app: string;
-  body: Record<string, unknown>;
+  body: object;
   testId: string;
   /** The hashes the page drew, as attributes. */
   data: Record<string, string>;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
-
-  const unapprove = async () => {
-    setBusy(true);
-    setProblem(null);
-    const r = await postJson(
-      `/api/looks/${encodeURIComponent(app)}/unapprove`,
-      body,
-    );
-    setBusy(false);
-    if (!r.ok) {
-      setProblem(r.error);
-      return;
-    }
-    window.location.reload();
-  };
+  const { busy, problem, postAndReload } = useLooksPost(app, "unapprove");
 
   return (
     <span className="flex flex-wrap items-center gap-2">
@@ -60,7 +36,7 @@ function UnapproveButton({
         variant="secondary"
         data-testid={testId}
         {...data}
-        onClick={() => void unapprove()}
+        onClick={() => void postAndReload(body)}
         disabled={busy}
       >
         {busy ? "Unapproving…" : "Unapprove"}
@@ -75,13 +51,10 @@ function UnapproveButton({
 }
 
 export function UnapproveMockup({
-  project,
-  app,
   mockup,
   mockupHash,
   componentsHash,
-  foundationHash,
-  checkout,
+  ...shown
 }: Shown & {
   mockup: string;
   /** The hash of the mockup as the page drew it, composed. */
@@ -91,31 +64,21 @@ export function UnapproveMockup({
 }) {
   return (
     <UnapproveButton
-      app={app}
+      app={shown.app}
       testId="unapprove-mockup"
       data={{
         "data-mockup-hash": mockupHash,
         "data-components-hash": componentsHash,
       }}
-      body={{
-        project,
-        mockup,
-        mockupHash,
-        componentsHash,
-        foundationHash,
-        checkout,
-      }}
+      body={mockupBody(shown, mockup, mockupHash, componentsHash)}
     />
   );
 }
 
 export function UnapproveStory({
-  project,
-  app,
   story,
   snapshotHash,
-  foundationHash,
-  checkout,
+  ...shown
 }: Shown & {
   /** `badge.ok` — the snapshot's name. */
   story: string;
@@ -124,17 +87,10 @@ export function UnapproveStory({
 }) {
   return (
     <UnapproveButton
-      app={app}
+      app={shown.app}
       testId="unapprove-story"
       data={{ "data-snapshot-hash": snapshotHash }}
-      body={{
-        project,
-        kind: "story",
-        story,
-        snapshotHash,
-        foundationHash,
-        checkout,
-      }}
+      body={storyBody(shown, story, snapshotHash)}
     />
   );
 }

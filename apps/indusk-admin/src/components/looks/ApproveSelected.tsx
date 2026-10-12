@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { postJson } from "@/lib/post-json";
+import { useLooksPost } from "./useLooksPost";
 
 /**
  * Group approval (ui-promises, Build Phase 5; stories added by
@@ -86,8 +86,7 @@ export function ApproveSelected({
 }) {
   const [selected, setSelected] = useState<Shown[]>([]);
   const total = proposed;
-  const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
+  const { busy, problem, setProblem, post } = useLooksPost(app, "approve");
 
   useEffect(() => {
     const read = () =>
@@ -109,41 +108,35 @@ export function ApproveSelected({
   };
 
   const approve = async () => {
-    setBusy(true);
-    setProblem(null);
-    const r = await postJson<{ results: GroupResult[] }>(
-      `/api/looks/${encodeURIComponent(app)}/approve`,
-      {
-        project,
-        mockups: selected.flatMap((x) =>
-          x.kind === "mockup"
-            ? [
-                {
-                  mockup: x.mockup,
-                  mockupHash: x.mockupHash,
-                  componentsHash: x.componentsHash,
-                },
-              ]
-            : [],
-        ),
-        stories: selected.flatMap((x) =>
-          x.kind === "story"
-            ? [
-                {
-                  story: x.story,
-                  snapshotHash: x.snapshotHash,
-                  ...(x.stylesheetHash
-                    ? { stylesheetHash: x.stylesheetHash }
-                    : {}),
-                },
-              ]
-            : [],
-        ),
-        foundationHash,
-        checkout,
-      },
-    );
-    setBusy(false);
+    const r = await post<{ results: GroupResult[] }>({
+      project,
+      mockups: selected.flatMap((x) =>
+        x.kind === "mockup"
+          ? [
+              {
+                mockup: x.mockup,
+                mockupHash: x.mockupHash,
+                componentsHash: x.componentsHash,
+              },
+            ]
+          : [],
+      ),
+      stories: selected.flatMap((x) =>
+        x.kind === "story"
+          ? [
+              {
+                story: x.story,
+                snapshotHash: x.snapshotHash,
+                ...(x.stylesheetHash
+                  ? { stylesheetHash: x.stylesheetHash }
+                  : {}),
+              },
+            ]
+          : [],
+      ),
+      foundationHash,
+      checkout,
+    });
     const results = r.ok ? r.body.results : [];
     const refused = r.ok
       ? results.filter((x) => !x.approved)

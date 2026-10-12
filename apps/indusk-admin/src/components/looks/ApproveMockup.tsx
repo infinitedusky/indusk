@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { postJson } from "@/lib/post-json";
+import { mockupBody, type Shown, storyBody } from "./shown";
+import { useLooksPost } from "./useLooksPost";
 
 /**
  * Approve (ui-promises ADR decision 3; storybook-components ADR decision 5):
@@ -16,14 +16,6 @@ import { postJson } from "@/lib/post-json";
  * promise: a-mockup-is-approved-by-a-person
  */
 
-interface Shown {
-  project: string;
-  app: string;
-  foundationHash: string;
-  /** The plan whose worktree is shown; null for the project's own checkout. */
-  checkout: string | null;
-}
-
 /** The button and its refusal, for whichever body the caller says was shown. */
 function ApproveButton({
   app,
@@ -31,34 +23,17 @@ function ApproveButton({
   testId,
 }: {
   app: string;
-  body: Record<string, unknown>;
+  body: object;
   testId: string;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
-
-  const approve = async () => {
-    setBusy(true);
-    setProblem(null);
-    const r = await postJson(
-      `/api/looks/${encodeURIComponent(app)}/approve`,
-      body,
-    );
-    setBusy(false);
-    if (!r.ok) {
-      setProblem(r.error);
-      return;
-    }
-    // The whole page reads again: the record, the chip and the coverage.
-    window.location.reload();
-  };
+  const { busy, problem, postAndReload } = useLooksPost(app, "approve");
 
   return (
     <span className="flex flex-wrap items-center gap-2">
       <Button
         size="sm"
         data-testid={testId}
-        onClick={() => void approve()}
+        onClick={() => void postAndReload(body)}
         disabled={busy}
       >
         {busy ? "Approving…" : "Approve"}
@@ -73,13 +48,10 @@ function ApproveButton({
 }
 
 export function ApproveMockup({
-  project,
-  app,
   mockup,
   mockupHash,
   componentsHash,
-  foundationHash,
-  checkout,
+  ...shown
 }: Shown & {
   mockup: string;
   /** The hash of the mockup as the page drew it, composed. */
@@ -89,28 +61,18 @@ export function ApproveMockup({
 }) {
   return (
     <ApproveButton
-      app={app}
+      app={shown.app}
       testId="approve-mockup"
-      body={{
-        project,
-        mockup,
-        mockupHash,
-        componentsHash,
-        foundationHash,
-        checkout,
-      }}
+      body={mockupBody(shown, mockup, mockupHash, componentsHash)}
     />
   );
 }
 
 export function ApproveStory({
-  project,
-  app,
   story,
   snapshotHash,
   stylesheetHash,
-  foundationHash,
-  checkout,
+  ...shown
 }: Shown & {
   /** `badge.ok` — the snapshot's name. */
   story: string;
@@ -121,17 +83,9 @@ export function ApproveStory({
 }) {
   return (
     <ApproveButton
-      app={app}
+      app={shown.app}
       testId="approve-story"
-      body={{
-        project,
-        kind: "story",
-        story,
-        snapshotHash,
-        ...(stylesheetHash === null ? {} : { stylesheetHash }),
-        foundationHash,
-        checkout,
-      }}
+      body={storyBody(shown, story, snapshotHash, stylesheetHash)}
     />
   );
 }
