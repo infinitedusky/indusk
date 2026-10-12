@@ -158,3 +158,11 @@ Each entry is a rule and a pointer; the pointer holds the story.
   refused while it runs, and an answer delivered but not recorded is reported
   sent, never failed. Guarded by `src/lib/build-host.release.test.ts` and
   `src/lib/decisions.test.ts`. — see `/decisions/plan-cockpit`
+- **Storybook is `@storybook/nextjs-vite`; its story tests are the system
+  tier's**: the `storybook` vitest project is named in `SYSTEM_PROJECTS`
+  (`vitest.tiers.ts`) and defined by `vitest.config.ts` only for a run the
+  system config started, so `pnpm test` never renders a story; `next` stays at
+  16.2.x until storybookjs#36720. `build:storybook` writes the git-ignored
+  `public/storybook/`, which the admin serves at `/storybook/index.html`.
+  Guarded by `everyday-tests-never-wait.test.ts` (A21). — see
+  `/decisions/storybook-components`

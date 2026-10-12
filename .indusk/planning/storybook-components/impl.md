@@ -176,8 +176,8 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 1 Context
 
-- [ ] root (Key Decisions): "Storybook components: each component one file with a story per state rendered to a snapshot; mockups compose components by name; a changed component reopens its mockups; Storybook served by the cockpit — see `/decisions/storybook-components`" — always-on because every UI plan from now on builds from these components; if the root is over its budget line, move another root entry down a tier first
-- [ ] `apps/indusk-admin/CLAUDE.md`: Storybook is `@storybook/nextjs-vite`, its story tests are the system tier's, and Next stays at 16.2.x until storybookjs#36720 — guarded by `everyday-tests-never-wait.test.ts` (A21)
+- [x] root (Key Decisions): "Storybook components: each component one file with a story per state rendered to a snapshot; mockups compose components by name; a changed component reopens its mockups; Storybook served by the cockpit — see `/decisions/storybook-components`" — always-on because every UI plan from now on builds from these components; if the root is over its budget line, move another root entry down a tier first
+- [x] `apps/indusk-admin/CLAUDE.md`: Storybook is `@storybook/nextjs-vite`, its story tests are the system tier's, and Next stays at 16.2.x until storybookjs#36720 — guarded by `everyday-tests-never-wait.test.ts` (A21)
 
 #### Build Phase 1 Document
 
