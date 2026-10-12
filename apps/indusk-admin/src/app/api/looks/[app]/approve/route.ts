@@ -1,8 +1,10 @@
 import {
   approve,
   approver,
+  componentsHashMissing,
   type Seen,
 } from "@infinitedusky/indusk-mcp/looks/approvals";
+import { readApp } from "@infinitedusky/indusk-mcp/looks/mockups";
 import { looksCheckouts } from "@infinitedusky/indusk-mcp/looks/overview";
 import type { NextRequest } from "next/server";
 import { getProjectPath } from "@/lib/registry-client";
@@ -150,6 +152,30 @@ function requestsOf(body: ApproveBody): Request[] | null {
   return [...storyRequests, ...mockupRequests];
 }
 
+/**
+ * Why the request cannot bind what the person saw, before anything is
+ * approved: a mockup that composes components sent without its
+ * `componentsHash` (A34), single or anywhere in a group, so a group is never
+ * half-recorded for a reason the request itself carries. An app the checkout
+ * cannot read is left to `approve`, which names it.
+ */
+async function componentsHashesMissing(
+  checkout: string,
+  app: string,
+  requests: Request[],
+): Promise<string | null> {
+  // A name that is not one folder is `approve`'s to refuse; nothing is read for it here.
+  if (!/^[\w-][\w.-]*$/.test(app)) return null;
+  const looks = await readApp(checkout, app).catch(() => null);
+  if (!looks) return null;
+  for (const { name, seen } of requests) {
+    const mockup = looks.mockups.find((m) => m.name === name);
+    const missing = mockup ? componentsHashMissing(mockup, seen) : null;
+    if (missing) return missing;
+  }
+  return null;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ app: string }> },
@@ -181,6 +207,12 @@ export async function POST(
       404,
       `plan ${JSON.stringify(body.checkout)} has no worktree here that holds mockups`,
     );
+  const incomplete = await componentsHashesMissing(
+    checkout.root,
+    app,
+    requests,
+  );
+  if (incomplete) return refuse(400, incomplete);
   const by = await approver(root);
   const results = [];
   for (const { name, seen } of requests) {
