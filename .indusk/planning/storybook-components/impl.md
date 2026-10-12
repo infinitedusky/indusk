@@ -214,7 +214,7 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/looks.md`: `indusk looks stories`, snapshots, `components.json`, the scan's two findings
+- [x] `apps/docs/src/reference/cli/looks.md`: `indusk looks stories`, snapshots, `components.json`, the scan's two findings
 
 ### Build Phase 3: Composed mockups, story approvals, components bound into mockup approvals
 

@@ -47,6 +47,10 @@ src/Badge.jsx:3  p-[13px]  arbitrary-class — arbitrary value in p-[13px] — u
 | `external-reference` | a mockup reaches outside itself: a `<link href>`, an `@import`, an `<img>`/`<script>`/`<iframe>` `src`, a `srcset`, a `poster`, or a `url()` that is not a `data:` URI or a `#fragment` — its approval binds only its own bytes. The generated `../tokens.css` is the foundation and passes |
 | `stock-class` | a Tailwind colour, spacing step, radius, text size or shadow the foundation's theme does not define |
 | `arbitrary-class` | a Tailwind arbitrary value such as `p-[13px]` |
+| `duplicate-component` | one `data-component` name marked in two non-test, non-story files — `duplicate component badge: src/Badge.tsx, src/Other.tsx` |
+| `component-outside-file` | when one of those files is the component's own by name (`Badge.tsx` for `badge`), every other file's marker — `component markup outside its file: src/Page.tsx:5 badge`: a screen writing the element out instead of rendering the component |
+| `not-in-catalog` | a marked component the app's `components.json` omits (only when the app has a catalog) |
+| `no-story` | a `<indusk-component name state>` in a mockup naming a state the catalog lists no story for — `no story: badge.warn` |
 
 **The properties held**: colour (`color`, `*-color`, `background`, `fill`,
 `stroke`, `outline`), `margin*`, `padding*`, `gap`, `border` and each side and
@@ -193,6 +197,8 @@ unresolved component: src/Dynamic.jsx:2
 | `uncovered state: <screen>.<state>` | the screen has an approved state, but not this one |
 | `uncovered component: <name>` | the app renders it and no approved mockup shows it on an element |
 | `unresolved component: <file>:<line>` | a source's `data-component={…}` is not a string literal, so no mockup can be said to cover it |
+| `not in catalog: <name>` | a marked component missing from `components.json` (an app with no catalog reports none) |
+| `no story: <name>.<state>` | a mockup places the state by name and the catalog lists no story for it |
 
 Only a mockup approved as it is now covers anything, and only with an element
 that carries the name: a mockup is parsed as HTML, so `data-component="badge"`
@@ -200,6 +206,59 @@ in its comment, script or style is text and covers nothing. A source's name is
 read when written literally — `data-component="badge"`, `'badge'`, `{"badge"}`
 — and listed `unresolved` when computed, never ignored. Exit 1 when anything is
 uncovered or unresolved, 0 when every part is covered.
+
+## `indusk looks stories <app>`
+
+Renders every story of the app's Storybook to a snapshot and writes the
+catalog an agent reads before it writes a component. Nothing needs to be
+running; the step builds what it reads.
+
+```
+chip  apps/indusk-admin/src/components/ui/Badge.tsx  passing, blocked, skipped, planned, writable, written, unknown, neutral
+admin: 8 snapshots for 1 components, catalog in .indusk/mockups/admin/components.json
+```
+
+```
+.indusk/mockups/admin/
+├── components.json              # the catalog: every component, its properties, its states
+└── components/chip.passing.html # one snapshot per component state
+```
+
+A **snapshot** is the markup Chromium drew for one story, in the app's own
+preview (its stylesheet and decorators), written to
+`components/<name>.<state>.html`. The name is the `data-component` the story's
+root element carries and the state is the story's id after `--`, so a story
+`ui-badge--needs-you` of `badge` is `badge.needs-you`. A changed component
+changes its snapshot with no edit to the story, which is what makes the
+snapshot the component's approved artefact.
+
+`components.json` is `{ components: [{ name, file, properties[], states[] }] }`:
+`file` is the component's one source file, `properties` are Storybook's
+components manifest (name, type, whether required, default, description), and
+each state is `{ name, snapshotHash }` — the sha256 of its snapshot file. An
+app with no catalog reports no catalog gaps; one with a catalog reports each
+marked component it omits (`not in catalog`), unless `screens.json` lists the
+name under `uncatalogued`, the components marked before they have a story,
+which only shrinks.
+
+The step runs the app's own Vitest with the addon-vitest plugin over a
+generated config in `node_modules/.cache/indusk-looks/`, so it needs the app's
+`vitest`, `@vitest/browser-playwright` and a `build:storybook` script (the
+components manifest is rebuilt first when it is older than a story or a
+component). It refuses, exit 1 and by name:
+
+- a marked name in two files — the scan's `duplicate component`;
+- a story whose markup carries no `data-component`, or of a component no
+  source marks;
+- two stories of one component state;
+- a story that did not render.
+
+**The scan** (`looks/components`, `./looks/components`) is what `lint` and
+`coverage` read and what the admin's `component-reuse-audit.test.ts` calls: a
+name in one file is never a finding (a component not yet extracted from its
+screen is the catalog's gap); a name in two is `duplicate component`, and when
+one is the component's own file by name every other is also
+`component markup outside its file: <file>:<line> <name>`.
 
 ## `indusk looks check <app> [--url <url>]`
 
