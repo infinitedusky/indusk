@@ -1,5 +1,12 @@
 import type { Browser } from "playwright-core";
-import { type ApprovalEntry, approvalOf, boundToNow } from "./approvals.js";
+import {
+	type ApprovalEntry,
+	approvalOf,
+	boundToNow,
+	type StoryApprovalEntry,
+	storyApprovalOf,
+} from "./approvals.js";
+import { readCatalog } from "./components.js";
 import type { Device, LooksApp } from "./mockups.js";
 import type { LookResult } from "./report.js";
 import { MEASURED_PROPERTIES, type MeasuredElement, verdict } from "./verdict.js";
@@ -49,6 +56,7 @@ function measureScript(
 	tokenNames: string[],
 	properties: readonly string[],
 	ignore: readonly string[],
+	scope = "body",
 ): string {
 	return `(() => {
 	const tokenNames = ${JSON.stringify(tokenNames)};
@@ -78,7 +86,10 @@ function measureScript(
 		return s;
 	};
 	const elements = [];
-	const nodes = [document.body, ...document.body.querySelectorAll("*")];
+	// A page is measured from its body; a story from its own root, so what the
+	// Storybook frame draws around it (its loader, its error display) is not read.
+	const root = document.querySelector(${JSON.stringify(scope)}) || document.body;
+	const nodes = [root, ...root.querySelectorAll("*")];
 	for (const el of nodes) {
 		if (["SCRIPT", "STYLE", "LINK", "META", "TITLE", "NOSCRIPT", "OPTION", "OPTGROUP"].includes(el.tagName) || ignored.includes(el.tagName)) continue;
 		const style = getComputedStyle(el);
@@ -145,6 +156,51 @@ export function judgeLook(input: {
 			screen: look.screen,
 			state: look.state,
 			device,
+			verdict: verdict({ approved, runtime: seen.runtime, elements: seen.elements }),
+		},
+	};
+}
+
+/** A story to open: its snapshot's name, the component and state, and the Storybook id it is served under. */
+export interface StoryTarget {
+	name: string;
+	component: string;
+	state: string;
+	id: string;
+}
+
+/**
+ * One story, judged from what its served page gave back: unchecked when the
+ * page did not draw the scheme it was opened under, else the verdict on its
+ * values. A story's page does not report a state — the URL names the story —
+ * so unlike `judgeLook` there is no state to demand. Reported as the
+ * component and state, marked `story`.
+ */
+export function judgeStory(input: {
+	app: string;
+	story: StoryTarget;
+	device: string;
+	scheme: Scheme;
+	approved: Record<string, string>;
+	seen: Measured;
+}): { result: LookResult } | { unchecked: Unchecked } {
+	const { app, story, device, scheme, approved, seen } = input;
+	if (seen.scheme !== scheme) {
+		return {
+			unchecked: {
+				mockup: `story ${story.name}`,
+				device,
+				reason: `the page did not render the ${scheme} scheme`,
+			},
+		};
+	}
+	return {
+		result: {
+			app,
+			screen: story.component,
+			state: story.state,
+			device,
+			kind: "story",
 			verdict: verdict({ approved, runtime: seen.runtime, elements: seen.elements }),
 		},
 	};
@@ -243,12 +299,69 @@ export function checkable(
 	return { checked, unchecked };
 }
 
+/**
+ * Where a story is served: the app's Storybook build under `/storybook`, the
+ * story's id, and the scheme as the theme global the preview's decorator reads.
+ */
+export function storyUrl(base: string, id: string, scheme: Scheme): string {
+	const url = new URL("/storybook/iframe.html", base);
+	url.searchParams.set("id", id);
+	url.searchParams.set("viewMode", "story");
+	url.searchParams.set("globals", `theme:${scheme}`);
+	return url.toString();
+}
+
+/**
+ * The stories to check, mirroring `checkable`: each story with a Storybook id
+ * in the catalog whose snapshot is approved as it is, or whose last approved
+ * version was approved on this very foundation and these declarations.
+ */
+export function checkableStories(
+	app: LooksApp,
+	approvals: readonly StoryApprovalEntry[],
+): { checked: StoryTarget[]; unchecked: Unchecked[] } {
+	const ids = new Map<string, string>();
+	for (const c of readCatalog(app)?.components ?? []) {
+		for (const s of c.states) if (s.id) ids.set(`${c.name}.${s.name}`, s.id);
+	}
+	const checked: StoryTarget[] = [];
+	const unchecked: Unchecked[] = [];
+	for (const story of app.stories) {
+		const mockup = `story ${story.name}`;
+		const approval = storyApprovalOf(app, story, approvals);
+		const heldTo =
+			approval.state === "approved" ||
+			(approval.reference !== null && boundToNow(app, approval.reference));
+		if (!heldTo) {
+			unchecked.push({
+				mockup,
+				reason: approval.reference
+					? "the foundation or the declarations changed since this story was approved"
+					: "proposed, never approved",
+			});
+			continue;
+		}
+		const id = ids.get(story.name);
+		if (!id) {
+			unchecked.push({
+				mockup,
+				reason: `no Storybook id in the catalog — run \`indusk looks stories ${app.app}\``,
+			});
+			continue;
+		}
+		checked.push({ name: story.name, component: story.component, state: story.state, id });
+	}
+	return { checked, unchecked };
+}
+
 async function measure(
 	browser: Browser,
 	device: Device,
 	scheme: Scheme,
 	url: string,
 	script: string,
+	/** A selector that appears once a story has drawn; absent for a page, which is read at `load`. */
+	rendered?: string,
 ): Promise<Measured> {
 	const context = await browser.newContext({
 		viewport: { width: device.width, height: device.height },
@@ -261,6 +374,13 @@ async function measure(
 		if (!response?.ok()) {
 			throw new LooksCheckError(`${url} answered ${response ? response.status() : "nothing"}`);
 		}
+		if (rendered) {
+			try {
+				await page.waitForSelector(rendered, { timeout: 30_000 });
+			} catch {
+				throw new LooksCheckError(`${url} did not draw its story within 30s`);
+			}
+		}
 		return (await page.evaluate(script)) as Measured;
 	} finally {
 		await context.close();
@@ -268,14 +388,16 @@ async function measure(
 }
 
 /**
- * Open every checkable screen state at every device of `app` and judge each.
- * `baseUrl` is `--url`, else the app's own `url`; with neither the check is
- * refused rather than guessed.
+ * Open every checkable screen state, and every checkable story in the app's
+ * served Storybook, at every device of `app` and judge each. `baseUrl` is
+ * `--url`, else the app's own `url`; with neither the check is refused rather
+ * than guessed.
  */
 export async function checkApp(
 	app: LooksApp,
 	approvals: readonly ApprovalEntry[],
 	baseUrl: string | undefined,
+	storyApprovals: readonly StoryApprovalEntry[] = [],
 ): Promise<CheckReport> {
 	const base = baseUrl ?? app.url;
 	if (!base) {
@@ -287,8 +409,10 @@ export async function checkApp(
 		throw new LooksCheckError(`${app.app} declares no reference devices (devices.json)`);
 	}
 	const { checked, unchecked } = checkable(app, approvals);
+	const stories = checkableStories(app, storyApprovals);
+	unchecked.push(...stories.unchecked);
 	const results: LookResult[] = [];
-	if (checked.length === 0) return { results, unchecked };
+	if (checked.length === 0 && stories.checked.length === 0) return { results, unchecked };
 
 	const chromium = await loadChromium();
 	const browser = await launch(chromium);
@@ -306,6 +430,30 @@ export async function checkApp(
 					const judged = judgeLook({
 						app: app.app,
 						look,
+						device: lookDevice(device.name, scheme),
+						scheme,
+						approved: approvedValues(app, scheme),
+						seen,
+					});
+					if ("result" in judged) results.push(judged.result);
+					else unchecked.push(judged.unchecked);
+				}
+			}
+		}
+		const storyScript = measureScript(
+			app.foundation.tokens.map((t) => t.name),
+			MEASURED_PROPERTIES,
+			app.ignore,
+			"#storybook-root",
+		);
+		for (const story of stories.checked) {
+			for (const device of app.devices) {
+				for (const scheme of schemesOf(app)) {
+					const url = storyUrl(base, story.id, scheme);
+					const seen = await measure(browser, device, scheme, url, storyScript, "body.sb-show-main");
+					const judged = judgeStory({
+						app: app.app,
+						story,
 						device: lookDevice(device.name, scheme),
 						scheme,
 						approved: approvedValues(app, scheme),

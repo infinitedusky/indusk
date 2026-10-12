@@ -116,6 +116,7 @@ export function buildCatalog(input: CatalogInput): {
 		};
 		component.states.push({
 			name: state,
+			id,
 			snapshotHash: createHash("sha256").update(snapshotBytes(html)).digest("hex"),
 		});
 		byComponent.set(name, component);

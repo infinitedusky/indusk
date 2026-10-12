@@ -166,6 +166,8 @@ export interface CatalogProperty {
 
 export interface CatalogState {
 	name: string;
+	/** The story's Storybook id (`components-ui-badge--passing`): what the cockpit frames from `/storybook/iframe.html`. */
+	id?: string;
 	/** sha256 of the state's snapshot file, `components/<name>.<state>.html`. */
 	snapshotHash: string;
 }

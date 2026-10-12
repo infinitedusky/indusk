@@ -139,14 +139,16 @@ export async function looksCoverage(projectRoot: string, appName: string): Promi
 
 /** A look's output: `held|broken <screen>.<state> @ <device>`, then one indented line per finding. */
 function lookLines(r: LookResult): string[] {
-	const head = `${r.verdict.state === "held" ? "held   " : "broken "} ${r.screen}.${r.state} @ ${r.device}`;
+	const subject = `${r.kind === "story" ? "story " : ""}${r.screen}.${r.state}`;
+	const head = `${r.verdict.state === "held" ? "held   " : "broken "} ${subject} @ ${r.device}`;
 	return [head, ...r.verdict.findings.map((f) => `  ${describe(f)}`)];
 }
 
 /**
  * `indusk looks check <app> [--url]` — opens each declared screen state with
- * an approved mockup at each reference device in Chromium and judges the
- * running app by value. One `held`/`broken` line per screen state and device,
+ * an approved mockup, and each approved story in the Storybook the app's
+ * server serves at `/storybook`, at each reference device in Chromium and
+ * judges the running app by value. One `held`/`broken` line per screen state and device,
  * each finding indented under a broken one (`token <name> approved <v> actual
  * <v>` or `element <selector> <property> actual <v> nearest <token (v)>`),
  * then the screen states not checked and why. Each look is also a span.
@@ -160,7 +162,12 @@ export async function looksCheck(
 ): Promise<void> {
 	try {
 		const app = await readApp(projectRoot, appName);
-		const { results, unchecked } = await checkApp(app, readApprovals(app), opts.url);
+		const { results, unchecked } = await checkApp(
+			app,
+			readApprovals(app),
+			opts.url,
+			readStoryApprovals(app),
+		);
 		for (const r of results) for (const line of lookLines(r)) console.info(line);
 		for (const u of unchecked) {
 			console.info(`unchecked ${u.mockup}${u.device ? ` @ ${u.device}` : ""} — ${u.reason}`);

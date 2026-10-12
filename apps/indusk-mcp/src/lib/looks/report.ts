@@ -21,13 +21,15 @@ export interface LookResult {
 	screen: string;
 	state: string;
 	device: string;
+	/** `story` for a component's story in the served Storybook (`screen` is its component); absent for a screen. */
+	kind?: "story";
 	verdict: Verdict;
 }
 
 /** One line for the violated event: what was seen first, and how many more. */
 export function symptomOf(result: LookResult): string {
 	const [first, ...rest] = result.verdict.findings;
-	const where = `${result.screen}.${result.state} @ ${result.device}`;
+	const where = `${result.kind === "story" ? "story " : ""}${result.screen}.${result.state} @ ${result.device}`;
 	if (!first) return `${where}: broken`;
 	const more = rest.length > 0 ? ` (+${rest.length} more)` : "";
 	return `${where}: ${describe(first)}${more}`;
