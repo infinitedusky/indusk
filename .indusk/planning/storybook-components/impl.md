@@ -354,6 +354,8 @@ The admin is built from components defined once, each with an approved story per
 
 #### Build Phase 6 Verification
 
+- Note (checks run before the pause, none checked off): A24, A25 and A26 pass (`looks-admin-foundation`, `looks-components-cli`, `src/lib/looks`: 84 tests); `indusk looks lint admin` no finding; `indusk looks status admin` reads every story approved (the snapshots did not change) and the eleven mockups proposed, each naming its components; `indusk looks coverage admin` reads 24 uncovered, all because the mockups are proposed until Sandy approves them. The admin's `storybook.contract.test.ts` (A5, A13) passes; `looks-components.contract.test.ts` could not start its own `next dev` — a `next dev` (pid 99735, started 09:14 today) already holds this directory.
+
 - [ ] A24, A25 and A26 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-admin-foundation.test.ts src/__tests__/looks-components-cli.test.ts`); a composed mockup opened on the Looks page is drawn styled, read by a person before approving; `indusk looks lint admin` no finding; `indusk looks status admin` eleven mockups and every story approved; `indusk looks coverage admin` every part covered
 
 #### Build Phase 6 Context
