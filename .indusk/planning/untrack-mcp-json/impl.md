@@ -8,6 +8,8 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+cleanup: skipped
+cleanup_reason: "reviewed all 11 changed files (listOversizedChangedFiles flagged three: changelog.md at 1070 lines is append-only and gained one entry; telemetry.ts at 501 lines shrank by 59 lines in this plan, its private file helpers moved to lib/mcp-config.ts; update.ts at 1015 lines is a long-standing command function this plan touched with one 10-line named helper and one call). The new lib/mcp-config.ts is 103 lines of one file's reads, writes and defaults with one reason to change, and its three consumers (telemetry.ts, update.ts, plan-worktree-commands.ts) each import it once. The only repetition is the 'is indusk on the PATH' probe, now in mcp-config.ts and in init.ts's server-add command (two copies, below the rule of three; init's is a shell string inside a larger command and is left to the next plan that touches init). The three test files share no helper beyond the fixtures that already exist. Nothing warrants extraction."
 ---
 
 # Untrack .mcp.json
