@@ -282,6 +282,12 @@
 					"required": false
 				},
 				{
+					"name": "optionProps",
+					"type": "(\n  device: string,\n) => ButtonHTMLAttributes<HTMLButtonElement> &\n  Record<`data-${string}`, string>",
+					"required": false,
+					"description": "What a segment says to a test, by device: its `data-*` attributes."
+				},
+				{
 					"name": "className",
 					"type": "string",
 					"required": false,
@@ -395,6 +401,12 @@
 					"description": "Folded to the rail: names and counts hidden, marks kept."
 				},
 				{
+					"name": "toggleProps",
+					"type": "ButtonHTMLAttributes<HTMLButtonElement> &\nRecord<`data-${string}`, string>",
+					"required": false,
+					"description": "What the collapse button does and says to a test: its click, `aria-expanded`."
+				},
+				{
 					"name": "children",
 					"type": "ReactNode",
 					"required": true,
@@ -417,6 +429,11 @@
 					"name": "looks-current",
 					"id": "ui-nav--looks-current",
 					"snapshotHash": "bf08348712d80360e5a58802700462e521e629f479be49b0c756062859691659"
+				},
+				{
+					"name": "plan-current",
+					"id": "ui-nav--plan-current",
+					"snapshotHash": "21cb8f858566fa837fe2c86be7c19e09977615b8129c70500d2d2dcb96b50e41"
 				},
 				{
 					"name": "collapsed",
@@ -448,7 +465,7 @@
 				},
 				{
 					"name": "stage",
-					"type": "string",
+					"type": "ReactNode",
 					"required": true,
 					"description": "Where the plan stands in words: \"Approve the cockpit mockups\", \"Building · 2 of 5\"."
 				},
@@ -458,6 +475,12 @@
 					"required": false,
 					"defaultValue": "false",
 					"description": "The plan that is open."
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": false,
+					"description": "Where the row goes. A link when given, a button when not."
 				},
 				{
 					"name": "className",
@@ -481,10 +504,15 @@
 					"name": "released",
 					"id": "ui-planrow--released",
 					"snapshotHash": "386505b3dd3ca21eceefd37d11c175a41c438d72aad5fab6637dfbd7f9ce58b0"
+				},
+				{
+					"name": "current",
+					"id": "ui-planrow--current",
+					"snapshotHash": "4ccaecc1ad1e755a9a46c0ecd34530a5ada31fdcfc91b1b6122f8b4fe863c55b"
 				}
 			],
 			"stylesheet": "components/plan-row.css",
-			"stylesheetHash": "95f2e2573a700bbe34a95bc8239ee34cc48db08d44eb46280067296bb1a7239d"
+			"stylesheetHash": "5d3be4e1672e200ffa3180d2fb0084a5c455b2402c6731cb8b83e581c2d8594b"
 		},
 		{
 			"name": "promise-row",
@@ -503,7 +531,7 @@
 				},
 				{
 					"name": "slug",
-					"type": "string",
+					"type": "ReactNode",
 					"required": true,
 					"description": "Its name."
 				},
@@ -515,13 +543,19 @@
 				},
 				{
 					"name": "evals",
-					"type": "string",
+					"type": "ReactNode",
 					"required": true
 				},
 				{
 					"name": "last",
-					"type": "string",
+					"type": "ReactNode",
 					"required": true
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": false,
+					"description": "Where the promise's page is. A link when given, a button when not."
 				},
 				{
 					"name": "empty",
@@ -863,7 +897,7 @@
 				},
 				{
 					"name": "count",
-					"type": "number",
+					"type": "ReactNode",
 					"required": false,
 					"description": "What the view is counting — broken promises, uncovered looks; hidden at zero by the caller."
 				},
@@ -873,6 +907,12 @@
 					"required": false,
 					"defaultValue": "false",
 					"description": "The view that is open."
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": false,
+					"description": "Where the view is. A link when given, a button when not."
 				},
 				{
 					"name": "className",
