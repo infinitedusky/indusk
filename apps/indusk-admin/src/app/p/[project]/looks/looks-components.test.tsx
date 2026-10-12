@@ -66,6 +66,38 @@ describe("the components list", () => {
   });
 });
 
+describe("what is shown: mockups, components, or both", () => {
+  const stories = (html: string) => html.includes('data-testid="story-row"');
+  const mockups = (html: string) => html.includes('data-testid="mockup-row"');
+
+  it("draws both by default, and each alone on request", async () => {
+    const both = await looksPage();
+    expect(mockups(both) && stories(both)).toBe(true);
+
+    const onlyMockups = await looksPage({ show: "mockups" });
+    expect(mockups(onlyMockups)).toBe(true);
+    expect(stories(onlyMockups)).toBe(false);
+
+    const onlyComponents = await looksPage({ show: "components" });
+    expect(stories(onlyComponents)).toBe(true);
+    expect(mockups(onlyComponents)).toBe(false);
+  });
+
+  it("draws the same choice in the cascade", async () => {
+    const onlyComponents = await looksPage({
+      show: "components",
+      view: "cascade",
+    });
+    expect(onlyComponents).toContain('data-testid="cascade-components"');
+    expect(onlyComponents).not.toContain('data-testid="cascade-mockups"');
+  });
+
+  it("keeps show, view and checkout when another choice is made", async () => {
+    const html = await looksPage({ show: "components", view: "cascade" });
+    expect(html).toMatch(/href="[^"]*show=components[^"]*view=cascade/);
+  });
+});
+
 describe("a story opened", () => {
   it("is framed from the admin's own /storybook, with Approve while it is proposed", async () => {
     const html = await looksPage({

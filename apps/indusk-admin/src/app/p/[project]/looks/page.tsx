@@ -21,6 +21,7 @@ interface LooksRouteProps {
     story?: string;
     device?: string;
     view?: string;
+    show?: string;
     checkout?: string;
   }>;
 }
@@ -78,6 +79,11 @@ export default async function PerProjectLooksPage({
       open={open}
       openStory={openStory}
       view={query.view === "cascade" ? "cascade" : "list"}
+      show={
+        query.show === "mockups" || query.show === "components"
+          ? query.show
+          : "all"
+      }
       checkout={checkout.plan}
       checkouts={await looksCheckouts(projectPath)}
     />

@@ -5,6 +5,7 @@ import type {
 import { APPROVAL_STYLE } from "@/components/bars/labels";
 import { stamp } from "@/lib/stamp";
 import { ApproveStory } from "./ApproveMockup";
+import { hrefOf, type Show } from "./address";
 import { LookFrame } from "./LookFrame";
 
 /**
@@ -49,21 +50,19 @@ export function Components({
   app,
   path,
   checkout,
+  show,
   current,
 }: {
   app: AppLooks;
   path: string;
   checkout: string | null;
+  show: Show;
   /** The story open, when one is. */
   current: string | null;
 }) {
   if (app.stories.length === 0) return null;
   const hrefAt = (story: string) =>
-    `${path}?${new URLSearchParams({
-      app: app.app,
-      story,
-      ...(checkout ? { checkout } : {}),
-    })}`;
+    hrefOf(path, { app: app.app, story, show, view: "list", checkout });
   return (
     <section
       className="flex flex-col gap-2"
