@@ -218,7 +218,11 @@ body {
   height: calc(100vh - var(--space-10) - 2 * var(--space-6));
 }
 .looks-split {
-  grid-template-columns: var(--size-side) minmax(0, 1fr);
+  /* the list holds a look's name whole beside its chip and Open: the side
+     column and a badge and a step, no narrower than the longest look name */
+  grid-template-columns:
+    calc(var(--size-side) + var(--size-badge) + var(--space-4))
+    minmax(0, 1fr);
 }
 .looks-sheet-toggle,
 .looks-sheet-handle {

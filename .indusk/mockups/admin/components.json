@@ -356,21 +356,21 @@
 				{
 					"name": "approved",
 					"id": "ui-lookrow--approved",
-					"snapshotHash": "4de21e6349fe60a88175b1fb4bf193e60805967dee39beef0635903d378aa24d"
+					"snapshotHash": "32a1f7841ed14ec4feeca9c0ad413530807519d0e88e7a44eb0367560481cb70"
 				},
 				{
 					"name": "proposed",
 					"id": "ui-lookrow--proposed",
-					"snapshotHash": "d5d5dd328da8b8c6263e04ab21ad9ad61a46cc07b80bfff5270b119df33b7215"
+					"snapshotHash": "6b252d278c6566a8b3752d88c92c8e076d9a2d6ff74a20dd9920c00ea5af6d84"
 				},
 				{
 					"name": "uncovered",
 					"id": "ui-lookrow--uncovered",
-					"snapshotHash": "884bcfe1843ee6045837284fb040286677c223b636217025513d2d5f84471ca0"
+					"snapshotHash": "695f7d86779177e66a499cf4d190ca607fad6717e9d0ff63aab9efa0a03c607c"
 				}
 			],
 			"stylesheet": "components/look-row.css",
-			"stylesheetHash": "a3a96ad21a52012b70c703c1b5f1f375d05b660cb98aae32486c9427686e2f67"
+			"stylesheetHash": "447f4b40b8f2b3c76e3ba9457fb20a7a6eef926484ed1cf7ffd1126af7bdd330"
 		},
 		{
 			"name": "nav",

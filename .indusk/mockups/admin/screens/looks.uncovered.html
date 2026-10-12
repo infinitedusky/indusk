@@ -50,7 +50,7 @@
 			.choices b.on { background: var(--color-dusk-wash); }
 			.looks-app { display: grid; gap: var(--space-3); }
 			.looks-app h2 { font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-semibold); }
-			.looks-split { display: grid; grid-template-columns: var(--size-side) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+			.looks-split { display: grid; grid-template-columns: calc(var(--size-side) + var(--size-badge) + var(--space-4)) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
 			.looks-sheet-toggle, .looks-sheet-handle { display: none; }
 			.looks-list { display: flex; flex-direction: column; gap: var(--space-3); }
 			.looks-rows { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-md); overflow: hidden; }

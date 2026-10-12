@@ -9,6 +9,9 @@
     width: var(--size-dot);
     height: var(--size-dot);
 }
+.min-w-0 {
+    min-width: 0;
+}
 .items-center {
     align-items: center;
 }
@@ -79,6 +82,9 @@
 }
 .tracking-chip {
     letter-spacing: var(--tracking-chip);
+}
+.break-words {
+    overflow-wrap: break-word;
 }
 .text-idle {
     color: var(--color-idle);
