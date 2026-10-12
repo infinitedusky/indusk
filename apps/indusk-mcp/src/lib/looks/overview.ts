@@ -13,7 +13,7 @@ import {
 import { readCatalog } from "./components.js";
 import { type Coverage, coverageOf } from "./coverage.js";
 import { generateCss } from "./foundation.js";
-import { type Device, MOCKUPS_DIR, type Mockup, readApp } from "./mockups.js";
+import { type ComponentStyle, type Device, MOCKUPS_DIR, type Mockup, readApp } from "./mockups.js";
 
 /**
  * What the cockpit's Looks page shows (ui-promises ADR decisions 2, 3, 5):
@@ -93,10 +93,19 @@ const TOKENS_LINK = /<link\b[^>]*\bhref=["'][^"']*tokens\.css["'][^>]*>/i;
  * generated `tokens.css` by a relative link, which a frame has no folder to
  * resolve, so the link is replaced by the same CSS inline — generated from
  * the foundation as it is now, so a changed value shows on the next read.
- * A mockup without the link gets the CSS first in its head.
+ * A mockup without the link gets the CSS first in its head. The stylesheet of
+ * each component the mockup names follows the tokens (ADR decision 10): a
+ * snapshot is markup, and its look is the app's compiled classes.
  */
-export function mockupDocument(html: string, tokensCss: string): string {
-	const style = `<style data-foundation>\n${tokensCss}</style>`;
+export function mockupDocument(
+	html: string,
+	tokensCss: string,
+	styles: readonly Pick<ComponentStyle, "component" | "css">[] = [],
+): string {
+	const style = [
+		`<style data-foundation>\n${tokensCss}</style>`,
+		...styles.map((s) => `<style data-component-style="${s.component}">\n${s.css}</style>`),
+	].join("\n");
 	if (TOKENS_LINK.test(html)) return html.replace(TOKENS_LINK, () => style);
 	if (/<head\b[^>]*>/i.test(html)) return html.replace(/<head\b[^>]*>/i, (head) => head + style);
 	return style + html;
@@ -118,7 +127,7 @@ function viewOf(
 		hash: mockup.hash,
 		componentsHash: mockup.componentsHash,
 		componentsChanged: approval.state === "proposed" ? (approval.componentsChanged ?? []) : [],
-		document: mockupDocument(mockup.html, css),
+		document: mockupDocument(mockup.html, css, mockup.styles),
 	};
 }
 

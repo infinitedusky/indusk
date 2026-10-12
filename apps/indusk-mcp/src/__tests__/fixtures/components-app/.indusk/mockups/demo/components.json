@@ -18,7 +18,9 @@
 					"name": "broken",
 					"snapshotHash": "e42924bf78efb01346c9e20bd117ba575c004f03d1d49b471ed959a9370b2e19"
 				}
-			]
+			],
+			"stylesheet": "components/badge.css",
+			"stylesheetHash": "097df5545e6df94c3b6ccc01246e789a2b83fbd5eaeeb89f15deea690041d252"
 		}
 	]
 }

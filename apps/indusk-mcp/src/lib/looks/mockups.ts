@@ -57,8 +57,10 @@ export interface Mockup {
 	hash: string;
 	/** The components it names, in document order, each with the snapshot hash composed in. */
 	uses: ComponentUse[];
-	/** `componentsHashOf` the snapshots it composes: what tells a changed component from a changed mockup. */
+	/** `componentsHashOf` the snapshots and stylesheets it composes: what tells a changed component from a changed mockup. */
 	componentsHash: string;
+	/** The stylesheet of each component it names that has one, by component name: inlined after the tokens (ADR decision 10). */
+	styles: ComponentStyle[];
 	/** Tokens the mockup declares new with `<meta name="indusk-new-tokens">`. */
 	declaresNew: string[];
 	/** Components it draws and declares new with `<meta name="indusk-new-components">`. */
@@ -80,6 +82,22 @@ export interface Story {
 	html: string;
 	/** sha256 of the file's bytes: a story approval is bound to it. */
 	hash: string;
+}
+
+/**
+ * A component's stylesheet, `components/<name>.css`, written by the render
+ * step: the app's compiled rules for the classes the component's snapshots
+ * use, on the foundation's tokens only (ADR decision 10).
+ */
+export interface ComponentStyle {
+	component: string;
+	/** Relative to the project root. */
+	file: string;
+	css: string;
+	/** sha256 of the file's bytes: it binds into the `componentsHash` of every mockup naming the component. */
+	hash: string;
+	/** The key an approval's `components` record holds it under: `badge.css`. */
+	key: string;
 }
 
 export interface LooksApp {
@@ -120,6 +138,8 @@ export interface LooksApp {
 	declarationsHash: string;
 	/** Every snapshot in `components/`, by name. */
 	stories: Story[];
+	/** Every `components/<name>.css`, sorted by component. */
+	styles: ComponentStyle[];
 	mockups: Mockup[];
 }
 
@@ -129,16 +149,20 @@ const sha256 = (bytes: Buffer | string) => createHash("sha256").update(bytes).di
 
 /**
  * The hash a mockup approval binds its components by: sha256 of the snapshot
- * hashes it composes, one per story, sorted and joined by newline. A mockup
- * that composes nothing has the hash of the empty string — the value an entry
- * written before composition existed is read as.
+ * hashes it composes, one per story, sorted and joined by newline, then each
+ * named component's stylesheet hash (`css:<hash>`, sorted). A mockup that
+ * composes nothing has the hash of the empty string — the value an entry
+ * written before composition existed is read as — and one whose components
+ * have no stylesheet binds the snapshots alone, as it did before.
  */
 export function componentsHashOf(
 	uses: readonly Pick<ComponentUse, "story" | "snapshotHash">[],
+	styles: readonly Pick<ComponentStyle, "hash">[] = [],
 ): string {
 	const byStory = new Map<string, string>();
 	for (const u of uses) if (u.snapshotHash !== null) byStory.set(u.story, u.snapshotHash);
-	return sha256([...byStory.values()].sort().join("\n"));
+	const sheets = styles.map((s) => `css:${s.hash}`);
+	return sha256([...[...byStory.values()].sort(), ...sheets.sort()].join("\n"));
 }
 
 /** JSON with every object's keys sorted, so a reformatted file binds the same declarations. */
@@ -198,6 +222,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 	}>(join(dir, "screens.json"), {});
 
 	const stories = await readStories(dir, join(MOCKUPS_DIR, app));
+	const styles = await readStyles(dir, join(MOCKUPS_DIR, app));
 	const snapshots = new Map<string, SnapshotBytes>(stories.map((s) => [s.name, s]));
 
 	const screensDir = join(dir, "screens");
@@ -211,6 +236,8 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		const bytes = await readFile(join(screensDir, fileName));
 		const source = bytes.toString("utf-8");
 		const composed = compose(source, snapshots);
+		const named = new Set(composed.uses.map((u) => u.name));
+		const used = styles.filter((s) => named.has(s.component));
 		mockups.push({
 			name,
 			screen,
@@ -220,7 +247,8 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 			html: composed.html,
 			hash: composed.uses.length === 0 ? sha256(bytes) : sha256(composed.html),
 			uses: composed.uses,
-			componentsHash: componentsHashOf(composed.uses),
+			componentsHash: componentsHashOf(composed.uses, used),
+			styles: used,
 			declaresNew: declaredNew(source, "indusk-new-tokens"),
 			declaresNewComponents: declaredNew(source, "indusk-new-components"),
 		});
@@ -242,6 +270,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		uncomposed: declared.uncomposed ?? [],
 		...(declared.url ? { url: declared.url } : {}),
 		stories,
+		styles,
 		mockups,
 	};
 }
@@ -267,6 +296,26 @@ async function readStories(dir: string, rel: string): Promise<Story[]> {
 		});
 	}
 	return stories;
+}
+
+/** The stylesheets in `<app>/components/`, `<name>.css`, sorted by component; none when the app has none. */
+async function readStyles(dir: string, rel: string): Promise<ComponentStyle[]> {
+	const componentsDir = join(dir, "components");
+	if (!existsSync(componentsDir)) return [];
+	const files = (await readdir(componentsDir)).filter((f) => f.endsWith(".css")).sort();
+	const styles: ComponentStyle[] = [];
+	for (const fileName of files) {
+		const component = fileName.slice(0, -".css".length);
+		const bytes = await readFile(join(componentsDir, fileName));
+		styles.push({
+			component,
+			file: join(rel, "components", fileName),
+			css: bytes.toString("utf-8"),
+			hash: sha256(bytes),
+			key: fileName,
+		});
+	}
+	return styles;
 }
 
 async function filesUnder(dir: string): Promise<string[]> {

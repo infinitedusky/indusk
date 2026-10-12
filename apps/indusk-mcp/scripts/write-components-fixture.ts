@@ -16,7 +16,8 @@
  *              foundationHash, declarationsHash, by, at }
  *   mockup   today's entry + componentsHash (`componentsHashOf`: the sha256 of
  *            the sorted snapshot hashes of the components it composes, joined
- *            by newline); its `mockupHash` is the hash of the mockup composed
+ *            by newline, then `css:<hash>` of each stylesheet of a component
+ *            it names); its `mockupHash` is the hash of the mockup composed
  *            (`looks/compose`), as Build Phase 3 decided — what is shown is
  *            what is bound. Every hash is read from `readApp`, never computed
  *            here.
@@ -66,10 +67,20 @@ writeFileSync(
 
 const catalogFile = join(ROOT, APP, "components.json");
 const catalog = JSON.parse(readFileSync(catalogFile, "utf-8")) as {
-	components: Array<{ name: string; states: Array<{ name: string; snapshotHash: string }> }>;
+	components: Array<{
+		name: string;
+		stylesheet?: string;
+		stylesheetHash?: string;
+		states: Array<{ name: string; snapshotHash: string }>;
+	}>;
 };
 for (const c of catalog.components) {
 	for (const s of c.states) s.snapshotHash = snapshot(`${c.name}.${s.name}`);
+	const sheet = app.styles.find((x) => x.component === c.name);
+	if (sheet) {
+		c.stylesheet = `components/${sheet.key}`;
+		c.stylesheetHash = sheet.hash;
+	}
 }
 writeFileSync(catalogFile, `${JSON.stringify(catalog, null, "\t")}\n`);
 process.stdout.write("wrote approved.json and components.json\n");

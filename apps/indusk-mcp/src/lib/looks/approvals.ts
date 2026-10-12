@@ -196,7 +196,7 @@ function readRecord(app: LooksApp): unknown[] {
  */
 export function approvalOf(
 	app: LooksApp,
-	mockup: Pick<Mockup, "name" | "hash" | "componentsHash" | "uses">,
+	mockup: Pick<Mockup, "name" | "hash" | "componentsHash" | "uses" | "styles">,
 	approvals: readonly ApprovalEntry[],
 ): Approval {
 	const mine = approvals.filter((e) => e.mockup === mockup.name);
@@ -223,7 +223,7 @@ export function approvalOf(
  * which one changed cannot be told. None when its `componentsHash` holds.
  */
 function componentsChanged(
-	mockup: Pick<Mockup, "componentsHash" | "uses">,
+	mockup: Pick<Mockup, "componentsHash" | "uses" | "styles">,
 	reference: ApprovalEntry,
 ): string[] {
 	if ((reference.componentsHash ?? NO_COMPONENTS) === mockup.componentsHash) return [];
@@ -233,8 +233,13 @@ function componentsChanged(
 	for (const u of now.values()) {
 		if (!bound || bound[u.story] !== u.snapshotHash) names.add(u.name);
 	}
-	for (const story of Object.keys(bound ?? {})) {
-		if (!now.has(story)) names.add(story.slice(0, story.indexOf(".")));
+	// A stylesheet is held in the record under `<component>.css`, beside the snapshots.
+	for (const s of mockup.styles) {
+		if (!bound || bound[s.key] !== s.hash) names.add(s.component);
+	}
+	const sheets = new Set(mockup.styles.map((s) => s.key));
+	for (const key of Object.keys(bound ?? {})) {
+		if (!now.has(key) && !sheets.has(key)) names.add(key.slice(0, key.indexOf(".")));
 	}
 	return [...names].sort();
 }
@@ -379,6 +384,7 @@ async function approveMockup(
 		if (now.state === "approved") return { held: now.entry };
 		const components: Record<string, string> = {};
 		for (const u of mockup.uses) if (u.snapshotHash !== null) components[u.story] = u.snapshotHash;
+		for (const s of mockup.styles) components[s.key] = s.hash;
 		return {
 			add: {
 				mockup: mockup.name,
