@@ -183,3 +183,96 @@ describe("approve — the cockpit's writer", () => {
 		expect(await approve(f.main, "demo", "home.full", " ")).toMatchObject({ approved: false });
 	});
 });
+
+/**
+ * promise: a-changed-component-reopens-its-mockups — storybook-components A12.
+ * promise: a-mockup-is-approved-by-a-person — a story is approved like a mockup.
+ *
+ * The components fixture: `home.default` composes `badge.ok` and
+ * `card.default`, each approved; its `badge.ok` snapshot is re-rendered (a
+ * changed component), which reopens the story and the mockup. The cockpit's
+ * Approve then sends what the page showed: the story's snapshot hash, and the
+ * mockup's composed hash and `componentsHash`.
+ */
+describe("approve — a mockup reopened by a changed component", () => {
+	const COMPONENTS = join(__dirname, "..", "..", "__tests__", "fixtures", "components-app");
+	let g: Fixture;
+	beforeEach(() => {
+		g = makeFixture();
+		cpSync(COMPONENTS, g.main, { recursive: true });
+		const snapshot = join(g.main, ".indusk/mockups/demo/components/badge.ok.html");
+		writeFileSync(
+			snapshot,
+			readFileSync(snapshot, "utf-8").replace("var(--space-2)", "var(--space-3)"),
+		);
+		g.git(g.main, "add", "-A");
+		g.git(g.main, "commit", "-qm", "the components fixture, badge.ok re-rendered");
+	});
+	afterEach(() => g.cleanup());
+
+	const read = async () => {
+		const app = await readApp(g.main, "demo");
+		const home = app.mockups.find((m) => m.name === "home.default");
+		const story = app.stories.find((s) => s.name === "badge.ok");
+		if (!home || !story) throw new Error("fixture lacks home.default or badge.ok");
+		return { app, home, story };
+	};
+
+	// A12
+	it("A12 approving the reopened mockup again, with the new componentsHash, makes it read approved", async () => {
+		const before = await read();
+		expect(approvalOf(before.app, before.home, readApprovals(before.app)).state).toBe("proposed");
+
+		const story = await approve(g.main, "demo", "badge.ok", "sandy", {
+			kind: "story",
+			snapshotHash: before.story.hash,
+			foundationHash: before.app.foundation.hash,
+		});
+		expect(story).toMatchObject({ approved: true });
+		const mockup = await approve(g.main, "demo", "home.default", "sandy", {
+			mockupHash: before.home.hash,
+			componentsHash: before.home.componentsHash,
+			foundationHash: before.app.foundation.hash,
+		});
+		expect(mockup).toMatchObject({ approved: true });
+
+		const after = await read();
+		const approval = approvalOf(after.app, after.home, readApprovals(after.app));
+		expect(approval.state).toBe("approved");
+		expect(approval.state === "approved" && approval.entry.componentsHash).toBe(
+			after.home.componentsHash,
+		);
+	});
+
+	it("refuses the mockup while a component it composes has no approved story, naming it, and writes nothing", async () => {
+		const record = join(g.main, ".indusk/mockups/demo/approved.json");
+		const held = readFileSync(record, "utf-8");
+		const { app, home } = await read();
+		const r = await approve(g.main, "demo", "home.default", "sandy", {
+			mockupHash: home.hash,
+			componentsHash: home.componentsHash,
+			foundationHash: app.foundation.hash,
+		});
+		expect(r).toMatchObject({ approved: false, reason: expect.stringContaining("badge.ok") });
+		expect(readFileSync(record, "utf-8")).toBe(held);
+	});
+
+	it("refuses a componentsHash other than the one the checkout composes, and a story sent without its snapshot hash", async () => {
+		const { app, home, story } = await read();
+		await approve(g.main, "demo", "badge.ok", "sandy", {
+			kind: "story",
+			snapshotHash: story.hash,
+			foundationHash: app.foundation.hash,
+		});
+		const stale = await approve(g.main, "demo", "home.default", "sandy", {
+			mockupHash: home.hash,
+			componentsHash: "c".repeat(64),
+			foundationHash: app.foundation.hash,
+		});
+		expect(stale).toMatchObject({ approved: false, reason: expect.stringContaining("cccccccc") });
+		const unseen = await approve(g.main, "demo", "badge.broken", "sandy", {
+			kind: "story",
+		} as never);
+		expect(unseen).toMatchObject({ approved: false });
+	});
+});
