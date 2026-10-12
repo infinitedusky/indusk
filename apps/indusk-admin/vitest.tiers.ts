@@ -34,6 +34,11 @@ export const SYSTEM = [
   // Storybook in Chromium, and the catalog the render step writes
   // (storybook-components A5, A13).
   "src/__tests__/storybook.contract.test.ts",
+  // Components in the cockpit (storybook-components A7, A18, A19): a composed
+  // mockup and the stories framed from the served /storybook, and the value
+  // check over the stories, in Chromium.
+  "src/app/p/[project]/looks/looks-components.contract.test.ts",
+  "src/__tests__/storybook-held.contract.test.ts",
 ];
 
 /**
