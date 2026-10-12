@@ -1,7 +1,7 @@
 ---
 title: "Storybook components — the approved mockups as components, one implementation each, a story per state"
 date: 2026-10-12
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -43,6 +43,7 @@ The admin is built from components defined once, each with an approved story per
 | Build Phase 6 | the eleven mockups rewritten to compose components; each component's `components/<name>.css` (compiled, token-resolved) inlined into every composed mockup that names it and bound into `componentsHash` | Build Phases 3, 5 |
 | Build Phase 7 | the nav, the dashboard and the Looks page rebuilt from components, the page's unapproved filter and sort, the checkout it reads and each checkout's proposed count, `LookRow` and the mockups' list column on the page, a current state on `PlanRow` | Build Phases 5–6 (the `PlanRow` change reopens the `plan.*` mockups) |
 | Build Phase 8 | the promise and plan pages rebuilt from components; the live check | Build Phases 5–7 |
+| Build Phase 9 | Falsification: a story bound to its stylesheet; a mockup that composes an unapproved story reads proposed; group Approve in dependency order; `componentsHash` required on Approve; the story frame drawn from the checkout's snapshot; the Storybook build refreshed by CSS | Build Phases 3, 4, 6 |
 
 ## Test Trajectory
 
@@ -78,6 +79,12 @@ The admin is built from components defined once, each with an approved story per
 | A28 | An agent cannot take an approval back: the command line's `unapprove` is refused, naming the cockpit's Unapprove | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
 | A29 | The Looks page offers Unapprove on an approved mockup and on an approved story, and not on a proposed one; it sends the shown hash like Approve | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-admin/src/app/p/[project]/looks/looks-components.test.tsx |
 | A30 | Every component a mockup places is drawn as its story draws it: in a real browser the composed mockup's computed padding, margin, border, background, font and size on the component's root and each descendant equal the story's, for every mockup and every component it names; a difference fails naming the mockup, the component, the element and the property | Build Phase 6 | Build Phase 6 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
+| A31 | A component whose stylesheet changes while its markup does not reads its stories proposed: after only `components/badge.css` is rewritten in the fixture, `indusk looks status demo` reads `story badge.ok  proposed`, and Approve of a mockup composing it is refused naming `badge.ok` until the story is approved again | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
+| A32 | An approved mockup that composes a story a person has Unapproved reads proposed, naming that component, in `indusk looks status` and coverage, as the lint already refuses it (`no approved story`) | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
+| A33 | One group Approve holding a proposed mockup and the proposed stories it composes records the stories and then the mockup: every result in the response is approved | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-changed-component-reopens-its-mockups | apps/indusk-admin/src/app/p/[project]/looks/looks-approve-binding.test.tsx |
+| A34 | Approve of a mockup that composes components, sent with its `mockupHash` and without its `componentsHash`, is refused — by `approve` and by the route, single and in a group — so a stylesheet changed since the page was drawn (outside `mockupHash`) is never approved unseen | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/lib/looks/approvals.test.ts, apps/indusk-admin/src/app/p/[project]/looks/looks-approve-binding.test.tsx |
+| A35 | The story a person approves is the snapshot they were shown: the Looks page's story frame loads a document drawn from the selected checkout's snapshot and its component's stylesheet on the foundation's tokens; a snapshot edited by hand in a plan's checkout shows its edit in the frame, while the admin's own `/storybook` build does not | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-admin/src/app/p/[project]/looks/looks-components.test.tsx |
+| A36 | `indusk looks stories` rebuilds the app's Storybook when a stylesheet in the app's sources (`globals.css`) is newer than the build, as it does for a component or story file | Build Phase 9 | Build Phase 9 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/stories.test.ts |
 
 ### Deferred Verification
 
@@ -496,6 +503,54 @@ The admin is built from components defined once, each with an approved story per
 #### Build Phase 8 Document
 
 - [x] `apps/docs/src/decisions/storybook-components.md` published from the ADR; `apps/docs/src/guide/ui-promises.md` names components before matching; sidebar entries for the guide and the decision; changelog: Added — "Components and stories: each component the admin's mockups name is implemented once with a story per state; mockups place components by name; a changed component reopens the mockups that use it; Storybook is served by the cockpit."
+
+### Build Phase 9: Falsification — what a person approves, and what keeps an approval in force
+
+**Tier**: strong — changes what a story approval binds, when a mockup reads approved, and what the Looks page frames; a wrong binding approves a look nobody saw
+
+**Goal**: verify whether a-mockup-is-approved-by-a-person and a-mockup-composes-approved-components hold against six failure modes found by reading the approval, composition, route and render code:
+- a component's look changing through its stylesheet alone, which no story approval binds;
+- a story Unapproved under an approved mockup, which only the lint notices;
+- a group Approve that records mockups before the stories they compose;
+- a mockup Approve that may omit `componentsHash`, the only hash that holds a stylesheet;
+- a story frame drawn from the admin's own Storybook build while Approve binds the selected checkout's snapshot;
+- a Storybook build judged fresh while `globals.css` is newer than it.
+
+Each row is one hypothesis, red today; each item is the fix if it confirms.
+
+Evidence found while hunting:
+- `storyApprovalOf` (`apps/indusk-mcp/src/lib/looks/approvals.ts`) compares `snapshotHash`, the sha256 of the snapshot's markup alone (`readStories` in `mockups.ts`). `components/<name>.css` is bound only into a mockup's `componentsHash` (ADR decision 10). A change to a rule `globals.css` writes by name — `.halo`, `.pulse`, `cols-*`, `[data-component="decision-card"] p` — rewrites the sheet and leaves every snapshot byte-identical. The story stays approved, and `unapprovedUses` lets its mockups be approved again without anyone approving the component's new look.
+- `approvalOf` checks the mockup's composed hash, its `componentsHash` and the foundation and declarations. It never checks whether the stories it composes are still approved. `approveMockup` refuses an unapproved story, but nothing reopens an approved mockup when a story under it is Unapproved; that guard runs in one direction only. `unapprovedUses` is also read outside the record's lock, before `appendEntry` takes it.
+- `requestsOf` in the approve route returns `[...mockupRequests, ...storyRequests]`. Select-all on the Looks page sends both (`ApproveSelected.tsx`), so a mockup reopened by a changed component is refused ("approve each story first") in the same request that approves its stories. This matches the error Sandy saw flash and disappear (Build Phase 7 Forward Intelligence).
+- The route passes `componentsHash` only when the body has one (`...(m.componentsHash ? … : {})`), and `mockupNotShown` skips a hash it was not given. A stylesheet is inlined by `mockupDocument` and is not part of `Mockup.hash`, so a request carrying only `mockupHash` binds a stylesheet the person may not have seen.
+- `Stories.tsx` frames `/storybook/iframe.html?id=…`: the admin process's own `public/storybook`, the landed build when it runs as the daemon. The overview reads the hashes from the checkout the page selects, a plan's worktree included. No guard covers `components/*.html`, so a snapshot changed by hand or rendered from a different component is approved while the frame shows another build.
+- `manifestOf` in `stories.ts` rebuilds Storybook only when a story or implementation file (`isImplementationFile`, markup extensions) is newer than the manifest. A `.css` source never counts, so `/storybook` and `indusk looks check` keep drawing the old stylesheet after `globals.css` changes.
+
+- [ ] A story's approval binds its component's stylesheet: a story entry gains `stylesheetHash` (the hash of `components/<component>.css` when approved; absent on an existing entry, which reads as bound to no sheet and so proposed once a sheet exists, per this phase's re-approval item); `storyApprovalOf` reads a story whose sheet differs as proposed; Approve of a story sends and checks the sheet's hash with its `snapshotHash`; the Looks page carries it as `data-stylesheet-hash`
+- [ ] `approvalOf` reads a mockup proposed when any story it composes is not approved as it is now, with `componentsChanged` naming that component, so status, coverage, the check's held-to choice and the overview agree with the lint; `approveMockup` decides its unapproved-story refusal inside `appendEntry`'s locked read, from `standingOf(record).stories`
+- [ ] The approve route orders a group's requests stories first, then mockups, so a mockup is approved after the stories it composes in the same request
+- [ ] `approve` refuses a mockup that composes components when `seen.componentsHash` is absent, and the route's 400 names the missing hash, single and in a group; a mockup that composes none still approves on `mockupHash` alone
+- [ ] The Looks page's story frame loads a document drawn from the selected checkout's snapshot, built as `mockupDocument` builds a composed mockup (the foundation's `tokens.css`, then the component's stylesheet), served by an admin route that takes the checkout and the story, the same way the mockup frame does. Storybook at `/storybook` stays for browsing and for `indusk looks check`. Amend ADR decision 6 with the reason: a frame drawn from another build is not what the hash binds
+- [ ] `manifestOf`'s freshness test becomes a named, exported predicate that counts every file under the app's sources that the Storybook build reads, `.css` included, plus `.storybook/`; `renderStories` calls it
+- [ ] Re-render the admin (`indusk looks stories admin`); the stories read proposed once they bind their stylesheets. **Pause for a person**: Sandy re-approves the admin's stories and any mockup reopened by them on the Looks page
+
+#### Build Phase 9 Verification
+
+- [ ] A31–A36 pass, each red first on its own assertion (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/looks-components-cli.test.ts src/lib/looks/approvals.test.ts src/lib/looks/stories.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run --project node src/app/p/\[project\]/looks/looks-approve-binding.test.tsx src/app/p/\[project\]/looks/looks-components.test.tsx`). A11, A12, A16, A17, A26, A27 and A29 still pass; `indusk looks status admin` shows every story and all eleven mockups approved after Sandy's pause; `indusk looks lint admin` finds nothing; tsc and biome clean on changed files
+
+#### Build Phase 9 Context
+
+- [ ] `apps/indusk-mcp/src/lib/looks/CLAUDE.md`: a story's approval binds its snapshot and its component's stylesheet, and a mockup is approved only while every story it composes is — guarded by `looks-components-cli.test.ts` (A31, A32)
+
+#### Build Phase 9 Document
+
+- [ ] `apps/docs/src/guide/components.md` and `apps/docs/src/reference/admin-ui/overview.md`: what a story's approval binds, a story's Unapprove reopening its mockups, group Approve's order, and the story frame drawn from the checkout's snapshot
+
+#### Build Phase 9 Falsification summary
+
+- Searched without a hypothesis: `compose.ts` (nested and missing references, a mockup that names none hashes its own bytes), `standingOf` and `withdraw` (order is the record's, a stale hash refused, a look not in force refused), the scan in `components.ts` (comment lines, test and story files, own-file rule), stale snapshot and stylesheet removal in `renderStories`, the unapprove route's body checks, and coverage's approved-story rule.
+- Seen and not authored, by design: a mockup or screen that pastes a component's markup with its `data-component` removed passes the lint and the scan. Both read the marker. Catching an unmarked copy means comparing markup, which is the detection the ADR rejected ("Detect instead of compose"); the U1 gap carried to mockup-matching covers the running screens.
+- Not investigated: other apps and other projects framing the admin's `/storybook` (out of scope: the admin only); the Storybook render mechanism inside Vitest (Build Phase 2's deviation, held by A5, A6, A13).
 
 ## Files Affected
 
