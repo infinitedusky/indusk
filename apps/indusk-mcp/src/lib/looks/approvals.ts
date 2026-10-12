@@ -570,6 +570,29 @@ export function componentsHashMissing(
 	return `${mockup.name} composes components and was sent without the componentsHash it was shown at — their stylesheets are outside mockupHash; open the mockup again and approve what it shows`;
 }
 
+/**
+ * `componentsHashMissing` for every request of one Approve, read in
+ * `checkout` before anything is approved: the first reason, or null. The
+ * cockpit's route asks it so a group carrying one such mockup is refused whole
+ * rather than half-recorded. An app name that is not one folder, or an app the
+ * checkout cannot read, is null here: `approve` refuses it, naming why.
+ */
+export async function componentsHashesMissing(
+	checkout: string,
+	appName: string,
+	requests: ReadonlyArray<{ name: string; seen: Seen }>,
+): Promise<string | null> {
+	if (!isUsableSegment(appName)) return null;
+	const app = await readApp(checkout, appName).catch(() => null);
+	if (!app) return null;
+	for (const { name, seen } of requests) {
+		const mockup = app.mockups.find((m) => m.name === name);
+		const missing = mockup ? componentsHashMissing(mockup, seen) : null;
+		if (missing) return missing;
+	}
+	return null;
+}
+
 /** Why a mockup is not what the person was shown, or null when it is. */
 function mockupNotShown(
 	checkout: string,
