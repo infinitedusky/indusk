@@ -34,10 +34,15 @@ interface UnapproveBody extends LooksBody {
   foundationHash?: string;
 }
 
-/** What is taken back and what the page showed, or null when the body names less than that. */
-function subjectOf(
-  body: UnapproveBody,
-): { kind: "mockup" | "story"; name: string; seen: SeenWithdrawal } | null {
+/** What is taken back and what the page showed. */
+interface Subject {
+  kind: "mockup" | "story";
+  name: string;
+  seen: SeenWithdrawal;
+}
+
+/** The subject the body names, or null when it names less than that. */
+function subjectOf(body: UnapproveBody): Subject | null {
   const { foundationHash } = body;
   if (!foundationHash) return null;
   if (body.kind === "story") {
@@ -64,10 +69,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ app: string }> },
 ): Promise<Response> {
-  const read = await readLooksRequest<
-    UnapproveBody,
-    NonNullable<ReturnType<typeof subjectOf>>
-  >(request, params, {
+  const read = await readLooksRequest<UnapproveBody, Subject>(request, params, {
     adminMessage: "an approval is taken back only from the admin's own page",
     browserMessage:
       "an approval is taken back only by a person, with Unapprove on the cockpit's Looks page in their browser",
