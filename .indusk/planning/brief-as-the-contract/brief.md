@@ -1,7 +1,7 @@
 ---
 title: "Brief as the contract"
 date: 2026-10-12
-status: draft
+status: accepted
 workflow: feature
 ---
 
