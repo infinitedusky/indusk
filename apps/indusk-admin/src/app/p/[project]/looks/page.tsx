@@ -3,6 +3,7 @@ import {
   readLooks,
   resolveLooksCheckout,
 } from "@infinitedusky/indusk-mcp/looks/overview";
+import { showOf } from "@/components/looks/address";
 import { LooksBody, type OpenMockup } from "@/components/looks/Looks";
 import type { OpenStory } from "@/components/looks/Stories";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
@@ -79,13 +80,7 @@ export default async function PerProjectLooksPage({
       open={open}
       openStory={openStory}
       view={query.view === "cascade" ? "cascade" : "list"}
-      show={
-        query.show === "mockups" ||
-        query.show === "components" ||
-        query.show === "unapproved"
-          ? query.show
-          : "all"
-      }
+      show={showOf(query.show)}
       checkout={checkout.plan}
       checkouts={await countedCheckouts(projectPath)}
     />

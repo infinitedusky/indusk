@@ -11,6 +11,13 @@
  */
 export type Show = "all" | "unapproved" | "mockups" | "components";
 
+/** The `?show=` a request carries, read as a `Show`; anything else is `all`. */
+export function showOf(value: string | undefined): Show {
+  return value === "mockups" || value === "components" || value === "unapproved"
+    ? value
+    : "all";
+}
+
 /** The looks a list draws: the ones waiting for a person first; with `unapproved`, only those. */
 export function looksListed<T extends { approval: "approved" | "proposed" }>(
   looks: T[],
