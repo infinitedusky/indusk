@@ -4,7 +4,7 @@ kind: state
 lifetime: holds
 state: enforced
 domain: admin
-owner: ui-promises
+owner: storybook-components
 sites:
   - 'apps/indusk-admin/src/app/api/looks/[app]/approve/route.ts'
   - apps/indusk-admin/src/components/looks/ApproveMockup.tsx
@@ -22,8 +22,9 @@ tests:
 incidents: []
 ---
 
-A mockup, and the foundation it defines, becomes the reference only when a person approves it in the cockpit; an agent can draw and propose one and never approve it.
+A mockup or a story, and the foundation it is drawn on, becomes the reference only when a person approves it in the cockpit; an agent can draw and propose one and never approve it.
 
 ## History
 - 2026-10-11 — declared (ui-promises), from its planning conversation.
 - 2026-10-12 — enforced, confirmed for ui-promises: proven by row A1, row A2, row A3, row A4, row A28, row A29, row A30, row A33, row A35.
+- 2026-10-12 — changed by storybook-components: stories are approved like mockups. It read: "A mockup, and the foundation it defines, becomes the reference only when a person approves it in the cockpit; an agent can draw and propose one and never approve it." Owned before by ui-promises; storybook-components takes it over.
