@@ -80,7 +80,6 @@ export function DecisionCard({
     <section
       className="mb-4 flex flex-col gap-3 rounded-md border border-warn bg-warn-wash p-4 text-sm"
       data-testid="decision-card"
-      data-component="decision-card"
       data-on={waiting.on}
     >
       <header className="flex flex-wrap items-baseline justify-between gap-2">

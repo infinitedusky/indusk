@@ -292,7 +292,10 @@ The admin is built from components defined once, each with an approved story per
 
 **Tier**: med — the work step's default
 
-- [ ] The nine marked components (view-link, shell, nav, look-row, device-frame, device-choice, decision-card, chip, button) each in one file whose root carries its marker, with a story per state its mockups show
+- [x] The nine marked components (view-link, shell, nav, look-row, device-frame, device-choice, decision-card, chip, button) each in one file whose root carries its marker, with a story per state its mockups show
+  - Note (files): each is `src/components/ui/<PascalName>.tsx` with a `<PascalName>.stories.tsx`; `chip` stays in `Badge.tsx` (its eight trajectory stories kept, the A13 and A19 bodies name them) and gains the mockups' five states (`declared`, `proving`, `enforced`, `broken`, `active`) as variants and stories, restyled to the mockups' pill; `button` stays in `Button.tsx`, restyled to the mockups' `btn` (stories `default`, `yes`).
+  - Deviation (markers removed from screens, needs acceptance): `shell` (`layout.tsx`), `nav` (`Sidebar.tsx`), `view-link` (`NavLink.tsx`), `decision-card` (`cockpit/DecisionCard.tsx`) and `look-row`, `device-frame`, `device-choice` (`looks/Looks.tsx`) each marked a screen's own element — a second marker for a name the component file now carries. The marker is removed there and the element is unchanged; Build Phases 7 and 8 render the components in those places. The app's coverage of these names is therefore the components' own stories until then.
+  - Note (motion): `pulse`, `pulse-slow` and `halo` are three classes in `globals.css` (the foundation's durations and easing; Tailwind's `animate-*` and shadow utilities are reset or composed with ring layers), used by `DecisionCard` and the ten unmarked components.
 - [ ] The ten unmarked components (plan-row, badge, step, tag, stat, box, rail-group, promise-row, timeline, summary-bar) built from their mockup markup on the foundation, one file each, with a story per state; presentational — data as props
 - [ ] `indusk looks stories admin` writes every snapshot and `components.json` with all nineteen
 - [ ] **Pause for a person**: Sandy approves each component's stories on the Looks page (Deferred Verification U2)

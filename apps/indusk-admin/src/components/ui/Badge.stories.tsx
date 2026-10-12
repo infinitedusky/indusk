@@ -8,8 +8,8 @@ import { Badge } from "./Badge";
 // the mockups' `chip` states — passing = enforced, blocked = broken, skipped =
 // proving, written = active, planned/neutral = declared. The mockups' `badge`
 // (a plan's initials square with a status dot: needs, working, released) is a
-// different component this file does not implement. Build Phases 2 and 5
-// settle the names.
+// different component, `PlanBadge`. The mockups' chip states are the stories
+// from `Declared` down.
 const meta = {
   title: "ui/Badge",
   component: Badge,
@@ -42,4 +42,23 @@ export const Unknown: Story = {
 };
 export const Neutral: Story = {
   args: { variant: "neutral", children: "neutral" },
+};
+
+// The states the mockups draw the chip in: a promise's standing and a look's
+// approval. `Passing`, `Blocked`, `Skipped`, `Planned` and `Written` above draw
+// the same colours for the trajectory's words.
+export const Declared: Story = {
+  args: { variant: "declared", children: "declared" },
+};
+export const Proving: Story = {
+  args: { variant: "proving", children: "proving" },
+};
+export const Enforced: Story = {
+  args: { variant: "enforced", children: "enforced" },
+};
+export const Broken: Story = {
+  args: { variant: "broken", children: "broken" },
+};
+export const Active: Story = {
+  args: { variant: "active", children: "active" },
 };

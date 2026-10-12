@@ -84,7 +84,6 @@ export function Sidebar({ header, children, className = "" }: SidebarProps) {
       )}
       <aside
         id="cockpit-nav"
-        data-component="nav"
         data-testid="cockpit-nav"
         data-open={open ? "true" : "false"}
         data-collapsed={collapsed ? "true" : "false"}

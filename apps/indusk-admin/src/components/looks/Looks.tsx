@@ -252,7 +252,6 @@ function OpenMockupView({
       <div className="max-w-full overflow-auto">
         <iframe
           data-testid="mockup-frame"
-          data-component="device-frame"
           title={`${mockup.name} at ${device.name}`}
           srcDoc={mockup.document}
           width={device.width}
@@ -289,7 +288,6 @@ function MockupRow({
   return (
     <li
       data-testid="mockup-row"
-      data-component="look-row"
       data-mockup={mockup.name}
       data-approval={mockup.approval}
       className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm"
@@ -320,7 +318,7 @@ function MockupRow({
           by {mockup.entry.by}, {stamp(mockup.entry.at)}
         </span>
       ) : null}
-      <span data-component="device-choice" className="ml-auto flex gap-2">
+      <span className="ml-auto flex gap-2">
         {app.devices.map((d) => (
           <a
             key={d.name}

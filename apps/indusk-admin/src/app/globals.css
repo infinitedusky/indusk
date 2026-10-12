@@ -145,3 +145,29 @@ body {
 .elevated {
   box-shadow: var(--shadow-card);
 }
+
+/* Motion the mockups name: a live dot or node dims and returns. The foundation
+   holds the durations and the easing; the keyframe is only the dimming. */
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+.pulse {
+  animation: pulse var(--duration-pulse) var(--easing-in-out) infinite;
+}
+.pulse-slow::after {
+  animation: pulse var(--duration-pulse-slow) var(--easing-in-out) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse,
+  .pulse-slow::after {
+    animation: none;
+  }
+}
+
+/* A step that needs a person: a ring of the dusk wash round its node, which
+   Tailwind's shadow utility would compose with ring layers it does not hold. */
+.halo {
+  box-shadow: 0 0 0 var(--space-1) var(--color-dusk-wash);
+}

@@ -115,7 +115,7 @@ export default async function PerProjectLayout({
   const waiting = readWaiting(project, active);
 
   return (
-    <div data-component="shell" className="flex h-full w-full">
+    <div className="flex h-full w-full">
       <Sidebar
         header={
           <div className="flex flex-col gap-2">
