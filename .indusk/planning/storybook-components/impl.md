@@ -453,6 +453,17 @@ The admin is built from components defined once, each with an approved story per
 
 - [x] `apps/docs/src/reference/admin-ui/overview.md`: the rebuilt nav, dashboard and Looks page
 
+#### Build Phase 7 Forward Intelligence
+
+- **Trajectory**: no row has `Passes at: Build Phase 7`; A22, A23 and A24 (regression guards, `Passes at: Test Phase 1`) were re-run green. A7, A18 and A19 (the contract files that boot their own `next dev`) are still owed at landing, as noted under Build Phase 6.
+- **Fragile**: `PlanRow` gained a current state, which reopened the three `plan.*` mockups; Sandy approved them again, with `nav.plan-current` and `plan-row.current`. Build Phase 8 rebuilds the plan page from these components: a further edit to `PlanRow`, `Nav` or any component under an approved mockup costs another round of approvals. Change a component once, run `indusk looks stories admin`, then ask.
+- **Fragile**: `LookRow` carries the 346px list column as a calc over three tokens (`--size-side` + `--size-badge` + `--space-4`); a named foundation token would read better but reopens the foundation and every approval, so it waits for Sandy's say-so.
+- **Watch out**: the cockpit's approve error message disappears before it can be read. Sandy saw it while approving a mockup before its stories were approved (the refusal flashed and went). Not fixed here; whoever next touches the Approve buttons (`ApproveMockup.tsx`, `ApproveSelected.tsx`, `Unapprove.tsx`) should keep the message on screen until dismissed.
+- **Watch out**: `indusk looks check admin --url http://localhost:3940` timed out three times at the CLI's fixed 30s page load while the machine was loaded (load average about 10) and the dev server compiled chunks cold (one chunk took 25s); the fourth run, warm, read 354 held, none broken. Warm the page with curl, or re-run, before reading a timeout as a defect.
+- **Watch out**: the Looks page's default still reads the main checkout; the page now says which checkout it reads and how many looks are proposed in each, but a person must still choose the plan's checkout.
+- **Assumption**: `Looks.tsx` is 433 lines, `layout.tsx` composes the nav inline, and the Approve-or-Unapprove strip repeats between `Looks.tsx` and `Stories.tsx`; `/cleanup` at close owns these, as the Shape step recorded. `countedCheckouts` reads each checkout's looks and the page reads the chosen one again; left for `/cleanup` too.
+- **Assumption**: `src/decisions/ui-promises.md` still breaks the docs build (95:1) on this branch; Build Phase 8's document item will hit it.
+
 ### Build Phase 8: The promise and plan pages rebuilt; the cockpit checked
 
 **Tier**: med — the work step's default
