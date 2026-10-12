@@ -1303,6 +1303,15 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T20:07:00.582Z"
+		},
+		{
+			"kind": "story",
+			"story": "chip.blocked",
+			"snapshotHash": "89ecd074e4cda70aed0555f9e6254d6981c71e2ed7c5421796e0d98d72e20b70",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T20:07:00.718Z"
 		}
 	]
 }
