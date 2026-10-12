@@ -278,3 +278,4 @@
 {"plan":"untrack-mcp-json","phase":1,"kind":"test","sha":"34fa70551ff6c54a4afb974c47de6d235ee47e2a","timestamp":"2026-10-11T22:10:32.554Z"}
 {"plan":"untrack-mcp-json","phase":1,"kind":"build","sha":"5d2dbb60620b6098966401a37077cf624d06c0b4","timestamp":"2026-10-12T00:38:14.262Z"}
 {"plan":"untrack-mcp-json","phase":2,"kind":"build","sha":"bf6533cc65404dfceca4f4571a20cb2034e2bb18","timestamp":"2026-10-12T00:46:15.728Z"}
+{"plan":"storybook-components","phase":1,"kind":"test","sha":"5464501687f9b957330f4df25bce0ed5c8760ec8","timestamp":"2026-10-12T02:43:11.882Z"}

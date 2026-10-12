@@ -1,7 +1,7 @@
 ---
 title: "Storybook components — the approved mockups as components, one implementation each, a story per state"
 date: 2026-10-12
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -92,7 +92,7 @@ The admin is built from components defined once, each with an approved story per
 
 **Goal**: author every row that can be written against today's `indusk` and the admin, and record the rest with their reasons.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create storybook-components`; made by `indusk plans start` on 2026-10-12 at `dusk-worktrees/storybook-components`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] Create/confirm this plan's worktree (`indusk worktree create storybook-components`; made by `indusk plans start` on 2026-10-12 at `dusk-worktrees/storybook-components`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
 - [ ] A fixture app, `apps/indusk-mcp/src/__tests__/fixtures/components-app/`: `.indusk/mockups/demo/` with ui-promises' files (a two-colour foundation, one device, `screens.json` declaring `home.default` and `home.empty`); `components/badge.ok.html`, `components/badge.broken.html` and `components/card.default.html` (snapshots, foundation values only); `components.json` listing `badge` (states `ok`, `broken`) and not `card`; `screens/home.default.html` composing `<indusk-component name="badge" state="ok">` and `card`; `screens/home.empty.html` drawing a `data-component="badge"` element inline; `screens/home.new.html` drawing `data-component="pill"` with `<meta name="indusk-new-components" content="pill">`; `screens/home.missing.html` naming `badge` state `warn`; `approved.json` (written by a `tsx` script calling the package's hash functions — the guard refuses a tool write to the path) approving the `badge.ok` story and `home.default` with its `componentsHash`; `src/Badge.jsx` and `src/Other.jsx` both carrying `data-component="badge"`, `src/Page.jsx` writing a raw `data-component="card"` element, `src/Card.jsx` the card
 - [ ] A1, A3, A4, A8, A9, A10, A11, A14, A15, A16, A17 in `apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts`, each spawning `indusk looks lint | status | coverage demo` over a temp copy of the fixture and asserting the line it names (A11 and A17 rewrite `badge.ok.html` in the copy first). RED today on their own assertions: the commands run, and the component lines are absent
 - [ ] A2 in `apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts`: `indusk looks coverage admin` at the repo root prints no `unimplemented component:` line. RED today: the line does not exist, so the assertion that each of the nineteen has an implementation fails on the ten unmarked
