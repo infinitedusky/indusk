@@ -99,22 +99,36 @@ The admin is built from components defined once, each with an approved story per
 - [x] A5 and A13 in `apps/indusk-admin/src/__tests__/storybook.contract.test.ts`, listed in the admin's `vitest.tiers.ts` `SYSTEM`: A5 runs the admin's `storybook` vitest project and expects exit 0 with at least one story; A13 runs `indusk looks stories admin` and reads `.indusk/mockups/admin/components.json` for `badge` with its properties and states. RED today: no `storybook` project, no `stories` command
 - [x] A21: a case in `everyday-tests-never-wait.test.ts` that fails unless the admin's `vitest.tiers.ts` lists a `storybook` project in the system tier and no everyday project includes `*.stories.*`. RED today: no such project
 - [x] A22, A23, A24: confirm `cockpit-phone.test.tsx`, `dashboard.test.tsx` and `looks-admin-foundation.test.ts` pass unchanged (Regression Guards)
-- [ ] Confirm each red test fails on its own assertion rather than on a missing import
+- [x] Confirm each red test fails on its own assertion rather than on a missing import
 
 #### Deferred to Build Phase 2
 
-- **A6** — its subject is the snapshot `indusk looks stories` writes, and the test edits a copy of `Badge.tsx` and reruns the render; the component file and the snapshot path exist only from Build Phase 1 and Build Phase 2. Body reviewed:
+- **A6** — its subject is the snapshot `indusk looks stories` writes, and the test edits `Badge.tsx` and reruns the render; the component file and the snapshot path exist only from Build Phase 1 and Build Phase 2. Body reviewed in Test Phase 1 (the first draft edited a `var(--space-tight)` string `Badge.tsx` does not contain and called helpers nothing defines; it edits the component's real class string in place and restores it, which the system tier's one-file-at-a-time run allows):
 
   ```typescript
   // apps/indusk-admin/src/__tests__/storybook.contract.test.ts — promise: every-component-state-has-a-story
+  // needs: readFileSync, writeFileSync from node:fs; spawnSync from node:child_process; join; the file's CLI and REPO constants
   it("A6: a changed component changes its snapshot with no edit to the story", () => {
-    const copy = tempCopyOfAdmin();
-    run(copy, ["looks", "stories", "admin"]);
-    const before = read(copy, ".indusk/mockups/admin/components/badge.ok.html");
-    edit(copy, "apps/indusk-admin/src/components/ui/Badge.tsx", (s) => s.replace("var(--space-tight)", "var(--space-2)"));
-    run(copy, ["looks", "stories", "admin"]);
-    expect(read(copy, ".indusk/mockups/admin/components/badge.ok.html")).not.toBe(before);
-    expect(gitDiffNames(copy)).not.toContain("Badge.stories.tsx");
+    const render = () => spawnSync("node", [CLI, "looks", "stories", "admin"], { cwd: REPO, encoding: "utf-8" });
+    const component = join(REPO, "apps/indusk-admin/src/components/ui/Badge.tsx");
+    const snapshotOf = () => {
+      const catalog = JSON.parse(readFileSync(join(REPO, ".indusk/mockups/admin/components.json"), "utf-8"));
+      const state = catalog.components.find((c: { name: string }) => c.name === "badge").states[0].name;
+      return readFileSync(join(REPO, `.indusk/mockups/admin/components/badge.${state}.html`), "utf-8");
+    };
+    const original = readFileSync(component, "utf-8");
+    expect(render().status).toBe(0);
+    const before = snapshotOf();
+    try {
+      writeFileSync(component, original.replace("px-2 py-hair", "px-3 py-hair"));
+      expect(render().status).toBe(0);
+      expect(snapshotOf()).not.toBe(before);
+    } finally {
+      writeFileSync(component, original);
+      render();
+    }
+    // the stories file was not edited: git sees only the component changed, and it is restored
+    expect(spawnSync("git", ["status", "--porcelain", "--", "apps/indusk-admin/src"], { cwd: REPO, encoding: "utf-8" }).stdout).not.toMatch(/stories/);
   });
   ```
 
