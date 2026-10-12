@@ -186,8 +186,8 @@ refused when the checkout now holds another.
 
 An agent can draw and propose a mockup; only a person approves one. The
 approval is given in the cockpit, on the app's Looks page, with Approve — the
-admin calls `approve` from `@infinitedusky/indusk-mcp/looks/approvals` with the
-person who pressed it, appends the entry, and commits the record on the branch
+admin calls `approve` (and `withdraw`, for Unapprove) from
+`@infinitedusky/indusk-mcp/looks/approve` with the person who pressed it, appends the entry, and commits the record on the branch
 of the checkout the page showed — a plan's worktree commits on the plan's
 branch, so the approval merges with the mockups it judges and never goes
 through `main` — through the same notes writer the plan history uses, only
