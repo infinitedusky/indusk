@@ -31,6 +31,9 @@ export const SYSTEM = [
   "src/__tests__/live-refresh.e2e.test.ts",
   // The Looks page's mockup frame in Chromium (ui-promises A15, A16).
   "src/app/p/[project]/looks/looks-browser.contract.test.ts",
+  // Storybook in Chromium, and the catalog the render step writes
+  // (storybook-components A5, A13).
+  "src/__tests__/storybook.contract.test.ts",
 ];
 
 /**
