@@ -2,7 +2,6 @@
 	"url": "http://localhost:3939",
 	"sources": ["apps/indusk-admin/src"],
 	"ignore": ["nextjs-portal"],
-	"uncomposed": ["dashboard.default", "dashboard.empty", "looks.default", "looks.uncovered", "nav.collapsed", "nav.expanded", "plan.needs-you", "plan.released", "plan.working", "promise.broken", "promise.enforced"],
 	"screens": [
 		{ "name": "nav", "states": ["expanded", "collapsed"], "path": "/p/dusk/promises" },
 		{ "name": "dashboard", "states": ["default", "empty"], "path": "/p/dusk/promises" },
