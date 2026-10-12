@@ -2,7 +2,6 @@ import type {
   AppLooks,
   StoryView,
 } from "@infinitedusky/indusk-mcp/looks/overview";
-import { LookRow } from "@/components/ui/LookRow";
 import { stamp } from "@/lib/stamp";
 import { ApproveStory } from "./ApproveMockup";
 import { hrefOf, looksListed, type Show } from "./address";
@@ -127,15 +126,12 @@ function StoryRow({
       data-state={state}
       className="border-t border-line first:border-t-0"
     >
-      {story.id ? (
-        <OpenLookRow
-          name={story.name}
-          approval={story.approval}
-          href={hrefAt(story.name)}
-        />
-      ) : (
-        <LookRow name={story.name} approval={story.approval} />
-      )}
+      {/* Every story opens: its frame is its snapshot, which needs no Storybook id. */}
+      <OpenLookRow
+        name={story.name}
+        approval={story.approval}
+        href={hrefAt(story.name)}
+      />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-3 text-xs text-ink-soft">
         {story.approval === "proposed" ? (
           <input
@@ -147,18 +143,14 @@ function StoryRow({
             aria-label={`Select ${story.name}`}
           />
         ) : null}
-        {story.id ? (
-          <a
-            href={hrefAt(story.name)}
-            data-testid="story-link"
-            aria-current={current ? "page" : undefined}
-            className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
-          >
-            {story.state}
-          </a>
-        ) : (
-          <span className="text-ink">{story.state}</span>
-        )}
+        <a
+          href={hrefAt(story.name)}
+          data-testid="story-link"
+          aria-current={current ? "page" : undefined}
+          className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
+        >
+          {story.state}
+        </a>
         {state === "changed" ? (
           <span className="text-warn">changed since approved</span>
         ) : null}
@@ -179,7 +171,7 @@ function StoryRow({
         ) : null}
         {story.id ? null : (
           <span className="ml-auto text-warn">
-            no Storybook id — run indusk looks stories {app.app}
+            no Storybook id, so not checked — run indusk looks stories {app.app}
           </span>
         )}
       </div>
