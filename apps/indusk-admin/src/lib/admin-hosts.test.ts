@@ -2,6 +2,7 @@ import { readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
+import * as looksApprove from "@/app/api/looks/[app]/approve/route";
 import * as decision from "@/app/api/plans/[name]/decision/route";
 import * as accept from "@/app/api/plans/accept/route";
 import * as approve from "@/app/api/plans/approve/route";
@@ -33,6 +34,7 @@ type Handler = (
 ) => Promise<Response>;
 
 const MODULES: Record<string, Record<string, unknown>> = {
+  "looks/[app]/approve": looksApprove,
   plans,
   "plans/[name]/decision": decision,
   "plans/accept": accept,
@@ -66,7 +68,13 @@ function call(
 ): Promise<Response> {
   const req = new NextRequest(`http://${host}/api/x?project=none&plan=none`, {
     method,
-    headers: { host, origin: `http://${host}` },
+    // As the page's browser sends it: its fetch metadata says same-origin
+    // for the rebound name too, so only the host can refuse that one.
+    headers: {
+      host,
+      origin: `http://${host}`,
+      "sec-fetch-site": "same-origin",
+    },
     ...(method === "POST" ? { body: "{}" } : {}),
   });
   return handler(req, { params: Promise.resolve({ id: "no-such-session" }) });

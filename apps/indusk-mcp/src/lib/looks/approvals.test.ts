@@ -1,0 +1,185 @@
+import { cpSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
+import { approvalOf, approve, readApprovals } from "./approvals.js";
+import { LooksAppError, readApp } from "./mockups.js";
+
+/**
+ * promise: a-mockup-is-approved-by-a-person — ui-promises A3, A4 (the record's
+ * reading) and the writer the cockpit's Approve calls (A2 drives it through
+ * the admin in Build Phase 4); A30 (an approval binds the mockup shown) and
+ * A35 (it binds the declarations the check trusts).
+ * promise: every-part-of-the-ui-is-covered — A35.
+ *
+ * The fixture app is copied into a main checkout with a plan worktree beside
+ * it, so `approve` is seen writing and committing in the checkout it is
+ * given — on the plan's branch from the worktree, leaving `main` alone.
+ */
+
+const FIXTURE = join(__dirname, "..", "..", "__tests__", "fixtures", "looks-app");
+const RECORD = ".indusk/mockups/demo/approved.json";
+
+let f: Fixture;
+beforeEach(() => {
+	f = makeFixture();
+	cpSync(FIXTURE, f.main, { recursive: true });
+	f.git(f.main, "add", "-A");
+	f.git(f.main, "commit", "-qm", "the looks fixture");
+});
+afterEach(() => f.cleanup());
+
+const mockupOf = async (name: string) => {
+	const app = await readApp(f.main, "demo");
+	const mockup = app.mockups.find((m) => m.name === name);
+	if (!mockup) throw new Error(`no mockup ${name}`);
+	return { app, mockup };
+};
+
+describe("approvalOf — bound to the mockup's hash and the foundation's", () => {
+	it("an entry holding both current hashes reads approved; a stale hash reads proposed with that entry as reference", async () => {
+		const empty = await mockupOf("home.empty");
+		expect(approvalOf(empty.app, empty.mockup, readApprovals(empty.app)).state).toBe("approved");
+
+		const full = await mockupOf("home.full");
+		const status = approvalOf(full.app, full.mockup, readApprovals(full.app));
+		expect(status.state).toBe("proposed");
+		expect(status.state === "proposed" && status.reference?.mockupHash).toMatch(/^0{64}$/);
+
+		const detail = await mockupOf("detail.default");
+		expect(approvalOf(detail.app, detail.mockup, readApprovals(detail.app))).toEqual({
+			state: "proposed",
+			reference: null,
+		});
+	});
+
+	// A35 — the declarations the check trusts are bound like the foundation.
+	const MOCKUPS = ".indusk/mockups/demo";
+	const declarationChanges: Array<[string, string, (text: string) => string]> = [
+		["a device's size", "devices.json", (t) => t.replace('"height": 844', '"height": 600')],
+		[
+			"an ignore tag",
+			"screens.json",
+			(t) => {
+				const o = JSON.parse(t);
+				return JSON.stringify({ ...o, ignore: [...(o.ignore ?? []), "main"] });
+			},
+		],
+		[
+			"the app's sources",
+			"screens.json",
+			(t) => JSON.stringify({ ...JSON.parse(t), sources: ["elsewhere"] }),
+		],
+	];
+	for (const [what, file, change] of declarationChanges) {
+		it(`A35 changing ${what} returns an approved mockup to proposed`, async () => {
+			const empty = await mockupOf("home.empty");
+			expect(approvalOf(empty.app, empty.mockup, readApprovals(empty.app)).state).toBe("approved");
+			const path = join(f.main, MOCKUPS, file);
+			writeFileSync(path, change(readFileSync(path, "utf-8")));
+			const after = await mockupOf("home.empty");
+			expect(approvalOf(after.app, after.mockup, readApprovals(after.app)).state).toBe("proposed");
+		});
+	}
+
+	it("A35 an entry that binds no declarations reads proposed", async () => {
+		const empty = await mockupOf("home.empty");
+		const entries = readApprovals(empty.app).map((e) => {
+			const { declarationsHash: _, ...rest } = e as typeof e & { declarationsHash?: string };
+			return rest;
+		});
+		expect(approvalOf(empty.app, empty.mockup, entries).state).toBe("proposed");
+	});
+
+	it("a record that is not a list of entries is refused, never read as empty", async () => {
+		writeFileSync(join(f.main, RECORD), JSON.stringify({ approvals: [{ mockup: "home.empty" }] }));
+		const app = await readApp(f.main, "demo");
+		expect(() => readApprovals(app)).toThrow(LooksAppError);
+	});
+});
+
+describe("approve — the cockpit's writer", () => {
+	it("appends an entry bound to the current hashes and commits only the record on the worktree's branch, never on main", async () => {
+		f.git(f.worktree, "merge", "-q", "main");
+		writeFileSync(join(f.worktree, "staged.txt"), "a person's work\n");
+		f.git(f.worktree, "add", "staged.txt");
+		const mainBefore = f.git(f.main, "rev-parse", "main");
+
+		const r = await approve(f.worktree, "demo", "home.full", "sandy");
+		expect(r.approved).toBe(true);
+
+		const app = await readApp(f.worktree, "demo");
+		const mockup = app.mockups.find((m) => m.name === "home.full");
+		if (!mockup) throw new Error("no mockup");
+		expect(approvalOf(app, mockup, readApprovals(app)).state).toBe("approved");
+		const entries = JSON.parse(readFileSync(join(f.worktree, RECORD), "utf-8")).approvals;
+		expect(entries.at(-1)).toMatchObject({
+			mockup: "home.full",
+			mockupHash: mockup.hash,
+			foundationHash: app.foundation.hash,
+			by: "sandy",
+		});
+		expect(f.git(f.worktree, "log", "-1", "--format=%s")).toMatch(/^chore\(indusk\): looks — /);
+		expect(f.git(f.worktree, "show", "--name-only", "--format=", "HEAD")).toBe(RECORD);
+		// What the person had staged stays staged, out of the commit.
+		expect(f.git(f.worktree, "status", "--porcelain")).toBe("A  staged.txt");
+		// Main is untouched: the approval travels with the branch.
+		expect(f.git(f.main, "rev-parse", "main")).toBe(mainBefore);
+		const onMain = JSON.parse(readFileSync(join(f.main, RECORD), "utf-8")).approvals;
+		expect(onMain.some((e: { mockupHash: string }) => e.mockupHash === mockup.hash)).toBe(false);
+	});
+
+	it("refuses to commit a record on a detached HEAD, leaving the entry written and saying why", async () => {
+		f.git(f.worktree, "merge", "-q", "main");
+		f.git(f.worktree, "checkout", "-q", "--detach");
+		const r = await approve(f.worktree, "demo", "home.full", "sandy");
+		expect(r).toMatchObject({ approved: true, commit: { committed: false } });
+	});
+
+	it("gives a mockup already approved as it is no second entry", async () => {
+		const before = readFileSync(join(f.main, RECORD), "utf-8");
+		const r = await approve(f.main, "demo", "home.empty", "sandy");
+		expect(r.approved).toBe(true);
+		expect(readFileSync(join(f.main, RECORD), "utf-8")).toBe(before);
+	});
+
+	it("refuses an approval of a foundation other than the one the checkout holds, writing nothing", async () => {
+		const before = readFileSync(join(f.main, RECORD), "utf-8");
+		const r = await approve(f.main, "demo", "home.full", "sandy", {
+			foundationHash: "f".repeat(64),
+		});
+		expect(r).toMatchObject({
+			approved: false,
+			reason: expect.stringMatching(/foundation in /),
+		});
+		expect(readFileSync(join(f.main, RECORD), "utf-8")).toBe(before);
+		const { app } = await mockupOf("home.full");
+		expect(
+			await approve(f.main, "demo", "home.full", "sandy", { foundationHash: app.foundation.hash }),
+		).toMatchObject({ approved: true });
+	});
+
+	// A30
+	it("A30 refuses a mockup changed since the page showed it, naming both hashes, and writes nothing", async () => {
+		const before = readFileSync(join(f.main, RECORD), "utf-8");
+		const { app, mockup } = await mockupOf("home.full");
+		const shown = "e".repeat(64);
+		const r = await approve(f.main, "demo", "home.full", "sandy", {
+			foundationHash: app.foundation.hash,
+			mockupHash: shown,
+		} as { foundationHash: string });
+		expect(r).toMatchObject({ approved: false });
+		const reason = r.approved ? "" : r.reason;
+		expect(reason).toContain(shown.slice(0, 8));
+		expect(reason).toContain(mockup.hash.slice(0, 8));
+		expect(readFileSync(join(f.main, RECORD), "utf-8")).toBe(before);
+	});
+
+	it("refuses an unknown mockup, an app name that leaves the folder, and an approval by nobody", async () => {
+		expect(await approve(f.main, "demo", "nope", "sandy")).toMatchObject({ approved: false });
+		expect(await approve(f.main, "../demo", "home.full", "sandy")).toMatchObject({
+			approved: false,
+		});
+		expect(await approve(f.main, "demo", "home.full", " ")).toMatchObject({ approved: false });
+	});
+});

@@ -184,7 +184,7 @@ this file now carries it so the sidebar and the numbers agree.
 | 9a | [display-names](../archive/display-names/retrospective.md) | promises read as words, plans by title with their start, landing and release dates, from one package module plan-cockpit reuses — **closed 2026-10-10**: `promises/display`, dates from the trunk's release commits (94 of 94 landed plans dated) |
 | 10 | [plan-cockpit](../archive/plan-cockpit/retrospective.md) | stage 1 of the promise UI: the dashboard, the promise page with its proof, the plan page — closed 2026-10-10 |
 | 11 | [contract-ui](../contract-ui/brief.md) | stage 2: the home view as the hierarchy above stage 1's pages, statuses derived — after the launch, after plan-premises |
-| 10a | [ui-promises](../ui-promises/brief.md) | how the app looks, held: mockups on one token foundation, approved in the cockpit, every part covered, a token broken in the running app caught on the dashboard — approved 2026-10-10, builds after plan-cockpit lands |
+| 10a | [ui-promises](../archive/ui-promises/retrospective.md) | how the app looks, held: mockups on one token foundation, approved in the cockpit, every part covered, a token broken in the running app caught — **closed 2026-10-11**: `lib/looks/`, `indusk looks`, the admin restyled and held (12 looks held, 54 unchecked: only the dashboard and Looks pages report their state) |
 | 12 | [mockup-matching](../mockup-matching/brief.md) | each screen compared pixel for pixel with its approved mockup, one pinned renderer — after the launch |
 | 13 | [cockpit-audit-fixes](../cockpit-audit-fixes/brief.md) | what plan-cockpit's cold audit found: thirty days that say only what was seen, every question answered, approval for a finished plan, the innermost Path — after the UI plans, a bugfix |
 
@@ -195,5 +195,6 @@ this file now carries it so the sidebar and the numbers agree.
   app looks had no contract. For the demo to show the power, a look has to be
   held and a break caught. Plan 1 of 2; the pixel comparison,
   mockup-matching, comes after the launch. Research and the open-tool survey
-  in [ui-promises/research.md](../ui-promises/research.md).
+  in [ui-promises/research.md](../archive/ui-promises/research.md).
+- **Carried from ui-promises** (closed 2026-10-11; its audit and retrospective): the nav, promise and plan pages report their `data-look-state` (54 of 66 admin looks unchecked until then); the look check runs at landing and on the watcher pass (built only on demand); looks on the dashboard read from a plan's checkout, not only `main`'s; `looks-min-max-sizes` (reading-measure tokens, then `min-*`/`max-*` held — a foundation change, re-approved by a person); the audit's open findings — an agent clicking Approve through a browser MCP, an easing or weight falling back to its default read as held, outline, line-height and letter-spacing unmeasured, inline `.tsx` styles unlinted. Owner: mockup-matching's brief takes these up when it is next opened, or a looks follow-up plan before it.
 - **Build order is 4 → 8 → 9 → 10 → 10a → 7 → 5 → 11 → 12.**

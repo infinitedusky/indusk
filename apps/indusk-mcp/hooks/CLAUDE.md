@@ -64,6 +64,16 @@ are about keeping the two lanes in step.
   lesson on its own line (`lesson: <name>`): its own string, or directly after
   a `\n` — the scan reads nothing else, and `context-tiers-register.test.ts`
   fails any register enforcer row whose file it cannot read.
+- **`looks-approval-guard.js` refuses an agent's write to any
+  `.indusk/mockups/<app>/approved.json`** — Write/Edit by path, and on Bash
+  (its second registration, as trunk-guard's) a redirect onto it, a writer
+  (`tee`, `cp`, `mv`, `sed -i`, an interpreter, `git checkout|restore …`) or a
+  call to `/api/looks/…/approve`. A mockup is approved only by a person,
+  through the cockpit's Approve. It reads command text, never the file, and
+  has no off switch: a **tripwire for an agent's ordinary attempt, not a
+  boundary** against a process running as the person — a script that builds
+  the path passes it; the hashes bound to what was shown hold there. Guarded
+  by `looks-approval-guard.test.ts`.
 - **`break-inbox.js` runs on every prompt** (`UserPromptSubmit`, no matcher):
   it reads two small files in the project's home (`projectHome` from
   `_hook-paths.js`) and exits; it never blocks and never grows a second read.

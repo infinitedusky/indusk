@@ -23,10 +23,7 @@ export function TableHeader({
   ...rest
 }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead
-      className={`border-b border-gray-200 bg-gray-50 ${className}`}
-      {...rest}
-    >
+    <thead className={`border-b border-line bg-ground ${className}`} {...rest}>
       {children}
     </thead>
   );
@@ -38,7 +35,7 @@ export function TableBody({
   ...rest
 }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <tbody className={`divide-y divide-gray-100 ${className}`} {...rest}>
+    <tbody className={`divide-y divide-line ${className}`} {...rest}>
       {children}
     </tbody>
   );
@@ -50,7 +47,7 @@ export function TableRow({
   ...rest
 }: HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={`hover:bg-gray-50 ${className}`} {...rest}>
+    <tr className={`hover:bg-ground ${className}`} {...rest}>
       {children}
     </tr>
   );
@@ -63,7 +60,7 @@ export function TableHead({
 }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600 ${className}`}
+      className={`px-3 py-2 text-xs font-semibold uppercase tracking-caps text-ink-soft ${className}`}
       {...rest}
     >
       {children}
@@ -77,7 +74,7 @@ export function TableCell({
   ...rest
 }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={`px-3 py-2 text-gray-800 ${className}`} {...rest}>
+    <td className={`px-3 py-2 text-ink ${className}`} {...rest}>
       {children}
     </td>
   );

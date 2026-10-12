@@ -12,19 +12,19 @@ export function PlanHistory({ entries }: { entries: DecisionEntry[] }) {
   if (entries.length === 0) return null;
   return (
     <section className="mb-4 text-sm" data-testid="plan-history">
-      <h2 className="mb-2 font-semibold text-gray-900">What happened</h2>
+      <h2 className="mb-2 font-semibold text-ink">What happened</h2>
       <ol className="flex flex-col gap-2">
         {[...entries].reverse().map((e) => (
           <li
             key={`${e.at}-${e.answer}`}
-            className="flex flex-col gap-0.5"
+            className="flex flex-col gap-hair"
             data-testid="history-entry"
           >
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-ink-faint">
               <time dateTime={e.at}>{stamp(e.at)}</time> · {e.by}
             </span>
-            <span className="text-gray-700">{e.decision}</span>
-            <span className="font-medium text-gray-900">→ {e.answer}</span>
+            <span className="text-ink-soft">{e.decision}</span>
+            <span className="font-medium text-ink">→ {e.answer}</span>
           </li>
         ))}
       </ol>

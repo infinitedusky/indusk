@@ -32,6 +32,7 @@ export type HookName =
 	| "validate-impl-structure.js"
 	| "check-gates.js"
 	| "stash-guard.js"
+	| "looks-approval-guard.js"
 	| "break-inbox.js"
 	| "claude-md-budget.js"
 	| "trunk-guard.js"

@@ -54,16 +54,16 @@ export function ScorecardsList({
   return (
     <section className="flex flex-col gap-4" data-testid="scorecards-list">
       <header className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold text-gray-900">Eval Scorecards</h1>
-        <p className="text-sm text-gray-600">
+        <h1 className="text-xl font-semibold text-ink">Eval Scorecards</h1>
+        <p className="text-sm text-ink-soft">
           Per-commit scores produced by the eval agent on every{" "}
-          <code className="rounded bg-gray-100 px-1 text-xs font-mono">
+          <code className="rounded-md bg-idle-wash px-1 text-xs font-mono">
             git commit
           </code>
           . This is a self-improvement signal — what worked, what didn't, what
           the system could improve. Not tied to any single plan.
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-ink-faint">
           Source: <span className="font-mono">eval/results.log</span> in each
           project's home across every registered project ({sorted.length}{" "}
           entries, most recent first)
@@ -71,7 +71,7 @@ export function ScorecardsList({
       </header>
 
       {sorted.length === 0 ? (
-        <p className="text-sm text-gray-500" data-testid="scorecards-empty">
+        <p className="text-sm text-ink-faint" data-testid="scorecards-empty">
           No scorecards yet — make a few{" "}
           <code className="font-mono">git commit</code>s inside Claude Code, and
           they'll start appearing.
@@ -116,7 +116,7 @@ function ScorecardCard({
     : [];
   const titleNode = (
     <span className="flex flex-1 items-center gap-2 truncate">
-      <span className="text-xs text-gray-500 font-mono shrink-0">
+      <span className="text-xs text-ink-faint font-mono shrink-0">
         {formatTimestamp(card.timestamp)}
       </span>
       {card.project ? (
@@ -128,16 +128,16 @@ function ScorecardCard({
           {card.project}
         </Badge>
       ) : null}
-      <span className="text-xs text-gray-500 font-mono shrink-0">
+      <span className="text-xs text-ink-faint font-mono shrink-0">
         {(card.changeId ?? "—").slice(0, 8)}
       </span>
-      <span className="text-sm text-gray-800 truncate">{headerLine}</span>
+      <span className="text-sm text-ink truncate">{headerLine}</span>
     </span>
   );
   const headerRight = (
     <span className="flex items-center gap-2">
       {card.mode ? (
-        <span className="text-xs text-gray-500">{String(card.mode)}</span>
+        <span className="text-xs text-ink-faint">{String(card.mode)}</span>
       ) : null}
       <Badge variant={status === "error" ? "blocked" : "passing"}>
         {status === "error" ? "✗ error" : "✓ ok"}
@@ -153,13 +153,13 @@ function ScorecardCard({
       <div className="flex flex-col gap-3">
         {commitMessage && (
           <section
-            className="rounded border border-blue-200 bg-blue-50 p-3"
+            className="rounded-md border border-dusk bg-dusk-wash p-3"
             data-testid="scorecard-commit-message"
           >
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+            <h3 className="text-xs font-semibold uppercase tracking-caps text-dusk">
               Commit message
             </h3>
-            <pre className="mt-1 text-sm text-gray-800 whitespace-pre-wrap font-sans">
+            <pre className="mt-1 text-sm text-ink whitespace-pre-wrap font-sans">
               {commitMessage}
             </pre>
           </section>
@@ -167,7 +167,7 @@ function ScorecardCard({
         <ScorecardMeta card={card} />
         {questions.length > 0 && <ScorecardQuestions questions={questions} />}
         {questions.length === 0 && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-ink-faint">
             No question results recorded for this scorecard.
             {card.error
               ? " The eval run errored before producing a structured scorecard — see the message below."
@@ -175,7 +175,7 @@ function ScorecardCard({
           </p>
         )}
         {card.error && card.message ? (
-          <pre className="overflow-x-auto rounded bg-red-50 p-3 text-xs font-mono text-red-800 whitespace-pre-wrap">
+          <pre className="overflow-x-auto rounded-md bg-bad-wash p-3 text-xs font-mono text-bad whitespace-pre-wrap">
             {String(card.message)}
           </pre>
         ) : null}
@@ -206,12 +206,12 @@ function ScorecardMeta({ card }: { card: Scorecard }) {
     ],
   ];
   return (
-    <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-700 sm:grid-cols-3">
+    <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-ink-soft sm:grid-cols-3">
       {fields
         .filter(([, v]) => v !== undefined && v !== "")
         .map(([k, v]) => (
           <div key={k} className="flex flex-col">
-            <dt className="font-semibold text-gray-500 uppercase tracking-wide">
+            <dt className="font-semibold text-ink-faint uppercase tracking-caps">
               {k}
             </dt>
             <dd className="font-mono break-all">{String(v)}</dd>
@@ -237,11 +237,11 @@ function ScorecardQuestions({ questions }: { questions: ScorecardQuestion[] }) {
           <TableRow key={q.id ?? `${q.question}-${q.answer}`}>
             <TableCell>
               <div className="flex flex-col">
-                <span className="font-semibold text-xs text-gray-900">
+                <span className="font-semibold text-xs text-ink">
                   {q.id ?? "—"}
                 </span>
                 {q.question && (
-                  <span className="text-xs text-gray-600">{q.question}</span>
+                  <span className="text-xs text-ink-soft">{q.question}</span>
                 )}
               </div>
             </TableCell>
@@ -254,10 +254,10 @@ function ScorecardQuestions({ questions }: { questions: ScorecardQuestion[] }) {
             <TableCell>
               <div className="flex flex-col gap-1">
                 {q.finding && (
-                  <span className="text-sm text-gray-800">{q.finding}</span>
+                  <span className="text-sm text-ink">{q.finding}</span>
                 )}
                 {q.evidence && (
-                  <span className="text-xs text-gray-500 italic">
+                  <span className="text-xs text-ink-faint italic">
                     Evidence: {q.evidence}
                   </span>
                 )}

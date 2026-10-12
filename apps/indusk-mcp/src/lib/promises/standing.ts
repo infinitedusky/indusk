@@ -183,3 +183,6 @@ function standingRows(
 		return { entry, rows, ...standingOf(entry, health, rows, sources, ctx) };
 	});
 }
+
+// A look's standing is its own module; this file re-exports it so `promises/standing` is unchanged.
+export * from "./look-standing.js";

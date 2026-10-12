@@ -6,21 +6,20 @@ import { Badge, type BadgeVariant } from "./Badge";
  * T9: each trajectory state's Badge variant renders with a recognizable
  * color class so pass/fail status is visually legible at a glance.
  *
- * We assert the className contains a known color token per variant —
- * not the exact RGB. The Tailwind utility names are stable enough; the
- * point is that "passing" carries green tokens and "blocked" carries
- * red tokens, distinct from each other.
+ * We assert the className contains a known foundation colour token per
+ * variant — not the exact RGB. The point is that "passing" carries the `ok`
+ * tokens and "blocked" the `bad` ones, distinct from each other.
  */
 describe("Badge — color-coded trajectory states (T9)", () => {
   const cases: Array<[BadgeVariant, RegExp]> = [
-    ["passing", /green/],
-    ["blocked", /red/],
-    ["skipped", /yellow/],
-    ["planned", /gray/],
-    ["writable", /gray/],
-    ["written", /blue/],
-    ["unknown", /gray/],
-    ["neutral", /gray/],
+    ["passing", /ok/],
+    ["blocked", /bad/],
+    ["skipped", /warn/],
+    ["planned", /idle/],
+    ["writable", /idle/],
+    ["written", /dusk/],
+    ["unknown", /ground/],
+    ["neutral", /idle/],
   ];
 
   for (const [variant, colorPattern] of cases) {
@@ -44,8 +43,8 @@ describe("Badge — color-coded trajectory states (T9)", () => {
     const pClass = pContainer.querySelector("span")?.className ?? "";
     const bClass = bContainer.querySelector("span")?.className ?? "";
     // Passing and blocked must carry DIFFERENT primary color tokens.
-    expect(pClass).toMatch(/green/);
-    expect(bClass).toMatch(/red/);
+    expect(pClass).toMatch(/ok/);
+    expect(bClass).toMatch(/bad/);
     expect(pClass).not.toBe(bClass);
   });
 });

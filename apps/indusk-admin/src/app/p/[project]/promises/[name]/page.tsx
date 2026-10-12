@@ -64,15 +64,15 @@ export default async function PromisePage({ params }: PromisePageProps) {
       <header className="flex min-w-0 flex-col gap-1">
         <Link
           href={`/p/${project}/promises`}
-          className="text-xs text-gray-500 hover:underline"
+          className="text-xs text-ink-faint hover:underline"
         >
           Promises
         </Link>
-        <h1 className="break-words text-xl font-semibold text-gray-900">
+        <h1 className="break-words text-xl font-semibold text-ink">
           {sentenceOf(entry.name)}
         </h1>
-        <p className="break-words text-sm text-gray-700">{entry.statement}</p>
-        <p className="flex flex-wrap gap-x-3 text-xs text-gray-500">
+        <p className="break-words text-sm text-ink-soft">{entry.statement}</p>
+        <p className="flex flex-wrap gap-x-3 text-xs text-ink-faint">
           <code>{entry.name}</code>
           <Link
             href={`${planHrefPrefix}${entry.owner}`}
@@ -92,7 +92,7 @@ export default async function PromisePage({ params }: PromisePageProps) {
           data-testid="proof-same-plan"
           className="flex min-w-0 flex-col gap-2"
         >
-          <h2 className="text-sm font-semibold text-gray-700">Same plan</h2>
+          <h2 className="text-sm font-semibold text-ink-soft">Same plan</h2>
           <ul className="flex flex-col gap-1 text-sm">
             {beside.map((p) => (
               <li key={p.name} className="min-w-0 break-words">

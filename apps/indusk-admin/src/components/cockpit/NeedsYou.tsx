@@ -20,10 +20,10 @@ export function NeedsYou({
   if (waiting.length === 0) return null;
   return (
     <nav
-      className="flex flex-col gap-1 border-t border-gray-200 py-3"
+      className="flex flex-col gap-1 border-t border-line py-3"
       data-testid="needs-you"
     >
-      <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+      <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-caps text-warn">
         Needs you
       </h3>
       {waiting.map((w) => (
@@ -31,12 +31,12 @@ export function NeedsYou({
           key={w.plan}
           href={`/p/${project}/plan/${w.plan}`}
           data-needs-you={w.plan}
-          className="flex items-baseline justify-between gap-2 rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+          className="flex items-baseline justify-between gap-2 rounded-md px-2 py-1 text-sm text-ink-soft hover:bg-idle-wash"
         >
           <span className="truncate">{titles[w.plan] ?? w.plan}</span>
           <span
             data-testid="needs-you-step"
-            className="shrink-0 text-xs text-amber-700"
+            className="shrink-0 text-xs text-warn"
           >
             {w.step}
           </span>

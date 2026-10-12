@@ -26,11 +26,11 @@ export function ProjectSwitcher({
   if (projects.length <= 1) return null;
 
   return (
-    <label className="flex items-center gap-2 text-xs text-gray-500">
+    <label className="flex items-center gap-2 text-xs text-ink-faint">
       <span>Project</span>
       <select
         data-testid="project-switcher"
-        className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="rounded-md border border-line bg-surface px-2 py-1 text-sm text-ink focus:border-dusk focus:outline-1 focus:outline-dusk"
         value={currentProject}
         onChange={(e) => {
           const next = e.currentTarget.value;

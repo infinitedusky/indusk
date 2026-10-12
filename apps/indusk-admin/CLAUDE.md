@@ -129,6 +129,30 @@ Each entry is a rule and a pointer; the pointer holds the story.
   only fs-to-props glue, never a second definition. Guarded by
   `apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts`. — see
   `/decisions/plan-cockpit`
+- **A look's state is read from `promises/standing` and `looks/*`, never
+  computed here**: the Looks page reads `looks/overview`, the dashboard and the
+  nav's broken count `readLookStanding`, Approve calls `looks/approvals`'
+  `approve` (the person is `approver`; the mockup's and the foundation's
+  hashes the ones the page showed, each mockup's in a group). The approve
+  route also requires the browser-set `Sec-Fetch-Site: same-origin`, which a
+  local process that sets `Host` and `Origin` does not send — guarded by
+  `looks-approve-binding.test.tsx`.
+  Guarded by `cockpit-single-definition.test.ts` (`approvalOf`, `coverageOf`,
+  `verdict`, `lookStandingOf`). The Looks page tests run in the node project
+  (`vitest.tiers.ts` `NODE_PAGES`) against a real fixture project; a listed
+  path under `[project]` is escaped (`asGlob`) before vitest globs it. — see
+  `/reference/admin-ui/overview`
+- **The admin's look is held by `.indusk/mockups/admin/`**: every colour, size,
+  radius, font and motion value is a token of its foundation, generated into
+  `src/app/foundation.generated.css` by `indusk looks tokens admin --tailwind`
+  (never edited by hand); Tailwind's stock theme is reset to it, so a stock
+  class has no value to compile. A new screen, state or `data-component` needs
+  its mockup approved first. Guarded by `looks-admin-foundation.test.ts`,
+  `indusk looks coverage admin` and `indusk looks check admin`. Two traps: layout
+  is not a token and the value check does not see it (`translate-x-0` once
+  compiled to nothing and left the nav off-screen), so a restyle is also looked
+  at; and the Typography plugin is gone — `.prose` is written on the foundation
+  in `globals.css`. — see `/decisions/ui-promises`
 - **A decision's card is read again from what the daemon holds after every
   answer**: a started release clears the build's stop and a second accept is
   refused while it runs, and an answer delivered but not recorded is reported

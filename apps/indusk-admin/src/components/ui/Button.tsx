@@ -9,9 +9,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800",
-  secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400",
-  ghost: "bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200",
+  primary: "bg-ink text-surface hover:bg-ink-soft active:bg-ink-soft",
+  secondary: "bg-idle-wash text-ink hover:bg-line active:bg-ink-faint",
+  ghost: "bg-transparent text-ink-soft hover:bg-idle-wash active:bg-idle-wash",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -25,8 +25,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const classes = [
-      "inline-flex items-center justify-center rounded font-medium transition-colors",
-      "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
+      "inline-flex items-center justify-center rounded-md font-medium transition-colors",
+      "focus:outline-2 focus:outline-dusk focus:outline-offset-1",
       "disabled:opacity-50 disabled:cursor-not-allowed",
       variantClasses[variant],
       sizeClasses[size],
@@ -36,7 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       .join(" ");
 
     return (
-      <button ref={ref} className={classes} {...rest}>
+      <button ref={ref} data-component="button" className={classes} {...rest}>
         {children}
       </button>
     );

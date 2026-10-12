@@ -71,13 +71,13 @@ export function StartFix({
           >
             {busy ? "Starting…" : "Start a fix plan"}
           </Button>
-          <span className="text-xs text-gray-600">
+          <span className="text-xs text-ink-soft">
             Starts Claude here with the break, its trace and its tests.
           </span>
         </div>
       )}
       {problem ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-bad">
           {problem}
         </p>
       ) : null}

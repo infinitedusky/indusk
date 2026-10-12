@@ -41,7 +41,7 @@ export function Mermaid({ source }: MermaidProps) {
   if (error) {
     return (
       <pre
-        className="overflow-x-auto whitespace-pre-wrap rounded bg-red-50 p-3 text-xs text-red-700"
+        className="overflow-x-auto whitespace-pre-wrap rounded-md bg-bad-wash p-3 text-xs text-bad"
         data-testid="mermaid-error"
       >
         Failed to render diagram: {error}

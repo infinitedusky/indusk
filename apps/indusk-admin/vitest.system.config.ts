@@ -1,6 +1,6 @@
 import path from "node:path";
 import { configDefaults, defineConfig } from "vitest/config";
-import { SYSTEM } from "./vitest.tiers";
+import { asGlob, SYSTEM } from "./vitest.tiers";
 
 // As in vitest.config.ts: no test auto-starts a telemetry daemon, and
 // extension hooks run the CLI under test, not a global install.
@@ -21,7 +21,7 @@ export default defineConfig({
   },
   test: {
     name: "system",
-    include: SYSTEM,
+    include: SYSTEM.map(asGlob),
     exclude: [...configDefaults.exclude],
     environment: "node",
     fileParallelism: false,

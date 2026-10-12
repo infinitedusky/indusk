@@ -23,7 +23,7 @@ export function TrustNotice({
   const [error, setError] = useState<string | null>(null);
   if (done) return null;
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2 rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900">
+    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-warn bg-warn-wash p-2 text-sm text-warn">
       <span>
         Claude Code doesn't trust this project yet, so sessions ask about
         everything.
@@ -39,7 +39,7 @@ export function TrustNotice({
       >
         Trust in Claude Code
       </Button>
-      {error ? <span className="text-red-700">{error}</span> : null}
+      {error ? <span className="text-bad">{error}</span> : null}
     </div>
   );
 }

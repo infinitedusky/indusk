@@ -54,7 +54,7 @@ export function RitualPhaseSection({
         title={
           <>
             {copy.title}
-            <span className="ml-2 text-xs font-normal text-gray-500">
+            <span className="ml-2 text-xs font-regular text-ink-faint">
               ({phaseTitle(phase)}
               {phase.title ? `: ${phase.title}` : ""})
             </span>
@@ -75,7 +75,7 @@ export function RitualPhaseSection({
         <div className="flex flex-col gap-2">
           {phase.trajectoryRows.length > 0 && (
             <div data-testid={ids.rows}>
-              <h3 className="mt-1 text-sm font-semibold text-gray-800">
+              <h3 className="mt-1 text-sm font-semibold text-ink">
                 {copy.rowsHeading}
               </h3>
               <TrajectoryRowsTable
@@ -86,21 +86,21 @@ export function RitualPhaseSection({
           )}
           {items.length > 0 && (
             <div data-testid={ids.items} className="mt-2">
-              <h3 className="text-sm font-semibold text-gray-800">
+              <h3 className="text-sm font-semibold text-ink">
                 {copy.itemsHeading}
               </h3>
               <ul className="flex flex-col gap-1">
                 {items.map((item) => (
                   <li
                     key={`${item.checked ? "x" : "o"}-${item.text}`}
-                    className="flex items-start gap-2 text-sm text-gray-700"
+                    className="flex items-start gap-2 text-sm text-ink-soft"
                   >
-                    <span className="font-mono text-xs text-gray-500">
+                    <span className="font-mono text-xs text-ink-faint">
                       [{item.checked ? "x" : " "}]
                     </span>
                     <span
                       className={
-                        item.checked ? "text-gray-500 line-through" : ""
+                        item.checked ? "text-ink-faint line-through" : ""
                       }
                     >
                       {item.text}

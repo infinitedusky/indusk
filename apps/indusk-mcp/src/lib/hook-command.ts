@@ -41,6 +41,12 @@ export const HOOK_REGISTRATIONS: readonly (readonly [
 	// never passes through Edit or Write. One matcher is half a gate.
 	["PreToolUse", "Edit|Write", "trunk-guard.js"],
 	["PreToolUse", "Bash", "trunk-guard.js"],
+	// A mockup is approved only by a person, with the cockpit's Approve: an
+	// agent's write to an app's approved.json is refused (ui-promises), and
+	// its twin on Bash refuses a shell write to it or a call to the approve
+	// route — the same two matchers trunk-guard needs, for the same reason.
+	["PreToolUse", "Edit|Write", "looks-approval-guard.js"],
+	["PreToolUse", "Bash", "looks-approval-guard.js"],
 	// Worktrees share one stash stack: an unnamed stash or a pop is refused
 	// where another session could be on the other end.
 	["PreToolUse", "Bash", "stash-guard.js"],

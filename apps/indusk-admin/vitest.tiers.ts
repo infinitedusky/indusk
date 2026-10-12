@@ -29,4 +29,22 @@ export const SYSTEM = [
   "src/__tests__/http-smoke.test.ts",
   "src/__tests__/http-stale-project.test.ts",
   "src/__tests__/live-refresh.e2e.test.ts",
+  // The Looks page's mockup frame in Chromium (ui-promises A15, A16).
+  "src/app/p/[project]/looks/looks-browser.contract.test.ts",
 ];
+
+/**
+ * Page tests that run in the node project, not the browser one: they read and
+ * write a real project through the package (the Looks page and its Approve,
+ * ui-promises A1, A2, A13, A14, and A29, A30 in the approve route's own file), which a browser cannot reach.
+ */
+export const NODE_PAGES = [
+  "src/app/p/[project]/looks/looks.test.tsx",
+  "src/app/p/[project]/looks/looks-approve-binding.test.tsx",
+];
+
+/**
+ * A listed path as a glob: `[project]` is a route folder, not a character
+ * class, so its brackets are escaped before vitest matches with them.
+ */
+export const asGlob = (file: string): string => file.replace(/[[\]]/g, "\\$&");

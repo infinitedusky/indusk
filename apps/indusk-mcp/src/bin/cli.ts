@@ -1091,6 +1091,75 @@ papersCmd
 		await papersPublish(rootOrExit(), target, opts);
 	});
 
+const looksCmd = program
+	.command("looks")
+	.description("An app's look (.indusk/mockups/<app>/): the foundation, the mockups, what is held");
+
+looksCmd
+	.command("lint <app>")
+	.description(
+		"Refuse a raw value, an undefined token or a stock class in an app's mockups and declared sources, naming file, line and value. Exit 1 on any finding.",
+	)
+	.action(async (app: string) => {
+		const { looksLint } = await import("./commands/looks.js");
+		await looksLint(rootOrExit(), app);
+	});
+
+looksCmd
+	.command("status <app>")
+	.description(
+		"Each mockup approved or proposed. Approved means approved.json holds the mockup's and the foundation's current hashes; a changed one reads proposed and names the approved version the app is held to.",
+	)
+	.action(async (app: string) => {
+		const { looksStatus } = await import("./commands/looks.js");
+		await looksStatus(rootOrExit(), app);
+	});
+
+looksCmd
+	.command("coverage <app>")
+	.description(
+		"Name every declared screen, state and rendered data-component with no approved mockup. Exit 1 when any is uncovered.",
+	)
+	.action(async (app: string) => {
+		const { looksCoverage } = await import("./commands/looks.js");
+		await looksCoverage(rootOrExit(), app);
+	});
+
+looksCmd
+	.command("check <app>")
+	.description(
+		"Open each approved screen state at each reference device in Chromium and report every token and element held or broken by value, as spans. --url is the running app; else the app's screens.json url. Exit 1 on any broken look or when nothing was checked.",
+	)
+	.option("--url <url>", "the running app's base URL")
+	.action(async (app: string, opts: { url?: string }) => {
+		const { looksCheck } = await import("./commands/looks.js");
+		await looksCheck(rootOrExit(), app, opts);
+	});
+
+looksCmd
+	.command("tokens <app>")
+	.description(
+		"Print an app's foundation as CSS custom properties; --tailwind emits an @theme block that resets the stock theme to the foundation. --out writes it to a file.",
+	)
+	.option("--tailwind", "an @theme block for a Tailwind app")
+	.option("--out <file>", "write to this file, relative to the project root")
+	.action(async (app: string, opts: { tailwind?: boolean; out?: string }) => {
+		const { looksTokens } = await import("./commands/looks.js");
+		await looksTokens(rootOrExit(), app, opts);
+	});
+
+looksCmd
+	.command("approve")
+	.description(
+		"Refused (exit 2): a mockup is approved only by a person, with the cockpit's Approve on the app's Looks page.",
+	)
+	.allowUnknownOption()
+	.allowExcessArguments()
+	.action(async () => {
+		const { looksApprove } = await import("./commands/looks.js");
+		looksApprove();
+	});
+
 const promisesCmd = program
 	.command("promises")
 	.description("The promise registry (.indusk/promises/): what the system commits to, checked");

@@ -30,14 +30,14 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
  * - neutral: utility variant for non-trajectory uses (status labels, etc.)
  */
 const variantClasses: Record<BadgeVariant, string> = {
-  passing: "bg-green-100 text-green-800 ring-green-600/20",
-  blocked: "bg-red-100 text-red-800 ring-red-600/20",
-  skipped: "bg-yellow-100 text-yellow-800 ring-yellow-600/20",
-  planned: "bg-gray-100 text-gray-700 ring-gray-500/20",
-  writable: "bg-gray-200 text-gray-800 ring-gray-500/20",
-  written: "bg-blue-50 text-blue-700 ring-blue-600/20",
-  unknown: "bg-gray-50 text-gray-500 ring-gray-400/20",
-  neutral: "bg-gray-100 text-gray-700 ring-gray-500/20",
+  passing: "bg-ok-wash text-ok border-ok",
+  blocked: "bg-bad-wash text-bad border-bad",
+  skipped: "bg-warn-wash text-warn border-warn",
+  planned: "bg-idle-wash text-ink-soft border-ink-faint",
+  writable: "bg-idle-wash text-ink border-ink-faint",
+  written: "bg-dusk-wash text-dusk border-dusk",
+  unknown: "bg-ground text-ink-faint border-ink-faint",
+  neutral: "bg-idle-wash text-ink-soft border-ink-faint",
 };
 
 export function Badge({
@@ -47,7 +47,7 @@ export function Badge({
   ...rest
 }: BadgeProps) {
   const classes = [
-    "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+    "inline-flex items-center rounded-md px-2 py-hair text-xs font-medium border",
     variantClasses[variant],
     className,
   ]
@@ -55,7 +55,7 @@ export function Badge({
     .join(" ");
 
   return (
-    <span className={classes} {...rest}>
+    <span data-component="chip" className={classes} {...rest}>
       {children}
     </span>
   );

@@ -92,7 +92,7 @@ export function FullscreenDiagram({ children }: FullscreenDiagramProps) {
     <div className="relative w-full" data-testid="fullscreen-diagram">
       <div
         ref={inlineRef}
-        className="rounded-lg border border-gray-200 bg-gray-50 p-4"
+        className="rounded-lg border border-line bg-ground p-4"
       >
         {children}
       </div>
@@ -101,36 +101,36 @@ export function FullscreenDiagram({ children }: FullscreenDiagramProps) {
         onClick={toggle}
         title="Expand"
         aria-label="Expand diagram"
-        className="absolute right-2 top-2 rounded border border-gray-200 bg-white p-1.5 text-gray-600 opacity-90 hover:bg-gray-50 hover:opacity-100"
+        className="absolute right-2 top-2 rounded-md border border-line bg-surface p-tight text-ink-soft opacity-90 hover:bg-ground hover:opacity-100"
       >
         <Maximize2 className="h-4 w-4" aria-hidden />
       </button>
 
       {expanded &&
         createPortal(
-          <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/85">
-            <div className="relative flex h-[95vh] w-[95vw] flex-col rounded-lg bg-white p-6">
+          <div className="fixed inset-0 z-1000 flex items-center justify-center bg-ink/85">
+            <div className="relative flex fullscreen-diagram flex-col rounded-lg bg-surface p-6">
               <div className="flex flex-1 items-center justify-center overflow-hidden">
                 <div
                   ref={expandedRef}
-                  className="cursor-move [&_svg]:block [&_svg]:h-auto [&_svg]:max-h-[90%] [&_svg]:min-w-[600px] [&_svg]:max-w-[90%]"
+                  className="cursor-move diagram-svg"
                   // biome-ignore lint/security/noDangerouslySetInnerHtml: cloning our own already-rendered Mermaid SVG, not user-supplied HTML.
                   dangerouslySetInnerHTML={{ __html: diagramHtml }}
                 />
               </div>
-              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg border border-gray-200 bg-white p-2">
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg border border-line bg-surface p-2">
                 <button
                   type="button"
                   onClick={zoomOut}
                   disabled={zoomPct <= MIN_ZOOM * 100}
                   title="Zoom Out"
                   aria-label="Zoom out"
-                  className="rounded p-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
+                  className="rounded-md p-1 text-ink-soft hover:bg-idle-wash disabled:opacity-30"
                 >
                   <Minus className="h-4 w-4" aria-hidden />
                 </button>
                 <span
-                  className="min-w-16 text-center text-sm text-gray-500"
+                  className="min-w-16 text-center text-sm text-ink-faint"
                   data-testid="zoom-level"
                 >
                   {zoomPct}%
@@ -141,7 +141,7 @@ export function FullscreenDiagram({ children }: FullscreenDiagramProps) {
                   disabled={zoomPct >= MAX_ZOOM * 100}
                   title="Zoom In"
                   aria-label="Zoom in"
-                  className="rounded p-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
+                  className="rounded-md p-1 text-ink-soft hover:bg-idle-wash disabled:opacity-30"
                 >
                   <Plus className="h-4 w-4" aria-hidden />
                 </button>
@@ -150,7 +150,7 @@ export function FullscreenDiagram({ children }: FullscreenDiagramProps) {
                   onClick={resetZoom}
                   title="Reset Zoom"
                   aria-label="Reset zoom"
-                  className="rounded p-1 text-gray-600 hover:bg-gray-100"
+                  className="rounded-md p-1 text-ink-soft hover:bg-idle-wash"
                 >
                   <RotateCcw className="h-4 w-4" aria-hidden />
                 </button>
@@ -160,7 +160,7 @@ export function FullscreenDiagram({ children }: FullscreenDiagramProps) {
                 onClick={toggle}
                 title="Close"
                 aria-label="Close"
-                className="absolute right-4 top-4 rounded border border-gray-200 bg-white p-1.5 text-gray-600 hover:bg-gray-50"
+                className="absolute right-4 top-4 rounded-md border border-line bg-surface p-tight text-ink-soft hover:bg-ground"
               >
                 <X className="h-4 w-4" aria-hidden />
               </button>
