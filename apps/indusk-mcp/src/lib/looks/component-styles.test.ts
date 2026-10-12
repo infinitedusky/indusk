@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-	classesOf,
-	componentStylesheet,
-	markedComponentsOf,
-	STYLESHEET_HEADER,
-} from "./component-styles.js";
+import { classesOf, componentStylesheet, STYLESHEET_HEADER } from "./component-styles.js";
 import type { Foundation } from "./foundation.js";
+import { markedComponentsOf } from "./markup.js";
 
 /**
  * The render step's stylesheet cut (storybook-components ADR decision 10):

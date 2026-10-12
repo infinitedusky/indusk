@@ -48,6 +48,16 @@ function textOf(el: Element): { value: string; line: number } | undefined {
 	};
 }
 
+/** The elements marked with `data-component` (its value is non-empty), nested ones included, in document order. */
+export function markedElementsOf(html: string): MarkupElement[] {
+	return elementsOf(html).filter((el) => el.attrs["data-component"]);
+}
+
+/** The component names the markup's elements are marked with (`data-component`), nested ones included; never a name in a comment, a script or a style. */
+export function markedComponentsOf(html: string): Set<string> {
+	return new Set(markedElementsOf(html).map((el) => el.attrs["data-component"] as string));
+}
+
 /** Every element of an HTML document, in document order, `<template>` contents included. */
 export function elementsOf(html: string): MarkupElement[] {
 	const out: MarkupElement[] = [];

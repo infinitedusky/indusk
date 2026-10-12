@@ -31,16 +31,6 @@ export function classesOf(html: string): Set<string> {
 	return classes;
 }
 
-/** The component names the markup's elements are marked with (`data-component`), nested ones included. */
-export function markedComponentsOf(html: string): Set<string> {
-	const names = new Set<string>();
-	for (const el of elementsOf(html)) {
-		const name = el.attrs["data-component"];
-		if (name) names.add(name);
-	}
-	return names;
-}
-
 const MARK_IN_SELECTOR = /\[data-component=["']?([\w-]+)["']?\]/g;
 
 /** The component names a selector is anchored on: `[data-component="decision-card"] p` -> decision-card. */

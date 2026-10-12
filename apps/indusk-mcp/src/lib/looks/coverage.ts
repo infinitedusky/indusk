@@ -7,7 +7,7 @@ import {
 	storyApprovalOf,
 } from "./approvals.js";
 import { catalogGaps, MARKER_PATTERN, MARKUP_EXTENSIONS } from "./components.js";
-import { elementsOf } from "./markup.js";
+import { markedComponentsOf } from "./markup.js";
 import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
 
 /**
@@ -76,16 +76,6 @@ export function unresolvedIn(text: string): number[] {
 	return lines;
 }
 
-/** The `data-component` names a mockup draws: on its elements, never in its text. */
-export function mockupComponents(html: string): Set<string> {
-	const names = new Set<string>();
-	for (const el of elementsOf(html)) {
-		const name = el.attrs["data-component"];
-		if (name) names.add(name);
-	}
-	return names;
-}
-
 /** Declared screens with no approved state, and the missing states of the rest. */
 function uncoveredScreens(
 	app: LooksApp,
@@ -129,7 +119,7 @@ async function uncoveredComponents(
 	approved: readonly Mockup[],
 ): Promise<Pick<Coverage, "components" | "unresolved">> {
 	const shown = new Set([
-		...approved.flatMap((m) => [...mockupComponents(m.html)]),
+		...approved.flatMap((m) => [...markedComponentsOf(m.html)]),
 		...componentsOfApprovedStories(app),
 	]);
 	const rendered = new Set<string>();

@@ -1,7 +1,7 @@
 import { readStoryApprovals, unapprovedUses } from "./approvals.js";
 import { catalogGaps, readCatalog } from "./components.js";
 import type { Finding } from "./lint-types.js";
-import { elementsOf } from "./markup.js";
+import { markedElementsOf } from "./markup.js";
 import type { LooksApp, Mockup } from "./mockups.js";
 
 /**
@@ -33,9 +33,9 @@ export function drawnComponents(app: LooksApp, mockup: Mockup, adopted: boolean)
 	const declared = new Set(mockup.declaresNewComponents);
 	const storied = new Set(app.stories.map((s) => s.component));
 	const findings: Finding[] = [];
-	for (const el of elementsOf(mockup.source)) {
-		const name = el.attrs["data-component"];
-		if (!name || declared.has(name)) continue;
+	for (const el of markedElementsOf(mockup.source)) {
+		const name = el.attrs["data-component"] as string;
+		if (declared.has(name)) continue;
 		const line = el.attrLine("data-component");
 		findings.push({
 			file: mockup.file,

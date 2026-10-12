@@ -4,7 +4,7 @@ import { readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
-import { classesOf, componentStylesheet, markedComponentsOf } from "./component-styles.js";
+import { classesOf, componentStylesheet } from "./component-styles.js";
 import {
 	CATALOG_FILE,
 	type Catalog,
@@ -12,6 +12,7 @@ import {
 	isImplementationFile,
 	scanComponents,
 } from "./components.js";
+import { markedComponentsOf } from "./markup.js";
 import {
 	appSourceFiles,
 	type LooksApp,

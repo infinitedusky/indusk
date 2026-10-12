@@ -1,5 +1,5 @@
 import type { CatalogComponent, CatalogProperty } from "./components.js";
-import { elementsOf } from "./markup.js";
+import { markedElementsOf } from "./markup.js";
 import { LooksAppError, snapshotHash } from "./mockups.js";
 
 /**
@@ -57,7 +57,7 @@ export function manifestIndex(manifest: unknown): {
 
 /** The first `data-component` a rendered story's markup carries: the component it is a story of. */
 const componentOf = (html: string): string | undefined =>
-	elementsOf(html).find((el) => el.attrs["data-component"])?.attrs["data-component"];
+	markedElementsOf(html)[0]?.attrs["data-component"];
 
 export interface CatalogInput {
 	/** The markup each story rendered, by story id. */
