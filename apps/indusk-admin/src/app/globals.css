@@ -156,12 +156,12 @@ body {
 .pulse {
   animation: pulse var(--duration-pulse) var(--easing-in-out) infinite;
 }
-.pulse-slow::after {
+.pulse-slow {
   animation: pulse var(--duration-pulse-slow) var(--easing-in-out) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .pulse,
-  .pulse-slow::after {
+  .pulse-slow {
     animation: none;
   }
 }
@@ -170,4 +170,67 @@ body {
    Tailwind's shadow utility would compose with ring layers it does not hold. */
 .halo {
   box-shadow: 0 0 0 var(--space-1) var(--color-dusk-wash);
+}
+
+/* Column lists over the foundation's sizes: Tailwind has no class that names
+   one. Each is the template a component's mockup draws. */
+.cols-shell {
+  grid-template-columns: var(--size-nav) minmax(0, 1fr);
+}
+.cols-shell-rail {
+  grid-template-columns: var(--size-nav-rail) minmax(0, 1fr);
+}
+.cols-plan-row {
+  grid-template-columns: var(--size-badge) minmax(0, 1fr);
+}
+.cols-view-link {
+  grid-template-columns: var(--size-badge) minmax(0, 1fr) auto;
+}
+.cols-step {
+  grid-template-columns: var(--space-5) minmax(0, 1fr) auto;
+}
+.cols-look-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+.cols-promise-row {
+  grid-template-columns:
+    var(--size-dot-lg) minmax(0, 1fr) var(--size-icon) var(--size-input)
+    var(--size-nav-rail);
+}
+.cols-timeline {
+  grid-template-columns: var(--size-nav-rail) var(--size-node) minmax(0, 1fr);
+}
+@media (max-width: 759px) {
+  .cols-shell,
+  .cols-shell-rail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cols-promise-row {
+    grid-template-columns: var(--size-dot-lg) minmax(0, 1fr) auto;
+  }
+}
+
+/* A collapsed nav keeps only the marks: what the nav's rows and links say in
+   words carries `nav-hide`, and a row or link that is only a mark `nav-mark`. */
+[data-component="nav"][data-collapsed="true"] .nav-hide {
+  display: none;
+}
+[data-component="nav"][data-collapsed="true"] .nav-mark {
+  grid-template-columns: var(--size-badge);
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* What a decision card says in words: a paragraph is read at a measure, and an
+   alert's is the ink, not the soft ink of a card that only reports. */
+[data-component="decision-card"] p {
+  max-width: 64ch;
+  color: var(--color-ink-soft);
+}
+[data-component="decision-card"][data-tone="alert"] p {
+  color: var(--color-ink);
+}
+[data-component="nav"][data-collapsed="true"] .nav-head {
+  justify-content: center;
+  padding: 0;
 }

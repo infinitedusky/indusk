@@ -33,7 +33,7 @@ export function LookRow({
   return (
     <div
       data-component="look-row"
-      className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4 border-t border-line px-4 py-3 first:border-t-0 ${className}`}
+      className={`cols-look-row grid items-center gap-4 border-t border-line px-4 py-3 first:border-t-0 ${className}`}
       {...rest}
     >
       <span>

@@ -67,7 +67,6 @@ export function Badge({
   const classes = [
     // The mockups' chip: a pill, a dot in the text's colour, small caps.
     "inline-flex items-center gap-tight rounded-pill px-2 py-1 text-2xs leading-1 font-semibold uppercase tracking-chip",
-    "before:size-dot before:rounded-pill before:bg-current before:content-['']",
     variantClasses[variant],
     className,
   ]
@@ -76,6 +75,7 @@ export function Badge({
 
   return (
     <span data-component="chip" className={classes} {...rest}>
+      <span aria-hidden="true" className="size-dot rounded-pill bg-current" />
       {children}
     </span>
   );

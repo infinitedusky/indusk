@@ -36,7 +36,7 @@ interface Catalog {
 
 /** The catalog entry for the component implemented in `Badge.tsx`, whatever its marker names it. */
 function badgeEntry(catalog: Catalog) {
-  return catalog.components.find((c) => /Badge\.tsx$/.test(c.file));
+  return catalog.components.find((c) => /\/Badge\.tsx$/.test(c.file));
 }
 
 /** The environment of a child that must not believe it is inside this test run. */
@@ -106,7 +106,7 @@ describe("Storybook in the admin", () => {
       "the component implemented in Badge.tsx is in the catalog",
     ).toBeDefined();
     expect(badge?.file, "the catalog names the component's file").toMatch(
-      /Badge\.tsx$/,
+      /\/Badge\.tsx$/,
     );
     expect(
       badge?.properties.length,
@@ -159,10 +159,7 @@ describe("Storybook in the admin", () => {
     expect(first.status, `${first.stdout}\n${first.stderr}`).toBe(0);
     const before = snapshotOf();
     try {
-      writeFileSync(
-        component,
-        original.replace("px-2 py-hair", "px-3 py-hair"),
-      );
+      writeFileSync(component, original.replace("px-2 py-1", "px-3 py-1"));
       const second = render();
       expect(second.status, `${second.stdout}\n${second.stderr}`).toBe(0);
       expect(snapshotOf()).not.toBe(before);

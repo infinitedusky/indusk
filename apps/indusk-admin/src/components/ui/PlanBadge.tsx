@@ -10,9 +10,9 @@ export interface PlanBadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const DOT: Record<PlanBadgeState, string> = {
-  needs: "after:bg-dusk",
-  working: "pulse-slow after:bg-ink-soft",
-  released: "after:bg-ok",
+  needs: "bg-dusk",
+  working: "pulse-slow bg-ink-soft",
+  released: "bg-ok",
 };
 
 /**
@@ -29,10 +29,14 @@ export function PlanBadge({
     <span
       data-component="badge"
       data-state={state}
-      className={`relative grid size-badge place-items-center rounded-md border border-line bg-ground font-mono text-2xs font-medium leading-1 text-ink-soft after:absolute after:-right-1 after:-top-1 after:size-node after:rounded-pill after:border-2 after:border-surface after:content-[''] ${DOT[state]} ${className}`}
+      className={`relative grid size-badge place-items-center rounded-md border border-line bg-ground font-mono text-2xs font-medium leading-1 text-ink-soft ${className}`}
       {...rest}
     >
       {children}
+      <span
+        aria-hidden="true"
+        className={`absolute -right-1 -top-1 size-node rounded-pill border-2 border-surface ${DOT[state]}`}
+      />
     </span>
   );
 }

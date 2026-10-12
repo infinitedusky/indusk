@@ -14,7 +14,7 @@ export interface ViewLinkProps
 /**
  * A view of the project in the nav — Promises, Looks — beside the plans: a
  * mark, a name and the count that wants attention. In a collapsed nav only the
- * mark stays (`group-data-[collapsed=true]/nav`).
+ * mark stays.
  */
 export function ViewLink({
   icon,
@@ -25,8 +25,7 @@ export function ViewLink({
   ...rest
 }: ViewLinkProps) {
   const classes = [
-    "mt-1 grid w-full grid-cols-[var(--size-badge)_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border p-tight text-left",
-    "group-data-[collapsed=true]/nav:grid-cols-[var(--size-badge)] group-data-[collapsed=true]/nav:justify-center group-data-[collapsed=true]/nav:px-0",
+    "nav-mark cols-view-link mt-1 grid w-full items-center gap-2 rounded-lg border p-tight text-left",
     current ? "border-dusk bg-dusk-wash" : "border-transparent",
     className,
   ]
@@ -43,11 +42,9 @@ export function ViewLink({
       <span className="grid size-badge place-items-center rounded-md bg-ink text-surface">
         {icon}
       </span>
-      <span className="text-md font-semibold leading-4 group-data-[collapsed=true]/nav:hidden">
-        {label}
-      </span>
+      <span className="nav-hide text-md font-semibold leading-4">{label}</span>
       {count === undefined ? null : (
-        <span className="rounded-pill bg-bad-wash px-tight py-1 font-mono text-2xs font-semibold leading-1 text-bad group-data-[collapsed=true]/nav:hidden">
+        <span className="rounded-pill bg-bad-wash px-tight py-1 nav-hide font-mono text-2xs font-semibold leading-1 text-bad">
           {count}
         </span>
       )}

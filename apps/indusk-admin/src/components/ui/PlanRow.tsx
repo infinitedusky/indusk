@@ -31,14 +31,14 @@ export function PlanRow({
       type="button"
       data-component="plan-row"
       aria-current={current ? "page" : undefined}
-      className={`grid w-full grid-cols-[var(--size-badge)_minmax(0,1fr)] items-center gap-2 rounded-lg border p-tight text-left group-data-[collapsed=true]/nav:grid-cols-[var(--size-badge)] group-data-[collapsed=true]/nav:justify-center group-data-[collapsed=true]/nav:px-0 ${
+      className={`nav-mark cols-plan-row grid w-full items-center gap-2 rounded-lg border p-tight text-left ${
         current ? "border-dusk bg-dusk-wash" : "border-transparent"
       } ${className}`}
       {...rest}
     >
       <PlanBadge state={state}>{initials}</PlanBadge>
-      <span className="grid min-w-0 group-data-[collapsed=true]/nav:hidden">
-        <span className="text-md font-medium leading-4 [overflow-wrap:anywhere]">
+      <span className="nav-hide grid min-w-0">
+        <span className="text-md font-medium leading-4 wrap-anywhere">
           {name}
         </span>
         <span

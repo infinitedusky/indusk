@@ -42,7 +42,8 @@ export function DecisionCard({
   return (
     <section
       data-component="decision-card"
-      className={`grid ${TONE[tone]} [&_p]:max-w-[64ch] ${tone === "alert" ? "[&_p]:text-ink" : "[&_p]:text-ink-soft"} ${className}`}
+      data-tone={tone}
+      className={`grid ${TONE[tone]} ${className}`}
     >
       {who ? (
         <div className="flex items-center gap-2 text-sm leading-3 text-ink-faint">

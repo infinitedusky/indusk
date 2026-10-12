@@ -45,7 +45,7 @@ export function Step({
       data-component="step"
       data-state={state}
       aria-current={current ? "step" : undefined}
-      className={`grid w-full grid-cols-[var(--space-5)_minmax(0,1fr)_auto] items-center gap-snug rounded-lg border px-tight py-2 text-left ${
+      className={`cols-step grid w-full items-center gap-snug rounded-lg border px-tight py-2 text-left ${
         current ? "border-ink-faint bg-ground" : "border-transparent"
       } ${className}`}
       {...rest}

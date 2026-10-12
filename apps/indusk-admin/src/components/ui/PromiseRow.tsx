@@ -62,13 +62,13 @@ export function PromiseRow({
       type="button"
       data-component="promise-row"
       data-standing={standing}
-      className={`grid w-full grid-cols-[var(--size-dot-lg)_minmax(0,1fr)_var(--size-icon)_var(--size-input)_var(--size-nav-rail)] items-center gap-4 border-t border-line px-4 py-3 text-left first:border-t-0 max-[759px]:grid-cols-[var(--size-dot-lg)_minmax(0,1fr)_auto] ${className}`}
+      className={`cols-promise-row grid w-full items-center gap-4 border-t border-line px-4 py-3 text-left first:border-t-0 ${className}`}
       {...rest}
     >
       <span className={`size-dot-lg rounded-pill ${DOT[standing]}`} />
       <span>
         <span className="block font-medium leading-4">{says}</span>
-        <span className="mt-hair block font-mono text-xs leading-2 text-ink-faint [overflow-wrap:anywhere]">
+        <span className="mt-hair block font-mono text-xs leading-2 text-ink-faint wrap-anywhere">
           {slug}
         </span>
       </span>

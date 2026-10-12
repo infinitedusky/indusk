@@ -14,7 +14,7 @@ export interface NavProps {
 /**
  * The project's nav: its name, then its plans in groups by what they wait on,
  * then its views. Rows and links inside it read `collapsed` from this frame
- * (`group/nav`), so they fold without being told.
+ * (`data-collapsed`), so they fold without being told.
  */
 export function Nav({
   project,
@@ -28,10 +28,10 @@ export function Nav({
       aria-label="Plans"
       data-component="nav"
       data-collapsed={collapsed ? "true" : "false"}
-      className={`group/nav flex flex-col gap-hair border-r border-line bg-surface pb-5 pt-4 px-snug ${className}`}
+      className={`flex flex-col gap-hair border-r border-line bg-surface pb-5 pt-4 px-snug ${className}`}
     >
-      <div className="flex items-center justify-between gap-2 px-1 pb-2 group-data-[collapsed=true]/nav:justify-center group-data-[collapsed=true]/nav:p-0">
-        <div className="grid group-data-[collapsed=true]/nav:hidden">
+      <div className="nav-head flex items-center justify-between gap-2 px-1 pb-2">
+        <div className="nav-hide grid">
           <b className="font-display text-lg font-bold leading-5">{project}</b>
           {summary ? (
             <small className="text-xs text-ink-faint">{summary}</small>
@@ -66,7 +66,7 @@ export function Nav({
 /** A group's heading in the nav — "Needs you", "In flight" — with how many it holds. */
 export function NavGroup({ label, count }: { label: string; count: number }) {
   return (
-    <div className="mx-tight mb-1 mt-3 flex items-center justify-between text-2xs font-semibold uppercase leading-1 tracking-caps text-ink-faint group-data-[collapsed=true]/nav:hidden">
+    <div className="mx-tight mb-1 mt-3 flex items-center justify-between text-2xs font-semibold uppercase leading-1 tracking-caps text-ink-faint nav-hide">
       <span>{label}</span>
       <span>{count}</span>
     </div>

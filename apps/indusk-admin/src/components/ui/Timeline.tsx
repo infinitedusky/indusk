@@ -21,7 +21,7 @@ export function Timeline({ items, className = "" }: TimelineProps) {
       {items.map((item) => (
         <li
           key={`${item.when} ${item.what}`}
-          className="grid grid-cols-[var(--size-nav-rail)_var(--size-node)_minmax(0,1fr)] gap-2 pb-3 text-md leading-4"
+          className="cols-timeline grid gap-2 pb-3 text-md leading-4"
         >
           <span className="whitespace-nowrap font-mono text-xs leading-2 text-ink-faint">
             {item.when}

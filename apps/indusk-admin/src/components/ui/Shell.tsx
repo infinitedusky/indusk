@@ -20,10 +20,8 @@ export function Shell({
   ...rest
 }: ShellProps) {
   const classes = [
-    "grid min-h-screen max-[759px]:grid-cols-1",
-    collapsed
-      ? "grid-cols-[var(--size-nav-rail)_minmax(0,1fr)]"
-      : "grid-cols-[var(--size-nav)_minmax(0,1fr)]",
+    "grid min-h-screen",
+    collapsed ? "cols-shell-rail" : "cols-shell",
     className,
   ]
     .filter(Boolean)
