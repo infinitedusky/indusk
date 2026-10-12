@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { ButtonOrLink } from "./ButtonOrLink";
 
 export type PromiseStanding = "declared" | "proving" | "enforced" | "broken";
 export type PipState = "planned" | "written" | "passing";
@@ -9,11 +10,13 @@ export interface PromiseRowProps
   /** The promise in a sentence. */
   says: string;
   /** Its name. */
-  slug: string;
+  slug: ReactNode;
   /** One pip per test, in the state it is in. */
   pips: readonly PipState[];
-  evals: string;
-  last: string;
+  evals: ReactNode;
+  last: ReactNode;
+  /** Where the promise's page is. A link when given, a button when not. */
+  href?: string;
   /** With no promises to list: the words that say so, in place of a row. */
   empty?: string;
 }
@@ -44,6 +47,7 @@ export function PromiseRow({
   evals,
   last,
   empty,
+  href,
   className = "",
   ...rest
 }: PromiseRowProps) {
@@ -58,8 +62,8 @@ export function PromiseRow({
     );
   }
   return (
-    <button
-      type="button"
+    <ButtonOrLink
+      href={href}
       data-component="promise-row"
       data-standing={standing}
       className={`cols-promise-row grid w-full items-center gap-4 border-t border-line px-4 py-3 text-left first:border-t-0 ${className}`}
@@ -87,6 +91,6 @@ export function PromiseRow({
       <span className="text-right text-sm leading-3 text-ink-faint">
         {last}
       </span>
-    </button>
+    </ButtonOrLink>
   );
 }
