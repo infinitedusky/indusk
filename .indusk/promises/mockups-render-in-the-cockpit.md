@@ -4,7 +4,7 @@ kind: state
 lifetime: holds
 state: enforced
 domain: admin
-owner: ui-promises
+owner: storybook-components
 sites:
   - 'apps/indusk-admin/src/app/p/[project]/looks/page.tsx'
   - apps/indusk-admin/src/components/looks/Looks.tsx
@@ -15,8 +15,9 @@ tests:
 incidents: []
 ---
 
-Each mockup opens in the cockpit at each reference device, drawn with the foundation's tokens.
+Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens, with nothing to run beside the cockpit.
 
 ## History
 - 2026-10-11 — declared (ui-promises), from its planning conversation.
 - 2026-10-12 — enforced, confirmed for ui-promises: proven by row A14, row A15, row A16.
+- 2026-10-12 — changed by storybook-components: stories render in the cockpit from the Storybook it serves. It read: "Each mockup opens in the cockpit at each reference device, drawn with the foundation's tokens." Owned before by ui-promises; storybook-components takes it over.
