@@ -220,6 +220,22 @@ export function looksApprove(): void {
 }
 
 /**
+ * `indusk looks unapprove` — refused, always. An approval is taken back only
+ * by a person, with the cockpit's Unapprove (storybook-components ADR decision
+ * 11); a command an agent can run is not that. Exit 2, nothing written.
+ */
+export function looksUnapprove(): void {
+	console.error(
+		[
+			"indusk looks unapprove: refused — an approval is taken back only by a person, with the cockpit's Unapprove.",
+			"Open the cockpit (`indusk ui`), go to the app's Looks page, find the approved mockup or story and press Unapprove.",
+			"promise: a-mockup-is-approved-by-a-person",
+		].join("\n"),
+	);
+	process.exitCode = 2;
+}
+
+/**
  * `indusk looks tokens <app> [--tailwind] [--out <file>]` — the foundation as
  * CSS: `:root` custom properties for a mockup, or with `--tailwind` an
  * `@theme` block that resets the stock theme to the foundation so a stock

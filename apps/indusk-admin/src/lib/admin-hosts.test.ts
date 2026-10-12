@@ -3,6 +3,7 @@ import { join, relative } from "node:path";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 import * as looksApprove from "@/app/api/looks/[app]/approve/route";
+import * as looksUnapprove from "@/app/api/looks/[app]/unapprove/route";
 import * as decision from "@/app/api/plans/[name]/decision/route";
 import * as accept from "@/app/api/plans/accept/route";
 import * as approve from "@/app/api/plans/approve/route";
@@ -35,6 +36,7 @@ type Handler = (
 
 const MODULES: Record<string, Record<string, unknown>> = {
   "looks/[app]/approve": looksApprove,
+  "looks/[app]/unapprove": looksUnapprove,
   plans,
   "plans/[name]/decision": decision,
   "plans/accept": accept,

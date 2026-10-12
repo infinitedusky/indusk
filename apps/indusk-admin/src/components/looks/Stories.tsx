@@ -7,6 +7,7 @@ import { stamp } from "@/lib/stamp";
 import { ApproveStory } from "./ApproveMockup";
 import { hrefOf, type Show } from "./address";
 import { LookFrame } from "./LookFrame";
+import { UnapproveStory } from "./Unapprove";
 
 /**
  * An app's components on the Looks page (storybook-components ADR decisions 3,
@@ -47,12 +48,14 @@ export function byComponent(
 }
 
 export function Components({
+  project,
   app,
   path,
   checkout,
   show,
   current,
 }: {
+  project: string;
   app: AppLooks;
   path: string;
   checkout: string | null;
@@ -83,6 +86,8 @@ export function Components({
               {stories.map((s) => (
                 <StoryRow
                   key={s.name}
+                  project={project}
+                  checkout={checkout}
                   app={app}
                   story={s}
                   hrefAt={hrefAt}
@@ -98,11 +103,15 @@ export function Components({
 }
 
 function StoryRow({
+  project,
+  checkout,
   app,
   story,
   hrefAt,
   current,
 }: {
+  project: string;
+  checkout: string | null;
   app: AppLooks;
   story: StoryView;
   hrefAt: (story: string) => string;
@@ -148,6 +157,16 @@ function StoryRow({
           by {story.entry.by}, {stamp(story.entry.at)}
         </span>
       ) : null}
+      {story.approval === "approved" ? (
+        <UnapproveStory
+          project={project}
+          app={app.app}
+          story={story.name}
+          snapshotHash={story.hash}
+          foundationHash={app.foundationHash}
+          checkout={checkout}
+        />
+      ) : null}
       {story.id ? null : (
         <span className="ml-auto text-xs text-warn">
           no Storybook id — run indusk looks stories {app.app}
@@ -157,7 +176,7 @@ function StoryRow({
   );
 }
 
-/** One story open: its name, Approve unless it is approved, and the frame at its own size. */
+/** One story open: its name, Approve while it is proposed, Unapprove once it is approved, and the frame at its own size. */
 export function OpenStoryView({
   project,
   app,
@@ -185,7 +204,16 @@ export function OpenStoryView({
             foundationHash={app.foundationHash}
             checkout={checkout}
           />
-        ) : null}
+        ) : (
+          <UnapproveStory
+            project={project}
+            app={app.app}
+            story={story.name}
+            snapshotHash={story.hash}
+            foundationHash={app.foundationHash}
+            checkout={checkout}
+          />
+        )}
       </div>
       {story.id ? (
         <LookFrame

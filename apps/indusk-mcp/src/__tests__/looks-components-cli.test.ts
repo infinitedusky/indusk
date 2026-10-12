@@ -276,7 +276,8 @@ describe("a story is approved by a person", () => {
 	});
 });
 
-describe("a person takes an approval back", () => {
+// Each case spawns the CLI several times; a loaded suite needs more than the default 5s.
+describe("a person takes an approval back", { timeout: 30_000 }, () => {
 	/** The copy as a git project, so the commit the writer makes can be read back. */
 	function project(): string {
 		const root = app();

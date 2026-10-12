@@ -6,7 +6,7 @@ import {
 import { looksCheckouts } from "@infinitedusky/indusk-mcp/looks/overview";
 import type { NextRequest } from "next/server";
 import { getProjectPath } from "@/lib/registry-client";
-import { adminOnly, refuse } from "@/lib/session-host";
+import { adminOnly, fromTheBrowser, refuse } from "@/lib/session-host";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,23 +33,6 @@ export const dynamic = "force-dynamic";
  *
  * promise: a-mockup-is-approved-by-a-person
  */
-/**
- * What this route adds to `adminOnly`, which a local process passes by
- * setting `Host` and `Origin` itself: the browser's own fetch metadata. A
- * browser sets `Sec-Fetch-Site` on every request and page script cannot set
- * or change it, so `same-origin` says the person's browser sent this from the
- * admin's page. `curl`, an agent's script or a test harness sends none.
- * Raises the bar to a deliberate forgery; it is not a signature
- * (ui-promises Build Phase 6, A29).
- */
-function fromTheBrowser(request: NextRequest): Response | null {
-  if (request.headers.get("sec-fetch-site") === "same-origin") return null;
-  return refuse(
-    403,
-    "a mockup is approved only by a person, with Approve on the cockpit's Looks page in their browser",
-  );
-}
-
 interface Shown {
   mockup: string;
   mockupHash: string;
@@ -156,7 +139,10 @@ export async function POST(
 ): Promise<Response> {
   const refused =
     adminOnly(request, "a mockup is approved only from the admin's own page") ??
-    fromTheBrowser(request);
+    fromTheBrowser(
+      request,
+      "a mockup is approved only by a person, with Approve on the cockpit's Looks page in their browser",
+    );
   if (refused) return refused;
   const { app } = await params;
   const body = (await request.json().catch(() => null)) as ApproveBody | null;

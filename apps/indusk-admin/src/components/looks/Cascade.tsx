@@ -4,11 +4,12 @@ import { stamp } from "@/lib/stamp";
 import { ApproveMockup, ApproveStory } from "./ApproveMockup";
 import { LookFrame } from "./LookFrame";
 import { byComponent, storyFrameSrc, storyLabel } from "./Stories";
+import { UnapproveMockup, UnapproveStory } from "./Unapprove";
 
 /**
  * The cascade view (storybook-components ADR decision 6): every mockup and
  * every component's stories drawn one after another, each at its own size with
- * the reference devices to choose from, and Approve beside the thing itself.
+ * the reference devices to choose from, and Approve (Unapprove once approved) beside the thing itself.
  * The same facts as the list and its stage (`looks/overview`); only the
  * arrangement differs.
  *
@@ -81,7 +82,17 @@ export function Cascade({
                     foundationHash={app.foundationHash}
                     checkout={checkout}
                   />
-                ) : null}
+                ) : (
+                  <UnapproveMockup
+                    project={project}
+                    app={app.app}
+                    mockup={m.name}
+                    mockupHash={m.hash}
+                    componentsHash={m.componentsHash}
+                    foundationHash={app.foundationHash}
+                    checkout={checkout}
+                  />
+                )}
               </header>
               <LookFrame
                 testId="mockup-frame"
@@ -146,7 +157,16 @@ export function Cascade({
                         foundationHash={app.foundationHash}
                         checkout={checkout}
                       />
-                    ) : null}
+                    ) : (
+                      <UnapproveStory
+                        project={project}
+                        app={app.app}
+                        story={s.name}
+                        snapshotHash={s.hash}
+                        foundationHash={app.foundationHash}
+                        checkout={checkout}
+                      />
+                    )}
                   </header>
                   {s.id ? (
                     <LookFrame

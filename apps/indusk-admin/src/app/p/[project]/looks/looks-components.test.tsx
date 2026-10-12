@@ -14,6 +14,7 @@ import {
   PROJECT,
   RECORD,
   root,
+  sectionOf,
   setUpComponentsProject,
   sha256,
   tearDownProject,
@@ -228,35 +229,31 @@ describe("A29 — Unapprove is offered on what is approved, never on what is pro
   }
 
   it("an approved story opened offers Unapprove carrying its snapshot hash; a proposed one does not", async () => {
-    const approved = await looksPage({
-      app: "demo",
-      story: "badge.ok",
-      device: "phone",
-    });
-    const tag = approved.slice(
-      approved.lastIndexOf("<", approved.indexOf('data-testid="unapprove-story"')),
+    const approved = sectionOf(
+      await looksPage({ app: "demo", story: "badge.ok", device: "phone" }),
+      "story-open",
     );
-    expect(approved).toContain('data-testid="unapprove-story"');
+    const at = approved.indexOf('data-testid="unapprove-story"');
+    expect(at, "no Unapprove on an approved story").toBeGreaterThan(-1);
+    const tag = approved.slice(approved.lastIndexOf("<", at));
     expect(attrOf(tag.slice(0, tag.indexOf(">")), "data-snapshot-hash")).toBe(
       sha256(snapshot("badge.ok")),
     );
     expect(approved).not.toContain('data-testid="approve-story"');
 
-    const proposed = await looksPage({
-      app: "demo",
-      story: "badge.broken",
-      device: "phone",
-    });
+    const proposed = sectionOf(
+      await looksPage({ app: "demo", story: "badge.broken", device: "phone" }),
+      "story-open",
+    );
     expect(proposed).toContain('data-testid="approve-story"');
     expect(proposed).not.toContain('data-testid="unapprove-story"');
   });
 
   it("an approved mockup opened offers Unapprove carrying the hashes it drew; a proposed one does not", async () => {
-    const approved = await looksPage({
-      app: "demo",
-      mockup: "home.default",
-      device: "phone",
-    });
+    const approved = sectionOf(
+      await looksPage({ app: "demo", mockup: "home.default", device: "phone" }),
+      "mockup-open",
+    );
     const at = approved.indexOf('data-testid="unapprove-mockup"');
     expect(at, "no Unapprove on an approved mockup").toBeGreaterThan(-1);
     const tag = approved.slice(approved.lastIndexOf("<", at));
@@ -266,11 +263,10 @@ describe("A29 — Unapprove is offered on what is approved, never on what is pro
     expect(attrOf(open, "data-components-hash")).toBe(shown.componentsHash);
     expect(approved).not.toContain('data-testid="approve-mockup"');
 
-    const proposed = await looksPage({
-      app: "demo",
-      mockup: "home.empty",
-      device: "phone",
-    });
+    const proposed = sectionOf(
+      await looksPage({ app: "demo", mockup: "home.empty", device: "phone" }),
+      "mockup-open",
+    );
     expect(proposed).toContain('data-testid="approve-mockup"');
     expect(proposed).not.toContain('data-testid="unapprove-mockup"');
   });
@@ -291,8 +287,7 @@ describe("A29 — Unapprove is offered on what is approved, never on what is pro
 
   it("the cascade offers it beside each approved look, and on no proposed one", async () => {
     const html = await looksPage({ view: "cascade" });
-    const item = (marker: string) =>
-      segmentOf(html, marker, "cascade-item");
+    const item = (marker: string) => segmentOf(html, marker, "cascade-item");
     expect(item('data-story="badge.ok"')).toContain(
       'data-testid="unapprove-story"',
     );

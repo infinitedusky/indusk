@@ -13,6 +13,7 @@ import { Cascade } from "./Cascade";
 import { LookFrame } from "./LookFrame";
 import { LooksToolbar } from "./LooksToolbar";
 import { Components, type OpenStory, OpenStoryView } from "./Stories";
+import { UnapproveMockup } from "./Unapprove";
 import { proposedIn, Uncovered } from "./Uncovered";
 
 /**
@@ -224,6 +225,7 @@ function AppSection({
               {app.mockups.map((m) => (
                 <MockupRow
                   key={m.name}
+                  project={project}
                   app={app}
                   mockup={m}
                   path={path}
@@ -238,6 +240,7 @@ function AppSection({
           ) : null}
           {components ? (
             <Components
+              project={project}
               app={app}
               path={path}
               checkout={checkout}
@@ -280,7 +283,7 @@ function AppSection({
   );
 }
 
-/** One mockup open at one device: its name and size, Approve when it is proposed, and the frame. */
+/** One mockup open at one device: its name and size, Approve when it is proposed, Unapprove when it is approved, and the frame. */
 function OpenMockupView({
   project,
   app,
@@ -308,7 +311,17 @@ function OpenMockupView({
             foundationHash={app.foundationHash}
             checkout={checkout}
           />
-        ) : null}
+        ) : (
+          <UnapproveMockup
+            project={project}
+            app={app.app}
+            mockup={mockup.name}
+            mockupHash={mockup.hash}
+            componentsHash={mockup.componentsHash}
+            foundationHash={app.foundationHash}
+            checkout={checkout}
+          />
+        )}
       </div>
       <LookFrame
         testId="mockup-frame"
@@ -322,6 +335,7 @@ function OpenMockupView({
 }
 
 function MockupRow({
+  project,
   app,
   mockup,
   path,
@@ -329,6 +343,7 @@ function MockupRow({
   show,
   current,
 }: {
+  project: string;
   app: AppLooks;
   mockup: MockupView;
   path: string;
@@ -378,6 +393,17 @@ function MockupRow({
         <span className="text-xs text-ink-faint">
           by {mockup.entry.by}, {stamp(mockup.entry.at)}
         </span>
+      ) : null}
+      {mockup.approval === "approved" ? (
+        <UnapproveMockup
+          project={project}
+          app={app.app}
+          mockup={mockup.name}
+          mockupHash={mockup.hash}
+          componentsHash={mockup.componentsHash}
+          foundationHash={app.foundationHash}
+          checkout={checkout}
+        />
       ) : null}
       <span className="ml-auto flex gap-2">
         {app.devices.map((d) => (

@@ -1170,6 +1170,18 @@ looksCmd
 		looksApprove();
 	});
 
+looksCmd
+	.command("unapprove")
+	.description(
+		"Refused (exit 2): an approval is taken back only by a person, with the cockpit's Unapprove on the app's Looks page.",
+	)
+	.allowUnknownOption()
+	.allowExcessArguments()
+	.action(async () => {
+		const { looksUnapprove } = await import("./commands/looks.js");
+		looksUnapprove();
+	});
+
 const promisesCmd = program
 	.command("promises")
 	.description("The promise registry (.indusk/promises/): what the system commits to, checked");

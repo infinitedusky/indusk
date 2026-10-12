@@ -16,8 +16,10 @@
  *     redirect onto it, or a segment run by a writing command (`tee`, `cp`,
  *     `mv`, `sed -i`, an interpreter's `-e`, `git checkout|restore …`);
  *   - an agent's Bash command that names the approve route
- *     (`/api/looks/<app>/approve`) — the route is the person's, pressed in
- *     their browser.
+ *     (`/api/looks/<app>/approve`) or the unapprove route
+ *     (`/api/looks/<app>/unapprove`, storybook-components ADR decision 11:
+ *     taking an approval back is the person's as giving it is) — the routes
+ *     are the person's, pressed in their browser.
  *
  * What it cannot see: a command that builds the path or the URL at run time
  * (a script file, a variable, an encoded string). It is a tripwire for an
@@ -40,6 +42,8 @@ const REDIRECT_ONTO_RECORD =
 	/>{1,2}\|?\s*["']?[^\s"']*\.indusk[\\/]mockups[\\/][^\s\\/'"`]+[\\/]approved\.json/i;
 /** The approve route named anywhere in a command's text. */
 const APPROVE_ROUTE = /\/api\/looks\/[^\s'"`]*approve/i;
+/** The unapprove route (ADR decision 11): taking an approval back is the person's as giving it is. */
+const UNAPPROVE_ROUTE = /\/api\/looks\/[^\s'"`]*unapprove/i;
 
 /** Commands that write the files they are handed. */
 const WRITERS = new Set([
@@ -98,6 +102,7 @@ function segmentWrites(segment) {
 
 /** Why a Bash command is refused, or null to let it run. */
 function bashRefusal(command) {
+	if (UNAPPROVE_ROUTE.test(command)) return "it calls the cockpit's unapprove route";
 	if (APPROVE_ROUTE.test(command)) return "it calls the cockpit's approve route";
 	if (segments(command).some(segmentWrites))
 		return "it writes the record of what a person approved";
@@ -110,8 +115,9 @@ function refuse(what, why) {
 			`looks-approval-guard: refusing — ${what}: ${why}.`,
 			"promise: a-mockup-is-approved-by-a-person",
 			"",
-			"A mockup becomes the reference only when a person approves it with the cockpit's Approve:",
-			"`indusk ui`, the app's Looks page, the mockup opened at each device, then Approve.",
+			"A mockup becomes the reference only when a person approves it with the cockpit's Approve,",
+			"and stops being one only when a person takes it back with the cockpit's Unapprove:",
+			"`indusk ui`, the app's Looks page, the mockup opened at each device, then Approve (or Unapprove).",
 			"Draw or change the mockup (screens/<screen>.<state>.html) and the foundation as you need;",
 			"a changed mockup reads proposed until a person approves it there.",
 			"",
