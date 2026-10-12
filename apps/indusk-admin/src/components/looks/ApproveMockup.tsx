@@ -108,6 +108,7 @@ export function ApproveStory({
   app,
   story,
   snapshotHash,
+  stylesheetHash,
   foundationHash,
   checkout,
 }: Shown & {
@@ -115,6 +116,8 @@ export function ApproveStory({
   story: string;
   /** The hash of the snapshot as the page drew it. */
   snapshotHash: string;
+  /** The hash of its component's stylesheet as the page drew it; null when it has none. */
+  stylesheetHash: string | null;
 }) {
   return (
     <ApproveButton
@@ -125,6 +128,7 @@ export function ApproveStory({
         kind: "story",
         story,
         snapshotHash,
+        ...(stylesheetHash === null ? {} : { stylesheetHash }),
         foundationHash,
         checkout,
       }}

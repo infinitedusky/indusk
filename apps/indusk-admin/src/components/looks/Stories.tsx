@@ -145,6 +145,7 @@ function StoryRow({
             value={story.name}
             data-select-story=""
             data-snapshot-hash={story.hash}
+            data-stylesheet-hash={story.stylesheetHash ?? ""}
             aria-label={`Select ${story.name}`}
           />
         ) : null}
@@ -213,6 +214,7 @@ export function OpenStoryView({
             app={app.app}
             story={story.name}
             snapshotHash={story.hash}
+            stylesheetHash={story.stylesheetHash}
             foundationHash={app.foundationHash}
             checkout={checkout}
           />

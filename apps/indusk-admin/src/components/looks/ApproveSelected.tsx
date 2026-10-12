@@ -10,7 +10,8 @@ import { postJson } from "@/lib/post-json";
  * stories, one select-all, and one Approve for the selection. It is the same
  * act as Approve on a single one — one entry per look, each as the person who
  * clicked and each bound to that look's own hash as the page drew it
- * (`data-mockup-hash`, `data-snapshot-hash`) — only done for several at once.
+ * (`data-mockup-hash`, `data-snapshot-hash`, `data-stylesheet-hash`) — only
+ * done for several at once.
  *
  * The rows are the server's markup, so the selection lives in the checkboxes
  * themselves (`input[data-select-mockup]` inside this app's section): this
@@ -30,7 +31,7 @@ function boxesOf(app: string): HTMLInputElement[] {
 
 /**
  * A look as the page drew it: a mockup with the hashes its checkbox carries,
- * or a story with its snapshot hash (`data-select-story`).
+ * or a story with its snapshot and stylesheet hashes (`data-select-story`).
  */
 type Shown =
   | {
@@ -39,7 +40,13 @@ type Shown =
       mockupHash: string;
       componentsHash: string;
     }
-  | { kind: "story"; story: string; snapshotHash: string };
+  | {
+      kind: "story";
+      story: string;
+      snapshotHash: string;
+      /** Empty when its component has no stylesheet. */
+      stylesheetHash: string;
+    };
 
 const shownBy = (box: HTMLInputElement): Shown =>
   box.dataset.selectStory !== undefined
@@ -47,6 +54,7 @@ const shownBy = (box: HTMLInputElement): Shown =>
         kind: "story",
         story: box.value,
         snapshotHash: box.dataset.snapshotHash ?? "",
+        stylesheetHash: box.dataset.stylesheetHash ?? "",
       }
     : {
         kind: "mockup",
@@ -120,7 +128,15 @@ export function ApproveSelected({
         ),
         stories: selected.flatMap((x) =>
           x.kind === "story"
-            ? [{ story: x.story, snapshotHash: x.snapshotHash }]
+            ? [
+                {
+                  story: x.story,
+                  snapshotHash: x.snapshotHash,
+                  ...(x.stylesheetHash
+                    ? { stylesheetHash: x.stylesheetHash }
+                    : {}),
+                },
+              ]
             : [],
         ),
         foundationHash,

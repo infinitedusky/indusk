@@ -139,6 +139,7 @@ export function Cascade({
                         value={s.name}
                         data-select-story=""
                         data-snapshot-hash={s.hash}
+                        data-stylesheet-hash={s.stylesheetHash ?? ""}
                         aria-label={`Select ${s.name}`}
                       />
                     ) : null}
@@ -159,6 +160,7 @@ export function Cascade({
                         app={app.app}
                         story={s.name}
                         snapshotHash={s.hash}
+                        stylesheetHash={s.stylesheetHash}
                         foundationHash={app.foundationHash}
                         checkout={checkout}
                       />

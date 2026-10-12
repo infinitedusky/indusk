@@ -35,6 +35,9 @@ import { POST as approveRoute } from "@/app/api/looks/[app]/approve/route";
 const CATALOG = ".indusk/mockups/demo/components.json";
 const snapshot = (name: string) =>
   join(root, `.indusk/mockups/demo/components/${name}.html`);
+/** The badge's stylesheet hash, which a story's Approve sends with its snapshot's. */
+const sheet = () =>
+  sha256(join(root, ".indusk/mockups/demo/components/badge.css"));
 const edit = (file: string) =>
   writeFileSync(file, `${readFileSync(file, "utf-8")}<!-- edited -->\n`);
 
@@ -138,6 +141,7 @@ describe("approving a story", () => {
       kind: "story",
       story: name,
       snapshotHash,
+      stylesheetHash: sheet(),
       foundationHash: foundationHash(),
     });
 
@@ -159,8 +163,16 @@ describe("approving a story", () => {
       approveRequest({
         project: PROJECT,
         stories: [
-          { story: "badge.broken", snapshotHash: shownHash },
-          { story: "badge.ok", snapshotHash: "not-what-was-shown" },
+          {
+            story: "badge.broken",
+            snapshotHash: shownHash,
+            stylesheetHash: sheet(),
+          },
+          {
+            story: "badge.ok",
+            snapshotHash: "not-what-was-shown",
+            stylesheetHash: sheet(),
+          },
         ],
         foundationHash: foundationHash(),
       }),

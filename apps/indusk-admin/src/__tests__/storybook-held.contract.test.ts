@@ -100,6 +100,7 @@ async function approveEveryStory() {
     const r = await approve(project, "admin", story.name, "Story Tester", {
       kind: "story",
       snapshotHash: story.hash,
+      stylesheetHash: story.stylesheetHash ?? undefined,
       foundationHash: app.foundation.hash,
     });
     expect(r.approved, JSON.stringify(r)).toBe(true);
