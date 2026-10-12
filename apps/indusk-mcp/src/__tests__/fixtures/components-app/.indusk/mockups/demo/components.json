@@ -1,0 +1,26 @@
+{
+	"components": [
+		{
+			"name": "badge",
+			"file": "src/Badge.jsx",
+			"properties": [
+				{
+					"name": "children",
+					"type": "ReactNode"
+				}
+			],
+			"states": [
+				{
+					"name": "ok",
+					"snapshotHash": "e391c44c24406491e1d892aba7ad417d2a0c2f6307740aefd3f1c3028140808a"
+				},
+				{
+					"name": "broken",
+					"snapshotHash": "e42924bf78efb01346c9e20bd117ba575c004f03d1d49b471ed959a9370b2e19"
+				}
+			],
+			"stylesheet": "components/badge.css",
+			"stylesheetHash": "097df5545e6df94c3b6ccc01246e789a2b83fbd5eaeeb89f15deea690041d252"
+		}
+	]
+}

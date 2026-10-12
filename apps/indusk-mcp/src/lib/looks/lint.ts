@@ -2,10 +2,11 @@ import { readFile } from "node:fs/promises";
 import { extname, relative } from "node:path";
 import { type Foundation, isGeneratedCss } from "./foundation.js";
 import { CLASS_SOURCE_EXTENSIONS, classFindings } from "./lint-classes.js";
+import { componentFindings } from "./lint-components.js";
 import type { CssBlock, Finding } from "./lint-types.js";
 import { cssFindings, isOwn } from "./lint-values.js";
 import { elementsOf } from "./markup.js";
-import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
+import { appSourceFiles, type ComponentStyle, type LooksApp, type Mockup } from "./mockups.js";
 
 /**
  * The no-raw-value rule (ui-promises ADR): every colour, size, space, radius,
@@ -149,8 +150,27 @@ const namesOf = (f: Foundation) => new Set(f.tokens.map((t) => t.name));
 const byPlace = (a: Finding, b: Finding) =>
 	a.file.localeCompare(b.file) || a.line - b.line || a.value.localeCompare(b.value);
 
-/** The findings of one mockup: its raw values, and the tokens it uses or adds. */
-async function lintMockup(mockup: Mockup, foundation: Set<string>): Promise<Finding[]> {
+/**
+ * What the no-raw-value rule reads of a mockup: a file and its markup. A
+ * mockup is linted as composed, part by part — its own source, located in its
+ * file, and each snapshot it composes, located in the snapshot's — so a
+ * finding names the line that holds it, not a line of the composed page.
+ */
+type MockupPart = Pick<Mockup, "file" | "declaresNew"> & { html: string };
+
+/** The parts of the app's composed mockups: each mockup's source, and each snapshot one composes, once. */
+function mockupParts(app: LooksApp): MockupPart[] {
+	const composed = new Set(app.mockups.flatMap((m) => m.uses.map((u) => u.story)));
+	return [
+		...app.mockups.map((m) => ({ file: m.file, html: m.source, declaresNew: m.declaresNew })),
+		...app.stories
+			.filter((s) => composed.has(s.name))
+			.map((s) => ({ file: s.file, html: s.html, declaresNew: [] })),
+	];
+}
+
+/** The findings of one mockup part: its raw values, and the tokens it uses or adds. */
+async function lintMockup(mockup: MockupPart, foundation: Set<string>): Promise<Finding[]> {
 	const blocks = cssBlocksOfHtml(mockup.html);
 	const raw = await Promise.all(
 		blocks.map((block) =>
@@ -164,6 +184,23 @@ async function lintMockup(mockup: Mockup, foundation: Set<string>): Promise<Find
 		true,
 	);
 	return [...raw.flat(), ...tokens, ...externalElements(mockup.file, mockup.html)];
+}
+
+/**
+ * The findings of a component's stylesheet, `components/<name>.css`: read by
+ * the rule a mockup's own styles are, so a raw value or an undefined token in
+ * a generated sheet is named in its file (ADR decision 10).
+ */
+async function lintStylesheet(style: ComponentStyle, foundation: Set<string>): Promise<Finding[]> {
+	const block: CssBlock = { code: style.css, startLine: 1 };
+	const raw = await cssFindings(style.file, block, { mockup: true });
+	const tokens = tokenFindings(
+		style.file,
+		[block],
+		{ foundation, declared: new Set(), elsewhere: new Set() },
+		true,
+	);
+	return [...raw, ...tokens];
 }
 
 /** The findings of the app's declared source directories: stylesheets, and class names in markup. */
@@ -207,12 +244,17 @@ async function lintSources(
 	return findings;
 }
 
-/** Every raw value, undefined token and stock class in an app's mockups and declared sources. */
+/**
+ * Every raw value, undefined token and stock class in an app's composed
+ * mockups and declared sources, and the component rules of `lint-components`.
+ */
 export async function lintApp(root: string, app: LooksApp): Promise<Finding[]> {
 	const foundation = namesOf(app.foundation);
-	const mockups = await Promise.all(app.mockups.map((m) => lintMockup(m, foundation)));
+	const mockups = await Promise.all(mockupParts(app).map((m) => lintMockup(m, foundation)));
+	const styles = await Promise.all(app.styles.map((s) => lintStylesheet(s, foundation)));
 	const sources = await lintSources(root, app.sources, foundation);
-	return [...mockups.flat(), ...sources].sort(byPlace);
+	const components = await componentFindings(root, app);
+	return [...mockups.flat(), ...styles.flat(), ...sources, ...components].sort(byPlace);
 }
 
 export type { Finding, LintRule } from "./lint-types.js";

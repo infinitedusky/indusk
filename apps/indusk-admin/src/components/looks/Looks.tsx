@@ -1,13 +1,22 @@
 import type {
   AppLooks,
   AppLooksRead,
-  LooksCheckout,
+  CountedCheckout,
   MockupView,
 } from "@infinitedusky/indusk-mcp/looks/overview";
-import { APPROVAL_STYLE } from "@/components/bars/labels";
+import { LookRow } from "@/components/ui/LookRow";
 import { stamp } from "@/lib/stamp";
 import { ApproveMockup } from "./ApproveMockup";
 import { ApproveSelected } from "./ApproveSelected";
+import { hrefOf, looksListed, type Show } from "./address";
+import { Cascade } from "./Cascade";
+import { LookFrame } from "./LookFrame";
+import { LooksToolbar } from "./LooksToolbar";
+import { OpenLookRow } from "./OpenLookRow";
+import { SelectBox } from "./SelectBox";
+import { Components, type OpenStory, OpenStoryView } from "./Stories";
+import { UnapproveMockup } from "./Unapprove";
+import { proposedIn, Uncovered } from "./Uncovered";
 
 /**
  * The Looks page's body (ui-promises ADR decisions 2, 3, 5): each app's
@@ -33,6 +42,7 @@ function lookState(apps: AppLooksRead[]): string | undefined {
       a.uncovered.screens.length +
         a.uncovered.states.length +
         a.uncovered.components.length +
+        a.uncovered.stories.length +
         a.uncovered.unresolved.length >
       0,
   );
@@ -50,6 +60,9 @@ export function LooksBody({
   apps,
   path,
   open,
+  openStory = null,
+  view = "list",
+  show = "all",
   checkout = null,
   checkouts = [],
 }: {
@@ -58,40 +71,31 @@ export function LooksBody({
   /** The page's own path, for the device links. */
   path: string;
   open: OpenMockup | null;
+  /** The story open in its frame, when one is. */
+  openStory?: OpenStory | null;
+  /** `list` is the list beside a stage; `cascade` draws every look, one after another. */
+  view?: "list" | "cascade";
+  /** Which looks are drawn: mockups, components, or both. */
+  show?: Show;
   /** The plan whose worktree is read; null for the project's own checkout. */
   checkout?: string | null;
   /** Every checkout that can be read; a switch is shown when there is more than one. */
-  checkouts?: LooksCheckout[];
+  checkouts?: CountedCheckout[];
 }) {
   return (
     <section
-      className="flex flex-col gap-6"
+      className="looks-page flex flex-col gap-4 overflow-y-auto"
       data-testid="looks"
       data-look-state={lookState(apps)}
     >
       <h1 className="text-xl font-semibold text-ink">Looks</h1>
-      {checkouts.length > 1 ? (
-        <nav
-          className="flex flex-wrap items-center gap-2 text-sm text-ink-soft"
-          data-testid="looks-checkouts"
-          aria-label="Checkout"
-        >
-          <span>Reading</span>
-          {checkouts.map((c) => (
-            <a
-              key={c.plan ?? "own"}
-              href={
-                c.plan ? `${path}?checkout=${encodeURIComponent(c.plan)}` : path
-              }
-              aria-current={c.plan === checkout ? "page" : undefined}
-              title={c.branch ?? undefined}
-              className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
-            >
-              {c.plan ?? "this checkout"}
-            </a>
-          ))}
-        </nav>
-      ) : null}
+      <LooksToolbar
+        path={path}
+        show={show}
+        view={view}
+        checkout={checkout}
+        checkouts={checkouts}
+      />
       {apps.length === 0 ? (
         <p className="text-sm text-ink-soft" data-testid="looks-empty">
           No looks yet. An app&apos;s look lives in{" "}
@@ -117,6 +121,9 @@ export function LooksBody({
             path={path}
             checkout={checkout}
             open={open?.app === app.app ? open : null}
+            openStory={openStory?.app === app.app ? openStory : null}
+            view={view}
+            show={show}
           />
         ),
       )}
@@ -130,60 +137,156 @@ function AppSection({
   path,
   checkout,
   open,
+  openStory,
+  view,
+  show,
 }: {
   project: string;
   app: AppLooks;
   path: string;
   checkout: string | null;
   open: OpenMockup | null;
+  openStory: OpenStory | null;
+  view: "list" | "cascade";
+  show: Show;
 }) {
+  const mockups = show !== "components";
+  const components = show !== "mockups";
   const opened = open
     ? (app.mockups.find((m) => m.name === open.mockup) ?? null)
     : null;
   const device = open
     ? (app.devices.find((d) => d.name === open.device) ?? null)
     : null;
+  const story = openStory
+    ? (app.stories.find((s) => s.name === openStory.story) ?? null)
+    : null;
+  const storyDevice = openStory?.device
+    ? (app.devices.find((d) => d.name === openStory.device) ?? null)
+    : null;
+  if (view === "cascade") {
+    return (
+      <section
+        className="flex flex-col gap-3"
+        data-testid="looks-app"
+        data-app={app.app}
+      >
+        <h2 className="text-base font-semibold text-ink">{app.app}</h2>
+        <ApproveSelected
+          project={project}
+          app={app.app}
+          foundationHash={app.foundationHash}
+          checkout={checkout}
+          proposed={proposedIn(app, show)}
+        />
+        <Cascade
+          project={project}
+          app={app}
+          checkout={checkout}
+          mockups={mockups}
+          components={components}
+          show={show}
+        />
+        <Uncovered app={app} show={show} />
+      </section>
+    );
+  }
   return (
     <section
-      className="flex flex-col gap-3"
+      className="flex min-h-0 flex-1 flex-col gap-3"
       data-testid="looks-app"
       data-app={app.app}
     >
       <h2 className="text-base font-semibold text-ink">{app.app}</h2>
-      <ApproveSelected
-        project={project}
-        app={app.app}
-        foundationHash={app.foundationHash}
-        checkout={checkout}
-        proposed={app.mockups.filter((m) => m.approval === "proposed").length}
-      />
-      <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
-        {app.mockups.map((m) => (
-          <MockupRow
-            key={m.name}
-            app={app}
-            mockup={m}
-            path={path}
-            checkout={checkout}
-            current={opened?.name === m.name ? (device?.name ?? null) : null}
-          />
-        ))}
-      </ul>
-      {opened && device ? (
-        <OpenMockupView
-          project={project}
-          app={app}
-          mockup={opened}
-          device={device}
-          checkout={checkout}
+      <div className="looks-split grid min-h-0 flex-1 gap-4">
+        <input
+          type="checkbox"
+          id={`looks-sheet-${app.app}`}
+          className="looks-sheet-toggle"
+          aria-hidden="true"
+          tabIndex={-1}
         />
-      ) : null}
-      <Uncovered app={app} />
+        <div
+          className="looks-list flex min-h-0 flex-col gap-3 overflow-y-auto"
+          data-testid="looks-list"
+        >
+          <label
+            htmlFor={`looks-sheet-${app.app}`}
+            className="looks-sheet-handle text-sm font-medium"
+          >
+            Looks
+          </label>
+          <ApproveSelected
+            project={project}
+            app={app.app}
+            foundationHash={app.foundationHash}
+            checkout={checkout}
+            proposed={proposedIn(app, show)}
+          />
+          {mockups ? (
+            <div className="looks-rows shrink-0 overflow-hidden rounded-md border border-line bg-surface">
+              {looksListed(app.mockups, show).map((m) => (
+                <MockupRow
+                  key={m.name}
+                  project={project}
+                  app={app}
+                  mockup={m}
+                  path={path}
+                  checkout={checkout}
+                  show={show}
+                  current={
+                    opened?.name === m.name ? (device?.name ?? null) : null
+                  }
+                />
+              ))}
+            </div>
+          ) : null}
+          {components ? (
+            <Components
+              project={project}
+              app={app}
+              path={path}
+              checkout={checkout}
+              show={show}
+              current={story?.name ?? null}
+            />
+          ) : null}
+          <Uncovered app={app} show={show} />
+        </div>
+        <div
+          className="looks-stage flex min-h-0 flex-col gap-3 overflow-auto"
+          data-testid="looks-stage"
+        >
+          {opened && device ? (
+            <OpenMockupView
+              project={project}
+              app={app}
+              mockup={opened}
+              device={device}
+              checkout={checkout}
+            />
+          ) : null}
+          {story ? (
+            <OpenStoryView
+              project={project}
+              app={app}
+              story={story}
+              device={storyDevice}
+              checkout={checkout}
+            />
+          ) : null}
+          {!(opened && device) && !story ? (
+            <p className="text-sm text-ink-soft" data-testid="stage-empty">
+              Choose a mockup or a story; it stays here while the list scrolls.
+            </p>
+          ) : null}
+        </div>
+      </div>
     </section>
   );
 }
 
-/** One mockup open at one device: its name and size, Approve when it is proposed, and the frame. */
+/** One mockup open at one device: its name and size, Approve when it is proposed, Unapprove when it is approved, and the frame. */
 function OpenMockupView({
   project,
   app,
@@ -201,133 +304,122 @@ function OpenMockupView({
     <section className="flex flex-col gap-2" data-testid="mockup-open">
       <div className="flex flex-wrap items-center gap-3 text-sm text-ink-soft">
         <span className="font-medium">{mockup.name}</span>
-        <span>
-          {device.name} · {device.width} × {device.height}
-        </span>
         {mockup.approval === "proposed" ? (
           <ApproveMockup
             project={project}
             app={app.app}
             mockup={mockup.name}
             mockupHash={mockup.hash}
+            componentsHash={mockup.componentsHash}
             foundationHash={app.foundationHash}
             checkout={checkout}
           />
-        ) : null}
+        ) : (
+          <UnapproveMockup
+            project={project}
+            app={app.app}
+            mockup={mockup.name}
+            mockupHash={mockup.hash}
+            componentsHash={mockup.componentsHash}
+            foundationHash={app.foundationHash}
+            checkout={checkout}
+          />
+        )}
       </div>
-      <div className="max-w-full overflow-auto">
-        <iframe
-          data-testid="mockup-frame"
-          data-component="device-frame"
-          title={`${mockup.name} at ${device.name}`}
-          srcDoc={mockup.document}
-          width={device.width}
-          height={device.height}
-          sandbox=""
-          className="block border-0 bg-surface elevated"
-        />
-      </div>
+      <LookFrame
+        testId="mockup-frame"
+        title={mockup.name}
+        srcDoc={mockup.document}
+        devices={app.devices}
+        initialDevice={device.name}
+      />
     </section>
   );
 }
 
+/** One mockup in the list: a `LookRow` for its name, chip and Open, then what a person does with it — select it, take its approval back, open it at a device. */
 function MockupRow({
+  project,
   app,
   mockup,
   path,
   checkout,
+  show,
   current,
 }: {
+  project: string;
   app: AppLooks;
   mockup: MockupView;
   path: string;
   checkout: string | null;
+  show: Show;
   /** The device it is open at, when it is the open mockup. */
   current: string | null;
 }) {
   const hrefAt = (device: string) =>
-    `${path}?${new URLSearchParams({
+    hrefOf(path, {
       app: app.app,
       mockup: mockup.name,
       device,
-      ...(checkout ? { checkout } : {}),
-    })}`;
+      show,
+      view: "list",
+      checkout,
+    });
+  const first = app.devices[0];
   return (
-    <li
+    <div
       data-testid="mockup-row"
-      data-component="look-row"
       data-mockup={mockup.name}
       data-approval={mockup.approval}
-      className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm"
+      className="border-t border-line first:border-t-0"
     >
-      {mockup.approval === "proposed" ? (
-        <input
-          type="checkbox"
-          value={mockup.name}
-          data-select-mockup=""
-          data-mockup-hash={mockup.hash}
-          aria-label={`Select ${mockup.name}`}
+      {first ? (
+        <OpenLookRow
+          name={mockup.name}
+          approval={mockup.approval}
+          href={hrefAt(first.name)}
         />
-      ) : null}
-      <span className="font-medium text-ink">{mockup.name}</span>
-      <span
-        className={`rounded-md border px-tight text-xs ${APPROVAL_STYLE[mockup.approval]}`}
-      >
-        {mockup.approval}
-      </span>
-      {mockup.approval === "approved" && mockup.entry ? (
-        <span className="text-xs text-ink-faint">
-          by {mockup.entry.by}, {stamp(mockup.entry.at)}
-        </span>
-      ) : null}
-      <span data-component="device-choice" className="ml-auto flex gap-2">
-        {app.devices.map((d) => (
-          <a
-            key={d.name}
-            href={hrefAt(d.name)}
-            data-testid="device-link"
-            data-device={d.name}
-            aria-current={current === d.name ? "page" : undefined}
-            className="rounded-md px-tight text-xs text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
-          >
-            {d.name}
-          </a>
-        ))}
-      </span>
-    </li>
-  );
-}
-
-function Uncovered({ app }: { app: AppLooks }) {
-  const items = [
-    ...app.uncovered.screens.map((name) => ({ kind: "screen", name })),
-    ...app.uncovered.states.map((name) => ({ kind: "state", name })),
-    ...app.uncovered.components.map((name) => ({ kind: "component", name })),
-    // A component named at run time, by where the source names it.
-    ...app.uncovered.unresolved.map((name) => ({ kind: "unresolved", name })),
-  ];
-  return (
-    <section className="flex flex-col gap-1" data-testid="uncovered">
-      <h3 className="text-sm font-semibold text-ink-soft">Uncovered</h3>
-      {items.length === 0 ? (
-        <p className="text-sm text-ink-soft">
-          Every declared screen, state and component has an approved mockup.
-        </p>
       ) : (
-        <ul className="flex flex-wrap gap-2 text-sm">
-          {items.map((i) => (
-            <li
-              key={`${i.kind}:${i.name}`}
-              data-testid="uncovered-item"
-              data-kind={i.kind}
-              data-name={i.name}
-              className="rounded-md border border-dashed border-warn bg-warn-wash px-tight text-warn"
-            >
-              {i.kind} {i.name}
-            </li>
-          ))}
-        </ul>
+        <LookRow name={mockup.name} approval={mockup.approval} />
       )}
-    </section>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-3 text-xs text-ink-soft">
+        {mockup.approval === "proposed" ? <SelectBox mockup={mockup} /> : null}
+        {mockup.componentsChanged.length > 0 ? (
+          <span className="text-warn" data-testid="components-changed">
+            component changed: {mockup.componentsChanged.join(", ")}
+          </span>
+        ) : null}
+        {mockup.approval === "approved" && mockup.entry ? (
+          <span className="text-ink-faint">
+            by {mockup.entry.by}, {stamp(mockup.entry.at)}
+          </span>
+        ) : null}
+        {mockup.approval === "approved" ? (
+          <UnapproveMockup
+            project={project}
+            app={app.app}
+            mockup={mockup.name}
+            mockupHash={mockup.hash}
+            componentsHash={mockup.componentsHash}
+            foundationHash={app.foundationHash}
+            checkout={checkout}
+          />
+        ) : null}
+        <span className="ml-auto flex gap-2">
+          {app.devices.map((d) => (
+            <a
+              key={d.name}
+              href={hrefAt(d.name)}
+              data-testid="device-link"
+              data-device={d.name}
+              aria-current={current === d.name ? "page" : undefined}
+              className="rounded-md px-tight text-dusk hover:bg-dusk-wash aria-[current=page]:bg-dusk-wash"
+            >
+              {d.name}
+            </a>
+          ))}
+        </span>
+      </div>
+    </div>
   );
 }

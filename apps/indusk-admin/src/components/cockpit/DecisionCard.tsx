@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ReviewPanel } from "@/components/session/ReviewPanel";
 import { Button } from "@/components/ui/Button";
+import { DecisionCard as UiDecisionCard } from "@/components/ui/DecisionCard";
 import { postJson } from "@/lib/post-json";
 
 /**
@@ -77,72 +78,69 @@ export function DecisionCard({
   };
 
   return (
-    <section
-      className="mb-4 flex flex-col gap-3 rounded-md border border-warn bg-warn-wash p-4 text-sm"
-      data-testid="decision-card"
-      data-component="decision-card"
-      data-on={waiting.on}
-    >
-      <header className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-semibold text-warn">{HEADING[waiting.on]}</h2>
-        <span className="text-xs text-warn">at {waiting.step}</span>
-      </header>
-      <p className="text-ink">{waiting.decision}</p>
-      {waiting.on === "review" && review ? (
-        <ReviewPanel review={review} />
-      ) : null}
-      <div className="flex flex-wrap gap-2">
-        <Button
-          size="sm"
-          data-testid="decision-accept"
-          disabled={busy}
-          onClick={() => void answer("accept")}
-        >
-          {waiting.accept}
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          data-testid="decision-alternative"
-          disabled={busy}
-          onClick={() => void answer("alternative")}
-        >
-          {waiting.alternative}
-        </Button>
-      </div>
-      <form
-        className="flex flex-col gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void answer("reply", words);
+    <div data-testid="decision-card" data-on={waiting.on}>
+      <UiDecisionCard
+        tone="ask"
+        who={{
+          label: `${HEADING[waiting.on]} at ${waiting.step}`,
+          state: "ask",
         }}
+        title={waiting.decision}
       >
-        <label className="text-xs text-ink-soft" htmlFor="decision-reply">
-          Or say it in your own words
-        </label>
-        <textarea
-          id="decision-reply"
-          data-testid="decision-reply"
-          className="min-h-16 w-full rounded-md border border-line bg-surface p-2"
-          value={words}
-          onChange={(e) => setWords(e.target.value)}
-        />
-        <div>
+        {waiting.on === "review" && review ? (
+          <ReviewPanel review={review} />
+        ) : null}
+        <div className="flex flex-wrap gap-snug">
           <Button
-            size="sm"
-            variant="secondary"
-            type="submit"
-            data-testid="decision-send"
-            disabled={busy || !words.trim()}
+            data-testid="decision-accept"
+            disabled={busy}
+            onClick={() => void answer("accept")}
           >
-            Send
+            {waiting.accept}
+          </Button>
+          <Button
+            variant="secondary"
+            data-testid="decision-alternative"
+            disabled={busy}
+            onClick={() => void answer("alternative")}
+          >
+            {waiting.alternative}
           </Button>
         </div>
-      </form>
-      {sent ? <p className="text-ok">Sent: {sent}</p> : null}
-      {problem ? (
-        <pre className="whitespace-pre-wrap text-bad">{problem}</pre>
-      ) : null}
-    </section>
+        <form
+          className="flex flex-col gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void answer("reply", words);
+          }}
+        >
+          <label className="text-xs text-ink-soft" htmlFor="decision-reply">
+            Or say it in your own words
+          </label>
+          <textarea
+            id="decision-reply"
+            data-testid="decision-reply"
+            className="min-h-16 w-full rounded-md border border-line bg-surface p-2"
+            value={words}
+            onChange={(e) => setWords(e.target.value)}
+          />
+          <div>
+            <Button
+              size="sm"
+              variant="secondary"
+              type="submit"
+              data-testid="decision-send"
+              disabled={busy || !words.trim()}
+            >
+              Send
+            </Button>
+          </div>
+        </form>
+        {sent ? <p className="text-ok">Sent: {sent}</p> : null}
+        {problem ? (
+          <pre className="whitespace-pre-wrap text-bad">{problem}</pre>
+        ) : null}
+      </UiDecisionCard>
+    </div>
   );
 }

@@ -1,5 +1,8 @@
 import { join } from "node:path";
+import { InMemorySpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { describe, expect, it } from "vitest";
+import { reportLooks } from "../looks/report.js";
 import { type LookRun, lookStandingFor, readLookStanding } from "./standing.js";
 import { parseMarkedSpan } from "./telemetry.js";
 
@@ -104,5 +107,62 @@ describe("parseMarkedSpan — a look check's span names its look", () => {
 		);
 		expect(look?.look).toEqual({ app: "demo", screen: "home", state: "empty", device: "phone" });
 		expect(parseMarkedSpan(span([]), "svc")?.look).toBeUndefined();
+	});
+});
+
+describe("a story's check run is told from a screen's", () => {
+	const verdict = { state: "held" as const, findings: [] };
+	const spanTags = async (kind?: "story") => {
+		const exporter = new InMemorySpanExporter();
+		const provider = new NodeTracerProvider({
+			spanProcessors: [new SimpleSpanProcessor(exporter)],
+		});
+		reportLooks(
+			[
+				{
+					app: "demo",
+					screen: "home",
+					state: "empty",
+					device: "phone",
+					verdict,
+					...(kind ? { kind } : {}),
+				},
+			],
+			provider.getTracer("a41"),
+		);
+		const attributes = exporter.getFinishedSpans()[0]?.attributes ?? {};
+		return Object.entries(attributes).map(([key, value]) => ({ key, value }));
+	};
+
+	// A41
+	it("A41 a story's span carries indusk.look.kind = story, the run read back keeps it, and a held story run never stands for a broken screen's", async () => {
+		const storyTags = await spanTags("story");
+		const screenTags = await spanTags();
+		const marked = (tags: { key: string; value: unknown }[]) =>
+			parseMarkedSpan(
+				{
+					traceID: "t",
+					spanID: "s",
+					operationName: "indusk.looks.check",
+					startTime: 1_000_000,
+					duration: 0,
+					processID: "p1",
+					tags,
+				},
+				"svc",
+			);
+		expect(storyTags.find((t) => t.key === "indusk.look.kind")?.value).toBe("story");
+		expect(screenTags.some((t) => t.key === "indusk.look.kind")).toBe(false);
+		expect(marked(storyTags)?.look).toMatchObject({ kind: "story" });
+		expect(marked(screenTags)?.look?.kind).toBeUndefined();
+
+		// The screen `home.empty @ phone` broke; a later held run of the story `home.empty @ phone` exists.
+		const { rows } = await readLookStanding(FIXTURE, {
+			runs: [
+				run("empty", "phone", "violated", "2026-10-11T00:00:00.000Z"),
+				{ ...run("empty", "phone", "upheld", "2026-10-11T06:00:00.000Z"), kind: "story" },
+			],
+		});
+		expect(find(rows, "home.empty", "phone")?.standing).toBe("broken");
 	});
 });

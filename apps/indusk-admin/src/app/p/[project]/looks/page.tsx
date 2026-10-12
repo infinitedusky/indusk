@@ -1,22 +1,28 @@
 import {
-  looksCheckouts,
+  countedCheckouts,
   readLooks,
   resolveLooksCheckout,
 } from "@infinitedusky/indusk-mcp/looks/overview";
+import { showOf } from "@/components/looks/address";
 import { LooksBody, type OpenMockup } from "@/components/looks/Looks";
+import type { OpenStory } from "@/components/looks/Stories";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
 interface LooksRouteProps {
   params: Promise<{ project: string }>;
   /**
-   * `?app=<app>&mockup=<name>&device=<device>` — the mockup open in its frame;
+   * `?app=<app>&mockup=<name>&device=<device>` — the mockup open in its frame,
+   * or `?app=<app>&story=<name>&device=<device>` — the story;
    * `checkout=<plan>` — the plan worktree read, the project's own when absent.
    */
   searchParams?: Promise<{
     app?: string;
     mockup?: string;
+    story?: string;
     device?: string;
+    view?: string;
+    show?: string;
     checkout?: string;
   }>;
 }
@@ -50,6 +56,14 @@ export default async function PerProjectLooksPage({
     query.app && query.mockup && query.device
       ? { app: query.app, mockup: query.mockup, device: query.device }
       : null;
+  const openStory: OpenStory | null =
+    query.app && query.story
+      ? {
+          app: query.app,
+          story: query.story,
+          device: query.device ?? null,
+        }
+      : null;
   const checkout = await resolveLooksCheckout(projectPath, query.checkout);
   if ("problem" in checkout) {
     return (
@@ -64,8 +78,11 @@ export default async function PerProjectLooksPage({
       apps={await readLooks(checkout.root)}
       path={`/p/${project}/looks`}
       open={open}
+      openStory={openStory}
+      view={query.view === "cascade" ? "cascade" : "list"}
+      show={showOf(query.show)}
       checkout={checkout.plan}
-      checkouts={await looksCheckouts(projectPath)}
+      checkouts={await countedCheckouts(projectPath)}
     />
   );
 }

@@ -116,6 +116,7 @@
 	--font-weight-semibold: 600;
 	--font-weight-bold: 700;
 	--shadow-card: 0px 1px 2px 0px rgb(9.4% 12.5% 16.9% / 0.06), 0px 6px 20px 0px rgb(9.4% 12.5% 16.9% / 0.06);
+	--shadow-ring: 0px 0px 0px 4px rgb(98.4% 93.3% 87.8%);
 	--duration-fast: 150ms;
 	--duration-base: 200ms;
 	--duration-pulse: 1200ms;
@@ -145,6 +146,7 @@
 		--color-idle: #8792a3;
 		--color-idle-wash: #232a35;
 		--shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+		--shadow-ring: 0 0 0 4px #3a2614;
 	}
 }
 :root[data-theme="dark"] {
@@ -166,4 +168,5 @@
 	--color-idle: #8792a3;
 	--color-idle-wash: #232a35;
 	--shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+	--shadow-ring: 0 0 0 4px #3a2614;
 }

@@ -7,7 +7,7 @@ import type {
 } from "@infinitedusky/indusk-mcp/promises/registry";
 import type { LookRow } from "@infinitedusky/indusk-mcp/promises/standing";
 import Link from "next/link";
-import { STANDING_STYLE } from "@/components/bars/labels";
+import { STANDING_BADGE } from "@/components/bars/labels";
 import { IncidentsTable } from "@/components/IncidentsTable";
 import { LooksOnDashboard } from "@/components/looks/LooksOnDashboard";
 import { SourceBanner, type SourceObserved } from "@/components/PromiseHealth";
@@ -17,6 +17,8 @@ import {
   TimelineEmpty,
 } from "@/components/PromiseTimeline";
 import { Button } from "@/components/ui/Button";
+import { PromiseRow } from "@/components/ui/PromiseRow";
+import { SummaryBar, type SummaryCounts } from "@/components/ui/SummaryBar";
 import {
   type DashboardQuery,
   type DashboardRow,
@@ -24,8 +26,6 @@ import {
   GROUPINGS,
   groupRows,
   SORTINGS,
-  STANDING_LABELS,
-  standingCounts,
 } from "@/lib/promise-dashboard";
 import { stamp } from "@/lib/stamp";
 import type { Strip, TimelineView } from "@/lib/timeline-strip";
@@ -132,7 +132,6 @@ export function PromisesDashboard({
 }: PromisesDashboardProps) {
   const shown = filterRows(rows, query.q);
   const groups = groupRows(shown, query, pathOrder);
-  const counts = standingCounts(rows);
   const hrefWith = (change: Partial<DashboardQuery>) => {
     const next = { ...query, ...change };
     const params = new URLSearchParams();
@@ -148,33 +147,7 @@ export function PromisesDashboard({
     <section className="flex flex-col gap-4" data-testid="promises">
       <header className="flex flex-col gap-2">
         <h1 className="text-xl font-semibold text-ink">Promises</h1>
-        <div
-          className="flex h-3 w-full overflow-hidden rounded-md bg-idle-wash"
-          data-testid="standing-bar"
-          role="img"
-          aria-label={counts
-            .map((c) => `${c.count} ${STANDING_LABELS[c.standing]}`)
-            .join(", ")}
-        >
-          {counts.map((c) => (
-            <span
-              key={c.standing}
-              data-standing={c.standing}
-              className={STANDING_STYLE[c.standing].bar}
-              style={{ flex: c.count }}
-            />
-          ))}
-        </div>
-        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-soft">
-          {counts.map((c) => (
-            <li key={c.standing} data-testid="standing-count">
-              <span
-                className={`mr-1 inline-block h-2 w-2 rounded-pill ${STANDING_STYLE[c.standing].bar}`}
-              />
-              {c.count} {STANDING_LABELS[c.standing].toLowerCase()}
-            </li>
-          ))}
-        </ul>
+        <SummaryBar counts={summaryCounts(rows)} note={summaryNote(rows)} />
       </header>
 
       <LooksOnDashboard looks={looks} href={looksHref} />
@@ -216,7 +189,18 @@ export function PromisesDashboard({
         <SourceBanner key={o.name} observed={o} />
       ))}
 
-      {groups.length === 0 && (
+      {rows.length === 0 && (
+        <PromiseRow
+          empty="No promises yet. Declare one in a plan's brief and it is listed here."
+          standing="declared"
+          says=""
+          slug=""
+          pips={[]}
+          evals=""
+          last=""
+        />
+      )}
+      {rows.length > 0 && groups.length === 0 && (
         <p className="text-sm text-ink-soft" data-testid="promises-none">
           No promise matches “{query.q}”.
         </p>
@@ -243,16 +227,22 @@ export function PromisesDashboard({
               {g.rows.length}
             </span>
           </h2>
-          <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
+          <div className="overflow-hidden rounded-xl border border-line bg-surface">
+            <div className="cols-promise-row grid items-center gap-4 border-b border-line bg-ground px-4 py-2 text-2xs font-semibold uppercase leading-1 tracking-caps text-ink-faint max-[759px]:hidden">
+              <span />
+              <span>Promise</span>
+              <span>Tests</span>
+              <span>Evals · 30 days</span>
+              <span className="text-right">Activity</span>
+            </div>
             {g.rows.map((r) => (
               <DashboardRowItem
                 key={r.name}
                 row={r}
-                planHrefPrefix={planHrefPrefix}
                 promiseHrefPrefix={promiseHrefPrefix}
               />
             ))}
-          </ul>
+          </div>
         </section>
       ))}
 
@@ -326,60 +316,63 @@ function ControlLinks<K extends string>({
   );
 }
 
-/** One promise, shown as its standing, its sentence in words, its name and plan, its tests, thirty days, last activity. */
+/** The bar's four segments from the dashboard's counts; the retired are not on it. */
+function summaryCounts(rows: DashboardRow[]): SummaryCounts {
+  const of = (standing: DashboardRow["standing"]) =>
+    rows.filter((r) => r.standing === standing).length;
+  return {
+    broken: of("broken"),
+    proving: of("being-proven"),
+    declared: of("declared"),
+    enforced: of("enforced"),
+  };
+}
+
+function summaryNote(rows: DashboardRow[]): string {
+  const retired = rows.filter((r) => r.standing === "retired").length;
+  const plans = new Set(rows.map((r) => r.plan)).size;
+  const total = `${rows.length} promises across ${plans} plans`;
+  return retired > 0 ? `${total} · ${retired} retired` : total;
+}
+
+/** One promise, drawn as a `PromiseRow` linking to its page: its standing, its sentence, its name and plan, a pip per test, thirty days, last activity. */
 function DashboardRowItem({
   row,
-  planHrefPrefix,
   promiseHrefPrefix,
 }: {
   row: DashboardRow;
-  planHrefPrefix: string;
   promiseHrefPrefix: string;
 }) {
   return (
-    <li
-      className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-3 py-2"
+    <div
       data-testid="promise-row"
       data-promise={row.name}
-      data-standing={row.standing}
       id={`promise-${row.name}`}
+      className="border-t border-line first:border-t-0"
     >
-      <span
-        className={`inline-flex shrink-0 items-center rounded-pill border px-2 py-hair text-xs font-medium ${STANDING_STYLE[row.standing].chip}`}
-      >
-        {STANDING_LABELS[row.standing].toLowerCase()}
-      </span>
-      <span className="flex min-w-0 flex-1 basis-rail flex-col">
-        <Link
-          href={`${promiseHrefPrefix}${row.name}`}
-          data-testid="promise-link"
-          className="text-sm font-medium text-ink hover:underline"
-        >
-          {row.sentence}
-        </Link>
-        <span className="flex flex-wrap gap-x-2 text-xs text-ink-faint">
-          <code>{row.name}</code>
-          <Link
-            href={`${planHrefPrefix}${row.plan}`}
-            className="hover:underline"
-          >
-            {row.planTitle}
-          </Link>
-        </span>
-      </span>
-      <span className="text-xs text-ink-soft" data-testid="promise-tests">
-        {row.tests.total === 0
-          ? "no tests"
-          : `${row.tests.passing}/${row.tests.total} tests passing`}
-      </span>
-      <span className="text-xs text-ink-soft" data-testid="promise-thirty">
-        {row.held === null
-          ? "not seen yet"
-          : `held ${row.held} · broke ${row.broke} of 30 days`}
-      </span>
-      <span className="text-xs text-ink-faint" data-testid="promise-activity">
-        {row.lastActivity ? `seen ${stamp(row.lastActivity)}` : "never seen"}
-      </span>
-    </li>
+      <PromiseRow
+        href={`${promiseHrefPrefix}${row.name}`}
+        standing={STANDING_BADGE[row.standing]}
+        says={row.sentence}
+        slug={
+          <>
+            {row.name} · {row.planTitle}
+          </>
+        }
+        pips={Array.from({ length: row.tests.total }, (_, i) =>
+          i < row.tests.passing ? "passing" : "planned",
+        )}
+        evals={
+          <span data-testid="promise-thirty">
+            {row.held === null
+              ? "not seen yet"
+              : `held ${row.held} · broke ${row.broke} of 30 days`}
+          </span>
+        }
+        last={
+          row.lastActivity ? `seen ${stamp(row.lastActivity)}` : "never seen"
+        }
+      />
+    </div>
   );
 }

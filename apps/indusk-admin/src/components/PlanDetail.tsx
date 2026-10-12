@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { PlanBar } from "@/components/bars/PlanBar";
 import {
   activePhaseLabel,
@@ -41,6 +42,11 @@ interface PlanDetailProps {
   holding?: number;
   /** Title, dates, Path and promise chips for the header (plan-cockpit). */
   header?: PlanHeaderFacts;
+  /**
+   * What the page has to say or ask — the decision, the session, the build
+   * controls — drawn beside the workflows' rail, as the plan mockups place it.
+   */
+  stage?: ReactNode;
 }
 
 /**
@@ -63,6 +69,7 @@ export function PlanDetail({
   planHrefPrefix = "/plan/",
   holding = 0,
   header,
+  stage,
 }: PlanDetailProps) {
   const isParent = subplans !== undefined && subplans.length > 0;
   // A plan with no documents at all (a parent whose declarations are missing
@@ -122,7 +129,21 @@ export function PlanDetail({
         />
       )}
 
-      {!isParent && <PlanWorkflows plan={plan} />}
+      {stage === undefined ? (
+        !isParent && <PlanWorkflows plan={plan} />
+      ) : (
+        <div
+          className={
+            isParent
+              ? "flex flex-col gap-4"
+              : "cols-plan-stage grid items-start gap-5"
+          }
+          data-testid="plan-stage"
+        >
+          {!isParent && <PlanWorkflows plan={plan} />}
+          <div className="flex min-w-0 flex-col gap-4">{stage}</div>
+        </div>
+      )}
 
       <details className="flex flex-col gap-6" data-testid="plan-details">
         <summary className="cursor-pointer text-sm font-semibold text-ink">

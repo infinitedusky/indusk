@@ -158,3 +158,59 @@ Each entry is a rule and a pointer; the pointer holds the story.
   refused while it runs, and an answer delivered but not recorded is reported
   sent, never failed. Guarded by `src/lib/build-host.release.test.ts` and
   `src/lib/decisions.test.ts`. — see `/decisions/plan-cockpit`
+- **Storybook is `@storybook/nextjs-vite`; its story tests are the system
+  tier's**: the `storybook` vitest project is named in `SYSTEM_PROJECTS`
+  (`vitest.tiers.ts`) and defined by `vitest.config.ts` only for a run the
+  system config started, so `pnpm test` never renders a story; `next` stays at
+  16.2.x until storybookjs#36720. `build:storybook` writes the git-ignored
+  `public/storybook/`, which the admin serves at `/storybook/index.html`.
+  Guarded by `everyday-tests-never-wait.test.ts` (A21). — see
+  `/decisions/storybook-components`
+- **A component is one file whose root carries `data-component`; a screen
+  never carries a component's marker**: a name marked in two files, or a
+  screen writing a component's element out beside its own file, is refused by
+  `indusk looks lint admin` (`duplicate component`, `component markup outside
+  its file`). Read `.indusk/mockups/admin/components.json` — each component's
+  file, properties and states, written by `indusk looks stories admin` — before
+  writing one; a marked component with no story is listed in `screens.json`
+  `uncatalogued` until it has, and the list only shrinks. Guarded by
+  `looks-components-cli.test.ts` (A1, A3, A14) and `component-reuse-audit.test.ts`.
+  — see `/decisions/storybook-components`
+- **A component a mockup names is one file, with a story per state, and
+  presentational**: its root carries `data-component="<name>"`, a second
+  marker anywhere is a finding, data arrives as props. Nineteen in
+  `components/ui/`, listed in `/reference/admin-ui/component-conventions`.
+  Guarded by `looks-components-cli.test.ts` (A1, A3) and
+  `looks-admin-components.test.ts` (A2).
+- **Stories are shown from the served `/storybook`, never from a Storybook dev
+  server, and approved by their snapshot hash**: the Looks page frames
+  `/storybook/iframe.html?id=<id>` (the id is in `components.json`) at the
+  component's own size, a device chosen only on request, in a list-and-stage
+  view or a cascade; a story's Approve sends the snapshot hash it showed and a mockup's
+  its `componentsHash`, through the one approve route. Guarded by
+  `looks-components.contract.test.ts` (A18) and `looks-components.test.tsx`.
+  — see `/decisions/storybook-components`
+- **A new admin screen's mockup composes existing components and declares
+  any new one; a composed component must draw as its story does**: a mockup
+  places a component by `<indusk-component name state>` and draws none of its
+  markup (`component drawn in mockup`), declares a new one and gets a story, and
+  changing a component's markup or style reopens every mockup that uses it.
+  A component's styles are generated per component into
+  `.indusk/mockups/admin/components/<name>.css` and are **unlayered** — a
+  mockup's own page styles are, and an unlayered rule beats a layered one — so
+  never hand-edit one and never rewrite the generator to layer. A person's
+  Unapprove takes an approval back; an agent's is refused. Guarded by
+  `looks-components-cli.test.ts` (A8, A9, A25–A28) and
+  `composition.contract.test.ts` (A30, which compares a composed component with
+  its story and cannot see a defect inside the component). — see
+  `/guide/components`
+- **A page composes components and passes them data as props; it renders no
+  component's markup itself**: the nav is `Shell` and `Nav` with `PlanRow` and
+  `ViewLink` (a row or link given an `href` is drawn as a link, so the page
+  hands it where to go), the dashboard `SummaryBar` and `PromiseRow`, the Looks
+  list `LookRow` with `DeviceChoice` and `DeviceFrame` at the stage. A piece a
+  test must find (`data-testid`) goes in a wrapper or in a slot the component
+  takes (`stage`, `count`, `evals`, `toggleProps`, `optionProps`), never into
+  the component's markup, which would reopen every mockup that uses it. Guarded
+  by `looks-components-cli.test.ts` (A3) through `component-reuse-audit.test.ts`.
+  — see `/reference/admin-ui/overview`

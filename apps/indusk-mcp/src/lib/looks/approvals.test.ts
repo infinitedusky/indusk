@@ -2,7 +2,8 @@ import { cpSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
-import { approvalOf, approve, readApprovals } from "./approvals.js";
+import { approvalOf, readApprovals } from "./approvals.js";
+import { approve, withdraw } from "./approve.js";
 import { LooksAppError, readApp } from "./mockups.js";
 
 /**
@@ -11,6 +12,8 @@ import { LooksAppError, readApp } from "./mockups.js";
  * the admin in Build Phase 4); A30 (an approval binds the mockup shown) and
  * A35 (it binds the declarations the check trusts).
  * promise: every-part-of-the-ui-is-covered — A35.
+ * promise: a-mockup-is-approved-by-a-person — storybook-components A38 (the
+ * record and its reading apart from the write side the admin's routes call).
  *
  * The fixture app is copied into a main checkout with a plan worktree beside
  * it, so `approve` is seen writing and committing in the checkout it is
@@ -181,5 +184,218 @@ describe("approve — the cockpit's writer", () => {
 			approved: false,
 		});
 		expect(await approve(f.main, "demo", "home.full", " ")).toMatchObject({ approved: false });
+	});
+});
+
+/**
+ * promise: a-changed-component-reopens-its-mockups — storybook-components A12.
+ * promise: a-mockup-is-approved-by-a-person — a story is approved like a mockup.
+ *
+ * The components fixture: `home.default` composes `badge.ok` and
+ * `card.default`, each approved; its `badge.ok` snapshot is re-rendered (a
+ * changed component), which reopens the story and the mockup. The cockpit's
+ * Approve then sends what the page showed: the story's snapshot hash, and the
+ * mockup's composed hash and `componentsHash`.
+ *
+ * promise: a-mockup-is-approved-by-a-person — storybook-components A34 (a
+ * mockup composing components is approved only with the `componentsHash` shown).
+ */
+describe("approve — a mockup reopened by a changed component", () => {
+	const COMPONENTS = join(__dirname, "..", "..", "__tests__", "fixtures", "components-app");
+	let g: Fixture;
+	beforeEach(() => {
+		g = makeFixture();
+		cpSync(COMPONENTS, g.main, { recursive: true });
+		const snapshot = join(g.main, ".indusk/mockups/demo/components/badge.ok.html");
+		writeFileSync(
+			snapshot,
+			readFileSync(snapshot, "utf-8").replace("var(--space-2)", "var(--space-3)"),
+		);
+		g.git(g.main, "add", "-A");
+		g.git(g.main, "commit", "-qm", "the components fixture, badge.ok re-rendered");
+	});
+	afterEach(() => g.cleanup());
+
+	const read = async () => {
+		const app = await readApp(g.main, "demo");
+		const home = app.mockups.find((m) => m.name === "home.default");
+		const story = app.stories.find((s) => s.name === "badge.ok");
+		if (!home || !story) throw new Error("fixture lacks home.default or badge.ok");
+		return { app, home, story };
+	};
+
+	// A12
+	it("A12 approving the reopened mockup again, with the new componentsHash, makes it read approved", async () => {
+		const before = await read();
+		expect(approvalOf(before.app, before.home, readApprovals(before.app)).state).toBe("proposed");
+
+		const story = await approve(g.main, "demo", "badge.ok", "sandy", {
+			kind: "story",
+			snapshotHash: before.story.hash,
+			stylesheetHash: before.story.stylesheetHash ?? undefined,
+			foundationHash: before.app.foundation.hash,
+		});
+		expect(story).toMatchObject({ approved: true });
+		const mockup = await approve(g.main, "demo", "home.default", "sandy", {
+			mockupHash: before.home.hash,
+			componentsHash: before.home.componentsHash,
+			foundationHash: before.app.foundation.hash,
+		});
+		expect(mockup).toMatchObject({ approved: true });
+
+		const after = await read();
+		const approval = approvalOf(after.app, after.home, readApprovals(after.app));
+		expect(approval.state).toBe("approved");
+		expect(approval.state === "approved" && approval.entry.componentsHash).toBe(
+			after.home.componentsHash,
+		);
+	});
+
+	it("refuses the mockup while a component it composes has no approved story, naming it, and writes nothing", async () => {
+		const record = join(g.main, ".indusk/mockups/demo/approved.json");
+		const held = readFileSync(record, "utf-8");
+		const { app, home } = await read();
+		const r = await approve(g.main, "demo", "home.default", "sandy", {
+			mockupHash: home.hash,
+			componentsHash: home.componentsHash,
+			foundationHash: app.foundation.hash,
+		});
+		expect(r).toMatchObject({ approved: false, reason: expect.stringContaining("badge.ok") });
+		expect(readFileSync(record, "utf-8")).toBe(held);
+	});
+
+	it("refuses a componentsHash other than the one the checkout composes, and a story sent without its snapshot hash", async () => {
+		const { app, home, story } = await read();
+		await approve(g.main, "demo", "badge.ok", "sandy", {
+			kind: "story",
+			snapshotHash: story.hash,
+			stylesheetHash: story.stylesheetHash ?? undefined,
+			foundationHash: app.foundation.hash,
+		});
+		const stale = await approve(g.main, "demo", "home.default", "sandy", {
+			mockupHash: home.hash,
+			componentsHash: "c".repeat(64),
+			foundationHash: app.foundation.hash,
+		});
+		expect(stale).toMatchObject({ approved: false, reason: expect.stringContaining("cccccccc") });
+		const unseen = await approve(g.main, "demo", "badge.broken", "sandy", {
+			kind: "story",
+		} as never);
+		expect(unseen).toMatchObject({ approved: false });
+	});
+});
+
+/**
+ * promise: a-mockup-is-approved-by-a-person — storybook-components A34.
+ *
+ * A component's stylesheet is inlined into the composed mockup's document but
+ * is not part of `mockupHash`; only `componentsHash` holds it. An Approve that
+ * sends the mockup's hash and not its `componentsHash` would bind a stylesheet
+ * the person may never have seen.
+ */
+describe("approve — a composed mockup needs the componentsHash it was shown at", () => {
+	const COMPONENTS = join(__dirname, "..", "..", "__tests__", "fixtures", "components-app");
+	const RECORD_FILE = ".indusk/mockups/demo/approved.json";
+	let g: Fixture;
+	beforeEach(() => {
+		g = makeFixture();
+		cpSync(COMPONENTS, g.main, { recursive: true });
+		g.git(g.main, "add", "-A");
+		g.git(g.main, "commit", "-qm", "the components fixture");
+	});
+	afterEach(() => g.cleanup());
+
+	// A34
+	it("A34 a mockup that composes components, sent with its mockupHash and without its componentsHash, is refused and writes nothing; one that composes none approves on mockupHash alone", async () => {
+		const app = await readApp(g.main, "demo");
+		const home = app.mockups.find((m) => m.name === "home.default");
+		const empty = app.mockups.find((m) => m.name === "home.empty");
+		if (!home || !empty) throw new Error("fixture lacks home.default or home.empty");
+		const foundationHash = app.foundation.hash;
+		// Taken back first, so an Approve would have something to write.
+		const taken = await withdraw(g.main, "demo", "home.default", "sandy", "mockup", {
+			foundationHash,
+			mockupHash: home.hash,
+			componentsHash: home.componentsHash,
+		});
+		expect(taken).toMatchObject({ withdrawn: true });
+		const before = readFileSync(join(g.main, RECORD_FILE), "utf-8");
+
+		const r = await approve(g.main, "demo", "home.default", "sandy", {
+			foundationHash,
+			mockupHash: home.hash,
+		});
+		expect(r).toMatchObject({
+			approved: false,
+			reason: expect.stringContaining("componentsHash"),
+		});
+		expect(readFileSync(join(g.main, RECORD_FILE), "utf-8")).toBe(before);
+
+		expect(
+			await approve(g.main, "demo", "home.default", "sandy", {
+				foundationHash,
+				mockupHash: home.hash,
+				componentsHash: home.componentsHash,
+			}),
+		).toMatchObject({ approved: true });
+
+		expect(empty.uses).toEqual([]);
+		expect(
+			await approve(g.main, "demo", "home.empty", "sandy", {
+				foundationHash,
+				mockupHash: empty.hash,
+			}),
+		).toMatchObject({ approved: true });
+	});
+});
+
+describe("the record and its reading are one subpath, the write side another", () => {
+	// A38
+	it("A38 ./looks/approvals exports no write; ./looks/approve exports approve, withdraw, approver and componentsHashesMissing; the admin's routes import the write side from it only", async () => {
+		const pkg = JSON.parse(
+			readFileSync(join(__dirname, "..", "..", "..", "package.json"), "utf-8"),
+		) as {
+			exports: Record<string, unknown>;
+		};
+		expect(Object.keys(pkg.exports), "the write side has its own subpath").toContain(
+			"./looks/approve",
+		);
+
+		const reading = Object.keys(await import("./approvals.js"));
+		for (const name of ["approve", "withdraw", "approver"]) {
+			expect(reading, `${name} is the write side`).not.toContain(name);
+		}
+		expect(reading).toEqual(expect.arrayContaining(["readApprovals", "approvalOf", "standingOf"]));
+
+		const writePath = "./approve.js";
+		const writing = Object.keys(
+			await import(/* @vite-ignore */ writePath).catch(() => ({}) as Record<string, unknown>),
+		);
+		expect(writing).toEqual(
+			expect.arrayContaining(["approve", "withdraw", "approver", "componentsHashesMissing"]),
+		);
+
+		const routes = join(
+			__dirname,
+			"..",
+			"..",
+			"..",
+			"..",
+			"indusk-admin",
+			"src",
+			"app",
+			"api",
+			"looks",
+			"[app]",
+		);
+		for (const route of ["approve", "unapprove"]) {
+			const source = readFileSync(join(routes, route, "route.ts"), "utf-8");
+			expect(source, `${route} route imports its write from ./looks/approve`).toMatch(
+				/from "@infinitedusky\/indusk-mcp\/looks\/approve";/,
+			);
+			expect(source, `${route} route takes nothing written from ./looks/approvals`).not.toMatch(
+				/\/looks\/approvals"/,
+			);
+		}
 	});
 });

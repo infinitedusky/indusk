@@ -1,0 +1,41 @@
+{
+	"approvals": [
+		{
+			"kind": "story",
+			"story": "badge.ok",
+			"snapshotHash": "e391c44c24406491e1d892aba7ad417d2a0c2f6307740aefd3f1c3028140808a",
+			"stylesheetHash": "097df5545e6df94c3b6ccc01246e789a2b83fbd5eaeeb89f15deea690041d252",
+			"foundationHash": "7adb7cf55471634a32c6056281030942060b72cae9bda8acc59168bb5307daa9",
+			"declarationsHash": "18e6e58b7608c7130ad16918b5b0c4cead4c77ffa52466a4f93b3fa2ac28683e",
+			"by": "sandy",
+			"at": "2026-10-12T09:00:00.000Z"
+		},
+		{
+			"kind": "story",
+			"story": "card.default",
+			"snapshotHash": "0a958b3cde2c2152d47b5976c58259f3e42e1f85563bf64dda810d8016909b14",
+			"foundationHash": "7adb7cf55471634a32c6056281030942060b72cae9bda8acc59168bb5307daa9",
+			"declarationsHash": "18e6e58b7608c7130ad16918b5b0c4cead4c77ffa52466a4f93b3fa2ac28683e",
+			"by": "sandy",
+			"at": "2026-10-12T09:00:00.000Z"
+		},
+		{
+			"mockup": "home.default",
+			"mockupHash": "8161182157214cc411ebe8953d4f01f3a7324e941e0179cb3aaa614501f405ab",
+			"componentsHash": "14a8ba11a3125c5637899dc26cf85156f3b6b6f3996b5c0dd34849075ee1cbf2",
+			"foundationHash": "7adb7cf55471634a32c6056281030942060b72cae9bda8acc59168bb5307daa9",
+			"declarationsHash": "18e6e58b7608c7130ad16918b5b0c4cead4c77ffa52466a4f93b3fa2ac28683e",
+			"by": "sandy",
+			"at": "2026-10-12T09:00:00.000Z"
+		},
+		{
+			"mockup": "detail.default",
+			"mockupHash": "7394c1553b17ecb16bb148efeffbbed6f88253acc779c6ca72a91e7eba66619a",
+			"componentsHash": "4092dc303c5a237d8119501365d37504895b7a814ee0c655f15d0c699dd802f1",
+			"foundationHash": "7adb7cf55471634a32c6056281030942060b72cae9bda8acc59168bb5307daa9",
+			"declarationsHash": "18e6e58b7608c7130ad16918b5b0c4cead4c77ffa52466a4f93b3fa2ac28683e",
+			"by": "sandy",
+			"at": "2026-10-12T09:00:00.000Z"
+		}
+	]
+}

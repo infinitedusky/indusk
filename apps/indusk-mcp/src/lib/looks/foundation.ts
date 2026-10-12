@@ -1,8 +1,8 @@
-import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import StyleDictionary from "style-dictionary";
 import type { DesignTokens } from "style-dictionary/types";
+import { sha256 } from "./mockups.js";
 
 /**
  * The foundation: one DTCG file every visual value in an app comes from
@@ -141,7 +141,7 @@ export async function readFoundation(appDir: string): Promise<Foundation> {
 			...(isNode(dark) && typeof dark.dark === "string" ? { dark: dark.dark } : {}),
 		};
 	});
-	return { tokens, hash: createHash("sha256").update(bytes).digest("hex") };
+	return { tokens, hash: sha256(bytes) };
 }
 
 /** Tailwind namespaces a foundation group lands in, and every namespace the theme resets. */

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readApprovals } from "./approvals.js";
+import { readApprovals, readStoryApprovals } from "./approvals.js";
 import * as check from "./check.js";
 import { checkable, pageUrl } from "./check.js";
 import { readApp } from "./mockups.js";
@@ -81,5 +81,98 @@ describe("A36 — a state the page did not say it rendered is unchecked, never h
 			result?: { verdict: { state: string } };
 		};
 		expect(out?.result?.verdict.state).toBe("held");
+	});
+});
+
+/**
+ * storybook-components Build Phase 4 — promise: tokens-are-held-exactly. The
+ * value check reaches stories: which stories are opened and where, judged from
+ * values with no browser (A19's contract opens them in Chromium).
+ */
+describe("checkableStories — the stories the app is held to", () => {
+	const COMPONENTS = join(__dirname, "..", "..", "__tests__", "fixtures", "components-app");
+
+	/** A copy of the components fixture whose catalog gives `badge.ok` a Storybook id. */
+	async function withIds(): Promise<string> {
+		const { cpSync, mkdtempSync, readFileSync, writeFileSync } = await import("node:fs");
+		const { tmpdir } = await import("node:os");
+		const root = mkdtempSync(join(tmpdir(), "looks-stories-check-"));
+		cpSync(COMPONENTS, root, { recursive: true });
+		const file = join(root, ".indusk/mockups/demo/components.json");
+		const catalog = JSON.parse(readFileSync(file, "utf-8"));
+		catalog.components[0].states[0].id = "components-badge--ok";
+		writeFileSync(file, JSON.stringify(catalog, null, "\t"));
+		return root;
+	}
+
+	it("opens an approved story that has a Storybook id; a proposed one is unchecked, never approved", async () => {
+		const root = await withIds();
+		const app = await readApp(root, "demo");
+		const { checked, unchecked } = check.checkableStories(app, readStoryApprovals(app));
+		expect(checked).toEqual([
+			{ name: "badge.ok", component: "badge", state: "ok", id: "components-badge--ok" },
+		]);
+		expect(unchecked).toContainEqual({
+			mockup: "story badge.broken",
+			reason: "proposed, never approved",
+		});
+	});
+
+	it("names an approved story the catalog gives no id", async () => {
+		const app = await readApp(COMPONENTS, "demo");
+		const { checked, unchecked } = check.checkableStories(app, readStoryApprovals(app));
+		expect(checked).toEqual([]);
+		expect(unchecked.find((u) => u.mockup === "story badge.ok")?.reason).toMatch(
+			/no Storybook id in the catalog/,
+		);
+	});
+});
+
+describe("storyUrl and judgeStory", () => {
+	it("serves a story from the app's /storybook with the scheme as the theme global", () => {
+		expect(check.storyUrl("http://localhost:3939/", "components-badge--ok", "dark")).toBe(
+			"http://localhost:3939/storybook/iframe.html?id=components-badge--ok&viewMode=story&globals=theme%3Adark",
+		);
+	});
+
+	const story = { name: "badge.ok", component: "badge", state: "ok", id: "components-badge--ok" };
+	const input = {
+		app: "demo",
+		story,
+		device: "phone",
+		scheme: "light" as const,
+		approved: { "--color-dusk": "#c2620b" },
+	};
+
+	it("judges a story by value with no state to report, marked as a story", () => {
+		const out = check.judgeStory({
+			...input,
+			seen: { runtime: { "--color-dusk": "#c2620b" }, elements: [], states: [], scheme: "light" },
+		}) as { result: { kind: string; screen: string; verdict: { state: string } } };
+		expect(out.result).toMatchObject({
+			kind: "story",
+			screen: "badge",
+			verdict: { state: "held" },
+		});
+	});
+
+	it("is broken when a token is not the approved value, and unchecked when the scheme was not drawn", () => {
+		const broken = check.judgeStory({
+			...input,
+			seen: { runtime: { "--color-dusk": "#000000" }, elements: [], states: [], scheme: "light" },
+		}) as { result: { verdict: { state: string } } };
+		expect(broken.result.verdict.state).toBe("broken");
+		const dark = check.judgeStory({
+			...input,
+			scheme: "dark",
+			seen: { runtime: {}, elements: [], states: [], scheme: "light" },
+		});
+		expect(dark).toEqual({
+			unchecked: {
+				mockup: "story badge.ok",
+				device: "phone",
+				reason: "the page did not render the dark scheme",
+			},
+		});
 	});
 });

@@ -1,0 +1,940 @@
+{
+	"components": [
+		{
+			"name": "badge",
+			"file": "apps/indusk-admin/src/components/ui/PlanBadge.tsx",
+			"properties": [
+				{
+					"name": "state",
+					"type": "\"needs\" | \"working\" | \"released\"",
+					"required": true,
+					"description": "What the plan is doing: waiting on a person, being built, shipped."
+				},
+				{
+					"name": "children",
+					"type": "string",
+					"required": true,
+					"description": "The plan's initials, two letters."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "needs",
+					"id": "ui-planbadge--needs",
+					"snapshotHash": "000b8417a8f6667e8af84ea26bd27c99e60518d80de0bfb4dc50870101a6c975"
+				},
+				{
+					"name": "working",
+					"id": "ui-planbadge--working",
+					"snapshotHash": "d48c2d2c7d6eafed8de8089196913e1d683a4344c0eb5b601c6d911aa124841a"
+				},
+				{
+					"name": "released",
+					"id": "ui-planbadge--released",
+					"snapshotHash": "070b75990ca2eea91ac042324db4768e897a93f4d6af7d36b9653e69a8630010"
+				}
+			],
+			"stylesheet": "components/badge.css",
+			"stylesheetHash": "6b8d07724dd190d27712e23ef8639fbc1832dedc32204167976bea148bf65797"
+		},
+		{
+			"name": "box",
+			"file": "apps/indusk-admin/src/components/ui/Box.tsx",
+			"properties": [
+				{
+					"name": "title",
+					"type": "string",
+					"required": false,
+					"description": "The box's heading."
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": true
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-box--default",
+					"snapshotHash": "7402034edd33d3fd922a411764e777346806db20f31f6cd3bc4657f2e925cf2f"
+				}
+			],
+			"stylesheet": "components/box.css",
+			"stylesheetHash": "eb9661970939a51d17e5182027d0f7772b41a60fe6328136669d8e50a78b4c57"
+		},
+		{
+			"name": "button",
+			"file": "apps/indusk-admin/src/components/ui/Button.tsx",
+			"properties": [
+				{
+					"name": "variant",
+					"type": "\"primary\" | \"secondary\" | \"ghost\"",
+					"required": false,
+					"defaultValue": "\"primary\""
+				},
+				{
+					"name": "size",
+					"type": "\"sm\" | \"md\"",
+					"required": false,
+					"defaultValue": "\"md\""
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-button--default",
+					"snapshotHash": "4fb0490dac0c491cea25740d4528959882900996236d41062a93c4684222eec2"
+				},
+				{
+					"name": "yes",
+					"id": "ui-button--yes",
+					"snapshotHash": "93fac0656e7c4033b3c25bf08c7420fd21a1e6e720ccea4315375538efc0f325"
+				}
+			],
+			"stylesheet": "components/button.css",
+			"stylesheetHash": "accf9aafd07cd466c57714b943d3fe6eb599feb7cb6e3e9241d2aba80a8e35f3"
+		},
+		{
+			"name": "chip",
+			"file": "apps/indusk-admin/src/components/ui/Badge.tsx",
+			"properties": [
+				{
+					"name": "variant",
+					"type": "| \"declared\"\n| \"proving\"\n| \"enforced\"\n| \"broken\"\n| \"active\"\n// The trajectory's states, which draw the chip's colours.\n| \"passing\"\n| \"blocked\"\n| \"skipped\"\n| \"planned\"\n| \"writable\"\n| \"written\"\n| \"unknown\"\n| \"neutral\"",
+					"required": false,
+					"defaultValue": "\"neutral\""
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "passing",
+					"id": "ui-badge--passing",
+					"snapshotHash": "f74b7a323810c57eb4383613e0b89ae782e2269677745a7da8bdce5ce75cd396"
+				},
+				{
+					"name": "blocked",
+					"id": "ui-badge--blocked",
+					"snapshotHash": "89ecd074e4cda70aed0555f9e6254d6981c71e2ed7c5421796e0d98d72e20b70"
+				},
+				{
+					"name": "skipped",
+					"id": "ui-badge--skipped",
+					"snapshotHash": "0c59dce1ae7c59e0d9be02a4a6a4c6989ae5aeb0a6ee21e666bed85c2ba4699d"
+				},
+				{
+					"name": "planned",
+					"id": "ui-badge--planned",
+					"snapshotHash": "3fe7d83f647d3e4eca124d5e6bac99b55870cfcc1ebf33fdd6ff70c80449a372"
+				},
+				{
+					"name": "writable",
+					"id": "ui-badge--writable",
+					"snapshotHash": "9d9b70ff4bea71efeaca6c676e403cb4d534efa3a0417c11fdaa5e5ca6d6a1fb"
+				},
+				{
+					"name": "written",
+					"id": "ui-badge--written",
+					"snapshotHash": "b615856e3ebcb6cfb3f49c93e20ec7c26c495b23faa837750fe8c93e0e13be94"
+				},
+				{
+					"name": "unknown",
+					"id": "ui-badge--unknown",
+					"snapshotHash": "c6542c08347fabc1996508531135a545620cef2b074dadef22aa6ec613c5ab32"
+				},
+				{
+					"name": "neutral",
+					"id": "ui-badge--neutral",
+					"snapshotHash": "f05be85987843fff8584b7011a7e3bd952ee82fc756da69289e19074ffbde932"
+				},
+				{
+					"name": "declared",
+					"id": "ui-badge--declared",
+					"snapshotHash": "8902a98ea33048bb6a5255805ea017beaf6d4a666477f037f8c1c8c965d4efbd"
+				},
+				{
+					"name": "proving",
+					"id": "ui-badge--proving",
+					"snapshotHash": "afa817d4cf413e6bdfd216d67a148d5b7fe5f10a2272845c56d3906130fcf4cf"
+				},
+				{
+					"name": "enforced",
+					"id": "ui-badge--enforced",
+					"snapshotHash": "779b408f6d0047019722ae7ceee57559c6608de6a78485656db7cb0f0f2dfa30"
+				},
+				{
+					"name": "broken",
+					"id": "ui-badge--broken",
+					"snapshotHash": "b5436ad74255aabc2199681f28e0de9dd86cc41e92151dd00bf859c72bcfac9e"
+				},
+				{
+					"name": "active",
+					"id": "ui-badge--active",
+					"snapshotHash": "1499d36ae87f0decf0073fd1dce3aeb83a0506436ae6ef3e5a5ebe8c03ef2e79"
+				}
+			],
+			"stylesheet": "components/chip.css",
+			"stylesheetHash": "090fbf26c88aba8de609fc1ec0b32af47ecc440a768232e500244f814017a789"
+		},
+		{
+			"name": "decision-card",
+			"file": "apps/indusk-admin/src/components/ui/DecisionCard.tsx",
+			"properties": [
+				{
+					"name": "tone",
+					"type": "\"ask\" | \"info\" | \"alert\"",
+					"required": false,
+					"defaultValue": "\"info\"",
+					"description": "`ask` waits on a person; `info` reports; `alert` is a broken promise's fix."
+				},
+				{
+					"name": "who",
+					"type": "{ label: string; state: DecisionWho }",
+					"required": false,
+					"description": "Who is acting and how: a dot (done, waiting, working) and the words beside it."
+				},
+				{
+					"name": "title",
+					"type": "string",
+					"required": false
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": false,
+					"description": "The words, the answers, the reply, the progress."
+				},
+				{
+					"name": "className",
+					"type": "string",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "ask",
+					"id": "ui-decisioncard--ask",
+					"snapshotHash": "9ed28254276ac8e0473d2a46840450e97a139eaad17b24827dbdab65865f53ba"
+				},
+				{
+					"name": "working",
+					"id": "ui-decisioncard--working",
+					"snapshotHash": "10820004f9c6776dae0142091004eb7869b642a3de3da5d7bff108142f7ffc90"
+				},
+				{
+					"name": "released",
+					"id": "ui-decisioncard--released",
+					"snapshotHash": "ee629faac31c86dc0a51f9beddae4476cdf3a28ddd2aa0d729cda4e816dea66b"
+				},
+				{
+					"name": "alert",
+					"id": "ui-decisioncard--alert",
+					"snapshotHash": "a990826ab239bc94e414cc39333f94e54d6278e6320a075f31d21632ae90e5fc"
+				}
+			],
+			"stylesheet": "components/decision-card.css",
+			"stylesheetHash": "f524512e5face4aada9c350e02e8d72fce81ba1b1b12264f26b967a0c95216c4"
+		},
+		{
+			"name": "device-choice",
+			"file": "apps/indusk-admin/src/components/ui/DeviceChoice.tsx",
+			"properties": [
+				{
+					"name": "devices",
+					"type": "unknown",
+					"required": true,
+					"description": "The reference devices, by name."
+				},
+				{
+					"name": "value",
+					"type": "string",
+					"required": true,
+					"description": "The one the look is open at."
+				},
+				{
+					"name": "onChange",
+					"type": "(device: string) => void",
+					"required": false
+				},
+				{
+					"name": "optionProps",
+					"type": "(\n  device: string,\n) => ButtonHTMLAttributes<HTMLButtonElement> &\n  Record<`data-${string}`, string>",
+					"required": false,
+					"description": "What a segment says to a test, by device: its `data-*` attributes."
+				},
+				{
+					"name": "className",
+					"type": "string",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-devicechoice--default",
+					"snapshotHash": "c4d8698990a2d4beb5400aa09bc19d0e3717ec0cf826462ac854c86fa8ab2bbc"
+				}
+			],
+			"stylesheet": "components/device-choice.css",
+			"stylesheetHash": "0969ea60ff4cefdc195ce9d4af1ecf1a5a7bde0746e6387989fa2a41b55bdd44"
+		},
+		{
+			"name": "device-frame",
+			"file": "apps/indusk-admin/src/components/ui/DeviceFrame.tsx",
+			"properties": [
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": true,
+					"description": "What the frame holds: a look at a device, `dashboard.default at phone · 390 × 844`."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-deviceframe--default",
+					"snapshotHash": "6552fc782d0151defa1028cf3b6cd8b2301108692faa44f573e51d979dbbd687"
+				}
+			],
+			"stylesheet": "components/device-frame.css",
+			"stylesheetHash": "136f2539234e65e710926a2a0b54c1190a03dbc925440c2f48d96cf4bf23de18"
+		},
+		{
+			"name": "look-row",
+			"file": "apps/indusk-admin/src/components/ui/LookRow.tsx",
+			"properties": [
+				{
+					"name": "name",
+					"type": "string",
+					"required": true,
+					"description": "The look: `dashboard.default`, `promise.broken`."
+				},
+				{
+					"name": "approval",
+					"type": "\"approved\" | \"proposed\" | \"uncovered\"",
+					"required": true
+				},
+				{
+					"name": "onOpen",
+					"type": "() => void",
+					"required": false
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "approved",
+					"id": "ui-lookrow--approved",
+					"snapshotHash": "32a1f7841ed14ec4feeca9c0ad413530807519d0e88e7a44eb0367560481cb70"
+				},
+				{
+					"name": "proposed",
+					"id": "ui-lookrow--proposed",
+					"snapshotHash": "6b252d278c6566a8b3752d88c92c8e076d9a2d6ff74a20dd9920c00ea5af6d84"
+				},
+				{
+					"name": "uncovered",
+					"id": "ui-lookrow--uncovered",
+					"snapshotHash": "695f7d86779177e66a499cf4d190ca607fad6717e9d0ff63aab9efa0a03c607c"
+				}
+			],
+			"stylesheet": "components/look-row.css",
+			"stylesheetHash": "447f4b40b8f2b3c76e3ba9457fb20a7a6eef926484ed1cf7ffd1126af7bdd330"
+		},
+		{
+			"name": "nav",
+			"file": "apps/indusk-admin/src/components/ui/Nav.tsx",
+			"properties": [
+				{
+					"name": "project",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "summary",
+					"type": "string",
+					"required": false,
+					"description": "Under the project's name: \"9 plans\"."
+				},
+				{
+					"name": "collapsed",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Folded to the rail: names and counts hidden, marks kept."
+				},
+				{
+					"name": "toggleProps",
+					"type": "ButtonHTMLAttributes<HTMLButtonElement> &\nRecord<`data-${string}`, string>",
+					"required": false,
+					"description": "What the collapse button does and says to a test: its click, `aria-expanded`."
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": true,
+					"description": "Plan groups, plan rows and view links."
+				},
+				{
+					"name": "className",
+					"type": "string",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "expanded",
+					"id": "ui-nav--expanded",
+					"snapshotHash": "dda3c6d55b852604d7d81c84f0d9b5c85ffe73a7b9f2e375cf4853bb2d7381ae"
+				},
+				{
+					"name": "looks-current",
+					"id": "ui-nav--looks-current",
+					"snapshotHash": "bf08348712d80360e5a58802700462e521e629f479be49b0c756062859691659"
+				},
+				{
+					"name": "plan-current",
+					"id": "ui-nav--plan-current",
+					"snapshotHash": "21cb8f858566fa837fe2c86be7c19e09977615b8129c70500d2d2dcb96b50e41"
+				},
+				{
+					"name": "collapsed",
+					"id": "ui-nav--collapsed",
+					"snapshotHash": "fb43491fb8be6d85095bd3cf737a08a5fbc237e36c03081029fc1833b77b7a0d"
+				}
+			],
+			"stylesheet": "components/nav.css",
+			"stylesheetHash": "3e58b69ca4f3ed44c1625cb3f2fa018b672b1bc1a6b51e5912cfeb0a3f0772f2"
+		},
+		{
+			"name": "plan-row",
+			"file": "apps/indusk-admin/src/components/ui/PlanRow.tsx",
+			"properties": [
+				{
+					"name": "initials",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "state",
+					"type": "\"needs\" | \"working\" | \"released\"",
+					"required": true
+				},
+				{
+					"name": "name",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "stage",
+					"type": "ReactNode",
+					"required": true,
+					"description": "Where the plan stands in words: \"Approve the cockpit mockups\", \"Building · 2 of 5\"."
+				},
+				{
+					"name": "current",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "The plan that is open."
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": false,
+					"description": "Where the row goes. A link when given, a button when not."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "needs",
+					"id": "ui-planrow--needs",
+					"snapshotHash": "e282cd5c4bc259ac5d8ff3b05932711bf3d02a84cac3b157fc5ddcdd98cc6a9c"
+				},
+				{
+					"name": "working",
+					"id": "ui-planrow--working",
+					"snapshotHash": "88dc232c565b93befd6bb438054561503f484b509991c132965f0b6599f97994"
+				},
+				{
+					"name": "released",
+					"id": "ui-planrow--released",
+					"snapshotHash": "386505b3dd3ca21eceefd37d11c175a41c438d72aad5fab6637dfbd7f9ce58b0"
+				},
+				{
+					"name": "current",
+					"id": "ui-planrow--current",
+					"snapshotHash": "4ccaecc1ad1e755a9a46c0ecd34530a5ada31fdcfc91b1b6122f8b4fe863c55b"
+				}
+			],
+			"stylesheet": "components/plan-row.css",
+			"stylesheetHash": "5d3be4e1672e200ffa3180d2fb0084a5c455b2402c6731cb8b83e581c2d8594b"
+		},
+		{
+			"name": "promise-row",
+			"file": "apps/indusk-admin/src/components/ui/PromiseRow.tsx",
+			"properties": [
+				{
+					"name": "standing",
+					"type": "\"declared\" | \"proving\" | \"enforced\" | \"broken\"",
+					"required": true
+				},
+				{
+					"name": "says",
+					"type": "string",
+					"required": true,
+					"description": "The promise in a sentence."
+				},
+				{
+					"name": "slug",
+					"type": "ReactNode",
+					"required": true,
+					"description": "Its name."
+				},
+				{
+					"name": "pips",
+					"type": "unknown",
+					"required": true,
+					"description": "One pip per test, in the state it is in."
+				},
+				{
+					"name": "evals",
+					"type": "ReactNode",
+					"required": true
+				},
+				{
+					"name": "last",
+					"type": "ReactNode",
+					"required": true
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": false,
+					"description": "Where the promise's page is. A link when given, a button when not."
+				},
+				{
+					"name": "empty",
+					"type": "string",
+					"required": false,
+					"description": "With no promises to list: the words that say so, in place of a row."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "broken",
+					"id": "ui-promiserow--broken",
+					"snapshotHash": "76e322a8442dc0142ddc258004e8d8cd1d67eeceb2ece166b73f945d0eb3bd9a"
+				},
+				{
+					"name": "proving",
+					"id": "ui-promiserow--proving",
+					"snapshotHash": "522f566da6ff1e05b3203738faa9da76d69093800122dd42838fdb3623d492cc"
+				},
+				{
+					"name": "enforced",
+					"id": "ui-promiserow--enforced",
+					"snapshotHash": "f6b2e5387ebc8c493f548ca38fe1ce4f27fea333af79d924a32877bf2ecd766b"
+				},
+				{
+					"name": "declared",
+					"id": "ui-promiserow--declared",
+					"snapshotHash": "d27183c9b464ff0688386f38685a5ebaeac5a973c2194d740c87fb8975cbeecc"
+				},
+				{
+					"name": "empty",
+					"id": "ui-promiserow--empty",
+					"snapshotHash": "0fba184d8a78eba12720c6fd61cb418951102a333bf1f51fcb95facbb99d1d81"
+				}
+			],
+			"stylesheet": "components/promise-row.css",
+			"stylesheetHash": "afec956a5ca1216fadafb3134529e9f058ca6c994ca0fa9e74f90c8784ff2cdf"
+		},
+		{
+			"name": "rail-group",
+			"file": "apps/indusk-admin/src/components/ui/RailGroup.tsx",
+			"properties": [
+				{
+					"name": "title",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "chip",
+					"type": "ReactNode",
+					"required": false,
+					"description": "The group's standing in a chip: \"done\", \"now\"."
+				},
+				{
+					"name": "current",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "The group the plan is in."
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": true,
+					"description": "The group's steps."
+				},
+				{
+					"name": "className",
+					"type": "string",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-railgroup--default",
+					"snapshotHash": "8d77a848575c43ed4f8be05977424076fc2c5e4e11d9410344ad2f81939fedb0"
+				},
+				{
+					"name": "current",
+					"id": "ui-railgroup--current",
+					"snapshotHash": "025252cd2657e8238ef3d0bc0287678edde159d0e4b9d73457e9f9720f0547bd"
+				}
+			],
+			"stylesheet": "components/rail-group.css",
+			"stylesheetHash": "4b903290cb06d70c76454beeeafe3c195d7aabb93b73cf6e713b2d98fb2bf004"
+		},
+		{
+			"name": "shell",
+			"file": "apps/indusk-admin/src/components/ui/Shell.tsx",
+			"properties": [
+				{
+					"name": "collapsed",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "The nav folded to its rail: the first column is the rail's width."
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": true,
+					"description": "The nav and the page."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-shell--default",
+					"snapshotHash": "a6d6464272673dfaf1e93886728124e33d8e11037f70f42fa95e5c4508093298"
+				},
+				{
+					"name": "collapsed",
+					"id": "ui-shell--collapsed",
+					"snapshotHash": "61a045eeb90503962bb425a274c890717ee26cba3d3b3b7b5de945b802bd88b9"
+				}
+			],
+			"stylesheet": "components/shell.css",
+			"stylesheetHash": "2d4decc73344d7467b41e80b00616182582d9c28a9e19e4bc38ae1d04fc81338"
+		},
+		{
+			"name": "stat",
+			"file": "apps/indusk-admin/src/components/ui/Stat.tsx",
+			"properties": [
+				{
+					"name": "label",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "value",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "note",
+					"type": "string",
+					"required": false,
+					"description": "What the number is over: \"last 30 days\", \"now\"."
+				},
+				{
+					"name": "tone",
+					"type": "\"ok\" | \"bad\"",
+					"required": false,
+					"description": "Colours the value when it is a good or a bad number."
+				},
+				{
+					"name": "className",
+					"type": "string",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-stat--default",
+					"snapshotHash": "c5f3e66faf5b6a85a955467a5b8ac1319ae016e0335dcc780509a174cad5f6ea"
+				},
+				{
+					"name": "ok",
+					"id": "ui-stat--ok",
+					"snapshotHash": "b1f7e004ac86c10f4552fd6c44bdb588b3c14685366ff1365e3d6b4cc7ee065d"
+				},
+				{
+					"name": "bad",
+					"id": "ui-stat--bad",
+					"snapshotHash": "41184063e2d931c5c0cc66e102fed8dd46d00dda2bcbc0daf01ef73f13f3a7fc"
+				}
+			],
+			"stylesheet": "components/stat.css",
+			"stylesheetHash": "b32b64f0509ea27f635bb828bffc87ee03090cd9640a3d7bb32f91942f199960"
+		},
+		{
+			"name": "step",
+			"file": "apps/indusk-admin/src/components/ui/Step.tsx",
+			"properties": [
+				{
+					"name": "name",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "status",
+					"type": "string",
+					"required": true,
+					"description": "In words: \"done\", \"approved\", \"waiting for you\"."
+				},
+				{
+					"name": "state",
+					"type": "\"done\" | \"working\" | \"needs\" | \"waiting\"",
+					"required": true
+				},
+				{
+					"name": "current",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "The step the page is on."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "done",
+					"id": "ui-step--done",
+					"snapshotHash": "7bebc9159ef521dd1d098fb20f2c31516b4009790f9078694b83c2557d60804a"
+				},
+				{
+					"name": "working",
+					"id": "ui-step--working",
+					"snapshotHash": "645b5d972049aefc6b15abb993d7a81c013214771a45e2cba5b38d2d2ebba97e"
+				},
+				{
+					"name": "needs",
+					"id": "ui-step--needs",
+					"snapshotHash": "80c31e0fa8a2368f09aad0581138e7a97d5938036b503675bcf8dd573d8c7dd2"
+				},
+				{
+					"name": "waiting",
+					"id": "ui-step--waiting",
+					"snapshotHash": "e1b554c8cbe66ad54a7cb4434402f56d0dbf4469bc07e18fb75502ff481860ab"
+				}
+			],
+			"stylesheet": "components/step.css",
+			"stylesheetHash": "347e90168a0eb8c6156fb94246690a466d81ed73cf0fb3674c31d1a5cad1c7de"
+		},
+		{
+			"name": "summary-bar",
+			"file": "apps/indusk-admin/src/components/ui/SummaryBar.tsx",
+			"properties": [
+				{
+					"name": "counts",
+					"type": "SummaryCounts",
+					"required": true
+				},
+				{
+					"name": "note",
+					"type": "string",
+					"required": false,
+					"description": "Right of the legend: \"13 promises across 4 plans\"."
+				},
+				{
+					"name": "className",
+					"type": "string",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-summarybar--default",
+					"snapshotHash": "cc2b4bb6af4d593b8d0f89566c4a687d006ca768156b8e6802332d97da26d911"
+				}
+			],
+			"stylesheet": "components/summary-bar.css",
+			"stylesheetHash": "91c91ec85b691b5cce3c51e656f392d68c900c9aa8dc5b010a2ff3dfdac7bfd2"
+		},
+		{
+			"name": "tag",
+			"file": "apps/indusk-admin/src/components/ui/Tag.tsx",
+			"properties": [
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-tag--default",
+					"snapshotHash": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2"
+				}
+			],
+			"stylesheet": "components/tag.css",
+			"stylesheetHash": "30d7bf10c27edc0deecf29411b623d76dc69248619af47401101eaa7500bba2c"
+		},
+		{
+			"name": "timeline",
+			"file": "apps/indusk-admin/src/components/ui/Timeline.tsx",
+			"properties": [
+				{
+					"name": "items",
+					"type": "unknown",
+					"required": true
+				},
+				{
+					"name": "className",
+					"type": "string",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-timeline--default",
+					"snapshotHash": "95d42b3bf92781f16b1a26f362f49a7fa5b41a4b6b392521ef4b99bc5dc2fb37"
+				}
+			],
+			"stylesheet": "components/timeline.css",
+			"stylesheetHash": "fea8031417cb7180c0978b574b41a9d8b14218826cb9ad9e5f8d51a099842c62"
+		},
+		{
+			"name": "view-link",
+			"file": "apps/indusk-admin/src/components/ui/ViewLink.tsx",
+			"properties": [
+				{
+					"name": "icon",
+					"type": "ReactNode",
+					"required": true,
+					"description": "The view's one-letter mark, drawn in the ink square."
+				},
+				{
+					"name": "label",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "count",
+					"type": "ReactNode",
+					"required": false,
+					"description": "What the view is counting — broken promises, uncovered looks; hidden at zero by the caller."
+				},
+				{
+					"name": "current",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "The view that is open."
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": false,
+					"description": "Where the view is. A link when given, a button when not."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-viewlink--default",
+					"snapshotHash": "fee6af90eb31d5d3b6fba46e85deb317b2f0a93964ea22b17cb34d6f7a5e2192"
+				},
+				{
+					"name": "current",
+					"id": "ui-viewlink--current",
+					"snapshotHash": "f16dd9a38469efa400cb6d19e966eb8da585b323790adccc09a1d427d737d908"
+				}
+			],
+			"stylesheet": "components/view-link.css",
+			"stylesheetHash": "45a31efe21223a0d5eb9efb0e3b9791b1bf642c4d37d4a80638fb1a04a11d162"
+		}
+	]
+}

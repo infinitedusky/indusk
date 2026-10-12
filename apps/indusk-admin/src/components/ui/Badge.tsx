@@ -5,6 +5,13 @@ import type { HTMLAttributes } from "react";
  * The Badge variant set mirrors them so trajectory rows map 1:1.
  */
 export type BadgeVariant =
+  // The mockups' chip states (a promise's standing, a look's approval).
+  | "declared"
+  | "proving"
+  | "enforced"
+  | "broken"
+  | "active"
+  // The trajectory's states, which draw the chip's colours.
   | "passing"
   | "blocked"
   | "skipped"
@@ -29,15 +36,26 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
  * - unknown: gray (parser fallback)
  * - neutral: utility variant for non-trajectory uses (status labels, etc.)
  */
+const DECLARED = "bg-idle-wash text-idle";
+const PROVING = "bg-warn-wash text-warn";
+const ENFORCED = "bg-ok-wash text-ok";
+const BROKEN = "bg-bad-wash text-bad";
+const ACTIVE = "bg-dusk-wash text-dusk";
+
 const variantClasses: Record<BadgeVariant, string> = {
-  passing: "bg-ok-wash text-ok border-ok",
-  blocked: "bg-bad-wash text-bad border-bad",
-  skipped: "bg-warn-wash text-warn border-warn",
-  planned: "bg-idle-wash text-ink-soft border-ink-faint",
-  writable: "bg-idle-wash text-ink border-ink-faint",
-  written: "bg-dusk-wash text-dusk border-dusk",
-  unknown: "bg-ground text-ink-faint border-ink-faint",
-  neutral: "bg-idle-wash text-ink-soft border-ink-faint",
+  declared: DECLARED,
+  proving: PROVING,
+  enforced: ENFORCED,
+  broken: BROKEN,
+  active: ACTIVE,
+  passing: ENFORCED,
+  blocked: BROKEN,
+  skipped: PROVING,
+  planned: DECLARED,
+  writable: DECLARED,
+  written: ACTIVE,
+  unknown: "bg-ground text-ink-faint",
+  neutral: DECLARED,
 };
 
 export function Badge({
@@ -47,7 +65,8 @@ export function Badge({
   ...rest
 }: BadgeProps) {
   const classes = [
-    "inline-flex items-center rounded-md px-2 py-hair text-xs font-medium border",
+    // The mockups' chip: a pill, a dot in the text's colour, small caps.
+    "inline-flex items-center gap-tight rounded-pill px-2 py-1 text-2xs leading-1 font-semibold uppercase tracking-chip",
     variantClasses[variant],
     className,
   ]
@@ -56,6 +75,7 @@ export function Badge({
 
   return (
     <span data-component="chip" className={classes} {...rest}>
+      <span aria-hidden="true" className="size-dot rounded-pill bg-current" />
       {children}
     </span>
   );

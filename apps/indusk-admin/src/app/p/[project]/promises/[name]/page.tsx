@@ -15,6 +15,7 @@ import {
   WhereItIsWatched,
   WhereItLives,
 } from "@/components/promise/PromiseProof";
+import { Box } from "@/components/ui/Box";
 import { readAdminRefreshMs } from "@/lib/project-reader";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
@@ -84,31 +85,33 @@ export default async function PromisePage({ params }: PromisePageProps) {
       </header>
       <PromiseBanner proof={proof} entry={entry} project={project} />
       <PromiseTiles proof={proof} />
-      <TestsThatBackIt proof={proof} planHrefPrefix={planHrefPrefix} />
-      <WhereItIsWatched proof={proof} />
-      <LastThirtyDays proof={proof} />
-      {beside.length > 0 && (
-        <section
-          data-testid="proof-same-plan"
-          className="flex min-w-0 flex-col gap-2"
-        >
-          <h2 className="text-sm font-semibold text-ink-soft">Same plan</h2>
-          <ul className="flex flex-col gap-1 text-sm">
-            {beside.map((p) => (
-              <li key={p.name} className="min-w-0 break-words">
-                <Link
-                  href={`/p/${project}/promises/${p.name}`}
-                  className="hover:underline"
-                >
-                  {sentenceOf(p.name)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <WhereItLives entry={entry} />
-      <PromiseHistory proof={proof} />
+      <div className="cols-promise-page grid items-start gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
+          <TestsThatBackIt proof={proof} planHrefPrefix={planHrefPrefix} />
+          <WhereItIsWatched proof={proof} />
+          <LastThirtyDays proof={proof} />
+          <PromiseHistory proof={proof} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-5">
+          {beside.length > 0 && (
+            <Box title="Same plan" data-testid="proof-same-plan">
+              <ul className="flex flex-col gap-1 text-sm">
+                {beside.map((p) => (
+                  <li key={p.name} className="min-w-0 break-words">
+                    <Link
+                      href={`/p/${project}/promises/${p.name}`}
+                      className="hover:underline"
+                    >
+                      {sentenceOf(p.name)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Box>
+          )}
+          <WhereItLives entry={entry} />
+        </div>
+      </div>
     </div>
   );
 }

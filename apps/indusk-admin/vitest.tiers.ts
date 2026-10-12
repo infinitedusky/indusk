@@ -31,7 +31,29 @@ export const SYSTEM = [
   "src/__tests__/live-refresh.e2e.test.ts",
   // The Looks page's mockup frame in Chromium (ui-promises A15, A16).
   "src/app/p/[project]/looks/looks-browser.contract.test.ts",
+  // Storybook in Chromium, and the catalog the render step writes
+  // (storybook-components A5, A13).
+  "src/__tests__/storybook.contract.test.ts",
+  // Components in the cockpit (storybook-components A7, A18, A19): a composed
+  // mockup and the stories framed from the served /storybook, and the value
+  // check over the stories, in Chromium.
+  "src/app/p/[project]/looks/looks-components.contract.test.ts",
+  "src/__tests__/storybook-held.contract.test.ts",
+  // A composed mockup draws each component as its story does (storybook-
+  // components A30): computed values compared in Chromium, mockup against story.
+  "src/__tests__/composition.contract.test.ts",
 ];
+
+/**
+ * Vitest projects that belong to the system tier: they render in Chromium
+ * against a built Storybook and are never part of `pnpm test`
+ * (storybook-components A21; `everyday-tests-never-wait.test.ts` reads this
+ * list and the everyday config). `vitest.system.config.ts` raises
+ * `SYSTEM_TIER_ENV`, which is what lets `vitest.config.ts` define them for a
+ * run the system tier started (A5 spawns `vitest run --project storybook`).
+ */
+export const SYSTEM_PROJECTS = ["storybook"];
+export const SYSTEM_TIER_ENV = "INDUSK_ADMIN_SYSTEM_TIER";
 
 /**
  * Page tests that run in the node project, not the browser one: they read and
@@ -41,6 +63,8 @@ export const SYSTEM = [
 export const NODE_PAGES = [
   "src/app/p/[project]/looks/looks.test.tsx",
   "src/app/p/[project]/looks/looks-approve-binding.test.tsx",
+  "src/app/p/[project]/looks/looks-components.test.tsx",
+  "src/app/p/[project]/looks/looks-unapprove.test.tsx",
 ];
 
 /**

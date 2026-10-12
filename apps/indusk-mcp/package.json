@@ -196,6 +196,22 @@
 			"types": "./dist/lib/looks/lint.d.ts",
 			"default": "./dist/lib/looks/lint.js"
 		},
+		"./looks/components": {
+			"types": "./dist/lib/looks/components.d.ts",
+			"default": "./dist/lib/looks/components.js"
+		},
+		"./looks/compose": {
+			"types": "./dist/lib/looks/compose.d.ts",
+			"default": "./dist/lib/looks/compose.js"
+		},
+		"./looks/stories": {
+			"types": "./dist/lib/looks/stories.d.ts",
+			"default": "./dist/lib/looks/stories.js"
+		},
+		"./looks/approve": {
+			"types": "./dist/lib/looks/approve.d.ts",
+			"default": "./dist/lib/looks/approve.js"
+		},
 		"./looks/approvals": {
 			"types": "./dist/lib/looks/approvals.d.ts",
 			"default": "./dist/lib/looks/approvals.js"
@@ -294,7 +310,9 @@
 		"gray-matter": "^4.0.3",
 		"lucide-react": "^1.8.0",
 		"next": "16.2.4",
+		"p-map": "7.0.3",
 		"parse5": "8.0.1",
+		"postcss": "8.5.28",
 		"postcss-value-parser": "4.2.0",
 		"react": "19.2.4",
 		"react-dom": "19.2.4",

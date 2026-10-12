@@ -41,6 +41,8 @@ export interface LookRun {
 	screen: string;
 	state: string;
 	device: string;
+	/** `story` for a component story's run; absent for a screen's, so no recorded run needs rewriting. */
+	kind?: "story";
 	outcome: "upheld" | "violated";
 	/** When the run ended, ISO. */
 	at: string;
@@ -74,11 +76,20 @@ export interface LookStandingRead {
 /**
  * The newest run for one look at one device, no older than `since` (the
  * approval in force; null when none is). A check against an earlier reference
- * says nothing about this one.
+ * says nothing about this one. Only a run of the look's own kind counts: a
+ * story's run shares a screen's app, name, state and device (`nav.expanded`),
+ * and a run without a kind is a screen's.
  */
 export function newestRunSince(
 	runs: readonly LookRun[],
-	key: { app: string; screen: string; state: string; device: string | null; since: string | null },
+	key: {
+		app: string;
+		screen: string;
+		state: string;
+		device: string | null;
+		since: string | null;
+		kind?: "story";
+	},
 ): LookRun | null {
 	return runs
 		.filter(
@@ -87,6 +98,7 @@ export function newestRunSince(
 				r.screen === key.screen &&
 				r.state === key.state &&
 				r.device === key.device &&
+				(r.kind ?? "screen") === (key.kind ?? "screen") &&
 				(key.since === null || r.at >= key.since),
 		)
 		.reduce<LookRun | null>((a, r) => (a === null || r.at > a.at ? r : a), null);

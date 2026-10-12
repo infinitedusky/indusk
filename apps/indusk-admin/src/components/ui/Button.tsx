@@ -9,14 +9,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-ink text-surface hover:bg-ink-soft active:bg-ink-soft",
-  secondary: "bg-idle-wash text-ink hover:bg-line active:bg-ink-faint",
-  ghost: "bg-transparent text-ink-soft hover:bg-idle-wash active:bg-idle-wash",
+  primary:
+    "border border-ink bg-ink text-surface hover:bg-ink-soft active:bg-ink-soft",
+  secondary:
+    "border border-line bg-surface text-ink hover:bg-idle-wash active:bg-idle-wash",
+  ghost:
+    "border border-transparent bg-transparent text-ink-soft hover:bg-idle-wash active:bg-idle-wash",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
   sm: "px-2 py-1 text-sm",
-  md: "px-4 py-2 text-base",
+  md: "px-5 py-snug text-base",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -25,7 +28,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const classes = [
-      "inline-flex items-center justify-center rounded-md font-medium transition-colors",
+      "inline-flex items-center justify-center rounded-lg font-semibold transition-colors",
       "focus:outline-2 focus:outline-dusk focus:outline-offset-1",
       "disabled:opacity-50 disabled:cursor-not-allowed",
       variantClasses[variant],

@@ -120,6 +120,14 @@ body {
   height: calc(100vh - var(--space-10));
 }
 
+/* The cockpit's frame is the page under the header and not a screen taller
+   than it: the nav and the page scroll inside it, each on its own. */
+.app-body [data-component="shell"] {
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
 /* Layout the foundation does not tokenise: viewport-relative sizes and a grid. */
 .fullscreen-diagram {
   width: 95vw;
@@ -144,4 +152,155 @@ body {
    composes ring and inset layers around it, which are not a token. */
 .elevated {
   box-shadow: var(--shadow-card);
+}
+
+/* Motion the mockups name: a live dot or node dims and returns. The foundation
+   holds the durations and the easing; the keyframe is only the dimming. */
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+.pulse {
+  animation: pulse var(--duration-pulse) var(--easing-in-out) infinite;
+}
+.pulse-slow {
+  animation: pulse var(--duration-pulse-slow) var(--easing-in-out) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse,
+  .pulse-slow {
+    animation: none;
+  }
+}
+
+/* A step that needs a person: a ring of the dusk wash round its node, which
+   Tailwind's shadow utility would compose with ring layers it does not hold. */
+.halo {
+  box-shadow: var(--shadow-ring);
+}
+
+/* Column lists over the foundation's sizes: Tailwind has no class that names
+   one. Each is the template a component's mockup draws. */
+.cols-shell {
+  grid-template-columns: var(--size-nav) minmax(0, 1fr);
+}
+.cols-shell-rail {
+  grid-template-columns: var(--size-nav-rail) minmax(0, 1fr);
+}
+.cols-plan-row {
+  grid-template-columns: var(--size-badge) minmax(0, 1fr);
+}
+.cols-view-link {
+  grid-template-columns: var(--size-badge) minmax(0, 1fr) auto;
+}
+.cols-step {
+  grid-template-columns: var(--space-5) minmax(0, 1fr) auto;
+}
+.cols-look-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+.cols-promise-row {
+  grid-template-columns:
+    var(--size-dot-lg) minmax(0, 1fr) var(--size-icon) var(--size-input)
+    var(--size-nav-rail);
+}
+.cols-timeline {
+  grid-template-columns: var(--size-nav-rail) var(--size-node) minmax(0, 1fr);
+}
+.cols-promise-page {
+  grid-template-columns: minmax(0, 1fr) var(--size-side);
+}
+.cols-plan-stage {
+  grid-template-columns: var(--size-rail) minmax(0, 1fr);
+}
+@media (max-width: 759px) {
+  .cols-shell,
+  .cols-shell-rail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cols-promise-row {
+    grid-template-columns: var(--size-dot-lg) minmax(0, 1fr) auto;
+  }
+  .cols-promise-page,
+  .cols-plan-stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The Looks page: the list scrolls on its own beside a stage that stays put.
+   On a phone the list is a sheet from the bottom edge, opened by its handle
+   (a checkbox, so a server-drawn page needs no script) and closed again when a
+   look is chosen, because choosing one loads the page. */
+.looks-page {
+  height: calc(100vh - var(--space-10) - 2 * var(--space-6));
+}
+.looks-split {
+  /* the list holds a look's name whole beside its chip and Open: the side
+     column and a badge and a step, no narrower than the longest look name */
+  grid-template-columns:
+    calc(var(--size-side) + var(--size-badge) + var(--space-4))
+    minmax(0, 1fr);
+}
+.looks-sheet-toggle,
+.looks-sheet-handle {
+  display: none;
+}
+@media (max-width: 759px) {
+  .looks-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .looks-list {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 20;
+    max-height: 70vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+    transform: translateY(calc(100% - var(--space-10)));
+  }
+  .looks-sheet-handle {
+    position: sticky;
+    top: 0;
+    display: flex;
+    height: var(--space-10);
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface);
+    color: var(--color-dusk);
+    cursor: pointer;
+  }
+  .looks-sheet-toggle:checked ~ .looks-list {
+    transform: translateY(0);
+  }
+  .looks-stage {
+    padding-bottom: var(--space-10);
+  }
+}
+
+/* A collapsed nav keeps only the marks: what the nav's rows and links say in
+   words carries `nav-hide`, and a row or link that is only a mark `nav-mark`. */
+[data-component="nav"][data-collapsed="true"] .nav-hide {
+  display: none;
+}
+[data-component="nav"][data-collapsed="true"] .nav-mark {
+  grid-template-columns: var(--size-badge);
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* What a decision card says in words: a paragraph is read at a measure, and an
+   alert's is the ink, not the soft ink of a card that only reports. */
+[data-component="decision-card"] p {
+  max-width: 64ch;
+  color: var(--color-ink-soft);
+}
+[data-component="decision-card"][data-tone="alert"] p {
+  color: var(--color-ink);
+}
+[data-component="nav"][data-collapsed="true"] .nav-head {
+  justify-content: center;
+  padding: 0;
 }

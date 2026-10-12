@@ -183,7 +183,9 @@ describe("A12 — a step is read from the documents, never set on the page", () 
     expect(["current", "needs-you"]).toContain(stateOf(planning, "Decision"));
     expect(
       before.root.querySelectorAll(
-        '[data-testid^="workflow-"] :is(button, input, select, textarea, [role="button"])',
+        // The rail's Step is drawn as a button by its approved mockup; here it
+        // carries no handler, so it is the one button a list may hold.
+        '[data-testid^="workflow-"] :is(button:not([data-component="step"]), input, select, textarea, [role="button"])',
       ),
       "a step has a control that could set it",
     ).toHaveLength(0);

@@ -143,6 +143,20 @@ describe("A29 — a Bash command naming the approve route is refused", () => {
 		expect(r.stderr).toMatch(/cockpit/i);
 	});
 
+	// storybook-components A29's agent half (ADR decision 11): taking an approval
+	// back is the person's too, so the Unapprove route is refused as Approve's is.
+	it("refuses a curl to /api/looks/<app>/unapprove, naming the cockpit's Unapprove", async () => {
+		const r = await runHook(
+			"looks-approval-guard.js",
+			bash(
+				`curl -s -X POST http://127.0.0.1:3939/api/looks/admin/unapprove -H 'Origin: http://127.0.0.1:3939' -H 'content-type: application/json' -d '{"project":"dusk","mockup":"nav.expanded"}'`,
+			),
+		);
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toMatch(/cockpit/i);
+		expect(r.stderr).toContain("Unapprove");
+	});
+
 	it("lets another admin route be called", async () => {
 		const r = await runHook(
 			"looks-approval-guard.js",

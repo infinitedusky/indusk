@@ -129,6 +129,8 @@ export const LOOK_MARK = {
 	screen: "indusk.look.screen",
 	state: "indusk.look.state",
 	device: "indusk.look.device",
+	/** `story` on a component story's span; absent on a screen's, which is the rule for every span recorded before it existed. */
+	kind: "indusk.look.kind",
 } as const;
 
 export const PROMISE_OUTCOMES = ["upheld", "violated"] as const;

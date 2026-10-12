@@ -1,3 +1,4 @@
+import { Tag } from "@/components/ui/Tag";
 import type { Plan } from "@/lib/planning-reader";
 
 /**
@@ -20,14 +21,12 @@ export function WorktreeChip({ plan }: { plan: Plan }) {
   if (!plan.worktree) return null;
   const { name, path, branch } = plan.worktree;
   return (
-    <span
+    <Tag
       data-testid="plan-worktree"
       title={`Read from the worktree at ${path} (${branch})`}
-      className="inline-flex items-center gap-1 rounded-pill border border-dusk bg-dusk-wash px-2 py-hair text-xs text-dusk"
     >
-      <span aria-hidden="true">⎇</span>
-      {name}
-    </span>
+      <span aria-hidden="true">⎇</span> {name}
+    </Tag>
   );
 }
 

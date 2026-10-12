@@ -74,6 +74,23 @@ export function adminOnly(
 }
 
 /**
+ * What a route adds to `adminOnly` when only the person's own browser may call
+ * it, which a local process passes by setting `Host` and `Origin` itself: the
+ * browser's own fetch metadata. A browser sets `Sec-Fetch-Site` on every
+ * request and page script cannot set or change it, so `same-origin` says the
+ * person's browser sent this from the admin's page. `curl`, an agent's script
+ * or a test harness sends none. Raises the bar to a deliberate forgery; it is
+ * not a signature (ui-promises Build Phase 6, A29).
+ */
+export function fromTheBrowser(
+  request: Request,
+  refusal: string,
+): Response | null {
+  if (request.headers.get("sec-fetch-site") === "same-origin") return null;
+  return refuse(403, refusal);
+}
+
+/**
  * The project's root and where `plan` lives in it now — its worktree while it
  * has one. In a workbench the plan lives at the root and its code in the
  * worktree its `code.json` names: a session there runs at the root with the

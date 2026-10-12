@@ -99,8 +99,9 @@ pass every class in the admin.
    running app renders must appear in an approved mockup. The missing ones are
    listed *uncovered*.
 
-6. **The running app is held by value, in Chromium.** `indusk looks check
-   <app>` opens each declared screen at each reference device (Playwright,
+6. **The running app is held by value, in Chromium.**
+   `indusk looks check <app>` opens each declared screen at each reference
+   device (Playwright,
    Apache-2.0, already the admin's browser driver) and runs two checks:
    (a) each foundation token's runtime value on `:root` equals the approved
    value — names the token, approved and actual; (b) every rendered element's
