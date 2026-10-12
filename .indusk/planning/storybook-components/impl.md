@@ -1,7 +1,7 @@
 ---
 title: "Storybook components — the approved mockups as components, one implementation each, a story per state"
 date: 2026-10-12
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -605,11 +605,11 @@ Evidence found while hunting:
 
 #### Build Phase 10 Context
 
-- [ ] `apps/indusk-mcp/src/lib/looks/CLAUDE.md`: the module map — `approvals` is the record and its reading, `approve` the write side the admin's routes call; every looks hash is computed by `sha256`/`snapshotHash`/`stylesheetHash` in `mockups.ts`, never a local `createHash` — guarded by A37 and A38
+- [x] `apps/indusk-mcp/src/lib/looks/CLAUDE.md`: the module map — `approvals` is the record and its reading, `approve` the write side the admin's routes call; every looks hash is computed by `sha256`/`snapshotHash`/`stylesheetHash` in `mockups.ts`, never a local `createHash` — guarded by A37 and A38
 
 #### Build Phase 10 Document
 
-- [ ] `apps/docs/src/reference/cli/looks.md`: the admin calls `approve` and `withdraw` from `@infinitedusky/indusk-mcp/looks/approve` (today it names `looks/approvals`)
+- [x] `apps/docs/src/reference/cli/looks.md`: the admin calls `approve` and `withdraw` from `@infinitedusky/indusk-mcp/looks/approve` (today it names `looks/approvals`)
 
 ## Files Affected
 
