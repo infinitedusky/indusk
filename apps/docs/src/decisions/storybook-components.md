@@ -89,6 +89,12 @@ this plan builds on.
    of the snapshot hashes it composes; a changed snapshot reopens every mockup
    whose `componentsHash` no longer matches, and the status names the
    component.
+   *(As built, after falsification: a story's entry also binds its
+   component's stylesheet hash, so a style-only change reopens the story; a
+   mockup reads proposed while any story it composes is not approved, so a
+   story's Unapprove reopens its mockups; a group Approve records stories
+   before the mockups that compose them; and Approve of a composed mockup
+   without its `componentsHash` is refused.)*
 
 6. **The cockpit serves Storybook.** `storybook build` runs in the admin's
    build; its output is served by the admin at `/storybook` (copied into the
@@ -100,6 +106,12 @@ this plan builds on.
    after another with Approve beside each. Nothing runs beside the admin.
    *(Amended 2026-10-12 at Sandy's direction while approving Build Phase 5: a
    story framed at each device's full size showed a badge in a blank screen.)*
+   *(Amended 2026-10-12, falsification: the Looks page frames a story from its
+   snapshot as the selected checkout holds it, drawn as a composed mockup is —
+   the foundation's tokens, then the component's stylesheet — not from the
+   admin's `/storybook` build. Approve binds the selected checkout's hashes; a
+   frame drawn from another build is not what the hash binds. `/storybook`
+   stays for browsing and for `indusk looks check`.)*
 
 7. **The catalog is a file.** The render step writes
    `.indusk/mockups/<app>/components.json` — each component's name, file,
