@@ -460,7 +460,9 @@ describe("a person takes an approval back", { timeout: 30_000 }, () => {
 });
 
 // Each case spawns the CLI and writes the record through the cockpit's writer.
-describe("what a story's approval binds, and what keeps a mockup approved", { timeout: 30_000 }, () => {
+describe("what a story's approval binds, and what keeps a mockup approved", {
+	timeout: 30_000,
+}, () => {
 	// A31
 	it("A31 a component whose stylesheet changes while its markup does not reads its stories proposed, and a mockup composing it is refused until the story is approved again", async () => {
 		const root = project();
@@ -524,7 +526,9 @@ describe("what a story's approval binds, and what keeps a mockup approved", { ti
 
 		const coverage = run(root, ["coverage", "demo"]).out;
 		expect(
-			coverage.split("\n").filter((l) => /uncovered (screen: home$|state: home\.default$)/.test(l.trim())),
+			coverage
+				.split("\n")
+				.filter((l) => /uncovered (screen: home$|state: home\.default$)/.test(l.trim())),
 			coverage,
 		).not.toEqual([]);
 		expect(linesWith(coverage, "uncovered story: badge.ok"), coverage).not.toEqual([]);
