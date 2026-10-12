@@ -469,7 +469,7 @@ The admin is built from components defined once, each with an approved story per
 **Tier**: med — the work step's default
 
 - [x] Rebuild the promise page (broken and enforced) from the components, matching `promise.broken` and `promise.enforced`
-- [ ] Rebuild the plan page (needs-you, working and released) from the components, matching `plan.needs-you`, `plan.working` and `plan.released`
+- [x] Rebuild the plan page (needs-you, working and released) from the components, matching `plan.needs-you`, `plan.working` and `plan.released`
 - [ ] **Pause for a person**: Sandy opens each of the admin's screens beside its approved mockup at each reference device and records here whether they match (Deferred Verification U1)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 

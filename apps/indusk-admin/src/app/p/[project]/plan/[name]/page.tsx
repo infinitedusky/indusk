@@ -10,6 +10,7 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import type { SubplanEntry } from "@/components/ParentPlanView";
 import { PlanDetail } from "@/components/PlanDetail";
 import type { PlanHeaderFacts } from "@/components/plan/PlanHeader";
+import { PlanStatusCard } from "@/components/plan/PlanStatusCard";
 import { BuildControls } from "@/components/session/BuildControls";
 import { PlanSession } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
@@ -108,11 +109,14 @@ export default async function PlanPage({ params }: PlanPageProps) {
   const waiting = plan.archived ? undefined : readWaiting(project, [plan])[0];
   const history = readPlanHistory(projectPath, name);
 
-  return (
+  const stage = (
     <>
-      <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       <TrustNotice project={project} trusted={projectTrusted(projectPath)} />
-      {waiting ? <DecisionCard project={project} waiting={waiting} /> : null}
+      {waiting ? (
+        <DecisionCard project={project} waiting={waiting} />
+      ) : (
+        <PlanStatusCard plan={plan} dates={header.dates} />
+      )}
       <PlanSession
         project={project}
         plan={name}
@@ -128,6 +132,12 @@ export default async function PlanPage({ params }: PlanPageProps) {
         />
       ) : null}
       <PlanHistory entries={history} />
+    </>
+  );
+
+  return (
+    <>
+      <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       <PlanDetail
         plan={plan}
         subplans={subplans}
@@ -135,6 +145,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
         planHrefPrefix={`/p/${project}/plan/`}
         holding={holding}
         header={header}
+        stage={stage}
       />
     </>
   );

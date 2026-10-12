@@ -3,36 +3,24 @@ import {
   type StepState,
   stepCount,
 } from "@infinitedusky/indusk-mcp/plans/steps";
+import { Badge } from "@/components/ui/Badge";
+import { RailGroup } from "@/components/ui/RailGroup";
+import { Step } from "@/components/ui/Step";
 import { snapshotOf } from "@/lib/plan-snapshot";
 import type { Plan } from "@/lib/planning-reader";
 
 /**
  * The plan page's two workflows: Planning (the documents the plan's type
  * requires) and Release (build to release). Every step's state comes from the
- * package's `plans/steps`; this component only lays them out. It holds no
- * control — a step is read from the documents, never set here (A12).
+ * package's `plans/steps`; this component only lays them out as the rail's
+ * groups and steps. It holds no control — a step is read from the documents,
+ * never set here (A12); the rail's `Step` is the approved component's shape
+ * and carries no handler.
  *
  * promise: a-plan-shows-two-workflows
  */
 
-const MARK: Record<StepState, string> = {
-  done: "✓",
-  current: "●",
-  "needs-you": "!",
-  "not-yet": "○",
-  skipped: "–",
-  missing: "?",
-};
-
-const STYLE: Record<StepState, string> = {
-  done: "text-ok",
-  current: "font-medium text-dusk",
-  "needs-you": "font-medium text-warn",
-  "not-yet": "text-ink-faint",
-  skipped: "text-ink-faint line-through",
-  missing: "text-bad",
-};
-
+/** The words a step's state is told in beside its name. */
 const LABEL: Record<StepState, string> = {
   done: "done",
   current: "in progress",
@@ -42,13 +30,21 @@ const LABEL: Record<StepState, string> = {
   missing: "missing",
 };
 
+/** How the rail's `Step` draws each state: it has four, so a step the plan will not take reads as waiting. */
+const RAIL_STATE: Record<StepState, "done" | "working" | "needs" | "waiting"> =
+  {
+    done: "done",
+    current: "working",
+    "needs-you": "needs",
+    "not-yet": "waiting",
+    skipped: "waiting",
+    missing: "waiting",
+  };
+
 export function PlanWorkflows({ plan }: { plan: Plan }) {
   const { planning, release } = planSteps(snapshotOf(plan));
   return (
-    <div
-      className="grid grid-cols-1 gap-4 md:grid-cols-2"
-      data-testid="plan-workflows"
-    >
+    <div className="flex flex-col gap-4" data-testid="plan-workflows">
       <WorkflowList which="planning" title="Planning" steps={planning} />
       <WorkflowList which="release" title="Release" steps={release} />
     </div>
@@ -65,39 +61,39 @@ function WorkflowList({
   steps: Array<{ name: string; state: StepState; reason?: string }>;
 }) {
   const { done, total } = stepCount(steps);
+  const now = steps.some(
+    (s) => s.state === "current" || s.state === "needs-you",
+  );
   return (
-    <section
-      className="rounded-md border border-line p-3"
-      data-testid={`workflow-${which}`}
-    >
-      <h2 className="mb-2 flex items-baseline justify-between text-sm font-semibold text-ink">
-        {title}
-        <span
-          className="text-xs font-regular text-ink-faint"
-          data-testid="workflow-count"
-        >
-          {done} of {total}
-        </span>
-      </h2>
-      <ol className="flex flex-col gap-1">
+    <div data-testid={`workflow-${which}`}>
+      <RailGroup
+        title={title}
+        current={now}
+        chip={
+          <Badge
+            data-testid="workflow-count"
+            variant={done === total ? "enforced" : now ? "active" : "declared"}
+          >
+            {done} of {total}
+          </Badge>
+        }
+      >
         {steps.map((step) => (
-          <li
+          <div
             key={step.name}
+            className="contents"
             data-step={step.name}
             data-state={step.state}
-            className={`flex items-center gap-2 text-sm ${STYLE[step.state]}`}
           >
-            <span aria-hidden="true" className="w-4 text-center">
-              {MARK[step.state]}
-            </span>
-            <span>{step.name}</span>
-            <span className="text-xs text-ink-faint">
-              {LABEL[step.state]}
-              {step.reason ? ` — ${step.reason}` : ""}
-            </span>
-          </li>
+            <Step
+              name={step.name}
+              state={RAIL_STATE[step.state]}
+              status={`${LABEL[step.state]}${step.reason ? ` — ${step.reason}` : ""}`}
+              current={step.state === "current" || step.state === "needs-you"}
+            />
+          </div>
         ))}
-      </ol>
-    </section>
+      </RailGroup>
+    </div>
   );
 }
