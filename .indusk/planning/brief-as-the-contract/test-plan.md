@@ -1,7 +1,7 @@
 ---
 title: "Brief as the contract — Test Plan"
 date: 2026-10-12
-status: draft
+status: accepted
 ---
 
 # Brief as the contract — Test Plan
