@@ -47,3 +47,4 @@ Shape raised 1 finding across all phases (Build Phase 1: the inline create-if-mi
 ## Release
 
 Nothing published; this project installs its own build at landing.
+Landed on main at 1962bb2a, 2026-10-12.
