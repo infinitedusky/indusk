@@ -24,6 +24,9 @@ import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
  * A mockup changed since its approval reads proposed (`approvalOf`), so it
  * covers nothing until a person approves the change.
  *
+ * A component is covered when an approved mockup shows it or every one of its
+ * stories is approved (`componentsOfApprovedStories`).
+ *
  * Components are covered by their stories (storybook-components ADR decision
  * 8): each story the app has — every state a mockup shows that has a story,
  * and every other state its component's stories render — is *uncovered* until
@@ -100,15 +103,35 @@ function uncoveredScreens(
 }
 
 /**
+ * Components covered by their stories alone (ADR decision 8): each has at
+ * least one story and every one of its stories is approved as it is now. One
+ * story not approved leaves it to the mockups, so it stays uncovered unless an
+ * approved mockup shows it.
+ */
+function componentsOfApprovedStories(app: LooksApp): Set<string> {
+	const approvals = readStoryApprovals(app);
+	const standing = new Map<string, boolean>();
+	for (const story of app.stories) {
+		const name = story.name.split(".")[0] as string;
+		const ok = storyApprovalOf(app, story, approvals).state === "approved";
+		standing.set(name, (standing.get(name) ?? true) && ok);
+	}
+	return new Set([...standing].filter(([, ok]) => ok).map(([name]) => name));
+}
+
+/**
  * `data-component` names in the app's declared sources that no approved
- * mockup shows, sorted, and the places a source names one at run time.
+ * mockup shows and no approved story covers, sorted, and the places a source names one at run time.
  */
 async function uncoveredComponents(
 	root: string,
 	app: LooksApp,
 	approved: readonly Mockup[],
 ): Promise<Pick<Coverage, "components" | "unresolved">> {
-	const shown = new Set(approved.flatMap((m) => [...mockupComponents(m.html)]));
+	const shown = new Set([
+		...approved.flatMap((m) => [...mockupComponents(m.html)]),
+		...componentsOfApprovedStories(app),
+	]);
 	const rendered = new Set<string>();
 	const unresolved: string[] = [];
 	for (const file of await appSourceFiles(root, app.sources)) {

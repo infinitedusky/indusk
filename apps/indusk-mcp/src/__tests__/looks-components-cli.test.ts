@@ -246,6 +246,40 @@ describe("every part of the UI is covered", () => {
 		expect(after).not.toMatch(/uncovered story: badge\.ok/);
 		expect(linesWith(after, "no story: badge.warn"), after).not.toEqual([]);
 	});
+	// A15's file and promise: a component no mockup names is covered by its stories.
+	it("A15 a component no mockup names is covered once each of its stories is approved, and uncovered while one is not", async () => {
+		const root = app();
+		writeFileSync(
+			join(root, "src/Tag.jsx"),
+			'export const Tag = () => <span data-component="tag">tag</span>;\n',
+		);
+		const snapshot = readFileSync(join(root, MOCKUPS, "components/card.default.html"), "utf-8");
+		writeFileSync(
+			join(root, MOCKUPS, "components/tag.default.html"),
+			snapshot.replace("card", "tag"),
+		);
+		const before = run(root, ["coverage", "demo"]).out;
+		expect(linesWith(before, "uncovered component: tag"), before).not.toEqual([]);
+
+		const record = join(root, MOCKUPS, "approved.json");
+		const held = JSON.parse(readFileSync(record, "utf-8")) as { approvals: unknown[] };
+		const demo = await readApp(root, "demo");
+		held.approvals.push({
+			kind: "story",
+			story: "tag.default",
+			snapshotHash: sha256(readFileSync(join(root, MOCKUPS, "components/tag.default.html"))),
+			foundationHash: demo.foundation.hash,
+			declarationsHash: demo.declarationsHash,
+			by: "sandy",
+			at: "2026-10-12T10:00:00.000Z",
+		});
+		writeFileSync(record, JSON.stringify(held, null, "\t"));
+
+		const after = run(root, ["coverage", "demo"]).out;
+		expect(after, "its approved story covers it").not.toMatch(/uncovered component: tag/);
+		// badge has a story not approved: still uncovered by any means.
+		expect(linesWith(after, "uncovered story: badge.broken"), after).not.toEqual([]);
+	});
 });
 
 describe("a story is approved by a person", () => {
