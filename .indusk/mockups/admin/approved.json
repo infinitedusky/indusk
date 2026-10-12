@@ -1555,6 +1555,15 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T20:07:04.498Z"
+		},
+		{
+			"kind": "story",
+			"story": "plan-row.working",
+			"snapshotHash": "88dc232c565b93befd6bb438054561503f484b509991c132965f0b6599f97994",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T20:07:04.619Z"
 		}
 	]
 }
