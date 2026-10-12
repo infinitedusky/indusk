@@ -6,7 +6,7 @@ import { componentFindings } from "./lint-components.js";
 import type { CssBlock, Finding } from "./lint-types.js";
 import { cssFindings, isOwn } from "./lint-values.js";
 import { elementsOf } from "./markup.js";
-import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
+import { appSourceFiles, type ComponentStyle, type LooksApp, type Mockup } from "./mockups.js";
 
 /**
  * The no-raw-value rule (ui-promises ADR): every colour, size, space, radius,
@@ -186,6 +186,23 @@ async function lintMockup(mockup: MockupPart, foundation: Set<string>): Promise<
 	return [...raw.flat(), ...tokens, ...externalElements(mockup.file, mockup.html)];
 }
 
+/**
+ * The findings of a component's stylesheet, `components/<name>.css`: read by
+ * the rule a mockup's own styles are, so a raw value or an undefined token in
+ * a generated sheet is named in its file (ADR decision 10).
+ */
+async function lintStylesheet(style: ComponentStyle, foundation: Set<string>): Promise<Finding[]> {
+	const block: CssBlock = { code: style.css, startLine: 1 };
+	const raw = await cssFindings(style.file, block, { mockup: true });
+	const tokens = tokenFindings(
+		style.file,
+		[block],
+		{ foundation, declared: new Set(), elsewhere: new Set() },
+		true,
+	);
+	return [...raw, ...tokens];
+}
+
 /** The findings of the app's declared source directories: stylesheets, and class names in markup. */
 async function lintSources(
 	root: string,
@@ -234,9 +251,10 @@ async function lintSources(
 export async function lintApp(root: string, app: LooksApp): Promise<Finding[]> {
 	const foundation = namesOf(app.foundation);
 	const mockups = await Promise.all(mockupParts(app).map((m) => lintMockup(m, foundation)));
+	const styles = await Promise.all(app.styles.map((s) => lintStylesheet(s, foundation)));
 	const sources = await lintSources(root, app.sources, foundation);
 	const components = await componentFindings(root, app);
-	return [...mockups.flat(), ...sources, ...components].sort(byPlace);
+	return [...mockups.flat(), ...styles.flat(), ...sources, ...components].sort(byPlace);
 }
 
 export type { Finding, LintRule } from "./lint-types.js";
