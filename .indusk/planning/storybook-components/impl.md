@@ -154,8 +154,8 @@ The admin is built from components defined once, each with an approved story per
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A5, A8–A11, A13–A17 and A21 authored, each red on its own assertion; A22–A24 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/looks-components-cli.test.ts src/__tests__/looks-admin-components.test.ts src/__tests__/everyday-tests-never-wait.test.ts src/__tests__/looks-admin-foundation.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/app/p/\[project\]/cockpit-phone.test.tsx src/app/p/\[project\]/promises/dashboard.test.tsx`; the contract file run once with `--config vitest.system.config.ts` and its red read); tsc and biome clean on the new files
-- [ ] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
+- [x] A1–A5, A8–A11, A13–A17 and A21 authored, each red on its own assertion; A22–A24 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/looks-components-cli.test.ts src/__tests__/looks-admin-components.test.ts src/__tests__/everyday-tests-never-wait.test.ts src/__tests__/looks-admin-foundation.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/app/p/\[project\]/cockpit-phone.test.tsx src/app/p/\[project\]/promises/dashboard.test.tsx`; the contract file run once with `--config vitest.system.config.ts` and its red read); tsc and biome clean on the new files
+- [x] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
 
 ### Build Phase 1: Storybook in the admin, served by the cockpit
 
