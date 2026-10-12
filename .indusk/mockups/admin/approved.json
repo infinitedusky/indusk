@@ -1753,6 +1753,31 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T20:07:07.964Z"
+		},
+		{
+			"mockup": "dashboard.default",
+			"mockupHash": "d13d8b0a26d938225315784481d74630ce71c24921868c3d9aeb964730d6a25c",
+			"componentsHash": "eb1c8ff5138c26a357122acfa540a41a92ed19bf35da2910d964fcbc469f9137",
+			"components": {
+				"nav.expanded": "dda3c6d55b852604d7d81c84f0d9b5c85ffe73a7b9f2e375cf4853bb2d7381ae",
+				"tag.default": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2",
+				"summary-bar.default": "cc2b4bb6af4d593b8d0f89566c4a687d006ca768156b8e6802332d97da26d911",
+				"chip.broken": "b5436ad74255aabc2199681f28e0de9dd86cc41e92151dd00bf859c72bcfac9e",
+				"promise-row.broken": "76e322a8442dc0142ddc258004e8d8cd1d67eeceb2ece166b73f945d0eb3bd9a",
+				"promise-row.proving": "522f566da6ff1e05b3203738faa9da76d69093800122dd42838fdb3623d492cc",
+				"promise-row.enforced": "f6b2e5387ebc8c493f548ca38fe1ce4f27fea333af79d924a32877bf2ecd766b",
+				"chip.enforced": "779b408f6d0047019722ae7ceee57559c6608de6a78485656db7cb0f0f2dfa30",
+				"promise-row.declared": "d27183c9b464ff0688386f38685a5ebaeac5a973c2194d740c87fb8975cbeecc",
+				"chip.css": "090fbf26c88aba8de609fc1ec0b32af47ecc440a768232e500244f814017a789",
+				"nav.css": "3e58b69ca4f3ed44c1625cb3f2fa018b672b1bc1a6b51e5912cfeb0a3f0772f2",
+				"promise-row.css": "afec956a5ca1216fadafb3134529e9f058ca6c994ca0fa9e74f90c8784ff2cdf",
+				"summary-bar.css": "91c91ec85b691b5cce3c51e656f392d68c900c9aa8dc5b010a2ff3dfdac7bfd2",
+				"tag.css": "30d7bf10c27edc0deecf29411b623d76dc69248619af47401101eaa7500bba2c"
+			},
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T20:07:27.891Z"
 		}
 	]
 }
