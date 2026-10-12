@@ -861,6 +861,13 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T15:34:43.482Z"
+		},
+		{
+			"kind": "withdrawn",
+			"subject": "story",
+			"name": "badge.needs",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-12T15:52:25.687Z"
 		}
 	]
 }
