@@ -148,6 +148,53 @@ describe("everyday-tests-never-wait", () => {
 		).toEqual([]);
 	});
 
+	// promise: everyday-tests-never-wait — storybook-components A21.
+	// Story tests render every story in Chromium: the admin's `storybook` vitest
+	// project belongs to the system tier. The tier file names its projects
+	// (`SYSTEM_PROJECTS`, as it names its files in `SYSTEM`), and the everyday
+	// config — read as vitest reads it, by importing it — runs none of them and
+	// includes no `*.stories.*` file in any project it does run.
+	it("the admin's storybook project is in the system tier and no everyday project includes stories (A21)", async () => {
+		const tiers = (await import(pathToFileURL(ADMIN_TIERS).href)) as { SYSTEM_PROJECTS?: string[] };
+		const systemProjects = tiers.SYSTEM_PROJECTS ?? [];
+		expect(
+			systemProjects,
+			"apps/indusk-admin/vitest.tiers.ts must export SYSTEM_PROJECTS naming the `storybook` project (lesson: everyday-tests-never-wait)",
+		).toContain("storybook");
+
+		// The config sets two environment variables as it loads; leave the test's own alone.
+		const saved = {
+			skip: process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART,
+			bin: process.env.INDUSK_BIN,
+		};
+		let projects: Array<{ test?: { name?: string; include?: string[] } }> = [];
+		try {
+			const config = (await import(
+				pathToFileURL(join(REPO, "apps/indusk-admin/vitest.config.ts")).href
+			)) as {
+				default: { test?: { projects?: typeof projects } };
+			};
+			projects = config.default.test?.projects ?? [];
+		} finally {
+			for (const [key, value] of [
+				["INDUSK_SKIP_TELEMETRY_AUTOSTART", saved.skip],
+				["INDUSK_BIN", saved.bin],
+			] as const) {
+				if (value === undefined) delete process.env[key];
+				else process.env[key] = value;
+			}
+		}
+		const everyday = projects.filter((p) => !systemProjects.includes(p.test?.name ?? ""));
+		expect(
+			everyday.map((p) => p.test?.name),
+			"an everyday project is one `pnpm test` runs; the storybook project is not among them",
+		).not.toContain("storybook");
+		for (const p of everyday) {
+			const stories = (p.test?.include ?? []).filter((glob) => glob.includes(".stories."));
+			expect(stories, `everyday project ${p.test?.name} includes story files`).toEqual([]);
+		}
+	});
+
 	it("a process that runs and exits does not trip the guard (A15)", () => {
 		const source = [
 			`const out = spawnSync("git", ["rev-parse", "HEAD"], { cwd });`,
