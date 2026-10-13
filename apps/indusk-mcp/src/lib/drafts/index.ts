@@ -3,6 +3,7 @@
  * Phase 5), held under the project's home and outside every checkout.
  */
 
+export { startFromDraft } from "./start.js";
 export {
 	AGED_AFTER_DAYS,
 	createDraft,

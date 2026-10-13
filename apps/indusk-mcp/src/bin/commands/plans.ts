@@ -5,7 +5,7 @@ import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js
 import { buildReview, type Review } from "../../lib/build/review.js";
 import { buildStepModel } from "../../lib/build/step-model.js";
 import { getDraftMaxAgeDays } from "../../lib/config.js";
-import { sweepDrafts } from "../../lib/drafts/index.js";
+import { findDraft, startFromDraft, sweepDrafts, writeProposal } from "../../lib/drafts/index.js";
 import { parsePhaseRef } from "../../lib/impl-headings.js";
 import { nextSessionForPlan } from "../../lib/models/next-session.js";
 import { phaseModel } from "../../lib/models/phase-model.js";
@@ -44,15 +44,31 @@ export function plansStart(
 	cwd: string,
 	type: string,
 	name: string,
-	opts: { repo?: string } = {},
+	opts: { repo?: string; fromDraft?: string } = {},
 ): Promise<void> {
 	return planVerb(async () => {
-		const s = await startPlan(cwd, type, name, new Date(), opts);
+		const s = opts.fromDraft
+			? await startFromDraftId(cwd, opts.fromDraft, type, name, opts.repo)
+			: await startPlan(cwd, type, name, new Date(), opts);
 		if (s.code) {
 			return `Started ${s.plan} (${s.type}): its ${s.document} is at the workbench root, and its code is on ${s.branch} in ${s.code.repo}, at ${s.code.worktree}.`;
 		}
 		return `Started ${s.plan} (${s.type}) in ${s.worktree} on ${s.branch}; its ${s.document} is there, and nothing is on the trunk until it is approved.`;
 	});
+}
+
+/** The draft `id` made a plan: `type` and `name` are the person's, over the agent's proposal. */
+async function startFromDraftId(
+	cwd: string,
+	id: string,
+	type: string,
+	name: string,
+	repo?: string,
+) {
+	const draft = findDraft(bookkeepingRoots(cwd).home, id);
+	if (!draft) throw new PlanCommandRefusal(`there is no draft ${id} in this project`);
+	writeProposal(draft, { name, type, ...(repo ? { repo } : {}) });
+	return startFromDraft(cwd, draft);
 }
 
 /** `indusk plans approve <name>` — the documents and promises reach the trunk. */

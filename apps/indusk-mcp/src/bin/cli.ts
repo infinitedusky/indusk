@@ -958,7 +958,11 @@ plansCmd
 		"Start a plan on its own branch and worktree (type: feature, bugfix, refactor, spike); nothing reaches the trunk until it is approved. In a workbench, the documents are written at the root and the code gets the branch",
 	)
 	.option("--repo <repo>", "in a workbench wrapping several repos, the one the plan's code goes in")
-	.action(async (type: string, name: string, opts: { repo?: string }) => {
+	.option(
+		"--from-draft <id>",
+		"make the plan from a draft conversation (its brief, or its research for a spike) and spend the draft; refused while the name is taken",
+	)
+	.action(async (type: string, name: string, opts: { repo?: string; fromDraft?: string }) => {
 		const { plansStart } = await import("./commands/plans.js");
 		await plansStart(process.cwd(), type, name, opts);
 	});
