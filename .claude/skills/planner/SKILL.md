@@ -81,10 +81,11 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    For feature/spike workflows that need new research: Explore the problem space — read code, search the web for library docs. **Grep for the affected symbols' consumers before scoping** — include structural findings in research.md with concrete numbers.
    Document what you find. Research holds the background, the findings and the decisions made on the way. It does not hold promises, and the brief does not repeat it.
 
-4. **If research is done** (or the workflow starts at the brief), write the brief. A brief is what the conversation produced and holds two things: the **expectations** (why we are doing this, each with a measure and a time to look) and the **promises** (what will be true: the ones this plan makes, and the existing ones it must not break, changes or replaces). It holds nothing else. The problem, the context and the findings are research; the approach is the ADR's; what "done" means is said once, as promises, and not again as success criteria. The template is below; the shape is read by a program, so keep it exactly. — see `/guide/briefs`
+4. **If research is done** (or the workflow starts at the brief), write the brief. A brief is what the conversation produced and holds three things: the **expectations** (why we are doing this, each with a measure and a time to look), the **promises** (what will be true: the ones this plan makes, and the existing ones it must not break, changes or replaces) and the **looks** (what a person will see: the ones this plan makes, and the existing ones it must not break, changes or replaces, or why it has none). It holds nothing else. The problem, the context and the findings are research; the approach is the ADR's; what "done" means is said once, as promises, and not again as success criteria. The template is below; the shape is read by a program, so keep it exactly. — see `/guide/briefs`
 
    - **Expectations decide what gets measured.** An expectation says what we expect to follow and how we would know, so writing one is also deciding what telemetry the work needs. Most can only be measured in production; say so in the measure. An expectation that does not happen is information, not a defect, and blocks nothing. A plan with none writes `None — {reason}`.
    - **Each promise is one sentence, observable, with a name and a kind.** A kebab-case name; the kind is `behaviour` (breaks on inputs nobody chose; watched in the running system), `state` (breaks on a later change; a test) or `structure` (breaks when something is removed or duplicated; a build-time check). Assign the kind from the sentence; the person can correct it. If a test with inputs you choose can prove it, it is `state`, even when it describes something a user does: `behaviour` is for what only the running system shows, and it asks for marks in that system.
+   - **Ask once the draft brief exists: "Does this change how anything looks?"** A plan that changes a file under an app's interface (the `sources` in each `.indusk/mockups/<app>/screens.json`) changes a look, and `plans approve` refuses it while its brief lists none and gives no reason. If it does, list each look under `## Looks`, as promises are listed: **This plan makes** for a screen or component that is new, and under **Existing looks** the ones it must not break, **Changes** (the approved look is still the one the app is held to until a person approves the new one) or **Replaces**. A look is a mockup (`home.full`, screen then state) or a story (`badge.ok`, a component's state). Name a story directly. Name a mockup directly, or draw a draft of it first under the app's `screens/` so the person sees it in the cockpit, where it reads as proposed. If it changes nothing, write `None — {the reason}`; never leave the section out of a plan that touches the interface. **Approval waits on the mockups the brief names:** a person approves each in the cockpit before the plan is approved (a story cannot be approved before its component exists, so it is exempt). The agent draws and proposes a look; it never approves one.
    - **Write it as `status: draft` and present it.** The draft is the conversation read back on paper. Walk the person through it: "Here is what I understood we are promising, and what we expect to follow. Is anything missing? Is there anything here you do not want to promise?" Iterate until they agree. A draft is not yet held to the registry, so edit it freely.
 
    **When the person accepts the brief, save its promises with the tools. Never type a file under `.indusk/promises/`:**
@@ -300,7 +301,7 @@ status: in-progress | complete
 
 ### brief.md
 
-A brief holds what the conversation produced: expectations and promises. `indusk promises contract` reads this shape, so keep the headings, keep each label on its own line, and start each entry with the promise's name as written here. Prose between the parts is fine.
+A brief holds what the conversation produced: expectations, promises and looks. `indusk promises contract` reads this shape, so keep the headings, keep each label on its own line, and start each entry with the promise's or the look's name as written here. Prose between the parts is fine.
 
 ```markdown
 ---
@@ -345,6 +346,28 @@ workflow: feature | bugfix | refactor | spike
 ### Not promised
 
 - {What was considered and deliberately not promised, and where it goes instead.}
+
+## Looks
+
+### This plan makes
+
+1. **`{look-name}`**. {What a person will see: the screen and its state, or the component.}
+
+### Existing looks
+
+**Must not break**
+
+- **`{look-name}`**. {Why this plan comes near it.}
+
+**Changes**
+
+- **`{look-name}`**. {The look as it will read; the approved one stays held until a person approves this.}
+
+**Replaces**
+
+- **`{old-look}`**, by **`{new-look}`**.
+
+{Write `None.` under any of the three that has no entry. A plan that changes nothing under an app's interface writes instead, under `## Looks`: None — {the reason}}
 
 ## Depends On
 - {Plans that must be completed before this one — e.g., `.indusk/planning/per-game-escrow/`}

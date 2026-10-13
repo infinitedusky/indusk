@@ -11,7 +11,7 @@ What is wrong with the current structure and why now are not the brief's. Write 
 
 ## Brief Template
 
-A brief holds what the conversation produced: expectations and promises, in the shape `indusk promises contract` reads (the planner skill has the full template and the rules). A refactor changes no behavior, so its brief is mostly the existing promises it works near: each goes under **Must not break**. A refactor that leaves a rule the structure must keep (one definition of something, no import across a boundary) makes that a `structure` promise.
+A brief holds what the conversation produced: expectations, promises and looks, in the shape `indusk promises contract` reads (the planner skill has the full template and the rules). A refactor changes no behavior, so its brief is mostly the existing promises it works near: each goes under **Must not break**, and it says `None — {reason}` for looks unless it moves files under an app's interface, where the looks it must not break are listed. A refactor that leaves a rule the structure must keep (one definition of something, no import across a boundary) makes that a `structure` promise.
 
 ```markdown
 ---

@@ -11,7 +11,7 @@ What is broken, how it shows and how to reproduce it are not the brief's. When t
 
 ## Brief Template
 
-A brief holds what the conversation produced: expectations and promises, in the shape `indusk promises contract` reads (the planner skill has the full template and the rules). A bug is a promise that broke, or one that was never made. If a promise in the registry covers what broke, list it under **Must not break** and let the failing test's row name it. If nothing covers it and it should stay fixed, make the promise here.
+A brief holds what the conversation produced: expectations, promises and looks, in the shape `indusk promises contract` reads (the planner skill has the full template and the rules). A bug is a promise that broke, or one that was never made. A fix that changes a file under an app's interface lists the look it touches under `## Looks`, or says why it has none. If a promise in the registry covers what broke, list it under **Must not break** and let the failing test's row name it. If nothing covers it and it should stay fixed, make the promise here.
 
 ```markdown
 ---
