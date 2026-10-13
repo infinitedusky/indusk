@@ -347,7 +347,8 @@ A person works on one document, the brief — promises, expectations and looks �
 
 #### Build Phase 4 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a plan's page shows its three parts from `plans/parts` and computes none — guarded by `cockpit-single-definition.test.ts` and `plan-parts.test.tsx` (A15)
+- [x] `apps/indusk-admin/CLAUDE.md`: a plan's page shows its three parts from `plans/parts` and computes none — guarded by `cockpit-single-definition.test.ts` and `plan-parts.test.tsx` (A15)
+  - Note: the rule is in `apps/indusk-admin/CLAUDE.md` beside the cockpit's other single-definition rules; `cockpit-single-definition.test.ts` now lists `plans/parts` and `readPlanParts` as package-only.
 
 #### Build Phase 4 Document
 

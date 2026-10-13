@@ -153,6 +153,14 @@ Each entry is a rule and a pointer; the pointer holds the story.
   compiled to nothing and left the nav off-screen), so a restyle is also looked
   at; and the Typography plugin is gone — `.prose` is written on the foundation
   in `globals.css`. — see `/decisions/ui-promises`
+- **A plan's page shows its brief's three parts from `plans/parts` and computes
+  none**: promises, expectations and looks (each look the approved `LookRow`
+  with `LookFrame` one click on, proposed until a person approves it on the
+  Looks page) and any waiting amendment come from the package's
+  `readPlanParts`, read from the plan's own checkout on every request; Approve
+  on an amendment posts to `plans/[name]/reapprove`. The review's `evidence`
+  group is read, not signed off. Guarded by `cockpit-single-definition.test.ts`
+  and `plan-parts.test.tsx` (A15). — see `/reference/admin-ui/overview`
 - **A decision's card is read again from what the daemon holds after every
   answer**: a started release clears the build's stop and a second accept is
   refused while it runs, and an answer delivered but not recorded is reported
