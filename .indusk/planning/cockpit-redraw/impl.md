@@ -74,7 +74,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 - [x] Author A1–A4 in `CockpitFrame.test.tsx`, rendering `CockpitFrame` at desktop and phone widths and dragging the nav's edge by its role (`separator`), RED: there is no edge today
 - [x] Author A5, A6 in `looks-approval-guard.test.ts` beside the record and route cases, RED: the guard allows both today
 - [x] Add `promise: only-a-person-reapproves` to `amendment-approval.test.ts` (A7), `promise: a-plan-page-shows-the-parts-of-its-brief` to `plan-page-layout.test.tsx` (A8) and `PlanSummary.test.tsx` (A9), and `promise: a-plan-builds-only-after-approval` to `check-gates-amendments.test.ts` (A12); each passes today
-- [ ] Confirm each red row fails on its own assertion rather than on a missing import
+- [x] Confirm each red row fails on its own assertion rather than on a missing import
 
 #### Deferred to Build Phase 3
 
