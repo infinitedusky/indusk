@@ -61,7 +61,7 @@ A person works on one document, the brief — promises, expectations and looks �
 | A14 | A change to an impl item, a note or a Shape finding after approval is recorded in the impl and waits for nobody | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-change-to-what-was-agreed-needs-the-person | apps/indusk-mcp/src/__tests__/amendments.test.ts |
 | A15 | A plan's page shows its promises, expectations and looks, each with its name and state, and a link one click down to the brief | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
 | A16 | A look the agent draws while a person is on the plan's page appears there, at each reference device and proposed, in a real browser | Build Phase 4 | Build Phase 4 | passing | contract | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/__tests__/plan-parts.contract.test.ts |
-| A17 | A promise or a look written by the agent in a live planning session appears on the page without the person leaving it | Build Phase 4 | Build Phase 4 | planned | live check | promise: a-plan-page-shows-the-parts-of-its-brief | manual: recorded in Build Phase 4's Verification |
+| A17 | A promise or a look written by the agent in a live planning session appears on the page without the person leaving it | Build Phase 5 | Build Phase 5 | planned | live check | promise: a-plan-page-shows-the-parts-of-its-brief | manual: recorded in Build Phase 5's Verification |
 | A18 | The page for starting a plan asks for no name and no type before the conversation begins | Test Phase 1 | Build Phase 5 | written | unit | promise: a-plan-starts-as-a-conversation | apps/indusk-admin/src/components/session/NewPlanForm.test.tsx |
 | A19 | Accepting the agent's proposed name and type creates the plan on its own branch and worktree with the draft as its brief; a name already taken is refused and another is asked for | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-plan-starts-as-a-conversation | apps/indusk-mcp/src/__tests__/drafts.test.ts |
 | A20 | A conversation not kept leaves no file in any checkout or branch of the project; it is listed on the page as a draft that can be reopened or discarded | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-conversation-that-is-not-kept-leaves-nothing-in-the-repository | apps/indusk-mcp/src/__tests__/drafts.test.ts |
@@ -166,7 +166,7 @@ A person works on one document, the brief — promises, expectations and looks �
   });
   ```
 
-- **A17** — a live check against the developer's own `claude`, recorded once in Build Phase 4's Verification.
+- **A17** — a live check against the developer's own `claude`, recorded once in Build Phase 5's Verification (moved from Build Phase 4 on 2026-10-13 with Sandy's approval: a plan being built offers no planning session, so the check runs on the conversation entry Build Phase 5 builds).
 
 #### Deferred to Build Phase 5
 
@@ -346,8 +346,6 @@ A person works on one document, the brief — promises, expectations and looks �
 
 - [x] A5, A10 and A15 pass (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/plan-parts.test.tsx`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/review-evidence.test.ts`); A16 passes in the system tier (`cd apps/indusk-admin && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/plan-parts.contract.test.ts`, listed in `SYSTEM`)
   - Result: `plan-parts.test.tsx` (A15, A5) 2 tests pass in the node project; `review-evidence.test.ts` (A10) 1 test passes; `plan-parts.contract.test.ts` (A16) passes in Chromium in the system tier (listed in `SYSTEM`). Their rows are `passing` (State cells only). Fixing the page for the browser project: `plans/parts` reads node:fs, so the five page tests that render the plan page mock it as a plan with no brief (`readPlanParts(root, plan, {archived})` now computes the folder itself, so `page.tsx` imports no `node:path`).
-- [ ] A17, live check: with the admin running, start a planning session from this plan's page, ask the agent to add a promise and draw a look, and see both appear without leaving the page — recorded here with the date and what was seen
-  - Note (unattended build, 2026-10-13): left unchecked on purpose — a live check against the developer's own `claude` needs a person to watch the page (Deferred-style manual item). It also keeps Build Phase 4's Verification not green, so the Shape step reports `skipped` ("verification is not green") and Build Phase 5 stays gated. A person runs A17, records it here, then Shape and Build Phase 5 can proceed.
 - [x] The admin's everyday suite passes; `indusk looks check admin` reads every checked look held; tsc and biome clean on changed files
   - Result: admin `pnpm test`: 83 files pass, 570 of 571 tests; the one failure is `NewPlanForm.test.tsx` A18, the row Build Phase 5 passes (state `written`, unchanged). `indusk looks check admin`: 354 held, 0 broken, exit 0 (105 unchecked: the new stories await approval, and the running admin on :3939 is main's build, which does not report the new states); `looks lint admin` finds no raw value and no undefined token, only needs-a-story notices for the inline-declared components; tsc clean in both packages; biome clean on every changed file (the findings it reports elsewhere, `project-reader.ts`, `hook-cwd-independence.test.ts`, public svgs, are not this phase's).
 
@@ -374,6 +372,8 @@ A person works on one document, the brief — promises, expectations and looks �
 
 #### Build Phase 5 Verification
 
+- [ ] A17, live check: with the admin running, press New, ask the agent in the draft's conversation to add a promise and draw a look, and see both appear without leaving the page — recorded here with the date and what was seen
+  - Note: moved from Build Phase 4 on 2026-10-13 — asked: "A17 can't run on this plan's page while it's being built — move it to Build Phase 5, where the conversation entry is built?" — user: "Yes moved is good"
 - [ ] A18, A19, A20 and A21 pass and A23 still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/drafts.test.ts src/__tests__/plans-approve-looks.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/session`); the admin's everyday suite and both packages' tests pass; tsc and biome clean on changed files
 
 #### Build Phase 5 Context
