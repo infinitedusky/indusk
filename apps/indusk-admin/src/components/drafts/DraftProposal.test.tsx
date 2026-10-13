@@ -139,3 +139,37 @@ describe("the proposal is the person's to accept or edit", () => {
     expect(push).not.toHaveBeenCalled();
   });
 });
+
+describe("A30 — a spike lands on the plan's page, not on a brief it never has", () => {
+  it("a draft accepted as a spike moves to the plan page; a feature moves to its brief", async () => {
+    capture(Response.json({ plan: "seat-study", type: "spike" }, { status: 201 }));
+    const spike = await render(
+      <DraftProposal
+        project="concierge"
+        draft="d1"
+        proposal={{ name: "seat-study", type: "spike" }}
+      />,
+    );
+    await userEvent.click(
+      spike.getByRole("button", { name: /accept/i }).element(),
+    );
+    await vi.waitFor(() => expect(push).toHaveBeenCalled());
+    expect(push).toHaveBeenCalledWith("/p/concierge/plan/seat-study");
+    await spike.unmount();
+    push.mockClear();
+
+    capture(Response.json({ plan: "seat-holds", type: "feature" }, { status: 201 }));
+    const feature = await render(
+      <DraftProposal
+        project="concierge"
+        draft="d2"
+        proposal={{ name: "seat-holds", type: "feature" }}
+      />,
+    );
+    await userEvent.click(
+      feature.getByRole("button", { name: /accept/i }).element(),
+    );
+    await vi.waitFor(() => expect(push).toHaveBeenCalled());
+    expect(push).toHaveBeenCalledWith("/p/concierge/plan/seat-holds/brief");
+  });
+});
