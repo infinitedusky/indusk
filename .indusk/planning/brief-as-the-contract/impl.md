@@ -440,7 +440,8 @@ A person works on one document, the brief — promises, expectations and looks �
   - Note: reads through `parseFrontmatter` (gray-matter, the promise modules' one reader); a malformed block reads as no description and no status. `plan-parts-description.test.ts` (A27, 3 tests) passes.
 - [x] `PlanSummary` takes whether the brief is finished from the package's `documentFinished("brief", status)` (`plans/steps`), shows nothing for a `superseded` brief, and the plan page passes no call to work on the brief for an archived plan (A28)
   - Note: `PlanSummary` calls `documentFinished("brief", status)`, shows a quiet link for a `superseded` brief and for `archived` (new prop; the page passes `plan.archived || archivedInWorktree`). `PlanSummary.test.tsx` (A28, 5 tests) passes.
-- [ ] The archive cache in `planning-reader.ts` keys on each archived plan's files' mtimes, not only the folders', so an in-place edit reads afresh (A29)
+- [x] The archive cache in `planning-reader.ts` keys on each archived plan's files' mtimes, not only the folders', so an in-place edit reads afresh (A29)
+  - Note: the key is the archive's mtime plus, per archived plan, the newest mtime of its folder and the files (and subfolders' files) in it (`newestMtime`). `planning-reader.archive-cache.test.ts` (A29) passes.
 - [ ] `DraftProposal`'s accept lands on `/brief` only when the plan has a brief; a `spike` lands on the plan's page (A30)
 - [ ] `WindowColumn` fits its height only while the two-column layout applies (the same breakpoint as `.cols-brief-page`), and clears it otherwise (A31)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here

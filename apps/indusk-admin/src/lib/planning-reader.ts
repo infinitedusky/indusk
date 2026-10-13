@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
@@ -521,9 +521,32 @@ export async function readProjectWorktrees(projectRoot: string): Promise<
 /**
  * Archived plans, read once per change to the archive: the read is the
  * slowest on every page (over two seconds on dusk's), and an archived plan's
- * folder changes only when a plan is archived or its folder is written. The
- * key is the archive's and each folder's mtime, so either reads afresh.
+ * folder changes only when a plan is archived or a file in it is written. The
+ * key is the archive's mtime and, for each plan, the newest mtime of its
+ * folder and the files in it: a file edited in place leaves its folder's
+ * mtime alone, and served the old text (brief-as-the-contract A29).
  */
+/** The newest mtime of `dir` and of what it holds, two levels down (an archived plan is flat, with a few folders). */
+function newestMtime(dir: string, depth = 2): number {
+  let newest = 0;
+  try {
+    newest = statSync(dir).mtimeMs;
+    if (depth === 0) return newest;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      newest = Math.max(
+        newest,
+        entry.isDirectory()
+          ? newestMtime(path, depth - 1)
+          : statSync(path).mtimeMs,
+      );
+    }
+  } catch {
+    // a file gone between the listing and the stat: the key reads it as it is
+  }
+  return newest;
+}
+
 const archivedCache = new Map<
   string,
   { key: string; plans: Promise<Plan[]> }
@@ -537,14 +560,8 @@ export async function readArchivedPlans(projectRoot: string): Promise<Plan[]> {
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
     .sort();
-  const key = [archiveDir, ...folders]
-    .map((f) => {
-      try {
-        return statSync(f === archiveDir ? f : join(archiveDir, f)).mtimeMs;
-      } catch {
-        return 0;
-      }
-    })
+  const key = [archiveDir, ...folders.map((f) => join(archiveDir, f))]
+    .map((dir) => (dir === archiveDir ? newestMtime(dir, 0) : newestMtime(dir)))
     .join(",");
   const cached = archivedCache.get(projectRoot);
   if (cached?.key === key) return cached.plans;
