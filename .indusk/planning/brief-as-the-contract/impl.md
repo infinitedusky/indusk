@@ -485,9 +485,12 @@ A person works on one document, the brief — promises, expectations and looks �
 - [x] (reviewed `cli.ts` +27, `config.ts` +13, `looks/approve.ts` +19, `looks/stories.ts` +7 — left as-is: small additions inside each file's existing job)
 - [x] (reviewed `apps/indusk-admin/src/components/session/NewPlanForm.tsx` — left as-is under its name, though it is now a button: A18's Test cell names its test file, and the trajectory's cells are not renamed at close)
 
+- [x] Shape — reviewed the 7 files this phase changed (`plan-page.ts` and its test, the three routes, `PlanSession` rename, `cleanup-pins.test.ts`, `session/index.ts`); one finding: the plan page's header comment still described the lookup and stale-path handling it no longer does — rewritten to point at `readPlanPage`. `readPlanPage` has one reason to change, a name that says what it serves, and a seam a test reaches through its two inputs. The plan page's parent-plan branch reads both plan lists again for its subplan names; left, as it is the only caller needing the lists and only for parent plans.
+
 #### Build Phase 7 Verification
 
-- [ ] A32 passes (`cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-page.test.ts`); the admin's everyday suite passes with the removed tree gone (`cd apps/indusk-admin && pnpm test`); `vitest related` on the changed indusk-mcp files; `indusk promises confirm` still finds a test for `a-review-shows-its-evidence`; tsc and biome clean on changed files
+- [x] A32 passes (`cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-page.test.ts`); the admin's everyday suite passes with the removed tree gone (`cd apps/indusk-admin && pnpm test`); `vitest related` on the changed indusk-mcp files; `indusk promises confirm` still finds a test for `a-review-shows-its-evidence`; tsc and biome clean on changed files
+  - Note: A32 passes (1 test). Admin `pnpm test`: 88 files, 556 tests, all pass (the removed tree took 5 + 4 test files with it; the prior 592/593's one failure, A18, is Build Phase 5's and passes). `vitest related` on the changed indusk-mcp file `session/index.ts` finds no test file; `tsc --noEmit` clean in both packages; `biome check` clean on every changed file (the admin tree has 4 existing findings in files this phase did not touch: `project-reader.ts`, `http-promise-remote.test.ts`, `LiveRefresh.tsx` x2). `indusk promises check` passes; `a-review-shows-its-evidence` keeps `plans-review.test.ts`, `ReviewPanel.test.tsx` and `DecisionCard.test.tsx`, each carrying its token.
 
 #### Build Phase 7 Context
 
