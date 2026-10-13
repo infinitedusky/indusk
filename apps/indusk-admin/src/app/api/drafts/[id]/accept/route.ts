@@ -58,7 +58,7 @@ export async function POST(
     });
     const started = await startFromDraft(root, draft);
     return Response.json(
-      { plan: started.plan, worktree: started.worktree },
+      { plan: started.plan, type: started.type, worktree: started.worktree },
       { status: 201 },
     );
   } catch (err) {

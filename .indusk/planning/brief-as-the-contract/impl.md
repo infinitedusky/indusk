@@ -442,7 +442,8 @@ A person works on one document, the brief — promises, expectations and looks �
   - Note: `PlanSummary` calls `documentFinished("brief", status)`, shows a quiet link for a `superseded` brief and for `archived` (new prop; the page passes `plan.archived || archivedInWorktree`). `PlanSummary.test.tsx` (A28, 5 tests) passes.
 - [x] The archive cache in `planning-reader.ts` keys on each archived plan's files' mtimes, not only the folders', so an in-place edit reads afresh (A29)
   - Note: the key is the archive's mtime plus, per archived plan, the newest mtime of its folder and the files (and subfolders' files) in it (`newestMtime`). `planning-reader.archive-cache.test.ts` (A29) passes.
-- [ ] `DraftProposal`'s accept lands on `/brief` only when the plan has a brief; a `spike` lands on the plan's page (A30)
+- [x] `DraftProposal`'s accept lands on `/brief` only when the plan has a brief; a `spike` lands on the plan's page (A30)
+  - Note: the accept route now returns the started plan's `type` (a draft with no brief becomes a spike whatever was proposed); `DraftProposal` moves to the plan page for a `spike`, to `/brief` otherwise. A30 passes, A9 still passes.
 - [ ] `WindowColumn` fits its height only while the two-column layout applies (the same breakpoint as `.cols-brief-page`), and clears it otherwise (A31)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 

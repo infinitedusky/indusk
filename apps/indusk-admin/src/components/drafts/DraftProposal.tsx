@@ -41,19 +41,25 @@ export function DraftProposal({
   const accept = async () => {
     setBusy(true);
     setProblem(null);
-    const r = await postJson<{ plan?: string }>(`/api/drafts/${draft}/accept`, {
-      project,
-      name,
-      type,
-      ...(asksRepo ? { repo } : {}),
-    });
+    const r = await postJson<{ plan?: string; type?: string }>(
+      `/api/drafts/${draft}/accept`,
+      {
+        project,
+        name,
+        type,
+        ...(asksRepo ? { repo } : {}),
+      },
+    );
     setBusy(false);
     if (!r.ok) {
       setProblem(r.error);
       setEditing(true);
       return;
     }
-    router.push(`/p/${project}/plan/${r.body.plan}/brief`);
+    // A spike has no brief (a draft with none becomes one), so it lands on the
+    // plan's page, where its research is.
+    const page = (r.body.type ?? type) === "spike" ? "" : "/brief";
+    router.push(`/p/${project}/plan/${r.body.plan}${page}`);
   };
 
   const editable = editing || asksRepo;
