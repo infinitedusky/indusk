@@ -320,7 +320,7 @@ export function plansArchiveDead(projectRoot: string, opts: PlansArchiveDeadOpti
 	});
 	if (drafts.length > 0) {
 		console.info(
-			`${opts.dryRun ? "Would discard" : "Discarded"} ${drafts.length} untouched draft(s): ${drafts.join(", ")}`,
+			`${opts.dryRun ? "Would archive" : "Archived"} ${drafts.length} untouched draft(s) in the project home: ${drafts.join(", ")}`,
 		);
 	}
 	const verb = result.dryRun ? "Would archive" : "Archived";

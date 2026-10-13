@@ -4,6 +4,7 @@ import {
 	mkdirSync,
 	readdirSync,
 	readFileSync,
+	renameSync,
 	rmSync,
 	statSync,
 	utimesSync,
@@ -161,13 +162,28 @@ export function discardDraft(home: string, id: string): void {
 	if (draft) rmSync(draft.dir, { recursive: true, force: true });
 }
 
-/** Discard every draft untouched for `maxAgeDays` or more; returns their ids. `dryRun` only reads. */
+/** Where an aged draft is kept: `<home>/drafts/archive/<id>/`, which is not itself a draft (it has no marker). */
+export const draftsArchiveDir = (home: string): string => join(draftsDir(home), "archive");
+
+/**
+ * Archive every draft untouched for `maxAgeDays` or more, moved whole to
+ * `<home>/drafts/archive/<id>/` (ADR decision 9: a draft nobody returned to is
+ * archived, never lost — what it held can still be read). Returns their ids.
+ * `dryRun` only reads.
+ */
 export function sweepDrafts(
 	home: string,
 	opts: { maxAgeDays: number; now?: Date; dryRun?: boolean },
 ): string[] {
 	const now = (opts.now ?? new Date()).getTime();
 	const old = listDrafts(home).filter((d) => now - d.updatedMs >= opts.maxAgeDays * DAY_MS);
-	if (!opts.dryRun) for (const d of old) discardDraft(home, d.id);
+	if (!opts.dryRun) {
+		mkdirSync(draftsArchiveDir(home), { recursive: true });
+		for (const d of old) {
+			const kept = join(draftsArchiveDir(home), d.id);
+			rmSync(kept, { recursive: true, force: true });
+			renameSync(d.dir, kept);
+		}
+	}
 	return old.map((d) => d.id);
 }

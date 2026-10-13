@@ -10,7 +10,9 @@ import { type Draft, readDraftDocument, readProposal } from "./store.js";
  * draft's document as its first one, and the draft is spent. A conversation
  * that made a brief becomes a plan with a brief; one that made research alone
  * becomes a research-only plan (`spike`) with no brief. Refused while the name
- * is taken, and the draft is kept so another name can be asked for.
+ * is taken, and the draft is kept so another name can be asked for. A draft
+ * holding both documents gives the plan both: the brief as its first document,
+ * the research beside it.
  *
  * promise: a-plan-starts-as-a-conversation
  */
@@ -40,6 +42,8 @@ export async function startFromDraft(
 		const started = await startPlan(anyCheckout, type, proposal.name, now, {
 			...(proposal.repo ? { repo: proposal.repo } : {}),
 			...(document ? { document } : {}),
+			// A brief and the research behind it: both reach the plan.
+			...(type !== "spike" && research ? { research } : {}),
 		});
 		rmSync(draft.dir, { recursive: true, force: true });
 		return started;

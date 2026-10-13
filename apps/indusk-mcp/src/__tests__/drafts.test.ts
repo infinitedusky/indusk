@@ -112,6 +112,9 @@ describe("a draft that held both documents keeps both", () => {
 		expect(readFileSync(join(folder, "brief.md"), "utf-8")).toContain("# promises");
 		expect(existsSync(join(folder, "research.md"))).toBe(true);
 		expect(readFileSync(join(folder, "research.md"), "utf-8")).toContain("# what we found");
-		expect(git(started.worktree, ["status", "--porcelain"])).toBe("");
+		// Committed with the brief, so the branch holds it and not only the folder.
+		expect(git(started.worktree, ["ls-files", ".indusk/planning/keeps-both"])).toContain(
+			"research.md",
+		);
 	});
 });
