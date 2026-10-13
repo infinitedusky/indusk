@@ -1,8 +1,8 @@
 ---
 title: "new-project-flow"
 date: 2026-10-13
-status: draft
-workflow: spike
+status: complete
+workflow: feature
 ---
 
 # new-project-flow — Research
@@ -53,11 +53,16 @@ The result: `~/code/sandbox/homework-gate-workbench`.
 - **Repo shape:** every app has a docs site, so every project is a monorepo;
   Turbo everywhere, non-JS apps (Swift, .NET) behind thin `package.json`
   scripts so every project has the same entry points (moderate confidence).
-- **The admin is read-only by decision** (`/decisions/admin-ui-hosting`, the
-  ADR that made the admin a machine-global read-only daemon). Creating a
-  project writes to disk, so this is a deliberate, narrow exception — probably
-  one write path the admin hands to the CLI, limited to a configured parent
-  directory.
+- **The admin already writes and already runs agents.** The read-only
+  objection raised early in the conversation is out of date: admin-plan-authoring
+  made the admin start plans and host agent sessions (`a-plan-can-start-from-the-admin`,
+  `a-session-can-be-stopped`, the session manager in
+  `apps/indusk-mcp/src/lib/session/`). Creating a project is one more write
+  through that path, not a new exception.
+- **Conversation-first "New plan" is already brief-as-the-contract's**
+  (`a-plan-starts-as-a-conversation`, `a-conversation-that-is-not-kept-leaves-nothing-in-the-repository`).
+  This plan builds the project-level version on top of it rather than
+  absorbing it.
 
 ## Walkthrough log
 
@@ -119,8 +124,7 @@ Each entry is something the real feature has to handle.
 
 ## Open questions
 
-- Who runs the agent? The admin daemon would launch `claude` headless — a new
-  kind of process for it to own.
+- Who runs the agent? Answered: the admin's existing session manager.
 - Where may it write — a configured parent directory only?
 - The exact line between the non-negotiable core and refusable documents.
 - Where the project brief lives, and whether this flow is where premises gets
@@ -130,10 +134,8 @@ Each entry is something the real feature has to handle.
 
 ## Related
 
-- Conversation-first new plan (not built): "New plan" opens a conversation, the
-  agent proposes name and type, scratch until named, every conversation ends as
-  a plan. This is the project-level version.
+- [brief-as-the-contract](../brief-as-the-contract/brief.md) — owns
+  conversation-first "New plan" (`a-plan-starts-as-a-conversation`); this plan
+  is the project-level version on top of it.
 - [plan-premises](../plan-premises/brief.md) — the draft brief for a project's
   scored aim.
-- brief-as-the-contract — the plan establishing the brief as the person's
-  document and the rest as the AI's.
