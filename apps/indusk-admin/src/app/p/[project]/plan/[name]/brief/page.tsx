@@ -4,6 +4,7 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { Markdown } from "@/components/Markdown";
 import { PlanFrame } from "@/components/plan/PlanFrame";
 import { PlanParts } from "@/components/plan/PlanParts";
+import { FollowAgent } from "@/components/session/FollowAgent";
 import { PlanSession } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
 import { planActions } from "@/lib/plan-actions";
@@ -19,8 +20,8 @@ interface BriefPageProps {
 
 /**
  * `/p/{project}/plan/{name}/brief` — where a plan is written: its promises,
- * expectations and looks and the brief itself on the left, the agent the
- * person writes it with in a column on the right. A draft's accepted name
+ * expectations and looks and the brief itself on the right, the agent the
+ * person writes it with in a column on the left. A draft's accepted name
  * lands here; Approve moves to the plan's page, where Build starts the build.
  *
  * promise: a-plan-page-shows-the-parts-of-its-brief
@@ -61,6 +62,7 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
   return (
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
+      <FollowAgent />
       <PlanFrame project={project} plan={plan}>
         <TrustNotice project={project} trusted={projectTrusted(projectPath)} />
         <nav className="flex gap-4 text-sm text-ink-soft">
@@ -68,6 +70,24 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
           {research ? <a href={`${planHref}/doc/research`}>Research</a> : null}
         </nav>
         <div className="cols-brief-page grid items-start gap-5">
+          <aside
+            className="sticky top-0 flex max-h-screen min-w-0 flex-col gap-2 self-start overflow-y-auto py-2"
+            data-testid="brief-agent"
+          >
+            <h2 className="font-display text-lg font-bold">Agent</h2>
+            {canTalk ? null : (
+              <p className="text-sm text-ink-faint">
+                The agent works in the plan's worktree; this plan has none.
+              </p>
+            )}
+            <PlanSession
+              project={project}
+              plan={name}
+              canApprove={actions.canApprove}
+              canPlan={canTalk}
+              approvedHref={planHref}
+            />
+          </aside>
           <div className="grid min-w-0 gap-4">
             {parts.description ? (
               <p className="text-ink-soft" data-testid="plan-description">
@@ -94,24 +114,6 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
               )}
             </article>
           </div>
-          <aside
-            className="sticky top-0 grid min-w-0 gap-2"
-            data-testid="brief-agent"
-          >
-            <h2 className="font-display text-lg font-bold">Agent</h2>
-            {canTalk ? null : (
-              <p className="text-sm text-ink-faint">
-                The agent works in the plan's worktree; this plan has none.
-              </p>
-            )}
-            <PlanSession
-              project={project}
-              plan={name}
-              canApprove={actions.canApprove}
-              canPlan={canTalk}
-              approvedHref={planHref}
-            />
-          </aside>
         </div>
       </PlanFrame>
     </>

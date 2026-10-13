@@ -25,7 +25,16 @@ export function SessionConnector({ sessionId }: { sessionId: string }) {
     source.onmessage = (message) => {
       const ev = JSON.parse(message.data) as StartedEvent;
       setEvents((prev) => [...prev, ev]);
-      if (ev.type === "tool" && WRITES.includes(ev.name)) router.refresh();
+      if (ev.type === "tool" && WRITES.includes(ev.name)) {
+        router.refresh();
+        // Tell the page what the agent wrote, so it can bring that part into
+        // view (`FollowAgent`).
+        const file = ev.input.file_path ?? ev.input.notebook_path;
+        if (typeof file === "string")
+          window.dispatchEvent(
+            new CustomEvent(AGENT_WROTE, { detail: { file, input: ev.input } }),
+          );
+      }
       if (ev.type === "exit") {
         setRunning(false);
         source.close();
@@ -64,3 +73,6 @@ export function SessionConnector({ sessionId }: { sessionId: string }) {
 }
 
 const WRITES = ["Write", "Edit", "MultiEdit", "NotebookEdit"];
+
+/** The window event a session fires for each file its agent writes. */
+export const AGENT_WROTE = "indusk:agent-wrote";
