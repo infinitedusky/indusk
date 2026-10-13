@@ -57,15 +57,27 @@ export interface PlanParts {
 	amendments: Amendment[];
 	/** Why the waiting amendments cannot be told; null when they can. */
 	amendmentsUnreadable: string | null;
+	/** What the plan is, in plain words: the brief's opening, before its first section; null when it has none. */
+	description: string | null;
+	/** The brief's `status` (draft, accepted, …); null when there is no brief or it names none. */
+	briefStatus: string | null;
 }
 
 type Drawn = Pick<PartLook, "plan" | "app" | "document" | "devices"> & {
 	approval: "approved" | "proposed";
 };
 
-const EMPTY = (plan: string, hasBrief: boolean): PlanParts => ({
+const EMPTY = (
+	plan: string,
+	hasBrief: boolean,
+	opening: Pick<PlanParts, "description" | "briefStatus"> = {
+		description: null,
+		briefStatus: null,
+	},
+): PlanParts => ({
 	plan,
 	hasBrief,
+	...opening,
 	promises: [],
 	expectations: [],
 	looks: [],
@@ -73,6 +85,20 @@ const EMPTY = (plan: string, hasBrief: boolean): PlanParts => ({
 	amendments: [],
 	amendmentsUnreadable: null,
 });
+
+/**
+ * The brief's opening: its `status` and the prose between its title and its
+ * first `##` section, which says what the plan is before any part of it is
+ * settled. A first cut of a plan's description, to be given its own place.
+ */
+export function briefOpening(source: string): Pick<PlanParts, "description" | "briefStatus"> {
+	const front = /^---\n([\s\S]*?)\n---\n?/.exec(source);
+	const status = front ? /^status:\s*"?([^"\n]+?)"?\s*$/m.exec(front[1]) : null;
+	const body = front ? source.slice(front[0].length) : source;
+	const head = body.split(/^## /m)[0] ?? "";
+	const description = head.replace(/^# .*$/m, "").trim();
+	return { description: description || null, briefStatus: status ? status[1] : null };
+}
 
 /** The looks the brief lists, each under how the brief lists it. */
 export function listedLooks(brief: BriefContract): Array<{ name: string; relation: LookRelation }> {
@@ -100,8 +126,10 @@ export async function readPlanParts(
 	const dir = join(root, ".indusk", "planning", ...(options.archived ? ["archive"] : []), plan);
 	const briefFile = join(dir, "brief.md");
 	if (!existsSync(briefFile)) return EMPTY(plan, false);
-	const brief = parseBriefContract(readFileSync(briefFile, "utf-8"));
-	if (brief.shape === "legacy") return EMPTY(plan, false);
+	const source = readFileSync(briefFile, "utf-8");
+	const opening = briefOpening(source);
+	const brief = parseBriefContract(source);
+	if (brief.shape === "legacy") return EMPTY(plan, false, opening);
 
 	const read = readPromises(root);
 	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
@@ -180,5 +208,6 @@ export async function readPlanParts(
 		noLooks: brief.looks?.none ?? null,
 		amendments,
 		amendmentsUnreadable,
+		...opening,
 	};
 }
