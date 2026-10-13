@@ -130,12 +130,16 @@ export async function amendmentsOf(folder: string): Promise<Amendment[]> {
 	// A contract in another repository (a workbench's code repo) has no copy at
 	// this commit; the brief's own sentences still carry each promise.
 	const inRepo = !dirRel.startsWith("..");
+	const atApproval = (file: string) =>
+		fileAtRevision(top, sha, join(dirRel, file)).catch(() => null);
+	const onDisk = async (file: string) =>
+		existsSync(join(dir, file)) ? readFileSync(join(dir, file), "utf-8") : null;
 	return amendmentsBetween(
 		{
 			brief: approvedBrief,
-			statements: inRepo ? await statementsAt(top, sha, dirRel, plan, names) : new Map(),
+			statements: inRepo ? await statementsFrom(names, plan, atApproval) : new Map(),
 		},
-		{ brief: briefNow, statements: inRepo ? statementsOnDisk(dir, plan, names) : new Map() },
+		{ brief: briefNow, statements: inRepo ? await statementsFrom(names, plan, onDisk) : new Map() },
 	);
 }
 
@@ -209,27 +213,20 @@ function promiseIn(raw: string): { owner: unknown; statement: string } | null {
 	return { owner: parsed.data.owner, statement: firstParagraph(parsed.content) };
 }
 
-async function statementsAt(
-	top: string,
-	sha: string,
-	dirRel: string,
-	plan: string,
+/**
+ * The statement of each promise in `names` the plan owns, each file's text
+ * handed by `read` (null when there is none): the same reading at the
+ * approval commit and on disk.
+ */
+async function statementsFrom(
 	names: string[],
+	plan: string,
+	read: (file: string) => Promise<string | null>,
 ): Promise<Map<string, string>> {
 	const out = new Map<string, string>();
 	for (const name of names) {
-		const raw = await fileAtRevision(top, sha, join(dirRel, `${name}.md`)).catch(() => null);
+		const raw = await read(`${name}.md`);
 		const p = raw === null ? null : promiseIn(raw);
-		if (p && p.owner === plan) out.set(name, p.statement);
-	}
-	return out;
-}
-
-function statementsOnDisk(dir: string, plan: string, names: string[]): Map<string, string> {
-	const out = new Map<string, string>();
-	for (const name of names) {
-		const file = join(dir, `${name}.md`);
-		const p = existsSync(file) ? promiseIn(readFileSync(file, "utf-8")) : null;
 		if (p && p.owner === plan) out.set(name, p.statement);
 	}
 	return out;
