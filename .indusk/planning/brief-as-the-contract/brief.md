@@ -78,6 +78,9 @@ None.
 11. **`plan.history`**. The plan page with its History panel open.
 12. **`part-section.closed`**. A new component, one part of the plan page folded to a row: its name and a one-line summary ("Promises · 4 · 1 enforced"), collapsed by default.
 13. **`part-section.open`**. The same component opened to what the part holds.
+14. **`phase-row.closed`**. A new component, one phase of the plan folded to a row: its name, its items done and its state (done, in progress, not started), collapsed by default; drawn inside the Phases part.
+15. **`phase-row.open`**. The same component opened to the phase's items, checked or not, each with the note recorded under it (what shipped, test results, decisions) in smaller, muted text.
+16. **`plan.phases`**. The plan page with its Phases part open, every phase a closed row but the one in progress.
 
 ### Existing looks
 
@@ -87,9 +90,9 @@ None.
 
 **Changes**
 
-- **`plan.needs-you`**. The plan page when it waits on the person, now with its three parts, any amendment waiting, and a closed History row.
-- **`plan.working`**. The plan page while it is built, now with its three parts, the Build control under the building card, and a closed History row.
-- **`plan.released`**. The plan page once released, now with its three parts and a closed History row.
+- **`plan.needs-you`**. The plan page when it waits on the person, now with its three parts, a closed Phases row, any amendment waiting, and a closed History row.
+- **`plan.working`**. The plan page while it is built, now with its three parts, a closed Phases row, the Build control under the building card, and a closed History row.
+- **`plan.released`**. The plan page once released, now with its three parts, a Phases row that says every phase is done, and a closed History row.
 
 **Replaces**
 
