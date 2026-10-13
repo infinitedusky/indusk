@@ -456,11 +456,13 @@ A person works on one document, the brief — promises, expectations and looks �
 
 #### Build Phase 6 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: whether a plan's document is finished comes from `plans/steps`' `documentFinished`, never a status compared in the admin — guarded by `PlanSummary.test.tsx` (A28)
+- [x] `apps/indusk-admin/CLAUDE.md`: whether a plan's document is finished comes from `plans/steps`' `documentFinished`, never a status compared in the admin — guarded by `PlanSummary.test.tsx` (A28)
+  - Note: added to the admin CLAUDE.md as a rule with its guard (`PlanSummary.test.tsx`, A28).
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the brief page — the brief's parts and the brief beside the agent's column, the agent following what it writes, the plan's description and the brief's state on the plan page, and what a planning session asks (only for a write outside its folder)
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the brief page — the brief's parts and the brief beside the agent's column, the agent following what it writes, the plan's description and the brief's state on the plan page, and what a planning session asks (only for a write outside its folder)
+  - Note: new "The brief page" section before "The nav": the two-column layout and phone fallback, the agent following what it writes, the description and the brief's state on the plan page (spike lands on the plan page), and what a planning session asks.
 
 ## Files Affected
 
