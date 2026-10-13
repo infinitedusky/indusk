@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { listApps, readAppLooks } from "../looks/overview.js";
 import { type BriefContract, parseBriefContract } from "../promises/brief-contract.js";
 import { readPromises } from "../promises/registry.js";
 import { type Amendment, amendmentsOf } from "./amendments.js";
-import { listApps, readAppLooks } from "../looks/overview.js";
 
 /**
  * What a plan's page shows of its brief (brief-as-the-contract ADR decision
@@ -39,6 +39,10 @@ export interface PartLook {
 	plan: string | null;
 	/** The app whose mockups hold it; null when undrawn. */
 	app: string | null;
+	/** The mockup as a page a frame can draw (`looks/overview`'s); null for a story or an undrawn look. */
+	document: string | null;
+	/** The app's reference devices, to draw the look at; empty when undrawn. */
+	devices: Array<{ name: string; width: number; height: number }>;
 }
 
 export interface PlanParts {
@@ -54,6 +58,10 @@ export interface PlanParts {
 	/** Why the waiting amendments cannot be told; null when they can. */
 	amendmentsUnreadable: string | null;
 }
+
+type Drawn = Pick<PartLook, "plan" | "app" | "document" | "devices"> & {
+	approval: "approved" | "proposed";
+};
 
 const EMPTY = (plan: string, hasBrief: boolean): PlanParts => ({
 	plan,
@@ -84,7 +92,11 @@ function listedLooks(brief: BriefContract): Array<{ name: string; relation: Look
  * brief is read there, the registry and the mockups from the same checkout,
  * so what the page shows is what the plan's branch holds.
  */
-export async function readPlanParts(root: string, plan: string, folder?: string): Promise<PlanParts> {
+export async function readPlanParts(
+	root: string,
+	plan: string,
+	folder?: string,
+): Promise<PlanParts> {
 	const dir = folder ?? join(root, ".indusk", "planning", plan);
 	const briefFile = join(dir, "brief.md");
 	if (!existsSync(briefFile)) return EMPTY(plan, false);
@@ -109,18 +121,42 @@ export async function readPlanParts(root: string, plan: string, folder?: string)
 	});
 
 	const apps = await Promise.all(listApps(root).map((app) => readAppLooks(root, app)));
-	const drawn = new Map<string, { approval: "approved" | "proposed"; plan: string | null; app: string }>();
+	const drawn = new Map<string, Drawn>();
 	for (const app of apps) {
 		if ("problem" in app) continue;
-		for (const item of [...app.mockups, ...app.stories]) {
-			drawn.set(item.name, { approval: item.approval, plan: item.plan, app: app.app });
+		const devices = app.devices.map(({ name, width, height }) => ({ name, width, height }));
+		for (const m of app.mockups) {
+			drawn.set(m.name, {
+				approval: m.approval,
+				plan: m.plan,
+				app: app.app,
+				document: m.document,
+				devices,
+			});
+		}
+		for (const s of app.stories) {
+			drawn.set(s.name, {
+				approval: s.approval,
+				plan: s.plan,
+				app: app.app,
+				document: null,
+				devices,
+			});
 		}
 	}
 	const looks = listedLooks(brief).map(({ name, relation }) => {
 		const found = drawn.get(name);
 		return found
-			? { name, relation, approval: found.approval, plan: found.plan, app: found.app }
-			: { name, relation, approval: "undrawn" as const, plan: null, app: null };
+			? { name, relation, ...found }
+			: {
+					name,
+					relation,
+					approval: "undrawn" as const,
+					plan: null,
+					app: null,
+					document: null,
+					devices: [],
+				};
 	});
 
 	let amendments: Amendment[] = [];
@@ -135,7 +171,11 @@ export async function readPlanParts(root: string, plan: string, folder?: string)
 		plan,
 		hasBrief: true,
 		promises,
-		expectations: brief.expectations.map((e) => ({ text: e.text, measure: e.measure, look: e.look })),
+		expectations: brief.expectations.map((e) => ({
+			text: e.text,
+			measure: e.measure,
+			look: e.look,
+		})),
 		looks,
 		noLooks: brief.looks?.none ?? null,
 		amendments,

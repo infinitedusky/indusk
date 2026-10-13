@@ -1,3 +1,5 @@
+import { join } from "node:path";
+import { readPlanParts } from "@infinitedusky/indusk-mcp/plans/parts";
 import {
   promiseWords,
   readHealthNames,
@@ -10,6 +12,7 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import type { SubplanEntry } from "@/components/ParentPlanView";
 import { PlanDetail } from "@/components/PlanDetail";
 import type { PlanHeaderFacts } from "@/components/plan/PlanHeader";
+import { PlanParts, WaitingAmendments } from "@/components/plan/PlanParts";
 import { PlanStatusCard } from "@/components/plan/PlanStatusCard";
 import { BuildControls } from "@/components/session/BuildControls";
 import { PlanSession } from "@/components/session/PlanSession";
@@ -109,9 +112,31 @@ export default async function PlanPage({ params }: PlanPageProps) {
   const waiting = plan.archived ? undefined : readWaiting(project, [plan])[0];
   const history = readPlanHistory(projectPath, name);
 
+  // The brief's three parts, read by the package from the checkout the plan is
+  // worked in (its worktree, else the project's own), on every request, so a
+  // promise or a look the agent writes shows on the next refresh.
+  const checkout = plan.worktree?.path ?? projectPath;
+  const parts = await readPlanParts(
+    checkout,
+    name,
+    join(
+      checkout,
+      ".indusk",
+      "planning",
+      ...(plan.archived || plan.archivedInWorktree ? ["archive"] : []),
+      name,
+    ),
+  );
+
   const stage = (
     <>
       <TrustNotice project={project} trusted={projectTrusted(projectPath)} />
+      <PlanParts
+        parts={parts}
+        briefHref={`/p/${project}/plan/${name}/brief`}
+        looksHref={`/p/${project}/looks?${plan.worktree ? `checkout=${encodeURIComponent(name)}` : ""}`}
+      />
+      <WaitingAmendments project={project} plan={name} parts={parts} />
       {waiting ? (
         <DecisionCard project={project} waiting={waiting} />
       ) : (

@@ -65,6 +65,8 @@ export const NODE_PAGES = [
   "src/app/p/[project]/looks/looks-approve-binding.test.tsx",
   "src/app/p/[project]/looks/looks-components.test.tsx",
   "src/app/p/[project]/looks/looks-unapprove.test.tsx",
+  // A plan's page over a real project (brief-as-the-contract A5, A15).
+  "src/__tests__/plan-parts.test.tsx",
 ];
 
 /**
