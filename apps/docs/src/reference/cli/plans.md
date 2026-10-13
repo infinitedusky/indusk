@@ -168,8 +168,8 @@ Refuses:
 ### In a workbench: approve, accept, review and land
 
 A workbench plan's documents are already at the workbench root, and its code is on a branch in the repo its `code.json` names. So:
-- **`approve`** runs the same brief check, then marks the impl `status: approved`, records the brief's hash as above, and commits the plan's documents (and the workbench's shadow contract) at the root. Nothing is merged.
-- **`accept`** records `accepted` in the impl at the root, and commits it there.
+- **`approve`** runs the same brief check and looks check (a look the brief names that is still proposed refuses it, read from the mockups at the root), then marks the impl `status: approved`, records the brief's hash as above, and commits the plan's documents (and the workbench's shadow contract) at the root. Nothing is merged.
+- **`accept`** runs the same interface and story checks, the diff read from the code repo's branch and the looks from the root's mockups, then records `accepted` in the impl at the root and commits it there. **`reapprove`** runs the looks check too.
 - **`review`** lists the files the code branch changed in its repo, against the repo's trunk branch, and any uncommitted work on that trunk on those paths.
 - **`land`** refuses an unaccepted plan. Otherwise it brings the repo's trunk into the code branch, runs the land checks in the code worktree, and merges the branch into the repo's trunk with a merge commit. Then it removes the code worktree and branch. The documents stay at the root, where the retrospective archives them.
 
@@ -215,7 +215,7 @@ Absent field → 30-day default. `indusk update` scaffolds the key idempotently.
 }
 ```
 
-`drafts.max_age_days` is the age at which `plans archive-dead` discards an untouched draft conversation; absent, 30.
+`drafts.max_age_days` is the age at which `plans archive-dead` archives an untouched draft conversation, moving it to `drafts/archive/<id>/` in the project's home with what it held; absent, 30. A discard from the page still deletes.
 
 ## Tiers and models
 

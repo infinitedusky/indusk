@@ -172,7 +172,9 @@ declares. Two moments hold a plan to its brief:
 
 - **At approval**, `indusk plans approve` reads the impl's *Files Affected*. A
   path under an app's `sources`, with no look listed and no reason given, is
-  refused, naming the paths and what the brief lacks.
+  refused, naming the paths and what the brief lacks. A path cell may carry a
+  note after the path (`` `src/Card.jsx` (new parts) ``) or several paths
+  (`` `a.tsx`, `b.tsx` ``, or joined by "and"); each is read on its own.
 - **At acceptance**, `indusk plans accept` reads the branch's real diff. A
   brief that says `None`, or has no Looks section, but whose branch changed
   those files is refused, naming them. The way forward is an amendment: the
@@ -234,7 +236,7 @@ flowchart TD
 
 When what the plan promises and how it looks are clear, the agent writes a proposal, a name and a type, and the page shows it with **Accept** and **Edit**. Accepting makes the plan: the branch, the worktree, and the draft as its `brief.md`, or as `research.md` when the conversation made neither promises nor looks (a research-only plan has no brief). A name that is already taken is refused, and the draft is kept so you can give another. In a workbench that wraps several repos, accepting also asks which repo the plan's code goes in.
 
-A conversation you do not keep leaves nothing in the repository. The project page lists it under **Drafts** with **Reopen** and **Discard**; one untouched for `drafts.max_age_days` (30 by default) is discarded by `indusk plans archive-dead`. From a terminal, `indusk plans start <type> <name> --from-draft <id>` is the same step.
+A conversation you do not keep leaves nothing in the repository. The project page lists it under **Drafts** with **Reopen** and **Discard**; one untouched for `drafts.max_age_days` (30 by default) is archived by `indusk plans archive-dead`, moved to `drafts/archive/` in the home with what it held. A draft that holds both a brief and research gives the plan both. From a terminal, `indusk plans start <type> <name> --from-draft <id>` is the same step.
 
 ## The contract
 
