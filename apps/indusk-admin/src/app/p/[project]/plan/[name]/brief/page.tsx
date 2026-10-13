@@ -97,7 +97,7 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
             </article>
           </div>
           <aside
-            className="sticky top-0 flex max-h-screen min-w-0 flex-col gap-2 self-start overflow-y-auto py-2"
+            className="sticky top-0 flex h-screen min-w-0 flex-col gap-2 self-start overflow-y-auto border-l border-line py-2 pl-4"
             data-testid="brief-agent"
           >
             <h2 className="font-display text-lg font-bold">Agent</h2>

@@ -321,7 +321,7 @@ body {
    agent in a narrower column on the right that stays put; one column on a
    phone. */
 .cols-brief-page {
-  grid-template-columns: minmax(0, 4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
 }
 @media (max-width: 759px) {
   .cols-brief-page {
