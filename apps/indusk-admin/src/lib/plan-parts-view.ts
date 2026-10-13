@@ -43,6 +43,16 @@ function progress(phase: Phase): { done: number; total: number } {
   return { done: items.filter((i) => i.checked).length, total: items.length };
 }
 
+/** Items done and in all, across `phases`. */
+function tally(phases: Phase[]): { done: number; total: number } {
+  return phases
+    .map(progress)
+    .reduce((t, p) => ({ done: t.done + p.done, total: t.total + p.total }), {
+      done: 0,
+      total: 0,
+    });
+}
+
 function isDone(phase: Phase): boolean {
   const { done, total } = progress(phase);
   return total > 0 && done === total;
@@ -80,16 +90,14 @@ export function phasesSummary(
   phases: Phase[],
   activeKey: string | null,
 ): string {
-  const items = phases.map(progress);
-  const done = items.reduce((n, p) => n + p.done, 0);
-  const total = items.reduce((n, p) => n + p.total, 0);
-  const tally = `${done} of ${total} done`;
+  const { done, total } = tally(phases);
+  const counted = `${done} of ${total} done`;
   const current =
     phases.find((p) => keyOf(p) === activeKey) ??
     phases.find((p) => !isDone(p));
-  if (!current) return `All phases done · ${tally}`;
+  if (!current) return `All phases done · ${counted}`;
   const ofKind = phases.filter((p) => p.kind === current.kind).length;
-  return `${phaseTitle(current)} of ${ofKind} · ${tally}`;
+  return `${phaseTitle(current)} of ${ofKind} · ${counted}`;
 }
 
 export interface PlanDocument {
@@ -137,9 +145,7 @@ export function planDocuments(plan: Plan): PlanDocument[] {
   if (plan.impl) {
     const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
     ritual = splitPhasesAroundFalsification(phases);
-    const items = phases.map(progress);
-    const done = items.reduce((n, p) => n + p.done, 0);
-    const total = items.reduce((n, p) => n + p.total, 0);
+    const { done, total } = tally(phases);
     const status = plan.impl.frontmatter.status ?? "written";
     add(
       "impl",

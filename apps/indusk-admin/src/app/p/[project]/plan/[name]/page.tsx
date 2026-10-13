@@ -85,8 +85,6 @@ export default async function PlanPage({ params }: PlanPageProps) {
       (await readPlanMasterContent(projectPath, name)) ?? undefined;
   }
 
-  // Only the plan page is live: it re-renders itself on an interval so a
-  // checkoff on disk reaches an open page without a reload (Build Phase 5).
   // The dates the released card reads come from the package.
   const dates = readHealthNames(projectPath).planDates[name];
 
@@ -153,6 +151,8 @@ export default async function PlanPage({ params }: PlanPageProps) {
     </>
   );
 
+  // Only the plan page is live: it re-renders itself on an interval so a
+  // checkoff on disk reaches an open page without a reload.
   return (
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
