@@ -93,9 +93,11 @@ vi.mock("@/lib/research-reader", () => ({
   readProjectResearch: async () => [],
 }));
 vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
-vi.mock("@infinitedusky/indusk-mcp/worktree/repos", () => ({
+// The project page lists the project's drafts (brief-as-the-contract); the
+// real module reads the project's home from disk.
+vi.mock("@infinitedusky/indusk-mcp/drafts", () => ({
   __esModule: true,
-  readWorkbenchRepos: () => [],
+  readDraftRows: () => [],
 }));
 
 import PerProjectLayout from "./layout";
@@ -321,20 +323,19 @@ describe("A13 — plans waiting on the person are listed under Needs you, with t
 });
 
 describe("A36 — a new plan can still be started from the admin (regression guard)", () => {
-  it("A36 the project's landing page, under the layout, offers the New plan form with a type and a name", async () => {
+  // brief-as-the-contract changed the way in: the form that asked for a type
+  // and a name is a button that asks for nothing (that plan's A18); the guard
+  // that the way in survives under the new nav stays.
+  it("A36 the project's landing page, under the layout, offers New plan, which asks for nothing", async () => {
     const landing = await PerProjectPage({
       params: Promise.resolve({ project: PROJECT }),
     });
     const root = await layoutAround(landing, base);
-    const form = root.querySelector("form");
-    expect(form?.textContent).toContain("New plan");
-    expect(form?.querySelector("select")).not.toBeNull();
-    expect(form?.querySelector("input")).not.toBeNull();
-    expect(
-      [...(form?.querySelectorAll("button") ?? [])].some((b) =>
-        /start|create/i.test(b.textContent ?? ""),
-      ),
-    ).toBe(true);
+    const entry = [...root.querySelectorAll("button")].find((b) =>
+      /new plan/i.test(b.textContent ?? ""),
+    );
+    expect(entry).toBeDefined();
+    expect(root.querySelector("main select, main input")).toBeNull();
     // the nav is still the frame around it
     expect(root.querySelector('a[data-plan-name="mid-build"]')).not.toBeNull();
   });
