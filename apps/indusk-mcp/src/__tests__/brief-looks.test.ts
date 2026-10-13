@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseBriefContract } from "../lib/promises/brief-contract.js";
-import { type BriefAppProject, briefAppProject, briefOf, PLAN } from "./helpers/brief-app.js";
+import {
+	type BriefAppProject,
+	briefAppProject,
+	briefOf,
+	implOf,
+	PLAN,
+} from "./helpers/brief-app.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
 /**
@@ -47,6 +53,30 @@ describe.skipIf(SHOULD_SKIP)("the Looks section at approval", () => {
 		const r = runCli(app.trunk, ["plans", "approve", PLAN]);
 		expect(r.code, out(r)).toBe(0);
 	});
+});
+
+describe.skipIf(SHOULD_SKIP)("a Files Affected cell is read path by path", () => {
+	// promise: a-brief-lists-its-looks
+	const cells = [
+		["a path with a note after it", "`src/Card.jsx` (new parts)"],
+		["two paths separated by a comma", "`lib/hold-timer.ts`, `src/Card.jsx`"],
+		["two paths joined by and", "`lib/hold-timer.ts` and `src/Card.jsx`"],
+	] as const;
+	for (const [label, cell] of cells) {
+		it(`A34 ${label} is refused at approval when one of them is under an app's interface`, () => {
+			app.writePlan({
+				brief: "legacy",
+				impl: implOf("interface").replace("| `src/Card.jsx` |", `| ${cell} |`),
+			});
+			const before = app.project.mainSha();
+
+			const r = runCli(app.trunk, ["plans", "approve", PLAN]);
+
+			expect(r.code, out(r)).not.toBe(0);
+			expect(out(r)).toContain("src/Card.jsx");
+			expect(app.project.mainSha()).toBe(before);
+		});
+	}
 });
 
 describe("A3 a look is read as the list it is under", () => {

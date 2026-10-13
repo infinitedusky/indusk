@@ -3,8 +3,16 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { approve } from "../lib/looks/approve.js";
 import { readApp, snapshotHash } from "../lib/looks/mockups.js";
-import { APP, type BriefAppProject, briefAppProject, PLAN } from "./helpers/brief-app.js";
+import {
+	APP,
+	type BriefAppProject,
+	briefAppProject,
+	briefOf,
+	briefWorkbench,
+	PLAN,
+} from "./helpers/brief-app.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { commitFile, git } from "./helpers/versioned-workbench.js";
 
 /**
  * promise: a-new-component-ends-its-plan-with-a-story — brief-as-the-contract A25.
@@ -115,5 +123,47 @@ describe.skipIf(SHOULD_SKIP)("a new component ends its plan with a story", () =>
 		expect(readFileSync(join(app.wt, `.indusk/planning/${PLAN}/impl.md`), "utf-8")).toMatch(
 			/^accepted: /m,
 		);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("a workbench plan is accepted under the same looks checks", () => {
+	it("A33 accept of a workbench plan is refused for an interface change its brief lists no look for, and for a new component with no approved story, naming each", async () => {
+		const bench = briefWorkbench();
+		try {
+			// An interface change against a brief that lists no look.
+			bench.writePlan({ brief: "none", impl: "internal" });
+			const approved = runCli(bench.root, ["plans", "approve", PLAN]);
+			expect(approved.code, out(approved)).toBe(0);
+			commitFile(bench.code, "src/Card.jsx", "export const Card = 2;\n", "the build");
+
+			const unlisted = runCli(bench.root, ["plans", "accept", PLAN]);
+			expect(unlisted.code, out(unlisted)).not.toBe(0);
+			expect(out(unlisted)).toContain("src/Card.jsx");
+			expect(
+				readFileSync(join(bench.root, `.indusk/planning/${PLAN}/impl.md`), "utf-8"),
+			).not.toMatch(/^accepted: /m);
+
+			// A new component with no approved story, its mockup drawing it inline.
+			const planDir = join(bench.root, `.indusk/planning/${PLAN}`);
+			writeFileSync(join(planDir, "brief.md"), briefOf("looks-listed"));
+			const mockups = join(bench.root, MOCKUPS, "screens");
+			writeFileSync(join(mockups, "home.full.html"), HOME_FULL_INLINE);
+			for (const look of ["home.full", "detail.default", "badge.ok"]) {
+				const held = (await readApp(bench.root, APP)).mockups.find((m) => m.name === look);
+				const person = await approve(bench.root, APP, look, "sandy", {
+					mockupHash: held?.hash,
+					...(held && held.uses.length > 0 ? { componentsHash: held.componentsHash } : {}),
+				});
+				expect(person.approved, JSON.stringify(person)).toBe(true);
+			}
+			git(bench.root, ["add", "-A"]);
+			git(bench.root, ["commit", "-q", "-m", "a brief that names looks"]);
+			const stories = runCli(bench.root, ["plans", "accept", PLAN]);
+			expect(stories.code, out(stories)).not.toBe(0);
+			expect(out(stories)).toContain("badge.ok");
+			expect(out(stories)).toContain("<indusk-component>");
+		} finally {
+			bench.cleanup();
+		}
 	});
 });

@@ -101,3 +101,17 @@ describe("a plan starts from a draft", () => {
 		expect(existsSync(join(feature.worktree, ".indusk/planning/has-promises/brief.md"))).toBe(true);
 	});
 });
+
+describe("a draft that held both documents keeps both", () => {
+	it("A36 accepting a draft with a brief and research puts both in the new plan", async () => {
+		const draft = createDraft(home, { brief: "# promises\n", research: "# what we found\n" });
+		writeProposal(draft, { name: "keeps-both", type: "feature" });
+		const started = await startFromDraft(trunk(), draft);
+
+		const folder = join(started.worktree, ".indusk/planning/keeps-both");
+		expect(readFileSync(join(folder, "brief.md"), "utf-8")).toContain("# promises");
+		expect(existsSync(join(folder, "research.md"))).toBe(true);
+		expect(readFileSync(join(folder, "research.md"), "utf-8")).toContain("# what we found");
+		expect(git(started.worktree, ["status", "--porcelain"])).toBe("");
+	});
+});

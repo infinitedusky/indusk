@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, utimesSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, utimesSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -27,7 +27,10 @@ afterEach(() => rmSync(home, { recursive: true, force: true }));
 const DAY = 86_400_000;
 function ageBy(dir: string, days: number): void {
 	const then = new Date(Date.now() - days * DAY);
-	for (const name of ["draft.json", "brief.md"]) utimesSync(join(dir, name), then, then);
+	for (const name of ["draft.json", "brief.md", "research.md"].filter((n) =>
+		existsSync(join(dir, n)),
+	))
+		utimesSync(join(dir, name), then, then);
 }
 
 describe("drafts age", () => {
@@ -48,6 +51,18 @@ describe("drafts age", () => {
 		expect(listDrafts(home)).toHaveLength(2);
 		expect(sweepDrafts(home, { maxAgeDays: 30 })).toEqual([gone.id]);
 		expect(listDrafts(home).map((d) => d.id)).toEqual([keep.id]);
+	});
+
+	it("A36 an aged draft is moved to the home's archive of drafts with what it held, not deleted", () => {
+		const gone = createDraft(home, { brief: "# gone\n", research: "# notes\n" });
+		ageBy(gone.dir, 40);
+		expect(sweepDrafts(home, { maxAgeDays: 30 })).toEqual([gone.id]);
+
+		expect(listDrafts(home)).toEqual([]);
+		const kept = join(home, "drafts", "archive", gone.id);
+		expect(existsSync(join(kept, "brief.md"))).toBe(true);
+		expect(readFileSync(join(kept, "brief.md"), "utf-8")).toBe("# gone\n");
+		expect(readFileSync(join(kept, "research.md"), "utf-8")).toBe("# notes\n");
 	});
 
 	it("words the age as the page shows it", () => {

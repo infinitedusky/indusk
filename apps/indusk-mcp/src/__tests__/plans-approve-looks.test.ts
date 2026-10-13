@@ -9,6 +9,7 @@ import {
 	type BriefAppProject,
 	briefAppProject,
 	briefOf,
+	briefWorkbench,
 	PLAN,
 	PLAN_DIR,
 } from "./helpers/brief-app.js";
@@ -55,6 +56,39 @@ describe.skipIf(SHOULD_SKIP)("approval and the looks a brief names", () => {
 		}
 		const approved = runCli(app.trunk, ["plans", "approve", PLAN]);
 		expect(approved.code, out(approved)).toBe(0);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("a workbench plan is held to its looks as a normal plan is", () => {
+	it("A33 approval and re-approval of a workbench plan are refused naming a look its brief names that is still proposed; once approved the same plan is approved", async () => {
+		const bench = briefWorkbench();
+		try {
+			bench.writePlan({ brief: "looks-listed", impl: "internal" });
+			const rootHead = () => git(bench.root, ["rev-parse", "HEAD"]);
+			const before = rootHead();
+
+			const refused = runCli(bench.root, ["plans", "approve", PLAN]);
+			expect(refused.code, out(refused)).not.toBe(0);
+			expect(out(refused)).toContain("home.full");
+			expect(rootHead()).toBe(before);
+
+			for (const look of ["home.full", "detail.default", "badge.ok"]) {
+				const person = await approve(bench.root, APP, look, "sandy");
+				expect(person.approved, JSON.stringify(person)).toBe(true);
+			}
+			const approved = runCli(bench.root, ["plans", "approve", PLAN]);
+			expect(approved.code, out(approved)).toBe(0);
+
+			// A look the plan makes is redrawn after approval, so it reads proposed
+			// again: re-approval refuses it too.
+			const mockup = join(bench.root, ".indusk/mockups", APP, "screens/home.full.html");
+			writeFileSync(mockup, `${readFileSync(mockup, "utf-8")}\n<!-- redrawn -->\n`);
+			const reapproved = runCli(bench.root, ["plans", "reapprove", PLAN]);
+			expect(reapproved.code, out(reapproved)).not.toBe(0);
+			expect(out(reapproved)).toContain("home.full");
+		} finally {
+			bench.cleanup();
+		}
 	});
 });
 
