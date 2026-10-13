@@ -12,7 +12,14 @@ import { SessionPanel } from "./SessionPanel";
  * the session's routes. When the session writes a file, the page refreshes,
  * so a plan appears and grows in the sidebar as it is written.
  */
-export function SessionConnector({ sessionId }: { sessionId: string }) {
+export function SessionConnector({
+  sessionId,
+  fill = false,
+}: {
+  sessionId: string;
+  /** Fill the column it sits in (the brief page's agent). */
+  fill?: boolean;
+}) {
   const router = useRouter();
   const [events, setEvents] = useState<StartedEvent[]>([]);
   const [running, setRunning] = useState(true);
@@ -54,7 +61,7 @@ export function SessionConnector({ sessionId }: { sessionId: string }) {
   };
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className={`flex flex-col gap-1 ${fill ? "min-h-0 flex-1" : ""}`}>
       {problem ? <p className="text-sm text-bad">{problem}</p> : null}
       <SessionPanel
         events={events}
@@ -67,6 +74,7 @@ export function SessionConnector({ sessionId }: { sessionId: string }) {
         }
         onStop={() => void post("stop", {})}
         onSay={(text) => void post("say", { text })}
+        fill={fill}
       />
     </div>
   );

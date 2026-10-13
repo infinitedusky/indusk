@@ -7,6 +7,7 @@ import { PlanParts } from "@/components/plan/PlanParts";
 import { FollowAgent } from "@/components/session/FollowAgent";
 import { PlanSession } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
+import { WindowColumn } from "@/components/session/WindowColumn";
 import { planActions } from "@/lib/plan-actions";
 import { planDocuments } from "@/lib/plan-parts-view";
 import { readActivePlans, readArchivedPlans } from "@/lib/planning-reader";
@@ -63,59 +64,63 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       <FollowAgent />
-      <PlanFrame project={project} plan={plan}>
-        <TrustNotice project={project} trusted={projectTrusted(projectPath)} />
-        <nav className="flex gap-4 text-sm text-ink-soft">
-          <a href={planHref}>Plan</a>
-          {research ? <a href={`${planHref}/doc/research`}>Research</a> : null}
-        </nav>
-        <div className="cols-brief-page grid items-start gap-5">
-          <div className="grid min-w-0 gap-4">
-            {parts.description ? (
-              <p className="text-ink-soft" data-testid="plan-description">
-                {parts.description}
-              </p>
+      <div className="cols-brief-page grid items-start gap-5">
+        <PlanFrame project={project} plan={plan}>
+          <TrustNotice
+            project={project}
+            trusted={projectTrusted(projectPath)}
+          />
+          <nav className="flex gap-4 text-sm text-ink-soft">
+            <a href={planHref}>Plan</a>
+            {research ? (
+              <a href={`${planHref}/doc/research`}>Research</a>
             ) : null}
-            <div className="grid gap-2" data-testid="plan-parts">
-              <PlanParts
-                parts={parts}
-                looksHref={`/p/${project}/looks?${plan.worktree ? `checkout=${encodeURIComponent(name)}` : ""}`}
-              />
-            </div>
-            <article
-              className="grid gap-4"
-              data-testid="plan-document-page"
-              data-document="brief"
-            >
-              {brief ? (
-                <Markdown>{brief.content}</Markdown>
-              ) : (
-                <p className="text-sm text-ink-faint">
-                  No brief yet. Ask the agent to write it.
-                </p>
-              )}
-            </article>
+          </nav>
+          {parts.description ? (
+            <p className="text-ink-soft" data-testid="plan-description">
+              {parts.description}
+            </p>
+          ) : null}
+          <div className="grid gap-2" data-testid="plan-parts">
+            <PlanParts
+              parts={parts}
+              looksHref={`/p/${project}/looks?${plan.worktree ? `checkout=${encodeURIComponent(name)}` : ""}`}
+            />
           </div>
-          <aside
-            className="sticky top-0 flex h-screen min-w-0 flex-col gap-2 self-start overflow-y-auto border-l border-line py-2 pl-4"
-            data-testid="brief-agent"
+          <article
+            className="grid gap-4"
+            data-testid="plan-document-page"
+            data-document="brief"
           >
-            <h2 className="font-display text-lg font-bold">Agent</h2>
-            {canTalk ? null : (
+            {brief ? (
+              <Markdown>{brief.content}</Markdown>
+            ) : (
               <p className="text-sm text-ink-faint">
-                The agent works in the plan's worktree; this plan has none.
+                No brief yet. Ask the agent to write it.
               </p>
             )}
-            <PlanSession
-              project={project}
-              plan={name}
-              canApprove={actions.canApprove}
-              canPlan={canTalk}
-              approvedHref={planHref}
-            />
-          </aside>
-        </div>
-      </PlanFrame>
+          </article>
+        </PlanFrame>
+        <WindowColumn
+          className="gap-2 border-l border-line py-2 pl-4"
+          data-testid="brief-agent"
+        >
+          <h2 className="font-display text-lg font-bold">Agent</h2>
+          {canTalk ? null : (
+            <p className="text-sm text-ink-faint">
+              The agent works in the plan's worktree; this plan has none.
+            </p>
+          )}
+          <PlanSession
+            project={project}
+            plan={name}
+            canApprove={actions.canApprove}
+            canPlan={canTalk}
+            approvedHref={planHref}
+            fill
+          />
+        </WindowColumn>
+      </div>
     </>
   );
 }

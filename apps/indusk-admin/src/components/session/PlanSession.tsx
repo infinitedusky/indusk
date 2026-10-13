@@ -48,6 +48,7 @@ export function PlanSession({
   approvedHref,
   opening = briefOpening,
   startLabel = "Talk to the agent",
+  fill = false,
 }: {
   project: string;
   plan: string;
@@ -59,6 +60,8 @@ export function PlanSession({
   /** The session's first message: the brief page's or the plan page's. */
   opening?: (plan: string) => string;
   startLabel?: string;
+  /** Fill the column it sits in: the brief page's agent runs to the window's bottom. */
+  fill?: boolean;
 }) {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -111,7 +114,7 @@ export function PlanSession({
 
   if (!sessionId && !canApprove && !canPlan) return null;
   return (
-    <div className="mb-4 flex flex-col gap-2">
+    <div className={`flex flex-col gap-2 ${fill ? "min-h-0 flex-1" : "mb-4"}`}>
       {canApprove ? (
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" onClick={() => void approve()} disabled={busy}>
@@ -142,7 +145,9 @@ export function PlanSession({
       {problem ? (
         <pre className="whitespace-pre-wrap text-sm text-bad">{problem}</pre>
       ) : null}
-      {sessionId ? <SessionConnector sessionId={sessionId} /> : null}
+      {sessionId ? (
+        <SessionConnector sessionId={sessionId} fill={fill} />
+      ) : null}
     </div>
   );
 }

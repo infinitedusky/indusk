@@ -21,6 +21,8 @@ export interface SessionPanelProps {
   onStop: () => void;
   /** Reply in the person's own words; absent, the panel offers no message box. */
   onSay?: (text: string) => void;
+  /** Fill the column it sits in: the log grows to the bottom and scrolls; the input stays below it. */
+  fill?: boolean;
 }
 
 export function SessionPanel({
@@ -30,6 +32,7 @@ export function SessionPanel({
   onDecide,
   onStop,
   onSay,
+  fill = false,
 }: SessionPanelProps) {
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const [draft, setDraft] = useState("");
@@ -47,7 +50,7 @@ export function SessionPanel({
 
   return (
     <section
-      className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3 text-sm"
+      className={`flex flex-col gap-2 rounded-md border border-line bg-surface p-3 text-sm ${fill ? "min-h-0 flex-1" : ""}`}
       data-testid="session-panel"
     >
       <header className="flex items-center justify-between">
@@ -61,7 +64,7 @@ export function SessionPanel({
       <ol
         ref={log}
         data-testid="session-log"
-        className="flex max-h-rail flex-col gap-2 overflow-y-auto"
+        className={`flex flex-col gap-2 overflow-y-auto ${fill ? "min-h-0 flex-1" : "max-h-rail"}`}
         onScroll={(e) => {
           const el = e.currentTarget;
           following.current =
