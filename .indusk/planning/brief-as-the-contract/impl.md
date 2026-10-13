@@ -239,7 +239,7 @@ A person works on one document, the brief — promises, expectations and looks �
 
 #### Build Phase 1 Context
 
-- [ ] planning: `apps/indusk-mcp/templates/planning/CLAUDE.md` — a brief holds expectations, promises and looks; a plan that changes an app's interface lists its looks or says why not — guarded by `brief-looks.test.ts` (A1)
+- [x] planning: `apps/indusk-mcp/templates/planning/CLAUDE.md` — a brief holds expectations, promises and looks; a plan that changes an app's interface lists its looks or says why not — guarded by `brief-looks.test.ts` (A1)
 
 #### Build Phase 1 Document
 

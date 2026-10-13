@@ -25,7 +25,8 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   mockup named or drawn as a draft), and a plan whose `Files Affected` names a
   path under an app's `sources` with none listed and no `None — {reason}` is
   refused at approval, as one whose branch changed them is at `plans accept`.
-  Approval waits on the mockups the brief names. — see `/guide/briefs`
+  Approval waits on the mockups the brief names. — guarded by
+  `brief-looks.test.ts` — see `/guide/briefs`
 - **Cross-reference related plans by path, and update both** when work in one
   changes something the other names — a plan never cites stale information.
 - **Plan hierarchy is declared top-down, in frontmatter**: the root `master.md`
