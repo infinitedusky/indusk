@@ -45,9 +45,9 @@ A person works on one document, the brief â€” promises, expectations and looks â
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A plan that changes files under an app's interface, whose brief lists no look and gives no reason, is refused at approval, and the refusal names what is missing | Test Phase 1 | Build Phase 1 | written | unit | promise: a-brief-lists-its-looks | apps/indusk-mcp/src/__tests__/brief-looks.test.ts |
+| A1 | A plan that changes files under an app's interface, whose brief lists no look and gives no reason, is refused at approval, and the refusal names what is missing | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-brief-lists-its-looks | apps/indusk-mcp/src/__tests__/brief-looks.test.ts |
 | A2 | A brief that says "None â€” {reason}" for its looks is approved when the plan changes nothing under an app's interface | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-brief-lists-its-looks | apps/indusk-mcp/src/__tests__/brief-looks.test.ts |
-| A3 | A look listed under makes, changes, replaces or must-not-break is read as that, so the plan page and the check say the same thing the brief does | Test Phase 1 | Build Phase 1 | written | unit | promise: a-brief-lists-its-looks | apps/indusk-mcp/src/__tests__/brief-looks.test.ts |
+| A3 | A look listed under makes, changes, replaces or must-not-break is read as that, so the plan page and the check say the same thing the brief does | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-brief-lists-its-looks | apps/indusk-mcp/src/__tests__/brief-looks.test.ts |
 | A4 | A look approved in a plan's checkout records that plan, and reading the approval shows it | Test Phase 1 | Build Phase 2 | written | unit | promise: a-look-has-the-plan-that-owns-it | apps/indusk-mcp/src/__tests__/look-ownership.test.ts |
 | A5 | A plan's page lists the looks it owns beside its promises, each with its approval | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-look-has-the-plan-that-owns-it | apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
 | A6 | A plan that redraws an approved look shows it as proposed while the old version is still the one the app is held to | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-changed-look-keeps-its-history | apps/indusk-mcp/src/__tests__/look-ownership.test.ts |
@@ -230,7 +230,8 @@ A person works on one document, the brief â€” promises, expectations and looks â
 
 #### Build Phase 1 Verification
 
-- [ ] A1 and A3 pass and A2, A22 still pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/brief-looks.test.ts`); `pnpm exec vitest related` over the changed files; `indusk promises contract brief-as-the-contract` and `indusk promises check` pass; tsc and biome clean on changed files
+- [x] A1 and A3 pass and A2, A22 still pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/brief-looks.test.ts`); `pnpm exec vitest related` over the changed files; `indusk promises contract brief-as-the-contract` and `indusk promises check` pass; tsc and biome clean on changed files
+  - Result: `pnpm build` clean; `brief-looks.test.ts` 4 of 4 (A1, A3 now pass; A2, A22 still pass); `vitest related` over the changed files 18 files, 127 tests pass; with the worktree-built CLI `promises contract brief-as-the-contract` reports the brief, rows and registry agree and `promises check` passes (113 promises); tsc and biome clean on changed files.
   - Decision: Build Phase 1's own check refused this plan's brief, because Files Affected names admin files and the brief listed no look. The user, asked whether to list the looks now, put a temporary None, or narrow the check, chose "List the looks now"; the brief's `## Looks` lists them.
 
 #### Build Phase 1 Context
