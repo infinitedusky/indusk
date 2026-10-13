@@ -43,6 +43,8 @@ The first argument to `/planner` can optionally be a workflow type that controls
 
 Parse the input: if the first word is `bugfix`, `refactor`, `spike`, or `feature`, use that workflow. Otherwise, default to `feature`. The remaining words become the plan name (kebab-cased).
 
+**Every brief carries a `description:`** in its frontmatter: the plan distilled in one to three tight sentences, plain words, what it does and for whom — not its background. The plan's page shows it at the top. Write it as soon as the plan is clear and keep it true as the brief changes.
+
 **Every plan declares its type.** Write `workflow: <type>` in the brief's frontmatter when you create it — `workflow: feature` when no type was given — and, for a spike, in the research document's, since a spike has no brief. The admin reads it to tell a document the plan was never going to have from one it should have had: with no declared type, an absent document reads *unknown*, never *skipped*. What each type requires is defined once, in the package's `workflow-types` module; the table above and the workflow templates are pinned equal to it by test, so change all three together.
 
 Workflow templates are in `templates/workflows/` in the package. They describe which documents to create and provide streamlined templates for each workflow type.
