@@ -1,6 +1,44 @@
 {
 	"components": [
 		{
+			"name": "amendment-card",
+			"file": "apps/indusk-admin/src/components/ui/AmendmentCard.tsx",
+			"properties": [
+				{
+					"name": "title",
+					"type": "string",
+					"required": true,
+					"description": "What changed, in a few words."
+				},
+				{
+					"name": "changes",
+					"type": "AmendmentChange[]",
+					"required": true
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": false,
+					"description": "The control that approves it; the card draws none."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "waiting",
+					"id": "ui-amendmentcard--waiting",
+					"snapshotHash": "6fc4ba6054527e54d7c319261dbbcc7c7973433356f630db6a4649e326738a3b"
+				}
+			],
+			"stylesheet": "components/amendment-card.css",
+			"stylesheetHash": "6b998e0ed28120b29c7e981df7c80f28e2481aed696a2273b234fad24f1f937e"
+		},
+		{
 			"name": "badge",
 			"file": "apps/indusk-admin/src/components/ui/PlanBadge.tsx",
 			"properties": [
@@ -330,6 +368,51 @@
 			],
 			"stylesheet": "components/device-frame.css",
 			"stylesheetHash": "136f2539234e65e710926a2a0b54c1190a03dbc925440c2f48d96cf4bf23de18"
+		},
+		{
+			"name": "expectation-row",
+			"file": "apps/indusk-admin/src/components/ui/ExpectationRow.tsx",
+			"properties": [
+				{
+					"name": "text",
+					"type": "string",
+					"required": true,
+					"description": "The expectation, as the brief states it."
+				},
+				{
+					"name": "when",
+					"type": "string",
+					"required": true,
+					"description": "When to look, as the brief states it."
+				},
+				{
+					"name": "due",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Its time to look has come."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-expectationrow--default",
+					"snapshotHash": "9c805b6dc444cb5ec3d63b9a81df2400da6adb7f3e8abe45409332ead4aed282"
+				},
+				{
+					"name": "due",
+					"id": "ui-expectationrow--due",
+					"snapshotHash": "319091df21839cbae747769efe4984367cd011c9d83d138a1b19b9c3d22b9067"
+				}
+			],
+			"stylesheet": "components/expectation-row.css",
+			"stylesheetHash": "597d9e274a01a823e8876482216b08a466d78cec31dcce7b936c4c3d4e0b5060"
 		},
 		{
 			"name": "look-row",
