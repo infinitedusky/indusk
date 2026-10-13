@@ -256,6 +256,10 @@
 			"types": "./dist/lib/plans/history.d.ts",
 			"default": "./dist/lib/plans/history.js"
 		},
+		"./plans/parts": {
+			"types": "./dist/lib/plans/parts.d.ts",
+			"default": "./dist/lib/plans/parts.js"
+		},
 		"./plans/amendments": {
 			"types": "./dist/lib/plans/amendments.d.ts",
 			"default": "./dist/lib/plans/amendments.js"

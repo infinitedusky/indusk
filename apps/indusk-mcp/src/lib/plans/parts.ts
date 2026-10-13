@@ -1,0 +1,144 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { type BriefContract, parseBriefContract } from "../promises/brief-contract.js";
+import { readPromises } from "../promises/registry.js";
+import { type Amendment, amendmentsOf } from "./amendments.js";
+import { listApps, readAppLooks } from "../looks/overview.js";
+
+/**
+ * What a plan's page shows of its brief (brief-as-the-contract ADR decision
+ * 7): its promises, its expectations and its looks, each with a name and a
+ * state, and the amendments waiting on the person. The page draws this and
+ * works out none of it.
+ *
+ * promise: a-plan-page-shows-the-parts-of-its-brief
+ * promise: a-look-has-the-plan-that-owns-it
+ */
+
+export type LookRelation = "makes" | "changes" | "replaces" | "must-not-break";
+
+export interface PartPromise {
+	name: string;
+	sentence: string;
+	/** The registry's state; `unregistered` for one the brief makes that the registry lacks. */
+	state: string;
+}
+
+export interface PartExpectation {
+	text: string;
+	measure: string | null;
+	look: string | null;
+}
+
+export interface PartLook {
+	name: string;
+	relation: LookRelation;
+	/** `undrawn` when no mockup or story of that name exists in the plan's checkout. */
+	approval: "approved" | "proposed" | "undrawn";
+	/** The plan that owns the look: the one its approval was made in; null when never approved. */
+	plan: string | null;
+	/** The app whose mockups hold it; null when undrawn. */
+	app: string | null;
+}
+
+export interface PlanParts {
+	plan: string;
+	/** False when the plan has no brief in the contract shape; the three parts are then empty. */
+	hasBrief: boolean;
+	promises: PartPromise[];
+	expectations: PartExpectation[];
+	looks: PartLook[];
+	/** `None — {reason}` of the brief's looks section; null when it lists looks or says nothing. */
+	noLooks: string | null;
+	amendments: Amendment[];
+	/** Why the waiting amendments cannot be told; null when they can. */
+	amendmentsUnreadable: string | null;
+}
+
+const EMPTY = (plan: string, hasBrief: boolean): PlanParts => ({
+	plan,
+	hasBrief,
+	promises: [],
+	expectations: [],
+	looks: [],
+	noLooks: null,
+	amendments: [],
+	amendmentsUnreadable: null,
+});
+
+/** The looks the brief lists, each under how the brief lists it. */
+function listedLooks(brief: BriefContract): Array<{ name: string; relation: LookRelation }> {
+	const looks = brief.looks;
+	if (!looks) return [];
+	return [
+		...looks.makes.map((l) => ({ name: l.name, relation: "makes" as const })),
+		...looks.changes.map((l) => ({ name: l.name, relation: "changes" as const })),
+		...looks.replaces.map((l) => ({ name: l.by, relation: "replaces" as const })),
+		...looks.mustNotBreak.map((name) => ({ name, relation: "must-not-break" as const })),
+	];
+}
+
+/**
+ * The parts of `plan`'s brief. `root` is the checkout the plan is worked in
+ * (its worktree, else the project), `folder` the plan's folder in it — the
+ * brief is read there, the registry and the mockups from the same checkout,
+ * so what the page shows is what the plan's branch holds.
+ */
+export async function readPlanParts(root: string, plan: string, folder?: string): Promise<PlanParts> {
+	const dir = folder ?? join(root, ".indusk", "planning", plan);
+	const briefFile = join(dir, "brief.md");
+	if (!existsSync(briefFile)) return EMPTY(plan, false);
+	const brief = parseBriefContract(readFileSync(briefFile, "utf-8"));
+	if (brief.shape === "legacy") return EMPTY(plan, false);
+
+	const read = readPromises(root);
+	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
+	const byName = new Map((registry?.promises ?? []).map((p) => [p.name, p]));
+	const names = new Set<string>([
+		...brief.makes.map((m) => m.name),
+		...(registry?.promises ?? []).filter((p) => p.owner === plan).map((p) => p.name),
+	]);
+	const promises = [...names].map((name) => {
+		const entry = byName.get(name);
+		const made = brief.makes.find((m) => m.name === name);
+		return {
+			name,
+			sentence: entry?.statement ?? made?.sentence ?? "",
+			state: entry?.state ?? "unregistered",
+		};
+	});
+
+	const apps = await Promise.all(listApps(root).map((app) => readAppLooks(root, app)));
+	const drawn = new Map<string, { approval: "approved" | "proposed"; plan: string | null; app: string }>();
+	for (const app of apps) {
+		if ("problem" in app) continue;
+		for (const item of [...app.mockups, ...app.stories]) {
+			drawn.set(item.name, { approval: item.approval, plan: item.plan, app: app.app });
+		}
+	}
+	const looks = listedLooks(brief).map(({ name, relation }) => {
+		const found = drawn.get(name);
+		return found
+			? { name, relation, approval: found.approval, plan: found.plan, app: found.app }
+			: { name, relation, approval: "undrawn" as const, plan: null, app: null };
+	});
+
+	let amendments: Amendment[] = [];
+	let amendmentsUnreadable: string | null = null;
+	try {
+		amendments = await amendmentsOf(dir);
+	} catch (err) {
+		amendmentsUnreadable = (err as Error).message;
+	}
+
+	return {
+		plan,
+		hasBrief: true,
+		promises,
+		expectations: brief.expectations.map((e) => ({ text: e.text, measure: e.measure, look: e.look })),
+		looks,
+		noLooks: brief.looks?.none ?? null,
+		amendments,
+		amendmentsUnreadable,
+	};
+}
