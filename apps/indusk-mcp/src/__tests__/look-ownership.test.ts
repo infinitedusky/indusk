@@ -10,7 +10,9 @@ import { readApp } from "../lib/looks/mockups.js";
  * promise: a-look-has-the-plan-that-owns-it — brief-as-the-contract A4.
  * promise: a-changed-look-keeps-its-history — brief-as-the-contract A6, a
  * regression guard: a redrawn approved look reads proposed while the version a
- * person approved stays the reference the app is held to.
+ * person approved stays the reference the app is held to. A7 (same promise) is
+ * the other half: once the new version is approved, the record shows both
+ * versions and the plan that changed it.
  *
  * A look approved in a plan's checkout records the plan that checkout is on,
  * and reading the approval shows it. The writer is the one the cockpit's
@@ -68,5 +70,28 @@ describe("A6 a redrawn look is proposed while the approved version is still the 
 			before.status.state === "approved" ? before.status.entry.mockupHash : "",
 		);
 		expect(after.entries).toEqual(before.entries);
+	});
+});
+
+describe("A7 after the new version is approved the record shows both versions and the plan", () => {
+	it("the redrawn look's approval is appended beside the first, naming the plan that changed it", async () => {
+		const entriesOf = async () =>
+			readApprovals(await readApp(f.worktree, "demo")).filter((e) => e.mockup === "home.empty");
+
+		const first = await entriesOf();
+		expect(first).toHaveLength(1);
+
+		appendFileSync(
+			join(f.worktree, ".indusk/mockups/demo/screens/home.empty.html"),
+			"<!-- redrawn by x -->\n",
+		);
+		const r = await approve(f.worktree, "demo", "home.empty", "sandy");
+		expect(r.approved, JSON.stringify(r)).toBe(true);
+
+		const entries = (await entriesOf()) as Array<{ mockupHash: string; plan?: string }>;
+		expect(entries).toHaveLength(2);
+		expect(entries[0].mockupHash).toBe(first[0].mockupHash);
+		expect(entries[1].mockupHash).not.toBe(entries[0].mockupHash);
+		expect(entries[1].plan).toBe("x");
 	});
 });
