@@ -260,7 +260,10 @@ A person works on one document, the brief — promises, expectations and looks �
 - [x] `looks/overview` returns each approval's `plan`, so a plan's looks can be read by owner
 - [x] A brief edited after approval reads as changed since its approval (the comparison `amendmentsOf` builds on in Build Phase 3)
   - `briefStandingOf(planDir)` returns `unapproved`, `unchanged` or `changed` from the impl's recorded hash; guarded by `approved-brief.test.ts`.
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+  - Result: 8 files reviewed (5 code, 3 tests); one finding (below), one left as-is.
+- [x] Shape (`apps/indusk-mcp/src/lib/plans/approve.ts`) — name the mockup-approval refusal as a function (`refuseUnapprovedLooks`) instead of an inline block inside `approvePlan`. Rule: Should this inline block have been a named function? (shape: intra-unit naming)
+- [x] Shape (`apps/indusk-mcp/src/lib/plans/approved-brief.ts`) — reviewed, left as-is: one concern, the approval record (hash, who, frontmatter, what approval waits on, standing); `approvedBy` repeats `approver` in `looks/approve.ts`, which the write-side rule keeps out of `lib/plans` imports, so that duplication is cross-file and left to /cleanup
 
 #### Build Phase 2 Verification
 

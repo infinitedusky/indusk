@@ -64,17 +64,7 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
 
 	const briefFile = join(pb.dir, "brief.md");
 	const brief = existsSync(briefFile) ? readFileSync(briefFile, "utf-8") : null;
-	if (brief !== null) {
-		const proposed = await unapprovedMockups(pb.worktree, brief);
-		if (proposed.length > 0) {
-			throw new PlanCommandRefusal(
-				[
-					`${plan} cannot be approved; its brief's looks are not approved yet:`,
-					...proposed.map((r) => `  ${r}`),
-				].join("\n"),
-			);
-		}
-	}
+	if (brief !== null) await refuseUnapprovedLooks(pb, brief);
 
 	await refuseDirtyTrunk(pb, paths, `before approving ${plan}`);
 	await setImplKeys(
@@ -88,6 +78,21 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
 	);
 	const merge = await mergeIntoTrunk(pb, `plan(${plan}): approved — its documents and promises`);
 	return { plan, merge, paths };
+}
+
+/** Refuse, naming each, when a mockup the brief makes, changes or replaces is not yet approved in the plan's worktree. */
+async function refuseUnapprovedLooks(
+	pb: Awaited<ReturnType<typeof planBranch>>,
+	brief: string,
+): Promise<void> {
+	const proposed = await unapprovedMockups(pb.worktree, brief);
+	if (proposed.length === 0) return;
+	throw new PlanCommandRefusal(
+		[
+			`${pb.plan} cannot be approved; its brief's looks are not approved yet:`,
+			...proposed.map((r) => `  ${r}`),
+		].join("\n"),
+	);
 }
 
 /**
