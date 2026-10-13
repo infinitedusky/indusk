@@ -165,3 +165,43 @@ describe("A29 — a Bash command naming the approve route is refused", () => {
 		expect(r.exitCode, r.stderr).toBe(0);
 	});
 });
+
+/**
+ * cockpit-redraw A5 and A6 — promise: only-a-person-reapproves.
+ *
+ * Re-approving a changed brief is the person's, as approving a look is: the
+ * amendment card's Approve in their browser, or their own terminal. An
+ * agent's Bash command that runs `plans reapprove`, or names the admin's
+ * re-approve route, is refused before it runs — so the plan's approval is
+ * left exactly as it was. Read from the command's text, a tripwire as the
+ * rest of this guard is.
+ */
+describe("A5 — an agent's `plans reapprove` is refused, saying only a person re-approves", () => {
+	const runs: Array<[string, string]> = [
+		["indusk", "indusk plans reapprove cockpit-redraw"],
+		["node on the built cli", "node /opt/indusk/dist/bin/cli.js plans reapprove cockpit-redraw"],
+		["after a cd", `cd ${ROOT} && indusk plans reapprove cockpit-redraw`],
+	];
+	for (const [how, command] of runs) {
+		it(`refuses ${how}`, async () => {
+			const r = await runHook("looks-approval-guard.js", bash(command));
+			expect(r.exitCode, `${command}\n${r.stderr}`).toBe(2);
+			expect(r.stderr).toMatch(/only a person/i);
+			expect(r.stderr).toMatch(/re-?approv/i);
+		});
+	}
+});
+
+describe("A6 — an agent's call to the re-approve route is refused the same way", () => {
+	it("refuses a curl to /api/plans/<name>/reapprove", async () => {
+		const r = await runHook(
+			"looks-approval-guard.js",
+			bash(
+				`curl -s -X POST http://127.0.0.1:3939/api/plans/cockpit-redraw/reapprove -H 'Origin: http://127.0.0.1:3939' -H 'content-type: application/json' -d '{"project":"dusk"}'`,
+			),
+		);
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toMatch(/only a person/i);
+		expect(r.stderr).toMatch(/re-?approv/i);
+	});
+});
