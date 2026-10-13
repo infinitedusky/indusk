@@ -52,6 +52,11 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
   const brief = documents.find((d) => d.slug === "brief");
   const research = documents.find((d) => d.slug === "research");
   const planHref = `/p/${project}/plan/${name}`;
+  // The brief can be talked over whenever the plan has a worktree or code to
+  // work in — before approval to write it, after to amend it, which waits on
+  // the person as any amendment does.
+  const canTalk =
+    !plan.archived && (plan.worktree !== undefined || plan.code !== undefined);
 
   return (
     <>
@@ -93,11 +98,17 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
             className="sticky top-0 grid min-w-0 gap-2"
             data-testid="brief-agent"
           >
+            <h2 className="font-display text-lg font-bold">Agent</h2>
+            {canTalk ? null : (
+              <p className="text-sm text-ink-faint">
+                The agent works in the plan's worktree; this plan has none.
+              </p>
+            )}
             <PlanSession
               project={project}
               plan={name}
               canApprove={actions.canApprove}
-              canPlan={actions.canPlan}
+              canPlan={canTalk}
               approvedHref={planHref}
             />
           </aside>
