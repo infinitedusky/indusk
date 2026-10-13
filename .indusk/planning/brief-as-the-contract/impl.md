@@ -267,7 +267,7 @@ A person works on one document, the brief — promises, expectations and looks �
 - [x] Shape (`apps/indusk-mcp/src/lib/plans/approve.ts`) — name the mockup-approval refusal as a function (`refuseUnapprovedLooks`) instead of an inline block inside `approvePlan`. Rule: Should this inline block have been a named function? (shape: intra-unit naming)
 - [x] Shape (`apps/indusk-mcp/src/lib/plans/approved-brief.ts`) — reviewed, left as-is: one concern, the approval record (hash, who, frontmatter, what approval waits on, standing); `approvedBy` repeats `approver` in `looks/approve.ts`, which the write-side rule keeps out of `lib/plans` imports, so that duplication is cross-file and left to /cleanup
 - [x] Discovered: `plans approve` refuses a look its brief names that is not drawn in the worktree, naming it, as it refuses a proposed one; no name is exempt, since a new component is named by its own mockup (ADR decision 4a). Supersedes the "not held" decision on the gate item above (A24)
-- [ ] Discovered: the planner skill, the brief template and the planning rules template say a story is never named without a mockup: a new component is drawn as its own mockup (`screens/<component>.<state>.html`, declared with `indusk-new-components`) and named in the brief beside the screens that use it
+- [x] Discovered: the planner skill, the brief template and the planning rules template say a story is never named without a mockup: a new component is drawn as its own mockup (`screens/<component>.<state>.html`, declared with `indusk-new-components`) and named in the brief beside the screens that use it
 
 #### Build Phase 2 Verification
 
