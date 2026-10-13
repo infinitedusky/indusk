@@ -40,6 +40,12 @@ export interface MockupView {
 	approval: "approved" | "proposed";
 	/** The entry in force when approved; the last one (the reference held to meanwhile) when proposed; null when never approved. */
 	entry: ApprovalEntry | null;
+	/**
+	 * The plan that owns the look: the one the entry was approved in. Null when
+	 * never approved or approved outside a plan. The plan page reads its looks
+	 * by this (brief-as-the-contract ADR decision 7).
+	 */
+	plan: string | null;
 	/** sha256 of the mockup's bytes as they are now. */
 	hash: string;
 	/** `componentsHashOf` the snapshots it composes: what a mockup's Approve sends back with `hash`. */
@@ -66,6 +72,8 @@ export interface StoryView {
 	approval: "approved" | "proposed";
 	/** The entry in force when approved; the last one when proposed; null when never approved. */
 	entry: StoryApprovalEntry | null;
+	/** The plan that owns the story: the one its entry was approved in, or null. */
+	plan: string | null;
 	/** sha256 of the snapshot as it is now; a story's Approve sends back the one the person saw. */
 	hash: string;
 	/** sha256 of its component's stylesheet as it is now, or null when it has none; sent back with `hash`. */
@@ -133,12 +141,14 @@ function viewOf(
 	css: string,
 ): MockupView {
 	const approval = approvalOf(app, mockup, approvals);
+	const entry = approval.state === "approved" ? approval.entry : approval.reference;
 	return {
 		name: mockup.name,
 		screen: mockup.screen,
 		state: mockup.state,
 		approval: approval.state,
-		entry: approval.state === "approved" ? approval.entry : approval.reference,
+		entry,
+		plan: entry?.plan ?? null,
 		hash: mockup.hash,
 		componentsHash: mockup.componentsHash,
 		componentsChanged: approval.state === "proposed" ? (approval.componentsChanged ?? []) : [],
@@ -174,13 +184,15 @@ function storiesOf(
 	const ids = storybookIds(app);
 	return app.stories.map((story) => {
 		const approval = storyApprovalOf(app, story, approvals);
+		const entry = approval.state === "approved" ? approval.entry : approval.reference;
 		return {
 			name: story.name,
 			component: story.component,
 			state: story.state,
 			id: ids.get(story.name) ?? null,
 			approval: approval.state,
-			entry: approval.state === "approved" ? approval.entry : approval.reference,
+			entry,
+			plan: entry?.plan ?? null,
 			hash: story.hash,
 			stylesheetHash: story.stylesheetHash,
 			document: storyDocument(story, css, app.styles),

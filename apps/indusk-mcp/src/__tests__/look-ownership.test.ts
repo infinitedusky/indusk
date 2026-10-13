@@ -5,6 +5,7 @@ import { type Fixture, makeFixture } from "../lib/bookkeeping/fixture.test-suppo
 import { approvalOf, readApprovals } from "../lib/looks/approvals.js";
 import { approve } from "../lib/looks/approve.js";
 import { readApp } from "../lib/looks/mockups.js";
+import { readAppLooks } from "../lib/looks/overview.js";
 
 /**
  * promise: a-look-has-the-plan-that-owns-it — brief-as-the-contract A4.
@@ -93,5 +94,19 @@ describe("A7 after the new version is approved the record shows both versions an
 		expect(entries[0].mockupHash).toBe(first[0].mockupHash);
 		expect(entries[1].mockupHash).not.toBe(entries[0].mockupHash);
 		expect(entries[1].plan).toBe("x");
+	});
+});
+
+describe("the overview returns each approval's plan, so a plan's looks can be read by owner", () => {
+	it("a look approved in the plan's checkout names the plan; one approved before ownership names none", async () => {
+		const r = await approve(f.worktree, "demo", "home.full", "sandy");
+		expect(r.approved, JSON.stringify(r)).toBe(true);
+
+		const read = await readAppLooks(f.worktree, "demo");
+		if ("problem" in read) throw new Error(read.problem);
+		const plan = (name: string) => read.mockups.find((m) => m.name === name)?.plan;
+		expect(plan("home.full")).toBe("x");
+		expect(plan("home.empty")).toBeNull();
+		expect(plan("detail.default")).toBeNull();
 	});
 });
