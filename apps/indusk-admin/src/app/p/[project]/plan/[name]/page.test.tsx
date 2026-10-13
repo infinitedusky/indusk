@@ -80,6 +80,20 @@ vi.mock("@/lib/decisions-reader", () => ({
   readPlanHistory: () => [],
 }));
 
+// The plan page's brief parts are read by the package from disk (node:fs), which
+// the browser project cannot import; these pages have no brief to show.
+vi.mock("@infinitedusky/indusk-mcp/plans/parts", () => ({
+  readPlanParts: async (_root: string, plan: string) => ({
+    plan,
+    hasBrief: false,
+    promises: [],
+    expectations: [],
+    looks: [],
+    noLooks: null,
+    amendments: [],
+    amendmentsUnreadable: null,
+  }),
+}));
 vi.mock("@infinitedusky/indusk-mcp/promises/standing", () => ({
   __esModule: true,
   readStanding: async () => [],

@@ -88,16 +88,16 @@ function listedLooks(brief: BriefContract): Array<{ name: string; relation: Look
 
 /**
  * The parts of `plan`'s brief. `root` is the checkout the plan is worked in
- * (its worktree, else the project), `folder` the plan's folder in it — the
- * brief is read there, the registry and the mockups from the same checkout,
+ * (its worktree, else the project), the plan's folder in it (under `archive/`
+ * once archived) — the brief is read there, the registry and the mockups from the same checkout,
  * so what the page shows is what the plan's branch holds.
  */
 export async function readPlanParts(
 	root: string,
 	plan: string,
-	folder?: string,
+	options: { archived?: boolean } = {},
 ): Promise<PlanParts> {
-	const dir = folder ?? join(root, ".indusk", "planning", plan);
+	const dir = join(root, ".indusk", "planning", ...(options.archived ? ["archive"] : []), plan);
 	const briefFile = join(dir, "brief.md");
 	if (!existsSync(briefFile)) return EMPTY(plan, false);
 	const brief = parseBriefContract(readFileSync(briefFile, "utf-8"));

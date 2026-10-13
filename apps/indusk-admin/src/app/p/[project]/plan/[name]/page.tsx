@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import { readPlanParts } from "@infinitedusky/indusk-mcp/plans/parts";
 import {
   promiseWords,
@@ -116,17 +115,9 @@ export default async function PlanPage({ params }: PlanPageProps) {
   // worked in (its worktree, else the project's own), on every request, so a
   // promise or a look the agent writes shows on the next refresh.
   const checkout = plan.worktree?.path ?? projectPath;
-  const parts = await readPlanParts(
-    checkout,
-    name,
-    join(
-      checkout,
-      ".indusk",
-      "planning",
-      ...(plan.archived || plan.archivedInWorktree ? ["archive"] : []),
-      name,
-    ),
-  );
+  const parts = await readPlanParts(checkout, name, {
+    archived: plan.archived || Boolean(plan.archivedInWorktree),
+  });
 
   const stage = (
     <>
