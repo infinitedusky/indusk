@@ -317,7 +317,8 @@ A person works on one document, the brief — promises, expectations and looks �
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/cli/plans.md`: `plans reapprove` and what counts as an amendment; `apps/docs/src/guide/briefs.md`: changing what was agreed during a build
+- [x] `apps/docs/src/reference/cli/plans.md`: `plans reapprove` and what counts as an amendment; `apps/docs/src/guide/briefs.md`: changing what was agreed during a build
+  - Note: the reference also gains `plans amendments` and `accept`'s new-component refusal; the guide's "The question" no longer says a story is named directly (ADR decision 4a), and gains a Mermaid of build → amendment waits → approved → stories → accepted.
 
 ### Build Phase 4: The plan page shows the parts of its brief
 
