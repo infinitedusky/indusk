@@ -46,8 +46,24 @@ export function interfaceFilesAmong(root: string, paths: readonly string[]): Int
 const NOT_A_PATH = /^(file|path|change|-+)$/i;
 
 /**
- * The paths an impl's `## Files Affected` names: the first backticked (or
- * bare) cell of each table row, or a bulleted path. A trailing slash and
+ * The paths one cell names, each read on its own: every backticked span, or —
+ * when the cell has none — each comma- or "and"-separated piece with a
+ * parenthesised note dropped. A piece with a space left in it is prose, not a
+ * path, and is skipped.
+ */
+function pathsInCell(cell: string): string[] {
+	const ticked = [...cell.matchAll(/`+([^`]+)`+/g)].map((m) => m[1]);
+	const pieces =
+		ticked.length > 0 ? ticked : cell.replace(/\([^)]*\)/g, "").split(/\s*(?:,|&|\band\b)\s*/);
+	return pieces
+		.map((piece) => piece.trim().replace(/^\.\//, "").replace(/\/+$/, ""))
+		.filter((path) => path !== "" && !NOT_A_PATH.test(path) && !/\s/.test(path));
+}
+
+/**
+ * The paths an impl's `## Files Affected` names: every path in the first cell
+ * of each table row (a note after one, or several, are read path by path), or
+ * a bulleted path. A trailing slash and
  * `./` are dropped so a directory entry matches a source by prefix.
  */
 export function filesAffectedOf(implText: string): string[] {
@@ -61,11 +77,7 @@ export function filesAffectedOf(implText: string): string[] {
 		if (!fenced[i] && /^#{1,2}\s/.test(line)) break;
 		const cell = /^\s*\|\s*([^|]+?)\s*\|/.exec(line)?.[1] ?? /^\s*[-*]\s+(.+?)\s*$/.exec(line)?.[1];
 		if (cell === undefined) continue;
-		const path = cell
-			.replace(/^`+|`+$/g, "")
-			.replace(/^\.\//, "")
-			.replace(/\/+$/, "");
-		if (path !== "" && !NOT_A_PATH.test(path) && !/\s/.test(path)) out.push(path);
+		out.push(...pathsInCell(cell));
 	}
 	return out;
 }
