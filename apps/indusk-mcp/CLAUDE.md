@@ -50,6 +50,8 @@ pointer; the pointer holds the story.
 
 ## Workbenches and worktrees
 
+- **A safety argument written in a comment is not enforced by the code around it** — grep for comments asserting an invariant and check the control flow delivers it; two workbench-sync paths each reported the worst case as the most reassuring one. — see `/reference/cli/workbench`
+
 - **Topology is DECLARED, never inferred** — `worktree.repos[]` with optional
   `path` / `worktrees`; the legacy `wrapped_repo` reduces to a one-element
   list; absence means flat. One reader (`readWorkbenchRepos` + `repoDir` /

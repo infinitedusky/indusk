@@ -98,4 +98,4 @@ dusk/
 
 ## Known Gotchas
 
-- **A safety argument written in a comment is not enforced by the code around it** — grep for comments asserting an invariant and check the control flow delivers it; two workbench-sync paths each reported the worst case as the most reassuring one. — see `/reference/cli/workbench`
+- Area gotchas live in the area's `CLAUDE.md`, loaded when a file there is read — workbench sync's is in `apps/indusk-mcp/CLAUDE.md` (Workbenches and worktrees).
