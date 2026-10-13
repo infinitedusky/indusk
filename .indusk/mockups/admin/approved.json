@@ -2534,6 +2534,19 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-12T21:43:32.101Z"
+		},
+		{
+			"mockup": "amendment-card.waiting",
+			"mockupHash": "21b42110c354827db4e003b83912520ce15ae667dee614d2e88227752f262fd7",
+			"componentsHash": "e4a92c561e70de32145f2e39d6d4726b7b1555c921df0cb79c2fdecac6bfe21b",
+			"components": {
+				"button.yes": "93fac0656e7c4033b3c25bf08c7420fd21a1e6e720ccea4315375538efc0f325",
+				"button.css": "accf9aafd07cd466c57714b943d3fe6eb599feb7cb6e3e9241d2aba80a8e35f3"
+			},
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-13T01:45:03.625Z"
 		}
 	]
 }
