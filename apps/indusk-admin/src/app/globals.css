@@ -332,7 +332,7 @@ body {
 /* The part the agent just wrote, marked for a moment as the brief page brings
    it into view (FollowAgent). */
 [data-followed="true"] {
-  outline: 2px solid var(--color-dusk);
-  outline-offset: 2px;
+  outline: var(--border-2) solid var(--color-dusk);
+  outline-offset: var(--border-2);
   border-radius: var(--radius-lg);
 }
