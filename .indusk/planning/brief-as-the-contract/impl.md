@@ -1,7 +1,7 @@
 ---
 title: "Brief as the contract — looks in the brief, approval of the brief, amendments, the plan page's parts, a plan that starts as a conversation"
 date: 2026-10-12
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -70,6 +70,12 @@ A person works on one document, the brief — promises, expectations and looks �
 | A24 | Approving a plan whose brief names a look that is not drawn in its worktree is refused, naming the look; a new component is named by its own mockup, so no name is exempt | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-plan-is-approved-with-its-looks-approved | apps/indusk-mcp/src/__tests__/plans-approve-looks.test.ts |
 | A25 | Accepting a plan is refused while a new component its brief names has no approved story, or a mockup its brief names still draws a component inline or composes one not approved, naming each; once the stories are approved the same plan is accepted | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-new-component-ends-its-plan-with-a-story | apps/indusk-mcp/src/__tests__/plans-accept-stories.test.ts |
 | A23 | Starting a plan from the terminal (`indusk plans start`) works as before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the form goes, the command stays | apps/indusk-mcp/src/__tests__/plans-approve-looks.test.ts |
+| A26 | A planning session (a draft's conversation or a plan's brief) asks nothing for a write inside its own folder, and a write outside it reaches the person: it never runs in `bypassPermissions`, where a draft's agent can write into the repository unasked | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-conversation-that-is-not-kept-leaves-nothing-in-the-repository | apps/indusk-mcp/src/lib/session/permissions.test.ts, apps/indusk-mcp/src/lib/session/protocol.test.ts |
+| A27 | A brief's `description:` written as YAML — a folded block (`>-`) or a quoted string with an escaped quote — shows as its text on the plan page, not as `>-` or a stray backslash | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-mcp/src/__tests__/plan-parts-description.test.ts |
+| A28 | A brief whose status is finished by the rail's own rule (`complete`, `accepted`) or that is `superseded`, or any archived plan, never shows "The brief is incomplete" as the current step | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/components/plan/PlanSummary.test.tsx |
+| A29 | A file edited in place inside an archived plan's folder is read on the next request; the archive cache never serves the old text | Build Phase 6 | Build Phase 6 | planned | unit | a regression guard: the archive cache never serves a stale plan | apps/indusk-admin/src/lib/planning-reader.archive-cache.test.ts |
+| A30 | Accepting a draft as a `spike` lands on the plan's page, not on a brief page that asks for a brief a spike never has | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-plan-starts-as-a-conversation | apps/indusk-admin/src/components/drafts/DraftProposal.test.tsx |
+| A31 | On a phone, where the brief page is one column, the agent column under the brief is given no window-fitted height, so it is not clipped while it scrolls into view | Build Phase 6 | Build Phase 6 | planned | unit | a regression guard: the agent column is fitted only beside the brief | apps/indusk-admin/src/components/session/WindowColumn.test.tsx |
 
 ### Deferred Verification
 
@@ -421,6 +427,32 @@ A person works on one document, the brief — promises, expectations and looks �
 
 - [x] `apps/docs/src/decisions/brief-as-the-contract.md` published from the ADR; `apps/docs/src/guide/briefs.md` and `reference/cli/plans.md` (`start --from-draft`); sidebar entries; changelog: Added — "The brief is the contract: looks belong to a plan, approval is of the brief, a change to what was agreed waits for the person, the plan page shows promises, expectations and looks, and a plan starts as a conversation."
   - Note: `decisions/brief-as-the-contract.md` from the ADR (the Documentation Plan section left out, links made site-relative) with a sidebar entry beside UI Promises; `guide/briefs.md` gains "Starting a plan: a conversation" with the draft flow diagram; `reference/cli/plans.md` documents `start --from-draft`, the drafts sweep in `archive-dead` and `drafts.max_age_days`; `reference/admin-ui/overview.md` gains the draft route and a Drafts section; the changelog has the Added entry. `pnpm build` in `apps/docs` completes (no dead link).
+
+### Build Phase 6: Falsification — what the brief page and the planning session were made to do on the last day
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds against the changes made in Build Phase 5's last item and after it (the brief page, the plan's description, the archive cache, the planning session's permissions). Each row A26–A31 is one hypothesis about what is broken; each item below is the fix if it confirms.
+
+- [ ] Planning sessions keep their boundary without asking more: `buildArgs("planning")` runs `acceptEdits`, and a planning session's permission requests are decided in code like a build's — a path inside its own folder (the plan's worktree, or the draft's folder) and a tool given no path are allowed unasked; a path outside is forwarded to the person rather than refused. Replaces `bypassPermissions` (A26). Say so to Sandy before landing: it reverses "set it to dangerously" for writes outside the folder only
+- [ ] `briefOpening` in `plans/parts` reads the brief's frontmatter through the package's frontmatter parser (`parseFrontmatter`, gray-matter), not a line regex (A27)
+- [ ] `PlanSummary` takes whether the brief is finished from the package's `documentFinished("brief", status)` (`plans/steps`), shows nothing for a `superseded` brief, and the plan page passes no call to work on the brief for an archived plan (A28)
+- [ ] The archive cache in `planning-reader.ts` keys on each archived plan's files' mtimes, not only the folders', so an in-place edit reads afresh (A29)
+- [ ] `DraftProposal`'s accept lands on `/brief` only when the plan has a brief; a `spike` lands on the plan's page (A30)
+- [ ] `WindowColumn` fits its height only while the two-column layout applies (the same breakpoint as `.cols-brief-page`), and clears it otherwise (A31)
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 6 Verification
+
+- [ ] A26–A31 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session src/__tests__/plan-parts-description.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/plan/PlanSummary.test.tsx src/lib/planning-reader.archive-cache.test.ts src/components/drafts/DraftProposal.test.tsx src/components/session/WindowColumn.test.tsx`); `vitest related` on the changed files in both packages; tsc and biome clean on changed files
+
+#### Build Phase 6 Context
+
+- [ ] `apps/indusk-admin/CLAUDE.md`: whether a plan's document is finished comes from `plans/steps`' `documentFinished`, never a status compared in the admin — guarded by `PlanSummary.test.tsx` (A28)
+
+#### Build Phase 6 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the brief page — the brief's parts and the brief beside the agent's column, the agent following what it writes, the plan's description and the brief's state on the plan page, and what a planning session asks (only for a write outside its folder)
 
 ## Files Affected
 
