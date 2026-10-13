@@ -39,13 +39,13 @@ then.
 
 ### This plan makes
 
-1. **`a-project-starts-as-a-conversation`** (state). A person starts a new project from the admin by describing it — typed, pasted or attached as a document — with nothing asked of them first, and the agent proposes its name, location and shape for the person to accept.
+1. **`a-project-starts-as-a-conversation`** (state). A person starts a new project from the admin by describing it, and may add documents for the agent to write the brief from, with nothing asked of them first; the agent proposes its name, location and shape for the person to accept.
 
 2. **`a-new-project-is-made-by-the-agent`** (state). Accepting the proposal creates the workbench, the project's repository inside it and its worktrees folder, and installs InDusk, with no command typed by the person.
 
 3. **`a-new-project-has-the-standard-layout`** (state). Every project created this way has the same layout — the workbench at the root, the repository inside it, a worktrees folder beside it, all declared in the project's config — and the project's own checks report it healthy.
 
-4. **`a-project-keeps-its-founding-brief`** (state). The person's description of the project is kept as the project's founding brief, and its milestones become the master plan's order, so the project opens with its plans named.
+4. **`a-project-keeps-its-founding-brief`** (state). Every project created this way opens with a founding brief the person accepted, written from the conversation and any documents they gave, and its milestones become the master plan's order; a document they gave is kept unchanged beside it.
 
 5. **`a-new-version-of-the-founding-brief-shows-what-changed`** (state). When the person gives a newer version of their document during the conversation, the agent shows what changed and works from the new one.
 
