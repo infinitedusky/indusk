@@ -135,7 +135,10 @@ describe("A3 — below 760 px there is no drag edge", () => {
   it("A3 has an edge on a desktop and none at 400 px, where the nav is a drawer", async () => {
     await page.viewport(1280, 900);
     await frame();
-    expect(edge(), "no drag edge at 1280 px, so its absence proves nothing").not.toBeNull();
+    expect(
+      edge(),
+      "no drag edge at 1280 px, so its absence proves nothing",
+    ).not.toBeNull();
 
     await page.viewport(400, 800);
     await vi.waitFor(() => expect(edge()).toBeNull());

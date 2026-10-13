@@ -105,6 +105,8 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 - **A9** — the plan page already opens this way (brief-as-the-contract Build Phase 6); the row holds the changed promise to it through the redraw.
 - **A12** — `check-gates-amendments.test.ts` already proves the amendment clause; the row gives `a-plan-builds-only-after-approval` its named test.
 
+- [x] Shape (Test Phase 1): reviewed `CockpitFrame.test.tsx`, `looks-approval-guard.test.ts`, `amendment-approval.test.ts`, `check-gates-amendments.test.ts` against the enabled extensions' craft rules (`rules.unreadable` empty) — one formatting finding (biome) fixed in place; nothing structural: the `drag` helper is the one named seam in `CockpitFrame.test.tsx`, the rest are one-line tokens and appended cases beside their siblings
+
 #### Test Phase 1 Verification
 
 - [x] A1–A6 authored and red on their own assertions; A7, A8, A9, A12 passing (`cd apps/indusk-admin && pnpm exec vitest run src/components/cockpit/CockpitFrame.test.tsx src/__tests__/amendment-approval.test.ts src/__tests__/plan-page-layout.test.tsx src/components/plan/PlanSummary.test.tsx`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-approval-guard.test.ts src/__tests__/check-gates-amendments.test.ts`)
