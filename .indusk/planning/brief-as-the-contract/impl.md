@@ -494,11 +494,13 @@ A person works on one document, the brief — promises, expectations and looks �
 
 #### Build Phase 7 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a plan route finds its plan through `lib/plan-page`'s `readPlanPage`, never its own lookup — guarded by `plan-page.test.ts` (A32)
+- [x] `apps/indusk-admin/CLAUDE.md`: a plan route finds its plan through `lib/plan-page`'s `readPlanPage`, never its own lookup — guarded by `plan-page.test.ts` (A32)
+  - Note: bullet added after the `planActions` rule; the `One home per piece` entry no longer names a ritual section in `components/phases/` (removed in item 1).
 
 #### Build Phase 7 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: no section still describes the plan page's removed regions (the stage strip, the phase sections, What happened); the routing tree names the brief page and the document page as they are
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: no section still describes the plan page's removed regions (the stage strip, the phase sections, What happened); the routing tree names the brief page and the document page as they are
+  - Note: the plan-detail section now describes the frame, the status rails and the six closed parts (Promises, Expectations, Looks, Phases, Documents, History) and says nothing is drawn beyond the mockups; the three progress lines, the type-chip/absence tables, the sections table and the falsification-rendering paragraph are gone; the routing tree gains `/doc/{doc}` and the brief page's real description; the organisation tree and `component-conventions.md` no longer name `PlanDetail` or `RitualPhaseSection`, and a worktree row no longer promises a 'Read from the worktree' line (the page removed it in Build Phase 4).
 
 ## Files Affected
 

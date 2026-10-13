@@ -25,6 +25,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
   by its worktree in normal mode or its `code.json` in a workbench, and gets
   the same buttons either way; a workbench session runs at the root with the
   code worktree added (`planLocation`). — see `/reference/admin-ui/sessions`
+- **A plan route finds its plan through `lib/plan-page`'s `readPlanPage`**,
+  never its own lookup: the plan page, `/brief` and `/doc/[doc]` share the
+  registry lookup, the stale-path `null` and the active-over-archived find.
+  Guarded by `plan-page.test.ts`.
 - Next.js App Router viewer over `.indusk/planning/` + each project's eval results in its home,
   hosted as one machine-global daemon (`indusk ui start/stop/restart/status`,
   registry `~/.indusk/projects.json`, routes `/p/[project]/...`). Custom
@@ -51,7 +55,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   file is an error block, never a guess. The rows table shows `Level` and
   `For` from the package's parser (`levelText`, `purpose`), never its own
   reading of a cell; the copied markdown carries the same columns.
-- **One home per piece**: rows table + ritual section in `components/phases/`,
+- **One home per piece**: rows table in `components/phases/`,
   progress lines in `bars/ProgressLines`, display vocabulary (incl. `phaseTitle`
   — the page says `Phase 4`; the package's `phaseLabel` is for logs, never a
   component) and every chip/label map in `bars/labels.ts`, badge maps in
