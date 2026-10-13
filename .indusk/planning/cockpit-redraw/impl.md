@@ -78,15 +78,22 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 #### Deferred to Build Phase 3
 
-- **A10** — holds each screen by value in Chromium, which needs the screens approved and the pages matched to them; it is written with them. Body reviewed:
+- **A10** — holds each screen by value in Chromium, which needs the screens approved and the pages matched to them; it is written with them. Body reviewed in Test Phase 1 and corrected: the first draft called `looksStatus(root, app)` and `looksCheck(root, app, { url })`, which no package subpath exports (`looksCheck` is the CLI's own function in `bin/commands/looks.ts`, returns void and sets an exit code), and read `.approval` / `.broken[].mockup` shapes that do not exist. The package's real surface: `readAppLooks` (`looks/overview`: `mockups[].name/.approval`, `stories[].name/.approval`, or `{ problem }`), `readApp` (`looks/mockups`), `readApprovals` / `readStoryApprovals` (`looks/approvals`), `checkApp` (`looks/check`: `{ results: LookResult[], unchecked }`, a result's mockup is `${screen}.${state}` and `verdict.state` is `held|broken`). The draft also let a named screen pass by never being checked, and omitted the two `nav-handle` stories the brief names. Corrected body:
 
   ```typescript
   it("A10 every screen cockpit-redraw names is approved and held by value", async () => {
-    const names = ["nav.expanded", "nav.wide", "brief.writing", "brief.approved", "plan.parts", "plan.working", "plan.needs-you", "plan.released"];
-    const status = await looksStatus(root, "admin");
-    for (const n of names) expect(status.find((s) => s.name === n)?.approval).toBe("approved");
-    const check = await looksCheck(root, "admin", { url: adminUrl });
-    expect(check.broken.filter((b) => names.includes(b.mockup))).toEqual([]);
+    const screens = ["nav.expanded", "nav.wide", "brief.writing", "brief.approved", "plan.parts", "plan.working", "plan.needs-you", "plan.released"];
+    const stories = ["nav-handle.default", "nav-handle.dragging"];
+    const read = await readAppLooks(root, "admin");
+    if ("problem" in read) throw new Error(read.problem);
+    for (const n of screens) expect(read.mockups.find((m) => m.name === n)?.approval, n).toBe("approved");
+    for (const n of stories) expect(read.stories.find((s) => s.name === n)?.approval, n).toBe("approved");
+    const app = await readApp(root, "admin");
+    const { results, unchecked } = await checkApp(app, readApprovals(app), adminUrl, readStoryApprovals(app));
+    const of = (r: { screen: string; state: string }) => `${r.screen}.${r.state}`;
+    for (const n of [...screens, ...stories]) expect(results.some((r) => of(r) === n), `${n} was never checked`).toBe(true);
+    expect(results.filter((r) => [...screens, ...stories].includes(of(r)) && r.verdict.state === "broken")).toEqual([]);
+    expect(unchecked.filter((u) => [...screens, ...stories].includes(u.mockup))).toEqual([]);
   });
   ```
 - **A11** — a live check, no body.
@@ -100,8 +107,8 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A6 authored and red on their own assertions; A7, A8, A9, A12 passing (`cd apps/indusk-admin && pnpm exec vitest run src/components/cockpit/CockpitFrame.test.tsx src/__tests__/amendment-approval.test.ts src/__tests__/plan-page-layout.test.tsx src/components/plan/PlanSummary.test.tsx`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-approval-guard.test.ts src/__tests__/check-gates-amendments.test.ts`)
-- [ ] A10's body reviewed: it compiles at Build Phase 3 against `looks/status` and `looks/check`, and asserts approval and held-by-value for exactly the screens the brief names
+- [x] A1–A6 authored and red on their own assertions; A7, A8, A9, A12 passing (`cd apps/indusk-admin && pnpm exec vitest run src/components/cockpit/CockpitFrame.test.tsx src/__tests__/amendment-approval.test.ts src/__tests__/plan-page-layout.test.tsx src/components/plan/PlanSummary.test.tsx`; `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-approval-guard.test.ts src/__tests__/check-gates-amendments.test.ts`)
+- [x] A10's body reviewed: it compiles at Build Phase 3 against `looks/status` and `looks/check`, and asserts approval and held-by-value for exactly the screens the brief names
 
 #### Test Phase 1 Context
 
