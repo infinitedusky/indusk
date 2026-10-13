@@ -276,7 +276,7 @@ A person works on one document, the brief â€” promises, expectations and looks â
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/plans.md`: `approve` records the brief and refuses a proposed mockup; `apps/docs/src/guide/ui-promises.md`: a look belongs to the plan that made it
+- [x] `apps/docs/src/reference/cli/plans.md`: `approve` records the brief and refuses a proposed mockup; `apps/docs/src/guide/ui-promises.md`: a look belongs to the plan that made it
 
 ### Build Phase 3: An amendment waits for the person
 

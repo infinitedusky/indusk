@@ -39,7 +39,7 @@ A code worktree inside the root that the root's ignore rules don't already cover
 
 ### `plans approve <name>`
 
-Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the worktree's copy; sets the impl's `status: approved` and commits it on the branch; merges the branch into the trunk with a merge commit. The build then continues in the same worktree on the same branch.
+Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the worktree's copy, then refuses, naming each, any mockup the brief's `## Looks` makes, changes or replaces that is not approved in that worktree's record (a story is exempt: it is approved at the build, once its component exists; a name with no mockup drawn yet is not held). It sets the impl's `status: approved` and records what was approved, `approved_brief` (the sha256 of `brief.md`), `approved_by` and `approved_at`, and commits it on the branch; merges the branch into the trunk with a merge commit. The build then continues in the same worktree on the same branch.
 
 Refuses:
 
@@ -137,7 +137,7 @@ Refuses:
 ### In a workbench: approve, accept, review and land
 
 A workbench plan's documents are already at the workbench root, and its code is on a branch in the repo its `code.json` names. So:
-- **`approve`** runs the same brief check, then marks the impl `status: approved` and commits the plan's documents (and the workbench's shadow contract) at the root. Nothing is merged.
+- **`approve`** runs the same brief check, then marks the impl `status: approved`, records the brief's hash as above, and commits the plan's documents (and the workbench's shadow contract) at the root. Nothing is merged.
 - **`accept`** records `accepted` in the impl at the root, and commits it there.
 - **`review`** lists the files the code branch changed in its repo, against the repo's trunk branch, and any uncommitted work on that trunk on those paths.
 - **`land`** refuses an unaccepted plan. Otherwise it brings the repo's trunk into the code branch, runs the land checks in the code worktree, and merges the branch into the repo's trunk with a merge commit. Then it removes the code worktree and branch. The documents stay at the root, where the retrospective archives them.
