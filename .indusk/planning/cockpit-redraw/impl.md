@@ -114,7 +114,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 #### Test Phase 1 Context
 
-- [ ] `.indusk/current.md`: cockpit-redraw in flight — the nav from the original cockpit, the brief page drawn, re-approval a person's
+- [x] `.indusk/current.md`: cockpit-redraw in flight — the nav from the original cockpit, the brief page drawn, re-approval a person's
 
 #### Test Phase 1 Document
 
