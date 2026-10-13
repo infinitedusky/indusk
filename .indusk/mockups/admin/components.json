@@ -415,6 +415,45 @@
 			"stylesheetHash": "597d9e274a01a823e8876482216b08a466d78cec31dcce7b936c4c3d4e0b5060"
 		},
 		{
+			"name": "history-panel",
+			"file": "apps/indusk-admin/src/components/ui/HistoryPanel.tsx",
+			"properties": [
+				{
+					"name": "entries",
+					"type": "DecisionEntry[]",
+					"required": true,
+					"description": "The plan's recorded events, oldest first, as `plans/history` reads them."
+				},
+				{
+					"name": "open",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Drawn open. Closed unless asked."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "closed",
+					"id": "ui-historypanel--closed",
+					"snapshotHash": "b518017cefa49e2d58031babd445ba81997e8b9805219b1c64a5d01f9f4226c1"
+				},
+				{
+					"name": "open",
+					"id": "ui-historypanel--open",
+					"snapshotHash": "ee7d049549dba9c2f869553c6b9b2d816336092a1b4d2ece6c1ccc5898339e86"
+				}
+			],
+			"stylesheet": "components/history-panel.css",
+			"stylesheetHash": "be98a8af91efa17e17a39057193f5bbeec9a0abd2199fb6611a603b33e112b6f"
+		},
+		{
 			"name": "look-row",
 			"file": "apps/indusk-admin/src/components/ui/LookRow.tsx",
 			"properties": [

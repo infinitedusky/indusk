@@ -3,7 +3,6 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="indusk-new-components" content="history-panel" />
 		<title>Plan — working</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -81,17 +80,6 @@
 			.build .go { border-width: var(--border-1); border-style: solid; border-color: var(--color-ink); background: var(--color-ink); color: var(--color-surface); border-radius: var(--radius-lg); padding: var(--space-snug) var(--space-5); font-size: var(--text-base); font-weight: var(--font-weight-semibold); }
 			.build .cap { font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
 			.build .stopped { flex-basis: 100%; font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
-			.hist { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); overflow: hidden; }
-			.hist .hhead { display: flex; align-items: baseline; gap: var(--space-3); width: 100%; padding: var(--space-3) var(--space-4); text-align: left; }
-			.hist .chev { color: var(--color-ink-faint); font-size: var(--text-sm); line-height: var(--leading-3); }
-			.hist h2 { font-family: var(--font-display); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-bold); }
-			.hist .count { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
-			.hist ol { list-style: none; border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); }
-			.hist li { display: grid; gap: var(--space-hair); padding: var(--space-3) var(--space-4); border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); }
-			.hist li:first-child { border-top-width: 0; }
-			.hist .when { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
-			.hist .what { color: var(--color-ink-soft); font-size: var(--text-sm); line-height: var(--leading-3); }
-			.hist .ans { font-weight: var(--font-weight-medium); font-size: var(--text-sm); line-height: var(--leading-3); }
 		</style>
 	</head>
 	<body>
@@ -105,7 +93,7 @@
 <div class="part"><div class="parthead"><h2>Looks</h2><span class="partstate">3 of 3 approved</span></div><div class="partrows"><indusk-component name="look-row" state="approved"></indusk-component><indusk-component name="look-row" state="approved"></indusk-component><indusk-component name="look-row" state="approved"></indusk-component></div></div>
 <a class="brieflink" href="#brief">Read the brief</a>
 </section><div class="stagebody"><aside class="rail"><indusk-component name="rail-group" state="default"></indusk-component></aside><div class="main"><indusk-component name="decision-card" state="working"></indusk-component><div class="build"><button class="go" type="button">Build</button><span class="cap">Works the phases, then falsification and cleanup, without asking; stops at review.</span><span class="stopped">Stopped: Build Phase 4 waits for a person to look at the redrawn mockups.</span></div></div></div>
-<div data-component="history-panel" class="hist"><button class="hhead" type="button"><span class="chev">▸</span><h2>History</h2><span class="count">· 5 events</span></button></div>
+<indusk-component name="history-panel" state="closed"></indusk-component>
 </div></main>
 </div>
 	</body>
