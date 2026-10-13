@@ -245,9 +245,12 @@ describe("a plan's document on its own page", () => {
     ).rejects.toThrow("not found");
   });
 
-  it("keeps /brief working as a redirect to the brief's own page", async () => {
-    await expect(PlanBriefPage({ params: params() })).rejects.toThrow(
-      `redirect /p/${PROJECT}/plan/${PLAN}/doc/brief`,
+  it("/brief is where the plan is written: the brief's parts and the brief beside the agent's column", async () => {
+    const html = renderToStaticMarkup(
+      (await PlanBriefPage({ params: params() })) as React.ReactElement,
     );
+    expect(html).toContain('data-testid="plan-parts"');
+    expect(html).toContain('data-testid="brief-agent"');
+    expect(html).toContain("A person approves a plan");
   });
 });

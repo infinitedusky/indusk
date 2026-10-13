@@ -180,7 +180,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
             className="cols-plan-stage grid items-start gap-5"
             data-testid="plan-stage"
           >
-            {subplans ? null : <PlanWorkflows plan={plan} />}
+            {subplans ? null : <PlanWorkflows plan={plan} project={project} />}
             <div className="flex min-w-0 flex-col gap-3">{main}</div>
           </div>
         </section>
