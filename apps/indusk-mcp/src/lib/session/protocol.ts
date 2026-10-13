@@ -51,7 +51,7 @@ export type PermissionEvent = Extract<SessionEvent, { type: "permission" }>;
 export type QuestionEvent = Extract<SessionEvent, { type: "question" }>;
 
 /** The flags every session starts with; `kind` decides what is asked. */
-export function buildArgs(_kind?: SessionKind): string[] {
+export function buildArgs(_kind: SessionKind): string[] {
 	return [
 		"-p",
 		"--input-format",

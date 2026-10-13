@@ -69,7 +69,11 @@ describe("A26 — a planning session is asked only about a write outside its fol
 		ask({ file_path: `${folder}/brief.md` });
 		ask({ file_path: "proposal.json" });
 		ask({ command: "ls" }, "Bash");
-		expect(decided.map((d) => d.decision)).toEqual([{ allow: true }, { allow: true }, { allow: true }]);
+		expect(decided.map((d) => d.decision)).toEqual([
+			{ allow: true },
+			{ allow: true },
+			{ allow: true },
+		]);
 		expect(forwarded).toEqual([]);
 	});
 
