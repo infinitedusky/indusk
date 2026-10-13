@@ -17,7 +17,6 @@ export {
 	SessionManager,
 	type SessionRecord,
 } from "./manager.js";
-export { newPlanPrompt } from "./new-plan-prompt.js";
 export { type Decision, decideBuildPermission, refuseBuildQuestion } from "./permissions.js";
 export {
 	answerQuestion,
