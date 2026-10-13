@@ -1,7 +1,7 @@
 ---
 title: "Brief as the contract — looks in the brief, approval of the brief, amendments, the plan page's parts, a plan that starts as a conversation"
 date: 2026-10-12
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -76,6 +76,7 @@ A person works on one document, the brief — promises, expectations and looks �
 | A29 | A file edited in place inside an archived plan's folder is read on the next request; the archive cache never serves the old text | Build Phase 6 | Build Phase 6 | passing | unit | a regression guard: the archive cache never serves a stale plan | apps/indusk-admin/src/lib/planning-reader.archive-cache.test.ts |
 | A30 | Accepting a draft as a `spike` lands on the plan's page, not on a brief page that asks for a brief a spike never has | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-plan-starts-as-a-conversation | apps/indusk-admin/src/components/drafts/DraftProposal.test.tsx |
 | A31 | On a phone, where the brief page is one column, the agent column under the brief is given no window-fitted height, so it is not clipped while it scrolls into view | Build Phase 6 | Build Phase 6 | passing | unit | a regression guard: the agent column is fitted only beside the brief | apps/indusk-admin/src/components/session/WindowColumn.test.tsx |
+| A32 | `readPlanPage(project, name)` gives the three plan routes (the plan page, the brief page, a document page) their plan: an active plan over an archived one of the same name, null for a project whose path is gone, and not-found for a plan that does not exist | Build Phase 7 | Build Phase 7 | planned | unit | a regression guard: the plan routes find their plan one way | apps/indusk-admin/src/lib/plan-page.test.ts |
 
 ### Deferred Verification
 
@@ -463,6 +464,34 @@ A person works on one document, the brief — promises, expectations and looks �
 
 - [x] `apps/docs/src/reference/admin-ui/overview.md`: the brief page — the brief's parts and the brief beside the agent's column, the agent following what it writes, the plan's description and the brief's state on the plan page, and what a planning session asks (only for a write outside its folder)
   - Note: new "The brief page" section before "The nav": the two-column layout and phone fallback, the agent following what it writes, the description and the brief's state on the plan page (spike lands on the plan page), and what a planning session asks.
+
+### Build Phase 7: Cleanup — what the plan page stopped using, and the three routes that find a plan
+
+**Tier**: med — the work step's default
+
+**Goal**: decompose what this plan left behind across files: a plan-page component tree no page renders since Build Phase 4, a prompt builder no caller uses since Build Phase 5, three routes that each find their plan the same way (the rule of three), and two exported `briefOpening`s in different packages that mean different things. Each item is one extraction or removal, or a reasoned leave-as-is.
+
+- [ ] Remove the plan-page tree no route renders since Build Phase 4 took the page to its mockups: `PlanDetail.tsx` (and its five tests), `plan/PlanHeader.tsx`, `cockpit/PlanHistory.tsx`, `PhasesSection.tsx`, `CleanupSection.tsx`, `FalsificationSection.tsx`, `phases/RitualPhaseSection.tsx` and their tests and stories (≈1,000 lines; nothing outside the tree imports them). `PlanDetail.skipped-rituals.test.tsx` carries `promise: a-review-shows-its-evidence`: before deleting it, confirm what it asserts is held by a test of what the page and the review show now, or move the assertion there, so the promise keeps a test — react: no component kept for no caller
+- [ ] Extract `readPlanPage(project, name)` into `apps/indusk-admin/src/lib/plan-page.ts` — the registry lookup, the stale-path return, the active-over-archived find and `notFound()` that `plan/[name]/page.tsx`, `plan/[name]/brief/page.tsx` and `plan/[name]/doc/[doc]/page.tsx` each repeat — and use it in all three (A32) — the rule of three
+- [ ] Rename `PlanSession`'s session-prompt builders `briefOpening` / `planOpening` to `briefSessionOpening` / `planSessionOpening`: `plans/parts` exports a `briefOpening` that reads the brief's frontmatter, and two exports of one name with two meanings across the packages read as one — a name says what it is for
+- [ ] Remove `newPlanPrompt` (`apps/indusk-mcp/src/lib/session/new-plan-prompt.ts`, its test and its export from `session/index.ts`): the name-first route that used it was deleted in Build Phase 5 and nothing calls it
+- [ ] (reviewed `apps/indusk-mcp/hooks/check-gates.js`, +75 — left as-is: the amendment refusal is the hook's own decision and its logic already lives in the package's `plans/amendments`, run through `indusk plans amendments`; hooks are self-contained scripts by convention)
+- [ ] (reviewed `apps/indusk-admin/src/lib/planning-reader.ts`, +65 — left as-is: the archive cache is the reader's own concern, beside the read it caches)
+- [ ] (reviewed `apps/indusk-mcp/src/lib/promises/brief-contract.ts`, +80, and `contract.ts`, +36 — left as-is: the Looks section is part of the brief's contract, parsed where the rest of it is)
+- [ ] (reviewed `cli.ts` +27, `config.ts` +13, `looks/approve.ts` +19, `looks/stories.ts` +7 — left as-is: small additions inside each file's existing job)
+- [ ] (reviewed `apps/indusk-admin/src/components/session/NewPlanForm.tsx` — left as-is under its name, though it is now a button: A18's Test cell names its test file, and the trajectory's cells are not renamed at close)
+
+#### Build Phase 7 Verification
+
+- [ ] A32 passes (`cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-page.test.ts`); the admin's everyday suite passes with the removed tree gone (`cd apps/indusk-admin && pnpm test`); `vitest related` on the changed indusk-mcp files; `indusk promises confirm` still finds a test for `a-review-shows-its-evidence`; tsc and biome clean on changed files
+
+#### Build Phase 7 Context
+
+- [ ] `apps/indusk-admin/CLAUDE.md`: a plan route finds its plan through `lib/plan-page`'s `readPlanPage`, never its own lookup — guarded by `plan-page.test.ts` (A32)
+
+#### Build Phase 7 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/overview.md`: no section still describes the plan page's removed regions (the stage strip, the phase sections, What happened); the routing tree names the brief page and the document page as they are
 
 ## Files Affected
 
