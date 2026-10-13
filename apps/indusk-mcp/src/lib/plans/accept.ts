@@ -6,6 +6,7 @@ import {
 	interfaceFilesAmong,
 	listsALook,
 } from "../promises/interface-files.js";
+import { storiesWaiting } from "./approved-brief.js";
 import {
 	branchFileChanges,
 	implPath,
@@ -29,7 +30,12 @@ import { commitAtRoot, workbenchPlan } from "./workbench-plan.js";
  * D2): approval caught the plan that said what it would change; this catches
  * the one that changed more than it said.
  *
+ * Refused too while a new component the brief names has not ended in an
+ * approved story, or a mockup it names still draws one inline or composes one
+ * not approved (ADR decision 4a).
+ *
  * promise: a-brief-lists-its-looks
+ * promise: a-new-component-ends-its-plan-with-a-story
  */
 
 export type AcceptedBy = "person" | "auto";
@@ -62,6 +68,7 @@ export async function acceptPlan(
 	}
 	const pb = await planBranch(anyCheckout, plan);
 	await refuseUnlistedInterfaceChanges(pb);
+	await refuseStoriesWaiting(pb);
 	await setImplKeys(pb, implPath(pb), { accepted, accepted_by: by }, message);
 	return { plan, accepted, acceptedBy: by };
 }
@@ -87,5 +94,26 @@ async function refuseUnlistedInterfaceChanges(pb: PlanBranch): Promise<void> {
 	const said = brief.looks === null ? "has no Looks section" : "says None for its looks";
 	throw new PlanCommandRefusal(
 		`${pb.plan} changed ${describeInterfaceFiles(files)}, which changes how something looks, and its brief ${said} — amend the brief to list each look the change makes, changes or replaces, and have a person approve the amendment, before the plan is accepted`,
+	);
+}
+
+/**
+ * A plan whose brief names a new component is accepted only once the
+ * component's story is approved and every mockup the brief names composes
+ * approved stories by name: the build made the component, so its look is held
+ * by the story from here on. Each refusal is named; the way forward is the
+ * Looks page and `<indusk-component>`.
+ */
+async function refuseStoriesWaiting(pb: PlanBranch): Promise<void> {
+	const briefPath = join(pb.dir, "brief.md");
+	if (!existsSync(briefPath)) return;
+	const waiting = await storiesWaiting(pb.worktree, readFileSync(briefPath, "utf-8"));
+	if (waiting.length === 0) return;
+	throw new PlanCommandRefusal(
+		[
+			`${pb.plan} cannot be accepted; a new component it names has not ended in an approved story:`,
+			...waiting.map((r) => `  ${r}`),
+			"Approve each story on the cockpit's Looks page, then place the component with <indusk-component> in each mockup that draws it, and have those mockups approved again.",
+		].join("\n"),
 	);
 }

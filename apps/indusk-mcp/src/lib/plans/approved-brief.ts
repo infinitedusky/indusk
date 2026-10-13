@@ -4,7 +4,13 @@ import { userInfo } from "node:os";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { git } from "../git.js";
-import { approvalOf, readRecord, standingOf } from "../looks/approvals.js";
+import {
+	approvalOf,
+	readRecord,
+	standingOf,
+	storyApprovalOf,
+	unapprovedUses,
+} from "../looks/approvals.js";
 import { type LooksApp, readApp } from "../looks/mockups.js";
 import { listApps } from "../looks/overview.js";
 import { type BriefLooks, parseBriefContract } from "../promises/brief-contract.js";
@@ -93,17 +99,7 @@ export async function unapprovedMockups(root: string, briefText: string): Promis
 	const wanted = brief.shape === "contract" ? looksToApprove(brief.looks) : [];
 	if (wanted.length === 0) return [];
 
-	const apps: LooksApp[] = [];
-	const refusals: string[] = [];
-	for (const name of listApps(root)) {
-		try {
-			apps.push(await readApp(root, name));
-		} catch (err) {
-			refusals.push(
-				`${name}'s looks cannot be read, so its mockups cannot be checked: ${(err as Error).message}`,
-			);
-		}
-	}
+	const { apps, refusals } = await readLooksApps(root);
 	// An app that could not be read may hold the look: its refusal stands for it.
 	const someUnreadable = refusals.length > 0;
 	for (const look of wanted) {
@@ -122,6 +118,76 @@ export async function unapprovedMockups(root: string, briefText: string): Promis
 			refusals.push(
 				`${look} (${app.app}) is still proposed — approve it in the cockpit's Looks page, in this plan's worktree`,
 			);
+		}
+	}
+	return refusals;
+}
+
+/** Every app's looks in `root`, and a refusal for each that cannot be read — never a silent pass. */
+async function readLooksApps(root: string): Promise<{ apps: LooksApp[]; refusals: string[] }> {
+	const apps: LooksApp[] = [];
+	const refusals: string[] = [];
+	for (const name of listApps(root)) {
+		try {
+			apps.push(await readApp(root, name));
+		} catch (err) {
+			refusals.push(
+				`${name}'s looks cannot be read, so its mockups cannot be checked: ${(err as Error).message}`,
+			);
+		}
+	}
+	return { apps, refusals };
+}
+
+/** Every mockup a brief names: those it makes, changes, replaces by, and must not break. */
+function looksNamed(looks: BriefLooks | null): string[] {
+	return looks === null ? [] : [...new Set([...looksToApprove(looks), ...looks.mustNotBreak])];
+}
+
+/**
+ * Refusals, one per thing that keeps a plan from acceptance because a new
+ * component has not ended in a story (brief-as-the-contract ADR decision 4a,
+ * `a-new-component-ends-its-plan-with-a-story`): a new component's own mockup
+ * (`screens/<component>.<state>.html`, declaring itself in
+ * `indusk-new-components`) with no approved story of the same name; a mockup
+ * the brief names that still draws a component inline under that
+ * declaration; and a mockup the brief names that composes a component whose
+ * story is not approved (`unapprovedUses`). Empty when nothing waits.
+ */
+export async function storiesWaiting(root: string, briefText: string): Promise<string[]> {
+	const brief = parseBriefContract(briefText);
+	const named = brief.shape === "contract" ? looksNamed(brief.looks) : [];
+	if (named.length === 0) return [];
+	const { apps, refusals } = await readLooksApps(root);
+	for (const app of apps) {
+		const standing = standingOf(readRecord(app));
+		for (const mockup of app.mockups.filter((m) => named.includes(m.name))) {
+			const own = mockup.declaresNewComponents.includes(mockup.screen);
+			if (own) {
+				const story = app.stories.find((s) => s.name === mockup.name);
+				if (!story) {
+					refusals.push(
+						`${mockup.name} (${app.app}) is a new component with no story yet — build it, render its stories (\`indusk looks stories ${app.app}\`) and approve ${mockup.name} on the cockpit's Looks page`,
+					);
+				} else if (storyApprovalOf(app, story, standing.stories).state !== "approved") {
+					refusals.push(
+						`${mockup.name} (${app.app}) is a new component whose story is not approved — approve the story ${mockup.name} on the cockpit's Looks page`,
+					);
+				}
+			}
+			for (const component of mockup.declaresNewComponents) {
+				if (own && component === mockup.screen) continue;
+				refusals.push(
+					`${mockup.name} (${app.app}) still draws ${component} inline — place it with <indusk-component name="${component}" state="…"> once its story is approved, and have ${mockup.name} approved again`,
+				);
+			}
+			for (const story of new Set(
+				unapprovedUses(app, mockup, standing.stories).map((u) => u.story),
+			)) {
+				refusals.push(
+					`${mockup.name} (${app.app}) composes ${story}, whose story is not approved — approve it on the cockpit's Looks page`,
+				);
+			}
 		}
 	}
 	return refusals;
