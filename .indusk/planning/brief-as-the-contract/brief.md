@@ -60,6 +60,30 @@ None.
 - Looks matched against their mockups, and a scenario per behaviour promise. Those are mockup-matching and demo-scenarios, steps 3 and 4 of the look series.
 - Screen-level stories for every mockup state in the admin. That is an amendment to storybook-components' follow-on, not this plan's.
 
+## Looks
+
+### This plan makes
+
+1. **`plan.parts`**. The plan page's three parts, promises, expectations and looks, each with its name and state first and the brief one link below.
+2. **`plan.drafts`**. The project page's list of drafts, each a conversation not yet kept, with Reopen and Discard.
+3. **`plan.new`**. The conversation entry that replaces the New plan form, asking for no name and no type before the talk begins.
+
+### Existing looks
+
+**Must not break**
+
+None.
+
+**Changes**
+
+- **`plan.needs-you`**. The plan page when it waits on the person, now with its three parts and any amendment waiting.
+- **`plan.working`**. The plan page while it is built, now with its three parts.
+- **`plan.released`**. The plan page once released, now with its three parts.
+
+**Replaces**
+
+None.
+
 ## Depends On
 - `.indusk/planning/archive/storybook-components/` — closed 2026-10-12; looks include stories, and a changed component reopens the mockups that use it.
 

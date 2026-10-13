@@ -231,6 +231,7 @@ A person works on one document, the brief â€” promises, expectations and looks â
 #### Build Phase 1 Verification
 
 - [ ] A1 and A3 pass and A2, A22 still pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/brief-looks.test.ts`); `pnpm exec vitest related` over the changed files; `indusk promises contract brief-as-the-contract` and `indusk promises check` pass; tsc and biome clean on changed files
+  - Decision: Build Phase 1's own check refused this plan's brief, because Files Affected names admin files and the brief listed no look. The user, asked whether to list the looks now, put a temporary None, or narrow the check, chose "List the looks now"; the brief's `## Looks` lists them.
 
 #### Build Phase 1 Context
 
@@ -290,7 +291,7 @@ A person works on one document, the brief â€” promises, expectations and looks â
 
 **Tier**: med â€” the work step's default
 
-- [ ] Add this plan's own looks to its brief's Looks section (`plan.parts`, `plan.drafts`, `plan.new`), as an amendment the person re-approves with `plans reapprove`, and draw each mockup on the admin's foundation composed of its components
+- [ ] Draw the mockups for the looks the brief already lists (`plan.parts`, `plan.drafts`, `plan.new`, and the changed `plan.needs-you`, `plan.working`, `plan.released`) on the admin's foundation composed of its components
 - [ ] **Pause for a person**: Sandy approves this plan's mockups on the Looks page and the amendment on the plan page (Deferred Verification U1)
 - [ ] `apps/indusk-mcp/src/lib/plans/parts.ts`, exported as `./plans/parts`: for a plan, its promises (the registry rows it owns), expectations (parsed from the brief) and looks (the brief's list joined to `looks/overview`'s approval, with `plan`); the amendments waiting
 - [ ] `apps/indusk-admin/src/components/plan/PlanParts.tsx`: promises, expectations and looks as three parts with names and states first, each look drawn at the reference devices with the Looks page's frame and proposed until approved there, the brief one link below, and each waiting amendment with Approve calling `plans reapprove`'s route
@@ -356,6 +357,6 @@ A person works on one document, the brief â€” promises, expectations and looks â
 - `plans audit-inputs`'s reading of the approval commit, and the plan-history record.
 
 ## Notes
-- This plan's own looks cannot be listed in its brief until Build Phase 1 builds the section, so they are added in Build Phase 4 as the first amendment the rule sees; Sandy approves it there.
+- This plan's own looks (`plan.parts`, `plan.drafts`, `plan.new`, and the changed `plan.*` screens) were listed in its brief at Build Phase 1, once the check fired on this plan's own Files Affected; Sandy approves their mockups in Build Phase 4.
 - `plans reapprove` from a terminal is the person's by convention, as `plans approve` is; only the cockpit's route is guarded by the browser's fetch metadata.
 - A story named in a brief is exempt from the mockup-approved gate: it is approved at the build, as storybook-components Build Phase 5 was.
