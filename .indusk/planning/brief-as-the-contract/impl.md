@@ -411,7 +411,8 @@ A person works on one document, the brief — promises, expectations and looks �
 
 #### Build Phase 5 Context
 
-- [ ] `.indusk/current.md`: a plan starts as a draft held in the project's home; the New plan form is gone — and root (Key Decisions): "Brief as the contract: looks in the brief, approval of the brief, an amendment stops the build until a person re-approves, a plan starts as a conversation — see `/decisions/brief-as-the-contract`" — always-on because it is design intent every plan is written under
+- [x] `.indusk/current.md`: a plan starts as a draft held in the project's home; the New plan form is gone — and root (Key Decisions): "Brief as the contract: looks in the brief, approval of the brief, an amendment stops the build until a person re-approves, a plan starts as a conversation — see `/decisions/brief-as-the-contract`" — always-on because it is design intent every plan is written under
+  - Note: a bullet under "In flight" in `.indusk/current.md` (a draft in the home, aged by archive-dead, New opens a conversation, A17 and the unapproved stories open) and a Key Decisions line in the root `CLAUDE.md` pointing at `/decisions/brief-as-the-contract`, which the Document item below publishes.
 
 #### Build Phase 5 Document
 
