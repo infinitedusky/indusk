@@ -70,8 +70,9 @@ No auto-pruning. If a registered project's path is deleted from disk, `indusk ui
 /                                    # Project grid — one card per registered project
 /p/{project}/                        # Per-project home (sidebar + empty state)
 /p/{project}/scorecards              # Per-project eval scorecards (1.27.2+)
-/p/{project}/plan/{name}             # Plan detail page
-/p/{project}/plan/{name}/brief       # The plan's brief, one click below its parts
+/p/{project}/plan/{name}             # The plan page: frame, parts, status
+/p/{project}/plan/{name}/brief       # Where the plan is written: its parts, the brief and the planning agent
+/p/{project}/plan/{name}/doc/{doc}   # One of the plan's documents on its own page
 /p/{project}/draft/{id}              # A conversation not yet kept as a plan (brief-as-the-contract)
 /p/{project}/looks                   # Each app's mockups, Approve, what is uncovered (ui-promises)
 /p/{project}/research/{slug}         # Per-project standalone research (1.27.2+)
@@ -123,11 +124,11 @@ The nav is drawn from components, as its approved mockups (`nav.expanded`, `nav.
 
 Switching projects via the header does not restart the daemon — the registry resolves on every request.
 
-**Which copy of a plan is shown.** Every plan is worked in its own worktree, so a project holds several copies of it. The admin reads each active plan from its **live copy**: from the worktree it is assigned to (by [`indusk worktree create` or `assign`](/reference/cli/worktree)), from the registered trunk otherwise. The documents, the progress lines and the active phase all come from that copy, including the phase-boundary record the worktree wrote. What the page says about it:
+**Which copy of a plan is shown.** Every plan is worked in its own worktree, so a project holds several copies of it. The admin reads each active plan from its **live copy**: from the worktree it is assigned to (by [`indusk worktree create` or `assign`](/reference/cli/worktree)), from the registered trunk otherwise. The documents, the parts and the active phase all come from that copy, including the phase-boundary record the worktree wrote. What the page says about it:
 
-| Case | Plan row and header | Notice under the header |
+| Case | Plan row and frame | Notice under the frame |
 |---|---|---|
-| Read from its worktree | a `⎇ <worktree>` chip | "Read from the worktree … on `<branch>`" |
+| Read from its worktree | a `⎇ <worktree>` tag | none — the tag is the whole statement |
 | Assigned worktree removed without release | no chip; trunk copy shown | "The assigned worktree `<path>` no longer exists — showing the trunk copy" |
 | Two live worktrees assigned (a hand-edited record) | no chip; trunk copy shown | both worktrees by path |
 | Archived on its branch, before the release (retrospective Step 9 → Step 10) | the chip; the worktree's archived copy shown | "archived in its worktree …, awaiting landing" |
@@ -137,7 +138,7 @@ Switching projects via the header does not restart the daemon — the registry r
 
 The resolver applies when the registered path is the top of a git checkout — the project is the repository. A project nested inside a larger repository reads the folder it was registered at, as before.
 
-**`/p/{project}/plan/{name}` (plan detail)** — under the header and the progress lines, the plan is shown as its two workflows (plan-cockpit):
+**`/p/{project}/plan/{name}` (plan page)** — under the frame (the crumb, the plan's name and its worktree tag) and the parts above, the plan's status is shown as its two workflows (plan-cockpit):
 
 - **Planning** — the documents the plan's type requires, in order: Research, Brief, Test plan, Decision, Impl. A bugfix lists Brief, Test plan and Impl; a spike lists Research only.
 - **Release** — Build, Falsify, Cleanup, Audit, Review, Release.
@@ -146,30 +147,11 @@ The page is drawn from components, as its approved mockups (`plan.needs-you`, `p
 
 Each list has its own count of steps done (`3 of 5`). A step is `done`, `in progress`, `needs you` (a document proposed and waiting to be accepted, or an impl waiting to be approved), `not yet`, `skipped` (the type has no such step, or a ritual was skipped with a reason — the reason is shown, and a skipped step is in neither number of the count) or `missing` (the type requires the document and the plan has moved past it). Every state is read from the plan's documents and where it stands, by the package's `plans/steps` — the same position the plan bar draws — and no control on the page sets one. The header names the plan by its title (the folder name beneath), with when it started, landed and was released, the Path or Paths that declare it (outermost first), and the promises it owns as chips — each its sentence and `passing/total tests`, linking to the promise's page. Today's documents, phases and test rows are under a collapsed **Details**; nothing was removed.
 
-The page opens as the overview: three progress lines under the header, then every document section collapsed (admin-ui-phase-progress, 2026-09-16). The lines are a zoom, and each one's label names the level below it:
+The parts below the status are each closed by default, a name and a one-line summary first and the detail one click on: Promises, Expectations, Looks, **Phases** (the current phase and items done, `Build Phase 4 of 6 · 38 of 52 done`; opened, each phase a row with its state, and a phase opened shows its items and the notes recorded under them), **Documents** (each of the plan's documents a row with its status, opening that document's own page) and **History** (what happened to the plan, newest first). The page draws nothing the approved mockups do not: no stage strip, no per-phase progress lines, no plan bar, and no inline document sections.
 
-| Line | Segments | Active label |
-|---|---|---|
-| **Plan bar** | every lifecycle position, research → … → cleanup → audit → review → accepted → retrospective → archived (→ monitor), from the package's `PLAN_POSITIONS` | what the position awaits — `brief draft, awaiting acceptance` — or, while executing, the phase: `executing: Phase 4` |
-| **Phase line** | every phase of the impl in document order | the phase and its active stage: `Phase 4: Verification` |
-| **Stage bar** | the active phase's stages — implementation items, then each gate it carries | the verb and the item being worked: `verifying: A6 green… (6 of 7)` |
+Which documents a plan has follows its type (admin-plan-type): a document the type does not require is not listed, and a required one the plan has moved past without is listed as missing, in the Planning rail, with the sentence *The test plan is missing — a bugfix requires it.*
 
-The active segment always carries a message, and the message never claims a fact the reader does not hold (falsification A29, A33). A cleaned plan with no `audit.md` (and no audit skip) reads `cleaned, awaiting /audit` at **audit** until the audit is written or skipped, so the admin does not offer Accept before it has run. A built plan — every phase, falsification, cleanup and audit closed — stops at **review**, `built, awaiting review`, until it is accepted (`indusk plans accept`, or the review panel); an accepted one sits at **accepted**, `accepted, the release runs: /retrospective next` (admin-plan-authoring). Either message adds `— promises unproven, retrospective blocked (<names>)` when a promise its test rows do not yet prove. Three more plan-bar messages exist for the cases where the obvious one would have lied: a completed impl whose rituals are terminal but whose trajectory still has a non-terminal row reads `rows not terminal — retrospective blocked (A7)` rather than "cleaned, awaiting /retrospective", because the retrospective gate would refuse; a completed impl whose `impl.md` could not be read reads `impl complete — readiness unknown (impl unreadable)` and sits at `falsify`, the earliest position a completed impl can hold; an `in-progress` impl with every item checked has no active phase to speak for it and reads `every item checked — impl status is still in-progress`. A stage with nothing in it is not drawn (A32): the parser always emits an implementation gate, and a phase with only gate items — a falsification phase whose hypotheses all held — closes when its gates do rather than reading "implementing 0 of 0" forever.
-
-Every segment is one of the lifecycle's `SEGMENT_STATES` — `done` / `active` / `pending` / `skipped` / `missing` / `unknown` (a gate can also be `opted-out`): done full, pending empty, skipped drawn empty with a dashed border so a plan's bar keeps its shape, active partially filled by its own n of m.
-
-**The plan's type, and what an absent document means** (admin-plan-type, 2026-10-01). The header carries a **type chip** on every page that draws the plan bar — `bugfix`, `feature`, `refactor`, `spike` — read from `workflow:` in the plan's brief (its research document, for a plan that is research only). A plan with no such line reads **type not declared**; a word that is not one of the four is shown as written and called *not a recognised type*. The type is never guessed from which documents exist. Clicking the chip opens an explanation — what the type is for, which documents it requires, which it skips and why — whose every fact comes from the package's `workflow-types` subpath, the same definition the planner skill's table and the workflow templates are pinned to.
-
-The type is what lets the plan bar tell a document the plan never needed from one it should have had. An absent document reads one of four ways:
-
-| Reading | When | Drawn |
-|---|---|---|
-| **skipped** | the plan's type does not require it — behind the plan's position or ahead of it | empty, dashed border; quiet |
-| **missing** | the type requires it and the plan has moved past it | empty, solid red outline, and a sentence under the bar: *The test plan is missing — a bugfix requires it.* |
-| **pending** | the type requires it and the plan has not reached it | an ordinary empty step |
-| **unknown** | the plan declares no type and has moved past it | empty, dotted border, and a sentence saying the absence cannot be judged |
-
-Before this, every absent earlier document was drawn as skipped, so a bugfix with no research and a bugfix that closed without its test plan looked identical. A missing document stays missing after the plan is archived: that is the record of how it closed. Skipped, missing and unknown also say their state in the segment's hover title, and missing and unknown are said in words on the page, because a gap that only a colour reports is a gap nobody reads. Segments are equal width and the plan bar says so — *steps, not time* — with one exception: **`monitor`** (day-monitor) fills with the share of the quiet window that has passed, and the caption says so. A closed plan holding a behaviour promise is in `monitor` until its promises have been quiet for `promises.quiet_window_days` (default 7), its active label reading `2 of 7 days quiet`, or `window restarted 2026-09-18 — 0 of 7 days quiet` after a violation. An archived plan reopened by an incident's Maintenance phase reads **executing** that phase. Both are derived from files by the package's `promises/after-close` subpath, the same function `list_plans` reads. A parent plan shows a **master bar** instead of a plan bar: one segment per declared subplan, closed ones full, in-flight ones partial, declared-but-missing ones empty, labelled `n of m closed, k executing`.
+**`/p/{project}/plan/{name}/doc/{doc}`** is one document on its own page, with a link back to the plan: research, brief, test-plan, adr, impl, falsification, cleanup or audit, whichever the plan has. A document the plan does not have is a 404. The plan page, the brief page and a document page find their plan through one lookup (`readPlanPage`): an active plan wins over an archived one of the same name, and a project whose path is gone renders the stale-project page.
 
 **The page is live.** A small client wrapper, `LiveRefresh`, ticks every `admin.refresh_ms` from the project's `.indusk/config.json` (default 5000 ms, floor 1000; absent means default, and `indusk update` never writes the key). Each tick sends a `HEAD` to the page itself as a reachability probe and then calls Next's `router.refresh()`, which re-runs the server components for the route and streams the new tree in — so a checkbox written to `impl.md` reaches an open page within one interval, and the viewer's open sections and scroll position stay where they were. It says what it is doing (`last updated 14:02:11`), pauses while the tab is hidden, and when a probe fails it stops and says `refresh failed — reload the page to resume` rather than showing a stale page as live. There is no route handler, no fetch of a second data shape and no socket: one render path, whole-route re-render, which is the trade the ADR accepted at the daemon's scale.
 
@@ -198,28 +180,7 @@ sequenceDiagram
 
 **Which phase is active.** The phase with the most recent boundary record (`.indusk/phase-boundary.jsonl`) among phases that still have unchecked items. A phase with everything checked is closed whatever its record says. With no records at all, the first open phase in document order is shown with the hint *no boundary record*, never as a confident marker. A malformed record file renders an error block and marks nothing active.
 
-Sections render conditionally on which documents are present, all closed by default:
-
-| Section | Source | Behavior |
-|---------|--------|----------|
-| Header | `name` + computed `status` | Always visible — name, archived/active marker, status badge |
-| Malformed banner | `plan.malformed` | Red banner when any document failed to parse |
-| Raw documents | `plan.rawDocuments` | One CollapsibleSection per malformed file with raw markdown in a `<pre>` |
-| Brief | `brief.md` | Collapsible (1.27.2+) Markdown render, defaulted to open — parity with Test Plan + ADR |
-| Test Plan | `test-plan.md` | Collapsible Markdown render |
-| ADR | `adr.md` | Collapsible Markdown render |
-| Papers | any document declaring `kind: paper` | One CollapsibleSection per paper, its status badge beside the title. Status comes from the shared parser (`draft` / `accepted` / `published` / `malformed`); the `published (stale)` label is derived on every read from the content hash the publish recorded, never stored, so a paper edited after publishing shows stale with no write anywhere. A papers-only plan (no lifecycle document) renders this section, takes the parser's paper-stage status as its header status, and renders no Falsification section. Publishing is `indusk papers publish` — see [`indusk papers`](/reference/cli/papers) |
-| Phases | `impl.md` | One CollapsibleSection per phase heading — `### Test Phase N`, `### Build Phase N` and the legacy `### Phase N` — in document order, EXCLUDING the falsification phase (see next row). Parsed by the package's own `parseImplString` (the `impl-parser` subpath), never a local regex, so the admin sees exactly the phases the hooks and `verify` see. The header carries a **stage strip**: the implementation items as `n of m`, then each gate the phase has (Verification, OTel where the project emits it, Context, Document), each `done` / `active` / `pending` / `opted-out` — an opted-out gate shows its conversation proof. The body holds the trajectory `<Table>` (rows whose `Passes at` names this phase by kind AND number, cells spelled `Test Phase 1` / `Build Phase 2`; when the impl's rows have them, a `Level` column and a `For` column saying what each test is for, a promise's name linking to it on the Promises page; the copied markdown carries the same columns) followed by the phase's full markdown |
-| Falsification (1.27.6+ phase path) | `impl.md` phase whose title starts with `Falsification` | Hypotheses table from the phase's trajectory rows (ID / Asserts / State) plus a Fix items list from the phase's `- [ ]` / `- [x]` checklist. Status badge reads `complete` when all rows are `passing`/`skipped` AND no unchecked items remain |
-| Falsification (legacy) | `falsification.md` | Used only when impl.md has no falsification phase. One entry per hypothesis, outcome-color-coded (`fix-in-scope` → green, `spawn-plan` → blue, `accept-finding` → gray) |
-| Follow-up Phases (1.27.6+) | `impl.md` phases AFTER the falsification phase | Same CollapsibleSection shape as regular Phases but in its own section below `Falsification`. Hidden when no post-falsification phases exist |
-| Scorecards | `<home>/eval/results.log` | Table of scorecards whose timestamp falls in the plan's date range (`brief.date` → `retrospective.date`/now). Most-recent first |
-
 `<home>` is the project's home outside every checkout, `~/.indusk/projects/<project>-<hash>/`; `indusk eval home` prints it.
-
-Missing optional documents are not errors — sections simply don't render.
-
-**Falsification rendering (1.27.6+)** — when a plan uses the phase-authoring flow from `/falsify` (introduced in 1.27.4), the admin UI automatically detects the falsification phase by scanning for the FIRST phase whose title STARTS with `Falsification` (case-insensitive — the same title-prefix rule the retrospective readiness gate applies, read from the lifecycle's `RITUAL_ORDER`). That phase is hoisted out of the main Phases section and rendered with a dedicated layout: trajectory rows become the Hypotheses table, and checklist items become the Fix items list. Phases authored AFTER the falsification phase — fix-in-scope follow-ups derived from the ritual — render as a distinct "Follow-up Phases" section below. Legacy plans (authored before 1.27.4 with a `falsification.md` log file) continue to render via the log-based path; the two paths are mutually exclusive but both supported, so archives keep rendering correctly.
 
 **`/p/{project}/scorecards` (per-project, 1.27.2+)** — flat table of `{project}`'s scorecards from its `<home>/eval/results.log`, sorted most-recent-first. No project-name column (redundant inside the project namespace). Two empty states, told apart by whether `<home>/eval/` exists: the directory is created by the evaluator's first append, so a project that has never had an evaluated commit has no directory at all and the page says "no evaluations recorded yet — the first evaluated commit creates `<home>/eval/`"; a project with the directory but no scorecards gets the plain "no scorecards recorded yet" line.
 
@@ -348,7 +309,7 @@ apps/indusk-admin/
 │   │   └── p/[project]/
 │   │       ├── layout.tsx                # Per-project sidebar + switcher
 │   │       ├── page.tsx                  # Per-project home (empty state)
-│   │       └── plan/[name]/page.tsx      # Plan detail
+│   │       └── plan/[name]/              # page.tsx (the plan), brief/page.tsx, doc/[doc]/page.tsx
 │   ├── components/
 │   │   ├── ui/                           # Primitives and the components the mockups name: Button, Badge, Table, Nav, Shell, PlanRow, ViewLink, PromiseRow, LookRow
 │   │   ├── cockpit/CockpitFrame.tsx      # The frame every project page sits in: Shell, Nav, the drawer and the collapse choice
@@ -358,7 +319,7 @@ apps/indusk-admin/
 │   │   ├── Markdown.tsx                  # react-markdown wrapper (single swap surface)
 │   │   ├── PlanList.tsx                  # Sidebar list (accepts planHrefPrefix prop)
 │   │   ├── PapersSection.tsx             # Papers (kind: paper) with derived status badges
-│   │   └── PlanDetail.tsx                # Main pane composition
+│   │   └── plan/PlanFrame.tsx, PlanParts.tsx   # The plan page's frame and parts
 │   ├── lib/
 │   │   ├── registry-client.ts            # Reads ~/.indusk/projects.json
 │   │   ├── planning-reader.ts            # Filesystem reader; reuses indusk-mcp parsers
@@ -375,7 +336,7 @@ apps/indusk-mcp/
 └── admin/                                # Bundled pre-built admin (published in tarball)
 ```
 
-See [Component conventions](./component-conventions) for the visual primitive discipline that `<PlanList>`, `<PlanDetail>`, and `<ProjectGrid>` consume.
+See [Component conventions](./component-conventions) for the visual primitive discipline that `<PlanList>`, `<PlanParts>`, and `<ProjectGrid>` consume.
 
 ## See also
 
