@@ -137,12 +137,14 @@ describe("A3 — a tool-use request arrives; allow lets it run, deny says no", (
 	});
 });
 
-describe("A4 — a planning session asks before every write", () => {
-	it("a planning session runs in permission mode default, whatever the developer's own default is", () => {
+describe("A4 — a planning session asks nothing; a build is judged in code", () => {
+	// Rewritten 2026-10-13 on Sandy's word ("way way way fewer accept deny … set it
+	// to dangerously"): A4 asserted a planning session asks before every write.
+	it("a planning session bypasses permission prompts, whatever the developer's own default is", () => {
 		const args = buildArgs("planning");
 		expect(
 			args.slice(args.indexOf("--permission-mode"), args.indexOf("--permission-mode") + 2),
-		).toEqual(["--permission-mode", "default"]);
+		).toEqual(["--permission-mode", "bypassPermissions"]);
 		expect(args).toEqual(expect.arrayContaining(["--permission-prompt-tool", "stdio"]));
 	});
 
@@ -151,10 +153,8 @@ describe("A4 — a planning session asks before every write", () => {
 		expect(args[args.indexOf("--permission-mode") + 1]).toBe("acceptEdits");
 	});
 
-	it("neither kind ever bypasses permissions", () => {
-		for (const kind of ["planning", "build"] as const) {
-			expect(buildArgs(kind).join(" ")).not.toMatch(/bypassPermissions|dangerously/);
-		}
+	it("a build never bypasses permissions", () => {
+		expect(buildArgs("build").join(" ")).not.toMatch(/bypassPermissions|dangerously/);
 	});
 });
 

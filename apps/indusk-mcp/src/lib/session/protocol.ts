@@ -50,7 +50,7 @@ export type SessionEvent =
 export type PermissionEvent = Extract<SessionEvent, { type: "permission" }>;
 export type QuestionEvent = Extract<SessionEvent, { type: "question" }>;
 
-/** The flags every session starts with; `kind` decides what is asked. Never bypasses permissions. */
+/** The flags every session starts with; `kind` decides what is asked. */
 export function buildArgs(kind: SessionKind): string[] {
 	return [
 		"-p",
@@ -61,12 +61,15 @@ export function buildArgs(kind: SessionKind): string[] {
 		"--verbose",
 		"--permission-prompt-tool",
 		"stdio",
-		// A planning session asks before every write, whatever the developer's
-		// own default (the spike's first run wrote outside the project unasked
-		// under `auto`). A build accepts edits; its other requests are decided
-		// in code (`permissions.ts`).
+		// A planning session asks nothing (Sandy, 2026-10-13: "we need to have
+		// way way way fewer accept deny … set it to dangerously"): a person is
+		// at the page, and the project's hooks still judge every tool. Known
+		// cost: a write outside the plan's worktree is not stopped — the
+		// spike's first run wrote outside the project unasked under `auto`. A
+		// build accepts edits; its other requests are decided in code
+		// (`permissions.ts`).
 		"--permission-mode",
-		kind === "planning" ? "default" : "acceptEdits",
+		kind === "planning" ? "bypassPermissions" : "acceptEdits",
 	];
 }
 
