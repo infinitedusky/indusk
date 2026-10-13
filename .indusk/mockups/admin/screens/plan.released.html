@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="indusk-new-components" content="expectation-row" />
 		<title>Plan — released</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -64,15 +65,38 @@
 			  .phead { display: none; }
 			  .title { font-size: var(--text-3xl); line-height: var(--leading-7); }
 			}
+		
+			.parts { display: grid; gap: var(--space-5); }
+			.part { display: grid; gap: var(--space-snug); }
+			.parthead { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
+			.parthead h2 { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--leading-4); font-weight: var(--font-weight-bold); }
+			.partstate { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+			.partrows { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); overflow: hidden; }
+			.brieflink { justify-self: start; font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); color: var(--color-dusk); }
+			.cols-look-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+			.convo { display: grid; gap: var(--space-4); max-width: var(--size-content); }
+			.convo textarea { font: inherit; color: var(--color-ink); background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); padding: var(--space-4); min-height: var(--size-input); width: 100%; resize: vertical; }
+			.convo .hint { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.acts { display: flex; flex-wrap: wrap; gap: var(--space-snug); }
+			.er { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); }
+			.er:first-child { border-top-width: 0; }
+			.er b { font-weight: var(--font-weight-medium); }
+			.er .when { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+			.er.due .when { color: var(--color-warn); font-weight: var(--font-weight-semibold); }
+			@media (max-width: 759px) { .er { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); } }
 		</style>
 	</head>
 	<body>
 <div class="shell">
 <indusk-component name="nav" state="plan-current"></indusk-component>
 <main class="content"><div class="wrap">
-<header class="top"><div><div class="crumb"><b>dusk</b> / Plans / ui-promises</div><h1 class="title">ui-promises</h1></div><button class="menubtn" type="button">Menu <span class="vcount">3</span></button><div class="meta"><indusk-component name="tag" state="default"></indusk-component></div></header>
-<section><div class="label">Promises</div><div class="pills"><span class="pill"><span class="d broken"></span>tokens-are-held-exactly</span><span class="pill"><span class="d proving"></span>a-mockup-is-approved-by-a-person</span><span class="pill"><span class="d enforced"></span>every-part-of-the-ui-is-covered</span></div></section>
-<div class="stagebody"><aside class="rail"><indusk-component name="rail-group" state="default"></indusk-component></aside><div class="main"><indusk-component name="decision-card" state="released"></indusk-component></div></div>
+<header class="top"><div><div class="crumb"><b>dusk</b> / Plans / brief-as-the-contract</div><h1 class="title">brief-as-the-contract</h1></div><button class="menubtn" type="button">Menu <span class="vcount">3</span></button><div class="meta"><indusk-component name="tag" state="default"></indusk-component></div></header>
+<section class="parts">
+<div class="part"><div class="parthead"><h2>Promises</h2><span class="partstate">4 of 4 enforced</span></div><div class="pills"><span class="pill"><span class="d enforced"></span>a-brief-lists-its-looks</span><span class="pill"><span class="d enforced"></span>a-look-has-the-plan-that-owns-it</span><span class="pill"><span class="d enforced"></span>a-changed-look-keeps-its-history</span><span class="pill"><span class="d enforced"></span>a-plan-is-approved-with-its-looks-approved</span></div></div>
+<div class="part"><div class="parthead"><h2>Expectations</h2><span class="partstate">2 to look at</span></div><div class="partrows"><div data-component="expectation-row" class="er"><b>A person approves a plan from its brief alone.</b><span class="when">look at the close of the first plan built under the rule</span></div><div data-component="expectation-row" class="er due"><b>No plan that changes the interface reaches review with its looks unlisted or unapproved.</b><span class="when">time to look: three plans approved</span></div></div></div>
+<div class="part"><div class="parthead"><h2>Looks</h2><span class="partstate">3 of 3 approved</span></div><div class="partrows"><indusk-component name="look-row" state="approved"></indusk-component><indusk-component name="look-row" state="approved"></indusk-component><indusk-component name="look-row" state="approved"></indusk-component></div></div>
+<a class="brieflink" href="#brief">Read the brief</a>
+</section><div class="stagebody"><aside class="rail"><indusk-component name="rail-group" state="default"></indusk-component></aside><div class="main"><indusk-component name="decision-card" state="released"></indusk-component></div></div>
 </div></main>
 </div>
 	</body>

@@ -68,6 +68,11 @@ None.
 1. **`plan.parts`**. The plan page's three parts, promises, expectations and looks, each with its name and state first and the brief one link below.
 2. **`plan.drafts`**. The project page's list of drafts, each a conversation not yet kept, with Reopen and Discard.
 3. **`plan.new`**. The conversation entry that replaces the New plan form, asking for no name and no type before the talk begins.
+4. **`expectation-row.default`**. A new component, an expectation on the plan page with the time to look beside it, drawn on its own so its story can be approved against it (decision 4a).
+5. **`expectation-row.due`**. The same component once its time to look has come.
+6. **`draft-row.default`**. A new component, one draft in the drafts list with Reopen and Discard.
+7. **`draft-row.aged`**. The same component once the draft has gone untouched for days.
+8. **`amendment-card.waiting`**. A new component, a change made during the build that waits for the person, shown as was and now with Approve.
 
 ### Existing looks
 
