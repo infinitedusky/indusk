@@ -133,6 +133,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
         description={parts.description}
         briefStatus={parts.briefStatus}
         briefHref={`/p/${project}/plan/${name}/brief`}
+        archived={plan.archived || Boolean(plan.archivedInWorktree)}
       />
       <WaitingAmendments project={project} plan={name} parts={parts} />
       {waiting ? (

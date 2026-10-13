@@ -1,21 +1,27 @@
+import { documentFinished } from "@infinitedusky/indusk-mcp/plans/steps";
 import { buttonClasses } from "@/components/ui/Button";
 
 /**
  * The top of a plan's page: what the plan is, in one to three sentences, and
  * its brief. Until the brief is accepted, writing it is the plan's current
  * step, so it stands out as the one thing to do; after, it is a quiet link.
- * The brief is worked on only on its own page.
+ * The brief is worked on only on its own page. Whether it is finished is the
+ * package's rule (`documentFinished`), never a status compared here; a
+ * superseded brief and an archived plan have no current step.
  */
 export function PlanSummary({
   description,
   briefStatus,
   briefHref,
+  archived = false,
 }: {
   description: string | null;
   briefStatus: string | null;
   briefHref: string;
+  archived?: boolean;
 }) {
-  const complete = briefStatus === "accepted";
+  const complete = documentFinished("brief", briefStatus ?? undefined);
+  const noCurrentStep = archived || briefStatus === "superseded";
   return (
     <div className="grid gap-3" data-testid="plan-summary">
       <p
@@ -24,9 +30,9 @@ export function PlanSummary({
       >
         {description ?? "No description yet."}
       </p>
-      {complete ? (
+      {complete || noCurrentStep ? (
         <a className="text-sm text-ink-soft" href={briefHref}>
-          Brief: accepted — open it
+          {complete ? "Brief: accepted — open it" : "Brief — open it"}
         </a>
       ) : (
         <div
