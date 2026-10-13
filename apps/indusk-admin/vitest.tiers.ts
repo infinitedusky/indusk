@@ -42,6 +42,9 @@ export const SYSTEM = [
   // A composed mockup draws each component as its story does (storybook-
   // components A30): computed values compared in Chromium, mockup against story.
   "src/__tests__/composition.contract.test.ts",
+  // A look the agent draws appears on the open plan page, at each device
+  // (brief-as-the-contract A16).
+  "src/__tests__/plan-parts.contract.test.ts",
 ];
 
 /**
