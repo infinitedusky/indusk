@@ -65,7 +65,7 @@ None.
 
 ### This plan makes
 
-1. **`plan.parts`**. The plan page's three parts, promises, expectations and looks, each with its name and state first and the brief one link below.
+1. **`plan.parts`**. The plan page's three parts, promises, expectations and looks, each with its name and state first and the brief one link below, and a closed History row under the page.
 2. **`plan.drafts`**. The project page's list of drafts, each a conversation not yet kept, with Reopen and Discard.
 3. **`plan.new`**. The conversation entry that replaces the New plan form, asking for no name and no type before the talk begins.
 4. **`expectation-row.default`**. A new component, an expectation on the plan page with the time to look beside it, drawn on its own so its story can be approved against it (decision 4a).
@@ -73,6 +73,9 @@ None.
 6. **`draft-row.default`**. A new component, one draft in the drafts list with Reopen and Discard.
 7. **`draft-row.aged`**. The same component once the draft has gone untouched for days.
 8. **`amendment-card.waiting`**. A new component, a change made during the build that waits for the person, shown as was and now with Approve.
+9. **`history-panel.closed`**. A new component, the plan's recorded events folded to one row ("History · 5 events"), collapsed by default as Figma's version history is; drawn under the plan's four states.
+10. **`history-panel.open`**. The same component opened to the plan's events, each with what happened, who and when, newest first; going back to an earlier point is not drawn.
+11. **`plan.history`**. The plan page with its History panel open.
 
 ### Existing looks
 
@@ -82,9 +85,9 @@ None.
 
 **Changes**
 
-- **`plan.needs-you`**. The plan page when it waits on the person, now with its three parts and any amendment waiting.
-- **`plan.working`**. The plan page while it is built, now with its three parts.
-- **`plan.released`**. The plan page once released, now with its three parts.
+- **`plan.needs-you`**. The plan page when it waits on the person, now with its three parts, any amendment waiting, and a closed History row.
+- **`plan.working`**. The plan page while it is built, now with its three parts, the Build control under the building card, and a closed History row.
+- **`plan.released`**. The plan page once released, now with its three parts and a closed History row.
 
 **Replaces**
 
