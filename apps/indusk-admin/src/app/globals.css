@@ -317,10 +317,11 @@ body {
   padding: 0;
 }
 
-/* The brief page: the agent in a column on the left that stays put, the
-   brief's parts and the brief scrolling beside it; one column on a phone. */
+/* The brief page: the brief's parts and the brief scrolling on the left, the
+   agent in a narrower column on the right that stays put; one column on a
+   phone. */
 .cols-brief-page {
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
 }
 @media (max-width: 759px) {
   .cols-brief-page {
