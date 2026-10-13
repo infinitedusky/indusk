@@ -15,6 +15,7 @@ import {
 /**
  * promise: a-plan-can-start-from-the-admin — admin-plan-authoring A1, A2, A3, A4, the protocol's half.
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the worktree half.
+ * promise: a-conversation-that-is-not-kept-leaves-nothing-in-the-repository — brief-as-the-contract A26: a planning session accepts edits only inside its own folder.
  *
  * The admin drives the developer's own `claude` over its stream protocol
  * (ADR D1). These are real exchanges, recorded from Claude Code 2.1.197 in the

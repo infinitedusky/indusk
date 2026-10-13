@@ -16,6 +16,7 @@ import { commitFile, git } from "./helpers/versioned-workbench.js";
 
 /**
  * promise: a-new-component-ends-its-plan-with-a-story — brief-as-the-contract A25.
+ * promise: a-plan-is-approved-with-its-looks-approved — brief-as-the-contract A33, a workbench plan's looks checks.
  *
  * A new component a brief names is drawn as its own mockup before approval
  * (`screens/badge.ok.html`, declaring `badge` in `indusk-new-components`), and

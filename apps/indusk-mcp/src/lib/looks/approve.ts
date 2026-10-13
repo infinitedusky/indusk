@@ -130,6 +130,13 @@ export async function approve(
 		: approveMockup(checkout, app, name, by, seen, plan);
 }
 
+/**
+ * Approving a mockup appends to its app's record and never rewrites it: the
+ * version approved before stays beside the new one, with the plan each was
+ * approved in, and stays the one the app is held to until this approval.
+ *
+ * promise: a-changed-look-keeps-its-history
+ */
 async function approveMockup(
 	checkout: string,
 	app: LooksApp,
