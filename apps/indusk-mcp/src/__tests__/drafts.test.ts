@@ -9,7 +9,10 @@ import {
 	startFromDraft,
 	writeProposal,
 } from "../lib/drafts/index.js";
-import { type PlanLifecycleProject, planLifecycleProject } from "./helpers/plan-lifecycle-fixture.js";
+import {
+	type PlanLifecycleProject,
+	planLifecycleProject,
+} from "./helpers/plan-lifecycle-fixture.js";
 import { git } from "./helpers/test-git.js";
 
 /**
@@ -95,8 +98,6 @@ describe("a plan starts from a draft", () => {
 		const made = createDraft(home, { brief: "# promises\n" });
 		writeProposal(made, { name: "has-promises", type: "feature" });
 		const feature = await startFromDraft(trunk(), made);
-		expect(
-			existsSync(join(feature.worktree, ".indusk/planning/has-promises/brief.md")),
-		).toBe(true);
+		expect(existsSync(join(feature.worktree, ".indusk/planning/has-promises/brief.md"))).toBe(true);
 	});
 });

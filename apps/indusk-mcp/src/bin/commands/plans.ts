@@ -1,8 +1,11 @@
 import { auditInputs } from "../../lib/audit/inputs.js";
+import { bookkeepingRoots } from "../../lib/bookkeeping/roots.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
 import { buildStepModel } from "../../lib/build/step-model.js";
+import { getDraftMaxAgeDays } from "../../lib/config.js";
+import { sweepDrafts } from "../../lib/drafts/index.js";
 import { parsePhaseRef } from "../../lib/impl-headings.js";
 import { nextSessionForPlan } from "../../lib/models/next-session.js";
 import { phaseModel } from "../../lib/models/phase-model.js";
@@ -289,6 +292,16 @@ export interface PlansArchiveDeadOptions {
  */
 export function plansArchiveDead(projectRoot: string, opts: PlansArchiveDeadOptions = {}): void {
 	const result = archiveDeadPlans(projectRoot, { dryRun: opts.dryRun });
+	// Conversations not kept age out of the project's home the same way (drafts.max_age_days).
+	const drafts = sweepDrafts(bookkeepingRoots(projectRoot).home, {
+		maxAgeDays: getDraftMaxAgeDays(projectRoot),
+		dryRun: opts.dryRun,
+	});
+	if (drafts.length > 0) {
+		console.info(
+			`${opts.dryRun ? "Would discard" : "Discarded"} ${drafts.length} untouched draft(s): ${drafts.join(", ")}`,
+		);
+	}
 	const verb = result.dryRun ? "Would archive" : "Archived";
 	if (result.archived.length === 0) {
 		console.info("No dead-draft plans found.");

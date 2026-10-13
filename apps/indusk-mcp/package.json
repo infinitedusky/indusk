@@ -100,6 +100,10 @@
 			"types": "./dist/lib/build/index.d.ts",
 			"default": "./dist/lib/build/index.js"
 		},
+		"./drafts": {
+			"types": "./dist/lib/drafts/index.d.ts",
+			"default": "./dist/lib/drafts/index.js"
+		},
 		"./plans": {
 			"types": "./dist/lib/plans/index.d.ts",
 			"default": "./dist/lib/plans/index.js"
