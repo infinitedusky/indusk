@@ -1,9 +1,9 @@
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import { listedLooks } from "../plans/parts.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
+import { describeDraftAge } from "./age.js";
 import {
 	type Draft,
-	describeDraftAge,
 	findDraft,
 	listDrafts,
 	type Proposal,

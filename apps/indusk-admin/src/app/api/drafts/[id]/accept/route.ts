@@ -21,6 +21,7 @@ export const dynamic = "force-dynamic";
  * taken is refused, and the draft is kept so another can be asked for.
  *
  * promise: a-plan-starts-as-a-conversation
+ * promise: a-plan-can-start-from-the-admin
  */
 export async function POST(
   request: NextRequest,
