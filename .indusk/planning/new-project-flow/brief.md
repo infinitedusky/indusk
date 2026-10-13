@@ -93,6 +93,14 @@ None.
 5. **`new-project.creating`**. The creation running as steps, ending with a way into the new project.
 6. **`recommendation.kept`**. A new component: a recommended practice, one line on why, and Decline.
 7. **`recommendation.declined`**. The same component declined, with the person's reason and a way to keep it after all.
+8. **`project-card.default`**. A new component: one project on the home grid — name, path, active plans.
+9. **`message.you`**. A new component: the person's message in the conversation, with any attached documents.
+10. **`message.agent`**. The same component as the agent's message, holding its open questions.
+11. **`file-chip.default`**. A new component: an attached document, by name.
+12. **`prompt-box.default`**. A new component: the "What do you want to build?" box with a way to add documents.
+13. **`knowledge-list.default`**. A new component: what the agent knows so far — why, what, how and where, name and place — each settled, asking or open.
+14. **`workflow-strip.default`**. A new component: the planning documents in order, the core marked kept and a declined one struck through.
+15. **`layout-tree.default`**. A new component: the project's directory layout as it will be created.
 
 ### Existing looks
 
