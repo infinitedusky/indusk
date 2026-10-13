@@ -81,6 +81,7 @@ None.
 14. **`phase-row.closed`**. A new component, one phase of the plan folded to a row: its name, its items done and its state (done, in progress, not started), collapsed by default; drawn inside the Phases part.
 15. **`phase-row.open`**. The same component opened to the phase's items, checked or not, each with the note recorded under it (what shipped, test results, decisions) in smaller, muted text.
 16. **`plan.phases`**. The plan page with its Phases part open, every phase a closed row but the one in progress.
+17. **`plan.documents`**. The plan page with its Documents part open: each document (research, brief, test plan, ADR, impl) a row with its name and status that opens that document's own page to read; the rows reuse `phase-row.closed`, no new component.
 
 ### Existing looks
 

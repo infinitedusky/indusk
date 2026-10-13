@@ -6,7 +6,7 @@
 		{ "name": "nav", "states": ["expanded", "collapsed"], "path": "/p/dusk/promises" },
 		{ "name": "dashboard", "states": ["default", "empty"], "path": "/p/dusk/promises" },
 		{ "name": "promise", "states": ["broken", "enforced"], "path": "/p/dusk/promises" },
-		{ "name": "plan", "states": ["needs-you", "working", "released", "parts", "drafts", "new", "history", "phases"], "path": "/p/dusk/plan/ui-promises" },
+		{ "name": "plan", "states": ["needs-you", "working", "released", "parts", "drafts", "new", "history", "phases", "documents"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "expectation-row", "states": ["default", "due"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "draft-row", "states": ["default", "aged"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "amendment-card", "states": ["waiting"], "path": "/p/dusk/plan/ui-promises" },
