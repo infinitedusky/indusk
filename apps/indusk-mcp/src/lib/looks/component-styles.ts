@@ -49,7 +49,7 @@ function selectorClasses(selector: string): string[] {
 	return [...selector.matchAll(CLASS_IN_SELECTOR)].map((m) => unescapeCss(m[1] as string));
 }
 
-/** Wrappers a utility rule sits in that are kept around it. A `@layer` is not one: see `keepUtilities`. */
+/** Wrappers a utility rule sits in that are kept around it. A `@layer` is not one: see `keepRules`. */
 const WRAPPERS = new Set(["media", "supports", "container"]);
 
 /** Tailwind's theme namespace for a foundation group, and the foundation's name behind each theme name. */
@@ -148,37 +148,26 @@ function resolveValue(
 }
 
 /**
- * The rules of `nodes` that name only `classes`, inside the wrappers they sit
+ * The rules of `nodes` whose selectors `keep` accepts, inside the wrappers they sit
  * in — except a `@layer`, which is dropped and its rules kept in place, in the
  * order the build wrote them: the sheet is unlayered, because a mockup's own
  * page styles are, and an unlayered rule beats every layered one whatever its
  * specificity (ADR decision 10, amended 2026-10-12). Among themselves the
  * rules keep the source order, which is what the layers' order gave them.
  */
-function keepUtilities(
-	nodes: readonly ChildNode[],
-	classes: ReadonlySet<string>,
-	marks: ReadonlySet<string>,
-): ChildNode[] {
+function keepRules(nodes: readonly ChildNode[], keep: (selector: string) => boolean): ChildNode[] {
 	const out: ChildNode[] = [];
 	for (const node of nodes) {
 		if (node.type === "rule") {
-			const kept = node.selectors.filter((s) => {
-				const used = selectorClasses(s);
-				if (used.length > 0) return used.every((c) => classes.has(c));
-				// No class: a rule the app writes on the component's own marker
-				// (`[data-component="decision-card"] p`), part of how it draws.
-				const anchors = selectorMarks(s);
-				return anchors.length > 0 && anchors.every((m) => marks.has(m));
-			});
+			const kept = node.selectors.filter(keep);
 			if (kept.length === 0) continue;
 			const copy = node.clone();
 			copy.selectors = kept;
 			out.push(copy);
 		} else if (node.type === "atrule" && node.name === "layer" && node.nodes) {
-			out.push(...keepUtilities(node.nodes, classes, marks));
+			out.push(...keepRules(node.nodes, keep));
 		} else if (node.type === "atrule" && WRAPPERS.has(node.name) && node.nodes) {
-			const inner = keepUtilities(node.nodes, classes, marks);
+			const inner = keepRules(node.nodes, keep);
 			if (inner.length === 0) continue;
 			const copy = node.clone({ nodes: [] });
 			copy.append(inner);
@@ -187,6 +176,20 @@ function keepUtilities(
 	}
 	return out;
 }
+
+/**
+ * A selector the component writes: every class it names is one of `classes`;
+ * or, naming no class, a rule the app writes on the component's own marker
+ * (`[data-component="decision-card"] p`), part of how it draws.
+ */
+const utilityOf =
+	(classes: ReadonlySet<string>, marks: ReadonlySet<string>) =>
+	(selector: string): boolean => {
+		const used = selectorClasses(selector);
+		if (used.length > 0) return used.every((c) => classes.has(c));
+		const anchors = selectorMarks(selector);
+		return anchors.length > 0 && anchors.every((m) => marks.has(m));
+	};
 
 /** Resolve every declaration under `container`; `--tw-*` declarations are the build's own and are dropped. */
 function resolveIn(container: Container, parent: ReadonlyMap<string, string>, ctx: Context): void {
@@ -275,16 +278,10 @@ export function componentStylesheet(
 	marks: ReadonlySet<string> = new Set(),
 ): string {
 	const root = postcss.parse(appCss);
-	const initial = new Map<string, string>();
-	root.walkAtRules("property", (at) => {
-		at.walkDecls("initial-value", (d) => {
-			initial.set(at.params.trim(), d.value);
-		});
-	});
-	const ctx: Context = { foundation, names: themeNames(foundation), initial };
+	const ctx = contextOf(root, foundation);
 
 	const out = postcss.root();
-	const kept = keepUtilities(root.nodes, classes, marks);
+	const kept = keepRules(root.nodes, utilityOf(classes, marks));
 	out.append(kept);
 
 	const used = animationNames(kept);
@@ -297,6 +294,36 @@ export function componentStylesheet(
 			}
 		});
 	}
+	return sheetOf(out, ctx);
+}
+
+/**
+ * The app's base stylesheet, `components/_base.css`: its compiled `body` rules —
+ * the font, ink and ground every component inherits in the app — resolved to the
+ * foundation's tokens as a component's sheet is. A story's frame loads it under
+ * the component's sheet, so a snapshot is drawn in the app's type rather than the
+ * browser's default. Not part of any approval: a component's look is its own sheet.
+ */
+export function baseStylesheet(appCss: string, foundation: Foundation): string {
+	const root = postcss.parse(appCss);
+	const out = postcss.root();
+	out.append(keepRules(root.nodes, (selector) => selector.trim() === "body"));
+	return sheetOf(out, contextOf(root, foundation));
+}
+
+/** The build's `@property` initial values, and the foundation's names for its variables. */
+function contextOf(root: postcss.Root, foundation: Foundation): Context {
+	const initial = new Map<string, string>();
+	root.walkAtRules("property", (at) => {
+		at.walkDecls("initial-value", (d) => {
+			initial.set(at.params.trim(), d.value);
+		});
+	});
+	return { foundation, names: themeNames(foundation), initial };
+}
+
+/** `out` resolved and printed under the header; just the header when no rule is left. */
+function sheetOf(out: postcss.Root, ctx: Context): string {
 	resolveIn(out, new Map(), ctx);
 	out.walk((n) => {
 		n.cleanRaws();

@@ -158,7 +158,8 @@ function viewOf(
 
 /**
  * A story's snapshot as a page the cockpit can draw on its own, built as
- * `mockupDocument` builds a composed mockup: the foundation's tokens, then its
+ * `mockupDocument` builds a composed mockup: the foundation's tokens, the app's
+ * base (`_base.css`, so the story is drawn in the app's type), then its
  * component's stylesheet, then the snapshot's markup inside a
  * `#storybook-root`, where the frame measures the component it holds. What is
  * drawn is exactly what the hashes an Approve sends were read from.
@@ -167,13 +168,13 @@ export function storyDocument(
 	story: Pick<Story, "component" | "html">,
 	tokensCss: string,
 	styles: readonly Pick<ComponentStyle, "component" | "css">[],
+	base = "",
 ): string {
 	const page = `<!doctype html>\n<html>\n<head><meta charset="utf-8"></head>\n<body><div id="storybook-root">${story.html}</div></body>\n</html>\n`;
-	return mockupDocument(
-		page,
-		tokensCss,
-		styles.filter((s) => s.component === story.component),
-	);
+	return mockupDocument(page, tokensCss, [
+		...(base ? [{ component: "_base", css: base }] : []),
+		...styles.filter((s) => s.component === story.component),
+	]);
 }
 
 function storiesOf(
@@ -195,7 +196,7 @@ function storiesOf(
 			plan: entry?.plan ?? null,
 			hash: story.hash,
 			stylesheetHash: story.stylesheetHash,
-			document: storyDocument(story, css, app.styles),
+			document: storyDocument(story, css, app.styles, app.base),
 		};
 	});
 }

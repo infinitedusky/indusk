@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { classesOf, componentStylesheet, STYLESHEET_HEADER } from "./component-styles.js";
+import {
+	baseStylesheet,
+	classesOf,
+	componentStylesheet,
+	STYLESHEET_HEADER,
+} from "./component-styles.js";
 import type { Foundation } from "./foundation.js";
 import { markedComponentsOf } from "./markup.js";
 
@@ -148,5 +153,29 @@ describe("classesOf", () => {
 	it("reads the classes of every element, nested ones included", () => {
 		const html = '<span class="a b"><i class="b c"></i><u></u></span>';
 		expect([...classesOf(html)].sort()).toEqual(["a", "b", "c"]);
+	});
+});
+
+describe("baseStylesheet", () => {
+	const APP = `
+@layer base { html, :host { line-height: 1.5; font-family: ui-sans-serif, system-ui; } }
+@layer base { body { line-height: inherit; } }
+body { color: var(--color-ink); font-family: var(--font-sans); }
+.prose body, body p { margin: 0; }
+.px-2 { padding-inline: var(--spacing-2); }
+`;
+
+	it("keeps the app's body rules, in the build's order, out of their layer, and nothing else", () => {
+		const css = baseStylesheet(APP, foundation);
+		expect(css.startsWith(STYLESHEET_HEADER)).toBe(true);
+		expect(css).toContain("line-height: inherit");
+		expect(css).toContain("color: var(--color-ink)");
+		expect(css).toContain("font-family: var(--font-sans)");
+		expect(css.indexOf("inherit")).toBeLessThan(css.indexOf("--font-sans"));
+		expect(css).not.toMatch(/@layer|html|:host|ui-sans-serif|margin|padding/);
+	});
+
+	it("is just the header when the app writes no body rule", () => {
+		expect(baseStylesheet(COMPILED, foundation)).toBe(STYLESHEET_HEADER);
 	});
 });
