@@ -3,6 +3,7 @@ title: "New project flow"
 date: 2026-10-13
 status: draft
 workflow: feature
+description: "Start a new project from the admin by saying what you want to build. The agent asks only what your idea leaves open, recommends the right way to build it, and creates the workbench, repository and founding brief for you."
 ---
 
 # New project flow — Brief
