@@ -83,9 +83,10 @@ export function looksToApprove(looks: BriefLooks | null): string[] {
 
 /**
  * Refusals, one per mockup `briefText` makes, changes or replaces that is not
- * approved as `root` holds it. A name that is a story, or no look drawn in
- * `root` yet, is not a mockup and is not held here. An app that cannot be
- * read is a refusal of its own, never a silent pass.
+ * approved as `root` holds it, or not drawn there at all. No name is exempt:
+ * a story is never named without a mockup, since a new component is drawn as
+ * its own (brief-as-the-contract ADR decision 4a). An app that cannot be read
+ * is a refusal of its own, never a silent pass.
  */
 export async function unapprovedMockups(root: string, briefText: string): Promise<string[]> {
 	const brief = parseBriefContract(briefText);
@@ -103,8 +104,16 @@ export async function unapprovedMockups(root: string, briefText: string): Promis
 			);
 		}
 	}
+	// An app that could not be read may hold the look: its refusal stands for it.
+	const someUnreadable = refusals.length > 0;
 	for (const look of wanted) {
-		for (const app of apps) {
+		const drawnIn = apps.filter((app) => app.mockups.some((m) => m.name === look));
+		if (drawnIn.length === 0 && !someUnreadable) {
+			refusals.push(
+				`${look} is not drawn — draw it as a mockup in this plan's worktree (a new component as its own mockup, declared in indusk-new-components) and approve it in the cockpit's Looks page`,
+			);
+		}
+		for (const app of drawnIn) {
 			const mockup = app.mockups.find((m) => m.name === look);
 			if (!mockup) continue;
 			const standing = standingOf(readRecord(app));

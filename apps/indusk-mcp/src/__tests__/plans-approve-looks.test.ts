@@ -4,7 +4,14 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { approve } from "../lib/looks/approve.js";
-import { APP, type BriefAppProject, briefAppProject, briefOf, PLAN, PLAN_DIR } from "./helpers/brief-app.js";
+import {
+	APP,
+	type BriefAppProject,
+	briefAppProject,
+	briefOf,
+	PLAN,
+	PLAN_DIR,
+} from "./helpers/brief-app.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { git } from "./helpers/test-git.js";
 
