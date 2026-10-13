@@ -49,12 +49,12 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 | A4 | Collapsing the nav to its strip and expanding it again returns it to the dragged width | Test Phase 1 | Build Phase 2 | written | unit | promise: the-nav-widens-by-dragging | apps/indusk-admin/src/components/cockpit/CockpitFrame.test.tsx |
 | A5 | An agent's command that runs `indusk plans reapprove` is refused, saying only a person re-approves, and the plan's approval is unchanged | Test Phase 1 | Build Phase 1 | written | unit | promise: only-a-person-reapproves | apps/indusk-mcp/src/__tests__/looks-approval-guard.test.ts |
 | A6 | An agent's command that calls the admin's re-approve route is refused the same way | Test Phase 1 | Build Phase 1 | written | unit | promise: only-a-person-reapproves | apps/indusk-mcp/src/__tests__/looks-approval-guard.test.ts |
-| A7 | The person's Approve on a waiting amendment, pressed in their browser, still re-approves the plan | Test Phase 1 | Test Phase 1 | planned | unit | promise: only-a-person-reapproves | apps/indusk-admin/src/__tests__/amendment-approval.test.ts |
-| A8 | The brief page shows the plan's description, promises, expectations and looks, with the agent's column beside them | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/__tests__/plan-page-layout.test.tsx |
-| A9 | The plan page opens with the description and, until the brief is finished, "The brief is incomplete" with a way to the brief; once it is finished, a link to it | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/components/plan/PlanSummary.test.tsx |
+| A7 | The person's Approve on a waiting amendment, pressed in their browser, still re-approves the plan | Test Phase 1 | Test Phase 1 | passing | unit | promise: only-a-person-reapproves | apps/indusk-admin/src/__tests__/amendment-approval.test.ts |
+| A8 | The brief page shows the plan's description, promises, expectations and looks, with the agent's column beside them | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/__tests__/plan-page-layout.test.tsx |
+| A9 | The plan page opens with the description and, until the brief is finished, "The brief is incomplete" with a way to the brief; once it is finished, a link to it | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/components/plan/PlanSummary.test.tsx |
 | A10 | Every screen this plan names reads approved and the running admin holds it by value at each reference device, in a real browser | Build Phase 3 | Build Phase 3 | planned | contract | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/__tests__/cockpit-redraw.contract.test.ts |
 | A11 | Live: talking to the agent on a brief page, a promise it adds and a look it draws appear on the page and are brought into view, without leaving it | Build Phase 3 | Build Phase 3 | planned | live check | a live check of a-plan-page-shows-the-parts-of-its-brief, recorded in Build Phase 3; the promise is proven by A8, A9 and A10 | manual: recorded in Build Phase 3's Verification |
-| A12 | While an amendment is waiting, checking off a build item is refused, naming the amendment | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/check-gates-amendments.test.ts |
+| A12 | While an amendment is waiting, checking off a build item is refused, naming the amendment | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/check-gates-amendments.test.ts |
 
 ### Deferred Verification
 
@@ -73,7 +73,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 - [x] Author A1–A4 in `CockpitFrame.test.tsx`, rendering `CockpitFrame` at desktop and phone widths and dragging the nav's edge by its role (`separator`), RED: there is no edge today
 - [x] Author A5, A6 in `looks-approval-guard.test.ts` beside the record and route cases, RED: the guard allows both today
-- [ ] Add `promise: only-a-person-reapproves` to `amendment-approval.test.ts` (A7), `promise: a-plan-page-shows-the-parts-of-its-brief` to `plan-page-layout.test.tsx` (A8) and `PlanSummary.test.tsx` (A9), and `promise: a-plan-builds-only-after-approval` to `check-gates-amendments.test.ts` (A12); each passes today
+- [x] Add `promise: only-a-person-reapproves` to `amendment-approval.test.ts` (A7), `promise: a-plan-page-shows-the-parts-of-its-brief` to `plan-page-layout.test.tsx` (A8) and `PlanSummary.test.tsx` (A9), and `promise: a-plan-builds-only-after-approval` to `check-gates-amendments.test.ts` (A12); each passes today
 - [ ] Confirm each red row fails on its own assertion rather than on a missing import
 
 #### Deferred to Build Phase 3
