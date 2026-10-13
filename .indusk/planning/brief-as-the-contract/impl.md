@@ -243,7 +243,7 @@ A person works on one document, the brief — promises, expectations and looks �
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/guide/briefs.md`: the Looks section and the question, with the draft → accepted → looks approved → approved flow in Mermaid
+- [x] `apps/docs/src/guide/briefs.md`: the Looks section and the question, with the draft → accepted → looks approved → approved flow in Mermaid
 
 ### Build Phase 2: A look belongs to a plan, and approval is of the brief
 

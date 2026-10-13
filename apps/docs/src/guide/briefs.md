@@ -2,12 +2,14 @@
 
 A brief is what a planning conversation produced. You say what you want; the
 agent asks, reads the promises already in force, and reads back what it
-understood. What you agree on is written down in two parts:
+understood. What you agree on is written down in three parts:
 
 - **Expectations**: why you are doing this, each with how you would know and
   when to look.
 - **Promises**: what will be true once it is built, each one sentence, each a
   file in the [registry](/guide/promises).
+- **Looks**: what a person will see, each one a mockup or a story, or the
+  reason the plan changes nothing visible. See [Looks](#looks).
 
 Everything else that came up on the way (what exists today, what was tried,
 what was decided and why) is [research](/guide/plan-lifecycle). How the
@@ -121,6 +123,74 @@ in one place.
 
 What you chose not to promise, and where it goes instead. It is not read by
 any check; it is there so the next person does not assume it was forgotten.
+
+## Looks
+
+A plan that changes how anything looks says so in its brief. `## Looks` has the
+shape of Promises: `### This plan makes` for a screen or component that is
+new, and `### Existing looks` with **Must not break**, **Changes** and
+**Replaces**. Each entry is a look's name: a mockup (`home.full`, the screen
+then its state) or a story (`badge.ok`, a component's state).
+
+```markdown
+## Looks
+
+### This plan makes
+
+1. **`home.full`**. The home screen with every seat shown.
+
+### Existing looks
+
+**Must not break**
+
+- **`home.empty`**. The empty home screen stays as approved.
+
+**Changes**
+
+- **`detail.default`**. The detail screen gains the seat's hold time.
+
+**Replaces**
+
+- **`badge.old`**, by **`badge.ok`**.
+```
+
+A plan that changes nothing under an app's interface writes `None — {reason}`
+instead.
+
+### The question
+
+Once the draft brief exists, the agent asks: *does this change how anything
+looks?* If it does, the look is named directly, or the agent draws a draft
+mockup so you can see it, proposed, in the cockpit. A story is named directly.
+The agent draws and proposes a look; only a person approves one.
+
+### The check
+
+An app's interface is the `sources` its `.indusk/mockups/<app>/screens.json`
+declares. Two moments hold a plan to its brief:
+
+- **At approval**, `indusk plans approve` reads the impl's *Files Affected*. A
+  path under an app's `sources`, with no look listed and no reason given, is
+  refused, naming the paths and what the brief lacks.
+- **At acceptance**, `indusk plans accept` reads the branch's real diff. A
+  brief that says `None`, or has no Looks section, but whose branch changed
+  those files is refused, naming them. The way forward is an amendment: the
+  brief gains the look and a person approves it.
+
+A brief written before the section existed is still approved when its plan
+changes nothing under an app's interface. Approval then waits on the mockups
+the brief names, which a person approves in the cockpit.
+
+```mermaid
+flowchart LR
+  D[Brief: draft] -->|"does this change how anything looks?"| Q{Looks listed?}
+  Q -->|"yes: named or drawn"| A[Brief: accepted]
+  Q -->|"None - reason"| A
+  A --> L[Looks approved by a person]
+  L --> P[Plan approved]
+  P --> B[Build]
+  B -->|"branch changed the interface, brief says None"| R[Refused at accept: amend the brief]
+```
 
 ## The contract
 
