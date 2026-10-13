@@ -11,8 +11,9 @@ import { PlanStatusCard } from "@/components/plan/PlanStatusCard";
 import { BuildControls } from "@/components/session/BuildControls";
 import { PlanSession } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
+import { HistoryPanel } from "@/components/ui/HistoryPanel";
 import { PlanCopyNotice } from "@/components/Worktrees";
-import { readWaiting } from "@/lib/decisions-reader";
+import { readPlanHistory, readWaiting } from "@/lib/decisions-reader";
 import { planActions } from "@/lib/plan-actions";
 import {
   readActivePlans,
@@ -162,6 +163,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
           {subplans ? null : <PlanWorkflows plan={plan} />}
           <div className="flex min-w-0 flex-col gap-3">{main}</div>
         </div>
+        <HistoryPanel entries={readPlanHistory(projectPath, name)} />
       </PlanFrame>
     </>
   );

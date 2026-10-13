@@ -345,7 +345,8 @@ A person works on one document, the brief — promises, expectations and looks �
   - Note: Build control drawn inline on `plan.working` under the building card (the `button` story is fixed to Approve/Not yet); new component `history-panel` drawn as `history-panel.closed` and `history-panel.open`, closed row on `plan.parts`, `plan.needs-you`, `plan.working`, `plan.released`, open state in the new `plan.history`; all named in the brief's Looks. Proposed, not approved.
 - [x] **Pause for a person**: Sandy approves the redrawn mockups and any new component mockups on the Looks page
   - Note: 2026-10-13 — Sandy approved all seven: `history-panel.closed`, `history-panel.open`, `plan.history`, and the redrawn `plan.working`, `plan.parts`, `plan.needs-you`, `plan.released`.
-- [ ] The page draws the Build control and the History panel as the approved mockups do
+- [x] The page draws the Build control and the History panel as the approved mockups do
+  - Note: `ui/HistoryPanel` (a native `<details>`, closed by default, "History · N events", newest first with what, who and when, no restore control) has a story per state (`closed`, `open`) and a test; the page draws it after the stage from `readPlanHistory`, and `BuildControls` stays where `plan.working` draws it. `looks stories admin` rendered the stories; `plan.parts`, `plan.working`, `plan.needs-you`, `plan.released` and `plan.history` now place `history-panel` by name and are proposed again for Sandy, with the story. `PlanHistory.tsx` (components/cockpit) has no importer now; it is left for the Cleanup phase.
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 4 Verification
