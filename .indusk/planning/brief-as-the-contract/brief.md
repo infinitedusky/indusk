@@ -1,4 +1,5 @@
 ---
+description: "You write one document, the brief (its promises, expectations and looks), with the agent and approve it once; making it true is the agent's job. A change to what was agreed waits for you to re-approve it, and a new plan starts as a conversation instead of a form."
 title: "Brief as the contract"
 date: 2026-10-12
 status: accepted
