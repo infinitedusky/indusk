@@ -102,7 +102,7 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
           </article>
         </PlanFrame>
         <WindowColumn
-          className="gap-2 border-l border-line py-2 pl-4"
+          className="gap-2 border-l border-line pt-2 pb-6 pl-4"
           data-testid="brief-agent"
         >
           <h2 className="font-display text-lg font-bold">Agent</h2>
