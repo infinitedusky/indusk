@@ -30,6 +30,8 @@ flowchart TD
 
 ## The shape
 
+A brief's frontmatter carries a `description:` — the plan in one to three tight sentences, what it does and for whom, not its background. The plan's page shows it at the top. The agent writes it as soon as the plan is clear and keeps it true as the brief changes; editing it is not an amendment.
+
 ```markdown
 ## Expectations
 

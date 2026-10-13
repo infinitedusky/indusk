@@ -190,8 +190,18 @@ needs none of that.
   Mitigation: the paths are the `sources` the look check already trusts, one
   definition.
 
+## As built
+
+Three things differ from the decisions above, each decided while the plan was used:
+
+- **The brief has its own page** (decision 7). The brief's parts and the brief sit on `/plan/{name}/brief` beside the planning agent, which follows what it writes; the plan page is where the plan is followed, opening with the brief's `description:` and the brief's state. See [the brief page](/reference/admin-ui/overview#the-brief-page).
+- **A planning session asks only to leave its folder.** It runs in `acceptEdits`; a write inside the plan's worktree or the draft's folder is allowed unasked, and only a path outside reaches the person. Before, it asked for every write.
+- **A draft's looks are names, not drawings** (decision 8). A draft lives outside the repository and mockups live in it, so a look is drawn on the brief page once the plan exists. A draft past its age is moved to the home's draft archive, as decision 9 says, and accepting a draft keeps both its brief and its research.
+
+The approval and acceptance checks for looks run for workbench plans too, and an amendment cannot be skipped by a `skip-gates` marker or by removing `approved_brief:` from the impl.
+
 ## References
-- Full ADR: `.indusk/planning/brief-as-the-contract/adr.md`
+- Full ADR: `.indusk/planning/archive/brief-as-the-contract/adr.md`
 - [UI promises](/decisions/ui-promises) — the rejected promise per look
 - [Storybook components](/decisions/storybook-components) — a story is a look
 - [Admin plan authoring](/decisions/admin-plan-authoring) — D3 plan commands, D8 written on its own branch
