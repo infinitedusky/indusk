@@ -1,7 +1,7 @@
 ---
 title: "Component content"
 date: 2026-10-13
-status: draft
+status: accepted
 workflow: feature
 description: "A mockup places an existing component with the words it needs — a button reading \"Create project\" — instead of showing the story's fixed text, so a screen can be made of components alone."
 ---
