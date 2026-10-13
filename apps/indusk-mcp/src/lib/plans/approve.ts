@@ -64,7 +64,7 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
 
 	const briefFile = join(pb.dir, "brief.md");
 	const brief = existsSync(briefFile) ? readFileSync(briefFile, "utf-8") : null;
-	if (brief !== null) await refuseUnapprovedLooks(pb, brief);
+	if (brief !== null) await refuseUnapprovedLooks(pb.plan, pb.worktree, brief);
 
 	await refuseDirtyTrunk(pb, paths, `before approving ${plan}`);
 	await setImplKeys(
@@ -81,15 +81,12 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
 }
 
 /** Refuse, naming each, when a mockup the brief makes, changes or replaces is not yet approved in the plan's worktree. */
-async function refuseUnapprovedLooks(
-	pb: Awaited<ReturnType<typeof planBranch>>,
-	brief: string,
-): Promise<void> {
-	const proposed = await unapprovedMockups(pb.worktree, brief);
+async function refuseUnapprovedLooks(plan: string, root: string, brief: string): Promise<void> {
+	const proposed = await unapprovedMockups(root, brief);
 	if (proposed.length === 0) return;
 	throw new PlanCommandRefusal(
 		[
-			`${pb.plan} cannot be approved; its brief's looks are not approved yet:`,
+			`${plan} cannot be approved; its brief's looks are not approved yet:`,
 			...proposed.map((r) => `  ${r}`),
 		].join("\n"),
 	);
@@ -115,10 +112,12 @@ async function approveWorkbenchPlan(wp: WorkbenchPlan): Promise<ApprovedPlan> {
 			].join("\n"),
 		);
 	}
+	// The looks are read where a workbench keeps them: the root's mockups.
 	const briefFile = join(wp.dir, "brief.md");
-	const record = existsSync(briefFile)
-		? approvalFrontmatter(readFileSync(briefFile, "utf-8"), await approvedBy(wp.root), new Date())
-		: {};
+	const brief = existsSync(briefFile) ? readFileSync(briefFile, "utf-8") : null;
+	if (brief !== null) await refuseUnapprovedLooks(wp.plan, wp.root, brief);
+	const record =
+		brief === null ? {} : approvalFrontmatter(brief, await approvedBy(wp.root), new Date());
 	writeFileSync(
 		impl,
 		setFrontmatterKeys(readFileSync(impl, "utf-8"), { status: "approved", ...record }),

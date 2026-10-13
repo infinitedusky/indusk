@@ -82,16 +82,14 @@ export async function reapprovePlan(
 		);
 	}
 	const brief = readFileSync(briefFile, "utf-8");
-	if (!wp) {
-		const looks = await unapprovedMockups(where.root, brief);
-		if (looks.length > 0) {
-			throw new PlanCommandRefusal(
-				[
-					`${plan}'s amendments cannot be approved; its brief's looks are not approved yet:`,
-					...looks.map((r) => `  ${r}`),
-				].join("\n"),
-			);
-		}
+	const looks = await unapprovedMockups(where.root, brief);
+	if (looks.length > 0) {
+		throw new PlanCommandRefusal(
+			[
+				`${plan}'s amendments cannot be approved; its brief's looks are not approved yet:`,
+				...looks.map((r) => `  ${r}`),
+			].join("\n"),
+		);
 	}
 
 	let amendments: Amendment[];

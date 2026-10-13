@@ -10,7 +10,6 @@ import { storiesWaiting } from "./approved-brief.js";
 import {
 	branchFileChanges,
 	implPath,
-	type PlanBranch,
 	PlanCommandRefusal,
 	planBranch,
 	refuseInsideBuildStep,
@@ -58,6 +57,18 @@ export async function acceptPlan(
 	// A workbench plan's impl lives at the workbench root, committed there.
 	const wp = await workbenchPlan(anyCheckout, plan);
 	if (wp) {
+		// The same checks a normal plan meets, against the workbench's pieces: the
+		// code repo's branch for the diff, the root's mockups for the looks.
+		const where: LooksWhere = {
+			plan,
+			dir: wp.dir,
+			mockups: wp.root,
+			trunk: wp.repoTrunk,
+			trunkBranch: wp.trunkBranch,
+			branch: wp.code.branch,
+		};
+		await refuseUnlistedInterfaceChanges(where);
+		await refuseStoriesWaiting(where);
 		const impl = join(wp.dir, "impl.md");
 		writeFileSync(
 			impl,
@@ -67,10 +78,33 @@ export async function acceptPlan(
 		return { plan, accepted, acceptedBy: by };
 	}
 	const pb = await planBranch(anyCheckout, plan);
-	await refuseUnlistedInterfaceChanges(pb);
-	await refuseStoriesWaiting(pb);
+	const where: LooksWhere = {
+		plan,
+		dir: pb.dir,
+		mockups: pb.worktree,
+		trunk: pb.trunk,
+		trunkBranch: pb.trunkBranch,
+		branch: pb.branch,
+	};
+	await refuseUnlistedInterfaceChanges(where);
+	await refuseStoriesWaiting(where);
 	await setImplKeys(pb, implPath(pb), { accepted, accepted_by: by }, message);
 	return { plan, accepted, acceptedBy: by };
+}
+
+/**
+ * Where the accept-time looks checks read: the plan's folder, the checkout
+ * whose mockups hold its looks, and the branch whose diff is its code. A normal
+ * plan has one worktree for all of it; a workbench plan has the root for the
+ * documents and mockups and the code repo for the diff.
+ */
+interface LooksWhere {
+	plan: string;
+	dir: string;
+	mockups: string;
+	trunk: string;
+	trunkBranch: string;
+	branch: string;
 }
 
 /**
@@ -80,14 +114,14 @@ export async function acceptPlan(
  * person approves it — not accepting over the gap. A brief written before
  * promises were part of one is not held to it, as at approval.
  */
-async function refuseUnlistedInterfaceChanges(pb: PlanBranch): Promise<void> {
+async function refuseUnlistedInterfaceChanges(pb: LooksWhere): Promise<void> {
 	const briefPath = join(pb.dir, "brief.md");
 	if (!existsSync(briefPath)) return;
 	const brief = parseBriefContract(readFileSync(briefPath, "utf-8"));
 	if (brief.shape !== "contract" || listsALook(brief.looks)) return;
 	const changed = await branchFileChanges(pb.trunk, pb.trunkBranch, pb.branch);
 	const files = interfaceFilesAmong(
-		pb.worktree,
+		pb.mockups,
 		changed.map((f) => f.path),
 	);
 	if (files.length === 0) return;
@@ -104,10 +138,10 @@ async function refuseUnlistedInterfaceChanges(pb: PlanBranch): Promise<void> {
  * by the story from here on. Each refusal is named; the way forward is the
  * Looks page and `<indusk-component>`.
  */
-async function refuseStoriesWaiting(pb: PlanBranch): Promise<void> {
+async function refuseStoriesWaiting(pb: LooksWhere): Promise<void> {
 	const briefPath = join(pb.dir, "brief.md");
 	if (!existsSync(briefPath)) return;
-	const waiting = await storiesWaiting(pb.worktree, readFileSync(briefPath, "utf-8"));
+	const waiting = await storiesWaiting(pb.mockups, readFileSync(briefPath, "utf-8"));
 	if (waiting.length === 0) return;
 	throw new PlanCommandRefusal(
 		[
