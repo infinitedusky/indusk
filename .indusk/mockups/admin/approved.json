@@ -2571,6 +2571,14 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-13T01:45:04.171Z"
+		},
+		{
+			"mockup": "expectation-row.due",
+			"mockupHash": "00ace79683189539cfc3e49f41c6c4c2c5c585bfe852f9a9b825e80fb2f3d216",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-13T01:45:04.320Z"
 		}
 	]
 }
