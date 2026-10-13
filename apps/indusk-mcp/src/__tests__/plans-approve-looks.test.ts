@@ -39,8 +39,12 @@ describe.skipIf(SHOULD_SKIP)("approval and the looks a brief names", () => {
 		expect(out(refused)).toContain("home.full");
 		expect(app.project.mainSha()).toBe(before);
 
-		const person = await approve(app.wt, APP, "home.full", "sandy");
-		expect(person.approved, JSON.stringify(person)).toBe(true);
+		// The brief names two proposed mockups (it makes home.full, changes
+		// detail.default); the plan is approved once the person has approved each.
+		for (const look of ["home.full", "detail.default"]) {
+			const person = await approve(app.wt, APP, look, "sandy");
+			expect(person.approved, JSON.stringify(person)).toBe(true);
+		}
 		const approved = runCli(app.trunk, ["plans", "approve", PLAN]);
 		expect(approved.code, out(approved)).toBe(0);
 	});

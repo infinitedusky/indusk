@@ -253,10 +253,13 @@ A person works on one document, the brief — promises, expectations and looks �
 
 - [x] `ApprovalEntry` and `StoryApprovalEntry` gain an optional `plan`; `approve()` takes the plan from the checkout it is called in and writes it; the admin's approve route passes the checkout it was sent
   - Note: the admin's approve route needed no change: it already passes `checkout.root`, and `approve()` reads the plan from that checkout's branch (`plan/x` becomes `x`; the project's own checkout records none).
-- [ ] `plans approve` writes `approved_brief: <sha256 of brief.md>`, `approved_by` and `approved_at` to the impl's frontmatter beside `status: approved`
-- [ ] `plans approve` refuses, naming the look, when a mockup its brief makes, changes or replaces is not approved in the worktree's record; a story it names is exempt
-- [ ] `looks/overview` returns each approval's `plan`, so a plan's looks can be read by owner
-- [ ] A brief edited after approval reads as changed since its approval (the comparison `amendmentsOf` builds on in Build Phase 3)
+- [x] `plans approve` writes `approved_brief: <sha256 of brief.md>`, `approved_by` and `approved_at` to the impl's frontmatter beside `status: approved`
+  - Note: the three values are written as quoted strings (a hash of digits and one `e` is a YAML number, a bare timestamp a date). Workbench plans record the brief too. Code: `lib/plans/approved-brief.ts`.
+- [x] `plans approve` refuses, naming the look, when a mockup its brief makes, changes or replaces is not approved in the worktree's record; a story it names is exempt
+  - Decision: a name that is neither a mockup nor a story drawn in the worktree is not held (nothing to approve yet). `A8`'s fixture brief also *changes* `detail.default`, a proposed mockup, so the test's arrange step now approves both looks the brief names; its assertions are unchanged. Not applied to workbench plans (their looks live in the code repo, not at the root).
+- [x] `looks/overview` returns each approval's `plan`, so a plan's looks can be read by owner
+- [x] A brief edited after approval reads as changed since its approval (the comparison `amendmentsOf` builds on in Build Phase 3)
+  - `briefStandingOf(planDir)` returns `unapproved`, `unchanged` or `changed` from the impl's recorded hash; guarded by `approved-brief.test.ts`.
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 2 Verification
