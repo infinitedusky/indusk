@@ -1,7 +1,11 @@
 // A32 of brief-as-the-contract: the three plan routes find their plan one way.
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { readPlanPage } from "./plan-page";
 
-const registry = vi.hoisted(() => ({ path: null as string | null, exists: true }));
+const registry = vi.hoisted(() => ({
+  path: null as string | null,
+  exists: true,
+}));
 const plans = vi.hoisted(() => ({
   active: [] as { name: string; from: string }[],
   archived: [] as { name: string; from: string }[],
@@ -21,14 +25,6 @@ vi.mock("@/lib/planning-reader", () => ({
   readArchivedPlans: async () => plans.archived,
 }));
 
-// Imported at run time so a missing module fails an assertion, not the load.
-async function load(): Promise<{
-  readPlanPage?: (project: string, name: string) => Promise<unknown>;
-}> {
-  const where = "./plan-page";
-  return import(/* @vite-ignore */ where).catch(() => ({}));
-}
-
 beforeEach(() => {
   registry.path = "/work/demo";
   registry.exists = true;
@@ -38,12 +34,11 @@ beforeEach(() => {
 
 describe("readPlanPage", () => {
   it("A32 gives the routes their plan: active over archived, null for a gone project, not-found for no plan", async () => {
-    const { readPlanPage } = await load();
-    expect(readPlanPage).toBeTypeOf("function");
-    if (!readPlanPage) return;
-
     plans.active = [{ name: "x", from: "active" }];
-    plans.archived = [{ name: "x", from: "archived" }, { name: "old", from: "archived" }];
+    plans.archived = [
+      { name: "x", from: "archived" },
+      { name: "old", from: "archived" },
+    ];
     expect(await readPlanPage("demo", "x")).toEqual({
       projectPath: "/work/demo",
       plan: { name: "x", from: "active" },
@@ -52,7 +47,9 @@ describe("readPlanPage", () => {
       projectPath: "/work/demo",
       plan: { name: "old", from: "archived" },
     });
-    await expect(readPlanPage("demo", "nope")).rejects.toThrow("NEXT_NOT_FOUND");
+    await expect(readPlanPage("demo", "nope")).rejects.toThrow(
+      "NEXT_NOT_FOUND",
+    );
 
     registry.exists = false;
     expect(await readPlanPage("demo", "x")).toBeNull();

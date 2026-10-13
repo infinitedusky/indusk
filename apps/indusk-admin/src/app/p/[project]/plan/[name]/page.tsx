@@ -1,6 +1,5 @@
 import { readPlanParts } from "@infinitedusky/indusk-mcp/plans/parts";
 import { readHealthNames } from "@infinitedusky/indusk-mcp/promises/display";
-import { notFound } from "next/navigation";
 import { activePhaseOf } from "@/components/bars/ProgressLines";
 import { DecisionCard } from "@/components/cockpit/DecisionCard";
 import { LiveRefresh } from "@/components/LiveRefresh";
@@ -23,6 +22,7 @@ import { PlanCopyNotice } from "@/components/Worktrees";
 import { readPlanHistory, readWaiting } from "@/lib/decisions-reader";
 import { extractPhases } from "@/lib/phases";
 import { planActions } from "@/lib/plan-actions";
+import { readPlanPage } from "@/lib/plan-page";
 import { planDocuments } from "@/lib/plan-parts-view";
 import {
   readActivePlans,
@@ -31,7 +31,6 @@ import {
   readPlanMasterContent,
 } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
-import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 import { projectTrusted } from "@/lib/trust-reader";
 
 interface PlanPageProps {
@@ -53,19 +52,9 @@ interface PlanPageProps {
  */
 export default async function PlanPage({ params }: PlanPageProps) {
   const { project, name } = await params;
-  const projectPath = getProjectPath(project);
-  if (!projectPath || !projectPathExists(projectPath)) return null;
-
-  const [active, archived] = await Promise.all([
-    readActivePlans(projectPath),
-    readArchivedPlans(projectPath),
-  ]);
-  const plan =
-    active.find((p) => p.name === name) ??
-    archived.find((p) => p.name === name);
-  if (!plan) {
-    notFound();
-  }
+  const found = await readPlanPage(project, name);
+  if (!found) return null;
+  const { projectPath, plan } = found;
 
   // Parent plan? Resolve its declared children against what exists on disk
   // (dawn-ui-plan-grouping Phase 3). Missing/corrupt declarations yield an
@@ -77,7 +66,11 @@ export default async function PlanPage({ params }: PlanPageProps) {
   let masterContent: string | undefined;
   if (declared.length > 0) {
     // Archived first so an active plan overwrites it on a name collision —
-    // matching the `active.find ?? archived.find` precedence above (T11).
+    // matching `readPlanPage`'s precedence (T11).
+    const [active, archived] = await Promise.all([
+      readActivePlans(projectPath),
+      readArchivedPlans(projectPath),
+    ]);
     const byName = new Map(
       [...archived, ...active].map((p) => [p.name, p] as const),
     );

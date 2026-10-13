@@ -1,5 +1,4 @@
 import { readPlanParts } from "@infinitedusky/indusk-mcp/plans/parts";
-import { notFound } from "next/navigation";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { Markdown } from "@/components/Markdown";
 import { PlanFrame } from "@/components/plan/PlanFrame";
@@ -9,10 +8,9 @@ import { PlanSession } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
 import { WindowColumn } from "@/components/session/WindowColumn";
 import { planActions } from "@/lib/plan-actions";
+import { readPlanPage } from "@/lib/plan-page";
 import { planDocuments } from "@/lib/plan-parts-view";
-import { readActivePlans, readArchivedPlans } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
-import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 import { projectTrusted } from "@/lib/trust-reader";
 
 interface BriefPageProps {
@@ -29,16 +27,9 @@ interface BriefPageProps {
  */
 export default async function PlanBriefPage({ params }: BriefPageProps) {
   const { project, name } = await params;
-  const projectPath = getProjectPath(project);
-  if (!projectPath || !projectPathExists(projectPath)) return null;
-  const [active, archived] = await Promise.all([
-    readActivePlans(projectPath),
-    readArchivedPlans(projectPath),
-  ]);
-  const plan =
-    active.find((p) => p.name === name) ??
-    archived.find((p) => p.name === name);
-  if (!plan) notFound();
+  const found = await readPlanPage(project, name);
+  if (!found) return null;
+  const { projectPath, plan } = found;
 
   const actions = planActions({
     worktree: plan.worktree,

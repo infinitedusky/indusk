@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import { Markdown } from "@/components/Markdown";
+import { readPlanPage } from "@/lib/plan-page";
 import { planDocuments } from "@/lib/plan-parts-view";
-import { readActivePlans, readArchivedPlans } from "@/lib/planning-reader";
-import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
 interface DocPageProps {
   params: Promise<{ project: string; name: string; doc: string }>;
@@ -18,18 +17,10 @@ interface DocPageProps {
  */
 export default async function PlanDocumentPage({ params }: DocPageProps) {
   const { project, name, doc } = await params;
-  const projectPath = getProjectPath(project);
-  if (!projectPath || !projectPathExists(projectPath)) return null;
-  const [active, archived] = await Promise.all([
-    readActivePlans(projectPath),
-    readArchivedPlans(projectPath),
-  ]);
-  const plan =
-    active.find((p) => p.name === name) ??
-    archived.find((p) => p.name === name);
-  const document = plan
-    ? planDocuments(plan).find((d) => d.slug === doc)
-    : undefined;
+  const found = await readPlanPage(project, name);
+  if (!found) return null;
+  const { plan } = found;
+  const document = planDocuments(plan).find((d) => d.slug === doc);
   if (!document) notFound();
   return (
     <article
