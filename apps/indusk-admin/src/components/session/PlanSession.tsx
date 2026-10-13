@@ -113,7 +113,7 @@ export function PlanSession({
   return (
     <div className="mb-4 flex flex-col gap-2">
       {canApprove ? (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" onClick={() => void approve()} disabled={busy}>
             {busy ? "Approving…" : "Approve"}
           </Button>
@@ -124,10 +124,11 @@ export function PlanSession({
         </div>
       ) : null}
       {canPlan && !sessionId ? (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
             variant="secondary"
+            className="whitespace-nowrap"
             onClick={() => void continuePlanning()}
             disabled={busy}
           >
