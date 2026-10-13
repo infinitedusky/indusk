@@ -10,6 +10,8 @@ export interface StepProps
   state: StepState;
   /** The step the page is on. */
   current?: boolean;
+  /** Where the step's document is read; the step is then a link. */
+  href?: string;
 }
 
 const NODE: Record<StepState, string> = {
@@ -37,19 +39,14 @@ export function Step({
   state,
   current = false,
   className = "",
+  href,
   ...rest
 }: StepProps) {
-  return (
-    <button
-      type="button"
-      data-component="step"
-      data-state={state}
-      aria-current={current ? "step" : undefined}
-      className={`cols-step grid w-full items-center gap-snug rounded-lg border px-tight py-2 text-left ${
-        current ? "border-ink-faint bg-ground" : "border-transparent"
-      } ${className}`}
-      {...rest}
-    >
+  const shape = `cols-step grid w-full items-center gap-snug rounded-lg border px-tight py-2 text-left ${
+    current ? "border-ink-faint bg-ground" : "border-transparent"
+  } ${className}`;
+  const inner = (
+    <>
       <span className={`ml-1 size-node rounded-pill border-2 ${NODE[state]}`} />
       <span
         className={`text-md leading-4 ${state === "needs" ? "font-semibold" : "font-medium"} ${state === "waiting" ? "text-ink-faint" : ""}`}
@@ -61,6 +58,30 @@ export function Step({
       >
         {status}
       </span>
+    </>
+  );
+  if (href)
+    return (
+      <a
+        href={href}
+        data-component="step"
+        data-state={state}
+        aria-current={current ? "step" : undefined}
+        className={`${shape} hover:bg-ground`}
+      >
+        {inner}
+      </a>
+    );
+  return (
+    <button
+      type="button"
+      data-component="step"
+      data-state={state}
+      aria-current={current ? "step" : undefined}
+      className={shape}
+      {...rest}
+    >
+      {inner}
     </button>
   );
 }

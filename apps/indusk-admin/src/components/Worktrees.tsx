@@ -71,14 +71,6 @@ export function PlanCopyNotice({ plan }: { plan: Plan }) {
       </output>
     );
   }
-  if (plan.worktree) {
-    return (
-      <p data-testid="plan-copy-source" className="text-xs text-ink-faint">
-        Read from the worktree {plan.worktree.name} on{" "}
-        <code>{plan.worktree.branch}</code>, where this plan is being worked.
-      </p>
-    );
-  }
   return null;
 }
 

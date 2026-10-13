@@ -134,3 +134,21 @@ status: in-progress
 		expect(completions[0].totalItems).toBeGreaterThan(0);
 	});
 });
+
+describe("a checklist item's note", () => {
+	it("carries the indented lines under an item, and none for an item without any", () => {
+		const parsed = parseImplString(
+			[
+				"### Build Phase 1: X",
+				"",
+				"- [x] First",
+				"  - Note: it was done",
+				"    over two lines",
+				"- [ ] Second",
+			].join("\n"),
+		);
+		const items = parsed.phases[0].gates[0].items;
+		expect(items[0].note).toBe("Note: it was done\nover two lines");
+		expect(items[1]).toEqual({ checked: false, text: "Second" });
+	});
+});

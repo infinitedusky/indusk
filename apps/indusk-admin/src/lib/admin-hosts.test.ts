@@ -2,14 +2,18 @@ import { readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
+import * as draftAccept from "@/app/api/drafts/[id]/accept/route";
+import * as draftDiscard from "@/app/api/drafts/[id]/discard/route";
+import * as draftTalk from "@/app/api/drafts/[id]/talk/route";
+import * as drafts from "@/app/api/drafts/route";
 import * as looksApprove from "@/app/api/looks/[app]/approve/route";
 import * as looksUnapprove from "@/app/api/looks/[app]/unapprove/route";
 import * as decision from "@/app/api/plans/[name]/decision/route";
+import * as reapprove from "@/app/api/plans/[name]/reapprove/route";
 import * as accept from "@/app/api/plans/accept/route";
 import * as approve from "@/app/api/plans/approve/route";
 import * as build from "@/app/api/plans/build/route";
 import * as review from "@/app/api/plans/review/route";
-import * as plans from "@/app/api/plans/route";
 import * as promiseFix from "@/app/api/promises/[name]/fix/route";
 import * as events from "@/app/api/sessions/[id]/events/route";
 import * as reply from "@/app/api/sessions/[id]/reply/route";
@@ -35,10 +39,14 @@ type Handler = (
 ) => Promise<Response>;
 
 const MODULES: Record<string, Record<string, unknown>> = {
+  drafts,
+  "drafts/[id]/accept": draftAccept,
+  "drafts/[id]/discard": draftDiscard,
+  "drafts/[id]/talk": draftTalk,
   "looks/[app]/approve": looksApprove,
   "looks/[app]/unapprove": looksUnapprove,
-  plans,
   "plans/[name]/decision": decision,
+  "plans/[name]/reapprove": reapprove,
   "plans/accept": accept,
   "plans/approve": approve,
   "plans/build": build,

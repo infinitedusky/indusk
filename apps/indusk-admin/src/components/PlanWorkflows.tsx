@@ -41,11 +41,42 @@ const RAIL_STATE: Record<StepState, "done" | "working" | "needs" | "waiting"> =
     missing: "waiting",
   };
 
-export function PlanWorkflows({ plan }: { plan: Plan }) {
+/** Where each Planning step's document is read: the brief on its own page, the rest as documents. */
+const DOCUMENT: Record<string, string> = {
+  Research: "doc/research",
+  Brief: "brief",
+  "Test plan": "doc/test-plan",
+  Decision: "doc/adr",
+  Impl: "doc/impl",
+};
+
+/** A step links to its document once the document exists; the brief always, since its page is where it is written. */
+const READABLE: StepState[] = ["done", "current", "needs-you"];
+
+export function PlanWorkflows({
+  plan,
+  project,
+}: {
+  plan: Plan;
+  /** The project the plan is in; with it, the Planning steps link to their documents. */
+  project?: string;
+}) {
   const { planning, release } = planSteps(snapshotOf(plan));
+  const hrefOf = (step: { name: string; state: StepState }) => {
+    const path = DOCUMENT[step.name];
+    if (!project || !path) return undefined;
+    if (step.name !== "Brief" && !READABLE.includes(step.state))
+      return undefined;
+    return `/p/${project}/plan/${plan.name}/${path}`;
+  };
   return (
     <div className="flex flex-col gap-4" data-testid="plan-workflows">
-      <WorkflowList which="planning" title="Planning" steps={planning} />
+      <WorkflowList
+        which="planning"
+        title="Planning"
+        steps={planning}
+        hrefOf={hrefOf}
+      />
       <WorkflowList which="release" title="Release" steps={release} />
     </div>
   );
@@ -55,10 +86,12 @@ function WorkflowList({
   which,
   title,
   steps,
+  hrefOf = () => undefined,
 }: {
   which: "planning" | "release";
   title: string;
   steps: Array<{ name: string; state: StepState; reason?: string }>;
+  hrefOf?: (step: { name: string; state: StepState }) => string | undefined;
 }) {
   const { done, total } = stepCount(steps);
   const now = steps.some(
@@ -90,6 +123,7 @@ function WorkflowList({
               state={RAIL_STATE[step.state]}
               status={`${LABEL[step.state]}${step.reason ? ` — ${step.reason}` : ""}`}
               current={step.state === "current" || step.state === "needs-you"}
+              href={hrefOf(step)}
             />
           </div>
         ))}

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { isAlive, realProcessReads } from "../process-identity.js";
+import { decideBuildPermission } from "./permissions.js";
 import type { QuestionEvent, SessionKind } from "./protocol.js";
 import { type Session, type SessionOptions, type StartedEvent, startSession } from "./start.js";
 
@@ -78,6 +79,15 @@ export class SessionManager {
 		const session = this.launch({
 			...opts,
 			onEvent: (ev) => {
+				// A planning session is asked only about a path outside its own
+				// folder (A26): the rest is decided here, as a build's is.
+				if (opts.kind === "planning" && ev.type === "permission") {
+					const decision = decideBuildPermission(ev, [opts.cwd, ...(opts.addDirs ?? [])]);
+					if (decision.allow) {
+						holder.session.decide(ev, decision);
+						return;
+					}
+				}
 				holder.events.push(ev);
 				opts.onEvent(ev);
 				for (const listen of holder.listeners) listen(ev);

@@ -23,6 +23,20 @@ export async function git(root: string, ...args: string[]): Promise<string> {
 }
 
 /**
+ * A file's bytes at `rev` (`git show <rev>:<path>`), exactly as committed —
+ * untrimmed, unlike `git()`, so a hash of what comes back is the hash of the
+ * file. `path` is relative to the repository's top. Throws when either is
+ * not there.
+ */
+export async function fileAtRevision(root: string, rev: string, path: string): Promise<string> {
+	const { stdout } = await execFileAsync("git", ["show", `${rev}:${path}`], {
+		cwd: root,
+		maxBuffer: 32 * 1024 * 1024,
+	});
+	return stdout;
+}
+
+/**
  * HEAD of `root`. Throws when there is none — not a repository, or an unborn
  * branch. The one spelling of "which commit is this tree at" (A19): verify's
  * ledger, the commit cadence's record and the run loop's trailer each wrote

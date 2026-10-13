@@ -1,0 +1,35 @@
+{
+	"$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+	"color": {
+		"$type": "color",
+		"paper": {
+			"$value": { "colorSpace": "srgb", "components": [0.98, 0.97, 0.95], "hex": "#faf7f2" }
+		},
+		"ink": {
+			"$value": { "colorSpace": "srgb", "components": [0.12, 0.1, 0.09], "hex": "#1f1a17" }
+		},
+		"dusk": {
+			"$value": { "colorSpace": "srgb", "components": [0.76, 0.384, 0.043], "hex": "#c2620b" }
+		}
+	},
+	"space": {
+		"$type": "dimension",
+		"1": { "$value": { "value": 4, "unit": "px" } },
+		"2": { "$value": { "value": 8, "unit": "px" } },
+		"3": { "$value": { "value": 12, "unit": "px" } },
+		"4": { "$value": { "value": 16, "unit": "px" } }
+	},
+	"radius": {
+		"$type": "dimension",
+		"md": { "$value": { "value": 6, "unit": "px" } }
+	},
+	"font": {
+		"sans": { "$type": "fontFamily", "$value": ["Inter", "system-ui", "sans-serif"] }
+	},
+	"duration": {
+		"fast": { "$type": "duration", "$value": { "value": 200, "unit": "ms" } }
+	},
+	"easing": {
+		"standard": { "$type": "cubicBezier", "$value": [0.2, 0, 0, 1] }
+	}
+}

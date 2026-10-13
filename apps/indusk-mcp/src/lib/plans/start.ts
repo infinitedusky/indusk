@@ -35,6 +35,14 @@ export interface StartedPlan {
 export interface StartOptions {
 	/** In a workbench wrapping several repos, the one the plan's code goes in. */
 	repo?: string;
+	/**
+	 * The plan's first document, written in place of the empty draft
+	 * (brief-as-the-contract: a plan accepted from a draft starts with what the
+	 * conversation wrote). A body without front matter gets the plan's own.
+	 */
+	document?: string;
+	/** Research that came with the first document, written beside it as `research.md`. */
+	research?: string;
 }
 
 export async function startPlan(
@@ -76,16 +84,18 @@ export async function startPlan(
 	if (hasBranch) throw new PlanCommandRefusal(`the branch ${branch} already exists`);
 
 	const document = join(".indusk", "planning", plan, type === "spike" ? "research.md" : "brief.md");
+	const documents = [document, ...(opts.research ? [researchPath(plan)] : [])];
 	try {
 		const { created } = await createPlanWorktree(trunk, plan, {
 			seed: (worktree) => {
 				const path = join(worktree, document);
 				mkdirSync(join(worktree, ".indusk", "planning", plan), { recursive: true });
-				writeFileSync(path, firstDocument(plan, type as WorkflowType, now));
+				writeFileSync(path, firstDocument(plan, type as WorkflowType, now, opts.document));
+				if (opts.research) writeFileSync(join(worktree, researchPath(plan)), opts.research);
 			},
 		});
-		await git(created, "add", "--", document);
-		await git(created, "commit", "-q", "-m", `plan(${plan}): started, ${type}`, "--", document);
+		await git(created, "add", "--", ...documents);
+		await git(created, "commit", "-q", "-m", `plan(${plan}): started, ${type}`, "--", ...documents);
 		return { plan, type: type as WorkflowType, worktree: canonical(created), branch, document };
 	} catch (err) {
 		if (err instanceof PlanWorktreeRefusal) throw new PlanCommandRefusal(err.message);
@@ -145,10 +155,16 @@ async function startWorkbenchPlan(
 	const codeFile = join(".indusk", "planning", plan, PLAN_CODE_FILE);
 	try {
 		mkdirSync(folder, { recursive: true });
-		writeFileSync(join(root, document), firstDocument(plan, type, now));
+		writeFileSync(join(root, document), firstDocument(plan, type, now, opts.document));
+		if (opts.research) writeFileSync(join(root, researchPath(plan)), opts.research);
 		const code = { repo: repo.name, branch, worktree: relative(root, worktree) };
 		writeFileSync(join(root, codeFile), `${JSON.stringify(code, null, 2)}\n`);
-		const paths = [document, codeFile, ...(await ignoreAtRoot(root, worktree))];
+		const paths = [
+			document,
+			...(opts.research ? [researchPath(plan)] : []),
+			codeFile,
+			...(await ignoreAtRoot(root, worktree)),
+		];
 		await git(root, "add", "--", ...paths);
 		await git(
 			root,
@@ -213,8 +229,16 @@ async function ignoreAtRoot(root: string, worktree: string): Promise<string[]> {
 	return [".gitignore"];
 }
 
-/** The plan's first document: a draft that declares the plan's type, for the planner to fill. */
-function firstDocument(plan: string, type: WorkflowType, now: Date): string {
+/** The research a draft brought, beside the plan's first document. */
+const researchPath = (plan: string): string => join(".indusk", "planning", plan, "research.md");
+
+/**
+ * The plan's first document: a draft that declares the plan's type, for the
+ * planner to fill — or, from a draft conversation, what it wrote under the
+ * same front matter (kept as it is when it brought its own).
+ */
+function firstDocument(plan: string, type: WorkflowType, now: Date, body?: string): string {
+	if (body?.startsWith("---")) return body.endsWith("\n") ? body : `${body}\n`;
 	const kind = type === "spike" ? "Research" : "Brief";
 	return [
 		"---",
@@ -224,7 +248,7 @@ function firstDocument(plan: string, type: WorkflowType, now: Date): string {
 		`workflow: ${type}`,
 		"---",
 		"",
-		`# ${plan} — ${kind}`,
+		...(body ? [body.trimEnd()] : [`# ${plan} — ${kind}`]),
 		"",
 	].join("\n");
 }

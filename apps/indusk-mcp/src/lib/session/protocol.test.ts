@@ -15,6 +15,7 @@ import {
 /**
  * promise: a-plan-can-start-from-the-admin — admin-plan-authoring A1, A2, A3, A4, the protocol's half.
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the worktree half.
+ * promise: a-conversation-that-is-not-kept-leaves-nothing-in-the-repository — brief-as-the-contract A26: a planning session accepts edits only inside its own folder.
  *
  * The admin drives the developer's own `claude` over its stream protocol
  * (ADR D1). These are real exchanges, recorded from Claude Code 2.1.197 in the
@@ -137,12 +138,18 @@ describe("A3 — a tool-use request arrives; allow lets it run, deny says no", (
 	});
 });
 
-describe("A4 — a planning session asks before every write", () => {
-	it("a planning session runs in permission mode default, whatever the developer's own default is", () => {
+describe("A4 — a planning session is asked only outside its folder; a build is judged in code", () => {
+	// Rewritten 2026-10-13 twice. First on Sandy's word ("way way way fewer accept deny
+	// … set it to dangerously"): planning ran `bypassPermissions`. Then by the
+	// brief-as-the-contract falsification row A26: bypass let a draft's agent write
+	// into the repository unasked, so planning accepts edits and its requests are
+	// decided in code (permissions.test.ts), a write outside its folder reaching the person.
+	it("a planning session accepts edits and never bypasses permission prompts", () => {
 		const args = buildArgs("planning");
 		expect(
 			args.slice(args.indexOf("--permission-mode"), args.indexOf("--permission-mode") + 2),
-		).toEqual(["--permission-mode", "default"]);
+		).toEqual(["--permission-mode", "acceptEdits"]);
+		expect(args.join(" ")).not.toMatch(/bypassPermissions|dangerously/);
 		expect(args).toEqual(expect.arrayContaining(["--permission-prompt-tool", "stdio"]));
 	});
 
@@ -151,10 +158,8 @@ describe("A4 — a planning session asks before every write", () => {
 		expect(args[args.indexOf("--permission-mode") + 1]).toBe("acceptEdits");
 	});
 
-	it("neither kind ever bypasses permissions", () => {
-		for (const kind of ["planning", "build"] as const) {
-			expect(buildArgs(kind).join(" ")).not.toMatch(/bypassPermissions|dangerously/);
-		}
+	it("a build never bypasses permissions", () => {
+		expect(buildArgs("build").join(" ")).not.toMatch(/bypassPermissions|dangerously/);
 	});
 });
 

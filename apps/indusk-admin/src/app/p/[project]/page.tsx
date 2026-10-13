@@ -1,4 +1,5 @@
-import { readWorkbenchRepos } from "@infinitedusky/indusk-mcp/worktree/repos";
+import { readDraftRows } from "@infinitedusky/indusk-mcp/drafts";
+import { DraftList } from "@/components/drafts/DraftList";
 import { NewPlanForm } from "@/components/session/NewPlanForm";
 import { TrustNotice } from "@/components/session/TrustNotice";
 import { getProjectPath } from "@/lib/registry-client";
@@ -19,11 +20,11 @@ interface PerProjectPageProps {
  * re-check of the project path. Trust the layout.
  */
 export default async function PerProjectPage({ params }: PerProjectPageProps) {
-  // New plan (admin-plan-authoring A1) needs the project's name, and in a
-  // workbench its repos (workbench-plan-authoring A9).
+  // New plan (brief-as-the-contract) needs only the project's name; the
+  // conversations not yet kept are listed beneath it.
   const { project } = await params;
   const root = getProjectPath(project);
-  const repos = root ? readWorkbenchRepos(root).map((r) => r.name) : [];
+  const drafts = root ? readDraftRows(root) : [];
   const trusted = root ? projectTrusted(root) : true;
 
   return (
@@ -35,7 +36,10 @@ export default async function PerProjectPage({ params }: PerProjectPageProps) {
       </p>
       <div className="mt-6 w-full max-w-sm">
         <TrustNotice project={project} trusted={trusted} />
-        <NewPlanForm project={project} repos={repos} />
+        <NewPlanForm project={project} />
+      </div>
+      <div className="mt-6 w-full max-w-content">
+        <DraftList project={project} drafts={drafts} />
       </div>
     </div>
   );

@@ -42,6 +42,9 @@ export const SYSTEM = [
   // A composed mockup draws each component as its story does (storybook-
   // components A30): computed values compared in Chromium, mockup against story.
   "src/__tests__/composition.contract.test.ts",
+  // A look the agent draws appears on the open plan page, at each device
+  // (brief-as-the-contract A16).
+  "src/__tests__/plan-parts.contract.test.ts",
 ];
 
 /**
@@ -65,6 +68,10 @@ export const NODE_PAGES = [
   "src/app/p/[project]/looks/looks-approve-binding.test.tsx",
   "src/app/p/[project]/looks/looks-components.test.tsx",
   "src/app/p/[project]/looks/looks-unapprove.test.tsx",
+  // A plan's page over a real project (brief-as-the-contract A5, A15).
+  "src/__tests__/plan-parts.test.tsx",
+  // The approved layout of the plan page and its document route.
+  "src/__tests__/plan-page-layout.test.tsx",
 ];
 
 /**

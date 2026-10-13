@@ -2,11 +2,21 @@
 name: a-plan-page-shows-the-parts-of-its-brief
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: admin
 owner: brief-as-the-contract
-sites: []
-tests: []
+sites:
+  - apps/indusk-admin/src/__tests__/plan-page-layout.test.tsx
+  - 'apps/indusk-admin/src/app/p/[project]/plan/[name]/brief/page.tsx'
+  - 'apps/indusk-admin/src/app/p/[project]/plan/[name]/doc/[doc]/page.tsx'
+  - apps/indusk-admin/src/components/drafts/DraftParts.tsx
+  - apps/indusk-admin/src/components/plan/PlanParts.tsx
+  - apps/indusk-mcp/src/lib/plans/parts.ts
+tests:
+  - apps/indusk-admin/src/__tests__/plan-parts.test.tsx
+  - apps/indusk-admin/src/__tests__/plan-parts.contract.test.ts
+  - apps/indusk-mcp/src/__tests__/plan-parts-description.test.ts
+  - apps/indusk-admin/src/components/plan/PlanSummary.test.tsx
 incidents: []
 ---
 
@@ -14,3 +24,4 @@ A plan's page shows its promises, its expectations and its looks, each updated a
 
 ## History
 - 2026-10-12 — declared (brief-as-the-contract), from its planning conversation.
+- 2026-10-13 — enforced, confirmed for brief-as-the-contract: proven by row A15, row A16, row A27, row A28.

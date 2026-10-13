@@ -30,3 +30,9 @@ pointer; the pointer holds the story.
   app, name, state and device (`nav.expanded`), so without the kind a held
   story would stand for a broken screen. A span with no kind is a screen's, so
   no recorded run needs rewriting. Guarded by `look-standing.test.ts` (A41).
+- **An approval entry records the plan it was made in, and the record stays
+  append-only**: `approve` reads the plan from the checkout's branch
+  (`plan/x` records `x`; the project's own checkout records none), so a look is
+  owned by a plan without a second registry, and a redrawn look's earlier
+  entry stays beside the new one as its history. `looks/overview` returns each
+  look's `plan`. Guarded by `look-ownership.test.ts` (A4, A7).

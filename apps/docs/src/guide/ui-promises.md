@@ -55,6 +55,15 @@ meanwhile.
 Approval happens in the checkout the plan is worked in — a plan's worktree
 commits it on the plan's branch — so it merges with the mockups it judges.
 
+**A look belongs to the plan that made it.** Each approval records the plan whose
+checkout it was made in (`plan/x` records `x`), so the cockpit can say whose a
+look is without a registry of its own. The record is append-only: a plan that
+redraws an approved look leaves the earlier approval beside the new one, which
+is that look's history. A plan's [brief](/guide/briefs) lists the looks it
+makes, changes or replaces, and `indusk plans approve` waits until each mockup
+among them is approved in the plan's worktree; a story is approved at the
+build, once its component exists.
+
 ## Held by value
 
 `indusk looks check <app>` opens each approved screen state at each device in a

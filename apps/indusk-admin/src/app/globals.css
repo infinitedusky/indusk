@@ -140,6 +140,10 @@ body {
   min-width: 600px;
   max-width: 90%;
 }
+.doc-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+}
 .stale-facts {
   grid-template-columns: auto 1fr;
 }
@@ -200,6 +204,12 @@ body {
 .cols-look-row {
   grid-template-columns: minmax(0, 1fr) auto auto;
 }
+.cols-expectation-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.cols-draft-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
 .cols-promise-row {
   grid-template-columns:
     var(--size-dot-lg) minmax(0, 1fr) var(--size-icon) var(--size-input)
@@ -223,7 +233,9 @@ body {
     grid-template-columns: var(--size-dot-lg) minmax(0, 1fr) auto;
   }
   .cols-promise-page,
-  .cols-plan-stage {
+  .cols-plan-stage,
+  .cols-draft-row,
+  .cols-expectation-row {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -303,4 +315,24 @@ body {
 [data-component="nav"][data-collapsed="true"] .nav-head {
   justify-content: center;
   padding: 0;
+}
+
+/* The brief page: the brief's parts and the brief scrolling on the left, the
+   agent in a narrower column on the right that stays put; one column on a
+   phone. */
+.cols-brief-page {
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+}
+@media (max-width: 759px) {
+  .cols-brief-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The part the agent just wrote, marked for a moment as the brief page brings
+   it into view (FollowAgent). */
+[data-followed="true"] {
+  outline: var(--border-2) solid var(--color-dusk);
+  outline-offset: var(--border-2);
+  border-radius: var(--radius-lg);
 }

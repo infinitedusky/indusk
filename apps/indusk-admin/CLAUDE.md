@@ -25,6 +25,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
   by its worktree in normal mode or its `code.json` in a workbench, and gets
   the same buttons either way; a workbench session runs at the root with the
   code worktree added (`planLocation`). — see `/reference/admin-ui/sessions`
+- **A plan route finds its plan through `lib/plan-page`'s `readPlanPage`**,
+  never its own lookup: the plan page, `/brief` and `/doc/[doc]` share the
+  registry lookup, the stale-path `null` and the active-over-archived find.
+  Guarded by `plan-page.test.ts`.
 - Next.js App Router viewer over `.indusk/planning/` + each project's eval results in its home,
   hosted as one machine-global daemon (`indusk ui start/stop/restart/status`,
   registry `~/.indusk/projects.json`, routes `/p/[project]/...`). Custom
@@ -51,7 +55,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   file is an error block, never a guess. The rows table shows `Level` and
   `For` from the package's parser (`levelText`, `purpose`), never its own
   reading of a cell; the copied markdown carries the same columns.
-- **One home per piece**: rows table + ritual section in `components/phases/`,
+- **One home per piece**: rows table in `components/phases/`,
   progress lines in `bars/ProgressLines`, display vocabulary (incl. `phaseTitle`
   — the page says `Phase 4`; the package's `phaseLabel` is for logs, never a
   component) and every chip/label map in `bars/labels.ts`, badge maps in
@@ -153,6 +157,14 @@ Each entry is a rule and a pointer; the pointer holds the story.
   compiled to nothing and left the nav off-screen), so a restyle is also looked
   at; and the Typography plugin is gone — `.prose` is written on the foundation
   in `globals.css`. — see `/decisions/ui-promises`
+- **A plan's page shows its brief's three parts from `plans/parts` and computes
+  none**: promises, expectations and looks (each look the approved `LookRow`
+  with `LookFrame` one click on, proposed until a person approves it on the
+  Looks page) and any waiting amendment come from the package's
+  `readPlanParts`, read from the plan's own checkout on every request; Approve
+  on an amendment posts to `plans/[name]/reapprove`. The review's `evidence`
+  group is read, not signed off. Guarded by `cockpit-single-definition.test.ts`
+  and `plan-parts.test.tsx` (A15). — see `/reference/admin-ui/overview`
 - **A decision's card is read again from what the daemon holds after every
   answer**: a started release clears the build's stop and a second accept is
   refused while it runs, and an answer delivered but not recorded is reported
@@ -214,3 +226,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   the component's markup, which would reopen every mockup that uses it. Guarded
   by `looks-components-cli.test.ts` (A3) through `component-reuse-audit.test.ts`.
   — see `/reference/admin-ui/overview`
+- **Whether a plan's document is finished comes from `plans/steps`'
+  `documentFinished`, never a status compared in the admin** — `complete` and
+  `accepted` both finish a brief, and a `superseded` one or an archived plan has
+  no current step; a hand-written `=== "accepted"` showed "The brief is
+  incomplete" on finished plans. Guarded by `PlanSummary.test.tsx` (A28). — see
+  `/reference/admin-ui/overview`
