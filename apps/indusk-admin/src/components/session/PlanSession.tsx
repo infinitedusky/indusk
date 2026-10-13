@@ -16,6 +16,7 @@ export function briefOpening(plan: string): string {
   return [
     `You are writing the brief of the plan "${plan}" with the person, on its brief page; they see its promises, expectations and looks beside you as you write them.`,
     `Use the Read tool (not Bash) to read .indusk/planning/${plan}/brief.md and research.md if they exist, and the planner skill's rules for a brief.`,
+    "The brief's frontmatter carries a `description:` — the plan in one to three tight sentences; write or tighten it when it is missing or long.",
     "Then say in two or three sentences where the brief stands and what it is missing, and ask what the person wants to work on. Do nothing else until they answer.",
   ].join("\n");
 }
