@@ -4,12 +4,12 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { approve } from "../lib/looks/approve.js";
-import { APP, type BriefAppProject, briefAppProject, PLAN, PLAN_DIR } from "./helpers/brief-app.js";
+import { APP, type BriefAppProject, briefAppProject, briefOf, PLAN, PLAN_DIR } from "./helpers/brief-app.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { git } from "./helpers/test-git.js";
 
 /**
- * promise: a-plan-is-approved-with-its-looks-approved — brief-as-the-contract A8.
+ * promise: a-plan-is-approved-with-its-looks-approved — brief-as-the-contract A8, A24.
  * promise: approval-is-of-the-brief — brief-as-the-contract A9.
  *
  * A23, a regression guard (the form goes, the command stays): `indusk plans
@@ -39,14 +39,36 @@ describe.skipIf(SHOULD_SKIP)("approval and the looks a brief names", () => {
 		expect(out(refused)).toContain("home.full");
 		expect(app.project.mainSha()).toBe(before);
 
-		// The brief names two proposed mockups (it makes home.full, changes
-		// detail.default); the plan is approved once the person has approved each.
-		for (const look of ["home.full", "detail.default"]) {
+		// The brief names three proposed mockups (it makes home.full, changes
+		// detail.default, replaces badge.old by badge.ok — a new component drawn
+		// as its own mockup); the plan is approved once the person has approved each.
+		for (const look of ["home.full", "detail.default", "badge.ok"]) {
 			const person = await approve(app.wt, APP, look, "sandy");
 			expect(person.approved, JSON.stringify(person)).toBe(true);
 		}
 		const approved = runCli(app.trunk, ["plans", "approve", PLAN]);
 		expect(approved.code, out(approved)).toBe(0);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("a look the brief names must be drawn", () => {
+	it("A24 a plan whose brief names a look not drawn in its worktree is refused naming it, even with every drawn look approved", async () => {
+		const brief = briefOf("looks-listed").replace(
+			"1. **`home.full`**. The home screen with every seat shown.",
+			"1. **`home.full`**. The home screen with every seat shown.\n2. **`seat.picker`**. A seat picker no one has drawn.",
+		);
+		expect(brief).toContain("seat.picker");
+		app.writePlan({ brief, impl: "internal" });
+		for (const look of ["home.full", "detail.default", "badge.ok"]) {
+			const person = await approve(app.wt, APP, look, "sandy");
+			expect(person.approved, JSON.stringify(person)).toBe(true);
+		}
+		const before = app.project.mainSha();
+
+		const refused = runCli(app.trunk, ["plans", "approve", PLAN]);
+		expect(refused.code, out(refused)).not.toBe(0);
+		expect(out(refused)).toContain("seat.picker");
+		expect(app.project.mainSha()).toBe(before);
 	});
 });
 
