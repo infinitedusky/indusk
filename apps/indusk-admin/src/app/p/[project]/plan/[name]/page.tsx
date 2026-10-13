@@ -1,12 +1,18 @@
 import { readPlanParts } from "@infinitedusky/indusk-mcp/plans/parts";
 import { readHealthNames } from "@infinitedusky/indusk-mcp/promises/display";
 import { notFound } from "next/navigation";
+import { activePhaseOf } from "@/components/bars/ProgressLines";
 import { DecisionCard } from "@/components/cockpit/DecisionCard";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
 import { PlanWorkflows } from "@/components/PlanWorkflows";
 import { PlanFrame } from "@/components/plan/PlanFrame";
-import { PlanParts, WaitingAmendments } from "@/components/plan/PlanParts";
+import {
+  DocumentsPart,
+  PhasesPart,
+  PlanParts,
+  WaitingAmendments,
+} from "@/components/plan/PlanParts";
 import { PlanStatusCard } from "@/components/plan/PlanStatusCard";
 import { BuildControls } from "@/components/session/BuildControls";
 import { PlanSession } from "@/components/session/PlanSession";
@@ -14,7 +20,9 @@ import { TrustNotice } from "@/components/session/TrustNotice";
 import { HistoryPanel } from "@/components/ui/HistoryPanel";
 import { PlanCopyNotice } from "@/components/Worktrees";
 import { readPlanHistory, readWaiting } from "@/lib/decisions-reader";
+import { extractPhases } from "@/lib/phases";
 import { planActions } from "@/lib/plan-actions";
+import { planDocuments } from "@/lib/plan-parts-view";
 import {
   readActivePlans,
   readArchivedPlans,
@@ -104,14 +112,22 @@ export default async function PlanPage({ params }: PlanPageProps) {
     archived: plan.archived || Boolean(plan.archivedInWorktree),
   });
 
-  // The page draws what its approved mockups draw (`plan.parts`,
-  // `plan.needs-you`, `plan.working`, `plan.released`): the frame's crumb, name
-  // and tag, the three parts with the one link to the brief, then the rail of
-  // the two workflows beside what the plan waits on — the amendment card, then
-  // the decision card (or what is being built, or released). The documents are
-  // read on the brief page, not here. The notices, the controls to plan or
-  // build and the parent's subplan cards appear only when there is something to
-  // say or ask; they are conditional, not regions of the mockups.
+  // The page draws what its approved mockups draw (`plan.working`,
+  // `plan.phases`, `plan.documents`, ...): the frame's crumb, name and tag; the
+  // status, always open — the rail of the two workflows beside what the plan
+  // waits on (the amendment card, then the decision card, or what is being
+  // built, or released) and the Build control; then every other part folded to
+  // a row of its name and one line: Promises, Expectations, Looks, Phases,
+  // Documents, History. The notices, the controls to plan or build and the
+  // parent's subplan cards appear only when there is something to say or ask;
+  // they are conditional, not regions of the mockups.
+  const phases = plan.impl
+    ? extractPhases(plan.impl.content, plan.impl.trajectory)
+    : [];
+  const activeRef = activePhaseOf(plan)?.ref;
+  const activeKey = activeRef ? `${activeRef.kind}-${activeRef.number}` : null;
+  const documentHref = (slug: string) =>
+    `/p/${project}/plan/${name}/${slug === "brief" ? "brief" : `doc/${slug}`}`;
   const main = (
     <>
       <WaitingAmendments project={project} plan={name} parts={parts} />
@@ -144,11 +160,6 @@ export default async function PlanPage({ params }: PlanPageProps) {
         <PlanCopyNotice plan={plan} />
         <TrustNotice project={project} trusted={projectTrusted(projectPath)} />
         {plan.malformed ? <MalformedNotice /> : null}
-        <PlanParts
-          parts={parts}
-          briefHref={`/p/${project}/plan/${name}/brief`}
-          looksHref={`/p/${project}/looks?${plan.worktree ? `checkout=${encodeURIComponent(name)}` : ""}`}
-        />
         {subplans ? (
           <ParentPlanView
             subplans={subplans}
@@ -156,14 +167,27 @@ export default async function PlanPage({ params }: PlanPageProps) {
             prefix={`/p/${project}/plan/`}
           />
         ) : null}
-        <div
-          className="cols-plan-stage grid items-start gap-5"
-          data-testid="plan-stage"
-        >
-          {subplans ? null : <PlanWorkflows plan={plan} />}
-          <div className="flex min-w-0 flex-col gap-3">{main}</div>
+        <section className="grid gap-3" data-testid="plan-status">
+          <div
+            className="cols-plan-stage grid items-start gap-5"
+            data-testid="plan-stage"
+          >
+            {subplans ? null : <PlanWorkflows plan={plan} />}
+            <div className="flex min-w-0 flex-col gap-3">{main}</div>
+          </div>
+        </section>
+        <div className="grid gap-2" data-testid="plan-parts">
+          <PlanParts
+            parts={parts}
+            looksHref={`/p/${project}/looks?${plan.worktree ? `checkout=${encodeURIComponent(name)}` : ""}`}
+          />
+          <PhasesPart phases={phases} activeKey={activeKey} />
+          <DocumentsPart
+            documents={planDocuments(plan)}
+            hrefOf={documentHref}
+          />
+          <HistoryPanel entries={readPlanHistory(projectPath, name)} />
         </div>
-        <HistoryPanel entries={readPlanHistory(projectPath, name)} />
       </PlanFrame>
     </>
   );

@@ -129,6 +129,8 @@ export interface Plan {
     reason: string;
   }>;
   retrospective?: RetroData;
+  /** `audit.md`, when the audit step wrote one. */
+  audit?: RetroData;
   /** Every `kind: paper` document, in filename order, with its body. Absent when there are none. */
   papers?: PaperEntry[];
   /**
@@ -214,6 +216,7 @@ const DOC_FILES = [
   "impl.md",
   "falsification.md",
   "retrospective.md",
+  "audit.md",
 ] as const;
 
 /**
@@ -289,8 +292,16 @@ async function readPlanFolder(
   projectRoot?: string,
 ): Promise<Plan> {
   const docs = await Promise.all(DOC_FILES.map((f) => readDoc(planDir, f)));
-  const [research, brief, testPlan, adr, impl, _falsification, retrospective] =
-    docs;
+  const [
+    research,
+    brief,
+    testPlan,
+    adr,
+    impl,
+    _falsification,
+    retrospective,
+    audit,
+  ] = docs;
   const malformed = docs.some((d) => isMalformed(d));
   const rawDocuments: Record<string, string> = {};
   for (let i = 0; i < docs.length; i++) {
@@ -401,6 +412,7 @@ async function readPlanFolder(
       retrospective !== null && !isMalformed(retrospective)
         ? retrospective
         : undefined,
+    ...(audit !== null && !isMalformed(audit) ? { audit } : {}),
     ...(malformed ? { malformed: true, rawDocuments } : {}),
   };
 }

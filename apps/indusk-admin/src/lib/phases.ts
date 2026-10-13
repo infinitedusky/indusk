@@ -35,6 +35,8 @@ import type {
 export interface ChecklistItem {
   text: string;
   checked: boolean;
+  /** What the impl records under the item, as the package parser read it. */
+  note?: string;
 }
 
 /** One stage of a phase: its implementation items, then each gate it carries. */
@@ -134,7 +136,11 @@ export function extractPhases(
       if (!stage) continue;
       itemsByStage.set(stage, [
         ...(itemsByStage.get(stage) ?? []),
-        ...gate.items.map((i) => ({ text: i.text, checked: i.checked })),
+        ...gate.items.map((i) => ({
+          text: i.text,
+          checked: i.checked,
+          ...(i.note ? { note: i.note } : {}),
+        })),
       ]);
     }
     const derived = implPhase ? derivePhaseActivity(implPhase, null) : null;

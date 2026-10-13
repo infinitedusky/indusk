@@ -24,6 +24,8 @@ export type GateType = "implementation" | "verification" | "otel" | "context" | 
 export interface ChecklistItem {
 	checked: boolean;
 	text: string;
+	/** The indented lines recorded under the item (its Note or Result), joined; absent when it has none. */
+	note?: string;
 }
 
 export interface PhaseGate {
@@ -74,6 +76,7 @@ const GATE_SUFFIXES: Record<string, GateType> = {
 
 function parseChecklistItems(lines: string[]): ChecklistItem[] {
 	const items: ChecklistItem[] = [];
+	const notes: string[][] = [];
 	for (const line of lines) {
 		const match = line.match(/^-\s+\[([ x])\]\s+(.*)/);
 		if (match) {
@@ -81,9 +84,14 @@ function parseChecklistItems(lines: string[]): ChecklistItem[] {
 				checked: match[1] === "x",
 				text: match[2].trim(),
 			});
+			notes.push([]);
+		} else if (items.length > 0 && /^\s+\S/.test(line)) {
+			notes[notes.length - 1].push(line.trim().replace(/^-\s+/, ""));
 		}
 	}
-	return items;
+	return items.map((item, i) =>
+		notes[i].length > 0 ? { ...item, note: notes[i].join("\n") } : item,
+	);
 }
 
 export function parseImplString(raw: string): ParsedImpl {

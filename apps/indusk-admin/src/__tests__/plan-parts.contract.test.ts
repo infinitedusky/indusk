@@ -176,7 +176,11 @@ describe("A16 — a look drawn while the page is open appears there", () => {
     });
     try {
       await open(page, `/p/${PROJECT}/plan/${PLAN}`);
-      await page.locator('[data-part="looks"]').waitFor({ timeout: 30_000 });
+      const looks = page.locator('[data-part="looks"]');
+      await looks.waitFor({ timeout: 30_000 });
+      // Every part but the status is collapsed by default (Sandy, 2026-10-13):
+      // the person opens Looks once, and what the agent draws appears there.
+      await looks.locator("summary").click();
       writeMockup("plan.working", MOCKUP);
       const row = page.locator(
         '[data-testid="plan-look"][data-look="plan.working"]',
