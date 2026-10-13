@@ -1,4 +1,5 @@
 import type { PlanParts as Parts } from "@infinitedusky/indusk-mcp/plans/parts";
+import { Markdown } from "@/components/Markdown";
 import { AmendmentCard } from "@/components/ui/AmendmentCard";
 import { ExpectationRow } from "@/components/ui/ExpectationRow";
 import { PartSection } from "@/components/ui/PartSection";
@@ -166,12 +167,17 @@ export function PhasesPart({
   );
 }
 
-/** Documents: each one the plan has, a row with its name and status that opens its own page. */
+/**
+ * Documents: each one the plan has, a row with its name and status, closed by
+ * default, that opens in place to the document rendered and scrolls within
+ * itself, the way a phase opens to its items.
+ */
 export function DocumentsPart({
   documents,
   hrefOf,
 }: {
   documents: PlanDocument[];
+  /** The document's own page, offered inside its opened row. */
   hrefOf: (slug: string) => string;
 }) {
   if (documents.length === 0) return null;
@@ -190,8 +196,19 @@ export function DocumentsPart({
             name={d.label}
             state={d.status}
             tone={d.tone}
-            href={hrefOf(d.slug)}
-          />
+          >
+            <div className="grid gap-2">
+              <a
+                href={hrefOf(d.slug)}
+                className="justify-self-start text-sm font-medium leading-3 text-dusk"
+              >
+                Open on its own page
+              </a>
+              <div className="doc-scroll">
+                <Markdown>{d.content}</Markdown>
+              </div>
+            </div>
+          </PhaseRow>
         ))}
       </div>
     </PartSection>

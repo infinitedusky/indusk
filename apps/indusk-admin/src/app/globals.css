@@ -140,6 +140,10 @@ body {
   min-width: 600px;
   max-width: 90%;
 }
+.doc-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+}
 .stale-facts {
   grid-template-columns: auto 1fr;
 }

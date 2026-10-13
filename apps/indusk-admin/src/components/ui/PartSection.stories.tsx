@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { Markdown } from "@/components/Markdown";
 import { PartSection } from "./PartSection";
 import { PhaseRow } from "./PhaseRow";
 
@@ -70,6 +71,19 @@ const phases = (
   </div>
 );
 
+const briefExcerpt = `## Expectations
+
+1. **A person approves a plan from its brief alone.**
+   - Measure: whether the approval was given without opening the ADR or the impl, recorded in each plan's retrospective
+   - Look: at the close of the first plan built under the rule
+
+## Promises
+
+### This plan makes
+
+1. **\`a-brief-lists-its-looks\`** (state). A brief lists the looks it makes, changes, replaces or must not break, or says why it has none.
+2. **\`a-look-has-the-plan-that-owns-it\`** (state). Every approved look records the plan that made or last changed it.`;
+
 const documents = (
   <div className="grid gap-2">
     {[
@@ -84,8 +98,20 @@ const documents = (
         name={name}
         state={state}
         tone={tone as "done" | "doing"}
-        href="#"
-      />
+        open={name === "Brief"}
+      >
+        <div className="grid gap-2">
+          <a
+            href="/p/dusk/plan/brief-as-the-contract/brief"
+            className="justify-self-start text-sm font-medium leading-3 text-dusk"
+          >
+            Open on its own page
+          </a>
+          <div className="doc-scroll">
+            <Markdown>{briefExcerpt}</Markdown>
+          </div>
+        </div>
+      </PhaseRow>
     ))}
   </div>
 );
@@ -140,7 +166,7 @@ export const PhasesOpen: Story = {
     children: phases,
   },
 };
-/** Documents opened: each document a row that opens its own page. */
+/** Documents opened: each document a closed row that opens in place, the Brief unfolded to the document rendered. */
 export const DocumentsOpen: Story = {
   args: {
     title: "Documents",

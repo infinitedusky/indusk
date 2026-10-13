@@ -27,7 +27,7 @@ vi.mock("next/navigation", () => ({
  * The approved plan page (`plan.working`, `plan.phases`, `plan.documents`):
  * the status first and open, every other part a closed row in the mockups'
  * order, Phases listing each phase with its items and their notes, Documents a
- * link row for each document the plan has, each opening its own page.
+ * row for each document the plan has, closed until opened, then showing the document in place.
  */
 
 const PLAN = "brief-as-the-contract";
@@ -199,19 +199,28 @@ describe("the plan page draws the approved layout", () => {
     expect(phase(2)).toContain("☐");
   });
 
-  it("lists each document the plan has as a link row with its name and status", async () => {
+  it("lists each document the plan has as a row, closed by default, that opens in place to the document", async () => {
     const html = await planPage();
     const row = (slug: string) => {
       const at = html.indexOf(`data-document="${slug}"`);
       expect(at, `no ${slug} row`).toBeGreaterThan(-1);
-      return html.slice(html.lastIndexOf("<a", at), html.indexOf("</a>", at));
+      const start = html.lastIndexOf("<details", at);
+      return {
+        tag: html.slice(start, html.indexOf(">", at) + 1),
+        whole: html.slice(start, html.indexOf("</details>", at)),
+      };
     };
-    expect(row("test-plan")).toContain(
+    for (const slug of ["test-plan", "impl", "brief"]) {
+      expect(row(slug).tag).not.toMatch(/\sopen(=|\s|>)/);
+    }
+    expect(row("test-plan").whole).toContain(
       `href="/p/${PROJECT}/plan/${PLAN}/doc/test-plan"`,
     );
-    expect(row("test-plan")).toContain("Test plan");
-    expect(row("test-plan")).toContain("written");
-    expect(row("impl")).toContain("in-progress, 3 of 5");
+    expect(row("test-plan").whole).toContain("Test plan");
+    expect(row("test-plan").whole).toContain("written");
+    expect(row("test-plan").whole).toContain("The test plan text.");
+    expect(row("impl").whole).toContain("in-progress, 3 of 5");
+    expect(row("brief").whole).toContain("A person approves a plan");
     expect(html).not.toContain('data-document="research"');
     expect(html).not.toContain('data-document="audit"');
   });

@@ -666,11 +666,11 @@
 				{
 					"name": "documents-open",
 					"id": "ui-partsection--documents-open",
-					"snapshotHash": "238a50f7dd88e463c7b3825999d8ebae676bce966cd33f3d75ab76d95955ab3e"
+					"snapshotHash": "1b9a967656995e4e5a5e7097ecf5ef1ba83925bbaa2bab2ed079e21339afc5c7"
 				}
 			],
 			"stylesheet": "components/part-section.css",
-			"stylesheetHash": "fc70db5e7fb99a5f128b8e74a6dc270deb02fbb04c4ed8d7e410ac86171c121a"
+			"stylesheetHash": "a7611216bfafa52765552f4167d83ca321b08c1ce1643ef7c2c7dd0a8813ed74"
 		},
 		{
 			"name": "phase-row",
