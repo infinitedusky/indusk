@@ -76,6 +76,8 @@ None.
 9. **`history-panel.closed`**. A new component, the plan's recorded events folded to one row ("History · 5 events"), collapsed by default as Figma's version history is; drawn under the plan's four states.
 10. **`history-panel.open`**. The same component opened to the plan's events, each with what happened, who and when, newest first; going back to an earlier point is not drawn.
 11. **`plan.history`**. The plan page with its History panel open.
+12. **`part-section.closed`**. A new component, one part of the plan page folded to a row: its name and a one-line summary ("Promises · 4 · 1 enforced"), collapsed by default.
+13. **`part-section.open`**. The same component opened to what the part holds.
 
 ### Existing looks
 

@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="indusk-new-components" content="part-section" />
 		<title>Plan — working</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -80,6 +81,14 @@
 			.build .go { border-width: var(--border-1); border-style: solid; border-color: var(--color-ink); background: var(--color-ink); color: var(--color-surface); border-radius: var(--radius-lg); padding: var(--space-snug) var(--space-5); font-size: var(--text-base); font-weight: var(--font-weight-semibold); }
 			.build .cap { font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
 			.build .stopped { flex-basis: 100%; font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.psec { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); overflow: hidden; }
+			.psec .phd { display: flex; align-items: baseline; gap: var(--space-3); width: 100%; padding: var(--space-3) var(--space-4); text-align: left; }
+			.psec .chev { color: var(--color-ink-faint); font-size: var(--text-sm); line-height: var(--leading-3); }
+			.psec h2 { font-family: var(--font-display); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-bold); }
+			.psec .sum { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+			.psec .pbody { border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); padding: var(--space-3) var(--space-4); }
+			.collapsed { display: grid; gap: var(--space-2); }
+			.status { display: grid; gap: var(--space-3); }
 		</style>
 	</head>
 	<body>
@@ -87,13 +96,8 @@
 <indusk-component name="nav" state="plan-current"></indusk-component>
 <main class="content"><div class="wrap">
 <header class="top"><div><div class="crumb"><b>dusk</b> / Plans / brief-as-the-contract</div><h1 class="title">brief-as-the-contract</h1></div><button class="menubtn" type="button">Menu <span class="vcount">3</span></button><div class="meta"><indusk-component name="tag" state="default"></indusk-component></div></header>
-<section class="parts">
-<div class="part"><div class="parthead"><h2>Promises</h2><span class="partstate">4 declared, 1 proving</span></div><div class="pills"><span class="pill"><span class="d declared"></span>a-brief-lists-its-looks</span><span class="pill"><span class="d proving"></span>a-look-has-the-plan-that-owns-it</span><span class="pill"><span class="d enforced"></span>a-changed-look-keeps-its-history</span><span class="pill"><span class="d declared"></span>a-plan-is-approved-with-its-looks-approved</span></div></div>
-<div class="part"><div class="parthead"><h2>Expectations</h2><span class="partstate">2 to look at</span></div><div class="partrows"><indusk-component name="expectation-row" state="default"></indusk-component><indusk-component name="expectation-row" state="due"></indusk-component></div></div>
-<div class="part"><div class="parthead"><h2>Looks</h2><span class="partstate">3 of 3 approved</span></div><div class="partrows"><indusk-component name="look-row" state="approved"></indusk-component><indusk-component name="look-row" state="approved"></indusk-component><indusk-component name="look-row" state="approved"></indusk-component></div></div>
-<a class="brieflink" href="#brief">Read the brief</a>
-</section><div class="stagebody"><aside class="rail"><indusk-component name="rail-group" state="default"></indusk-component></aside><div class="main"><indusk-component name="decision-card" state="working"></indusk-component><div class="build"><button class="go" type="button">Build</button><span class="cap">Works the phases, then falsification and cleanup, without asking; stops at review.</span><span class="stopped">Stopped: Build Phase 4 waits for a person to look at the redrawn mockups.</span></div></div></div>
-<indusk-component name="history-panel" state="closed"></indusk-component>
+<section class="status"><div class="stagebody"><aside class="rail"><indusk-component name="rail-group" state="default"></indusk-component></aside><div class="main"><indusk-component name="decision-card" state="working"></indusk-component><div class="build"><button class="go" type="button">Build</button><span class="cap">Works the phases, then falsification and cleanup, without asking; stops at review.</span><span class="stopped">Stopped: Build Phase 4 waits for a person to look at the redrawn mockups.</span></div></div></div></section>
+<div class="collapsed"><div data-component="part-section" class="psec"><button class="phd" type="button"><span class="chev">▸</span><h2>Promises</h2><span class="sum">· 4 · 1 enforced</span></button></div><div data-component="part-section" class="psec"><button class="phd" type="button"><span class="chev">▸</span><h2>Expectations</h2><span class="sum">· 2 · 1 due</span></button></div><div data-component="part-section" class="psec"><button class="phd" type="button"><span class="chev">▸</span><h2>Looks</h2><span class="sum">· 3 of 3 approved</span></button></div><indusk-component name="history-panel" state="closed"></indusk-component></div><a class="brieflink" href="#brief">Read the brief</a>
 </div></main>
 </div>
 	</body>

@@ -10,6 +10,7 @@
 		{ "name": "expectation-row", "states": ["default", "due"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "draft-row", "states": ["default", "aged"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "amendment-card", "states": ["waiting"], "path": "/p/dusk/plan/ui-promises" },
+		{ "name": "part-section", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "history-panel", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "looks", "states": ["default", "uncovered"], "path": "/p/dusk/looks" }
 	]
