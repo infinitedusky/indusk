@@ -46,6 +46,18 @@ export type Seen =
 	| { kind?: "mockup"; foundationHash?: string; mockupHash?: string; componentsHash?: string }
 	| { kind: "story"; snapshotHash: string; stylesheetHash?: string; foundationHash?: string };
 
+/**
+ * The plan a checkout belongs to: `x` for a checkout on `plan/x`, null for any
+ * other (the project's own, a detached head). The approval records it, so a
+ * look is owned by the plan it was approved in without a registry of its own.
+ */
+async function planOf(checkout: string): Promise<string | null> {
+	const branch = await git(checkout, "branch", "--show-current").catch(() => "");
+	return branch.startsWith("plan/") && branch.length > "plan/".length
+		? branch.slice("plan/".length)
+		: null;
+}
+
 const short = (hash: string) => hash.slice(0, 8);
 
 /**
@@ -112,9 +124,10 @@ export async function approve(
 	});
 	if ("reason" in opened) return { approved: false, reason: opened.reason };
 	const { app } = opened;
+	const plan = await planOf(checkout);
 	return seen.kind === "story"
-		? approveStory(checkout, app, name, by, seen)
-		: approveMockup(checkout, app, name, by, seen);
+		? approveStory(checkout, app, name, by, seen, plan)
+		: approveMockup(checkout, app, name, by, seen, plan);
 }
 
 async function approveMockup(
@@ -123,6 +136,7 @@ async function approveMockup(
 	mockupName: string,
 	by: string,
 	seen: Exclude<Seen, { kind: "story" }>,
+	plan: string | null,
 ): Promise<ApproveResult> {
 	const mockup = app.mockups.find((m) => m.name === mockupName);
 	if (!mockup) {
@@ -160,6 +174,7 @@ async function approveMockup(
 				declarationsHash: app.declarationsHash,
 				by,
 				at: new Date().toISOString(),
+				...(plan === null ? {} : { plan }),
 			},
 		};
 	});
@@ -171,6 +186,7 @@ async function approveStory(
 	storyName: string,
 	by: string,
 	seen: Extract<Seen, { kind: "story" }>,
+	plan: string | null,
 ): Promise<ApproveResult> {
 	const story = app.stories.find((s) => s.name === storyName);
 	if (!story) {
@@ -202,6 +218,7 @@ async function approveStory(
 				declarationsHash: app.declarationsHash,
 				by,
 				at: new Date().toISOString(),
+				...(plan === null ? {} : { plan }),
 			},
 		};
 	});

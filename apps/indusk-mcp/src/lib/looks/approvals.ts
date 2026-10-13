@@ -74,6 +74,12 @@ export interface ApprovalEntry {
 	by: string;
 	/** When, as an ISO date-time. */
 	at: string;
+	/**
+	 * The plan whose checkout the approval was made in (brief-as-the-contract
+	 * ADR decision 3): `plan/<name>`'s `<name>`. Absent on an entry made in the
+	 * project's own checkout or before ownership, which no plan owns.
+	 */
+	plan?: string;
 }
 
 export type Approval =
@@ -119,6 +125,8 @@ export interface StoryApprovalEntry {
 	declarationsHash?: string;
 	by: string;
 	at: string;
+	/** The plan whose checkout the approval was made in; see `ApprovalEntry.plan`. */
+	plan?: string;
 }
 
 export type StoryApproval =
@@ -157,7 +165,7 @@ function isStoryEntry(v: unknown): v is StoryApprovalEntry {
 		["story", "snapshotHash", "foundationHash", "by", "at"].every(
 			(k) => typeof o[k] === "string",
 		) &&
-		["declarationsHash", "stylesheetHash"].every(
+		["declarationsHash", "stylesheetHash", "plan"].every(
 			(k) => o[k] === undefined || typeof o[k] === "string",
 		)
 	);
@@ -169,7 +177,7 @@ function isEntry(v: unknown): v is ApprovalEntry {
 	return (
 		o.kind === undefined &&
 		FIELDS.every((k) => typeof o[k] === "string") &&
-		["declarationsHash", "componentsHash"].every(
+		["declarationsHash", "componentsHash", "plan"].every(
 			(k) => o[k] === undefined || typeof o[k] === "string",
 		) &&
 		(o.components === undefined ||
