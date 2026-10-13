@@ -13,6 +13,9 @@
 		{ "name": "part-section", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "phase-row", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "history-panel", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
-		{ "name": "looks", "states": ["default", "uncovered"], "path": "/p/dusk/looks" }
+		{ "name": "looks", "states": ["default", "uncovered"], "path": "/p/dusk/looks" },
+		{ "name": "home", "states": ["default"], "path": "/" },
+		{ "name": "new-project", "states": ["start", "conversation", "proposal", "creating"], "path": "/new" },
+		{ "name": "recommendation", "states": ["kept", "declined"], "path": "/new" }
 	]
 }

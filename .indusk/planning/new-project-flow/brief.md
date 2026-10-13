@@ -13,11 +13,6 @@ build; the agent asks what the idea leaves open, recommends the right way and
 runs every command. Background, the vision and the Homework Gate walkthrough
 are in [research.md](research.md).
 
-**Looks are not named yet.** The New project button, the text box and the
-summary screen are visual; their looks are named once the in-flight mockup
-work (`storybook-components`) lands, and this brief is not accepted before
-then.
-
 ## Expectations
 
 1. **A person gets from an idea to a project with its first plan in one sitting.**
@@ -87,10 +82,35 @@ None.
 - **Adopting an existing repository** through this flow. `indusk setup` covers it today; the conversation detecting it is a later plan.
 - **Where premises (a project's scored aim) live.** The founding brief holds the aim for now; `plan-premises` decides its home.
 
+## Looks
+
+### This plan makes
+
+1. **`home.default`**. The project grid with a New project button.
+2. **`new-project.start`**. One text box — "What do you want to build?" — and a way to add documents to write the brief from; nothing else asked.
+3. **`new-project.conversation`**. Mid-conversation: the person's messages and documents, the agent's open questions, and what the agent knows so far (why, what, how and where, name and place).
+4. **`new-project.proposal`**. The proposal: name, location and shape, the planning workflow with the core kept, each recommendation kept or declined, the founding brief, the private GitHub repository as a separate confirm, and Create.
+5. **`new-project.creating`**. The creation running as steps, ending with a way into the new project.
+6. **`recommendation.kept`**. A new component: a recommended practice, one line on why, and Decline.
+7. **`recommendation.declined`**. The same component declined, with the person's reason and a way to keep it after all.
+
+### Existing looks
+
+**Must not break**
+
+None.
+
+**Changes**
+
+None.
+
+**Replaces**
+
+None.
+
 ## Depends On
 
 - `.indusk/planning/brief-as-the-contract/` — the plan conversation this builds on.
-- `.indusk/planning/storybook-components/` — the looks this brief names before acceptance.
 
 ## Blocks
 
