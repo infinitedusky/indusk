@@ -71,6 +71,7 @@ No auto-pruning. If a registered project's path is deleted from disk, `indusk ui
 /p/{project}/                        # Per-project home (sidebar + empty state)
 /p/{project}/scorecards              # Per-project eval scorecards (1.27.2+)
 /p/{project}/plan/{name}             # Plan detail page
+/p/{project}/plan/{name}/brief       # The plan's brief, one click below its parts
 /p/{project}/looks                   # Each app's mockups, Approve, what is uncovered (ui-promises)
 /p/{project}/research/{slug}         # Per-project standalone research (1.27.2+)
 ```
@@ -88,6 +89,16 @@ Everything is project-scoped under `/p/{project}/...`. The top-level home at `/`
 3. **Plan list** — one root node (the root `master.md`'s title) with the declared Paths and every unclaimed plan beneath it (admin-ui-phase-progress, 2026-09-16): see [The nav](#the-nav). `Archived (N)` stays outside the root, collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`. No root master → no root node, the tree renders flat.
 4. **Unassigned worktrees** — every worktree of the project's repository that holds no plan assignment, with its branch (admin-plan-worktrees, 2026-09-18). Omitted when there are none.
 5. **Research group** — listed slugs from `.indusk/research/` when the directory exists and contains at least one entry; omitted entirely when empty.
+
+### The plan page's parts
+
+A plan's page draws the three parts of its brief above the plan's stage, each with its name and state first and the detail one click on ([Briefs](/guide/briefs)):
+
+- **Promises** — the registry rows the plan owns (and any the brief makes that the registry lacks, marked `unregistered`), each a pill with its state: declared, enforced or known-violated.
+- **Expectations** — the brief's expectations, each with when to look at it; one whose time has come is drawn warm.
+- **Looks** — each look the brief makes, changes, replaces or must not break, its row showing approved or proposed (a look not yet drawn reads *uncovered*). Open shows the look in the Looks page's frame at the app's reference devices; a look is approved only on the Looks page, in the checkout the plan is worked in, never here.
+
+Below them, **Read the brief** goes to `/p/{project}/plan/{name}/brief`. When a promise, an expectation or a look changed after the person approved the brief, an **amendment** card sits above the decision the plan waits on, with what each was and what it is now; **Approve** there calls `plans reapprove`, and only from the person's own browser (the same `Sec-Fetch-Site: same-origin` check the look approval requires). All of it is read by the package's `plans/parts` from the plan's own checkout on every request, so what the agent writes appears on the next refresh without leaving the page. The review a built plan stops at shows the test plan, the ADR and the impl as **evidence** — read, not signed off; the person approved the brief.
 
 ### The nav
 

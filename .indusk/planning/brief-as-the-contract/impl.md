@@ -352,7 +352,8 @@ A person works on one document, the brief â€” promises, expectations and looks â
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the plan page's parts, the amendment Approve, the review's evidence
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the plan page's parts, the amendment Approve, the review's evidence
+  - Note: a new section "The plan page's parts" (promises, expectations, looks, the brief link, the amendment card with Approve, the review's evidence) and the `/brief` route in the routing tree.
 
 ### Build Phase 5: A plan starts as a conversation
 
