@@ -114,3 +114,9 @@ agent can run `plans reapprove` / `plans start --from-draft` from a terminal;
 rewrite dropped the Papers section, the type chip and the falsification and
 skipped-ritual details without the brief saying so; a draft's agent cannot draw
 a look) — a new plan's brief, written after this one lands.
+
+## Checks at close
+
+- Nested-context probe (`vitest --config vitest.e2e.config.ts context-tiers`): 4/4 passing.
+- `day-monitor.e2e.test.ts` A24 fails here and identically on main (it expects the evaluator's error text "issue with the selected model", which the current model does not produce) — not this plan's.
+- `indusk promises confirm`: ten promises enforced; `a-plan-builds-only-after-approval` re-changed to its brief sentence. The registry check then caught an approved plan (`cockpit-audit-fixes`) refused by the Looks rule after A34; fixed in Build Phase 8 as A37 before landing.
