@@ -479,11 +479,11 @@ A person works on one document, the brief — promises, expectations and looks �
   - Note: both builders and their two call sites renamed (`PlanSession.tsx`, the plan page); `plans/parts`'s `briefOpening` is untouched. No test named the admin's builders. tsc clean.
 - [x] Remove `newPlanPrompt` (`apps/indusk-mcp/src/lib/session/new-plan-prompt.ts`, its test and its export from `session/index.ts`): the name-first route that used it was deleted in Build Phase 5 and nothing calls it
   - Note: removed `new-plan-prompt.ts`, its test and the export (no other reference in the repo); tsc and biome clean.
-- [ ] (reviewed `apps/indusk-mcp/hooks/check-gates.js`, +75 — left as-is: the amendment refusal is the hook's own decision and its logic already lives in the package's `plans/amendments`, run through `indusk plans amendments`; hooks are self-contained scripts by convention)
-- [ ] (reviewed `apps/indusk-admin/src/lib/planning-reader.ts`, +65 — left as-is: the archive cache is the reader's own concern, beside the read it caches)
-- [ ] (reviewed `apps/indusk-mcp/src/lib/promises/brief-contract.ts`, +80, and `contract.ts`, +36 — left as-is: the Looks section is part of the brief's contract, parsed where the rest of it is)
-- [ ] (reviewed `cli.ts` +27, `config.ts` +13, `looks/approve.ts` +19, `looks/stories.ts` +7 — left as-is: small additions inside each file's existing job)
-- [ ] (reviewed `apps/indusk-admin/src/components/session/NewPlanForm.tsx` — left as-is under its name, though it is now a button: A18's Test cell names its test file, and the trajectory's cells are not renamed at close)
+- [x] (reviewed `apps/indusk-mcp/hooks/check-gates.js`, +75 — left as-is: the amendment refusal is the hook's own decision and its logic already lives in the package's `plans/amendments`, run through `indusk plans amendments`; hooks are self-contained scripts by convention)
+- [x] (reviewed `apps/indusk-admin/src/lib/planning-reader.ts`, +65 — left as-is: the archive cache is the reader's own concern, beside the read it caches)
+- [x] (reviewed `apps/indusk-mcp/src/lib/promises/brief-contract.ts`, +80, and `contract.ts`, +36 — left as-is: the Looks section is part of the brief's contract, parsed where the rest of it is)
+- [x] (reviewed `cli.ts` +27, `config.ts` +13, `looks/approve.ts` +19, `looks/stories.ts` +7 — left as-is: small additions inside each file's existing job)
+- [x] (reviewed `apps/indusk-admin/src/components/session/NewPlanForm.tsx` — left as-is under its name, though it is now a button: A18's Test cell names its test file, and the trajectory's cells are not renamed at close)
 
 #### Build Phase 7 Verification
 
