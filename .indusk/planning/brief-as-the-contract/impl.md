@@ -1,7 +1,7 @@
 ---
 title: "Brief as the contract — looks in the brief, approval of the brief, amendments, the plan page's parts, a plan that starts as a conversation"
 date: 2026-10-12
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -77,6 +77,34 @@ A person works on one document, the brief — promises, expectations and looks �
 | A30 | Accepting a draft as a `spike` lands on the plan's page, not on a brief page that asks for a brief a spike never has | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-plan-starts-as-a-conversation | apps/indusk-admin/src/components/drafts/DraftProposal.test.tsx |
 | A31 | On a phone, where the brief page is one column, the agent column under the brief is given no window-fitted height, so it is not clipped while it scrolls into view | Build Phase 6 | Build Phase 6 | passing | unit | a regression guard: the agent column is fitted only beside the brief | apps/indusk-admin/src/components/session/WindowColumn.test.tsx |
 | A32 | `readPlanPage(project, name)` gives the three plan routes (the plan page, the brief page, a document page) their plan: an active plan over an archived one of the same name, null for a project whose path is gone, and not-found for a plan that does not exist | Build Phase 7 | Build Phase 7 | passing | unit | a regression guard: the plan routes find their plan one way | apps/indusk-admin/src/lib/plan-page.test.ts |
+| A33 | Approving, re-approving and accepting a workbench plan run the same looks checks a normal plan does: a look its brief names still proposed refuses approval and re-approval, an interface change against a brief listing no look refuses acceptance, and a new component with no approved story refuses acceptance — each naming what is missing | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-plan-is-approved-with-its-looks-approved | apps/indusk-mcp/src/__tests__/plans-approve-looks.test.ts, apps/indusk-mcp/src/__tests__/plans-accept-stories.test.ts |
+| A34 | A `### Build Phase 8: Audit fixes — holes the cold reader found in four promises
+
+**Tier**: med — the work step's default
+
+**Goal**: close audit findings 1–4 (`audit.md`), which Sandy chose to fix before landing ("fix the one through four short extra phase"): workbench plans skipping the looks checks, the approval-time interface check dropping rows, two ways around the amendment gate, and drafts losing work. Each row A33–A36 is one finding.
+
+- [ ] Workbench plans run the looks checks (A33): `approve.ts` runs `refuseUnapprovedLooks` (and the Files Affected interface check) before handing a workbench plan to `approveWorkbenchPlan`; `reapprove` runs the looks check for a workbench plan; `accept.ts` runs the diff interface check and the new-component story check before its workbench return — against the workbench's code repo for the diff, the root's mockups for the looks
+- [ ] The Files Affected path cell is read path by path (A34): `promises/interface-files.ts` takes every backticked or bare path in the first cell — a path followed by a note in parentheses, two paths separated by a comma or "and" — instead of the whole cell as one path
+- [ ] The amendment gate cannot be skipped from the impl (A35): in `hooks/check-gates.js`, the amendment refusal runs before the `<!-- skip-gates -->` escape; and an edit to an approved plan's impl that removes or changes `approved_brief:` is refused, naming `indusk plans reapprove` as the way the field changes. Copy to `.claude/hooks/check-gates.js` as the hooks are installed
+- [ ] Drafts lose nothing (A36): the age sweep in `drafts/store.ts` moves an aged draft to `<home>/drafts/archive/<id>/` (as ADR decision 9 says, "archives"), and `drafts/start.ts` writes a draft's `research.md` into the plan beside its `brief.md` when it has both
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 8 Verification
+
+- [ ] A33–A36 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/plans-approve-looks.test.ts src/__tests__/plans-accept-stories.test.ts src/__tests__/brief-looks.test.ts src/__tests__/check-gates-amendments.test.ts src/__tests__/drafts.test.ts src/__tests__/drafts-age.test.ts`); `vitest related` on the changed files; the hook copies match (`diff apps/indusk-mcp/hooks/check-gates.js .claude/hooks/check-gates.js`); tsc and biome clean on changed files
+
+#### Build Phase 8 Context
+
+- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: the amendment refusal runs before any skip marker, and `approved_brief` changes only through `plans reapprove` — guarded by `check-gates-amendments.test.ts` (A35)
+
+#### Build Phase 8 Document
+
+- [ ] `apps/docs/src/reference/cli/plans.md`: `approve`, `reapprove` and `accept` check looks for workbench plans too; `apps/docs/src/guide/briefs.md`: a Files Affected cell may hold a path with a note, or several paths; a draft past its age is archived in the home, not deleted
+
+## Files Affected` row whose path cell carries a note after the path, or two paths, is read path by path: an interface path among them is caught at approval like a bare one | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-brief-lists-its-looks | apps/indusk-mcp/src/__tests__/brief-looks.test.ts |
+| A35 | While an amendment waits, a `<!-- skip-gates -->` marker does not let a build item be checked off; and an impl edit that removes `approved_brief:` from an approved plan is refused, so the amendment gate cannot be switched off from the impl | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-change-to-what-was-agreed-needs-the-person | apps/indusk-mcp/src/__tests__/check-gates-amendments.test.ts |
+| A36 | A draft past its age is moved to the home's archive of drafts, not deleted; and accepting a draft that holds both a brief and research keeps both in the new plan | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-conversation-that-is-not-kept-leaves-nothing-in-the-repository | apps/indusk-mcp/src/__tests__/drafts.test.ts, apps/indusk-mcp/src/__tests__/drafts-age.test.ts |
 
 ### Deferred Verification
 
