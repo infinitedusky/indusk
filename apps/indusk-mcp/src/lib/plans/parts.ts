@@ -75,7 +75,7 @@ const EMPTY = (plan: string, hasBrief: boolean): PlanParts => ({
 });
 
 /** The looks the brief lists, each under how the brief lists it. */
-function listedLooks(brief: BriefContract): Array<{ name: string; relation: LookRelation }> {
+export function listedLooks(brief: BriefContract): Array<{ name: string; relation: LookRelation }> {
 	const looks = brief.looks;
 	if (!looks) return [];
 	return [

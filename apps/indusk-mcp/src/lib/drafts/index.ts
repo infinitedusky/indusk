@@ -21,3 +21,4 @@ export {
 	touchDraft,
 	writeProposal,
 } from "./store.js";
+export { type DraftView, draftHomeOf, readDraftRows, readDraftView } from "./view.js";

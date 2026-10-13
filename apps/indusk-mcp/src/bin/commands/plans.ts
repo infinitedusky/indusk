@@ -1,11 +1,16 @@
 import { auditInputs } from "../../lib/audit/inputs.js";
-import { bookkeepingRoots } from "../../lib/bookkeeping/roots.js";
 import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
 import { buildStepModel } from "../../lib/build/step-model.js";
 import { getDraftMaxAgeDays } from "../../lib/config.js";
-import { findDraft, startFromDraft, sweepDrafts, writeProposal } from "../../lib/drafts/index.js";
+import {
+	draftHomeOf,
+	findDraft,
+	startFromDraft,
+	sweepDrafts,
+	writeProposal,
+} from "../../lib/drafts/index.js";
 import { parsePhaseRef } from "../../lib/impl-headings.js";
 import { nextSessionForPlan } from "../../lib/models/next-session.js";
 import { phaseModel } from "../../lib/models/phase-model.js";
@@ -65,7 +70,7 @@ async function startFromDraftId(
 	name: string,
 	repo?: string,
 ) {
-	const draft = findDraft(bookkeepingRoots(cwd).home, id);
+	const draft = findDraft(draftHomeOf(cwd), id);
 	if (!draft) throw new PlanCommandRefusal(`there is no draft ${id} in this project`);
 	writeProposal(draft, { name, type, ...(repo ? { repo } : {}) });
 	return startFromDraft(cwd, draft);
@@ -309,7 +314,7 @@ export interface PlansArchiveDeadOptions {
 export function plansArchiveDead(projectRoot: string, opts: PlansArchiveDeadOptions = {}): void {
 	const result = archiveDeadPlans(projectRoot, { dryRun: opts.dryRun });
 	// Conversations not kept age out of the project's home the same way (drafts.max_age_days).
-	const drafts = sweepDrafts(bookkeepingRoots(projectRoot).home, {
+	const drafts = sweepDrafts(draftHomeOf(projectRoot), {
 		maxAgeDays: getDraftMaxAgeDays(projectRoot),
 		dryRun: opts.dryRun,
 	});
