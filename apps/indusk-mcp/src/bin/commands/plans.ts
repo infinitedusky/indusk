@@ -8,6 +8,7 @@ import { nextSessionForPlan } from "../../lib/models/next-session.js";
 import { phaseModel } from "../../lib/models/phase-model.js";
 import { isTierStep, TIER_STEPS, TierConfigError } from "../../lib/models/tier-names.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
+import { type Amendment, AmendmentsUnreadable, amendmentsOf } from "../../lib/plans/amendments.js";
 import {
 	acceptPlan,
 	approvePlan,
@@ -15,6 +16,7 @@ import {
 	PlanCommandRefusal,
 	startPlan,
 } from "../../lib/plans/index.js";
+import { resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
 /** Run a plan verb: print what it did, or its refusal on stderr and exit 1. */
 async function planVerb(run: () => Promise<string>): Promise<void> {
@@ -153,6 +155,47 @@ function describeStep(s: BuildStep): string {
 		case "cannot-continue":
 			return `cannot continue: ${s.why}`;
 	}
+}
+
+/** One amendment as a line: `promise x: was "a" — now "b"`. */
+export function describeAmendment(a: Amendment): string {
+	const said = (s: string | null) => (s === null ? "(not in the brief)" : JSON.stringify(s));
+	return `${a.part} ${a.name}: was ${said(a.was)} — now ${said(a.now)}`;
+}
+
+/**
+ * `indusk plans amendments <name> [--dir <folder>] [--json]` — what the brief
+ * says now that it did not at approval. `--dir` names the plan folder the
+ * caller means (check-gates hands the impl's own); otherwise the plan's live
+ * copy. Exit 0 with the list, empty or not; 1 when it cannot be told.
+ */
+export function plansAmendments(
+	cwd: string,
+	name: string,
+	opts: { dir?: string; json?: boolean },
+): Promise<void> {
+	return planVerb(async () => {
+		let dir = opts.dir;
+		if (dir === undefined) {
+			const copies = await resolvePlanCopies(cwd);
+			if (!copies.ok) {
+				throw new PlanCommandRefusal(`the worktree record ${copies.file} cannot be read: ${copies.problem}`);
+			}
+			const copy = copies.copies.get(name);
+			if (!copy) throw new PlanCommandRefusal(`no plan named ${name}, on the trunk or in a worktree`);
+			dir = copy.dir;
+		}
+		let amendments: Amendment[];
+		try {
+			amendments = await amendmentsOf(dir);
+		} catch (err) {
+			if (err instanceof AmendmentsUnreadable) throw new PlanCommandRefusal(err.message);
+			throw err;
+		}
+		if (opts.json) return JSON.stringify(amendments);
+		if (amendments.length === 0) return `${name}: nothing waits — the brief is the one approved`;
+		return [`${name}: ${amendments.length} amendment(s) wait on the person:`, ...amendments.map((a) => `  ${describeAmendment(a)}`)].join("\n");
+	});
 }
 
 /** `indusk plans review <name>` — what a person needs to decide whether a built plan may ship. */

@@ -1033,6 +1033,18 @@ plansCmd
 	});
 
 plansCmd
+	.command("amendments <name>")
+	.description(
+		"What a plan's brief says now that it did not say at approval — each expectation, promise or look changed, waiting on the person (check-gates reads this)",
+	)
+	.option("--dir <dir>", "The plan's folder, when the caller knows which copy it means")
+	.option("--json", "Print the amendments as JSON")
+	.action(async (name: string, opts: { dir?: string; json?: boolean }) => {
+		const { plansAmendments } = await import("./commands/plans.js");
+		await plansAmendments(process.cwd(), name, opts);
+	});
+
+plansCmd
 	.command("review <name>")
 	.description(
 		"What a built plan's review shows: each promise with the tests that prove it, what falsification found and fixed, the files changed, every skipped gate item",

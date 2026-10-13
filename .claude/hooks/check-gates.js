@@ -11,7 +11,9 @@
  * Exit 2 = block the edit (stderr sent to agent as feedback)
  */
 
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { policyFromEnvironment, skipCarriesReason } from "./_gate-policy.js";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
 import { phaseExists, phaseOrdinal, phaseSequence } from "./_impl-headings.js";
@@ -280,6 +282,79 @@ for (let pi = 0; pi < newPhases.length; pi++) {
 
 if (newlyChecked.length === 0) {
 	process.exit(0);
+}
+
+// promise: a-plan-builds-only-after-approval
+// An amendment waits for the person (brief-as-the-contract ADR decision 5): a
+// change since approval to the brief's expectations, promises or looks, or to
+// a promise's statement the plan owns, stops every build item until a person
+// approves it (`indusk plans reapprove`, or Approve on the plan's page). The
+// comparison needs the brief, the registry and git, so it is the package's
+// (`plans/amendments`), run through `indusk plans amendments` — never a second
+// reader here. An impl that records no `approved_brief` was approved before
+// the field existed and has no amendments: absence is a rule, so no command
+// runs. A check that cannot run refuses, and says why.
+const buildChecked = newlyChecked.filter((item) => item.phaseKind !== "test");
+const approvedBrief = /^---\r?\n([\s\S]*?)\r?\n---/
+	.exec(fullContent)?.[1]
+	?.match(/^approved_brief:[ \t]*["']?([0-9a-f]{64})/m)?.[1];
+if (buildChecked.length > 0 && approvedBrief) {
+	const refusal = amendmentRefusal(filePath);
+	if (refusal) {
+		process.stderr.write(refusal);
+		process.exit(2);
+	}
+}
+
+/** The refusal while amendments wait, the could-not-check refusal, or null to allow. */
+function amendmentRefusal(implPath) {
+	const planDir = dirname(implPath);
+	const plan = planDir.match(/[\\/]\.indusk[\\/]planning[\\/]([^\\/]+)$/)?.[1];
+	if (!plan) return null;
+	const bin = process.env.INDUSK_BIN ?? "indusk";
+	const ran = `${bin} plans amendments ${plan} --dir ${planDir} --json`;
+	const r = spawnSync(
+		`${bin} plans amendments "$INDUSK_AMEND_PLAN" --dir "$INDUSK_AMEND_DIR" --json`,
+		{
+			shell: true,
+			cwd: planDir,
+			encoding: "utf-8",
+			timeout: 30_000,
+			env: {
+				...process.env,
+				INDUSK_AMEND_PLAN: plan,
+				INDUSK_AMEND_DIR: planDir,
+				INDUSK_SKIP_UPDATE_CHECK: "1",
+			},
+		},
+	);
+	let amendments = null;
+	if (r.status === 0) {
+		try {
+			const parsed = JSON.parse((r.stdout ?? "").trim().split("\n").pop() ?? "");
+			if (Array.isArray(parsed)) amendments = parsed;
+		} catch {
+			// not the list: reported below as a check that could not run
+		}
+	}
+	if (amendments === null) {
+		const how = r.error
+			? `could not start: ${r.error.message}`
+			: r.signal
+				? `was stopped by ${r.signal} (30s limit)`
+				: r.status === 0
+					? "printed no list of amendments"
+					: `exited ${r.status}`;
+		const said = (r.stderr ?? "").trim();
+		const detail = said ? `\n${said.split("\n").slice(0, 6).join("\n")}` : "";
+		return `Whether ${plan}'s brief still says what was approved could not be checked, so this checkoff is refused: a gate that cannot run is never a pass.\n\n  ran: ${ran}\n  it ${how}${detail}\n\nThe \`indusk\` this hook reaches must have \`plans amendments\`: install or upgrade the one on PATH, or set INDUSK_BIN to a build that has it.\nlesson: detectors-must-distinguish-could-not-check-from-checked-and-failed\n`;
+	}
+	if (amendments.length === 0) return null;
+	const said = (s) => (s === null || s === undefined ? "(not in the brief)" : JSON.stringify(s));
+	const lines = amendments
+		.map((a) => `  - ${a.part} ${a.name}: was ${said(a.was)} — now ${said(a.now)}`)
+		.join("\n");
+	return `${plan} has ${amendments.length} amendment(s) waiting on the person: what was agreed at approval has changed, so no build item is checked off until a person approves the change.\n${lines}\n\nThe person approves it with Approve on the plan's page in the cockpit, or by running \`indusk plans reapprove ${plan}\`; or put the brief back as it was approved.\nlesson: a-plan-builds-only-after-approval\n`;
 }
 
 // Trajectory gates run BEFORE the gate-completeness loop, deliberately.
