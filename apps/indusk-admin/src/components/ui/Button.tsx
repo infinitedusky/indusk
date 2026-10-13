@@ -22,28 +22,37 @@ const sizeClasses: Record<ButtonSize, string> = {
   md: "px-5 py-snug text-base",
 };
 
+/** A button's classes, for a link that is drawn as one. */
+export function buttonClasses(
+  variant: ButtonVariant = "primary",
+  size: ButtonSize = "md",
+  className = "",
+): string {
+  return [
+    "inline-flex items-center justify-center rounded-lg font-semibold transition-colors",
+    "focus:outline-2 focus:outline-dusk focus:outline-offset-1",
+    "disabled:opacity-50 disabled:cursor-not-allowed",
+    variantClasses[variant],
+    sizeClasses[size],
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     { variant = "primary", size = "md", className = "", children, ...rest },
     ref,
-  ) => {
-    const classes = [
-      "inline-flex items-center justify-center rounded-lg font-semibold transition-colors",
-      "focus:outline-2 focus:outline-dusk focus:outline-offset-1",
-      "disabled:opacity-50 disabled:cursor-not-allowed",
-      variantClasses[variant],
-      sizeClasses[size],
-      className,
-    ]
-      .filter(Boolean)
-      .join(" ");
-
-    return (
-      <button ref={ref} data-component="button" className={classes} {...rest}>
-        {children}
-      </button>
-    );
-  },
+  ) => (
+    <button
+      ref={ref}
+      data-component="button"
+      className={buttonClasses(variant, size, className)}
+      {...rest}
+    >
+      {children}
+    </button>
+  ),
 );
-
 Button.displayName = "Button";

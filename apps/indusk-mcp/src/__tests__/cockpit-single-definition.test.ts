@@ -35,6 +35,9 @@ const MODULES = [
 	["./plans/steps", "src/lib/plans/steps.ts", "planSteps"],
 	["./plans/waiting", "src/lib/plans/waiting.ts", "planWaiting"],
 	["./plans/history", "src/lib/plans/history.ts", "appendDecision"],
+	// brief-as-the-contract Build Phase 4: a plan's promises, expectations, looks
+	// and waiting amendments are the package's, drawn by the plan page.
+	["./plans/parts", "src/lib/plans/parts.ts", "readPlanParts"],
 	// ui-promises Build Phase 4: a look's state — approved, covered, held — is
 	// the package's, read by the admin's Looks page and dashboard and the editor.
 	["./looks/approvals", "src/lib/looks/approvals.ts", "approvalOf"],
@@ -51,6 +54,7 @@ const PACKAGE_ONLY = [
 	"planSteps",
 	"planWaiting",
 	"appendDecision",
+	"readPlanParts",
 	"approvalOf",
 	"coverageOf",
 	"verdict",

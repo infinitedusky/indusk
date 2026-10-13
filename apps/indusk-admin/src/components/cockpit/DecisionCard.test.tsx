@@ -67,6 +67,7 @@ const evidence: Review = {
     },
   ],
   files: [{ path: "src/seat.ts", status: "M" }],
+  evidence: [],
   uncommittedOnMain: [],
   skippedRituals: [],
   skips: [],

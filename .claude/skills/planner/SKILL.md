@@ -43,6 +43,8 @@ The first argument to `/planner` can optionally be a workflow type that controls
 
 Parse the input: if the first word is `bugfix`, `refactor`, `spike`, or `feature`, use that workflow. Otherwise, default to `feature`. The remaining words become the plan name (kebab-cased).
 
+**Every brief carries a `description:`** in its frontmatter: the plan distilled in one to three tight sentences, plain words, what it does and for whom — not its background. The plan's page shows it at the top. Write it as soon as the plan is clear and keep it true as the brief changes.
+
 **Every plan declares its type.** Write `workflow: <type>` in the brief's frontmatter when you create it — `workflow: feature` when no type was given — and, for a spike, in the research document's, since a spike has no brief. The admin reads it to tell a document the plan was never going to have from one it should have had: with no declared type, an absent document reads *unknown*, never *skipped*. What each type requires is defined once, in the package's `workflow-types` module; the table above and the workflow templates are pinned equal to it by test, so change all three together.
 
 Workflow templates are in `templates/workflows/` in the package. They describe which documents to create and provide streamlined templates for each workflow type.
@@ -81,10 +83,11 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    For feature/spike workflows that need new research: Explore the problem space — read code, search the web for library docs. **Grep for the affected symbols' consumers before scoping** — include structural findings in research.md with concrete numbers.
    Document what you find. Research holds the background, the findings and the decisions made on the way. It does not hold promises, and the brief does not repeat it.
 
-4. **If research is done** (or the workflow starts at the brief), write the brief. A brief is what the conversation produced and holds two things: the **expectations** (why we are doing this, each with a measure and a time to look) and the **promises** (what will be true: the ones this plan makes, and the existing ones it must not break, changes or replaces). It holds nothing else. The problem, the context and the findings are research; the approach is the ADR's; what "done" means is said once, as promises, and not again as success criteria. The template is below; the shape is read by a program, so keep it exactly. — see `/guide/briefs`
+4. **If research is done** (or the workflow starts at the brief), write the brief. A brief is what the conversation produced and holds three things: the **expectations** (why we are doing this, each with a measure and a time to look), the **promises** (what will be true: the ones this plan makes, and the existing ones it must not break, changes or replaces) and the **looks** (what a person will see: the ones this plan makes, and the existing ones it must not break, changes or replaces, or why it has none). It holds nothing else. The problem, the context and the findings are research; the approach is the ADR's; what "done" means is said once, as promises, and not again as success criteria. The template is below; the shape is read by a program, so keep it exactly. — see `/guide/briefs`
 
    - **Expectations decide what gets measured.** An expectation says what we expect to follow and how we would know, so writing one is also deciding what telemetry the work needs. Most can only be measured in production; say so in the measure. An expectation that does not happen is information, not a defect, and blocks nothing. A plan with none writes `None — {reason}`.
    - **Each promise is one sentence, observable, with a name and a kind.** A kebab-case name; the kind is `behaviour` (breaks on inputs nobody chose; watched in the running system), `state` (breaks on a later change; a test) or `structure` (breaks when something is removed or duplicated; a build-time check). Assign the kind from the sentence; the person can correct it. If a test with inputs you choose can prove it, it is `state`, even when it describes something a user does: `behaviour` is for what only the running system shows, and it asks for marks in that system.
+   - **Ask once the draft brief exists: "Does this change how anything looks?"** A plan that changes a file under an app's interface (the `sources` in each `.indusk/mockups/<app>/screens.json`) changes a look, and `plans approve` refuses it while its brief lists none and gives no reason. If it does, list each look under `## Looks`, as promises are listed: **This plan makes** for a screen or component that is new, and under **Existing looks** the ones it must not break, **Changes** (the approved look is still the one the app is held to until a person approves the new one) or **Replaces**. Every look the brief names is a mockup, drawn under the app's `screens/` so the person sees it in the cockpit, where it reads as proposed: a screen (`home.full`, screen then state), or a new component drawn on its own (`chip.waiting`, one mockup per state, declaring itself with `<meta name="indusk-new-components">`). **A story is never named without a mockup.** A story is rendered from the real component, so it cannot exist before the build; the component's own mockup is what the person approves now, and its story, the same name built, is approved against it during the build. Screens that use a new component draw it inline under the same declaration until its story exists. If it changes nothing, write `None — {the reason}`; never leave the section out of a plan that touches the interface. **Approval waits on every look the brief names:** each must be drawn and approved in the cockpit before the plan is approved, and `plans accept` holds the plan until each new component has an approved story and every mockup the brief names composes only approved stories. The agent draws and proposes a look; it never approves one.
    - **Write it as `status: draft` and present it.** The draft is the conversation read back on paper. Walk the person through it: "Here is what I understood we are promising, and what we expect to follow. Is anything missing? Is there anything here you do not want to promise?" Iterate until they agree. A draft is not yet held to the registry, so edit it freely.
 
    **When the person accepts the brief, save its promises with the tools. Never type a file under `.indusk/promises/`:**
@@ -300,7 +303,7 @@ status: in-progress | complete
 
 ### brief.md
 
-A brief holds what the conversation produced: expectations and promises. `indusk promises contract` reads this shape, so keep the headings, keep each label on its own line, and start each entry with the promise's name as written here. Prose between the parts is fine.
+A brief holds what the conversation produced: expectations, promises and looks. `indusk promises contract` reads this shape, so keep the headings, keep each label on its own line, and start each entry with the promise's or the look's name as written here. Prose between the parts is fine.
 
 ```markdown
 ---
@@ -345,6 +348,28 @@ workflow: feature | bugfix | refactor | spike
 ### Not promised
 
 - {What was considered and deliberately not promised, and where it goes instead.}
+
+## Looks
+
+### This plan makes
+
+1. **`{look-name}`**. {What a person will see: the screen and its state, or the component.}
+
+### Existing looks
+
+**Must not break**
+
+- **`{look-name}`**. {Why this plan comes near it.}
+
+**Changes**
+
+- **`{look-name}`**. {The look as it will read; the approved one stays held until a person approves this.}
+
+**Replaces**
+
+- **`{old-look}`**, by **`{new-look}`**.
+
+{Write `None.` under any of the three that has no entry. A plan that changes nothing under an app's interface writes instead, under `## Looks`: None — {the reason}}
 
 ## Depends On
 - {Plans that must be completed before this one — e.g., `.indusk/planning/per-game-escrow/`}

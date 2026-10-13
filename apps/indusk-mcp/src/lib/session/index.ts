@@ -3,6 +3,12 @@
  * one definition behind the admin and the build runner.
  */
 
+export {
+	type DraftConversation,
+	draftConversation,
+	draftPrompt,
+	draftSessionPlan,
+} from "./draft.js";
 export { isAdminHost } from "./hosts.js";
 export {
 	defaultRecordPath,
@@ -11,7 +17,6 @@ export {
 	SessionManager,
 	type SessionRecord,
 } from "./manager.js";
-export { newPlanPrompt } from "./new-plan-prompt.js";
 export { type Decision, decideBuildPermission, refuseBuildQuestion } from "./permissions.js";
 export {
 	answerQuestion,

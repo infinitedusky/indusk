@@ -147,6 +147,8 @@ export interface LooksApp {
 	stories: Story[];
 	/** Every `components/<name>.css`, sorted by component. */
 	styles: ComponentStyle[];
+	/** `components/_base.css`, the app's compiled `body` rules a story's frame draws under; "" when absent. */
+	base: string;
 	mockups: Mockup[];
 }
 
@@ -247,6 +249,8 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 	}>(join(dir, "screens.json"), {});
 
 	const styles = await readStyles(dir, join(MOCKUPS_DIR, app));
+	const basePath = join(dir, "components", BASE_STYLESHEET);
+	const base = existsSync(basePath) ? await readFile(basePath, "utf-8") : "";
 	const stories = await readStories(dir, join(MOCKUPS_DIR, app), styles);
 	const snapshots = new Map<string, SnapshotBytes>(stories.map((s) => [s.name, s]));
 
@@ -296,6 +300,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		...(declared.url ? { url: declared.url } : {}),
 		stories,
 		styles,
+		base,
 		mockups,
 	};
 }
@@ -329,11 +334,16 @@ async function readStories(
 	return stories;
 }
 
+/** The app's base stylesheet in `<app>/components/`, beside the components' own; not a component's. */
+export const BASE_STYLESHEET = "_base.css";
+
 /** The stylesheets in `<app>/components/`, `<name>.css`, sorted by component; none when the app has none. */
 async function readStyles(dir: string, rel: string): Promise<ComponentStyle[]> {
 	const componentsDir = join(dir, "components");
 	if (!existsSync(componentsDir)) return [];
-	const files = (await readdir(componentsDir)).filter((f) => f.endsWith(".css")).sort();
+	const files = (await readdir(componentsDir))
+		.filter((f) => f.endsWith(".css") && f !== BASE_STYLESHEET)
+		.sort();
 	const styles: ComponentStyle[] = [];
 	for (const fileName of files) {
 		const component = fileName.slice(0, -".css".length);

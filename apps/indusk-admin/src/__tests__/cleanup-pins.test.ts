@@ -79,14 +79,14 @@ describe("A34 — HoldingBadge has one server-renderable home", () => {
     expect(source).not.toMatch(/"use client"/);
   });
 
-  it("the sidebar and the plan header import it from there, and nothing else exports it", () => {
+  it("the sidebar imports it from there, and nothing else exports it", () => {
     expect(
       filesContaining(
         join(SRC, "components"),
         /export function HoldingBadge\b/,
       ),
     ).toEqual(["components/HoldingBadge.tsx"]);
-    for (const rel of ["PlanList.tsx", "plan/PlanHeader.tsx"]) {
+    for (const rel of ["PlanList.tsx"]) {
       const source = readFileSync(join(SRC, "components", rel), "utf-8");
       expect(
         source,

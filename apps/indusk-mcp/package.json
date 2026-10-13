@@ -100,6 +100,10 @@
 			"types": "./dist/lib/build/index.d.ts",
 			"default": "./dist/lib/build/index.js"
 		},
+		"./drafts": {
+			"types": "./dist/lib/drafts/index.d.ts",
+			"default": "./dist/lib/drafts/index.js"
+		},
 		"./plans": {
 			"types": "./dist/lib/plans/index.d.ts",
 			"default": "./dist/lib/plans/index.js"
@@ -255,6 +259,14 @@
 		"./plans/history": {
 			"types": "./dist/lib/plans/history.d.ts",
 			"default": "./dist/lib/plans/history.js"
+		},
+		"./plans/parts": {
+			"types": "./dist/lib/plans/parts.d.ts",
+			"default": "./dist/lib/plans/parts.js"
+		},
+		"./plans/amendments": {
+			"types": "./dist/lib/plans/amendments.d.ts",
+			"default": "./dist/lib/plans/amendments.js"
 		},
 		"./promises/fix": {
 			"types": "./dist/lib/promises/fix.d.ts",

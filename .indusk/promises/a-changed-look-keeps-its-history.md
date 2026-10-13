@@ -2,11 +2,13 @@
 name: a-changed-look-keeps-its-history
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: planning
 owner: brief-as-the-contract
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/looks/approve.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/look-ownership.test.ts
 incidents: []
 ---
 
@@ -14,3 +16,4 @@ A plan that redraws an existing look says so in its brief; the approved version 
 
 ## History
 - 2026-10-12 — declared (brief-as-the-contract), from its planning conversation.
+- 2026-10-13 — enforced, confirmed for brief-as-the-contract: proven by row A6, row A7.

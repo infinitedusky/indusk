@@ -44,6 +44,21 @@ export function ReviewPanel({ review }: { review: Review }) {
           </ul>
         </div>
       ) : null}
+      {review.evidence.length > 0 ? (
+        <div data-testid="review-evidence">
+          <h3 className="font-medium text-ink-soft">Evidence</h3>
+          <p className="text-xs text-ink-faint">
+            You approved the brief. These are read, not signed off.
+          </p>
+          <ul className="mt-1 font-mono text-xs text-ink-soft">
+            {review.evidence.map((e) => (
+              <li key={e.document} data-document={e.document}>
+                {e.document} — {e.path}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div>
         <h3 className="font-medium text-ink-soft">Promises</h3>
         <ul className="mt-1 flex flex-col gap-1">

@@ -58,6 +58,17 @@ are about keeping the two lanes in step.
   The row rules (shape, level, purpose) are the contract's too, so they hold
   for a file any tool wrote; the hook's own run of them, on an edit that adds
   a phase or an item, is the early word on a draft.
+- **An amendment, not an impl edit, is what stops a build**: `check-gates.js`
+  refuses a build-phase checkoff while `indusk plans amendments` lists a
+  change to the brief's expectations, promises or looks, or to an owned
+  promise's statement, since approval (`lesson: a-plan-builds-only-after-approval`);
+  an item, a note or a Shape finding changed waits for nobody. It runs only
+  for an impl that records `approved_brief` — one approved before the field
+  has none, and no command runs. The refusal runs before any skip marker, and
+  `approved_brief` changes only through `plans reapprove` (a CLI write; an
+  edit that removes or changes it is refused, or deleting it would end the
+  gate). Guarded by `amendments.test.ts` (A11, A12, A14) and
+  `check-gates-amendments.test.ts` (A35). — see `/reference/cli/plans`
 - The budget hook judges growth, not size; a root is the state root, a
   declared repo's dir (`declaredRepoDirsAt`), or any checkout's top (`.git`
   present — plan worktrees), never a depth. Every hook that refuses names its

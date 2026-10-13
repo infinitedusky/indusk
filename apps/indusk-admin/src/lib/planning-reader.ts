@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
@@ -129,6 +129,8 @@ export interface Plan {
     reason: string;
   }>;
   retrospective?: RetroData;
+  /** `audit.md`, when the audit step wrote one. */
+  audit?: RetroData;
   /** Every `kind: paper` document, in filename order, with its body. Absent when there are none. */
   papers?: PaperEntry[];
   /**
@@ -214,6 +216,7 @@ const DOC_FILES = [
   "impl.md",
   "falsification.md",
   "retrospective.md",
+  "audit.md",
 ] as const;
 
 /**
@@ -289,8 +292,16 @@ async function readPlanFolder(
   projectRoot?: string,
 ): Promise<Plan> {
   const docs = await Promise.all(DOC_FILES.map((f) => readDoc(planDir, f)));
-  const [research, brief, testPlan, adr, impl, _falsification, retrospective] =
-    docs;
+  const [
+    research,
+    brief,
+    testPlan,
+    adr,
+    impl,
+    _falsification,
+    retrospective,
+    audit,
+  ] = docs;
   const malformed = docs.some((d) => isMalformed(d));
   const rawDocuments: Record<string, string> = {};
   for (let i = 0; i < docs.length; i++) {
@@ -401,6 +412,7 @@ async function readPlanFolder(
       retrospective !== null && !isMalformed(retrospective)
         ? retrospective
         : undefined,
+    ...(audit !== null && !isMalformed(audit) ? { audit } : {}),
     ...(malformed ? { malformed: true, rawDocuments } : {}),
   };
 }
@@ -506,6 +518,40 @@ export async function readProjectWorktrees(projectRoot: string): Promise<
  * Read every plan in `.indusk/planning/archive/`. Returns the same `Plan` shape
  * as `readActivePlans` but with `archived: true`.
  */
+/**
+ * Archived plans, read once per change to the archive: the read is the
+ * slowest on every page (over two seconds on dusk's), and an archived plan's
+ * folder changes only when a plan is archived or a file in it is written. The
+ * key is the archive's mtime and, for each plan, the newest mtime of its
+ * folder and the files in it: a file edited in place leaves its folder's
+ * mtime alone, and served the old text (brief-as-the-contract A29).
+ */
+/** The newest mtime of `dir` and of what it holds, two levels down (an archived plan is flat, with a few folders). */
+function newestMtime(dir: string, depth = 2): number {
+  let newest = 0;
+  try {
+    newest = statSync(dir).mtimeMs;
+    if (depth === 0) return newest;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      newest = Math.max(
+        newest,
+        entry.isDirectory()
+          ? newestMtime(path, depth - 1)
+          : statSync(path).mtimeMs,
+      );
+    }
+  } catch {
+    // a file gone between the listing and the stat: the key reads it as it is
+  }
+  return newest;
+}
+
+const archivedCache = new Map<
+  string,
+  { key: string; plans: Promise<Plan[]> }
+>();
+
 export async function readArchivedPlans(projectRoot: string): Promise<Plan[]> {
   const archiveDir = join(projectRoot, PLANNING_DIR, ARCHIVE_DIR);
   if (!existsSync(archiveDir)) return [];
@@ -514,6 +560,22 @@ export async function readArchivedPlans(projectRoot: string): Promise<Plan[]> {
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
     .sort();
+  const key = [archiveDir, ...folders.map((f) => join(archiveDir, f))]
+    .map((dir) => (dir === archiveDir ? newestMtime(dir, 0) : newestMtime(dir)))
+    .join(",");
+  const cached = archivedCache.get(projectRoot);
+  if (cached?.key === key) return cached.plans;
+  const plans = readArchivedFolders(projectRoot, archiveDir, folders);
+  archivedCache.set(projectRoot, { key, plans });
+  plans.catch(() => archivedCache.delete(projectRoot));
+  return plans;
+}
+
+async function readArchivedFolders(
+  projectRoot: string,
+  archiveDir: string,
+  folders: string[],
+): Promise<Plan[]> {
   const boundaries = await readProjectBoundaries(projectRoot);
   return Promise.all(
     folders.map((name) =>

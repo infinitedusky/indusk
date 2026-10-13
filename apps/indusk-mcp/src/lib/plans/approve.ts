@@ -1,8 +1,9 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { git, headSha } from "../git.js";
 import { checkPlanContract } from "../promises/contract.js";
 import { contractDir } from "../promises/registry.js";
+import { approvalFrontmatter, approvedBy, unapprovedMockups } from "./approved-brief.js";
 import { statusPaths } from "./bookkeeping.js";
 import {
 	branchChanges,
@@ -61,10 +62,34 @@ export async function approvePlan(anyCheckout: string, plan: string): Promise<Ap
 		);
 	}
 
+	const briefFile = join(pb.dir, "brief.md");
+	const brief = existsSync(briefFile) ? readFileSync(briefFile, "utf-8") : null;
+	if (brief !== null) await refuseUnapprovedLooks(pb.plan, pb.worktree, brief);
+
 	await refuseDirtyTrunk(pb, paths, `before approving ${plan}`);
-	await setImplKeys(pb, impl, { status: "approved" }, `plan(${plan}): impl approved`);
+	await setImplKeys(
+		pb,
+		impl,
+		{
+			status: "approved",
+			...(brief === null ? {} : approvalFrontmatter(brief, await approvedBy(pb.trunk), new Date())),
+		},
+		`plan(${plan}): impl approved`,
+	);
 	const merge = await mergeIntoTrunk(pb, `plan(${plan}): approved — its documents and promises`);
 	return { plan, merge, paths };
+}
+
+/** Refuse, naming each, when a mockup the brief makes, changes or replaces is not yet approved in the plan's worktree. */
+async function refuseUnapprovedLooks(plan: string, root: string, brief: string): Promise<void> {
+	const proposed = await unapprovedMockups(root, brief);
+	if (proposed.length === 0) return;
+	throw new PlanCommandRefusal(
+		[
+			`${plan} cannot be approved; its brief's looks are not approved yet:`,
+			...proposed.map((r) => `  ${r}`),
+		].join("\n"),
+	);
 }
 
 /**
@@ -87,7 +112,16 @@ async function approveWorkbenchPlan(wp: WorkbenchPlan): Promise<ApprovedPlan> {
 			].join("\n"),
 		);
 	}
-	writeFileSync(impl, setFrontmatterKeys(readFileSync(impl, "utf-8"), { status: "approved" }));
+	// The looks are read where a workbench keeps them: the root's mockups.
+	const briefFile = join(wp.dir, "brief.md");
+	const brief = existsSync(briefFile) ? readFileSync(briefFile, "utf-8") : null;
+	if (brief !== null) await refuseUnapprovedLooks(wp.plan, wp.root, brief);
+	const record =
+		brief === null ? {} : approvalFrontmatter(brief, await approvedBy(wp.root), new Date());
+	writeFileSync(
+		impl,
+		setFrontmatterKeys(readFileSync(impl, "utf-8"), { status: "approved", ...record }),
+	);
 	// The root commits the contract only while it is the workbench's shadow; a
 	// repo's own contract is written and committed in the repo (D4).
 	const promises = contractDir(wp.root, wp.plan);

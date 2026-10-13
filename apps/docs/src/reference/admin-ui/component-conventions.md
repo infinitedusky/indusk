@@ -138,8 +138,7 @@ The plan page grew fast during admin-ui-phase-progress and its cleanup phase set
 | Piece | Home | Rule |
 |---|---|---|
 | The rows table (ID / Asserts / State, plus Writable at / Passes at for the Implementation Plan) | `components/phases/TrajectoryRowsTable.tsx` | one table, an optional pair of phase columns; it was written three times before it had a name |
-| A ritual phase's section (Falsification, Cleanup) | `components/phases/RitualPhaseSection.tsx` | one component, two configurations; `CleanupSection` and the phase branch of `FalsificationSection` are one-liners over it; its headings come from `RITUAL_COPY` and so does the copied markdown (`ritualPhaseMarkdown`), so the page and the copy button agree |
-| The progress lines and the active-phase derivation | `components/bars/ProgressLines.tsx` | `PlanDetail` composes sections and holds no derivation; `activePhaseOf` / `activePhaseLabel` live with the lines they feed |
+| The progress lines and the active-phase derivation | `components/bars/ProgressLines.tsx` | the plan page composes parts and holds no derivation; `activePhaseOf` / `activePhaseLabel` live with the lines they feed |
 | Display vocabulary — position, activity and stage labels, `phaseTitle`, `RITUAL_COPY` | `components/bars/labels.ts` | `satisfies Record<…>` over the lifecycle's unions |
 | Project-level reads — `.indusk/config.json`, `<home>/eval/`, the phase-boundary record | `lib/project-reader.ts` | project facts, not plan-folder facts; config is read through the package's `./config` subpath, never parsed by hand |
 | Plan-folder reads | `lib/planning-reader.ts` | documents, trajectory, papers, position |
@@ -251,7 +250,7 @@ beforeEach(() => {
 });
 ```
 
-See `apps/indusk-admin/src/components/PlanDetail.test.tsx` for a reference implementation.
+See `apps/indusk-admin/src/components/PlanList.test.tsx` for a reference implementation.
 
 ### Trajectory-row fixtures carry both kind fields
 
