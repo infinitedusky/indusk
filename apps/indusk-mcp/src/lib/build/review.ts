@@ -5,7 +5,9 @@ import { isAuditSkipped, isCleanupSkipped } from "../cleanup/gate.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
 import { type ImplPhase, parseImplString } from "../impl-parser-core.js";
 import { RITUAL_ORDER } from "../lifecycle.js";
+import { type Amendment, amendmentOfDecision, amendmentsOf } from "../plans/amendments.js";
 import { uncommittedWork } from "../plans/bookkeeping.js";
+import { readHistory } from "../plans/history.js";
 import { branchFileChanges } from "../plans/plan-branch.js";
 import { workbenchPlan } from "../plans/workbench-plan.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
@@ -65,6 +67,18 @@ export interface Review {
 	 * since landing refuses it (Build Phase 10).
 	 */
 	uncommittedOnMain: string[];
+	/**
+	 * What was agreed and changed (brief-as-the-contract ADR decision 6):
+	 * each amendment a person approved, from the plan's history, with what it
+	 * was and what it became; those still waiting; and why the waiting ones
+	 * cannot be told, when they cannot. Absent from a review an older
+	 * `indusk` printed, so a reader takes absence as none.
+	 */
+	amendments?: {
+		approved: Array<Amendment & { by: string; at: string }>;
+		waiting: Amendment[];
+		unreadable: string | null;
+	};
 }
 
 export async function buildReview(anyCheckout: string, plan: string): Promise<Review> {
@@ -118,6 +132,7 @@ export async function buildReview(anyCheckout: string, plan: string): Promise<Re
 		]
 			.filter((r) => r.check.skipped)
 			.map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" })),
+		amendments: await reviewAmendments(anyCheckout, plan, copy.dir),
 		skips: impl.phases.flatMap((phase) =>
 			phase.gates.flatMap((g) =>
 				g.items
@@ -152,6 +167,22 @@ function reviewPromises(
 		rows: p.rows,
 		why: p.refusal,
 	}));
+}
+
+async function reviewAmendments(
+	anyCheckout: string,
+	plan: string,
+	dir: string,
+): Promise<NonNullable<Review["amendments"]>> {
+	const approved = readHistory(anyCheckout, plan).flatMap((e) => {
+		const a = amendmentOfDecision(e.decision);
+		return a ? [{ ...a, by: e.by, at: e.at }] : [];
+	});
+	try {
+		return { approved, waiting: await amendmentsOf(dir), unreadable: null };
+	} catch (err) {
+		return { approved, waiting: [], unreadable: (err as Error).message };
+	}
 }
 
 async function changedFiles(trunk: string, branch: string): Promise<Review["files"]> {

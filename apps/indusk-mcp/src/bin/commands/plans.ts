@@ -14,6 +14,7 @@ import {
 	approvePlan,
 	landPlan,
 	PlanCommandRefusal,
+	reapprovePlan,
 	startPlan,
 } from "../../lib/plans/index.js";
 import { resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
@@ -179,10 +180,13 @@ export function plansAmendments(
 		if (dir === undefined) {
 			const copies = await resolvePlanCopies(cwd);
 			if (!copies.ok) {
-				throw new PlanCommandRefusal(`the worktree record ${copies.file} cannot be read: ${copies.problem}`);
+				throw new PlanCommandRefusal(
+					`the worktree record ${copies.file} cannot be read: ${copies.problem}`,
+				);
 			}
 			const copy = copies.copies.get(name);
-			if (!copy) throw new PlanCommandRefusal(`no plan named ${name}, on the trunk or in a worktree`);
+			if (!copy)
+				throw new PlanCommandRefusal(`no plan named ${name}, on the trunk or in a worktree`);
 			dir = copy.dir;
 		}
 		let amendments: Amendment[];
@@ -194,7 +198,24 @@ export function plansAmendments(
 		}
 		if (opts.json) return JSON.stringify(amendments);
 		if (amendments.length === 0) return `${name}: nothing waits — the brief is the one approved`;
-		return [`${name}: ${amendments.length} amendment(s) wait on the person:`, ...amendments.map((a) => `  ${describeAmendment(a)}`)].join("\n");
+		return [
+			`${name}: ${amendments.length} amendment(s) wait on the person:`,
+			...amendments.map((a) => `  ${describeAmendment(a)}`),
+		].join("\n");
+	});
+}
+
+/** `indusk plans reapprove <name>` — the person approves the amendments an approved plan waits on. */
+export function plansReapprove(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const r = await reapprovePlan(cwd, name);
+		if (r.amendments.length === 0) {
+			return `${r.plan}: no amendment waited; its brief is recorded as approved (${r.approvedBrief.slice(0, 8)}).`;
+		}
+		return [
+			`Approved ${r.amendments.length} amendment(s) to ${r.plan}; its brief is recorded as approved (${r.approvedBrief.slice(0, 8)}) and the build goes on:`,
+			...r.amendments.map((a) => `  ${describeAmendment(a)}`),
+		].join("\n");
 	});
 }
 
@@ -225,6 +246,18 @@ function describeReview(r: Review): string {
 		lines.push("", `${f.phase}:`);
 		for (const row of f.rows) lines.push(`  ${row.id} (${row.state}) ${row.asserts}`);
 		for (const item of f.items) lines.push(`  ${item.done ? "[x]" : "[ ]"} ${item.text}`);
+	}
+	const amended = r.amendments;
+	if (
+		amended &&
+		(amended.approved.length > 0 || amended.waiting.length > 0 || amended.unreadable)
+	) {
+		lines.push("", "Amendments:");
+		for (const a of amended.approved)
+			lines.push(`  ✓ ${describeAmendment(a)} — approved by ${a.by}, ${a.at}`);
+		for (const a of amended.waiting)
+			lines.push(`  … ${describeAmendment(a)} — waiting on the person`);
+		if (amended.unreadable) lines.push(`  ? cannot be told: ${amended.unreadable}`);
 	}
 	lines.push("", `Files changed: ${r.files.length}`);
 	for (const f of r.files) lines.push(`  ${f.status} ${f.path}`);

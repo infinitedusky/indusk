@@ -1045,6 +1045,16 @@ plansCmd
 	});
 
 plansCmd
+	.command("reapprove <name>")
+	.description(
+		"Approve the amendments an approved plan waits on: its brief is checked again, recorded as the one approved, and each amendment written to the plan's history",
+	)
+	.action(async (name: string) => {
+		const { plansReapprove } = await import("./commands/plans.js");
+		await plansReapprove(process.cwd(), name);
+	});
+
+plansCmd
 	.command("review <name>")
 	.description(
 		"What a built plan's review shows: each promise with the tests that prove it, what falsification found and fixed, the files changed, every skipped gate item",
