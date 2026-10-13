@@ -120,3 +120,5 @@ a look) — a new plan's brief, written after this one lands.
 - Nested-context probe (`vitest --config vitest.e2e.config.ts context-tiers`): 4/4 passing.
 - `day-monitor.e2e.test.ts` A24 fails here and identically on main (it expects the evaluator's error text "issue with the selected model", which the current model does not produce) — not this plan's.
 - `indusk promises confirm`: ten promises enforced; `a-plan-builds-only-after-approval` re-changed to its brief sentence. The registry check then caught an approved plan (`cockpit-audit-fixes`) refused by the Looks rule after A34; fixed in Build Phase 8 as A37 before landing.
+
+Landed on main at a31a0742, 2026-10-13. Installed locally (`pnpm install:local`, indusk 1.70.0); nothing published — publishing is deliberate (`indusk release`).
