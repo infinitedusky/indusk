@@ -30,7 +30,7 @@ a promise file per look, a new promise kind for looks, re-running `plans approve
 a contract the person can read in one place, a build that cannot quietly leave it, and a way to start that asks for nothing until there is something to name,
 
 **Accepting:**
-that the brief must be good enough to carry the whole contract, that approval of a story can only happen at the build, and that an amendment run from the terminal is the person's by convention, as `plans approve` already is,
+that the brief must be good enough to carry the whole contract, that a new component is drawn twice (as its own mockup before the build, as its story during it), and that an amendment run from the terminal is the person's by convention, as `plans approve` already is,
 
 **Because:**
 each rule reuses something that already holds — the approval record is append-only and already keeps the old version, the brief already has a shape a program reads, `check-gates` already stops a build item on a plan that is not approved — so the change is to what they are asked, not new machinery.
@@ -45,8 +45,9 @@ the four open questions research left.
 
 1. **A brief's Looks section has the Promises section's shape.** `## Looks`
    with `### This plan makes`, `### Existing looks` (**Must not break**,
-   **Changes**, **Replaces**) and `None — {reason}`; each entry a look's name
-   (`plan.working`, or a story `badge.ok`). It follows `## Promises` in the
+   **Changes**, **Replaces**) and `None — {reason}`; each entry a mockup's name
+   — a screen (`plan.working`) or a new component drawn on its own
+   (`chip.waiting`), never a story without a mockup (decision 4a). It follows `## Promises` in the
    template; `parseBriefContract` returns it as `looks`. A brief with no such
    section stays valid (A22): the section is required only by decision 2.
 
@@ -75,11 +76,25 @@ the four open questions research left.
    `approved_brief: <sha256 of brief.md>` with `approved_by` and `approved_at`
    to the impl's frontmatter (beside the `status: approved` it sets), and
    refuses, naming the look, when a **mockup** its brief makes, changes or
-   replaces is not approved in that worktree's record. A **story** it names is
-   exempt: it cannot be approved before the component exists, and the build
-   pauses for it (storybook-components Build Phase 5). The review (`buildReview`)
+   replaces is not drawn, or not approved, in that worktree's record. No look
+   is exempt: a new component is named by its own mockup (decision 4a), which
+   can be approved before the component exists. The review (`buildReview`)
    shows the test plan, ADR and impl as evidence beside the approval, with no
    control to sign them off.
+
+4a. **A story is never named without a mockup.** A story's snapshot is
+   rendered from the real component, so it cannot be approved before the
+   build. A new component is therefore drawn as its own mockup,
+   `screens/<component>.<state>.html` declaring itself with `<meta
+   name="indusk-new-components">`, one per state, and the brief names it
+   beside the screen mockups that use it; those screens draw it inline under
+   the same declaration until its story exists. The mockup is approved before
+   the plan; the story, the same name built, is approved against it during
+   the build. `plans accept` refuses a plan while a new component its brief
+   names has no approved story, or a mockup its brief names still draws a
+   component inline or composes one not approved, naming each
+   (`a-new-component-ends-its-plan-with-a-story`). Decided 2026-10-12 in
+   Build Phase 2, when the gate as first built let an undrawn name through.
 
 5. **An amendment is the brief's difference from what was approved.** A pure
    function, `amendmentsOf(plan)`, compares the brief's three parts and each
@@ -168,7 +183,8 @@ needs none of that.
 - Approval reads the impl's `Files Affected`, which is a plan's own
   statement; a plan that writes none, or the wrong ones, passes the first
   check and is caught by the second, at acceptance.
-- A story named in a brief can be approved only at the build.
+- A new component is drawn twice: as its mockup before approval, as its story
+  during the build.
 - `reapprove` from a terminal trusts the person at the keyboard, like `approve`.
 
 ### Risks

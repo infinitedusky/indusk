@@ -67,6 +67,8 @@ A person works on one document, the brief â€” promises, expectations and looks â
 | A20 | A conversation not kept leaves no file in any checkout or branch of the project; it is listed on the page as a draft that can be reopened or discarded | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-conversation-that-is-not-kept-leaves-nothing-in-the-repository | apps/indusk-mcp/src/__tests__/drafts.test.ts |
 | A21 | A kept conversation that makes promises or looks becomes a plan with a brief; one that makes neither becomes a research-only plan with no brief | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-conversation-that-is-not-kept-leaves-nothing-in-the-repository | apps/indusk-mcp/src/__tests__/drafts.test.ts |
 | A22 | A brief written before this rule, with no looks section, is still approved when its plan changes nothing under an app's interface | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over every plan already written | apps/indusk-mcp/src/__tests__/brief-looks.test.ts |
+| A24 | Approving a plan whose brief names a look that is not drawn in its worktree is refused, naming the look; a new component is named by its own mockup, so no name is exempt | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-plan-is-approved-with-its-looks-approved | apps/indusk-mcp/src/__tests__/plans-approve-looks.test.ts |
+| A25 | Accepting a plan is refused while a new component its brief names has no approved story, or a mockup its brief names still draws a component inline or composes one not approved, naming each; once the stories are approved the same plan is accepted | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-new-component-ends-its-plan-with-a-story | apps/indusk-mcp/src/__tests__/plans-accept-stories.test.ts |
 | A23 | Starting a plan from the terminal (`indusk plans start`) works as before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the form goes, the command stays | apps/indusk-mcp/src/__tests__/plans-approve-looks.test.ts |
 
 ### Deferred Verification
@@ -264,11 +266,14 @@ A person works on one document, the brief â€” promises, expectations and looks â
   - Result: 8 files reviewed (5 code, 3 tests); one finding (below), one left as-is.
 - [x] Shape (`apps/indusk-mcp/src/lib/plans/approve.ts`) â€” name the mockup-approval refusal as a function (`refuseUnapprovedLooks`) instead of an inline block inside `approvePlan`. Rule: Should this inline block have been a named function? (shape: intra-unit naming)
 - [x] Shape (`apps/indusk-mcp/src/lib/plans/approved-brief.ts`) â€” reviewed, left as-is: one concern, the approval record (hash, who, frontmatter, what approval waits on, standing); `approvedBy` repeats `approver` in `looks/approve.ts`, which the write-side rule keeps out of `lib/plans` imports, so that duplication is cross-file and left to /cleanup
+- [ ] Discovered: `plans approve` refuses a look its brief names that is not drawn in the worktree, naming it, as it refuses a proposed one; no name is exempt, since a new component is named by its own mockup (ADR decision 4a). Supersedes the "not held" decision on the gate item above (A24)
+- [ ] Discovered: the planner skill, the brief template and the planning rules template say a story is never named without a mockup: a new component is drawn as its own mockup (`screens/<component>.<state>.html`, declared with `indusk-new-components`) and named in the brief beside the screens that use it
 
 #### Build Phase 2 Verification
 
 - [x] A4, A7, A8 and A9 pass and A6 still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/look-ownership.test.ts src/__tests__/plans-approve-looks.test.ts`); the package's looks tests and `plans` tests pass; tsc and biome clean on changed files
   - Result: `pnpm build` clean; `look-ownership.test.ts` (A4, A6, A7 and the overview's plan) and `plans-approve-looks.test.ts` (A8, A9, A23) and `approved-brief.test.ts` pass, 10 tests; `vitest related` over the 5 changed source files ran 21 files, 153 tests, all green (one `release-incident.test.ts` A12 timed out at 5s under the parallel load and passed 6 of 6 alone); tsc clean in `indusk-mcp` and `indusk-admin`; biome clean on changed files.
+- [ ] A24 passes and A8, A9 still pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/plans-approve-looks.test.ts src/__tests__/approved-brief.test.ts`); `indusk promises contract brief-as-the-contract` passes; tsc and biome clean on changed files
 
 #### Build Phase 2 Context
 
@@ -287,11 +292,12 @@ A person works on one document, the brief â€” promises, expectations and looks â
 - [ ] `indusk plans reapprove <name>`: refused before approval; runs the contract check; sets `approved_brief` to the current hash; appends each amendment (what it was, what it is, by, at) to `plan-history/<plan>.md`
 - [ ] `apps/indusk-admin/src/app/api/plans/[name]/reapprove/route.ts`: `adminOnly` first, then the same `Sec-Fetch-Site: same-origin` guard the look approval has; calls `reapprove` through the package
 - [ ] `indusk promises change a-plan-builds-only-after-approval --plan brief-as-the-contract --statement "A plan leaves draft only through indusk plans approve, and no build item is checked off on a plan that is not approved or that has an amendment waiting." --reason "an amendment waits for the person"`
+- [ ] `plans accept` refuses, naming each, while a new component the brief names (a mockup declaring itself in `indusk-new-components`) has no approved story of the same name, or a mockup the brief names still draws a component inline or composes one not approved (`unapprovedUses`); the message names approving the story on the Looks page and placing it with `<indusk-component>` as the way forward (A25, ADR decision 4a)
 - [ ] Shape â€” review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 3 Verification
 
-- [ ] A11, A12 and A13 pass and A14 still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/amendments.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/amendment-approval.test.ts`); the hooks' tests (`apps/indusk-mcp/hooks`) pass; `indusk promises check` passes; tsc and biome clean on changed files
+- [ ] A11, A12, A13 and A25 pass and A14 still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/amendments.test.ts src/__tests__/plans-accept-stories.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/amendment-approval.test.ts`); the hooks' tests (`apps/indusk-mcp/hooks`) pass; `indusk promises check` passes; tsc and biome clean on changed files
 
 #### Build Phase 3 Context
 
@@ -305,7 +311,7 @@ A person works on one document, the brief â€” promises, expectations and looks â
 
 **Tier**: med â€” the work step's default
 
-- [ ] Draw the mockups for the looks the brief already lists (`plan.parts`, `plan.drafts`, `plan.new`, and the changed `plan.needs-you`, `plan.working`, `plan.released`) on the admin's foundation composed of its components
+- [ ] Draw the mockups for the looks the brief already lists (`plan.parts`, `plan.drafts`, `plan.new`, and the changed `plan.needs-you`, `plan.working`, `plan.released`) on the admin's foundation composed of its components; any component they need that has no story is drawn as its own mockup, one per state, and named in the brief (ADR decision 4a)
 - [ ] **Pause for a person**: Sandy approves this plan's mockups on the Looks page and the amendment on the plan page (Deferred Verification U1)
 - [ ] `apps/indusk-mcp/src/lib/plans/parts.ts`, exported as `./plans/parts`: for a plan, its promises (the registry rows it owns), expectations (parsed from the brief) and looks (the brief's list joined to `looks/overview`'s approval, with `plan`); the amendments waiting
 - [ ] `apps/indusk-admin/src/components/plan/PlanParts.tsx`: promises, expectations and looks as three parts with names and states first, each look drawn at the reference devices with the Looks page's frame and proposed until approved there, the brief one link below, and each waiting amendment with Approve calling `plans reapprove`'s route
@@ -373,4 +379,4 @@ A person works on one document, the brief â€” promises, expectations and looks â
 ## Notes
 - This plan's own looks (`plan.parts`, `plan.drafts`, `plan.new`, and the changed `plan.*` screens) were listed in its brief at Build Phase 1, once the check fired on this plan's own Files Affected; Sandy approves their mockups in Build Phase 4.
 - `plans reapprove` from a terminal is the person's by convention, as `plans approve` is; only the cockpit's route is guarded by the browser's fetch metadata.
-- A story named in a brief is exempt from the mockup-approved gate: it is approved at the build, as storybook-components Build Phase 5 was.
+- A story is never named in a brief without a mockup (ADR decision 4a, 2026-10-12): a new component is drawn as its own mockup and approved before the plan; its story is approved against it during the build, and `plans accept` holds the plan until it is.

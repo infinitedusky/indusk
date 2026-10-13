@@ -71,10 +71,12 @@ promises (ui-promises research decision, 2026-10-10).
 
 ### A story cannot be pre-approved
 
-A story's snapshot is rendered from the real component, so a story named in a
-brief cannot be approved before the component exists: the brief names it with a
-draft mockup that carries the approval, or in words, and the build pauses for
-the person when the story exists (storybook-components Build Phase 5).
+A story's snapshot is rendered from the real component, so a story cannot be
+approved before the component exists. A new component is therefore drawn as
+its own mockup in the brief, approved before the plan, and its story is
+approved against that mockup during the build (ADR decision 4a). A story is
+never named without a mockup; the earlier "or in words" path was dropped
+2026-10-12.
 
 ### Verification is only half built
 

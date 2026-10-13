@@ -28,12 +28,13 @@ workflow: feature
 1. **`a-brief-lists-its-looks`** (state). A brief lists the looks it makes, changes, replaces or must not break, or says why it has none, and a plan that changes files under an app's interface with none listed is refused at approval.
 2. **`a-look-has-the-plan-that-owns-it`** (state). Every approved look records the plan that made or last changed it, and that plan's page shows its looks beside its promises.
 3. **`a-changed-look-keeps-its-history`** (state). A plan that redraws an existing look says so in its brief; the approved version stays the one held until a person approves the new one, and the record keeps both with the plan that changed it.
-4. **`a-plan-is-approved-with-its-looks-approved`** (state). A plan is approved only after a person has approved each look its brief names, and one still proposed is named in the refusal.
+4. **`a-plan-is-approved-with-its-looks-approved`** (state). A plan is approved only after a person has approved each look its brief names, every screen and every new component drawn as its own mockup, and a look still proposed or not yet drawn is named in the refusal.
 5. **`approval-is-of-the-brief`** (state). A person's approval covers the brief — its expectations, promises and looks — while the test plan, the ADR and the impl are shown at review as evidence, not signed off.
 6. **`a-change-to-what-was-agreed-needs-the-person`** (state). A change during the build to a promise's statement, an expectation or a look updates the brief and waits for a person's approval before the build goes on.
 7. **`a-plan-page-shows-the-parts-of-its-brief`** (state). A plan's page shows its promises, its expectations and its looks, each updated as the agent writes them while a person works with it there, with the brief itself one click below.
 8. **`a-plan-starts-as-a-conversation`** (state). A person starts a plan by talking to the agent with nothing asked of them first, and the plan is named, once what it promises and how it looks are clear, by the agent's proposal and the person's acceptance.
 9. **`a-conversation-that-is-not-kept-leaves-nothing-in-the-repository`** (state). A conversation that has not become a plan is held only outside the repository, as a draft a person can reopen or discard, and accepting its name makes it a plan — with a brief when it makes promises or looks, with research alone when it does not.
+10. **`a-new-component-ends-its-plan-with-a-story`** (state). A new component a brief names is drawn as its own mockup before approval, and its plan is accepted only once the component's story is approved and every mockup the brief names composes only approved stories.
 
 ### Existing promises
 
