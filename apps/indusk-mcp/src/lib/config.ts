@@ -367,7 +367,7 @@ export const DEFAULT_SWEEP_TTL_MINUTES = 7 * 24 * 60;
 
 /** Default dead-draft age threshold for `indusk plans archive-dead`. */
 export const DEFAULT_DEAD_DRAFT_DAYS = 30;
-/** Default age after which `indusk plans archive-dead` discards an untouched draft conversation. */
+/** Default age after which `indusk plans archive-dead` archives an untouched draft conversation. */
 export const DEFAULT_DRAFT_MAX_AGE_DAYS = 30;
 
 /** Read `agents.sweep_ttl_minutes` with the 7-day default. Defaults live here, in the reader. */

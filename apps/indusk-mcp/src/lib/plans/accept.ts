@@ -114,20 +114,20 @@ interface LooksWhere {
  * person approves it — not accepting over the gap. A brief written before
  * promises were part of one is not held to it, as at approval.
  */
-async function refuseUnlistedInterfaceChanges(pb: LooksWhere): Promise<void> {
-	const briefPath = join(pb.dir, "brief.md");
+async function refuseUnlistedInterfaceChanges(where: LooksWhere): Promise<void> {
+	const briefPath = join(where.dir, "brief.md");
 	if (!existsSync(briefPath)) return;
 	const brief = parseBriefContract(readFileSync(briefPath, "utf-8"));
 	if (brief.shape !== "contract" || listsALook(brief.looks)) return;
-	const changed = await branchFileChanges(pb.trunk, pb.trunkBranch, pb.branch);
+	const changed = await branchFileChanges(where.trunk, where.trunkBranch, where.branch);
 	const files = interfaceFilesAmong(
-		pb.mockups,
+		where.mockups,
 		changed.map((f) => f.path),
 	);
 	if (files.length === 0) return;
 	const said = brief.looks === null ? "has no Looks section" : "says None for its looks";
 	throw new PlanCommandRefusal(
-		`${pb.plan} changed ${describeInterfaceFiles(files)}, which changes how something looks, and its brief ${said} — amend the brief to list each look the change makes, changes or replaces, and have a person approve the amendment, before the plan is accepted`,
+		`${where.plan} changed ${describeInterfaceFiles(files)}, which changes how something looks, and its brief ${said} — amend the brief to list each look the change makes, changes or replaces, and have a person approve the amendment, before the plan is accepted`,
 	);
 }
 
@@ -138,14 +138,14 @@ async function refuseUnlistedInterfaceChanges(pb: LooksWhere): Promise<void> {
  * by the story from here on. Each refusal is named; the way forward is the
  * Looks page and `<indusk-component>`.
  */
-async function refuseStoriesWaiting(pb: LooksWhere): Promise<void> {
-	const briefPath = join(pb.dir, "brief.md");
+async function refuseStoriesWaiting(where: LooksWhere): Promise<void> {
+	const briefPath = join(where.dir, "brief.md");
 	if (!existsSync(briefPath)) return;
-	const waiting = await storiesWaiting(pb.mockups, readFileSync(briefPath, "utf-8"));
+	const waiting = await storiesWaiting(where.mockups, readFileSync(briefPath, "utf-8"));
 	if (waiting.length === 0) return;
 	throw new PlanCommandRefusal(
 		[
-			`${pb.plan} cannot be accepted; a new component it names has not ended in an approved story:`,
+			`${where.plan} cannot be accepted; a new component it names has not ended in an approved story:`,
 			...waiting.map((r) => `  ${r}`),
 			"Approve each story on the cockpit's Looks page, then place the component with <indusk-component> in each mockup that draws it, and have those mockups approved again.",
 		].join("\n"),
