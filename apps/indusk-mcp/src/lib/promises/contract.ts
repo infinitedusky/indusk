@@ -14,6 +14,12 @@ import {
 	sameSentence,
 } from "./brief-contract.js";
 import {
+	describeInterfaceFiles,
+	filesAffectedOf,
+	interfaceFilesAmong,
+	listsALook,
+} from "./interface-files.js";
+import {
 	type PlanFolder,
 	planFileRel,
 	planFolderPath,
@@ -219,6 +225,28 @@ function existingRefusals(brief: BriefContract, byName: Map<string, PromiseEntry
 	return out;
 }
 
+// promise: a-brief-lists-its-looks
+/**
+ * A plan whose impl names files under an app's interface changes how
+ * something looks, so its brief lists the look or says why there is none.
+ * A brief with no Looks section is read as having done neither.
+ */
+function lookRefusals(planRoot: string, brief: BriefContract, implText: string | null): string[] {
+	if (implText === null || listsALook(brief.looks)) return [];
+	if (brief.looks !== null && brief.looks.none !== null && brief.looks.none !== "") return [];
+	const files = interfaceFilesAmong(planRoot, filesAffectedOf(implText));
+	if (files.length === 0) return [];
+	const missing =
+		brief.looks === null
+			? 'the brief has no "## Looks" section'
+			: brief.looks.none === ""
+				? 'the brief says "None" for its looks without the reason'
+				: "the brief lists no look";
+	return [
+		`the impl's Files Affected names ${describeInterfaceFiles(files)}, which changes how something looks, and ${missing} — list each look under "## Looks" (### This plan makes, or ### Existing looks), or write "None — {reason}" there`,
+	];
+}
+
 // promise: every-test-says-what-it-is-for
 /**
  * What each row names, against the registry. `brief` is null for a plan
@@ -372,6 +400,11 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 				...madeRefusals(brief, plan, byName()),
 				...existingRefusals(brief, byName()),
 			]) {
+				refusals.push({ file: briefFile, message });
+			}
+		}
+		if (brief !== null) {
+			for (const message of lookRefusals(planRoot, brief, implText)) {
 				refusals.push({ file: briefFile, message });
 			}
 		}
