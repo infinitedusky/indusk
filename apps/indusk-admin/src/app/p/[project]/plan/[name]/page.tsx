@@ -38,17 +38,10 @@ interface PlanPageProps {
 }
 
 /**
- * Server component for `/p/{project}/plan/{name}`. Resolves the project's
- * path via the registry, reads every active + archived plan for that
- * project, finds the requested plan by folder name, and renders the plan's frame, parts and stage.
- *
- * The stale-project branch (path null OR deleted on disk) is handled by
- * the layout (`app/p/[project]/layout.tsx`) — it replaces its own output
- * with `<StaleProjectFailurePage>` in that case, so this page's rendered
- * element is never placed in the DOM. We early-return `null` when path is
- * stale so the page's own code doesn't trip on `readActivePlans` against
- * a deleted dir. `notFound()` is reserved for the genuinely plan-not-found
- * case (path OK, plan name wrong).
+ * Server component for `/p/{project}/plan/{name}`: renders the plan's frame,
+ * parts and stage. The plan comes from `readPlanPage` — null for a stale
+ * project (the layout replaces this page's output then), `notFound()` for a
+ * plan that does not exist.
  */
 export default async function PlanPage({ params }: PlanPageProps) {
   const { project, name } = await params;
