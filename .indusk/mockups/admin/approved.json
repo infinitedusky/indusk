@@ -2992,6 +2992,15 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-13T16:53:14.075Z",
 			"plan": "brief-as-the-contract"
+		},
+		{
+			"mockup": "part-section.open",
+			"mockupHash": "22b52563b07e736b527d3a1ec21ab13d3140b65dfa87e5186ca1ea543905735d",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-13T16:53:14.360Z",
+			"plan": "brief-as-the-contract"
 		}
 	]
 }
