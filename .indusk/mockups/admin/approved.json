@@ -2634,6 +2634,24 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-13T01:45:04.732Z"
+		},
+		{
+			"mockup": "plan.parts",
+			"mockupHash": "d2df0188f89101703d78e19f998a0ef320072686d40f9743bc9b99aa7402150f",
+			"componentsHash": "eb141e5d7b2afcb997c0ee9b5b77aa185b407e0201c66d080f234552cb70bad0",
+			"components": {
+				"nav.plan-current": "21cb8f858566fa837fe2c86be7c19e09977615b8129c70500d2d2dcb96b50e41",
+				"tag.default": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2",
+				"look-row.approved": "32a1f7841ed14ec4feeca9c0ad413530807519d0e88e7a44eb0367560481cb70",
+				"look-row.proposed": "6b252d278c6566a8b3752d88c92c8e076d9a2d6ff74a20dd9920c00ea5af6d84",
+				"look-row.css": "447f4b40b8f2b3c76e3ba9457fb20a7a6eef926484ed1cf7ffd1126af7bdd330",
+				"nav.css": "3e58b69ca4f3ed44c1625cb3f2fa018b672b1bc1a6b51e5912cfeb0a3f0772f2",
+				"tag.css": "30d7bf10c27edc0deecf29411b623d76dc69248619af47401101eaa7500bba2c"
+			},
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-13T01:45:04.864Z"
 		}
 	]
 }
