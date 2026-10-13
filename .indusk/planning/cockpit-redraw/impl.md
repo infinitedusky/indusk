@@ -1,13 +1,16 @@
 ---
 title: "cockpit-redraw — the nav from the original cockpit, the brief page drawn, re-approval a person's"
 date: 2026-10-13
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+approved_brief: "e738be9154dc4042dd598b3a82e9cc55e33f5f46df5136e97dfa6c2b2a542dc3"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-13T23:53:56.059Z"
 ---
 
 # cockpit-redraw
