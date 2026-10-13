@@ -22,16 +22,16 @@ export function WindowColumn({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const fit = () => {
+    const fitToWindow = () => {
       const top = Math.max(0, el.getBoundingClientRect().top);
       el.style.height = `${window.innerHeight - top}px`;
     };
-    fit();
-    window.addEventListener("scroll", fit, { passive: true });
-    window.addEventListener("resize", fit);
+    fitToWindow();
+    window.addEventListener("scroll", fitToWindow, { passive: true });
+    window.addEventListener("resize", fitToWindow);
     return () => {
-      window.removeEventListener("scroll", fit);
-      window.removeEventListener("resize", fit);
+      window.removeEventListener("scroll", fitToWindow);
+      window.removeEventListener("resize", fitToWindow);
     };
   }, []);
   return (
