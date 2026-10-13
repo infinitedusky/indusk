@@ -226,7 +226,10 @@ A person works on one document, the brief — promises, expectations and looks �
 - [x] `checkPlanContract` refuses, at approval, a plan whose impl's `Files Affected` names a path under an app's declared interface (`sources` in each `.indusk/mockups/<app>/screens.json`) while its brief lists no look and gives no reason, naming the paths and what is missing; a brief with no section and no such path is untouched
 - [x] `plans accept` runs the same check over the branch's diff against the trunk and refuses a plan whose brief says `None` but which changed those files, naming them; the message names the amendment as the way forward
 - [x] The planner skill (`apps/indusk-mcp/skills/planner.md`), the brief template (`templates/workflows/`) and the planning rules template (`templates/planning/CLAUDE.md`): the Looks section, the question "does this change how anything looks?" asked after the draft brief, a story named directly or with a draft mockup, and that approval waits on the mockups it names
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+  - Result: 11 files reviewed (6 code, 5 prose); one finding (below), one left as-is; the duplicated "no section or None" wording in `accept.ts` and `contract.ts` is cross-file and left to `/cleanup`.
+- [x] Shape (`apps/indusk-mcp/src/lib/promises/contract.ts`) — name what is missing from a brief's looks as a function (`lookGap`) instead of a nested ternary inside `lookRefusals`. Rule: Should this inline block have been a named function? (shape: intra-unit naming)
+- [x] Shape (`apps/indusk-mcp/src/lib/promises/interface-files.ts`) — reviewed, left as-is: `filesAffectedOf` is one parser with one reason to change and its cell regex is commented by its docblock; splitting it would name steps no test reaches separately
 
 #### Build Phase 1 Verification
 

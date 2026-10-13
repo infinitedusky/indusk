@@ -9,6 +9,7 @@ import {
 } from "../trajectory/validator.js";
 import {
 	type BriefContract,
+	type BriefLooks,
 	collapseSpace,
 	parseBriefContract,
 	sameSentence,
@@ -225,6 +226,13 @@ function existingRefusals(brief: BriefContract, byName: Map<string, PromiseEntry
 	return out;
 }
 
+/** What a brief's Looks section lacks when it lists no look and gives no reason. */
+function lookGap(looks: BriefLooks | null): string {
+	if (looks === null) return 'the brief has no "## Looks" section';
+	if (looks.none === "") return 'the brief says "None" for its looks without the reason';
+	return "the brief lists no look";
+}
+
 // promise: a-brief-lists-its-looks
 /**
  * A plan whose impl names files under an app's interface changes how
@@ -236,12 +244,7 @@ function lookRefusals(planRoot: string, brief: BriefContract, implText: string |
 	if (brief.looks !== null && brief.looks.none !== null && brief.looks.none !== "") return [];
 	const files = interfaceFilesAmong(planRoot, filesAffectedOf(implText));
 	if (files.length === 0) return [];
-	const missing =
-		brief.looks === null
-			? 'the brief has no "## Looks" section'
-			: brief.looks.none === ""
-				? 'the brief says "None" for its looks without the reason'
-				: "the brief lists no look";
+	const missing = lookGap(brief.looks);
 	return [
 		`the impl's Files Affected names ${describeInterfaceFiles(files)}, which changes how something looks, and ${missing} — list each look under "## Looks" (### This plan makes, or ### Existing looks), or write "None — {reason}" there`,
 	];
