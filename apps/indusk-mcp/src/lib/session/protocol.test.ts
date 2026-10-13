@@ -137,14 +137,18 @@ describe("A3 — a tool-use request arrives; allow lets it run, deny says no", (
 	});
 });
 
-describe("A4 — a planning session asks nothing; a build is judged in code", () => {
-	// Rewritten 2026-10-13 on Sandy's word ("way way way fewer accept deny … set it
-	// to dangerously"): A4 asserted a planning session asks before every write.
-	it("a planning session bypasses permission prompts, whatever the developer's own default is", () => {
+describe("A4 — a planning session is asked only outside its folder; a build is judged in code", () => {
+	// Rewritten 2026-10-13 twice. First on Sandy's word ("way way way fewer accept deny
+	// … set it to dangerously"): planning ran `bypassPermissions`. Then by the
+	// brief-as-the-contract falsification row A26: bypass let a draft's agent write
+	// into the repository unasked, so planning accepts edits and its requests are
+	// decided in code (permissions.test.ts), a write outside its folder reaching the person.
+	it("a planning session accepts edits and never bypasses permission prompts", () => {
 		const args = buildArgs("planning");
 		expect(
 			args.slice(args.indexOf("--permission-mode"), args.indexOf("--permission-mode") + 2),
-		).toEqual(["--permission-mode", "bypassPermissions"]);
+		).toEqual(["--permission-mode", "acceptEdits"]);
+		expect(args.join(" ")).not.toMatch(/bypassPermissions|dangerously/);
 		expect(args).toEqual(expect.arrayContaining(["--permission-prompt-tool", "stdio"]));
 	});
 
