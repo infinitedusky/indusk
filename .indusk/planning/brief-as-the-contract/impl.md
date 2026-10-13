@@ -272,7 +272,7 @@ A person works on one document, the brief — promises, expectations and looks �
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-mcp/src/lib/looks/CLAUDE.md`: an approval entry records the plan it was made in; the record stays append-only — guarded by `look-ownership.test.ts` (A4, A7)
+- [x] `apps/indusk-mcp/src/lib/looks/CLAUDE.md`: an approval entry records the plan it was made in; the record stays append-only — guarded by `look-ownership.test.ts` (A4, A7)
 
 #### Build Phase 2 Document
 
