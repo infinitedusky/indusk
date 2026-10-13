@@ -37,6 +37,37 @@ if (!filePath.endsWith("/impl.md") && !filePath.endsWith("\\impl.md")) {
 	process.exit(0);
 }
 
+/** The items `newPhases` has checked that `oldPhases` had not, by position. */
+function newlyCheckedIn(oldPhases, newPhases) {
+	const found = [];
+	for (let pi = 0; pi < newPhases.length; pi++) {
+		const newPhase = newPhases[pi];
+		const oldPhase = oldPhases[pi];
+		if (!oldPhase) continue;
+
+		for (let ii = 0; ii < newPhase.items.length; ii++) {
+			const newItem = newPhase.items[ii];
+			const oldItem = oldPhase.items[ii];
+			if (!oldItem) continue;
+
+			if (newItem.checked && !oldItem.checked) {
+				found.push({
+					phase: newPhase.number,
+					phaseKind: newPhase.kind,
+					ordinal: newPhase.ordinal,
+					phaseName: newPhase.name,
+					text: newItem.text,
+					gate: newItem.gate,
+				});
+			}
+		}
+	}
+	return found;
+}
+
+/** A build item: one the amendment gate holds (a test phase's authoring waits for nobody). */
+const isBuildItem = (item) => item.phaseKind !== "test";
+
 // Check for skip-gates escape hatch
 const newContent = toolInput.new_string ?? toolInput.content ?? "";
 
@@ -67,13 +98,52 @@ function readGatePolicy() {
 
 const gatePolicy = readGatePolicy();
 
+// promise: a-change-to-what-was-agreed-needs-the-person
+// The amendment gate is the person's, so nothing in the impl switches it off
+// (brief-as-the-contract ADR decision 5; audit finding 3). Two ways round it
+// are shut here, before the skip marker is read:
+//   - an edit that removes or changes `approved_brief:` on an approved plan —
+//     the gate runs only while the impl records it, so deleting the field would
+//     end it for every later checkoff. The field changes through `indusk plans
+//     reapprove`, a CLI write that passes no hook, never through an edit;
+//   - a `<!-- skip-gates -->` marker on an edit that checks a build item off
+//     while an amendment waits.
+const oldContent = toolInput.old_string ?? "";
+const approvedBriefOf = (text) =>
+	/^---\r?\n([\s\S]*?)\r?\n---/
+		.exec(text)?.[1]
+		?.match(/^approved_brief:[ \t]*["']?([0-9a-f]{64})/m)?.[1];
+let onDisk = null;
+try {
+	onDisk = readFileSync(filePath, "utf-8");
+} catch {
+	// a new file records no approval yet
+}
+const recordedBrief = onDisk === null ? undefined : approvedBriefOf(onDisk);
+if (recordedBrief) {
+	const after = applyEdit(onDisk);
+	if (after !== null && approvedBriefOf(after) !== recordedBrief) {
+		process.stderr.write(
+			`This edit ${approvedBriefOf(after) ? "changes" : "removes"} \`approved_brief:\` on an approved plan. That field records the brief a person approved, and the amendment gate reads it, so it changes only when a person approves an amendment: \`indusk plans reapprove <plan>\` (or Approve on the plan's page).\nlesson: a-plan-builds-only-after-approval\n`,
+		);
+		process.exit(2);
+	}
+}
+
 // In strict mode, skip-gates escape hatch is not allowed
 if (newContent.includes("<!-- skip-gates -->") && gatePolicy !== "strict") {
+	const after = recordedBrief ? applyEdit(onDisk) : null;
+	if (after !== null && newlyCheckedIn(parsePhases(onDisk), parsePhases(after)).some(isBuildItem)) {
+		const refusal = amendmentRefusal(filePath);
+		if (refusal) {
+			process.stderr.write(refusal);
+			process.exit(2);
+		}
+	}
 	process.exit(0);
 }
 
 // Detect checkbox transition: - [ ] → - [x]
-const oldContent = toolInput.old_string ?? "";
 
 // promise: a-plan-builds-only-after-approval
 // A plan leaves `draft` only through `indusk plans approve`, which writes the
@@ -256,29 +326,7 @@ if (newPhases.length === 0) {
 }
 
 // Find which items were just checked (were unchecked before, checked now)
-const newlyChecked = [];
-for (let pi = 0; pi < newPhases.length; pi++) {
-	const newPhase = newPhases[pi];
-	const oldPhase = oldPhases[pi];
-	if (!oldPhase) continue;
-
-	for (let ii = 0; ii < newPhase.items.length; ii++) {
-		const newItem = newPhase.items[ii];
-		const oldItem = oldPhase.items[ii];
-		if (!oldItem) continue;
-
-		if (newItem.checked && !oldItem.checked) {
-			newlyChecked.push({
-				phase: newPhase.number,
-				phaseKind: newPhase.kind,
-				ordinal: newPhase.ordinal,
-				phaseName: newPhase.name,
-				text: newItem.text,
-				gate: newItem.gate,
-			});
-		}
-	}
-}
+const newlyChecked = newlyCheckedIn(oldPhases, newPhases);
 
 if (newlyChecked.length === 0) {
 	process.exit(0);
@@ -294,11 +342,8 @@ if (newlyChecked.length === 0) {
 // reader here. An impl that records no `approved_brief` was approved before
 // the field existed and has no amendments: absence is a rule, so no command
 // runs. A check that cannot run refuses, and says why.
-const buildChecked = newlyChecked.filter((item) => item.phaseKind !== "test");
-const approvedBrief = /^---\r?\n([\s\S]*?)\r?\n---/
-	.exec(fullContent)?.[1]
-	?.match(/^approved_brief:[ \t]*["']?([0-9a-f]{64})/m)?.[1];
-if (buildChecked.length > 0 && approvedBrief) {
+const buildChecked = newlyChecked.filter(isBuildItem);
+if (buildChecked.length > 0 && approvedBriefOf(fullContent)) {
 	const refusal = amendmentRefusal(filePath);
 	if (refusal) {
 		process.stderr.write(refusal);
