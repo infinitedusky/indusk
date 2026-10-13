@@ -39,7 +39,7 @@ A code worktree inside the root that the root's ignore rules don't already cover
 
 ### `plans approve <name>`
 
-Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the worktree's copy, then refuses, naming each, any mockup the brief's `## Looks` makes, changes or replaces that is not approved in that worktree's record (a story is exempt: it is approved at the build, once its component exists; a name with no mockup drawn yet is not held). It sets the impl's `status: approved` and records what was approved, `approved_brief` (the sha256 of `brief.md`), `approved_by` and `approved_at`, and commits it on the branch; merges the branch into the trunk with a merge commit. The build then continues in the same worktree on the same branch.
+Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the worktree's copy, then refuses, naming each, any look the brief's `## Looks` makes, changes or replaces that is not drawn as a mockup, or not approved, in that worktree's record. No name is exempt: a new component is named by its own mockup, approved now, and its story is approved against it during the build. It sets the impl's `status: approved` and records what was approved, `approved_brief` (the sha256 of `brief.md`), `approved_by` and `approved_at`, and commits it on the branch; merges the branch into the trunk with a merge commit. The build then continues in the same worktree on the same branch.
 
 Refuses:
 

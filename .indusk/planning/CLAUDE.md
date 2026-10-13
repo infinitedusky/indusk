@@ -21,12 +21,14 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   `/guide/briefs`
 - **A plan that changes an app's interface lists its looks, or says why it
   has none.** Once the draft brief exists, ask "does this change how anything
-  looks?"; a yes lists each look under `## Looks` (a story named directly, a
-  mockup named or drawn as a draft), and a plan whose `Files Affected` names a
-  path under an app's `sources` with none listed and no `None — {reason}` is
-  refused at approval, as one whose branch changed them is at `plans accept`.
-  Approval waits on the mockups the brief names. — guarded by
-  `brief-looks.test.ts` — see `/guide/briefs`
+  looks?"; a yes lists each look under `## Looks` as a drawn mockup — a
+  screen, or a new component drawn on its own; a story is never named without
+  a mockup. A plan whose `Files Affected` names a path under an app's
+  `sources` with none listed and no `None — {reason}` is refused at approval,
+  as one whose branch changed them is at `plans accept`. Approval waits on
+  every look the brief names being drawn and approved; acceptance, on each new
+  component's story. — guarded by `brief-looks.test.ts` and
+  `plans-approve-looks.test.ts` — see `/guide/briefs`
 - **Cross-reference related plans by path, and update both** when work in one
   changes something the other names — a plan never cites stale information.
 - **Plan hierarchy is declared top-down, in frontmatter**: the root `master.md`
