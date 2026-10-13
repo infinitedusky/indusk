@@ -3,7 +3,6 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="indusk-new-components" content="draft-row" />
 		<title>Plan — drafts</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -95,7 +94,7 @@
 <indusk-component name="nav" state="plan-current"></indusk-component>
 <main class="content"><div class="wrap">
 <header class="top"><div><div class="crumb"><b>dusk</b> / Plans / Drafts</div><h1 class="title">Drafts</h1></div><button class="menubtn" type="button">Menu <span class="vcount">3</span></button><div class="meta"><indusk-component name="tag" state="default"></indusk-component></div></header>
-<section class="parts"><div class="part"><div class="parthead"><h2>Drafts</h2><span class="partstate">2 conversations not kept</span></div><div class="partrows"><div data-component="draft-row" class="dr"><span class="what"><b>a way to see which plans touch the interface</b><span class="age">last talked 2h ago</span></span><span class="btns"><button class="go" type="button">Reopen</button><button type="button">Discard</button></span></div><div data-component="draft-row" class="dr aged"><span class="what"><b>rename the nav sections</b><span class="age">untouched 12 days</span></span><span class="btns"><button class="go" type="button">Reopen</button><button type="button">Discard</button></span></div></div></div></section>
+<section class="parts"><div class="part"><div class="parthead"><h2>Drafts</h2><span class="partstate">2 conversations not kept</span></div><div class="partrows"><indusk-component name="draft-row" state="default"></indusk-component><indusk-component name="draft-row" state="aged"></indusk-component></div></div></section>
 </div></main>
 </div>
 	</body>

@@ -2,6 +2,10 @@ import { readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
+import * as draftAccept from "@/app/api/drafts/[id]/accept/route";
+import * as draftDiscard from "@/app/api/drafts/[id]/discard/route";
+import * as draftTalk from "@/app/api/drafts/[id]/talk/route";
+import * as drafts from "@/app/api/drafts/route";
 import * as looksApprove from "@/app/api/looks/[app]/approve/route";
 import * as looksUnapprove from "@/app/api/looks/[app]/unapprove/route";
 import * as decision from "@/app/api/plans/[name]/decision/route";
@@ -36,9 +40,12 @@ type Handler = (
 ) => Promise<Response>;
 
 const MODULES: Record<string, Record<string, unknown>> = {
+  drafts,
+  "drafts/[id]/accept": draftAccept,
+  "drafts/[id]/discard": draftDiscard,
+  "drafts/[id]/talk": draftTalk,
   "looks/[app]/approve": looksApprove,
   "looks/[app]/unapprove": looksUnapprove,
-  plans,
   "plans/[name]/decision": decision,
   "plans/[name]/reapprove": reapprove,
   "plans/accept": accept,
@@ -51,6 +58,7 @@ const MODULES: Record<string, Record<string, unknown>> = {
   "sessions/[id]/reply": reply,
   "sessions/[id]/say": say,
   "sessions/[id]/stop": stop,
+  plans,
   trust,
 };
 

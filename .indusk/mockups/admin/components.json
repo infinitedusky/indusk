@@ -370,6 +370,61 @@
 			"stylesheetHash": "136f2539234e65e710926a2a0b54c1190a03dbc925440c2f48d96cf4bf23de18"
 		},
 		{
+			"name": "draft-row",
+			"file": "apps/indusk-admin/src/components/ui/DraftRow.tsx",
+			"properties": [
+				{
+					"name": "title",
+					"type": "string",
+					"required": true,
+					"description": "What the conversation is about, in a line."
+				},
+				{
+					"name": "age",
+					"type": "string",
+					"required": true,
+					"description": "How long it has been since anyone talked in it, as the page words it."
+				},
+				{
+					"name": "aged",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Untouched for days: the age is drawn warm, so the person sees it will go."
+				},
+				{
+					"name": "onReopen",
+					"type": "() => void",
+					"required": false
+				},
+				{
+					"name": "onDiscard",
+					"type": "() => void",
+					"required": false
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-draftrow--default",
+					"snapshotHash": "3790d8ec3af7d810960da4e92acf94fff3f25ad9195137312aee91de440c9ea2"
+				},
+				{
+					"name": "aged",
+					"id": "ui-draftrow--aged",
+					"snapshotHash": "32c0051ae2845cc9d0dcf6c4822ec2fe715e6a51935dbec849d8e7e5f8122653"
+				}
+			],
+			"stylesheet": "components/draft-row.css",
+			"stylesheetHash": "df981fd826be361514ad84f15e30b9b8f65db16bebaea5c54eafd9de0a485102"
+		},
+		{
 			"name": "expectation-row",
 			"file": "apps/indusk-admin/src/components/ui/ExpectationRow.tsx",
 			"properties": [

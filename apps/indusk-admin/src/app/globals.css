@@ -207,6 +207,9 @@ body {
 .cols-expectation-row {
   grid-template-columns: minmax(0, 1fr) auto;
 }
+.cols-draft-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
 .cols-promise-row {
   grid-template-columns:
     var(--size-dot-lg) minmax(0, 1fr) var(--size-icon) var(--size-input)
@@ -231,6 +234,7 @@ body {
   }
   .cols-promise-page,
   .cols-plan-stage,
+  .cols-draft-row,
   .cols-expectation-row {
     grid-template-columns: minmax(0, 1fr);
   }
