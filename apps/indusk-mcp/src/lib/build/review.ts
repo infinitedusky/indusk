@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import matter from "gray-matter";
 import { isAuditSkipped, isCleanupSkipped } from "../cleanup/gate.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
@@ -52,8 +52,21 @@ export interface ReviewSkip {
 	item: string;
 }
 
+/**
+ * A document of the plan shown beside the approval as evidence
+ * (brief-as-the-contract ADR decision 3): the person approved the brief, so
+ * these carry no sign-off of their own and no field to record one.
+ */
+export interface ReviewEvidence {
+	document: "test-plan" | "adr" | "impl";
+	/** The file, relative to the plan's checkout. */
+	path: string;
+}
+
 export interface Review {
 	plan: string;
+	/** The test plan, the ADR and the impl the plan has, in that order — read, not signed off. */
+	evidence: ReviewEvidence[];
 	promises: ReviewPromise[];
 	falsification: ReviewFalsification[];
 	/** Changed against the trunk branch since the plan's branch left it; empty when the plan has no worktree. */
@@ -110,6 +123,7 @@ export async function buildReview(anyCheckout: string, plan: string): Promise<Re
 
 	return {
 		plan,
+		evidence: evidenceOf(copy.root, copy.dir),
 		promises: reviewPromises(copy.root, copy.dir, plan, implText),
 		falsification: impl.phases.filter(isFalsification).map((phase) => ({
 			phase: phaseTitle(phase),
@@ -166,6 +180,16 @@ function reviewPromises(
 		proven: p.refusal === null,
 		rows: p.rows,
 		why: p.refusal,
+	}));
+}
+
+const EVIDENCE: ReviewEvidence["document"][] = ["test-plan", "adr", "impl"];
+
+/** The documents of the plan that are evidence at review, those that exist. */
+function evidenceOf(root: string, dir: string): ReviewEvidence[] {
+	return EVIDENCE.filter((document) => existsSync(join(dir, `${document}.md`))).map((document) => ({
+		document,
+		path: relative(root, join(dir, `${document}.md`)),
 	}));
 }
 
