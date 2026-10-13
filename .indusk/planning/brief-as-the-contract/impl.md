@@ -444,7 +444,8 @@ A person works on one document, the brief — promises, expectations and looks �
   - Note: the key is the archive's mtime plus, per archived plan, the newest mtime of its folder and the files (and subfolders' files) in it (`newestMtime`). `planning-reader.archive-cache.test.ts` (A29) passes.
 - [x] `DraftProposal`'s accept lands on `/brief` only when the plan has a brief; a `spike` lands on the plan's page (A30)
   - Note: the accept route now returns the started plan's `type` (a draft with no brief becomes a spike whatever was proposed); `DraftProposal` moves to the plan page for a `spike`, to `/brief` otherwise. A30 passes, A9 still passes.
-- [ ] `WindowColumn` fits its height only while the two-column layout applies (the same breakpoint as `.cols-brief-page`), and clears it otherwise (A31)
+- [x] `WindowColumn` fits its height only while the two-column layout applies (the same breakpoint as `.cols-brief-page`), and clears it otherwise (A31)
+  - Note: fits only while `matchMedia("(min-width: 760px)")` matches (the `.cols-brief-page` breakpoint), clears `style.height` otherwise and on the media query's change. `WindowColumn.test.tsx` (A31) passes.
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 6 Verification
