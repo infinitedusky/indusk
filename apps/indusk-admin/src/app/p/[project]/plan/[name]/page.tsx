@@ -14,8 +14,9 @@ import {
   WaitingAmendments,
 } from "@/components/plan/PlanParts";
 import { PlanStatusCard } from "@/components/plan/PlanStatusCard";
+import { PlanSummary } from "@/components/plan/PlanSummary";
 import { BuildControls } from "@/components/session/BuildControls";
-import { PlanSession } from "@/components/session/PlanSession";
+import { PlanSession, planOpening } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
 import { HistoryPanel } from "@/components/ui/HistoryPanel";
 import { PlanCopyNotice } from "@/components/Worktrees";
@@ -128,6 +129,11 @@ export default async function PlanPage({ params }: PlanPageProps) {
     `/p/${project}/plan/${name}/${slug === "brief" ? "brief" : `doc/${slug}`}`;
   const main = (
     <>
+      <PlanSummary
+        description={parts.description}
+        briefStatus={parts.briefStatus}
+        briefHref={`/p/${project}/plan/${name}/brief`}
+      />
       <WaitingAmendments project={project} plan={name} parts={parts} />
       {waiting ? (
         <DecisionCard project={project} waiting={waiting} />
@@ -139,6 +145,8 @@ export default async function PlanPage({ params }: PlanPageProps) {
         plan={name}
         canApprove={actions.canApprove && waiting?.on !== "approval"}
         canPlan={actions.canPlan}
+        opening={planOpening}
+        startLabel="Ask about this plan"
       />
       {actions.showBuild ? (
         <BuildControls

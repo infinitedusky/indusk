@@ -316,3 +316,14 @@ body {
   justify-content: center;
   padding: 0;
 }
+
+/* The brief page: the brief's parts on the left, the agent in a column on the
+   right; one column on a phone. */
+.cols-brief-page {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+@media (max-width: 759px) {
+  .cols-brief-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

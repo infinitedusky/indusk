@@ -92,6 +92,8 @@ vi.mock("@infinitedusky/indusk-mcp/plans/parts", () => ({
     noLooks: null,
     amendments: [],
     amendmentsUnreadable: null,
+    description: null,
+    briefStatus: null,
   }),
 }));
 vi.mock("@infinitedusky/indusk-mcp/promises/standing", () => ({

@@ -8,6 +8,32 @@ import { ownsSession, type RunningSession } from "@/lib/session-owner";
 import { SessionConnector } from "./SessionConnector";
 
 /**
+ * The first message of a planning session: read the brief, say where it
+ * stands, and wait — the person leads, the agent does not run the planner
+ * unasked. The Read tool, not a shell, so the catch-up asks no permission.
+ */
+export function briefOpening(plan: string): string {
+  return [
+    `You are writing the brief of the plan "${plan}" with the person, on its brief page; they see its promises, expectations and looks beside you as you write them.`,
+    `Use the Read tool (not Bash) to read .indusk/planning/${plan}/brief.md and research.md if they exist, and the planner skill's rules for a brief.`,
+    "Then say in two or three sentences where the brief stands and what it is missing, and ask what the person wants to work on. Do nothing else until they answer.",
+  ].join("\n");
+}
+
+/**
+ * The first message of the plan page's agent: questions about the plan, not
+ * writing it — a change to what was agreed is made by reopening the brief.
+ */
+export function planOpening(plan: string): string {
+  return [
+    `You are the agent on the page of the plan "${plan}". The person asks you about the plan: where it stands, what it promises, whether something should change.`,
+    `Use the Read tool (not Bash) to read .indusk/planning/${plan}/brief.md and impl.md if they exist.`,
+    "When what they want changes the brief — a promise, an expectation or a look — say so and tell them to reopen it on the brief page; do not edit it from here.",
+    "Ask what they want to know, in one sentence, and do nothing else until they answer.",
+  ].join("\n");
+}
+
+/**
  * A plan's controls in the admin (admin-plan-authoring): the session running
  * for this plan, if any, and Approve once its impl is written and not yet
  * approved. Approve is `indusk plans approve`; its refusal is shown as the
@@ -18,12 +44,20 @@ export function PlanSession({
   plan,
   canApprove,
   canPlan = false,
+  approvedHref,
+  opening = briefOpening,
+  startLabel = "Talk to the agent",
 }: {
   project: string;
   plan: string;
   canApprove: boolean;
   /** A plan on its own branch, not yet approved: a planning session can be started or resumed (A6). */
   canPlan?: boolean;
+  /** Where Approve moves once it succeeds: the plan's page, from its brief. */
+  approvedHref?: string;
+  /** The session's first message: the brief page's or the plan page's. */
+  opening?: (plan: string) => string;
+  startLabel?: string;
 }) {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -53,7 +87,8 @@ export function PlanSession({
       setProblem(r.error);
       return;
     }
-    router.refresh();
+    if (approvedHref) router.push(approvedHref);
+    else router.refresh();
   };
 
   const continuePlanning = async () => {
@@ -63,7 +98,7 @@ export function PlanSession({
       project,
       plan,
       kind: "planning",
-      prompt: `/planner ${plan}`,
+      prompt: opening(plan),
     });
     setBusy(false);
     if (!r.ok || !r.body.id) {
@@ -95,10 +130,10 @@ export function PlanSession({
             onClick={() => void continuePlanning()}
             disabled={busy}
           >
-            Continue planning
+            {startLabel}
           </Button>
           <span className="text-xs text-ink-faint">
-            Starts a planning session in this plan's worktree.
+            Starts a session in this plan's worktree; it waits for you.
           </span>
         </div>
       ) : null}

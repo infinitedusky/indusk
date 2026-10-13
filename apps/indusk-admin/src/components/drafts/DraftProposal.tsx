@@ -53,7 +53,7 @@ export function DraftProposal({
       setEditing(true);
       return;
     }
-    router.push(`/p/${project}/plan/${r.body.plan}`);
+    router.push(`/p/${project}/plan/${r.body.plan}/brief`);
   };
 
   const editable = editing || asksRepo;

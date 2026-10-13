@@ -82,7 +82,7 @@ describe("A9 — accepting in a workbench asks which repo", () => {
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]?.body).not.toHaveProperty("repo");
     await vi.waitFor(() =>
-      expect(push).toHaveBeenCalledWith("/p/concierge/plan/seat-holds"),
+      expect(push).toHaveBeenCalledWith("/p/concierge/plan/seat-holds/brief"),
     );
   });
 });

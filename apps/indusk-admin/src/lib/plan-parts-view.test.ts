@@ -18,6 +18,8 @@ const parts = (over: Partial<PlanParts>): PlanParts => ({
   noLooks: null,
   amendments: [],
   amendmentsUnreadable: null,
+  description: null,
+  briefStatus: null,
   ...over,
 });
 
