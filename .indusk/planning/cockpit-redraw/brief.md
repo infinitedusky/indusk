@@ -2,7 +2,7 @@
 title: "cockpit-redraw"
 description: "The cockpit's nav, plan page and brief page are redrawn to look as Sandy meant them — the nav from the original cockpit mockup, with every plan, Scorecards and a width you can drag — and each look is approved once. Re-approving a changed brief becomes something only a person can do."
 date: 2026-10-13
-status: draft
+status: accepted
 workflow: feature
 ---
 
