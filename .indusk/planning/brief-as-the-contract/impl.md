@@ -312,7 +312,8 @@ A person works on one document, the brief â€” promises, expectations and looks â
 
 #### Build Phase 3 Context
 
-- [ ] guard: `check-gates.js`'s refusal carries `lesson: a-plan-builds-only-after-approval` and its test is `amendments.test.ts` (A12); `apps/indusk-mcp/hooks/CLAUDE.md`: an amendment, not an impl edit, is what stops a build
+- [x] guard: `check-gates.js`'s refusal carries `lesson: a-plan-builds-only-after-approval` and its test is `amendments.test.ts` (A12); `apps/indusk-mcp/hooks/CLAUDE.md`: an amendment, not an impl edit, is what stops a build
+  - Note: the refusal ends on its own `lesson: a-plan-builds-only-after-approval` line (A12 asserts it); the lesson the refusal names (`.claude/lessons/a-plan-builds-only-after-approval.md`) now says an amendment holds the build too, and that the agent shows it to the person and never reapproves on its own; `hooks/CLAUDE.md` gains the rule with `amendments.test.ts` as its guard. Context-tier and lesson tests (7 files, 52 tests) pass.
 
 #### Build Phase 3 Document
 
