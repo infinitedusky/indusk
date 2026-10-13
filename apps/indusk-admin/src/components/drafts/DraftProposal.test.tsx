@@ -142,7 +142,9 @@ describe("the proposal is the person's to accept or edit", () => {
 
 describe("A30 — a spike lands on the plan's page, not on a brief it never has", () => {
   it("a draft accepted as a spike moves to the plan page; a feature moves to its brief", async () => {
-    capture(Response.json({ plan: "seat-study", type: "spike" }, { status: 201 }));
+    capture(
+      Response.json({ plan: "seat-study", type: "spike" }, { status: 201 }),
+    );
     const spike = await render(
       <DraftProposal
         project="concierge"
@@ -158,7 +160,9 @@ describe("A30 — a spike lands on the plan's page, not on a brief it never has"
     await spike.unmount();
     push.mockClear();
 
-    capture(Response.json({ plan: "seat-holds", type: "feature" }, { status: 201 }));
+    capture(
+      Response.json({ plan: "seat-holds", type: "feature" }, { status: 201 }),
+    );
     const feature = await render(
       <DraftProposal
         project="concierge"

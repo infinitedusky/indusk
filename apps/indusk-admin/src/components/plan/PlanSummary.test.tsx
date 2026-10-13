@@ -24,7 +24,9 @@ describe("A28 — the incomplete brief is shown only for an unfinished brief", (
   it("a draft or proposed brief shows the current step", async () => {
     for (const status of ["draft", "proposed", null]) {
       const screen = await show(status);
-      await expect.element(screen.getByTestId("brief-incomplete")).toBeVisible();
+      await expect
+        .element(screen.getByTestId("brief-incomplete"))
+        .toBeVisible();
       await screen.unmount();
     }
   });

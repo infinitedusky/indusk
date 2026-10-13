@@ -25,7 +25,8 @@ beforeEach(() => {
 });
 afterEach(() => rmSync(project, { recursive: true, force: true }));
 
-const brief = (title: string) => `---\ntitle: "${title}"\nstatus: accepted\n---\n\n# ${title}\n`;
+const brief = (title: string) =>
+  `---\ntitle: "${title}"\nstatus: accepted\n---\n\n# ${title}\n`;
 
 describe("A29 — an archived plan's file edited in place is read afresh", () => {
   it("the next request shows the new text", async () => {

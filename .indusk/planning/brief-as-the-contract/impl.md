@@ -446,7 +446,8 @@ A person works on one document, the brief — promises, expectations and looks �
   - Note: the accept route now returns the started plan's `type` (a draft with no brief becomes a spike whatever was proposed); `DraftProposal` moves to the plan page for a `spike`, to `/brief` otherwise. A30 passes, A9 still passes.
 - [x] `WindowColumn` fits its height only while the two-column layout applies (the same breakpoint as `.cols-brief-page`), and clears it otherwise (A31)
   - Note: fits only while `matchMedia("(min-width: 760px)")` matches (the `.cols-brief-page` breakpoint), clears `style.height` otherwise and on the media query's change. `WindowColumn.test.tsx` (A31) passes.
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+  - Note: reviewed by hand: `manager.ts` routes one more event kind through the decision it already imports (one reason to change, kept); `newestMtime` is a named helper with its seam in the A29 test; `buildArgs` keeps its `kind` parameter (now unused, `_kind`) because `start.ts` and the pinned tests call it that way — left as is.
 
 #### Build Phase 6 Verification
 
