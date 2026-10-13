@@ -161,7 +161,8 @@ instead.
 
 Once the draft brief exists, the agent asks: *does this change how anything
 looks?* If it does, the look is named directly, or the agent draws a draft
-mockup so you can see it, proposed, in the cockpit. A story is named directly.
+mockup so you can see it, proposed, in the cockpit. A story is never named
+without a mockup: a new component is drawn as its own mockup, one per state.
 The agent draws and proposes a look; only a person approves one.
 
 ### The check
@@ -190,6 +191,29 @@ flowchart LR
   L --> P[Plan approved]
   P --> B[Build]
   B -->|"branch changed the interface, brief says None"| R[Refused at accept: amend the brief]
+```
+
+### Changing what was agreed during a build
+
+The brief is what a person approved, so the build may not quietly leave it.
+A change to an expectation, a promise or a look — or to the statement of a
+promise the plan owns — is an **amendment**: the agent writes it into the
+brief, and the build stops. No build item is checked off until a person
+approves it, with Approve on the plan's page or `indusk plans reapprove`.
+The plan's history keeps what each amendment was and what it became, and the
+review shows both. Rewording an impl item, adding a note or a Shape finding
+is not an amendment and waits for nobody. A new component ends its plan with a
+story: `indusk plans accept` holds the plan until the component's story is
+approved and every mockup the brief names places it by name.
+
+```mermaid
+flowchart LR
+  P[Plan approved] --> B[Build]
+  B -->|"brief changed: an expectation, a promise or a look"| W[Amendment waits]
+  W -->|"build items refused"| W
+  W -->|"person approves (cockpit Approve or plans reapprove)"| B
+  B --> S[New components' stories approved]
+  S --> A[Plan accepted]
 ```
 
 ## The contract

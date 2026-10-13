@@ -9,6 +9,7 @@ A plan is written on its own branch, in its own worktree. Its documents and decl
 ```bash
 indusk plans start <type> <name>    # its branch, its worktree, its first document
 indusk plans approve <name>         # the brief check, then its documents merge to the trunk
+indusk plans reapprove <name>       # the person approves an amendment; the build goes on
 indusk plans accept <name> [--auto] # the build may ship
 indusk plans land <name>            # the build reaches the trunk; worktree and branch removed
 ```
@@ -52,9 +53,29 @@ Refuses:
 
 InDusk commits its own notes on `main` as it writes them (`.indusk/current.md` and `.claude/lessons/`), and keeps its machine state outside every checkout, in the project's home. A note it could not commit (the trunk was off its branch or mid-merge), or a project not yet moved by `indusk update`, still leaves these in the trunk's working tree: `.indusk/current.md`, `.indusk/highlights.jsonl`, `.indusk/highlights-processed.jsonl`, `.indusk/eval/` and `.claude/lessons/`. `approve` and `land` commit whatever of these is uncommitted, in a commit of its own (`chore(indusk): bookkeeping, committed before …`), then check the trunk. Anything else uncommitted there may be someone's real work: it is refused, named, and listed by `plans review` as *uncommitted on main* so the person sorts it out before accepting.
 
+### What counts as an amendment
+
+What a person approved is the brief. An **amendment** is the brief's difference from it: an expectation, a promise or a look the brief says now that it did not say at approval, or says differently, and a promise the plan owns whose statement in the registry has moved to a sentence the approved brief did not state. A statement brought to what the brief's **Changes** already said (`indusk promises change` doing what was agreed) is the build keeping the contract, not an amendment. Edits to the test plan, the ADR, the impl, its notes and Shape findings are never amendments: they are the agent's to change.
+
+What was approved is read from git, at the approval commit — `plan(<name>): impl approved` from `approve` (in a workbench, `plan(<name>): approved`) or `plan(<name>): amendment approved` from `reapprove`, whichever is newest — and held to the impl's `approved_brief`. An impl that records no `approved_brief` was approved before the record existed and has no amendments.
+
+While an amendment waits, `check-gates` refuses to check off any build item, naming each amendment with what it was and what it is now (`lesson: a-plan-builds-only-after-approval`). The way on is the person's: Approve on the plan's page in the cockpit, or `plans reapprove` run by the person — or put the brief back as it was approved.
+
+### `plans amendments <name> [--dir <folder>] [--json]`
+
+Lists the amendments waiting, each as `part name: was "…" — now "…"`, or says nothing waits. `--json` prints the list (`[{part, name, was, now}]`) — what `check-gates` reads; `--dir` names the plan folder the caller means, otherwise the plan's live copy is read. Refused, exit 1, when what was approved cannot be told: no approval commit on the branch, or one whose brief is not the `approved_brief` recorded — never read as "nothing changed".
+
+### `plans reapprove <name>`
+
+The person approves the amendments an approved plan waits on. Refused before approval — that is `approve`'s, which also merges, and refuses a branch past approval. Runs the brief check and the looks check `approve` runs (an amendment that names a look waits for that look's approval), records the brief as the one approved (`approved_brief`, `approved_by`, `approved_at`), commits the impl, the brief and the promises the amendments changed on the plan's branch as `plan(<name>): amendment approved`, and appends each amendment to the plan's history (`.indusk/plan-history/<name>.md`, on `main`) as `amendment to the <part> <name>: was …, now …`, answered *Approve*, with who and when. Nothing waiting and the brief unchanged: nothing is written. `plans review` then shows each approved amendment, both versions, beside any still waiting.
+
+The cockpit's Approve calls `POST /api/plans/<name>/reapprove`, which answers only the person's browser on the admin's own page (`Sec-Fetch-Site: same-origin`, as the look approval does); a script or an agent's request is refused. Run from a terminal it is the person's by convention, as `approve` is: an agent never runs it on its own.
+
 ### `plans accept <name> [--auto]`
 
 Writes `accepted: <time>` and `accepted_by: person` (or `auto`, with `--auto`: a workflow that accepts on its own) to the impl's frontmatter and commits it on the branch.
+
+Refused, naming each, while the branch changed files under an app's interface and the brief lists no look, and while a new component the brief names has not ended in a story: its own mockup (`screens/<component>.<state>.html`, declaring itself in `indusk-new-components`) has no approved story of the same name, or a mockup the brief names still draws a component inline under that declaration, or composes one whose story is not approved. The way forward: approve each story on the cockpit's Looks page, place the component with `<indusk-component>` in each mockup that draws it, and have those mockups approved again.
 
 Refused inside a build step. An unattended build runs each step (work, falsify, cleanup, audit) with `INDUSK_BUILD_STEP` set to the step, and `accept` and `land` refuse under it, naming the step: a build stops at review, and acceptance is the person's. The release session that acceptance starts is not marked, so it lands. This stops a confused session, not a determined one: a session that unsets the variable is not stopped.
 
