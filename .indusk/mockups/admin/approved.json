@@ -3540,6 +3540,25 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-13T19:17:35.478Z",
 			"plan": "brief-as-the-contract"
+		},
+		{
+			"mockup": "plan.drafts",
+			"mockupHash": "707796e3e0d0138d48cbf46ede7c89deac2e21f1239c8aa3c843c3b89503806f",
+			"componentsHash": "d74d1afd5d336a48dcd5af753484a31f072f97a3d3ab07dbd2edab5bf3ad47ff",
+			"components": {
+				"nav.plan-current": "21cb8f858566fa837fe2c86be7c19e09977615b8129c70500d2d2dcb96b50e41",
+				"tag.default": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2",
+				"draft-row.default": "3790d8ec3af7d810960da4e92acf94fff3f25ad9195137312aee91de440c9ea2",
+				"draft-row.aged": "32c0051ae2845cc9d0dcf6c4822ec2fe715e6a51935dbec849d8e7e5f8122653",
+				"draft-row.css": "df981fd826be361514ad84f15e30b9b8f65db16bebaea5c54eafd9de0a485102",
+				"nav.css": "3e58b69ca4f3ed44c1625cb3f2fa018b672b1bc1a6b51e5912cfeb0a3f0772f2",
+				"tag.css": "30d7bf10c27edc0deecf29411b623d76dc69248619af47401101eaa7500bba2c"
+			},
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-13T19:17:35.868Z",
+			"plan": "brief-as-the-contract"
 		}
 	]
 }
