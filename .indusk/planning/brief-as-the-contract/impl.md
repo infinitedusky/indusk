@@ -251,7 +251,8 @@ A person works on one document, the brief — promises, expectations and looks �
 
 **Tier**: med — the work step's default
 
-- [ ] `ApprovalEntry` and `StoryApprovalEntry` gain an optional `plan`; `approve()` takes the plan from the checkout it is called in and writes it; the admin's approve route passes the checkout it was sent
+- [x] `ApprovalEntry` and `StoryApprovalEntry` gain an optional `plan`; `approve()` takes the plan from the checkout it is called in and writes it; the admin's approve route passes the checkout it was sent
+  - Note: the admin's approve route needed no change: it already passes `checkout.root`, and `approve()` reads the plan from that checkout's branch (`plan/x` becomes `x`; the project's own checkout records none).
 - [ ] `plans approve` writes `approved_brief: <sha256 of brief.md>`, `approved_by` and `approved_at` to the impl's frontmatter beside `status: approved`
 - [ ] `plans approve` refuses, naming the look, when a mockup its brief makes, changes or replaces is not approved in the worktree's record; a story it names is exempt
 - [ ] `looks/overview` returns each approval's `plan`, so a plan's looks can be read by owner
