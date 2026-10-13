@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { listApps, readAppLooks } from "../looks/overview.js";
 import { type BriefContract, parseBriefContract } from "../promises/brief-contract.js";
-import { readPromises } from "../promises/registry.js";
+import { parseFrontmatter, readPromises } from "../promises/registry.js";
 import { type Amendment, amendmentsOf } from "./amendments.js";
 
 /**
@@ -92,9 +92,12 @@ const EMPTY = (
  * agent, never cut from the brief's prose — a long opening is not a summary.
  */
 export function briefOpening(source: string): Pick<PlanParts, "description" | "briefStatus"> {
-	const front = /^---\n([\s\S]*?)\n---/.exec(source)?.[1] ?? "";
-	const field = (name: string) =>
-		new RegExp(`^${name}:\\s*"?(.+?)"?\\s*$`, "m").exec(front)?.[1]?.trim() || null;
+	const parsed = parseFrontmatter(source);
+	const data = "error" in parsed ? {} : parsed.data;
+	const field = (name: string) => {
+		const value = data[name];
+		return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
+	};
 	return { description: field("description"), briefStatus: field("status") };
 }
 
