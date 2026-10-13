@@ -98,6 +98,13 @@ export interface ContractOptions {
 	 * every `pnpm test` red; asking about one plan by name does not, because
 	 * that question is "what does acceptance still need?".
 	 */
+	/**
+	 * Leave the Looks rule unasked of a plan already approved. The rule is
+	 * held at approval (`a-brief-lists-its-looks`): a plan approved before it
+	 * existed, or before a Files Affected cell was read path by path, is not
+	 * refused again by the sweep over every plan, which `pnpm test` runs.
+	 */
+	looksAtApprovalOnly?: boolean;
 	skipDraft?: boolean;
 }
 
@@ -248,6 +255,13 @@ function lookRefusals(planRoot: string, brief: BriefContract, implText: string |
 	return [
 		`the impl's Files Affected names ${describeInterfaceFiles(files)}, which changes how something looks, and ${missing} — list each look under "## Looks" (### This plan makes, or ### Existing looks), or write "None — {reason}" there`,
 	];
+}
+
+/** Whether an impl has been approved: its status is `approved` or a later one. */
+function pastApproval(implText: string | null): boolean {
+	if (implText === null) return false;
+	const status = /^---\n[\s\S]*?^status:\s*"?([a-z-]+)"?\s*$/m.exec(implText)?.[1];
+	return status !== undefined && status !== "draft";
 }
 
 // promise: every-test-says-what-it-is-for
@@ -406,7 +420,7 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 				refusals.push({ file: briefFile, message });
 			}
 		}
-		if (brief !== null) {
+		if (brief !== null && !(opts.looksAtApprovalOnly && pastApproval(implText))) {
 			for (const message of lookRefusals(planRoot, brief, implText)) {
 				refusals.push({ file: briefFile, message });
 			}
@@ -473,7 +487,11 @@ export function checkAllContracts(
 	const refusals: ContractRefusal[] = [];
 	for (const folder of planFolders(planRoot)) {
 		if (opts.activeOnly && folder.archived) continue;
-		const result = checkFolder(planRoot, folder, { registry: opts.registry, skipDraft: true });
+		const result = checkFolder(planRoot, folder, {
+			registry: opts.registry,
+			skipDraft: true,
+			looksAtApprovalOnly: true,
+		});
 		if (result.ok) summaries.push(result.summary);
 		else refusals.push(...result.refusals);
 	}

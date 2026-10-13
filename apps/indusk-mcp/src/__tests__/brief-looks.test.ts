@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseBriefContract } from "../lib/promises/brief-contract.js";
+import { checkAllContracts } from "../lib/promises/contract.js";
+import type { Registry } from "../lib/promises/registry.js";
 import {
 	type BriefAppProject,
 	briefAppProject,
@@ -91,5 +93,23 @@ describe("A3 a look is read as the list it is under", () => {
 			changes: [{ name: "detail.default" }],
 			replaces: [{ old: "badge.old", by: "badge.ok" }],
 		});
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("A37 the Looks rule is held at approval, not after it", () => {
+	const refusals = () =>
+		checkAllContracts(app.wt, { registry: { promises: [] } as unknown as Registry })
+			.refusals.map((r) => r.message)
+			.join("\n");
+
+	it("an approved plan whose brief predates the Looks section is not refused by the registry check; the same plan as a draft is", () => {
+		app.writePlan({
+			brief: "legacy",
+			impl: implOf("interface").replace("status: draft", "status: approved"),
+		});
+		expect(refusals()).not.toContain("src/Card.jsx");
+
+		app.writePlan({ brief: "legacy", impl: "interface" });
+		expect(refusals()).toContain("src/Card.jsx");
 	});
 });
