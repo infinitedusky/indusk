@@ -222,3 +222,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   the component's markup, which would reopen every mockup that uses it. Guarded
   by `looks-components-cli.test.ts` (A3) through `component-reuse-audit.test.ts`.
   — see `/reference/admin-ui/overview`
+- **Whether a plan's document is finished comes from `plans/steps`'
+  `documentFinished`, never a status compared in the admin** — `complete` and
+  `accepted` both finish a brief, and a `superseded` one or an archived plan has
+  no current step; a hand-written `=== "accepted"` showed "The brief is
+  incomplete" on finished plans. Guarded by `PlanSummary.test.tsx` (A28). — see
+  `/reference/admin-ui/overview`
