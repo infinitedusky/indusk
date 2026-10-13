@@ -2619,6 +2619,21 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-13T01:45:04.596Z"
+		},
+		{
+			"mockup": "plan.new",
+			"mockupHash": "96dcc88e19a470a21e6bc4901c60b53b21940a1c99e145a9946383a931c148bd",
+			"componentsHash": "a309e7c6d5cbf330163a01a7c25aa39021d89a6fb4d0d90b6231555184982027",
+			"components": {
+				"nav.plan-current": "21cb8f858566fa837fe2c86be7c19e09977615b8129c70500d2d2dcb96b50e41",
+				"tag.default": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2",
+				"nav.css": "3e58b69ca4f3ed44c1625cb3f2fa018b672b1bc1a6b51e5912cfeb0a3f0772f2",
+				"tag.css": "30d7bf10c27edc0deecf29411b623d76dc69248619af47401101eaa7500bba2c"
+			},
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-13T01:45:04.732Z"
 		}
 	]
 }
