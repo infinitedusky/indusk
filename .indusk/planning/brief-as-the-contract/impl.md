@@ -416,7 +416,8 @@ A person works on one document, the brief — promises, expectations and looks �
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/decisions/brief-as-the-contract.md` published from the ADR; `apps/docs/src/guide/briefs.md` and `reference/cli/plans.md` (`start --from-draft`); sidebar entries; changelog: Added — "The brief is the contract: looks belong to a plan, approval is of the brief, a change to what was agreed waits for the person, the plan page shows promises, expectations and looks, and a plan starts as a conversation."
+- [x] `apps/docs/src/decisions/brief-as-the-contract.md` published from the ADR; `apps/docs/src/guide/briefs.md` and `reference/cli/plans.md` (`start --from-draft`); sidebar entries; changelog: Added — "The brief is the contract: looks belong to a plan, approval is of the brief, a change to what was agreed waits for the person, the plan page shows promises, expectations and looks, and a plan starts as a conversation."
+  - Note: `decisions/brief-as-the-contract.md` from the ADR (the Documentation Plan section left out, links made site-relative) with a sidebar entry beside UI Promises; `guide/briefs.md` gains "Starting a plan: a conversation" with the draft flow diagram; `reference/cli/plans.md` documents `start --from-draft`, the drafts sweep in `archive-dead` and `drafts.max_age_days`; `reference/admin-ui/overview.md` gains the draft route and a Drafts section; the changelog has the Added entry. `pnpm build` in `apps/docs` completes (no dead link).
 
 ## Files Affected
 

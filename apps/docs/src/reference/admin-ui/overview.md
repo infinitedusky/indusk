@@ -72,6 +72,7 @@ No auto-pruning. If a registered project's path is deleted from disk, `indusk ui
 /p/{project}/scorecards              # Per-project eval scorecards (1.27.2+)
 /p/{project}/plan/{name}             # Plan detail page
 /p/{project}/plan/{name}/brief       # The plan's brief, one click below its parts
+/p/{project}/draft/{id}              # A conversation not yet kept as a plan (brief-as-the-contract)
 /p/{project}/looks                   # Each app's mockups, Approve, what is uncovered (ui-promises)
 /p/{project}/research/{slug}         # Per-project standalone research (1.27.2+)
 ```
@@ -89,6 +90,10 @@ Everything is project-scoped under `/p/{project}/...`. The top-level home at `/`
 3. **Plan list** — one root node (the root `master.md`'s title) with the declared Paths and every unclaimed plan beneath it (admin-ui-phase-progress, 2026-09-16): see [The nav](#the-nav). `Archived (N)` stays outside the root, collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`. No root master → no root node, the tree renders flat.
 4. **Unassigned worktrees** — every worktree of the project's repository that holds no plan assignment, with its branch (admin-plan-worktrees, 2026-09-18). Omitted when there are none.
 5. **Research group** — listed slugs from `.indusk/research/` when the directory exists and contains at least one entry; omitted entirely when empty.
+
+### Drafts
+
+**New plan** on the project's home asks for nothing: it opens an empty draft in the project's home and moves to `/p/{project}/draft/{id}`, where a box takes what you want and the conversation runs. The agent works in the draft's own folder, so nothing is written in a checkout. The page shows the promises, expectations and looks the brief has so far, and, once the agent has proposed a name and type, the proposal with **Accept** and **Edit** (a workbench of several repos also asks which repo). Accepting runs [`plans start --from-draft`](/reference/cli/plans) and moves to the plan. The project home lists conversations not kept as **Drafts**, each with **Reopen** and **Discard**.
 
 ### The plan page's parts
 

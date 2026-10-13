@@ -216,6 +216,26 @@ flowchart LR
   S --> A[Plan accepted]
 ```
 
+## Starting a plan: a conversation
+
+You start a plan by talking, and nothing is asked first. In the cockpit, **New plan** opens an empty *draft* and its conversation; the box says "What do you want to build?" and takes your words, not a name or a type. The agent works in the draft's own folder, `drafts/<id>/` in the project's home (`indusk eval home` prints it), so it reads and writes nothing in a checkout, and it plans under the [planner's](/reference/skills/plan) rules. As it writes, the draft's page shows the promises, expectations and looks so far.
+
+```mermaid
+flowchart TD
+  N[New plan] --> D[(Draft in the project's home)]
+  D -->|you talk, the agent writes the brief| P[The agent proposes a name and type]
+  P -->|Accept or Edit| S[indusk plans start --from-draft]
+  S --> W[Plan on its own branch and worktree, the draft as its brief]
+  W --> L[Looks approved, plan approved, build]
+  L -->|a change to what was agreed| A[Amendment waits for you]
+  A -->|Approve| L
+  D -->|not kept| G[Aged out or discarded: nothing was in the repository]
+```
+
+When what the plan promises and how it looks are clear, the agent writes a proposal, a name and a type, and the page shows it with **Accept** and **Edit**. Accepting makes the plan: the branch, the worktree, and the draft as its `brief.md`, or as `research.md` when the conversation made neither promises nor looks (a research-only plan has no brief). A name that is already taken is refused, and the draft is kept so you can give another. In a workbench that wraps several repos, accepting also asks which repo the plan's code goes in.
+
+A conversation you do not keep leaves nothing in the repository. The project page lists it under **Drafts** with **Reopen** and **Discard**; one untouched for `drafts.max_age_days` (30 by default) is discarded by `indusk plans archive-dead`. From a terminal, `indusk plans start <type> <name> --from-draft <id>` is the same step.
+
 ## The contract
 
 A plan's brief, its test rows and the registry have to agree before the plan

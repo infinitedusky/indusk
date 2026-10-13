@@ -27,6 +27,16 @@ Refuses:
 - a name with a folder on the trunk, naming the folder;
 - a name whose branch `plan/<name>` already exists.
 
+#### `plans start <type> <name> --from-draft <id>`
+
+Makes the plan from a draft conversation (`drafts/<id>/` in the project's home, see [Briefs](/guide/briefs#starting-a-plan-a-conversation)) instead of an empty first document: the draft's `brief.md` becomes the plan's, under the front matter that declares `workflow: <type>`, and the draft is removed once the plan exists. A draft that made research alone becomes a `spike` with `research.md` and no brief, whatever type is given. `<type>` and `<name>` are the person's, over the agent's proposal in `proposal.json`. Refuses, with the draft kept:
+
+- a draft that does not exist in this project;
+- a name already taken (the same refusals as `plans start`), adding "choose another name for this draft";
+- a draft that has said nothing yet.
+
+`plans start` without the flag is unchanged. The admin's Accept button calls the same step.
+
 #### In a workbench: `plans start <type> <name> [--repo <repo>]`
 
 A workbench keeps its plans at the workbench root and its code in the repos it declares. There:
@@ -181,6 +191,8 @@ A plan is a dead draft only when **all three** hold:
 2. **The newest file in the plan directory is older than `planning.dead_draft_days`** (default 30; configured in `.indusk/config.json`).
 3. **master.md does not protect it.** A markdown link to the plan on a master.md line that does *not* contain the word "draft" protects it — so a `parked — revisit with v2` row protects its plan, while a `brief draft` row leaves it archivable.
 
+Draft conversations age out in the same pass: a draft in the project's home untouched for `drafts.max_age_days` (default 30) is discarded, and `--dry-run` says which would be.
+
 `--dry-run` prints the candidate list and skip reasons without moving anything. Always review the dry-run before the first real run on a project with a large backlog.
 
 ## Configuration
@@ -194,6 +206,16 @@ A plan is a dead draft only when **all three** hold:
 ```
 
 Absent field → 30-day default. `indusk update` scaffolds the key idempotently.
+
+```json
+{
+  "drafts": {
+    "max_age_days": 30
+  }
+}
+```
+
+`drafts.max_age_days` is the age at which `plans archive-dead` discards an untouched draft conversation; absent, 30.
 
 ## Tiers and models
 
