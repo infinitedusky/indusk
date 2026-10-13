@@ -57,7 +57,7 @@ export function draftPrompt(opts: { reopened?: boolean; firstMessage?: string } 
 			: [
 					"2. Say in one or two sentences that you are ready and ask the person to describe what they want, in their own words. Ask for no name and no type; do not guess the plan before they have described it.",
 				]),
-		"3. Write what the conversation settles to ./brief.md (expectations, promises, looks), or to ./research.md when it is notes with no promises or looks.",
+		"3. Write what the conversation settles to ./brief.md (a `description:` in its frontmatter distilling the plan in one to three sentences, then expectations, promises, looks), or to ./research.md when it is notes with no promises or looks.",
 		'4. Once what the plan promises and how it looks are clear, write ./proposal.json as {"name": "<kebab-case-name>", "type": "feature|bugfix|refactor|spike"} and tell the person you have proposed it. They accept or edit it; do not start the plan yourself.',
 		...(opts.firstMessage ? ["", "The person says:", opts.firstMessage] : []),
 	].join("\n");

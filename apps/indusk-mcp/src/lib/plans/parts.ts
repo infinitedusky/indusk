@@ -57,7 +57,7 @@ export interface PlanParts {
 	amendments: Amendment[];
 	/** Why the waiting amendments cannot be told; null when they can. */
 	amendmentsUnreadable: string | null;
-	/** What the plan is, in plain words: the brief's opening, before its first section; null when it has none. */
+	/** What the plan is, in one to three sentences: the brief's `description`; null when it has none. */
 	description: string | null;
 	/** The brief's `status` (draft, accepted, …); null when there is no brief or it names none. */
 	briefStatus: string | null;
@@ -87,17 +87,15 @@ const EMPTY = (
 });
 
 /**
- * The brief's opening: its `status` and the prose between its title and its
- * first `##` section, which says what the plan is before any part of it is
- * settled. A first cut of a plan's description, to be given its own place.
+ * The brief's opening: its `status` and its `description`, the frontmatter
+ * field that distills the plan in one to three sentences. Written by the
+ * agent, never cut from the brief's prose — a long opening is not a summary.
  */
 export function briefOpening(source: string): Pick<PlanParts, "description" | "briefStatus"> {
-	const front = /^---\n([\s\S]*?)\n---\n?/.exec(source);
-	const status = front ? /^status:\s*"?([^"\n]+?)"?\s*$/m.exec(front[1]) : null;
-	const body = front ? source.slice(front[0].length) : source;
-	const head = body.split(/^## /m)[0] ?? "";
-	const description = head.replace(/^# .*$/m, "").trim();
-	return { description: description || null, briefStatus: status ? status[1] : null };
+	const front = /^---\n([\s\S]*?)\n---/.exec(source)?.[1] ?? "";
+	const field = (name: string) =>
+		new RegExp(`^${name}:\\s*"?(.+?)"?\\s*$`, "m").exec(front)?.[1]?.trim() || null;
+	return { description: field("description"), briefStatus: field("status") };
 }
 
 /** The looks the brief lists, each under how the brief lists it. */
