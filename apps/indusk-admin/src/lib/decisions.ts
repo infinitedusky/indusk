@@ -114,22 +114,7 @@ async function deliver(
   answer: string,
 ): Promise<Pick<Answered, "via" | "sessionId">> {
   if (waiting.on === "question") {
-    // The session that asked, found by its request: a plan can have a build
-    // and a planning session, and only one of them made this question.
-    const ours = waiting.requestId
-      ? deps.sessions
-          .running()
-          .find(
-            (r) =>
-              r.project === project &&
-              r.plan === waiting.plan &&
-              deps.sessions.pendingQuestion(r.id)?.requestId ===
-                waiting.requestId,
-          )
-      : undefined;
-    // A request already answered is no longer pending: the plan's session is
-    // asked, and the manager says why it cannot be answered again.
-    const target = ours ?? deps.sessions.forPlan(project, waiting.plan);
+    const target = sessionThatAsked(deps, project, waiting);
     if (!target || !waiting.requestId) {
       throw new Error(
         `no session is running for ${waiting.plan} to answer its question`,
@@ -170,6 +155,31 @@ async function deliver(
     onEvent: () => {},
   });
   return { via: "session", sessionId: id };
+}
+
+/**
+ * The session that asked a waiting question, found by its request: a plan can
+ * have a build and a planning session, and only one of them made this one. A
+ * request no longer pending (already answered) falls back to the plan's
+ * session, so the manager's own "already answered" refusal still speaks.
+ */
+function sessionThatAsked(
+  deps: DecisionDeps,
+  project: string,
+  waiting: Waiting,
+): { id: string } | undefined {
+  const asking = waiting.requestId
+    ? deps.sessions
+        .running()
+        .find(
+          (r) =>
+            r.project === project &&
+            r.plan === waiting.plan &&
+            deps.sessions.pendingQuestion(r.id)?.requestId ===
+              waiting.requestId,
+        )
+    : undefined;
+  return asking ?? deps.sessions.forPlan(project, waiting.plan);
 }
 
 /** The first message of a session started to carry a reply to the plan's agent. */
