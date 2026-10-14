@@ -133,3 +133,5 @@ a person.
 - Promises made: 13; trajectory rows: 44, all passing
 - Brief amendments re-approved: 5
 - Shape: 6 raised, 0 judged wrong
+
+Landed on main at 84323823, 2026-10-14. Installed with `pnpm install:local`; nothing published (dusk installs its own build; a publish is `indusk release`, the operator's call).
