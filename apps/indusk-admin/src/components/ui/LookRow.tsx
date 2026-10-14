@@ -59,7 +59,7 @@ export function LookRow({
         >
           {KIND[kind].label}
         </span>
-        <b className="[overflow-wrap:anywhere]">{name}</b>
+        <b className="wrap-anywhere">{name}</b>
       </span>
       <Badge variant={CHIP[approval]}>{approval}</Badge>
       <Button size="sm" variant="secondary" onClick={onOpen}>
