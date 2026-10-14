@@ -4,6 +4,7 @@ import {
   touchDraft,
 } from "@infinitedusky/indusk-mcp/drafts";
 import {
+  alreadyRunningOnThisPlan,
   draftConversation,
   draftSessionPlan,
 } from "@infinitedusky/indusk-mcp/session";
@@ -48,9 +49,9 @@ export async function POST(
     "planning",
   );
   if (running) {
-    return refuse(
-      409,
-      `a ${running.kind} session is already running for ${running.plan}: ${running.id} — stop it first`,
+    return Response.json(
+      { error: alreadyRunningOnThisPlan(running), running: { id: running.id } },
+      { status: 409 },
     );
   }
   touchDraft(draft);
