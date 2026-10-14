@@ -3,7 +3,6 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="indusk-new-components" content="recommendation,project-card,message,file-chip,prompt-box,knowledge-list,workflow-strip,layout-tree" />
 		<title>New project</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -39,10 +38,7 @@
 	<body>
 <main class="page">
 <header><div class="crumb"><b>Projects</b> / New</div><h1 class="title">New project</h1></header>
-<section class="box" data-component="prompt-box" data-state="default"><h2 class="says">What do you want to build?</h2><textarea aria-label="Tell the agent what you want to build"></textarea>
-<div class="actions"><button class="attach" type="button">+ Add documents to write the brief from</button></div>
-<p class="place">New projects go in <span class="mono">~/code</span><button class="btn quiet" type="button">Change</button></p>
-<p class="hint">Say it however you like — one sentence or a whole brief. The agent asks only what your idea leaves open, then proposes the project for you to accept. Nothing is created until you do.</p></section>
+<indusk-component name="prompt-box" state="default"></indusk-component>
 </main>
 	</body>
 </html>

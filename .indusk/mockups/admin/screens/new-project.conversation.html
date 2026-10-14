@@ -3,7 +3,6 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="indusk-new-components" content="recommendation,project-card,message,file-chip,prompt-box,knowledge-list,workflow-strip,layout-tree" />
 		<title>New project — conversation</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -60,19 +59,14 @@
 <header><div class="crumb"><b>Projects</b> / New</div><h1 class="title">New project</h1></header>
 <div class="cols">
 <section class="thread">
-<div class="msg you" data-component="message" data-state="you"><span class="who">You</span><p>A parental control system for desktop and mobile that works with the child on homework and unlocks things when it's done.</p><span class="file" data-component="file-chip" data-state="default">Homework Gate Project Brief.md</span></div>
-<div class="msg agent" data-component="message" data-state="agent-folded"><span class="who-row"><span class="dot ok"></span><span class="who">Agent</span></span><button class="fold" type="button">See more ›</button><p>Your brief answers <strong>why</strong> and <strong>what</strong>. Three things it leaves open:</p><ol><li>Is mobile a phone app that enforces the lock, or phone rules plus the web page?</li><li>Where should the server run — Fly, or a Raspberry Pi at home?</li><li>Name and place: <code>homework-gate</code> in <code>~/code/sandbox</code>?</li></ol></div>
-<div class="msg you" data-component="message" data-state="you"><span class="who">You</span><p>A phone app that enforces it. Fly for now. The name and place are fine.</p></div>
-<div class="msg agent" data-component="message" data-state="agent-folded"><span class="who-row"><span class="dot ok"></span><span class="who">Agent</span></span><button class="fold" type="button">See more ›</button><p>Got it. One more: what are the parts — is <strong>enforcement</strong> (the lock on each device) separate from <strong>learning</strong> (checking the homework)?</p></div>
+<indusk-component name="message" state="you"></indusk-component>
+<indusk-component name="message" state="agent-folded"></indusk-component>
+<indusk-component name="message" state="you"></indusk-component>
+<indusk-component name="message" state="agent-folded"></indusk-component>
 <div class="reply"><textarea aria-label="Reply to the agent" rows="3"></textarea><div class="actions"><button class="attach" type="button">+ Add a document</button><button class="btn primary" type="button">Send</button></div></div>
 </section>
 <aside class="side card"><p class="label">What the agent knows</p>
-<ul class="know" data-component="knowledge-list" data-state="default">
-<li><span class="dot ok"></span><span>Why — goals and success criteria</span></li>
-<li><span class="dot ok"></span><span>What — eight milestones</span></li>
-<li><span class="dot"></span><span>How and where — asking about the parts</span></li>
-<li><span class="dot ok"></span><span>Name and place — homework-gate in ~/code/sandbox</span></li>
-</ul>
+<indusk-component name="knowledge-list" state="default"></indusk-component>
 <p class="hint">When these are settled the agent proposes the project. Leave now and the conversation is kept as a draft; nothing is on disk.</p></aside>
 </div>
 </main>
