@@ -2,8 +2,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { readApprovals, readStoryApprovals } from "./approvals.js";
 import * as check from "./check.js";
-import { checkable, pageUrl } from "./check.js";
-import { readApp } from "./mockups.js";
+import { checkable, type LookTarget, pageUrl, withScreenSeed } from "./check.js";
+import { type LooksApp, readApp } from "./mockups.js";
 
 /**
  * promise: tokens-are-held-exactly — which screen states the browser check
@@ -174,5 +174,84 @@ describe("storyUrl and judgeStory", () => {
 				reason: "the page did not render the dark scheme",
 			},
 		});
+	});
+});
+
+/**
+ * A screen whose states exist only once something does (a draft, a record):
+ * `paths` gives a state its own address, `seed` makes the thing before the
+ * screen is opened and `unseed` takes it away after, whatever happened.
+ */
+describe("a screen with a seed", () => {
+	it("opens a state with a path of its own at that path, and the rest at the screen's", async () => {
+		const app = await readApp(FIXTURE, "demo");
+		const declared: LooksApp = {
+			...app,
+			screens: app.screens.map((s) =>
+				s.name === "home"
+					? {
+							...s,
+							path: "/",
+							paths: { full: "/home/{seed}" },
+							seed: "make",
+							unseed: "remove {seed}",
+						}
+					: s,
+			),
+		};
+		const { checked } = checkable(declared, readApprovals(declared));
+		const byState = Object.fromEntries(
+			checked.filter((c) => c.screen === "home").map((c) => [c.state, c.path]),
+		);
+		expect(byState).toEqual({ empty: "/", full: "/home/{seed}" });
+		expect(checked.find((c) => c.screen === "home")?.seed).toBe("make");
+	});
+
+	const looks: LookTarget[] = [
+		{ screen: "s", state: "a", path: "/s/{seed}", seed: "make", unseed: "remove {seed}" },
+		{ screen: "s", state: "b", seed: "make", unseed: "remove {seed}" },
+	];
+
+	it("runs the seed once, puts its trimmed output in every path, and unseeds after", async () => {
+		const ran: string[] = [];
+		const run = (command: string) => {
+			ran.push(command);
+			return command === "make" ? "d-42\n" : "";
+		};
+		const seen = await withScreenSeed(looks, async (seeded) => seeded.map((l) => l.path), run);
+		expect(seen).toEqual(["/s/d-42", undefined]);
+		expect(ran).toEqual(["make", "remove d-42"]);
+	});
+
+	it("unseeds after the body fails, and the failure still reaches the caller", async () => {
+		const ran: string[] = [];
+		const run = (command: string) => {
+			ran.push(command);
+			return "d-7";
+		};
+		await expect(
+			withScreenSeed(
+				looks,
+				async () => {
+					throw new Error("the page answered 404");
+				},
+				run,
+			),
+		).rejects.toThrow("the page answered 404");
+		expect(ran).toEqual(["make", "remove d-7"]);
+	});
+
+	it("runs nothing for a screen that declares no seed", async () => {
+		const ran: string[] = [];
+		const out = await withScreenSeed(
+			[{ screen: "s", state: "a", path: "/s" }],
+			async (l) => l.length,
+			(c) => {
+				ran.push(c);
+				return "";
+			},
+		);
+		expect(out).toBe(1);
+		expect(ran).toEqual([]);
 	});
 });

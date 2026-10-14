@@ -2,11 +2,13 @@
 name: a-recommendation-can-be-declined
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: scaffold
 owner: new-project-flow
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/new-project/create.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/new-project-cli.test.ts
 incidents: []
 ---
 
@@ -14,3 +16,4 @@ Every practice the agent recommends — a docs site, telemetry, deployment, a re
 
 ## History
 - 2026-10-14 — declared (new-project-flow), from its planning conversation.
+- 2026-10-14 — enforced, confirmed for new-project-flow: proven by row A10, row A41.

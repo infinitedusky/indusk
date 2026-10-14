@@ -83,6 +83,18 @@ the brief's promises; each names the smallest level that proves it.
 | A17 | Discarding a project conversation removes everything it held, and nothing exists under the parent directory or in the project registry because of it. | unit |
 | A18 | A project conversation left open, at any point before acceptance, has created nothing outside its own draft folder. | unit |
 
+### `a-project-conversation-is-a-back-and-forth` — A project conversation reads as a back-and-forth: the person's messages and the agent's replies alternate as "you" and "agent" bubbles, each reply formatted as Markdown, and the person answers in the same thread. Everything the agent did between replies is folded inside its bubble behind "See more", one click from view.
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
+| A23 | A session's events read as alternating "you" and "agent" turns: each agent turn's reply is its last text, and the tools and text before it are its working. | unit |
+| A24 | In the conversation, an agent reply written in Markdown shows formatted, its working is hidden until "See more" is clicked, and "See less" hides it again. | unit |
+| A25 | A question or permission the agent is waiting on is never folded away. | unit |
+| A26 | Reopening a project conversation with no agent running shows the same turns it had; discarding it removes them. | unit |
+| A27 | The project conversation's prompt tells the agent to reply in a few sentences of Markdown and ask at most three questions at a time. | unit |
+| A28 | Starting a project conversation starts its agent: the conversation opens with the agent working, with no second click. | unit |
+| A29 | Every agent turn carries one status: working while its agent runs without a reply, done once it has replied, stopped when its agent ended before replying. | unit |
+
 ### `a-plan-starts-as-a-conversation`, `a-conversation-that-is-not-kept-leaves-nothing-in-the-repository`, `a-plan-can-start-from-the-admin` — must not break
 
 | ID | Assertion (user-visible behavior) | Level |
@@ -112,6 +124,7 @@ the brief's promises; each names the smallest level that proves it.
 | ID | Assertion | Reason untestable | Compensating control |
 |----|-----------|-------------------|----------------------|
 | U1 | The agent asks only what the person's input leaves open. | Question quality is a model's judgement. | Expectation 2 counts questions per creation; a live check in the plan records one real run. |
+| U2 | The agent's replies are short enough to read without opening the working. | How short is enough is a judgement. | Expectation 5 records words per reply and folds opened on each creation's span; the live check records one real run. |
 
 ## Notes
 

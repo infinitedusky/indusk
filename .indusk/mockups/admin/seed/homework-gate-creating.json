@@ -1,0 +1,24 @@
+{
+  "steps": [
+    {
+      "id": "workbench",
+      "state": "done"
+    },
+    {
+      "id": "repository",
+      "state": "done"
+    },
+    {
+      "id": "install",
+      "state": "done"
+    },
+    {
+      "id": "documents",
+      "state": "working"
+    },
+    {
+      "id": "github",
+      "state": "waiting"
+    }
+  ]
+}

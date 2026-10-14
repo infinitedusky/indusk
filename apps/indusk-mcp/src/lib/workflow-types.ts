@@ -66,6 +66,35 @@ export const WORKFLOW_DEFINITIONS: Record<WorkflowType, WorkflowDefinition> = {
 	},
 };
 
+/**
+ * The documents a project can never turn off (`planning.documents_off`,
+ * new-project-flow): a plan always has a brief that makes promises, and a test
+ * plan that is how anyone knows the promises hold.
+ *
+ * promise: the-core-is-always-kept
+ */
+export const CORE_DOCUMENTS = ["brief", "test-plan"] as const;
+
+/** The first core document `off` names, or null - the one a turn-off is refused for. */
+export function coreDocumentIn(off: readonly string[]): string | null {
+	return off.find((doc) => (CORE_DOCUMENTS as readonly string[]).includes(doc)) ?? null;
+}
+
+/**
+ * A workflow's required documents minus the ones the project turned off. A
+ * document dropped here is *skipped* wherever absence is judged - it was never
+ * going to exist - not *missing*. A core document in `off` is ignored: the core
+ * is always kept, and a config that names one is refused where it is read.
+ */
+export function requiredDocuments(
+	type: WorkflowType,
+	off: readonly string[] = [],
+): readonly DocumentPosition[] {
+	return WORKFLOW_DEFINITIONS[type].requires.filter(
+		(doc) => !off.includes(doc) || (CORE_DOCUMENTS as readonly string[]).includes(doc),
+	);
+}
+
 /** What each document is called when a person reads it. */
 export const DOCUMENT_LABELS: Record<DocumentPosition, string> = {
 	research: "research",

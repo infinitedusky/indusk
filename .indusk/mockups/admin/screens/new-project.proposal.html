@@ -3,7 +3,6 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="indusk-new-components" content="recommendation,project-card,message,file-chip,prompt-box,knowledge-list,workflow-strip,layout-tree" />
 		<title>New project — proposal</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -49,6 +48,9 @@
 			.flow span.core { font-weight: var(--font-weight-semibold); }
 			.flow span.off { background: var(--color-idle-wash); color: var(--color-ink-faint); text-decoration: line-through; }
 			.confirm { display: flex; align-items: start; gap: var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+					.vis { display: flex; flex-wrap: wrap; gap: var(--space-4); padding-left: var(--space-6); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.vis label { display: inline-flex; align-items: center; gap: var(--space-2); }
+			.confirm.off { color: var(--color-ink-faint); }
 		</style>
 	</head>
 	<body>
@@ -56,18 +58,13 @@
 <header><div class="crumb"><b>Projects</b> / New</div><h1 class="title">homework-gate</h1><p class="hint">The agent's proposal. Change anything, then create it.</p></header>
 <section class="card"><p class="label">Where and what shape</p>
 <dl class="facts"><dt>Name</dt><dd class="mono">homework-gate</dd><dt>Location</dt><dd class="mono">~/code/sandbox/homework-gate-workbench</dd><dt>Shape</dt><dd>A workbench with one repository — a Turbo monorepo</dd></dl>
-<pre class="tree" data-component="layout-tree" data-state="default">homework-gate-workbench/
-  homework-gate/      the repository
-    apps/server       Next.js — policy, parent console, learning
-    apps/grader       Python — math checking
-    apps/docs         the docs site
-  worktrees/          one per plan</pre></section>
+<indusk-component name="layout-tree" state="default"></indusk-component></section>
 <section class="card"><p class="label">How you'll plan</p>
-<div class="flow" data-component="workflow-strip" data-state="default"><span class="doc core">Brief</span><span>→</span><span class="doc core">Test plan</span><span>→</span><span class="doc off">ADR</span><span>→</span><span class="doc">Impl</span><span>→</span><span class="doc">Retrospective</span></div>
+<indusk-component name="workflow-strip" state="default"></indusk-component>
 <p class="hint">A brief with promises and a test plan are always kept — they are how you know the project does what you asked. Decision records are off, by your choice.</p></section>
-<section class="box"><p class="label">What building it properly takes</p><ul class="recs"><li class="rec" data-component="recommendation" data-state="kept"><span class="dot ok"></span><div><h3>A docs site with a changelog</h3><p class="why">So others can join in: what was built, why, and what changed, in one place.</p></div><button class="btn quiet" type="button">Decline</button></li><li class="rec" data-component="recommendation" data-state="kept"><span class="dot ok"></span><div><h3>Telemetry from the first line</h3><p class="why">So you can see what the app does while you build it. It carries no personal content.</p></div><button class="btn quiet" type="button">Decline</button></li><li class="rec" data-component="recommendation" data-state="kept"><span class="dot ok"></span><div><h3>Deploy to Fly</h3><p class="why">The phone and laptop must reach the server away from home.</p></div><button class="btn quiet" type="button">Decline</button></li><li class="rec declined" data-component="recommendation" data-state="declined"><span class="dot idle"></span><div><h3>Decision records (ADRs) — declined</h3><p class="why">A record of why each choice was made, so a later contributor doesn't undo it.</p><p class="reason">Your reason: Solo project for now; I'll turn them on when someone joins.</p></div><button class="btn quiet" type="button">Keep it after all</button></li></ul></section>
-<section class="card"><p class="label">Founding brief</p><p>Written from this conversation and <span class="file" data-component="file-chip" data-state="default">Homework Gate Project Brief.md</span>. Its eight milestones become the master plan; your document is kept unchanged beside it.</p><div class="actions"><button class="btn quiet" type="button">Read the brief</button></div></section>
-<section class="card"><label class="confirm"><input type="checkbox" /><span>Also create a <b>private</b> GitHub repository for <span class="mono">homework-gate</span>. This is the only step that sends anything off this machine.</span></label></section>
+<section class="box"><p class="label">What building it properly takes</p><ul class="recs"><indusk-component name="recommendation" state="kept"></indusk-component><indusk-component name="recommendation" state="kept"></indusk-component><indusk-component name="recommendation" state="kept"></indusk-component><indusk-component name="recommendation" state="declined"></indusk-component></ul></section>
+<section class="card"><p class="label">Founding brief</p><p>Written from this conversation and <indusk-component name="file-chip" state="default"></indusk-component>. Its eight milestones become the master plan; your document is kept unchanged beside it.</p><div class="actions"><button class="btn quiet" type="button">Read the brief</button></div></section>
+<section class="card"><label class="confirm"><input type="checkbox" /><span>Also create a GitHub repository for <span class="mono">homework-gate</span> as <b>infinitedusky</b>. This is the only step that sends anything off this machine.</span></label><div class="vis"><label><input type="radio" name="visibility" checked /> Private — only you can see it</label><label><input type="radio" name="visibility" /> Public — anyone can see it</label></div></section>
 <div class="actions"><button class="btn primary" type="button">Create project</button><button class="btn" type="button">Keep talking</button></div>
 </main>
 	</body>

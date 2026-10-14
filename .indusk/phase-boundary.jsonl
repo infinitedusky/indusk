@@ -299,3 +299,12 @@
 {"plan":"brief-as-the-contract","phase":6,"kind":"build","sha":"ec929646bb0564b8e794454854e74d5d7fc7005c","timestamp":"2026-10-13T21:00:39.137Z"}
 {"plan":"brief-as-the-contract","phase":7,"kind":"build","sha":"cf45cf79cd1330fd4f68d55788af0f3ffbb96f66","timestamp":"2026-10-13T21:34:50.981Z"}
 {"plan":"brief-as-the-contract","phase":8,"kind":"build","sha":"97d99d38fcdf982ec7b8071587e5755dc947cf3d","timestamp":"2026-10-13T21:58:47.613Z"}
+{"plan":"new-project-flow","phase":1,"kind":"test","sha":"355c6cc63c8388ed1176504462c7eda177d21f89","timestamp":"2026-10-14T00:53:59.597Z"}
+{"plan":"new-project-flow","phase":1,"kind":"build","sha":"beec95bc581313030e1fd42e95aa1cefb3bb07c6","timestamp":"2026-10-14T01:06:40.784Z"}
+{"plan":"new-project-flow","phase":2,"kind":"build","sha":"a490169f278a399ec15ac6ad22432d40cd71bc44","timestamp":"2026-10-14T02:02:39.010Z"}
+{"plan":"new-project-flow","phase":3,"kind":"build","sha":"8e726fdc2db0082ccd9b5905eb787b7b87ec1f58","timestamp":"2026-10-14T02:34:12.455Z"}
+{"plan":"new-project-flow","phase":4,"kind":"build","sha":"f0d6a4c0e98f52844fd8f4daa415180b43a277fe","timestamp":"2026-10-14T15:29:46.344Z"}
+{"plan":"new-project-flow","phase":5,"kind":"build","sha":"975ccf1c000b5a838d998d3f841edb260f89c7d4","timestamp":"2026-10-14T17:07:43.747Z"}
+{"plan":"new-project-flow","phase":6,"kind":"build","sha":"6a8e43aa8f61bd032f048b6da53542236f4e9454","timestamp":"2026-10-14T17:36:58.439Z"}
+{"plan":"new-project-flow","phase":7,"kind":"build","sha":"570c80dd5073b8961122502818cef6206f3b9983","timestamp":"2026-10-14T19:01:14.692Z"}
+{"plan":"new-project-flow","phase":8,"kind":"build","sha":"4e3b7e75cdc7c31b9960503204f2f13514e74013","timestamp":"2026-10-14T20:51:36.105Z"}

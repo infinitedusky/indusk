@@ -141,6 +141,8 @@ export interface Plan {
   workflow?: WorkflowType | null;
   /** The word that was declared, when it is not one of the types. */
   workflowDeclared?: string;
+  /** Documents the plan's project turned off (`planning.documents_off`); they read skipped. */
+  documentsOff?: string[];
   /**
    * Where the plan stands in the lifecycle, derived from its documents, its
    * impl and the retrospective readiness gate (admin-ui-phase-progress).
@@ -396,6 +398,7 @@ async function readPlanFolder(
     ...(parsed.workflowDeclared
       ? { workflowDeclared: parsed.workflowDeclared }
       : {}),
+    ...(parsed.documentsOff ? { documentsOff: parsed.documentsOff } : {}),
     ...boundaryFields,
     ...(papers ? { papers } : {}),
     archived,

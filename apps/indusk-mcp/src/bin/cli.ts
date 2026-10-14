@@ -406,6 +406,71 @@ program
 		await verify(rootOrExit(), plan, { phase, fullSuite: opts.fullSuite });
 	});
 
+const newProjectCmd = program
+	.command("new-project")
+	.description(
+		"Start a project as a conversation: drafts held under the InDusk home, made into a project only when you accept",
+	);
+
+newProjectCmd
+	.command("start")
+	.description("Open a conversation about a project not yet made; prints its id")
+	.requiredOption("--message <text>", "What you want to build, in your own words")
+	.option(
+		"--document <file>",
+		"A document to write the brief from (repeatable)",
+		(file: string, all: string[]) => [...all, file],
+		[] as string[],
+	)
+	.action(async (opts: { message: string; document: string[] }) => {
+		const { newProjectStart } = await import("./commands/new-project.js");
+		newProjectStart(opts);
+	});
+
+newProjectCmd
+	.command("add <id> <file>")
+	.description(
+		"Add a document to a conversation; one with a name already added keeps the newer and prints what changed",
+	)
+	.action(async (id: string, file: string) => {
+		const { newProjectAdd } = await import("./commands/new-project.js");
+		newProjectAdd(id, file);
+	});
+
+newProjectCmd
+	.command("discard <id>")
+	.description("Remove a conversation and everything it held; nothing else was ever written")
+	.action(async (id: string) => {
+		const { newProjectDiscard } = await import("./commands/new-project.js");
+		newProjectDiscard(id);
+	});
+
+newProjectCmd
+	.command("accept <id>")
+	.description("Make the project a conversation's proposal describes, printing each step")
+	.action(async (id: string) => {
+		const { newProjectAccept } = await import("./commands/new-project.js");
+		await newProjectAccept(id);
+	});
+
+newProjectCmd
+	.command("transcript <id>")
+	.description(
+		"Print what a conversation has said, one JSON line per event, as the admin reads it back",
+	)
+	.action(async (id: string) => {
+		const { newProjectTranscript } = await import("./commands/new-project.js");
+		newProjectTranscript(id);
+	});
+
+newProjectCmd
+	.command("parent [dir]")
+	.description("Set the directory new projects are made in; with no argument, print it")
+	.action(async (dir?: string) => {
+		const { newProjectParent } = await import("./commands/new-project.js");
+		newProjectParent(dir);
+	});
+
 // Commander quirk: options declared on BOTH a parent and a subcommand cause
 // the subcommand to silently receive the default for duplicated flags (the
 // parent consumes the token). Declaring `--port`/`--no-open` only on the

@@ -1,10 +1,6 @@
----
-title: "New project flow"
-date: 2026-10-14
-status: accepted
----
+# New project flow — a project starts as a conversation in the admin
 
-# New project flow
+**Decided 2026-10-14.** Full ADR: `.indusk/planning/archive/new-project-flow/adr.md`.
 
 ## Goal
 
@@ -23,7 +19,7 @@ worktree config, and a founding document with no home (research.md, entries
 the admin's existing plan conversation — a draft held outside the repository, an agent session launched by the package's session manager, a proposal accepted into a plan — and a project that does not exist yet.
 
 **Facing:**
-an admin that may start a process only through the package (A25 in `admin-uses-package-commands.test.ts`), an `init` that exits the process and writes to the console, draft storage keyed by a project that is not there, a layout `indusk setup` does not make, and a parent directory nothing configures.
+an admin that may start a process only through the package (`admin-uses-package-commands.test.ts`), an `init` that exits the process and writes to the console, draft storage keyed by a project that is not there, a layout `indusk setup` does not make, and a parent directory nothing configures.
 
 **We decided for:**
 a project draft at `~/.indusk/new-projects/<id>/`, talked through the existing session manager with a new-project prompt, under top-level routes `/new` and `/new/<id>`; a package module `lib/new-project/` with a CLI `indusk new-project` (`start`, `add`, `accept`, `discard`, `parent`) that the admin's routes call through the package like `./drafts`; creation that runs the package's own `indusk init` as a child process inside a workbench it lays out (repository inside, `worktrees/` beside, `repos[]` config), writes the founding brief, master plan and the person's documents, records declines and turned-off documents in the project's config, and runs `gh` only when the proposal confirms the remote.
@@ -101,6 +97,25 @@ draft prompt), `bin/commands/init.ts` (`init(projectRoot, options)`),
 8. **Home page.** `ProjectGrid`'s header gains New project (the `home.default`
    look); its empty state offers it beside `indusk init`.
 
+9. **The project conversation as a thread** (amended 2026-10-14). The
+   project conversation stops showing the shared session panel: a pure
+   `turnsOf(events)` reads a session's events as alternating "you" and
+   "agent" turns - an agent turn's reply is its last `text`, the `tool`
+   events and earlier text before it are its working - and the page renders
+   them as `Message` bubbles, the reply through the admin's `Markdown`, the
+   working folded behind "See more". A `question` or `permission` is never
+   folded: it waits on the person. The session's events are appended to the
+   draft as `transcript.jsonl`, so a reopened conversation shows its turns
+   with no agent running, and discarding the draft removes them. The prompt
+   asks for a few sentences of Markdown and at most three questions at a
+   time. Only the project conversation changes; the plan conversation,
+   builds and Fix with Claude keep the session panel until a later plan
+   moves them onto the same thread. Start launches the agent as it creates
+   the draft, and every agent reply carries a status dot (`turnsOf` gives each
+   agent turn `working`, `done` or `stopped`): a pulsing dot and "Working…"
+   while it runs, a green dot once it has replied, a grey dot and a line to
+   write below when it ended before replying.
+
 ## Alternatives Considered
 
 ### Reuse plan drafts
@@ -133,28 +148,18 @@ Rejected: the promise is the directory the person configured.
 
 ### Risks
 - A half-made project after a failure. Mitigation: creation removes what it
-  made, and A17/A18 hold the parent directory clean.
+  made, and the tests for discarding and for a conversation left open hold the parent directory clean.
 - `gh` not installed or not signed in. Mitigation: the remote step fails on
   its own after the project exists locally, and says so; nothing else is
   undone.
 
-## Documentation Plan
+## As built
 
-### Pages
-- New: `apps/docs/src/guide/new-project.md` — starting a project from the admin, the proposal, declines, the parent directory.
-- New: `apps/docs/src/reference/cli/new-project.md` — `indusk new-project start | add | accept | discard | parent`.
-- Update: `apps/docs/src/guide/worktree-setup.md` — the admin as the first way to make a workbench.
+These differ from the decisions above, found while building:
 
-### Diagrams
-- Mermaid in `guide/new-project.md`: text box → conversation → proposal → creation steps → project.
-
-### Changelog
-- Added — start a new project from the admin by describing it; the agent creates the workbench, repository and founding brief.
-
-### ADR in Docs
-- Yes: `apps/docs/src/decisions/new-project-flow.md`.
-
-## References
-- [research.md](research.md), [brief.md](brief.md)
-- `.indusk/planning/archive/brief-as-the-contract/` — the plan conversation this builds on
-- `.indusk/planning/component-content/` — converts this plan's inline buttons and steps afterwards
+- **Repositories are declared inside the workbench with `repos_root: "."`** (decision 5). The ADR wrote the `worktree` config with `sibling_parent`; `repos_root` supersedes it and is what says the repositories live inside the workbench, without which `indusk worktree list` reads each one as an unusual trunk. The config is `{ shape: "workbench", repos: [{ name, worktrees: "worktrees" }], repos_root: "." }`.
+- **A creation records its steps in the draft** (decision 5). `creating.json` in the draft's folder holds the steps and where each stands, so a page opened mid-run or after a stop (`/new/<id>?creating=1`) can show them; it is the package's file, written by `createProject`, and removed with the draft when the project is made.
+- **`gh repo create` is named for the first repository**, since the remote holds a repository; with one repository (every proposal so far) it is also the project's name. Its failure is reported and leaves the finished local project, as the Risks say.
+- **The transcript is appended by a subscription, with a marker per session** (decision 9). The session manager replays a running session's events to a new listener and a stopped one replays nothing, so `startProjectConversation` writes a `{"type":"session","id"}` line and subscribes the draft to the session; a page connected to that session shows the transcript before its marker and the live replay after, so nothing is drawn twice. `indusk new-project transcript <id>` prints the file.
+- **"See more" is counted** (decision 9). The page posts to `/api/new-projects/<id>/fold` when a reply's working is opened, and a `fold-opened` line is appended to the transcript; creation reads the transcript into the `new_project.create` span before it deletes the draft (`conversation.questions`, `conversation.replies`, `conversation.reply_words`, `conversation.folds_opened`, `conversation.has_document`), and the span starts when the person opened the text box, so its duration is the time from idea to project.
+- **One subscription hears a running agent** (decision 9). The project conversation and the plan conversation (`SessionConnector`) open the agent's events through the same `useSessionEvents` hook, with `onWrite` as the one difference; it is what the other conversations (builds, Fix with Claude) will move onto when they move onto the thread. The accept, discard and add routes find a draft's agent through `draftSession` and `stopDraftSession`.
