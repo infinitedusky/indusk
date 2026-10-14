@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { Nav } from "@/components/ui/Nav";
-import { NavHandle } from "@/components/ui/NavHandle";
+import { clampNavWidth, NavHandle } from "@/components/ui/NavHandle";
 import { Shell } from "@/components/ui/Shell";
 import { navLookState } from "@/lib/look-state";
 
@@ -115,7 +115,7 @@ export function CockpitFrame({
     // page: it wins over the kept one and is not kept (so a check that opens a
     // fresh browser can draw the nav wide, as `nav.wide` is).
     const asked = readAskedWidth() ?? readWidth();
-    if (asked !== null) setWidth(Math.min(read.max, Math.max(read.min, asked)));
+    if (asked !== null) setWidth(clampNavWidth(asked, read));
   }, []);
 
   useEffect(() => {

@@ -35,8 +35,11 @@ export interface NavHandleProps
   dragging?: boolean;
 }
 
-const clamp = (n: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, n));
+/** The one rule for the width the nav may take: held between `min` and `max`. A drag, a key step, a kept width and `?nav=` all go through it. */
+export const clampNavWidth = (
+  width: number,
+  { min, max }: { min: number; max: number },
+) => Math.min(max, Math.max(min, width));
 
 /** The width a key asks for — arrows step, Home and End go to the ends — held between `min` and `max`; null for any other key. */
 function widthForKey(
@@ -46,8 +49,8 @@ function widthForKey(
   max: number,
   step: number,
 ): number | null {
-  if (key === "ArrowRight") return clamp(value + step, min, max);
-  if (key === "ArrowLeft") return clamp(value - step, min, max);
+  if (key === "ArrowRight") return clampNavWidth(value + step, { min, max });
+  if (key === "ArrowLeft") return clampNavWidth(value - step, { min, max });
   if (key === "Home") return min;
   if (key === "End") return max;
   return null;
@@ -90,10 +93,9 @@ export function NavHandle({
   };
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
     if (!holding.current) return;
-    last.current = clamp(
+    last.current = clampNavWidth(
       from.current.width + e.clientX - from.current.x,
-      min,
-      max,
+      { min, max },
     );
     onResize?.(last.current);
   };
