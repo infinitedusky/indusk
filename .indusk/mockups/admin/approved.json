@@ -4431,6 +4431,20 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T22:25:46.404Z",
 			"plan": "new-project-flow"
+		},
+		{
+			"mockup": "home.default",
+			"mockupHash": "4a93fa467c4641dd27f14511d38d4e5646ce0f577aaf37a56f54498259d4e726",
+			"componentsHash": "c88cc91a35db7ad2cdebe30ea51625b05491ad756f6a5f50d5a25da54de11b4a",
+			"components": {
+				"project-card.default": "39104a137d61747cd9dcc494dcbf2ced8abbe22adc1eb7d2ae027dc10822c0a4",
+				"project-card.css": "4b2f698887b372e86b009b0e2ce3bbb72106a9c9ead521f15fe324e0e7e72e26"
+			},
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T22:25:46.631Z",
+			"plan": "new-project-flow"
 		}
 	]
 }
