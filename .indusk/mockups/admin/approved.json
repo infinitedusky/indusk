@@ -4745,6 +4745,22 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T01:53:19.223Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"mockup": "dashboard.empty",
+			"mockupHash": "8e09655bfd4a9f0840962495e1fb11d1d6e34a69c3b047847f6b0a80654c93d8",
+			"componentsHash": "7114ea4ae8f0a33ce53c1874fe2a4d45924279ba37e9b297e19b1867805f3bac",
+			"components": {
+				"nav.expanded": "f7f7da1765585eb6bfa81cc58ec87303ee7e66ec3a2eef6286e21d93d0580e81",
+				"promise-row.empty": "0fba184d8a78eba12720c6fd61cb418951102a333bf1f51fcb95facbb99d1d81",
+				"nav.css": "c57723f174d0839b7aa9be7522e43f62e3db3f1120c45bf3015f2821488e7a41",
+				"promise-row.css": "afec956a5ca1216fadafb3134529e9f058ca6c994ca0fa9e74f90c8784ff2cdf"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T01:53:19.431Z",
+			"plan": "cockpit-redraw"
 		}
 	]
 }
