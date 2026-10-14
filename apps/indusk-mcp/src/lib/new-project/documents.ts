@@ -60,3 +60,14 @@ function readableDiff(raw: string, name: string): string {
 		})
 		.join("\n");
 }
+
+/**
+ * What the agent is told when a document reaches a conversation it is already
+ * in: the difference, when a name was replaced, so it works from the new
+ * version, or where to read a document it has not seen. The words are the
+ * package's, so the admin and a person at the command line send the same.
+ */
+export function documentNotice(added: AddedDocument): string {
+	if (!added.replaced) return `A document was added: ./documents/${added.name}. Read it.`;
+	return `A newer version of ./documents/${added.name} was added. What changed:\n\n${added.diff || "(nothing differs)"}\n\nWork from the new version.`;
+}
