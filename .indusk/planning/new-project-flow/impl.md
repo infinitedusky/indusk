@@ -163,7 +163,7 @@ Deferred-body review (Test Phase 1):
 - [x] CLI `indusk new-project start | add | discard | parent` in `bin/cli.ts`; the package exports `./new-project` for the admin
 - [x] Admin: `/api/new-projects` (POST create), `/api/new-projects/[id]/talk` (session with `plan: "new-project:<id>"`, refused while another session runs), `/[id]/add` (the diff sent with `/api/sessions/[id]/say`), `/[id]/discard`
   - Decision (A2): `POST /api/new-projects` creates the draft **and** starts the session (`kind: "planning"`, `plan: "new-project:<id>"`) with the first message and documents in its prompt; `/[id]/talk` handles later turns and restarting the session. This keeps the reviewed A2 body, which posts to the create route, valid.
-- [ ] Admin: `/new` (`NewProjectStart`, the `prompt-box` look) and `/new/[id]` (`NewProjectConversation` with `message`, `file-chip`, `knowledge-list`, reusing `SessionConnector`); New project in `ProjectGrid`'s header and empty state (`home.default`, `project-card`)
+- [x] Admin: `/new` (`NewProjectStart`, the `prompt-box` look) and `/new/[id]` (`NewProjectConversation` with `message`, `file-chip`, `knowledge-list`, reusing `SessionConnector`); New project in `ProjectGrid`'s header and empty state (`home.default`, `project-card`)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 1 Verification

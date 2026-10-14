@@ -19,7 +19,9 @@ describe("A1 — New project asks only what you want to build", () => {
   it("A1 shows the question, one box and a way to add documents, and needs no project", async () => {
     const screen = await render(<NewProjectStart />);
     await expect
-      .element(screen.getByRole("heading", { name: "What do you want to build?" }))
+      .element(
+        screen.getByRole("heading", { name: "What do you want to build?" }),
+      )
       .toBeInTheDocument();
     await expect
       .element(screen.getByRole("button", { name: /add documents/i }))

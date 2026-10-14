@@ -224,6 +224,12 @@ body {
 .cols-plan-stage {
   grid-template-columns: var(--size-rail) minmax(0, 1fr);
 }
+.cols-conversation {
+  grid-template-columns: minmax(0, 1fr) var(--size-side);
+}
+.cols-project-grid {
+  grid-template-columns: repeat(auto-fill, minmax(var(--size-side), 1fr));
+}
 @media (max-width: 759px) {
   .cols-shell,
   .cols-shell-rail {
@@ -234,6 +240,7 @@ body {
   }
   .cols-promise-page,
   .cols-plan-stage,
+  .cols-conversation,
   .cols-draft-row,
   .cols-expectation-row {
     grid-template-columns: minmax(0, 1fr);
