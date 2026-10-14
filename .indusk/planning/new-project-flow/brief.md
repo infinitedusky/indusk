@@ -31,6 +31,10 @@ are in [research.md](research.md).
    - Measure: projects registered through the admin flow against projects registered by a bare `indusk init` or `indusk setup`, from the project registry.
    - Look: 30 days after release.
 
+5. **The person reads the agent's replies, not its working.**
+   - Measure: per project conversation, the words in each agent reply and how often the person opens what was folded. Long replies or frequent opening means the prompt or the fold is wrong.
+   - Look: after the first three projects created this way.
+
 ## Promises
 
 ### This plan makes
@@ -54,6 +58,8 @@ are in [research.md](research.md).
 9. **`a-new-project-is-written-only-under-its-parent`** (state). The admin creates a project only inside the parent directory the person configured.
 
 10. **`an-unkept-project-conversation-leaves-nothing-on-disk`** (state). A project conversation that is abandoned before acceptance creates no directory and registers no project.
+
+11. **`a-project-conversation-is-a-back-and-forth`** (state). A project conversation reads as a back-and-forth: the person's messages and the agent's replies alternate as "you" and "agent" bubbles, each reply formatted as Markdown, and the person answers in the same thread. Everything the agent did between replies is folded inside its bubble behind "See more", one click from view.
 
 ### Existing promises
 
@@ -81,6 +87,8 @@ None.
 - **Asking only what the input leaves open.** The quality of the agent's questions is judged by expectation 2, not promised.
 - **Adopting an existing repository** through this flow. `indusk setup` covers it today; the conversation detecting it is a later plan.
 - **Where premises (a project's scored aim) live.** The founding brief holds the aim for now; `plan-premises` decides its home.
+- **Folded working in the other agent conversations** (a plan's conversation, a build, Fix with Claude). The project conversation goes first; the others follow in a later plan once this fold has been used.
+- **Short replies.** The agent is told to answer concisely and ask as little as it can; how short is judged by expectation 5, not promised.
 
 ## Looks
 
@@ -88,7 +96,7 @@ None.
 
 1. **`home.default`**. The project grid with a New project button.
 2. **`new-project.start`**. One text box — "What do you want to build?" — and a way to add documents to write the brief from; nothing else asked.
-3. **`new-project.conversation`**. Mid-conversation: the person's messages and documents, the agent's open questions, and what the agent knows so far (why, what, how and where, name and place).
+3. **`new-project.conversation`**. Mid-conversation: the person's messages and documents, "you" and "agent" bubbles alternating, each agent reply formatted with its working folded inside it, a box to answer in, and what the agent knows so far (why, what, how and where, name and place).
 4. **`new-project.proposal`**. The proposal: name, location and shape, the planning workflow with the core kept, each recommendation kept or declined, the founding brief, the private GitHub repository as a separate confirm, and Create.
 5. **`new-project.creating`**. The creation running as steps, ending with a way into the new project.
 6. **`recommendation.kept`**. A new component: a recommended practice, one line on why, and Decline.
@@ -101,6 +109,8 @@ None.
 13. **`knowledge-list.default`**. A new component: what the agent knows so far — why, what, how and where, name and place — each settled, asking or open.
 14. **`workflow-strip.default`**. A new component: the planning documents in order, the core marked kept and a declined one struck through.
 15. **`layout-tree.default`**. A new component: the project's directory layout as it will be created.
+16. **`message.agent-folded`**. The agent's bubble (`message.agent`) holding a formatted reply, with one "See more ›" line standing for the working before it.
+17. **`message.agent-open`**. The same bubble opened: the working listed above the reply, and "See less".
 
 ### Existing looks
 
