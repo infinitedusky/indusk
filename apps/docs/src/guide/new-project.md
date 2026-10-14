@@ -134,7 +134,15 @@ indusk new-project parent ~/code/sandbox
 
 With none set, creation is refused and the message names that command. A
 proposal whose location is outside it is refused, and nothing is made. The
-agent proposes a location; it never decides where the admin may write.
+comparison is by real path, so a symbolic link inside the parent that leads
+out of it does not get a project written beyond it. A location inside an
+existing git repository under the parent is refused too, naming that
+repository, and the repository is left alone. The agent proposes a location;
+it never decides where the admin may write.
+
+Creating a project ends its conversation: the conversation's agent is stopped
+before anything is made, so it does not keep running in the deleted draft or
+hold the one session slot, and a new project conversation can start at once.
 
 ## The remote repository
 
