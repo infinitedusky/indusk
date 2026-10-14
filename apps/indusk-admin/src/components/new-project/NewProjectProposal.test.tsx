@@ -6,6 +6,7 @@ import { render } from "vitest-browser-react";
 import { NewProjectProposal } from "./NewProjectProposal";
 
 // promise: a-project-starts-as-a-conversation
+// promise: a-remote-repository-says-whose-and-who-can-see-it
 
 /**
  * new-project-flow A3: once the agent writes its proposal, the page shows the
@@ -152,6 +153,57 @@ describe("A37 — the GitHub repository starts unticked whatever the agent propo
     await screen.getByRole("button", { name: "Create project" }).click();
     expect(onCreate).toHaveBeenLastCalledWith(
       expect.objectContaining({ remote: { github: true } }),
+    );
+  });
+});
+
+/**
+ * new-project-flow A43: the GitHub offer names the account the repository
+ * would be made as and lets the person choose private or public; with nobody
+ * signed in to GitHub it cannot be ticked and says how to sign in.
+ */
+describe("A43 — the GitHub offer names whose repository it is and who can see it", () => {
+  it("A43 signed in: names the account, offers Private (chosen) and Public, and hands the choice on", async () => {
+    const onCreate = vi.fn();
+    const screen = await render(
+      <NewProjectProposal
+        proposal={homeworkGate}
+        githubAccount="infinitedusky"
+        onCreate={onCreate}
+      />,
+    );
+    await expect.element(screen.getByText("infinitedusky")).toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("radio", { name: /Private — only you/ }))
+      .toBeChecked();
+    await expect
+      .element(screen.getByRole("radio", { name: /Public — anyone/ }))
+      .not.toBeChecked();
+    await screen.getByRole("checkbox").click();
+    await screen.getByRole("radio", { name: /Public — anyone/ }).click();
+    await screen.getByRole("button", { name: "Create project" }).click();
+    expect(onCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        remote: { github: true, visibility: "public" },
+      }),
+    );
+  });
+
+  it("A43 signed out: the box cannot be ticked and says to run gh auth login and reload", async () => {
+    const onCreate = vi.fn();
+    const screen = await render(
+      <NewProjectProposal
+        proposal={{ ...homeworkGate, remote: { github: true } }}
+        githubAccount={null}
+        onCreate={onCreate}
+      />,
+    );
+    await expect.element(screen.getByRole("checkbox")).toBeDisabled();
+    await expect.element(screen.getByText("gh auth login")).toBeInTheDocument();
+    expect(screen.getByRole("radio").elements()).toHaveLength(0);
+    await screen.getByRole("button", { name: "Create project" }).click();
+    expect(onCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ remote: expect.objectContaining({ github: false }) }),
     );
   });
 });
