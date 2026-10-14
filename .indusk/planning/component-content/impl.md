@@ -1,13 +1,16 @@
 ---
 title: "Component content — a placed component takes its own words"
 date: 2026-10-13
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+approved_brief: "ce09d0d9b9bda6ff49a59e1bba93c4b528d33656eb74886eeb798089b19a4c5e"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-14T21:40:24.962Z"
 ---
 
 # Component content
