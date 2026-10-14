@@ -97,6 +97,21 @@ draft prompt), `bin/commands/init.ts` (`init(projectRoot, options)`),
 8. **Home page.** `ProjectGrid`'s header gains New project (the `home.default`
    look); its empty state offers it beside `indusk init`.
 
+9. **The project conversation as a thread** (amended 2026-10-14). The
+   project conversation stops showing the shared session panel: a pure
+   `turnsOf(events)` reads a session's events as alternating "you" and
+   "agent" turns - an agent turn's reply is its last `text`, the `tool`
+   events and earlier text before it are its working - and the page renders
+   them as `Message` bubbles, the reply through the admin's `Markdown`, the
+   working folded behind "See more". A `question` or `permission` is never
+   folded: it waits on the person. The session's events are appended to the
+   draft as `transcript.jsonl`, so a reopened conversation shows its turns
+   with no agent running, and discarding the draft removes them. The prompt
+   asks for a few sentences of Markdown and at most three questions at a
+   time. Only the project conversation changes; the plan conversation,
+   builds and Fix with Claude keep the session panel until a later plan
+   moves them onto the same thread.
+
 ## Alternatives Considered
 
 ### Reuse plan drafts
@@ -136,8 +151,10 @@ Rejected: the promise is the directory the person configured.
 
 ## As built
 
-Three things differ from the decisions above, each found while building creation:
+These differ from the decisions above, found while building:
 
 - **Repositories are declared inside the workbench with `repos_root: "."`** (decision 5). The ADR wrote the `worktree` config with `sibling_parent`; `repos_root` supersedes it and is what says the repositories live inside the workbench, without which `indusk worktree list` reads each one as an unusual trunk. The config is `{ shape: "workbench", repos: [{ name, worktrees: "worktrees" }], repos_root: "." }`.
 - **A creation records its steps in the draft** (decision 5). `creating.json` in the draft's folder holds the steps and where each stands, so a page opened mid-run or after a stop (`/new/<id>?creating=1`) can show them; it is the package's file, written by `createProject`, and removed with the draft when the project is made.
 - **`gh repo create` is named for the first repository**, since the remote holds a repository; with one repository (every proposal so far) it is also the project's name. Its failure is reported and leaves the finished local project, as the Risks say.
+- **The transcript is appended by a subscription, with a marker per session** (decision 9). The session manager replays a running session's events to a new listener and a stopped one replays nothing, so `startProjectConversation` writes a `{"type":"session","id"}` line and subscribes the draft to the session; a page connected to that session shows the transcript before its marker and the live replay after, so nothing is drawn twice. `indusk new-project transcript <id>` prints the file.
+- **"See more" is counted** (decision 9). The page posts to `/api/new-projects/<id>/fold` when a reply's working is opened, and a `fold-opened` line is appended to the transcript; creation reads the transcript into the `new_project.create` span before it deletes the draft (`conversation.questions`, `conversation.replies`, `conversation.reply_words`, `conversation.folds_opened`, `conversation.has_document`), and the span starts when the person opened the text box, so its duration is the time from idea to project.

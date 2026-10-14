@@ -302,8 +302,8 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/guide/new-project.md`: the conversation as a thread, what "See more" holds, the transcript kept in the draft
-- [ ] `apps/docs/src/decisions/new-project-flow.md`: decision 9 published; changelog entry under the plan's "Added"
+- [x] `apps/docs/src/guide/new-project.md`: the conversation as a thread, what "See more" holds, the transcript kept in the draft
+- [x] `apps/docs/src/decisions/new-project-flow.md`: decision 9 published; changelog entry under the plan's "Added"
 
 ## Files Affected
 
