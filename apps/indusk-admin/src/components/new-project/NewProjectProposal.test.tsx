@@ -130,3 +130,28 @@ describe("A3 — the proposal shows name, location and shape, each changeable", 
     );
   });
 });
+
+/**
+ * new-project-flow A37: the GitHub repository is unticked when the proposal
+ * opens, whatever the agent proposed. Only the person's tick creates one.
+ */
+describe("A37 — the GitHub repository starts unticked whatever the agent proposed", () => {
+  const agentTicked: Proposal = { ...homeworkGate, remote: { github: true } };
+
+  it("A37 opens unticked and creates with no remote unless the person ticks it", async () => {
+    const onCreate = vi.fn();
+    const screen = await render(
+      <NewProjectProposal proposal={agentTicked} onCreate={onCreate} />,
+    );
+    await expect.element(screen.getByRole("checkbox")).not.toBeChecked();
+    await screen.getByRole("button", { name: "Create project" }).click();
+    expect(onCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ remote: { github: false } }),
+    );
+    await screen.getByRole("checkbox").click();
+    await screen.getByRole("button", { name: "Create project" }).click();
+    expect(onCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ remote: { github: true } }),
+    );
+  });
+});

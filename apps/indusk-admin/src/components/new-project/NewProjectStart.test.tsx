@@ -25,7 +25,7 @@ afterEach(() => {
 
 describe("A1 — New project asks only what you want to build", () => {
   it("A1 shows the question, one box and a way to add documents, and needs no project", async () => {
-    const screen = await render(<NewProjectStart />);
+    const screen = await render(<NewProjectStart parent="/home/me/code" />);
     await expect
       .element(
         screen.getByRole("heading", { name: "What do you want to build?" }),
@@ -54,7 +54,7 @@ describe("A28 — Start launches the agent", () => {
         return Response.json({ id: "d1" }, { status: 201 });
       }),
     );
-    const screen = await render(<NewProjectStart />);
+    const screen = await render(<NewProjectStart parent="/home/me/code" />);
     await userEvent.type(screen.getByRole("textbox"), "A homework gate");
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
     await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/new/d1"));
@@ -88,6 +88,76 @@ describe("A28 — Start launches the agent", () => {
     await expect.element(screen.getByText("Working…")).toBeVisible();
     expect(
       screen.getByRole("button", { name: /talk to the agent/i }).elements(),
+    ).toHaveLength(0);
+  });
+});
+
+/**
+ * new-project-flow A35: with no parent set, the start page asks where new
+ * projects go and saves it through the admin; a project can then be created
+ * with no command typed. With one set, the page shows it with a way to change it.
+ */
+describe("A35 — the start page asks where new projects go, with none set", () => {
+  const stubRoutes = (sent: { url: string; body: unknown }[]) =>
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        sent.push({
+          url,
+          body: init?.body ? JSON.parse(String(init.body)) : undefined,
+        });
+        return url.endsWith("/parent")
+          ? Response.json({ parent: "/home/me/code" })
+          : Response.json({ id: "d1" }, { status: 201 });
+      }),
+    );
+
+  it("A35 asks first, holds Start back, saves the answer, then starts the conversation", async () => {
+    const sent: { url: string; body: unknown }[] = [];
+    stubRoutes(sent);
+    const screen = await render(<NewProjectStart parent={null} />);
+    await expect
+      .element(screen.getByLabelText("Where should new projects go?"))
+      .toBeInTheDocument();
+    await userEvent.type(
+      screen.getByRole("textbox", { name: /tell the agent/i }),
+      "A homework gate",
+    );
+    await expect
+      .element(screen.getByRole("button", { name: "Start" }))
+      .toBeDisabled();
+
+    await userEvent.fill(
+      screen.getByLabelText("Where should new projects go?"),
+      "~/code",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await expect
+      .element(screen.getByText("/home/me/code"))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Start" }))
+      .toBeEnabled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/new/d1"));
+    expect(sent.map((s) => s.url)).toEqual([
+      "/api/new-projects/parent",
+      "/api/new-projects",
+    ]);
+    expect(sent[0]?.body).toEqual({ parent: "~/code" });
+  });
+
+  it("A35 with one set, shows it with Change and does not ask", async () => {
+    const screen = await render(<NewProjectStart parent="/home/me/code" />);
+    await expect
+      .element(screen.getByText("/home/me/code"))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Change" }))
+      .toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Where should new projects go?").elements(),
     ).toHaveLength(0);
   });
 });
