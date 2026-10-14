@@ -11,6 +11,15 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+/** The look states this page draws: the screen, and each component it places in its default state. */
+const lookStates = (withDocuments: boolean): string =>
+  [
+    "new-project.conversation",
+    "message.you",
+    ...(withDocuments ? ["file-chip.default"] : []),
+    "knowledge-list.default",
+  ].join(" ");
+
 /**
  * `/new/{id}` - a project conversation (new-project-flow), drawn as the
  * approved `new-project.conversation` draws it: the person's words and
@@ -27,7 +36,7 @@ export default async function NewProjectConversationPage({ params }: Props) {
   return (
     <main
       className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
-      data-look-state="new-project.conversation"
+      data-look-state={lookStates(draft.documents.length > 0)}
       data-draft={id}
     >
       <header>

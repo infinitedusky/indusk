@@ -11,7 +11,7 @@ export default function NewProjectPage() {
   return (
     <main
       className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
-      data-look-state="new-project.start"
+      data-look-state="new-project.start prompt-box.default"
     >
       <header>
         <div className="text-sm leading-3 text-ink-faint">

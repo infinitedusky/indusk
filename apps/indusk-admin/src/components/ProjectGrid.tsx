@@ -58,7 +58,7 @@ export function ProjectGrid({ projects, notFound = [] }: ProjectGridProps) {
   return (
     <div
       className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
-      data-look-state="home.default"
+      data-look-state="home.default project-card.default"
     >
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
