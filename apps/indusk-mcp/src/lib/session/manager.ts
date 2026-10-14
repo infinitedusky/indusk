@@ -52,6 +52,12 @@ export interface SessionRecord {
 export interface ManagedStart extends SessionOptions {
 	project: string;
 	plan: string;
+	/**
+	 * A step of a build already admitted: the machine's cap does not refuse it
+	 * (a build's slot is free between its steps, and another plan's start must
+	 * not cost it the next one). The same-plan rule still does.
+	 */
+	inBuild?: true;
 }
 
 interface Held {
@@ -95,8 +101,9 @@ export class SessionManager {
 			listeners: new Set(),
 			answered: new Set(),
 		};
+		const { inBuild: _inBuild, ...launchOpts } = opts;
 		const session = this.launch({
-			...opts,
+			...launchOpts,
 			onEvent: (ev) => {
 				// A planning session is asked only about a path outside its own
 				// folder (A26): the rest is decided here, as a build's is.
@@ -143,14 +150,17 @@ export class SessionManager {
 		if (same) {
 			return new SessionBusy(alreadyRunningOnThisPlan(same), same);
 		}
+		return opts.inBuild ? undefined : this.capRefusal();
+	}
+
+	/** The refusal a new session meets when the machine already runs its cap, if it does. */
+	capRefusal(): SessionBusy | undefined {
 		const max = this.max ?? readSessionsMax();
-		if (this.held.size >= max) {
-			const names = this.running().map((r) => `${r.kind} for ${r.plan}`);
-			return new SessionBusy(
-				`${max} sessions are running (sessions.max): ${names.join(", ")} — stop one from its plan's page in the admin`,
-			);
-		}
-		return undefined;
+		if (this.held.size < max) return undefined;
+		const names = this.running().map((r) => `${r.kind} for ${r.plan}`);
+		return new SessionBusy(
+			`${max} sessions are running (sessions.max): ${names.join(", ")} — stop one from its plan's page in the admin`,
+		);
 	}
 
 	/** The plan's running session of `kind` (either kind when omitted), if any. */
