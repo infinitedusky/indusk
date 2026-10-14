@@ -124,7 +124,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 **Tier**: med — the work step's default
 
-- [ ] `hooks/looks-approval-guard.js` refuses an agent's Bash command that runs `plans reapprove` (`indusk plans reapprove`, `node …/cli.js plans reapprove`) or names `/api/plans/<name>/reapprove`, with a message saying only a person re-approves and how (the amendment card's Approve, or the person's own terminal); copy to `.claude/hooks/`; the header comment names `only-a-person-reapproves`
+- [x] `hooks/looks-approval-guard.js` refuses an agent's Bash command that runs `plans reapprove` (`indusk plans reapprove`, `node …/cli.js plans reapprove`) or names `/api/plans/<name>/reapprove`, with a message saying only a person re-approves and how (the amendment card's Approve, or the person's own terminal); copy to `.claude/hooks/`; the header comment names `only-a-person-reapproves`
 - [x] Shape (Build Phase 1): reviewed `looks-approval-guard.js` (and its `.claude/hooks/` copy) against the enabled extensions' craft rules — one finding, fixed in place: `refuse` picked its message by testing the `why` string and held two inline message arrays in a ternary; the two messages are now named `MOCKUP_GUIDANCE` and `REAPPROVAL_GUIDANCE`, `bashRefusal` returns the guidance with its reason, and `refuse` only prints. A5, A6 and the 20 older guard cases still pass
 
 #### Build Phase 1 Verification
