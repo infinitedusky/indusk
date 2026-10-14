@@ -1,7 +1,7 @@
 ---
 title: "Decided prompts stay closed"
 date: 2026-10-14
-status: draft
+status: accepted
 workflow: bugfix
 description: "During a build, the cockpit shows an Allow/Deny prompt only when a person actually has to choose. A request the build decided on its own never shows as waiting, and once any request is decided it stays done, including after the page reloads."
 ---
