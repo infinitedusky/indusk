@@ -8,6 +8,8 @@ import { SessionPanel } from "./SessionPanel";
 /**
  * promise: a-plan-can-start-from-the-admin — admin-plan-authoring A1, A2, A3, the panel's half.
  * promise: a-session-can-be-stopped — admin-plan-authoring A21, the panel's half.
+ * promise: a-prompt-shows-only-when-a-person-must-choose — decided-prompts-stay-closed A1, A2, A3, the panel's half.
+ * promise: a-decided-request-stays-decided — decided-prompts-stay-closed A6, A7, the panel's half.
  *
  * What the session says appears as it says it; a question shows its choices
  * and the chosen answer goes back; a request to use a tool can be allowed or
@@ -275,5 +277,79 @@ describe("A2 — a question can be answered in the person's own words, or with s
         "What should change?": "Drop OTel, Rename it",
       }),
     );
+  });
+});
+
+// The `decided` event is built loosely so this file loads before the type exists.
+const decided = (over: Record<string, unknown>) =>
+  ({ type: "decided", by: "rule", ...over }) as unknown as StartedEvent;
+
+describe("decided-prompts-stay-closed — a decided request is drawn decided, from the log alone", () => {
+  it("A1 a request the build allowed shows Allowed, with no Allow or Deny", async () => {
+    const { rendered } = panel([
+      init,
+      permission,
+      decided({ requestId: "p1", allow: true }),
+    ]);
+    expect(await textOf(rendered)).toContain("Allowed");
+    expect(await button(rendered, "Allow")).toBeUndefined();
+    expect(await button(rendered, "Deny")).toBeUndefined();
+  });
+
+  it("A2 a request the build denied shows Denied with the build's reason, and no Allow or Deny", async () => {
+    const { rendered } = panel([
+      init,
+      permission,
+      decided({
+        requestId: "p1",
+        allow: false,
+        message: "a build writes only inside /w",
+      }),
+    ]);
+    const text = await textOf(rendered);
+    expect(text).toContain("Denied");
+    expect(text).toContain("a build writes only inside /w");
+    expect(await button(rendered, "Allow")).toBeUndefined();
+    expect(await button(rendered, "Deny")).toBeUndefined();
+  });
+
+  it("A6 a panel connecting after a person decided shows their outcome, with no buttons", async () => {
+    const { rendered } = panel([
+      init,
+      permission,
+      decided({
+        requestId: "p1",
+        allow: false,
+        message: "not that",
+        by: "person",
+      }),
+    ]);
+    const text = await textOf(rendered);
+    expect(text).toContain("Denied");
+    expect(text).toContain("not that");
+    expect(await button(rendered, "Allow")).toBeUndefined();
+    expect(await button(rendered, "Deny")).toBeUndefined();
+  });
+
+  it("A7 a question the build declined shows as declined with the reason, never as waiting", async () => {
+    const { rendered } = panel([
+      init,
+      question,
+      decided({
+        requestId: "q1",
+        allow: false,
+        message: "decide on your own judgement and record why",
+      }),
+    ]);
+    const text = await textOf(rendered);
+    expect(text).toContain("Declined");
+    expect(text).toContain("own judgement");
+    expect(await button(rendered, "Answer")).toBeUndefined();
+  });
+
+  it("A3 a request nothing has decided, in a running session, still shows Allow and Deny", async () => {
+    const { rendered } = panel([init, permission]);
+    expect(await button(rendered, "Allow")).toBeDefined();
+    expect(await button(rendered, "Deny")).toBeDefined();
   });
 });
