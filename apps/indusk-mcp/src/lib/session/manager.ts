@@ -141,7 +141,10 @@ export class SessionManager {
 		return this.held.get(id)?.session;
 	}
 
-	/** Why `opts` may not start now: the plan already has this kind, or the machine is at its cap. */
+	/**
+	 * Why `opts` may not start now: the plan already has this kind, or the machine is at its cap.
+	 * promise: a-session-belongs-to-its-plan
+	 */
 	private refusalFor(opts: ManagedStart): SessionBusy | undefined {
 		const same = this.forPlan(opts.project, opts.plan, opts.kind);
 		if (same) {
