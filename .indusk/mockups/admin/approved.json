@@ -4493,6 +4493,17 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T01:53:14.453Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"kind": "story",
+			"story": "rail-group.current",
+			"snapshotHash": "025252cd2657e8238ef3d0bc0287678edde159d0e4b9d73457e9f9720f0547bd",
+			"stylesheetHash": "4b903290cb06d70c76454beeeafe3c195d7aabb93b73cf6e713b2d98fb2bf004",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T01:53:14.694Z",
+			"plan": "cockpit-redraw"
 		}
 	]
 }
