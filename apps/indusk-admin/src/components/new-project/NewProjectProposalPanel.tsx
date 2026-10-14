@@ -21,11 +21,13 @@ export function NewProjectProposalPanel({
   proposal,
   documents,
   briefView,
+  githubAccount,
 }: {
   draft: string;
   proposal: Proposal;
   documents: readonly string[];
   briefView?: ReactNode;
+  githubAccount: string | null;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -81,6 +83,7 @@ export function NewProjectProposalPanel({
         proposal={proposal}
         documents={documents}
         briefView={briefView}
+        githubAccount={githubAccount}
         busy={busy}
         problem={problem}
         onCreate={(edited) => void create(edited)}

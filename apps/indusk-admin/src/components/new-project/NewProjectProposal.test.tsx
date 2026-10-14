@@ -34,12 +34,17 @@ const homeworkGate: Proposal = {
     },
   ],
   documentsOff: [],
-  remote: { github: false },
+  remote: { github: false, visibility: "private" },
 };
 
 describe("A3 — the proposal shows name, location and shape, each changeable", () => {
   it("A3 shows the name, the location and the shape, and Create project is ready", async () => {
-    const screen = await render(<NewProjectProposal proposal={homeworkGate} />);
+    const screen = await render(
+      <NewProjectProposal
+        githubAccount="infinitedusky"
+        proposal={homeworkGate}
+      />,
+    );
     await expect
       .element(screen.getByLabelText("Name", { exact: true }))
       .toHaveValue("homework-gate");
@@ -57,7 +62,11 @@ describe("A3 — the proposal shows name, location and shape, each changeable", 
   it("A3 hands the changed name, location and shape on when the person creates it", async () => {
     const onCreate = vi.fn();
     const screen = await render(
-      <NewProjectProposal proposal={homeworkGate} onCreate={onCreate} />,
+      <NewProjectProposal
+        githubAccount="infinitedusky"
+        proposal={homeworkGate}
+        onCreate={onCreate}
+      />,
     );
     await userEvent.fill(
       screen.getByLabelText("Name", { exact: true }),
@@ -84,7 +93,11 @@ describe("A3 — the proposal shows name, location and shape, each changeable", 
   it("declining a recommendation asks for a reason, turns its document off, and can be taken back", async () => {
     const onCreate = vi.fn();
     const screen = await render(
-      <NewProjectProposal proposal={homeworkGate} onCreate={onCreate} />,
+      <NewProjectProposal
+        githubAccount="infinitedusky"
+        proposal={homeworkGate}
+        onCreate={onCreate}
+      />,
     );
     await screen.getByRole("button", { name: "Decline" }).nth(1).click();
     await userEvent.fill(
@@ -118,16 +131,24 @@ describe("A3 — the proposal shows name, location and shape, each changeable", 
   it("confirms the private GitHub repository separately, off until the person says so", async () => {
     const onCreate = vi.fn();
     const screen = await render(
-      <NewProjectProposal proposal={homeworkGate} onCreate={onCreate} />,
+      <NewProjectProposal
+        githubAccount="infinitedusky"
+        proposal={homeworkGate}
+        onCreate={onCreate}
+      />,
     );
     await screen.getByRole("button", { name: "Create project" }).click();
     expect(onCreate).toHaveBeenLastCalledWith(
-      expect.objectContaining({ remote: { github: false } }),
+      expect.objectContaining({
+        remote: { github: false, visibility: "private" },
+      }),
     );
     await screen.getByRole("checkbox").click();
     await screen.getByRole("button", { name: "Create project" }).click();
     expect(onCreate).toHaveBeenLastCalledWith(
-      expect.objectContaining({ remote: { github: true } }),
+      expect.objectContaining({
+        remote: { github: true, visibility: "private" },
+      }),
     );
   });
 });
@@ -137,22 +158,33 @@ describe("A3 — the proposal shows name, location and shape, each changeable", 
  * opens, whatever the agent proposed. Only the person's tick creates one.
  */
 describe("A37 — the GitHub repository starts unticked whatever the agent proposed", () => {
-  const agentTicked: Proposal = { ...homeworkGate, remote: { github: true } };
+  const agentTicked: Proposal = {
+    ...homeworkGate,
+    remote: { github: true, visibility: "private" },
+  };
 
   it("A37 opens unticked and creates with no remote unless the person ticks it", async () => {
     const onCreate = vi.fn();
     const screen = await render(
-      <NewProjectProposal proposal={agentTicked} onCreate={onCreate} />,
+      <NewProjectProposal
+        githubAccount="infinitedusky"
+        proposal={agentTicked}
+        onCreate={onCreate}
+      />,
     );
     await expect.element(screen.getByRole("checkbox")).not.toBeChecked();
     await screen.getByRole("button", { name: "Create project" }).click();
     expect(onCreate).toHaveBeenLastCalledWith(
-      expect.objectContaining({ remote: { github: false } }),
+      expect.objectContaining({
+        remote: { github: false, visibility: "private" },
+      }),
     );
     await screen.getByRole("checkbox").click();
     await screen.getByRole("button", { name: "Create project" }).click();
     expect(onCreate).toHaveBeenLastCalledWith(
-      expect.objectContaining({ remote: { github: true } }),
+      expect.objectContaining({
+        remote: { github: true, visibility: "private" },
+      }),
     );
   });
 });
@@ -193,7 +225,10 @@ describe("A43 — the GitHub offer names whose repository it is and who can see 
     const onCreate = vi.fn();
     const screen = await render(
       <NewProjectProposal
-        proposal={{ ...homeworkGate, remote: { github: true } }}
+        proposal={{
+          ...homeworkGate,
+          remote: { github: true, visibility: "private" },
+        }}
         githubAccount={null}
         onCreate={onCreate}
       />,
@@ -203,7 +238,9 @@ describe("A43 — the GitHub offer names whose repository it is and who can see 
     expect(screen.getByRole("radio").elements()).toHaveLength(0);
     await screen.getByRole("button", { name: "Create project" }).click();
     expect(onCreate).toHaveBeenLastCalledWith(
-      expect.objectContaining({ remote: expect.objectContaining({ github: false }) }),
+      expect.objectContaining({
+        remote: expect.objectContaining({ github: false }),
+      }),
     );
   });
 });

@@ -1,4 +1,5 @@
 import {
+  githubAccount,
   induskHome,
   knowledgeOf,
   loadProposal,
@@ -28,6 +29,7 @@ interface Props {
     creating?: string;
     open?: string;
     working?: string;
+    github?: string;
   }>;
 }
 
@@ -35,9 +37,10 @@ interface Props {
 const proposalLookStates = (
   proposal: Proposal,
   withDocuments: boolean,
+  signedIn: boolean,
 ): string =>
   [
-    "new-project.proposal",
+    signedIn ? "new-project.proposal" : "new-project.github-signed-out",
     "layout-tree.default",
     "workflow-strip.default",
     ...(proposal.recommendations.some((r) => r.kept)
@@ -91,7 +94,7 @@ export default async function NewProjectConversationPage({
   searchParams,
 }: Props) {
   const { id } = await params;
-  const { talk, creating, open, working } = await searchParams;
+  const { talk, creating, open, working, github } = await searchParams;
   const draft = readProjectDraft(induskHome(), id);
   if (!draft) notFound();
   const { proposal, problems } = draft.hasProposal
@@ -120,12 +123,16 @@ export default async function NewProjectConversationPage({
     );
   }
   if (proposal && talk === undefined) {
+    // `?github=signed-out` only ever turns the offer off: it is how the looks
+    // check reaches `new-project.github-signed-out` on a machine that is signed in.
+    const account = github === "signed-out" ? null : await githubAccount();
     return (
       <main
         className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
         data-look-state={proposalLookStates(
           proposal,
           draft.documents.length > 0,
+          account !== null,
         )}
         data-draft={id}
       >
@@ -133,6 +140,7 @@ export default async function NewProjectConversationPage({
           draft={id}
           proposal={proposal}
           documents={draft.documents}
+          githubAccount={account}
           briefView={
             draft.brief ? <Markdown>{draft.brief}</Markdown> : undefined
           }
