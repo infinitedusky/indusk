@@ -159,8 +159,10 @@ Deferred-body review (Test Phase 1):
 - [x] `lib/new-project/documents.ts`: `addDocument(draft, file)` — a name already present keeps the newer bytes and returns the unified diff
 - [x] `lib/new-project/prompt.ts`: the new-project prompt — the planner skill, ask why / what / how-where and only what the input leaves open, write `brief.md` then `proposal.json`
 - [x] `lib/new-project/parent.ts`: `readParent()` / `setParent(dir)` on `newProjects.parent` in `~/.indusk/admin-ui.json`
+  - Decision: the setting is kept in `<INDUSK_HOME>/new-projects.json`, not `admin-ui.json` as written above: `admin-ui.json` is the daemon's own record (`daemonStart` overwrites it, `daemonStop` removes it), so a parent kept there would be lost by `indusk ui stop`.
 - [x] CLI `indusk new-project start | add | discard | parent` in `bin/cli.ts`; the package exports `./new-project` for the admin
-- [ ] Admin: `/api/new-projects` (POST create), `/api/new-projects/[id]/talk` (session with `plan: "new-project:<id>"`, refused while another session runs), `/[id]/add` (the diff sent with `/api/sessions/[id]/say`), `/[id]/discard`
+- [x] Admin: `/api/new-projects` (POST create), `/api/new-projects/[id]/talk` (session with `plan: "new-project:<id>"`, refused while another session runs), `/[id]/add` (the diff sent with `/api/sessions/[id]/say`), `/[id]/discard`
+  - Decision (A2): `POST /api/new-projects` creates the draft **and** starts the session (`kind: "planning"`, `plan: "new-project:<id>"`) with the first message and documents in its prompt; `/[id]/talk` handles later turns and restarting the session. This keeps the reviewed A2 body, which posts to the create route, valid.
 - [ ] Admin: `/new` (`NewProjectStart`, the `prompt-box` look) and `/new/[id]` (`NewProjectConversation` with `message`, `file-chip`, `knowledge-list`, reusing `SessionConnector`); New project in `ProjectGrid`'s header and empty state (`home.default`, `project-card`)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
