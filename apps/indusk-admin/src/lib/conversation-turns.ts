@@ -38,6 +38,17 @@ export interface TurnOptions {
   running?: boolean;
 }
 
+/** The look state an agent turn draws (`message.<state>`): its status, and for a reply whether its working is folded or open. */
+export function agentState(
+  turn: Extract<Turn, { who: "agent" }>,
+  open: boolean,
+): "agent" | "agent-folded" | "agent-open" | "agent-working" | "agent-stopped" {
+  if (turn.status === "working") return "agent-working";
+  if (turn.status === "stopped") return "agent-stopped";
+  if (turn.working.length === 0) return "agent";
+  return open ? "agent-open" : "agent-folded";
+}
+
 /** A tool's input in a few words: the path it names, or its command, or nothing. */
 export function describeToolInput(input: Record<string, unknown>): string {
   for (const key of [

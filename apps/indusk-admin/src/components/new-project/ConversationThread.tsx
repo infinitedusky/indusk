@@ -6,8 +6,8 @@ import { useState } from "react";
 import { Markdown } from "@/components/Markdown";
 import { EventView } from "@/components/session/SessionPanel";
 import { Button } from "@/components/ui/Button";
-import { Message, type MessageState } from "@/components/ui/Message";
-import { type Turn, turnsOf } from "@/lib/conversation-turns";
+import { Message } from "@/components/ui/Message";
+import { agentState, type Turn, turnsOf } from "@/lib/conversation-turns";
 
 /**
  * A project conversation as a thread (new-project-flow, ADR decision 9): the
@@ -115,17 +115,6 @@ export function ConversationThread({
       ) : null}
     </div>
   );
-}
-
-/** The look state an agent turn draws: its status, and for a reply whether its working is folded. */
-function agentState(
-  turn: Extract<Turn, { who: "agent" }>,
-  open: boolean,
-): MessageState {
-  if (turn.status === "working") return "agent-working";
-  if (turn.status === "stopped") return "agent-stopped";
-  if (turn.working.length === 0) return "agent";
-  return open ? "agent-open" : "agent-folded";
 }
 
 function TurnView({

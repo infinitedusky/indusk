@@ -8,6 +8,7 @@ import {
   readCreation,
   readProjectDraft,
   readTranscript,
+  type TranscriptLine,
 } from "@infinitedusky/indusk-mcp/new-project";
 import { creationStepIds } from "@infinitedusky/indusk-mcp/new-project/steps";
 import Link from "next/link";
@@ -16,12 +17,18 @@ import { Markdown } from "@/components/Markdown";
 import { NewProjectConversation } from "@/components/new-project/NewProjectConversation";
 import { NewProjectCreatingPanel } from "@/components/new-project/NewProjectCreatingPanel";
 import { NewProjectProposalPanel } from "@/components/new-project/NewProjectProposalPanel";
+import { agentState, historyBefore, turnsOf } from "@/lib/conversation-turns";
 import { sessionManager } from "@/lib/session-host";
 import { ownsSession } from "@/lib/session-owner";
 
 interface Props {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ talk?: string; creating?: string; open?: string }>;
+  searchParams: Promise<{
+    talk?: string;
+    creating?: string;
+    open?: string;
+    working?: string;
+  }>;
 }
 
 /** The look states the proposal draws: the screen, and each component it places. */
@@ -42,26 +49,30 @@ const proposalLookStates = (
     ...(withDocuments ? ["file-chip.default"] : []),
   ].join(" ");
 
-/** The look states this page draws: the screen, and each component it places in its default state. */
+/** The look states this page draws: the screen, and each component it places in the states its turns are in. */
 const lookStates = (
   withDocuments: boolean,
-  replies: "none" | "folded" | "open",
+  replies: readonly string[],
 ): string =>
   [
     "new-project.conversation",
     "message.you",
-    ...(replies === "none" ? [] : [`message.agent-${replies}`]),
+    ...replies.map((state) => `message.${state}`),
     ...(withDocuments ? ["file-chip.default"] : []),
     "knowledge-list.default",
   ].join(" ");
 
-/** The message look state the thread draws: replies with working are folded, or open when the page was opened with `?open`. */
-const replyLookState = (
-  hasWorking: boolean,
-  open: string | undefined,
-): "none" | "folded" | "open" => {
-  if (!hasWorking) return "none";
-  return open === undefined ? "folded" : "open";
+/** The message states the thread draws for the transcript's turns, each once, in the order first met. */
+const replyLookStates = (
+  transcript: readonly TranscriptLine[],
+  { open, running }: { open: boolean; running: boolean },
+): string[] => {
+  const turns = turnsOf(historyBefore(transcript, null), { running });
+  return [
+    ...new Set(
+      turns.flatMap((t) => (t.who === "agent" ? [agentState(t, open)] : [])),
+    ),
+  ];
 };
 
 /**
@@ -80,7 +91,7 @@ export default async function NewProjectConversationPage({
   searchParams,
 }: Props) {
   const { id } = await params;
-  const { talk, creating, open } = await searchParams;
+  const { talk, creating, open, working } = await searchParams;
   const draft = readProjectDraft(induskHome(), id);
   if (!draft) notFound();
   const { proposal, problems } = draft.hasProposal
@@ -138,13 +149,15 @@ export default async function NewProjectConversationPage({
   )
     ? running.id
     : null;
-  const hasWorking = transcript.some((l) => l.type === "tool");
   return (
     <main
       className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
       data-look-state={lookStates(
         draft.documents.length > 0,
-        replyLookState(hasWorking, open),
+        replyLookStates(transcript, {
+          open: open !== undefined,
+          running: working !== undefined,
+        }),
       )}
       data-draft={id}
     >
@@ -179,6 +192,7 @@ export default async function NewProjectConversationPage({
         transcript={transcript}
         initiallyOpen={open !== undefined}
         session={session}
+        showRunning={working !== undefined}
       />
     </main>
   );

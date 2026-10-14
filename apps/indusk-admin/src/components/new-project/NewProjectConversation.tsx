@@ -38,6 +38,7 @@ export function NewProjectConversation({
   transcript = [],
   initiallyOpen = false,
   session: startedSession = null,
+  showRunning = false,
 }: {
   draft: string;
   /** The `plan` the draft's session record names (`newProjectSessionPlan`). */
@@ -57,6 +58,8 @@ export function NewProjectConversation({
    * stays only for a conversation whose agent is not running.
    */
   session?: string | null;
+  /** Draw the thread as if an agent runs (the look check reaches `agent-working` this way; no session is started). */
+  showRunning?: boolean;
 }) {
   const router = useRouter();
   const picker = useRef<HTMLInputElement>(null);
@@ -147,7 +150,7 @@ export function NewProjectConversation({
         {threaded ? (
           <ConversationThread
             events={[...history, ...session.events]}
-            running={session.running}
+            running={session.running || showRunning}
             onAnswer={session.answer}
             onDecide={session.decide}
             onSay={(text) =>
