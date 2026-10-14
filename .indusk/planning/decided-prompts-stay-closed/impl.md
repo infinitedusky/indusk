@@ -115,8 +115,8 @@ Every request a session makes is recorded in its log together with how it was de
 
 **Goal**: a request's state comes from its `decided` event, in the panel and in the thread alike.
 
-- [ ] `SessionPanel.tsx`: build a `requestId → decided` map from `events`; `open` is `running && !decided.has(id) && !answered.has(id)` (the local set stays, so a click closes the prompt before the event arrives); a permission with a decision shows its outcome line, "Allowed", or "Denied — {message}", in place of the buttons; a question with a declining decision shows "Declined — {message}"
-- [ ] `lib/conversation-turns.ts`: `turnsOf` treats a request with a `decided` event as answered, whatever `answered` set it is handed; a `decided` event is not drawn as a line of its own
+- [x] `SessionPanel.tsx`: build a `requestId → decided` map from `events`; `open` is `running && !decided.has(id) && !answered.has(id)` (the local set stays, so a click closes the prompt before the event arrives); a permission with a decision shows its outcome line, "Allowed", or "Denied — {message}", in place of the buttons; a question with a declining decision shows "Declined — {message}"
+- [x] `lib/conversation-turns.ts`: `turnsOf` treats a request with a `decided` event as answered, whatever `answered` set it is handed; a `decided` event is not drawn as a line of its own
 - [ ] A8 live check: run a build of a small approved plan from the cockpit, watch the panel, reload mid-build, and record here what was seen (the plan, the number of requests, any left open)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
