@@ -118,9 +118,9 @@ export async function startBuild(
     throw new Error(
       `a build session is already running for ${plan}: ${running.id} — stop it first`,
     );
-  // Admitted once, here: the build's step sessions then hold their place.
-  const atCap = sessionManager().capRefusal();
-  if (atCap) throw atCap;
+  // Admitted once, here, and holding its place under the cap until it ends —
+  // between its steps too, so another plan's start cannot take it.
+  const free = sessionManager().admitBuild(project, plan);
   const state: BuildState = {
     running: true,
     step: null,
@@ -128,7 +128,14 @@ export async function startBuild(
     stop: null,
     release: null,
   };
-  const { root, deps } = await depsFor(project, plan, state);
+  let root: string;
+  let deps: Awaited<ReturnType<typeof depsFor>>["deps"];
+  try {
+    ({ root, deps } = await depsFor(project, plan, state));
+  } catch (err) {
+    free();
+    throw err;
+  }
   builds().set(key(project, plan), state);
   void runBuild({ ...deps, autoAccept: autoAccepts(root) })
     .then((stop) => {
@@ -140,6 +147,7 @@ export async function startBuild(
     .finally(() => {
       state.running = false;
       state.step = null;
+      free();
     });
   return state;
 }

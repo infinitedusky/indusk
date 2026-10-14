@@ -34,7 +34,7 @@ vi.mock("./session-host", () => ({
   planLocation: async () => ({ root: "/p", cwd: "/p" }),
   sessionManager: () => ({
     forPlan: () => undefined,
-    capRefusal: () => undefined,
+    admitBuild: () => () => {},
   }),
 }));
 vi.mock("./registry-client", () => ({ getProjectPath: () => "/p" }));
