@@ -89,8 +89,8 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A40 | A created project has InDusk installed — its skills, hooks and MCP entry are there — and its own health check reports it healthy | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A41 | Leaving the GitHub repository unticked is recorded in the project's config as declined, like any declined recommendation | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-recommendation-can-be-declined | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A42 | Every row on the looks page says whether it is a mockup or a story | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-look-says-whether-it-is-a-mockup-or-a-story | apps/indusk-admin/src/components/ui/LookRow.test.tsx |
-| A43 | The proposal's GitHub offer names the signed-in account; with nobody signed in it cannot be ticked and says how to sign in | Build Phase 8 | Build Phase 8 | written | unit | promise: a-remote-repository-says-whose-and-who-can-see-it | apps/indusk-admin/src/components/new-project/NewProjectProposal.test.tsx |
-| A44 | A repository is created private unless the person chose public, and public only when they did | Build Phase 8 | Build Phase 8 | written | unit | promise: a-remote-repository-says-whose-and-who-can-see-it | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
+| A43 | The proposal's GitHub offer names the signed-in account; with nobody signed in it cannot be ticked and says how to sign in | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-remote-repository-says-whose-and-who-can-see-it | apps/indusk-admin/src/components/new-project/NewProjectProposal.test.tsx |
+| A44 | A repository is created private unless the person chose public, and public only when they did | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-remote-repository-says-whose-and-who-can-see-it | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 
 ### Deferred Verification
 
@@ -442,7 +442,8 @@ Deferred-body review (Test Phase 1):
 #### Build Phase 8 Verification
 
 - [ ] A43, A44 pass; every earlier row still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project && cd ../indusk-admin && pnpm exec vitest run src/components/new-project src/components/ui src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files; `indusk looks lint admin` reports no finding outside `nav-handle`
-- [ ] `indusk looks check admin` holds `new-project.proposal` and `new-project.github-signed-out` by value; `indusk promises contract new-project-flow` passes
+- [x] `indusk looks check admin` holds `new-project.proposal` and `new-project.github-signed-out` by value; `indusk promises contract new-project-flow` passes
+  - Result: restricted to the `new-project` and `look-row` screens (the full check ran past nine minutes; `screens.json` restored after). `new-project.start | conversation | proposal | creating | no-parent | github-signed-out` held at all six device-and-scheme combinations; 606 held, 12 unchecked (`look-row.mockup` and `look-row.story`: the temporary `INDUSK_HOME` has no registered `dusk` project, so the Looks page reports no state), 0 broken. Ran against a temporary copy of the admin on :4949 (deleted) with a fake `gh` signed in as `infinitedusky`; the signed-out look is reached by `?github=signed-out` on the proposal. `look-row.*` stories were re-rendered and now read proposed, never approved.
 
 #### Build Phase 8 Context
 
