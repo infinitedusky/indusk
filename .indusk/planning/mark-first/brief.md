@@ -1,7 +1,7 @@
 ---
 title: "Mark first"
 date: 2026-10-14
-status: draft
+status: accepted
 workflow: feature
 description: "Promises are proved by what the running system reports, not by tests alone. A promise is made of clauses — split times along the way and limits that always hold — each with its own mark, layered by component so a break leads down to its cause, and an agent reads the broken mark's trace and proposes the fix."
 ---
@@ -53,7 +53,7 @@ are in [research.md](research.md).
 
 7. **`a-break-comes-with-a-diagnosis`** (behaviour). When a clause breaks, an agent reads the broken mark and its trace, and the incident holds the cause it found and the fix it proposes before anyone asks.
 
-8. **`a-message-sent-gets-a-reply`** (behaviour). Every message a person sends in a project conversation shows in the thread at once and is answered there within thirty seconds, or the thread says why not. The first promise written in clauses: its splits and limits are in research.md.
+8. **`a-message-sent-gets-a-reply`** (behaviour). Every message a person sends in a project conversation shows in the thread at once and is answered there within thirty seconds, or the thread says why not.
 
 ### Existing promises
 
@@ -64,7 +64,6 @@ are in [research.md](research.md).
 - **`an-incident-names-its-tests`**. An incident still names the tests that supported the promise, beside its clauses.
 - **`a-click-and-its-server-work-share-a-trace`**. Browser marks ride the same trace a click already carries.
 - **`everyday-suite-stays-fast`**. Marks add no waiting to the everyday suite.
-- **`a-project-conversation-is-a-back-and-forth`**. The worked example marks the conversation; it does not change what the person sees.
 
 **Changes**
 
@@ -110,7 +109,7 @@ None.
 
 ## Depends On
 
-- `.indusk/planning/new-project-flow/` — its project conversation is the first worked example.
+- `.indusk/planning/new-project-flow/` — its project conversation is the first worked example, so it lands first; marking the conversation must not change what the person sees (`a-project-conversation-is-a-back-and-forth`, which that plan makes).
 
 ## Blocks
 
