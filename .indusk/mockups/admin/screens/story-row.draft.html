@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="indusk-new-components" content="story-row" />
+		<title>story-row — draft</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<style>
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--color-ground); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-regular); }
+			h1, h2, h3, p, dl, dd, ol, ul { margin: 0; padding: 0; }
+			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+			.shell { display: grid; grid-template-columns: var(--size-nav) minmax(0, 1fr); min-height: 100vh; }
+			.content { min-width: 0; padding: 0 var(--space-6) var(--space-16); }
+			.wrap { max-width: var(--size-content); margin: 0 auto; display: grid; gap: var(--space-5); }
+			.menubtn { display: none; align-items: center; gap: var(--space-2); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface); padding: var(--space-tight) var(--space-snug); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); }
+			.vcount { font-family: var(--font-mono); font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); color: var(--color-bad); background: var(--color-bad-wash); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-tight); }
+			.top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); padding: var(--space-5) 0 var(--space-1); }
+			.crumb { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.crumb b { color: var(--color-ink-soft); font-weight: var(--font-weight-medium); }
+			.title { font-family: var(--font-display); font-size: var(--text-4xl); line-height: var(--leading-7); font-weight: var(--font-weight-bold); }
+			.meta { margin-left: auto; display: flex; gap: var(--space-2); flex-wrap: wrap; }
+			.story { display: grid; gap: var(--space-3); }
+			.purpose { font-size: var(--text-lg); line-height: var(--leading-6); color: var(--color-ink-soft); max-width: 60ch; }
+			.progress { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-5); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.progress b { font-family: var(--font-mono); font-size: var(--text-md); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); color: var(--color-ink); margin-right: var(--space-1); }
+			.progress a { margin-left: auto; color: var(--color-dusk); font-weight: var(--font-weight-medium); text-decoration: none; }
+			.listhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
+			.listhead h2 { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--leading-4); font-weight: var(--font-weight-bold); }
+			.listhead span { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+			.stories { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); overflow: hidden; }
+			.sr { display: grid; grid-template-columns: var(--space-5) var(--size-badge) minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-3) var(--space-4); color: var(--color-ink); text-decoration: none; border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); }
+			.sr:first-child { border-top-width: 0; }
+			.sr-n { text-align: right; font-family: var(--font-mono); font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-medium); font-variant-numeric: tabular-nums; color: var(--color-ink-faint); }
+			.sr-what { display: grid; gap: var(--space-hair); min-width: 0; }
+			.sr-what b { font-size: var(--text-md); line-height: var(--leading-4); font-weight: var(--font-weight-medium); }
+			.sr-desc { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.sr-stage { font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); white-space: nowrap; }
+			.sr.released .sr-stage { color: var(--color-ok); font-weight: var(--font-weight-medium); }
+			.sr.draft .sr-stage { color: var(--color-ink-soft); font-weight: var(--font-weight-medium); }
+			.sr.queued .sr-what b { color: var(--color-ink-soft); }
+			.sr.queued .sr-desc { color: var(--color-ink-faint); }
+			.sr.queued .sr-stage { font-style: italic; }
+			@media (max-width: 759px) {
+			  .shell { grid-template-columns: minmax(0, 1fr); }
+			  [data-component="nav"] { display: none; }
+			  .menubtn { display: inline-flex; }
+			  .content { padding: 0 var(--space-4) var(--space-16); }
+			  .title { font-size: var(--text-3xl); line-height: var(--leading-7); }
+			  .sr { grid-template-columns: var(--size-badge) minmax(0, 1fr); padding: var(--space-3); }
+			  .sr-n { display: none; }
+			  .sr-stage { grid-column: 2; }
+			  .progress a { margin-left: 0; }
+			}
+		</style>
+	</head>
+	<body>
+<div style="padding:var(--space-6)"><div class="stories"><a data-component="story-row" data-state="draft" class="sr draft" href="/p/dusk/plan/workbench-watch-provisioning"><span class="sr-n">18</span><indusk-component name="badge" state="idle">WF</indusk-component><span class="sr-what"><b>Watched from day one</b><span class="sr-desc">A new workbench gets its own watching server when it is created.</span></span><span class="sr-stage">Draft, parked</span></a></div></div>
+	</body>
+</html>
