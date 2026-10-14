@@ -39,10 +39,7 @@ export function PartSection({
       >
         {/* where the arrow would be, so the title lines up with its siblings' */}
         <span aria-hidden="true" className="size-dot" />
-        <h2 className="font-display text-base font-bold leading-5">{title}</h2>
-        <span className="font-mono text-xs leading-2 text-ink-faint">
-          · {summary}
-        </span>
+        <PartName title={title} summary={summary} />
       </div>
     );
   }
@@ -58,12 +55,21 @@ export function PartSection({
           <span className="group-open/part:hidden">▸</span>
           <span className="hidden group-open/part:inline">▾</span>
         </span>
-        <h2 className="font-display text-base font-bold leading-5">{title}</h2>
-        <span className="font-mono text-xs leading-2 text-ink-faint">
-          · {summary}
-        </span>
+        <PartName title={title} summary={summary} />
       </summary>
       <div className="border-t border-line px-4 py-3">{children}</div>
     </details>
+  );
+}
+
+/** The part's name and its one line: the same words on a disclosure's row and on an empty part's. */
+function PartName({ title, summary }: { title: string; summary: string }) {
+  return (
+    <>
+      <h2 className="font-display text-base font-bold leading-5">{title}</h2>
+      <span className="font-mono text-xs leading-2 text-ink-faint">
+        · {summary}
+      </span>
+    </>
   );
 }
