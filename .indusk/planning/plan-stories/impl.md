@@ -1,13 +1,16 @@
 ---
 title: "Plan titles and stories"
 date: 2026-10-14
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+approved_brief: "6969084f4c82f8d416fb0f82af9106c575e0516bbbde08591ca6492816721ef8"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-14T23:57:30.140Z"
 ---
 
 # Plan titles and stories
