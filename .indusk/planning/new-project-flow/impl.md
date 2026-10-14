@@ -69,11 +69,11 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A20 | A project conversation's agent can be stopped, and none is left running when the admin stops | Test Phase 1 | Test Phase 1 | passing | contract | promise: a-session-can-be-stopped | apps/indusk-mcp/src/__tests__/admin-session-lifecycle.test.ts |
 | A21 | A created project resolves to exactly one contract | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A22 | A created project's repository holds no telemetry vendor files written by installation | Test Phase 1 | Build Phase 3 | passing | unit | promise: init-writes-no-vendor-into-an-app | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
-| A23 | A session's events read as alternating you/agent turns: an agent turn's reply is its last text, the tools and text before it its working | Build Phase 4 | Build Phase 4 | written | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/lib/conversation-turns.test.ts |
-| A24 | An agent reply in Markdown shows formatted; its working is hidden until See more, and See less hides it again | Build Phase 4 | Build Phase 4 | written | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
-| A25 | A question or permission the agent is waiting on is never folded away | Build Phase 4 | Build Phase 4 | written | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
-| A26 | Reopening a project conversation with no agent running shows the same turns; discarding removes them | Build Phase 4 | Build Phase 4 | written | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
-| A27 | The project conversation's prompt asks for a few sentences of Markdown and at most three questions at a time | Build Phase 4 | Build Phase 4 | written | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/lib/new-project/prompt.test.ts |
+| A23 | A session's events read as alternating you/agent turns: an agent turn's reply is its last text, the tools and text before it its working | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/lib/conversation-turns.test.ts |
+| A24 | An agent reply in Markdown shows formatted; its working is hidden until See more, and See less hides it again | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
+| A25 | A question or permission the agent is waiting on is never folded away | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
+| A26 | Reopening a project conversation with no agent running shows the same turns; discarding removes them | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
+| A27 | The project conversation's prompt asks for a few sentences of Markdown and at most three questions at a time | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/lib/new-project/prompt.test.ts |
 
 ### Deferred Verification
 
@@ -289,8 +289,9 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 4 Verification
 
-- [ ] A23–A27 pass; every earlier row still passes (`cd apps/indusk-admin && pnpm exec vitest run src/lib/conversation-turns.test.ts src/components/new-project && cd ../indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project`); `pnpm exec vitest related` over the changed files
-- [ ] `indusk looks check admin` holds `new-project.conversation`, `message.agent-folded` and `message.agent-open` by value; `indusk promises contract new-project-flow` passes
+- [x] A23–A27 pass; every earlier row still passes (`cd apps/indusk-admin && pnpm exec vitest run src/lib/conversation-turns.test.ts src/components/new-project && cd ../indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project`); `pnpm exec vitest related` over the changed files
+- [x] `indusk looks check admin` holds `new-project.conversation`, `message.agent-folded` and `message.agent-open` by value; `indusk promises contract new-project-flow` passes
+  - Result: `new-project.conversation`, `message.agent-folded` and `message.agent-open` are **held** at all six device-and-scheme combinations; 618 held, 218 unchecked, 0 broken. Run against a `next dev` of this worktree's source on :4951 with a temporary `INDUSK_HOME` and this worktree's `indusk` build on `PATH`; `agent-open` is reached at `/new/{seed}?talk=1&open=1`. `indusk promises contract new-project-flow` passes (11 made, 6 kept, 5 expectations). The admin suite has one failure outside this phase: `component-reuse-audit.test.ts` finds an inline `<button>` at `NewProjectCreating.tsx:94`, a Build Phase 2 file this phase did not touch.
 
 #### Build Phase 4 Context
 
