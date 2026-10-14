@@ -89,6 +89,18 @@ A failure before the remote removes what the run made - the directories and the
 registry entry - and keeps the conversation, so it can be accepted again. A
 failed remote leaves the finished local project and exits non-zero, saying so.
 
+## `transcript`
+
+```bash
+indusk new-project transcript <id>
+```
+
+Prints what the conversation has said, one JSON line per event, in order: the
+agent's text and tool use, your replies, the questions it asked, where each
+session began (`session`) and each time you opened a reply's working
+(`fold-opened`). It is what the admin shows when it reopens a conversation with
+no agent running, and it is removed with the conversation by `discard`.
+
 ## `parent`
 
 ```bash

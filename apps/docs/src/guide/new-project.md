@@ -13,6 +13,25 @@ flowchart LR
   C -->|Keep talking| B
 ```
 
+## The conversation
+
+The conversation reads as a thread: your words to the right, the agent's replies
+on the left. A reply is a few sentences of Markdown, with at most three
+questions at a time. The agent's working - the files it read, the notes it
+wrote, what it said on the way to the reply - is folded away behind **See more
+›**; **See less** hides it again. A question the agent is waiting on, or a
+request to use a tool outside the conversation's folder, is never folded: it
+stays in the reply, to answer in place.
+
+Everything said is kept in the conversation's draft as `transcript.jsonl`. Leave
+the page and come back with no agent running and the same thread is there, with
+a reply box; sending a message starts the agent again with your words. Discarding
+the conversation removes the transcript with the rest of the draft. `indusk
+new-project transcript <id>` prints it, one JSON line per event.
+
+The plan conversation, builds and **Fix with Claude** still use the session
+panel; the project conversation goes first.
+
 ## The proposal
 
 When the agent has settled why, what, and how and where, it writes a proposal
