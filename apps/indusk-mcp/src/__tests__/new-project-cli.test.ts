@@ -13,6 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { installProblems } from "../lib/new-project/install.js";
 import { readPlanDeclarations } from "../lib/plan-parser.js";
 import { git, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
@@ -457,5 +458,66 @@ describe.skipIf(SHOULD_SKIP)("indusk new-project", () => {
 				`${file} names a vendor`,
 			).toEqual([]);
 		}
+	});
+	it("A40 a created project has its skills, hooks and MCP entry, its own check reports it healthy, and an install missing one is a failed creation", () => {
+		const sb = sandbox();
+		const { root } = accepted(sb);
+
+		expect(existsSync(join(root, ".claude", "skills", "work", "SKILL.md"))).toBe(true);
+		expect(existsSync(join(root, ".claude", "skills", "planner", "SKILL.md"))).toBe(true);
+		expect(existsSync(join(root, ".claude", "hooks", "check-gates.js"))).toBe(true);
+		expect(readJson(join(root, ".claude", "settings.json")).hooks.PreToolUse).toBeDefined();
+		expect(Object.keys(readJson(join(root, ".mcp.json")).mcpServers)).toContain("indusk");
+		expect(installProblems(root)).toEqual([]);
+
+		// The check is not a rubber stamp: each thing taken away is named.
+		rmSync(join(root, ".mcp.json"));
+		expect(installProblems(root).join("\n")).toContain(".mcp.json");
+		rmSync(join(root, ".claude", "hooks", "check-gates.js"));
+		expect(installProblems(root).join("\n")).toContain("check-gates.js");
+		rmSync(join(root, ".claude", "skills", "work"), { recursive: true });
+		expect(installProblems(root).join("\n")).toContain("work");
+
+		// Init swallows a sub-step that fails (`claude mcp add` with no `claude`):
+		// creation reads what init wrote and fails the install, removing what it made.
+		const bare = sandbox();
+		const bin = join(dirname(bare.ghLog), "bin");
+		symlinkSync(process.execPath, join(bin, "node"));
+		bare.env.PATH = `${bin}:/usr/bin:/bin`;
+		setParent(bare);
+		const { id } = seed(bare);
+		const refused = run(bare, ["accept", id]);
+		expect(refused.code, "creation went ahead without an MCP entry").not.toBe(0);
+		expect(`${refused.stdout}${refused.stderr}`).toContain(".mcp.json");
+		expect(existsSync(proposalFor(bare).location), "the failed install left the project").toBe(
+			false,
+		);
+	});
+
+	it("A41 leaving the GitHub repository unticked is recorded as declined, like any declined recommendation", () => {
+		const unticked = accepted(sandbox(), { proposal: { remote: { github: false } } });
+		const recorded = projectConfig(unticked.root).recommendations;
+		expect(recorded).toContainEqual({ name: "github", kept: false, reason: "not confirmed" });
+		expect(recorded).toContainEqual({ name: "docs-site", kept: true });
+
+		// The person's own decline, with their words, is the one recorded, once.
+		const own = accepted(sandbox(), {
+			proposal: {
+				remote: { github: false },
+				recommendations: [{ name: "github", kept: false, reason: "Private for now" }],
+			},
+		});
+		const entries = projectConfig(own.root).recommendations.filter(
+			(r: { name: string }) => r.name === "github",
+		);
+		expect(entries).toEqual([{ name: "github", kept: false, reason: "Private for now" }]);
+
+		// A ticked box is not a decline.
+		const ticked = accepted(sandbox(), { proposal: { remote: { github: true } } });
+		expect(
+			projectConfig(ticked.root).recommendations.filter(
+				(r: { name: string }) => r.name === "github",
+			),
+		).toEqual([]);
 	});
 });

@@ -25,7 +25,7 @@ afterEach(() => {
 const folder = "/home/.indusk/projects/p-1/drafts/d1";
 const extra = "/p/proj-code-worktrees/seats";
 
-function run(addDirs?: string[]) {
+function run(addDirs?: string[], confined = false) {
 	const decided: Array<{ ev: PermissionEvent; decision: unknown }> = [];
 	const forwarded: SessionEvent[] = [];
 	let emit: (ev: SessionEvent) => void = () => {};
@@ -57,6 +57,7 @@ function run(addDirs?: string[]) {
 		project: "proj",
 		plan: "draft:d1",
 		...(addDirs ? { addDirs } : {}),
+		...(confined ? { confined: true } : {}),
 	});
 	const ask = (input: Record<string, unknown>, tool = "Write") =>
 		emit({ type: "permission", requestId: `r${decided.length}${forwarded.length}`, tool, input });
@@ -89,5 +90,65 @@ describe("A26 — a planning session is asked only about a write outside its fol
 		ask({ file_path: `${folder}/../other/x.md` });
 		expect(decided).toEqual([]);
 		expect(forwarded).toHaveLength(2);
+	});
+});
+
+/**
+ * new-project-flow A39 — a project conversation's agent runs in its draft with
+ * nobody to ask: it may read and write inside the draft and nothing else.
+ *
+ * promise: an-unkept-project-conversation-leaves-nothing-on-disk
+ */
+describe("A39 — a confined session is refused any shell, web or MCP tool, and any path outside its draft", () => {
+	const refused = (decision: unknown) =>
+		expect(decision).toEqual({ allow: false, message: expect.stringMatching(/draft/i) });
+
+	it("A39 refuses Bash, WebFetch and an MCP tool, saying why, and asks the person nothing", () => {
+		const { decided, forwarded, ask } = run(undefined, true);
+		ask({ command: "git init /tmp/x" }, "Bash");
+		ask({ url: "https://example.com" }, "WebFetch");
+		ask({ project: "dusk" }, "mcp__indusk__add_lesson");
+		expect(decided).toHaveLength(3);
+		for (const d of decided) refused(d.decision);
+		expect(decided[0]?.decision).toEqual({
+			allow: false,
+			message: expect.stringContaining("Bash"),
+		});
+		expect(forwarded).toEqual([]);
+	});
+
+	it("A39 refuses a write outside the draft instead of passing it to the person", () => {
+		const { decided, forwarded, ask } = run(undefined, true);
+		ask({ file_path: "/Users/dev/code/proj/src/seat.ts" });
+		ask({ file_path: `${folder}/../other/x.md` }, "Edit");
+		expect(decided).toHaveLength(2);
+		for (const d of decided) refused(d.decision);
+		expect(forwarded).toEqual([]);
+	});
+
+	it("A39 still allows Read, Write, Edit, Glob and Grep inside the draft", () => {
+		const { decided, forwarded, ask } = run(undefined, true);
+		ask({ file_path: `${folder}/brief.md` }, "Write");
+		ask({ file_path: "proposal.json" }, "Edit");
+		ask({ file_path: `${folder}/documents/spec.md` }, "Read");
+		ask({ pattern: "documents/*.md" }, "Glob");
+		ask({ pattern: "budget", path: folder }, "Grep");
+		expect(decided.map((d) => d.decision)).toEqual([
+			{ allow: true },
+			{ allow: true },
+			{ allow: true },
+			{ allow: true },
+			{ allow: true },
+		]);
+		expect(forwarded).toEqual([]);
+	});
+
+	it("A39 refuses a Glob or Grep that reaches outside the draft", () => {
+		const { decided, ask } = run(undefined, true);
+		ask({ pattern: "**/*.md", path: "/Users/dev" }, "Glob");
+		ask({ pattern: "/etc/*" }, "Glob");
+		ask({ pattern: "token", path: `${folder}/..` }, "Grep");
+		expect(decided).toHaveLength(3);
+		for (const d of decided) refused(d.decision);
 	});
 });
