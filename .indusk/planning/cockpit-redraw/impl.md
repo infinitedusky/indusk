@@ -156,7 +156,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 #### Build Phase 2 Verification
 
-- [ ] A1–A4 pass (`cd apps/indusk-admin && pnpm exec vitest run src/components/cockpit/CockpitFrame.test.tsx`); the nav's existing tests pass (`pnpm exec vitest related src/components/cockpit/CockpitFrame.tsx src/components/ui/Nav.tsx`); `indusk looks lint admin` clean; tsc and biome clean on changed files
+- [x] A1–A4 pass (`cd apps/indusk-admin && pnpm exec vitest run src/components/cockpit/CockpitFrame.test.tsx`); the nav's existing tests pass (`pnpm exec vitest related src/components/cockpit/CockpitFrame.tsx src/components/ui/Nav.tsx`); `indusk looks lint admin` clean; tsc and biome clean on changed files
   - A1–A4 pass (4 of 4), `vitest related` over the changed files passes (17 files, 74 tests), tsc and biome clean on changed files; left unchecked: `indusk looks lint admin` reports 122 findings, every one `no-approved-story` — the foundation changed (`--size-nav-max`), so every story and mockup reads proposed until Sandy approves them on the Looks page
 
 #### Build Phase 2 Context
