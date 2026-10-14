@@ -30,6 +30,8 @@ export type StartedEvent =
 	| { type: "trusted" | "untrusted"; cwd: string }
 	/** What the person said, in their own words, through the manager's `say`. */
 	| { type: "you"; text: string }
+	/** How a request was decided, recorded after its decision: by the session's own rule or by a person. */
+	| { type: "decided"; requestId: string; allow: boolean; message?: string; by: "rule" | "person" }
 	| { type: "exit"; code: number | null; stderr: string };
 
 export interface SessionOptions {
