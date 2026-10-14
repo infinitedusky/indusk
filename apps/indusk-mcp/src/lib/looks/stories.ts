@@ -12,6 +12,7 @@ import {
 	isImplementationFile,
 	scanComponents,
 } from "./components.js";
+import type { ContentMap } from "./compose.js";
 import { markedComponentsOf } from "./markup.js";
 import {
 	appSourceFiles,
@@ -231,21 +232,55 @@ const own = app as { afterEach?: unknown };
 const MARK = "\\u2063";
 const WORDS = new RegExp(MARK + "slot:([^" + MARK + "]+)" + MARK, "g");
 
-/** Where each marker sits: its name to the child-index paths of the text nodes that carry it. */
-function markerPaths(root: Node): Record<string, number[][]> {
-	const found: Record<string, number[][]> = {};
-	const walk = (node: Node, path: number[]) => {
-		node.childNodes.forEach((child, i) => {
-			const here = [...path, i];
-			if (child.nodeType === 3) {
-				for (const m of (child as Text).data.matchAll(WORDS)) {
-					const list = (found[m[1] as string] ??= []);
-					if (!list.some((p) => p.join() === here.join())) list.push(here);
+/**
+ * Where each marker sits: its name to its places. Each text node carrying a
+ * marker is aligned with the first render's node (\`canvas\`, normalized as the
+ * snapshot's serialization merges adjacent text), parent by parent. Where the
+ * two parents differ in child count the marker stood for several nodes: the
+ * place spans the difference, and later siblings shift by it. Two markers in
+ * one parent whose counts differ cannot be told apart, and record neither.
+ * A text node that carries other words records them as \`before\` / \`after\`.
+ */
+function markerPlaces(root: Node, canvas: Node): Record<string, unknown[]> {
+	const found: Record<string, unknown[]> = {};
+	const first = canvas.cloneNode(true);
+	first.normalize();
+	const walk = (marked: Node, shown: Node, path: number[]) => {
+		const mine = Array.from(marked.childNodes);
+		const theirs = Array.from(shown.childNodes);
+		const carriers: number[] = [];
+		mine.forEach((n, i) => {
+			if (n.nodeType === 3 && (n as Text).data.includes(MARK)) carriers.push(i);
+		});
+		const grown = theirs.length - mine.length;
+		if (grown !== 0 && (carriers.length !== 1 || grown < 0)) return;
+		const at = (i: number) => (grown !== 0 && i > (carriers[0] as number) ? i + grown : i);
+		mine.forEach((n, i) => {
+			if (carriers.includes(i)) {
+				const data = (n as Text).data;
+				const all = data.match(WORDS) ?? [];
+				for (const m of all) {
+					const name = new RegExp(WORDS.source).exec(m)?.[1] as string;
+					const place: { at: number[]; nodes?: number; before?: string; after?: string } = {
+						at: [...path, at(i)],
+					};
+					if (grown !== 0) place.nodes = grown + 1;
+					if (all.length === 1) {
+						const from = data.indexOf(m);
+						if (from > 0) place.before = data.slice(0, from);
+						if (from + m.length < data.length) place.after = data.slice(from + m.length);
+					}
+					const list = (found[name] ??= []);
+					const plain = place.nodes === undefined && place.before === undefined && place.after === undefined;
+					const entry = plain ? place.at : place;
+					if (!list.some((p) => JSON.stringify(p) === JSON.stringify(entry))) list.push(entry);
 				}
-			} else walk(child, here);
+			} else if (n.nodeType === 1 && theirs[at(i)]?.nodeType === 1) {
+				walk(n, theirs[at(i)] as Node, [...path, at(i)]);
+			}
 		});
 	};
-	walk(root, []);
+	walk(root, first, []);
 	return found;
 }
 
@@ -273,7 +308,7 @@ async function contentPaths(context: {
 	args: Record<string, unknown>;
 	canvasElement: HTMLElement;
 	originalStoryFn: (args: unknown, context: unknown) => unknown;
-}): Promise<Record<string, number[][]>> {
+}): Promise<Record<string, unknown[]>> {
 	const shown = new Set(texts(context.canvasElement));
 	const marked: Record<string, unknown> = { ...context.args };
 	const names: string[] = [];
@@ -295,7 +330,7 @@ async function contentPaths(context: {
 	try {
 		flushSync(() => root.render(context.originalStoryFn(marked, context) as never));
 		host.normalize();
-		return markerPaths(host);
+		return markerPlaces(host, context.canvasElement);
 	} finally {
 		root.unmount();
 		host.remove();
@@ -311,7 +346,7 @@ export default {
 				${JSON.stringify(`${outDir}/`)} + context.id + ".html",
 				context.canvasElement.innerHTML,
 			);
-			let content: Record<string, number[][]> = {};
+			let content: Record<string, unknown> = {};
 			try {
 				content = await contentPaths(context as never);
 			} catch {
@@ -367,7 +402,7 @@ function writeRunConfig(appDir: string): { cacheDir: string; outDir: string } {
 /** Run every story through the app's Vitest; the markup each rendered, by story id, and the app's compiled CSS. */
 async function renderAll(appDir: string): Promise<{
 	rendered: Map<string, string>;
-	content: Map<string, Record<string, number[][]>>;
+	content: Map<string, ContentMap>;
 	css: string;
 }> {
 	const { cacheDir, outDir } = writeRunConfig(appDir);
@@ -397,7 +432,7 @@ async function renderAll(appDir: string): Promise<{
 	if (failure) throw new LooksAppError(`a story did not render in ${appDir}:\n${failure}`);
 
 	const rendered = new Map<string, string>();
-	const content = new Map<string, Record<string, number[][]>>();
+	const content = new Map<string, ContentMap>();
 	let css = "";
 	if (existsSync(outDir)) {
 		for (const file of await readdir(outDir)) {

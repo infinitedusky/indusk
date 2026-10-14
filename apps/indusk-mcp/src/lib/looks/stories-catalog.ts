@@ -1,4 +1,5 @@
 import type { CatalogComponent, CatalogProperty } from "./components.js";
+import type { ContentMap } from "./compose.js";
 import { markedElementsOf } from "./markup.js";
 import { LooksAppError, snapshotHash } from "./mockups.js";
 
@@ -70,7 +71,7 @@ export interface CatalogInput {
 	/** A story id's place among its component's stories, for the order of states. */
 	order: ReadonlyMap<string, number>;
 	/** Where each story's fillable properties land, by story id (`looks/stories`' marker render). */
-	content: ReadonlyMap<string, Record<string, number[][]>>;
+	content: ReadonlyMap<string, ContentMap>;
 }
 
 /**

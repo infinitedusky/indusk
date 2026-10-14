@@ -19,7 +19,13 @@ export interface MarkupElement {
 	attrs: Readonly<Record<string, string>>;
 	/** The 1-based line the element's start tag is on. */
 	line: number;
-	/** Offsets of the whole element in the source, start tag to end tag: what `looks/compose` replaces. */
+	/**
+	 * Offsets of the whole element in the source, start tag to end tag: what
+	 * `looks/compose` replaces. A custom element written self-closing
+	 * (`<indusk-component … />`) ends at its start tag — HTML has no such
+	 * thing and the parser nests what follows in it, but the author's meaning is
+	 * plain.
+	 */
 	start: number;
 	end: number;
 	/** Offsets of what sits between the start tag and the end tag; equal when the element has none. */
@@ -68,14 +74,19 @@ export function elementsOf(html: string): MarkupElement[] {
 		if (isElement(n)) {
 			const loc = n.sourceCodeLocation;
 			const line = loc?.startLine ?? 1;
+			const startTagEnd = loc?.startTag?.endOffset;
+			const selfClosed =
+				n.tagName.includes("-") &&
+				startTagEnd !== undefined &&
+				html.slice(startTagEnd - 2, startTagEnd) === "/>";
 			out.push({
 				tag: n.tagName,
 				attrs: Object.fromEntries(n.attrs.map((a) => [a.name, a.value])),
 				line,
 				start: loc?.startOffset ?? 0,
-				end: loc?.endOffset ?? 0,
-				innerStart: loc?.startTag?.endOffset ?? loc?.endOffset ?? 0,
-				innerEnd: loc?.endTag?.startOffset ?? loc?.endOffset ?? 0,
+				end: selfClosed ? startTagEnd : (loc?.endOffset ?? 0),
+				innerStart: startTagEnd ?? loc?.endOffset ?? 0,
+				innerEnd: selfClosed ? startTagEnd : (loc?.endTag?.startOffset ?? loc?.endOffset ?? 0),
 				attrLine: (name) => loc?.attrs?.[name]?.startLine ?? line,
 				...(n.tagName === "style" ? { text: textOf(n) } : {}),
 			});

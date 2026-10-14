@@ -26,9 +26,16 @@ afterAll(() => {
 	}
 });
 
+interface Place {
+	at: number[];
+	nodes?: number;
+	before?: string;
+	after?: string;
+}
+
 interface State {
 	name: string;
-	content?: Record<string, number[][]>;
+	content?: Record<string, Array<number[] | Place>>;
 }
 
 /**
@@ -58,5 +65,18 @@ describe("the render step records where content goes", () => {
 		expect(takes("tag", "default"), out).toContain("children");
 		expect(takes("step", "done"), out).toContain("name");
 		expect(takes("box", "default"), out).toEqual(expect.arrayContaining(["title", "children"]));
+	});
+
+	it("A14 a place records the words around a property and the nodes its children span", {
+		timeout: 600_000,
+	}, () => {
+		const { components, out } = render();
+		const places = (component: string, state: string, property: string) =>
+			(
+				components.find((c) => c.name === component)?.states.find((s) => s.name === state)
+					?.content?.[property] ?? []
+			).map((p) => (Array.isArray(p) ? { at: p } : p));
+		expect(places("part-section", "open", "summary")[0]?.before, out).toBe("\u00b7 ");
+		expect(places("decision-card", "ask", "children")[0]?.nodes, out).toBe(2);
 	});
 });

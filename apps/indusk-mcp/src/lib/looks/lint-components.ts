@@ -85,27 +85,65 @@ export function contentFindings(app: LooksApp, mockup: Mockup): Finding[] {
 		const mine = (el: { start: number; end: number }) =>
 			inside(ref, el) && !refs.some((o) => o !== ref && inside(ref, o) && inside(o, el));
 		const own = elements.filter((el) => el !== ref && mine(el));
+		const contents = own.filter((el) => el.tag === CONTENT_TAG);
+		const nested = (el: { start: number; end: number }) =>
+			contents.some(
+				(o) =>
+					o.start !== el.start && inside({ innerStart: o.innerStart, innerEnd: o.innerEnd }, el),
+			);
 		for (const el of own) {
-			if (el.tag === COMPONENT_TAG || el.tag === CONTENT_TAG) continue;
+			if (el.tag === CONTENT_TAG && el.attrs.for && !nested(el)) continue;
+			if (el.tag === COMPONENT_TAG) continue;
+			const why =
+				el.tag !== CONTENT_TAG
+					? `<${el.tag}> inside ${ref.attrs.name} — a placed component takes words and placed components only`
+					: el.attrs.for
+						? `<${el.tag}> inside another <${el.tag}> — content is words and placed components only`
+						: `<${el.tag}> with no "for" inside ${ref.attrs.name} — name the property it fills`;
 			findings.push({
 				file: mockup.file,
 				line: el.line,
 				value: el.tag,
 				rule: "content-not-words-or-components",
-				message: `content not words or components: ${mockup.file}:${el.line} <${el.tag}> inside ${ref.attrs.name} — a placed component takes words and placed components only (promise: placed-content-is-only-words-and-components)`,
+				message: `content not words or components: ${mockup.file}:${el.line} ${why} (promise: placed-content-is-only-words-and-components)`,
 			});
 		}
 		const state = catalog?.components
 			.find((c) => c.name === ref.attrs.name)
 			?.states.find((s) => s.name === (ref.attrs.state || "default"));
 		if (!state) continue;
-		const named = own.filter((el) => el.tag === CONTENT_TAG && el.attrs.for);
-		const filled = new Map<string, number>(named.map((el) => [el.attrs.for as string, el.line]));
+		const top = contents.filter((el) => !nested(el));
+		const named = top.filter((el) => el.attrs.for);
+		const filled = new Map<string, number>();
+		for (const el of named) {
+			const property = el.attrs.for as string;
+			const first = filled.get(property);
+			if (first !== undefined) {
+				findings.push({
+					file: mockup.file,
+					line: el.line,
+					value: `${ref.attrs.name}.${property}`,
+					rule: "content-given-twice",
+					message: `content given twice: ${mockup.file}:${el.line} ${ref.attrs.name} "${property}" is also given at line ${first} — one of them would be dropped (promise: placed-content-is-only-words-and-components)`,
+				});
+			} else filled.set(property, el.line);
+		}
 		let bare = mockup.source.slice(ref.innerStart, ref.innerEnd);
-		for (const el of [...named].sort((a, b) => b.start - a.start)) {
+		for (const el of [...top].sort((a, b) => b.start - a.start)) {
 			bare = bare.slice(0, el.start - ref.innerStart) + bare.slice(el.end - ref.innerStart);
 		}
-		if (bare.trim() !== "") filled.set("children", ref.line);
+		if (bare.trim() !== "") {
+			const first = filled.get("children");
+			if (first !== undefined) {
+				findings.push({
+					file: mockup.file,
+					line: ref.line,
+					value: `${ref.attrs.name}.children`,
+					rule: "content-given-twice",
+					message: `content given twice: ${mockup.file}:${ref.line} ${ref.attrs.name} "children" is words here and also given at line ${first} — the words would be dropped (promise: placed-content-is-only-words-and-components)`,
+				});
+			} else filled.set("children", ref.line);
+		}
 		for (const [property, line] of filled) {
 			if (property in (state.content ?? {})) continue;
 			findings.push({

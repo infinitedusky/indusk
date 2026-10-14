@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { type Dirent, existsSync, readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { type ComponentUse, compose, type SnapshotBytes } from "./compose.js";
+import { type ComponentUse, type ContentMap, compose, type SnapshotBytes } from "./compose.js";
 import { type Foundation, readFoundation } from "./foundation.js";
 
 /**
@@ -90,7 +90,7 @@ export interface Story {
 	 */
 	stylesheetHash: string | null;
 	/** Where a mockup's content for each property lands in the snapshot (`components.json`'s `content`); absent when it records none. */
-	content?: Readonly<Record<string, number[][]>>;
+	content?: ContentMap;
 }
 
 /**
@@ -318,12 +318,12 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
  * shape: the catalog's own reader (`looks/components`) is the one that judges
  * validity, and it imports this module.
  */
-async function readContentMaps(file: string): Promise<Map<string, Record<string, number[][]>>> {
-	const maps = new Map<string, Record<string, number[][]>>();
+async function readContentMaps(file: string): Promise<Map<string, ContentMap>> {
+	const maps = new Map<string, ContentMap>();
 	const parsed = await readJson<{
 		components?: Array<{
 			name?: string;
-			states?: Array<{ name?: string; content?: Record<string, number[][]> }>;
+			states?: Array<{ name?: string; content?: ContentMap }>;
 		}>;
 	} | null>(file, null);
 	for (const c of parsed?.components ?? []) {
@@ -339,7 +339,7 @@ async function readStories(
 	dir: string,
 	rel: string,
 	styles: readonly ComponentStyle[],
-	contentOf: ReadonlyMap<string, Record<string, number[][]>> = new Map(),
+	contentOf: ReadonlyMap<string, ContentMap> = new Map(),
 ): Promise<Story[]> {
 	const sheetOf = new Map(styles.map((s) => [s.component, s.hash] as const));
 	const componentsDir = join(dir, "components");

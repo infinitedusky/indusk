@@ -19,6 +19,14 @@ import { elementsOf, type MarkupElement } from "./markup.js";
  * turn (nested references too) and serializes the result. With no content the
  * snapshot's bytes go in untouched.
  *
+ * A place is recorded from a second render and holds only where the two
+ * renders agree: the path of the node where the property's words begin, how
+ * many nodes of the snapshot they are (`nodes` — a story's children may be
+ * several), and the static words that share that text node (`before` /
+ * `after`). Compose replaces exactly the property's words and leaves the rest.
+ * An `<indusk-content>` with no `for`, or inside another, is never content
+ * and never emitted: the lint refuses it, compose drops it.
+ *
  * Pure: the snapshots are handed in with their hashes, read and hashed by
  * `looks/mockups`, the one place a looks hash is computed. Whether a
  * snapshot is *approved* is `looks/approvals`' question; composition places the
@@ -66,12 +74,33 @@ function referenceElements(html: string) {
 		}));
 }
 
+/**
+ * Where one property's content lands in a snapshot: the child-index path from
+ * its root to the first node, how many sibling nodes the story's words are
+ * (default 1), and the story's static words around them in the same text node.
+ */
+export interface ContentPlace {
+	at: number[];
+	nodes?: number;
+	before?: string;
+	after?: string;
+}
+
+/** A place as a catalog stores it: a bare path is a catalog written before places carried more. */
+export type StoredPlace = number[] | ContentPlace;
+
+/** Per fillable property, the places its content lands. */
+export type ContentMap = Readonly<Record<string, readonly StoredPlace[]>>;
+
+/** The one reader of a stored place. */
+export const placeOf = (p: StoredPlace): ContentPlace => (Array.isArray(p) ? { at: p } : p);
+
 export interface SnapshotBytes {
 	html: string;
 	/** sha256 of the snapshot file's bytes. */
 	hash: string;
-	/** Per fillable property, the child-index paths from the snapshot's root where its content lands. */
-	content?: Readonly<Record<string, number[][]>>;
+	/** Per fillable property, where its content lands in the snapshot (written by the render step). */
+	content?: ContentMap;
 }
 
 export interface ComponentUse extends ComponentReference {
@@ -94,27 +123,36 @@ type Reference = ReturnType<typeof referenceElements>[number];
 /** Child nodes of a parse5 node, `<template>` contents excluded: snapshots are markup, not documents. */
 type FragmentNode = { childNodes?: FragmentNode[]; parentNode?: FragmentNode | null };
 
+const escapeText = (t: string) =>
+	t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 /**
- * Replace the node at each path of `property` with `content`, deepest and
- * last first so an earlier replacement cannot move a later path.
+ * Replace the nodes at each place with its content, framed by the place's
+ * static words. Every property's places are applied together, deepest and last
+ * first, so a replacement that changes a node count cannot move a place that
+ * is still to be filled.
  */
-function fillAt(root: FragmentNode, paths: readonly number[][], content: string): void {
-	const sorted = [...paths].sort((a, b) => {
-		for (let i = 0; i < Math.max(a.length, b.length); i++) {
-			const d = (b[i] ?? -1) - (a[i] ?? -1);
+function fillPlaces(
+	root: FragmentNode,
+	fills: ReadonlyArray<{ place: ContentPlace; content: string }>,
+): void {
+	const sorted = [...fills].sort((a, b) => {
+		for (let i = 0; i < Math.max(a.place.at.length, b.place.at.length); i++) {
+			const d = (b.place.at[i] ?? -1) - (a.place.at[i] ?? -1);
 			if (d !== 0) return d;
 		}
 		return 0;
 	});
-	for (const path of sorted) {
+	for (const { place, content } of sorted) {
 		let node: FragmentNode | undefined = root;
-		for (const i of path) node = node?.childNodes?.[i];
+		for (const i of place.at) node = node?.childNodes?.[i];
 		const parent = node?.parentNode;
 		if (!node || !parent?.childNodes) continue;
 		const at = parent.childNodes.indexOf(node);
-		const filled = (parseFragment(content) as FragmentNode).childNodes ?? [];
+		const framed = escapeText(place.before ?? "") + content + escapeText(place.after ?? "");
+		const filled = (parseFragment(framed) as FragmentNode).childNodes ?? [];
 		for (const n of filled) n.parentNode = parent;
-		parent.childNodes.splice(at, 1, ...filled);
+		parent.childNodes.splice(at, Math.max(1, place.nodes ?? 1), ...filled);
 	}
 }
 
@@ -126,39 +164,42 @@ function fillAt(root: FragmentNode, paths: readonly number[][], content: string)
  */
 export function compose(source: string, snapshots: ReadonlyMap<string, SnapshotBytes>): Composed {
 	const refs = referenceElements(source);
-	const contents = elementsOf(source).filter((el) => el.tag === CONTENT_TAG && el.attrs.for);
+	const contentElements = elementsOf(source).filter((el) => el.tag === CONTENT_TAG);
 	const uses: ComponentUse[] = refs.map(({ ref }) => {
 		const story = storyKey(ref);
 		return { ...ref, story, snapshotHash: snapshots.get(story)?.hash ?? null };
 	});
+	const within = (outer: Span, el: Span) => el.start >= outer.start && el.end <= outer.end;
 
-	/** `range` of the source with the references directly inside it composed in. */
-	const render = (range: Span, skip: readonly Span[] = []): string => {
+	/**
+	 * `range` of the source with the references directly inside it composed in
+	 * and the `drop` spans left out.
+	 */
+	const render = (range: Span, drop: readonly Span[] = []): string => {
+		const parts: Array<Span & { text: string }> = [
+			...drop.map((d) => ({ start: d.start, end: d.end, text: "" })),
+			...refs
+				.filter((r) => within(range, r) && !drop.some((d) => within(d, r)))
+				.map((r) => ({ start: r.start, end: r.end, text: renderReference(r) })),
+		].sort((a, b) => a.start - b.start || b.end - a.end);
 		let out = "";
 		let at = range.start;
-		for (const r of refs) {
-			// Only the outermost references in this range; a nested one is rendered by its parent.
-			if (r.start < at || r.end > range.end) continue;
-			if (skip.some((s) => r.start >= s.start && r.end <= s.end)) continue;
-			out += source.slice(at, r.start) + renderReference(r);
-			at = r.end;
+		for (const p of parts) {
+			// Only the outermost in this range; a nested reference is rendered by its parent.
+			if (p.start < at) continue;
+			out += source.slice(at, p.start) + p.text;
+			at = p.end;
 		}
 		return out + source.slice(at, range.end);
 	};
 
 	/** The `<indusk-content>` elements that belong to `r` itself, not to a reference nested in it. */
 	const contentOf = (r: Reference): MarkupElement[] =>
-		contents.filter(
+		contentElements.filter(
 			(c) =>
-				c.start >= r.innerStart &&
-				c.end <= r.innerEnd &&
+				within({ start: r.innerStart, end: r.innerEnd }, c) &&
 				!refs.some(
-					(o) =>
-						o !== r &&
-						o.start >= r.innerStart &&
-						o.end <= r.innerEnd &&
-						c.start >= o.start &&
-						c.end <= o.end,
+					(o) => o !== r && within({ start: r.innerStart, end: r.innerEnd }, o) && within(o, c),
 				),
 		);
 
@@ -166,20 +207,24 @@ export function compose(source: string, snapshots: ReadonlyMap<string, SnapshotB
 		const snapshot = snapshots.get(storyKey(r.ref));
 		if (!snapshot) return source.slice(r.start, r.end);
 		const inner = { start: r.innerStart, end: r.innerEnd };
-		const named = contentOf(r);
+		// Content inside other content is never content; one with no `for` is never content.
+		const mine = contentOf(r);
+		const top = mine.filter((c) => !mine.some((o) => o !== c && within(innerOf(o), c)));
 		const wanted = new Map<string, string>();
-		for (const c of named) wanted.set(c.attrs.for as string, render(innerOf(c)));
-		const bare = render(
-			inner,
-			named.map((c) => ({ start: c.start, end: c.end })),
-		);
+		for (const c of top) {
+			if (!c.attrs.for) continue;
+			const nested = mine.filter((o) => o !== c && within(innerOf(c), o));
+			wanted.set(c.attrs.for, render(innerOf(c), nested));
+		}
+		const bare = render(inner, top);
 		if (bare.trim() !== "" && !wanted.has("children")) wanted.set("children", bare.trim());
 		if (wanted.size === 0 || !snapshot.content) return snapshot.html;
 		const root = parseFragment(snapshot.html) as FragmentNode;
-		for (const [property, content] of wanted) {
-			const paths = snapshot.content[property];
-			if (paths) fillAt(root, paths, content);
-		}
+		const fills = Object.entries(snapshot.content).flatMap(([property, places]) => {
+			const content = wanted.get(property);
+			return content === undefined ? [] : places.map((p) => ({ place: placeOf(p), content }));
+		});
+		fillPlaces(root, fills);
 		return serialize(root as unknown as DefaultTreeAdapterMap["parentNode"]);
 	};
 

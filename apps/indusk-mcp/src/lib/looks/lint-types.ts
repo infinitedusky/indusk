@@ -14,6 +14,7 @@ export type LintRule =
 	| "no-approved-story"
 	| "content-not-words-or-components"
 	| "component-takes-no-content"
+	| "content-given-twice"
 	| "component-drawn-in-mockup"
 	| "needs-a-story";
 
