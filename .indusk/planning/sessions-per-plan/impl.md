@@ -116,7 +116,8 @@ Several plans can each have an agent at once: the session manager refuses only a
 - [x] `lib/decisions.ts` (`deliver`) and `lib/decisions-reader.ts` (`readWaiting`): the plan's own session, and one waiting entry per running session of the project
 - [x] `app/api/sessions/route.ts`: `GET ?project&plan&kind` returns that plan's session; its client in `components/session/PlanSession.tsx` passes them; `app/api/promises/[name]/fix/route.ts` asks for its plan's
   - Note: the fix route never called `current()`; it only starts a session, which the manager's owner rule now judges, so only its comment changed. Other `/api/sessions` clients found by grep: `DraftConversation.tsx` and `StartFix.tsx` (both moved to the new URL via `sessionUrl` in `lib/session-owner.ts`) and `LiveRefresh.tsx` (a reachability probe with no plan: the route answers `{ session: null }` with 200).
-- [ ] The mocks that stub `current` (`build-host.release.test.ts`, `promise-fix-route.test.ts`) stub `forPlan`/`running` instead
+- [x] The mocks that stub `current` (`build-host.release.test.ts`, `promise-fix-route.test.ts`) stub `forPlan`/`running` instead
+  - Note: `build-host.release.test.ts` now stubs `forPlan` (committed with the build host); `promise-fix-route.test.ts` stubs only `start`, never `current`, so it needed nothing; `decisions.test.ts` reads `manager.forPlan(PROJECT, PLAN)` where it read `manager.current()` (committed with the decisions), same assertions; `DraftConversation.test.tsx`'s fetch stub matches the new sessions URL. No assertion encoded "one session".
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 2 Verification
