@@ -1,6 +1,6 @@
 # Component content — a placed component takes its own words
 
-**Decided 2026-10-14.** Full ADR: `.indusk/planning/component-content/adr.md`.
+**Decided 2026-10-14.** Full ADR: `.indusk/planning/archive/component-content/adr.md`.
 
 ## Goal
 
