@@ -1,8 +1,9 @@
 ---
 title: "Sessions per plan"
 date: 2026-10-14
-status: draft
+status: accepted
 workflow: feature
+description: "Lets several plans have an agent at once: a session belongs to its plan, so starting one no longer waits on another plan's, and a machine-wide cap keeps the number sane."
 ---
 
 # Sessions per plan — Brief
@@ -24,13 +25,8 @@ things in parallel." The first small plan of the parallel-first direction
 
 ### This plan makes
 
-1. **`a-session-belongs-to-its-plan`** (behaviour). A plan's session starts whatever
-   other plans' sessions are running. Only a second session of the same kind on the
-   same plan is refused, and the refusal names the session already running. A plan
-   can have a planning session and a build at the same time.
-2. **`sessions-are-capped`** (behaviour). The number of sessions running together on
-   a machine is capped by `sessions.max` in `.indusk/config.json` (default 4). A start
-   beyond the cap is refused, naming the sessions running and how to stop one.
+1. **`a-session-belongs-to-its-plan`** (state). A plan's session starts whatever other plans' sessions are running; only a second session of the same kind on the same plan is refused, naming the session already running, so a plan can have a planning session and a build at the same time.
+2. **`sessions-are-capped`** (state). The number of sessions running together on a machine is capped by sessions.max in .indusk/config.json, 4 by default; a start beyond the cap is refused, naming the sessions running and how to stop one.
 
 ### Existing promises
 
