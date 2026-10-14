@@ -14,6 +14,17 @@ import type { PermissionEvent, QuestionEvent } from "./protocol.js";
  * - A question is answered with a refusal that tells the session to decide on
  *   its own judgement and record the decision, because the build stops only
  *   for a judgement the plan declared.
+ *
+ * A project conversation is decided differently (`decideConfinedPermission`,
+ * new-project-flow Build Phase 7): its agent runs in a draft folder under the
+ * InDusk home, before any project exists, and the prompt alone cannot keep it
+ * there. It is confined to its draft: Read, Write, Edit, Glob and Grep, on
+ * paths inside the draft, and every other tool - a shell, the web, an MCP
+ * tool - is refused with the reason, whatever the project's allow-list says.
+ * Nothing it asks reaches the person. Plan conversations and builds keep the
+ * rules above, unchanged.
+ *
+ * promise: an-unkept-project-conversation-leaves-nothing-on-disk
  */
 
 export type Decision = { allow: true } | { allow: false; message: string };
@@ -41,6 +52,46 @@ export function decideBuildPermission(ev: PermissionEvent, roots: string | strin
 		}
 	}
 	return { allow: true };
+}
+
+/** The tools a confined session may use: the ones that only read and write files, each given a path. */
+const CONFINED_TOOLS: readonly string[] = ["Read", "Write", "Edit", "Glob", "Grep"];
+
+/**
+ * How a confined session's requests are decided: allowed for a file tool whose
+ * paths - `file_path`, `path`, and a Glob's pattern or a Grep's `glob` - stay
+ * inside `root`; refused, with the reason, for anything else. Nothing is
+ * forwarded to a person: there is no one watching a draft who could say yes.
+ */
+export function decideConfinedPermission(ev: PermissionEvent, root: string): Decision {
+	const why = (what: string): Decision => ({
+		allow: false,
+		message: `${what} A project conversation works only inside its draft folder, ${root}, with Read, Write, Edit, Glob and Grep, because nothing is made until the person accepts your proposal. Write what you mean to ./brief.md or ./proposal.json, and say the rest in your reply.`,
+	});
+	if (!CONFINED_TOOLS.includes(ev.tool)) {
+		return why(`${ev.tool} is not available here.`);
+	}
+	const inside = decideBuildPermission(ev, root);
+	if (!inside.allow) return why(`${describePath(ev)} is outside the draft.`);
+	const pattern = ev.tool === "Glob" ? ev.input.pattern : ev.input.glob;
+	if (typeof pattern === "string" && pattern !== "") {
+		const reaches = pattern.split("/").includes("..") || isAbsolute(pattern);
+		const target = isAbsolute(pattern) ? pattern : resolve(root, pattern);
+		const rel = relative(resolve(root), target);
+		if (reaches && (rel.startsWith("..") || isAbsolute(rel))) {
+			return why(`The pattern ${pattern} reaches outside the draft.`);
+		}
+	}
+	return { allow: true };
+}
+
+/** The path a request named, for the refusal's words. */
+function describePath(ev: PermissionEvent): string {
+	for (const key of PATH_KEYS) {
+		const value = ev.input[key];
+		if (typeof value === "string" && value !== "") return value;
+	}
+	return "That path";
 }
 
 /** A build asks no one: the reply to its question tells it to decide and record why. */

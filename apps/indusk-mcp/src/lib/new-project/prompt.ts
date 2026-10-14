@@ -18,6 +18,8 @@ import type { ProjectDraftView } from "./store.js";
 export interface ProjectConversation {
 	cwd: string;
 	kind: SessionKind;
+	/** Confined to its draft: file tools there only, any other tool refused (`decideConfinedPermission`). */
+	confined: true;
 	/** The first message the session is started with. */
 	prompt: string;
 	/** The session record's `plan`: a project draft is not a plan, so it is `new-project:<id>`. */
@@ -48,6 +50,7 @@ export function newProjectConversation(
 	return {
 		cwd: draft.dir,
 		kind: "planning",
+		confined: true,
 		prompt: newProjectPrompt(draft, { parent: readParent(), ...opts }),
 		plan: newProjectSessionPlan(draft.id),
 	};

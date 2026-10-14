@@ -26,6 +26,7 @@ export function startProjectConversation(
   const started = sessionManager().start({
     cwd: convo.cwd,
     kind: convo.kind,
+    confined: convo.confined,
     prompt: convo.prompt,
     project: NEW_PROJECT_SESSION_PROJECT,
     plan: convo.plan,
