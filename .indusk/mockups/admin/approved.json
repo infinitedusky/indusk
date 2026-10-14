@@ -4515,6 +4515,17 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T01:53:14.920Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"kind": "story",
+			"story": "shell.collapsed",
+			"snapshotHash": "c2328827363e5498a830a992627b549854b1a5e3cacffd4a53d9d1099fb7866f",
+			"stylesheetHash": "f567efff4587040f11820fb43e68228fe57709113d00c35cc286a1630202af48",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T01:53:15.161Z",
+			"plan": "cockpit-redraw"
 		}
 	]
 }
