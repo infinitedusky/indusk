@@ -346,6 +346,35 @@ describe.skipIf(SHOULD_SKIP)("indusk new-project", () => {
 		expect(registered(sb)).toEqual([]);
 	});
 
+	it("A26 a reopened conversation with no agent running shows the same turns; discarding removes them", () => {
+		const sb = sandbox();
+		setParent(sb);
+		const { id, dir } = seed(sb);
+		// What the admin's session subscription appends while an agent talks.
+		const lines = [
+			{ type: "session", id: "s1" },
+			{ type: "tool", name: "Read", input: { file_path: "planner.md" } },
+			{ type: "text", text: "Three things are open." },
+			{ type: "you", text: "A phone app." },
+			{ type: "fold-opened", at: "2026-10-14T10:00:00.000Z" },
+		];
+		writeFileSync(join(dir, "transcript.jsonl"), `${lines.map((l) => JSON.stringify(l)).join("\n")}\n`);
+
+		const shown = run(sb, ["transcript", id]);
+		expect(shown.code, `new-project transcript\n${shown.stderr}`).toBe(0);
+		expect(
+			shown.stdout
+				.trim()
+				.split("\n")
+				.map((l) => JSON.parse(l)),
+		).toEqual(lines);
+
+		const discarded = run(sb, ["discard", id]);
+		expect(discarded.code, `new-project discard\n${discarded.stderr}`).toBe(0);
+		expect(existsSync(join(dir, "transcript.jsonl"))).toBe(false);
+		expect(existsSync(dir)).toBe(false);
+	});
+
 	it("A18 a conversation left open has created nothing outside its draft folder", () => {
 		const sb = sandbox();
 		setParent(sb);
