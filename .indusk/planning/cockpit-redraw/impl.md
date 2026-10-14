@@ -178,6 +178,10 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 - [ ] The brief page matched to `brief.writing` / `brief.approved`, and the plan page to `plan.parts`, `plan.working`, `plan.needs-you`, `plan.released`; their components' stories reapproved where they changed
 - [ ] The components the approved brief and plan mockups redraw inline: `RailGroup`, `Step` and `Chip` rebuilt to match, their stories rendered and approved by Sandy, and `plan.parts` and the brief screens recomposed from them so they draw nothing inline
 - [ ] `indusk promises change a-plan-page-shows-the-parts-of-its-brief --plan cockpit-redraw --statement '<the brief's Changes sentence>' --reason 'the parts moved to the brief page; the plan page opens with the description'` — single-quoted, so no shell strips its words
+- [ ] Discovered (per-state paths): the nav, brief page and plan page report the state they really draw, from their own data, with `data-look-state` (`nav.expanded|collapsed|wide`, `brief.writing|approved`, `plan.parts|working|needs-you|released`) — never from `?state=`
+- [ ] Discovered (per-state paths): the nav's width may be set by a parameter (`?nav=<px>`, clamped like a drag), the person's own setting, so `nav.wide` is reachable by a check that opens a fresh browser
+- [ ] Discovered (per-state paths): `screens.json` lists one path per state (a screen listed once per path), keeping the approved declarations' hash unchanged
+- [ ] Discovered (per-state paths): A10 serves fixture plans in each condition (four plan states, two brief states) from a throwaway project registered as `dusk`, and checks the plan's screens against them — assertions unchanged
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 3 Verification
