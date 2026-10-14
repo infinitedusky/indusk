@@ -46,16 +46,16 @@ components alone (see [adr.md](adr.md)).
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A button placed with "Create project" shows the approved button reading "Create project", and none of the story's words | Test Phase 1 | Build Phase 1 | written | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
-| A2 | A step placed with content for its name shows that name where the story's name was, its look unchanged | Test Phase 1 | Build Phase 1 | written | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
-| A3 | A container placed with components inside shows them composed where the story's content was | Test Phase 1 | Build Phase 1 | written | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
+| A1 | A button placed with "Create project" shows the approved button reading "Create project", and none of the story's words | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
+| A2 | A step placed with content for its name shows that name where the story's name was, its look unchanged | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
+| A3 | A container placed with components inside shows them composed where the story's content was | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
 | A4 | A component placed with no content shows the story's words exactly as before | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
 | A5 | After the admin's stories render, each state says which properties a mockup may fill — button and tag words, step name, box title and body | Test Phase 1 | Build Phase 2 | written | contract | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/__tests__/looks-component-content.contract.test.ts |
 | A6 | The lint refuses any element inside a placed component other than a placed component or named content, naming file, line and element | Test Phase 1 | Build Phase 3 | written | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
 | A7 | The lint refuses content for a property the state does not take, naming the component and the property | Test Phase 1 | Build Phase 3 | written | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
 | A8 | The lint accepts text and placed components inside a placed component | Test Phase 1 | Build Phase 3 | passing | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
-| A9 | A mockup placing a component with its own words returns to proposed, naming the component, when that component's story changes | Test Phase 1 | Build Phase 1 | written | unit | promise: a-changed-component-reopens-its-mockups | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
-| A10 | Changing only the words placed in a component returns an approved mockup to proposed | Test Phase 1 | Build Phase 1 | written | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
+| A9 | A mockup placing a component with its own words returns to proposed, naming the component, when that component's story changes | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-changed-component-reopens-its-mockups | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
+| A10 | Changing only the words placed in a component returns an approved mockup to proposed | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
 | A11 | Every admin mockup approved before this change is still approved after it | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/__tests__/looks-admin-approvals-hold.test.ts |
 
 ## Checklist
@@ -87,25 +87,25 @@ components alone (see [adr.md](adr.md)).
 
 **Tier**: med — the work step's default
 
-- [ ] `SnapshotBytes` gains `content?: Readonly<Record<string, number[][]>>` — per property, the child-index paths from the snapshot's root
-- [ ] `compose` reads each reference's content: bare children → `children`; each `<indusk-content for="p">` → `p`. With none, the snapshot's bytes go in unchanged. With some, the content is composed first (nested references), the snapshot is parsed with `parse5`, the node at each path of a filled property is replaced by the content, and the result serialized
+- [x] `SnapshotBytes` gains `content?: Readonly<Record<string, number[][]>>` — per property, the child-index paths from the snapshot's root
+- [x] `compose` reads each reference's content: bare children → `children`; each `<indusk-content for="p">` → `p`. With none, the snapshot's bytes go in unchanged. With some, the content is composed first (nested references), the snapshot is parsed with `parse5`, the node at each path of a filled property is replaced by the content, and the result serialized
   ```typescript
   export interface SnapshotBytes { html: string; hash: string; content?: Readonly<Record<string, number[][]>> }
   ```
-- [ ] `ComponentUse` keeps one entry per reference, nested ones included, so `componentsHashOf` still binds every snapshot a mockup composes
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] `ComponentUse` keeps one entry per reference, nested ones included, so `componentsHashOf` still binds every snapshot a mockup composes
+- [x] Shape — reviewed `compose.ts`, `markup.ts`, `mockups.ts`: one finding, the inline "content belonging to this reference" predicate in `renderReference` deserved a name — extracted as `contentOf`, done in this phase. `readContentMaps` in `mockups.ts` reads `components.json` raw because `components.ts` imports `mockups.ts` (decision: the catalog's validating reader cannot be imported without a cycle)
 
 #### Build Phase 1 Verification
 
-- [ ] A1–A3, A9 and A10 pass; A4 and A11 still pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/looks/compose.test.ts src/__tests__/looks-component-content-approval.test.ts src/__tests__/looks-admin-approvals-hold.test.ts && pnpm exec vitest related src/lib/looks/compose.ts`)
+- [x] A1–A3, A9 and A10 pass; A4 and A11 still pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/looks/compose.test.ts src/__tests__/looks-component-content-approval.test.ts src/__tests__/looks-admin-approvals-hold.test.ts && pnpm exec vitest related src/lib/looks/compose.ts`) — green run alone; under the unattended build's `INDUSK_GATE_POLICY=auto` environment `plans-accept-stories`, `plans-approve-looks` and `release-incident` fail for the environment's reason (accept refused "from inside a build step"), not this change's
 
 #### Build Phase 1 Context
 
-- [ ] mcp: the docblock of `looks/compose.ts` — a reference may carry content, bare for `children` or `<indusk-content for>` for a property, filled at the state's recorded paths — `promise: a-placed-component-shows-its-content`
+- [x] mcp: the docblock of `looks/compose.ts` — a reference may carry content, bare for `children` or `<indusk-content for>` for a property, filled at the state's recorded paths — `promise: a-placed-component-shows-its-content`
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/guide/components.md`: "Placing a component with its own words" — the two forms, with a button and a step as examples
+- [x] `apps/docs/src/guide/components.md`: "Placing a component with its own words" — the two forms, with a button and a step as examples
 
 ### Build Phase 2: The render step records where content goes
 

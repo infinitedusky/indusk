@@ -170,6 +170,12 @@ export interface CatalogState {
 	id?: string;
 	/** sha256 of the state's snapshot file, `components/<name>.<state>.html`. */
 	snapshotHash: string;
+	/**
+	 * Per property a mockup may fill, the child-index paths from the snapshot's
+	 * root where that property's words or components land. Absent in a catalog
+	 * written before component content: nothing can be placed in it.
+	 */
+	content?: Record<string, number[][]>;
 }
 
 export interface CatalogComponent {

@@ -22,6 +22,9 @@ export interface MarkupElement {
 	/** Offsets of the whole element in the source, start tag to end tag: what `looks/compose` replaces. */
 	start: number;
 	end: number;
+	/** Offsets of what sits between the start tag and the end tag; equal when the element has none. */
+	innerStart: number;
+	innerEnd: number;
 	/** The 1-based line an attribute is on; the element's own when it has none. */
 	attrLine(name: string): number;
 	/** For `<style>`: its text and the line that text starts on. */
@@ -71,6 +74,8 @@ export function elementsOf(html: string): MarkupElement[] {
 				line,
 				start: loc?.startOffset ?? 0,
 				end: loc?.endOffset ?? 0,
+				innerStart: loc?.startTag?.endOffset ?? loc?.endOffset ?? 0,
+				innerEnd: loc?.endTag?.startOffset ?? loc?.endOffset ?? 0,
 				attrLine: (name) => loc?.attrs?.[name]?.startLine ?? line,
 				...(n.tagName === "style" ? { text: textOf(n) } : {}),
 			});

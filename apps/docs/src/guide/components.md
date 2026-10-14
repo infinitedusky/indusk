@@ -81,6 +81,29 @@ A story is one fixed rendering, so a mockup shows each component's story
 content and cannot pass it data. A state a mockup needs to show that has no
 story is a missing story, not a missing mockup rule.
 
+## Placing a component with its own words
+
+A mockup places a component and gives it words. Bare content inside the
+reference is the component's `children`:
+
+```html
+<indusk-component name="button" state="default">Create project</indusk-component>
+```
+
+A named property is filled with `<indusk-content for="<property>">`:
+
+```html
+<indusk-component name="step" state="working">
+  <indusk-content for="name">Name your project</indusk-content>
+</indusk-component>
+```
+
+The component's look is the approved snapshot's, unchanged; only the words
+land where the story's own words were. A component placed inside a component
+is composed in turn, so a screen is made of components and words alone.
+Placed words are part of the mockup, so changing them returns an approved
+mockup to proposed, as changing the component does.
+
 ## Approval, and taking it back
 
 A person approves, never an agent. In the cockpit's Looks page, **Show:
