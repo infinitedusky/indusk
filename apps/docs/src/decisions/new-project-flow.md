@@ -1,6 +1,6 @@
 # New project flow — a project starts as a conversation in the admin
 
-**Decided 2026-10-14.** Full ADR: `.indusk/planning/new-project-flow/adr.md`.
+**Decided 2026-10-14.** Full ADR: `.indusk/planning/archive/new-project-flow/adr.md`.
 
 ## Goal
 
