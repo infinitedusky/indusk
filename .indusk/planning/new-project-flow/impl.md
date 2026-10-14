@@ -1,7 +1,7 @@
 ---
 title: "New project flow — from a text box to a laid-out project"
 date: 2026-10-14
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
