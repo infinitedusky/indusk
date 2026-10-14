@@ -11,6 +11,7 @@ export {
 	type CreateOptions,
 	CreationError,
 	createProject,
+	readCreation,
 } from "./create.js";
 export { type AddedDocument, addDocument, documentNotice } from "./documents.js";
 export { type KnowledgeEntry, type KnowledgeState, knowledgeOf } from "./knowledge.js";

@@ -155,6 +155,18 @@ function masterPlan(proposal: Proposal, now: Date): string {
 	);
 }
 
+/** What a creation has recorded in its draft so far, or null when none has begun (or the record is unreadable). */
+export function readCreation(draft: ProjectDraft): CreationRecord | null {
+	try {
+		const raw = JSON.parse(
+			readFileSync(join(draft.dir, "creating.json"), "utf-8"),
+		) as CreationRecord;
+		return Array.isArray(raw.steps) ? raw : null;
+	} catch {
+		return null;
+	}
+}
+
 /** Write the creation's progress into the draft, for a page opened mid-run or after a failure. */
 function recorder(draft: ProjectDraft, proposal: Proposal, report: CreateOptions["report"]) {
 	const record: CreationRecord = {
