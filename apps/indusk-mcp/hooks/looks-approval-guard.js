@@ -2,6 +2,7 @@
 /**
  * PreToolUse hook (Edit|Write, and Bash): only a person approves a mockup.
  * promise: a-mockup-is-approved-by-a-person
+ * promise: only-a-person-reapproves
  *
  * An app's `.indusk/mockups/<app>/approved.json` is the record of which
  * mockups a person approved, each entry bound to the hashes of the mockup the
@@ -19,7 +20,12 @@
  *     (`/api/looks/<app>/approve`) or the unapprove route
  *     (`/api/looks/<app>/unapprove`, storybook-components ADR decision 11:
  *     taking an approval back is the person's as giving it is) — the routes
- *     are the person's, pressed in their browser.
+ *     are the person's, pressed in their browser;
+ *   - an agent's Bash command that runs `plans reapprove`
+ *     (`indusk plans reapprove …`, `node …/cli.js plans reapprove …`) or names
+ *     the admin's re-approve route (`/api/plans/<name>/reapprove`):
+ *     re-approving a changed brief is the person's as approving a look is
+ *     (cockpit-redraw, only-a-person-reapproves).
  *
  * What it cannot see: a command that builds the path or the URL at run time
  * (a script file, a variable, an encoded string). It is a tripwire for an
@@ -44,6 +50,12 @@ const REDIRECT_ONTO_RECORD =
 const APPROVE_ROUTE = /\/api\/looks\/[^\s'"`]*approve/i;
 /** The unapprove route (ADR decision 11): taking an approval back is the person's as giving it is. */
 const UNAPPROVE_ROUTE = /\/api\/looks\/[^\s'"`]*unapprove/i;
+/** The re-approve route named anywhere in a command's text. */
+const REAPPROVE_ROUTE = /\/api\/plans\/[^\s'"`]*\/reapprove/i;
+/** `plans reapprove` as the words of a command (also inside a quoted `bash -c` string). */
+const REAPPROVE_COMMAND = /(^|[\s"'`(])plans\s+reapprove(?=$|[\s"'`);])/i;
+/** Commands that only print or search their arguments; naming `plans reapprove` to them runs nothing. */
+const READERS = new Set(["echo", "printf", "grep", "rg", "cat", "git", "man", "which"]);
 
 /** Commands that write the files they are handed. */
 const WRITERS = new Set([
@@ -100,28 +112,49 @@ function segmentWrites(segment) {
 	return WRITERS.has(name);
 }
 
+/** Whether one segment runs `plans reapprove`. */
+function segmentReapproves(segment) {
+	if (!REAPPROVE_COMMAND.test(segment)) return false;
+	const verb = wordsOf(segment)[0] ?? "";
+	return !READERS.has(verb.split("/").pop() ?? verb);
+}
+
 /** Why a Bash command is refused, or null to let it run. */
 function bashRefusal(command) {
 	if (UNAPPROVE_ROUTE.test(command)) return "it calls the cockpit's unapprove route";
 	if (APPROVE_ROUTE.test(command)) return "it calls the cockpit's approve route";
+	if (REAPPROVE_ROUTE.test(command)) return "it calls the admin's re-approve route";
+	if (segments(command).some(segmentReapproves)) return "it runs `plans reapprove`";
 	if (segments(command).some(segmentWrites))
 		return "it writes the record of what a person approved";
 	return null;
 }
 
 function refuse(what, why) {
+	const reapproval = /re-?approve/.test(why);
 	process.stderr.write(
-		[
-			`looks-approval-guard: refusing — ${what}: ${why}.`,
-			"promise: a-mockup-is-approved-by-a-person",
-			"",
-			"A mockup becomes the reference only when a person approves it with the cockpit's Approve,",
-			"and stops being one only when a person takes it back with the cockpit's Unapprove:",
-			"`indusk ui`, the app's Looks page, the mockup opened at each device, then Approve (or Unapprove).",
-			"Draw or change the mockup (screens/<screen>.<state>.html) and the foundation as you need;",
-			"a changed mockup reads proposed until a person approves it there.",
-			"",
-		].join("\n"),
+		(reapproval
+			? [
+					`looks-approval-guard: refusing — ${what}: ${why}.`,
+					"promise: only-a-person-reapproves",
+					"",
+					"Only a person re-approves a changed brief: the amendment card's Approve in the cockpit",
+					"(`indusk ui`, the plan's page), or `indusk plans reapprove <plan>` run in their own terminal.",
+					"Write the amendment as you need; the build waits until a person re-approves.",
+					"",
+				]
+			: [
+					`looks-approval-guard: refusing — ${what}: ${why}.`,
+					"promise: a-mockup-is-approved-by-a-person",
+					"",
+					"A mockup becomes the reference only when a person approves it with the cockpit's Approve,",
+					"and stops being one only when a person takes it back with the cockpit's Unapprove:",
+					"`indusk ui`, the app's Looks page, the mockup opened at each device, then Approve (or Unapprove).",
+					"Draw or change the mockup (screens/<screen>.<state>.html) and the foundation as you need;",
+					"a changed mockup reads proposed until a person approves it there.",
+					"",
+				]
+		).join("\n"),
 	);
 	process.exit(2);
 }
