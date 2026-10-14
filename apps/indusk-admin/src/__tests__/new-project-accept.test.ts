@@ -5,6 +5,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // promise: a-session-can-be-stopped
+// promise: a-new-project-publishes-nothing-unasked
 
 /**
  * new-project-flow A30: creating a project ends its conversation's agent. The

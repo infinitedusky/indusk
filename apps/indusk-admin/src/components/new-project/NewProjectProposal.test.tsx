@@ -6,6 +6,7 @@ import { render } from "vitest-browser-react";
 import { NewProjectProposal } from "./NewProjectProposal";
 
 // promise: a-project-starts-as-a-conversation
+// promise: a-new-project-publishes-nothing-unasked
 // promise: a-remote-repository-says-whose-and-who-can-see-it
 
 /**

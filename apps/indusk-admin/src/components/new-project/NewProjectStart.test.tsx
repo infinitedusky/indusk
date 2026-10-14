@@ -6,6 +6,7 @@ import { NewProjectConversation } from "./NewProjectConversation";
 import { NewProjectStart } from "./NewProjectStart";
 
 // promise: a-project-starts-as-a-conversation
+// promise: a-new-project-is-made-by-the-agent
 
 /**
  * new-project-flow A1: New project opens a page with only the "What do you want
