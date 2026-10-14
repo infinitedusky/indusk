@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="indusk-new-components" content="plan-look" />
+		<title>plan-look — story-open</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<style>
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--color-ground); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-regular); }
+			h1, h2, h3, p, dl, dd, ol, ul { margin: 0; padding: 0; }
+			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+			.page { max-width: var(--size-content); margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-16); display: grid; gap: var(--space-3); }
+			.hint { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.rows { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); overflow: hidden; }
+			.look + .look { border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); }
+			.row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); }
+			.what { display: grid; gap: var(--space-1); justify-items: start; min-width: 0; }
+			.what b { overflow-wrap: anywhere; }
+			.kind { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); }
+			.kind.mockup { background: var(--color-dusk-wash); color: var(--color-dusk); }
+			.kind.story { background: var(--color-idle-wash); color: var(--color-ink-soft); }
+			.chip { display: inline-flex; align-items: center; gap: var(--space-tight); font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); background: var(--color-warn-wash); color: var(--color-warn); }
+			.chip.ok { background: var(--color-ok-wash); color: var(--color-ok); }
+			.dot { width: var(--size-dot); height: var(--size-dot); border-radius: var(--radius-pill); background: currentColor; flex: none; }
+			.btn { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-lg); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); background: var(--color-surface); padding: var(--space-tight) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); }
+			.body { display: grid; gap: var(--space-2); border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); padding: var(--space-3) var(--space-4); }
+			.devices { display: flex; flex-wrap: wrap; gap: var(--space-2); font-size: var(--text-sm); line-height: var(--leading-3); }
+			.devices b { font-weight: var(--font-weight-regular); color: var(--color-dusk); border-radius: var(--radius-md); padding: 0 var(--space-tight); }
+			.devices b.on { background: var(--color-dusk-wash); }
+			.frame { border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); background: var(--color-ground); padding: var(--space-4); min-height: var(--size-input); display: grid; gap: var(--space-2); }
+			.frame .prow { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); }
+			.frame .prow b { font-family: var(--font-display); font-weight: var(--font-weight-bold); }
+			.frame .story-text { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.link { font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); color: var(--color-dusk); }
+		</style>
+	</head>
+	<body>
+<main class="page"><div class="rows"><div class="look" data-component="plan-look"><div class="row"><span class="what"><span class="kind mockup">Mockup</span><b>phase-row.open</b></span><span class="chip"><span class="dot"></span>proposed</span><button class="btn" type="button">Open</button></div></div><div class="look" data-component="plan-look"><div class="row"><span class="what"><span class="kind story">Story</span><b>phase-row.open</b></span><span class="chip ok"><span class="dot"></span>approved</span><button class="btn" type="button">Close</button></div><div class="body"><div class="devices"><b class="on">phone</b><b>narrow-laptop</b><b>desktop</b></div><div class="frame"><div class="prow"><b>Build Phase 4</b> · 8 of 12 · in progress</div><p class="story-text">The built phase row, drawn from the real component as it is today.</p></div><a class="link" href="#">Open on the Looks page</a></div></div></div><p class="hint">A story opens in place on the plan page, at each device, the same as a mockup.</p></main>
+	</body>
+</html>
