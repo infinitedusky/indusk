@@ -781,6 +781,41 @@
 			"stylesheetHash": "597d9e274a01a823e8876482216b08a466d78cec31dcce7b936c4c3d4e0b5060"
 		},
 		{
+			"name": "file-chip",
+			"file": "apps/indusk-admin/src/components/ui/FileChip.tsx",
+			"properties": [
+				{
+					"name": "children",
+					"type": "string",
+					"required": true,
+					"description": "The document's name, as the person gave it."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-filechip--default",
+					"snapshotHash": "96bc93a92232be00a886a181330b2f2c43897c7cdc9c26d902dd2ba7362ad139",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
+				}
+			],
+			"stylesheet": "components/file-chip.css",
+			"stylesheetHash": "f66b27d5908ab4d0332e9228659f53079ba1074d5741e683bd23934c6c45781d"
+		},
+		{
 			"name": "history-panel",
 			"file": "apps/indusk-admin/src/components/ui/HistoryPanel.tsx",
 			"properties": [
@@ -822,9 +857,77 @@
 			"stylesheetHash": "be98a8af91efa17e17a39057193f5bbeec9a0abd2199fb6611a603b33e112b6f"
 		},
 		{
+			"name": "knowledge-list",
+			"file": "apps/indusk-admin/src/components/ui/KnowledgeList.tsx",
+			"properties": [
+				{
+					"name": "items",
+					"type": "unknown",
+					"required": true
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-knowledgelist--default",
+					"snapshotHash": "4f4c60447468d7bd4bf4cbb1ce000409483b2c7146f8d603ad40ca16f887ba2b",
+					"content": {}
+				}
+			],
+			"stylesheet": "components/knowledge-list.css",
+			"stylesheetHash": "3ed41e464559d87068eb714f423e304a5f9776143fda708cea97191180717f22"
+		},
+		{
+			"name": "layout-tree",
+			"file": "apps/indusk-admin/src/components/ui/LayoutTree.tsx",
+			"properties": [
+				{
+					"name": "children",
+					"type": "string",
+					"required": true,
+					"description": "The tree as text: one line per folder, indented, a note after the name."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-layouttree--default",
+					"snapshotHash": "77148b6d4129b04aa6a1490de46381f6bdc120bcddb98885772e371ea7cae033",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
+				}
+			],
+			"stylesheet": "components/layout-tree.css",
+			"stylesheetHash": "05ac1143e283e11e614fd50f32d6f5270bb352eee3acbd99d07b1669a9f26691"
+		},
+		{
 			"name": "look-row",
 			"file": "apps/indusk-admin/src/components/ui/LookRow.tsx",
 			"properties": [
+				{
+					"name": "kind",
+					"type": "\"mockup\" | \"story\"",
+					"required": true,
+					"description": "Whether the look is a mockup or a story; every row says."
+				},
 				{
 					"name": "name",
 					"type": "string",
@@ -852,13 +955,13 @@
 				{
 					"name": "approved",
 					"id": "ui-lookrow--approved",
-					"snapshotHash": "32a1f7841ed14ec4feeca9c0ad413530807519d0e88e7a44eb0367560481cb70",
+					"snapshotHash": "4c6bbf7e82e5044666ef0360f9425160788507618ecc20d1440df32c9bda6043",
 					"content": {
 						"name": [
 							[
 								0,
 								0,
-								0,
+								1,
 								0
 							]
 						],
@@ -874,13 +977,13 @@
 				{
 					"name": "proposed",
 					"id": "ui-lookrow--proposed",
-					"snapshotHash": "6b252d278c6566a8b3752d88c92c8e076d9a2d6ff74a20dd9920c00ea5af6d84",
+					"snapshotHash": "9e6bc0f28704d2a2f0480b7ac17f762a46515102d32c76c3e22499b31324d1b0",
 					"content": {
 						"name": [
 							[
 								0,
 								0,
-								0,
+								1,
 								0
 							]
 						],
@@ -896,13 +999,57 @@
 				{
 					"name": "uncovered",
 					"id": "ui-lookrow--uncovered",
-					"snapshotHash": "695f7d86779177e66a499cf4d190ca607fad6717e9d0ff63aab9efa0a03c607c",
+					"snapshotHash": "b2e07cb0a616aaa9bdb004bad88ba1c064c0c08c5c07765dea183a2e06c117c8",
 					"content": {
 						"name": [
 							[
 								0,
 								0,
+								1,
+								0
+							]
+						],
+						"approval": [
+							[
 								0,
+								1,
+								1
+							]
+						]
+					}
+				},
+				{
+					"name": "mockup",
+					"id": "ui-lookrow--mockup",
+					"snapshotHash": "cbdd8da7b72229dedf4d14a294071e8d08e696ffeed750c9ae078d0cacc249fe",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"approval": [
+							[
+								0,
+								1,
+								1
+							]
+						]
+					}
+				},
+				{
+					"name": "story",
+					"id": "ui-lookrow--story",
+					"snapshotHash": "ab8f40038306d63561013b920c4440456150b5965b5df8ddc7d4540c6bf28d51",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								1,
 								0
 							]
 						],
@@ -917,7 +1064,135 @@
 				}
 			],
 			"stylesheet": "components/look-row.css",
-			"stylesheetHash": "447f4b40b8f2b3c76e3ba9457fb20a7a6eef926484ed1cf7ffd1126af7bdd330"
+			"stylesheetHash": "08bbb96f2c70367810148018b10172ec9b12d29f1c98cd4c0dfa9fb0cae23cee"
+		},
+		{
+			"name": "message",
+			"file": "apps/indusk-admin/src/components/ui/Message.tsx",
+			"properties": [
+				{
+					"name": "state",
+					"type": "| \"you\"\n| \"agent\"\n| \"agent-folded\"\n| \"agent-open\"\n| \"agent-working\"\n| \"agent-stopped\"",
+					"required": true,
+					"description": "Whose words: the person's, set to the right on a wash, or the agent's, on\na surface. An agent's reply with working behind it is `agent-folded` (the\nworking hidden behind \"See more ›\") or `agent-open` (the working shown\nabove the reply, \"See less\" to hide it), each with the green done dot. A\nreply still being made is `agent-working` (the pulsing dot, \"Working…\");\none whose agent ended before replying is `agent-stopped` (the grey dot and\na line saying to write below to pick it up)."
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": true,
+					"description": "The words: paragraphs, and a numbered list when the agent asks."
+				},
+				{
+					"name": "documents",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "[]",
+					"description": "The documents that came with it, by name."
+				},
+				{
+					"name": "working",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "[]",
+					"description": "What the agent did before it replied: one line each; shown only when open."
+				},
+				{
+					"name": "onToggle",
+					"type": "() => void",
+					"required": false,
+					"description": "The fold button was pressed; the page flips `state` between folded and open."
+				},
+				{
+					"name": "expanded",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Working and stopped replies show their working only when this is set."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "you",
+					"id": "ui-message--you",
+					"snapshotHash": "49e58d7e8117c2b85c5c20046b4766b443a10ebe918aea9adde94b0443515883",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
+				},
+				{
+					"name": "agent",
+					"id": "ui-message--agent",
+					"snapshotHash": "610a400a814d02dfc03e7f756b29c27ce5589243e3a34bd086d52781a2e0fd95",
+					"content": {
+						"children": [
+							{
+								"at": [
+									0,
+									1
+								],
+								"nodes": 2
+							}
+						]
+					}
+				},
+				{
+					"name": "agent-folded",
+					"id": "ui-message--agent-folded",
+					"snapshotHash": "0efbe9906dc4d534cd03d92184e370385864e317d71261074b18082978dfd48f",
+					"content": {
+						"children": [
+							{
+								"at": [
+									0,
+									2
+								],
+								"nodes": 2
+							}
+						]
+					}
+				},
+				{
+					"name": "agent-open",
+					"id": "ui-message--agent-open",
+					"snapshotHash": "c4a9ea11bf390a8f5d989aae640a2bdb9c93163b11b9a9c84bad941a2e228a51",
+					"content": {
+						"children": [
+							{
+								"at": [
+									0,
+									3
+								],
+								"nodes": 2
+							}
+						]
+					}
+				},
+				{
+					"name": "agent-working",
+					"id": "ui-message--agent-working",
+					"snapshotHash": "92d333839ba51a52644669bea4e716b455fc3ca5bcde15809479774b641327f9",
+					"content": {}
+				},
+				{
+					"name": "agent-stopped",
+					"id": "ui-message--agent-stopped",
+					"snapshotHash": "e05b425ebe23bdc7498d010e74136cf84b3f4696e2681e3ceb9ff84e58a8427b",
+					"content": {}
+				}
+			],
+			"stylesheet": "components/message.css",
+			"stylesheetHash": "2aa4de27ff8aa5f227c964f2853815b932044c869658e67cf476311b8b3d91be"
 		},
 		{
 			"name": "nav",
@@ -1883,6 +2158,65 @@
 			"stylesheetHash": "5d3be4e1672e200ffa3180d2fb0084a5c455b2402c6731cb8b83e581c2d8594b"
 		},
 		{
+			"name": "project-card",
+			"file": "apps/indusk-admin/src/components/ui/ProjectCard.tsx",
+			"properties": [
+				{
+					"name": "name",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "path",
+					"type": "string",
+					"required": true,
+					"description": "Where it lives, as the person knows it (`~/code/...`)."
+				},
+				{
+					"name": "activePlanCount",
+					"type": "number",
+					"required": true
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": true,
+					"description": "Where it opens."
+				},
+				{
+					"name": "extra",
+					"type": "ReactNode",
+					"required": false,
+					"description": "What the page adds beneath the count: a shape, an in-progress badge, when it was last seen."
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-projectcard--default",
+					"snapshotHash": "39104a137d61747cd9dcc494dcbf2ced8abbe22adc1eb7d2ae027dc10822c0a4",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"path": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
+				}
+			],
+			"stylesheet": "components/project-card.css",
+			"stylesheetHash": "4b2f698887b372e86b009b0e2ce3bbb72106a9c9ead521f15fe324e0e7e72e26"
+		},
+		{
 			"name": "promise-row",
 			"file": "apps/indusk-admin/src/components/ui/PromiseRow.tsx",
 			"properties": [
@@ -2106,6 +2440,61 @@
 			"stylesheetHash": "afec956a5ca1216fadafb3134529e9f058ca6c994ca0fa9e74f90c8784ff2cdf"
 		},
 		{
+			"name": "prompt-box",
+			"file": "apps/indusk-admin/src/components/ui/PromptBox.tsx",
+			"properties": [
+				{
+					"name": "value",
+					"type": "string",
+					"required": false
+				},
+				{
+					"name": "onChange",
+					"type": "(value: string) => void",
+					"required": false
+				},
+				{
+					"name": "onAdd",
+					"type": "() => void",
+					"required": false,
+					"description": "The person chose to add documents."
+				},
+				{
+					"name": "attachments",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Documents already added, drawn between the box and its buttons."
+				},
+				{
+					"name": "actions",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Beside the add button: what sends the words on."
+				},
+				{
+					"name": "hint",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Under the buttons: a line saying what happens next."
+				},
+				{
+					"name": "textareaProps",
+					"type": "Omit<\n  TextareaHTMLAttributes<HTMLTextAreaElement>,\n  \"value\" | \"onChange\"\n>",
+					"required": false
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-promptbox--default",
+					"snapshotHash": "13c5d196e8b479332fe0ea2083fd0ea11c4daaf57c036d2e337338af51649af2",
+					"content": {}
+				}
+			],
+			"stylesheet": "components/prompt-box.css",
+			"stylesheetHash": "4249c5ad5e660284ea71b763803b4c44493d8e62a7280f392c7c79b0d3209912"
+		},
+		{
 			"name": "rail-group",
 			"file": "apps/indusk-admin/src/components/ui/RailGroup.tsx",
 			"properties": [
@@ -2174,6 +2563,106 @@
 			],
 			"stylesheet": "components/rail-group.css",
 			"stylesheetHash": "4b903290cb06d70c76454beeeafe3c195d7aabb93b73cf6e713b2d98fb2bf004"
+		},
+		{
+			"name": "recommendation",
+			"file": "apps/indusk-admin/src/components/ui/Recommendation.tsx",
+			"properties": [
+				{
+					"name": "state",
+					"type": "\"kept\" | \"declined\"",
+					"required": true
+				},
+				{
+					"name": "title",
+					"type": "string",
+					"required": true,
+					"description": "The practice, in a few words."
+				},
+				{
+					"name": "why",
+					"type": "string",
+					"required": false,
+					"description": "One line on why it is recommended."
+				},
+				{
+					"name": "reason",
+					"type": "string",
+					"required": false,
+					"description": "The person's reason, in their words; shown once it is declined."
+				},
+				{
+					"name": "action",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Decline, or Keep it after all: the button the page gives it."
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Anything under the reason: the field a decline asks for."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "kept",
+					"id": "ui-recommendation--kept",
+					"snapshotHash": "16726baf388ba8badafd652fbac21c3c14379838c3996e198ece8fabe7eae968",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"why": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "declined",
+					"id": "ui-recommendation--declined",
+					"snapshotHash": "86d6bb342fec77eb89cfd3ea93c5fedfd1c302fdbae450a60c61df92bbc2d73f",
+					"content": {
+						"why": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						],
+						"reason": [
+							{
+								"at": [
+									0,
+									1,
+									2,
+									0
+								],
+								"before": "Your reason: "
+							}
+						]
+					}
+				}
+			],
+			"stylesheet": "components/recommendation.css",
+			"stylesheetHash": "44221201ffe67d72eaf0cd0eccb2bfb16b325980e3485d6237d0b93cb8e000c3"
 		},
 		{
 			"name": "shell",
@@ -2672,6 +3161,34 @@
 			],
 			"stylesheet": "components/view-link.css",
 			"stylesheetHash": "45a31efe21223a0d5eb9efb0e3b9791b1bf642c4d37d4a80638fb1a04a11d162"
+		},
+		{
+			"name": "workflow-strip",
+			"file": "apps/indusk-admin/src/components/ui/WorkflowStrip.tsx",
+			"properties": [
+				{
+					"name": "documents",
+					"type": "unknown",
+					"required": true,
+					"description": "The planning documents in order."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-workflowstrip--default",
+					"snapshotHash": "f5c21833c099ea33378d68108be5475250e645e485a762cc159799e7f5a97da7",
+					"content": {}
+				}
+			],
+			"stylesheet": "components/workflow-strip.css",
+			"stylesheetHash": "3473cfd6dbbea9d45cf908bc3fd92c5bda568b80ed4ac5f888d97902a7fbefca"
 		}
 	]
 }

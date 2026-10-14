@@ -1,0 +1,15 @@
+{"type": "session", "id": "seed-1"}
+{"type": "tool", "name": "Read", "input": {"file_path": "planner.md"}}
+{"type": "tool", "name": "Read", "input": {"file_path": "documents/Homework Gate Project Brief.md"}}
+{"type": "text", "text": "Wrote knowledge.json — why settled, what settled"}
+{"type": "text", "text": "Your brief answers **why** and **what**. Three things it leaves open:\n\n1. Is mobile a phone app that enforces the lock, or phone rules plus the web page?\n2. Where should the server run — Fly, or a Raspberry Pi at home?\n3. Name and place: `homework-gate` in `~/code/sandbox`?"}
+{"type": "result", "ok": true, "subtype": "success", "text": "Your brief answers **why** and **what**.", "sessionId": "seed-1"}
+{"type": "you", "text": "A phone app that enforces it. Fly for now. The name and place are fine."}
+{"type": "tool", "name": "Edit", "input": {"file_path": "brief.md"}}
+{"type": "text", "text": "Got it. One more: what are the parts — is **enforcement** (the lock on each device) separate from **learning** (checking the homework)?"}
+{"type": "result", "ok": true, "subtype": "success", "text": "Got it.", "sessionId": "seed-1"}
+{"type": "exit", "code": 0, "stderr": ""}
+{"type": "you", "text": "Two repos: one for the lock, one for the server."}
+{"type": "tool", "name": "Read", "input": {"file_path": "brief.md"}}
+{"type": "tool", "name": "Edit", "input": {"file_path": "knowledge.json"}}
+{"type": "exit", "code": 1, "stderr": ""}

@@ -21,6 +21,17 @@ indusk --version    # must be >= 1.28.26
 
 ---
 
+## Flow 0 - Let the admin make it
+
+A project that does not exist yet needs none of the flows below. In the admin,
+**New project** starts a conversation; accepting the agent's proposal makes the
+workbench, the repository inside it, its `worktrees/` folder and the InDusk
+install, and registers the project. The workbench has the repository **inside**
+it (`repos_root: "."`) rather than beside it with a symlink, and a git
+repository of its own for its planning. See [Starting a project](/guide/new-project).
+
+Flows A and B are for a repository that already exists.
+
 ## Flow A — Fresh setup on a new machine
 
 The mental model: **the wrapped repo is the only versioned/shared thing. The workbench (Dusk) is per-developer scaffolding around it. Plans, scripts, and worktree configs live in your local workbench — not in the wrapped repo, not in a shared workbench repo.** Another dev on another machine does the same flow against the same wrapped repo and gets their own independent workbench.

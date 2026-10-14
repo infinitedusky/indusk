@@ -180,7 +180,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			// which knows the declared type — this named the ADR for every plan,
 			// including the bugfix whose type skips it (admin-plan-type, A25).
 			if (plan.stage === "brief" || plan.stage === "test-plan") {
-				const next = nextRequiredDocument(plan.stage, plan.workflow ?? null);
+				const next = nextRequiredDocument(plan.stage, plan.workflow ?? null, plan.documentsOff);
 				const transition = `${plan.stage} → ${next ?? "done"}`;
 				if (plan.stageStatus === "accepted") {
 					return respond({ allowed: true, transition, nextStage: plan.nextStep });

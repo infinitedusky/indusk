@@ -194,3 +194,15 @@ export function pruneRegistry(options: { dryRun?: boolean } = {}): PruneResult {
 	writeRegistry({ ...reg, projects: kept });
 	return { removed, kept, backup };
 }
+
+/**
+ * Drop one project from the registry by path. Quiet when it is not there. The
+ * undo of `addProject` for a creation that failed after `init` registered the
+ * project: it removes that entry and no other, where `pruneRegistry` would
+ * sweep every dead path.
+ */
+export function removeProject(projectPath: string): void {
+	const reg = readRegistry();
+	const kept = reg.projects.filter((p) => p.path !== projectPath);
+	if (kept.length !== reg.projects.length) writeRegistry({ ...reg, projects: kept });
+}

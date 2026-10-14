@@ -52,6 +52,10 @@ mockup and the foundation it was drawn on, so changing either returns it to
 *proposed* by itself, and the app is held to the last approved version
 meanwhile.
 
+Every row on the Looks page says what it is, on a line of its own above the
+look's name: **Mockup** (a drawing, approved to say this is how it should look)
+or **Story** (the built component, approved when it matches its mockup).
+
 Approval happens in the checkout the plan is worked in — a plan's worktree
 commits it on the plan's branch — so it merges with the mockups it judges.
 
