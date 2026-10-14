@@ -105,18 +105,14 @@ export class SessionManager {
 				// request is recorded, then its decision, so the log says both.
 				if (opts.confined && ev.type === "permission") {
 					const decision = decideConfinedPermission(ev, opts.cwd);
-					this.record(holder, opts, ev, false);
-					holder.session.decide(ev, decision);
-					this.record(holder, opts, decidedBy(ev.requestId, decision, "rule"), false);
+					this.decideByRule(holder, opts, ev, decision);
 					if (!decision.allow) opts.onRefused?.(ev, decision.message);
 					return;
 				}
 				if (opts.kind === "planning" && ev.type === "permission") {
 					const decision = decideBuildPermission(ev, [opts.cwd, ...(opts.addDirs ?? [])]);
 					if (decision.allow) {
-						this.record(holder, opts, ev, false);
-						holder.session.decide(ev, decision);
-						this.record(holder, opts, decidedBy(ev.requestId, decision, "rule"), false);
+						this.decideByRule(holder, opts, ev, decision);
 						return;
 					}
 				}
@@ -152,6 +148,18 @@ export class SessionManager {
 		holder.events.push(ev);
 		if (forward) opts.onEvent(ev);
 		for (const listen of holder.listeners) listen(ev);
+	}
+
+	/** Log a request, answer it by the session's rule, log the decision; the starter hears neither. */
+	private decideByRule(
+		holder: Held,
+		opts: SessionOptions,
+		ev: PermissionEvent,
+		decision: { allow: true } | { allow: false; message: string },
+	): void {
+		this.record(holder, opts, ev, false);
+		holder.session.decide(ev, decision);
+		this.record(holder, opts, decidedBy(ev.requestId, decision, "rule"), false);
 	}
 
 	/** The session `id`, or undefined. */
