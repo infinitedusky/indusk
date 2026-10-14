@@ -89,8 +89,8 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A40 | A created project has InDusk installed — its skills, hooks and MCP entry are there — and its own health check reports it healthy | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A41 | Leaving the GitHub repository unticked is recorded in the project's config as declined, like any declined recommendation | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-recommendation-can-be-declined | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A42 | Every row on the looks page says whether it is a mockup or a story | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-look-says-whether-it-is-a-mockup-or-a-story | apps/indusk-admin/src/components/ui/LookRow.test.tsx |
-| A43 | The proposal's GitHub offer names the signed-in account; with nobody signed in it cannot be ticked and says how to sign in | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-remote-repository-says-whose-and-who-can-see-it | apps/indusk-admin/src/components/new-project/NewProjectProposal.test.tsx |
-| A44 | A repository is created private unless the person chose public, and public only when they did | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-remote-repository-says-whose-and-who-can-see-it | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
+| A43 | The proposal's GitHub offer names the signed-in account; with nobody signed in it cannot be ticked and says how to sign in | Build Phase 8 | Build Phase 8 | written | unit | promise: a-remote-repository-says-whose-and-who-can-see-it | apps/indusk-admin/src/components/new-project/NewProjectProposal.test.tsx |
+| A44 | A repository is created private unless the person chose public, and public only when they did | Build Phase 8 | Build Phase 8 | written | unit | promise: a-remote-repository-says-whose-and-who-can-see-it | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 
 ### Deferred Verification
 

@@ -43,6 +43,7 @@ import { git, runCli, SHOULD_SKIP } from "./helpers/cli.js";
  * promise: an-unkept-project-conversation-leaves-nothing-on-disk
  * promise: a-project-has-one-contract
  * promise: init-writes-no-vendor-into-an-app
+ * promise: a-remote-repository-says-whose-and-who-can-see-it
  */
 
 const NAME = "homework-gate";
@@ -123,7 +124,7 @@ interface Proposal {
 	milestones: string[];
 	recommendations: { name: string; kept: boolean; reason?: string }[];
 	documentsOff: string[];
-	remote: { github: boolean };
+	remote: { github: boolean; visibility?: string };
 }
 
 const proposalFor = (sb: Sandbox, over: Partial<Proposal> = {}): Proposal => ({
@@ -337,6 +338,34 @@ describe.skipIf(SHOULD_SKIP)("indusk new-project", () => {
 		expect(calls[0]).toContain("--private");
 		expect(calls[0]).toContain(`--source ${repo}`);
 		expect(calls[0]).toContain("--push");
+	});
+
+	it("A44 a repository is created private unless the person chose public, and public only when they did", () => {
+		const callsOf = (sb: Sandbox) =>
+			existsSync(sb.ghLog) ? readFileSync(sb.ghLog, "utf-8").split("\n").filter(Boolean) : [];
+
+		const unchosen = sandbox();
+		accepted(unchosen, { proposal: { remote: { github: true } } });
+		expect(callsOf(unchosen)[0]).toContain("--private");
+		expect(callsOf(unchosen)[0]).not.toContain("--public");
+
+		const chosenPrivate = sandbox();
+		accepted(chosenPrivate, { proposal: { remote: { github: true, visibility: "private" } } });
+		expect(callsOf(chosenPrivate)[0]).toContain("--private");
+
+		const chosenPublic = sandbox();
+		accepted(chosenPublic, { proposal: { remote: { github: true, visibility: "public" } } });
+		expect(callsOf(chosenPublic)).toHaveLength(1);
+		expect(callsOf(chosenPublic)[0]).toContain("--public");
+		expect(callsOf(chosenPublic)[0]).not.toContain("--private");
+
+		const unknown = sandbox();
+		setParent(unknown);
+		const { id } = seed(unknown, { proposal: { remote: { github: true, visibility: "internal" } } });
+		const refused = run(unknown, ["accept", id]);
+		expect(refused.code, "a visibility other than private or public was accepted").not.toBe(0);
+		expect(refused.stderr).toContain("visibility");
+		expect(callsOf(unknown)).toEqual([]);
 	});
 
 	it("A15 a proposal located outside the configured parent is refused and nothing is created", () => {
