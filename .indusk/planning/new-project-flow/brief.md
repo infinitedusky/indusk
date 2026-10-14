@@ -39,7 +39,7 @@ are in [research.md](research.md).
 
 ### This plan makes
 
-1. **`a-project-starts-as-a-conversation`** (state). A person starts a new project from the admin by describing it, and may add documents for the agent to write the brief from, with nothing asked of them first; the agent proposes its name, location and shape for the person to accept.
+1. **`a-project-starts-as-a-conversation`** (state). A person starts a new project from the admin by describing it, and may add documents for the agent to write the brief from, with nothing asked of them first; the agent starts at once and proposes its name, location and shape for the person to accept.
 
 2. **`a-new-project-is-made-by-the-agent`** (state). Accepting the proposal creates the workbench, the project's repository inside it and its worktrees folder, and installs InDusk, with no command typed by the person.
 
@@ -111,6 +111,7 @@ None.
 15. **`layout-tree.default`**. A new component: the project's directory layout as it will be created.
 16. **`message.agent-folded`**. The agent's bubble (`message.agent`) holding a formatted reply, with one "See more ›" line standing for the working before it.
 17. **`message.agent-open`**. The same bubble opened: the working listed above the reply, and "See less".
+18. **`message.agent-working`**. The agent's bubble while it works: shown the moment the conversation starts, pulsing, with "Working…" and its working so far behind "See more ›", until its reply arrives.
 
 ### Existing looks
 
