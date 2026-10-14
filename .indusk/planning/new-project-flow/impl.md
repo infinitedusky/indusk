@@ -88,6 +88,7 @@ nothing the person did not accept (see [adr.md](adr.md)).
 - [x] Author A4, A6–A11, A13–A18, A21, A22 in `new-project-cli.test.ts` through the built CLI with a temporary `INDUSK_HOME`, a temporary parent directory and a fake `gh` on `PATH` that records its arguments; a draft is seeded by `indusk new-project start --message … --document <file>` and its proposal written as the agent would (`proposal.json`, `brief.md`). RED: `new-project` is an unknown command
 - [x] Author A12 in `documents-off.test.ts`: a temp project whose config sets `planning.documents_off: ["adr"]`, a feature plan with brief, test plan and impl; the plan status the admin reads (`lib/plan-parser.ts`) reports the ADR. RED: it reads missing
 - [x] Confirm A19's existing tests (`drafts.test.ts`, `DraftConversation.test.tsx`) and A20's (`admin-session-lifecycle.test.ts`, with a session whose plan is `new-project:<id>`) pass
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Deferred to Build Phase 1
 
@@ -139,9 +140,16 @@ nothing the person did not accept (see [adr.md](adr.md)).
 
 #### Test Phase 1 Verification
 
-- [ ] A4, A6–A18 (CLI rows), A21, A22 and A12 authored, each failing on its own assertion (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/__tests__/documents-off.test.ts`)
-- [ ] A19 and A20 pass (`pnpm exec vitest run src/__tests__/drafts.test.ts`; A20 with `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/admin-session-lifecycle.test.ts`)
-- [ ] Every deferred body above reviewed: will it compile at the phase it names, and does it assert what it claims?
+- [x] A4, A6–A18 (CLI rows), A21, A22 and A12 authored, each failing on its own assertion (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/__tests__/documents-off.test.ts`)
+- [x] A19 and A20 pass (`pnpm exec vitest run src/__tests__/drafts.test.ts`; A20 with `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/admin-session-lifecycle.test.ts`)
+- [x] Every deferred body above reviewed: will it compile at the phase it names, and does it assert what it claims?
+
+Deferred-body review (Test Phase 1):
+
+- A1 — assertions are right, the API is not: this repo's component tests run in Vitest browser mode with `vitest-browser-react` (`const screen = await render(...)`, `await expect.element(screen.getByRole(...))`), not a global `screen` with `toBeInTheDocument`. Build Phase 1 adapts the calls; the three assertions stand.
+- A2 — needs a decision: the body asserts that POST `/api/new-projects` starts the session, but Build Phase 1 splits create (`/api/new-projects`) from `/[id]/talk`, which starts it. Either create starts it or the body posts to `/talk`. It also needs `vi.mock("@/lib/session-host")` for `fakeManager`, `jsonRequest`, `brief` and `home` (the pattern in `promise-fix-route.test.ts`).
+- A3 — same API adaptation as A1; `homeworkGate` is an undefined fixture to author in Build Phase 2.
+- A5 — same API adaptation (`getAllByRole` is `.elements()` in browser mode); `done`/`working` step helpers to author in Build Phase 3.
 
 ### Build Phase 1: A project conversation
 
