@@ -16,6 +16,7 @@ import { writePromise } from "./helpers/promises-fixture.js";
 
 /**
  * promise: a-change-to-what-was-agreed-needs-the-person — brief-as-the-contract A35.
+ * promise: a-plan-builds-only-after-approval — cockpit-redraw A12: the amendment clause.
  *
  * The amendment gate cannot be stepped past from the impl: a `<!-- skip-gates -->`
  * marker does not let a build item be checked off while an amendment waits, and

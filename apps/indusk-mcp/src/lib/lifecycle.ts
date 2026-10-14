@@ -3,7 +3,7 @@ import type { GateKind } from "./impl-headings.js";
 import type { ImplPhase, ParsedImpl } from "./impl-parser.js";
 import type { PlanSummary } from "./plan-parser.js";
 import type { PhaseBoundaryRecord } from "./shape/boundary.js";
-import { DOCUMENT_LABELS, WORKFLOW_DEFINITIONS, type WorkflowType } from "./workflow-types.js";
+import { DOCUMENT_LABELS, requiredDocuments, type WorkflowType } from "./workflow-types.js";
 
 /**
  * The one definition of a plan's lifecycle (admin-ui-phase-progress, ADR D1).
@@ -345,7 +345,7 @@ function resolvePosition(input: DerivePlanPositionInput): {
 			// A22: the active label never claims a fact the reader does not
 			// hold. A spike's finished research awaits nothing.
 			const type = summary.workflow ?? null;
-			if (type !== null && nextRequiredDocument(stage, type) === undefined) {
+			if (type !== null && nextRequiredDocument(stage, type, summary.documentsOff) === undefined) {
 				return { position: stage, awaiting: `${noun} finished — a ${type} ends here` };
 			}
 			return { position: stage, awaiting: `${noun} accepted, awaiting the next document` };
@@ -376,7 +376,8 @@ export function derivePlanPosition(input: DerivePlanPositionInput): PlanPosition
 	const currentIndex = PLAN_POSITIONS.indexOf(position);
 	const docs = new Set(input.summary.documents);
 	const type = input.summary.workflow ?? null;
-	const required = type === null ? null : new Set(WORKFLOW_DEFINITIONS[type].requires);
+	const required =
+		type === null ? null : new Set(requiredDocuments(type, input.summary.documentsOff));
 	const segments = {} as Record<PlanPosition, SegmentState>;
 	for (const [index, candidate] of PLAN_POSITIONS.entries()) {
 		if (index === currentIndex) {
@@ -427,10 +428,11 @@ function restingState(
 export function nextRequiredDocument(
 	stage: string,
 	type: WorkflowType | null,
+	documentsOff: readonly string[] = [],
 ): DocumentPosition | undefined {
 	const index = (DOCUMENT_POSITIONS as readonly string[]).indexOf(stage);
 	return DOCUMENT_POSITIONS.slice(index + 1).find(
-		(doc) => type === null || WORKFLOW_DEFINITIONS[type].requires.includes(doc),
+		(doc) => type === null || requiredDocuments(type, documentsOff).includes(doc),
 	);
 }
 

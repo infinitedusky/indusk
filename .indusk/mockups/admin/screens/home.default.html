@@ -3,7 +3,6 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="indusk-new-components" content="recommendation,project-card,message,file-chip,prompt-box,knowledge-list,workflow-strip,layout-tree" />
 		<title>Projects</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -42,7 +41,7 @@
 	<body>
 <main class="page">
 <header class="head"><div><h1 class="title">Projects</h1><p class="hint">Every project registered on this machine.</p></div><button class="btn primary" type="button">New project</button></header>
-<div class="grid"><a class="pcard" data-component="project-card" data-state="default"><h2>homework-gate-workbench</h2><p class="mono">~/code/sandbox/homework-gate-workbench</p><p class="count">0 active plans</p></a><a class="pcard" data-component="project-card" data-state="default"><h2>dusk</h2><p class="mono">~/code/sandbox/dusk</p><p class="count">4 active plans</p></a><a class="pcard" data-component="project-card" data-state="default"><h2>numero-workbench</h2><p class="mono">~/code/sandbox/numero-workbench</p><p class="count">2 active plans</p></a></div>
+<div class="grid"><indusk-component name="project-card" state="default"></indusk-component><indusk-component name="project-card" state="default"></indusk-component><indusk-component name="project-card" state="default"></indusk-component></div>
 </main>
 	</body>
 </html>

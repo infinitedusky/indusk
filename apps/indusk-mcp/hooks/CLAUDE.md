@@ -79,7 +79,12 @@ are about keeping the two lanes in step.
   `.indusk/mockups/<app>/approved.json`** — Write/Edit by path, and on Bash
   (its second registration, as trunk-guard's) a redirect onto it, a writer
   (`tee`, `cp`, `mv`, `sed -i`, an interpreter, `git checkout|restore …`) or a
-  call to `/api/looks/…/approve`. A mockup is approved only by a person,
+  call to `/api/looks/…/approve`. It holds every person-only act — a look's
+  approval and a brief's re-approval (a Bash `plans reapprove`, a call to
+  `/api/plans/…/reapprove`, an interpreter segment naming `reapprovePlan`). A
+  person-only act is refused by its function's name as well as its command and
+  route, and the reader exemption (`echo`, `cat`, `git` …) never covers a
+  segment holding a substitution (`$(…)`, a backtick, `<(…)`, `>(…)`). A mockup is approved only by a person,
   through the cockpit's Approve. It reads command text, never the file, and
   has no off switch: a **tripwire for an agent's ordinary attempt, not a
   boundary** against a process running as the person — a script that builds

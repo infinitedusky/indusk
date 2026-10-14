@@ -75,14 +75,12 @@ dusk/
 - Workbench setup one-shot (`indusk setup`) — see `.indusk/planning/archive/workbench-setup-command/`
 - Dawn hook parity: invariants + eval rail in the thin lane; headless `ask` = pause, `ask` the default in both lanes — see `/decisions/dawn-hook-parity`
 - Test phases as structure: `### Test Phase N` + `### Build Phase N` as two sequences; Test Phase 1 mandatory, first, and the register where every deferral is justified. Zero migration via an optional `Build ` prefix — see `/decisions/test-phase-structure`
-- Shape check: per-phase craft review in `/work` (intra-unit) vs `/cleanup` at close (inter-file) — a step, not a gate type; findings become items in the phase — see `/decisions/lifecycle-rebalance`
 - Dawn verify (component 6, the keystone): read-only phase-boundary verification for work Dawn didn't execute; detects, never repairs, reads files and exit codes never runner output — see `/decisions/dawn-verify`
 - InDusk Makeover (2026-07-23): budgets + decay + removal — the 60 KB budget hook + compaction, Graphiti/CGC removed with the lessons rail kept, current.md sweep + dead-draft archive, catchup diet, MCP keep-lists, hub push/pull. Supersedes context-budget. — see `.indusk/planning/archive/indusk-makeover/adr.md`
 - Versioned workbench (1.37.0–1.38.3): the workbench root is a git repo with its own remote and a sync loop; repos declared in `worktree.repos[]` — see `/decisions/versioned-workbench`
 - Dawn workbench execution (6.5): one `resolveExecutionRoots` behind run/verify/cleanup; two roots and a commit cadence per repo in the loop; `codeSha` on the ledger and `repo` on queued evals, absence a rule not a migration; multi-repo still refuses — see `/decisions/dawn-workbench-execution`
 - Promises (Day 4a): one markdown file per promise at the plan root, links as declared paths verified by a `promise: <name>` token, per-kind link rule, four states, domains in config, one `lib/promises/` behind CLI/MCP/admin — see `/decisions/day-promises`
 - Monitor (Day 4b): plain-OTel promise mark, no InDusk runtime code; `promises status`/`watch` over local Jaeger; reopen by Maintenance phase; `monitor` from files — see `/decisions/day-monitor`
-- Watcher heartbeat: every promise read first probes its Jaeger (a span sent and read back) and says *watcher blind*, never zero; the server beats each pass and tells Slack once each way — see `/decisions/watcher-heartbeat`
 - Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `/decisions/promise-sources`
 - Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
 - Release as a declared step: `indusk release` runs `workflow.steps.release` — slow tests before or after, `done_when` — and routes failures from JUnit to incidents or bugfix plans — see `/decisions/release-records-its-failures`
@@ -95,6 +93,9 @@ dusk/
 - UI promises: an app's look is held by mockups a person approves in the cockpit, on one DTCG foundation, no raw values, held by value in Chromium — see `/decisions/ui-promises`
 - Storybook components: each component one file with a story per state rendered to a snapshot; mockups compose components by name; a changed component reopens its mockups; Storybook served by the cockpit — see `/decisions/storybook-components`
 - Brief as the contract: looks in the brief, approval of the brief, an amendment stops the build until a person re-approves, a plan starts as a conversation — see `/decisions/brief-as-the-contract`
+- cockpit-redraw: the nav from the original cockpit, drag-to-widen per browser, re-approval a person's — see `/decisions/cockpit-redraw`
+- Component content: a mockup places a component with its own words (text and components only); paths are recorded from a second render and held to one node structure — see `/decisions/component-content`
+- New project flow: a project starts as a conversation in the admin; drafts at `~/.indusk/new-projects/`, creation by the package — see `/decisions/new-project-flow`
 
 ## Known Gotchas
 

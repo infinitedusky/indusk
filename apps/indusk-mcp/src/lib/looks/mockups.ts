@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { type Dirent, existsSync, readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { type ComponentUse, compose, type SnapshotBytes } from "./compose.js";
+import { type ComponentUse, type ContentMap, compose, type SnapshotBytes } from "./compose.js";
 import { type Foundation, readFoundation } from "./foundation.js";
 
 /**
@@ -31,6 +31,19 @@ export interface DeclaredScreen {
 	states: string[];
 	/** Where the running app serves this screen; `/<name>` when not declared. */
 	path?: string;
+	/**
+	 * A path per state, overriding `path` for those states: a state that exists
+	 * only at another address (`{ "conversation": "/new/{seed}" }`).
+	 */
+	paths?: Record<string, string>;
+	/**
+	 * A command the check runs before it opens this screen's states; its trimmed
+	 * stdout replaces `{seed}` in the screen's paths and in `unseed`. For a state
+	 * that exists only once something does.
+	 */
+	seed?: string;
+	/** Run after the screen's states are opened, whatever happened; `{seed}` is substituted. */
+	unseed?: string;
 }
 
 export interface Mockup {
@@ -89,6 +102,8 @@ export interface Story {
 	 * component draws and leaves its markup byte-identical (Build Phase 9, A31).
 	 */
 	stylesheetHash: string | null;
+	/** Where a mockup's content for each property lands in the snapshot (`components.json`'s `content`); absent when it records none. */
+	content?: ContentMap;
 }
 
 /**
@@ -251,7 +266,12 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 	const styles = await readStyles(dir, join(MOCKUPS_DIR, app));
 	const basePath = join(dir, "components", BASE_STYLESHEET);
 	const base = existsSync(basePath) ? await readFile(basePath, "utf-8") : "";
-	const stories = await readStories(dir, join(MOCKUPS_DIR, app), styles);
+	const stories = await readStories(
+		dir,
+		join(MOCKUPS_DIR, app),
+		styles,
+		await readContentMaps(join(dir, "components.json")),
+	);
 	const snapshots = new Map<string, SnapshotBytes>(stories.map((s) => [s.name, s]));
 
 	const screensDir = join(dir, "screens");
@@ -305,11 +325,34 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 	};
 }
 
+/**
+ * Each story's content map from the catalog, `badge.ok` → property → paths.
+ * Read from the file as written and tolerant of its absence or an older
+ * shape: the catalog's own reader (`looks/components`) is the one that judges
+ * validity, and it imports this module.
+ */
+async function readContentMaps(file: string): Promise<Map<string, ContentMap>> {
+	const maps = new Map<string, ContentMap>();
+	const parsed = await readJson<{
+		components?: Array<{
+			name?: string;
+			states?: Array<{ name?: string; content?: ContentMap }>;
+		}>;
+	} | null>(file, null);
+	for (const c of parsed?.components ?? []) {
+		for (const s of c.states ?? []) {
+			if (s.content && c.name && s.name) maps.set(`${c.name}.${s.name}`, s.content);
+		}
+	}
+	return maps;
+}
+
 /** The snapshots in `<app>/components/`, sorted by name, each with its component's stylesheet hash; none when the app has no stories. */
 async function readStories(
 	dir: string,
 	rel: string,
 	styles: readonly ComponentStyle[],
+	contentOf: ReadonlyMap<string, ContentMap> = new Map(),
 ): Promise<Story[]> {
 	const sheetOf = new Map(styles.map((s) => [s.component, s.hash] as const));
 	const componentsDir = join(dir, "components");
@@ -329,6 +372,7 @@ async function readStories(
 			html: bytes.toString("utf-8"),
 			hash: snapshotHash(bytes),
 			stylesheetHash: sheetOf.get(name.slice(0, dot)) ?? null,
+			...(contentOf.has(name) ? { content: contentOf.get(name) } : {}),
 		});
 	}
 	return stories;

@@ -3,6 +3,7 @@
 import type { Question, StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { describeToolInput as describeInput } from "@/lib/conversation-turns";
 
 /**
  * A session of the developer's own `claude`, as a person sees it
@@ -77,6 +78,7 @@ export function SessionPanel({
           <li key={i}>
             <EventView
               ev={ev}
+              repeatsReply={replyRepeated(events, i)}
               open={"requestId" in ev && !answered.has(ev.requestId) && running}
               onAnswer={(answers) => {
                 if (ev.type !== "question") return;
@@ -120,13 +122,32 @@ export function SessionPanel({
   );
 }
 
-function EventView({
+/**
+ * Whether a finished turn's text is the reply the log already shows just
+ * above it: Claude Code's result carries the turn's last message again, and
+ * the log should not say it twice.
+ */
+export function replyRepeated(events: StartedEvent[], i: number): boolean {
+  const ev = events[i];
+  if (!ev || ev.type !== "result" || !ev.text) return false;
+  for (let n = i - 1; n >= 0; n--) {
+    const before = events[n];
+    if (before?.type === "text") return before.text.trim() === ev.text.trim();
+    if (before?.type === "result") return false;
+  }
+  return false;
+}
+
+export function EventView({
   ev,
+  repeatsReply = false,
   open,
   onAnswer,
   onDecide,
 }: {
   ev: StartedEvent;
+  /** A finished turn's text is the reply shown above it: say "Turn done" alone. Absent: say it with its text. */
+  repeatsReply?: boolean;
   open: boolean;
   onAnswer: (answers: Record<string, string>) => void;
   onDecide: (allow: boolean) => void;
@@ -201,7 +222,9 @@ function EventView({
     // promise: a-session-says-how-it-ended
     case "result":
       return ev.ok ? (
-        <p className="text-ok">Turn done{ev.text ? ` — ${ev.text}` : ""}</p>
+        <p className="text-ok">
+          Turn done{ev.text && !repeatsReply ? ` — ${ev.text}` : ""}
+        </p>
       ) : (
         <p className="text-bad">
           Failed —{" "}
@@ -350,19 +373,4 @@ function QuestionView({
       ) : null}
     </div>
   );
-}
-
-/** A tool's input in a few words: the path it names, or its command, or nothing. */
-function describeInput(input: Record<string, unknown>): string {
-  for (const key of [
-    "file_path",
-    "path",
-    "notebook_path",
-    "command",
-    "pattern",
-    "skill",
-  ]) {
-    if (typeof input[key] === "string") return String(input[key]);
-  }
-  return "";
 }

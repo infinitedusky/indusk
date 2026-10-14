@@ -165,3 +165,106 @@ describe("A29 — a Bash command naming the approve route is refused", () => {
 		expect(r.exitCode, r.stderr).toBe(0);
 	});
 });
+
+/**
+ * cockpit-redraw A5 and A6 — promise: only-a-person-reapproves.
+ *
+ * Re-approving a changed brief is the person's, as approving a look is: the
+ * amendment card's Approve in their browser, or their own terminal. An
+ * agent's Bash command that runs `plans reapprove`, or names the admin's
+ * re-approve route, is refused before it runs — so the plan's approval is
+ * left exactly as it was. Read from the command's text, a tripwire as the
+ * rest of this guard is.
+ */
+describe("A5 — an agent's `plans reapprove` is refused, saying only a person re-approves", () => {
+	const runs: Array<[string, string]> = [
+		["indusk", "indusk plans reapprove cockpit-redraw"],
+		["node on the built cli", "node /opt/indusk/dist/bin/cli.js plans reapprove cockpit-redraw"],
+		["after a cd", `cd ${ROOT} && indusk plans reapprove cockpit-redraw`],
+	];
+	for (const [how, command] of runs) {
+		it(`refuses ${how}`, async () => {
+			const r = await runHook("looks-approval-guard.js", bash(command));
+			expect(r.exitCode, `${command}\n${r.stderr}`).toBe(2);
+			expect(r.stderr).toMatch(/only a person/i);
+			expect(r.stderr).toMatch(/re-?approv/i);
+		});
+	}
+});
+
+describe("A6 — an agent's call to the re-approve route is refused the same way", () => {
+	it("refuses a curl to /api/plans/<name>/reapprove", async () => {
+		const r = await runHook(
+			"looks-approval-guard.js",
+			bash(
+				`curl -s -X POST http://127.0.0.1:3939/api/plans/cockpit-redraw/reapprove -H 'Origin: http://127.0.0.1:3939' -H 'content-type: application/json' -d '{"project":"dusk"}'`,
+			),
+		);
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toMatch(/only a person/i);
+		expect(r.stderr).toMatch(/re-?approv/i);
+	});
+});
+
+/**
+ * cockpit-redraw A13 and A14 — promise: only-a-person-reapproves.
+ *
+ * The reader exemption (`echo`, `cat`, `git`, …) is for a command that only
+ * prints its words; a substitution inside one is run by the shell before the
+ * reader sees anything. And `plans reapprove` is one call to the package's
+ * `reapprovePlan`, which an interpreter can make without the command's words.
+ */
+describe("A13 — a reader runs what it substitutes", () => {
+	const substituted: Array<[string, string]> = [
+		["a command substitution", 'echo "$(indusk plans reapprove x)"'],
+		["a backtick substitution", "echo `indusk plans reapprove x`"],
+		["a process substitution", "cat <(indusk plans reapprove x)"],
+		["an output process substitution", "tee >(indusk plans reapprove x)"],
+	];
+	for (const [how, command] of substituted) {
+		it(`refuses ${how}`, async () => {
+			const r = await runHook("looks-approval-guard.js", bash(command));
+			expect(r.exitCode, `${command}\n${r.stderr}`).toBe(2);
+			expect(r.stderr).toMatch(/only-a-person-reapproves/);
+			expect(r.stderr).toMatch(/only a person/i);
+		});
+	}
+
+	const printed: Array<[string, string]> = [
+		["an echo of the words", 'echo "indusk plans reapprove x"'],
+		["a commit message naming it", 'git commit -m "docs: plans reapprove is a person\'s"'],
+	];
+	for (const [how, command] of printed) {
+		it(`still allows ${how}`, async () => {
+			const r = await runHook("looks-approval-guard.js", bash(command));
+			expect(r.exitCode, `${command}\n${r.stderr}`).toBe(0);
+		});
+	}
+});
+
+describe("A14 — the function behind the command is refused by its name", () => {
+	const calls: Array<[string, string]> = [
+		[
+			"node -e",
+			`node -e "import('@infinitedusky/indusk-mcp/plans').then(m => m.reapprovePlan('.', 'x'))"`,
+		],
+		[
+			"tsx -e",
+			`tsx -e "import { reapprovePlan } from './src/lib/plans/reapprove.ts'; reapprovePlan('.', 'x')"`,
+		],
+		["after a cd", `cd ${ROOT} && node -e "require('x').reapprovePlan('.', 'x')"`],
+	];
+	for (const [how, command] of calls) {
+		it(`refuses ${how}`, async () => {
+			const r = await runHook("looks-approval-guard.js", bash(command));
+			expect(r.exitCode, `${command}\n${r.stderr}`).toBe(2);
+			expect(r.stderr).toMatch(/only-a-person-reapproves/);
+			expect(r.stderr).toMatch(/only a person/i);
+		});
+	}
+
+	it("still allows a reader that names the function", async () => {
+		const r = await runHook("looks-approval-guard.js", bash("grep -rn reapprovePlan src"));
+		expect(r.exitCode, r.stderr).toBe(0);
+	});
+});

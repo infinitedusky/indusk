@@ -1,0 +1,99 @@
+import { copyFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
+import { induskMcpPackageRoot } from "../package-root.js";
+import type { SessionKind } from "../session/protocol.js";
+import { readParent } from "./parent.js";
+import type { ProjectDraftView } from "./store.js";
+
+/**
+ * A project draft's conversation (new-project-flow, ADR decision 2): the agent
+ * talks with the person in the draft's own folder, outside any project - there
+ * is none yet - so it can read and write nothing but the conversation. The
+ * rules it plans under are the planner's, copied in as `planner.md` as a plan
+ * draft's are, since a folder under the InDusk home has no `/planner`.
+ *
+ * promise: an-unkept-project-conversation-leaves-nothing-on-disk
+ */
+
+export interface ProjectConversation {
+	cwd: string;
+	kind: SessionKind;
+	/** Confined to its draft: file tools there only, any other tool refused (`decideConfinedPermission`). */
+	confined: true;
+	/** The first message the session is started with. */
+	prompt: string;
+	/** The session record's `plan`: a project draft is not a plan, so it is `new-project:<id>`. */
+	plan: string;
+}
+
+/** What the session record names for a session that is not in any project. */
+export const NEW_PROJECT_SESSION_PROJECT = "new-project";
+
+/** The session record's `plan` for draft `id`; one definition, read by the routes and the page. */
+export const newProjectSessionPlan = (id: string): string => `new-project:${id}`;
+
+export interface PromptOptions {
+	reopened?: boolean;
+	text?: string;
+	/** The folder new projects go in, which the proposal's location must be inside; none set, none said. */
+	parent?: string | null;
+}
+
+export function newProjectConversation(
+	draft: ProjectDraftView,
+	opts: PromptOptions = {},
+): ProjectConversation {
+	const planner = join(draft.dir, "planner.md");
+	if (!existsSync(planner)) {
+		copyFileSync(join(induskMcpPackageRoot(), "skills", "planner.md"), planner);
+	}
+	return {
+		cwd: draft.dir,
+		kind: "planning",
+		confined: true,
+		prompt: newProjectPrompt(draft, { parent: readParent(), ...opts }),
+		plan: newProjectSessionPlan(draft.id),
+	};
+}
+
+/**
+ * What the agent is told. The person has said what they want (and may have
+ * brought documents); the agent asks only what that leaves open, in the order
+ * why, what, how and where, and writes the founding brief and then the
+ * proposal. It runs no command and creates nothing: the project is made only
+ * when the person accepts. It is told where new projects go, so the location
+ * it proposes is one creation will accept.
+ */
+export function newProjectPrompt(
+	draft: Pick<ProjectDraftView, "message" | "documents" | "brief" | "hasProposal">,
+	opts: PromptOptions = {},
+): string {
+	const documents = draft.documents.map((name) => `./documents/${name}`);
+	return [
+		"This is a new-project conversation: the project does not exist yet, and your working directory is this conversation's own folder. Write only here; create no project, run no `indusk` command and no `git init` - the project is made only when the person accepts your proposal.",
+		"1. Read ./planner.md - the planner's rules - and follow them for writing the founding brief: its promises, expectations and looks.",
+		...(documents.length > 0
+			? [
+					`2. The person brought documents: ${documents.join(", ")}. Read them first; they answer what they answer. Do not ask what a document already says. A newer version of a document may arrive during the conversation with the difference spelled out; work from the new one.`,
+				]
+			: ["2. The person brought no documents; what they say below is all you start with."]),
+		"3. Ask only what the input leaves open, in this order: why (the goal and what success is), what (what it is and the milestones, in order), then how and where (the stack, where it runs, the name and the place). Ask at most three questions at a time, numbered, from one step, and none that the input already settles; if more are open, ask the rest after the answers. Recommend, in plain words, what building it properly takes - a GitHub repository, deployment, telemetry, a docs site - and accept a refusal; a refusal is recorded, never argued.",
+		"4. Reply in a few sentences of Markdown: short paragraphs, a numbered list when you ask, no headings and no recap of what you did - the person reads a conversation, not a report. Your tool calls are folded away from them; do not narrate them.",
+		"5. Write what the conversation settles to ./brief.md (a `description:` in its frontmatter distilling the project in one to three sentences, then expectations, promises, looks). Keep the person's own documents as they are; the brief is yours.",
+		`6. Once why, what, how and where, the name and the place are settled, write ./proposal.json as {"name": "<kebab-case>", "location": "<absolute directory${opts.parent ? ` inside ${opts.parent}` : ""}>", "repos": [{"name": "<repo>"}], "milestones": ["<kebab-case>", ...], "recommendations": [{"name": "<practice>", "title": "<the practice in a few words>", "why": "<one line on why>", "kept": true}, {"name": "<practice>", "title": "...", "why": "...", "kept": false, "reason": "<their words>"}], "documentsOff": [], "remote": {"github": false}} and tell the person you have proposed it. A recommendation named for a planning document (\`adr\`) that the person declines is also listed in documentsOff. The brief and the test plan are never turned off. They accept or edit it; The GitHub repository is the person's own choice on the page: always write false. Do not create anything yourself.`,
+		...(opts.parent
+			? [
+					`New projects are made only inside ${opts.parent}. Propose a location inside it (a new folder there, named for the project) - a location anywhere else is refused when the person accepts.`,
+				]
+			: []),
+		...(opts.reopened
+			? [
+					"",
+					"This conversation is being reopened. Read what it already holds (./brief.md, ./proposal.json, ./documents/) and say in a sentence where it stands.",
+				]
+			: []),
+		"",
+		"The person says:",
+		opts.text ?? draft.message,
+	].join("\n");
+}

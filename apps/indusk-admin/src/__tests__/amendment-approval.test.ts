@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // promise: a-change-to-what-was-agreed-needs-the-person
+// promise: only-a-person-reapproves
 
 /**
  * brief-as-the-contract A13: an amendment is approved only by a person in

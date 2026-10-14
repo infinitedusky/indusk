@@ -12,10 +12,13 @@ import type { Plan } from "@/lib/planning-reader";
 export function PlanFrame({
   project,
   plan,
+  lookState,
   children,
 }: {
   project: string;
   plan: Plan;
+  /** The look the page really draws (`lib/look-state`), for the look check. */
+  lookState: string;
   children: ReactNode;
 }) {
   return (
@@ -23,6 +26,7 @@ export function PlanFrame({
       className="grid gap-5"
       data-testid="plan-detail"
       data-plan-name={plan.name}
+      data-look-state={lookState}
     >
       <header
         className="flex flex-wrap items-center gap-x-5 gap-y-3 pb-hair pt-5"
