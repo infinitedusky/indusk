@@ -3869,6 +3869,15 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-13T23:44:26.998Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"mockup": "agent-panel.already-running",
+			"mockupHash": "bfa2f0c1d5c5f218636676c3f52148b0e19409d6b539252adf0466018663813a",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T23:42:49.119Z",
+			"plan": "sessions-per-plan"
 		}
 	]
 }
