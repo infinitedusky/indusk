@@ -380,6 +380,9 @@ export async function openWithinTime<T>(
 	}
 }
 
+/** How long a page is given to settle after `load` before it is read. */
+const SETTLE_MS = 3_000;
+
 async function measure(
 	browser: Browser,
 	device: Device,
@@ -400,6 +403,12 @@ async function measure(
 		if (!response?.ok()) {
 			throw new LooksCheckError(`${url} answered ${response ? response.status() : "nothing"}`);
 		}
+		// A page that sets its look state, or anything it draws, after hydration
+		// (the nav's width, asked for in the address) has not said so at `load`:
+		// give it until the network is quiet, but never hold a look to a page
+		// that never settles (a poll, a stream).
+		if (!rendered)
+			await page.waitForLoadState("networkidle", { timeout: SETTLE_MS }).catch(() => {});
 		if (rendered) {
 			try {
 				await page.waitForSelector(rendered, { timeout: 30_000 });
