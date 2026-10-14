@@ -1,7 +1,7 @@
 ---
 title: "cockpit-redraw — the nav from the original cockpit, the brief page drawn, re-approval a person's"
 date: 2026-10-13
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -59,7 +59,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 | A14 | An agent's command that calls the package's `reapprovePlan` through an interpreter (`node -e "…reapprovePlan(…)"`, `tsx -e`) is refused the same way as `plans reapprove` | Build Phase 4 | Build Phase 4 | passing | unit | promise: only-a-person-reapproves | apps/indusk-mcp/src/__tests__/looks-approval-guard.test.ts |
 | A15 | A drag the browser cancels (`pointercancel`, or the pointer capture lost) ends the drag: the edge stops reading `dragging`, the width reached is kept, and a later pointer move with no button held does not resize the nav | Build Phase 4 | Build Phase 4 | passing | unit | promise: the-nav-widens-by-dragging | apps/indusk-admin/src/components/ui/NavHandle.test.tsx |
 | A16 | A plan whose only wait is an amendment (no session question, no stopped build) reports `plan.needs-you`, the state whose mockup draws the amendment card, not `plan.working` | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/lib/look-state.test.ts |
-| A17 | `buildGroups`, moved to `lib/plan-groups.ts`, returns every plan passed in — inside a Path or in `rest` — for nested Paths, a declared cycle and a child declared under two parents; the PlanList tests pass unchanged | Build Phase 5 | Build Phase 5 | written | unit | promise: paths-keep-their-order | apps/indusk-admin/src/lib/plan-groups.test.ts |
+| A17 | `buildGroups`, moved to `lib/plan-groups.ts`, returns every plan passed in — inside a Path or in `rest` — for nested Paths, a declared cycle and a child declared under two parents; the PlanList tests pass unchanged | Build Phase 5 | Build Phase 5 | passing | unit | promise: paths-keep-their-order | apps/indusk-admin/src/lib/plan-groups.test.ts |
 
 ### Deferred Verification
 
@@ -294,15 +294,16 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 - [x] (reviewed `PlanList.tsx`'s three flat lists (Plans, Unordered, Archived) each mapping `PlanItem` — left as-is: an intra-file repetition, Shape's territory, and Build Phase 2's Shape left `isReleased`'s threading deliberately; after the move above the file is ~300 lines of rendering)
 - [x] (reviewed `__tests__/cockpit-redraw.contract.test.ts`'s fixture builder against `plan-parts.contract.test.ts` and `helpers/cockpit-fixture.ts` — left as-is: the shapes differ (plan conditions on disk vs a brief's looks vs mocked readers); one consumer each, so a shared helper would be the wrong abstraction)
 - [x] (reviewed `lib/look-state.ts`, `components/ui/NavPath.tsx`, `NavHandle.tsx`, `CockpitFrame.tsx`, `PartSection.tsx`, `PlanParts.tsx`, `session/*`, `hooks/looks-approval-guard.js`, `lib/plans/parts.ts` — left as-is: each under its cap and cohesive; `look-state.ts` holds the three page-state rules together on purpose, so page and check cannot disagree)
+- [x] Shape (Build Phase 5): reviewed `PlanList.tsx` (357 lines, rendering only), `plan-groups.ts`, `plan-groups.test.ts`, `NavHandle.tsx`, `CockpitFrame.tsx` against the enabled extensions' craft rules (`rules.unreadable` empty) — nothing found: the move is behaviour-preserving, `clampNavWidth` is the one named seam for the width bound, and `buildGroups`'s inner `open` closure is the recursion's own state (`claimed`, `opened`), kept as moved
 
 #### Build Phase 5 Verification
-- [ ] A17: `cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-groups.test.ts src/components/PlanList*.test.tsx src/app/p/\[project\]/cockpit-nav.test.tsx src/__tests__/cleanup-pins.test.ts` green; A1–A4 and A15 still pass (`pnpm exec vitest run src/components/cockpit/CockpitFrame.test.tsx src/components/ui/NavHandle.test.tsx`); `indusk looks stories admin` changes no snapshot; tsc and biome clean on changed files
+- [x] A17: `cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-groups.test.ts src/components/PlanList*.test.tsx src/app/p/\[project\]/cockpit-nav.test.tsx src/__tests__/cleanup-pins.test.ts` green; A1–A4 and A15 still pass (`pnpm exec vitest run src/components/cockpit/CockpitFrame.test.tsx src/components/ui/NavHandle.test.tsx`); `indusk looks stories admin` changes no snapshot; tsc and biome clean on changed files
 
 #### Build Phase 5 Context
-- [ ] `apps/indusk-admin/CLAUDE.md`: the plan tree's derivation lives in `lib/plan-groups.ts` (pure, tested), `PlanList` only draws it; the nav's width bound is `NavHandle`'s `clampNavWidth`, used wherever a width is set
+- [x] `apps/indusk-admin/CLAUDE.md`: the plan tree's derivation lives in `lib/plan-groups.ts` (pure, tested), `PlanList` only draws it; the nav's width bound is `NavHandle`'s `clampNavWidth`, used wherever a width is set
 
 #### Build Phase 5 Document
-- [ ] (none — internal decomposition; no page, route or CLI changes; ask before checking)
+- [x] (none needed — asked: "Build Phase 5 (cleanup) moves the plan-tree logic into lib/plan-groups.ts and shares one width clamp — no page, route or CLI changes. Can I skip its document gate?" — user: "Yes, skip it")
 
 ## Files Affected
 

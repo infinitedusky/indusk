@@ -44,8 +44,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
   its health cache); no other page polls. — see `/reference/admin-ui/overview`
 - **The sidebar tree is derived entirely from declarations** — one root node
   (`readPlanDeclarations().root`) with parents and unclaimed plans beneath it;
-  directly under the root means unclaimed. Grouping lives in
-  `PlanList.buildGroups`; subplan children resolve against active + archived
+  directly under the root means unclaimed. Grouping is
+  `lib/plan-groups.ts`; subplan children resolve against active + archived
   with active winning, identically in sidebar and detail; parents render
   additively via `ParentPlanView`, doc-less plans header-only.
 - **Phases render through `parseImplString`** (the `impl-parser` subpath) —
@@ -232,14 +232,13 @@ Each entry is a rule and a pointer; the pointer holds the story.
   no current step; a hand-written `=== "accepted"` showed "The brief is
   incomplete" on finished plans. Guarded by `PlanSummary.test.tsx` (A28). — see
   `/reference/admin-ui/overview`
-- **The nav's width is the person's, per browser, and its plan tree is drawn by
+- **The nav's width is the person's, per browser; its tree is drawn by
   `nav.expanded`**: `CockpitFrame` keeps the width in `localStorage`
-  (`indusk-admin.nav.width`), clamps it between `--size-nav` and
-  `--size-nav-max`, keeps it through a collapse, and draws no `NavHandle` below
-  760 px. `PlanList` draws the tree through `NavPath`, `PlanRow` and `NavGroup`
-  — a Path is folded and numbered, a plan carries its stage — and never its own
-  markup. Guarded by `CockpitFrame.test.tsx` (A1–A4) and `PlanList.test.tsx`.
-  — see `/decisions/cockpit-redraw`
+  (`indusk-admin.nav.width`), no `NavHandle` below 760 px; every width goes
+  through `NavHandle`'s `clampNavWidth` (drag, key step, kept width, `?nav=`).
+  `PlanList` only draws the tree (`NavPath`, `PlanRow`, `NavGroup`), never its
+  own markup. Guarded by `CockpitFrame.test.tsx` (A1–A4) and
+  `PlanList.test.tsx`. — see `/decisions/cockpit-redraw`
 - **The brief page and plan page are held to `brief.*` and `plan.*`, and say
   which they draw**: each page reports its state from its own facts with
   `data-look-state` (`lib/look-state.ts`: `planLookState`, `briefLookState`,
