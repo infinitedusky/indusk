@@ -165,7 +165,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md` (The nav): the redrawn nav, Scorecards, the plan tree as drawn, and dragging its width
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (The nav): the redrawn nav, Scorecards, the plan tree as drawn, and dragging its width
 
 ### Build Phase 3: The brief page and plan page, to their mockups
 
