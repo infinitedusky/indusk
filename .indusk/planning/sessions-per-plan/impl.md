@@ -87,7 +87,7 @@ Several plans can each have an agent at once: the session manager refuses only a
   forPlan(project: string, plan: string, kind?: SessionKind): SessionRecord | undefined
   running(): SessionRecord[]
   ```
-- [ ] `readSessionsMax(home = induskHome()): number` in `apps/indusk-mcp/src/lib/session/limits.ts`: `sessions.max` from `<home>/config.json`, a positive integer, else 4; an absent or malformed file is 4, never a throw. The manager reads it when no `max` is given
+- [x] `readSessionsMax(home = induskHome()): number` in `apps/indusk-mcp/src/lib/session/limits.ts`: `sessions.max` from `<home>/config.json`, a positive integer, else 4; an absent or malformed file is 4, never a throw. The manager reads it when no `max` is given
 - [ ] Remove `current()`; export `forPlan`, `running` and `readSessionsMax` through `./session`
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
