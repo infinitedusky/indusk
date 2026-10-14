@@ -23,6 +23,7 @@ indusk new-project discard 5k2x9f1a-3c0e7b
 | `documents/` | `start --document` and `add`: the person's documents, byte for byte |
 | `brief.md`, `research.md` | the agent, as the conversation settles |
 | `proposal.json` | the agent, once why, what, how and where, name and place are settled |
+| `creating.json` | `accept`: the steps of a creation and where each stands, while it runs or after it stopped |
 
 A draft is the only thing a conversation writes. Abandoned, it leaves nothing
 under the parent directory and registers no project.
@@ -63,12 +64,30 @@ conversation is already gone.
 indusk new-project accept <id>
 ```
 
-Checks the conversation's `proposal.json` and refuses one that is not valid,
-naming every problem: a name that is not a folder name, a relative location, no
-repository, a declined recommendation with no reason, a `documentsOff` naming
-the brief or the test plan, or one that names no planning document. Nothing is
-made for a refused proposal. Making the project follows the check in a later
-phase of the new-project-flow plan.
+Makes the project the conversation's `proposal.json` describes, printing each
+step as it starts (`...`) and ends (`ok`). The admin's **Create project** calls
+the same code and streams the same steps.
+
+Refused before anything is made, with the message naming why:
+
+- a proposal that is not valid, naming every problem: a name that is not a folder name, a relative location, no repository, a declined recommendation with no reason, a `documentsOff` naming the brief or the test plan, or one that names no planning document;
+- no parent directory set (the message names `indusk new-project parent <dir>`);
+- a location outside the parent directory, or one that already exists;
+- a conversation with no founding brief yet.
+
+Then, in order: the workbench folder and its `worktrees/` folder; each
+repository (`git init -b main`, a README, one commit); `indusk init
+--workbench` as a child process; `worktree` in the project's config rewritten to
+declare every repository with `worktrees: "worktrees"` and `repos_root: "."`;
+`project-brief.md`, `sources/<file>` for each document (byte for byte) and
+`master.md` with the milestones as `roadmap:`; `recommendations` and
+`planning.documents_off` in the config; the workbench's first commit; and, only
+when the proposal confirms it, `gh repo create <repository> --private --source
+<path> --push`. The conversation's folder is then removed.
+
+A failure before the remote removes what the run made - the directories and the
+registry entry - and keeps the conversation, so it can be accepted again. A
+failed remote leaves the finished local project and exits non-zero, saying so.
 
 ## `parent`
 
