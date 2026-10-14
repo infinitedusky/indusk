@@ -80,6 +80,7 @@ const config = defineConfig({
 				{
 					text: "Working across repos",
 					items: [
+						{ text: "Starting a project", link: "/guide/new-project" },
 						{ text: "Workbenches & Worktrees", link: "/guide/worktree-setup" },
 						{ text: "Sharing a Workbench", link: "/guide/workbench-sharing" },
 						{ text: "Multi-Agent Coordination", link: "/guide/multi-agent" },

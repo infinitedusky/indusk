@@ -57,6 +57,19 @@ indusk new-project discard <id>
 Removes the conversation's folder and everything it held. Quiet when the
 conversation is already gone.
 
+## `accept`
+
+```bash
+indusk new-project accept <id>
+```
+
+Checks the conversation's `proposal.json` and refuses one that is not valid,
+naming every problem: a name that is not a folder name, a relative location, no
+repository, a declined recommendation with no reason, a `documentsOff` naming
+the brief or the test plan, or one that names no planning document. Nothing is
+made for a refused proposal. Making the project follows the check in a later
+phase of the new-project-flow plan.
+
 ## `parent`
 
 ```bash

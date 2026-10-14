@@ -215,7 +215,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/guide/new-project.md`: the proposal — name, location, shape, the workflow and what can be turned off, recommendations and declines
+- [x] `apps/docs/src/guide/new-project.md`: the proposal — name, location, shape, the workflow and what can be turned off, recommendations and declines
 
 ### Build Phase 3: Creation
 
