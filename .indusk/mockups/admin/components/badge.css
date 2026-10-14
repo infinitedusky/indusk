@@ -51,6 +51,9 @@
 .bg-ground {
     background-color: var(--color-ground);
 }
+.bg-idle {
+    background-color: var(--color-idle);
+}
 .bg-ink-soft {
     background-color: var(--color-ink-soft);
 }

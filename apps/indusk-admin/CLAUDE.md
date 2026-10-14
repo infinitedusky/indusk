@@ -56,8 +56,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
   its health cache); no other page polls. — see `/reference/admin-ui/overview`
 - **The sidebar tree is derived entirely from declarations** — one root node
   (`readPlanDeclarations().root`) with parents and unclaimed plans beneath it;
-  directly under the root means unclaimed. Grouping lives in
-  `PlanList.buildGroups`; subplan children resolve against active + archived
+  directly under the root means unclaimed. Grouping is
+  `lib/plan-groups.ts`; subplan children resolve against active + archived
   with active winning, identically in sidebar and detail; parents render
   additively via `ParentPlanView`, doc-less plans header-only.
 - **Phases render through `parseImplString`** (the `impl-parser` subpath) —
@@ -244,4 +244,19 @@ Each entry is a rule and a pointer; the pointer holds the story.
   no current step; a hand-written `=== "accepted"` showed "The brief is
   incomplete" on finished plans. Guarded by `PlanSummary.test.tsx` (A28). — see
   `/reference/admin-ui/overview`
+- **The nav's width is the person's, per browser; its tree is drawn by
+  `nav.expanded`**: `CockpitFrame` keeps the width in `localStorage`
+  (`indusk-admin.nav.width`), no `NavHandle` below 760 px; every width goes
+  through `NavHandle`'s `clampNavWidth` (drag, key step, kept width, `?nav=`).
+  `PlanList` only draws the tree (`NavPath`, `PlanRow`, `NavGroup`), never its
+  own markup. Guarded by `CockpitFrame.test.tsx` (A1–A4) and
+  `PlanList.test.tsx`. — see `/decisions/cockpit-redraw`
+- **The brief page and plan page are held to `brief.*` and `plan.*`**: each
+  reports its state with `data-look-state` (`lib/look-state.ts`), never a
+  `?state=`; `screens.json` lists one path per state at A10's fixture plans,
+  which the real project lacks, so there the check names them `unchecked …
+  answered 404`, never a failure. A change to either page is drawn and approved
+  first; `?nav=<px>` sets the nav's width for one page. Guarded by
+  `look-state.test.ts`, `cockpit-redraw.contract.test.ts` (A10). — see
+  `/decisions/cockpit-redraw`
 - **A running agent's events are heard through `useSessionEvents`** — `components/session/use-session-events.ts`, the one subscription every conversation uses (the `EventSource` on `/api/sessions/:id/events`, `running`, a refresh on a write and on exit, an `onWrite` callback). A new view of a session uses it rather than opening its own `EventSource`; a draft's agent is found with `draftSession`/`stopDraftSession` in `lib/new-project-session.ts`, never by comparing `sessionManager().current()?.plan`. Guarded by `use-session-events.test.tsx` (A34).

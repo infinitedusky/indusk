@@ -160,7 +160,7 @@ export default async function PerProjectLayout({
               problem={worktrees.problem}
             />
           )}
-          <div className="nav-hide mt-3 flex flex-col gap-4 border-t border-line pt-3">
+          <div className="nav-hide flex flex-col gap-4">
             <PlanList
               active={active}
               archived={archived}
@@ -169,6 +169,7 @@ export default async function PerProjectLayout({
               holding={holding}
               red={red}
               dates={planDates}
+              waiting={Object.fromEntries(waiting.map((w) => [w.plan, w.step]))}
               planHrefPrefix={`/p/${project}/plan/`}
             />
             {worktrees.ok && (

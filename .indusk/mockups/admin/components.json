@@ -60,9 +60,9 @@
 			"properties": [
 				{
 					"name": "state",
-					"type": "\"needs\" | \"working\" | \"released\"",
+					"type": "\"needs\" | \"working\" | \"released\" | \"idle\"",
 					"required": true,
-					"description": "What the plan is doing: waiting on a person, being built, shipped."
+					"description": "What the plan is doing: waiting on a person, being built, shipped, or a draft nobody is working."
 				},
 				{
 					"name": "children",
@@ -116,10 +116,23 @@
 							]
 						]
 					}
+				},
+				{
+					"name": "idle",
+					"id": "ui-planbadge--idle",
+					"snapshotHash": "df00a00978ceef86c44c8af03ec9f7aa0c8334c8916def79c45deee3399b8796",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/badge.css",
-			"stylesheetHash": "6b8d07724dd190d27712e23ef8639fbc1832dedc32204167976bea148bf65797"
+			"stylesheetHash": "52b8bf01d6454a3a647ec27811294e986d483d6eecc67c7548962ba529c6b15f"
 		},
 		{
 			"name": "box",
@@ -1239,7 +1252,7 @@
 				{
 					"name": "expanded",
 					"id": "ui-nav--expanded",
-					"snapshotHash": "dda3c6d55b852604d7d81c84f0d9b5c85ffe73a7b9f2e375cf4853bb2d7381ae",
+					"snapshotHash": "f7f7da1765585eb6bfa81cc58ec87303ee7e66ec3a2eef6286e21d93d0580e81",
 					"content": {
 						"project": [
 							[
@@ -1265,7 +1278,7 @@
 									0,
 									1
 								],
-								"nodes": 6
+								"nodes": 14
 							}
 						]
 					}
@@ -1273,7 +1286,7 @@
 				{
 					"name": "looks-current",
 					"id": "ui-nav--looks-current",
-					"snapshotHash": "bf08348712d80360e5a58802700462e521e629f479be49b0c756062859691659",
+					"snapshotHash": "e83691e46c22f263400180f470ba25d123b2f2cf9c715704064ea441cc2bbb8b",
 					"content": {
 						"project": [
 							[
@@ -1299,7 +1312,7 @@
 									0,
 									1
 								],
-								"nodes": 6
+								"nodes": 14
 							}
 						]
 					}
@@ -1307,7 +1320,7 @@
 				{
 					"name": "plan-current",
 					"id": "ui-nav--plan-current",
-					"snapshotHash": "21cb8f858566fa837fe2c86be7c19e09977615b8129c70500d2d2dcb96b50e41",
+					"snapshotHash": "3470475f1b717c94b9e492bd191d67f517a101705fd0ef6a2e6eee1b995ac430",
 					"content": {
 						"project": [
 							[
@@ -1333,7 +1346,7 @@
 									0,
 									1
 								],
-								"nodes": 6
+								"nodes": 14
 							}
 						]
 					}
@@ -1341,7 +1354,7 @@
 				{
 					"name": "collapsed",
 					"id": "ui-nav--collapsed",
-					"snapshotHash": "fb43491fb8be6d85095bd3cf737a08a5fbc237e36c03081029fc1833b77b7a0d",
+					"snapshotHash": "c920a32cd94ef62cc67fab5742824cb3c2e2a8dfaa630e325fa2e53775bcd3c9",
 					"content": {
 						"project": [
 							[
@@ -1367,14 +1380,85 @@
 									0,
 									1
 								],
-								"nodes": 6
+								"nodes": 14
 							}
 						]
 					}
 				}
 			],
 			"stylesheet": "components/nav.css",
-			"stylesheetHash": "3e58b69ca4f3ed44c1625cb3f2fa018b672b1bc1a6b51e5912cfeb0a3f0772f2"
+			"stylesheetHash": "c57723f174d0839b7aa9be7522e43f62e3db3f1120c45bf3015f2821488e7a41"
+		},
+		{
+			"name": "nav-handle",
+			"file": "apps/indusk-admin/src/components/ui/NavHandle.tsx",
+			"properties": [
+				{
+					"name": "value",
+					"type": "number",
+					"required": true,
+					"description": "The nav's width now, in px."
+				},
+				{
+					"name": "min",
+					"type": "number",
+					"required": true,
+					"description": "The narrowest the nav drags to (`--size-nav`), in px."
+				},
+				{
+					"name": "max",
+					"type": "number",
+					"required": true,
+					"description": "The widest the nav drags to (`--size-nav-max`), in px."
+				},
+				{
+					"name": "onResize",
+					"type": "(width: number) => void",
+					"required": false,
+					"description": "Called with each width the pointer or a key asks for, already held between `min` and `max`."
+				},
+				{
+					"name": "onResizeEnd",
+					"type": "(width: number) => void",
+					"required": false,
+					"description": "Called with the width a drag or a key step ended on."
+				},
+				{
+					"name": "step",
+					"type": "number",
+					"required": false,
+					"defaultValue": "16",
+					"description": "What an arrow key moves the width by, in px."
+				},
+				{
+					"name": "dragging",
+					"type": "boolean",
+					"required": false,
+					"description": "Draw the dragging state without a pointer holding it (a story, a test)."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-navhandle--default",
+					"snapshotHash": "439984dd5a050c329b44dc83873f6fe32f855ffb481fb0b4367b7cf052e282f3",
+					"content": {}
+				},
+				{
+					"name": "dragging",
+					"id": "ui-navhandle--dragging",
+					"snapshotHash": "64b8dd2467f4b263dced137f56815cebccef1302d54593fcacf418d2b156f34c",
+					"content": {}
+				}
+			],
+			"stylesheet": "components/nav-handle.css",
+			"stylesheetHash": "12b4a47b23ac04d97734c1ef2e8e945b31c21317109913db0346500ff51db35c"
 		},
 		{
 			"name": "part-section",
@@ -1404,6 +1488,13 @@
 					"required": false,
 					"defaultValue": "false",
 					"description": "Drawn open. Closed unless asked."
+				},
+				{
+					"name": "empty",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Holds nothing: a plain row of its name and summary, not a disclosure — there is nothing to open."
 				},
 				{
 					"name": "className",
@@ -1608,6 +1699,78 @@
 								1,
 								0
 							]
+						]
+					}
+				},
+				{
+					"name": "promises-none",
+					"id": "ui-partsection--promises-none",
+					"snapshotHash": "fbd905485b01807bc88fa452e29da5eb44da7c0fb87d75460f63feb854ebb34e",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						]
+					}
+				},
+				{
+					"name": "expectations-none",
+					"id": "ui-partsection--expectations-none",
+					"snapshotHash": "3ebfc687bd83d208e80b2dbe837c9ea40b6770680f7fdcd1b97a64ceb4c20689",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						]
+					}
+				},
+				{
+					"name": "looks-none",
+					"id": "ui-partsection--looks-none",
+					"snapshotHash": "08dac6a9aeab518ed115fafafde1f1dbd7b1491adf700c398dd131f67e9bfd58",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
 						]
 					}
 				},
@@ -1998,7 +2161,7 @@
 				},
 				{
 					"name": "state",
-					"type": "\"needs\" | \"working\" | \"released\"",
+					"type": "\"needs\" | \"working\" | \"released\" | \"idle\"",
 					"required": true
 				},
 				{
@@ -2011,6 +2174,19 @@
 					"type": "ReactNode",
 					"required": true,
 					"description": "Where the plan stands in words: \"Approve the cockpit mockups\", \"Building · 2 of 5\"."
+				},
+				{
+					"name": "number",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Its place in a Path, 1-up. Omitted: a row on its own, no number column; empty: a row beside numbered ones, the column kept."
+				},
+				{
+					"name": "queued",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "A plan declared but not made yet: its stage is set in italics."
 				},
 				{
 					"name": "current",
@@ -2036,7 +2212,7 @@
 				{
 					"name": "needs",
 					"id": "ui-planrow--needs",
-					"snapshotHash": "e282cd5c4bc259ac5d8ff3b05932711bf3d02a84cac3b157fc5ddcdd98cc6a9c",
+					"snapshotHash": "a48732d22f31f7d20d10f687b9b13c971b4ebc310012dc73501307c1a153c9d9",
 					"content": {
 						"initials": [
 							[
@@ -2066,7 +2242,7 @@
 				{
 					"name": "working",
 					"id": "ui-planrow--working",
-					"snapshotHash": "88dc232c565b93befd6bb438054561503f484b509991c132965f0b6599f97994",
+					"snapshotHash": "ef93ea035957d8aae7ab0720fe3f52cad1303d881240f4aa609f9e294d413cf9",
 					"content": {
 						"initials": [
 							[
@@ -2096,7 +2272,7 @@
 				{
 					"name": "released",
 					"id": "ui-planrow--released",
-					"snapshotHash": "386505b3dd3ca21eceefd37d11c175a41c438d72aad5fab6637dfbd7f9ce58b0",
+					"snapshotHash": "e180a737ace3fe5d8132f1d9bae4a75c75fc939ccf23f279def5d6d1368a9674",
 					"content": {
 						"initials": [
 							[
@@ -2126,7 +2302,7 @@
 				{
 					"name": "current",
 					"id": "ui-planrow--current",
-					"snapshotHash": "4ccaecc1ad1e755a9a46c0ecd34530a5ada31fdcfc91b1b6122f8b4fe863c55b",
+					"snapshotHash": "01a4acdcd70af292f4610dda907eae06ad38bf24f5b78b13da52c4682fd8a35f",
 					"content": {
 						"initials": [
 							[
@@ -2152,10 +2328,100 @@
 							]
 						]
 					}
+				},
+				{
+					"name": "numbered",
+					"id": "ui-planrow--numbered",
+					"snapshotHash": "d4e3422d93a882ebfb076029cbec0553af4b634c197b702a8b0c966939313b2b",
+					"content": {
+						"initials": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								2,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "idle",
+					"id": "ui-planrow--idle",
+					"snapshotHash": "255801117625b618a484e3704652b2ba066fd102f9382030328151370efc1b4f",
+					"content": {
+						"initials": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "queued",
+					"id": "ui-planrow--queued",
+					"snapshotHash": "965bed7dda920c5ded5c93f3177904d058ef90be4538408ccfd1d46402dde505",
+					"content": {
+						"initials": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								2,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/plan-row.css",
-			"stylesheetHash": "5d3be4e1672e200ffa3180d2fb0084a5c455b2402c6731cb8b83e581c2d8594b"
+			"stylesheetHash": "07b69b630ba109e10d811414731a9046befe5368c851feb5217cbe0de5d22940"
 		},
 		{
 			"name": "project-card",
@@ -2692,7 +2958,7 @@
 				{
 					"name": "default",
 					"id": "ui-shell--default",
-					"snapshotHash": "a6d6464272673dfaf1e93886728124e33d8e11037f70f42fa95e5c4508093298",
+					"snapshotHash": "afadd4f62ae49eb708975fbad1e3d941bb9b228867359dbb9baed620410c959a",
 					"content": {
 						"children": [
 							{
@@ -2708,7 +2974,7 @@
 				{
 					"name": "collapsed",
 					"id": "ui-shell--collapsed",
-					"snapshotHash": "61a045eeb90503962bb425a274c890717ee26cba3d3b3b7b5de945b802bd88b9",
+					"snapshotHash": "c2328827363e5498a830a992627b549854b1a5e3cacffd4a53d9d1099fb7866f",
 					"content": {
 						"children": [
 							{
@@ -2723,7 +2989,7 @@
 				}
 			],
 			"stylesheet": "components/shell.css",
-			"stylesheetHash": "2d4decc73344d7467b41e80b00616182582d9c28a9e19e4bc38ae1d04fc81338"
+			"stylesheetHash": "f567efff4587040f11820fb43e68228fe57709113d00c35cc286a1630202af48"
 		},
 		{
 			"name": "stat",
@@ -3119,7 +3385,7 @@
 				{
 					"name": "default",
 					"id": "ui-viewlink--default",
-					"snapshotHash": "fee6af90eb31d5d3b6fba46e85deb317b2f0a93964ea22b17cb34d6f7a5e2192",
+					"snapshotHash": "b51d5e7b205736954a657f5f44b7dfdee5bf1b8ece8ecc5c45c98ce324c62e78",
 					"content": {
 						"icon": [
 							[
@@ -3140,7 +3406,7 @@
 				{
 					"name": "current",
 					"id": "ui-viewlink--current",
-					"snapshotHash": "f16dd9a38469efa400cb6d19e966eb8da585b323790adccc09a1d427d737d908",
+					"snapshotHash": "32eea38591de6b8a6624a73e517f777f35ad7c7a6156460cd19a8ce57117583c",
 					"content": {
 						"icon": [
 							[

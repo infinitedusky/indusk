@@ -404,8 +404,12 @@ names, such as `nextjs-portal` in development); a margin of `auto` is read as
 the keyword, not the pixels it resolved to; a shadow is read layer by layer, in
 whatever colour spelling, and a framework's empty layer is not a break.
 
-A proposed mockup is not checked against (`unchecked`, with the reason), and
-the closing line counts unchecked looks beside held and broken. Each look is
+A proposed mockup is not checked against (`unchecked`, with the reason). A look
+whose page answers 404 is `unchecked` too, naming the 404 (`… answered 404 — not
+in this project`) and the run goes on: the plan and brief screens open at
+fixture plans only the contract test's project holds, so a check against your
+own project names them unchecked. A page that fails any other way (a 500, a
+refused connection) still ends the run. The closing line counts unchecked looks beside held and broken. Each look is
 also recorded as a span, one per screen × state × device and scheme, carrying a
 promise's mark under `tokens-are-held-exactly` — `upheld` when held,
 `violated` with the first finding as the symptom when broken — so a look reads
