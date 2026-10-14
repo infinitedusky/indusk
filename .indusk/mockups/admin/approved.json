@@ -3559,6 +3559,15 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-13T19:17:35.868Z",
 			"plan": "brief-as-the-contract"
+		},
+		{
+			"mockup": "file-chip.default",
+			"mockupHash": "2163883d37af7344d2692eb22f38b3f60a576a6c85b804593be938e5795b5271",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T00:01:23.354Z",
+			"plan": "new-project-flow"
 		}
 	]
 }
