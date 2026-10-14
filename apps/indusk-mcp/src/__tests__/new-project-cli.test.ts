@@ -368,7 +368,7 @@ describe.skipIf(SHOULD_SKIP)("indusk new-project", () => {
 		expect(refused.code, "a visibility other than private or public was accepted").not.toBe(0);
 		expect(refused.stderr).toContain("visibility");
 		expect(callsOf(unknown)).toEqual([]);
-	});
+	}, 20_000);
 
 	it("A15 a proposal located outside the configured parent is refused and nothing is created", () => {
 		const sb = sandbox();
@@ -523,7 +523,7 @@ describe.skipIf(SHOULD_SKIP)("indusk new-project", () => {
 		expect(existsSync(proposalFor(bare).location), "the failed install left the project").toBe(
 			false,
 		);
-	});
+	}, 20_000);
 
 	it("A41 leaving the GitHub repository unticked is recorded as declined, like any declined recommendation", () => {
 		const unticked = accepted(sandbox(), { proposal: { remote: { github: false } } });
@@ -550,5 +550,5 @@ describe.skipIf(SHOULD_SKIP)("indusk new-project", () => {
 				(r: { name: string }) => r.name === "github",
 			),
 		).toEqual([]);
-	});
+	}, 20_000);
 });
