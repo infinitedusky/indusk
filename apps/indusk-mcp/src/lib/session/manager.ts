@@ -22,6 +22,11 @@ import { type Session, type SessionOptions, type StartedEvent, startSession } fr
  * promise: a-session-can-be-stopped
  */
 
+/** The refusal of a second session of a kind on a plan that has one: said plainly, offering to continue it. */
+export function alreadyRunningOnThisPlan(running: Pick<SessionRecord, "kind" | "plan">): string {
+	return `A ${running.kind} session is already running on this plan (${running.plan}). Do you want to continue that session here?`;
+}
+
 export class SessionBusy extends Error {
 	/** The session already running on this plan, when that is why: the person may continue it instead. */
 	readonly running?: SessionRecord;
@@ -136,10 +141,7 @@ export class SessionManager {
 	private refusalFor(opts: ManagedStart): SessionBusy | undefined {
 		const same = this.forPlan(opts.project, opts.plan, opts.kind);
 		if (same) {
-			return new SessionBusy(
-				`A ${same.kind} session is already running on this plan (${same.plan}). Do you want to continue that session here?`,
-				same,
-			);
+			return new SessionBusy(alreadyRunningOnThisPlan(same), same);
 		}
 		const max = this.max ?? readSessionsMax();
 		if (this.held.size >= max) {
