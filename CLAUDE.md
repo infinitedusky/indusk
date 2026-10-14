@@ -95,6 +95,7 @@ dusk/
 - UI promises: an app's look is held by mockups a person approves in the cockpit, on one DTCG foundation, no raw values, held by value in Chromium — see `/decisions/ui-promises`
 - Storybook components: each component one file with a story per state rendered to a snapshot; mockups compose components by name; a changed component reopens its mockups; Storybook served by the cockpit — see `/decisions/storybook-components`
 - Brief as the contract: looks in the brief, approval of the brief, an amendment stops the build until a person re-approves, a plan starts as a conversation — see `/decisions/brief-as-the-contract`
+- Sessions per plan: a session is owned by its plan and kind; the machine runs at most `sessions.max` — see `/decisions/sessions-per-plan`
 
 ## Known Gotchas
 

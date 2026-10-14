@@ -100,8 +100,8 @@ Several plans can each have an agent at once: the session manager refuses only a
 
 #### Build Phase 1 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md`: a session is owned by its project, plan and kind; the machine's cap is `sessions.max` in the InDusk home's `config.json` — guarded by `manager.test.ts` (A2, A9)
-- [ ] root (Key Decisions): "Sessions per plan: a session is owned by its plan and kind; the machine runs at most `sessions.max` — see `/decisions/sessions-per-plan`" — always-on because every admin feature that starts an agent is written under it
+- [x] `apps/indusk-mcp/CLAUDE.md`: a session is owned by its project, plan and kind; the machine's cap is `sessions.max` in the InDusk home's `config.json` — guarded by `manager.test.ts` (A2, A9)
+- [x] root (Key Decisions): "Sessions per plan: a session is owned by its plan and kind; the machine runs at most `sessions.max` — see `/decisions/sessions-per-plan`" — always-on because every admin feature that starts an agent is written under it
 
 #### Build Phase 1 Document
 
