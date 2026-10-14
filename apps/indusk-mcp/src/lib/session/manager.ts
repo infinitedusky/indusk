@@ -22,7 +22,15 @@ import { type Session, type SessionOptions, type StartedEvent, startSession } fr
  * promise: a-session-can-be-stopped
  */
 
-export class SessionBusy extends Error {}
+export class SessionBusy extends Error {
+	/** The session already running on this plan, when that is why: the person may continue it instead. */
+	readonly running?: SessionRecord;
+
+	constructor(message: string, running?: SessionRecord) {
+		super(message);
+		if (running) this.running = running;
+	}
+}
 
 export interface SessionRecord {
 	id: string;
@@ -129,7 +137,8 @@ export class SessionManager {
 		const same = this.forPlan(opts.project, opts.plan, opts.kind);
 		if (same) {
 			return new SessionBusy(
-				`a ${same.kind} session is already running for ${same.plan}: ${same.id} — stop it first`,
+				`A ${same.kind} session is already running on this plan (${same.plan}). Do you want to continue that session here?`,
+				same,
 			);
 		}
 		const max = this.max ?? readSessionsMax();

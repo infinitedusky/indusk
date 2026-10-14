@@ -94,7 +94,10 @@ describe("A21 — a session can be stopped, and is recorded", () => {
 		const { id } = m.start({ ...planning, ...meta });
 		const refusal = attempt(() => m.start({ ...planning, ...meta }));
 		expect(refusal).toBeInstanceOf(SessionBusy);
-		expect(refusal?.message).toContain(`a planning session is already running for seats: ${id}`);
+		// Sandy, 2026-10-14: the refusal says plainly that this plan has one, and offers to continue it.
+		expect(refusal?.message).toContain("A planning session is already running on this plan");
+		expect(refusal?.message).toContain("Do you want to continue that session here?");
+		expect((refusal as SessionBusy).running?.id).toBe(id);
 	});
 
 	it("stopping it ends the session and clears the record; another may start", async () => {
