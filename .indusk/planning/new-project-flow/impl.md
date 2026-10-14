@@ -57,7 +57,7 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A9 | Adding a document with a name already added reports what changed between the two, and keeps the newer | Test Phase 1 | Build Phase 1 | written | unit | promise: a-new-version-of-the-founding-brief-shows-what-changed | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A10 | Declining a recommendation with a reason creates a project whose config records it declined, with the reason | Test Phase 1 | Build Phase 3 | written | unit | promise: a-recommendation-can-be-declined | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A11 | A proposal turning off the brief or the test plan is refused, naming the document | Test Phase 1 | Build Phase 2 | written | unit | promise: the-core-is-always-kept | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
-| A12 | In a project with decision records turned off, a feature plan's ADR reads skipped, not missing | Test Phase 1 | Build Phase 2 | planned | unit | promise: the-core-is-always-kept | apps/indusk-mcp/src/__tests__/documents-off.test.ts |
+| A12 | In a project with decision records turned off, a feature plan's ADR reads skipped, not missing | Test Phase 1 | Build Phase 2 | written | unit | promise: the-core-is-always-kept | apps/indusk-mcp/src/__tests__/documents-off.test.ts |
 | A13 | Creating without confirming the remote runs no GitHub command and leaves no remote | Test Phase 1 | Build Phase 3 | written | unit | promise: a-new-project-publishes-nothing-unasked | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A14 | Creating with the remote confirmed creates one private repository, once, and pushes the first commit | Test Phase 1 | Build Phase 3 | written | unit | promise: a-new-project-publishes-nothing-unasked | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A15 | A proposal located outside the configured parent is refused and nothing is created | Test Phase 1 | Build Phase 3 | written | unit | promise: a-new-project-is-written-only-under-its-parent | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
@@ -86,7 +86,7 @@ nothing the person did not accept (see [adr.md](adr.md)).
 
 - [x] Create/confirm this plan's worktree (`indusk worktree assign new-project-flow /Users/the_dusky/code/sandbox/dusk-worktrees/new-project-flow`, the one `plans start` made) — worktree-per-plan default
 - [x] Author A4, A6–A11, A13–A18, A21, A22 in `new-project-cli.test.ts` through the built CLI with a temporary `INDUSK_HOME`, a temporary parent directory and a fake `gh` on `PATH` that records its arguments; a draft is seeded by `indusk new-project start --message … --document <file>` and its proposal written as the agent would (`proposal.json`, `brief.md`). RED: `new-project` is an unknown command
-- [ ] Author A12 in `documents-off.test.ts`: a temp project whose config sets `planning.documents_off: ["adr"]`, a feature plan with brief, test plan and impl; the plan status the admin reads (`lib/plan-parser.ts`) reports the ADR. RED: it reads missing
+- [x] Author A12 in `documents-off.test.ts`: a temp project whose config sets `planning.documents_off: ["adr"]`, a feature plan with brief, test plan and impl; the plan status the admin reads (`lib/plan-parser.ts`) reports the ADR. RED: it reads missing
 - [ ] Confirm A19's existing tests (`drafts.test.ts`, `DraftConversation.test.tsx`) and A20's (`admin-session-lifecycle.test.ts`, with a session whose plan is `new-project:<id>`) pass
 
 #### Deferred to Build Phase 1
