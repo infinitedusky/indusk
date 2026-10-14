@@ -13,6 +13,15 @@ flowchart LR
   C -->|Keep talking| B
 ```
 
+## Where new projects go
+
+The start page shows the folder new projects are made in, with **Change**. With
+none set, the page asks first - "Where should new projects go?" - and **Start**
+waits until you save one, so a project can be made with no command typed. The
+folder is the same setting `indusk new-project parent <dir>` writes; the command
+stays for scripts. The agent is told the folder, so the location it proposes is
+one creation will accept.
+
 ## The conversation
 
 **Start** launches the agent at once: the conversation opens with the agent
@@ -30,6 +39,12 @@ wrote, what it said on the way to the reply - is folded away behind **See more
 ›**; **See less** hides it again. A question the agent is waiting on, or a
 request to use a tool outside the conversation's folder, is never folded: it
 stays in the reply, to answer in place.
+
+The agent works in the conversation's own folder and nowhere else. It may read
+and write files there (`Read`, `Write`, `Edit`, `Glob`, `Grep`) and nothing
+more: a shell command, a web fetch, an MCP tool, or a path outside the folder is
+refused, and the agent is told why, without asking you. So an abandoned
+conversation leaves nothing behind it but the folder, which discarding removes.
 
 Everything said is kept in the conversation's draft as `transcript.jsonl`. Leave
 the page and come back with no agent running and the same thread is there, with
@@ -54,7 +69,7 @@ yours to change before you create anything:
 | **How you'll plan** | See which planning documents the project writes, in order. |
 | **Recommendations** | Each practice the agent recommends (a docs site, telemetry, deployment) is kept unless you decline it. |
 | **Founding brief** | Read the brief the conversation produced; the documents you gave are kept unchanged beside it. |
-| **Private GitHub repository** | A separate confirm, off by default. It is the only step that sends anything off your machine. |
+| **Private GitHub repository** | A separate confirm. It opens unticked whatever the agent wrote, and only your tick creates one. It is the only step that sends anything off your machine. |
 
 **Keep talking** goes back to the conversation; the proposal is kept and you
 can return to it.
@@ -86,19 +101,25 @@ project's config under `recommendations`:
 { "recommendations": [{ "name": "adr", "kept": false, "reason": "Solo project for now" }] }
 ```
 
+A private GitHub repository you leave unticked is recorded the same way, as
+`{ "name": "github", "kept": false, "reason": "not confirmed" }`, unless the
+proposal already declines it in your words.
+
 Declining a recommendation named for a planning document (the decision
 records) also turns that document off. **Keep it after all** takes the decline
 back, and the document with it.
 
 ## Creating the project
 
-**Create project** keeps your edits, then makes the project. The page shows
+**Create project** keeps your edits, then makes the project from them: the
+proposal you see is the one that is made, and anything the agent writes after
+you press it is not used. The page shows
 each step as it runs, with a dot for where it stands, and ends with **Open the
 project**:
 
 1. **Workbench created** - the folder at the location you chose, with its `worktrees/` folder.
 2. **Repository created inside it** - each repository, a git repository on `main` with one commit.
-3. **InDusk installed** - the package's own `indusk init`, run as a separate process.
+3. **InDusk installed** - the package's own `indusk init`, run as a separate process. Creation then reads the project: its skills, its hooks and the `indusk` MCP entry must all be there, and a missing one fails this step and removes what was made.
 4. **Founding brief and master plan written** - see below.
 5. **Private GitHub repository created** - only when you confirmed it.
 
@@ -126,7 +147,8 @@ and why, with **Try again** and **Change the proposal**. Reloading the page
 
 ## The parent directory
 
-A project is made only inside the parent directory you configured:
+A project is made only inside the parent directory you configured, from the
+start page or with the command:
 
 ```bash
 indusk new-project parent ~/code/sandbox
