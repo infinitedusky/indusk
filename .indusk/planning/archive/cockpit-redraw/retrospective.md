@@ -57,3 +57,5 @@ The plan touched 113 files (+5035 / −885); 65 of them under `apps/` (+2433 / �
 
 - `pnpm test` on the branch: 2 admin and 5 indusk-mcp files failed under the parallel run. Rerun alone, every file passes except `plan-worktrees-cli.test.ts` A13 (`?? .mcp.json` left in a created worktree), which fails the same way on `main` — not this plan's.
 - Open, recorded for later: 140 admin looks unchecked as "the page did not report state"; A10's flaky teardown; the audit's guard spellings this plan does not catch (`plans "reapprove"`, a line continuation, a shell `sed -i` on `approved_brief:`), accepted as the tripwire's limit.
+
+Landed on main at 36d4c16e, 2026-10-14.
