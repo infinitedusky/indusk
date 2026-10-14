@@ -446,6 +446,14 @@ newProjectCmd
 	});
 
 newProjectCmd
+	.command("accept <id>")
+	.description("Check a conversation's proposal and, once accepted, make the project")
+	.action(async (id: string) => {
+		const { newProjectAccept } = await import("./commands/new-project.js");
+		newProjectAccept(id);
+	});
+
+newProjectCmd
 	.command("parent [dir]")
 	.description("Set the directory new projects are made in; with no argument, print it")
 	.action(async (dir?: string) => {

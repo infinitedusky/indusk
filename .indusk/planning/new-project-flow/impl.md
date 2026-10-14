@@ -190,7 +190,7 @@ Deferred-body review (Test Phase 1):
 
 **Tier**: med — the work step's default
 
-- [ ] `lib/new-project/proposal.ts`: `readProposal(draft)` validating the ADR's shape — name, location, repos, milestones, recommendations (`kept`, `reason` required when declined), `documentsOff` (refusing `brief` and `test-plan`), `remote.github`
+- [x] `lib/new-project/proposal.ts`: `readProposal(draft)` validating the ADR's shape — name, location, repos, milestones, recommendations (`kept`, `reason` required when declined), `documentsOff` (refusing `brief` and `test-plan`), `remote.github`
 - [ ] `InduskConfig` gains `planning?: { documents_off?: string[] }` and `recommendations?: { name: string; kept: boolean; reason?: string }[]`; reading a config whose `documents_off` names `brief` or `test-plan` refuses, naming it
 - [ ] `lib/workflow-types.ts`: a workflow's required documents minus the project's `documents_off`, so the plan status reads a turned-off document `skipped`; the planner skill (`apps/indusk-mcp/skills/planner.md`) says a turned-off document is not written
 - [ ] Admin: `/new/[id]` shows `NewProjectProposal` once `proposal.json` exists — editable name, location and shape (`layout-tree`), `workflow-strip`, `recommendation` rows with Decline and a reason, the founding brief with its `file-chip`s, the remote confirm, Create project

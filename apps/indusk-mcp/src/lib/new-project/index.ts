@@ -17,6 +17,16 @@ export {
 	type ProjectConversation,
 } from "./prompt.js";
 export {
+	loadProposal,
+	type Proposal,
+	type ProposalCheck,
+	ProposalError,
+	type ProposalRecommendation,
+	readProposal,
+	saveProposal,
+	validateProposal,
+} from "./proposal.js";
+export {
 	createProjectDraft,
 	type DraftDocument,
 	discardProjectDraft,

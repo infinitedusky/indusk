@@ -6,7 +6,9 @@ import {
 	type DraftDocument,
 	discardProjectDraft,
 	findProjectDraft,
+	ProposalError,
 	readParent,
+	readProposal,
 	setParent,
 } from "../../lib/new-project/index.js";
 import { induskHome } from "../../lib/telemetry/status.js";
@@ -75,4 +77,27 @@ export function newProjectParent(dir?: string): void {
 		return;
 	}
 	console.info(`New projects will be made in ${setParent(dir)}.`);
+}
+
+/**
+ * `accept`: check the proposal and refuse it, naming every problem, before
+ * anything is made. Making the project follows in Build Phase 3; until then a
+ * proposal that passes the check stops here, saying so.
+ *
+ * promise: the-core-is-always-kept
+ */
+export function newProjectAccept(id: string): void {
+	const draft = findProjectDraft(induskHome(), id);
+	if (!draft) {
+		fail(`No project conversation ${id}.`);
+		return;
+	}
+	try {
+		readProposal(draft);
+	} catch (err) {
+		if (!(err instanceof ProposalError)) throw err;
+		fail(`The proposal for ${id} is refused: ${err.message}`);
+		return;
+	}
+	fail("The proposal is valid, but creating a project is not built yet.");
 }
