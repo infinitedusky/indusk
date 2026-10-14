@@ -1,7 +1,7 @@
 ---
 title: "cockpit-redraw — the nav from the original cockpit, the brief page drawn, re-approval a person's"
 date: 2026-10-13
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -55,6 +55,10 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 | A10 | Every screen this plan names reads approved and the running admin holds it by value at each reference device, in a real browser | Build Phase 3 | Build Phase 3 | passing | contract | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/__tests__/cockpit-redraw.contract.test.ts |
 | A11 | Live: talking to the agent on a brief page, a promise it adds and a look it draws appear on the page and are brought into view, without leaving it | Build Phase 3 | Build Phase 3 | passing | live check | a live check of a-plan-page-shows-the-parts-of-its-brief, recorded in Build Phase 3; the promise is proven by A8, A9 and A10 | manual: recorded in Build Phase 3's Verification |
 | A12 | While an amendment is waiting, checking off a build item is refused, naming the amendment | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-builds-only-after-approval | apps/indusk-mcp/src/__tests__/check-gates-amendments.test.ts |
+| A13 | An agent's command that runs `plans reapprove` inside a command or process substitution under a reader (`echo "$(indusk plans reapprove x)"`, `cat <(indusk plans reapprove x)`) is refused; `echo "indusk plans reapprove x"` with no substitution is still allowed | Build Phase 4 | Build Phase 4 | planned | unit | promise: only-a-person-reapproves | apps/indusk-mcp/src/__tests__/looks-approval-guard.test.ts |
+| A14 | An agent's command that calls the package's `reapprovePlan` through an interpreter (`node -e "…reapprovePlan(…)"`, `tsx -e`) is refused the same way as `plans reapprove` | Build Phase 4 | Build Phase 4 | planned | unit | promise: only-a-person-reapproves | apps/indusk-mcp/src/__tests__/looks-approval-guard.test.ts |
+| A15 | A drag the browser cancels (`pointercancel`, or the pointer capture lost) ends the drag: the edge stops reading `dragging`, the width reached is kept, and a later pointer move with no button held does not resize the nav | Build Phase 4 | Build Phase 4 | planned | unit | promise: the-nav-widens-by-dragging | apps/indusk-admin/src/components/ui/NavHandle.test.tsx |
+| A16 | A plan whose only wait is an amendment (no session question, no stopped build) reports `plan.needs-you`, the state whose mockup draws the amendment card, not `plan.working` | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/lib/look-state.test.ts |
 
 ### Deferred Verification
 
@@ -239,6 +243,34 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 - **Fragile**: the six recomposed mockups place `nav` (`plan-current`) and, in `plan.parts`, `rail-group` by name, so a change to `Nav` or `RailGroup` reopens them and costs a round of approvals; change a component once, run `indusk looks stories admin`, then ask.
 - **Watch out**: the admin's app-wide header bar (`InDusk Admin`) is drawn by no approved mockup of any screen; left as is.
 - **Watch out**: a test's `next dev` now builds into `.next-tests` (`INDUSK_ADMIN_DIST_DIR`), so it no longer collides with a running admin; the look check waits up to 3 s for a page to go network-quiet (`looks/check.ts`), so the indusk-mcp dist must be rebuilt after a change there.
+
+### Build Phase 4: Falsification — the reader exemption runs what it reads, a cancelled drag never ends, and an amendment reads as working
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds against three failure modes found by reading the shipped code: the looks guard's re-approval refusal has two ordinary ways round it (its new `READERS` exemption trusts a segment's first word, and it never names the function the CLI calls); `NavHandle` handles `pointerup` but not `pointercancel` or lost capture, so a drag the browser takes back never ends; and the plan page reports `plan.working` while it draws the amendment card that `plan.needs-you`'s approved mockup holds. Each was confirmed by reading the code, not by running it.
+
+- [ ] **A13 — a reader runs what it substitutes.** `segmentReapproves` exempts a segment whose first word is in `READERS` (`echo`, `cat`, `git`, …), so `echo "$(indusk plans reapprove x)"` and `cat <(indusk plans reapprove x)` pass — the shell runs the substitution before the reader sees anything. Fix: the exemption does not apply to a segment holding `$(`, a backtick or `<(` / `>(`; the plain `echo "indusk plans reapprove x"` the exemption exists for stays allowed
+- [ ] **A14 — the function behind the command is not named.** `plans reapprove` is one call to the package's `reapprovePlan`, and an agent refused the CLI can call it through `node -e` / `tsx -e` (`import('@infinitedusky/indusk-mcp/plans').then(m => m.reapprovePlan('.', 'x'))`): neither `REAPPROVE_COMMAND` nor `REAPPROVE_ROUTE` matches. Fix: a segment run by an interpreter (the `WRITERS` interpreters) that names `reapprovePlan` is refused with `REAPPROVAL_GUIDANCE`; the header comment lists it beside the command and the route. Copy to `.claude/hooks/`
+- [ ] **A15 — a cancelled drag is held forever.** `NavHandle` clears `holding` only in `onPointerUp`. A `pointercancel` (a touch the browser turns into a scroll on a tablet at 760 px and up, where the edge is drawn and `touch-none` says touch is meant to drag) or a lost capture leaves `holding` true and `data-state="dragging"`, never calls `onResizeEnd` (so the width reached is not kept), and the next hover across the 8 px edge resizes the nav with no button held. Fix: `onPointerCancel` and `onLostPointerCapture` end the drag as `onPointerUp` does — one named `endDrag`
+- [ ] **A16 — an amendment waits under `plan.working`.** The plan page passes `waiting: waiting !== undefined` to `planLookState`, and `readWaiting` (the package's `planWaiting`) knows sessions and stopped builds, not amendments; yet the page draws `WaitingAmendments` whenever `parts.amendments` is non-empty, and the approved `plan.needs-you` mockup is the one that draws `amendment-card`. A plan waiting only on an amendment reports `plan.working` while drawing what `plan.working` does not. Fix: the plan page counts a waiting amendment as waiting for its look state (`waiting || parts.amendments.length > 0`); `planLookState`'s rule is unchanged, and its doc names the amendment
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 4 Verification
+- [ ] A13: `echo "$(indusk plans reapprove x)"` and `cat <(indusk plans reapprove x)` are refused naming `only-a-person-reapproves`; `echo "indusk plans reapprove x"` and `git commit -m "… plans reapprove …"` still pass; the 22 older guard cases still pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-approval-guard.test.ts`)
+- [ ] A14: `node -e "…reapprovePlan('.', 'x')…"` and `tsx -e` with the same are refused; `grep -rn reapprovePlan src` passes (same command); `diff apps/indusk-mcp/hooks/looks-approval-guard.js .claude/hooks/looks-approval-guard.js` empty
+- [ ] A15: after `pointerdown`, a move, then `pointercancel`, the edge reads `default`, `onResizeEnd` was called with the width reached, and a following `pointermove` calls no `onResize` (`cd apps/indusk-admin && pnpm exec vitest run src/components/ui/NavHandle.test.tsx src/components/cockpit/CockpitFrame.test.tsx`); A1–A4 still pass; the `nav-handle` story snapshots unchanged (`indusk looks stories admin` changes nothing)
+- [ ] A16: a plan with a waiting amendment and nothing else waiting reports `plan.needs-you` (`pnpm exec vitest run src/lib/look-state.test.ts` plus the plan page's test that builds a `PlanParts` with an amendment); A10 still passes in the system tier; tsc and biome clean on changed files
+
+#### Build Phase 4 Context
+- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: the guard's reader exemption never covers a segment with a substitution, and a person-only act is refused by its function's name as well as its command and route
+
+#### Build Phase 4 Document
+- [ ] (none — internal-only fixes: the guard's refusal message, the nav's drag and the page's look state change no documented behaviour; `reference/cli/plans.md` already says an agent's `reapprove` is refused)
+
+#### Build Phase 4 Falsification Summary
+- Searched without a hypothesis: the guard's route regex (encoded URLs are the tripwire's acknowledged limit), `bash -c` strings (the split on `;`/`&&` reaches inside them), an Edit of `approved_brief:` (check-gates already refuses it), `?nav=` (read once at mount, clamped, never kept), the width clamp and A4's collapse, the brief page's look state (it never draws the amendment card), the session-panel attach (`ownsSession` keys on project, plan and kind).
+- Not investigated: the fixture project A10 serves (test setup, not shipped behaviour); the mockups' look (Sandy's, by approval); a wide nav squeezing the brief page's columns at 760–1100 px (the ADR's named risk, mitigated by the width's upper bound; a design judgement, not a failure a row can name).
 
 ## Files Affected
 
