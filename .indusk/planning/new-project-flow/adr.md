@@ -101,7 +101,29 @@ draft prompt), `bin/commands/init.ts` (`init(projectRoot, options)`),
 8. **Home page.** `ProjectGrid`'s header gains New project (the `home.default`
    look); its empty state offers it beside `indusk init`.
 
+9. **The project conversation as a thread** (amended 2026-10-14). The
+   project conversation stops showing the shared session panel: a pure
+   `turnsOf(events)` reads a session's events as alternating "you" and
+   "agent" turns — an agent turn's reply is its last `text`, the `tool`
+   events and earlier text before it are its working — and the page renders
+   them as `Message` bubbles, the reply through the admin's `Markdown`, the
+   working folded behind "See more". A `question` or `permission` is never
+   folded: it waits on the person. The session's events are appended to the
+   draft as `transcript.jsonl`, so a reopened conversation shows its turns
+   with no agent running, and discarding the draft removes them. The prompt
+   asks for a few sentences of Markdown and at most three questions at a
+   time. Only the project conversation changes; the plan conversation,
+   builds and Fix with Claude keep the session panel until a later plan
+   moves them onto the same thread.
+
 ## Alternatives Considered
+
+### Fold inside the shared session panel
+
+A `folded` prop on `SessionPanel` would change every agent conversation at
+once; the person wants the project conversation first and the others after
+the fold has been used. `turnsOf` lives where the other panels can take it
+later.
 
 ### Reuse plan drafts
 Rejected: their home is `bookkeepingRoots(root).home`, which needs a project

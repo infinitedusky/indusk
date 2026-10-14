@@ -41,6 +41,7 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | Build Phase 1 | `lib/new-project/{store,prompt,documents,parent}.ts`; CLI `start`, `add`, `discard`, `parent`; `/api/new-projects/*` (create, talk, add, discard); `/new`, `/new/[id]`; New project on the home page | `lib/session/` manager, `induskHome()`, the approved looks |
 | Build Phase 2 | `lib/new-project/proposal.ts` (read, validate); `planning.documents_off` in `InduskConfig` and `workflow-types`; the proposal page | Build Phase 1's draft store |
 | Build Phase 3 | `lib/new-project/create.ts`; CLI `accept`; `/api/new-projects/[id]/accept`; the creating page | Build Phase 2's validated proposal; `init` as a child process; `addProject` |
+| Build Phase 4 | `lib/conversation-turns.ts` (`turnsOf`); `ConversationThread`; `Message` folded/open; the draft's `transcript.jsonl`; the shorter prompt; the `new_project.create` span | the session manager's events; the admin's `Markdown`; Build Phase 3's `createProject` |
 
 ## Test Trajectory
 
@@ -68,13 +69,23 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A20 | A project conversation's agent can be stopped, and none is left running when the admin stops | Test Phase 1 | Test Phase 1 | passing | contract | promise: a-session-can-be-stopped | apps/indusk-mcp/src/__tests__/admin-session-lifecycle.test.ts |
 | A21 | A created project resolves to exactly one contract | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-project-has-one-contract | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A22 | A created project's repository holds no telemetry vendor files written by installation | Test Phase 1 | Build Phase 3 | passing | unit | promise: init-writes-no-vendor-into-an-app | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
+| A23 | A session's events read as alternating you/agent turns: an agent turn's reply is its last text, the tools and text before it its working | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/lib/conversation-turns.test.ts |
+| A24 | An agent reply in Markdown shows formatted; its working is hidden until See more, and See less hides it again | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
+| A25 | A question or permission the agent is waiting on is never folded away | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
+| A26 | Reopening a project conversation with no agent running shows the same turns; discarding removes them | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
+| A27 | The project conversation's prompt asks for a few sentences of Markdown and at most three questions at a time | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/lib/new-project/prompt.test.ts |
 
 ### Deferred Verification
 
 - **The agent asks only what the input leaves open (U1)**
   - reason: the quality of a model's questions is a judgement, not an output a test can fix
   - would require: a rubric and a judged set of real conversations
-  - mitigation: expectation 2 counts questions per creation; Build Phase 3 records one real run (Homework Gate's brief) as a live check in this impl
+  - mitigation: expectation 2 counts questions per creation; Build Phase 4 records one real run (Homework Gate's brief) as a live check in this impl
+
+- **The agent's replies are short enough to read without opening the working (U2)**
+  - reason: how short is enough is a judgement
+  - would require: a judged set of real conversations
+  - mitigation: expectation 5's words per reply and folds opened, on each creation's span; the live check records one real run
 
 ## Checklist
 
@@ -226,7 +237,7 @@ Deferred-body review (Test Phase 1):
 - [x] CLI `indusk new-project accept <id>` printing each step
 - [x] Admin: `/api/new-projects/[id]/accept` streaming the steps; `NewProjectCreating` (the `new-project.creating` look) ending with a link to `/p/<name>/`
   - Decision: the look is reached with `paths.creating` = `/new/{seed}?creating=1` and the `new-project` seed also copying `seed/homework-gate-creating.json` into the draft as `creating.json`; the page shows the creation only for `?creating=1` (the panel sets it when a run starts), so the `proposal` and `conversation` seeds, which share the draft, are untouched.
-- [ ] Live check: create Homework Gate from its brief through the admin into a temporary parent; record the questions asked and the result here
+- [x] Live check — moved to Build Phase 4 (amended 2026-10-14): the person asked for the folded, back-and-forth conversation first, so the agent is judged with the shorter prompt in place
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 - [x] Shape (`apps/indusk-mcp/src/lib/new-project/create.ts`) — the `documents` step of `createProject` inlined three jobs (writing the founding documents, recording the person's choices in the config, committing the workbench); moved into `writeFoundingDocuments`, `recordChoices` and `commitWorkbench`, which also reads the config once. Rule: Should this inline block have been a named function or module? (shape: intra-unit)
 - [x] Shape — reviewed the other files this phase changed (`steps.ts`, `registry.ts` `removeProject`, the CLI `accept`, the accept route, `NewProjectCreating`, `NewProjectCreatingPanel`, `creation-stream.ts`, the proposal panel and `/new/[id]` page) against the enabled extensions' craft rules; nothing else to change. `NewProjectCreatingPanel` was considered and left as-is: starting the run, folding its events and offering the stop's two buttons share one view state, so a hook would move the state, not remove a job. The step labels are read from `steps.ts` in both the package and the panel, one definition.
@@ -254,6 +265,42 @@ Deferred-body review (Test Phase 1):
 - [x] `apps/docs/src/guide/worktree-setup.md`: the admin as the first way to make a workbench
 - [x] `apps/docs/src/decisions/new-project-flow.md` published; changelog entry "Added — start a new project from the admin by describing it"
 
+### Build Phase 4: The conversation as a thread
+
+**Tier**: med — the work step's default
+
+- [ ] `apps/indusk-admin/src/lib/conversation-turns.ts`: `turnsOf(events)` — alternating `{ who: "you", text }` and `{ who: "agent", reply, working, waiting }` turns; the reply is the turn's last `text` (or the `result` text when there is none), `tool` events and earlier text are `working`, an open `question` or `permission` is `waiting`
+- [ ] `Message` (`components/ui/Message.tsx`) gains the `agent-folded` and `agent-open` states: the reply through `Markdown`, the working behind "See more ›" / "See less"; stories for both states, `indusk looks stories admin`
+- [ ] `components/new-project/ConversationThread.tsx`: the thread of `Message` bubbles from `turnsOf`, a waiting question or permission answered in place, the reply box sending through the session's `say`; `NewProjectConversation` uses it in place of `SessionConnector` (the plan conversation keeps `SessionConnector`)
+- [ ] The draft keeps `transcript.jsonl`: the manager's events for a project conversation's session are appended to it; the page reads it when no session runs; `discard` removes it with the draft
+- [ ] `lib/new-project/prompt.ts`: reply in a few sentences of Markdown, at most three questions at a time, only what the documents leave open
+- [ ] Looks: the `new-project` seed copies `seed/homework-gate-transcript.jsonl` into the draft so `new-project.conversation` and `message.agent-folded` / `agent-open` are reached with turns; `paths` entries for the two message states
+- [ ] Live check: create Homework Gate from its brief through the admin into a temporary parent; record the questions asked, the words per reply and the result here
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 4 OTel
+
+- [ ] `createProject` emits a `new_project.create` span: duration from the draft's creation (expectation 1), `conversation.questions` and `conversation.has_document` (expectation 2), `conversation.reply_words` and `conversation.folds_opened` read from the transcript before the draft is deleted (expectation 5); "See more" appends a `fold-opened` line to the transcript
+
+#### Build Phase 3 Forward Intelligence
+
+- **Fragile**: the `new-project` seed is shared by `start`, `conversation`, `proposal` and `creating`; a transcript added to it must not change what `proposal` and `creating` show.
+- **Assumption**: the session manager replays a running session's events to a new `EventSource`; a stopped one replays nothing, which is why the transcript is kept in the draft.
+
+#### Build Phase 4 Verification
+
+- [ ] A23–A27 pass; every earlier row still passes (`cd apps/indusk-admin && pnpm exec vitest run src/lib/conversation-turns.test.ts src/components/new-project && cd ../indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project`); `pnpm exec vitest related` over the changed files
+- [ ] `indusk looks check admin` holds `new-project.conversation`, `message.agent-folded` and `message.agent-open` by value; `indusk promises contract new-project-flow` passes
+
+#### Build Phase 4 Context
+
+- [ ] admin: `apps/indusk-admin/CLAUDE.md` — the project conversation renders a thread from `turnsOf`; the other agent conversations still use the session panel until they move — `promise: a-project-conversation-is-a-back-and-forth`
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/guide/new-project.md`: the conversation as a thread, what "See more" holds, the transcript kept in the draft
+- [ ] `apps/docs/src/decisions/new-project-flow.md`: decision 9 published; changelog entry under the plan's "Added"
+
 ## Files Affected
 
 | File | Change |
@@ -269,6 +316,7 @@ Deferred-body review (Test Phase 1):
 | `apps/indusk-admin/src/components/new-project/*` | `NewProjectStart`, `NewProjectConversation`, `NewProjectProposal`, `NewProjectCreating` and the new components |
 | `apps/indusk-admin/src/components/ProjectGrid.tsx`, `ProjectCard.tsx` | New project; `project-card` marker |
 | `apps/indusk-mcp/templates/planning/CLAUDE.md` | `documents_off` rule |
+| `apps/indusk-admin/src/lib/conversation-turns.ts`, `components/new-project/ConversationThread.tsx`, `components/ui/Message.tsx` | the conversation as a thread |
 | `apps/docs/src/guide/new-project.md`, `reference/cli/new-project.md`, `decisions/new-project-flow.md`, `guide/worktree-setup.md` | docs |
 
 ## Dependencies
