@@ -593,6 +593,12 @@
 			"file": "apps/indusk-admin/src/components/ui/LookRow.tsx",
 			"properties": [
 				{
+					"name": "kind",
+					"type": "\"mockup\" | \"story\"",
+					"required": true,
+					"description": "Whether the look is a mockup or a story; every row says."
+				},
+				{
 					"name": "name",
 					"type": "string",
 					"required": true,
@@ -619,21 +625,31 @@
 				{
 					"name": "approved",
 					"id": "ui-lookrow--approved",
-					"snapshotHash": "32a1f7841ed14ec4feeca9c0ad413530807519d0e88e7a44eb0367560481cb70"
+					"snapshotHash": "ab07b2d5a884312ee8415977c758c63bc22d525da0f0deb36e4402afd2c95064"
 				},
 				{
 					"name": "proposed",
 					"id": "ui-lookrow--proposed",
-					"snapshotHash": "6b252d278c6566a8b3752d88c92c8e076d9a2d6ff74a20dd9920c00ea5af6d84"
+					"snapshotHash": "ec8af726177a495831c5e3c70780b99df9e827edf838a8e7864f1937ce1845ed"
 				},
 				{
 					"name": "uncovered",
 					"id": "ui-lookrow--uncovered",
-					"snapshotHash": "695f7d86779177e66a499cf4d190ca607fad6717e9d0ff63aab9efa0a03c607c"
+					"snapshotHash": "e649c4b0bf68e87e749edd5ac4a5b91e4d98f9dfc33f0a188fe74b05ac1d1f55"
+				},
+				{
+					"name": "kind-mockup",
+					"id": "ui-lookrow--kind-mockup",
+					"snapshotHash": "913644514f843800ac579ddb7fa2ddba74f1207da2ed77c2fecfe359632ca01e"
+				},
+				{
+					"name": "kind-story",
+					"id": "ui-lookrow--kind-story",
+					"snapshotHash": "ebcf532bb5530df836caee1a9309930bd11b552f5ae35b05022c4209dbe481ba"
 				}
 			],
 			"stylesheet": "components/look-row.css",
-			"stylesheetHash": "447f4b40b8f2b3c76e3ba9457fb20a7a6eef926484ed1cf7ffd1126af7bdd330"
+			"stylesheetHash": "a115c2aafd086a109141a379736ad1dc5b603073773a632359c00eefb0c68379"
 		},
 		{
 			"name": "message",
