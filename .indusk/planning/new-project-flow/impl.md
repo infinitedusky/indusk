@@ -8,9 +8,9 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
-approved_brief: "a82730f18ba4adeb233118bed9becb88b55b7cb1db11b76048bf66813f8d9de9"
+approved_brief: "7a30256d9b39cba5f85afccbe34e99ea40b3096b2f3b1722d5ff61da44d73f58"
 approved_by: "Sandy Corsillo"
-approved_at: "2026-10-14T16:05:59.822Z"
+approved_at: "2026-10-14T19:00:34.261Z"
 ---
 
 # New project flow
