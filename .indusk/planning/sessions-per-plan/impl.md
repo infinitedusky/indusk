@@ -105,7 +105,7 @@ Several plans can each have an agent at once: the session manager refuses only a
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/decisions/sessions-per-plan.md` published from the ADR, with its sidebar entry
+- [x] `apps/docs/src/decisions/sessions-per-plan.md` published from the ADR, with its sidebar entry
 
 ### Build Phase 2: Every admin caller asks for its own plan's session
 
