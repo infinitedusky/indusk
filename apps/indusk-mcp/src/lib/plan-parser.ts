@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "./config.js";
 import { fencedLineMask } from "./impl-headings.js";
@@ -11,7 +11,7 @@ import {
 	readPaper,
 } from "./papers/summary.js";
 import { isCleanSegment } from "./path-segment.js";
-import { readWorkflow, type WorkflowType } from "./workflow-types.js";
+import { CORE_DOCUMENTS, readWorkflow, type WorkflowType } from "./workflow-types.js";
 
 // Re-exported so the `planning/plan-parser` subpath and existing imports keep
 // working; the definitions live in papers/summary.ts.
@@ -63,6 +63,12 @@ export interface PlanSummary {
 	workflow?: WorkflowType;
 	/** The word that was declared, when it is not one of the types. */
 	workflowDeclared?: string;
+	/**
+	 * Planning documents the project turned off (`planning.documents_off` in
+	 * its config, found from the plan's folder). A turned-off document reads
+	 * skipped, never missing. Absent when none are, and never the core.
+	 */
+	documentsOff?: string[];
 	/** Every document declaring `kind: paper`, in filename order. Absent when there are none. */
 	papers?: PaperSummary[];
 	/** Set when frontmatter in one of the plan's docs failed to parse. Contains
@@ -112,6 +118,7 @@ function resolvePlanStage(
 	walked: ReturnType<typeof determineStage>,
 	papers: PaperSummary[],
 	type: WorkflowType | null,
+	documentsOff: readonly string[],
 ): { stage: PlanStage; stageStatus: string; nextStep: string } {
 	if (walked.stage === "unknown" && papers.length > 0) {
 		return {
@@ -123,7 +130,13 @@ function resolvePlanStage(
 	return {
 		stage: walked.stage,
 		stageStatus: walked.stageStatus,
-		nextStep: determineNextStep(walked.stage, walked.stageStatus, type, walked.parseError),
+		nextStep: determineNextStep(
+			walked.stage,
+			walked.stageStatus,
+			type,
+			documentsOff,
+			walked.parseError,
+		),
 	};
 }
 
@@ -174,6 +187,7 @@ function determineNextStep(
 	stage: PlanStage,
 	stageStatus: string,
 	type: WorkflowType | null,
+	documentsOff: readonly string[],
 	parseError?: { file: string; message: string },
 ): string {
 	if (stage === "malformed" && parseError) {
@@ -182,7 +196,7 @@ function determineNextStep(
 	if (stage === "unknown") return "Create a brief";
 
 	if (isFinishedDocumentStatus(stageStatus)) {
-		const next = nextRequiredDocument(stage, type);
+		const next = nextRequiredDocument(stage, type, documentsOff);
 		if (next) return `Create ${next}`;
 		return "Done";
 	}
@@ -228,6 +242,34 @@ function rawFrontmatterValue(raw: string, key: string): string | null {
 	return text ? text : null;
 }
 
+/**
+ * The documents the plan's project turned off, read from the config found
+ * above the plan's folder (`<root>/.indusk/planning/<plan>`, or one level
+ * deeper for an archived plan). A reader of a plan has only the folder, so the
+ * config is found from it. Read tolerantly - a config that cannot be read, or
+ * names the core, is the config reader's to refuse; here it turns nothing off.
+ */
+function readDocumentsOff(planDir: string): string[] {
+	let dir = dirname(planDir);
+	for (let depth = 0; depth < 4; depth++) {
+		const config = join(dir, "config.json");
+		if (existsSync(config) && dir.endsWith(".indusk")) {
+			try {
+				const off = JSON.parse(readFileSync(config, "utf-8"))?.planning?.documents_off;
+				if (!Array.isArray(off)) return [];
+				return off.filter(
+					(doc): doc is string =>
+						typeof doc === "string" && !(CORE_DOCUMENTS as readonly string[]).includes(doc),
+				);
+			} catch {
+				return [];
+			}
+		}
+		dir = dirname(dir);
+	}
+	return [];
+}
+
 export function parsePlan(planDir: string): PlanSummary {
 	const name = planDir.split("/").pop() ?? "";
 	const entries = readdirSync(planDir).filter((f) => f.endsWith(".md"));
@@ -239,7 +281,13 @@ export function parsePlan(planDir: string): PlanSummary {
 		.filter((p): p is PaperSummary => p !== null);
 
 	const declared = readDeclaredWorkflow(planDir, entries);
-	const { stage, stageStatus, nextStep } = resolvePlanStage(walked, papers, declared.type);
+	const documentsOff = readDocumentsOff(planDir);
+	const { stage, stageStatus, nextStep } = resolvePlanStage(
+		walked,
+		papers,
+		declared.type,
+		documentsOff,
+	);
 
 	return {
 		name,
@@ -251,6 +299,7 @@ export function parsePlan(planDir: string): PlanSummary {
 		...(declared.type !== null && { workflow: declared.type }),
 		...(declared.type === null &&
 			declared.declared !== null && { workflowDeclared: declared.declared }),
+		...(documentsOff.length > 0 && { documentsOff }),
 		...(papers.length > 0 && { papers }),
 		...(walked.parseError && { parseError: walked.parseError }),
 	};

@@ -1,6 +1,6 @@
 import type { DocumentPosition } from "../lifecycle.js";
 import type { Question } from "../session/protocol.js";
-import { WORKFLOW_DEFINITIONS } from "../workflow-types.js";
+import { requiredDocuments } from "../workflow-types.js";
 import { documentFinished, type PlanSnapshot, planSteps } from "./steps.js";
 
 /**
@@ -115,7 +115,9 @@ function atReview(plan: PlanSnapshot & { name: string }, builds: ReadonlyArray<W
 function awaitingApproval(plan: PlanSnapshot): boolean {
 	if (plan.documents.impl?.status !== "draft") return false;
 	const required: readonly DocumentPosition[] =
-		plan.workflow === null ? ["brief", "test-plan"] : WORKFLOW_DEFINITIONS[plan.workflow].requires;
+		plan.workflow === null
+			? ["brief", "test-plan"]
+			: requiredDocuments(plan.workflow, plan.documentsOff);
 	return required
 		.filter((d) => BEFORE_IMPL.includes(d))
 		.every((d) => documentFinished(d, plan.documents[d]?.status));

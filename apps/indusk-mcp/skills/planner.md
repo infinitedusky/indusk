@@ -47,6 +47,8 @@ Parse the input: if the first word is `bugfix`, `refactor`, `spike`, or `feature
 
 **Every plan declares its type.** Write `workflow: <type>` in the brief's frontmatter when you create it — `workflow: feature` when no type was given — and, for a spike, in the research document's, since a spike has no brief. The admin reads it to tell a document the plan was never going to have from one it should have had: with no declared type, an absent document reads *unknown*, never *skipped*. What each type requires is defined once, in the package's `workflow-types` module; the table above and the workflow templates are pinned equal to it by test, so change all three together.
 
+**A turned-off document is not written.** A project can turn planning documents off with `planning.documents_off` in `.indusk/config.json` (a project made through the admin records the ones its person declined). Read it before you write the first document: a plan in that project does not get a document named there — no ADR when `adr` is off — and the plan's page reads it *skipped*, not *missing*, so do not create it to quiet anything. The brief and the test plan are the core and are never off: a config that names either is refused when it is read.
+
 Workflow templates are in `templates/workflows/` in the package. They describe which documents to create and provide streamlined templates for each workflow type.
 
 ## What to Do When Asked to Plan
