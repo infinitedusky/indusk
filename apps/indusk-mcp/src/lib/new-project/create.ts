@@ -15,6 +15,7 @@ import matter from "gray-matter";
 import { readRegistry, removeProject } from "../admin/registry.js";
 import { type InduskConfig, readConfig, writeConfig } from "../config.js";
 import { induskMcpPackageRoot } from "../package-root.js";
+import { installProblems } from "./install.js";
 import { isUnderParent, readParent, repositoryAround } from "./parent.js";
 import { type Proposal, ProposalError, readProposal } from "./proposal.js";
 import {
@@ -384,6 +385,10 @@ async function makeProject(
 			],
 			root,
 		);
+		const missing = installProblems(root);
+		if (missing.length > 0) {
+			throw new Error(`InDusk is not fully installed: ${missing.join("; ")}`);
+		}
 		const config = readConfig(root) as InduskConfig;
 		writeConfig(root, {
 			...config,
