@@ -81,14 +81,14 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A32 | A proposal located inside an existing git repository under the parent is refused and that repository is untouched | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A33 | A proposal naming a repository `worktrees` is refused, so a repository never shares the worktrees folder | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/lib/new-project/proposal.test.ts |
 | A34 | A running agent's events reach the plan conversation and the project conversation through one subscription: a file the agent writes refreshes either page, and the agent ending stops it listening | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/session/use-session-events.test.tsx |
-| A35 | With no parent set, the start page asks where new projects go and saves it, and a project can then be created with no command typed | Build Phase 7 | Build Phase 7 | written | unit | promise: a-new-project-is-made-by-the-agent | apps/indusk-admin/src/components/new-project/NewProjectStart.test.tsx |
-| A36 | The project conversation's agent is told where new projects go, and proposes a location inside it | Build Phase 7 | Build Phase 7 | written | unit | promise: a-new-project-is-written-only-under-its-parent | apps/indusk-mcp/src/lib/new-project/prompt.test.ts |
-| A37 | The GitHub repository is unticked when the proposal opens, whatever the agent proposed; only the person's tick creates one | Build Phase 7 | Build Phase 7 | written | unit | promise: a-new-project-publishes-nothing-unasked | apps/indusk-admin/src/components/new-project/NewProjectProposal.test.tsx |
-| A38 | Creating uses the proposal as the person last saved it: what the agent writes after the person presses Create is not used | Build Phase 7 | Build Phase 7 | written | unit | promise: a-new-project-publishes-nothing-unasked | apps/indusk-admin/src/__tests__/new-project-accept.test.ts |
-| A39 | The project conversation's agent cannot run a shell command, fetch from the web, or write outside its draft; it is refused and told why | Build Phase 7 | Build Phase 7 | written | unit | promise: an-unkept-project-conversation-leaves-nothing-on-disk | apps/indusk-mcp/src/lib/session/permissions.test.ts |
-| A40 | A created project has InDusk installed — its skills, hooks and MCP entry are there — and its own health check reports it healthy | Build Phase 7 | Build Phase 7 | written | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
-| A41 | Leaving the GitHub repository unticked is recorded in the project's config as declined, like any declined recommendation | Build Phase 7 | Build Phase 7 | written | unit | promise: a-recommendation-can-be-declined | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
-| A42 | Every row on the looks page says whether it is a mockup or a story | Build Phase 7 | Build Phase 7 | written | unit | promise: a-look-says-whether-it-is-a-mockup-or-a-story | apps/indusk-admin/src/components/ui/LookRow.test.tsx |
+| A35 | With no parent set, the start page asks where new projects go and saves it, and a project can then be created with no command typed | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-new-project-is-made-by-the-agent | apps/indusk-admin/src/components/new-project/NewProjectStart.test.tsx |
+| A36 | The project conversation's agent is told where new projects go, and proposes a location inside it | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-new-project-is-written-only-under-its-parent | apps/indusk-mcp/src/lib/new-project/prompt.test.ts |
+| A37 | The GitHub repository is unticked when the proposal opens, whatever the agent proposed; only the person's tick creates one | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-new-project-publishes-nothing-unasked | apps/indusk-admin/src/components/new-project/NewProjectProposal.test.tsx |
+| A38 | Creating uses the proposal as the person last saved it: what the agent writes after the person presses Create is not used | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-new-project-publishes-nothing-unasked | apps/indusk-admin/src/__tests__/new-project-accept.test.ts |
+| A39 | The project conversation's agent cannot run a shell command, fetch from the web, or write outside its draft; it is refused and told why | Build Phase 7 | Build Phase 7 | passing | unit | promise: an-unkept-project-conversation-leaves-nothing-on-disk | apps/indusk-mcp/src/lib/session/permissions.test.ts |
+| A40 | A created project has InDusk installed — its skills, hooks and MCP entry are there — and its own health check reports it healthy | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
+| A41 | Leaving the GitHub repository unticked is recorded in the project's config as declined, like any declined recommendation | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-recommendation-can-be-declined | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
+| A42 | Every row on the looks page says whether it is a mockup or a story | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-look-says-whether-it-is-a-mockup-or-a-story | apps/indusk-admin/src/components/ui/LookRow.test.tsx |
 
 ### Deferred Verification
 
@@ -399,6 +399,8 @@ Deferred-body review (Test Phase 1):
 - [x] An unticked GitHub repository is written to `recommendations` as `{ name: "github", kept: false, reason: "not confirmed" }` unless the person's proposal already declines it with a reason
 - [x] `LookRow` leads with its kind — Mockup or Story — as the approved `look-row.mockup` / `look-row.story` draw it, everywhere it is used (the looks page, a plan's looks, the promise page); stories for both kinds, `indusk looks stories admin` (Sandy, 2026-10-14: "we need it to be clear that it is a story or a mockup in looks")
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-mcp/src/lib/session/permissions.ts`) — decideConfinedPermission: the pattern check tests for a `..` segment or an absolute pattern before resolving it; resolving against the root and testing the relative path alone says the same in two lines. Rule: Shape: one reason to change - a guard should state its rule once
+- [ ] Shape (`apps/indusk-admin/src/components/new-project/NewProjectStart.tsx`) — extract the parent folder line and its ask form (about forty lines of JSX and the save call) into a named NewProjectParent component; Start keeps the box and the documents. Rule: Shape: should this inline block have been a named function or module
 
 #### Build Phase 7 OTel
 
@@ -406,16 +408,16 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 7 Verification
 
-- [ ] A35–A42 pass; every earlier row still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project src/lib/session && cd ../indusk-admin && pnpm exec vitest run src/components/new-project src/components/session src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files
-- [ ] `indusk looks check admin` holds `new-project.start`, `new-project.no-parent`, `look-row.mockup` and `look-row.story` by value; `indusk promises contract new-project-flow` passes
+- [x] A35–A42 pass; every earlier row still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project src/lib/session && cd ../indusk-admin && pnpm exec vitest run src/components/new-project src/components/session src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files
+- [x] `indusk looks check admin` holds `new-project.start`, `new-project.no-parent`, `look-row.mockup` and `look-row.story` by value; `indusk promises contract new-project-flow` passes
 
 #### Build Phase 7 Context
 
-- [ ] mcp: the docblock of `lib/session/permissions.ts` — a project conversation's agent is confined to its draft and refused any shell, web or MCP tool — `promise: an-unkept-project-conversation-leaves-nothing-on-disk`
+- [x] mcp: the docblock of `lib/session/permissions.ts` — a project conversation's agent is confined to its draft and refused any shell, web or MCP tool — `promise: an-unkept-project-conversation-leaves-nothing-on-disk`
 
 #### Build Phase 7 Document
 
-- [ ] `apps/docs/src/guide/new-project.md`: the parent set from the start page (the command stays for scripts), the GitHub box only the person ticks, what the conversation's agent may and may not do
+- [x] `apps/docs/src/guide/new-project.md`: the parent set from the start page (the command stays for scripts), the GitHub box only the person ticks, what the conversation's agent may and may not do
 
 ## Files Affected
 

@@ -75,10 +75,8 @@ export function decideConfinedPermission(ev: PermissionEvent, root: string): Dec
 	if (!inside.allow) return why(`${describePath(ev)} is outside the draft.`);
 	const pattern = ev.tool === "Glob" ? ev.input.pattern : ev.input.glob;
 	if (typeof pattern === "string" && pattern !== "") {
-		const reaches = pattern.split("/").includes("..") || isAbsolute(pattern);
-		const target = isAbsolute(pattern) ? pattern : resolve(root, pattern);
-		const rel = relative(resolve(root), target);
-		if (reaches && (rel.startsWith("..") || isAbsolute(rel))) {
+		const rel = relative(resolve(root), resolve(root, pattern));
+		if (rel.startsWith("..") || isAbsolute(rel)) {
 			return why(`The pattern ${pattern} reaches outside the draft.`);
 		}
 	}
