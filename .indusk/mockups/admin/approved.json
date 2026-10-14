@@ -4252,6 +4252,27 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T20:22:22.183Z",
 			"plan": "new-project-flow"
+		},
+		{
+			"mockup": "looks.default",
+			"mockupHash": "6d490b069c40809aca6b5f41b51084c18a5c206927b31b33d776de5b17f76e0b",
+			"componentsHash": "75f24761980c45e5d58d0f48b70a43b62f3a9e1d030420aef0ea57fc96097d94",
+			"components": {
+				"nav.looks-current": "bf08348712d80360e5a58802700462e521e629f479be49b0c756062859691659",
+				"look-row.approved": "ab07b2d5a884312ee8415977c758c63bc22d525da0f0deb36e4402afd2c95064",
+				"look-row.proposed": "ec8af726177a495831c5e3c70780b99df9e827edf838a8e7864f1937ce1845ed",
+				"device-choice.default": "c4d8698990a2d4beb5400aa09bc19d0e3717ec0cf826462ac854c86fa8ab2bbc",
+				"device-frame.default": "6552fc782d0151defa1028cf3b6cd8b2301108692faa44f573e51d979dbbd687",
+				"device-choice.css": "0969ea60ff4cefdc195ce9d4af1ecf1a5a7bde0746e6387989fa2a41b55bdd44",
+				"device-frame.css": "136f2539234e65e710926a2a0b54c1190a03dbc925440c2f48d96cf4bf23de18",
+				"look-row.css": "a115c2aafd086a109141a379736ad1dc5b603073773a632359c00eefb0c68379",
+				"nav.css": "3e58b69ca4f3ed44c1625cb3f2fa018b672b1bc1a6b51e5912cfeb0a3f0772f2"
+			},
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T20:22:22.373Z",
+			"plan": "new-project-flow"
 		}
 	]
 }
