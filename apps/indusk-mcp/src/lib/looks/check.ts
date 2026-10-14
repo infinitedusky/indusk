@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import pMap from "p-map";
 import type { Browser } from "playwright-core";
 import {
@@ -33,6 +34,9 @@ export interface LookTarget {
 	screen: string;
 	state: string;
 	path?: string;
+	/** The screen's seed and unseed commands (`DeclaredScreen`), when it declares them. */
+	seed?: string;
+	unseed?: string;
 }
 
 /** A screen state that was not checked, and why; at one device when the page was opened there. */
@@ -286,7 +290,14 @@ export function checkable(
 				approval.state === "approved" ||
 				(approval.reference !== null && boundToNow(app, approval.reference));
 			if (heldTo) {
-				checked.push({ screen: screen.name, state, ...(screen.path ? { path: screen.path } : {}) });
+				const path = screen.paths?.[state] ?? screen.path;
+				checked.push({
+					screen: screen.name,
+					state,
+					...(path ? { path } : {}),
+					...(screen.seed ? { seed: screen.seed } : {}),
+					...(screen.unseed ? { unseed: screen.unseed } : {}),
+				});
 			} else {
 				unchecked.push({
 					mockup: name,
@@ -310,6 +321,51 @@ export function storyUrl(base: string, id: string, scheme: Scheme): string {
 	url.searchParams.set("viewMode", "story");
 	url.searchParams.set("globals", `theme:${scheme}`);
 	return url.toString();
+}
+
+/** Runs a shell command and returns its stdout; throws when it fails. */
+export type RunCommand = (command: string) => string;
+
+const shellCommand: RunCommand = (command) =>
+	execFileSync("sh", ["-c", command], {
+		encoding: "utf-8",
+		stdio: ["ignore", "pipe", "inherit"],
+	});
+
+const substitute = (text: string, seed: string): string => text.replaceAll("{seed}", seed);
+
+/**
+ * Open a screen's states with its seed in place. A screen that declares no
+ * `seed` just runs `body` with each look unchanged. Otherwise the seed command
+ * runs once, its trimmed stdout is `{seed}` in every look's path, and `unseed`
+ * runs after `body` whether it finished or threw - a seed that is not taken
+ * away is the check leaving something behind.
+ */
+export async function withScreenSeed<T>(
+	looks: readonly LookTarget[],
+	body: (looks: LookTarget[]) => Promise<T>,
+	run: RunCommand = shellCommand,
+): Promise<T> {
+	const first = looks[0];
+	if (!first?.seed) return body([...looks]);
+	const seed = run(first.seed).trim();
+	if (seed === "") {
+		throw new LooksCheckError(`the seed for ${first.screen} printed nothing: ${first.seed}`);
+	}
+	try {
+		return await body(
+			looks.map((l) => ({ ...l, ...(l.path ? { path: substitute(l.path, seed) } : {}) })),
+		);
+	} finally {
+		if (first.unseed) run(substitute(first.unseed, seed));
+	}
+}
+
+/** The checked looks grouped by screen, in order. */
+function byScreen(looks: readonly LookTarget[]): LookTarget[][] {
+	const groups = new Map<string, LookTarget[]>();
+	for (const look of looks) groups.set(look.screen, [...(groups.get(look.screen) ?? []), look]);
+	return [...groups.values()];
 }
 
 /**
@@ -514,31 +570,37 @@ export async function checkApp(
 		app.ignore,
 	);
 	try {
-		for (const look of checked) {
-			for (const device of app.devices) {
-				for (const scheme of schemesOf(app)) {
-					const url = pageUrl(base, look.screen, look.path, look.state);
-					const seen = await openWithinTime(() => measure(browser, device, scheme, url, script));
-					if ("timedOut" in seen) {
-						unchecked.push({
-							mockup: `${look.screen}.${look.state}`,
-							device: lookDevice(device.name, scheme),
-							reason: seen.timedOut,
-						});
-						continue;
+		for (const group of byScreen(checked)) {
+			await withScreenSeed(group, async (seeded) => {
+				for (const look of seeded) {
+					for (const device of app.devices) {
+						for (const scheme of schemesOf(app)) {
+							const url = pageUrl(base, look.screen, look.path, look.state);
+							const seen = await openWithinTime(() =>
+								measure(browser, device, scheme, url, script),
+							);
+							if ("timedOut" in seen) {
+								unchecked.push({
+									mockup: `${look.screen}.${look.state}`,
+									device: lookDevice(device.name, scheme),
+									reason: seen.timedOut,
+								});
+								continue;
+							}
+							const judged = judgeLook({
+								app: app.app,
+								look,
+								device: lookDevice(device.name, scheme),
+								scheme,
+								approved: approvedValues(app, scheme),
+								seen,
+							});
+							if ("result" in judged) results.push(judged.result);
+							else unchecked.push(judged.unchecked);
+						}
 					}
-					const judged = judgeLook({
-						app: app.app,
-						look,
-						device: lookDevice(device.name, scheme),
-						scheme,
-						approved: approvedValues(app, scheme),
-						seen,
-					});
-					if ("result" in judged) results.push(judged.result);
-					else unchecked.push(judged.unchecked);
 				}
-			}
+			});
 		}
 		const found = await checkStories(browser, app, base, stories.checked);
 		results.push(...found.results);
