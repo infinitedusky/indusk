@@ -6860,6 +6860,24 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T23:26:21.570Z",
 			"plan": "skip-reason-why"
+		},
+		{
+			"mockup": "phase-row.open",
+			"mockupHash": "c590c218a4ad2c89a7653dd5454df323c9ad48d27b45414b7a9495b82d0534bf",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T23:16:09.699Z",
+			"plan": "story-first-phases"
+		},
+		{
+			"mockup": "phase-row.open",
+			"mockupHash": "c590c218a4ad2c89a7653dd5454df323c9ad48d27b45414b7a9495b82d0534bf",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T23:55:23.642Z",
+			"plan": "story-first-phases"
 		}
 	]
 }
