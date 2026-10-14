@@ -1,7 +1,7 @@
 ---
 title: "Sessions per plan"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -54,6 +54,8 @@ Several plans can each have an agent at once: the session manager refuses only a
 | A9 | With no sessions.max set a fifth session is refused and a fourth is not; with sessions.max 2 in the InDusk home's config a third is refused | Test Phase 1 | Build Phase 1 | passing | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A10 | With two sessions running, stopping one leaves the other running and recorded | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard over a-session-can-be-stopped, which the brief must not break; it needs two sessions, which only this plan allows | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A11 | A session that ends records its end for its own plan, and the others' records stay | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard over a-session-says-how-it-ended; it needs two sessions, which only this plan allows | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A13 | With a build running on a plan and a planning session started after it, answering the planning session's question on the decision card reaches the planning session | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
+| A14 | With the machine at its cap, a running build's next step still starts; a new build at the cap is refused before it starts | Build Phase 3 | Build Phase 3 | planned | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A12 | A second session on the same plan is refused as already running on this plan, asks whether to continue it here, and hands back its id | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
 
 ## Checklist
@@ -140,6 +142,31 @@ Several plans can each have an agent at once: the session manager refuses only a
 #### Build Phase 2 Document
 
 - [x] `apps/docs/src/reference/admin-ui/overview.md` (sessions: one per plan and kind, the cap and where it is set) and `apps/docs/src/guide/multi-agent.md` (several plans' agents at once); changelog: Changed — "Several plans can each have an agent at once; a machine runs at most `sessions.max` (4) sessions, set in `~/.indusk/config.json`."
+
+### Build Phase 3: Falsification — the plan's other session, and a build between its steps
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds once a plan can have two sessions and the machine has a cap. Two hypotheses, each found by reading the code:
+
+- **A13.** `deliver` in `apps/indusk-admin/src/lib/decisions.ts` answers through `forPlan(project, waiting.plan)` with no kind, which returns whichever of the plan's sessions started first. With a build running on a plan and a planning session started after it, the planning session's question shows on the decision card; answering it replies to the *build's* session id with the planning session's request id, and `reply` throws "session … made no request" — the person's answer is lost. The same lookup sends a "say" reply into the build.
+- **A14.** A build runs one session per step (`runStepSession` → `manager.start`), so between one step's end and the next step's start its slot is free. Another plan's start in that moment takes it, and at the cap the build's next step is refused and the build stops, though it was admitted when it started.
+
+- [ ] `deliver` answers a question through the session that asked it: the project's session for that plan whose `pendingQuestion(id)?.requestId` is `waiting.requestId`; a "say" goes to the plan's planning session (`forPlan(project, plan, "planning")`). `DecisionSessions` gains what that needs (`running`, `pendingQuestion`)
+- [ ] A build's step sessions are not refused by the cap: `ManagedStart` gains `inBuild?: true`, which `runStepSession` passes and `refusalFor` lets past the cap (never past the same-plan rule); `startBuild` checks the cap once, before the build starts, with the same refusal the manager gives
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 3 Verification
+
+- [ ] A13 and A14 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/session/manager.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts && pnpm exec vitest related src/lib/decisions.ts src/lib/build-host.ts --run`); tsc and biome clean on changed files
+
+#### Build Phase 3 Context
+
+- [ ] `apps/indusk-admin/CLAUDE.md`: an answer goes to the session that asked, found by its request — guarded by `sessions-per-plan.test.ts` (A13)
+
+#### Build Phase 3 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/overview.md` Sessions section: a build holds its place under the cap from its first step to its last
 
 ## Files Affected
 
