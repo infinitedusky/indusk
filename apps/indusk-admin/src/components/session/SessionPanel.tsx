@@ -121,7 +121,7 @@ export function SessionPanel({
   );
 }
 
-function EventView({
+export function EventView({
   ev,
   open,
   onAnswer,

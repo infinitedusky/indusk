@@ -1,8 +1,8 @@
 "use client";
 
+import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { SessionConnector } from "@/components/session/SessionConnector";
 import { Button } from "@/components/ui/Button";
 import {
   type KnowledgeItem,
@@ -11,7 +11,9 @@ import {
 import { Message } from "@/components/ui/Message";
 import { postJson } from "@/lib/post-json";
 import { ownsSession, type RunningSession } from "@/lib/session-owner";
+import { ConversationThread } from "./ConversationThread";
 import { readFiles } from "./documents";
+import { useProjectSession } from "./use-project-session";
 
 /** The session record's project for a conversation that is in no project (`NEW_PROJECT_SESSION_PROJECT`). */
 const SESSION_PROJECT = "new-project";
@@ -19,8 +21,8 @@ const SESSION_PROJECT = "new-project";
 /**
  * A project conversation (new-project-flow, the approved
  * `new-project.conversation`): the person's first words and documents, the
- * agent's session beside them (the same panel a plan's conversation uses), and
- * what the agent knows so far. Leaving now keeps the draft; Discard removes it
+ * agent's replies as a thread (`ConversationThread`: Markdown, the working
+ * folded behind "See more"), and what the agent knows so far. Leaving now keeps the draft; Discard removes it
  * and everything it held. Nothing is on disk outside the draft.
  *
  * promise: a-project-starts-as-a-conversation
@@ -32,6 +34,8 @@ export function NewProjectConversation({
   documents,
   knowledge,
   hasContent,
+  history = [],
+  initiallyOpen = false,
 }: {
   draft: string;
   /** The `plan` the draft's session record names (`newProjectSessionPlan`). */
@@ -41,6 +45,10 @@ export function NewProjectConversation({
   knowledge: KnowledgeItem[];
   /** The agent has written a brief or a proposal: the conversation is reopened, not begun. */
   hasContent: boolean;
+  /** What earlier sessions of this conversation said, from the draft's transcript. */
+  history?: StartedEvent[];
+  /** Every reply starts with its working shown. */
+  initiallyOpen?: boolean;
 }) {
   const router = useRouter();
   const picker = useRef<HTMLInputElement>(null);
@@ -48,6 +56,7 @@ export function NewProjectConversation({
   const [problem, setProblem] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const session = useProjectSession(sessionId);
 
   useEffect(() => {
     let live = true;
@@ -66,12 +75,13 @@ export function NewProjectConversation({
     };
   }, [sessionPlan]);
 
-  const reopen = async () => {
+  /** Start the conversation again; `text` rides in the first message when the person is replying. */
+  const reopen = async (text?: string) => {
     setBusy(true);
     setProblem(null);
     const r = await postJson<{ id?: string }>(
       `/api/new-projects/${draft}/talk`,
-      { reopened: hasContent },
+      { reopened: hasContent, ...(text ? { text } : {}) },
     );
     setBusy(false);
     if (!r.ok || !r.body.id) {
@@ -112,14 +122,34 @@ export function NewProjectConversation({
     router.push("/");
   };
 
+  const threaded = sessionId !== null || history.length > 0;
+  const addButton = (
+    <Button variant="ghost" size="sm" onClick={() => picker.current?.click()}>
+      + Add a document
+    </Button>
+  );
+
   return (
     <div className="cols-conversation grid items-start gap-5">
       <section className="grid min-w-0 gap-3">
         <Message state="you" documents={documents}>
           <p className="whitespace-pre-wrap">{message}</p>
         </Message>
-        {sessionId ? (
-          <SessionConnector sessionId={sessionId} />
+        {threaded ? (
+          <ConversationThread
+            events={[...history, ...session.events]}
+            running={session.running}
+            onAnswer={session.answer}
+            onDecide={session.decide}
+            onSay={(text) =>
+              sessionId && session.running
+                ? session.say(text)
+                : void reopen(text)
+            }
+            onStop={session.stop}
+            initiallyOpen={initiallyOpen}
+            actions={addButton}
+          />
         ) : (
           <div className="flex flex-wrap items-center gap-3">
             <Button onClick={() => void reopen()} disabled={busy}>
@@ -128,13 +158,7 @@ export function NewProjectConversation({
           </div>
         )}
         <div className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => picker.current?.click()}
-          >
-            + Add a document
-          </Button>
+          {threaded ? null : addButton}
           <Button variant="ghost" size="sm" onClick={() => void discard()}>
             Discard
           </Button>
@@ -151,7 +175,9 @@ export function NewProjectConversation({
           }}
         />
         {note ? <p className="text-sm text-ink-soft">{note}</p> : null}
-        {problem ? <p className="text-sm text-bad">{problem}</p> : null}
+        {problem || session.problem ? (
+          <p className="text-sm text-bad">{problem ?? session.problem}</p>
+        ) : null}
       </section>
       <aside className="grid gap-3 rounded-xl border border-line bg-surface p-4">
         <p className="text-2xs leading-1 font-semibold tracking-caps text-ink-faint uppercase">

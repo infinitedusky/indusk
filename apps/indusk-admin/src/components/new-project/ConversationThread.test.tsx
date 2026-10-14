@@ -45,11 +45,15 @@ describe("A24 — a reply is formatted and its working is folded", () => {
     expect(screen.container.textContent).not.toContain("**");
     expect(screen.container.textContent).not.toContain("Read planner.md");
 
-    await userEvent.click(screen.getByRole("button", { name: /see more/i }).element());
+    await userEvent.click(
+      screen.getByRole("button", { name: /see more/i }).element(),
+    );
     await expect.element(screen.getByText("Read planner.md")).toBeVisible();
     await expect.element(screen.getByText("Reading the brief.")).toBeVisible();
 
-    await userEvent.click(screen.getByRole("button", { name: /see less/i }).element());
+    await userEvent.click(
+      screen.getByRole("button", { name: /see less/i }).element(),
+    );
     expect(screen.container.textContent).not.toContain("Read planner.md");
   });
 
@@ -64,7 +68,9 @@ describe("A24 — a reply is formatted and its working is folded", () => {
         onFoldOpened={opened}
       />,
     );
-    await userEvent.click(screen.getByRole("button", { name: /see more/i }).element());
+    await userEvent.click(
+      screen.getByRole("button", { name: /see more/i }).element(),
+    );
     expect(opened).toHaveBeenCalledTimes(1);
   });
 });
@@ -82,11 +88,20 @@ describe("A25 — what the agent waits on is never folded", () => {
           ],
           input: {},
         },
-        { type: "permission", requestId: "p1", tool: "Write", input: { file_path: "/x/y.md" } },
+        {
+          type: "permission",
+          requestId: "p1",
+          tool: "Write",
+          input: { file_path: "/x/y.md" },
+        },
       ]),
     );
-    await expect.element(screen.getByText("Where should it run?")).toBeVisible();
-    await expect.element(screen.getByRole("button", { name: "Allow" })).toBeVisible();
+    await expect
+      .element(screen.getByText("Where should it run?"))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: "Allow" }))
+      .toBeVisible();
     expect(screen.container.textContent).not.toContain("Read planner.md");
   });
 
@@ -107,8 +122,12 @@ describe("A25 — what the agent waits on is never folded", () => {
         onDecide={noop}
       />,
     );
-    await userEvent.click(screen.getByRole("button", { name: /Fly/ }).element());
-    await userEvent.click(screen.getByRole("button", { name: "Answer" }).element());
+    await userEvent.click(
+      screen.getByRole("button", { name: /Fly/ }).element(),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Answer", exact: true }).element(),
+    );
     expect(answered).toHaveBeenCalledWith("q1", { "Where?": "Fly" });
   });
 });
