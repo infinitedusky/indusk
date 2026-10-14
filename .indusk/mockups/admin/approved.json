@@ -4445,6 +4445,15 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T22:25:46.631Z",
 			"plan": "new-project-flow"
+		},
+		{
+			"mockup": "message.agent-folded",
+			"mockupHash": "5facf4fd2ea6ae48025200e6f8ea9ff71b5369faf9733abfea8077158c0331aa",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T22:25:46.868Z",
+			"plan": "new-project-flow"
 		}
 	]
 }
