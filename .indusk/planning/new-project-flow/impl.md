@@ -174,9 +174,8 @@ Deferred-body review (Test Phase 1):
 #### Build Phase 1 Verification
 
 - [x] A1, A2, A9, A17, A18 pass; A19, A20 still pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts -t "A9|A17|A18" && cd ../indusk-admin && pnpm exec vitest run src/components/new-project src/__tests__/new-project-routes.test.ts src/__tests__/admin-uses-package-commands.test.ts`); `pnpm exec vitest related` over the changed files
-- [ ] `indusk looks check admin` holds `home.default`, `new-project.start` and `new-project.conversation` by value
-  - Result (admin served by `next dev` on :4939 against a temporary `INDUSK_HOME`, because :3939 was another process): `home.default`, `new-project.start`, and the two component screens the pages draw in their default state, `project-card.default` and `prompt-box.default`, are **held** at all six device-and-scheme combinations; nothing is broken (498 held, 270 unchecked, 0 broken across the app).
-  - Not held: `new-project.conversation` (and `message.you`, `message.agent`, `file-chip.default`, `knowledge-list.default`) read *unchecked — the page did not report state conversation*. `screens.json` declares the whole `new-project` screen at `/new`, and the check opens `/new?state=conversation`; a conversation exists only at `/new/<id>`, and a page reports a state only from real data (as the promises dashboard does), so no page at `/new` can honestly report it. `/new/<id>` does report `new-project.conversation message.you file-chip.default knowledge-list.default` (checked by hand against a real draft). This item stays open until a person decides how the check reaches a draft: a per-state path in `screens.json` (reopens the approved declarations), or `/new` offering the open conversation.
+- [x] `indusk looks check admin` holds `home.default`, `new-project.start` and `new-project.conversation` by value
+  - Result: with the check seeding a draft (the two items above), `home.default`, `new-project.start`, `new-project.conversation`, `project-card.default`, `prompt-box.default`, `message.you`, `file-chip.default` and `knowledge-list.default` are **held** at all six device-and-scheme combinations; 522 held, 246 unchecked, 0 broken across the app; the seeded draft was discarded (no `new-projects/` entry left). The admin was this worktree's `next dev` on :4939 with a temporary `INDUSK_HOME` (the seed went into it), and `indusk` on `PATH` was this worktree's build: the daemon on :3939 serves the main checkout's older admin, which has no `/new`, until this plan lands and `pnpm install:local` runs. `message.agent` stays unchecked: no conversation page draws an agent message.
 
 #### Build Phase 1 Context
 
@@ -196,6 +195,11 @@ Deferred-body review (Test Phase 1):
 - [ ] `lib/workflow-types.ts`: a workflow's required documents minus the project's `documents_off`, so the plan status reads a turned-off document `skipped`; the planner skill (`apps/indusk-mcp/skills/planner.md`) says a turned-off document is not written
 - [ ] Admin: `/new/[id]` shows `NewProjectProposal` once `proposal.json` exists — editable name, location and shape (`layout-tree`), `workflow-strip`, `recommendation` rows with Decline and a reason, the founding brief with its `file-chip`s, the remote confirm, Create project
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 1 Forward Intelligence
+
+- **Watch out**: `new-project.proposal` exists only once a draft has a `proposal.json`, so `indusk looks check admin` cannot reach it from `/new`. Apply the mechanism Build Phase 1 added: give the `new-project` screen in `screens.json` a `paths` entry for `proposal` (`/new/{seed}`) and make its `seed` also write a valid `proposal.json` into the draft, and the same for `recommendation`, `workflow-strip` and `layout-tree` (which are drawn only on the proposal). The `seed` and `unseed` commands already exist on `new-project`; changing them does not reopen an approval (the declarations hash covers devices, `ignore` and `sources` only).
+- **Assumption**: the daemon on :3939 serves the main checkout's admin, so a looks check of this worktree's pages runs against `next dev` of the worktree with a temporary `INDUSK_HOME`, and `indusk` on `PATH` must be the worktree's build.
 
 #### Build Phase 2 Verification
 
@@ -219,6 +223,10 @@ Deferred-body review (Test Phase 1):
 - [ ] Admin: `/api/new-projects/[id]/accept` streaming the steps; `NewProjectCreating` (the `new-project.creating` look) ending with a link to `/p/<name>/`
 - [ ] Live check: create Homework Gate from its brief through the admin into a temporary parent; record the questions asked and the result here
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 2 Forward Intelligence
+
+- **Watch out**: `new-project.creating` is reached the same way as the proposal states: a `paths` entry and a `seed` that leaves the draft mid-creation (or a fixture the creating page reads), unseeded after. See Build Phase 1's Forward Intelligence.
 
 #### Build Phase 3 Verification
 
