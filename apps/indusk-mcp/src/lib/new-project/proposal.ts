@@ -25,6 +25,10 @@ export interface ProposalRecommendation {
 	kept: boolean;
 	/** The person's words; required when the recommendation is declined. */
 	reason?: string;
+	/** The practice in a few words, as the proposal's page reads it; the name when absent. */
+	title?: string;
+	/** One line on why it is recommended. */
+	why?: string;
 }
 
 export interface Proposal {
@@ -101,6 +105,11 @@ export function validateProposal(raw: unknown): ProposalCheck {
 			problems.push("a recommendation needs a name and kept: true or false");
 		} else if (!rec.kept && !isText(rec.reason)) {
 			problems.push(`declining ${rec.name} needs the person's reason`);
+		} else if (
+			(rec.title !== undefined && !isText(rec.title)) ||
+			(rec.why !== undefined && !isText(rec.why))
+		) {
+			problems.push(`${rec.name}: title and why, when given, must be text`);
 		}
 	}
 
@@ -135,6 +144,8 @@ export function validateProposal(raw: unknown): ProposalCheck {
 			recommendations: (recommendations as ProposalRecommendation[]).map((rec) => ({
 				name: rec.name,
 				kept: rec.kept,
+				...(rec.title ? { title: rec.title } : {}),
+				...(rec.why ? { why: rec.why } : {}),
 				...(rec.kept ? {} : { reason: rec.reason }),
 			})),
 			documentsOff: documentsOff as string[],

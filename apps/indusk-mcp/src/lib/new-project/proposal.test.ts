@@ -109,3 +109,13 @@ describe("a project proposal", () => {
 		]);
 	});
 });
+
+describe("a recommendation's page words", () => {
+	it("keeps a title and a why, and refuses ones that are not text", () => {
+		const rec = { name: "docs-site", kept: true, title: "A docs site", why: "So others can join" };
+		expect(
+			validateProposal({ ...valid(), recommendations: [rec] }).proposal?.recommendations,
+		).toEqual([rec]);
+		expect(problemsOf({ recommendations: [{ ...rec, why: 3 }] })).toContain("title and why");
+	});
+});
