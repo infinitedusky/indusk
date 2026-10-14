@@ -6,11 +6,12 @@ Loaded by Claude Code when a file under `apps/indusk-admin/` is read. Rules that
 apply only here; cross-cutting design intent stays in the root `CLAUDE.md`.
 Each entry is a rule and a pointer; the pointer holds the story.
 
-- **The admin writes only through the package**: its routes (`app/api/sessions/`)
-  start, answer and stop sessions through `@infinitedusky/indusk-mcp/session`,
-  and plans change through `/plans`; no file in this app writes a plan file,
-  spawns a process (beyond the two read-only git readers) or parses Claude's
-  protocol. Guarded by `admin-uses-package-commands.test.ts`.
+- **The admin writes only through the package**: its routes start, answer and
+  stop sessions through `@infinitedusky/indusk-mcp/session`, change plans
+  through `/plans`, and keep a project conversation through `./new-project`;
+  no file in this app writes a plan or project file, spawns a process (beyond
+  the two read-only git readers) or parses Claude's protocol. Guarded by
+  `admin-uses-package-commands.test.ts`.
 - **Every handler under `app/api` calls `adminOnly(request)` first**: the
   `Host` must be the admin's own (`isAdminHost`), and a `POST`'s `Origin`
   must match it. Listening on 127.0.0.1 is not enough: DNS rebinding points
@@ -37,7 +38,6 @@ Each entry is a rule and a pointer; the pointer holds the story.
   the tarball by `prepublishOnly`. Why a standalone read-only viewer — see
   `/decisions/indusk-admin-ui`; why one daemon and a registry — see
   `/decisions/admin-ui-hosting`
-- Tailwind 4 needs Node 22 ("Cannot find native binding" on 18).
 - **The plan page is live**: `LiveRefresh` probes the page and
   `router.refresh()`es every `admin.refresh_ms` (default 5000), pauses when
   hidden, stops visibly on failure; the Promises page is live the same way (also
