@@ -127,11 +127,11 @@ Every request a session makes is recorded in its log together with how it was de
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a view reads whether a request is decided from its `decided` event, never from a set of its own; a click may close a prompt early but the event is the record. Guarded by `SessionPanel.test.tsx` (A6) and `conversation-turns.test.ts` (A4)
+- [x] `apps/indusk-admin/CLAUDE.md`: a view reads whether a request is decided from its `decided` event, never from a set of its own; a click may close a prompt early but the event is the record. Guarded by `SessionPanel.test.tsx` (A6) and `conversation-turns.test.ts` (A4)
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: a decided request shows its outcome in the panel and the thread; and correct the page's stale line that a planning session runs under `default` (it runs `acceptEdits`, deciding in code, `protocol.ts`)
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: a decided request shows its outcome in the panel and the thread; and correct the page's stale line that a planning session runs under `default` (it runs `acceptEdits`, deciding in code, `protocol.ts`)
 
 ## Files Affected
 
