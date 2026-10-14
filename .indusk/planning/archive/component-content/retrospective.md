@@ -82,3 +82,7 @@ Skip reasons: the audit's "Which skip reason would you not accept?" answered "no
 - Adapt `composition.contract.test.ts` A30 to placed content.
 - Contract row over every state's content map, to catch a silent loss.
 - new-project-flow's screens converted to placed content (the brief's Expectation 1; depends on new-project-flow, not in this plan).
+
+Landed on main at 4088c4a0, 2026-10-14.
+
+Install after landing did not complete. `pnpm install:local` passed type checking, then failed in the admin's Next build while prerendering `/_global-error` (`TypeError: Cannot read properties of null (reading 'useContext')`). Removing the stale `apps/indusk-admin/.next` cache and rerunning gave the same failure. A `pnpm install` to sync dependencies after the merge did not complete in this session. The machine's `indusk` is still 1.70.0 from an earlier install, not the landed build. Cause not confirmed; this plan changed no admin source, only the generated catalog the Storybook build reads.
