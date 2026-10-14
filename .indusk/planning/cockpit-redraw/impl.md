@@ -171,6 +171,8 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 **Tier**: med — the work step's default
 
+Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the page reports it via `data-look-state`, and the nav, brief and plan pages reported none, opening every state at one path with an ignored `?state=`). Sandy chose per-state paths: each page reports the state it really draws from its own data, `screens.json` lists one path per state, A10 serves fixture plans in each condition from a throwaway project, and the nav's width — the person's own setting, not a faked state — may be set by a parameter so `nav.wide` is reachable. A10's assertions are unchanged.
+
 - [x] Author A10 (`cockpit-redraw.contract.test.ts`, listed in `SYSTEM`) from its reviewed body
   - written; red on its own assertion (`nav.expanded was never checked`): the admin's pages report no `data-look-state` for the nav, brief or plan screens, so the check leaves them unchecked. Two changes from the reviewed body, neither weakening it: the check is given an app narrowed to the screens and stories the plan names (the whole admin's check is `indusk looks check admin`'s, ~8 min inside a test), and an unchecked story is matched by its `story <name>` label as `checkStories` writes it
 - [ ] The brief page matched to `brief.writing` / `brief.approved`, and the plan page to `plan.parts`, `plan.working`, `plan.needs-you`, `plan.released`; their components' stories reapproved where they changed
