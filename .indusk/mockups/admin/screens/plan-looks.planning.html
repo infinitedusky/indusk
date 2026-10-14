@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="indusk-new-components" content="plan-look" />
-		<title>plan-look — story-open</title>
+		<meta name="indusk-new-components" content="plan-looks" />
+		<title>plan-looks — planning</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
 			* { box-sizing: border-box; }
@@ -34,9 +34,18 @@
 			.frame .prow b { font-family: var(--font-display); font-weight: var(--font-weight-bold); }
 			.frame .story-text { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
 			.link { font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); color: var(--color-dusk); }
+			.sec { display: grid; gap: var(--space-2); }
+			.sechead { display: flex; align-items: baseline; gap: var(--space-2); }
+			.sechead h3 { font-family: var(--font-display); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-bold); }
+			.sechead span { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+			.empty { padding: var(--space-3) var(--space-4); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.added { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-dusk); }
+			.compare { border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); padding: var(--space-2) var(--space-4) var(--space-3); display: grid; gap: var(--space-2); }
+			.compare summary { cursor: pointer; font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.was { font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
 		</style>
 	</head>
 	<body>
-<main class="page"><div class="rows"><div class="look" data-component="plan-look"><div class="row"><span class="what"><span class="kind mockup">Mockup</span><b>phase-row.open</b></span><span class="chip"><span class="dot"></span>proposed</span><button class="btn" type="button">Open</button></div></div><div class="look" data-component="plan-look"><div class="row"><span class="what"><span class="kind story">Story</span><b>phase-row.open</b></span><span class="chip ok"><span class="dot"></span>approved</span><button class="btn" type="button">Close</button></div><div class="body"><div class="devices"><b class="on">phone</b><b>narrow-laptop</b><b>desktop</b></div><div class="frame"><div class="prow"><b>Build Phase 4</b> · 8 of 12 · in progress</div><p class="story-text">The built phase row, drawn from the real component as it is today.</p></div><a class="link" href="#">Open on the Looks page</a></div></div></div><p class="hint">A story opens in place on the plan page, at each device, the same as a mockup.</p></main>
+<main class="page"><div data-component="plan-looks" class="sec"><div class="sec"><div class="sechead"><h3>Mockups</h3><span>· 1 of 2 approved</span></div><div class="rows"><div class="look"><div class="row"><span class="what"><span class="kind mockup">Mockup</span><b>phase-row.open</b></span><span class="chip"><span class="dot"></span>proposed</span><button class="btn" type="button">Open</button></div><details class="compare"><summary>Compare with today's build</summary></details></div><div class="look"><div class="row"><span class="what"><span class="kind mockup">Mockup</span><b>chip.waiting</b></span><span class="chip ok"><span class="dot"></span>approved</span><button class="btn" type="button">Open</button></div></div></div></div><div class="sec"><div class="sechead"><h3>Stories</h3><span>· none built yet</span></div><div class="rows"><p class="empty">Stories appear here as this plan builds its components.</p></div></div></div><p class="hint">While a plan is being written: its mockups, and a changed component's current build only inside its mockup, for comparison.</p></main>
 	</body>
 </html>

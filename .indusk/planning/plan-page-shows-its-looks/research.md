@@ -51,12 +51,24 @@ Looks page" or "Open on the Looks page".
 ## Decisions
 
 - **Every look opens on the plan page, story or mockup** (Sandy, 2026-10-14).
-- **A mockup and its same-named story show as two rows**, each with its own
-  approval (agreed with Sandy, 2026-10-14).
+- **Two sections, and only this plan's stories** (Sandy, 2026-10-14, replacing
+  an earlier "two rows" idea). A component's story carries its mockup's name,
+  so a plan that changes an existing component finds the earlier plan's story
+  under the name of its own redrawn mockup. Sandy: the old story must not be
+  shown as this plan's; if shown at all, it is clearly the earlier build, "used
+  as a comp". So the Looks part has a Mockups section and a Stories section;
+  Stories lists only stories this plan built (proposed on its branch, or
+  approved with `plan:` this plan — story approvals already record `plan`,
+  `looks/approvals.ts`); a changed component's current build appears only in
+  a "Compare with today's build" fold inside its mockup, labelled with the
+  plan its mockup's earlier approval records, with no approval state.
+- **A mockup added after approval says so** (Sandy, 2026-10-14): "added
+  during build" and its date. The brief's difference from what was approved is
+  already computed (`plans/amendments.ts`, an `Amendment` with `part: "look"`
+  and `was: null`), and `readPlanParts` already returns the amendments.
 - Its own plan, not part of story-first-phases, which is about how phases
   read (Sandy, 2026-10-14: "we could just do it now").
 
 ## Open Questions
 
-- Whether approving moves onto the plan page too. Today approval is on the
-  Looks page; this plan keeps it there unless Sandy says otherwise.
+- Approving stays on the Looks page (not raised again by Sandy after being offered).

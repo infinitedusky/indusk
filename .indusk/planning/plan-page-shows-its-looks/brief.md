@@ -3,7 +3,7 @@ title: "A plan's page shows all its looks"
 date: 2026-10-14
 status: accepted
 workflow: feature
-description: "Every look a plan names opens on the plan's own page, a story as well as a mockup. When a mockup and a story share a name, both are shown, each with its own state, so a mockup waiting for approval never reads as approved."
+description: "A plan's page shows its looks in two sections, the mockups it proposes and the stories it has built, and every one opens in place. A component the plan changes shows its current build only inside its mockup, labelled for comparison, and a mockup added after approval says so with its date."
 ---
 
 # A plan's page shows all its looks — Brief
@@ -19,7 +19,8 @@ description: "Every look a plan names opens on the plan's own page, a story as w
 ### This plan makes
 
 1. **`every-look-opens-on-its-plan-page`** (state). Every look a plan's brief names opens on the plan's own page, a story as well as a mockup, without going to the Looks page.
-2. **`a-mockup-and-its-story-show-apart`** (state). When a mockup and a story share a name, the plan's page shows both, each with its own state, so a mockup waiting for approval never reads as approved.
+2. **`a-plan-shows-only-its-own-stories`** (state). A plan's page lists only the stories that plan built; a component the plan changes shows its current build only inside its mockup, labelled as the earlier plan's build for comparison, never as this plan's story or with an approval state.
+3. **`a-look-added-after-approval-says-so`** (state). A mockup added to a plan's brief after the plan was approved is marked on the plan's page as added during the build, with its date.
 
 ### Existing promises
 
@@ -44,8 +45,9 @@ None.
 
 ### This plan makes
 
-1. **`plan-look.pair`**. A mockup and its story with the same name, shown as two rows on the plan page, the mockup proposed and the story approved.
-2. **`plan-look.story-open`**. A story opened in place on the plan page, drawn at the app's devices, with a link to the Looks page.
+1. **`plan-looks.planning`**. The plan page's Looks part while a plan is written: a Mockups section, with a changed component's mockup carrying a closed "Compare with today's build" fold, and an empty Stories section.
+2. **`plan-looks.compare-open`**. The same, with the fold opened: today's build drawn in place, labelled with the plan that built it, with no approval state.
+3. **`plan-looks.building`**. The Looks part during the build: the Stories section holding the story this plan built, waiting for approval, and a mockup marked "Added during build" with its date.
 
 ### Existing looks
 

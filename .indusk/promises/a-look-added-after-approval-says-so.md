@@ -1,5 +1,5 @@
 ---
-name: a-mockup-and-its-story-show-apart
+name: a-look-added-after-approval-says-so
 kind: state
 lifetime: holds
 state: declared
@@ -10,7 +10,7 @@ tests: []
 incidents: []
 ---
 
-When a mockup and a story share a name, the plan's page shows both, each with its own state, so a mockup waiting for approval never reads as approved.
+A mockup added to a plan's brief after the plan was approved is marked on the plan's page as added during the build, with its date.
 
 ## History
 - 2026-10-14 — declared (plan-page-shows-its-looks), from its planning conversation.

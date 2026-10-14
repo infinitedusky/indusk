@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="indusk-new-components" content="plan-looks" />
+		<title>plan-looks — building</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<style>
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--color-ground); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-regular); }
+			h1, h2, h3, p, dl, dd, ol, ul { margin: 0; padding: 0; }
+			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+			.page { max-width: var(--size-content); margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-16); display: grid; gap: var(--space-3); }
+			.hint { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.rows { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); overflow: hidden; }
+			.look + .look { border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); }
+			.row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); }
+			.what { display: grid; gap: var(--space-1); justify-items: start; min-width: 0; }
+			.what b { overflow-wrap: anywhere; }
+			.kind { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); }
+			.kind.mockup { background: var(--color-dusk-wash); color: var(--color-dusk); }
+			.kind.story { background: var(--color-idle-wash); color: var(--color-ink-soft); }
+			.chip { display: inline-flex; align-items: center; gap: var(--space-tight); font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); background: var(--color-warn-wash); color: var(--color-warn); }
+			.chip.ok { background: var(--color-ok-wash); color: var(--color-ok); }
+			.dot { width: var(--size-dot); height: var(--size-dot); border-radius: var(--radius-pill); background: currentColor; flex: none; }
+			.btn { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-lg); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); background: var(--color-surface); padding: var(--space-tight) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); }
+			.body { display: grid; gap: var(--space-2); border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); padding: var(--space-3) var(--space-4); }
+			.devices { display: flex; flex-wrap: wrap; gap: var(--space-2); font-size: var(--text-sm); line-height: var(--leading-3); }
+			.devices b { font-weight: var(--font-weight-regular); color: var(--color-dusk); border-radius: var(--radius-md); padding: 0 var(--space-tight); }
+			.devices b.on { background: var(--color-dusk-wash); }
+			.frame { border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); background: var(--color-ground); padding: var(--space-4); min-height: var(--size-input); display: grid; gap: var(--space-2); }
+			.frame .prow { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); }
+			.frame .prow b { font-family: var(--font-display); font-weight: var(--font-weight-bold); }
+			.frame .story-text { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.link { font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); color: var(--color-dusk); }
+			.sec { display: grid; gap: var(--space-2); }
+			.sechead { display: flex; align-items: baseline; gap: var(--space-2); }
+			.sechead h3 { font-family: var(--font-display); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-bold); }
+			.sechead span { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+			.empty { padding: var(--space-3) var(--space-4); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.added { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-dusk); }
+			.compare { border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); padding: var(--space-2) var(--space-4) var(--space-3); display: grid; gap: var(--space-2); }
+			.compare summary { cursor: pointer; font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.was { font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+		</style>
+	</head>
+	<body>
+<main class="page"><div data-component="plan-looks" class="sec"><div class="sec"><div class="sechead"><h3>Mockups</h3><span>· 2 of 3 approved</span></div><div class="rows"><div class="look"><div class="row"><span class="what"><span class="kind mockup">Mockup</span><b>phase-row.open</b></span><span class="chip ok"><span class="dot"></span>approved</span><button class="btn" type="button">Open</button></div></div><div class="look"><div class="row"><span class="what"><span class="kind mockup">Mockup</span><b>chip.waiting</b></span><span class="chip ok"><span class="dot"></span>approved</span><button class="btn" type="button">Open</button></div></div><div class="look"><div class="row"><span class="what"><span class="kind mockup">Mockup</span><b>phase-row.empty</b><span class="added">Added during build · Oct 15</span></span><span class="chip"><span class="dot"></span>proposed</span><button class="btn" type="button">Open</button></div></div></div></div><div class="sec"><div class="sechead"><h3>Stories</h3><span>· 0 of 1 approved</span></div><div class="rows"><div class="look"><div class="row"><span class="what"><span class="kind story">Story</span><b>phase-row.open</b></span><span class="chip"><span class="dot"></span>proposed</span><button class="btn" type="button">Open</button></div></div></div></div></div><p class="hint">During the build: the stories this plan built, and a mockup added after approval marked with its date.</p></main>
+	</body>
+</html>
