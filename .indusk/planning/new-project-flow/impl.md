@@ -74,6 +74,8 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A25 | A question or permission the agent is waiting on is never folded away | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
 | A26 | Reopening a project conversation with no agent running shows the same turns; discarding removes them | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A27 | The project conversation's prompt asks for a few sentences of Markdown and at most three questions at a time | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/lib/new-project/prompt.test.ts |
+| A28 | Starting a project conversation starts its agent: the conversation opens with the agent working, with no second click | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-project-starts-as-a-conversation | apps/indusk-admin/src/components/new-project/NewProjectStart.test.tsx |
+| A29 | Every agent turn carries one status: working while running without a reply, done once replied, stopped when it ended before replying | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/lib/conversation-turns.test.ts |
 
 ### Deferred Verification
 
@@ -275,6 +277,9 @@ Deferred-body review (Test Phase 1):
 - [x] The draft keeps `transcript.jsonl`: the manager's events for a project conversation's session are appended to it; the page reads it when no session runs; `discard` removes it with the draft
 - [x] `lib/new-project/prompt.ts`: reply in a few sentences of Markdown, at most three questions at a time, only what the documents leave open
 - [x] Looks: the `new-project` seed copies `seed/homework-gate-transcript.jsonl` into the draft so `new-project.conversation` and `message.agent-folded` / `agent-open` are reached with turns; `paths` entries for the two message states
+- [ ] Start launches the agent (amended 2026-10-14): `/api/new-projects` starts the draft's session as it creates it, and `/new/<id>` opens on the thread with the agent working — no "Talk to the agent" click; the button remains only for a conversation whose agent is not running
+- [ ] `turnsOf` gives each agent turn a `status` — `working`, `done` or `stopped` — and an agent turn appears as soon as the session starts, before any text; `Message` gains `agent-working` (pulsing dot with the `shadow.ring` halo, "Working…") and `agent-stopped` (grey dot, the pick-up line); `agent-folded` / `agent-open` carry the green done dot; stories for the new states, `indusk looks stories admin`
+- [ ] Looks: `paths` and seed lines reaching `message.agent-working` and `message.agent-stopped` (a transcript fixture ending mid-turn, read as working only while a session runs, or a query the page honours for the check)
 - [ ] Live check: create Homework Gate from its brief through the admin into a temporary parent; record the questions asked, the words per reply and the result here
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 - [x] Shape (`apps/indusk-admin/src/app/new/[id]/page.tsx`) — the inline nested ternary that decides which message look state the page draws (`!hasWorking ? "none" : open === undefined ? "folded" : "open"`) becomes a named function `replyLookState(hasWorking, open)` beside `lookStates`. Rule: Should this inline block have been a named function or module? (shape: intra-unit)
@@ -292,8 +297,8 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 4 Verification
 
-- [x] A23–A27 pass; every earlier row still passes (`cd apps/indusk-admin && pnpm exec vitest run src/lib/conversation-turns.test.ts src/components/new-project && cd ../indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project`); `pnpm exec vitest related` over the changed files
-- [x] `indusk looks check admin` holds `new-project.conversation`, `message.agent-folded` and `message.agent-open` by value; `indusk promises contract new-project-flow` passes
+- [ ] A23–A29 pass; every earlier row still passes (`cd apps/indusk-admin && pnpm exec vitest run src/lib/conversation-turns.test.ts src/components/new-project && cd ../indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project`); `pnpm exec vitest related` over the changed files
+- [ ] `indusk looks check admin` holds `new-project.conversation` and `message.agent-folded`, `agent-open`, `agent-working`, `agent-stopped` by value; `indusk promises contract new-project-flow` passes
   - Result: `new-project.conversation`, `message.agent-folded` and `message.agent-open` are **held** at all six device-and-scheme combinations; 618 held, 218 unchecked, 0 broken. Run against a `next dev` of this worktree's source on :4951 with a temporary `INDUSK_HOME` and this worktree's `indusk` build on `PATH`; `agent-open` is reached at `/new/{seed}?talk=1&open=1`. `indusk promises contract new-project-flow` passes (11 made, 6 kept, 5 expectations). The admin suite has one failure outside this phase: `component-reuse-audit.test.ts` finds an inline `<button>` at `NewProjectCreating.tsx:94`, a Build Phase 3 file this phase did not touch.
 
 #### Build Phase 4 Context

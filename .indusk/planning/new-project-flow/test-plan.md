@@ -92,6 +92,8 @@ the brief's promises; each names the smallest level that proves it.
 | A25 | A question or permission the agent is waiting on is never folded away. | unit |
 | A26 | Reopening a project conversation with no agent running shows the same turns it had; discarding it removes them. | unit |
 | A27 | The project conversation's prompt tells the agent to reply in a few sentences of Markdown and ask at most three questions at a time. | unit |
+| A28 | Starting a project conversation starts its agent: the conversation opens with the agent working, with no second click. | unit |
+| A29 | Every agent turn carries one status: working while its agent runs without a reply, done once it has replied, stopped when its agent ended before replying. | unit |
 
 ### `a-plan-starts-as-a-conversation`, `a-conversation-that-is-not-kept-leaves-nothing-in-the-repository`, `a-plan-can-start-from-the-admin` — must not break
 
