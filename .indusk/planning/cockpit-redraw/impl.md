@@ -1,7 +1,7 @@
 ---
 title: "cockpit-redraw — the nav from the original cockpit, the brief page drawn, re-approval a person's"
 date: 2026-10-13
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -59,6 +59,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 | A14 | An agent's command that calls the package's `reapprovePlan` through an interpreter (`node -e "…reapprovePlan(…)"`, `tsx -e`) is refused the same way as `plans reapprove` | Build Phase 4 | Build Phase 4 | passing | unit | promise: only-a-person-reapproves | apps/indusk-mcp/src/__tests__/looks-approval-guard.test.ts |
 | A15 | A drag the browser cancels (`pointercancel`, or the pointer capture lost) ends the drag: the edge stops reading `dragging`, the width reached is kept, and a later pointer move with no button held does not resize the nav | Build Phase 4 | Build Phase 4 | passing | unit | promise: the-nav-widens-by-dragging | apps/indusk-admin/src/components/ui/NavHandle.test.tsx |
 | A16 | A plan whose only wait is an amendment (no session question, no stopped build) reports `plan.needs-you`, the state whose mockup draws the amendment card, not `plan.working` | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/lib/look-state.test.ts |
+| A17 | `buildGroups`, moved to `lib/plan-groups.ts`, returns every plan passed in — inside a Path or in `rest` — for nested Paths, a declared cycle and a child declared under two parents; the PlanList tests pass unchanged | Build Phase 5 | Build Phase 5 | planned | unit | promise: paths-keep-their-order | apps/indusk-admin/src/lib/plan-groups.test.ts |
 
 ### Deferred Verification
 
@@ -278,6 +279,30 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 - Searched without a hypothesis: the guard's route regex (encoded URLs are the tripwire's acknowledged limit), `bash -c` strings (the split on `;`/`&&` reaches inside them), an Edit of `approved_brief:` (check-gates already refuses it), `?nav=` (read once at mount, clamped, never kept), the width clamp and A4's collapse, the brief page's look state (it never draws the amendment card), the session-panel attach (`ownsSession` keys on project, plan and kind).
 - Not investigated: the fixture project A10 serves (test setup, not shipped behaviour); the mockups' look (Sandy's, by approval); a wide nav squeezing the brief page's columns at 760–1100 px (the ADR's named risk, mitigated by the width's upper bound; a design judgement, not a failure a row can name).
 
+
+### Build Phase 5: Cleanup — the plan tree's derivation out of the nav's markup, one clamp for the nav's width
+
+**Tier**: med — the work step's default
+
+**Goal**: decompose what this plan grew across files, per the react extension's one-unit-per-file and the rule that one fact has one home. `PlanList.tsx` (491 lines, the cap 400) holds a 100-line pure derivation — `buildGroups`, the function `paths-keep-their-order` guards — beside five render components, reachable by a test only through rendering; and the nav's width is held between `--size-nav` and `--size-nav-max` by two copies of one rule, in `NavHandle` and `CockpitFrame`. Each item below is one extraction or a reasoned leave-as-is.
+
+- [ ] Move `buildGroups`, `orderByMaster` and the `PathEntry` / `PlanGroup` types from `components/PlanList.tsx` into `lib/plan-groups.ts` (no React, exported), and have `PlanList` import them; `PlanList.tsx` keeps only rendering. Basis: a pure derivation with its own promise is a module, not a component's private helper — it gets a seam (A17) and the file a single reason to change. Move the `promise: paths-keep-their-order` token with it (keep it in `PlanList.tsx` too only if a test there still names it)
+- [ ] Export `clampNavWidth(width, { min, max })` from `components/ui/NavHandle.tsx` (replacing its private `clamp`) and use it in `CockpitFrame`'s mount effect in place of `Math.min(read.max, Math.max(read.min, asked))`. Basis: the width the nav may take is one rule — a drag, a key step, a kept width and `?nav=` must agree — and two copies drift when the bound changes (both Shape reviews deferred this cross-file match here)
+- [ ] (reviewed `apps/docs/src/changelog.md` — left as-is: an append-only log; its length is its history, and this plan added one entry)
+- [ ] (reviewed `apps/indusk-mcp/src/lib/looks/check.ts` — left as-is: 559 lines, but this plan touched 9 of them (the 3 s network-quiet wait); decomposing the look check is a plan of its own, not this one's close-out)
+- [ ] (reviewed `PlanList.tsx`'s three flat lists (Plans, Unordered, Archived) each mapping `PlanItem` — left as-is: an intra-file repetition, Shape's territory, and Build Phase 2's Shape left `isReleased`'s threading deliberately; after the move above the file is ~300 lines of rendering)
+- [ ] (reviewed `__tests__/cockpit-redraw.contract.test.ts`'s fixture builder against `plan-parts.contract.test.ts` and `helpers/cockpit-fixture.ts` — left as-is: the shapes differ (plan conditions on disk vs a brief's looks vs mocked readers); one consumer each, so a shared helper would be the wrong abstraction)
+- [ ] (reviewed `lib/look-state.ts`, `components/ui/NavPath.tsx`, `NavHandle.tsx`, `CockpitFrame.tsx`, `PartSection.tsx`, `PlanParts.tsx`, `session/*`, `hooks/looks-approval-guard.js`, `lib/plans/parts.ts` — left as-is: each under its cap and cohesive; `look-state.ts` holds the three page-state rules together on purpose, so page and check cannot disagree)
+
+#### Build Phase 5 Verification
+- [ ] A17: `cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-groups.test.ts src/components/PlanList*.test.tsx src/app/p/\[project\]/cockpit-nav.test.tsx src/__tests__/cleanup-pins.test.ts` green; A1–A4 and A15 still pass (`pnpm exec vitest run src/components/cockpit/CockpitFrame.test.tsx src/components/ui/NavHandle.test.tsx`); `indusk looks stories admin` changes no snapshot; tsc and biome clean on changed files
+
+#### Build Phase 5 Context
+- [ ] `apps/indusk-admin/CLAUDE.md`: the plan tree's derivation lives in `lib/plan-groups.ts` (pure, tested), `PlanList` only draws it; the nav's width bound is `NavHandle`'s `clampNavWidth`, used wherever a width is set
+
+#### Build Phase 5 Document
+- [ ] (none — internal decomposition; no page, route or CLI changes; ask before checking)
+
 ## Files Affected
 
 | File | Change |
@@ -298,4 +323,3 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 
 ## Notes
 - The mockups are drawn before approval and approved by Sandy in the cockpit; `plans approve` refuses while any look the brief names is proposed.
-
