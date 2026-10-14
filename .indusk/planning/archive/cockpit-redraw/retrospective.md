@@ -59,3 +59,4 @@ The plan touched 113 files (+5035 / −885); 65 of them under `apps/` (+2433 / �
 - Open, recorded for later: 140 admin looks unchecked as "the page did not report state"; A10's flaky teardown; the audit's guard spellings this plan does not catch (`plans "reapprove"`, a line continuation, a shell `sed -i` on `approved_brief:`), accepted as the tripwire's limit.
 
 Landed on main at 36d4c16e, 2026-10-14.
+Installed locally with `pnpm install:local` (indusk 1.70.0); nothing published — a release is Sandy's call (`indusk release`).
