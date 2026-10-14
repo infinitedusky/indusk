@@ -95,7 +95,7 @@ None.
 ### This plan makes
 
 1. **`home.default`**. The project grid with a New project button.
-2. **`new-project.start`**. One text box — "What do you want to build?" — and a way to add documents to write the brief from; nothing else asked.
+2. **`new-project.start`**. One text box — "What do you want to build?" — and a way to add documents to write the brief from, with where new projects go shown and changeable; nothing else asked.
 3. **`new-project.conversation`**. Mid-conversation: the person's messages and documents, "you" and "agent" bubbles alternating, each agent reply formatted with its working folded inside it, a box to answer in, and what the agent knows so far (why, what, how and where, name and place).
 4. **`new-project.proposal`**. The proposal: name, location and shape, the planning workflow with the core kept, each recommendation kept or declined, the founding brief, the private GitHub repository as a separate confirm, and Create.
 5. **`new-project.creating`**. The creation running as steps, ending with a way into the new project.
@@ -113,6 +113,7 @@ None.
 17. **`message.agent-open`**. The same bubble opened: the working listed above the reply, and "See less".
 18. **`message.agent-working`**. The agent's bubble while it works: shown the moment the conversation starts, its dot pulsing with a ring of the same colour, "Working…" and its working so far behind "See more ›", until its reply arrives.
 19. **`message.agent-stopped`**. The agent's bubble when it stopped before replying: a grey dot, its working behind "See more ›", and a line saying the person can write to pick the conversation up again. Every agent bubble carries one of the three dots: working, done or stopped.
+20. **`new-project.no-parent`**. The start page before anyone has said where new projects go: one field, "Where should new projects go?", saved from the page, so no command is typed.
 
 ### Existing looks
 
