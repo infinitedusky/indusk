@@ -91,6 +91,9 @@ export function validateProposal(raw: unknown): ProposalCheck {
 			problems.push(`repository ${JSON.stringify(repo)} is not a usable folder name`);
 		}
 	}
+	if (repoNames.includes("worktrees")) {
+		problems.push("a repository cannot be named worktrees: that folder is where plan worktrees go");
+	}
 	if (new Set(repoNames).size !== repoNames.length) problems.push("repos names a repository twice");
 
 	const milestones = Array.isArray(raw.milestones) ? raw.milestones : [];
