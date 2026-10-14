@@ -176,10 +176,11 @@ const NOT_EVENTS = new Set(["session", "fold-opened"]);
 
 /**
  * What the draft's transcript holds that the page is not already hearing live:
- * every event of the earlier sessions, and none of the session `sessionId`
- * the page is connected to (the session manager replays that one from its
- * start). With no such session, or one the transcript has not yet marked, all
- * of it.
+ * every event of the earlier sessions, and of the session `sessionId` the page
+ * is connected to only the words the person started it with (the `you` lines
+ * right after its marker — the manager never hears those, so it never replays
+ * them). The rest of that session the manager replays from its start. With no
+ * such session, or one the transcript has not yet marked, all of it.
  */
 export function historyBefore(
   lines: readonly TranscriptLine[],
@@ -188,7 +189,25 @@ export function historyBefore(
   const at = sessionId
     ? lines.findIndex((l) => l.type === "session" && l.id === sessionId)
     : -1;
-  return (at >= 0 ? lines.slice(0, at) : lines).filter(
+  const before = at >= 0 ? lines.slice(0, at) : lines;
+  const opening: TranscriptLine[] = [];
+  for (let i = at + 1; at >= 0 && i < lines.length; i++) {
+    const line = lines[i];
+    if (line?.type !== "you") break;
+    opening.push(line);
+  }
+  return [...before, ...opening].filter(
     (l): l is StartedEvent => !NOT_EVENTS.has(l.type),
+  );
+}
+
+/** Whether the transcript has marked session `sessionId` yet (the page's copy is drawn before a reopen marks it). */
+export function marks(
+  lines: readonly TranscriptLine[],
+  sessionId: string | null,
+): boolean {
+  return (
+    sessionId !== null &&
+    lines.some((l) => l.type === "session" && l.id === sessionId)
   );
 }

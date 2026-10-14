@@ -1,6 +1,7 @@
 "use client";
 
 import type { TranscriptLine } from "@infinitedusky/indusk-mcp/new-project";
+import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -9,7 +10,7 @@ import {
   KnowledgeList,
 } from "@/components/ui/KnowledgeList";
 import { Message } from "@/components/ui/Message";
-import { historyBefore } from "@/lib/conversation-turns";
+import { historyBefore, marks } from "@/lib/conversation-turns";
 import { postJson } from "@/lib/post-json";
 import { ownsSession, type RunningSession } from "@/lib/session-owner";
 import { ConversationThread } from "./ConversationThread";
@@ -67,6 +68,11 @@ export function NewProjectConversation({
   const [problem, setProblem] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // What the person said to restart the agent, until the transcript the page
+  // was drawn with catches up and marks the new session.
+  const [opening, setOpening] = useState<{ id: string; text: string } | null>(
+    null,
+  );
   const session = useProjectSession(sessionId);
 
   useEffect(() => {
@@ -99,7 +105,9 @@ export function NewProjectConversation({
       setProblem(r.ok ? "the admin started no conversation" : r.error);
       return;
     }
+    if (text) setOpening({ id: r.body.id, text });
     setSessionId(r.body.id);
+    router.refresh();
   };
 
   const addDocuments = async (files: FileList | null) => {
@@ -134,9 +142,18 @@ export function NewProjectConversation({
   };
 
   const history = historyBefore(transcript, sessionId);
+  const said: StartedEvent[] =
+    opening && opening.id === sessionId && !marks(transcript, sessionId)
+      ? [{ type: "you", text: opening.text }]
+      : [];
   const threaded = sessionId !== null || history.length > 0;
   const addButton = (
-    <Button variant="ghost" size="sm" onClick={() => picker.current?.click()}>
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      onClick={() => picker.current?.click()}
+    >
       + Add a document
     </Button>
   );
@@ -149,7 +166,7 @@ export function NewProjectConversation({
         </Message>
         {threaded ? (
           <ConversationThread
-            events={[...history, ...session.events]}
+            events={[...history, ...said, ...session.events]}
             running={session.running || showRunning}
             onAnswer={session.answer}
             onDecide={session.decide}

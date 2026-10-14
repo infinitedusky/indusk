@@ -1,6 +1,6 @@
 import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { describe, expect, it } from "vitest";
-import { historyBefore, turnsOf } from "./conversation-turns";
+import { historyBefore, marks, turnsOf } from "./conversation-turns";
 
 // promise: a-project-conversation-is-a-back-and-forth
 
@@ -142,5 +142,27 @@ describe("historyBefore — what the transcript holds that the page is not heari
 
   it("keeps every event when no session is connected", () => {
     expect(historyBefore([...kept], null)).toHaveLength(3);
+  });
+
+  // The words a person restarts the agent with are written after the new
+  // session's marker but never heard by the manager, so nothing replays them:
+  // without this each message showed only after the next one was sent.
+  it("keeps the words the connected session was started with, in order", () => {
+    const restarted = [
+      ...kept,
+      { type: "exit", code: 1, stderr: "" },
+      { type: "session", id: "c" },
+      { type: "you", text: "this is a test" },
+      text("heard live"),
+    ] as const;
+    const history = historyBefore([...restarted], "c");
+    expect(history.at(-1)).toEqual({ type: "you", text: "this is a test" });
+    expect(history).not.toContainEqual(text("heard live"));
+  });
+
+  it("knows whether the transcript has marked a session yet", () => {
+    expect(marks([...kept], "b")).toBe(true);
+    expect(marks([...kept], "c")).toBe(false);
+    expect(marks([...kept], null)).toBe(false);
   });
 });
