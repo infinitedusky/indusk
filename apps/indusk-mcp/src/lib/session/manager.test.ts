@@ -330,6 +330,33 @@ describe("sessions-per-plan — the machine's cap", () => {
 	});
 });
 
+describe("A14 — a build's own next step is not refused by the cap", () => {
+	function atCap() {
+		const dir = mkdtempSync(join(tmpdir(), "session-manager-"));
+		dirs.push(dir);
+		const fake = fakeStarter();
+		const m = new SessionManager({ recordPath: join(dir, "r.json"), start: fake.start, max: 2 });
+		for (const plan of ["p1", "p2"]) m.start({ ...planning, ...meta, plan });
+		return m;
+	}
+	const build = { ...planning, ...meta, kind: "build" as const, plan: "p3" };
+
+	it("A14 — an inBuild start for a third plan succeeds at the cap", () => {
+		expect(attempt(() => atCap().start({ ...build, inBuild: true }))).toBeUndefined();
+	});
+
+	it("A14 — a plain start at the cap is still refused", () => {
+		expect(attempt(() => atCap().start(build))).toBeInstanceOf(SessionBusy);
+	});
+
+	it("A14 — an inBuild start never gets past the same-plan rule", () => {
+		const m = atCap();
+		const refusal = attempt(() => m.start({ ...planning, ...meta, plan: "p1", inBuild: true }));
+		expect(refusal).toBeInstanceOf(SessionBusy);
+		expect(refusal?.message).toMatch(/already running on this plan/);
+	});
+});
+
 describe("sessions-per-plan — what two running sessions must not break", () => {
 	it("A10 — stopping one leaves the other running and recorded", async () => {
 		const { m, record, fake } = manager();
