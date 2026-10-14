@@ -20,7 +20,7 @@ import { TrustNotice } from "@/components/session/TrustNotice";
 import { HistoryPanel } from "@/components/ui/HistoryPanel";
 import { PlanCopyNotice } from "@/components/Worktrees";
 import { readPlanHistory, readWaiting } from "@/lib/decisions-reader";
-import { planLookState } from "@/lib/look-state";
+import { planLookState, planPageWaiting } from "@/lib/look-state";
 import { extractPhases } from "@/lib/phases";
 import { planActions } from "@/lib/plan-actions";
 import { readPlanPage } from "@/lib/plan-page";
@@ -158,7 +158,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
         lookState={planLookState({
           archived: plan.archived || Boolean(plan.archivedInWorktree),
           position: plan.position?.position,
-          waiting: waiting !== undefined,
+          waiting: planPageWaiting(waiting, parts.amendments),
           briefStatus: parts.briefStatus,
         })}
       >

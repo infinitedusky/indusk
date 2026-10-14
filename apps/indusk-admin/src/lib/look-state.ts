@@ -19,7 +19,8 @@ export type BriefLookState = "brief.approved" | "brief.writing" | "brief.empty";
 
 /**
  * The plan page's state: released once archived or in monitor; else
- * `needs-you` while it waits on a person; else `parts` while its brief is not
+ * `needs-you` while it waits on a person (a session question, a stopped build
+ * or an amendment — `planPageWaiting` counts all three); else `parts` while its brief is not
  * finished (the page opens on it as the current step); else being built.
  */
 export function planLookState(input: {
@@ -45,7 +46,7 @@ export function planPageWaiting(
   waiting: unknown | undefined,
   amendments: readonly unknown[],
 ): boolean {
-  return waiting !== undefined;
+  return waiting !== undefined || amendments.length > 0;
 }
 
 /**
