@@ -113,6 +113,21 @@ properties a mockup may fill (`children` for bare content, or the named
 property for `<indusk-content for>`). A state that lists none takes no
 content — its words are the story's.
 
+### The two lint rules
+
+`indusk looks lint` holds what sits inside a placed component to words and
+placed components:
+
+- **`content-not-words-or-components`** — an element other than
+  `<indusk-component>` or `<indusk-content>` was written inside a reference
+  (`content not words or components: <file>:<line> <div> inside button`). A
+  placed component takes text and other placed components; to show something
+  else, make it a component.
+- **`component-takes-no-content`** — content was given for a property the
+  state's `content` in `components.json` does not list
+  (`component takes no content: <file>:<line> button has no "label" to fill`).
+  Name a property the state lists, or give the component a story that takes it.
+
 ## Approval, and taking it back
 
 A person approves, never an agent. In the cockpit's Looks page, **Show:

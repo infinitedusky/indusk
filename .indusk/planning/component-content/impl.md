@@ -1,7 +1,7 @@
 ---
 title: "Component content — a placed component takes its own words"
 date: 2026-10-13
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -51,8 +51,8 @@ components alone (see [adr.md](adr.md)).
 | A3 | A container placed with components inside shows them composed where the story's content was | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
 | A4 | A component placed with no content shows the story's words exactly as before | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
 | A5 | After the admin's stories render, each state says which properties a mockup may fill — button and tag words, step name, box title and body | Test Phase 1 | Build Phase 2 | passing | contract | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/__tests__/looks-component-content.contract.test.ts |
-| A6 | The lint refuses any element inside a placed component other than a placed component or named content, naming file, line and element | Test Phase 1 | Build Phase 3 | written | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
-| A7 | The lint refuses content for a property the state does not take, naming the component and the property | Test Phase 1 | Build Phase 3 | written | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
+| A6 | The lint refuses any element inside a placed component other than a placed component or named content, naming file, line and element | Test Phase 1 | Build Phase 3 | passing | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
+| A7 | The lint refuses content for a property the state does not take, naming the component and the property | Test Phase 1 | Build Phase 3 | passing | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
 | A8 | The lint accepts text and placed components inside a placed component | Test Phase 1 | Build Phase 3 | passing | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
 | A9 | A mockup placing a component with its own words returns to proposed, naming the component, when that component's story changes | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-changed-component-reopens-its-mockups | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
 | A10 | Changing only the words placed in a component returns an approved mockup to proposed | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
@@ -132,21 +132,21 @@ components alone (see [adr.md](adr.md)).
 
 **Tier**: med — the work step's default
 
-- [ ] `contentFindings` in `looks/lint-components.ts`, joined into `componentFindings`: `content-not-words-or-components` for any element inside a reference other than `<indusk-component>` or `<indusk-content>`; `component-takes-no-content` for a filled property absent from the state's `content` — each naming file, line and value
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] `contentFindings` in `looks/lint-components.ts`, joined into `componentFindings`: `content-not-words-or-components` for any element inside a reference other than `<indusk-component>` or `<indusk-content>`; `component-takes-no-content` for a filled property absent from the state's `content` — each naming file, line and value
+- [x] Shape — reviewed `lint-components.ts`: `contentFindings` is one reason to change and sits beside the other component rules in the file whose docblock already lists them; no extraction. Left as is: the `mine`/`inside` offset predicates are inline closures because they close over the one reference — naming them would pass four arguments each
 
 #### Build Phase 3 Verification
 
-- [ ] A6–A8 pass; A1–A5, A9–A11 still pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/looks-component-content-lint.test.ts && pnpm exec vitest related src/lib/looks/lint-components.ts`); `indusk looks lint admin` reports no new finding over the existing admin mockups
+- [x] A6–A8 pass; A1–A5, A9–A11 still pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/looks-component-content-lint.test.ts && pnpm exec vitest related src/lib/looks/lint-components.ts`); `indusk looks lint admin` reports no new finding over the existing admin mockups
 
 #### Build Phase 3 Context
 
-- [ ] guard: the two rules' messages name `promise: placed-content-is-only-words-and-components`
+- [x] guard: the two rules' messages name `promise: placed-content-is-only-words-and-components` (both messages end with it; `indusk looks lint admin` reports no new finding)
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/guide/components.md`: the two lint rules and what each message means
-- [ ] `apps/docs/src/decisions/component-content.md`: the ADR, published; changelog entry "Added — a placed component takes its own words"
+- [x] `apps/docs/src/guide/components.md`: the two lint rules and what each message means
+- [x] `apps/docs/src/decisions/component-content.md`: the ADR, published; changelog entry "Added — a placed component takes its own words"
 
 ## Files Affected
 
