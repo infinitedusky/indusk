@@ -622,6 +622,75 @@
 			"stylesheetHash": "3e58b69ca4f3ed44c1625cb3f2fa018b672b1bc1a6b51e5912cfeb0a3f0772f2"
 		},
 		{
+			"name": "nav-handle",
+			"file": "apps/indusk-admin/src/components/ui/NavHandle.tsx",
+			"properties": [
+				{
+					"name": "value",
+					"type": "number",
+					"required": true,
+					"description": "The nav's width now, in px."
+				},
+				{
+					"name": "min",
+					"type": "number",
+					"required": true,
+					"description": "The narrowest the nav drags to (`--size-nav`), in px."
+				},
+				{
+					"name": "max",
+					"type": "number",
+					"required": true,
+					"description": "The widest the nav drags to (`--size-nav-max`), in px."
+				},
+				{
+					"name": "onResize",
+					"type": "(width: number) => void",
+					"required": false,
+					"description": "Called with each width the pointer or a key asks for, already held between `min` and `max`."
+				},
+				{
+					"name": "onResizeEnd",
+					"type": "(width: number) => void",
+					"required": false,
+					"description": "Called with the width a drag or a key step ended on."
+				},
+				{
+					"name": "step",
+					"type": "number",
+					"required": false,
+					"defaultValue": "16",
+					"description": "What an arrow key moves the width by, in px."
+				},
+				{
+					"name": "dragging",
+					"type": "boolean",
+					"required": false,
+					"description": "Draw the dragging state without a pointer holding it (a story, a test)."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-navhandle--default",
+					"snapshotHash": "439984dd5a050c329b44dc83873f6fe32f855ffb481fb0b4367b7cf052e282f3"
+				},
+				{
+					"name": "dragging",
+					"id": "ui-navhandle--dragging",
+					"snapshotHash": "64b8dd2467f4b263dced137f56815cebccef1302d54593fcacf418d2b156f34c"
+				}
+			],
+			"stylesheet": "components/nav-handle.css",
+			"stylesheetHash": "12b4a47b23ac04d97734c1ef2e8e945b31c21317109913db0346500ff51db35c"
+		},
+		{
 			"name": "part-section",
 			"file": "apps/indusk-admin/src/components/ui/PartSection.tsx",
 			"properties": [
@@ -1120,6 +1189,12 @@
 					"required": false,
 					"defaultValue": "false",
 					"description": "The step the page is on."
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": false,
+					"description": "Where the step's document is read; the step is then a link."
 				},
 				{
 					"name": "className",
