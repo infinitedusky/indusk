@@ -5105,6 +5105,34 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T01:53:24.421Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"mockup": "plan.phases",
+			"mockupHash": "ae9d8c497edab7634f65b2a7cfa59f6266ff7a29bac1841ccba1f41cf4b251a6",
+			"componentsHash": "648ccd35e36dad1177ac3cd394367c039fe50d9a20fa4e4fb220d49765dbf16e",
+			"components": {
+				"nav.plan-current": "3470475f1b717c94b9e492bd191d67f517a101705fd0ef6a2e6eee1b995ac430",
+				"tag.default": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2",
+				"rail-group.default": "8d77a848575c43ed4f8be05977424076fc2c5e4e11d9410344ad2f81939fedb0",
+				"decision-card.working": "10820004f9c6776dae0142091004eb7869b642a3de3da5d7bff108142f7ffc90",
+				"part-section.closed": "50f0153bc707cfb88f517dab8ac080856a28c164b4621d39b4bd6fecd5fd11a1",
+				"part-section.expectations": "015cf1be68ceb68165daa662c75e3ea6e344f688dc9d0883426bafd24fdc454f",
+				"part-section.looks": "14c524a7ea50dd7f756a871c6727181721659e9f4a23277cd9d4b5b33867d54d",
+				"part-section.phases-open": "8cc9714e16428f866b5ad0caf0eb05868d0ea6e3cbf1f72a092a007c86ae6872",
+				"part-section.documents": "593a1a27ad6db21e61ab2db586d07e6d0d91f5ae754392be735101fd42f71560",
+				"history-panel.closed": "b518017cefa49e2d58031babd445ba81997e8b9805219b1c64a5d01f9f4226c1",
+				"decision-card.css": "f524512e5face4aada9c350e02e8d72fce81ba1b1b12264f26b967a0c95216c4",
+				"history-panel.css": "be98a8af91efa17e17a39057193f5bbeec9a0abd2199fb6611a603b33e112b6f",
+				"nav.css": "c57723f174d0839b7aa9be7522e43f62e3db3f1120c45bf3015f2821488e7a41",
+				"part-section.css": "a7611216bfafa52765552f4167d83ca321b08c1ce1643ef7c2c7dd0a8813ed74",
+				"rail-group.css": "4b903290cb06d70c76454beeeafe3c195d7aabb93b73cf6e713b2d98fb2bf004",
+				"tag.css": "30d7bf10c27edc0deecf29411b623d76dc69248619af47401101eaa7500bba2c"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T01:53:24.901Z",
+			"plan": "cockpit-redraw"
 		}
 	]
 }
