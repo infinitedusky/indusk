@@ -106,17 +106,17 @@ async function depsFor(project: string, plan: string, state: BuildState) {
   };
 }
 
-/** Start the build in the background; refused while one runs for the plan or any session runs. */
+/** Start the build in the background; refused while a build runs or a build session is held for the plan. */
 export async function startBuild(
   project: string,
   plan: string,
 ): Promise<BuildState> {
   const existing = buildState(project, plan);
   if (existing?.running) throw new Error(`${plan} is already building`);
-  const running = sessionManager().current();
+  const running = sessionManager().forPlan(project, plan, "build");
   if (running)
     throw new Error(
-      `a session is already running: ${running.kind} for ${running.plan} — stop it first`,
+      `a build session is already running for ${plan}: ${running.id} — stop it first`,
     );
   const state: BuildState = {
     running: true,
@@ -155,10 +155,10 @@ export async function startRelease(
   const existing = buildState(project, plan);
   if (existing?.running)
     throw new Error(`${plan} is already building or releasing`);
-  const running = sessionManager().current();
+  const running = sessionManager().forPlan(project, plan, "build");
   if (running)
     throw new Error(
-      `a session is already running: ${running.kind} for ${running.plan} — stop it first`,
+      `a build session is already running for ${plan}: ${running.id} — stop it first`,
     );
   const state: BuildState = existing ?? {
     running: false,

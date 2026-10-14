@@ -32,7 +32,7 @@ vi.mock("@infinitedusky/indusk-mcp/plans", () => ({
 }));
 vi.mock("./session-host", () => ({
   planLocation: async () => ({ root: "/p", cwd: "/p" }),
-  sessionManager: () => ({ current: () => undefined }),
+  sessionManager: () => ({ forPlan: () => undefined }),
 }));
 vi.mock("./registry-client", () => ({ getProjectPath: () => "/p" }));
 
