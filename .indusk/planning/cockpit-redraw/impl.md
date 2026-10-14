@@ -118,7 +118,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 #### Test Phase 1 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: note under the brief page that its look is being drawn in cockpit-redraw, so the page and the docs say the same thing until it lands
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: note under the brief page that its look is being drawn in cockpit-redraw, so the page and the docs say the same thing until it lands
 
 ### Build Phase 1: Re-approval is a person's
 

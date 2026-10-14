@@ -112,6 +112,10 @@ Below them, **Read the brief** goes to `/p/{project}/plan/{name}/brief`. When a 
 
 The plan page is where a plan is followed. It opens with the plan's **description** (the brief's `description:` field, read as YAML) and a link to the brief. Until the brief is finished by the rail's own rule (`accepted` or `complete`), "The brief is incomplete" is the plan's current step, with **Work on the brief**; a `superseded` brief and an archived plan have none. A draft accepted as a `spike` has no brief and lands on the plan page. The plan page's agent answers questions and sends a change to what was agreed back to the brief.
 
+::: info Being drawn
+The brief page's look is being drawn in `cockpit-redraw` (`brief.writing`, `brief.approved`): until it lands, the page is the one built live in brief-as-the-contract and reads as proposed in the Looks view.
+:::
+
 ### The nav
 
 The nav is drawn from components, as its approved mockups (`nav.expanded`, `nav.collapsed`) place them: `Shell` (the frame, with the nav's column and the page's), `Nav` (the project's name, plan count and collapse button, with `NavGroup` headings), `PlanRow` (a plan's mark, name and the step it is at) and `ViewLink` (Scorecards, Promises, Looks). A `PlanRow` or `ViewLink` given an `href` is a link and takes `aria-current` when its page is open; the plan tree (Paths, archived plans, unassigned worktrees, research) is the app's own and sits below the views, hidden when the nav is folded to its rail. The nav is on every project page — a plan, the dashboard, a promise — and lists every active plan in the project, so any plan is one click away (plan-cockpit).
