@@ -37,7 +37,7 @@ export function PromptBox({
       data-state="default"
       className="grid gap-3"
     >
-      <h2 className="max-w-[30ch] font-display text-3xl leading-7 font-bold">
+      <h2 className="measure-question font-display text-3xl leading-7 font-bold">
         What do you want to build?
       </h2>
       <textarea

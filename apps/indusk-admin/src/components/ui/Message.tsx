@@ -35,7 +35,7 @@ export function Message({
     <div
       data-component="message"
       data-state={state}
-      className={`grid max-w-[60ch] gap-2 rounded-xl px-4 py-3 [&_ol]:grid [&_ol]:list-decimal [&_ol]:gap-1 [&_ol]:pl-5 ${SHAPE[state]} ${className}`}
+      className={`grid measure-message gap-2 rounded-xl px-4 py-3 [&_ol]:grid [&_ol]:list-decimal [&_ol]:gap-1 [&_ol]:pl-5 ${SHAPE[state]} ${className}`}
       {...rest}
     >
       <span className="text-2xs leading-1 font-semibold tracking-caps text-ink-faint uppercase">
