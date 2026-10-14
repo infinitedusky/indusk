@@ -143,6 +143,6 @@ describe("A38 — creating uses the proposal the person saved, not what the agen
 
     const kept = JSON.parse(readFileSync(file, "utf-8"));
     expect(kept.name).toBe("person-saved");
-    expect(kept.remote).toEqual({ github: false });
+    expect(kept.remote).toEqual({ github: false, visibility: "private" });
   });
 });
