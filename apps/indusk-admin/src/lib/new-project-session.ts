@@ -1,4 +1,5 @@
 import {
+  appendTranscript,
   NEW_PROJECT_SESSION_PROJECT,
   newProjectConversation,
   type ProjectDraftView,
@@ -29,6 +30,13 @@ export function startProjectConversation(
     plan: convo.plan,
     onEvent: () => {},
   });
+  // The draft keeps what is said (ADR decision 9): a marker for where this
+  // session begins, what the person said to start it, then every event the
+  // manager holds or hears - its `say` included - so a reopened conversation
+  // shows its turns with no agent running.
+  appendTranscript(draft, { type: "session", id: started.id });
+  if (opts.text) appendTranscript(draft, { type: "you", text: opts.text });
+  sessionManager().subscribe(started.id, (ev) => appendTranscript(draft, ev));
   return { id: started.id };
 }
 

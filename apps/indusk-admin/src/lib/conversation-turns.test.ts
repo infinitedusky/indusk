@@ -1,6 +1,6 @@
 import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { describe, expect, it } from "vitest";
-import { turnsOf } from "./conversation-turns";
+import { historyBefore, turnsOf } from "./conversation-turns";
 
 // promise: a-project-conversation-is-a-back-and-forth
 
@@ -51,7 +51,10 @@ describe("A23 — events read as alternating turns", () => {
   });
 
   it("A23 a turn with no text replies with its result's text", () => {
-    const turns = turnsOf([tool("Write", "brief.md"), result("Wrote the brief.")]);
+    const turns = turnsOf([
+      tool("Write", "brief.md"),
+      result("Wrote the brief."),
+    ]);
     expect(turns).toMatchObject([
       { who: "agent", reply: "Wrote the brief.", working: ["Write brief.md"] },
     ]);
@@ -70,8 +73,30 @@ describe("A23 — events read as alternating turns", () => {
     expect(turns).toHaveLength(1);
     const turn = turns[0];
     expect(turn).toMatchObject({ who: "agent", reply: "One thing first." });
-    expect(turn?.who === "agent" ? turn.waiting.map((w) => w.requestId) : []).toEqual([
-      "r1",
+    expect(
+      turn?.who === "agent" ? turn.waiting.map((w) => w.requestId) : [],
+    ).toEqual(["r1"]);
+  });
+});
+
+describe("historyBefore — what the transcript holds that the page is not hearing live", () => {
+  const kept = [
+    { type: "session", id: "a" },
+    text("first"),
+    { type: "exit", code: 0, stderr: "" },
+    { type: "session", id: "b" },
+    text("second"),
+    { type: "fold-opened", at: "2026-10-14T10:00:00.000Z" },
+  ] as const;
+
+  it("drops the session the page is connected to, and the transcript's own lines", () => {
+    expect(historyBefore([...kept], "b")).toEqual([
+      text("first"),
+      { type: "exit", code: 0, stderr: "" },
     ]);
+  });
+
+  it("keeps every event when no session is connected", () => {
+    expect(historyBefore([...kept], null)).toHaveLength(3);
   });
 });

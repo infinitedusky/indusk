@@ -6,6 +6,7 @@ import {
   type Proposal,
   readCreation,
   readProjectDraft,
+  readTranscript,
 } from "@infinitedusky/indusk-mcp/new-project";
 import { creationStepIds } from "@infinitedusky/indusk-mcp/new-project/steps";
 import Link from "next/link";
@@ -17,7 +18,7 @@ import { NewProjectProposalPanel } from "@/components/new-project/NewProjectProp
 
 interface Props {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ talk?: string; creating?: string }>;
+  searchParams: Promise<{ talk?: string; creating?: string; open?: string }>;
 }
 
 /** The look states the proposal draws: the screen, and each component it places. */
@@ -39,10 +40,14 @@ const proposalLookStates = (
   ].join(" ");
 
 /** The look states this page draws: the screen, and each component it places in its default state. */
-const lookStates = (withDocuments: boolean): string =>
+const lookStates = (
+  withDocuments: boolean,
+  replies: "none" | "folded" | "open",
+): string =>
   [
     "new-project.conversation",
     "message.you",
+    ...(replies === "none" ? [] : [`message.agent-${replies}`]),
     ...(withDocuments ? ["file-chip.default"] : []),
     "knowledge-list.default",
   ].join(" ");
@@ -63,7 +68,7 @@ export default async function NewProjectConversationPage({
   searchParams,
 }: Props) {
   const { id } = await params;
-  const { talk, creating } = await searchParams;
+  const { talk, creating, open } = await searchParams;
   const draft = readProjectDraft(induskHome(), id);
   if (!draft) notFound();
   const { proposal, problems } = draft.hasProposal
@@ -111,10 +116,15 @@ export default async function NewProjectConversationPage({
       </main>
     );
   }
+  const transcript = readTranscript(draft);
+  const hasWorking = transcript.some((l) => l.type === "tool");
   return (
     <main
       className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
-      data-look-state={lookStates(draft.documents.length > 0)}
+      data-look-state={lookStates(
+        draft.documents.length > 0,
+        !hasWorking ? "none" : open === undefined ? "folded" : "open",
+      )}
       data-draft={id}
     >
       <header>
@@ -145,6 +155,8 @@ export default async function NewProjectConversationPage({
         documents={draft.documents}
         knowledge={knowledgeOf(draft)}
         hasContent={draft.brief !== null || draft.hasProposal}
+        transcript={transcript}
+        initiallyOpen={open !== undefined}
       />
     </main>
   );

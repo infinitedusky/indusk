@@ -1,6 +1,6 @@
 "use client";
 
-import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
+import type { TranscriptLine } from "@infinitedusky/indusk-mcp/new-project";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +9,7 @@ import {
   KnowledgeList,
 } from "@/components/ui/KnowledgeList";
 import { Message } from "@/components/ui/Message";
+import { historyBefore } from "@/lib/conversation-turns";
 import { postJson } from "@/lib/post-json";
 import { ownsSession, type RunningSession } from "@/lib/session-owner";
 import { ConversationThread } from "./ConversationThread";
@@ -34,7 +35,7 @@ export function NewProjectConversation({
   documents,
   knowledge,
   hasContent,
-  history = [],
+  transcript = [],
   initiallyOpen = false,
 }: {
   draft: string;
@@ -45,8 +46,8 @@ export function NewProjectConversation({
   knowledge: KnowledgeItem[];
   /** The agent has written a brief or a proposal: the conversation is reopened, not begun. */
   hasContent: boolean;
-  /** What earlier sessions of this conversation said, from the draft's transcript. */
-  history?: StartedEvent[];
+  /** What the conversation has said so far, from the draft's `transcript.jsonl`. */
+  transcript?: TranscriptLine[];
   /** Every reply starts with its working shown. */
   initiallyOpen?: boolean;
 }) {
@@ -122,6 +123,7 @@ export function NewProjectConversation({
     router.push("/");
   };
 
+  const history = historyBefore(transcript, sessionId);
   const threaded = sessionId !== null || history.length > 0;
   const addButton = (
     <Button variant="ghost" size="sm" onClick={() => picker.current?.click()}>
@@ -148,6 +150,9 @@ export function NewProjectConversation({
             }
             onStop={session.stop}
             initiallyOpen={initiallyOpen}
+            onFoldOpened={() =>
+              void postJson(`/api/new-projects/${draft}/fold`, {})
+            }
             actions={addButton}
           />
         ) : (

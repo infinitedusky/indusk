@@ -1,3 +1,4 @@
+import type { TranscriptLine } from "@infinitedusky/indusk-mcp/new-project";
 import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 
 /**
@@ -116,4 +117,26 @@ export function turnsOf(
   }
   flush();
   return turns;
+}
+
+/** The event types a session emits; the transcript's own lines (`session`, `fold-opened`) are not among them. */
+const NOT_EVENTS = new Set(["session", "fold-opened"]);
+
+/**
+ * What the draft's transcript holds that the page is not already hearing live:
+ * every event of the earlier sessions, and none of the session `sessionId`
+ * the page is connected to (the session manager replays that one from its
+ * start). With no such session, or one the transcript has not yet marked, all
+ * of it.
+ */
+export function historyBefore(
+  lines: readonly TranscriptLine[],
+  sessionId: string | null,
+): StartedEvent[] {
+  const at = sessionId
+    ? lines.findIndex((l) => l.type === "session" && l.id === sessionId)
+    : -1;
+  return (at >= 0 ? lines.slice(0, at) : lines).filter(
+    (l): l is StartedEvent => !NOT_EVENTS.has(l.type),
+  );
 }

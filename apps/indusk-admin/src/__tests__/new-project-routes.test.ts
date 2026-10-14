@@ -16,6 +16,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const started: Array<Record<string, unknown>> = [];
+/** What the draft's transcript subscribes to the session: the manager replays and then hears events. */
+let heard: ((ev: unknown) => void) | undefined;
 
 vi.mock("@/lib/session-host", () => ({
   adminOnly: () => null,
@@ -23,6 +25,10 @@ vi.mock("@/lib/session-host", () => ({
     Response.json({ error: message }, { status }),
   sessionManager: () => ({
     current: () => undefined,
+    subscribe: (_id: string, listen: (ev: unknown) => void) => {
+      heard = listen;
+      return () => {};
+    },
     start: (opts: Record<string, unknown>) => {
       started.push(opts);
       return { id: "s-1", session: { pid: 4242 } };
@@ -79,5 +85,16 @@ describe("A2 — the first message starts a conversation that holds it and the d
     expect(
       readFileSync(join(home, "new-projects", id, "documents", "brief.md"), "utf-8"),
     ).toBe(brief.content);
+    // The conversation is kept in the draft as it is said (ADR decision 9).
+    heard?.({ type: "text", text: "Three things are open." });
+    expect(
+      readFileSync(join(home, "new-projects", id, "transcript.jsonl"), "utf-8")
+        .trim()
+        .split("\n")
+        .map((l) => JSON.parse(l)),
+    ).toEqual([
+      { type: "session", id: "s-1" },
+      { type: "text", text: "Three things are open." },
+    ]);
   });
 });
