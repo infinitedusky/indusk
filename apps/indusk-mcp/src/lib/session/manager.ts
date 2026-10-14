@@ -72,19 +72,8 @@ export class SessionManager {
 	 * or when the machine already runs its cap.
 	 */
 	start(opts: ManagedStart): { id: string; session: Session } {
-		const same = this.forPlan(opts.project, opts.plan, opts.kind);
-		if (same) {
-			throw new SessionBusy(
-				`a ${same.kind} session is already running for ${same.plan}: ${same.id} — stop it first`,
-			);
-		}
-		const max = this.max ?? readSessionsMax();
-		if (this.held.size >= max) {
-			const names = this.running().map((r) => `${r.kind} for ${r.plan}`);
-			throw new SessionBusy(
-				`${max} sessions are running (sessions.max): ${names.join(", ")} — stop one from its plan's page in the admin`,
-			);
-		}
+		const refusal = this.refusalFor(opts);
+		if (refusal) throw refusal;
 		const id = randomUUID();
 		const holder: Held = {
 			record: undefined as unknown as SessionRecord,
@@ -133,6 +122,24 @@ export class SessionManager {
 	/** The session `id`, or undefined. */
 	get(id: string): Session | undefined {
 		return this.held.get(id)?.session;
+	}
+
+	/** Why `opts` may not start now: the plan already has this kind, or the machine is at its cap. */
+	private refusalFor(opts: ManagedStart): SessionBusy | undefined {
+		const same = this.forPlan(opts.project, opts.plan, opts.kind);
+		if (same) {
+			return new SessionBusy(
+				`a ${same.kind} session is already running for ${same.plan}: ${same.id} — stop it first`,
+			);
+		}
+		const max = this.max ?? readSessionsMax();
+		if (this.held.size >= max) {
+			const names = this.running().map((r) => `${r.kind} for ${r.plan}`);
+			return new SessionBusy(
+				`${max} sessions are running (sessions.max): ${names.join(", ")} — stop one from its plan's page in the admin`,
+			);
+		}
+		return undefined;
 	}
 
 	/** The plan's running session of `kind` (either kind when omitted), if any. */

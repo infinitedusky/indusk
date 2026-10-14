@@ -90,7 +90,8 @@ Several plans can each have an agent at once: the session manager refuses only a
 - [x] `readSessionsMax(home = induskHome()): number` in `apps/indusk-mcp/src/lib/session/limits.ts`: `sessions.max` from `<home>/config.json`, a positive integer, else 4; an absent or malformed file is 4, never a throw. The manager reads it when no `max` is given
 - [x] Remove `current()`; export `forPlan`, `running` and `readSessionsMax` through `./session`
   - Note: `current()` was removed in the manager commit (`b7159a35`); `forPlan`/`running` are methods of the already-exported `SessionManager`, and `readSessionsMax` and `DEFAULT_SESSIONS_MAX` are exported here. Callers of `.current()` found by grep, all left for Build Phase 2 and breaking the admin's typecheck until then: `app/api/plans/build/route.ts`, `app/api/drafts/[id]/{talk,discard,accept}/route.ts`, `app/api/sessions/route.ts`, `lib/decisions-reader.ts`, `lib/decisions.ts`, `lib/build-host.ts` (two), and `lib/decisions.test.ts` (two). No caller outside the admin.
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-mcp/src/lib/session/manager.ts`) — the owner-rule and cap refusals sit inline in the already long start(); extract a private refusalFor(opts) that returns the SessionBusy or undefined, so the two refusals have one named seam and start() only launches. Rule: Should this inline block have been a named function or module? (one reason to change per unit)
 
 #### Build Phase 1 Verification
 
@@ -115,7 +116,7 @@ Several plans can each have an agent at once: the session manager refuses only a
 - [ ] `lib/decisions.ts` (`deliver`) and `lib/decisions-reader.ts` (`readWaiting`): the plan's own session, and one waiting entry per running session of the project
 - [ ] `app/api/sessions/route.ts`: `GET ?project&plan&kind` returns that plan's session; its client in `components/session/PlanSession.tsx` passes them; `app/api/promises/[name]/fix/route.ts` asks for its plan's
 - [ ] The mocks that stub `current` (`build-host.release.test.ts`, `promise-fix-route.test.ts`) stub `forPlan`/`running` instead
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 2 Verification
 
