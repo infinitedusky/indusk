@@ -95,7 +95,7 @@
 .tracking-chip {
     letter-spacing: var(--tracking-chip);
 }
-.\[overflow-wrap\:anywhere\] {
+.wrap-anywhere {
     overflow-wrap: anywhere;
 }
 .text-dusk {

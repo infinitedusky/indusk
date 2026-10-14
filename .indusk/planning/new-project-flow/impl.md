@@ -430,7 +430,7 @@ Deferred-body review (Test Phase 1):
 - [x] `lib/new-project/github.ts`: `githubAccount()` — the account `gh auth status` reports as active, or null when `gh` is missing or nobody is signed in; it runs `gh`, so it takes the command runner as an input for its tests
 - [x] The proposal's `remote` gains `visibility: "private" | "public"` (default `private`; `validateProposal` refuses anything else); `createProject` passes `--private` or `--public` from it
 - [x] The proposal page reads the account (a `/api/new-projects/github` route or the page's server read): signed in, the offer names it and offers Private — only you / Public — anyone, Private chosen (`new-project.proposal`); signed out, the box cannot be ticked and says to run `gh auth login` and reload (`new-project.github-signed-out`); `screens.json` reaches `github-signed-out`
-- [ ] Found by the looks lint after Build Phase 7: `components/ui/LookRow.tsx:62` uses the arbitrary class `[overflow-wrap:anywhere]` — use a class from the foundation's theme (add a utility to the theme if none exists), and the stories re-render
+- [x] Found by the looks lint after Build Phase 7: `components/ui/LookRow.tsx:62` uses the arbitrary class `[overflow-wrap:anywhere]` — use a class from the foundation's theme (add a utility to the theme if none exists), and the stories re-render
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 8 OTel

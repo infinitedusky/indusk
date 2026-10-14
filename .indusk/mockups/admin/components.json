@@ -625,31 +625,31 @@
 				{
 					"name": "approved",
 					"id": "ui-lookrow--approved",
-					"snapshotHash": "ab07b2d5a884312ee8415977c758c63bc22d525da0f0deb36e4402afd2c95064"
+					"snapshotHash": "4c6bbf7e82e5044666ef0360f9425160788507618ecc20d1440df32c9bda6043"
 				},
 				{
 					"name": "proposed",
 					"id": "ui-lookrow--proposed",
-					"snapshotHash": "ec8af726177a495831c5e3c70780b99df9e827edf838a8e7864f1937ce1845ed"
+					"snapshotHash": "9e6bc0f28704d2a2f0480b7ac17f762a46515102d32c76c3e22499b31324d1b0"
 				},
 				{
 					"name": "uncovered",
 					"id": "ui-lookrow--uncovered",
-					"snapshotHash": "e649c4b0bf68e87e749edd5ac4a5b91e4d98f9dfc33f0a188fe74b05ac1d1f55"
+					"snapshotHash": "b2e07cb0a616aaa9bdb004bad88ba1c064c0c08c5c07765dea183a2e06c117c8"
 				},
 				{
 					"name": "kind-mockup",
 					"id": "ui-lookrow--kind-mockup",
-					"snapshotHash": "913644514f843800ac579ddb7fa2ddba74f1207da2ed77c2fecfe359632ca01e"
+					"snapshotHash": "cbdd8da7b72229dedf4d14a294071e8d08e696ffeed750c9ae078d0cacc249fe"
 				},
 				{
 					"name": "kind-story",
 					"id": "ui-lookrow--kind-story",
-					"snapshotHash": "ebcf532bb5530df836caee1a9309930bd11b552f5ae35b05022c4209dbe481ba"
+					"snapshotHash": "ab8f40038306d63561013b920c4440456150b5965b5df8ddc7d4540c6bf28d51"
 				}
 			],
 			"stylesheet": "components/look-row.css",
-			"stylesheetHash": "a115c2aafd086a109141a379736ad1dc5b603073773a632359c00eefb0c68379"
+			"stylesheetHash": "08bbb96f2c70367810148018b10172ec9b12d29f1c98cd4c0dfa9fb0cae23cee"
 		},
 		{
 			"name": "message",
