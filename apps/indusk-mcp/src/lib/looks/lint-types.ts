@@ -12,6 +12,9 @@ export type LintRule =
 	| "no-story"
 	| "not-in-catalog"
 	| "no-approved-story"
+	| "content-not-words-or-components"
+	| "component-takes-no-content"
+	| "content-given-twice"
 	| "component-drawn-in-mockup"
 	| "needs-a-story";
 
