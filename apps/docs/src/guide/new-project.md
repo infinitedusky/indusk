@@ -36,9 +36,8 @@ The conversation reads as a thread: your words to the right, the agent's replies
 on the left. A reply is a few sentences of Markdown, with at most three
 questions at a time. The agent's working - the files it read, the notes it
 wrote, what it said on the way to the reply - is folded away behind **See more
-›**; **See less** hides it again. A question the agent is waiting on, or a
-request to use a tool outside the conversation's folder, is never folded: it
-stays in the reply, to answer in place.
+›**; **See less** hides it again. A question the agent is waiting on is never
+folded: it stays in the reply, to answer in place.
 
 The agent works in the conversation's own folder and nowhere else. It may read
 and write files there (`Read`, `Write`, `Edit`, `Glob`, `Grep`) and nothing
