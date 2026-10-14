@@ -56,6 +56,7 @@ Several plans can each have an agent at once: the session manager refuses only a
 | A11 | A session that ends records its end for its own plan, and the others' records stay | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard over a-session-says-how-it-ended; it needs two sessions, which only this plan allows | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A13 | With a build running on a plan and a planning session started after it, answering the planning session's question on the decision card reaches the planning session | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
 | A14 | With the machine at its cap, a running build's next step still starts; a new build at the cap is refused before it starts | Build Phase 3 | Build Phase 3 | passing | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A15 | An admitted build holds one place under the cap from its start to its end, between its steps too, and frees it when it ends | Build Phase 5 | Build Phase 5 | passing | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A12 | A second session on the same plan is refused as already running on this plan, asks whether to continue it here, and hands back its id | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
 
 ## Checklist
@@ -195,6 +196,29 @@ Several plans can each have an agent at once: the session manager refuses only a
 #### Build Phase 4 Document
 
 - [x] `apps/docs/src/reference/admin-ui/overview.md`: confirm the Sessions section's description of the same-plan refusal (it offers to continue the running session) matches both routes after the extraction
+
+### Build Phase 5: Audit fix — a build holds its place under the cap
+
+**Tier**: med — the work step's default
+
+**Goal**: the cold audit (`audit.md`, 2026-10-14) found the cap could be exceeded: a build was checked against the cap once, held no place between its steps, and its steps skipped the cap (`inBuild`), so several Builds pressed together were all admitted. Sandy: fix before landing ("You can go ahead").
+
+- [x] `SessionManager.admitBuild(project, plan): () => void` admits a build at the cap or refuses it, and the build holds one place until the returned function is called; `capRefusal` counts admitted builds plus every session that is not an admitted build's step; a build-kind start for an admitted plan takes its build's place. `inBuild` removed from `ManagedStart` and `runStepSession`
+  - Note: A14's tests now admit the build instead of passing `inBuild` (its Asserts text is unchanged and still holds); A15 added. A release starts no agent session (`runRelease` in `lib/build/runner.ts` runs commands), so it holds no place — the audit's "releases never check the cap" does not apply.
+- [x] `startBuild` (`apps/indusk-admin/src/lib/build-host.ts`) admits the build, and frees its place when the build ends or when it fails to start; `build-host.release.test.ts`'s manager stub gains `admitBuild`
+
+#### Build Phase 5 Verification
+
+- [x] A14 and A15 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/session/manager.test.ts && pnpm exec vitest related src/lib/session/manager.ts src/lib/build/build-session.ts --run`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts && pnpm exec vitest related src/lib/build-host.ts --run`); tsc and biome clean
+  - Result: `manager.test.ts` 23 passed (A14 ×3, A15 ×2 red first on `admitBuild is not a function`); mcp related 5 files, 45 tests; admin `sessions-per-plan.test.ts` 6 passed; admin related 13 files, 98 tests; tsc clean in both; biome clean.
+
+#### Build Phase 5 Context
+
+- [x] `apps/indusk-mcp/CLAUDE.md`: no new rule — the session rule already says the cap is the machine's; an admitted build is how a build counts toward it, stated where it is decided (`admitBuild`'s comment)
+
+#### Build Phase 5 Document
+
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: "A build holds its place under the cap from its first step to its last" — true now; unchanged
 
 ## Files Affected
 
