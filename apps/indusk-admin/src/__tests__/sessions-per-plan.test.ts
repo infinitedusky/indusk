@@ -22,6 +22,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const dirs: string[] = [];
 const launched: Array<{ opts: SessionOptions }> = [];
+/** Every answer a fake session received, by the kind of session that got it. */
+const answered: Array<{ kind: string; requestId: string }> = [];
 
 vi.mock("@/lib/registry-client", () => ({
   getProjectPath: () => "/mock/proj",
@@ -46,18 +48,21 @@ vi.mock("@infinitedusky/indusk-mcp/drafts", async (importActual) => ({
   touchDraft: () => {},
 }));
 
+import type { Waiting } from "@infinitedusky/indusk-mcp/plans/waiting";
 import { POST as talk } from "@/app/api/drafts/[id]/talk/route";
 import { POST as startSession } from "@/app/api/sessions/route";
-import { startBuild } from "@/lib/build-host";
+import { buildState, startBuild } from "@/lib/build-host";
+import { answerDecision } from "@/lib/decisions";
 import { readWaiting } from "@/lib/decisions-reader";
 import type { Plan } from "@/lib/planning-reader";
 
 const KEY = Symbol.for("indusk.admin.sessionManager");
 
-function install(): SessionManager {
+function install(max?: number): SessionManager {
   const record = join(dirs[0] ?? tmpdir(), "admin-sessions.json");
   const manager = new SessionManager({
     recordPath: record,
+    ...(max ? { max } : {}),
     start: (opts: SessionOptions): Session => {
       launched.push({ opts });
       return {
@@ -65,7 +70,9 @@ function install(): SessionManager {
         kind: opts.kind,
         cwd: opts.cwd,
         say: () => {},
-        answer: () => {},
+        answer: (ev) => {
+          answered.push({ kind: opts.kind, requestId: ev.requestId });
+        },
         decide: () => {},
         stop: async () => {},
         done: new Promise(() => {}),
@@ -88,6 +95,7 @@ const planning = (plan: string) => ({
 beforeEach(() => {
   dirs.push(mkdtempSync(join(tmpdir(), "sessions-per-plan-")));
   launched.length = 0;
+  answered.length = 0;
 });
 afterEach(() => {
   delete (globalThis as unknown as Record<symbol, unknown>)[KEY];
@@ -187,5 +195,61 @@ describe("A12 — a second session on the same plan offers to continue the runni
     expect(body.error).toContain("Do you want to continue that session here?");
     expect(body.running?.id).toBe(id);
     expect(manager.running()).toHaveLength(1);
+  });
+});
+
+describe("A13 — an answer reaches the session that asked it", () => {
+  it("A13 a question asked by the plan's planning session, with a build running first, is answered in the planning session", async () => {
+    const manager = install();
+    manager.start({ ...planning("one"), kind: "build", prompt: "/work" });
+    manager.start(planning("one"));
+    const asking = launched.find(({ opts }) => opts.kind === "planning");
+    asking?.opts.onEvent({
+      type: "question",
+      requestId: "req-planning",
+      questions: [
+        {
+          question: "Which map?",
+          options: [{ label: "A" }, { label: "B" }],
+        },
+      ],
+      input: {},
+    });
+    const waiting = {
+      plan: "one",
+      on: "question",
+      step: "Brief",
+      decision: "Which map?",
+      accept: "A",
+      alternative: "B",
+      requestId: "req-planning",
+    } as unknown as Waiting;
+    await expect(
+      answerDecision(
+        {
+          sessions: manager,
+          where: async () => ({ cwd: "/mock/proj" }),
+          approve: async () => ({}),
+          release: async () => ({}),
+          record: () => ({ commit: { committed: true } }),
+        },
+        "proj",
+        waiting,
+        { choice: "accept" },
+      ),
+    ).resolves.toMatchObject({ via: "question" });
+    expect(answered).toEqual([{ kind: "planning", requestId: "req-planning" }]);
+  });
+});
+
+describe("A14 — a new build at the cap is refused before it starts", () => {
+  it("A14 startBuild with the machine at its cap throws the cap's refusal and starts no build", async () => {
+    const manager = install(2);
+    manager.start(planning("one"));
+    manager.start(planning("two"));
+    await expect(startBuild("proj", "three")).rejects.toThrow(
+      /2 sessions are running \(sessions\.max\)/,
+    );
+    expect(buildState("proj", "three")).toBeNull();
   });
 });
