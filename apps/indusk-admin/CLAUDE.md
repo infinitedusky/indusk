@@ -232,3 +232,11 @@ Each entry is a rule and a pointer; the pointer holds the story.
   no current step; a hand-written `=== "accepted"` showed "The brief is
   incomplete" on finished plans. Guarded by `PlanSummary.test.tsx` (A28). — see
   `/reference/admin-ui/overview`
+- **The nav's width is the person's, per browser, and its plan tree is drawn by
+  `nav.expanded`**: `CockpitFrame` keeps the width in `localStorage`
+  (`indusk-admin.nav.width`), clamps it between `--size-nav` and
+  `--size-nav-max`, keeps it through a collapse, and draws no `NavHandle` below
+  760 px. `PlanList` draws the tree through `NavPath`, `PlanRow` and `NavGroup`
+  — a Path is folded and numbered, a plan carries its stage — and never its own
+  markup. Guarded by `CockpitFrame.test.tsx` (A1–A4) and `PlanList.test.tsx`.
+  — see `/decisions/cockpit-redraw`

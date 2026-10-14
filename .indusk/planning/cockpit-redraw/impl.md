@@ -161,7 +161,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: the nav's width is the person's, per browser, between `--size-nav` and `--size-nav-max`; the plan tree is drawn by `nav.expanded`, not the app's own
+- [x] `apps/indusk-admin/CLAUDE.md`: the nav's width is the person's, per browser, between `--size-nav` and `--size-nav-max`; the plan tree is drawn by `nav.expanded`, not the app's own
 
 #### Build Phase 2 Document
 
