@@ -641,9 +641,9 @@
 			"properties": [
 				{
 					"name": "state",
-					"type": "\"you\" | \"agent\"",
+					"type": "\"you\" | \"agent\" | \"agent-folded\" | \"agent-open\"",
 					"required": true,
-					"description": "Whose words: the person's, set to the right on a wash, or the agent's, on a surface."
+					"description": "Whose words: the person's, set to the right on a wash, or the agent's, on\na surface. An agent's reply with working behind it is `agent-folded` (the\nworking hidden behind \"See more ›\") or `agent-open` (the working shown\nabove the reply, \"See less\" to hide it)."
 				},
 				{
 					"name": "children",
@@ -657,6 +657,19 @@
 					"required": false,
 					"defaultValue": "[]",
 					"description": "The documents that came with it, by name."
+				},
+				{
+					"name": "working",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "[]",
+					"description": "What the agent did before it replied: one line each; shown only when open."
+				},
+				{
+					"name": "onToggle",
+					"type": "() => void",
+					"required": false,
+					"description": "The fold button was pressed; the page flips `state` between folded and open."
 				},
 				{
 					"name": "className",
@@ -675,10 +688,20 @@
 					"name": "agent",
 					"id": "ui-message--agent",
 					"snapshotHash": "610a400a814d02dfc03e7f756b29c27ce5589243e3a34bd086d52781a2e0fd95"
+				},
+				{
+					"name": "agent-folded",
+					"id": "ui-message--agent-folded",
+					"snapshotHash": "8165eec6b2946cc278e1c05853669f458c6bdb384d056609b767d0603194b561"
+				},
+				{
+					"name": "agent-open",
+					"id": "ui-message--agent-open",
+					"snapshotHash": "fe07d1bd3b6894080026b60a0955273c27cc23719cb22f99ae2a0562b510412d"
 				}
 			],
 			"stylesheet": "components/message.css",
-			"stylesheetHash": "e4b47a0a229a9e9792394cc951df5652c46387bd1b225f6e9e56ab5ca31f37dd"
+			"stylesheetHash": "1da843a71f8e491f2197e3e3b41b9f53b4d51e7e23da377a8af7fe868125dbd6"
 		},
 		{
 			"name": "nav",

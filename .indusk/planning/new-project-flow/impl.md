@@ -270,7 +270,7 @@ Deferred-body review (Test Phase 1):
 **Tier**: med — the work step's default
 
 - [x] `apps/indusk-admin/src/lib/conversation-turns.ts`: `turnsOf(events)` — alternating `{ who: "you", text }` and `{ who: "agent", reply, working, waiting }` turns; the reply is the turn's last `text` (or the `result` text when there is none), `tool` events and earlier text are `working`, an open `question` or `permission` is `waiting`
-- [ ] `Message` (`components/ui/Message.tsx`) gains the `agent-folded` and `agent-open` states: the reply through `Markdown`, the working behind "See more ›" / "See less"; stories for both states, `indusk looks stories admin`
+- [x] `Message` (`components/ui/Message.tsx`) gains the `agent-folded` and `agent-open` states: the reply through `Markdown`, the working behind "See more ›" / "See less"; stories for both states, `indusk looks stories admin`
 - [ ] `components/new-project/ConversationThread.tsx`: the thread of `Message` bubbles from `turnsOf`, a waiting question or permission answered in place, the reply box sending through the session's `say`; `NewProjectConversation` uses it in place of `SessionConnector` (the plan conversation keeps `SessionConnector`)
 - [ ] The draft keeps `transcript.jsonl`: the manager's events for a project conversation's session are appended to it; the page reads it when no session runs; `discard` removes it with the draft
 - [ ] `lib/new-project/prompt.ts`: reply in a few sentences of Markdown, at most three questions at a time, only what the documents leave open

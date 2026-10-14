@@ -36,3 +36,39 @@ export const Agent: Story = {
     ),
   },
 };
+
+const reply = (
+  <>
+    <p>
+      Your brief answers <strong>why</strong> and <strong>what</strong>. Three
+      things it leaves open:
+    </p>
+    <ol>
+      <li>Is mobile a phone app that enforces the lock?</li>
+      <li>Where should the server run?</li>
+      <li>Name and place?</li>
+    </ol>
+  </>
+);
+
+/** The agent's reply with its working hidden behind "See more ›". */
+export const AgentFolded: Story = {
+  args: {
+    state: "agent-folded",
+    working: ["Read planner.md"],
+    children: reply,
+  },
+};
+
+/** The same reply with its working shown above it, and "See less". */
+export const AgentOpen: Story = {
+  args: {
+    state: "agent-open",
+    working: [
+      "Read planner.md",
+      "Read documents/Homework Gate Project Brief.md",
+      "Wrote knowledge.json — why settled, what settled",
+    ],
+    children: reply,
+  },
+};
