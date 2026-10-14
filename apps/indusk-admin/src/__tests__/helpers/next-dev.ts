@@ -1,5 +1,5 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -60,12 +60,20 @@ export async function startNextDev(options: {
   env?: Record<string, string>;
 }): Promise<DevServer> {
   const port = await findFreePort();
+  // Its own build directory, so it never meets another `next dev`'s lock (the
+  // admin's own, a person's): one fixed name, so `tsconfig.json` names it once.
+  const distDir = ".next-tests";
   const server: ChildProcess = spawn(
     "pnpm",
     ["exec", "next", "dev", "--port", String(port)],
     {
       cwd: ADMIN_ROOT,
-      env: { ...process.env, INDUSK_HOME: options.home, ...options.env },
+      env: {
+        ...process.env,
+        INDUSK_HOME: options.home,
+        INDUSK_ADMIN_DIST_DIR: distDir,
+        ...options.env,
+      },
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
@@ -97,6 +105,7 @@ export async function startNextDev(options: {
         await sleep(200);
         if (!server.killed) server.kill("SIGKILL");
       }
+      rmSync(path.join(ADMIN_ROOT, distDir), { recursive: true, force: true });
     },
   };
 }

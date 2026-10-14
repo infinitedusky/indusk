@@ -189,6 +189,7 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
   - `?nav=<px>`, clamped to the foundation's bounds, read by `CockpitFrame` ahead of the kept width and never kept; tested in `CockpitFrame.test.tsx`
 - [ ] Discovered (per-state paths): `screens.json` lists one path per state (a screen listed once per path), keeping the approved declarations' hash unchanged
 - [ ] Discovered (per-state paths): A10 serves fixture plans in each condition (four plan states, two brief states) from a throwaway project registered as `dusk`, and checks the plan's screens against them — assertions unchanged
+- [x] Discovered (verification): a test's `next dev` could not start beside a person's running admin (Next holds one lock per build directory: "Another next dev server is already running"), so the helper builds into `.next-tests` (`INDUSK_ADMIN_DIST_DIR` in `next.config.ts`, named once in `tsconfig.json`, ignored by git)
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 3 Verification
