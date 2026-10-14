@@ -17,6 +17,8 @@ import { installProblems } from "../lib/new-project/install.js";
 import { readPlanDeclarations } from "../lib/plan-parser.js";
 import { git, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
+// promise: a-project-conversation-is-a-back-and-forth
+
 /**
  * new-project-flow, Test Phase 1: A4, A6-A11, A13-A18, A21, A22 - what a person
  * gets from `indusk new-project`, the command the admin calls, run through the

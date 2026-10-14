@@ -11,6 +11,7 @@ import {
 } from "./proposal.js";
 
 // promise: the-core-is-always-kept
+// promise: a-new-project-has-the-standard-layout
 
 const made: string[] = [];
 afterEach(() => {

@@ -58,6 +58,8 @@ import { conversationFigures, readTranscript } from "./transcript.js";
  * promise: a-new-project-is-made-by-the-agent
  * promise: a-new-project-publishes-nothing-unasked
  * promise: a-new-project-is-written-only-under-its-parent
+ * promise: a-project-keeps-its-founding-brief
+ * promise: a-recommendation-can-be-declined
  */
 
 const exec = promisify(execFile);
