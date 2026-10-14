@@ -46,9 +46,9 @@ Several plans can each have an agent at once: the session manager refuses only a
 | A1 | With a planning session running for one plan, a planning session for another plan starts | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A2 | A second planning session on the same plan is refused, naming the session already running | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A3 | A plan can have a planning session and a build running at the same time | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager.test.ts |
-| A4 | A draft's conversation starts while a plan's session is running | Test Phase 1 | Build Phase 2 | written | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
-| A5 | Starting a build of one plan from the admin is not refused because another plan has a session | Test Phase 1 | Build Phase 2 | written | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
-| A6 | With sessions running on two plans, each plan's waiting entry shows its own session and question, never the other's | Test Phase 1 | Build Phase 2 | written | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
+| A4 | A draft's conversation starts while a plan's session is running | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
+| A5 | Starting a build of one plan from the admin is not refused because another plan has a session | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
+| A6 | With sessions running on two plans, each plan's waiting entry shows its own session and question, never the other's | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
 | A7 | In the running admin, a person starts planning on two plans and talks to both without stopping either | Build Phase 2 | Build Phase 2 | planned | live check | promise: a-session-belongs-to-its-plan | manual: recorded in Build Phase 2's Verification |
 | A8 | With as many sessions running as the cap allows, another start is refused, naming each running session and how to stop one | Test Phase 1 | Build Phase 1 | passing | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A9 | With no sessions.max set a fifth session is refused and a fourth is not; with sessions.max 2 in the InDusk home's config a third is refused | Test Phase 1 | Build Phase 1 | passing | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
@@ -122,7 +122,8 @@ Several plans can each have an agent at once: the session manager refuses only a
 
 #### Build Phase 2 Verification
 
-- [ ] A4, A5, A6 pass (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts && pnpm exec vitest related <the files this phase changed> --run`); tsc and biome clean on changed files; the admin's everyday suite passes
+- [x] A4, A5, A6 pass (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts && pnpm exec vitest related <the files this phase changed> --run`); tsc and biome clean on changed files; the admin's everyday suite passes
+  - Result: `sessions-per-plan.test.ts` 3 passed (A4, A5, A6); `vitest related` on the 16 changed files 18 files, 132 tests passed; `tsc --noEmit` clean; `biome check` on the changed files clean; `pnpm test` in `apps/indusk-admin` 89 files, 562 tests passed (it prints `Maximum update depth exceeded` console noise from browser-project tests; the effects' dependency arrays are unchanged by this phase).
 - [ ] A7, live check: with the admin running from this worktree, start planning on two plans, send each a message, and see both answer without either being stopped — recorded here with the date and what was seen
 
 #### Build Phase 2 Context
