@@ -77,7 +77,7 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 
 #### Test Phase 1 Context
 
-- [ ] guard: `skip-reason-length.test.ts` opens with `// promise: a-skip-reason-is-one-sentence`, and the A1–A3 block with `// promise: a-skipped-step-shows-why-on-request`
+- [x] guard: `skip-reason-length.test.ts` opens with `// promise: a-skip-reason-is-one-sentence`, and the A1–A3 block with `// promise: a-skipped-step-shows-why-on-request`
 
 ### Build Phase 1: The reason is a summary
 
