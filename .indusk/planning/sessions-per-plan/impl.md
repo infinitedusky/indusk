@@ -1,7 +1,7 @@
 ---
 title: "Sessions per plan"
 date: 2026-10-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -54,8 +54,8 @@ Several plans can each have an agent at once: the session manager refuses only a
 | A9 | With no sessions.max set a fifth session is refused and a fourth is not; with sessions.max 2 in the InDusk home's config a third is refused | Test Phase 1 | Build Phase 1 | passing | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A10 | With two sessions running, stopping one leaves the other running and recorded | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard over a-session-can-be-stopped, which the brief must not break; it needs two sessions, which only this plan allows | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A11 | A session that ends records its end for its own plan, and the others' records stay | Test Phase 1 | Build Phase 1 | passing | unit | a regression guard over a-session-says-how-it-ended; it needs two sessions, which only this plan allows | apps/indusk-mcp/src/lib/session/manager.test.ts |
-| A13 | With a build running on a plan and a planning session started after it, answering the planning session's question on the decision card reaches the planning session | Build Phase 3 | Build Phase 3 | written | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
-| A14 | With the machine at its cap, a running build's next step still starts; a new build at the cap is refused before it starts | Build Phase 3 | Build Phase 3 | written | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A13 | With a build running on a plan and a planning session started after it, answering the planning session's question on the decision card reaches the planning session | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
+| A14 | With the machine at its cap, a running build's next step still starts; a new build at the cap is refused before it starts | Build Phase 3 | Build Phase 3 | passing | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A12 | A second session on the same plan is refused as already running on this plan, asks whether to continue it here, and hands back its id | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
 
 ## Checklist
@@ -155,19 +155,23 @@ Several plans can each have an agent at once: the session manager refuses only a
 - [x] `deliver` answers a question through the session that asked it: the project's session for that plan whose `pendingQuestion(id)?.requestId` is `waiting.requestId`; a "say" goes to the plan's planning session (`forPlan(project, plan, "planning")`). `DecisionSessions` gains what that needs (`running`, `pendingQuestion`)
   - Note: two fallbacks keep plan-cockpit's A15/A16 green. A request no longer pending (already answered) falls back to the plan's session, so the manager's own "already answered" refusal still speaks; a "say" with no planning session goes to whichever session the plan has, as A16 (words said to a running build) requires.
 - [x] A build's step sessions are not refused by the cap: `ManagedStart` gains `inBuild?: true`, which `runStepSession` passes and `refusalFor` lets past the cap (never past the same-plan rule); `startBuild` checks the cap once, before the build starts, with the same refusal the manager gives
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+  - Run after Verification, reading the phase's diff (manager.ts, build-session.ts, decisions.ts, build-host.ts). One finding, below; `manager.ts` left as-is: `capRefusal` is the one place the cap's wording lives and `refusalFor` calls it, and the `inBuild` strip in `start` is one destructure.
+- [x] Shape (`apps/indusk-admin/src/lib/decisions.ts`) — `deliver`'s question branch carried the lookup of the asking session inline beside the routing; it is now `sessionThatAsked(deps, project, waiting)`, named for what it finds. Rule: should this inline block have been a named function? (shape: intra-unit). Re-ran `sessions-per-plan.test.ts` and `decisions.test.ts` (17 passed), tsc and biome clean.
 
 #### Build Phase 3 Verification
 
-- [ ] A13 and A14 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/session/manager.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts && pnpm exec vitest related src/lib/decisions.ts src/lib/build-host.ts --run`); tsc and biome clean on changed files
+- [x] A13 and A14 pass (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/session/manager.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts && pnpm exec vitest related src/lib/decisions.ts src/lib/build-host.ts --run`); tsc and biome clean on changed files
+  - Result: `manager.test.ts` 21 passed (A14 three tests); `sessions-per-plan.test.ts` 6 passed (A13, A14); `vitest related` 14 files, 109 tests passed; `tsc --noEmit` clean in both apps; `biome check` clean on changed files. `build-host.release.test.ts`'s manager mock gained `capRefusal` (a stub, no assertion changed).
 
 #### Build Phase 3 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: an answer goes to the session that asked, found by its request — guarded by `sessions-per-plan.test.ts` (A13)
+- [x] `apps/indusk-admin/CLAUDE.md`: an answer goes to the session that asked, found by its request — guarded by `sessions-per-plan.test.ts` (A13)
+  - Note: the file was already past its nested budget (16384 bytes), so the edit merged the sessions bullet with the new rule and shrank it; the rule's wording on `GET /api/sessions` was dropped from the bullet (the route's own file and the docs page state it).
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md` Sessions section: a build holds its place under the cap from its first step to its last
+- [x] `apps/docs/src/reference/admin-ui/overview.md` Sessions section: a build holds its place under the cap from its first step to its last
 
 ## Files Affected
 
