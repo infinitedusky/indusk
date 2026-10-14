@@ -69,6 +69,8 @@ export interface CatalogInput {
 	properties: ReadonlyMap<string, CatalogProperty[]>;
 	/** A story id's place among its component's stories, for the order of states. */
 	order: ReadonlyMap<string, number>;
+	/** Where each story's fillable properties land, by story id (`looks/stories`' marker render). */
+	content: ReadonlyMap<string, Record<string, number[][]>>;
 }
 
 /**
@@ -117,6 +119,7 @@ export function buildCatalog(input: CatalogInput): {
 			name: state,
 			id,
 			snapshotHash: snapshotHash(snapshotBytes(html)),
+			content: input.content.get(id) ?? {},
 		});
 		byComponent.set(name, component);
 	}

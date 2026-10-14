@@ -104,6 +104,15 @@ is composed in turn, so a screen is made of components and words alone.
 Placed words are part of the mockup, so changing them returns an approved
 mockup to proposed, as changing the component does.
 
+### Which properties a state can take
+
+The render step renders each story a second time with its words replaced by
+markers and records, per state, where each property's words land. That record
+is `content` on the state in `components.json`: a state's keys are the
+properties a mockup may fill (`children` for bare content, or the named
+property for `<indusk-content for>`). A state that lists none takes no
+content — its words are the story's.
+
 ## Approval, and taking it back
 
 A person approves, never an agent. In the cockpit's Looks page, **Show:

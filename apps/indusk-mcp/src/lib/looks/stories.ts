@@ -37,8 +37,14 @@ import { buildCatalog, manifestIndex, snapshotBytes } from "./stories-catalog.js
  * Storybook's components manifest, which the app's `build:storybook` writes;
  * a manifest older than a story or a component is rebuilt first.
  *
+ * Each story renders a second time with its words replaced by markers
+ * (`contentPaths` in the generated preview), and the child-index paths of the
+ * text nodes that carry them are written per state as `content` — where a
+ * mockup's words for each property land (`looks/compose` fills them).
+ *
  * promise: every-component-state-has-a-story
  * promise: an-agent-can-find-every-component
+ * promise: a-placed-component-shows-its-content
  */
 
 const run = promisify(execFile);
@@ -46,6 +52,8 @@ const run = promisify(execFile);
 export const SNAPSHOTS_DIR = "components";
 /** The app's compiled CSS, written beside the stories' markup while they render. */
 const APP_CSS = "_app.css";
+/** What the second, marker render writes beside a story's markup: where each fillable property lands. */
+const CONTENT_SUFFIX = ".content.json";
 const CACHE = join("node_modules", ".cache", "indusk-looks");
 const SB_MANIFEST = join("manifests", "components.json");
 const MAIN_FILES = ["main.ts", "main.mts", "main.js", "main.mjs"];
@@ -219,6 +227,81 @@ function storybookPreview(outDir: string, previewFile: string | undefined): stri
 ${previewFile ? `import app from ${JSON.stringify(previewFile)};` : "const app = {};"}
 
 const own = app as { afterEach?: unknown };
+
+const MARK = "\\u2063";
+const WORDS = new RegExp(MARK + "slot:([^" + MARK + "]+)" + MARK, "g");
+
+/** Where each marker sits: its name to the child-index paths of the text nodes that carry it. */
+function markerPaths(root: Node): Record<string, number[][]> {
+	const found: Record<string, number[][]> = {};
+	const walk = (node: Node, path: number[]) => {
+		node.childNodes.forEach((child, i) => {
+			const here = [...path, i];
+			if (child.nodeType === 3) {
+				for (const m of (child as Text).data.matchAll(WORDS)) {
+					const list = (found[m[1] as string] ??= []);
+					if (!list.some((p) => p.join() === here.join())) list.push(here);
+				}
+			} else walk(child, here);
+		});
+	};
+	walk(root, []);
+	return found;
+}
+
+/** The text a canvas shows, by text node, once adjacent nodes are merged as the serialized markup is read. */
+function texts(root: Node): string[] {
+	const out: string[] = [];
+	const walk = (node: Node) =>
+		node.childNodes.forEach((child) => {
+			if (child.nodeType === 3) out.push((child as Text).data.trim());
+			else walk(child);
+		});
+	walk(root);
+	return out;
+}
+
+/**
+ * Where a mockup's words land in this story. The story is rendered a second
+ * time with each argument that is words (a string the first render shows as a
+ * text node, and \`children\`) replaced by a marker no story's own words can
+ * equal; the child-index paths of the text nodes carrying a marker are the
+ * property's places. A story that cannot render again by itself records none:
+ * a component that takes no content is a fact, not a failure.
+ */
+async function contentPaths(context: {
+	args: Record<string, unknown>;
+	canvasElement: HTMLElement;
+	originalStoryFn: (args: unknown, context: unknown) => unknown;
+}): Promise<Record<string, number[][]>> {
+	const shown = new Set(texts(context.canvasElement));
+	const marked: Record<string, unknown> = { ...context.args };
+	const names: string[] = [];
+	for (const [name, value] of Object.entries(context.args)) {
+		const words = typeof value === "string" && value.trim() !== "" && shown.has(value.trim());
+		if (words || (name === "children" && value !== undefined && value !== null)) {
+			marked[name] = MARK + "slot:" + name + MARK;
+			names.push(name);
+		}
+	}
+	if (names.length === 0) return {};
+	const [{ createRoot }, { flushSync }] = await Promise.all([
+		import("react-dom/client"),
+		import("react-dom"),
+	]);
+	const host = document.createElement("div");
+	document.body.appendChild(host);
+	const root = createRoot(host);
+	try {
+		flushSync(() => root.render(context.originalStoryFn(marked, context) as never));
+		host.normalize();
+		return markerPaths(host);
+	} finally {
+		root.unmount();
+		host.remove();
+	}
+}
+
 export default {
 	...app,
 	afterEach: [
@@ -227,6 +310,16 @@ export default {
 			await server.commands.writeFile(
 				${JSON.stringify(`${outDir}/`)} + context.id + ".html",
 				context.canvasElement.innerHTML,
+			);
+			let content: Record<string, number[][]> = {};
+			try {
+				content = await contentPaths(context as never);
+			} catch {
+				// A story that will not render by itself takes no content.
+			}
+			await server.commands.writeFile(
+				${JSON.stringify(`${outDir}/`)} + context.id + "${CONTENT_SUFFIX}",
+				JSON.stringify(content),
 			);
 			// The app's compiled CSS as the build wrote it: a <style> element's own text
 			// when it has one (the dev server's), else the rules the browser parsed.
@@ -272,7 +365,11 @@ function writeRunConfig(appDir: string): { cacheDir: string; outDir: string } {
 }
 
 /** Run every story through the app's Vitest; the markup each rendered, by story id, and the app's compiled CSS. */
-async function renderAll(appDir: string): Promise<{ rendered: Map<string, string>; css: string }> {
+async function renderAll(appDir: string): Promise<{
+	rendered: Map<string, string>;
+	content: Map<string, Record<string, number[][]>>;
+	css: string;
+}> {
 	const { cacheDir, outDir } = writeRunConfig(appDir);
 
 	const vitest = join(
@@ -300,11 +397,17 @@ async function renderAll(appDir: string): Promise<{ rendered: Map<string, string
 	if (failure) throw new LooksAppError(`a story did not render in ${appDir}:\n${failure}`);
 
 	const rendered = new Map<string, string>();
+	const content = new Map<string, Record<string, number[][]>>();
 	let css = "";
 	if (existsSync(outDir)) {
 		for (const file of await readdir(outDir)) {
 			if (file === APP_CSS) css = readFileSync(join(outDir, file), "utf-8");
-			else if (file.endsWith(".html")) {
+			else if (file.endsWith(CONTENT_SUFFIX)) {
+				content.set(
+					file.slice(0, -CONTENT_SUFFIX.length),
+					JSON.parse(readFileSync(join(outDir, file), "utf-8")),
+				);
+			} else if (file.endsWith(".html")) {
 				rendered.set(
 					file.slice(0, -".html".length),
 					readFileSync(join(outDir, file), "utf-8").trim(),
@@ -312,7 +415,7 @@ async function renderAll(appDir: string): Promise<{ rendered: Map<string, string
 			}
 		}
 	}
-	return { rendered, css };
+	return { rendered, content, css };
 }
 
 /**
@@ -382,7 +485,7 @@ export async function renderStories(root: string, appName: string): Promise<Stor
 	}
 
 	const { properties, order } = manifestIndex(await manifestOf(root, app, appDir));
-	const { rendered, css } = await renderAll(appDir);
+	const { rendered, content, css } = await renderAll(appDir);
 	const missing = [...order.keys()].filter((id) => !rendered.has(id));
 	if (missing.length > 0) {
 		throw new LooksAppError(`story did not render to a snapshot: ${missing.join(", ")}`);
@@ -396,6 +499,7 @@ export async function renderStories(root: string, appName: string): Promise<Stor
 		sources: app.sources,
 		properties,
 		order,
+		content,
 	});
 
 	mkdirSync(snapshotsDir, { recursive: true });

@@ -50,7 +50,7 @@ components alone (see [adr.md](adr.md)).
 | A2 | A step placed with content for its name shows that name where the story's name was, its look unchanged | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
 | A3 | A container placed with components inside shows them composed where the story's content was | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
 | A4 | A component placed with no content shows the story's words exactly as before | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
-| A5 | After the admin's stories render, each state says which properties a mockup may fill — button and tag words, step name, box title and body | Test Phase 1 | Build Phase 2 | written | contract | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/__tests__/looks-component-content.contract.test.ts |
+| A5 | After the admin's stories render, each state says which properties a mockup may fill — button and tag words, step name, box title and body | Test Phase 1 | Build Phase 2 | passing | contract | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/__tests__/looks-component-content.contract.test.ts |
 | A6 | The lint refuses any element inside a placed component other than a placed component or named content, naming file, line and element | Test Phase 1 | Build Phase 3 | written | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
 | A7 | The lint refuses content for a property the state does not take, naming the component and the property | Test Phase 1 | Build Phase 3 | written | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
 | A8 | The lint accepts text and placed components inside a placed component | Test Phase 1 | Build Phase 3 | passing | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
@@ -111,22 +111,22 @@ components alone (see [adr.md](adr.md)).
 
 **Tier**: med — the work step's default
 
-- [ ] The generated `afterEach` in `looks/stories.ts` renders each story a second time with every string arg and `children` replaced by `⁣slot:<arg>⁣`, walks the canvas's text nodes for each marker, and writes the child-index paths beside the snapshot (`components/<name>.<state>.content.json`)
-- [ ] `buildCatalog` in `looks/stories-catalog.ts` puts each state's paths in `components.json` as `content`; `snapshotBytes` in `looks/mockups.ts` hands them to `compose`
-- [ ] Run `indusk looks stories admin` and commit the regenerated `components.json` and snapshots
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] The generated `afterEach` in `looks/stories.ts` renders each story a second time with every string arg and `children` replaced by `⁣slot:<arg>⁣`, walks the canvas's text nodes for each marker, and writes the child-index paths beside the snapshot (`components/<name>.<state>.content.json`)
+- [x] `buildCatalog` in `looks/stories-catalog.ts` puts each state's paths in `components.json` as `content`; `snapshotBytes` in `looks/mockups.ts` hands them to `compose` (decision: `snapshotBytes` lives in `stories-catalog.ts` and only frames bytes; the hand-off is `readApp` reading `components.json` onto each `Story.content`, done in Build Phase 1 so A10 could pass there)
+- [x] Run `indusk looks stories admin` and commit the regenerated `components.json` and snapshots
+- [x] Shape — reviewed `stories.ts`, `stories-catalog.ts`: nothing to extract. Decision: the marker render only replaces string args the first render shows as a text node plus `children`, so an enum arg (`variant`, `state`) is never overwritten; adjacent text nodes are merged by serialization, so two markers in one text node share one path (noted limitation). Left as is: the generated preview is one string template in `stories.ts` — it is the file's existing shape
 
 #### Build Phase 2 Verification
 
-- [ ] A5 passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-component-content.contract.test.ts`); A11 still passes; `pnpm exec vitest related src/lib/looks/stories.ts src/lib/looks/stories-catalog.ts src/lib/looks/mockups.ts`
+- [x] A5 passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-component-content.contract.test.ts`); A11 still passes; `pnpm exec vitest related src/lib/looks/stories.ts src/lib/looks/stories-catalog.ts src/lib/looks/mockups.ts`
 
 #### Build Phase 2 Context
 
-- [ ] mcp: the docblock of `looks/stories.ts` — the second, marker render and the `content` map it writes per state — `promise: a-placed-component-shows-its-content`
+- [x] mcp: the docblock of `looks/stories.ts` — the second, marker render and the `content` map it writes per state — `promise: a-placed-component-shows-its-content`
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/guide/components.md`: which properties a state can take, read from `content` in `components.json`
+- [x] `apps/docs/src/guide/components.md`: which properties a state can take, read from `content` in `components.json`
 
 ### Build Phase 3: The lint holds content to words and components
 
