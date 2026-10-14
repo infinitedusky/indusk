@@ -224,7 +224,8 @@ Deferred-body review (Test Phase 1):
 - [x] `lib/new-project/create.ts`: `createProject(home, id, { now, report })` — refuse an unset parent (naming `indusk new-project parent <dir>`) or a location outside it; make `<location>/`, `<location>/<repo>/` (`git init -b main`, README commit), `<location>/worktrees/`, a minimal `package.json`; run `indusk init --workbench --wrapped-repo <repo> --sibling-parent <location>` as a child process; rewrite `worktree` to `repos: [{ name, worktrees: "worktrees" }]`; write `project-brief.md` (`kind: project-brief`), `sources/<file>` per document, `master.md` with `roadmap:`; write `recommendations` and `planning.documents_off`; `gh repo create <name> --private --source <repo> --push` only when `remote.github`; commit the workbench root; delete the draft. Every step calls `report(step, state)`; a failure removes what the run made
   - Decision: the worktree config is written `{ shape: "workbench", repos: [{ name, worktrees: "worktrees" }], repos_root: "." }`, not with `sibling_parent` as the ADR wrote: `repos_root: "."` is the declared shape for repositories inside the workbench (`readReposRoot`), and without it `worktree list` reads the repository as an "unusual" trunk (A6). Progress is also kept in the draft as `creating.json` (steps and where each stands, `lib/new-project/steps.ts`) so a page opened mid-run or after a failure can show it; `gh repo create` is named for the first repository and its failure leaves the finished local project (a `remoteError`), as the ADR's Risks say.
 - [x] CLI `indusk new-project accept <id>` printing each step
-- [ ] Admin: `/api/new-projects/[id]/accept` streaming the steps; `NewProjectCreating` (the `new-project.creating` look) ending with a link to `/p/<name>/`
+- [x] Admin: `/api/new-projects/[id]/accept` streaming the steps; `NewProjectCreating` (the `new-project.creating` look) ending with a link to `/p/<name>/`
+  - Decision: the look is reached with `paths.creating` = `/new/{seed}?creating=1` and the `new-project` seed also copying `seed/homework-gate-creating.json` into the draft as `creating.json`; the page shows the creation only for `?creating=1` (the panel sets it when a run starts), so the `proposal` and `conversation` seeds, which share the draft, are untouched.
 - [ ] Live check: create Homework Gate from its brief through the admin into a temporary parent; record the questions asked and the result here
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
@@ -242,13 +243,13 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 3 Context
 
-- [ ] mcp: the docblock of `lib/new-project/create.ts` — the standard layout and the order of creation — `promise: a-new-project-has-the-standard-layout`
+- [x] mcp: the docblock of `lib/new-project/create.ts` — the standard layout and the order of creation — `promise: a-new-project-has-the-standard-layout`
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/guide/new-project.md`: creation, the parent directory, the remote confirm; the Mermaid flow
-- [ ] `apps/docs/src/guide/worktree-setup.md`: the admin as the first way to make a workbench
-- [ ] `apps/docs/src/decisions/new-project-flow.md` published; changelog entry "Added — start a new project from the admin by describing it"
+- [x] `apps/docs/src/guide/new-project.md`: creation, the parent directory, the remote confirm; the Mermaid flow
+- [x] `apps/docs/src/guide/worktree-setup.md`: the admin as the first way to make a workbench
+- [x] `apps/docs/src/decisions/new-project-flow.md` published; changelog entry "Added — start a new project from the admin by describing it"
 
 ## Files Affected
 
