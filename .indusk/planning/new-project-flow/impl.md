@@ -46,8 +46,8 @@ nothing the person did not accept (see [adr.md](adr.md)).
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | New project opens a page with only the "What do you want to build?" box and a way to add documents, needing no project | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-project-starts-as-a-conversation | apps/indusk-admin/src/components/new-project/NewProjectStart.test.tsx |
-| A2 | The first message, with documents added, starts a conversation with the agent that holds both | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-project-starts-as-a-conversation | apps/indusk-admin/src/__tests__/new-project-routes.test.ts |
+| A1 | New project opens a page with only the "What do you want to build?" box and a way to add documents, needing no project | Build Phase 1 | Build Phase 1 | written | unit | promise: a-project-starts-as-a-conversation | apps/indusk-admin/src/components/new-project/NewProjectStart.test.tsx |
+| A2 | The first message, with documents added, starts a conversation with the agent that holds both | Build Phase 1 | Build Phase 1 | written | unit | promise: a-project-starts-as-a-conversation | apps/indusk-admin/src/__tests__/new-project-routes.test.ts |
 | A3 | Once the agent writes its proposal, the page shows the name, location and shape, each changeable before accepting | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-project-starts-as-a-conversation | apps/indusk-admin/src/components/new-project/NewProjectProposal.test.tsx |
 | A4 | Accepting creates the workbench, a repository inside it with one commit, a worktrees folder, InDusk installed, and a registered project | Test Phase 1 | Build Phase 3 | written | unit | promise: a-new-project-is-made-by-the-agent | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A5 | The creation shows each step as it runs and ends with a way into the project | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-new-project-is-made-by-the-agent | apps/indusk-admin/src/components/new-project/NewProjectCreating.test.tsx |
