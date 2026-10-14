@@ -65,4 +65,31 @@ describe("A25 — the admin acts only through the package", () => {
       .map((f) => relative(SRC, f));
     expect(local).toEqual([]);
   });
+
+  it("a project conversation is written only through the package's new-project module, never by the admin's own filesystem calls", () => {
+    // new-project-flow: the draft a project conversation keeps is the package's
+    // (`lib/new-project/`, `indusk new-project`); the routes and their helpers
+    // call it and touch no file themselves.
+    const ownFiles = sources().filter((f) =>
+      /(?:app\/api\/new-projects\/|lib\/new-project-[\w-]+\.ts$)/.test(
+        relative(SRC, f),
+      ),
+    );
+    expect(ownFiles.length).toBeGreaterThan(0);
+    const writing = ownFiles
+      .filter((f) =>
+        /from ["']node:fs(?:\/promises)?["']/.test(readFileSync(f, "utf-8")),
+      )
+      .map((f) => relative(SRC, f));
+    expect(writing).toEqual([]);
+    const outsidePackage = ownFiles
+      .filter(
+        (f) =>
+          !/@infinitedusky\/indusk-mcp\/new-project/.test(
+            readFileSync(f, "utf-8"),
+          ),
+      )
+      .map((f) => relative(SRC, f));
+    expect(outsidePackage).toEqual([]);
+  });
 });

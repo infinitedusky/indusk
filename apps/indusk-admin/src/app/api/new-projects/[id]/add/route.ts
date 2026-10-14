@@ -1,5 +1,6 @@
 import {
   addDocument,
+  documentNotice,
   findProjectDraft,
   induskHome,
   newProjectSessionPlan,
@@ -47,12 +48,7 @@ export async function POST(
   const running = sessionManager().current();
   const told = running?.plan === newProjectSessionPlan(id);
   if (told) {
-    sessionManager().say(
-      running.id,
-      added.replaced
-        ? `A newer version of ./documents/${added.name} was added. What changed:\n\n${added.diff || "(nothing differs)"}\n\nWork from the new version.`
-        : `A document was added: ./documents/${added.name}. Read it.`,
-    );
+    sessionManager().say(running.id, documentNotice(added));
   }
   return Response.json({ ...added, told });
 }
