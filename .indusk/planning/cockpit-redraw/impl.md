@@ -145,7 +145,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 - [x] `--size-nav-max` in the admin's foundation (`foundation.tokens.json`, regenerated CSS), the widest the nav drags
 - [ ] `NavHandle` (`components/ui/NavHandle.tsx`) with stories `default` and `dragging`, approved against `nav-handle.default` / `nav-handle.dragging`: a vertical separator a pointer drags, with keyboard steps
-- [ ] `CockpitFrame` keeps the nav's width in `localStorage` (`indusk-admin.nav.width`) beside the collapse choice, applies it to the shell's nav column above 760 px, clamps it between `--size-nav` and `--size-nav-max`, keeps it through collapse, and renders no handle below 760 px (A1–A4)
+- [x] `CockpitFrame` keeps the nav's width in `localStorage` (`indusk-admin.nav.width`) beside the collapse choice, applies it to the shell's nav column above 760 px, clamps it between `--size-nav` and `--size-nav-max`, keeps it through collapse, and renders no handle below 760 px (A1–A4)
 - [ ] `Nav` redrawn to `nav.expanded`: project, Needs you, the views with Scorecards, then every plan under its Paths with its stage, Archived folded; its stories updated and reapproved against the mockup; `nav.wide` drawn by the same components at a wider width
 - [ ] The components the approved nav mockups redraw inline (`<meta name="indusk-new-components">`): `Nav`, `PlanRow`, `ViewLink` and `Badge` (with its new `idle` state for drafts) rebuilt to match, their stories rendered and approved by Sandy, and the mockups recomposed from them so they draw nothing inline — `plans accept` refuses while one does
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
