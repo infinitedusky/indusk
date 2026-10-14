@@ -1,7 +1,7 @@
 ---
 title: "New project flow — from a text box to a laid-out project"
 date: 2026-10-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -441,7 +441,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 8 Verification
 
-- [ ] A43, A44 pass; every earlier row still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project && cd ../indusk-admin && pnpm exec vitest run src/components/new-project src/components/ui src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files; `indusk looks lint admin` reports no finding outside `nav-handle`
+- [x] A43, A44 pass; every earlier row still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project && cd ../indusk-admin && pnpm exec vitest run src/components/new-project src/components/ui src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files; `indusk looks lint admin` reports no finding outside `nav-handle`
 - [x] `indusk looks check admin` holds `new-project.proposal` and `new-project.github-signed-out` by value; `indusk promises contract new-project-flow` passes
   - Result: restricted to the `new-project` and `look-row` screens (the full check ran past nine minutes; `screens.json` restored after). `new-project.start | conversation | proposal | creating | no-parent | github-signed-out` held at all six device-and-scheme combinations; 606 held, 12 unchecked (`look-row.mockup` and `look-row.story`: the temporary `INDUSK_HOME` has no registered `dusk` project, so the Looks page reports no state), 0 broken. Ran against a temporary copy of the admin on :4949 (deleted) with a fake `gh` signed in as `infinitedusky`; the signed-out look is reached by `?github=signed-out` on the proposal. `look-row.*` stories were re-rendered and now read proposed, never approved.
 
