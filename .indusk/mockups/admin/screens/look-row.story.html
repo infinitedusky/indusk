@@ -47,8 +47,10 @@
 			.know li span.q { color: var(--color-ink-faint); }
 			@media (max-width: 60rem) { .cols { grid-template-columns: minmax(0, 1fr); } }
 					.rows { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); }
-			.row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); }
+			.row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); }
 			.row + .row { border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); }
+			.what { display: grid; gap: var(--space-1); justify-items: start; min-width: 0; }
+			.what b { overflow-wrap: anywhere; }
 			.kind { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); }
 			.kind.mockup { background: var(--color-dusk-wash); color: var(--color-dusk); }
 			.kind.story { background: var(--color-idle-wash); color: var(--color-ink-soft); }
@@ -58,7 +60,7 @@
 	</head>
 		<body>
 <main class="page"><div class="rows">
-<div class="row" data-component="look-row" data-state="story"><span class="kind story">Story</span><b>message.agent-working</b><span class="chip"><span class="dot"></span>proposed</span><button class="btn quiet" type="button">Open</button></div>
+<div class="row" data-component="look-row" data-state="story"><span class="what"><span class="kind story">Story</span><b>message.agent-working</b></span><span class="chip"><span class="dot"></span>proposed</span><button class="btn quiet" type="button">Open</button></div>
 </div><p class="hint">A story is the built component: approve it when it matches its mockup.</p></main>
 	</body>
 </html>
