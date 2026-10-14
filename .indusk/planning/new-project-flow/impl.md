@@ -178,7 +178,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 1 Context
 
-- [ ] Root (Key Decisions): `- New project flow: a project starts as a conversation in the admin; drafts at ~/.indusk/new-projects/, creation by the package — see /decisions/new-project-flow` — always-on because every session that touches the admin or init needs to know projects are now created this way
+- [x] Root (Key Decisions): `- New project flow: a project starts as a conversation in the admin; drafts at ~/.indusk/new-projects/, creation by the package — see /decisions/new-project-flow` — always-on because every session that touches the admin or init needs to know projects are now created this way
 - [ ] admin: `apps/indusk-admin/CLAUDE.md` — the admin writes a project only through `indusk new-project`, never its own process — guarded by `admin-uses-package-commands.test.ts`
 
 #### Build Phase 1 Document
