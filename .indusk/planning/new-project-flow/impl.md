@@ -1,7 +1,7 @@
 ---
 title: "New project flow — from a text box to a laid-out project"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -76,6 +76,10 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A27 | The project conversation's prompt asks for a few sentences of Markdown and at most three questions at a time | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/lib/new-project/prompt.test.ts |
 | A28 | Starting a project conversation starts its agent: the conversation opens with the agent working, with no second click | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-starts-as-a-conversation | apps/indusk-admin/src/components/new-project/NewProjectStart.test.tsx |
 | A29 | Every agent turn carries one status: working while running without a reply, done once replied, stopped when it ended before replying | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/lib/conversation-turns.test.ts |
+| A30 | After a project is created, the conversation's agent is no longer running, and a new project conversation can be started straight away | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-session-can-be-stopped | apps/indusk-admin/src/app/api/new-projects/accept.test.ts |
+| A31 | A proposal located through a symbolic link that leads out of the parent directory is refused and nothing is created outside the parent | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-new-project-is-written-only-under-its-parent | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
+| A32 | A proposal located inside an existing git repository under the parent is refused and that repository is untouched | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
+| A33 | A proposal naming a repository `worktrees` is refused, so a repository never shares the worktrees folder | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/lib/new-project/proposal.test.ts |
 
 ### Deferred Verification
 
@@ -313,6 +317,33 @@ Deferred-body review (Test Phase 1):
 
 - [x] `apps/docs/src/guide/new-project.md`: the conversation as a thread, what "See more" holds, the transcript kept in the draft
 - [x] `apps/docs/src/decisions/new-project-flow.md`: decision 9 published; changelog entry under the plan's "Added"
+
+### Build Phase 5: Falsification — the agent outlives its project, and the parent guard reads paths as text
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds against four failure modes found by reading the code. Accepting never stops the conversation's agent, which keeps running in a deleted draft folder and holds the one session slot (`/api/new-projects/[id]/accept` stops nothing; `discard` does). The parent guard (`isUnderParent`) compares `path.resolve` text, so a symbolic link inside the parent leads out of it. Nothing refuses a location inside an existing repository under the parent (`~/code/sandbox/dusk/x` when the parent is `~/code/sandbox`). And a repository may be named `worktrees`, the folder plan worktrees go in. Each row below is one hypothesis; each item is the fix if it confirms.
+
+- [ ] Accepting stops the draft's running session before creation starts (the same `sessionManager().current()` / `newProjectSessionPlan(id)` check `discard` makes), in the accept route
+- [ ] `isUnderParent` compares real paths: the parent's `realpath`, and the `realpath` of the location's nearest existing ancestor joined with the rest — so a link out of the parent is outside it
+- [ ] `guard` refuses a location inside an existing git working tree (any directory from the parent down to the location's nearest existing ancestor holding `.git`), naming that repository
+- [ ] `validateProposal` refuses a repository named `worktrees`
+
+#### Build Phase 5 OTel
+
+- [ ] A refused creation sets `new_project.refused` on the `new_project.create` span with which guard refused it (`no-parent`, `outside-parent`, `inside-repository`, `exists`, `no-brief`, `proposal`), so refusals are counted in real use, not only in tests
+
+#### Build Phase 5 Verification
+
+- [ ] A30–A33 pass; every earlier row still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project && cd ../indusk-admin && pnpm exec vitest run src/app/api/new-projects src/components/new-project`); `pnpm exec vitest related` over the changed files
+
+#### Build Phase 5 Context
+
+- [ ] mcp: the docblock of `lib/new-project/parent.ts` — the guard compares real paths and refuses a location inside an existing repository — `promise: a-new-project-is-written-only-under-its-parent`
+
+#### Build Phase 5 Document
+
+- [ ] `apps/docs/src/guide/new-project.md`: the parent directory section names the two refusals (a link out of the parent, a location inside an existing repository) and that creating a project ends its conversation's agent
 
 ## Files Affected
 
