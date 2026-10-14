@@ -269,7 +269,7 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
   - look-state.test.ts 10 of 10; `vitest related` over look-state, the plan page and NavHandle 67 tests in 13 files; plan-page-layout, PlanSummary, amendment-approval 13 tests; A10 passes in the system tier (65 s, second attempt: the first run passed its test and failed only in teardown, `ENOTEMPTY` removing `.next-tests`); tsc clean in both packages; biome clean on changed files (one pre-existing unused-import warning in `project-reader.ts`, untouched)
 
 #### Build Phase 4 Context
-- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: the guard's reader exemption never covers a segment with a substitution, and a person-only act is refused by its function's name as well as its command and route
+- [x] `apps/indusk-mcp/hooks/CLAUDE.md`: the guard's reader exemption never covers a segment with a substitution, and a person-only act is refused by its function's name as well as its command and route
 
 #### Build Phase 4 Document
 - [ ] (none — internal-only fixes: the guard's refusal message, the nav's drag and the page's look state change no documented behaviour; `reference/cli/plans.md` already says an agent's `reapprove` is refused)
