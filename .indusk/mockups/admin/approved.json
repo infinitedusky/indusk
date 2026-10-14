@@ -4219,6 +4219,17 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T20:22:21.660Z",
 			"plan": "new-project-flow"
+		},
+		{
+			"kind": "story",
+			"story": "look-row.kind-story",
+			"snapshotHash": "ebcf532bb5530df836caee1a9309930bd11b552f5ae35b05022c4209dbe481ba",
+			"stylesheetHash": "a115c2aafd086a109141a379736ad1dc5b603073773a632359c00eefb0c68379",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T20:22:21.833Z",
+			"plan": "new-project-flow"
 		}
 	]
 }
