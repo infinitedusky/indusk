@@ -6,6 +6,12 @@
  */
 
 export { induskHome } from "../telemetry/status.js";
+export {
+	type CreatedProject,
+	type CreateOptions,
+	CreationError,
+	createProject,
+} from "./create.js";
 export { type AddedDocument, addDocument, documentNotice } from "./documents.js";
 export { type KnowledgeEntry, type KnowledgeState, knowledgeOf } from "./knowledge.js";
 export { isUnderParent, readParent, setParent } from "./parent.js";
@@ -26,6 +32,13 @@ export {
 	saveProposal,
 	validateProposal,
 } from "./proposal.js";
+export {
+	type CreationRecord,
+	type CreationStepId,
+	type CreationStepState,
+	creationStepIds,
+	stepLabel,
+} from "./steps.js";
 export {
 	createProjectDraft,
 	type DraftDocument,

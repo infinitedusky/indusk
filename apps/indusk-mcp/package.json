@@ -108,6 +108,10 @@
 			"types": "./dist/lib/new-project/index.d.ts",
 			"default": "./dist/lib/new-project/index.js"
 		},
+		"./new-project/steps": {
+			"types": "./dist/lib/new-project/steps.d.ts",
+			"default": "./dist/lib/new-project/steps.js"
+		},
 		"./plans": {
 			"types": "./dist/lib/plans/index.d.ts",
 			"default": "./dist/lib/plans/index.js"
