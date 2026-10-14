@@ -230,6 +230,9 @@ Deferred-body review (Test Phase 1):
 #### Build Phase 2 Forward Intelligence
 
 - **Watch out**: `new-project.creating` is reached the same way as the proposal states: a `paths` entry and a `seed` that leaves the draft mid-creation (or a fixture the creating page reads), unseeded after. See Build Phase 1's Forward Intelligence.
+- **Watch out**: `indusk new-project accept` is only the proposal check today (`newProjectAccept` in `bin/commands/new-project.ts` ends with "creating a project is not built yet", exit 1); `createProject` replaces that last line. The proposal page's Create project already saves the edits (`/api/new-projects/[id]/proposal`) and then POSTs `/api/new-projects/[id]/accept`, which does not exist until this phase builds it; until then Create shows the 404.
+- **Assumption**: `readProposal(draft)` (`lib/new-project/proposal.ts`) is the one validated read; `createProject` takes its result and does the parent guard (A15, A16) itself - the proposal check does not look at the parent. A declined recommendation may carry `title` and `why`; `config.recommendations` takes only `name`, `kept`, `reason`, so write those three.
+- **Fragile**: `new-project.proposal` is seeded by writing `proposal.json` and `brief.md` into the draft with `cp` (`screens.json`); the `conversation` state therefore opens at `?talk=1`. A `creating` seed that leaves a draft mid-creation must not break those two.
 
 #### Build Phase 3 Verification
 
