@@ -32,6 +32,21 @@ export interface NavHandleProps
 const clamp = (n: number, min: number, max: number) =>
   Math.min(max, Math.max(min, n));
 
+/** The width a key asks for — arrows step, Home and End go to the ends — held between `min` and `max`; null for any other key. */
+function widthForKey(
+  key: string,
+  value: number,
+  min: number,
+  max: number,
+  step: number,
+): number | null {
+  if (key === "ArrowRight") return clamp(value + step, min, max);
+  if (key === "ArrowLeft") return clamp(value - step, min, max);
+  if (key === "Home") return min;
+  if (key === "End") return max;
+  return null;
+}
+
 /**
  * The nav's drag edge: a vertical separator a pointer drags to widen or narrow
  * the nav, and arrow keys step. It reports widths and draws nothing else, so
@@ -83,21 +98,11 @@ export function NavHandle({
     onResizeEnd?.(last.current);
   };
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const next =
-      e.key === "ArrowRight"
-        ? value + step
-        : e.key === "ArrowLeft"
-          ? value - step
-          : e.key === "Home"
-            ? min
-            : e.key === "End"
-              ? max
-              : null;
+    const next = widthForKey(e.key, value, min, max, step);
     if (next === null) return;
     e.preventDefault();
-    const held = clamp(next, min, max);
-    onResize?.(held);
-    onResizeEnd?.(held);
+    onResize?.(next);
+    onResizeEnd?.(next);
   };
 
   return (
