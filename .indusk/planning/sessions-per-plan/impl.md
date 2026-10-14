@@ -81,7 +81,7 @@ Several plans can each have an agent at once: the session manager refuses only a
 
 **Tier**: med — the work step's default
 
-- [ ] `apps/indusk-mcp/src/lib/session/manager.ts`: `start` refuses only a held session with the same `project`, `plan` and `kind` (`SessionBusy`: `a <kind> session is already running for <plan>: <id> — stop it first`), and refuses at the cap (`<max> sessions are running (sessions.max): <kind> for <plan>, … — stop one from its plan's page in the admin`)
+- [x] `apps/indusk-mcp/src/lib/session/manager.ts`: `start` refuses only a held session with the same `project`, `plan` and `kind` (`SessionBusy`: `a <kind> session is already running for <plan>: <id> — stop it first`), and refuses at the cap (`<max> sessions are running (sessions.max): <kind> for <plan>, … — stop one from its plan's page in the admin`)
   ```typescript
   constructor(opts: { recordPath?: string; start?: (opts: SessionOptions) => Session; max?: number } = {})
   forPlan(project: string, plan: string, kind?: SessionKind): SessionRecord | undefined

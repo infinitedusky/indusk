@@ -3,13 +3,16 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { isAlive, realProcessReads } from "../process-identity.js";
+import { readSessionsMax } from "./limits.js";
 import { decideBuildPermission } from "./permissions.js";
 import type { QuestionEvent, SessionKind } from "./protocol.js";
 import { type Session, type SessionOptions, type StartedEvent, startSession } from "./start.js";
 
 /**
  * Who owns the sessions the admin starts (admin-plan-authoring, ADR D2): the
- * admin daemon, through one manager. One session at a time; each written to a
+ * admin daemon, through one manager. A session is owned by its project, plan
+ * and kind (sessions-per-plan), and the machine runs at most `sessions.max`;
+ * each is written to a
  * record (`~/.indusk/admin-sessions.json`) so `indusk ui stop` can end them
  * and a daemon starting after a crash can end what its predecessor left.
  *
@@ -54,18 +57,32 @@ export class SessionManager {
 	private readonly recordPath: string;
 	private readonly launch: (opts: SessionOptions) => Session;
 	private readonly held = new Map<string, Held>();
+	private readonly max: number | undefined;
 
-	constructor(opts: { recordPath?: string; start?: (opts: SessionOptions) => Session } = {}) {
+	constructor(
+		opts: { recordPath?: string; start?: (opts: SessionOptions) => Session; max?: number } = {},
+	) {
 		this.recordPath = opts.recordPath ?? defaultRecordPath();
 		this.launch = opts.start ?? startSession;
+		this.max = opts.max;
 	}
 
-	/** Start a session, refusing while another runs. */
+	/**
+	 * Start a session. Refused when the same plan already has one of this kind,
+	 * or when the machine already runs its cap.
+	 */
 	start(opts: ManagedStart): { id: string; session: Session } {
-		const running = [...this.held.values()][0];
-		if (running) {
+		const same = this.forPlan(opts.project, opts.plan, opts.kind);
+		if (same) {
 			throw new SessionBusy(
-				`a session is already running: ${running.record.id}, ${running.record.kind} for ${running.record.plan} — stop it first`,
+				`a ${same.kind} session is already running for ${same.plan}: ${same.id} — stop it first`,
+			);
+		}
+		const max = this.max ?? readSessionsMax();
+		if (this.held.size >= max) {
+			const names = this.running().map((r) => `${r.kind} for ${r.plan}`);
+			throw new SessionBusy(
+				`${max} sessions are running (sessions.max): ${names.join(", ")} — stop one from its plan's page in the admin`,
 			);
 		}
 		const id = randomUUID();
@@ -118,9 +135,16 @@ export class SessionManager {
 		return this.held.get(id)?.session;
 	}
 
-	/** The running session's record, if any. */
-	current(): SessionRecord | undefined {
-		return [...this.held.values()][0]?.record;
+	/** The plan's running session of `kind` (either kind when omitted), if any. */
+	forPlan(project: string, plan: string, kind?: SessionKind): SessionRecord | undefined {
+		return this.running().find(
+			(r) => r.project === project && r.plan === plan && (kind === undefined || r.kind === kind),
+		);
+	}
+
+	/** Every running session's record. */
+	running(): SessionRecord[] {
+		return [...this.held.values()].map((h) => h.record);
 	}
 
 	/**
