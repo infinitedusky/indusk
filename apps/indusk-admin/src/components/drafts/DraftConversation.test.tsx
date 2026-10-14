@@ -24,7 +24,8 @@ describe("a draft's conversation", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string, init?: RequestInit) => {
-        if (url === "/api/sessions") return Response.json({ session: null });
+        if (url.startsWith("/api/sessions?"))
+          return Response.json({ session: null });
         sent.push({ url, body: JSON.parse(String(init?.body)) });
         return Response.json({ id: "s1" }, { status: 201 });
       }),
