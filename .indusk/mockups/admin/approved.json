@@ -4806,6 +4806,15 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T01:53:20.408Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"mockup": "history-panel.open",
+			"mockupHash": "631fa0b67403aa53bc6992fe4a27436ee8047d8c0ecf228dc64f27e101ce2c45",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T01:53:20.633Z",
+			"plan": "cockpit-redraw"
 		}
 	]
 }
