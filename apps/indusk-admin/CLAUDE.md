@@ -239,11 +239,11 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `PlanList` only draws the tree (`NavPath`, `PlanRow`, `NavGroup`), never its
   own markup. Guarded by `CockpitFrame.test.tsx` (A1–A4) and
   `PlanList.test.tsx`. — see `/decisions/cockpit-redraw`
-- **The brief page and plan page are held to `brief.*` and `plan.*`, and say
-  which they draw**: each page reports its state from its own facts with
-  `data-look-state` (`lib/look-state.ts`: `planLookState`, `briefLookState`,
-  `navLookState`) — never from a `?state=` — and `screens.json` lists one path
-  per state, A10's fixture plans being what serve them. A change to either page
-  is drawn as a mockup and approved before it is built; the nav's width may be
-  asked for with `?nav=<px>` for one page. Guarded by `look-state.test.ts` and
-  `cockpit-redraw.contract.test.ts` (A10). — see `/decisions/cockpit-redraw`
+- **The brief page and plan page are held to `brief.*` and `plan.*`**: each
+  reports its state with `data-look-state` (`lib/look-state.ts`), never a
+  `?state=`; `screens.json` lists one path per state at A10's fixture plans,
+  which the real project lacks, so there the check names them `unchecked …
+  answered 404`, never a failure. A change to either page is drawn and approved
+  first; `?nav=<px>` sets the nav's width for one page. Guarded by
+  `look-state.test.ts`, `cockpit-redraw.contract.test.ts` (A10). — see
+  `/decisions/cockpit-redraw`

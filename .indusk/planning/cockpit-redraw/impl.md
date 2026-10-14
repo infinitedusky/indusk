@@ -324,7 +324,7 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 - [x] A18 and the older timeout cases pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-check-timeout.test.ts src/lib/looks/check.test.ts`); `pnpm exec vitest related src/lib/looks/check.ts`; tsc and biome clean on changed files; the indusk-mcp dist rebuilt (`pnpm build` in apps/indusk-mcp) so the admin's A10 uses it, and A10 still passes in the system tier (`cd apps/indusk-admin && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/cockpit-redraw.contract.test.ts`)
 
 #### Build Phase 6 Context
-- [ ] `apps/indusk-admin/CLAUDE.md` (shrink, it is over budget): the plan and brief screens are held by A10's fixture project; against the real project the check names them unchecked (404), never a failure
+- [x] `apps/indusk-admin/CLAUDE.md` (shrink, it is over budget): the plan and brief screens are held by A10's fixture project; against the real project the check names them unchecked (404), never a failure
 
 #### Build Phase 6 Document
 - [ ] `apps/docs/src/reference/cli/looks.md` (or the page that documents `looks check`): a look whose page answers 404 is reported unchecked, and the run goes on
