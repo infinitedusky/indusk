@@ -276,7 +276,10 @@ Deferred-body review (Test Phase 1):
 - [x] `lib/new-project/prompt.ts`: reply in a few sentences of Markdown, at most three questions at a time, only what the documents leave open
 - [x] Looks: the `new-project` seed copies `seed/homework-gate-transcript.jsonl` into the draft so `new-project.conversation` and `message.agent-folded` / `agent-open` are reached with turns; `paths` entries for the two message states
 - [ ] Live check: create Homework Gate from its brief through the admin into a temporary parent; record the questions asked, the words per reply and the result here
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-admin/src/app/new/[id]/page.tsx`) — the inline nested ternary that decides which message look state the page draws (`!hasWorking ? "none" : open === undefined ? "folded" : "open"`) becomes a named function `replyLookState(hasWorking, open)` beside `lookStates`. Rule: Should this inline block have been a named function or module? (shape: intra-unit)
+- [x] Shape (`apps/indusk-admin/src/components/new-project/ConversationThread.tsx`) — reviewed, left as-is: the thread and its reply box share one state (the draft, which turns are open, which requests are answered) and move together; a `ReplyBox` component would move that state, not remove a job. `TurnView` is already its own unit
+- [x] Shape (`apps/indusk-mcp/src/lib/new-project/transcript.ts`) — reviewed, left as-is: `conversationFigures` reads replies the way the admin's `turnsOf` does but counts them without drawing; the two live in different packages by the admin-through-the-package rule, so sharing them is `/cleanup`'s inter-file question, not an intra-unit one
 
 #### Build Phase 4 OTel
 
@@ -291,7 +294,7 @@ Deferred-body review (Test Phase 1):
 
 - [x] A23–A27 pass; every earlier row still passes (`cd apps/indusk-admin && pnpm exec vitest run src/lib/conversation-turns.test.ts src/components/new-project && cd ../indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project`); `pnpm exec vitest related` over the changed files
 - [x] `indusk looks check admin` holds `new-project.conversation`, `message.agent-folded` and `message.agent-open` by value; `indusk promises contract new-project-flow` passes
-  - Result: `new-project.conversation`, `message.agent-folded` and `message.agent-open` are **held** at all six device-and-scheme combinations; 618 held, 218 unchecked, 0 broken. Run against a `next dev` of this worktree's source on :4951 with a temporary `INDUSK_HOME` and this worktree's `indusk` build on `PATH`; `agent-open` is reached at `/new/{seed}?talk=1&open=1`. `indusk promises contract new-project-flow` passes (11 made, 6 kept, 5 expectations). The admin suite has one failure outside this phase: `component-reuse-audit.test.ts` finds an inline `<button>` at `NewProjectCreating.tsx:94`, a Build Phase 2 file this phase did not touch.
+  - Result: `new-project.conversation`, `message.agent-folded` and `message.agent-open` are **held** at all six device-and-scheme combinations; 618 held, 218 unchecked, 0 broken. Run against a `next dev` of this worktree's source on :4951 with a temporary `INDUSK_HOME` and this worktree's `indusk` build on `PATH`; `agent-open` is reached at `/new/{seed}?talk=1&open=1`. `indusk promises contract new-project-flow` passes (11 made, 6 kept, 5 expectations). The admin suite has one failure outside this phase: `component-reuse-audit.test.ts` finds an inline `<button>` at `NewProjectCreating.tsx:94`, a Build Phase 3 file this phase did not touch.
 
 #### Build Phase 4 Context
 

@@ -52,6 +52,15 @@ const lookStates = (
     "knowledge-list.default",
   ].join(" ");
 
+/** The message look state the thread draws: replies with working are folded, or open when the page was opened with `?open`. */
+const replyLookState = (
+  hasWorking: boolean,
+  open: string | undefined,
+): "none" | "folded" | "open" => {
+  if (!hasWorking) return "none";
+  return open === undefined ? "folded" : "open";
+};
+
 /**
  * `/new/{id}` - a project conversation (new-project-flow), drawn as the
  * approved `new-project.conversation` draws it: the person's words and
@@ -123,7 +132,7 @@ export default async function NewProjectConversationPage({
       className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
       data-look-state={lookStates(
         draft.documents.length > 0,
-        !hasWorking ? "none" : open === undefined ? "folded" : "open",
+        replyLookState(hasWorking, open),
       )}
       data-draft={id}
     >
