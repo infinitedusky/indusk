@@ -11,6 +11,8 @@ The admin plans and builds through the developer's own Claude Code: it starts th
 
 A planning session uses `default` whatever the developer's own Claude Code is set to. In the spike, a session that inherited `auto` wrote a file outside its project without asking. Neither kind ever bypasses permissions.
 
+**Every request is recorded with how it was decided.** A request a session makes goes in its log, followed by a `decided` event: allowed, or denied with the reason, and whether the session's own rule decided it (a build, a planning session's writes in its folder, a project conversation's draft) or you did. A planning session's writes inside its folder, decided by rule, are in the log too.
+
 ## The protocol
 
 ```
