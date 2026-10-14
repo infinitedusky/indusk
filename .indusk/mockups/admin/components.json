@@ -470,6 +470,33 @@
 			"stylesheetHash": "597d9e274a01a823e8876482216b08a466d78cec31dcce7b936c4c3d4e0b5060"
 		},
 		{
+			"name": "file-chip",
+			"file": "apps/indusk-admin/src/components/ui/FileChip.tsx",
+			"properties": [
+				{
+					"name": "children",
+					"type": "string",
+					"required": true,
+					"description": "The document's name, as the person gave it."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-filechip--default",
+					"snapshotHash": "96bc93a92232be00a886a181330b2f2c43897c7cdc9c26d902dd2ba7362ad139"
+				}
+			],
+			"stylesheet": "components/file-chip.css",
+			"stylesheetHash": "f66b27d5908ab4d0332e9228659f53079ba1074d5741e683bd23934c6c45781d"
+		},
+		{
 			"name": "history-panel",
 			"file": "apps/indusk-admin/src/components/ui/HistoryPanel.tsx",
 			"properties": [
@@ -507,6 +534,32 @@
 			],
 			"stylesheet": "components/history-panel.css",
 			"stylesheetHash": "be98a8af91efa17e17a39057193f5bbeec9a0abd2199fb6611a603b33e112b6f"
+		},
+		{
+			"name": "knowledge-list",
+			"file": "apps/indusk-admin/src/components/ui/KnowledgeList.tsx",
+			"properties": [
+				{
+					"name": "items",
+					"type": "unknown",
+					"required": true
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-knowledgelist--default",
+					"snapshotHash": "4f4c60447468d7bd4bf4cbb1ce000409483b2c7146f8d603ad40ca16f887ba2b"
+				}
+			],
+			"stylesheet": "components/knowledge-list.css",
+			"stylesheetHash": "3ed41e464559d87068eb714f423e304a5f9776143fda708cea97191180717f22"
 		},
 		{
 			"name": "look-row",
@@ -554,6 +607,51 @@
 			],
 			"stylesheet": "components/look-row.css",
 			"stylesheetHash": "447f4b40b8f2b3c76e3ba9457fb20a7a6eef926484ed1cf7ffd1126af7bdd330"
+		},
+		{
+			"name": "message",
+			"file": "apps/indusk-admin/src/components/ui/Message.tsx",
+			"properties": [
+				{
+					"name": "state",
+					"type": "\"you\" | \"agent\"",
+					"required": true,
+					"description": "Whose words: the person's, set to the right on a wash, or the agent's, on a surface."
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": true,
+					"description": "The words: paragraphs, and a numbered list when the agent asks."
+				},
+				{
+					"name": "documents",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "[]",
+					"description": "The documents that came with it, by name."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "you",
+					"id": "ui-message--you",
+					"snapshotHash": "49e58d7e8117c2b85c5c20046b4766b443a10ebe918aea9adde94b0443515883"
+				},
+				{
+					"name": "agent",
+					"id": "ui-message--agent",
+					"snapshotHash": "610a400a814d02dfc03e7f756b29c27ce5589243e3a34bd086d52781a2e0fd95"
+				}
+			],
+			"stylesheet": "components/message.css",
+			"stylesheetHash": "e4b47a0a229a9e9792394cc951df5652c46387bd1b225f6e9e56ab5ca31f37dd"
 		},
 		{
 			"name": "nav",
@@ -867,6 +965,49 @@
 			"stylesheetHash": "5d3be4e1672e200ffa3180d2fb0084a5c455b2402c6731cb8b83e581c2d8594b"
 		},
 		{
+			"name": "project-card",
+			"file": "apps/indusk-admin/src/components/ui/ProjectCard.tsx",
+			"properties": [
+				{
+					"name": "name",
+					"type": "string",
+					"required": true
+				},
+				{
+					"name": "path",
+					"type": "string",
+					"required": true,
+					"description": "Where it lives, as the person knows it (`~/code/...`)."
+				},
+				{
+					"name": "activePlanCount",
+					"type": "number",
+					"required": true
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": true,
+					"description": "Where it opens."
+				},
+				{
+					"name": "extra",
+					"type": "ReactNode",
+					"required": false,
+					"description": "What the page adds beneath the count: a shape, an in-progress badge, when it was last seen."
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-projectcard--default",
+					"snapshotHash": "39104a137d61747cd9dcc494dcbf2ced8abbe22adc1eb7d2ae027dc10822c0a4"
+				}
+			],
+			"stylesheet": "components/project-card.css",
+			"stylesheetHash": "4b2f698887b372e86b009b0e2ce3bbb72106a9c9ead521f15fe324e0e7e72e26"
+		},
+		{
 			"name": "promise-row",
 			"file": "apps/indusk-admin/src/components/ui/PromiseRow.tsx",
 			"properties": [
@@ -951,6 +1092,60 @@
 			],
 			"stylesheet": "components/promise-row.css",
 			"stylesheetHash": "afec956a5ca1216fadafb3134529e9f058ca6c994ca0fa9e74f90c8784ff2cdf"
+		},
+		{
+			"name": "prompt-box",
+			"file": "apps/indusk-admin/src/components/ui/PromptBox.tsx",
+			"properties": [
+				{
+					"name": "value",
+					"type": "string",
+					"required": false
+				},
+				{
+					"name": "onChange",
+					"type": "(value: string) => void",
+					"required": false
+				},
+				{
+					"name": "onAdd",
+					"type": "() => void",
+					"required": false,
+					"description": "The person chose to add documents."
+				},
+				{
+					"name": "attachments",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Documents already added, drawn between the box and its buttons."
+				},
+				{
+					"name": "actions",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Beside the add button: what sends the words on."
+				},
+				{
+					"name": "hint",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Under the buttons: a line saying what happens next."
+				},
+				{
+					"name": "textareaProps",
+					"type": "Omit<\n  TextareaHTMLAttributes<HTMLTextAreaElement>,\n  \"value\" | \"onChange\"\n>",
+					"required": false
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-promptbox--default",
+					"snapshotHash": "13c5d196e8b479332fe0ea2083fd0ea11c4daaf57c036d2e337338af51649af2"
+				}
+			],
+			"stylesheet": "components/prompt-box.css",
+			"stylesheetHash": "4249c5ad5e660284ea71b763803b4c44493d8e62a7280f392c7c79b0d3209912"
 		},
 		{
 			"name": "rail-group",
@@ -1120,6 +1315,12 @@
 					"required": false,
 					"defaultValue": "false",
 					"description": "The step the page is on."
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": false,
+					"description": "Where the step's document is read; the step is then a link."
 				},
 				{
 					"name": "className",
