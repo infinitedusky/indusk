@@ -52,6 +52,9 @@ None.
 ### This plan makes
 
 1. **`plan.master`**. A master plan's page: its title and what it is for, then each of its plans in order, each with its title, description and stage, the ones not yet started shown as queued.
+2. **`story-row.released`**. A new component, one plan in a master's story: its number, mark, title, description and "Released", a link to the plan.
+3. **`story-row.draft`**. The same row for a plan in draft or being built, a link to the plan.
+4. **`story-row.queued`**. The same row, dimmed, for a plan not yet started: "Queued", no link.
 
 ### Existing looks
 
