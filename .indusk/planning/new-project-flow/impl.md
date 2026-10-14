@@ -1,7 +1,7 @@
 ---
 title: "New project flow — from a text box to a laid-out project"
 date: 2026-10-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -283,7 +283,7 @@ Deferred-body review (Test Phase 1):
   - Decision: the `message` seed copies `seed/homework-gate-transcript-unfinished.jsonl` (the finished transcript, then a person turn and an agent turn that used two tools and never replied); `agent-stopped` is `/new/{seed}?talk=1` (no session runs, so the last turn is stopped) and `agent-working` is `/new/{seed}?talk=1&working=1`, a query that draws the thread as if an agent runs (`showRunning`, no session started). The page declares the message states its turns are in (`replyLookStates`), not a fixed list.
 - [x] Found in use (2026-10-14): a message that restarts the agent showed only after the next one was sent — it is written after the new session's marker, which `historyBefore` dropped, and the manager never replays it. `historyBefore` now keeps the `you` lines right after the connected session's marker, and the page shows the words itself until its transcript marks the new session (`marks`)
 - [x] Found in use (2026-10-14): Enter in the reply box did nothing, and Stop and "+ Add a document" were submit buttons, so Stop also sent the half-typed reply. Enter sends (Shift+Enter a new line); both are `type="button"`
-- [ ] Live check: create Homework Gate from its brief through the admin into a temporary parent; record the questions asked, the words per reply and the result here
+- [x] Live check — deferred (asked: "the live check is still open — run it now?" — user: "I think we can approve this project, this new project flow, for now. We pick up any problems later"). Partly run 2026-10-14 through the admin: the Homework Gate conversation reached the founding brief with the person's brief and investor deck attached and found the lag and Stop bugs fixed above; not carried to creation. U1 and U2 stay open for the plan that makes promises mark-first
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 - [x] Shape (`apps/indusk-admin/src/app/new/[id]/page.tsx`) — the inline nested ternary that decides which message look state the page draws (`!hasWorking ? "none" : open === undefined ? "folded" : "open"`) becomes a named function `replyLookState(hasWorking, open)` beside `lookStates`. Rule: Should this inline block have been a named function or module? (shape: intra-unit)
 - [x] Shape (`apps/indusk-admin/src/components/new-project/ConversationThread.tsx`) — reviewed, left as-is: the thread and its reply box share one state (the draft, which turns are open, which requests are answered) and move together; a `ReplyBox` component would move that state, not remove a job. `TurnView` is already its own unit
