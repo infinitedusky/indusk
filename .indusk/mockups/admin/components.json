@@ -709,7 +709,7 @@
 				{
 					"name": "agent-working",
 					"id": "ui-message--agent-working",
-					"snapshotHash": "3ebaa2bb725cda582f56d2122d919d53b60ee98cdd72d3343566ef7806a6df3e"
+					"snapshotHash": "92d333839ba51a52644669bea4e716b455fc3ca5bcde15809479774b641327f9"
 				},
 				{
 					"name": "agent-stopped",
@@ -718,7 +718,7 @@
 				}
 			],
 			"stylesheet": "components/message.css",
-			"stylesheetHash": "31f455802bff7263bbc49dbba124fc9afd26f04bf9909b73fdaeba86e9c45cec"
+			"stylesheetHash": "2aa4de27ff8aa5f227c964f2853815b932044c869658e67cf476311b8b3d91be"
 		},
 		{
 			"name": "nav",

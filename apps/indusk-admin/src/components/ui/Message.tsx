@@ -46,7 +46,7 @@ const SHAPE: Record<MessageState, string> = {
 const DOT: Partial<Record<MessageState, string>> = {
   "agent-folded": "bg-ok",
   "agent-open": "bg-ok",
-  "agent-working": "pulse bg-dusk shadow-ring",
+  "agent-working": "pulse halo bg-dusk",
   "agent-stopped": "bg-idle",
 };
 

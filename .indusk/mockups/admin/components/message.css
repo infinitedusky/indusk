@@ -125,9 +125,6 @@
 .uppercase {
     text-transform: uppercase;
 }
-.shadow-ring {
-    box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 0 4px rgb(98.4% 93.3% 87.8%);
-}
 .\[\&_ol\]\:grid {
     & ol {
         display: grid;
@@ -155,6 +152,9 @@
     .pulse {
         animation: none;
     }
+}
+.halo {
+    box-shadow: var(--shadow-ring);
 }
 .measure-message {
     max-width: 60ch;
