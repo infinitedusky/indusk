@@ -51,7 +51,22 @@ afterEach(() => {
 const request = () =>
   new NextRequest("http://127.0.0.1:3996/api/new-projects/x/accept", {
     method: "POST",
-    headers: { host: "127.0.0.1:3996", origin: "http://127.0.0.1:3996" },
+    headers: {
+      host: "127.0.0.1:3996",
+      origin: "http://127.0.0.1:3996",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      proposal: {
+        name: "parental-control",
+        location: join(home, "projects", "parental-control"),
+        repos: [{ name: "parental-control" }],
+        milestones: [],
+        recommendations: [],
+        documentsOff: [],
+        remote: { github: false },
+      },
+    }),
   });
 
 describe("A30 — creating a project ends its conversation's agent", () => {

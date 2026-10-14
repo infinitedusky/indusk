@@ -3,6 +3,9 @@ import {
   createProject,
   findProjectDraft,
   induskHome,
+  ProposalError,
+  saveProposal,
+  validateProposal,
 } from "@infinitedusky/indusk-mcp/new-project";
 import type { NextRequest } from "next/server";
 import { stopDraftSession } from "@/lib/new-project-session";
@@ -19,6 +22,13 @@ export const dynamic = "force-dynamic";
  * carries what it reports. Nothing is made unless the page asks. The draft's
  * running session is stopped first, as discard does.
  *
+ * The request carries `{ proposal }`: the proposal as the person last saved
+ * it. It is saved over `proposal.json` after the agent has stopped, and
+ * creation reads that - never what the agent wrote after the press, which a
+ * still-running agent could otherwise change between the person's last look
+ * and the project (a GitHub repository included).
+ *
+ * promise: a-new-project-publishes-nothing-unasked
  * promise: a-new-project-is-made-by-the-agent
  */
 export async function POST(
@@ -31,12 +41,27 @@ export async function POST(
   );
   if (refused) return refused;
   const { id } = await ctx.params;
-  if (!findProjectDraft(induskHome(), id)) {
-    return refuse(404, `no project conversation ${id}`);
+  const draft = findProjectDraft(induskHome(), id);
+  if (!draft) return refuse(404, `no project conversation ${id}`);
+  const body = (await request.json().catch(() => null)) as {
+    proposal?: unknown;
+  } | null;
+  const checked = validateProposal(body?.proposal);
+  if (checked.proposal === null) {
+    return refuse(
+      400,
+      `Create needs the proposal as the person saved it: ${checked.problems.join("; ")}`,
+    );
   }
   // The conversation is over once the project is made: its agent would keep
   // running in the deleted draft folder and hold the one session slot.
   await stopDraftSession(id);
+  try {
+    saveProposal(draft, checked.proposal);
+  } catch (err) {
+    if (err instanceof ProposalError) return refuse(400, err.message);
+    throw err;
+  }
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {

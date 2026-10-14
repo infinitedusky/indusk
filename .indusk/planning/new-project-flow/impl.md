@@ -393,7 +393,7 @@ Deferred-body review (Test Phase 1):
 - [x] Start page: where new projects go is shown with Change (`new-project.start`); with none set, the page asks for it and saves it (`new-project.no-parent`) through a new `/api/new-projects/parent` route calling `setParent`; Start waits until one is set. `screens.json` reaches `no-parent` with a seed that leaves the parent unset
 - [x] `lib/new-project/prompt.ts`: the prompt names the parent directory and asks for a location inside it
 - [x] The proposal page opens with the GitHub repository unticked whatever `proposal.json` says; only the person's tick sets `remote.github`
-- [ ] Create sends the proposal as the person sees it; the accept route stops the draft's agent, saves that proposal, then creates — never re-reading what the agent wrote after the press
+- [x] Create sends the proposal as the person sees it; the accept route stops the draft's agent, saves that proposal, then creates — never re-reading what the agent wrote after the press
 - [ ] The project conversation's session is confined: path tools only inside its draft, Read/Write/Edit/Glob/Grep allowed, any other tool (Bash, WebFetch, an MCP tool) refused with a message saying why — a decision beside `decideBuildPermission` in `lib/session/permissions.ts`, chosen for the draft's session kind; plan conversations and builds unchanged
 - [ ] `createProject`'s `install` step checks what `indusk init` wrote — the project's skills, hooks and MCP entry — and fails the step, rolling back, when one is missing
 - [ ] An unticked GitHub repository is written to `recommendations` as `{ name: "github", kept: false, reason: "not confirmed" }` unless the person's proposal already declines it with a reason

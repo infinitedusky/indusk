@@ -107,6 +107,7 @@ export default async function NewProjectConversationPage({
       >
         <NewProjectCreatingPanel
           draft={id}
+          proposal={proposal}
           name={proposal.name}
           location={proposal.location}
           stepIds={creationStepIds(proposal.remote.github)}

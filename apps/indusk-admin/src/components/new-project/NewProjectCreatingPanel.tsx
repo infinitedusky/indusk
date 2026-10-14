@@ -1,5 +1,6 @@
 "use client";
 
+import type { Proposal } from "@infinitedusky/indusk-mcp/new-project";
 import {
   type CreationStepId,
   type CreationStepState,
@@ -26,6 +27,7 @@ const WAITING = (ids: readonly CreationStepId[]): CreationView["steps"] =>
  */
 export function NewProjectCreatingPanel({
   draft,
+  proposal,
   name,
   location,
   stepIds,
@@ -36,6 +38,8 @@ export function NewProjectCreatingPanel({
   backHref,
 }: {
   draft: string;
+  /** The proposal as the person last saved it: what Create sends, so the project is made from it and from nothing the agent wrote since. */
+  proposal: Proposal;
   name: string;
   location: string;
   /** The steps this creation runs, in order. */
@@ -69,7 +73,7 @@ export function NewProjectCreatingPanel({
       const response = await fetch(`/api/new-projects/${draft}/accept`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: "{}",
+        body: JSON.stringify({ proposal }),
       });
       await readCreation(response, (event) =>
         setView((v) => applyEvent(v, event)),
@@ -81,7 +85,7 @@ export function NewProjectCreatingPanel({
     } finally {
       setRunning(false);
     }
-  }, [draft, stepIds]);
+  }, [draft, proposal, stepIds]);
 
   useEffect(() => {
     if (!start || began.current) return;

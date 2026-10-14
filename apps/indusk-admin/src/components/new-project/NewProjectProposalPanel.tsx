@@ -52,6 +52,7 @@ export function NewProjectProposalPanel({
     return (
       <NewProjectCreatingPanel
         draft={draft}
+        proposal={creating}
         name={creating.name}
         location={creating.location}
         stepIds={creationStepIds(creating.remote.github)}
