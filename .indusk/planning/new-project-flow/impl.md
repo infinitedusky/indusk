@@ -183,7 +183,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/new-project.md`: `start`, `add`, `discard`, `parent`
+- [x] `apps/docs/src/reference/cli/new-project.md`: `start`, `add`, `discard`, `parent`
 
 ### Build Phase 2: The proposal
 
