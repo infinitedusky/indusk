@@ -1,7 +1,7 @@
 ---
 title: "Story-first impl phases"
 date: 2026-10-14
-status: draft
+status: accepted
 workflow: feature
 description: "Every impl phase opens by saying, in plain words, what it does for the whole plan, and every task reads as one plain sentence with its technical detail folded beneath it. A person can follow a plan's phases without reading code, and open the detail when they want it."
 ---
