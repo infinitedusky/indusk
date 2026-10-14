@@ -206,7 +206,16 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/decisions/cockpit-redraw.md` published from the ADR, sidebar entry; `apps/docs/src/reference/admin-ui/overview.md` (The brief page) as drawn; changelog: Changed — "The cockpit is redrawn: the nav lists every plan as the original cockpit did and drags wider, and the brief page is drawn; re-approving a brief is a person's alone."
+- [x] `apps/docs/src/decisions/cockpit-redraw.md` published from the ADR, sidebar entry; `apps/docs/src/reference/admin-ui/overview.md` (The brief page) as drawn; changelog: Changed — "The cockpit is redrawn: the nav lists every plan as the original cockpit did and drags wider, and the brief page is drawn; re-approving a brief is a person's alone."
+
+#### Build Phase 3 Forward Intelligence
+
+- **Trajectory**: A10 is `passing` (system tier, about 60 s); A8 and A9 still pass. A11, the live check, is Sandy's: on the admin already running on :3940, open a brief page, ask the agent to add a promise and draw a look, and see both appear and come into view without leaving the page.
+- **Watch out (for review)**: `nav.wide` is not drawn below 760 px (the nav is a drawer, `the-nav-fits-a-phone`), so the page never reports it there and A10's check for unchecked screens ignores `nav.wide` at devices narrower than 760 px. It is the one carve-out in A10's setup; the assertions are unchanged. Sandy has not yet said whether she accepts it.
+- **Watch out**: the fixture paths (`/p/dusk/plan/looks-fixture-*`) exist only in A10's throwaway project. Against the daemon's real project a check reads them unchecked, and `indusk looks check admin` as a whole cannot run against the fixture server (a page that answers 404 aborts it). A10 is the held-by-value evidence for this plan's screens.
+- **Fragile**: the six recomposed mockups place `nav` (`plan-current`) and, in `plan.parts`, `rail-group` by name, so a change to `Nav` or `RailGroup` reopens them and costs a round of approvals; change a component once, run `indusk looks stories admin`, then ask.
+- **Watch out**: the admin's app-wide header bar (`InDusk Admin`) is drawn by no approved mockup of any screen; left as is.
+- **Watch out**: a test's `next dev` now builds into `.next-tests` (`INDUSK_ADMIN_DIST_DIR`), so it no longer collides with a running admin; the look check waits up to 3 s for a page to go network-quiet (`looks/check.ts`), so the indusk-mcp dist must be rebuilt after a change there.
 
 ## Files Affected
 
