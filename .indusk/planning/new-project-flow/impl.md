@@ -400,7 +400,7 @@ Deferred-body review (Test Phase 1):
 - [x] `LookRow` leads with its kind — Mockup or Story — as the approved `look-row.mockup` / `look-row.story` draw it, everywhere it is used (the looks page, a plan's looks, the promise page); stories for both kinds, `indusk looks stories admin` (Sandy, 2026-10-14: "we need it to be clear that it is a story or a mockup in looks")
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 - [x] Shape (`apps/indusk-mcp/src/lib/session/permissions.ts`) — decideConfinedPermission: the pattern check tests for a `..` segment or an absolute pattern before resolving it; resolving against the root and testing the relative path alone says the same in two lines. Rule: Shape: one reason to change - a guard should state its rule once
-- [ ] Shape (`apps/indusk-admin/src/components/new-project/NewProjectStart.tsx`) — extract the parent folder line and its ask form (about forty lines of JSX and the save call) into a named NewProjectParent component; Start keeps the box and the documents. Rule: Shape: should this inline block have been a named function or module
+- [x] Shape (`apps/indusk-admin/src/components/new-project/NewProjectStart.tsx`) — extract the parent folder line and its ask form (about forty lines of JSX and the save call) into a named NewProjectParent component; Start keeps the box and the documents. Rule: Shape: should this inline block have been a named function or module
 
 #### Build Phase 7 OTel
 

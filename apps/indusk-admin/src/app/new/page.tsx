@@ -18,10 +18,15 @@ export default async function NewProjectPage({
   searchParams: Promise<{ change?: string }>;
 }) {
   const { change } = await searchParams;
+  const parent = readParent();
+  // `new-project.no-parent` is the page asking for the folder; the component says so.
+  const asking = parent === null || change === "parent";
   return (
     <main
       className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
-      data-look-state="new-project.start prompt-box.default"
+      data-look-state={
+        asking ? "prompt-box.default" : "new-project.start prompt-box.default"
+      }
     >
       <header>
         <div className="text-sm leading-3 text-ink-faint">
@@ -31,7 +36,7 @@ export default async function NewProjectPage({
           New project
         </h1>
       </header>
-      <NewProjectStart parent={readParent()} editing={change === "parent"} />
+      <NewProjectStart parent={parent} editing={change === "parent"} />
     </main>
   );
 }

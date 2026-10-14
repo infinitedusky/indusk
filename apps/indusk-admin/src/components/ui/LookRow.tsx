@@ -48,6 +48,8 @@ export function LookRow({
   return (
     <div
       data-component="look-row"
+      data-state={kind}
+      data-look-state={`look-row.${kind}`}
       className={`cols-look-row grid items-center gap-4 border-t border-line px-4 py-3 first:border-t-0 ${className}`}
       {...rest}
     >
