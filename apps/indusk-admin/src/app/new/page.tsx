@@ -1,13 +1,23 @@
+import { readParent } from "@infinitedusky/indusk-mcp/new-project";
 import { NewProjectStart } from "@/components/new-project/NewProjectStart";
 
 /**
  * `/new` - New project (new-project-flow), drawn as the approved
  * `new-project.start` draws it: a crumb, "New project", and the box that asks
- * what you want to build. Needs no project and writes nothing.
+ * what you want to build. Needs no project and writes nothing. Where new
+ * projects go is read here, each time: it is the person's setting, changed
+ * from this page (`?change=parent` opens the field to change it).
  *
  * promise: a-project-starts-as-a-conversation
  */
-export default function NewProjectPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewProjectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ change?: string }>;
+}) {
+  const { change } = await searchParams;
   return (
     <main
       className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
@@ -21,7 +31,7 @@ export default function NewProjectPage() {
           New project
         </h1>
       </header>
-      <NewProjectStart />
+      <NewProjectStart parent={readParent()} editing={change === "parent"} />
     </main>
   );
 }

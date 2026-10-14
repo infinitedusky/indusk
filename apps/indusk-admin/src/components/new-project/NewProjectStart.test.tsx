@@ -132,9 +132,7 @@ describe("A35 — the start page asks where new projects go, with none set", () 
       "~/code",
     );
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    await expect
-      .element(screen.getByText("/home/me/code"))
-      .toBeInTheDocument();
+    await expect.element(screen.getByText("/home/me/code")).toBeInTheDocument();
     await expect
       .element(screen.getByRole("button", { name: "Start" }))
       .toBeEnabled();
@@ -150,9 +148,7 @@ describe("A35 — the start page asks where new projects go, with none set", () 
 
   it("A35 with one set, shows it with Change and does not ask", async () => {
     const screen = await render(<NewProjectStart parent="/home/me/code" />);
-    await expect
-      .element(screen.getByText("/home/me/code"))
-      .toBeInTheDocument();
+    await expect.element(screen.getByText("/home/me/code")).toBeInTheDocument();
     await expect
       .element(screen.getByRole("button", { name: "Change" }))
       .toBeInTheDocument();

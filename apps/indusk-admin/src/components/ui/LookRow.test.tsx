@@ -13,7 +13,11 @@ import { LookRow } from "./LookRow";
 describe("A42 — a look row says whether it is a mockup or a story", () => {
   it("A42 a mockup row is labelled Mockup, above its name", async () => {
     const screen = await render(
-      <LookRow kind="mockup" name="new-project.no-parent" approval="proposed" />,
+      <LookRow
+        kind="mockup"
+        name="new-project.no-parent"
+        approval="proposed"
+      />,
     );
     await expect.element(screen.getByText("Mockup")).toBeVisible();
     const kind = screen.getByText("Mockup").element().getBoundingClientRect();
@@ -33,7 +37,8 @@ describe("A42 — a look row says whether it is a mockup or a story", () => {
   });
 
   it("A42 a long name wraps inside its column and never reaches the status chip", async () => {
-    const long = "message.agent-working-with-a-very-long-state-name-that-keeps-going";
+    const long =
+      "message.agent-working-with-a-very-long-state-name-that-keeps-going";
     const screen = await render(
       <div style={{ width: "320px" }}>
         <LookRow kind="story" name={long} approval="proposed" />

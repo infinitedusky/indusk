@@ -89,7 +89,10 @@ describe("A38 — creating uses the proposal the person saved, not what the agen
     );
     const { writeFileSync, readFileSync } = await import("node:fs");
     const draft = createProjectDraft(home, { message: "A parental control" });
-    const file = join(findProjectDraft(home, draft.id)?.dir as string, "proposal.json");
+    const file = join(
+      findProjectDraft(home, draft.id)?.dir as string,
+      "proposal.json",
+    );
     const proposal = (name: string, github: boolean) => ({
       name,
       location: join(home, "projects", name),
