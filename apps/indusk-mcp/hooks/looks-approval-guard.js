@@ -25,7 +25,13 @@
  *     (`indusk plans reapprove …`, `node …/cli.js plans reapprove …`) or names
  *     the admin's re-approve route (`/api/plans/<name>/reapprove`):
  *     re-approving a changed brief is the person's as approving a look is
- *     (cockpit-redraw, only-a-person-reapproves).
+ *     (cockpit-redraw, only-a-person-reapproves);
+ *   - an agent's Bash command that names `reapprovePlan`, the package function
+ *     behind that command, in a segment an interpreter runs (`node -e`,
+ *     `tsx -e`, `pnpm exec tsx -e`). The reader exemption (`echo`, `cat`,
+ *     `git` …) covers a command that only prints its words, never a segment
+ *     holding a substitution (`$(…)`, a backtick, `<(…)`, `>(…)`): the shell
+ *     runs that before the reader sees anything.
  *
  * What it cannot see: a command that builds the path or the URL at run time
  * (a script file, a variable, an encoded string). It is a tripwire for an
@@ -57,8 +63,16 @@ const REAPPROVE_COMMAND = /(^|[\s"'`(])plans\s+reapprove(?=$|[\s"'`);])/i;
 /** Commands that only print or search their arguments; naming `plans reapprove` to them runs nothing. */
 const READERS = new Set(["echo", "printf", "grep", "rg", "cat", "git", "man", "which"]);
 
+/** The `reapprovePlan` function the CLI's `plans reapprove` calls, named anywhere in a segment. */
+const REAPPROVE_FUNCTION = /\breapprovePlan\b/;
+/** A substitution the shell runs before the command sees its words: `$(…)`, a backtick, `<(…)`, `>(…)`. */
+const SUBSTITUTION = /\$\(|`|[<>]\(/;
+/** Commands that run the code they are handed. */
+const INTERPRETERS = new Set(["node", "python", "python3", "perl", "ruby", "deno", "bun", "tsx"]);
+
 /** Commands that write the files they are handed. */
 const WRITERS = new Set([
+	...INTERPRETERS,
 	"tee",
 	"cp",
 	"mv",
@@ -70,14 +84,6 @@ const WRITERS = new Set([
 	"rm",
 	"touch",
 	"sponge",
-	"node",
-	"python",
-	"python3",
-	"perl",
-	"ruby",
-	"deno",
-	"bun",
-	"tsx",
 ]);
 /** `git` subcommands that write a file in the working tree. */
 const GIT_WRITERS = new Set(["checkout", "restore", "apply", "mv", "rm", "reset", "stash"]);
@@ -112,11 +118,16 @@ function segmentWrites(segment) {
 	return WRITERS.has(name);
 }
 
-/** Whether one segment runs `plans reapprove`. */
+/** Whether one segment runs `plans reapprove`, or an interpreter calls `reapprovePlan`. */
 function segmentReapproves(segment) {
+	if (REAPPROVE_FUNCTION.test(segment)) {
+		const named = wordsOf(segment).map((w) => w.split("/").pop() ?? w);
+		if (named.some((w) => INTERPRETERS.has(w))) return true;
+	}
 	if (!REAPPROVE_COMMAND.test(segment)) return false;
 	const verb = wordsOf(segment)[0] ?? "";
-	return !READERS.has(verb.split("/").pop() ?? verb);
+	const reads = READERS.has(verb.split("/").pop() ?? verb);
+	return !reads || SUBSTITUTION.test(segment);
 }
 
 /** What an agent is told when it reaches for a mockup's approval. */
@@ -147,7 +158,8 @@ function bashRefusal(command) {
 	if (UNAPPROVE_ROUTE.test(command)) return mockup("it calls the cockpit's unapprove route");
 	if (APPROVE_ROUTE.test(command)) return mockup("it calls the cockpit's approve route");
 	if (REAPPROVE_ROUTE.test(command)) return reapproval("it calls the admin's re-approve route");
-	if (segments(command).some(segmentReapproves)) return reapproval("it runs `plans reapprove`");
+	if (segments(command).some(segmentReapproves))
+		return reapproval("it runs `plans reapprove` or calls `reapprovePlan`");
 	if (segments(command).some(segmentWrites))
 		return mockup("it writes the record of what a person approved");
 	return null;

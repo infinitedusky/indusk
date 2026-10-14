@@ -248,7 +248,10 @@ describe("A14 — the function behind the command is refused by its name", () =>
 			"node -e",
 			`node -e "import('@infinitedusky/indusk-mcp/plans').then(m => m.reapprovePlan('.', 'x'))"`,
 		],
-		["tsx -e", `tsx -e "import { reapprovePlan } from './src/lib/plans/reapprove.ts'; reapprovePlan('.', 'x')"`],
+		[
+			"tsx -e",
+			`tsx -e "import { reapprovePlan } from './src/lib/plans/reapprove.ts'; reapprovePlan('.', 'x')"`,
+		],
 		["after a cd", `cd ${ROOT} && node -e "require('x').reapprovePlan('.', 'x')"`],
 	];
 	for (const [how, command] of calls) {
