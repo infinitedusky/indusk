@@ -233,9 +233,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   incomplete" on finished plans. Guarded by `PlanSummary.test.tsx` (A28). — see
   `/reference/admin-ui/overview`
 - **A route asks for its own plan's session (`forPlan(project, plan, kind?)`),
-  never "the" session**: the admin's one `SessionManager` holds a session per
-  plan and kind, so a page that took whichever came first would show another
-  plan's agent, or miss its own. `running()` is for the caller that genuinely
-  needs every session (`readWaiting`, one entry each). `GET /api/sessions` is
-  `?project&plan&kind`. Guarded by `sessions-per-plan.test.ts` (A6). — see
+  never "the" session**: one `SessionManager` holds a session per plan and
+  kind. `running()` is for the caller that needs every session (`readWaiting`).
+  An answer goes to the session that asked, found by its `pendingQuestion`
+  request id (a build and a planning session share a plan); words go to the
+  planning session. Guarded by `sessions-per-plan.test.ts` (A6, A13). — see
   `/decisions/sessions-per-plan`
