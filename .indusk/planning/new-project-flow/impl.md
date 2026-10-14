@@ -194,7 +194,9 @@ Deferred-body review (Test Phase 1):
 - [x] `InduskConfig` gains `planning?: { documents_off?: string[] }` and `recommendations?: { name: string; kept: boolean; reason?: string }[]`; reading a config whose `documents_off` names `brief` or `test-plan` refuses, naming it
 - [x] `lib/workflow-types.ts`: a workflow's required documents minus the project's `documents_off`, so the plan status reads a turned-off document `skipped`; the planner skill (`apps/indusk-mcp/skills/planner.md`) says a turned-off document is not written
 - [x] Admin: `/new/[id]` shows `NewProjectProposal` once `proposal.json` exists — editable name, location and shape (`layout-tree`), `workflow-strip`, `recommendation` rows with Decline and a reason, the founding brief with its `file-chip`s, the remote confirm, Create project
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-admin/src/components/new-project/NewProjectProposal.tsx`) — reviewed, left as-is: the four cards (shape, workflow, recommendations, brief) and the remote confirm share one edited proposal; the decline editor's reason state is read by the recommendation rows and written back into that proposal, so splitting it moves state without removing a job. The edits' meaning (`decline`, `keep`, `layoutOf`, `workflowDocuments`) is already out in the tested `proposal-edit.ts`.
+- [x] Shape — reviewed the other files this phase changed (`lib/new-project/proposal.ts`, `config.ts` refusal, `plan-parser.ts` `readDocumentsOff`, `required-documents`, the three ui components, the proposal route, `NewProjectProposalPanel`, the page) against the enabled extensions' craft rules by reading them; nothing else to change. `prepareShapeReview` not run: the review was done by reading the files.
 
 #### Build Phase 1 Forward Intelligence
 
@@ -209,7 +211,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 2 Context
 
-- [ ] planning: `apps/indusk-mcp/templates/planning/CLAUDE.md` — `planning.documents_off` turns a document off for a project; the brief and the test plan cannot be — guarded by `documents-off.test.ts` (A12)
+- [x] planning: `apps/indusk-mcp/templates/planning/CLAUDE.md` — `planning.documents_off` turns a document off for a project; the brief and the test plan cannot be — guarded by `documents-off.test.ts` (A12)
 
 #### Build Phase 2 Document
 

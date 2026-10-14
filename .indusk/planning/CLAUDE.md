@@ -29,6 +29,11 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   every look the brief names being drawn and approved; acceptance, on each new
   component's story. — guarded by `brief-looks.test.ts` and
   `plans-approve-looks.test.ts` — see `/guide/briefs`
+- **`planning.documents_off` turns a planning document off for a project**: a
+  plan in it reads that document *skipped*, never *missing*, and the planner
+  does not write it. The brief and the test plan cannot be turned off; a config
+  naming either is refused when read. — guarded by `documents-off.test.ts` (A12)
+  — see `/guide/new-project`
 - **Cross-reference related plans by path, and update both** when work in one
   changes something the other names — a plan never cites stale information.
 - **Plan hierarchy is declared top-down, in frontmatter**: the root `master.md`
