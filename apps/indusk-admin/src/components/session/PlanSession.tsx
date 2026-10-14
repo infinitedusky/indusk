@@ -67,6 +67,10 @@ export function PlanSession({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Whether the running session has been looked up. Until it has, the page
+  // does not know whether to offer Start: a Start shown over a session that is
+  // about to reattach is a click that is refused.
+  const [looked, setLooked] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -76,7 +80,10 @@ export function PlanSession({
         if (live && ownsSession(body.session, project, plan, "planning"))
           setSessionId(body.session.id);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (live) setLooked(true);
+      });
     return () => {
       live = false;
     };
@@ -126,7 +133,12 @@ export function PlanSession({
           </span>
         </div>
       ) : null}
-      {canPlan && !sessionId ? (
+      {canPlan && !sessionId && !looked ? (
+        <p className="text-xs text-ink-faint" data-testid="session-connecting">
+          Connecting…
+        </p>
+      ) : null}
+      {canPlan && !sessionId && looked ? (
         <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
