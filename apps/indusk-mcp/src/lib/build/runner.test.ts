@@ -26,6 +26,7 @@ const ready = (missing: string[] = []): RetrospectiveReadiness => ({
 	nonTerminalRows: [],
 	promisesOk: true,
 	unprovenPromises: [],
+	longSkipReasons: [],
 	passes: missing.length === 0,
 	missing,
 });

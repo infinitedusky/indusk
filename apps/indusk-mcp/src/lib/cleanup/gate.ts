@@ -111,6 +111,16 @@ export function isAuditComplete(planRoot: string): boolean {
 	return existsSync(join(planRoot, "audit.md"));
 }
 
+/**
+ * The longest a skip reason may be: one sentence. The detail belongs in the
+ * impl body or the retrospective, not in frontmatter a status row must carry.
+ *
+ * promise: a-skip-reason-is-one-sentence
+ */
+export const SKIP_REASON_MAX = 120;
+
+type SkippableRitual = "falsification" | "cleanup" | "audit";
+
 export interface RetrospectiveReadiness {
 	falsificationOk: boolean;
 	cleanupOk: boolean;
@@ -124,8 +134,21 @@ export interface RetrospectiveReadiness {
 	promisesOk: boolean;
 	/** The promises that are not, by name — what the skill's refusal names. */
 	unprovenPromises: string[];
+	/**
+	 * Rituals whose skip would satisfy them but whose reason is over
+	 * SKIP_REASON_MAX characters (skip-reason-why). Each also lands in
+	 * `missing` under its own word, so a caller that refuses on `missing`
+	 * refuses on this too; this names the length. A ritual satisfied some
+	 * other way (a log, a terminal phase, audit.md) is not listed.
+	 *
+	 * promise: a-skip-reason-is-one-sentence
+	 */
+	longSkipReasons: Array<{ ritual: SkippableRitual; length: number }>;
 	passes: boolean;
-	/** What is not yet satisfied (subset of ["falsification", "cleanup", "audit", "rows", "promises"]). */
+	/**
+	 * What is not yet satisfied (subset of ["falsification", "cleanup", "audit", "rows", "promises"]).
+	 * A ritual skipped with a reason over SKIP_REASON_MAX is named here too.
+	 */
 	missing: string[];
 }
 
@@ -175,12 +198,30 @@ export function checkRetrospectiveReadiness(
 	planRoot: string,
 	implContent: string,
 ): RetrospectiveReadiness {
+	const longSkipReasons: RetrospectiveReadiness["longSkipReasons"] = [];
+	// A skip satisfies a ritual only when its reason is one sentence; a long
+	// one is recorded, and counts only if nothing else satisfies the ritual.
+	const skipSatisfies = (skip: SkipCheck): boolean => {
+		if (!skip.skipped) return false;
+		const length = skip.reason?.length ?? 0;
+		return length <= SKIP_REASON_MAX;
+	};
+	const noteLong = (ritual: SkippableRitual, skip: SkipCheck, ok: boolean): void => {
+		const length = skip.reason?.length ?? 0;
+		if (!ok && skip.skipped && length > SKIP_REASON_MAX) longSkipReasons.push({ ritual, length });
+	};
+	const falsificationSkip = isFalsificationSkipped(implContent);
 	const falsificationOk =
 		isFalsificationComplete(planRoot) ||
-		isFalsificationSkipped(implContent).skipped ||
+		skipSatisfies(falsificationSkip) ||
 		isFalsificationPhaseTerminal(implContent);
-	const cleanupOk = isCleanupComplete(planRoot) || isCleanupSkipped(implContent).skipped;
-	const auditOk = isAuditComplete(planRoot) || isAuditSkipped(implContent).skipped;
+	noteLong("falsification", falsificationSkip, falsificationOk);
+	const cleanupSkip = isCleanupSkipped(implContent);
+	const cleanupOk = isCleanupComplete(planRoot) || skipSatisfies(cleanupSkip);
+	noteLong("cleanup", cleanupSkip, cleanupOk);
+	const auditSkip = isAuditSkipped(implContent);
+	const auditOk = isAuditComplete(planRoot) || skipSatisfies(auditSkip);
+	noteLong("audit", auditSkip, auditOk);
 	// The check the skill's text always promised and the code never performed:
 	// a row left `written` after its phase closed is invisible to the two
 	// ritual walks above, which see checkboxes and not rows.
@@ -203,6 +244,7 @@ export function checkRetrospectiveReadiness(
 		nonTerminalRows,
 		promisesOk,
 		unprovenPromises,
+		longSkipReasons,
 		passes: missing.length === 0,
 		missing,
 	};

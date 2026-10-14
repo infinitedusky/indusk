@@ -83,7 +83,7 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 
 **Tier**: med — the work step's default
 
-- [ ] In `apps/indusk-mcp/src/lib/cleanup/gate.ts`: export `SKIP_REASON_MAX = 120`; in `checkRetrospectiveReadiness`, a ritual skipped with a reason longer than it is not satisfied, and is listed in a new field
+- [x] In `apps/indusk-mcp/src/lib/cleanup/gate.ts`: export `SKIP_REASON_MAX = 120`; in `checkRetrospectiveReadiness`, a ritual skipped with a reason longer than it is not satisfied, and is listed in a new field
   ```typescript
   /** Rituals skipped with a reason over SKIP_REASON_MAX characters (skip-reason-why). */
   longSkipReasons: Array<{ ritual: "falsification" | "cleanup" | "audit"; length: number }>;

@@ -33,6 +33,7 @@ const ready: RetrospectiveReadiness = {
 	nonTerminalRows: [],
 	promisesOk: true,
 	unprovenPromises: [],
+	longSkipReasons: [],
 	passes: true,
 	missing: [],
 };
