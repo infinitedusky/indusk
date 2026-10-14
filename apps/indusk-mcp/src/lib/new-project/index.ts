@@ -1,0 +1,30 @@
+/**
+ * New project flow (new-project-flow): a project starts as a conversation held
+ * under the InDusk home, outside every checkout, and is made only when a person
+ * accepts the proposal. The admin reads and writes a draft through this module
+ * and the `indusk new-project` command, never with a process of its own.
+ */
+
+export { induskHome } from "../telemetry/status.js";
+export { type AddedDocument, addDocument } from "./documents.js";
+export { isUnderParent, readParent, setParent } from "./parent.js";
+export {
+	NEW_PROJECT_SESSION_PROJECT,
+	newProjectConversation,
+	newProjectPrompt,
+	newProjectSessionPlan,
+	type ProjectConversation,
+} from "./prompt.js";
+export {
+	createProjectDraft,
+	type DraftDocument,
+	discardProjectDraft,
+	documentName,
+	documentsDir,
+	findProjectDraft,
+	newProjectsDir,
+	type ProjectDraft,
+	type ProjectDraftView,
+	readProjectDraft,
+	touchProjectDraft,
+} from "./store.js";

@@ -104,6 +104,10 @@
 			"types": "./dist/lib/drafts/index.d.ts",
 			"default": "./dist/lib/drafts/index.js"
 		},
+		"./new-project": {
+			"types": "./dist/lib/new-project/index.d.ts",
+			"default": "./dist/lib/new-project/index.js"
+		},
 		"./plans": {
 			"types": "./dist/lib/plans/index.d.ts",
 			"default": "./dist/lib/plans/index.js"
