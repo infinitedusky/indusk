@@ -244,3 +244,4 @@ Each entry is a rule and a pointer; the pointer holds the story.
   no current step; a hand-written `=== "accepted"` showed "The brief is
   incomplete" on finished plans. Guarded by `PlanSummary.test.tsx` (A28). — see
   `/reference/admin-ui/overview`
+- **A running agent's events are heard through `useSessionEvents`** — `components/session/use-session-events.ts`, the one subscription every conversation uses (the `EventSource` on `/api/sessions/:id/events`, `running`, a refresh on a write and on exit, an `onWrite` callback). A new view of a session uses it rather than opening its own `EventSource`; a draft's agent is found with `draftSession`/`stopDraftSession` in `lib/new-project-session.ts`, never by comparing `sessionManager().current()?.plan`. Guarded by `use-session-events.test.tsx` (A34).

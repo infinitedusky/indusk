@@ -80,7 +80,7 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A31 | A proposal located through a symbolic link that leads out of the parent directory is refused and nothing is created outside the parent | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-new-project-is-written-only-under-its-parent | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A32 | A proposal located inside an existing git repository under the parent is refused and that repository is untouched | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A33 | A proposal naming a repository `worktrees` is refused, so a repository never shares the worktrees folder | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/lib/new-project/proposal.test.ts |
-| A34 | A running agent's events reach the plan conversation and the project conversation through one subscription: a file the agent writes refreshes either page, and the agent ending stops it listening | Build Phase 6 | Build Phase 6 | written | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/session/use-session-events.test.tsx |
+| A34 | A running agent's events reach the plan conversation and the project conversation through one subscription: a file the agent writes refreshes either page, and the agent ending stops it listening | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/session/use-session-events.test.tsx |
 
 ### Deferred Verification
 
@@ -365,15 +365,16 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 6 Verification
 
-- [ ] A34 passes, and every earlier row still passes (`cd apps/indusk-admin && pnpm exec vitest run src/components/session src/components/new-project src/components/drafts src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files
+- [x] A34 passes, and every earlier row still passes (`cd apps/indusk-admin && pnpm exec vitest run src/components/session src/components/new-project src/components/drafts src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules (one hook per concern, one place for the check); nothing to change.
 
 #### Build Phase 6 Context
 
-- [ ] admin: `apps/indusk-admin/CLAUDE.md` — a running agent's events are heard through `useSessionEvents`, the one subscription every conversation uses; a new view of a session uses it rather than opening its own `EventSource`
+- [x] admin: `apps/indusk-admin/CLAUDE.md` — a running agent's events are heard through `useSessionEvents`, the one subscription every conversation uses; a new view of a session uses it rather than opening its own `EventSource`
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/decisions/new-project-flow.md`: decision 9's as-built note names `useSessionEvents` as what the other conversations will move onto
+- [x] `apps/docs/src/decisions/new-project-flow.md`: decision 9's as-built note names `useSessionEvents` as what the other conversations will move onto
 
 ## Files Affected
 
