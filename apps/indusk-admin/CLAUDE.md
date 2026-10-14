@@ -26,7 +26,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `lib/conversation-turns`'s `turnsOf(events)` reads a session's events as
   alternating you/agent turns (the reply is the last text, the tools and
   earlier text are its working, an open question or permission is *waiting* and
-  never folded); `ConversationThread` draws them as `Message` bubbles, the
+  never folded; each agent turn has a `status` - working, done or stopped - drawn
+  as `Message`'s dot, and Start launches the agent so the thread opens with it
+  working); `ConversationThread` draws them as `Message` bubbles, the
   reply through `Markdown`; the draft's `transcript.jsonl` (appended by
   `startProjectConversation`) is what a reopened page shows. The plan
   conversation, builds and Fix with Claude still use the session panel until
