@@ -63,6 +63,8 @@ are in [research.md](research.md).
 
 12. **`a-look-says-whether-it-is-a-mockup-or-a-story`** (state). Every look on the looks page says whether it is a mockup — a drawing approved before the build — or a story — the built component, approved when it matches its mockup.
 
+13. **`a-remote-repository-says-whose-and-who-can-see-it`** (state). The offer to create a GitHub repository names the account it will be made under, or says to sign in first and cannot be taken, and makes it private unless the person chooses public.
+
 ### Existing promises
 
 **Must not break**
@@ -99,7 +101,7 @@ None.
 1. **`home.default`**. The project grid with a New project button.
 2. **`new-project.start`**. One text box — "What do you want to build?" — and a way to add documents to write the brief from, with where new projects go shown and changeable; nothing else asked.
 3. **`new-project.conversation`**. Mid-conversation: the person's messages and documents, "you" and "agent" bubbles alternating, each agent reply formatted with its working folded inside it, a box to answer in, and what the agent knows so far (why, what, how and where, name and place).
-4. **`new-project.proposal`**. The proposal: name, location and shape, the planning workflow with the core kept, each recommendation kept or declined, the founding brief, the private GitHub repository as a separate confirm, and Create.
+4. **`new-project.proposal`**. The proposal: name, location and shape, the planning workflow with the core kept, each recommendation kept or declined, the founding brief, the GitHub repository as a separate confirm naming the account it is made under, private or public, and Create.
 5. **`new-project.creating`**. The creation running as steps, ending with a way into the new project.
 6. **`recommendation.kept`**. A new component: a recommended practice, one line on why, and Decline.
 7. **`recommendation.declined`**. The same component declined, with the person's reason and a way to keep it after all.
@@ -118,6 +120,7 @@ None.
 20. **`new-project.no-parent`**. The start page before anyone has said where new projects go: one field, "Where should new projects go?", saved from the page, so no command is typed.
 21. **`look-row.mockup`**. A row on the looks page labelled Mockup: a drawing approved before the build.
 22. **`look-row.story`**. A row on the looks page labelled Story: the built component, approved when it matches its mockup.
+23. **`new-project.github-signed-out`**. The proposal when nobody is signed in to GitHub on this machine: the repository cannot be ticked, and the page says how to sign in.
 
 ### Existing looks
 
