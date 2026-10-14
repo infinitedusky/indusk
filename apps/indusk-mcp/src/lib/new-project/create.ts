@@ -203,13 +203,20 @@ function writeFoundingDocuments(
 /** What the person decided - each recommendation kept or declined (with the reason), the documents turned off - in the project's config. */
 function recordChoices(root: string, proposal: Proposal): void {
 	const config = readConfig(root) as InduskConfig;
+	const recommendations = proposal.recommendations.map((rec) => ({
+		name: rec.name,
+		kept: rec.kept,
+		...(rec.kept ? {} : { reason: rec.reason }),
+	}));
+	// A GitHub repository the person did not tick is a recommendation declined,
+	// recorded like any other. Their own words stand when the proposal already
+	// declines it with a reason; a ticked box is not a decline.
+	if (!proposal.remote.github && !recommendations.some((rec) => rec.name === "github")) {
+		recommendations.push({ name: "github", kept: false, reason: "not confirmed" });
+	}
 	writeConfig(root, {
 		...config,
-		recommendations: proposal.recommendations.map((rec) => ({
-			name: rec.name,
-			kept: rec.kept,
-			...(rec.kept ? {} : { reason: rec.reason }),
-		})),
+		recommendations,
 		...(proposal.documentsOff.length > 0
 			? { planning: { ...config.planning, documents_off: proposal.documentsOff } }
 			: {}),

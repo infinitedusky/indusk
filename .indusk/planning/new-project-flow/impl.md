@@ -396,7 +396,7 @@ Deferred-body review (Test Phase 1):
 - [x] Create sends the proposal as the person sees it; the accept route stops the draft's agent, saves that proposal, then creates — never re-reading what the agent wrote after the press
 - [x] The project conversation's session is confined: path tools only inside its draft, Read/Write/Edit/Glob/Grep allowed, any other tool (Bash, WebFetch, an MCP tool) refused with a message saying why — a decision beside `decideBuildPermission` in `lib/session/permissions.ts`, chosen for the draft's session kind; plan conversations and builds unchanged
 - [x] `createProject`'s `install` step checks what `indusk init` wrote — the project's skills, hooks and MCP entry — and fails the step, rolling back, when one is missing
-- [ ] An unticked GitHub repository is written to `recommendations` as `{ name: "github", kept: false, reason: "not confirmed" }` unless the person's proposal already declines it with a reason
+- [x] An unticked GitHub repository is written to `recommendations` as `{ name: "github", kept: false, reason: "not confirmed" }` unless the person's proposal already declines it with a reason
 - [ ] `LookRow` leads with its kind — Mockup or Story — as the approved `look-row.mockup` / `look-row.story` draw it, everywhere it is used (the looks page, a plan's looks, the promise page); stories for both kinds, `indusk looks stories admin` (Sandy, 2026-10-14: "we need it to be clear that it is a story or a mockup in looks")
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
