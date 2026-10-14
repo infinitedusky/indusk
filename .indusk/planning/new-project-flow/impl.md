@@ -1,7 +1,7 @@
 ---
 title: "New project flow — from a text box to a laid-out project"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -80,6 +80,7 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A31 | A proposal located through a symbolic link that leads out of the parent directory is refused and nothing is created outside the parent | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-new-project-is-written-only-under-its-parent | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A32 | A proposal located inside an existing git repository under the parent is refused and that repository is untouched | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A33 | A proposal naming a repository `worktrees` is refused, so a repository never shares the worktrees folder | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/lib/new-project/proposal.test.ts |
+| A34 | A running agent's events reach the plan conversation and the project conversation through one subscription: a file the agent writes refreshes either page, and the agent ending stops it listening | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/session/use-session-events.test.tsx |
 
 ### Deferred Verification
 
@@ -348,6 +349,31 @@ Deferred-body review (Test Phase 1):
 #### Build Phase 5 Document
 
 - [x] `apps/docs/src/guide/new-project.md`: the parent directory section names the two refusals (a link out of the parent, a location inside an existing repository) and that creating a project ends its conversation's agent
+
+### Build Phase 6: Cleanup — one way to hear a running agent, one way to find a draft's agent
+
+**Tier**: med — the work step's default
+
+**Goal**: decompose two pieces this plan wrote twice, per the react extension's one-hook-per-concern and the rule of three. `components/new-project/use-project-session.ts` copies `SessionConnector`'s subscription — the `EventSource` on `/api/sessions/:id/events`, the `WRITES` list, the refresh on a write, the close on `exit` — and the plan that moves the other agent conversations onto the thread will need it a third time. The accept, discard and add routes each repeat `sessionManager().current()` and `running?.plan === newProjectSessionPlan(id)` to find the draft's agent. Every other oversized file is left as it is, with the reason below.
+
+- [ ] Extract `useSessionEvents(sessionId, { onWrite })` into `components/session/use-session-events.ts` — the subscription, `WRITES` once, `running` and the close on `exit`; `SessionConnector` and `useProjectSession` both use it, `SessionConnector` keeping its `AGENT_WROTE` dispatch as its `onWrite`
+- [ ] Extract `draftSession(id)` and `stopDraftSession(id)` into `lib/new-project-session.ts`; the accept, discard and add routes call them instead of repeating the check
+- [x] (reviewed `apps/indusk-mcp/src/lib/new-project/create.ts`, 433 lines — left as-is: one module for one creation, its steps read top-down in the order they run; Shape already named its documents step's three parts, and the span is 40 lines that exist only for `createProject`)
+- [x] (reviewed `apps/indusk-mcp/src/__tests__/new-project-cli.test.ts`, 461 lines — left as-is: one boundary, the CLI, over shared fixtures (a home, a parent, a draft); split by promise it would copy the fixtures into each file)
+- [x] (reviewed `apps/indusk-mcp/src/bin/cli.ts`, `lib/config.ts`, `lib/lifecycle.ts`, `lib/looks/check.ts`, `lib/plan-parser.ts`, `apps/indusk-admin/src/lib/planning-reader.ts` — left as-is: over the cap before this plan; its touches are wiring or a few lines each — `cli.ts` registers `new-project` and delegates to `bin/commands/new-project.ts`, `looks/check.ts` gained query-string paths — and decomposing them is not this plan's)
+- [x] (reviewed `apps/indusk-mcp/skills/planner.md`, `.claude/skills/planner/SKILL.md`, `apps/docs/src/changelog.md` — left as-is: prose, two lines each from this plan)
+
+#### Build Phase 6 Verification
+
+- [ ] A34 passes, and every earlier row still passes (`cd apps/indusk-admin && pnpm exec vitest run src/components/session src/components/new-project src/components/drafts src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files
+
+#### Build Phase 6 Context
+
+- [ ] admin: `apps/indusk-admin/CLAUDE.md` — a running agent's events are heard through `useSessionEvents`, the one subscription every conversation uses; a new view of a session uses it rather than opening its own `EventSource`
+
+#### Build Phase 6 Document
+
+- [ ] `apps/docs/src/decisions/new-project-flow.md`: decision 9's as-built note names `useSessionEvents` as what the other conversations will move onto
 
 ## Files Affected
 
