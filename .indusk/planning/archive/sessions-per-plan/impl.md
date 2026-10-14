@@ -11,6 +11,8 @@ gate_policy: ask
 approved_brief: "041a7060639eb7f83fa4cecc337cd9478ca47dd0c8aa32c70f3d771d21404fc1"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-14T21:39:31.605Z"
+accepted: 2026-10-14T23:37:20.628Z
+accepted_by: person
 ---
 
 # Sessions per plan
