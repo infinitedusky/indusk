@@ -109,9 +109,10 @@ None.
 13. **`knowledge-list.default`**. A new component: what the agent knows so far — why, what, how and where, name and place — each settled, asking or open.
 14. **`workflow-strip.default`**. A new component: the planning documents in order, the core marked kept and a declined one struck through.
 15. **`layout-tree.default`**. A new component: the project's directory layout as it will be created.
-16. **`message.agent-folded`**. The agent's bubble (`message.agent`) holding a formatted reply, with one "See more ›" line standing for the working before it.
+16. **`message.agent-folded`**. The agent's bubble (`message.agent`) holding a formatted reply, a steady green dot for done, with one "See more ›" line standing for the working before it.
 17. **`message.agent-open`**. The same bubble opened: the working listed above the reply, and "See less".
-18. **`message.agent-working`**. The agent's bubble while it works: shown the moment the conversation starts, pulsing, with "Working…" and its working so far behind "See more ›", until its reply arrives.
+18. **`message.agent-working`**. The agent's bubble while it works: shown the moment the conversation starts, its dot pulsing with a ring of the same colour, "Working…" and its working so far behind "See more ›", until its reply arrives.
+19. **`message.agent-stopped`**. The agent's bubble when it stopped before replying: a grey dot, its working behind "See more ›", and a line saying the person can write to pick the conversation up again. Every agent bubble carries one of the three dots: working, done or stopped.
 
 ### Existing looks
 
