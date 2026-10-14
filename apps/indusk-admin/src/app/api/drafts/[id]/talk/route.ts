@@ -3,7 +3,10 @@ import {
   findDraft,
   touchDraft,
 } from "@infinitedusky/indusk-mcp/drafts";
-import { draftConversation } from "@infinitedusky/indusk-mcp/session";
+import {
+  draftConversation,
+  draftSessionPlan,
+} from "@infinitedusky/indusk-mcp/session";
 import type { NextRequest } from "next/server";
 import { getProjectPath } from "@/lib/registry-client";
 import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
@@ -15,7 +18,7 @@ export const dynamic = "force-dynamic";
  * Talk in a draft: `{ project, text?, reopened? }`. Starts the draft's
  * conversation in the draft's own folder (`draftConversation`), so the agent
  * reads and writes nothing in a checkout; the person's words, if any, ride in
- * the first message. One session at a time, as everywhere.
+ * the first message. One conversation per draft; other plans' sessions are not in its way.
  *
  * promise: a-conversation-that-is-not-kept-leaves-nothing-in-the-repository
  */
@@ -39,11 +42,15 @@ export async function POST(
   if (!root) return refuse(404, `no project named ${body.project}`);
   const draft = findDraft(draftHomeOf(root), id);
   if (!draft) return refuse(404, `no draft ${id} in ${body.project}`);
-  const running = sessionManager().current();
+  const running = sessionManager().forPlan(
+    body.project,
+    draftSessionPlan(id),
+    "planning",
+  );
   if (running) {
     return refuse(
       409,
-      `a session is already running: ${running.kind} for ${running.plan} — stop it first`,
+      `a ${running.kind} session is already running for ${running.plan}: ${running.id} — stop it first`,
     );
   }
   touchDraft(draft);

@@ -112,7 +112,7 @@ Several plans can each have an agent at once: the session manager refuses only a
 **Tier**: med — the work step's default
 
 - [x] `apps/indusk-admin/src/lib/build-host.ts` and `app/api/plans/build/route.ts`: the start checks and the build's session use `forPlan(project, plan, "build")`
-- [ ] `app/api/drafts/[id]/talk`, `accept`, `discard`: each asks for the draft's own session (`forPlan(project, <the draft's key>)`), not any session
+- [x] `app/api/drafts/[id]/talk`, `accept`, `discard`: each asks for the draft's own session (`forPlan(project, <the draft's key>)`), not any session
 - [ ] `lib/decisions.ts` (`deliver`) and `lib/decisions-reader.ts` (`readWaiting`): the plan's own session, and one waiting entry per running session of the project
 - [ ] `app/api/sessions/route.ts`: `GET ?project&plan&kind` returns that plan's session; its client in `components/session/PlanSession.tsx` passes them; `app/api/promises/[name]/fix/route.ts` asks for its plan's
 - [ ] The mocks that stub `current` (`build-host.release.test.ts`, `promise-fix-route.test.ts`) stub `forPlan`/`running` instead
