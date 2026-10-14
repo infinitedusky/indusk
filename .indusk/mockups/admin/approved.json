@@ -6700,6 +6700,27 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T22:56:03.980Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"mockup": "new-project.github-signed-out",
+			"mockupHash": "78b892e045c447121b25454bafa18abc3cb345341affee65fb2bd47a62f632a1",
+			"componentsHash": "66b1e58f7e0ce1efa583910efcda8f04912dd5a8d4b08a50615a313d4af2cf5e",
+			"components": {
+				"layout-tree.default": "77148b6d4129b04aa6a1490de46381f6bdc120bcddb98885772e371ea7cae033",
+				"workflow-strip.default": "f5c21833c099ea33378d68108be5475250e645e485a762cc159799e7f5a97da7",
+				"recommendation.kept": "16726baf388ba8badafd652fbac21c3c14379838c3996e198ece8fabe7eae968",
+				"recommendation.declined": "86d6bb342fec77eb89cfd3ea93c5fedfd1c302fdbae450a60c61df92bbc2d73f",
+				"file-chip.default": "96bc93a92232be00a886a181330b2f2c43897c7cdc9c26d902dd2ba7362ad139",
+				"file-chip.css": "f66b27d5908ab4d0332e9228659f53079ba1074d5741e683bd23934c6c45781d",
+				"layout-tree.css": "05ac1143e283e11e614fd50f32d6f5270bb352eee3acbd99d07b1669a9f26691",
+				"recommendation.css": "44221201ffe67d72eaf0cd0eccb2bfb16b325980e3485d6237d0b93cb8e000c3",
+				"workflow-strip.css": "3473cfd6dbbea9d45cf908bc3fd92c5bda568b80ed4ac5f888d97902a7fbefca"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T22:56:04.280Z",
+			"plan": "cockpit-redraw"
 		}
 	]
 }
