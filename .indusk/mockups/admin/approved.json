@@ -3693,7 +3693,9 @@
 			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T00:01:27.755Z",
-			"plan": "new-project-flow",
+			"plan": "new-project-flow"
+		},
+		{
 			"mockup": "brief.approved",
 			"mockupHash": "9caeb38f5385d75c38f7196782e92a73cf7cbaaeda09392fac9dd32c03ba5ae5",
 			"componentsHash": "a7a269acd695244b12c9ae53b6899112b24335fcd4596dc5008aa4190d484fa3",
