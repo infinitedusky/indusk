@@ -4,6 +4,7 @@ import { join } from "node:path";
 import type { Span, Tracer } from "@opentelemetry/api";
 import { afterEach, describe, expect, it } from "vitest";
 import { CreationError, createProject } from "./create.js";
+import { setParent } from "./parent.js";
 import { createProjectDraft } from "./store.js";
 import {
 	appendTranscript,
@@ -42,6 +43,7 @@ describe("conversationFigures — what the creation span carries about the conve
 			replies: 2,
 			replyWords: 5,
 			foldsOpened: 2,
+			toolsRefused: 0,
 		});
 	});
 
@@ -68,6 +70,7 @@ describe("conversationFigures — what the creation span carries about the conve
 			replies: 0,
 			replyWords: 0,
 			foldsOpened: 0,
+			toolsRefused: 0,
 		});
 	});
 });
@@ -121,6 +124,9 @@ describe("createProject's span", () => {
 		);
 		appendTranscript(draft, text("One question? And another?"));
 		appendTranscript(draft, { type: "fold-opened", at: "2026-10-14T09:01:00.000Z" });
+		appendTranscript(draft, { type: "refused", tool: "Bash" });
+		appendTranscript(draft, { type: "refused", tool: "WebFetch" });
+		setParent(join(h, "code"), h, "admin");
 
 		const seen: {
 			name?: string;
@@ -150,7 +156,7 @@ describe("createProject's span", () => {
 			},
 		} as unknown as Tracer;
 
-		// No parent is configured, so creation is refused - the span still reports it.
+		// The draft holds no proposal, so creation is refused - the span still reports it.
 		const prev = process.env.INDUSK_HOME;
 		process.env.INDUSK_HOME = h;
 		try {
@@ -166,6 +172,8 @@ describe("createProject's span", () => {
 			"conversation.has_document": true,
 			"conversation.reply_words": 4,
 			"conversation.folds_opened": 1,
+			"conversation.tools_refused": 2,
+			"new_project.parent_set_in_admin": true,
 		});
 		expect(seen.status).toMatchObject({ code: 2 });
 		expect(seen.ended).toBe(true);

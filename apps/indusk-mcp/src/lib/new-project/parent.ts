@@ -36,12 +36,29 @@ export function readParent(home: string = induskHome()): string | null {
 	}
 }
 
+/** Where the parent was set: the command, or the admin's start page. Read by the creation span. */
+export type ParentSetBy = "cli" | "admin";
+
+/** Where the saved parent was set, or null when none is. */
+export function parentSetBy(home: string = induskHome()): ParentSetBy | null {
+	try {
+		const raw = JSON.parse(readFileSync(settingsPath(home), "utf-8")) as { setBy?: unknown };
+		return raw.setBy === "admin" ? "admin" : "cli";
+	} catch {
+		return null;
+	}
+}
+
 /** `~` and relative paths made absolute; the directory is made if it is not there. */
-export function setParent(dir: string, home: string = induskHome()): string {
+export function setParent(
+	dir: string,
+	home: string = induskHome(),
+	setBy: ParentSetBy = "cli",
+): string {
 	const absolute = resolve(dir.startsWith("~") ? join(homedir(), dir.slice(1)) : dir);
 	mkdirSync(absolute, { recursive: true });
 	mkdirSync(home, { recursive: true });
-	writeFileSync(settingsPath(home), `${JSON.stringify({ parent: absolute }, null, 2)}\n`);
+	writeFileSync(settingsPath(home), `${JSON.stringify({ parent: absolute, setBy }, null, 2)}\n`);
 	return absolute;
 }
 

@@ -15,7 +15,7 @@ export {
 } from "./create.js";
 export { type AddedDocument, addDocument, documentNotice } from "./documents.js";
 export { type KnowledgeEntry, type KnowledgeState, knowledgeOf } from "./knowledge.js";
-export { isUnderParent, readParent, setParent } from "./parent.js";
+export { isUnderParent, type ParentSetBy, parentSetBy, readParent, setParent } from "./parent.js";
 export {
 	NEW_PROJECT_SESSION_PROJECT,
 	newProjectConversation,
@@ -62,6 +62,7 @@ export {
 	readTranscript,
 	recordFoldOpened,
 	type SessionMarker,
+	type ToolRefused,
 	type TranscriptLine,
 	transcriptPath,
 } from "./transcript.js";

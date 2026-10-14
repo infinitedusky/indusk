@@ -402,7 +402,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 7 OTel
 
-- [ ] The `new_project.create` span carries `conversation.tools_refused` (how many tool requests the confined agent was refused, read from the transcript) and `new_project.parent_set_in_admin` (whether the parent was saved from the page); exporting the span is `mark-first`'s
+- [x] The `new_project.create` span carries `conversation.tools_refused` (how many tool requests the confined agent was refused, read from the transcript) and `new_project.parent_set_in_admin` (whether the parent was saved from the page); exporting the span is `mark-first`'s
 
 #### Build Phase 7 Verification
 

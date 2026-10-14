@@ -16,7 +16,7 @@ import { readRegistry, removeProject } from "../admin/registry.js";
 import { type InduskConfig, readConfig, writeConfig } from "../config.js";
 import { induskMcpPackageRoot } from "../package-root.js";
 import { installProblems } from "./install.js";
-import { isUnderParent, readParent, repositoryAround } from "./parent.js";
+import { isUnderParent, parentSetBy, readParent, repositoryAround } from "./parent.js";
 import { type Proposal, ProposalError, readProposal } from "./proposal.js";
 import {
 	type CreationRecord,
@@ -301,7 +301,10 @@ const TRACER_NAME = "@infinitedusky/indusk-mcp/new-project";
  * project); the conversation figures are read from the draft's transcript now,
  * before creation deletes the draft - `conversation.questions` and
  * `conversation.has_document` for expectation 2, `conversation.reply_words`
- * and `conversation.folds_opened` for expectation 5. Telemetry is best-effort:
+ * and `conversation.folds_opened` for expectation 5. `conversation.tools_refused`
+ * counts the requests the confined agent was refused, and
+ * `new_project.parent_set_in_admin` says whether the parent was saved from the
+ * start page rather than typed. Telemetry is best-effort:
  * a failure here never fails a creation.
  */
 function startCreateSpan(
@@ -320,6 +323,8 @@ function startCreateSpan(
 		span.setAttribute("conversation.replies", figures.replies);
 		span.setAttribute("conversation.reply_words", figures.replyWords);
 		span.setAttribute("conversation.folds_opened", figures.foldsOpened);
+		span.setAttribute("conversation.tools_refused", figures.toolsRefused);
+		span.setAttribute("new_project.parent_set_in_admin", parentSetBy(home) === "admin");
 		span.setAttribute(
 			"conversation.has_document",
 			(readProjectDraft(home, draft.id)?.documents.length ?? 0) > 0,

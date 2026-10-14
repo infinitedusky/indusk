@@ -27,7 +27,13 @@ export interface FoldOpened {
 	at: string;
 }
 
-export type TranscriptLine = StartedEvent | SessionMarker | FoldOpened;
+/** The confined agent asked for a tool it may not use and was refused (`decideConfinedPermission`): the span counts these. */
+export interface ToolRefused {
+	type: "refused";
+	tool: string;
+}
+
+export type TranscriptLine = StartedEvent | SessionMarker | FoldOpened | ToolRefused;
 
 export const transcriptPath = (draft: ProjectDraft): string => join(draft.dir, "transcript.jsonl");
 
@@ -77,6 +83,8 @@ export interface ConversationFigures {
 	replyWords: number;
 	/** Times the person opened a reply's working. */
 	foldsOpened: number;
+	/** Tool requests the confined agent was refused. */
+	toolsRefused: number;
 }
 
 const wordsIn = (text: string): number => text.split(/\s+/).filter(Boolean).length;
@@ -96,6 +104,7 @@ export function conversationFigures(lines: readonly TranscriptLine[]): Conversat
 	let last: string | null = null;
 	let toolQuestions = 0;
 	let foldsOpened = 0;
+	let toolsRefused = 0;
 	const endTurn = () => {
 		if (last !== null) replies.push(last);
 		last = null;
@@ -105,6 +114,7 @@ export function conversationFigures(lines: readonly TranscriptLine[]): Conversat
 		else if (line.type === "result" || line.type === "you" || line.type === "session") endTurn();
 		else if (line.type === "question") toolQuestions += line.questions.length;
 		else if (line.type === "fold-opened") foldsOpened++;
+		else if (line.type === "refused") toolsRefused++;
 	}
 	endTurn();
 	const words = replies.reduce((sum, r) => sum + wordsIn(r), 0);
@@ -113,5 +123,6 @@ export function conversationFigures(lines: readonly TranscriptLine[]): Conversat
 		replies: replies.length,
 		replyWords: replies.length === 0 ? 0 : Math.round(words / replies.length),
 		foldsOpened,
+		toolsRefused,
 	};
 }
