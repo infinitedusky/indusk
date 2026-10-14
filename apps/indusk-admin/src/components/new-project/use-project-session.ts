@@ -1,11 +1,8 @@
 "use client";
 
-import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { postJson } from "@/lib/post-json";
-
-const WRITES = ["Write", "Edit", "MultiEdit", "NotebookEdit"];
+import { useSessionEvents } from "../session/use-session-events";
 
 /**
  * A project conversation's running session as the thread needs it: its events
@@ -15,35 +12,8 @@ const WRITES = ["Write", "Edit", "MultiEdit", "NotebookEdit"];
  * refreshes, so what it knows and its proposal show as they are written.
  */
 export function useProjectSession(sessionId: string | null) {
-  const router = useRouter();
-  // Held in a ref: the effect below belongs to the session, not to the router object.
-  const refresh = useRef(() => router.refresh());
-  refresh.current = () => router.refresh();
-  const [events, setEvents] = useState<StartedEvent[]>([]);
-  const [running, setRunning] = useState(false);
+  const { events, running } = useSessionEvents(sessionId);
   const [problem, setProblem] = useState<string | null>(null);
-
-  useEffect(() => {
-    setEvents((prev) => (prev.length === 0 ? prev : []));
-    setRunning(sessionId !== null);
-    if (!sessionId) return;
-    const source = new EventSource(`/api/sessions/${sessionId}/events`);
-    source.onmessage = (message) => {
-      const ev = JSON.parse(message.data) as StartedEvent;
-      setEvents((prev) => [...prev, ev]);
-      if (ev.type === "tool" && WRITES.includes(ev.name)) refresh.current();
-      if (ev.type === "exit") {
-        setRunning(false);
-        source.close();
-        refresh.current();
-      }
-    };
-    source.onerror = () => {
-      setRunning(false);
-      source.close();
-    };
-    return () => source.close();
-  }, [sessionId]);
 
   const post = async (path: string, body: unknown) => {
     if (!sessionId) return;
