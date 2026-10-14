@@ -3,11 +3,16 @@
 	"sources": ["apps/indusk-admin/src"],
 	"ignore": ["nextjs-portal"],
 	"screens": [
-		{ "name": "nav", "states": ["expanded", "collapsed", "wide"], "path": "/p/dusk/promises" },
+		{ "name": "nav", "states": ["expanded", "collapsed"], "path": "/p/dusk/promises" },
+		{ "name": "nav", "states": ["wide"], "path": "/p/dusk/promises?nav=5000" },
 		{ "name": "nav-handle", "states": ["default", "dragging"], "path": "/p/dusk/promises" },
 		{ "name": "dashboard", "states": ["default", "empty"], "path": "/p/dusk/promises" },
 		{ "name": "promise", "states": ["broken", "enforced"], "path": "/p/dusk/promises" },
-		{ "name": "plan", "states": ["needs-you", "working", "released", "parts", "drafts", "new", "history", "phases", "documents"], "path": "/p/dusk/plan/ui-promises" },
+		{ "name": "plan", "states": ["parts"], "path": "/p/dusk/plan/looks-fixture-parts" },
+		{ "name": "plan", "states": ["working"], "path": "/p/dusk/plan/looks-fixture-working" },
+		{ "name": "plan", "states": ["needs-you"], "path": "/p/dusk/plan/looks-fixture-needs-you" },
+		{ "name": "plan", "states": ["released"], "path": "/p/dusk/plan/looks-fixture-released" },
+		{ "name": "plan", "states": ["drafts", "new", "history", "phases", "documents"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "expectation-row", "states": ["default", "due"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "draft-row", "states": ["default", "aged"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "amendment-card", "states": ["waiting"], "path": "/p/dusk/plan/ui-promises" },
@@ -15,6 +20,7 @@
 		{ "name": "phase-row", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "history-panel", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "looks", "states": ["default", "uncovered"], "path": "/p/dusk/looks" },
-		{ "name": "brief", "states": ["writing", "approved"], "path": "/p/dusk/plan/cockpit-redraw/brief" }
+		{ "name": "brief", "states": ["writing"], "path": "/p/dusk/plan/looks-fixture-parts/brief" },
+		{ "name": "brief", "states": ["approved"], "path": "/p/dusk/plan/looks-fixture-working/brief" }
 	]
 }
