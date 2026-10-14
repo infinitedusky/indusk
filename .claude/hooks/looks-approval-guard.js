@@ -119,42 +119,49 @@ function segmentReapproves(segment) {
 	return !READERS.has(verb.split("/").pop() ?? verb);
 }
 
-/** Why a Bash command is refused, or null to let it run. */
+/** What an agent is told when it reaches for a mockup's approval. */
+const MOCKUP_GUIDANCE = {
+	promise: "a-mockup-is-approved-by-a-person",
+	lines: [
+		"A mockup becomes the reference only when a person approves it with the cockpit's Approve,",
+		"and stops being one only when a person takes it back with the cockpit's Unapprove:",
+		"`indusk ui`, the app's Looks page, the mockup opened at each device, then Approve (or Unapprove).",
+		"Draw or change the mockup (screens/<screen>.<state>.html) and the foundation as you need;",
+		"a changed mockup reads proposed until a person approves it there.",
+	],
+};
+/** What an agent is told when it reaches for a brief's re-approval. */
+const REAPPROVAL_GUIDANCE = {
+	promise: "only-a-person-reapproves",
+	lines: [
+		"Only a person re-approves a changed brief: the amendment card's Approve in the cockpit",
+		"(`indusk ui`, the plan's page), or `indusk plans reapprove <plan>` run in their own terminal.",
+		"Write the amendment as you need; the build waits until a person re-approves.",
+	],
+};
+
+/** Why a Bash command is refused, with the guidance that goes with it; null to let it run. */
 function bashRefusal(command) {
-	if (UNAPPROVE_ROUTE.test(command)) return "it calls the cockpit's unapprove route";
-	if (APPROVE_ROUTE.test(command)) return "it calls the cockpit's approve route";
-	if (REAPPROVE_ROUTE.test(command)) return "it calls the admin's re-approve route";
-	if (segments(command).some(segmentReapproves)) return "it runs `plans reapprove`";
+	const mockup = (why) => ({ why, guidance: MOCKUP_GUIDANCE });
+	const reapproval = (why) => ({ why, guidance: REAPPROVAL_GUIDANCE });
+	if (UNAPPROVE_ROUTE.test(command)) return mockup("it calls the cockpit's unapprove route");
+	if (APPROVE_ROUTE.test(command)) return mockup("it calls the cockpit's approve route");
+	if (REAPPROVE_ROUTE.test(command)) return reapproval("it calls the admin's re-approve route");
+	if (segments(command).some(segmentReapproves)) return reapproval("it runs `plans reapprove`");
 	if (segments(command).some(segmentWrites))
-		return "it writes the record of what a person approved";
+		return mockup("it writes the record of what a person approved");
 	return null;
 }
 
-function refuse(what, why) {
-	const reapproval = /re-?approve/.test(why);
+function refuse(what, why, guidance = MOCKUP_GUIDANCE) {
 	process.stderr.write(
-		(reapproval
-			? [
-					`looks-approval-guard: refusing — ${what}: ${why}.`,
-					"promise: only-a-person-reapproves",
-					"",
-					"Only a person re-approves a changed brief: the amendment card's Approve in the cockpit",
-					"(`indusk ui`, the plan's page), or `indusk plans reapprove <plan>` run in their own terminal.",
-					"Write the amendment as you need; the build waits until a person re-approves.",
-					"",
-				]
-			: [
-					`looks-approval-guard: refusing — ${what}: ${why}.`,
-					"promise: a-mockup-is-approved-by-a-person",
-					"",
-					"A mockup becomes the reference only when a person approves it with the cockpit's Approve,",
-					"and stops being one only when a person takes it back with the cockpit's Unapprove:",
-					"`indusk ui`, the app's Looks page, the mockup opened at each device, then Approve (or Unapprove).",
-					"Draw or change the mockup (screens/<screen>.<state>.html) and the foundation as you need;",
-					"a changed mockup reads proposed until a person approves it there.",
-					"",
-				]
-		).join("\n"),
+		[
+			`looks-approval-guard: refusing — ${what}: ${why}.`,
+			`promise: ${guidance.promise}`,
+			"",
+			...guidance.lines,
+			"",
+		].join("\n"),
 	);
 	process.exit(2);
 }
@@ -171,8 +178,13 @@ try {
 if (event.tool_name === "Bash") {
 	const command = event.tool_input?.command;
 	if (typeof command !== "string") process.exit(0);
-	const why = bashRefusal(command);
-	if (why) refuse(command.length > 120 ? `${command.slice(0, 117)}...` : command, why);
+	const refusal = bashRefusal(command);
+	if (refusal)
+		refuse(
+			command.length > 120 ? `${command.slice(0, 117)}...` : command,
+			refusal.why,
+			refusal.guidance,
+		);
 	process.exit(0);
 }
 
