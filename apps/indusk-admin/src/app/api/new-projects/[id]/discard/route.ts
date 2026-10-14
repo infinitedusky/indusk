@@ -1,10 +1,10 @@
 import {
   discardProjectDraft,
   induskHome,
-  newProjectSessionPlan,
 } from "@infinitedusky/indusk-mcp/new-project";
 import type { NextRequest } from "next/server";
-import { adminOnly, sessionManager } from "@/lib/session-host";
+import { stopDraftSession } from "@/lib/new-project-session";
+import { adminOnly } from "@/lib/session-host";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,10 +26,7 @@ export async function POST(
   );
   if (refused) return refused;
   const { id } = await ctx.params;
-  const running = sessionManager().current();
-  if (running?.plan === newProjectSessionPlan(id)) {
-    await sessionManager().get(running.id)?.stop();
-  }
+  await stopDraftSession(id);
   discardProjectDraft(induskHome(), id);
   return Response.json({ discarded: id });
 }

@@ -2,6 +2,7 @@ import {
   appendTranscript,
   NEW_PROJECT_SESSION_PROJECT,
   newProjectConversation,
+  newProjectSessionPlan,
   type ProjectDraftView,
   touchProjectDraft,
 } from "@infinitedusky/indusk-mcp/new-project";
@@ -46,4 +47,16 @@ export function busyMessage(): string | null {
   return running
     ? `a session is already running: ${running.kind} for ${running.plan} — stop it first`
     : null;
+}
+
+/** The session now running that is this draft's conversation, if it is. */
+export function draftSession(id: string) {
+  const running = sessionManager().current();
+  return running?.plan === newProjectSessionPlan(id) ? running : null;
+}
+
+/** Stop the draft's agent if it runs; the one check accept and discard share. */
+export async function stopDraftSession(id: string): Promise<void> {
+  const running = draftSession(id);
+  if (running) await sessionManager().get(running.id)?.stop();
 }

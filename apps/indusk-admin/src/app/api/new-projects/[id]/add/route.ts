@@ -3,13 +3,13 @@ import {
   documentNotice,
   findProjectDraft,
   induskHome,
-  newProjectSessionPlan,
 } from "@infinitedusky/indusk-mcp/new-project";
 import type { NextRequest } from "next/server";
 import {
   readSentDocument,
   type SentDocument,
 } from "@/lib/new-project-document";
+import { draftSession } from "@/lib/new-project-session";
 import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
 
 export const runtime = "nodejs";
@@ -45,10 +45,8 @@ export async function POST(
   } catch (err) {
     return refuse(400, (err as Error).message);
   }
-  const running = sessionManager().current();
-  const told = running?.plan === newProjectSessionPlan(id);
-  if (told) {
-    sessionManager().say(running.id, documentNotice(added));
-  }
+  const running = draftSession(id);
+  const told = running !== null;
+  if (running) sessionManager().say(running.id, documentNotice(added));
   return Response.json({ ...added, told });
 }

@@ -3,10 +3,10 @@ import {
   createProject,
   findProjectDraft,
   induskHome,
-  newProjectSessionPlan,
 } from "@infinitedusky/indusk-mcp/new-project";
 import type { NextRequest } from "next/server";
-import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
+import { stopDraftSession } from "@/lib/new-project-session";
+import { adminOnly, refuse } from "@/lib/session-host";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,10 +36,7 @@ export async function POST(
   }
   // The conversation is over once the project is made: its agent would keep
   // running in the deleted draft folder and hold the one session slot.
-  const running = sessionManager().current();
-  if (running?.plan === newProjectSessionPlan(id)) {
-    await sessionManager().get(running.id)?.stop();
-  }
+  await stopDraftSession(id);
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
