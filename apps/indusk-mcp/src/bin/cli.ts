@@ -454,6 +454,16 @@ newProjectCmd
 	});
 
 newProjectCmd
+	.command("transcript <id>")
+	.description(
+		"Print what a conversation has said, one JSON line per event, as the admin reads it back",
+	)
+	.action(async (id: string) => {
+		const { newProjectTranscript } = await import("./commands/new-project.js");
+		newProjectTranscript(id);
+	});
+
+newProjectCmd
 	.command("parent [dir]")
 	.description("Set the directory new projects are made in; with no argument, print it")
 	.action(async (dir?: string) => {

@@ -9,6 +9,7 @@ import {
 	discardProjectDraft,
 	findProjectDraft,
 	readParent,
+	readTranscript,
 	setParent,
 	stepLabel,
 } from "../../lib/new-project/index.js";
@@ -67,6 +68,16 @@ export function newProjectAdd(id: string, file: string): void {
 export function newProjectDiscard(id: string): void {
 	discardProjectDraft(induskHome(), id);
 	console.info(`Discarded ${id}.`);
+}
+
+/** `transcript`: print what a conversation has said, one JSON line per event, as the admin reads it back. */
+export function newProjectTranscript(id: string): void {
+	const draft = findProjectDraft(induskHome(), id);
+	if (!draft) {
+		fail(`No project conversation ${id}.`);
+		return;
+	}
+	for (const line of readTranscript(draft)) console.info(JSON.stringify(line));
 }
 
 /** `parent`: set the directory new projects are made in, or print it. */

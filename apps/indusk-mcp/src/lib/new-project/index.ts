@@ -53,3 +53,12 @@ export {
 	readProjectDraft,
 	touchProjectDraft,
 } from "./store.js";
+export {
+	appendTranscript,
+	type FoldOpened,
+	readTranscript,
+	recordFoldOpened,
+	type SessionMarker,
+	type TranscriptLine,
+	transcriptPath,
+} from "./transcript.js";
