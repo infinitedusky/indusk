@@ -3,6 +3,7 @@ import {
   adminOnly,
   planLocation,
   refuse,
+  refuseRunning,
   sessionManager,
 } from "@/lib/session-host";
 
@@ -79,12 +80,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     // The same plan's session: say so, and hand its id back so the page can
     // offer to continue it here instead of starting another.
     const running = (err as { running?: { id: string } }).running;
-    if (running) {
-      return Response.json(
-        { error: (err as Error).message, running: { id: running.id } },
-        { status: 409 },
-      );
-    }
+    if (running) return refuseRunning((err as Error).message, running);
     return refuse(409, (err as Error).message);
   }
 }

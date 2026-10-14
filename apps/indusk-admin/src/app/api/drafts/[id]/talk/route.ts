@@ -10,7 +10,12 @@ import {
 } from "@infinitedusky/indusk-mcp/session";
 import type { NextRequest } from "next/server";
 import { getProjectPath } from "@/lib/registry-client";
-import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
+import {
+  adminOnly,
+  refuse,
+  refuseRunning,
+  sessionManager,
+} from "@/lib/session-host";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,10 +54,7 @@ export async function POST(
     "planning",
   );
   if (running) {
-    return Response.json(
-      { error: alreadyRunningOnThisPlan(running), running: { id: running.id } },
-      { status: 409 },
-    );
+    return refuseRunning(alreadyRunningOnThisPlan(running), running);
   }
   touchDraft(draft);
   const convo = draftConversation(draft, {
