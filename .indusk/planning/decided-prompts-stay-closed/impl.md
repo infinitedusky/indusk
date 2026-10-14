@@ -1,7 +1,7 @@
 ---
 title: "Decided prompts stay closed"
 date: 2026-10-14
-status: draft
+status: approved
 workflow: bugfix
 trajectory: required
 test_phases: required
@@ -9,6 +9,9 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+approved_brief: "458b34365821f6437a177f2be6a459bb881dfac26d9b76baeead937d83cade51"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-14T23:04:11.069Z"
 ---
 
 # Decided prompts stay closed
