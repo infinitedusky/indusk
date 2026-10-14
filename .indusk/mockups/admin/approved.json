@@ -4625,6 +4625,17 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T01:53:17.473Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"kind": "story",
+			"story": "tag.default",
+			"snapshotHash": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2",
+			"stylesheetHash": "30d7bf10c27edc0deecf29411b623d76dc69248619af47401101eaa7500bba2c",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T01:53:17.699Z",
+			"plan": "cockpit-redraw"
 		}
 	]
 }
