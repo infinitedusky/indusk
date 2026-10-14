@@ -119,6 +119,7 @@ Several plans can each have an agent at once: the session manager refuses only a
 - [x] The mocks that stub `current` (`build-host.release.test.ts`, `promise-fix-route.test.ts`) stub `forPlan`/`running` instead
   - Note: `build-host.release.test.ts` now stubs `forPlan` (committed with the build host); `promise-fix-route.test.ts` stubs only `start`, never `current`, so it needed nothing; `decisions.test.ts` reads `manager.forPlan(PROJECT, PLAN)` where it read `manager.current()` (committed with the decisions), same assertions; `DraftConversation.test.tsx`'s fetch stub matches the new sessions URL. No assertion encoded "one session".
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — skipped: Build Phase 2 verification is not green: the A7 live check is a person's and stays unchecked, so Shape cannot run yet. Run it when A7 is recorded.
 
 #### Build Phase 2 Verification
 
