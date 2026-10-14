@@ -65,7 +65,23 @@ const accept = async (id: string) => {
   return POST(
     new NextRequest(`http://127.0.0.1:3996/api/new-projects/${id}/accept`, {
       method: "POST",
-      headers: { host: "127.0.0.1:3996", origin: "http://127.0.0.1:3996" },
+      headers: {
+        host: "127.0.0.1:3996",
+        origin: "http://127.0.0.1:3996",
+        "content-type": "application/json",
+      },
+      // Create sends the proposal as the person saved it (A38).
+      body: JSON.stringify({
+        proposal: {
+          name: "homework-gate",
+          location: "/p/homework-gate-workbench",
+          repos: [{ name: "homework-gate" }],
+          milestones: [],
+          recommendations: [],
+          documentsOff: [],
+          remote: { github: false },
+        },
+      }),
     }),
     { params: Promise.resolve({ id }) },
   );
