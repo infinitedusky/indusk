@@ -155,6 +155,51 @@ function masterPlan(proposal: Proposal, now: Date): string {
 	);
 }
 
+/** The founding brief, the person's documents (byte for byte) and the master plan, under the project's planning folder. */
+function writeFoundingDocuments(
+	root: string,
+	draft: ProjectDraft,
+	proposal: Proposal,
+	brief: string,
+	now: Date,
+): void {
+	const planning = join(root, ".indusk", "planning");
+	mkdirSync(join(planning, "sources"), { recursive: true });
+	writeFileSync(join(planning, "project-brief.md"), foundingBrief(proposal, brief, now));
+	writeFileSync(join(planning, "master.md"), masterPlan(proposal, now));
+	const kept = documentsDir(draft);
+	for (const name of existsSync(kept) ? readdirSync(kept) : []) {
+		copyFileSync(join(kept, name), join(planning, "sources", name));
+	}
+}
+
+/** What the person decided - each recommendation kept or declined (with the reason), the documents turned off - in the project's config. */
+function recordChoices(root: string, proposal: Proposal): void {
+	const config = readConfig(root) as InduskConfig;
+	writeConfig(root, {
+		...config,
+		recommendations: proposal.recommendations.map((rec) => ({
+			name: rec.name,
+			kept: rec.kept,
+			...(rec.kept ? {} : { reason: rec.reason }),
+		})),
+		...(proposal.documentsOff.length > 0
+			? { planning: { ...config.planning, documents_off: proposal.documentsOff } }
+			: {}),
+	});
+}
+
+/** The workbench's own git repository and first commit; the repositories and worktrees inside it are ignored. */
+async function commitWorkbench(root: string, proposal: Proposal): Promise<void> {
+	await git(root, ["init", "-q", "-b", "main"]);
+	const ignored = [...proposal.repos.map((r) => `/${r.name}/`), "/worktrees/"];
+	const ignorePath = join(root, ".gitignore");
+	const before = existsSync(ignorePath) ? readFileSync(ignorePath, "utf-8").trimEnd() : "";
+	writeFileSync(ignorePath, `${before}${before ? "\n" : ""}${ignored.join("\n")}\n`);
+	await git(root, ["add", "-A"]);
+	await git(root, ["commit", "-q", "-m", `Create the ${proposal.name} workbench`]);
+}
+
 /** What a creation has recorded in its draft so far, or null when none has begun (or the record is unreadable). */
 export function readCreation(draft: ProjectDraft): CreationRecord | null {
 	try {
@@ -257,37 +302,9 @@ export async function createProject(
 		progress.set("install", "done");
 
 		begin("documents");
-		const planning = join(root, ".indusk", "planning");
-		mkdirSync(join(planning, "sources"), { recursive: true });
-		writeFileSync(join(planning, "project-brief.md"), foundingBrief(proposal, brief, now));
-		writeFileSync(join(planning, "master.md"), masterPlan(proposal, now));
-		const kept = documentsDir(draft);
-		for (const name of existsSync(kept) ? readdirSync(kept) : []) {
-			copyFileSync(join(kept, name), join(planning, "sources", name));
-		}
-		writeConfig(root, {
-			...(readConfig(root) as InduskConfig),
-			recommendations: proposal.recommendations.map((rec) => ({
-				name: rec.name,
-				kept: rec.kept,
-				...(rec.kept ? {} : { reason: rec.reason }),
-			})),
-			...(proposal.documentsOff.length > 0
-				? {
-						planning: {
-							...(readConfig(root)?.planning ?? {}),
-							documents_off: proposal.documentsOff,
-						},
-					}
-				: {}),
-		});
-		await git(root, ["init", "-q", "-b", "main"]);
-		const ignored = [...proposal.repos.map((r) => `/${r.name}/`), "/worktrees/"];
-		const ignorePath = join(root, ".gitignore");
-		const before = existsSync(ignorePath) ? readFileSync(ignorePath, "utf-8").trimEnd() : "";
-		writeFileSync(ignorePath, `${before}${before ? "\n" : ""}${ignored.join("\n")}\n`);
-		await git(root, ["add", "-A"]);
-		await git(root, ["commit", "-q", "-m", `Create the ${proposal.name} workbench`]);
+		writeFoundingDocuments(root, draft, proposal, brief, now);
+		recordChoices(root, proposal);
+		await commitWorkbench(root, proposal);
 		progress.set("documents", "done");
 	} catch (err) {
 		const message = (err as Error).message;
