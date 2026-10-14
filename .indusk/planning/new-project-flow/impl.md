@@ -97,12 +97,12 @@ nothing the person did not accept (see [adr.md](adr.md)).
 - **The agent asks only what the input leaves open (U1)**
   - reason: the quality of a model's questions is a judgement, not an output a test can fix
   - would require: a rubric and a judged set of real conversations
-  - mitigation: expectation 2 counts questions per creation; Build Phase 4 records one real run (Homework Gate's brief) as a live check in this impl
+  - mitigation: downstream plan `.indusk/planning/mark-first/` — it exports the `new_project.create` span, whose `conversation.questions` and `conversation.has_document` attributes are expectation 2's count (its research, "Carried from new-project-flow's audit"); the live check here was deferred by Sandy on 2026-10-14
 
 - **The agent's replies are short enough to read without opening the working (U2)**
   - reason: how short is enough is a judgement
   - would require: a judged set of real conversations
-  - mitigation: expectation 5's words per reply and folds opened, on each creation's span; the live check records one real run
+  - mitigation: downstream plan `.indusk/planning/mark-first/` — it exports the `new_project.create` span, whose `conversation.reply_words` and `conversation.folds_opened` attributes are expectation 5's measure; the live check here was deferred by Sandy on 2026-10-14
 
 ## Checklist
 
