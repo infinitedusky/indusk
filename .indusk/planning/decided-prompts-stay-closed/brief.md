@@ -44,7 +44,7 @@ None.
 
 ## Looks
 
-None — the session panel's states (an open prompt, a decided one) already exist; this changes which state a request is drawn in, not how either looks.
+None — no approved look holds the session panel (it is no component with a story, and no screen state draws it); a decided request gains a one-line outcome inside it. one-conversation-view (`.indusk/planning/one-conversation-view/`) draws every session's look for approval.
 
 ## Depends On
 
