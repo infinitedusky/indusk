@@ -327,7 +327,7 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 - [x] `apps/indusk-admin/CLAUDE.md` (shrink, it is over budget): the plan and brief screens are held by A10's fixture project; against the real project the check names them unchecked (404), never a failure
 
 #### Build Phase 6 Document
-- [ ] `apps/docs/src/reference/cli/looks.md` (or the page that documents `looks check`): a look whose page answers 404 is reported unchecked, and the run goes on
+- [x] `apps/docs/src/reference/cli/looks.md` (or the page that documents `looks check`): a look whose page answers 404 is reported unchecked, and the run goes on
 
 
 ## Files Affected
