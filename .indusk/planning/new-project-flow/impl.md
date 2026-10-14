@@ -1,7 +1,7 @@
 ---
 title: "New project flow — from a text box to a laid-out project"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -89,6 +89,8 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A40 | A created project has InDusk installed — its skills, hooks and MCP entry are there — and its own health check reports it healthy | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A41 | Leaving the GitHub repository unticked is recorded in the project's config as declined, like any declined recommendation | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-recommendation-can-be-declined | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A42 | Every row on the looks page says whether it is a mockup or a story | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-look-says-whether-it-is-a-mockup-or-a-story | apps/indusk-admin/src/components/ui/LookRow.test.tsx |
+| A43 | The proposal's GitHub offer names the signed-in account; with nobody signed in it cannot be ticked and says how to sign in | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-remote-repository-says-whose-and-who-can-see-it | apps/indusk-admin/src/components/new-project/NewProjectProposal.test.tsx |
+| A44 | A repository is created private unless the person chose public, and public only when they did | Build Phase 8 | Build Phase 8 | planned | unit | promise: a-remote-repository-says-whose-and-who-can-see-it | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 
 ### Deferred Verification
 
@@ -418,6 +420,35 @@ Deferred-body review (Test Phase 1):
 #### Build Phase 7 Document
 
 - [x] `apps/docs/src/guide/new-project.md`: the parent set from the start page (the command stays for scripts), the GitHub box only the person ticks, what the conversation's agent may and may not do
+
+### Build Phase 8: The GitHub offer says whose and who can see it
+
+**Tier**: med — the work step's default
+
+**Goal**: the proposal's GitHub offer is honest about what it will do (Sandy, 2026-10-14, at the live check: "it would require login with github I think and it should prob offer public or private"). Today it never says which account `gh repo create` will use, fails only at the last step for someone not signed in, and is always `--private`.
+
+- [ ] `lib/new-project/github.ts`: `githubAccount()` — the account `gh auth status` reports as active, or null when `gh` is missing or nobody is signed in; it runs `gh`, so it takes the command runner as an input for its tests
+- [ ] The proposal's `remote` gains `visibility: "private" | "public"` (default `private`; `validateProposal` refuses anything else); `createProject` passes `--private` or `--public` from it
+- [ ] The proposal page reads the account (a `/api/new-projects/github` route or the page's server read): signed in, the offer names it and offers Private — only you / Public — anyone, Private chosen (`new-project.proposal`); signed out, the box cannot be ticked and says to run `gh auth login` and reload (`new-project.github-signed-out`); `screens.json` reaches `github-signed-out`
+- [ ] Found by the looks lint after Build Phase 7: `components/ui/LookRow.tsx:62` uses the arbitrary class `[overflow-wrap:anywhere]` — use a class from the foundation's theme (add a utility to the theme if none exists), and the stories re-render
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 8 OTel
+
+- [ ] The `new_project.create` span carries `new_project.remote_visibility` (`private`, `public` or `none`)
+
+#### Build Phase 8 Verification
+
+- [ ] A43, A44 pass; every earlier row still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project && cd ../indusk-admin && pnpm exec vitest run src/components/new-project src/components/ui src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files; `indusk looks lint admin` reports no finding outside `nav-handle`
+- [ ] `indusk looks check admin` holds `new-project.proposal` and `new-project.github-signed-out` by value; `indusk promises contract new-project-flow` passes
+
+#### Build Phase 8 Context
+
+- [ ] mcp: the docblock of `lib/new-project/github.ts` — the account is read, never assumed; a repository is private unless the person chose public — `promise: a-remote-repository-says-whose-and-who-can-see-it`
+
+#### Build Phase 8 Document
+
+- [ ] `apps/docs/src/guide/new-project.md`: the GitHub offer — the account it uses, signing in with `gh auth login`, private or public
 
 ## Files Affected
 
