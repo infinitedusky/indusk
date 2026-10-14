@@ -81,7 +81,9 @@ export function SessionPanel({
             <EventView
               ev={ev}
               repeatsReply={replyRepeated(events, i)}
-              decision={"requestId" in ev ? decisions.get(ev.requestId) : undefined}
+              decision={
+                "requestId" in ev ? decisions.get(ev.requestId) : undefined
+              }
               open={
                 "requestId" in ev &&
                 running &&

@@ -127,7 +127,11 @@ export function turnsOf(
         break;
       case "question":
       case "permission":
-        if (running && !decided.has(ev.requestId) && !answered.has(ev.requestId))
+        if (
+          running &&
+          !decided.has(ev.requestId) &&
+          !answered.has(ev.requestId)
+        )
           waiting.push(ev);
         break;
       case "result":
