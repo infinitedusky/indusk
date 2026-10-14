@@ -133,11 +133,11 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 
 #### Build Phase 1 Context
 
-- [ ] `apps/indusk-mcp/hooks/CLAUDE.md`: the looks guard holds every person-only act — a look's approval and a brief's re-approval — guarded by `looks-approval-guard.test.ts`; and root (Key Decisions): "cockpit-redraw: the nav from the original cockpit, drag-to-widen per browser, re-approval a person's — see `/decisions/cockpit-redraw`" — always-on because it is design intent every admin page is drawn under
+- [x] `apps/indusk-mcp/hooks/CLAUDE.md`: the looks guard holds every person-only act — a look's approval and a brief's re-approval — guarded by `looks-approval-guard.test.ts`; and root (Key Decisions): "cockpit-redraw: the nav from the original cockpit, drag-to-widen per browser, re-approval a person's — see `/decisions/cockpit-redraw`" — always-on because it is design intent every admin page is drawn under
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/plans.md`: `reapprove` is run by a person; an agent's call is refused
+- [x] `apps/docs/src/reference/cli/plans.md`: `reapprove` is run by a person; an agent's call is refused
 
 ### Build Phase 2: The nav, redrawn and widened
 
