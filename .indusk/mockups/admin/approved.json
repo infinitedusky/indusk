@@ -5421,6 +5421,24 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T16:11:41.223Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"mockup": "brief.empty",
+			"mockupHash": "fe2762ad90a817dffb3fb613adaca9cc948a9fd0b74088cf4c062c2f3a815c23",
+			"componentsHash": "5b96814d1f9cbe87c78aa2444404afa62287c2e9afa617b56084ed78e537539e",
+			"components": {
+				"nav.plan-current": "3470475f1b717c94b9e492bd191d67f517a101705fd0ef6a2e6eee1b995ac430",
+				"part-section.promises-none": "fbd905485b01807bc88fa452e29da5eb44da7c0fb87d75460f63feb854ebb34e",
+				"part-section.expectations-none": "3ebfc687bd83d208e80b2dbe837c9ea40b6770680f7fdcd1b97a64ceb4c20689",
+				"part-section.looks-none": "08dac6a9aeab518ed115fafafde1f1dbd7b1491adf700c398dd131f67e9bfd58",
+				"nav.css": "c57723f174d0839b7aa9be7522e43f62e3db3f1120c45bf3015f2821488e7a41",
+				"part-section.css": "a7611216bfafa52765552f4167d83ca321b08c1ce1643ef7c2c7dd0a8813ed74"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T16:11:41.614Z",
+			"plan": "cockpit-redraw"
 		}
 	]
 }
