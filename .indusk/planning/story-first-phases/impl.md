@@ -1,7 +1,7 @@
 ---
 title: "Story-first impl phases"
 date: 2026-10-14
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_story: required
 gate_policy: ask
+approved_brief: "cdaa7e9db5508db73b5f76f530494237e6780d78984f0292b7ebf625abe8baa8"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-14T23:53:16.048Z"
 ---
 
 # Story-first impl phases
