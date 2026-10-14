@@ -1,13 +1,16 @@
 ---
 title: "Sessions per plan"
 date: 2026-10-14
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+approved_brief: "041a7060639eb7f83fa4cecc337cd9478ca47dd0c8aa32c70f3d771d21404fc1"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-14T21:39:31.605Z"
 ---
 
 # Sessions per plan
