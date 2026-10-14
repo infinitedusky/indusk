@@ -28,6 +28,10 @@ const field =
  * What a valid proposal is stays the package's: Create hands the edited
  * proposal on and the refusal, if there is one, comes back as `problem`.
  *
+ * The private GitHub repository opens unticked whatever the proposal says, so
+ * only the person's tick creates one.
+ *
+ * promise: a-new-project-publishes-nothing-unasked
  * promise: a-project-starts-as-a-conversation
  */
 export function NewProjectProposal({
@@ -49,7 +53,12 @@ export function NewProjectProposal({
   busy?: boolean;
   problem?: string | null;
 }) {
-  const [edited, setEdited] = useState(proposal);
+  // The GitHub repository is the person's to tick: whatever the agent wrote,
+  // the box opens unticked (a-new-project-publishes-nothing-unasked).
+  const [edited, setEdited] = useState<Proposal>({
+    ...proposal,
+    remote: { github: false },
+  });
   const [reposText, setReposText] = useState(
     proposal.repos.map((r) => r.name).join(", "),
   );
