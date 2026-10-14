@@ -66,3 +66,52 @@ export function readTranscript(draft: ProjectDraft): TranscriptLine[] {
 	}
 	return lines;
 }
+
+/** What a finished conversation measured, for the creation span (new-project-flow expectations 2 and 5). */
+export interface ConversationFigures {
+	/** Questions the agent asked: its `AskUserQuestion` questions plus each `?` in its replies. */
+	questions: number;
+	/** Agent replies: the last text of each agent turn. */
+	replies: number;
+	/** Mean words per reply, rounded; 0 when there were none. */
+	replyWords: number;
+	/** Times the person opened a reply's working. */
+	foldsOpened: number;
+}
+
+const wordsIn = (text: string): number => text.split(/\s+/).filter(Boolean).length;
+
+/** `?` outside inline code: a question asked in the agent's words. */
+const questionMarks = (text: string): number =>
+	(text.replace(/`[^`]*`/g, "").match(/\?/g) ?? []).length;
+
+/**
+ * The figures of a conversation, read from its transcript. A reply is the
+ * last text before a turn ends (a `result`, the person speaking, or a new
+ * session); the same reading the admin's thread makes of the events, counted
+ * here without drawing them.
+ */
+export function conversationFigures(lines: readonly TranscriptLine[]): ConversationFigures {
+	const replies: string[] = [];
+	let last: string | null = null;
+	let toolQuestions = 0;
+	let foldsOpened = 0;
+	const endTurn = () => {
+		if (last !== null) replies.push(last);
+		last = null;
+	};
+	for (const line of lines) {
+		if (line.type === "text") last = line.text;
+		else if (line.type === "result" || line.type === "you" || line.type === "session") endTurn();
+		else if (line.type === "question") toolQuestions += line.questions.length;
+		else if (line.type === "fold-opened") foldsOpened++;
+	}
+	endTurn();
+	const words = replies.reduce((sum, r) => sum + wordsIn(r), 0);
+	return {
+		questions: toolQuestions + replies.reduce((sum, r) => sum + questionMarks(r), 0),
+		replies: replies.length,
+		replyWords: replies.length === 0 ? 0 : Math.round(words / replies.length),
+		foldsOpened,
+	};
+}

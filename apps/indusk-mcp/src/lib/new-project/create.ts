@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
+import { type Span, SpanStatusCode, type Tracer, trace } from "@opentelemetry/api";
 import matter from "gray-matter";
 import { readRegistry, removeProject } from "../admin/registry.js";
 import { type InduskConfig, readConfig, writeConfig } from "../config.js";
@@ -22,7 +23,14 @@ import {
 	type CreationStepState,
 	creationStepIds,
 } from "./steps.js";
-import { documentsDir, findProjectDraft, type ProjectDraft, readProjectDraft } from "./store.js";
+import {
+	documentsDir,
+	findProjectDraft,
+	type ProjectDraft,
+	projectDraftCreatedAt,
+	readProjectDraft,
+} from "./store.js";
+import { conversationFigures, readTranscript } from "./transcript.js";
 
 /**
  * Making a project (new-project-flow, ADR decision 5) - the one place a
@@ -72,6 +80,8 @@ export interface CreatedProject {
 
 export interface CreateOptions {
 	now?: Date;
+	/** Where the `new_project.create` span goes; the process's own tracer unless a test says otherwise. */
+	tracer?: Tracer;
 	/** Called as each step starts, ends, or fails. */
 	report?: (step: CreationStepId, state: CreationStepState) => void;
 }
@@ -240,6 +250,71 @@ export async function createProject(
 	home: string,
 	id: string,
 	options: CreateOptions = {},
+): Promise<CreatedProject> {
+	const draft = findProjectDraft(home, id);
+	const span = draft ? startCreateSpan(options.tracer, home, draft) : null;
+	try {
+		const created = await makeProject(home, id, options);
+		span?.setAttribute("new_project.name", created.name);
+		span?.setAttribute("new_project.remote_failed", created.remoteError !== undefined);
+		return created;
+	} catch (err) {
+		span?.setStatus({ code: SpanStatusCode.ERROR, message: (err as Error).message });
+		throw err;
+	} finally {
+		endSpan(span, options.now);
+	}
+}
+
+const TRACER_NAME = "@infinitedusky/indusk-mcp/new-project";
+
+/**
+ * The `new_project.create` span (new-project-flow, OTel): it starts when the
+ * person opened the text box, so its duration is expectation 1 (idea to
+ * project); the conversation figures are read from the draft's transcript now,
+ * before creation deletes the draft - `conversation.questions` and
+ * `conversation.has_document` for expectation 2, `conversation.reply_words`
+ * and `conversation.folds_opened` for expectation 5. Telemetry is best-effort:
+ * a failure here never fails a creation.
+ */
+function startCreateSpan(
+	tracer: Tracer | undefined,
+	home: string,
+	draft: ProjectDraft,
+): Span | null {
+	try {
+		const created = projectDraftCreatedAt(draft);
+		const span = (tracer ?? trace.getTracer(TRACER_NAME)).startSpan(
+			"new_project.create",
+			created ? { startTime: created } : {},
+		);
+		const figures = conversationFigures(readTranscript(draft));
+		span.setAttribute("conversation.questions", figures.questions);
+		span.setAttribute("conversation.replies", figures.replies);
+		span.setAttribute("conversation.reply_words", figures.replyWords);
+		span.setAttribute("conversation.folds_opened", figures.foldsOpened);
+		span.setAttribute(
+			"conversation.has_document",
+			(readProjectDraft(home, draft.id)?.documents.length ?? 0) > 0,
+		);
+		return span;
+	} catch {
+		return null;
+	}
+}
+
+function endSpan(span: Span | null, now: Date | undefined): void {
+	try {
+		span?.end(now);
+	} catch {
+		// best-effort
+	}
+}
+
+async function makeProject(
+	home: string,
+	id: string,
+	options: CreateOptions,
 ): Promise<CreatedProject> {
 	const { now = new Date(), report } = options;
 	const draft = findProjectDraft(home, id);

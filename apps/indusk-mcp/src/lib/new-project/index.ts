@@ -50,11 +50,14 @@ export {
 	newProjectsDir,
 	type ProjectDraft,
 	type ProjectDraftView,
+	projectDraftCreatedAt,
 	readProjectDraft,
 	touchProjectDraft,
 } from "./store.js";
 export {
 	appendTranscript,
+	type ConversationFigures,
+	conversationFigures,
 	type FoldOpened,
 	readTranscript,
 	recordFoldOpened,

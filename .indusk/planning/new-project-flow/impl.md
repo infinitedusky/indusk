@@ -280,7 +280,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 4 OTel
 
-- [ ] `createProject` emits a `new_project.create` span: duration from the draft's creation (expectation 1), `conversation.questions` and `conversation.has_document` (expectation 2), `conversation.reply_words` and `conversation.folds_opened` read from the transcript before the draft is deleted (expectation 5); "See more" appends a `fold-opened` line to the transcript
+- [x] `createProject` emits a `new_project.create` span: duration from the draft's creation (expectation 1), `conversation.questions` and `conversation.has_document` (expectation 2), `conversation.reply_words` and `conversation.folds_opened` read from the transcript before the draft is deleted (expectation 5); "See more" appends a `fold-opened` line to the transcript
 
 #### Build Phase 3 Forward Intelligence
 

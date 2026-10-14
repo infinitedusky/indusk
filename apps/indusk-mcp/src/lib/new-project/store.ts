@@ -127,6 +127,17 @@ export function readProjectDraft(home: string, id: string): ProjectDraftView | n
 	};
 }
 
+/** When the person opened the conversation (the draft's first message), or null when the marker cannot say. */
+export function projectDraftCreatedAt(draft: ProjectDraft): Date | null {
+	try {
+		const raw = JSON.parse(readFileSync(join(draft.dir, MARKER), "utf-8")) as { created?: unknown };
+		const at = typeof raw.created === "string" ? new Date(raw.created) : null;
+		return at && !Number.isNaN(at.getTime()) ? at : null;
+	} catch {
+		return null;
+	}
+}
+
 /** Mark the draft as talked in just now. */
 export function touchProjectDraft(draft: ProjectDraft, now: Date = new Date()): void {
 	utimesSync(join(draft.dir, MARKER), now, now);
