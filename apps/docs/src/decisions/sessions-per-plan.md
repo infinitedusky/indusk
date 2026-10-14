@@ -26,6 +26,8 @@ The admin's one `SessionManager` refused any start while any session ran, so a p
 2. **The cap.** `start` refuses when the manager holds `max` sessions, naming each running session and how to stop one. `max` is the constructor option when given (tests), else `sessions.max` from `~/.indusk/config.json` (honouring `INDUSK_HOME`): a positive integer, else 4. A malformed file reads as 4, never a crash of the daemon.
 3. **Readers name their plan.** `current()` is removed, so a caller left on "the first session" fails to compile instead of showing another plan's agent.
 4. **Stopping is per session**, as before: `stop(id)` ends one and leaves the rest recorded.
+5. **A build holds one place under the cap, start to end.** `SessionManager.admitBuild(project, plan)` admits a build at the cap or refuses it, and returns a function that frees the place; a build-kind start for an admitted plan takes its build's place, so the gaps between steps hold it too. An earlier `inBuild` opt-out let several builds exceed the cap (found by the audit) and was removed. A release starts no agent session and holds no place.
+6. **A same-plan refusal asks to continue.** It says the session is already running on this plan, asks "Do you want to continue that session here?" and hands back its id; the plan page shows a **Continue it here** button. This was added mid-build at Sandy's request, after the brief said Looks: None, so the brief was not amended. The fix page and the draft conversation show the question without a button; a follow-up.
 
 ## Why a machine file for the cap
 
