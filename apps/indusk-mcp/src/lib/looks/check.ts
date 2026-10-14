@@ -355,23 +355,34 @@ export function checkableStories(
 /** A page that did not load, or a story that did not draw, within its time. */
 class LookTimedOut extends Error {}
 
+/**
+ * A page that answers 404: its plan or screen is not in the project the check
+ * runs against (the plan and brief screens are drawn at plans only A10's
+ * fixture project holds). A fact about the project, not about the page.
+ */
+export class LookNotHere extends LooksCheckError {}
+
 const isTimeout = (e: unknown): boolean =>
 	e instanceof LookTimedOut || (e instanceof Error && e.name === "TimeoutError");
 
 /**
  * Open a look, trying again once when it runs out of time. A look that times
  * out twice is the reason it was not checked, named — never the end of the
- * run: one slow page used to throw away every look measured before it. Any
- * other failure (a page that answers 404) still ends the run, loudly.
+ * run: one slow page used to throw away every look measured before it. A page
+ * that answers 404 is not in this project: it is unchecked at once (a second
+ * try would answer the same), and the run goes on. Any other failure (a 500, a
+ * refused connection) is a broken check, not a missing look, and still ends the
+ * run, loudly.
  */
 export async function openWithinTime<T>(
 	open: () => Promise<T>,
 	tries = 2,
-): Promise<T | { timedOut: string }> {
+): Promise<T | { timedOut: string } | { unchecked: string }> {
 	for (let attempt = 1; ; attempt++) {
 		try {
 			return await open();
 		} catch (e) {
+			if (e instanceof LookNotHere) return { unchecked: `${e.message} — not in this project` };
 			if (!isTimeout(e)) throw e;
 			if (attempt >= tries) {
 				return { timedOut: `timed out ${tries} times: ${(e as Error).message.split("\n")[0]}` };
@@ -401,7 +412,8 @@ async function measure(
 		const page = await context.newPage();
 		const response = await page.goto(url, { waitUntil: "load" });
 		if (!response?.ok()) {
-			throw new LooksCheckError(`${url} answered ${response ? response.status() : "nothing"}`);
+			const answer = `${url} answered ${response ? response.status() : "nothing"}`;
+			throw response?.status() === 404 ? new LookNotHere(answer) : new LooksCheckError(answer);
 		}
 		// A page that sets its look state, or anything it draws, after hydration
 		// (the nav's width, asked for in the address) has not said so at `load`:
@@ -461,12 +473,12 @@ async function checkStories(
 			const seen = await openWithinTime(() =>
 				measure(browser, device, scheme, url, script, "#storybook-root > *"),
 			);
-			if ("timedOut" in seen) {
+			if ("timedOut" in seen || "unchecked" in seen) {
 				return {
 					unchecked: {
 						mockup: `story ${story.name}`,
 						device: lookDevice(device.name, scheme),
-						reason: seen.timedOut,
+						reason: "timedOut" in seen ? seen.timedOut : seen.unchecked,
 					},
 				};
 			}
@@ -528,11 +540,11 @@ export async function checkApp(
 				for (const scheme of schemesOf(app)) {
 					const url = pageUrl(base, look.screen, look.path, look.state);
 					const seen = await openWithinTime(() => measure(browser, device, scheme, url, script));
-					if ("timedOut" in seen) {
+					if ("timedOut" in seen || "unchecked" in seen) {
 						unchecked.push({
 							mockup: `${look.screen}.${look.state}`,
 							device: lookDevice(device.name, scheme),
-							reason: seen.timedOut,
+							reason: "timedOut" in seen ? seen.timedOut : seen.unchecked,
 						});
 						continue;
 					}

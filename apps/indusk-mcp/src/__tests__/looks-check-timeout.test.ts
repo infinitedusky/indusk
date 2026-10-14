@@ -59,7 +59,8 @@ describe("a look that runs out of time is unchecked, not the end of the run", ()
 		});
 		expect(calls).toBe(1);
 		expect(seen).toEqual({
-			unchecked: "http://localhost:3939/p/dusk/plan/looks-fixture-a answered 404 — not in this project",
+			unchecked:
+				"http://localhost:3939/p/dusk/plan/looks-fixture-a answered 404 — not in this project",
 		});
 	});
 });
