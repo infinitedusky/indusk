@@ -43,3 +43,33 @@ export const Current: Story = {
     current: true,
   },
 };
+// A plan in a Path: its place first, the column kept for plans beside it.
+export const Numbered: Story = {
+  args: {
+    number: 3,
+    initials: "DW",
+    state: "released",
+    name: "dawn-workbench-execution",
+    stage: "Released",
+  },
+};
+// A draft nobody is working: the grey dot.
+export const Idle: Story = {
+  args: {
+    initials: "CR",
+    state: "idle",
+    name: "context-reaches-every-session",
+    stage: "Brief · draft",
+  },
+};
+// Declared in a master, not made yet: the stage in italics, no page behind it.
+export const Queued: Story = {
+  args: {
+    number: 4,
+    initials: "AU",
+    state: "idle",
+    name: "admin-ui-phase-progress",
+    stage: "Queued",
+    queued: true,
+  },
+};

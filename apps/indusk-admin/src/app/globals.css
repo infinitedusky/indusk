@@ -195,6 +195,12 @@ body {
 .cols-plan-row {
   grid-template-columns: var(--size-badge) minmax(0, 1fr);
 }
+.cols-plan-row-numbered {
+  grid-template-columns: var(--space-3) var(--size-badge) minmax(0, 1fr);
+}
+.cols-nav-path {
+  grid-template-columns: var(--space-3) var(--space-3) minmax(0, 1fr) auto auto;
+}
 .cols-view-link {
   grid-template-columns: var(--size-badge) minmax(0, 1fr) auto;
 }

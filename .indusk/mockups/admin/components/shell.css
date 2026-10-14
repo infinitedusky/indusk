@@ -41,6 +41,9 @@
 .min-w-0 {
     min-width: 0;
 }
+.shrink-0 {
+    flex-shrink: 0;
+}
 .rotate-180 {
     rotate: 180deg;
 }
@@ -61,6 +64,11 @@
 }
 .gap-hair {
     gap: var(--space-hair);
+}
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .rounded-lg {
     border-radius: var(--radius-lg);
@@ -194,14 +202,14 @@
 .font-semibold {
     font-weight: var(--font-weight-semibold);
 }
-.wrap-anywhere {
-    overflow-wrap: anywhere;
-}
 .text-bad {
     color: var(--color-bad);
 }
 .text-dusk {
     color: var(--color-dusk);
+}
+.text-ink {
+    color: var(--color-ink);
 }
 .text-ink-faint {
     color: var(--color-ink-faint);

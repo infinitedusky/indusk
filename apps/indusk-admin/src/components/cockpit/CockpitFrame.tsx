@@ -168,7 +168,7 @@ export function CockpitFrame({
             project={project}
             summary={summary}
             collapsed={folded}
-            className="h-full overflow-y-auto"
+            className="h-full overflow-y-auto overflow-x-hidden"
             toggleProps={{
               "data-testid": "nav-collapse-button",
               "aria-expanded": !collapsed,

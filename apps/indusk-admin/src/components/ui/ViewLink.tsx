@@ -43,7 +43,7 @@ export function ViewLink({
       className={classes}
       {...rest}
     >
-      <span className="grid size-badge place-items-center rounded-md bg-ink text-surface">
+      <span className="grid size-badge place-items-center rounded-md bg-ink font-mono text-2xs font-semibold leading-1 text-surface">
         {icon}
       </span>
       <span className="nav-hide text-md font-semibold leading-4">{label}</span>

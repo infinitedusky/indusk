@@ -60,3 +60,28 @@ export function paperStatusToBadge(
 export function paperStatusLabel(status: PaperStatus, stale: boolean): string {
   return status === "published" && stale ? "published (stale)" : status;
 }
+
+/** How a plan reads in the nav: the mark's state and the words under its name. */
+export interface NavMark {
+  state: "needs" | "working" | "released" | "idle";
+  stage: string;
+}
+
+/**
+ * A plan's mark in the nav from its frontmatter status. A plan waiting on a
+ * person is the caller's to say (it comes from the package's `planWaiting`),
+ * so this reads a status and nothing else. A finished plan says its status;
+ * "Released" is the caller's to say, from a release's date.
+ */
+export function statusToNavMark(status: string, archived: boolean): NavMark {
+  const normalized = status.toLowerCase();
+  if (archived || normalized.includes("completed"))
+    return { state: "released", stage: status };
+  if (normalized.includes("in-progress"))
+    return { state: "working", stage: "Building" };
+  if (normalized.includes("accepted") || normalized.includes("approved"))
+    return { state: "working", stage: "Approved" };
+  if (normalized.includes("draft") || normalized.includes("planned"))
+    return { state: "idle", stage: "Draft" };
+  return { state: "idle", stage: status };
+}

@@ -1,9 +1,9 @@
 import type { HTMLAttributes } from "react";
 
-export type PlanBadgeState = "needs" | "working" | "released";
+export type PlanBadgeState = "needs" | "working" | "released" | "idle";
 
 export interface PlanBadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  /** What the plan is doing: waiting on a person, being built, shipped. */
+  /** What the plan is doing: waiting on a person, being built, shipped, or a draft nobody is working. */
   state: PlanBadgeState;
   /** The plan's initials, two letters. */
   children: string;
@@ -13,6 +13,7 @@ const DOT: Record<PlanBadgeState, string> = {
   needs: "bg-dusk",
   working: "pulse-slow bg-ink-soft",
   released: "bg-ok",
+  idle: "bg-idle",
 };
 
 /**
