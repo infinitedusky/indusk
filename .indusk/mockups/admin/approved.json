@@ -4871,6 +4871,20 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T01:53:21.362Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"mockup": "nav-handle.dragging",
+			"mockupHash": "b9ca97d278c46fafec83307d5fae0012d8da37abb1f594b6ca875c970992be9f",
+			"componentsHash": "67d57d91cab3b833758f84fd56811b193c0d2343067f48dd8453b355bad194b8",
+			"components": {
+				"nav-handle.dragging": "64b8dd2467f4b263dced137f56815cebccef1302d54593fcacf418d2b156f34c",
+				"nav-handle.css": "12b4a47b23ac04d97734c1ef2e8e945b31c21317109913db0346500ff51db35c"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T01:53:21.570Z",
+			"plan": "cockpit-redraw"
 		}
 	]
 }
