@@ -35,6 +35,6 @@ describe("A36 — the agent is told where new projects go", () => {
 	});
 
 	it("A36 asks for a proposed location inside it", () => {
-		expect(prompt).toMatch(/"location"[^]{0,80}inside \/home\/me\/code/);
+		expect(prompt).toMatch(/"location"[\s\S]{0,80}inside \/home\/me\/code/);
 	});
 });
