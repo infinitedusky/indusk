@@ -389,7 +389,10 @@ describe.skipIf(SHOULD_SKIP)("indusk new-project", () => {
 			{ type: "you", text: "A phone app." },
 			{ type: "fold-opened", at: "2026-10-14T10:00:00.000Z" },
 		];
-		writeFileSync(join(dir, "transcript.jsonl"), `${lines.map((l) => JSON.stringify(l)).join("\n")}\n`);
+		writeFileSync(
+			join(dir, "transcript.jsonl"),
+			`${lines.map((l) => JSON.stringify(l)).join("\n")}\n`,
+		);
 
 		const shown = run(sb, ["transcript", id]);
 		expect(shown.code, `new-project transcript\n${shown.stderr}`).toBe(0);

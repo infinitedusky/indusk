@@ -15,7 +15,7 @@ import matter from "gray-matter";
 import { readRegistry, removeProject } from "../admin/registry.js";
 import { type InduskConfig, readConfig, writeConfig } from "../config.js";
 import { induskMcpPackageRoot } from "../package-root.js";
-import { isUnderParent, readParent } from "./parent.js";
+import { isUnderParent, readParent, repositoryAround } from "./parent.js";
 import { type Proposal, ProposalError, readProposal } from "./proposal.js";
 import {
 	type CreationRecord,
@@ -63,8 +63,11 @@ const exec = promisify(execFile);
 
 /** A creation that cannot go on; the message is for the person. */
 export class CreationError extends Error {
-	constructor(message: string) {
+	/** Which guard refused, when one did: `no-parent`, `outside-parent`, `inside-repository`, `exists`, `no-brief`, `proposal`. */
+	readonly refusedBy?: string;
+	constructor(message: string, refusedBy?: string) {
 		super(message);
+		this.refusedBy = refusedBy;
 		this.name = "CreationError";
 	}
 }
@@ -118,6 +121,7 @@ function guard(home: string, draft: ProjectDraft): { proposal: Proposal; brief: 
 	if (parent === null) {
 		throw new CreationError(
 			"No parent directory is set. Set one with: indusk new-project parent <dir>",
+			"no-parent",
 		);
 	}
 	let proposal: Proposal;
@@ -125,20 +129,32 @@ function guard(home: string, draft: ProjectDraft): { proposal: Proposal; brief: 
 		proposal = readProposal(draft);
 	} catch (err) {
 		if (err instanceof ProposalError) {
-			throw new CreationError(`The proposal for ${draft.id} is refused: ${err.message}`);
+			throw new CreationError(
+				`The proposal for ${draft.id} is refused: ${err.message}`,
+				"proposal",
+			);
 		}
 		throw err;
 	}
 	if (!isUnderParent(proposal.location, parent)) {
 		throw new CreationError(
 			`${proposal.location} is outside the parent directory ${parent}; new projects are made only inside it.`,
+			"outside-parent",
+		);
+	}
+	const around = repositoryAround(proposal.location, parent);
+	if (around !== null) {
+		throw new CreationError(
+			`${proposal.location} is inside the existing repository ${around}; a new project is not made inside another repository.`,
+			"inside-repository",
 		);
 	}
 	if (existsSync(proposal.location)) {
-		throw new CreationError(`${proposal.location} already exists; nothing was changed.`);
+		throw new CreationError(`${proposal.location} already exists; nothing was changed.`, "exists");
 	}
 	const brief = readProjectDraft(home, draft.id)?.brief;
-	if (!brief) throw new CreationError("The agent has not written the founding brief yet.");
+	if (!brief)
+		throw new CreationError("The agent has not written the founding brief yet.", "no-brief");
 	return { proposal, brief };
 }
 
@@ -259,6 +275,9 @@ export async function createProject(
 		span?.setAttribute("new_project.remote_failed", created.remoteError !== undefined);
 		return created;
 	} catch (err) {
+		if (err instanceof CreationError && err.refusedBy) {
+			span?.setAttribute("new_project.refused", err.refusedBy);
+		}
 		span?.setStatus({ code: SpanStatusCode.ERROR, message: (err as Error).message });
 		throw err;
 	} finally {
