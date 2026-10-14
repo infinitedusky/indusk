@@ -250,6 +250,7 @@ const config = defineConfig({
 						{ text: "The Shape check — craft feedback at the phase boundary", link: "/decisions/lifecycle-rebalance" },
 						{ text: "Local Init Mode", link: "/decisions/local-init-mode" },
 						{ text: "Multi-Agent Coordination", link: "/decisions/multi-agent-coordination" },
+						{ text: "New Project Flow", link: "/decisions/new-project-flow" },
 						{ text: "OpenTelemetry Extension", link: "/decisions/otel-extension" },
 						{ text: "Semantic Graph Bridge", link: "/decisions/semantic-graph-bridge" },
 						{ text: "Test phases as structure", link: "/decisions/test-phase-structure" },
