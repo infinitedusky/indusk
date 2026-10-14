@@ -22,19 +22,19 @@ agent needs is folded beneath it, on the page and in the file.
 an impl that is read by two audiences at once: a person who approves and follows the plan, and an agent that builds from it, with hooks that parse the same file to gate every checkoff.
 
 **Facing:**
-a checklist whose item text is the technical instruction itself, so the person cannot follow it, and checkers that read box-shaped and opt-out-shaped text anywhere in the file, so any prose added under an item could move a gate.
+a checklist whose item text is the technical instruction itself, so the person cannot follow it, and two scripts that check the file (`validate-impl-structure.js` when it is saved, `check-gates.js` when a box is ticked) that read box-shaped and opt-out-shaped text anywhere in the file, so any prose added under an item could move a gate.
 
 **We decided for:**
-a phase paragraph between the `**Tier**:` line and the first task, and each task as one sentence on the checkbox line with its detail in an indented `<details><summary>Technical</summary>` block beneath it; opted into with `phase_story: required` in the impl's frontmatter and checked by `validate-impl-structure.js`; the checkers reading only column-zero checkbox and opt-out lines; the parser keeping the phase paragraph and each item's detail whole, fences included; the admin rendering the paragraph and the detail as markdown in a closed disclosure.
+a phase paragraph between the `**Tier**:` line and the first task, and each task as one sentence on the checkbox line with its detail in an indented `<details><summary>Technical</summary>` block beneath it; opted into with `phase_story: required` in the impl's frontmatter and checked by `validate-impl-structure.js`; both scripts reading only column-zero checkbox and opt-out lines; the parser keeping the phase paragraph and each item's detail whole, fences included; the admin rendering the paragraph and the detail as markdown in a closed disclosure.
 
 **And against:**
 a plain indented note the admin collapses on its own (the file would stay unreadable on GitHub and in the docs site, where `<details>` folds natively); a separate "story" document beside the impl (two homes for one phase, which drift); writing the story only in the admin (the agent and the person would read different plans); making the shape mandatory for every existing impl (dozens of archived impls would need rewriting for no reader).
 
 **To achieve:**
-a phase a person can follow without reading code, the same text in the file, on GitHub and on the plan page, and folded detail that can never tick a box, skip a gate or add a task (A9–A11 in the test plan).
+a phase a person can follow without reading code or knowing the plan's shorthand, the same text in the file, on GitHub and on the plan page, and folded detail that can never tick a box, skip a gate or add a task (the test plan's assertions under `hidden-detail-is-only-read`).
 
 **Accepting:**
-that the checker can see a paragraph and a sentence are present but not that they are plain, so plainness stays a judgement at approval; and that a task's line may hold no code span, which forces even a short command into the detail.
+that the save check can see a paragraph and a sentence are present but not that they are plain, so plainness stays a judgement at approval; and that a task's line may hold no code span, which forces even a short command into the detail.
 
 **Because:**
 `<details>` is the one fold that renders in all three places the impl is read, and opting in by frontmatter is how `trajectory:`, `test_phases:` and `test_levels:` were introduced without migrating a single existing plan.
@@ -78,8 +78,28 @@ shows the note raw and drops fences. The brief makes three promises
 2. **The rule.** With `phase_story: required`, `validate-impl-structure.js`
    refuses a phase with no paragraph between its Tier line (or heading) and its
    first task or `####`, naming the phase; and a task line holding a code span
-   (backticks), naming the task. Ritual phases authored later
-   (Falsification, Cleanup) are held the same way once the impl opts in.
+   (backticks) or a row label (`\b[TA]\d+\b`), naming the task; and a
+   phase paragraph holding a row label, naming the phase. Ritual phases
+   authored later (Falsification, Cleanup) are held the same way once the
+   impl opts in.
+
+   **Written for someone without the shorthand.** Sandy's rule (2026-10-14):
+   a paragraph or sentence is written for someone who has worked on the
+   project but knows none of its shorthand — no row labels, no abbreviations,
+   no nicknames ("the checkers"), no pronoun whose referent is unclear. Row
+   labels are refused mechanically; the rest is a writing prompt in the
+   planner, with a before-and-after example, and a person's judgement at
+   approval.
+
+   **Verification names its rows in the detail.** The rule that every
+   Verification section names the trajectory rows it proves (the
+   cross-reference rule, in both `validate-impl-structure.js` and
+   `lib/trajectory/validator.ts`) reads, in an opted-in impl, row labels from
+   each Verification task's folded detail as well as its line. Reading a
+   label for this rule ticks nothing, skips nothing and adds no task, so it
+   keeps `hidden-detail-is-only-read`. Until that change lands, this plan's
+   own Verification tasks carry their labels in a trailing bracket on the
+   line, removed by Build Phase 1's last task.
 
 3. **Detail is only read.** `check-gates.js` counts only lines matching
    `^-\s+\[[ x]\]`; `validate-impl-structure.js` reads an opt-out only on a
@@ -120,7 +140,7 @@ approving it.
 
 ### Positive
 - A phase is readable by a person who does not read code, in every place the impl is read.
-- Two latent hazards in the checkers (unanchored checkbox counting, unanchored opt-out reading) are closed for every impl, opted in or not.
+- Two latent hazards in the two checking scripts (unanchored checkbox counting, unanchored opt-out reading) are closed for every impl, opted in or not.
 
 ### Negative
 - Impls get longer: a paragraph per phase and a fold per task.

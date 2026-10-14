@@ -103,6 +103,14 @@ Neither has been seen to fire; nothing prevents either.
 - **The third promise is worded for a reader** (Sandy, 2026-10-14): "never
   moves a gate" meant nothing to Sandy; it became "what is written in a task's
   hidden detail is only read".
+- **Written for someone who knows the project but none of its shorthand**
+  (Sandy, 2026-10-14, after reading my summary of this plan): no row labels
+  like A4, no abbreviations, no nicknames ("the checkers" meant nothing — say
+  "the two scripts that check an impl file when it is saved and when a box is
+  ticked"), no pronoun whose referent is unclear. Row labels are refused
+  mechanically; the rest is a writing prompt in the planner. Verification
+  tasks therefore name their test rows in the folded detail, and the save
+  check reads them there.
 - Taken as the default, open for correction at the brief: the checker refuses
   a missing phase paragraph or plain sentence (whether the writing is plain
   stays a person's judgement at approval); gate items (Verification, Context,
