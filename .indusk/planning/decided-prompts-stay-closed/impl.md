@@ -42,13 +42,13 @@ Every request a session makes is recorded in its log together with how it was de
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | During a build, a request to write inside the worktree shows in the panel already allowed, with no Allow or Deny | Test Phase 1 | Build Phase 2 | written | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A2 | During a build, a request to write outside the worktree shows already denied, with the build's reason, and no Allow or Deny | Test Phase 1 | Build Phase 2 | written | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A1 | During a build, a request to write inside the worktree shows in the panel already allowed, with no Allow or Deny | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A2 | During a build, a request to write outside the worktree shows already denied, with the build's reason, and no Allow or Deny | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A3 | A request nothing has decided, in a running session, still shows Allow and Deny | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A4 | In the new-project conversation, a request its agent's rule decided is not waiting on the person | Test Phase 1 | Build Phase 2 | written | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/lib/conversation-turns.test.ts |
+| A4 | In the new-project conversation, a request its agent's rule decided is not waiting on the person | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/lib/conversation-turns.test.ts |
 | A5 | A request a planning session allowed on its own rule appears in the log as allowed | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts |
-| A6 | A request the person allowed or denied shows the outcome they chose, and a panel connecting afterwards shows it decided, with no buttons | Test Phase 1 | Build Phase 2 | written | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A7 | A question a build declined on its own shows as declined, with the reason, never as waiting | Test Phase 1 | Build Phase 2 | written | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A6 | A request the person allowed or denied shows the outcome they chose, and a panel connecting afterwards shows it decided, with no buttons | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A7 | A question a build declined on its own shows as declined, with the reason, never as waiting | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A8 | Watching a real build in the cockpit, no prompt is left looking undecided, and a reload leaves every one decided | Build Phase 2 | Build Phase 2 | planned | live check | the brief's expectation: watching a build shows no prompt waiting unless it is | recorded in this impl, Build Phase 2 |
 
 ## Checklist
@@ -122,7 +122,7 @@ Every request a session makes is recorded in its log together with how it was de
 
 #### Build Phase 2 Verification
 
-- [ ] A1, A2, A4, A6, A7 pass, A3 still passes (`cd apps/indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx src/lib/conversation-turns.test.ts && pnpm exec vitest related src/components/session/SessionPanel.tsx src/lib/conversation-turns.ts --run`); tsc and biome clean on the changed files
+- [x] A1, A2, A4, A6, A7 pass, A3 still passes (`cd apps/indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx src/lib/conversation-turns.test.ts && pnpm exec vitest related src/components/session/SessionPanel.tsx src/lib/conversation-turns.ts --run`); tsc and biome clean on the changed files
 - [ ] A8 recorded above with what was seen
 
 #### Build Phase 2 Context
