@@ -2,6 +2,8 @@
 title: "Component content — a placed component takes its own words"
 date: 2026-10-13
 status: completed
+cleanup: skipped
+cleanup_reason: "reviewed the plan's changed source files — stories.ts (564 LOC, over the 400 cap), mockups.ts (417), compose.ts (235), lint-components.ts (207), markup.ts (98), components.ts, stories-catalog.ts. stories.ts: the +147 lines (markerPlaces, texts, contentPaths) sit inside a template string that is emitted as the browser-side Storybook setup, so they cannot import from compose.ts or move to a sibling module without inventing a template-embedding mechanism; the inline place type there duplicates compose.ts ContentPlace only because generated code cannot import it, and the one normalizer (placeOf) is shared by every reader. mockups.ts: +35 lines, readContentMaps is one reader with one caller, 417 vs cap is the pre-existing file, no cross-file duplication. compose.ts, lint-components.ts, markup.ts: under cap and cohesive (Build Phase 4 Shape step recorded the same). Nothing warrants extraction; no rule-of-three repeats across files."
 trajectory: required
 test_phases: required
 test_levels: required
