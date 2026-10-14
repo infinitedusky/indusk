@@ -34,6 +34,7 @@ export function PartSection({
       <div
         data-component="part-section"
         data-empty="true"
+        {...(rest as HTMLAttributes<HTMLDivElement>)}
         className={`flex items-baseline gap-3 overflow-hidden rounded-xl border border-line bg-surface px-4 py-3 ${className}`}
       >
         {/* where the arrow would be, so the title lines up with its siblings' */}

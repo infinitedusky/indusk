@@ -12,6 +12,7 @@ import {
 const parts = (over: Partial<PlanParts>): PlanParts => ({
   plan: "p",
   hasBrief: true,
+  hasBriefFile: true,
   promises: [],
   expectations: [],
   looks: [],

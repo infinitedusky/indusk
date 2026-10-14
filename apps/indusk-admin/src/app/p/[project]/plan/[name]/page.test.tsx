@@ -86,6 +86,7 @@ vi.mock("@infinitedusky/indusk-mcp/plans/parts", () => ({
   readPlanParts: async (_root: string, plan: string) => ({
     plan,
     hasBrief: false,
+    hasBriefFile: true,
     promises: [],
     expectations: [],
     looks: [],

@@ -80,6 +80,7 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
           <div className="grid gap-2" data-testid="plan-parts">
             <PlanParts
               parts={parts}
+              zeroWithoutBrief
               looksHref={`/p/${project}/looks?${plan.worktree ? `checkout=${encodeURIComponent(name)}` : ""}`}
             />
           </div>
