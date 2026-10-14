@@ -32,6 +32,8 @@
 			.dot { width: var(--size-dot); height: var(--size-dot); border-radius: var(--radius-pill); background: var(--color-dusk); flex: none; }
 			.dot.ok { background: var(--color-ok); }
 			.dot.idle { background: var(--color-idle); }
+					.place { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.place input { font: inherit; color: var(--color-ink); background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); padding: var(--space-tight) var(--space-3); min-width: 0; flex: 1; }
 		</style>
 	</head>
 	<body>
@@ -39,6 +41,7 @@
 <header><div class="crumb"><b>Projects</b> / New</div><h1 class="title">New project</h1></header>
 <section class="box" data-component="prompt-box" data-state="default"><h2 class="says">What do you want to build?</h2><textarea aria-label="Tell the agent what you want to build"></textarea>
 <div class="actions"><button class="attach" type="button">+ Add documents to write the brief from</button></div>
+<p class="place">New projects go in <span class="mono">~/code</span><button class="btn quiet" type="button">Change</button></p>
 <p class="hint">Say it however you like — one sentence or a whole brief. The agent asks only what your idea leaves open, then proposes the project for you to accept. Nothing is created until you do.</p></section>
 </main>
 	</body>
