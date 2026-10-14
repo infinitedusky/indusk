@@ -88,6 +88,7 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A39 | The project conversation's agent cannot run a shell command, fetch from the web, or write outside its draft; it is refused and told why | Build Phase 7 | Build Phase 7 | planned | unit | promise: an-unkept-project-conversation-leaves-nothing-on-disk | apps/indusk-mcp/src/lib/session/permissions.test.ts |
 | A40 | A created project has InDusk installed — its skills, hooks and MCP entry are there — and its own health check reports it healthy | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-new-project-has-the-standard-layout | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A41 | Leaving the GitHub repository unticked is recorded in the project's config as declined, like any declined recommendation | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-recommendation-can-be-declined | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
+| A42 | Every row on the looks page says whether it is a mockup or a story | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-look-says-whether-it-is-a-mockup-or-a-story | apps/indusk-admin/src/components/ui/LookRow.test.tsx |
 
 ### Deferred Verification
 
@@ -396,6 +397,7 @@ Deferred-body review (Test Phase 1):
 - [ ] The project conversation's session is confined: path tools only inside its draft, Read/Write/Edit/Glob/Grep allowed, any other tool (Bash, WebFetch, an MCP tool) refused with a message saying why — a decision beside `decideBuildPermission` in `lib/session/permissions.ts`, chosen for the draft's session kind; plan conversations and builds unchanged
 - [ ] `createProject`'s `install` step checks what `indusk init` wrote — the project's skills, hooks and MCP entry — and fails the step, rolling back, when one is missing
 - [ ] An unticked GitHub repository is written to `recommendations` as `{ name: "github", kept: false, reason: "not confirmed" }` unless the person's proposal already declines it with a reason
+- [ ] `LookRow` leads with its kind — Mockup or Story — as the approved `look-row.mockup` / `look-row.story` draw it, everywhere it is used (the looks page, a plan's looks, the promise page); stories for both kinds, `indusk looks stories admin` (Sandy, 2026-10-14: "we need it to be clear that it is a story or a mockup in looks")
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 7 OTel
@@ -404,8 +406,8 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 7 Verification
 
-- [ ] A35–A41 pass; every earlier row still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project src/lib/session && cd ../indusk-admin && pnpm exec vitest run src/components/new-project src/components/session src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files
-- [ ] `indusk looks check admin` holds `new-project.start` and `new-project.no-parent` by value; `indusk promises contract new-project-flow` passes
+- [ ] A35–A42 pass; every earlier row still passes (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/new-project-cli.test.ts src/lib/new-project src/lib/session && cd ../indusk-admin && pnpm exec vitest run src/components/new-project src/components/session src/__tests__/new-project-accept.test.ts && pnpm exec tsc --noEmit -p .`); `pnpm exec vitest related` over the changed files
+- [ ] `indusk looks check admin` holds `new-project.start`, `new-project.no-parent`, `look-row.mockup` and `look-row.story` by value; `indusk promises contract new-project-flow` passes
 
 #### Build Phase 7 Context
 
