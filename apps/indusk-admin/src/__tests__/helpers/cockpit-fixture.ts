@@ -159,6 +159,13 @@ const ALL_DOCS: PlanSpec["docs"] = {
   impl: { status: "approved" },
 };
 
+/** A 950-character skip reason (skip-reason-why A3): a paragraph, not a sentence. */
+export const LONG_SKIP_REASON =
+  `${"Reviewed every changed region and found nothing that warrants this ritual. ".repeat(13)}`.slice(
+    0,
+    950,
+  );
+
 /** The plan page's fixtures. */
 const PAGE_PLANS: PlanSpec[] = [
   {
@@ -178,6 +185,13 @@ const PAGE_PLANS: PlanSpec[] = [
     at: "cleanup",
     docs: ALL_DOCS,
     skipped: [{ ritual: "falsification", reason: "a docs-only plan" }],
+  },
+  {
+    // skip-reason-why A3: a reason far past one sentence; the status must stay "skipped".
+    name: "skipped-ritual-long",
+    at: "cleanup",
+    docs: ALL_DOCS,
+    skipped: [{ ritual: "falsification", reason: LONG_SKIP_REASON }],
   },
   {
     name: "asking-plan",

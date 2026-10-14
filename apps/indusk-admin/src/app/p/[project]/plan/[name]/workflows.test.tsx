@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import {
   changeOnDisk,
+  LONG_SKIP_REASON,
   PROJECT,
   resetFixture,
 } from "@/__tests__/helpers/cockpit-fixture";
@@ -212,5 +213,63 @@ describe("A12 — a step is read from the documents, never set on the page", () 
 
     const after = await pageFor("adr-flip");
     expect(stateOf(stepsOf(after.root, "planning"), "Decision")).toBe("done");
+  });
+});
+
+// promise: a-skipped-step-shows-why-on-request
+describe('skip-reason-why — a skipped step reads "skipped" with a "why?" that opens its reason', () => {
+  const statusOf = (root: HTMLElement, step: string) =>
+    root
+      .querySelector(
+        `[data-step="${step}"] [data-component="step"] span:last-of-type`,
+      )
+      ?.textContent?.trim();
+  const whyOf = (root: HTMLElement, step: string) =>
+    [...root.querySelectorAll(`[data-step="${step}"] button`)].find(
+      (b) => b.textContent?.trim() === "why?",
+    ) as HTMLElement | undefined;
+  const click = (el: HTMLElement) => el.click();
+
+  it('A1 reads "skipped" with a "why?" and keeps the reason off the page', async () => {
+    const { root } = await pageFor("skipped-ritual");
+    expect(statusOf(root, "Falsify")).toBe("skipped");
+    const why = whyOf(root, "Falsify");
+    expect(why, 'no "why?" button in the Falsify step').toBeDefined();
+    expect(why?.getAttribute("aria-expanded")).toBe("false");
+    expect(root.textContent).not.toContain("a docs-only plan");
+  });
+
+  it('A2 shows the reason beneath the step when "why?" is opened, and hides it when opened again', async () => {
+    const { root } = await pageFor("skipped-ritual");
+    const why = whyOf(root, "Falsify");
+    expect(why, 'no "why?" button in the Falsify step').toBeDefined();
+    click(why as HTMLElement);
+    expect(why?.getAttribute("aria-expanded")).toBe("true");
+    expect(root.textContent).toContain("a docs-only plan");
+    click(why as HTMLElement);
+    expect(why?.getAttribute("aria-expanded")).toBe("false");
+    expect(root.textContent).not.toContain("a docs-only plan");
+  });
+
+  it('A3 leaves the status exactly "skipped" for a 950-character reason until "why?" is opened', async () => {
+    expect(LONG_SKIP_REASON).toHaveLength(950);
+    const { root } = await pageFor("skipped-ritual-long");
+    expect(statusOf(root, "Falsify")).toBe("skipped");
+    expect(root.textContent).not.toContain(LONG_SKIP_REASON.slice(0, 80));
+    const why = whyOf(root, "Falsify");
+    expect(why, 'no "why?" button in the Falsify step').toBeDefined();
+    click(why as HTMLElement);
+    expect(root.textContent).toContain(LONG_SKIP_REASON.slice(0, 80));
+  });
+});
+
+describe('skip-reason-why A8 — a step with no reason draws with no "why?" (regression guard)', () => {
+  it('A8 gives no step of a mid-build plan a "why?" button', async () => {
+    const { root } = await pageFor("mid-build");
+    expect(stepsOf(root, "release").length).toBeGreaterThan(0);
+    const whys = [...root.querySelectorAll("[data-step] button")].filter(
+      (b) => b.textContent?.trim() === "why?",
+    );
+    expect(whys).toHaveLength(0);
   });
 });
