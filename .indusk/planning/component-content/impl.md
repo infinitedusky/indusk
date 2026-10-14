@@ -1,7 +1,7 @@
 ---
 title: "Component content — a placed component takes its own words"
 date: 2026-10-13
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -46,17 +46,17 @@ components alone (see [adr.md](adr.md)).
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A button placed with "Create project" shows the approved button reading "Create project", and none of the story's words | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
-| A2 | A step placed with content for its name shows that name where the story's name was, its look unchanged | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
-| A3 | A container placed with components inside shows them composed where the story's content was | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
-| A4 | A component placed with no content shows the story's words exactly as before | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
-| A5 | After the admin's stories render, each state says which properties a mockup may fill — button and tag words, step name, box title and body | Test Phase 1 | Build Phase 2 | planned | contract | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/__tests__/looks-component-content.contract.test.ts |
-| A6 | The lint refuses any element inside a placed component other than a placed component or named content, naming file, line and element | Test Phase 1 | Build Phase 3 | planned | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
-| A7 | The lint refuses content for a property the state does not take, naming the component and the property | Test Phase 1 | Build Phase 3 | planned | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
-| A8 | The lint accepts text and placed components inside a placed component | Test Phase 1 | Build Phase 3 | planned | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
-| A9 | A mockup placing a component with its own words returns to proposed, naming the component, when that component's story changes | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-changed-component-reopens-its-mockups | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
-| A10 | Changing only the words placed in a component returns an approved mockup to proposed | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
-| A11 | Every admin mockup approved before this change is still approved after it | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/__tests__/looks-admin-approvals-hold.test.ts |
+| A1 | A button placed with "Create project" shows the approved button reading "Create project", and none of the story's words | Test Phase 1 | Build Phase 1 | written | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
+| A2 | A step placed with content for its name shows that name where the story's name was, its look unchanged | Test Phase 1 | Build Phase 1 | written | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
+| A3 | A container placed with components inside shows them composed where the story's content was | Test Phase 1 | Build Phase 1 | written | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
+| A4 | A component placed with no content shows the story's words exactly as before | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/lib/looks/compose.test.ts |
+| A5 | After the admin's stories render, each state says which properties a mockup may fill — button and tag words, step name, box title and body | Test Phase 1 | Build Phase 2 | written | contract | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/__tests__/looks-component-content.contract.test.ts |
+| A6 | The lint refuses any element inside a placed component other than a placed component or named content, naming file, line and element | Test Phase 1 | Build Phase 3 | written | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
+| A7 | The lint refuses content for a property the state does not take, naming the component and the property | Test Phase 1 | Build Phase 3 | written | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
+| A8 | The lint accepts text and placed components inside a placed component | Test Phase 1 | Build Phase 3 | passing | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
+| A9 | A mockup placing a component with its own words returns to proposed, naming the component, when that component's story changes | Test Phase 1 | Build Phase 1 | written | unit | promise: a-changed-component-reopens-its-mockups | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
+| A10 | Changing only the words placed in a component returns an approved mockup to proposed | Test Phase 1 | Build Phase 1 | written | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
+| A11 | Every admin mockup approved before this change is still approved after it | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/__tests__/looks-admin-approvals-hold.test.ts |
 
 ## Checklist
 
@@ -66,12 +66,12 @@ components alone (see [adr.md](adr.md)).
 
 **Goal**: author every test that can honestly be authored now, and record every test that cannot.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create component-content`, or `indusk worktree assign component-content <path>` for the one `plans start` made) — worktree-per-plan default
-- [ ] Author A1–A4 in `compose.test.ts`: snapshots handed in as `{ html, hash, content }` with a content map (`content: { children: [[0, 0]] }` for a button, `{ name: [[0, 1, 0]] }` for a step, `{ children: [[0, 1]] }` for a box); A1–A3 RED on their assertions (today's compose drops the content), A4 green
-- [ ] Author A5 as a system-tier contract test that runs `indusk looks stories admin` into a temp copy and reads `components.json`; add it to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts`; RED (no `content` on any state)
-- [ ] Author A6–A8 against `componentFindings` over a fixture app (a `screens.json`, a `components.json` whose states carry content maps, three mockups); A6 and A7 RED (no such rules), A8 green
-- [ ] Author A9–A10 against `readApp` and `readStoryApprovals` over a fixture app with an approved mockup that places a button with content; RED (content is dropped, so changing it does not change the hash)
-- [ ] Author A11 over the repository's own `.indusk/mockups/admin`: every entry in `approved.json` whose mockup still exists reads approved through `readApp`
+- [x] Create/confirm this plan's worktree (`indusk worktree create component-content`, or `indusk worktree assign component-content <path>` for the one `plans start` made) — worktree-per-plan default
+- [x] Author A1–A4 in `compose.test.ts`: snapshots handed in as `{ html, hash, content }` with a content map (`content: { children: [[0, 0]] }` for a button, `{ name: [[0, 1, 0]] }` for a step, `{ children: [[0, 1]] }` for a box); A1–A3 RED on their assertions (today's compose drops the content), A4 green
+- [x] Author A5 as a system-tier contract test (runs in the checkout over a backup of `.indusk/mockups/admin`, restored after: Vite will not serve the admin's sources through a symlinked or copied tree — decided over the plan's temp copy, red verified on its own assertion) that runs `indusk looks stories admin` into a temp copy and reads `components.json`; add it to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts`; RED (no `content` on any state)
+- [x] Author A6–A8 against `componentFindings` over a fixture app (a `screens.json`, a `components.json` whose states carry content maps, three mockups); A6 and A7 RED (no such rules), A8 green
+- [x] Author A9–A10 against `readApp` and `readStoryApprovals` over a fixture app with an approved mockup that places a button with content; RED (content is dropped, so changing it does not change the hash)
+- [x] Author A11 over the repository's own `.indusk/mockups/admin`: every entry in `approved.json` whose mockup still exists reads approved through `readApp`
 
 #### Regression Guards
 
@@ -80,8 +80,8 @@ components alone (see [adr.md](adr.md)).
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A3, A5–A7, A9, A10 authored and each fails on its own assertion, not on a missing import (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/looks/compose.test.ts src/__tests__/looks-component-content-lint.test.ts src/__tests__/looks-component-content-approval.test.ts src/__tests__/looks-admin-approvals-hold.test.ts`; A5 with `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-component-content.contract.test.ts`)
-- [ ] A4, A8 and A11 pass
+- [x] A1–A3, A5–A7, A10 authored and each fails on its own assertion, not on a missing import; **A9 is green today** — `compose` already lists a nested reference in `uses`, so a changed component already reopens a mockup that places it with words; it stays `written` as a guard whose red window is none (decision: keep it, it asserts the promise and costs nothing) (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/looks/compose.test.ts src/__tests__/looks-component-content-lint.test.ts src/__tests__/looks-component-content-approval.test.ts src/__tests__/looks-admin-approvals-hold.test.ts`; A5 with `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-component-content.contract.test.ts`)
+- [x] A4, A8 and A11 pass
 
 ### Build Phase 1: Compose fills content
 
