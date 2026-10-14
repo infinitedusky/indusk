@@ -84,7 +84,7 @@ nothing the person did not accept (see [adr.md](adr.md)).
 
 **Goal**: author every test that can honestly be authored now, and record every test that cannot.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree assign new-project-flow /Users/the_dusky/code/sandbox/dusk-worktrees/new-project-flow`, the one `plans start` made) — worktree-per-plan default
+- [x] Create/confirm this plan's worktree (`indusk worktree assign new-project-flow /Users/the_dusky/code/sandbox/dusk-worktrees/new-project-flow`, the one `plans start` made) — worktree-per-plan default
 - [ ] Author A4, A6–A11, A13–A18, A21, A22 in `new-project-cli.test.ts` through the built CLI with a temporary `INDUSK_HOME`, a temporary parent directory and a fake `gh` on `PATH` that records its arguments; a draft is seeded by `indusk new-project start --message … --document <file>` and its proposal written as the agent would (`proposal.json`, `brief.md`). RED: `new-project` is an unknown command
 - [ ] Author A12 in `documents-off.test.ts`: a temp project whose config sets `planning.documents_off: ["adr"]`, a feature plan with brief, test plan and impl; the plan status the admin reads (`lib/plan-parser.ts`) reports the ADR. RED: it reads missing
 - [ ] Confirm A19's existing tests (`drafts.test.ts`, `DraftConversation.test.tsx`) and A20's (`admin-session-lifecycle.test.ts`, with a session whose plan is `new-project:<id>`) pass
