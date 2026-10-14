@@ -7,6 +7,7 @@
 
 export { induskHome } from "../telemetry/status.js";
 export { type AddedDocument, addDocument } from "./documents.js";
+export { type KnowledgeEntry, type KnowledgeState, knowledgeOf } from "./knowledge.js";
 export { isUnderParent, readParent, setParent } from "./parent.js";
 export {
 	NEW_PROJECT_SESSION_PROJECT,
