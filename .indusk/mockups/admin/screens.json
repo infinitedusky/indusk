@@ -13,7 +13,7 @@
 		{ "name": "plan", "states": ["needs-you"], "path": "/p/dusk/plan/looks-fixture-needs-you" },
 		{ "name": "plan", "states": ["released"], "path": "/p/dusk/plan/looks-fixture-released" },
 		{ "name": "plan", "states": ["master"], "path": "/p/dusk/plan/indusk-v4-day" },
-		{ "name": "story-row", "states": ["released", "draft", "queued"], "path": "/p/dusk/plan/indusk-v4-day" },
+		{ "name": "subplan-row", "states": ["released", "draft", "queued"], "path": "/p/dusk/plan/indusk-v4-day" },
 		{ "name": "plan", "states": ["drafts", "new", "history", "phases", "documents"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "expectation-row", "states": ["default", "due"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "draft-row", "states": ["default", "aged"], "path": "/p/dusk/plan/ui-promises" },
