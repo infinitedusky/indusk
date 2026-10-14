@@ -26,7 +26,7 @@ things in parallel." The first small plan of the parallel-first direction
 ### This plan makes
 
 1. **`a-session-belongs-to-its-plan`** (state). A plan's session starts whatever other plans' sessions are running; only a second session of the same kind on the same plan is refused, naming the session already running, so a plan can have a planning session and a build at the same time.
-2. **`sessions-are-capped`** (state). The number of sessions running together on a machine is capped by sessions.max in .indusk/config.json, 4 by default; a start beyond the cap is refused, naming the sessions running and how to stop one.
+2. **`sessions-are-capped`** (state). The number of sessions running together on a machine is capped by sessions.max in the InDusk home's config.json (~/.indusk/config.json), 4 by default; a start beyond the cap is refused, naming the sessions running and how to stop one.
 
 ### Existing promises
 
