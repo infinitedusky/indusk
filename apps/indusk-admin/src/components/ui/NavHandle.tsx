@@ -11,7 +11,13 @@ import {
 export interface NavHandleProps
   extends Omit<
     HTMLAttributes<HTMLDivElement>,
-    "onChange" | "onPointerDown" | "onPointerMove" | "onPointerUp" | "onKeyDown"
+    | "onChange"
+    | "onPointerDown"
+    | "onPointerMove"
+    | "onPointerUp"
+    | "onPointerCancel"
+    | "onLostPointerCapture"
+    | "onKeyDown"
   > {
   /** The nav's width now, in px. */
   value: number;
@@ -91,7 +97,9 @@ export function NavHandle({
     );
     onResize?.(last.current);
   };
-  const onPointerUp = () => {
+  // Every way a drag ends — the pointer lifted, the browser cancelled it (a
+  // touch turned into a scroll), or the capture was lost — ends it once.
+  const endDrag = () => {
     if (!holding.current) return;
     holding.current = false;
     setDragging(false);
@@ -119,7 +127,9 @@ export function NavHandle({
       tabIndex={0}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onLostPointerCapture={endDrag}
       onKeyDown={onKeyDown}
       className={`group absolute inset-y-0 -right-1 z-1 grid w-2 cursor-col-resize touch-none place-items-center ${className}`}
       {...rest}
