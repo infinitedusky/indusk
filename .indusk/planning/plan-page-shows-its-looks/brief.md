@@ -1,7 +1,7 @@
 ---
 title: "A plan's page shows all its looks"
 date: 2026-10-14
-status: draft
+status: accepted
 workflow: feature
 description: "Every look a plan names opens on the plan's own page, a story as well as a mockup. When a mockup and a story share a name, both are shown, each with its own state, so a mockup waiting for approval never reads as approved."
 ---
