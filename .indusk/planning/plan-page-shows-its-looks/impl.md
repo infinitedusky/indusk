@@ -18,8 +18,8 @@ gate_policy: ask
 A plan's page shows its looks in two sections, the mockups it proposes and the
 stories it has built, each opening in place. A component the plan changes
 shows its current build only inside its mockup, labelled as the earlier
-plan's build for comparison. A mockup added after approval says so, with its
-date.
+plan's build for comparison. A mockup added after approval says so, with the
+phase that builds it.
 
 ## Scope
 
@@ -53,7 +53,7 @@ date.
 | A7 | A waiting mockup for a changed component reads waiting, whatever the earlier story's state | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-plan-shows-only-its-own-stories | apps/indusk-mcp/src/lib/plans/parts-looks.test.ts |
 | A8 | story-first-phases' plan page, on its own branch, shows its redrawn phase row as a waiting mockup with today's build in the comparison fold, and an empty Stories section | Build Phase 2 | Build Phase 2 | planned | live check | seen on the plan where the fault was found | |
 | A9 | A mockup named in the brief at approval carries no added mark | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-look-added-after-approval-says-so | apps/indusk-mcp/src/lib/plans/parts-looks.test.ts |
-| A10 | A mockup added to the brief after approval carries Added during build and the date of the commit that added it | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-look-added-after-approval-says-so | apps/indusk-mcp/src/lib/plans/parts-looks.test.ts |
+| A10 | A mockup added to the brief after approval carries Added during build and the phase whose tasks build it | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-look-added-after-approval-says-so | apps/indusk-mcp/src/lib/plans/parts-looks.test.ts |
 | A11 | The three states of the Looks part drawn from the real component match the mockups Sandy approved | Build Phase 2 | Build Phase 2 | planned | live check | the looks this plan makes, held by their approval in the cockpit | |
 
 ## Checklist
@@ -62,7 +62,7 @@ date.
 
 **Tier**: med — the work step's default
 
-Before any code changes, this phase writes the tests that describe the new Looks part. They check that the list behind the plan page keeps the plan's mockups apart from the stories the plan built, that an earlier plan's build of a component is attached to the mockup that changes it as a comparison, and that a mockup added after approval is marked with its date. On the page side, they check that a story opens in place and that the comparison fold is labelled and asks for nothing. Most fail today, because the story overwrites the mockup and carries no page. Two pass from the start and guard what must not change: a look drawn nowhere still says so, and a mockup that was in the brief at approval carries no mark.
+Before any code changes, this phase writes the tests that describe the new Looks part. They check that the list behind the plan page keeps the plan's mockups apart from the stories the plan built, that an earlier plan's build of a component is attached to the mockup that changes it as a comparison, and that a mockup added after approval is marked with the phase that builds it. On the page side, they check that a story opens in place and that the comparison fold is labelled and asks for nothing. Most fail today, because the story overwrites the mockup and carries no page. Two pass from the start and guard what must not change: a look drawn nowhere still says so, and a mockup that was in the brief at approval carries no mark.
 
 **Goal**: author every test that can honestly be authored now, and record every test that cannot.
 
@@ -78,10 +78,10 @@ Before any code changes, this phase writes the tests that describe the new Looks
   `apps/indusk-mcp/src/lib/plans/parts-looks.test.ts`, over a fixture git project (as `check-gates-amendments.test.ts` builds one through `briefAppProject`): one app with mockup `chip.open` approved under `plan: "earlier"` and then edited (reads proposed), story `chip.open` approved with no `plan`; a brief naming `chip.open` under Changes and `never.drawn` under Must not break. A2: every drawn entry in `looks` and `stories` has a non-null `document`, and `chip.open`'s `today.document` is non-null. A3: `never.drawn` reads `undrawn` (green today). A4: `stories` is empty; `chip.open`'s `today.plan` is `"earlier"`. A5: change the story's snapshot in the fixture → `stories` holds `chip.open`, proposed. A7: `looks`' `chip.open` reads proposed (red today: approved, the story's). Red today on A2, A4, A5, A7: there is no `stories`, no `today`, and the story overwrites the mockup.
 
   </details>
-- [ ] Tests that a mockup added to the brief after approval is marked with its date, and one named at approval is not
+- [ ] Tests that a mockup added to the brief after approval is marked with the phase that builds it, and one named at approval is not
   <details><summary>Technical</summary>
 
-  Same file: approve the fixture plan (`indusk plans approve`), then commit a brief naming `chip.added` under This plan makes with a drawn mockup. A9: `chip.open` has `added: null` (green today: no such field reads undefined — assert `toBeFalsy`). A10: `chip.added` has `added` equal to that commit's date, `YYYY-MM-DD` (red today).
+  Same file: approve the fixture plan (`indusk plans approve`), then commit a brief naming `chip.added` under This plan makes with a drawn mockup, and an impl whose `### Build Phase 2: Chips` has a task whose detail names `chip.added`. A9: `chip.open` has `added` falsy (green today: no such field). A10: `chip.added` has `added.phase` equal to `"Build Phase 2: Chips"`; with that task removed, `added.phase` is null (red today).
 
   </details>
 - [ ] Tests that the plan page opens a story in place and shows today's build only as a labelled comparison, failing for now
@@ -114,12 +114,12 @@ Before any code changes, this phase writes the tests that describe the new Looks
 
 **Tier**: med — the work step's default
 
-The plan page is built from one list of the looks a plan's brief names. Today that list is keyed by name, so a component's old story, which carries the same name as the mockup being redrawn, overwrites the mockup, and no story gets a page to draw. This phase rebuilds the list in two parts. The first holds the plan's mockups, each with a page; a mockup that changes an existing component carries that component's current build as a comparison, named with the plan that built it; a mockup added after approval carries the date it was added. The second holds only the stories this plan built, each with a page. Approving a story in the cockpit starts recording which plan it was approved in, so a story built and approved by this plan stays listed as this plan's. The plan page itself changes in Build Phase 2.
+The plan page is built from one list of the looks a plan's brief names. Today that list is keyed by name, so a component's old story, which carries the same name as the mockup being redrawn, overwrites the mockup, and no story gets a page to draw. This phase rebuilds the list in two parts. The first holds the plan's mockups, each with a page; a mockup that changes an existing component carries that component's current build as a comparison, named with the plan that built it; a mockup added after approval carries the phase that builds it. The second holds only the stories this plan built, each with a page. Approving a story in the cockpit starts recording which plan it was approved in, so a story built and approved by this plan stays listed as this plan's. The plan page itself changes in Build Phase 2.
 
 - [ ] Each mockup in the list carries its page, today's build of its component when there is one, and when it was added if after approval
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/src/lib/plans/parts.ts`: `PartLook` gains `today: { document: string; plan: string | null } | null` and `added: string | null`; mockups only (and undrawn names). Build the drawn map per kind (`mockups: Map`, `stories: Map`) instead of one map. A story under a listed name that is not this plan's (below) becomes the mockup's `today`; `today.plan` is the mockup's previous approval's `plan` from `approved.json`, or null.
+  `apps/indusk-mcp/src/lib/plans/parts.ts`: `PartLook` gains `today: { document: string; plan: string | null } | null` and `added: { phase: string | null } | null`; mockups only (and undrawn names). Build the drawn map per kind (`mockups: Map`, `stories: Map`) instead of one map. A story under a listed name that is not this plan's (below) becomes the mockup's `today`; `today.plan` is the mockup's previous approval's `plan` from `approved.json`, or null.
 
   </details>
 - [ ] The list holds, apart, only the stories this plan built
@@ -128,10 +128,10 @@ The plan page is built from one list of the looks a plan's brief names. Today th
   `PlanParts.stories: PartStory[]`, `PartStory = { name, approval, document, devices, app }`, from `StoryView` (`looks/overview.ts`, `document` included): a story under a name the brief lists whose approval reads `proposed` in this checkout, or whose approval record's `plan` is this plan.
 
   </details>
-- [ ] A mockup added to the brief after approval gets the date it was added
+- [ ] A mockup added to the brief after approval gets the phase that builds it
   <details><summary>Technical</summary>
 
-  From `amendments` (already read in `readPlanParts`): each `{ part: "look", was: null, now }`; its date is the committer date (`git log --format=%cs --reverse <approval-commit>..HEAD -- brief.md`, first commit whose brief text names it) — reuse the approval-commit lookup in `plans/amendments.ts` rather than a second one.
+  From `amendments` (already read in `readPlanParts`): each `{ part: "look", was: null, now }`; its phase is the first impl phase whose column-zero task or folded detail names the mockup, read with `parseImplString` (`ImplPhase` heading name), or null while none does.
 
   </details>
 - [ ] A story approved in the cockpit records the plan it was approved in, as a mockup's approval does
@@ -149,7 +149,7 @@ The plan page is built from one list of the looks a plan's brief names. Today th
 
 #### Build Phase 1 Verification
 
-- [ ] The list keeps the plan's mockups and its own stories apart, carries the comparison and the added date, and still reads an undrawn look as undrawn (A2, A3, A4, A5, A7, A9, A10)
+- [ ] The list keeps the plan's mockups and its own stories apart, carries the comparison and the added mark, and still reads an undrawn look as undrawn (A2, A3, A4, A5, A7, A9, A10)
   <details><summary>Technical</summary>
 
   Green: A2, A4, A5, A7, A10; still green: A3, A9. `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/plans/parts-looks.test.ts src/lib/looks/approvals.test.ts && pnpm exec vitest related src/lib/plans/parts.ts src/lib/looks/approve.ts`.
@@ -178,7 +178,7 @@ The plan page is built from one list of the looks a plan's brief names. Today th
 
 **Tier**: med — the work step's default
 
-This is the part Sandy sees. The plan page's Looks part becomes two sections. Mockups lists what the plan proposes, each opening in place; a mockup that changes an existing component has a closed "Compare with today's build" fold that shows the current build, labelled with the plan that built it and asking for nothing; and a mockup added after approval says "Added during build" with its date. Stories lists only what this plan has built, each opening in place, and says "none built yet" until there is one. The Looks part becomes a named component in the admin's catalog, with a story for each of the three states Sandy approves as mockups. After this phase, every look of a plan can be looked at from its page, and story-first-phases' page shows its redrawn phase row as waiting.
+This is the part Sandy sees. The plan page's Looks part becomes two sections. Mockups lists what the plan proposes, each opening in place; a mockup that changes an existing component has a closed "Compare with today's build" fold that shows the current build, labelled with the plan that built it and asking for nothing; and a mockup added after approval says "Added during build" with the phase that builds it. Stories lists only what this plan has built, each opening in place, and says "none built yet" until there is one. The Looks part becomes a named component in the admin's catalog, with a story for each of the three states Sandy approves as mockups. After this phase, every look of a plan can be looked at from its page, and story-first-phases' page shows its redrawn phase row as waiting.
 
 - [ ] The Looks part draws a Mockups section and a Stories section, every row opening in place
   <details><summary>Technical</summary>
@@ -192,10 +192,10 @@ This is the part Sandy sees. The plan page's Looks part becomes two sections. Mo
   In `PlanLook`, when `look.today`: a closed `<details>` "Compare with today's build"; opened, "Built by {plan} — today's version, for comparison. Not this plan's to approve." (without "by {plan}" when null) and a `LookFrame` of `today.document`; no approval chip, no link.
 
   </details>
-- [ ] A mockup added after approval says so with its date
+- [ ] A mockup added after approval says so, with the phase that builds it
   <details><summary>Technical</summary>
 
-  In `PlanLook`, when `look.added`: the "Added during build · {Mon D}" label under the name, styled as the mockup's `.added`.
+  In `PlanLook`, when `look.added`: the "Added during build · for {phase}" label under the name ("Added during build" alone when `phase` is null), styled as the mockup's `.added`.
 
   </details>
 - [ ] The Looks part joins the admin's component catalog, with a story for each state

@@ -63,7 +63,8 @@ Looks page" or "Open on the Looks page".
   a "Compare with today's build" fold inside its mockup, labelled with the
   plan its mockup's earlier approval records, with no approval state.
 - **A mockup added after approval says so** (Sandy, 2026-10-14): "added
-  during build" and its date. The brief's difference from what was approved is
+  during build" and the phase that builds it — not a date (Sandy, on seeing
+  the drawn mark: the phase is what matters). The brief's difference from what was approved is
   already computed (`plans/amendments.ts`, an `Amendment` with `part: "look"`
   and `was: null`), and `readPlanParts` already returns the amendments.
 - Its own plan, not part of story-first-phases, which is about how phases

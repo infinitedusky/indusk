@@ -35,12 +35,12 @@ each becomes a row of the impl's Test Trajectory.
 | A7 | The Mockups count reads the plan's mockups only: a waiting mockup for a changed component reads waiting, whatever the old story's state. | unit |
 | A8 | story-first-phases' plan page, on its own branch, shows its redrawn phase row as a waiting mockup with today's build in the comparison fold, and an empty Stories section. | live check |
 
-### `a-look-added-after-approval-says-so` — A mockup added to a plan's brief after the plan was approved is marked on the plan's page as added during the build, with its date.
+### `a-look-added-after-approval-says-so` — A mockup added to a plan's brief after the plan was approved is marked on the plan's page as added during the build, with the phase that builds it.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
 | A9 | A mockup named in the brief at approval carries no "added" mark. | unit |
-| A10 | A mockup added to the brief after approval carries "Added during build" and the date of the commit that added it. | unit |
+| A10 | A mockup added to the brief after approval carries "Added during build" and the phase whose tasks build it, or "Added during build" alone while no phase names it yet. | unit |
 
 ### Not for a promise
 

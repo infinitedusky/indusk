@@ -27,7 +27,7 @@ the plan page's Looks part, built from the list of looks `readPlanParts` returns
 a list keyed by name in which the story, added second, overwrites the mockup; stories given no page to draw; and nothing that tells this plan's stories from an earlier plan's.
 
 **We decided for:**
-a list of mockups and a separate list of this plan's stories; a story is this plan's when it reads proposed on the plan's branch or its approval records `plan` as this plan; any other story under a name the brief lists is attached to that mockup as `today`, a comparison carrying its page and the plan its mockup's earlier approval records, with no approval state; each mockup carrying `added` (the date of the commit that first named it in the brief) when the brief's amendments since approval show it added; and the plan page drawing the two sections, the comparison fold and the mark.
+a list of mockups and a separate list of this plan's stories; a story is this plan's when it reads proposed on the plan's branch or its approval records `plan` as this plan; any other story under a name the brief lists is attached to that mockup as `today`, a comparison carrying its page and the plan its mockup's earlier approval records, with no approval state; each mockup carrying `added` (the impl phase whose tasks name it, or none yet) when the brief's amendments since approval show it added; and the plan page drawing the two sections, the comparison fold and the mark.
 
 **And against:**
 showing a mockup and its same-named story as two rows in one list (the earlier build reads as this plan's story, which Sandy rejected); hiding the earlier build altogether (the person loses the one view of what the change replaces); a separate list of add-ons (a look added later is still one of the plan's mockups, and two lists for one kind drift).
@@ -53,7 +53,7 @@ through `approved-brief.ts` and were never fooled.
 ## Decision
 
 1. `PlanParts.looks` holds the brief's mockups (and undrawn names), each
-   `{ name, relation, approval, document, devices, app, plan, added: string | null, today: { document, plan: string | null } | null }`.
+   `{ name, relation, approval, document, devices, app, plan, added: { phase: string | null } | null, today: { document, plan: string | null } | null }`.
 2. `PlanParts.stories` holds this plan's stories under names the brief lists:
    each `{ name, approval, document, devices, app }`, where the story reads
    proposed on the plan's checkout or its approval's `plan` is this plan.
@@ -61,15 +61,16 @@ through `approved-brief.ts` and were never fooled.
    `today`, with its page; `today.plan` is the plan the mockup's previous
    approval records, or null.
 4. `added` is set when an amendment with `part: "look"` and `was: null` names
-   the mockup; its date is the committer date of the first commit after the
-   approval commit whose brief names it (`git log` over the brief).
+   the mockup: `{ phase: string | null }`, the heading name of the first impl
+   phase whose task line or folded detail names the mockup, or null while no
+   phase does.
 5. Story approvals made in the cockpit record `plan` as mockup approvals do,
    so a story approved during this plan's build stays listed as this plan's.
    Check the approve route passes the checkout's plan for stories; add it if
    not.
 6. The plan page draws a `plan-looks` component: a Mockups section (count of
    approved mockups), each row opening in place, a changed one carrying the
-   closed "Compare with today's build" fold, an added one its mark; a Stories
+   closed "Compare with today's build" fold, an added one its mark ("Added during build · for {phase}"); a Stories
    section (count, or "none built yet"), each row opening in place.
 
 ## Alternatives Considered
