@@ -89,7 +89,7 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
   longSkipReasons: Array<{ ritual: "falsification" | "cleanup" | "audit"; length: number }>;
   ```
   The ritual still lands in `missing` under its own word, so every caller that refuses on `missing` refuses on this too.
-- [ ] In `apps/indusk-mcp/src/lib/lifecycle.ts`, before the per-ritual "awaiting /…" branches: a non-empty `longSkipReasons` reads `"<ritual> skip reason is <n> characters — one sentence, at most 120"` at that ritual's position
+- [x] In `apps/indusk-mcp/src/lib/lifecycle.ts`, before the per-ritual "awaiting /…" branches: a non-empty `longSkipReasons` reads `"<ritual> skip reason is <n> characters — one sentence, at most 120"` at that ritual's position
 - [ ] Rewrite the skip example and its sentence in `skills/cleanup.md`, `skills/falsify.md`, `skills/audit.md`: one sentence, at most 120 characters, the detail in the impl body or the retrospective; name the limit and `promise: a-skip-reason-is-one-sentence`. Same sentence in `skills/retrospective.md` Step 0, beside the readiness refusal. Then `indusk update` to sync `.claude/skills/`
 - [ ] The retrospective skill's refusal message names the long reason's ritual and length when `longSkipReasons` is non-empty
 

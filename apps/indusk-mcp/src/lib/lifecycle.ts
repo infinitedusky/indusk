@@ -1,4 +1,4 @@
-import type { RetrospectiveReadiness } from "./cleanup/gate.js";
+import { type RetrospectiveReadiness, SKIP_REASON_MAX } from "./cleanup/gate.js";
 import type { GateKind } from "./impl-headings.js";
 import type { ImplPhase, ParsedImpl } from "./impl-parser.js";
 import type { PlanSummary } from "./plan-parser.js";
@@ -292,14 +292,29 @@ function resolvePosition(input: DerivePlanPositionInput): {
 				};
 			}
 			const missing = readiness.missing;
+			// skip-reason-why: a ritual skipped with a reason over the limit reads
+			// as that, at its own position, not as "awaiting /<ritual>".
+			// promise: a-skip-reason-is-one-sentence
+			const longReason = (ritual: "falsification" | "cleanup" | "audit") => {
+				const found = readiness.longSkipReasons.find((l) => l.ritual === ritual);
+				return found
+					? `${ritual} skip reason is too long, ${found.length} characters — one sentence, at most ${SKIP_REASON_MAX}`
+					: null;
+			};
 			if (missing.includes("falsification")) {
-				return { position: "falsify", awaiting: "impl complete, awaiting /falsify" };
+				return {
+					position: "falsify",
+					awaiting: longReason("falsification") ?? "impl complete, awaiting /falsify",
+				};
 			}
 			if (missing.includes("cleanup")) {
-				return { position: "cleanup", awaiting: "falsified, awaiting /cleanup" };
+				return {
+					position: "cleanup",
+					awaiting: longReason("cleanup") ?? "falsified, awaiting /cleanup",
+				};
 			}
 			if (missing.includes("audit")) {
-				return { position: "audit", awaiting: "cleaned, awaiting /audit" };
+				return { position: "audit", awaiting: longReason("audit") ?? "cleaned, awaiting /audit" };
 			}
 			if (missing.includes("rows")) {
 				const rows = readiness.nonTerminalRows.join(", ");
