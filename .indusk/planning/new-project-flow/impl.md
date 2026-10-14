@@ -448,7 +448,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 8 Document
 
-- [ ] `apps/docs/src/guide/new-project.md`: the GitHub offer — the account it uses, signing in with `gh auth login`, private or public
+- [x] `apps/docs/src/guide/new-project.md`: the GitHub offer — the account it uses, signing in with `gh auth login`, private or public
 
 ## Files Affected
 

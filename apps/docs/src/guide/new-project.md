@@ -69,7 +69,7 @@ yours to change before you create anything:
 | **How you'll plan** | See which planning documents the project writes, in order. |
 | **Recommendations** | Each practice the agent recommends (a docs site, telemetry, deployment) is kept unless you decline it. |
 | **Founding brief** | Read the brief the conversation produced; the documents you gave are kept unchanged beside it. |
-| **Private GitHub repository** | A separate confirm. It opens unticked whatever the agent wrote, and only your tick creates one. It is the only step that sends anything off your machine. |
+| **GitHub repository** | A separate confirm. It names the GitHub account the repository would be made as (the one `gh auth status` reports as active), and offers *Private - only you can see it* (chosen) or *Public - anyone can see it*. It opens unticked whatever the agent wrote, and only your tick creates one. With nobody signed in the box cannot be ticked and says to run `gh auth login`, then reload. It is the only step that sends anything off your machine. |
 
 **Keep talking** goes back to the conversation; the proposal is kept and you
 can return to it.
@@ -101,7 +101,7 @@ project's config under `recommendations`:
 { "recommendations": [{ "name": "adr", "kept": false, "reason": "Solo project for now" }] }
 ```
 
-A private GitHub repository you leave unticked is recorded the same way, as
+A GitHub repository you leave unticked is recorded the same way, as
 `{ "name": "github", "kept": false, "reason": "not confirmed" }`, unless the
 proposal already declines it in your words.
 
@@ -121,7 +121,7 @@ project**:
 2. **Repository created inside it** - each repository, a git repository on `main` with one commit.
 3. **InDusk installed** - the package's own `indusk init`, run as a separate process. Creation then reads the project: its skills, its hooks and the `indusk` MCP entry must all be there, and a missing one fails this step and removes what was made.
 4. **Founding brief and master plan written** - see below.
-5. **Private GitHub repository created** - only when you confirmed it.
+5. **GitHub repository created** - only when you confirmed it, private unless you chose public.
 
 The result is the same layout every time:
 
@@ -168,12 +168,15 @@ hold the one session slot, and a new project conversation can start at once.
 
 ## The remote repository
 
-Creating a project sends nothing off your machine. The private GitHub
-repository is its own confirm on the proposal, off by default. When it is on,
-the last step runs `gh repo create <repository> --private --source <path>
---push` once. If `gh` is missing or not signed in, that step reports the
-failure and the finished local project is left as it is - nothing else is
-undone, and you can create the repository yourself.
+Creating a project sends nothing off your machine. The GitHub repository is
+its own confirm on the proposal, off by default. The proposal reads the account
+from `gh` and names it; to change it, sign in with `gh auth login` (or
+`gh auth switch`) and reload the page. Private is chosen unless you choose
+public. When the confirm is on, the last step runs `gh repo create
+<repository> --private --source <path> --push` once (`--public` when you chose
+public). If `gh` fails at that point, the step reports the failure and the
+finished local project is left as it is - nothing else is undone, and you can
+create the repository yourself.
 
 ## See also
 
