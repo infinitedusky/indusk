@@ -43,17 +43,17 @@ Several plans can each have an agent at once: the session manager refuses only a
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | With a planning session running for one plan, a planning session for another plan starts | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager.test.ts |
-| A2 | A second planning session on the same plan is refused, naming the session already running | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager.test.ts |
-| A3 | A plan can have a planning session and a build running at the same time | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager.test.ts |
-| A4 | A draft's conversation starts while a plan's session is running | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
-| A5 | Starting a build of one plan from the admin is not refused because another plan has a session | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
-| A6 | With sessions running on two plans, each plan's waiting entry shows its own session and question, never the other's | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
+| A1 | With a planning session running for one plan, a planning session for another plan starts | Test Phase 1 | Build Phase 1 | written | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A2 | A second planning session on the same plan is refused, naming the session already running | Test Phase 1 | Build Phase 1 | written | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A3 | A plan can have a planning session and a build running at the same time | Test Phase 1 | Build Phase 1 | written | unit | promise: a-session-belongs-to-its-plan | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A4 | A draft's conversation starts while a plan's session is running | Test Phase 1 | Build Phase 2 | written | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
+| A5 | Starting a build of one plan from the admin is not refused because another plan has a session | Test Phase 1 | Build Phase 2 | written | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
+| A6 | With sessions running on two plans, each plan's waiting entry shows its own session and question, never the other's | Test Phase 1 | Build Phase 2 | written | unit | promise: a-session-belongs-to-its-plan | apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts |
 | A7 | In the running admin, a person starts planning on two plans and talks to both without stopping either | Build Phase 2 | Build Phase 2 | planned | live check | promise: a-session-belongs-to-its-plan | manual: recorded in Build Phase 2's Verification |
-| A8 | With as many sessions running as the cap allows, another start is refused, naming each running session and how to stop one | Test Phase 1 | Build Phase 1 | planned | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
-| A9 | With no sessions.max set a fifth session is refused and a fourth is not; with sessions.max 2 in the InDusk home's config a third is refused | Test Phase 1 | Build Phase 1 | planned | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
-| A10 | With two sessions running, stopping one leaves the other running and recorded | Test Phase 1 | Build Phase 1 | planned | unit | a regression guard over a-session-can-be-stopped, which the brief must not break; it needs two sessions, which only this plan allows | apps/indusk-mcp/src/lib/session/manager.test.ts |
-| A11 | A session that ends records its end for its own plan, and the others' records stay | Test Phase 1 | Build Phase 1 | planned | unit | a regression guard over a-session-says-how-it-ended; it needs two sessions, which only this plan allows | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A8 | With as many sessions running as the cap allows, another start is refused, naming each running session and how to stop one | Test Phase 1 | Build Phase 1 | written | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A9 | With no sessions.max set a fifth session is refused and a fourth is not; with sessions.max 2 in the InDusk home's config a third is refused | Test Phase 1 | Build Phase 1 | written | unit | promise: sessions-are-capped | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A10 | With two sessions running, stopping one leaves the other running and recorded | Test Phase 1 | Build Phase 1 | written | unit | a regression guard over a-session-can-be-stopped, which the brief must not break; it needs two sessions, which only this plan allows | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A11 | A session that ends records its end for its own plan, and the others' records stay | Test Phase 1 | Build Phase 1 | written | unit | a regression guard over a-session-says-how-it-ended; it needs two sessions, which only this plan allows | apps/indusk-mcp/src/lib/session/manager.test.ts |
 
 ## Checklist
 
@@ -66,7 +66,7 @@ Several plans can each have an agent at once: the session manager refuses only a
 - [x] Create/confirm this plan's worktree (`indusk worktree create sessions-per-plan`, which records the assignment; this plan was started with `indusk plans start`, which made it) — worktree-per-plan default
 - [x] A1, A2, A3, A8, A9, A10, A11 in `apps/indusk-mcp/src/lib/session/manager.test.ts`, against the real `SessionManager` with its fake launcher (the file's `manager()` helper). A8 passes the cap through the constructor (`new SessionManager({ ..., max: 2 })`); A9 points `INDUSK_HOME` at a temp folder with and without `config.json` holding `{ "sessions": { "max": 2 } }`. Today's "a second session is refused while one runs" test states the rule this plan removes: replace it with A2's same-plan refusal (test-plan Notes). Each fails today on its own assertion: the second start throws `SessionBusy`
 - [x] A4, A5, A6 in `apps/indusk-admin/src/__tests__/sessions-per-plan.test.ts`: install a real `SessionManager` with a fake launcher on `globalThis[Symbol.for("indusk.admin.sessionManager")]` (what `session-host.ts` reads), start a session for plan `one`, then: A4 POSTs the draft talk route for a draft and expects 201; A5 calls the build host's start for plan `two` and expects no refusal; A6 starts a second session on `two` with a pending question and expects `readWaiting` to hold an entry for each plan with its own question. Each fails today on its own assertion (409, a refusal, one entry)
-- [ ] Confirm each fails on its own assertion rather than on a missing import
+- [x] Confirm each fails on its own assertion rather than on a missing import
 
 #### Regression Guards
 
@@ -74,7 +74,8 @@ Several plans can each have an agent at once: the session manager refuses only a
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A6 and A8–A11 are authored, and each fails on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/manager.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts`)
+- [x] A1–A6 and A8–A11 are authored, and each fails on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/manager.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts`)
+  - Result: `manager.test.ts` 8 failed | 10 passed (the 10 are the existing tests; A1, A2, A3, A8, A9 twice, A10, A11 red), and `sessions-per-plan.test.ts` 3 failed | 0 passed (A4, A5, A6). Every red is its own assertion, none a load error: A2 expects the refusal text `a planning session is already running for seats: <id>` and gets today's `a session is already running: …`; A1, A3, A8, A10, A11 expect the second start (other plan, or build) to be undefined and get `SessionBusy`; A9 expects four starts without a refusal and gets `SessionBusy` on the second; A4 expects 201 and gets 409; A5 expects `startBuild` to resolve and it rejects with `a session is already running`; A6 expects the second start not to throw and it throws. Nothing deferred.
 
 ### Build Phase 1: A session belongs to its plan, and the machine has a cap
 
