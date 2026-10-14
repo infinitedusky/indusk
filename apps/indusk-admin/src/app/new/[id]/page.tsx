@@ -2,6 +2,7 @@ import {
   induskHome,
   knowledgeOf,
   loadProposal,
+  NEW_PROJECT_SESSION_PROJECT,
   newProjectSessionPlan,
   type Proposal,
   readCreation,
@@ -15,6 +16,8 @@ import { Markdown } from "@/components/Markdown";
 import { NewProjectConversation } from "@/components/new-project/NewProjectConversation";
 import { NewProjectCreatingPanel } from "@/components/new-project/NewProjectCreatingPanel";
 import { NewProjectProposalPanel } from "@/components/new-project/NewProjectProposalPanel";
+import { sessionManager } from "@/lib/session-host";
+import { ownsSession } from "@/lib/session-owner";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -126,6 +129,15 @@ export default async function NewProjectConversationPage({
     );
   }
   const transcript = readTranscript(draft);
+  const running = sessionManager().current();
+  const session = ownsSession(
+    running,
+    NEW_PROJECT_SESSION_PROJECT,
+    newProjectSessionPlan(id),
+    "planning",
+  )
+    ? running.id
+    : null;
   const hasWorking = transcript.some((l) => l.type === "tool");
   return (
     <main
@@ -166,6 +178,7 @@ export default async function NewProjectConversationPage({
         hasContent={draft.brief !== null || draft.hasProposal}
         transcript={transcript}
         initiallyOpen={open !== undefined}
+        session={session}
       />
     </main>
   );

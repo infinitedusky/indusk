@@ -37,6 +37,7 @@ export function NewProjectConversation({
   hasContent,
   transcript = [],
   initiallyOpen = false,
+  session: startedSession = null,
 }: {
   draft: string;
   /** The `plan` the draft's session record names (`newProjectSessionPlan`). */
@@ -50,10 +51,16 @@ export function NewProjectConversation({
   transcript?: TranscriptLine[];
   /** Every reply starts with its working shown. */
   initiallyOpen?: boolean;
+  /**
+   * The draft's session when the page was drawn: Start launched it, so the
+   * conversation opens on the thread with the agent working. The button below
+   * stays only for a conversation whose agent is not running.
+   */
+  session?: string | null;
 }) {
   const router = useRouter();
   const picker = useRef<HTMLInputElement>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(startedSession);
   const [problem, setProblem] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

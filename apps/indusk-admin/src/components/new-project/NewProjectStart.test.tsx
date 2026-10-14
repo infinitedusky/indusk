@@ -86,6 +86,8 @@ describe("A28 — Start launches the agent", () => {
       />,
     );
     await expect.element(screen.getByText("Working…")).toBeVisible();
-    expect(screen.getByRole("button", { name: /talk to the agent/i }).elements()).toHaveLength(0);
+    expect(
+      screen.getByRole("button", { name: /talk to the agent/i }).elements(),
+    ).toHaveLength(0);
   });
 });

@@ -109,7 +109,12 @@ describe("A29 — every agent turn carries one status", () => {
     ];
     expect(statusOf(turnsOf(ended, { running: false })[0])).toBe("stopped");
     const earlier = turnsOf(
-      [tool("Read", "a.md"), { type: "you", text: "Go on." }, text("Ok."), result("Ok.")],
+      [
+        tool("Read", "a.md"),
+        { type: "you", text: "Go on." },
+        text("Ok."),
+        result("Ok."),
+      ],
       { running: true },
     );
     expect(statusOf(earlier[0])).toBe("stopped");
