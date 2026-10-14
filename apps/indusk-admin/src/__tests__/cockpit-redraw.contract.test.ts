@@ -29,7 +29,7 @@ import {
  * plan in four conditions: `screens.json` lists a path per state, and the
  * project holds a fixture plan for each — `looks-fixture-parts` (brief being
  * written, so also `brief.writing`), `-working` (approved, so also
- * `brief.approved`), `-needs-you` (its impl waits on approval) and `-released`
+ * `brief.approved`), `-no-brief` (research only, so `brief.empty`), `-needs-you` (its impl waits on approval) and `-released`
  * (archived). A named screen that the check never opened fails (`was never
  * checked`) rather than passing by omission.
  */
@@ -41,6 +41,7 @@ const SCREENS = [
   "nav.wide",
   "brief.writing",
   "brief.approved",
+  "brief.empty",
   "plan.parts",
   "plan.working",
   "plan.needs-you",
@@ -106,6 +107,20 @@ beforeAll(async () => {
     impl: "in-progress",
     approved: true,
   });
+  // research only, no brief: `brief.empty`
+  mkdirSync(join(project, ".indusk", "planning", "looks-fixture-no-brief"), {
+    recursive: true,
+  });
+  writeFileSync(
+    join(
+      project,
+      ".indusk",
+      "planning",
+      "looks-fixture-no-brief",
+      "research.md",
+    ),
+    doc("accepted"),
+  );
   plan(project, "looks-fixture-needs-you", {
     brief: "accepted",
     impl: "draft",
