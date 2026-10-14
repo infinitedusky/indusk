@@ -202,7 +202,7 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 
 #### Build Phase 3 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: the brief page and plan page are held to `brief.*` and `plan.*`; a change to either is drawn before it is built
+- [x] `apps/indusk-admin/CLAUDE.md`: the brief page and plan page are held to `brief.*` and `plan.*`; a change to either is drawn before it is built
 
 #### Build Phase 3 Document
 
