@@ -174,8 +174,38 @@ describe("createProject's span", () => {
 			"conversation.folds_opened": 1,
 			"conversation.tools_refused": 2,
 			"new_project.parent_set_in_admin": true,
+			"new_project.remote_visibility": "none",
 		});
 		expect(seen.status).toMatchObject({ code: 2 });
 		expect(seen.ended).toBe(true);
+	});
+	it("carries who can see the repository the proposal confirmed", async () => {
+		const h = mkdtempSync(join(tmpdir(), "create-span-"));
+		made.push(h);
+		const draft = createProjectDraft(h, { message: "x", documents: [] });
+		const proposal = {
+			name: "demo",
+			location: join(h, "code", "demo-workbench"),
+			repos: [{ name: "demo" }],
+			milestones: ["first"],
+			recommendations: [],
+			documentsOff: [],
+			remote: { github: true, visibility: "public" },
+		};
+		writeFileSync(join(draft.dir, "proposal.json"), JSON.stringify(proposal));
+		const attrs: Record<string, unknown> = {};
+		const tracer = {
+			startSpan: () =>
+				({
+					setAttribute: (k: string, v: unknown) => {
+						attrs[k] = v;
+					},
+					setStatus: () => {},
+					end: () => {},
+				}) as unknown as Span,
+		} as unknown as Tracer;
+		// No parent is set, so creation is refused before anything is made; the span still says what was confirmed.
+		await expect(createProject(h, draft.id, { tracer })).rejects.toBeInstanceOf(CreationError);
+		expect(attrs["new_project.remote_visibility"]).toBe("public");
 	});
 });

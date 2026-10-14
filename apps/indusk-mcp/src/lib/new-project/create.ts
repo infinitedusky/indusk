@@ -17,7 +17,7 @@ import { type InduskConfig, readConfig, writeConfig } from "../config.js";
 import { induskMcpPackageRoot } from "../package-root.js";
 import { installProblems } from "./install.js";
 import { isUnderParent, parentSetBy, readParent, repositoryAround } from "./parent.js";
-import { type Proposal, ProposalError, readProposal } from "./proposal.js";
+import { loadProposal, type Proposal, ProposalError, readProposal } from "./proposal.js";
 import {
 	type CreationRecord,
 	type CreationStepId,
@@ -302,8 +302,9 @@ const TRACER_NAME = "@infinitedusky/indusk-mcp/new-project";
  * before creation deletes the draft - `conversation.questions` and
  * `conversation.has_document` for expectation 2, `conversation.reply_words`
  * and `conversation.folds_opened` for expectation 5. `conversation.tools_refused`
- * counts the requests the confined agent was refused, and
- * `new_project.parent_set_in_admin` says whether the parent was saved from the
+ * counts the requests the confined agent was refused, `new_project.remote_visibility`
+ * says who can see the repository made (`private`, `public`, or `none` when no
+ * GitHub repository was confirmed), and `new_project.parent_set_in_admin` says whether the parent was saved from the
  * start page rather than typed. Telemetry is best-effort:
  * a failure here never fails a creation.
  */
@@ -324,6 +325,8 @@ function startCreateSpan(
 		span.setAttribute("conversation.reply_words", figures.replyWords);
 		span.setAttribute("conversation.folds_opened", figures.foldsOpened);
 		span.setAttribute("conversation.tools_refused", figures.toolsRefused);
+		const remote = loadProposal(draft).proposal?.remote;
+		span.setAttribute("new_project.remote_visibility", remote?.github ? remote.visibility : "none");
 		span.setAttribute("new_project.parent_set_in_admin", parentSetBy(home) === "admin");
 		span.setAttribute(
 			"conversation.has_document",

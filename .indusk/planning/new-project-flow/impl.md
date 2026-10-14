@@ -435,7 +435,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 8 OTel
 
-- [ ] The `new_project.create` span carries `new_project.remote_visibility` (`private`, `public` or `none`)
+- [x] The `new_project.create` span carries `new_project.remote_visibility` (`private`, `public` or `none`)
 
 #### Build Phase 8 Verification
 
