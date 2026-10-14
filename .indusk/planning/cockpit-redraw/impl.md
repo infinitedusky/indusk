@@ -1,7 +1,7 @@
 ---
 title: "cockpit-redraw — the nav from the original cockpit, the brief page drawn, re-approval a person's"
 date: 2026-10-13
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -272,7 +272,7 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 - [x] `apps/indusk-mcp/hooks/CLAUDE.md`: the guard's reader exemption never covers a segment with a substitution, and a person-only act is refused by its function's name as well as its command and route
 
 #### Build Phase 4 Document
-- [ ] (none — internal-only fixes: the guard's refusal message, the nav's drag and the page's look state change no documented behaviour; `reference/cli/plans.md` already says an agent's `reapprove` is refused)
+- [x] (none needed — asked: "Build Phase 4 is green except its Document item. The fixes change no documented behaviour — reference/cli/plans.md already says an agent's reapprove is refused. Can I skip the document gate?" — user: "Yes, skip it")
 
 #### Build Phase 4 Falsification Summary
 - Searched without a hypothesis: the guard's route regex (encoded URLs are the tripwire's acknowledged limit), `bash -c` strings (the split on `;`/`&&` reaches inside them), an Edit of `approved_brief:` (check-gates already refuses it), `?nav=` (read once at mount, clamped, never kept), the width clamp and A4's collapse, the brief page's look state (it never draws the amendment card), the session-panel attach (`ownsSession` keys on project, plan and kind).
