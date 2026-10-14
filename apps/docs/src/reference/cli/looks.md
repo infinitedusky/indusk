@@ -52,6 +52,8 @@ src/Badge.jsx:3  p-[13px]  arbitrary-class — arbitrary value in p-[13px] — u
 | `not-in-catalog` | a marked component the app's `components.json` omits (only when the app has a catalog) |
 | `no-story` | a `<indusk-component name state>` in a mockup naming a state the catalog lists no story for — `no story: badge.warn` |
 | `no-approved-story` | a `<indusk-component>` whose story has no snapshot, or one no person has approved as it is now — `no approved story: badge.warn`, at the reference's line |
+| `content-not-words-or-components` | an element inside a `<indusk-component>` other than `<indusk-component>` or `<indusk-content>` — `content not words or components: <file>:<line> <div> inside button` |
+| `component-takes-no-content` | content for a property the state's `content` in `components.json` does not list — `component takes no content: <file>:<line> button has no "label" to fill in state default` |
 | `component-drawn-in-mockup` | a `data-component` element written in a mockup's source instead of placed by name — `component drawn in mockup: <file>:<line> badge` (only when the app has a catalog; a mockup `screens.json` lists as `uncomposed` is exempt) |
 | `needs-a-story` | a notice, never a failure: a component the mockup declares new (`indusk-new-components`) that has no story yet — `needs a story: pill` |
 

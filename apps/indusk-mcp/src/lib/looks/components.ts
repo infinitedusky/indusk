@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, extname, join, relative } from "node:path";
+import type { ContentMap } from "./compose.js";
 import { appSourceFiles, type LooksApp, LooksAppError, readJsonSync } from "./mockups.js";
 
 /**
@@ -170,6 +171,14 @@ export interface CatalogState {
 	id?: string;
 	/** sha256 of the state's snapshot file, `components/<name>.<state>.html`. */
 	snapshotHash: string;
+	/**
+	 * Per property a mockup may fill, where that property's words or components
+	 * land in the snapshot: each place is a child-index path from its root, or
+	 * an object adding how many nodes the story's words are and the static
+	 * words around them (`looks/compose`'s `ContentPlace`). Absent in a catalog
+	 * written before component content: nothing can be placed in it.
+	 */
+	content?: ContentMap;
 }
 
 export interface CatalogComponent {

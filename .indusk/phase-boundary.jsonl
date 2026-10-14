@@ -306,6 +306,8 @@
 {"plan":"cockpit-redraw","phase":4,"kind":"build","sha":"319b271b67995f34d77d16e709c0d07a034dc4f0","timestamp":"2026-10-14T19:08:59.423Z"}
 {"plan":"cockpit-redraw","phase":5,"kind":"build","sha":"92bbd9b7c525e51ddf918e98f8abf87ffcba43e0","timestamp":"2026-10-14T20:41:46.056Z"}
 {"plan":"cockpit-redraw","phase":6,"kind":"build","sha":"c06136dbac5fa38ca1f022061f3a32b5cca3a505","timestamp":"2026-10-14T20:58:42.876Z"}
+{"plan":"component-content","phase":1,"kind":"build","sha":"73ca1b5b8edfa1bf84c6875aa5936e139d202a25","timestamp":"2026-10-14T21:45:13.126Z"}
+{"plan":"component-content","phase":4,"kind":"build","sha":"c74e8855d52db7a44e81aa9fd0dff4de89749e5b","timestamp":"2026-10-14T22:00:01.136Z"}
 {"plan":"new-project-flow","phase":1,"kind":"test","sha":"355c6cc63c8388ed1176504462c7eda177d21f89","timestamp":"2026-10-14T00:53:59.597Z"}
 {"plan":"new-project-flow","phase":1,"kind":"build","sha":"beec95bc581313030e1fd42e95aa1cefb3bb07c6","timestamp":"2026-10-14T01:06:40.784Z"}
 {"plan":"new-project-flow","phase":2,"kind":"build","sha":"a490169f278a399ec15ac6ad22432d40cd71bc44","timestamp":"2026-10-14T02:02:39.010Z"}

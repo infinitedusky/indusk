@@ -32,7 +32,23 @@
 				{
 					"name": "waiting",
 					"id": "ui-amendmentcard--waiting",
-					"snapshotHash": "6fc4ba6054527e54d7c319261dbbcc7c7973433356f630db6a4649e326738a3b"
+					"snapshotHash": "6fc4ba6054527e54d7c319261dbbcc7c7973433356f630db6a4649e326738a3b",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"children": [
+							[
+								0,
+								4,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/amendment-card.css",
@@ -65,22 +81,54 @@
 				{
 					"name": "needs",
 					"id": "ui-planbadge--needs",
-					"snapshotHash": "000b8417a8f6667e8af84ea26bd27c99e60518d80de0bfb4dc50870101a6c975"
+					"snapshotHash": "000b8417a8f6667e8af84ea26bd27c99e60518d80de0bfb4dc50870101a6c975",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "working",
 					"id": "ui-planbadge--working",
-					"snapshotHash": "d48c2d2c7d6eafed8de8089196913e1d683a4344c0eb5b601c6d911aa124841a"
+					"snapshotHash": "d48c2d2c7d6eafed8de8089196913e1d683a4344c0eb5b601c6d911aa124841a",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "released",
 					"id": "ui-planbadge--released",
-					"snapshotHash": "070b75990ca2eea91ac042324db4768e897a93f4d6af7d36b9653e69a8630010"
+					"snapshotHash": "070b75990ca2eea91ac042324db4768e897a93f4d6af7d36b9653e69a8630010",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "idle",
 					"id": "ui-planbadge--idle",
-					"snapshotHash": "df00a00978ceef86c44c8af03ec9f7aa0c8334c8916def79c45deee3399b8796"
+					"snapshotHash": "df00a00978ceef86c44c8af03ec9f7aa0c8334c8916def79c45deee3399b8796",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/badge.css",
@@ -112,7 +160,22 @@
 				{
 					"name": "default",
 					"id": "ui-box--default",
-					"snapshotHash": "7402034edd33d3fd922a411764e777346806db20f31f6cd3bc4657f2e925cf2f"
+					"snapshotHash": "7402034edd33d3fd922a411764e777346806db20f31f6cd3bc4657f2e925cf2f",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/box.css",
@@ -145,12 +208,28 @@
 				{
 					"name": "default",
 					"id": "ui-button--default",
-					"snapshotHash": "4fb0490dac0c491cea25740d4528959882900996236d41062a93c4684222eec2"
+					"snapshotHash": "4fb0490dac0c491cea25740d4528959882900996236d41062a93c4684222eec2",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "yes",
 					"id": "ui-button--yes",
-					"snapshotHash": "93fac0656e7c4033b3c25bf08c7420fd21a1e6e720ccea4315375538efc0f325"
+					"snapshotHash": "93fac0656e7c4033b3c25bf08c7420fd21a1e6e720ccea4315375538efc0f325",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/button.css",
@@ -177,67 +256,171 @@
 				{
 					"name": "passing",
 					"id": "ui-badge--passing",
-					"snapshotHash": "f74b7a323810c57eb4383613e0b89ae782e2269677745a7da8bdce5ce75cd396"
+					"snapshotHash": "f74b7a323810c57eb4383613e0b89ae782e2269677745a7da8bdce5ce75cd396",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "blocked",
 					"id": "ui-badge--blocked",
-					"snapshotHash": "89ecd074e4cda70aed0555f9e6254d6981c71e2ed7c5421796e0d98d72e20b70"
+					"snapshotHash": "89ecd074e4cda70aed0555f9e6254d6981c71e2ed7c5421796e0d98d72e20b70",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "skipped",
 					"id": "ui-badge--skipped",
-					"snapshotHash": "0c59dce1ae7c59e0d9be02a4a6a4c6989ae5aeb0a6ee21e666bed85c2ba4699d"
+					"snapshotHash": "0c59dce1ae7c59e0d9be02a4a6a4c6989ae5aeb0a6ee21e666bed85c2ba4699d",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "planned",
 					"id": "ui-badge--planned",
-					"snapshotHash": "3fe7d83f647d3e4eca124d5e6bac99b55870cfcc1ebf33fdd6ff70c80449a372"
+					"snapshotHash": "3fe7d83f647d3e4eca124d5e6bac99b55870cfcc1ebf33fdd6ff70c80449a372",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "writable",
 					"id": "ui-badge--writable",
-					"snapshotHash": "9d9b70ff4bea71efeaca6c676e403cb4d534efa3a0417c11fdaa5e5ca6d6a1fb"
+					"snapshotHash": "9d9b70ff4bea71efeaca6c676e403cb4d534efa3a0417c11fdaa5e5ca6d6a1fb",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "written",
 					"id": "ui-badge--written",
-					"snapshotHash": "b615856e3ebcb6cfb3f49c93e20ec7c26c495b23faa837750fe8c93e0e13be94"
+					"snapshotHash": "b615856e3ebcb6cfb3f49c93e20ec7c26c495b23faa837750fe8c93e0e13be94",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "unknown",
 					"id": "ui-badge--unknown",
-					"snapshotHash": "c6542c08347fabc1996508531135a545620cef2b074dadef22aa6ec613c5ab32"
+					"snapshotHash": "c6542c08347fabc1996508531135a545620cef2b074dadef22aa6ec613c5ab32",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "neutral",
 					"id": "ui-badge--neutral",
-					"snapshotHash": "f05be85987843fff8584b7011a7e3bd952ee82fc756da69289e19074ffbde932"
+					"snapshotHash": "f05be85987843fff8584b7011a7e3bd952ee82fc756da69289e19074ffbde932",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "declared",
 					"id": "ui-badge--declared",
-					"snapshotHash": "8902a98ea33048bb6a5255805ea017beaf6d4a666477f037f8c1c8c965d4efbd"
+					"snapshotHash": "8902a98ea33048bb6a5255805ea017beaf6d4a666477f037f8c1c8c965d4efbd",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "proving",
 					"id": "ui-badge--proving",
-					"snapshotHash": "afa817d4cf413e6bdfd216d67a148d5b7fe5f10a2272845c56d3906130fcf4cf"
+					"snapshotHash": "afa817d4cf413e6bdfd216d67a148d5b7fe5f10a2272845c56d3906130fcf4cf",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "enforced",
 					"id": "ui-badge--enforced",
-					"snapshotHash": "779b408f6d0047019722ae7ceee57559c6608de6a78485656db7cb0f0f2dfa30"
+					"snapshotHash": "779b408f6d0047019722ae7ceee57559c6608de6a78485656db7cb0f0f2dfa30",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "broken",
 					"id": "ui-badge--broken",
-					"snapshotHash": "b5436ad74255aabc2199681f28e0de9dd86cc41e92151dd00bf859c72bcfac9e"
+					"snapshotHash": "b5436ad74255aabc2199681f28e0de9dd86cc41e92151dd00bf859c72bcfac9e",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "active",
 					"id": "ui-badge--active",
-					"snapshotHash": "1499d36ae87f0decf0073fd1dce3aeb83a0506436ae6ef3e5a5ebe8c03ef2e79"
+					"snapshotHash": "1499d36ae87f0decf0073fd1dce3aeb83a0506436ae6ef3e5a5ebe8c03ef2e79",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/chip.css",
@@ -282,22 +465,81 @@
 				{
 					"name": "ask",
 					"id": "ui-decisioncard--ask",
-					"snapshotHash": "9ed28254276ac8e0473d2a46840450e97a139eaad17b24827dbdab65865f53ba"
+					"snapshotHash": "9ed28254276ac8e0473d2a46840450e97a139eaad17b24827dbdab65865f53ba",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"children": [
+							{
+								"at": [
+									0,
+									2
+								],
+								"nodes": 2
+							}
+						]
+					}
 				},
 				{
 					"name": "working",
 					"id": "ui-decisioncard--working",
-					"snapshotHash": "10820004f9c6776dae0142091004eb7869b642a3de3da5d7bff108142f7ffc90"
+					"snapshotHash": "10820004f9c6776dae0142091004eb7869b642a3de3da5d7bff108142f7ffc90",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"children": [
+							[
+								0,
+								2
+							]
+						]
+					}
 				},
 				{
 					"name": "released",
 					"id": "ui-decisioncard--released",
-					"snapshotHash": "ee629faac31c86dc0a51f9beddae4476cdf3a28ddd2aa0d729cda4e816dea66b"
+					"snapshotHash": "ee629faac31c86dc0a51f9beddae4476cdf3a28ddd2aa0d729cda4e816dea66b",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"children": [
+							[
+								0,
+								2
+							]
+						]
+					}
 				},
 				{
 					"name": "alert",
 					"id": "ui-decisioncard--alert",
-					"snapshotHash": "a990826ab239bc94e414cc39333f94e54d6278e6320a075f31d21632ae90e5fc"
+					"snapshotHash": "a990826ab239bc94e414cc39333f94e54d6278e6320a075f31d21632ae90e5fc",
+					"content": {
+						"children": [
+							{
+								"at": [
+									0,
+									0
+								],
+								"nodes": 2
+							}
+						]
+					}
 				}
 			],
 			"stylesheet": "components/decision-card.css",
@@ -341,7 +583,8 @@
 				{
 					"name": "default",
 					"id": "ui-devicechoice--default",
-					"snapshotHash": "c4d8698990a2d4beb5400aa09bc19d0e3717ec0cf826462ac854c86fa8ab2bbc"
+					"snapshotHash": "c4d8698990a2d4beb5400aa09bc19d0e3717ec0cf826462ac854c86fa8ab2bbc",
+					"content": {}
 				}
 			],
 			"stylesheet": "components/device-choice.css",
@@ -368,7 +611,15 @@
 				{
 					"name": "default",
 					"id": "ui-deviceframe--default",
-					"snapshotHash": "6552fc782d0151defa1028cf3b6cd8b2301108692faa44f573e51d979dbbd687"
+					"snapshotHash": "6552fc782d0151defa1028cf3b6cd8b2301108692faa44f573e51d979dbbd687",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/device-frame.css",
@@ -418,12 +669,48 @@
 				{
 					"name": "default",
 					"id": "ui-draftrow--default",
-					"snapshotHash": "3790d8ec3af7d810960da4e92acf94fff3f25ad9195137312aee91de440c9ea2"
+					"snapshotHash": "3790d8ec3af7d810960da4e92acf94fff3f25ad9195137312aee91de440c9ea2",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								0,
+								0
+							]
+						],
+						"age": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "aged",
 					"id": "ui-draftrow--aged",
-					"snapshotHash": "32c0051ae2845cc9d0dcf6c4822ec2fe715e6a51935dbec849d8e7e5f8122653"
+					"snapshotHash": "32c0051ae2845cc9d0dcf6c4822ec2fe715e6a51935dbec849d8e7e5f8122653",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								0,
+								0
+							]
+						],
+						"age": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/draft-row.css",
@@ -463,12 +750,44 @@
 				{
 					"name": "default",
 					"id": "ui-expectationrow--default",
-					"snapshotHash": "9c805b6dc444cb5ec3d63b9a81df2400da6adb7f3e8abe45409332ead4aed282"
+					"snapshotHash": "9c805b6dc444cb5ec3d63b9a81df2400da6adb7f3e8abe45409332ead4aed282",
+					"content": {
+						"text": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"when": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "due",
 					"id": "ui-expectationrow--due",
-					"snapshotHash": "319091df21839cbae747769efe4984367cd011c9d83d138a1b19b9c3d22b9067"
+					"snapshotHash": "319091df21839cbae747769efe4984367cd011c9d83d138a1b19b9c3d22b9067",
+					"content": {
+						"text": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"when": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/expectation-row.css",
@@ -495,7 +814,15 @@
 				{
 					"name": "default",
 					"id": "ui-filechip--default",
-					"snapshotHash": "96bc93a92232be00a886a181330b2f2c43897c7cdc9c26d902dd2ba7362ad139"
+					"snapshotHash": "96bc93a92232be00a886a181330b2f2c43897c7cdc9c26d902dd2ba7362ad139",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/file-chip.css",
@@ -529,12 +856,14 @@
 				{
 					"name": "closed",
 					"id": "ui-historypanel--closed",
-					"snapshotHash": "b518017cefa49e2d58031babd445ba81997e8b9805219b1c64a5d01f9f4226c1"
+					"snapshotHash": "b518017cefa49e2d58031babd445ba81997e8b9805219b1c64a5d01f9f4226c1",
+					"content": {}
 				},
 				{
 					"name": "open",
 					"id": "ui-historypanel--open",
-					"snapshotHash": "ee7d049549dba9c2f869553c6b9b2d816336092a1b4d2ece6c1ccc5898339e86"
+					"snapshotHash": "ee7d049549dba9c2f869553c6b9b2d816336092a1b4d2ece6c1ccc5898339e86",
+					"content": {}
 				}
 			],
 			"stylesheet": "components/history-panel.css",
@@ -560,7 +889,8 @@
 				{
 					"name": "default",
 					"id": "ui-knowledgelist--default",
-					"snapshotHash": "4f4c60447468d7bd4bf4cbb1ce000409483b2c7146f8d603ad40ca16f887ba2b"
+					"snapshotHash": "4f4c60447468d7bd4bf4cbb1ce000409483b2c7146f8d603ad40ca16f887ba2b",
+					"content": {}
 				}
 			],
 			"stylesheet": "components/knowledge-list.css",
@@ -587,7 +917,15 @@
 				{
 					"name": "default",
 					"id": "ui-layouttree--default",
-					"snapshotHash": "77148b6d4129b04aa6a1490de46381f6bdc120bcddb98885772e371ea7cae033"
+					"snapshotHash": "77148b6d4129b04aa6a1490de46381f6bdc120bcddb98885772e371ea7cae033",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/layout-tree.css",
@@ -630,27 +968,112 @@
 				{
 					"name": "approved",
 					"id": "ui-lookrow--approved",
-					"snapshotHash": "4c6bbf7e82e5044666ef0360f9425160788507618ecc20d1440df32c9bda6043"
+					"snapshotHash": "4c6bbf7e82e5044666ef0360f9425160788507618ecc20d1440df32c9bda6043",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"approval": [
+							[
+								0,
+								1,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "proposed",
 					"id": "ui-lookrow--proposed",
-					"snapshotHash": "9e6bc0f28704d2a2f0480b7ac17f762a46515102d32c76c3e22499b31324d1b0"
+					"snapshotHash": "9e6bc0f28704d2a2f0480b7ac17f762a46515102d32c76c3e22499b31324d1b0",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"approval": [
+							[
+								0,
+								1,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "uncovered",
 					"id": "ui-lookrow--uncovered",
-					"snapshotHash": "b2e07cb0a616aaa9bdb004bad88ba1c064c0c08c5c07765dea183a2e06c117c8"
+					"snapshotHash": "b2e07cb0a616aaa9bdb004bad88ba1c064c0c08c5c07765dea183a2e06c117c8",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"approval": [
+							[
+								0,
+								1,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "mockup",
 					"id": "ui-lookrow--mockup",
-					"snapshotHash": "cbdd8da7b72229dedf4d14a294071e8d08e696ffeed750c9ae078d0cacc249fe"
+					"snapshotHash": "cbdd8da7b72229dedf4d14a294071e8d08e696ffeed750c9ae078d0cacc249fe",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"approval": [
+							[
+								0,
+								1,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "story",
 					"id": "ui-lookrow--story",
-					"snapshotHash": "ab8f40038306d63561013b920c4440456150b5965b5df8ddc7d4540c6bf28d51"
+					"snapshotHash": "ab8f40038306d63561013b920c4440456150b5965b5df8ddc7d4540c6bf28d51",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"approval": [
+							[
+								0,
+								1,
+								1
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/look-row.css",
@@ -710,32 +1133,75 @@
 				{
 					"name": "you",
 					"id": "ui-message--you",
-					"snapshotHash": "49e58d7e8117c2b85c5c20046b4766b443a10ebe918aea9adde94b0443515883"
+					"snapshotHash": "49e58d7e8117c2b85c5c20046b4766b443a10ebe918aea9adde94b0443515883",
+					"content": {
+						"children": [
+							[
+								0,
+								1
+							]
+						]
+					}
 				},
 				{
 					"name": "agent",
 					"id": "ui-message--agent",
-					"snapshotHash": "610a400a814d02dfc03e7f756b29c27ce5589243e3a34bd086d52781a2e0fd95"
+					"snapshotHash": "610a400a814d02dfc03e7f756b29c27ce5589243e3a34bd086d52781a2e0fd95",
+					"content": {
+						"children": [
+							{
+								"at": [
+									0,
+									1
+								],
+								"nodes": 2
+							}
+						]
+					}
 				},
 				{
 					"name": "agent-folded",
 					"id": "ui-message--agent-folded",
-					"snapshotHash": "0efbe9906dc4d534cd03d92184e370385864e317d71261074b18082978dfd48f"
+					"snapshotHash": "0efbe9906dc4d534cd03d92184e370385864e317d71261074b18082978dfd48f",
+					"content": {
+						"children": [
+							{
+								"at": [
+									0,
+									2
+								],
+								"nodes": 2
+							}
+						]
+					}
 				},
 				{
 					"name": "agent-open",
 					"id": "ui-message--agent-open",
-					"snapshotHash": "c4a9ea11bf390a8f5d989aae640a2bdb9c93163b11b9a9c84bad941a2e228a51"
+					"snapshotHash": "c4a9ea11bf390a8f5d989aae640a2bdb9c93163b11b9a9c84bad941a2e228a51",
+					"content": {
+						"children": [
+							{
+								"at": [
+									0,
+									3
+								],
+								"nodes": 2
+							}
+						]
+					}
 				},
 				{
 					"name": "agent-working",
 					"id": "ui-message--agent-working",
-					"snapshotHash": "92d333839ba51a52644669bea4e716b455fc3ca5bcde15809479774b641327f9"
+					"snapshotHash": "92d333839ba51a52644669bea4e716b455fc3ca5bcde15809479774b641327f9",
+					"content": {}
 				},
 				{
 					"name": "agent-stopped",
 					"id": "ui-message--agent-stopped",
-					"snapshotHash": "e05b425ebe23bdc7498d010e74136cf84b3f4696e2681e3ceb9ff84e58a8427b"
+					"snapshotHash": "e05b425ebe23bdc7498d010e74136cf84b3f4696e2681e3ceb9ff84e58a8427b",
+					"content": {}
 				}
 			],
 			"stylesheet": "components/message.css",
@@ -786,22 +1252,138 @@
 				{
 					"name": "expanded",
 					"id": "ui-nav--expanded",
-					"snapshotHash": "f7f7da1765585eb6bfa81cc58ec87303ee7e66ec3a2eef6286e21d93d0580e81"
+					"snapshotHash": "f7f7da1765585eb6bfa81cc58ec87303ee7e66ec3a2eef6286e21d93d0580e81",
+					"content": {
+						"project": [
+							[
+								0,
+								0,
+								0,
+								0,
+								0
+							]
+						],
+						"summary": [
+							[
+								0,
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"children": [
+							{
+								"at": [
+									0,
+									1
+								],
+								"nodes": 14
+							}
+						]
+					}
 				},
 				{
 					"name": "looks-current",
 					"id": "ui-nav--looks-current",
-					"snapshotHash": "e83691e46c22f263400180f470ba25d123b2f2cf9c715704064ea441cc2bbb8b"
+					"snapshotHash": "e83691e46c22f263400180f470ba25d123b2f2cf9c715704064ea441cc2bbb8b",
+					"content": {
+						"project": [
+							[
+								0,
+								0,
+								0,
+								0,
+								0
+							]
+						],
+						"summary": [
+							[
+								0,
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"children": [
+							{
+								"at": [
+									0,
+									1
+								],
+								"nodes": 14
+							}
+						]
+					}
 				},
 				{
 					"name": "plan-current",
 					"id": "ui-nav--plan-current",
-					"snapshotHash": "3470475f1b717c94b9e492bd191d67f517a101705fd0ef6a2e6eee1b995ac430"
+					"snapshotHash": "3470475f1b717c94b9e492bd191d67f517a101705fd0ef6a2e6eee1b995ac430",
+					"content": {
+						"project": [
+							[
+								0,
+								0,
+								0,
+								0,
+								0
+							]
+						],
+						"summary": [
+							[
+								0,
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"children": [
+							{
+								"at": [
+									0,
+									1
+								],
+								"nodes": 14
+							}
+						]
+					}
 				},
 				{
 					"name": "collapsed",
 					"id": "ui-nav--collapsed",
-					"snapshotHash": "c920a32cd94ef62cc67fab5742824cb3c2e2a8dfaa630e325fa2e53775bcd3c9"
+					"snapshotHash": "c920a32cd94ef62cc67fab5742824cb3c2e2a8dfaa630e325fa2e53775bcd3c9",
+					"content": {
+						"project": [
+							[
+								0,
+								0,
+								0,
+								0,
+								0
+							]
+						],
+						"summary": [
+							[
+								0,
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"children": [
+							{
+								"at": [
+									0,
+									1
+								],
+								"nodes": 14
+							}
+						]
+					}
 				}
 			],
 			"stylesheet": "components/nav.css",
@@ -865,12 +1447,14 @@
 				{
 					"name": "default",
 					"id": "ui-navhandle--default",
-					"snapshotHash": "439984dd5a050c329b44dc83873f6fe32f855ffb481fb0b4367b7cf052e282f3"
+					"snapshotHash": "439984dd5a050c329b44dc83873f6fe32f855ffb481fb0b4367b7cf052e282f3",
+					"content": {}
 				},
 				{
 					"name": "dragging",
 					"id": "ui-navhandle--dragging",
-					"snapshotHash": "64b8dd2467f4b263dced137f56815cebccef1302d54593fcacf418d2b156f34c"
+					"snapshotHash": "64b8dd2467f4b263dced137f56815cebccef1302d54593fcacf418d2b156f34c",
+					"content": {}
 				}
 			],
 			"stylesheet": "components/nav-handle.css",
@@ -923,82 +1507,503 @@
 				{
 					"name": "closed",
 					"id": "ui-partsection--closed",
-					"snapshotHash": "50f0153bc707cfb88f517dab8ac080856a28c164b4621d39b4bd6fecd5fd11a1"
+					"snapshotHash": "50f0153bc707cfb88f517dab8ac080856a28c164b4621d39b4bd6fecd5fd11a1",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "open",
 					"id": "ui-partsection--open",
-					"snapshotHash": "12c61383870f9e9c900fac6de55ee40cbddf266549202d6c401f221117a60ed9"
+					"snapshotHash": "12c61383870f9e9c900fac6de55ee40cbddf266549202d6c401f221117a60ed9",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "promises-all-enforced",
 					"id": "ui-partsection--promises-all-enforced",
-					"snapshotHash": "48f72d1164b720461be4a530d8731bcb7a47c3dacc4c857b37d118df196032a4"
+					"snapshotHash": "48f72d1164b720461be4a530d8731bcb7a47c3dacc4c857b37d118df196032a4",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "expectations",
 					"id": "ui-partsection--expectations",
-					"snapshotHash": "015cf1be68ceb68165daa662c75e3ea6e344f688dc9d0883426bafd24fdc454f"
+					"snapshotHash": "015cf1be68ceb68165daa662c75e3ea6e344f688dc9d0883426bafd24fdc454f",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "looks",
 					"id": "ui-partsection--looks",
-					"snapshotHash": "14c524a7ea50dd7f756a871c6727181721659e9f4a23277cd9d4b5b33867d54d"
+					"snapshotHash": "14c524a7ea50dd7f756a871c6727181721659e9f4a23277cd9d4b5b33867d54d",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "looks-two-of-three",
 					"id": "ui-partsection--looks-two-of-three",
-					"snapshotHash": "161771600f3094652c0ee601b60ca5b36bce6b25b7f045fd12d195ed2649e717"
+					"snapshotHash": "161771600f3094652c0ee601b60ca5b36bce6b25b7f045fd12d195ed2649e717",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "promises-none",
 					"id": "ui-partsection--promises-none",
-					"snapshotHash": "fbd905485b01807bc88fa452e29da5eb44da7c0fb87d75460f63feb854ebb34e"
+					"snapshotHash": "fbd905485b01807bc88fa452e29da5eb44da7c0fb87d75460f63feb854ebb34e",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						]
+					}
 				},
 				{
 					"name": "expectations-none",
 					"id": "ui-partsection--expectations-none",
-					"snapshotHash": "3ebfc687bd83d208e80b2dbe837c9ea40b6770680f7fdcd1b97a64ceb4c20689"
+					"snapshotHash": "3ebfc687bd83d208e80b2dbe837c9ea40b6770680f7fdcd1b97a64ceb4c20689",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						]
+					}
 				},
 				{
 					"name": "looks-none",
 					"id": "ui-partsection--looks-none",
-					"snapshotHash": "08dac6a9aeab518ed115fafafde1f1dbd7b1491adf700c398dd131f67e9bfd58"
+					"snapshotHash": "08dac6a9aeab518ed115fafafde1f1dbd7b1491adf700c398dd131f67e9bfd58",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						]
+					}
 				},
 				{
 					"name": "phases",
 					"id": "ui-partsection--phases",
-					"snapshotHash": "12a7ad383b9868528d7b6179eb2e1564c2438007ad79990b933455089b841578"
+					"snapshotHash": "12a7ad383b9868528d7b6179eb2e1564c2438007ad79990b933455089b841578",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "phases-in-review",
 					"id": "ui-partsection--phases-in-review",
-					"snapshotHash": "68502d54837d88e387465efd051a539d1be3a6f939b4aabef9c60c7d80f6cfca"
+					"snapshotHash": "68502d54837d88e387465efd051a539d1be3a6f939b4aabef9c60c7d80f6cfca",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "phases-done",
 					"id": "ui-partsection--phases-done",
-					"snapshotHash": "70ab587c0caddef4501904570af63195e08379b759409ccdf2e9af640fab0853"
+					"snapshotHash": "70ab587c0caddef4501904570af63195e08379b759409ccdf2e9af640fab0853",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "documents",
 					"id": "ui-partsection--documents",
-					"snapshotHash": "593a1a27ad6db21e61ab2db586d07e6d0d91f5ae754392be735101fd42f71560"
+					"snapshotHash": "593a1a27ad6db21e61ab2db586d07e6d0d91f5ae754392be735101fd42f71560",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "documents-released",
 					"id": "ui-partsection--documents-released",
-					"snapshotHash": "4f7e6675c09adf5be12650657576b45781ae327e1a5c65663b110e59749d2fea"
+					"snapshotHash": "4f7e6675c09adf5be12650657576b45781ae327e1a5c65663b110e59749d2fea",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "phases-open",
 					"id": "ui-partsection--phases-open",
-					"snapshotHash": "8cc9714e16428f866b5ad0caf0eb05868d0ea6e3cbf1f72a092a007c86ae6872"
+					"snapshotHash": "8cc9714e16428f866b5ad0caf0eb05868d0ea6e3cbf1f72a092a007c86ae6872",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "documents-open",
 					"id": "ui-partsection--documents-open",
-					"snapshotHash": "1b9a967656995e4e5a5e7097ecf5ef1ba83925bbaa2bab2ed079e21339afc5c7"
+					"snapshotHash": "1b9a967656995e4e5a5e7097ecf5ef1ba83925bbaa2bab2ed079e21339afc5c7",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"summary": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/part-section.css",
@@ -1062,12 +2067,84 @@
 				{
 					"name": "closed",
 					"id": "ui-phaserow--closed",
-					"snapshotHash": "04f6cd0c7dc1627b42b386fc40ab7f316437bcc23c15db7951b4a0cffbcb0868"
+					"snapshotHash": "04f6cd0c7dc1627b42b386fc40ab7f316437bcc23c15db7951b4a0cffbcb0868",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"count": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"state": [
+							[
+								0,
+								0,
+								3,
+								0
+							]
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "open",
 					"id": "ui-phaserow--open",
-					"snapshotHash": "187726b52f97f40858ee3f2bf82cea0e5d558d678cc969c10f4a3a55b754b001"
+					"snapshotHash": "187726b52f97f40858ee3f2bf82cea0e5d558d678cc969c10f4a3a55b754b001",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								1,
+								0
+							]
+						],
+						"count": [
+							{
+								"at": [
+									0,
+									0,
+									2,
+									0
+								],
+								"before": "· "
+							}
+						],
+						"state": [
+							[
+								0,
+								0,
+								3,
+								0
+							]
+						],
+						"children": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/phase-row.css",
@@ -1135,37 +2212,212 @@
 				{
 					"name": "needs",
 					"id": "ui-planrow--needs",
-					"snapshotHash": "a48732d22f31f7d20d10f687b9b13c971b4ebc310012dc73501307c1a153c9d9"
+					"snapshotHash": "a48732d22f31f7d20d10f687b9b13c971b4ebc310012dc73501307c1a153c9d9",
+					"content": {
+						"initials": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "working",
 					"id": "ui-planrow--working",
-					"snapshotHash": "ef93ea035957d8aae7ab0720fe3f52cad1303d881240f4aa609f9e294d413cf9"
+					"snapshotHash": "ef93ea035957d8aae7ab0720fe3f52cad1303d881240f4aa609f9e294d413cf9",
+					"content": {
+						"initials": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "released",
 					"id": "ui-planrow--released",
-					"snapshotHash": "e180a737ace3fe5d8132f1d9bae4a75c75fc939ccf23f279def5d6d1368a9674"
+					"snapshotHash": "e180a737ace3fe5d8132f1d9bae4a75c75fc939ccf23f279def5d6d1368a9674",
+					"content": {
+						"initials": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "current",
 					"id": "ui-planrow--current",
-					"snapshotHash": "01a4acdcd70af292f4610dda907eae06ad38bf24f5b78b13da52c4682fd8a35f"
+					"snapshotHash": "01a4acdcd70af292f4610dda907eae06ad38bf24f5b78b13da52c4682fd8a35f",
+					"content": {
+						"initials": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "numbered",
 					"id": "ui-planrow--numbered",
-					"snapshotHash": "d4e3422d93a882ebfb076029cbec0553af4b634c197b702a8b0c966939313b2b"
+					"snapshotHash": "d4e3422d93a882ebfb076029cbec0553af4b634c197b702a8b0c966939313b2b",
+					"content": {
+						"initials": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								2,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "idle",
 					"id": "ui-planrow--idle",
-					"snapshotHash": "255801117625b618a484e3704652b2ba066fd102f9382030328151370efc1b4f"
+					"snapshotHash": "255801117625b618a484e3704652b2ba066fd102f9382030328151370efc1b4f",
+					"content": {
+						"initials": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "queued",
 					"id": "ui-planrow--queued",
-					"snapshotHash": "965bed7dda920c5ded5c93f3177904d058ef90be4538408ccfd1d46402dde505"
+					"snapshotHash": "965bed7dda920c5ded5c93f3177904d058ef90be4538408ccfd1d46402dde505",
+					"content": {
+						"initials": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								2,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/plan-row.css",
@@ -1208,7 +2460,23 @@
 				{
 					"name": "default",
 					"id": "ui-projectcard--default",
-					"snapshotHash": "39104a137d61747cd9dcc494dcbf2ced8abbe22adc1eb7d2ae027dc10822c0a4"
+					"snapshotHash": "39104a137d61747cd9dcc494dcbf2ced8abbe22adc1eb7d2ae027dc10822c0a4",
+					"content": {
+						"name": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"path": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/project-card.css",
@@ -1274,27 +2542,164 @@
 				{
 					"name": "broken",
 					"id": "ui-promiserow--broken",
-					"snapshotHash": "76e322a8442dc0142ddc258004e8d8cd1d67eeceb2ece166b73f945d0eb3bd9a"
+					"snapshotHash": "76e322a8442dc0142ddc258004e8d8cd1d67eeceb2ece166b73f945d0eb3bd9a",
+					"content": {
+						"says": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"slug": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						],
+						"evals": [
+							[
+								0,
+								3,
+								0
+							]
+						],
+						"last": [
+							[
+								0,
+								4,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "proving",
 					"id": "ui-promiserow--proving",
-					"snapshotHash": "522f566da6ff1e05b3203738faa9da76d69093800122dd42838fdb3623d492cc"
+					"snapshotHash": "522f566da6ff1e05b3203738faa9da76d69093800122dd42838fdb3623d492cc",
+					"content": {
+						"says": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"slug": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						],
+						"evals": [
+							[
+								0,
+								3,
+								0
+							]
+						],
+						"last": [
+							[
+								0,
+								4,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "enforced",
 					"id": "ui-promiserow--enforced",
-					"snapshotHash": "f6b2e5387ebc8c493f548ca38fe1ce4f27fea333af79d924a32877bf2ecd766b"
+					"snapshotHash": "f6b2e5387ebc8c493f548ca38fe1ce4f27fea333af79d924a32877bf2ecd766b",
+					"content": {
+						"says": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"slug": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						],
+						"evals": [
+							[
+								0,
+								3,
+								0
+							]
+						],
+						"last": [
+							[
+								0,
+								4,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "declared",
 					"id": "ui-promiserow--declared",
-					"snapshotHash": "d27183c9b464ff0688386f38685a5ebaeac5a973c2194d740c87fb8975cbeecc"
+					"snapshotHash": "d27183c9b464ff0688386f38685a5ebaeac5a973c2194d740c87fb8975cbeecc",
+					"content": {
+						"says": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"slug": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						],
+						"evals": [
+							[
+								0,
+								3,
+								0
+							]
+						],
+						"last": [
+							[
+								0,
+								4,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "empty",
 					"id": "ui-promiserow--empty",
-					"snapshotHash": "0fba184d8a78eba12720c6fd61cb418951102a333bf1f51fcb95facbb99d1d81"
+					"snapshotHash": "0fba184d8a78eba12720c6fd61cb418951102a333bf1f51fcb95facbb99d1d81",
+					"content": {
+						"empty": [
+							[
+								0,
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/promise-row.css",
@@ -1348,7 +2753,8 @@
 				{
 					"name": "default",
 					"id": "ui-promptbox--default",
-					"snapshotHash": "13c5d196e8b479332fe0ea2083fd0ea11c4daaf57c036d2e337338af51649af2"
+					"snapshotHash": "13c5d196e8b479332fe0ea2083fd0ea11c4daaf57c036d2e337338af51649af2",
+					"content": {}
 				}
 			],
 			"stylesheet": "components/prompt-box.css",
@@ -1393,12 +2799,32 @@
 				{
 					"name": "default",
 					"id": "ui-railgroup--default",
-					"snapshotHash": "8d77a848575c43ed4f8be05977424076fc2c5e4e11d9410344ad2f81939fedb0"
+					"snapshotHash": "8d77a848575c43ed4f8be05977424076fc2c5e4e11d9410344ad2f81939fedb0",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								0,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "current",
 					"id": "ui-railgroup--current",
-					"snapshotHash": "025252cd2657e8238ef3d0bc0287678edde159d0e4b9d73457e9f9720f0547bd"
+					"snapshotHash": "025252cd2657e8238ef3d0bc0287678edde159d0e4b9d73457e9f9720f0547bd",
+					"content": {
+						"title": [
+							[
+								0,
+								0,
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/rail-group.css",
@@ -1454,12 +2880,51 @@
 				{
 					"name": "kept",
 					"id": "ui-recommendation--kept",
-					"snapshotHash": "16726baf388ba8badafd652fbac21c3c14379838c3996e198ece8fabe7eae968"
+					"snapshotHash": "16726baf388ba8badafd652fbac21c3c14379838c3996e198ece8fabe7eae968",
+					"content": {
+						"title": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"why": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "declined",
 					"id": "ui-recommendation--declined",
-					"snapshotHash": "86d6bb342fec77eb89cfd3ea93c5fedfd1c302fdbae450a60c61df92bbc2d73f"
+					"snapshotHash": "86d6bb342fec77eb89cfd3ea93c5fedfd1c302fdbae450a60c61df92bbc2d73f",
+					"content": {
+						"why": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						],
+						"reason": [
+							{
+								"at": [
+									0,
+									1,
+									2,
+									0
+								],
+								"before": "Your reason: "
+							}
+						]
+					}
 				}
 			],
 			"stylesheet": "components/recommendation.css",
@@ -1493,12 +2958,34 @@
 				{
 					"name": "default",
 					"id": "ui-shell--default",
-					"snapshotHash": "afadd4f62ae49eb708975fbad1e3d941bb9b228867359dbb9baed620410c959a"
+					"snapshotHash": "afadd4f62ae49eb708975fbad1e3d941bb9b228867359dbb9baed620410c959a",
+					"content": {
+						"children": [
+							{
+								"at": [
+									0,
+									0
+								],
+								"nodes": 2
+							}
+						]
+					}
 				},
 				{
 					"name": "collapsed",
 					"id": "ui-shell--collapsed",
-					"snapshotHash": "c2328827363e5498a830a992627b549854b1a5e3cacffd4a53d9d1099fb7866f"
+					"snapshotHash": "c2328827363e5498a830a992627b549854b1a5e3cacffd4a53d9d1099fb7866f",
+					"content": {
+						"children": [
+							{
+								"at": [
+									0,
+									0
+								],
+								"nodes": 2
+							}
+						]
+					}
 				}
 			],
 			"stylesheet": "components/shell.css",
@@ -1541,17 +3028,86 @@
 				{
 					"name": "default",
 					"id": "ui-stat--default",
-					"snapshotHash": "c5f3e66faf5b6a85a955467a5b8ac1319ae016e0335dcc780509a174cad5f6ea"
+					"snapshotHash": "c5f3e66faf5b6a85a955467a5b8ac1319ae016e0335dcc780509a174cad5f6ea",
+					"content": {
+						"label": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"value": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"note": [
+							[
+								0,
+								2,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "ok",
 					"id": "ui-stat--ok",
-					"snapshotHash": "b1f7e004ac86c10f4552fd6c44bdb588b3c14685366ff1365e3d6b4cc7ee065d"
+					"snapshotHash": "b1f7e004ac86c10f4552fd6c44bdb588b3c14685366ff1365e3d6b4cc7ee065d",
+					"content": {
+						"label": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"value": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"note": [
+							[
+								0,
+								2,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "bad",
 					"id": "ui-stat--bad",
-					"snapshotHash": "41184063e2d931c5c0cc66e102fed8dd46d00dda2bcbc0daf01ef73f13f3a7fc"
+					"snapshotHash": "41184063e2d931c5c0cc66e102fed8dd46d00dda2bcbc0daf01ef73f13f3a7fc",
+					"content": {
+						"label": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"value": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"note": [
+							[
+								0,
+								2,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/stat.css",
@@ -1601,22 +3157,86 @@
 				{
 					"name": "done",
 					"id": "ui-step--done",
-					"snapshotHash": "7bebc9159ef521dd1d098fb20f2c31516b4009790f9078694b83c2557d60804a"
+					"snapshotHash": "7bebc9159ef521dd1d098fb20f2c31516b4009790f9078694b83c2557d60804a",
+					"content": {
+						"name": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"status": [
+							[
+								0,
+								2,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "working",
 					"id": "ui-step--working",
-					"snapshotHash": "645b5d972049aefc6b15abb993d7a81c013214771a45e2cba5b38d2d2ebba97e"
+					"snapshotHash": "645b5d972049aefc6b15abb993d7a81c013214771a45e2cba5b38d2d2ebba97e",
+					"content": {
+						"name": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"status": [
+							[
+								0,
+								2,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "needs",
 					"id": "ui-step--needs",
-					"snapshotHash": "80c31e0fa8a2368f09aad0581138e7a97d5938036b503675bcf8dd573d8c7dd2"
+					"snapshotHash": "80c31e0fa8a2368f09aad0581138e7a97d5938036b503675bcf8dd573d8c7dd2",
+					"content": {
+						"name": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"status": [
+							[
+								0,
+								2,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "waiting",
 					"id": "ui-step--waiting",
-					"snapshotHash": "e1b554c8cbe66ad54a7cb4434402f56d0dbf4469bc07e18fb75502ff481860ab"
+					"snapshotHash": "e1b554c8cbe66ad54a7cb4434402f56d0dbf4469bc07e18fb75502ff481860ab",
+					"content": {
+						"name": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"status": [
+							[
+								0,
+								2,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/step.css",
@@ -1648,7 +3268,17 @@
 				{
 					"name": "default",
 					"id": "ui-summarybar--default",
-					"snapshotHash": "cc2b4bb6af4d593b8d0f89566c4a687d006ca768156b8e6802332d97da26d911"
+					"snapshotHash": "cc2b4bb6af4d593b8d0f89566c4a687d006ca768156b8e6802332d97da26d911",
+					"content": {
+						"note": [
+							[
+								0,
+								1,
+								4,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/summary-bar.css",
@@ -1669,7 +3299,15 @@
 				{
 					"name": "default",
 					"id": "ui-tag--default",
-					"snapshotHash": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2"
+					"snapshotHash": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2",
+					"content": {
+						"children": [
+							[
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/tag.css",
@@ -1695,7 +3333,8 @@
 				{
 					"name": "default",
 					"id": "ui-timeline--default",
-					"snapshotHash": "95d42b3bf92781f16b1a26f362f49a7fa5b41a4b6b392521ef4b99bc5dc2fb37"
+					"snapshotHash": "95d42b3bf92781f16b1a26f362f49a7fa5b41a4b6b392521ef4b99bc5dc2fb37",
+					"content": {}
 				}
 			],
 			"stylesheet": "components/timeline.css",
@@ -1746,12 +3385,44 @@
 				{
 					"name": "default",
 					"id": "ui-viewlink--default",
-					"snapshotHash": "b51d5e7b205736954a657f5f44b7dfdee5bf1b8ece8ecc5c45c98ce324c62e78"
+					"snapshotHash": "b51d5e7b205736954a657f5f44b7dfdee5bf1b8ece8ecc5c45c98ce324c62e78",
+					"content": {
+						"icon": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"label": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				},
 				{
 					"name": "current",
 					"id": "ui-viewlink--current",
-					"snapshotHash": "32eea38591de6b8a6624a73e517f777f35ad7c7a6156460cd19a8ce57117583c"
+					"snapshotHash": "32eea38591de6b8a6624a73e517f777f35ad7c7a6156460cd19a8ce57117583c",
+					"content": {
+						"icon": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"label": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/view-link.css",
@@ -1778,7 +3449,8 @@
 				{
 					"name": "default",
 					"id": "ui-workflowstrip--default",
-					"snapshotHash": "f5c21833c099ea33378d68108be5475250e645e485a762cc159799e7f5a97da7"
+					"snapshotHash": "f5c21833c099ea33378d68108be5475250e645e485a762cc159799e7f5a97da7",
+					"content": {}
 				}
 			],
 			"stylesheet": "components/workflow-strip.css",
