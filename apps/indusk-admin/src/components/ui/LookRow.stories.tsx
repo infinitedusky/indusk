@@ -10,11 +10,20 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Approved: Story = {
-  args: { name: "dashboard.default", approval: "approved" },
+  args: { kind: "mockup", name: "dashboard.default", approval: "approved" },
 };
 export const Proposed: Story = {
-  args: { name: "promise.broken", approval: "proposed" },
+  args: { kind: "mockup", name: "promise.broken", approval: "proposed" },
 };
 export const Uncovered: Story = {
-  args: { name: "plan.released", approval: "uncovered" },
+  args: { kind: "mockup", name: "plan.released", approval: "uncovered" },
+};
+
+/** A mockup is a drawing: the kind leads, above the name. */
+export const KindMockup: Story = {
+  args: { kind: "mockup", name: "new-project.no-parent", approval: "proposed" },
+};
+/** A story is the built component: the kind leads, above the name. */
+export const KindStory: Story = {
+  args: { kind: "story", name: "message.agent-working", approval: "proposed" },
 };

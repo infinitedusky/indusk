@@ -129,6 +129,7 @@ function StoryRow({
     >
       {/* Every story opens: its frame is its snapshot, which needs no Storybook id. */}
       <OpenLookRow
+        kind="story"
         name={story.name}
         approval={story.approval}
         href={hrefAt(story.name)}

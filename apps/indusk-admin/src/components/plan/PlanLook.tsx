@@ -29,6 +29,7 @@ export function PlanLook({
       data-relation={look.relation}
     >
       <LookRow
+        kind={look.document || !drawn ? "mockup" : "story"}
         name={look.name}
         approval={look.approval === "undrawn" ? "uncovered" : look.approval}
         onOpen={() => setOpen((was) => !was)}
