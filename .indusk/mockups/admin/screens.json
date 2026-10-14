@@ -21,6 +21,7 @@
 		{ "name": "history-panel", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "looks", "states": ["default", "uncovered"], "path": "/p/dusk/looks" },
 		{ "name": "brief", "states": ["writing"], "path": "/p/dusk/plan/looks-fixture-parts/brief" },
-		{ "name": "brief", "states": ["approved"], "path": "/p/dusk/plan/looks-fixture-working/brief" }
+		{ "name": "brief", "states": ["approved"], "path": "/p/dusk/plan/looks-fixture-working/brief" },
+		{ "name": "brief", "states": ["empty"], "path": "/p/dusk/plan/looks-fixture-no-brief/brief" }
 	]
 }

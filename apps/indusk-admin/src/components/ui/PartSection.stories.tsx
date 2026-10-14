@@ -141,6 +141,16 @@ export const Looks: Story = {
 export const LooksTwoOfThree: Story = {
   args: { title: "Looks", summary: "2 of 3 approved" },
 };
+/** A plan with no brief yet: each part of the brief is there, saying 0. */
+export const PromisesNone: Story = {
+  args: { summary: "0 · 0 enforced", children: null },
+};
+export const ExpectationsNone: Story = {
+  args: { title: "Expectations", summary: "0", children: null },
+};
+export const LooksNone: Story = {
+  args: { title: "Looks", summary: "0", children: null },
+};
 export const Phases: Story = {
   args: { title: "Phases", summary: "Build Phase 4 of 5 · 38 of 52 done" },
 };

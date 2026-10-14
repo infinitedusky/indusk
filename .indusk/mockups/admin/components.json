@@ -763,6 +763,21 @@
 					"snapshotHash": "161771600f3094652c0ee601b60ca5b36bce6b25b7f045fd12d195ed2649e717"
 				},
 				{
+					"name": "promises-none",
+					"id": "ui-partsection--promises-none",
+					"snapshotHash": "812ce7a7d48603fd8c98b123edc4d4546701b8962bd8271a328c095c1c48e037"
+				},
+				{
+					"name": "expectations-none",
+					"id": "ui-partsection--expectations-none",
+					"snapshotHash": "9399197c189168daa5c6b213c1b6f3ffeb470ac9f9e3631cc6ce3bb90ee4df50"
+				},
+				{
+					"name": "looks-none",
+					"id": "ui-partsection--looks-none",
+					"snapshotHash": "312fe52c397de13a05c33a420b40122ce092a3d360081bd92645cfce3a3f65c8"
+				},
+				{
 					"name": "phases",
 					"id": "ui-partsection--phases",
 					"snapshotHash": "12a7ad383b9868528d7b6179eb2e1564c2438007ad79990b933455089b841578"
