@@ -118,6 +118,9 @@ export async function startBuild(
     throw new Error(
       `a build session is already running for ${plan}: ${running.id} — stop it first`,
     );
+  // Admitted once, here: the build's step sessions then hold their place.
+  const atCap = sessionManager().capRefusal();
+  if (atCap) throw atCap;
   const state: BuildState = {
     running: true,
     step: null,

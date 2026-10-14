@@ -154,7 +154,7 @@ Several plans can each have an agent at once: the session manager refuses only a
 
 - [x] `deliver` answers a question through the session that asked it: the project's session for that plan whose `pendingQuestion(id)?.requestId` is `waiting.requestId`; a "say" goes to the plan's planning session (`forPlan(project, plan, "planning")`). `DecisionSessions` gains what that needs (`running`, `pendingQuestion`)
   - Note: two fallbacks keep plan-cockpit's A15/A16 green. A request no longer pending (already answered) falls back to the plan's session, so the manager's own "already answered" refusal still speaks; a "say" with no planning session goes to whichever session the plan has, as A16 (words said to a running build) requires.
-- [ ] A build's step sessions are not refused by the cap: `ManagedStart` gains `inBuild?: true`, which `runStepSession` passes and `refusalFor` lets past the cap (never past the same-plan rule); `startBuild` checks the cap once, before the build starts, with the same refusal the manager gives
+- [x] A build's step sessions are not refused by the cap: `ManagedStart` gains `inBuild?: true`, which `runStepSession` passes and `refusalFor` lets past the cap (never past the same-plan rule); `startBuild` checks the cap once, before the build starts, with the same refusal the manager gives
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 3 Verification
