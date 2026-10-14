@@ -72,7 +72,7 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A7 are authored, and each red one fails on its own assertion (`pnpm exec vitest run apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts "apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx"`)
+- [x] A1–A7 are authored, and each red one fails on its own assertion (`pnpm exec vitest run apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts "apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx"`)
 - [ ] A8 and A9 pass as written
 
 #### Test Phase 1 Context
