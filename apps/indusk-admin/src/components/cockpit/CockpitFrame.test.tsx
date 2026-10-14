@@ -170,3 +170,37 @@ describe("A4 — collapsing and expanding returns the nav to its dragged width",
     await vi.waitFor(() => expect(navWidth()).toBe(dragged));
   });
 });
+
+describe("the nav says which look it draws, and a width asked for in the address is drawn", () => {
+  const lookState = () =>
+    navEl()?.getAttribute("data-look-state") ?? "(no state)";
+
+  it("reports nav.expanded as it opens and nav.collapsed once folded", async () => {
+    await page.viewport(1280, 900);
+    await frame();
+    expect(lookState()).toBe("nav.expanded");
+    (
+      document.querySelector(
+        '[data-testid="nav-collapse-button"]',
+      ) as HTMLElement
+    ).click();
+    await vi.waitFor(() => expect(lookState()).toBe("nav.collapsed"));
+  });
+
+  it("?nav=<px> draws the nav wider as nav.wide, clamped, and keeps nothing", async () => {
+    await page.viewport(1280, 900);
+    const first = await frame();
+    const opened = navWidth();
+    first.unmount();
+    window.history.replaceState(null, "", "?nav=5000");
+    try {
+      await frame();
+      await vi.waitFor(() => expect(lookState()).toBe("nav.wide"));
+      expect(navWidth()).toBeGreaterThan(opened);
+      expect(navWidth(), "the nav ate the window").toBeLessThan(1280);
+      expect(localStorage.getItem(KEY), "the asked width was kept").toBeNull();
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  });
+});

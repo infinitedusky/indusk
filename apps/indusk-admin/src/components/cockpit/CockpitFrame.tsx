@@ -58,6 +58,17 @@ function writeWidth(width: number): void {
   }
 }
 
+/** The query parameter that sets the nav's width for one page, in pixels. */
+const WIDTH_PARAM = "nav";
+
+/** The width a link or a check asks for with `?nav=<px>`; null when it asks for none. */
+function readAskedWidth(): number | null {
+  const n = Number.parseFloat(
+    new URLSearchParams(window.location.search).get(WIDTH_PARAM) ?? "",
+  );
+  return Number.isFinite(n) ? n : null;
+}
+
 /** The narrowest and widest the nav drags to, read from the foundation's `--size-nav` and `--size-nav-max`. */
 function readBounds(): { min: number; max: number } {
   const style = getComputedStyle(document.documentElement);
@@ -99,8 +110,11 @@ export function CockpitFrame({
     setCollapsed(readCollapsed());
     const read = readBounds();
     setBounds(read);
-    const kept = readWidth();
-    if (kept !== null) setWidth(Math.min(read.max, Math.max(read.min, kept)));
+    // A width asked for in the address is the person's own setting for this
+    // page: it wins over the kept one and is not kept (so a check that opens a
+    // fresh browser can draw the nav wide, as `nav.wide` is).
+    const asked = readAskedWidth() ?? readWidth();
+    if (asked !== null) setWidth(Math.min(read.max, Math.max(read.min, asked)));
   }, []);
 
   useEffect(() => {
@@ -124,6 +138,13 @@ export function CockpitFrame({
   };
   const folded = collapsed && wide;
   const dragged = wide && !folded && bounds !== null && width !== null;
+  // What the nav really draws, for the look check (`data-look-state`): folded
+  // to its strip, dragged wider than the foundation's width, or as it opens.
+  const lookState = folded
+    ? "nav.collapsed"
+    : dragged && width > bounds.min
+      ? "nav.wide"
+      : "nav.expanded";
 
   return (
     <>
@@ -160,6 +181,7 @@ export function CockpitFrame({
           data-testid="cockpit-nav"
           data-open={open ? "true" : "false"}
           data-collapsed={collapsed ? "true" : "false"}
+          data-look-state={lookState}
           className={`fixed inset-y-0 left-0 z-40 min-h-0 w-nav nav-drawer ${
             open ? "translate-x-0" : "-translate-x-full"
           } min-[760px]:relative min-[760px]:w-auto min-[760px]:max-w-none min-[760px]:translate-x-0`}
