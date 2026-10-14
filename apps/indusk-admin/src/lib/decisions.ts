@@ -33,7 +33,13 @@ export type DecisionChoice =
   | { choice: "reply"; text: string };
 
 export interface DecisionSessions {
-  forPlan(project: string, plan: string): { id: string } | undefined;
+  forPlan(
+    project: string,
+    plan: string,
+    kind?: "planning" | "build",
+  ): { id: string } | undefined;
+  running(): Array<{ id: string; project: string; plan: string }>;
+  pendingQuestion(id: string): { requestId: string } | undefined;
   reply(
     id: string,
     reply: { requestId: string; answers: Record<string, string> },
@@ -107,19 +113,33 @@ async function deliver(
   choice: DecisionChoice,
   answer: string,
 ): Promise<Pick<Answered, "via" | "sessionId">> {
-  const ours = deps.sessions.forPlan(project, waiting.plan);
-
   if (waiting.on === "question") {
-    if (!ours || !waiting.requestId) {
+    // The session that asked, found by its request: a plan can have a build
+    // and a planning session, and only one of them made this question.
+    const ours = waiting.requestId
+      ? deps.sessions
+          .running()
+          .find(
+            (r) =>
+              r.project === project &&
+              r.plan === waiting.plan &&
+              deps.sessions.pendingQuestion(r.id)?.requestId ===
+                waiting.requestId,
+          )
+      : undefined;
+    // A request already answered is no longer pending: the plan's session is
+    // asked, and the manager says why it cannot be answered again.
+    const target = ours ?? deps.sessions.forPlan(project, waiting.plan);
+    if (!target || !waiting.requestId) {
       throw new Error(
         `no session is running for ${waiting.plan} to answer its question`,
       );
     }
-    deps.sessions.reply(ours.id, {
+    deps.sessions.reply(target.id, {
       requestId: waiting.requestId,
       answers: { [waiting.decision]: answer },
     });
-    return { via: "question", sessionId: ours.id };
+    return { via: "question", sessionId: target.id };
   }
   if (choice.choice === "accept") {
     if (waiting.on === "approval") {
@@ -129,6 +149,11 @@ async function deliver(
     await deps.release();
     return { via: "release" };
   }
+  // Words go to the plan's agent in conversation: its planning session, else
+  // whichever session the plan has.
+  const ours =
+    deps.sessions.forPlan(project, waiting.plan, "planning") ??
+    deps.sessions.forPlan(project, waiting.plan);
   if (ours) {
     deps.sessions.say(ours.id, answer);
     return { via: "say", sessionId: ours.id };
