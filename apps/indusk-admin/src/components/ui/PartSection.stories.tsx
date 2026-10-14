@@ -141,15 +141,15 @@ export const Looks: Story = {
 export const LooksTwoOfThree: Story = {
   args: { title: "Looks", summary: "2 of 3 approved" },
 };
-/** A plan with no brief yet: each part of the brief is there, saying 0. */
+/** A plan with no brief yet: each part of the brief is there, saying 0, as a plain row — nothing to open. */
 export const PromisesNone: Story = {
-  args: { summary: "0 · 0 enforced", children: null },
+  args: { summary: "0 · 0 enforced", children: null, empty: true },
 };
 export const ExpectationsNone: Story = {
-  args: { title: "Expectations", summary: "0", children: null },
+  args: { title: "Expectations", summary: "0", children: null, empty: true },
 };
 export const LooksNone: Story = {
-  args: { title: "Looks", summary: "0", children: null },
+  args: { title: "Looks", summary: "0", children: null, empty: true },
 };
 export const Phases: Story = {
   args: { title: "Phases", summary: "Build Phase 4 of 5 · 38 of 52 done" },

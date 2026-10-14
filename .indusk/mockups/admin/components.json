@@ -725,6 +725,13 @@
 					"description": "Drawn open. Closed unless asked."
 				},
 				{
+					"name": "empty",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Holds nothing: a plain row of its name and summary, not a disclosure — there is nothing to open."
+				},
+				{
 					"name": "className",
 					"type": "unknown",
 					"required": false,
@@ -765,17 +772,17 @@
 				{
 					"name": "promises-none",
 					"id": "ui-partsection--promises-none",
-					"snapshotHash": "812ce7a7d48603fd8c98b123edc4d4546701b8962bd8271a328c095c1c48e037"
+					"snapshotHash": "fbd905485b01807bc88fa452e29da5eb44da7c0fb87d75460f63feb854ebb34e"
 				},
 				{
 					"name": "expectations-none",
 					"id": "ui-partsection--expectations-none",
-					"snapshotHash": "9399197c189168daa5c6b213c1b6f3ffeb470ac9f9e3631cc6ce3bb90ee4df50"
+					"snapshotHash": "3ebfc687bd83d208e80b2dbe837c9ea40b6770680f7fdcd1b97a64ceb4c20689"
 				},
 				{
 					"name": "looks-none",
 					"id": "ui-partsection--looks-none",
-					"snapshotHash": "312fe52c397de13a05c33a420b40122ce092a3d360081bd92645cfce3a3f65c8"
+					"snapshotHash": "08dac6a9aeab518ed115fafafde1f1dbd7b1491adf700c398dd131f67e9bfd58"
 				},
 				{
 					"name": "phases",
