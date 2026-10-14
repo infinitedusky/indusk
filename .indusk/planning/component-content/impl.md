@@ -1,7 +1,7 @@
 ---
 title: "Component content — a placed component takes its own words"
 date: 2026-10-13
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -57,6 +57,12 @@ components alone (see [adr.md](adr.md)).
 | A9 | A mockup placing a component with its own words returns to proposed, naming the component, when that component's story changes | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-changed-component-reopens-its-mockups | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
 | A10 | Changing only the words placed in a component returns an approved mockup to proposed | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-component-content-approval.test.ts |
 | A11 | Every admin mockup approved before this change is still approved after it | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/__tests__/looks-admin-approvals-hold.test.ts |
+| A12 | A part-section placed with `<indusk-content for="summary">3 · none</indusk-content>` shows "· 3 · none": the story's static words that share a text node with a property stay, only the property's words are replaced | Phase 0 | Build Phase 4 | planned | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/__tests__/looks-component-content-falsification.test.ts |
+| A13 | A decision-card placed with the words "Mine" shows none of the story's children — no "Approve" button from the story — and every property after its children still lands where it did | Phase 0 | Build Phase 4 | planned | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/__tests__/looks-component-content-falsification.test.ts |
+| A14 | After the admin's stories render, part-section's `summary` place records the words "· " before it, and decision-card.ask's `children` place records that it spans the story's two nodes | Phase 0 | Build Phase 4 | planned | contract | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/__tests__/looks-component-content.contract.test.ts |
+| A15 | An `<indusk-content>` with no `for`, or one inside another `<indusk-content>`, is refused by the lint naming file and line, and compose never puts an `<indusk-content>` element into a composed mockup | Phase 0 | Build Phase 4 | planned | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-falsification.test.ts |
+| A16 | Content given twice for one property — two `<indusk-content for="name">`, or `for="children"` beside bare words — is refused by the lint naming the component and the property, instead of one silently dropped | Phase 0 | Build Phase 4 | planned | unit | promise: placed-content-is-only-words-and-components | apps/indusk-mcp/src/__tests__/looks-component-content-falsification.test.ts |
+| A17 | A self-closing `<indusk-component name="button" />` followed by `<p>after</p>` composes to the button and then the paragraph, not the paragraph inside the button, and the lint reports no content finding for it | Phase 0 | Build Phase 4 | planned | unit | promise: a-placed-component-shows-its-content | apps/indusk-mcp/src/__tests__/looks-component-content-falsification.test.ts |
 
 ## Checklist
 
@@ -147,6 +153,51 @@ components alone (see [adr.md](adr.md)).
 
 - [x] `apps/docs/src/guide/components.md`: the two lint rules and what each message means
 - [x] `apps/docs/src/decisions/component-content.md`: the ADR, published; changelog entry "Added — a placed component takes its own words"
+
+### Build Phase 4: Falsification — places recorded from one render, filled in another
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds where the marker render and the snapshot disagree in shape, and where a mockup's content is malformed. The ADR claims content is located "by structure, not by matching text, so it cannot land on the wrong word"; but a place is a path recorded from a *second* render and applied to the *first* render's snapshot, and a path names a whole node. Each trajectory row below captures one hypothesis; each checklist item the fix it needs. Every hypothesis was probed against the built `compose` and the admin's committed snapshots before it was written (the probes are scratch scripts, not tests; nothing was run from the suite):
+
+- **Static words share a text node with a property** (A12, A14). `PartSection.tsx` renders `· {summary}`; the marker render's `host.normalize()` merges `"· "` with the marker, so `summary`'s place is the whole text node `[0,0,2,0]`. Probe: part-section.open placed with summary "3 · none" composes to `<span …>3 · none</span>` — the story's `· ` is gone. phase-row's `count` (`· 8 of 12`) is the same shape.
+- **The story's `children` render as several nodes** (A13, A14). decision-card.ask's snapshot has its children as `<p>…</p><div>…buttons…</div>` at `[0,2]` and `[0,3]`; the marker render, with children one marker string, records only `[0,2]`. Probe: decision-card.ask placed with "Mine" shows "Mine" *and* the story's "Approve" button. nav (`children: [[0,1]]` over many plan rows) and shell (`[[0,0]]`, the nav, with the story's main after it) are the same shape; and any property recorded *after* such children in the same parent is off by the difference in node count.
+- **`<indusk-content>` with no `for`** (A15). compose only reads `<indusk-content>` elements that carry `for`; one without is bare content, so it is poured into `children` as a raw element. Probe: `<indusk-content>Raw</indusk-content>` inside a button composes to `<button><indusk-content>Raw</indusk-content></button>`. The lint allows it (`el.tag === CONTENT_TAG` passes `content-not-words-or-components`, and `named` requires `for`). Nested `<indusk-content>` inside another leaks the inner tag into the outer property the same way.
+- **Content given twice** (A16). `wanted` in `renderReference` is a `Map`: a second `<indusk-content for="name">` overwrites the first, and bare words beside `for="children"` are dropped (`!wanted.has("children")`); the lint's `filled` map collapses both the same way, so no finding is raised and words vanish silently.
+- **A self-closing reference** (A17). HTML has no self-closing custom elements: parse5 nests every following sibling inside `<indusk-component … />`, and `innerEnd` falls back to the element's end. Probe: `<indusk-component name="button" state="default" /><p>after</p>` composes to `<button><p>after</p></button>`, and the lint reports `<p>` as content of the button — a message that names the wrong cause. No admin mockup is self-closing today (A11 holds either way); an agent writing one is the expected case.
+
+Decisions recorded for this unattended build:
+- **The place's shape changes rather than a property being dropped.** The conservative alternative — record no place for a property that shares its text node or whose children span several nodes, so the lint refuses filling it — would make part-section's `summary`, phase-row's `count`, decision-card's and nav's `children` unfillable, which new-project-flow's screens need. Decision: a place becomes `{ at: number[]; nodes?: number; before?: string; after?: string }`; a bare `number[]` (a catalog written before this phase) reads as `{ at }`, so nothing committed needs rewriting by hand and A1–A11's fixtures stay valid.
+- **A self-closing reference is read as ending at its start tag**, not refused: the author's intent is unambiguous, and a rule would only tell them to type an end tag the reader could infer.
+- **Content given twice is its own rule**, `content-given-twice`, not folded into `component-takes-no-content`: the state does take the property; the message must say "twice".
+
+- [ ] `looks/stories.ts`, the generated `contentPaths`: record each place against the first render's shape. Normalize a clone of `canvasElement` (the snapshot's serialization merges adjacent text nodes) and align the marker render to it parent by parent: where the clone's parent has M children and the marker render's N, the marker's place spans `nodes: M − N + 1` and every later sibling's index shifts by `M − N`; two markers in one parent whose counts differ is ambiguous and records neither (the lint then refuses filling it). Where a marker's text node carries other text, record that text as `before` / `after` (A14)
+- [ ] `looks/stories-catalog.ts` and `looks/components.ts` (`CatalogState.content`), `looks/mockups.ts` (`readContentMaps`, `Story.content`), `looks/compose.ts` (`SnapshotBytes.content`): the place type `{ at, nodes?, before?, after? }`, read through one normalizer that accepts a bare `number[]` as `{ at }`; regenerate `.indusk/mockups/admin/components.json` with `indusk looks stories admin` and commit it with the snapshots
+- [ ] `looks/compose.ts`, `fillAt`: replace `nodes` (default 1) siblings from the place, and wrap the content in the place's `before` / `after` text; sort places so a multi-node replacement cannot move a later place (A12, A13)
+- [ ] `looks/markup.ts`: a self-closing `<indusk-component … />` ends at its start tag — `end` and `innerEnd` are the start tag's end, so `compose` replaces only it and the lint sees its followers as siblings (A17)
+- [ ] `looks/compose.ts`: an `<indusk-content>` with no `for` is never bare content and never emitted — it contributes nothing to the composed bytes (A15)
+- [ ] `looks/lint-components.ts`, `contentFindings`: an `<indusk-content>` with no `for`, or inside another `<indusk-content>`, is `content-not-words-or-components` naming file and line (A15); a property filled twice is `content-given-twice` naming the component, the property and both lines (A16); add `content-given-twice` to `LintRule` in `lint-types.ts`
+- [ ] Shape step for this phase over `compose.ts`, `stories.ts`, `markup.ts`, `lint-components.ts`
+
+#### Build Phase 4 Verification
+
+- [ ] A12, A13, A15, A16, A17 authored red at phase start, each on its own assertion, then green (`cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/looks-component-content-falsification.test.ts`)
+- [ ] A14 authored red, then green after the regenerated catalog (`cd apps/indusk-mcp && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-component-content.contract.test.ts`); A5 in the same file still green
+- [ ] A1–A11 still green (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/looks/compose.test.ts src/__tests__/looks-component-content-lint.test.ts src/__tests__/looks-component-content-approval.test.ts src/__tests__/looks-admin-approvals-hold.test.ts && pnpm exec vitest related src/lib/looks/compose.ts src/lib/looks/markup.ts src/lib/looks/lint-components.ts`); `indusk looks lint admin` reports no new finding
+
+#### Build Phase 4 Context
+
+- [ ] mcp: the docblock of `looks/compose.ts` — a place is recorded from a second render and holds only where the two renders agree; it carries the node count and the static words around it, so compose replaces exactly the property's words — `promise: a-placed-component-shows-its-content`
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/guide/components.md`: a place's `nodes` / `before` / `after` in `components.json`, the `content-given-twice` rule, and that `<indusk-content>` always names `for`; the ADR's Risks in `apps/docs/src/decisions/component-content.md` gain the two shapes this phase found (words around a property; children of several nodes) and how the place records them
+
+#### Build Phase 4 Hunt record
+
+Searched and found no further attack: approval binding (a mockup's hash is its composed bytes, so any content-map change that changes composition reopens it; nested references are in `uses`, A9); `render`'s outermost-reference skip and the named-content skip spans in `compose`; `contentOf` vs the lint's `mine` (same ownership rule); the sort in `fillAt` for paths of different depth; the admin decorator (it returns `Story()` unwrapped, so the undecorated marker render and the canvas share a root); string args used only as attributes (not marked, not fillable, per the ADR's Risks).
+
+Not pursued, with reasons: the marker render's `catch {}` recording `{}` for a story that throws standalone — the ADR decided that deliberately ("a component that takes no content is a fact, not a failure"), and every admin state with `{}` (device-choice, history-panel, timeline) takes only array or boolean args; an `<indusk-content>` outside any placed component — not content of a component, so outside this plan's promise; words in the live app check — out of scope by the plan's own Scope.
 
 ## Files Affected
 
