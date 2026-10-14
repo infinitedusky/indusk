@@ -57,8 +57,7 @@ None.
 
 ## Looks
 
-None. No screen changes. A plan's page shows its own plan's session as it does today;
-a refusal is shown where it is shown today.
+None — no screen changes: a plan's page shows its own plan's session as it does today, and a refusal is shown where it is shown today.
 
 ## Depends On
 
