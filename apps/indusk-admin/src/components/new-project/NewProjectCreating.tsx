@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { buttonClasses } from "@/components/ui/Button";
+import { Button, buttonClasses } from "@/components/ui/Button";
 
 export interface CreatingStep {
   label: string;
@@ -91,9 +91,9 @@ export function NewProjectCreating({
             Open the project
           </Link>
         ) : problem ? null : (
-          <button type="button" disabled className={buttonClasses("secondary")}>
+          <Button variant="secondary" disabled>
             Open the project when it's ready
-          </button>
+          </Button>
         )}
         {actions}
       </div>
