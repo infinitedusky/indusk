@@ -42,13 +42,13 @@ Every request a session makes is recorded in its log together with how it was de
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | During a build, a request to write inside the worktree shows in the panel already allowed, with no Allow or Deny | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A2 | During a build, a request to write outside the worktree shows already denied, with the build's reason, and no Allow or Deny | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A3 | A request nothing has decided, in a running session, still shows Allow and Deny | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A4 | In the new-project conversation, a request its agent's rule decided is not waiting on the person | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/lib/conversation-turns.test.ts |
-| A5 | A request a planning session allowed on its own rule appears in the log as allowed | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts |
-| A6 | A request the person allowed or denied shows the outcome they chose, and a panel connecting afterwards shows it decided, with no buttons | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A7 | A question a build declined on its own shows as declined, with the reason, never as waiting | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A1 | During a build, a request to write inside the worktree shows in the panel already allowed, with no Allow or Deny | Test Phase 1 | Build Phase 2 | written | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A2 | During a build, a request to write outside the worktree shows already denied, with the build's reason, and no Allow or Deny | Test Phase 1 | Build Phase 2 | written | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A3 | A request nothing has decided, in a running session, still shows Allow and Deny | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A4 | In the new-project conversation, a request its agent's rule decided is not waiting on the person | Test Phase 1 | Build Phase 2 | written | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/lib/conversation-turns.test.ts |
+| A5 | A request a planning session allowed on its own rule appears in the log as allowed | Test Phase 1 | Build Phase 1 | written | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A6 | A request the person allowed or denied shows the outcome they chose, and a panel connecting afterwards shows it decided, with no buttons | Test Phase 1 | Build Phase 2 | written | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A7 | A question a build declined on its own shows as declined, with the reason, never as waiting | Test Phase 1 | Build Phase 2 | written | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A8 | Watching a real build in the cockpit, no prompt is left looking undecided, and a reload leaves every one decided | Build Phase 2 | Build Phase 2 | planned | live check | the brief's expectation: watching a build shows no prompt waiting unless it is | recorded in this impl, Build Phase 2 |
 
 ## Checklist
@@ -59,13 +59,13 @@ Every request a session makes is recorded in its log together with how it was de
 
 **Goal**: author A1–A7 against today's code and read each failure; A3 is a guard that passes at once.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create decided-prompts-stay-closed`; made by `indusk plans start`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
-- [ ] A1, A2, A7 (package half) in `build-session.test.ts`: run a build step against the manager with the existing fake session, emit an inside write, an outside write and a question, and read the events a subscriber hears. Each request is followed by a `decided` event (`allow: true`; `allow: false` with the refusal's message; the question declined with its message), `by: "rule"`. Read the event's `type` as a string so the file loads before the type exists. RED today: no `decided` event
-- [ ] A5 and A6 (package half) in `manager.test.ts`: a planning session's auto-allowed permission is in the events, followed by `decided` `by: "rule"`; a person's `reply` is followed by `decided` `by: "person"` with their outcome; a subscriber joining afterwards hears both. RED today: the auto-allowed request is dropped, and no `decided` event is recorded
-- [ ] A1, A2, A6, A7 (panel half) in `SessionPanel.test.tsx`: render a fresh panel (as after a reload) with `[permission, decided]`, running. It shows no Allow/Deny, and shows "Allowed", or "Denied" with the message. RED today: the buttons show
-- [ ] A3 in `SessionPanel.test.tsx`: a running panel with an undecided permission shows Allow and Deny
-- [ ] A4 in `conversation-turns.test.ts`: `turnsOf([permission, decided])` with no `answered` set lists nothing waiting. RED today: the permission is waiting
-- [ ] Confirm each red test fails on its own assertion rather than on a missing import
+- [x] Create/confirm this plan's worktree (`indusk worktree create decided-prompts-stay-closed`; made by `indusk plans start`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] A1, A2, A7 (package half) in `build-session.test.ts`: run a build step against the manager with the existing fake session, emit an inside write, an outside write and a question, and read the events a subscriber hears. Each request is followed by a `decided` event (`allow: true`; `allow: false` with the refusal's message; the question declined with its message), `by: "rule"`. Read the event's `type` as a string so the file loads before the type exists. RED today: no `decided` event
+- [x] A5 and A6 (package half) in `manager.test.ts`: a planning session's auto-allowed permission is in the events, followed by `decided` `by: "rule"`; a person's `reply` is followed by `decided` `by: "person"` with their outcome; a subscriber joining afterwards hears both. RED today: the auto-allowed request is dropped, and no `decided` event is recorded
+- [x] A1, A2, A6, A7 (panel half) in `SessionPanel.test.tsx`: render a fresh panel (as after a reload) with `[permission, decided]`, running. It shows no Allow/Deny, and shows "Allowed", or "Denied" with the message. RED today: the buttons show
+- [x] A3 in `SessionPanel.test.tsx`: a running panel with an undecided permission shows Allow and Deny
+- [x] A4 in `conversation-turns.test.ts`: `turnsOf([permission, decided])` with no `answered` set lists nothing waiting. RED today: the permission is waiting
+- [x] Confirm each red test fails on its own assertion rather than on a missing import
 
 #### Deferred to Build Phase 2
 
@@ -77,7 +77,7 @@ Every request a session makes is recorded in its log together with how it was de
 
 #### Test Phase 1 Verification
 
-- [ ] A1, A2, A4–A7 authored and each fails on its own assertion; A3 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/build/build-session.test.ts src/lib/session/manager.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx src/lib/conversation-turns.test.ts`)
+- [x] A1, A2, A4–A7 authored and each fails on its own assertion; A3 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/build/build-session.test.ts src/lib/session/manager.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx src/lib/conversation-turns.test.ts`)
 
 ### Build Phase 1: The manager records every decision
 
