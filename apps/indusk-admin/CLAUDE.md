@@ -22,6 +22,16 @@ Each entry is a rule and a pointer; the pointer holds the story.
   and sends a person's choices back through the routes; a client component
   imports only *types* from `/session`, whose code is Node's. — see
   `/reference/admin-ui/sessions`
+- **The project conversation renders a thread, not the session panel**:
+  `lib/conversation-turns`'s `turnsOf(events)` reads a session's events as
+  alternating you/agent turns (the reply is the last text, the tools and
+  earlier text are its working, an open question or permission is *waiting* and
+  never folded); `ConversationThread` draws them as `Message` bubbles, the
+  reply through `Markdown`; the draft's `transcript.jsonl` (appended by
+  `startProjectConversation`) is what a reopened page shows. The plan
+  conversation, builds and Fix with Claude still use the session panel until
+  they move. Guarded by `conversation-turns.test.ts` and
+  `ConversationThread.test.tsx`. — `promise: a-project-conversation-is-a-back-and-forth`
 - **What a plan's page offers is one rule, `planActions`**: a plan is started
   by its worktree in normal mode or its `code.json` in a workbench, and gets
   the same buttons either way; a workbench session runs at the root with the

@@ -298,7 +298,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 4 Context
 
-- [ ] admin: `apps/indusk-admin/CLAUDE.md` — the project conversation renders a thread from `turnsOf`; the other agent conversations still use the session panel until they move — `promise: a-project-conversation-is-a-back-and-forth`
+- [x] admin: `apps/indusk-admin/CLAUDE.md` — the project conversation renders a thread from `turnsOf`; the other agent conversations still use the session panel until they move — `promise: a-project-conversation-is-a-back-and-forth`
 
 #### Build Phase 4 Document
 
