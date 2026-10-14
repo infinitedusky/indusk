@@ -36,6 +36,19 @@ export function planLookState(input: {
 }
 
 /**
+ * Whether the plan page is waiting on a person, for its look state: a session
+ * question or a stopped build (`waiting`, from the package's `planWaiting`), or
+ * an amendment the person has not re-approved — the page draws the amendment
+ * card for it, and the approved `plan.needs-you` mockup is the one that does.
+ */
+export function planPageWaiting(
+  waiting: unknown | undefined,
+  amendments: readonly unknown[],
+): boolean {
+  return waiting !== undefined;
+}
+
+/**
  * The brief page's state: empty while the plan has no brief file; else
  * approved once the plan's impl carries the approval of its brief, writing
  * before.

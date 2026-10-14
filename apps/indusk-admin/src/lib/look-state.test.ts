@@ -1,5 +1,11 @@
+// promise: a-plan-page-shows-the-parts-of-its-brief
 import { describe, expect, it } from "vitest";
-import { briefLookState, navLookState, planLookState } from "@/lib/look-state";
+import {
+  briefLookState,
+  navLookState,
+  planLookState,
+  planPageWaiting,
+} from "@/lib/look-state";
 
 const base = {
   archived: false,
@@ -62,5 +68,22 @@ describe("navLookState — what the nav says it draws", () => {
     expect(navLookState({ folded: false, width: null, opening: null })).toBe(
       "nav.expanded",
     );
+  });
+});
+
+describe("A16 — an amendment is a wait the plan page counts", () => {
+  it("a plan whose only wait is an amendment reports plan.needs-you", () => {
+    const waiting = planPageWaiting(undefined, [{ id: "a1" }]);
+    expect(planLookState({ ...base, waiting })).toBe("plan.needs-you");
+  });
+
+  it("a plan with no wait and no amendment is still working", () => {
+    const waiting = planPageWaiting(undefined, []);
+    expect(planLookState({ ...base, waiting })).toBe("plan.working");
+  });
+
+  it("a session question or a stopped build waits whether or not an amendment does", () => {
+    expect(planPageWaiting({ on: "question" }, [])).toBe(true);
+    expect(planPageWaiting({ on: "review" }, [{ id: "a1" }])).toBe(true);
   });
 });

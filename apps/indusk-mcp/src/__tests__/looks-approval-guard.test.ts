@@ -205,3 +205,63 @@ describe("A6 — an agent's call to the re-approve route is refused the same way
 		expect(r.stderr).toMatch(/re-?approv/i);
 	});
 });
+
+/**
+ * cockpit-redraw A13 and A14 — promise: only-a-person-reapproves.
+ *
+ * The reader exemption (`echo`, `cat`, `git`, …) is for a command that only
+ * prints its words; a substitution inside one is run by the shell before the
+ * reader sees anything. And `plans reapprove` is one call to the package's
+ * `reapprovePlan`, which an interpreter can make without the command's words.
+ */
+describe("A13 — a reader runs what it substitutes", () => {
+	const substituted: Array<[string, string]> = [
+		["a command substitution", 'echo "$(indusk plans reapprove x)"'],
+		["a backtick substitution", "echo `indusk plans reapprove x`"],
+		["a process substitution", "cat <(indusk plans reapprove x)"],
+		["an output process substitution", "tee >(indusk plans reapprove x)"],
+	];
+	for (const [how, command] of substituted) {
+		it(`refuses ${how}`, async () => {
+			const r = await runHook("looks-approval-guard.js", bash(command));
+			expect(r.exitCode, `${command}\n${r.stderr}`).toBe(2);
+			expect(r.stderr).toMatch(/only-a-person-reapproves/);
+			expect(r.stderr).toMatch(/only a person/i);
+		});
+	}
+
+	const printed: Array<[string, string]> = [
+		["an echo of the words", 'echo "indusk plans reapprove x"'],
+		["a commit message naming it", 'git commit -m "docs: plans reapprove is a person\'s"'],
+	];
+	for (const [how, command] of printed) {
+		it(`still allows ${how}`, async () => {
+			const r = await runHook("looks-approval-guard.js", bash(command));
+			expect(r.exitCode, `${command}\n${r.stderr}`).toBe(0);
+		});
+	}
+});
+
+describe("A14 — the function behind the command is refused by its name", () => {
+	const calls: Array<[string, string]> = [
+		[
+			"node -e",
+			`node -e "import('@infinitedusky/indusk-mcp/plans').then(m => m.reapprovePlan('.', 'x'))"`,
+		],
+		["tsx -e", `tsx -e "import { reapprovePlan } from './src/lib/plans/reapprove.ts'; reapprovePlan('.', 'x')"`],
+		["after a cd", `cd ${ROOT} && node -e "require('x').reapprovePlan('.', 'x')"`],
+	];
+	for (const [how, command] of calls) {
+		it(`refuses ${how}`, async () => {
+			const r = await runHook("looks-approval-guard.js", bash(command));
+			expect(r.exitCode, `${command}\n${r.stderr}`).toBe(2);
+			expect(r.stderr).toMatch(/only-a-person-reapproves/);
+			expect(r.stderr).toMatch(/only a person/i);
+		});
+	}
+
+	it("still allows a reader that names the function", async () => {
+		const r = await runHook("looks-approval-guard.js", bash("grep -rn reapprovePlan src"));
+		expect(r.exitCode, r.stderr).toBe(0);
+	});
+});
