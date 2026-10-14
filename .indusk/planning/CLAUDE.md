@@ -147,7 +147,8 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   **Shape** → context → document. Shape is a step, not a gate type: the
   executing agent reviews the code the phase wrote against the enabled
   extensions' prose rules, and findings land as unchecked items in the current
-  phase. — see `/guide/shape`
+  phase. Shape is intra-unit; decomposition across files is `/cleanup`'s, at
+  close. — see `/guide/shape`, `/decisions/lifecycle-rebalance`
 - **Commit cadence**: one commit per checklist item on the plan's
   `plan/{name}` branch, intent-named; in a monorepo, one commit per app or
   context; merge and delete fast. — see `/reference/skills/work`

@@ -75,7 +75,6 @@ dusk/
 - Workbench setup one-shot (`indusk setup`) — see `.indusk/planning/archive/workbench-setup-command/`
 - Dawn hook parity: invariants + eval rail in the thin lane; headless `ask` = pause, `ask` the default in both lanes — see `/decisions/dawn-hook-parity`
 - Test phases as structure: `### Test Phase N` + `### Build Phase N` as two sequences; Test Phase 1 mandatory, first, and the register where every deferral is justified. Zero migration via an optional `Build ` prefix — see `/decisions/test-phase-structure`
-- Shape check: per-phase craft review in `/work` (intra-unit) vs `/cleanup` at close (inter-file) — a step, not a gate type; findings become items in the phase — see `/decisions/lifecycle-rebalance`
 - Dawn verify (component 6, the keystone): read-only phase-boundary verification for work Dawn didn't execute; detects, never repairs, reads files and exit codes never runner output — see `/decisions/dawn-verify`
 - InDusk Makeover (2026-07-23): budgets + decay + removal — the 60 KB budget hook + compaction, Graphiti/CGC removed with the lessons rail kept, current.md sweep + dead-draft archive, catchup diet, MCP keep-lists, hub push/pull. Supersedes context-budget. — see `.indusk/planning/archive/indusk-makeover/adr.md`
 - Versioned workbench (1.37.0–1.38.3): the workbench root is a git repo with its own remote and a sync loop; repos declared in `worktree.repos[]` — see `/decisions/versioned-workbench`
