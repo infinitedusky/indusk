@@ -4669,6 +4669,20 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T01:53:18.361Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"mockup": "amendment-card.waiting",
+			"mockupHash": "21b42110c354827db4e003b83912520ce15ae667dee614d2e88227752f262fd7",
+			"componentsHash": "e4a92c561e70de32145f2e39d6d4726b7b1555c921df0cb79c2fdecac6bfe21b",
+			"components": {
+				"button.yes": "93fac0656e7c4033b3c25bf08c7420fd21a1e6e720ccea4315375538efc0f325",
+				"button.css": "accf9aafd07cd466c57714b943d3fe6eb599feb7cb6e3e9241d2aba80a8e35f3"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T01:53:18.576Z",
+			"plan": "cockpit-redraw"
 		}
 	]
 }
