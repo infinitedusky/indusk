@@ -129,6 +129,28 @@ The lag bug would have been the first split never marked kept; the Stop bug, a
 message arriving with no agent running — before anyone knew a button was the
 cause.
 
+### Carried from `new-project-flow`'s audit (2026-10-14)
+
+A fresh reader's audit of `new-project-flow` (its `audit.md`) found two
+telemetry gaps; Sandy moved them here.
+
+- **The `new_project.create` span goes nowhere.** Neither the admin nor the
+  CLI registers a tracer provider, so the span is exported only if the
+  production-break recorder happened to set one up in the same process — and
+  then to its endpoint, which may be off the machine. Expectations 1, 2 and 5
+  of `new-project-flow`, and the mitigations of its untestable rows U1 (the
+  agent asks only what is open) and U2 (replies are short), all read this
+  span. The admin needs one tracer provider exporting to the local daemon,
+  which `a-page-can-mark-a-promise` needs for the server side anyway.
+- **Three promises rest only on the prompt.**
+  `an-unkept-project-conversation-leaves-nothing-on-disk`,
+  `a-new-project-publishes-nothing-unasked` and
+  `a-new-project-is-written-only-under-its-parent` hold because the agent is
+  told not to break them. `new-project-flow` Build Phase 7 confines the
+  conversation's tools; marks are still what proves them in use: a write
+  outside the draft, a `git`/`gh` command, a project made outside the parent,
+  each marked broken where it happens.
+
 ## Decisions
 
 - **Tests stay.** Sandy: "I don't want to remove tests." Marks become the
