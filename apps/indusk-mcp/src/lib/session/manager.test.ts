@@ -331,29 +331,67 @@ describe("sessions-per-plan — the machine's cap", () => {
 });
 
 describe("A14 — a build's own next step is not refused by the cap", () => {
-	function atCap() {
+	function capped() {
 		const dir = mkdtempSync(join(tmpdir(), "session-manager-"));
 		dirs.push(dir);
 		const fake = fakeStarter();
 		const m = new SessionManager({ recordPath: join(dir, "r.json"), start: fake.start, max: 2 });
-		for (const plan of ["p1", "p2"]) m.start({ ...planning, ...meta, plan });
 		return m;
 	}
 	const build = { ...planning, ...meta, kind: "build" as const, plan: "p3" };
 
-	it("A14 — an inBuild start for a third plan succeeds at the cap", () => {
-		expect(attempt(() => atCap().start({ ...build, inBuild: true }))).toBeUndefined();
+	it("A14 — an admitted build's step starts though other plans filled the cap since", () => {
+		const m = capped();
+		m.admitBuild("proj", "p3");
+		m.start({ ...planning, ...meta, plan: "p1" });
+		expect(attempt(() => m.start(build))).toBeUndefined();
 	});
 
-	it("A14 — a plain start at the cap is still refused", () => {
-		expect(attempt(() => atCap().start(build))).toBeInstanceOf(SessionBusy);
+	it("A14 — a build at the cap is refused before it starts", () => {
+		const m = capped();
+		for (const plan of ["p1", "p2"]) m.start({ ...planning, ...meta, plan });
+		expect(attempt(() => m.admitBuild("proj", "p3"))).toBeInstanceOf(SessionBusy);
 	});
 
-	it("A14 — an inBuild start never gets past the same-plan rule", () => {
-		const m = atCap();
-		const refusal = attempt(() => m.start({ ...planning, ...meta, plan: "p1", inBuild: true }));
+	it("A14 — an admitted build never gets past the same-plan rule", () => {
+		const m = capped();
+		m.admitBuild("proj", "p3");
+		m.start(build);
+		const refusal = attempt(() => m.start(build));
 		expect(refusal).toBeInstanceOf(SessionBusy);
 		expect(refusal?.message).toMatch(/already running on this plan/);
+	});
+});
+
+describe("A15 — an admitted build holds its place between its steps", () => {
+	it("A15 — with one build admitted and no step running, the cap of 2 admits one more session, not two", () => {
+		const dir = mkdtempSync(join(tmpdir(), "session-manager-"));
+		dirs.push(dir);
+		const m = new SessionManager({
+			recordPath: join(dir, "r.json"),
+			start: fakeStarter().start,
+			max: 2,
+		});
+		m.admitBuild("proj", "built");
+		expect(attempt(() => m.start({ ...planning, ...meta, plan: "p1" }))).toBeUndefined();
+		expect(attempt(() => m.start({ ...planning, ...meta, plan: "p2" }))).toBeInstanceOf(
+			SessionBusy,
+		);
+		expect(attempt(() => m.admitBuild("proj", "another"))).toBeInstanceOf(SessionBusy);
+	});
+
+	it("A15 — once the build ends its place is free again", () => {
+		const dir = mkdtempSync(join(tmpdir(), "session-manager-"));
+		dirs.push(dir);
+		const m = new SessionManager({
+			recordPath: join(dir, "r.json"),
+			start: fakeStarter().start,
+			max: 2,
+		});
+		const done = m.admitBuild("proj", "built");
+		m.start({ ...planning, ...meta, plan: "p1" });
+		done();
+		expect(attempt(() => m.start({ ...planning, ...meta, plan: "p2" }))).toBeUndefined();
 	});
 });
 

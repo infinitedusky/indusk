@@ -90,7 +90,6 @@ async function oneSession(
 		cwd: opts.worktree,
 		...(opts.addDirs?.length ? { addDirs: opts.addDirs } : {}),
 		kind: "build",
-		inBuild: true,
 		prompt: stepPrompt(step, opts.plan),
 		project: opts.project,
 		plan: opts.plan,

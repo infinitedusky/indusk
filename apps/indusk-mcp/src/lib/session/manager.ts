@@ -52,12 +52,6 @@ export interface SessionRecord {
 export interface ManagedStart extends SessionOptions {
 	project: string;
 	plan: string;
-	/**
-	 * A step of a build already admitted: the machine's cap does not refuse it
-	 * (a build's slot is free between its steps, and another plan's start must
-	 * not cost it the next one). The same-plan rule still does.
-	 */
-	inBuild?: true;
 }
 
 interface Held {
@@ -72,11 +66,15 @@ export function defaultRecordPath(): string {
 	return join(process.env.INDUSK_HOME ?? join(homedir(), ".indusk"), "admin-sessions.json");
 }
 
+const buildKey = (project: string, plan: string): string => `${project}\0${plan}`;
+
 export class SessionManager {
 	private readonly recordPath: string;
 	private readonly launch: (opts: SessionOptions) => Session;
 	private readonly held = new Map<string, Held>();
 	private readonly max: number | undefined;
+	/** Builds admitted under the cap, by `project\0plan`: each holds one place from its start to its end. */
+	private readonly builds = new Set<string>();
 
 	constructor(
 		opts: { recordPath?: string; start?: (opts: SessionOptions) => Session; max?: number } = {},
@@ -101,9 +99,8 @@ export class SessionManager {
 			listeners: new Set(),
 			answered: new Set(),
 		};
-		const { inBuild: _inBuild, ...launchOpts } = opts;
 		const session = this.launch({
-			...launchOpts,
+			...opts,
 			onEvent: (ev) => {
 				// A planning session is asked only about a path outside its own
 				// folder (A26): the rest is decided here, as a build's is.
@@ -150,14 +147,39 @@ export class SessionManager {
 		if (same) {
 			return new SessionBusy(alreadyRunningOnThisPlan(same), same);
 		}
-		return opts.inBuild ? undefined : this.capRefusal();
+		// An admitted build's step takes the place its build already holds.
+		if (opts.kind === "build" && this.builds.has(buildKey(opts.project, opts.plan)))
+			return undefined;
+		return this.capRefusal();
+	}
+
+	/**
+	 * Admit a build under the cap: it holds one place from now until the
+	 * returned function is called, whether or not one of its steps is running —
+	 * so another plan's start between two steps cannot take it. Refused at the cap.
+	 */
+	admitBuild(project: string, plan: string): () => void {
+		const refusal = this.capRefusal();
+		if (refusal) throw refusal;
+		const key = buildKey(project, plan);
+		this.builds.add(key);
+		return () => {
+			this.builds.delete(key);
+		};
 	}
 
 	/** The refusal a new session meets when the machine already runs its cap, if it does. */
 	capRefusal(): SessionBusy | undefined {
 		const max = this.max ?? readSessionsMax();
-		if (this.held.size < max) return undefined;
-		const names = this.running().map((r) => `${r.kind} for ${r.plan}`);
+		// Each admitted build is one place; its running step is inside that place.
+		const unadmitted = this.running().filter(
+			(r) => !(r.kind === "build" && this.builds.has(buildKey(r.project, r.plan))),
+		);
+		if (this.builds.size + unadmitted.length < max) return undefined;
+		const names = [
+			...[...this.builds].map((k) => `build for ${k.split("\0")[1]}`),
+			...unadmitted.map((r) => `${r.kind} for ${r.plan}`),
+		];
 		return new SessionBusy(
 			`${max} sessions are running (sessions.max): ${names.join(", ")} — stop one from its plan's page in the admin`,
 		);
