@@ -2,14 +2,15 @@ import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 import {
 	addDocument,
+	CreationError,
+	createProject,
 	createProjectDraft,
 	type DraftDocument,
 	discardProjectDraft,
 	findProjectDraft,
-	ProposalError,
 	readParent,
-	readProposal,
 	setParent,
+	stepLabel,
 } from "../../lib/new-project/index.js";
 import { induskHome } from "../../lib/telemetry/status.js";
 
@@ -80,24 +81,28 @@ export function newProjectParent(dir?: string): void {
 }
 
 /**
- * `accept`: check the proposal and refuse it, naming every problem, before
- * anything is made. Making the project follows in Build Phase 3; until then a
- * proposal that passes the check stops here, saying so.
+ * `accept`: make the project the proposal describes, printing each step as it
+ * runs. A proposal that is refused (every problem named) or a parent that is
+ * unset or does not hold the location stops before anything is made.
  *
  * promise: the-core-is-always-kept
+ * promise: a-new-project-is-made-by-the-agent
  */
-export function newProjectAccept(id: string): void {
-	const draft = findProjectDraft(induskHome(), id);
-	if (!draft) {
-		fail(`No project conversation ${id}.`);
-		return;
-	}
+export async function newProjectAccept(id: string): Promise<void> {
 	try {
-		readProposal(draft);
+		const created = await createProject(induskHome(), id, {
+			report: (step, state) => {
+				if (state === "working") console.info(`... ${stepLabel(step, state)}`);
+				else if (state === "done") console.info(`ok  ${stepLabel(step, state)}`);
+				else console.info(`FAILED  ${stepLabel(step, state)}`);
+			},
+		});
+		console.info(`\nCreated ${created.name} at ${created.root}`);
+		if (created.remoteError) {
+			fail(`The project is made, but its GitHub repository was not: ${created.remoteError}`);
+		}
 	} catch (err) {
-		if (!(err instanceof ProposalError)) throw err;
-		fail(`The proposal for ${id} is refused: ${err.message}`);
-		return;
+		if (!(err instanceof CreationError)) throw err;
+		fail(err.message);
 	}
-	fail("The proposal is valid, but creating a project is not built yet.");
 }

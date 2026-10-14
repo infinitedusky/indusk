@@ -447,10 +447,10 @@ newProjectCmd
 
 newProjectCmd
 	.command("accept <id>")
-	.description("Check a conversation's proposal and, once accepted, make the project")
+	.description("Make the project a conversation's proposal describes, printing each step")
 	.action(async (id: string) => {
 		const { newProjectAccept } = await import("./commands/new-project.js");
-		newProjectAccept(id);
+		await newProjectAccept(id);
 	});
 
 newProjectCmd
