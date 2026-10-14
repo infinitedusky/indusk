@@ -7,6 +7,7 @@ import { FollowAgent } from "@/components/session/FollowAgent";
 import { PlanSession } from "@/components/session/PlanSession";
 import { TrustNotice } from "@/components/session/TrustNotice";
 import { WindowColumn } from "@/components/session/WindowColumn";
+import { briefLookState } from "@/lib/look-state";
 import { planActions } from "@/lib/plan-actions";
 import { readPlanPage } from "@/lib/plan-page";
 import { planDocuments } from "@/lib/plan-parts-view";
@@ -56,7 +57,11 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       <FollowAgent />
       <div className="cols-brief-page grid items-start gap-5">
-        <PlanFrame project={project} plan={plan}>
+        <PlanFrame
+          project={project}
+          plan={plan}
+          lookState={briefLookState(plan.impl?.frontmatter)}
+        >
           <TrustNotice
             project={project}
             trusted={projectTrusted(projectPath)}
