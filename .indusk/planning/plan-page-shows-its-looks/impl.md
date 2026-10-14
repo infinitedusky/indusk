@@ -1,7 +1,7 @@
 ---
 title: "A plan's page shows all its looks"
 date: 2026-10-14
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_story: required
 gate_policy: ask
+approved_brief: "786345f57fd6c2f12d98a26898242bad05c8184b35956aafdd0269c8d3626d9d"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-14T23:52:54.548Z"
 ---
 
 # A plan's page shows all its looks
