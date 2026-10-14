@@ -79,6 +79,45 @@ describe("A23 — events read as alternating turns", () => {
   });
 });
 
+describe("A29 — every agent turn carries one status", () => {
+  const statusOf = (turn: ReturnType<typeof turnsOf>[number] | undefined) =>
+    turn?.who === "agent" ? turn.status : undefined;
+
+  it("A29 a turn is working while its agent runs without a reply, and appears before any text", () => {
+    expect(statusOf(turnsOf([], { running: true })[0])).toBe("working");
+    expect(
+      statusOf(turnsOf([tool("Read", "planner.md")], { running: true })[0]),
+    ).toBe("working");
+    const after = turnsOf([{ type: "you", text: "Fly." }], { running: true });
+    expect(after.map((t) => t.who)).toEqual(["you", "agent"]);
+    expect(statusOf(after[1])).toBe("working");
+  });
+
+  it("A29 a turn is done once it has replied", () => {
+    expect(
+      statusOf(turnsOf([text("Hi."), result("Hi.")], { running: true })[0]),
+    ).toBe("done");
+    expect(
+      statusOf(turnsOf([text("Hi."), result("Hi.")], { running: false })[0]),
+    ).toBe("done");
+  });
+
+  it("A29 a turn is stopped when its agent ended before replying", () => {
+    const ended: StartedEvent[] = [
+      tool("Read", "planner.md"),
+      { type: "exit", code: 1, stderr: "" },
+    ];
+    expect(statusOf(turnsOf(ended, { running: false })[0])).toBe("stopped");
+    const earlier = turnsOf(
+      [tool("Read", "a.md"), { type: "you", text: "Go on." }, text("Ok."), result("Ok.")],
+      { running: true },
+    );
+    expect(statusOf(earlier[0])).toBe("stopped");
+    expect(statusOf(earlier[2])).toBe("done");
+    expect(turnsOf([], { running: false })).toEqual([]);
+  });
+});
+
 describe("historyBefore — what the transcript holds that the page is not hearing live", () => {
   const kept = [
     { type: "session", id: "a" },

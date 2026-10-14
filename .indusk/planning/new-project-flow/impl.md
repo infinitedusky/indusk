@@ -74,8 +74,8 @@ nothing the person did not accept (see [adr.md](adr.md)).
 | A25 | A question or permission the agent is waiting on is never folded away | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
 | A26 | Reopening a project conversation with no agent running shows the same turns; discarding removes them | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/__tests__/new-project-cli.test.ts |
 | A27 | The project conversation's prompt asks for a few sentences of Markdown and at most three questions at a time | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-mcp/src/lib/new-project/prompt.test.ts |
-| A28 | Starting a project conversation starts its agent: the conversation opens with the agent working, with no second click | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-project-starts-as-a-conversation | apps/indusk-admin/src/components/new-project/NewProjectStart.test.tsx |
-| A29 | Every agent turn carries one status: working while running without a reply, done once replied, stopped when it ended before replying | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/lib/conversation-turns.test.ts |
+| A28 | Starting a project conversation starts its agent: the conversation opens with the agent working, with no second click | Build Phase 4 | Build Phase 4 | written | unit | promise: a-project-starts-as-a-conversation | apps/indusk-admin/src/components/new-project/NewProjectStart.test.tsx |
+| A29 | Every agent turn carries one status: working while running without a reply, done once replied, stopped when it ended before replying | Build Phase 4 | Build Phase 4 | written | unit | promise: a-project-conversation-is-a-back-and-forth | apps/indusk-admin/src/lib/conversation-turns.test.ts |
 
 ### Deferred Verification
 
