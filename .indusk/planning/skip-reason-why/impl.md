@@ -1,7 +1,7 @@
 ---
 title: "skip-reason-why"
 date: 2026-10-14
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -60,7 +60,7 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 
 **Goal**: author every test that can honestly be authored now, and record every test that cannot.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create skip-reason-why`, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs `indusk worktree assign skip-reason-why <path>`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] Create/confirm this plan's worktree (`indusk worktree create skip-reason-why`, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs `indusk worktree assign skip-reason-why <path>`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
 - [ ] Author A1–A3 and A8 in `workflows.test.tsx` against the `skipped-ritual` fixture (give its `falsification_reason` a second fixture plan with a 950-character reason for A3), RED for A1–A3: today the status reads `skipped — <reason>` and there is no "why?"
 - [ ] Author A4–A7 and A9 in `apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts`, building plan folders in a temp dir as `cleanup-gate.test.ts` does; A4–A6 assert `passes === false` and the missing ritual, RED today; A7 reads the three skill files: each `*_reason:` example is at most 120 characters (true today: 92, 92, 49) and the skill names the limit `120 characters` beside it (absent today), RED on the second
 - [ ] Confirm each red row fails on its own assertion rather than on a missing import
