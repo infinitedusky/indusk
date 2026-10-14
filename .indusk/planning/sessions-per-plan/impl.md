@@ -1,7 +1,7 @@
 ---
 title: "Sessions per plan"
 date: 2026-10-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -179,22 +179,22 @@ Several plans can each have an agent at once: the session manager refuses only a
 
 **Goal**: decompose what this plan grew across files. The size scan (`listOversizedChangedFiles` against `main`) flags only `apps/docs/src/changelog.md`, which is long by nature and not this plan's growth. The one cross-file finding is a protocol shape written twice: the 409 that carries the running session (`{ error, running: { id } }`) is built inline in `app/api/sessions/route.ts` and in `app/api/drafts/[id]/talk/route.ts`, and `PlanSession` parses it; if the two copies drift, **Continue it here** silently stops appearing on one of them.
 
-- [ ] Extract `refuseRunning(message: string, running: { id: string }): Response` into `apps/indusk-admin/src/lib/session-host.ts`, beside `refuse`, and use it in both routes — one definition of the continuable refusal the page reads (rule: a shape two producers and one consumer share is defined once)
-- [ ] (reviewed `components/session/PlanSession.tsx`, `drafts/DraftConversation.tsx`, `promise/StartFix.tsx` — left as-is: each fetches its own session on load and checks `ownsSession`; the pattern predates this plan, which only changed the URL to `sessionUrl`, and the three differ in kind and in what they do on attach)
-- [ ] (reviewed `app/api/drafts/[id]/{accept,discard,talk}/route.ts` — left as-is: each looks up the draft's session with one `forPlan(project, draftSessionPlan(id))` call; a helper would wrap a single line)
-- [ ] (reviewed `apps/indusk-mcp/src/lib/session/manager.ts` — left as-is: the owner rule, the cap and the wording now live once, in `refusalFor`, `capRefusal` and `alreadyRunningOnThisPlan`)
+- [x] Extract `refuseRunning(message: string, running: { id: string }): Response` into `apps/indusk-admin/src/lib/session-host.ts`, beside `refuse`, and use it in both routes — one definition of the continuable refusal the page reads (rule: a shape two producers and one consumer share is defined once)
+- [x] (reviewed `components/session/PlanSession.tsx`, `drafts/DraftConversation.tsx`, `promise/StartFix.tsx` — left as-is: each fetches its own session on load and checks `ownsSession`; the pattern predates this plan, which only changed the URL to `sessionUrl`, and the three differ in kind and in what they do on attach)
+- [x] (reviewed `app/api/drafts/[id]/{accept,discard,talk}/route.ts` — left as-is: each looks up the draft's session with one `forPlan(project, draftSessionPlan(id))` call; a helper would wrap a single line)
+- [x] (reviewed `apps/indusk-mcp/src/lib/session/manager.ts` — left as-is: the owner rule, the cap and the wording now live once, in `refusalFor`, `capRefusal` and `alreadyRunningOnThisPlan`)
 
 #### Build Phase 4 Verification
 
-- [ ] (no tests flip at this phase — reason: refactor) A12 and A4 still pass, with the admin's related tests (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts && pnpm exec vitest related src/lib/session-host.ts src/app/api/sessions/route.ts "src/app/api/drafts/[id]/talk/route.ts" --run`); tsc and biome clean on changed files
+- [x] (no tests flip at this phase — reason: refactor) A12 and A4 still pass, with the admin's related tests (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/sessions-per-plan.test.ts && pnpm exec vitest related src/lib/session-host.ts src/app/api/sessions/route.ts "src/app/api/drafts/[id]/talk/route.ts" --run`); tsc and biome clean on changed files
 
 #### Build Phase 4 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: no new rule — the refusal helper sits beside `refuse` in `session-host.ts`, which the file's session rule already names; confirm the rule still reads true after the change
+- [x] `apps/indusk-admin/CLAUDE.md`: no new rule — the refusal helper sits beside `refuse` in `session-host.ts`, which the file's session rule already names; confirm the rule still reads true after the change
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: confirm the Sessions section's description of the same-plan refusal (it offers to continue the running session) matches both routes after the extraction
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: confirm the Sessions section's description of the same-plan refusal (it offers to continue the running session) matches both routes after the extraction
 
 ## Files Affected
 
