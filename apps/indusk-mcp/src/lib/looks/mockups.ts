@@ -31,6 +31,19 @@ export interface DeclaredScreen {
 	states: string[];
 	/** Where the running app serves this screen; `/<name>` when not declared. */
 	path?: string;
+	/**
+	 * A path per state, overriding `path` for those states: a state that exists
+	 * only at another address (`{ "conversation": "/new/{seed}" }`).
+	 */
+	paths?: Record<string, string>;
+	/**
+	 * A command the check runs before it opens this screen's states; its trimmed
+	 * stdout replaces `{seed}` in the screen's paths and in `unseed`. For a state
+	 * that exists only once something does.
+	 */
+	seed?: string;
+	/** Run after the screen's states are opened, whatever happened; `{seed}` is substituted. */
+	unseed?: string;
 }
 
 export interface Mockup {

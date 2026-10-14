@@ -80,6 +80,7 @@ const config = defineConfig({
 				{
 					text: "Working across repos",
 					items: [
+						{ text: "Starting a project", link: "/guide/new-project" },
 						{ text: "Workbenches & Worktrees", link: "/guide/worktree-setup" },
 						{ text: "Sharing a Workbench", link: "/guide/workbench-sharing" },
 						{ text: "Multi-Agent Coordination", link: "/guide/multi-agent" },
@@ -126,6 +127,7 @@ const config = defineConfig({
 					items: [
 						{ text: "setup", link: "/reference/cli/setup" },
 						{ text: "workbench", link: "/reference/cli/workbench" },
+						{ text: "new-project", link: "/reference/cli/new-project" },
 						{ text: "worktree", link: "/reference/cli/worktree" },
 						{ text: "run", link: "/reference/cli/run" },
 						{ text: "verify", link: "/reference/cli/verify" },
@@ -249,6 +251,7 @@ const config = defineConfig({
 						{ text: "The Shape check — craft feedback at the phase boundary", link: "/decisions/lifecycle-rebalance" },
 						{ text: "Local Init Mode", link: "/decisions/local-init-mode" },
 						{ text: "Multi-Agent Coordination", link: "/decisions/multi-agent-coordination" },
+						{ text: "New Project Flow", link: "/decisions/new-project-flow" },
 						{ text: "OpenTelemetry Extension", link: "/decisions/otel-extension" },
 						{ text: "Semantic Graph Bridge", link: "/decisions/semantic-graph-bridge" },
 						{ text: "Test phases as structure", link: "/decisions/test-phase-structure" },

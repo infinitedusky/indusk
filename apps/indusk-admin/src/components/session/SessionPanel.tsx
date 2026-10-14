@@ -3,6 +3,7 @@
 import type { Question, StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { describeToolInput as describeInput } from "@/lib/conversation-turns";
 
 /**
  * A session of the developer's own `claude`, as a person sees it
@@ -137,16 +138,16 @@ export function replyRepeated(events: StartedEvent[], i: number): boolean {
   return false;
 }
 
-function EventView({
+export function EventView({
   ev,
-  repeatsReply,
+  repeatsReply = false,
   open,
   onAnswer,
   onDecide,
 }: {
   ev: StartedEvent;
-  /** A finished turn's text is the reply shown above it: say "Turn done" alone. */
-  repeatsReply: boolean;
+  /** A finished turn's text is the reply shown above it: say "Turn done" alone. Absent: say it with its text. */
+  repeatsReply?: boolean;
   open: boolean;
   onAnswer: (answers: Record<string, string>) => void;
   onDecide: (allow: boolean) => void;
@@ -372,19 +373,4 @@ function QuestionView({
       ) : null}
     </div>
   );
-}
-
-/** A tool's input in a few words: the path it names, or its command, or nothing. */
-function describeInput(input: Record<string, unknown>): string {
-  for (const key of [
-    "file_path",
-    "path",
-    "notebook_path",
-    "command",
-    "pattern",
-    "skill",
-  ]) {
-    if (typeof input[key] === "string") return String(input[key]);
-  }
-  return "";
 }
