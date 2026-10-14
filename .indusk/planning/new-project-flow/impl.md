@@ -156,7 +156,7 @@ Deferred-body review (Test Phase 1):
 **Tier**: med — the work step's default
 
 - [x] `lib/new-project/store.ts`: `createProjectDraft(home, { message, documents })`, `readProjectDraft`, `discardProjectDraft`, under `<induskHome()>/new-projects/<id>/` (`draft.json`, `brief.md`, `research.md`, `documents/`)
-- [ ] `lib/new-project/documents.ts`: `addDocument(draft, file)` — a name already present keeps the newer bytes and returns the unified diff
+- [x] `lib/new-project/documents.ts`: `addDocument(draft, file)` — a name already present keeps the newer bytes and returns the unified diff
 - [ ] `lib/new-project/prompt.ts`: the new-project prompt — the planner skill, ask why / what / how-where and only what the input leaves open, write `brief.md` then `proposal.json`
 - [ ] `lib/new-project/parent.ts`: `readParent()` / `setParent(dir)` on `newProjects.parent` in `~/.indusk/admin-ui.json`
 - [ ] CLI `indusk new-project start | add | discard | parent` in `bin/cli.ts`; the package exports `./new-project` for the admin

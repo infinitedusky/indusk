@@ -1,4 +1,4 @@
-import { execFile, execFileSync } from "node:child_process";
+import { execFile, execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
@@ -243,4 +243,21 @@ export function parseWorktreeList(porcelain: string): GitWorktree[] {
 		});
 	}
 	return entries;
+}
+
+/**
+ * The unified diff between two files that need not be in any repository
+ * (`git diff --no-index`), synchronously; the empty string when they are the
+ * same. git exits 1 when they differ, which is the answer here, not a failure.
+ * Headers are git's own, naming the paths as given.
+ */
+export function diffFiles(before: string, after: string): string {
+	const r = spawnSync("git", ["diff", "--no-index", "--no-color", "--", before, after], {
+		encoding: "utf-8",
+		maxBuffer: 32 * 1024 * 1024,
+	});
+	if (r.status !== 0 && r.status !== 1) {
+		throw new Error(`git diff --no-index failed: ${r.stderr.trim() || `exit ${r.status}`}`);
+	}
+	return r.stdout;
 }
