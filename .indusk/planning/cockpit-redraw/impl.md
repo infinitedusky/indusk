@@ -1,7 +1,7 @@
 ---
 title: "cockpit-redraw — the nav from the original cockpit, the brief page drawn, re-approval a person's"
 date: 2026-10-13
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -60,6 +60,7 @@ The cockpit looks as Sandy meant it and each look is approved once: the nav redr
 | A15 | A drag the browser cancels (`pointercancel`, or the pointer capture lost) ends the drag: the edge stops reading `dragging`, the width reached is kept, and a later pointer move with no button held does not resize the nav | Build Phase 4 | Build Phase 4 | passing | unit | promise: the-nav-widens-by-dragging | apps/indusk-admin/src/components/ui/NavHandle.test.tsx |
 | A16 | A plan whose only wait is an amendment (no session question, no stopped build) reports `plan.needs-you`, the state whose mockup draws the amendment card, not `plan.working` | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/lib/look-state.test.ts |
 | A17 | `buildGroups`, moved to `lib/plan-groups.ts`, returns every plan passed in — inside a Path or in `rest` — for nested Paths, a declared cycle and a child declared under two parents; the PlanList tests pass unchanged | Build Phase 5 | Build Phase 5 | passing | unit | promise: paths-keep-their-order | apps/indusk-admin/src/lib/plan-groups.test.ts |
+| A18 | A look whose page answers 404 (its plan is not in the project the check runs against) is recorded unchecked, naming the 404, and the check measures every other look; a failure that is neither a 404 nor a timeout (connection refused, a 500) still ends the run | Build Phase 6 | Build Phase 6 | planned | unit | regression: the audit's finding that `indusk looks check admin` against the person's own project stops at the first `looks-fixture-*` path | apps/indusk-mcp/src/__tests__/looks-check-timeout.test.ts |
 
 ### Deferred Verification
 
@@ -304,6 +305,26 @@ Resolved 2026-10-13 (was a blocker: `looks check` counts a state only when the p
 
 #### Build Phase 5 Document
 - [x] (none needed — asked: "Build Phase 5 (cleanup) moves the plan-tree logic into lib/plan-groups.ts and shares one width clamp — no page, route or CLI changes. Can I skip its document gate?" — user: "Yes, skip it")
+
+### Build Phase 6: The admin's look check finishes against the person's own project
+
+**Tier**: med — the work step's default
+
+**Goal**: the audit (`audit.md`, "What does the diff change that no row touches?") found that `screens.json` now opens the plan and brief screens at `looks-fixture-*` plans that exist only in A10's throwaway project, and `measure` in `looks/check.ts` throws on a 404, which `openWithinTime` rethrows — so `indusk looks check admin` run against the person's admin ends at the first fixture path and loses every look it measured. A 404 says the page is not in this project, a fact about the project as a timeout is a fact about the page: it becomes the reason that look was not checked, and the run goes on. Other failures stay loud.
+
+- [ ] `looks/check.ts`: a page that answers 404 is a named `LookNotHere` (beside `LookTimedOut`); `openWithinTime` returns `{ unchecked: "<url> answered 404 — not in this project" }` for it on the first try (no retry), and the caller records it in `unchecked` exactly as a timed-out look is; every other `LooksCheckError` still throws. The function's comment and the existing case "still ends the run on a failure that is not time" are updated to say 404 is the exception and why (the 500/refused case keeps that test's assertion)
+- [ ] `indusk looks check admin` against the running admin on the real project: the `looks-fixture-*` screens print `unchecked … answered 404`, every other admin screen is measured, and the run ends with `N looks held, M unchecked` (or names broken looks honestly) — recorded here with the counts
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+
+#### Build Phase 6 Verification
+- [ ] A18 and the older timeout cases pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/looks-check-timeout.test.ts src/lib/looks/check.test.ts`); `pnpm exec vitest related src/lib/looks/check.ts`; tsc and biome clean on changed files; the indusk-mcp dist rebuilt (`pnpm build` in apps/indusk-mcp) so the admin's A10 uses it, and A10 still passes in the system tier (`cd apps/indusk-admin && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/cockpit-redraw.contract.test.ts`)
+
+#### Build Phase 6 Context
+- [ ] `apps/indusk-admin/CLAUDE.md` (shrink, it is over budget): the plan and brief screens are held by A10's fixture project; against the real project the check names them unchecked (404), never a failure
+
+#### Build Phase 6 Document
+- [ ] `apps/docs/src/reference/cli/looks.md` (or the page that documents `looks check`): a look whose page answers 404 is reported unchecked, and the run goes on
+
 
 ## Files Affected
 
