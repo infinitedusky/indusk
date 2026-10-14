@@ -14,6 +14,7 @@ import * as newProjectDiscard from "@/app/api/new-projects/[id]/discard/route";
 import * as newProjectFold from "@/app/api/new-projects/[id]/fold/route";
 import * as newProjectProposal from "@/app/api/new-projects/[id]/proposal/route";
 import * as newProjectTalk from "@/app/api/new-projects/[id]/talk/route";
+import * as newProjectParent from "@/app/api/new-projects/parent/route";
 import * as newProjects from "@/app/api/new-projects/route";
 import * as decision from "@/app/api/plans/[name]/decision/route";
 import * as reapprove from "@/app/api/plans/[name]/reapprove/route";
@@ -71,6 +72,7 @@ const MODULES: Record<string, Record<string, unknown>> = {
   "new-projects/[id]/fold": newProjectFold,
   "new-projects/[id]/proposal": newProjectProposal,
   "new-projects/[id]/talk": newProjectTalk,
+  "new-projects/parent": newProjectParent,
   trust,
 };
 
