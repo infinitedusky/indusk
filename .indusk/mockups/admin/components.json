@@ -638,13 +638,13 @@
 					"snapshotHash": "b2e07cb0a616aaa9bdb004bad88ba1c064c0c08c5c07765dea183a2e06c117c8"
 				},
 				{
-					"name": "kind-mockup",
-					"id": "ui-lookrow--kind-mockup",
+					"name": "mockup",
+					"id": "ui-lookrow--mockup",
 					"snapshotHash": "cbdd8da7b72229dedf4d14a294071e8d08e696ffeed750c9ae078d0cacc249fe"
 				},
 				{
-					"name": "kind-story",
-					"id": "ui-lookrow--kind-story",
+					"name": "story",
+					"id": "ui-lookrow--story",
 					"snapshotHash": "ab8f40038306d63561013b920c4440456150b5965b5df8ddc7d4540c6bf28d51"
 				}
 			],

@@ -20,10 +20,10 @@ export const Uncovered: Story = {
 };
 
 /** A mockup is a drawing: the kind leads, above the name. */
-export const KindMockup: Story = {
+export const Mockup: Story = {
   args: { kind: "mockup", name: "new-project.no-parent", approval: "proposed" },
 };
 /** A story is the built component: the kind leads, above the name. */
-export const KindStory: Story = {
+export const Story: Story = {
   args: { kind: "story", name: "message.agent-working", approval: "proposed" },
 };
