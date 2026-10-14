@@ -53,11 +53,11 @@
 			.working { display: grid; gap: var(--space-1); padding-bottom: var(--space-2); border-bottom-width: var(--border-1); border-bottom-style: solid; border-bottom-color: var(--color-line); }
 			.working li { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); overflow-wrap: anywhere; }
 					@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-			.msg.working { animation: pulse var(--duration-pulse) var(--easing-in-out) infinite; }
+			.dot.live { box-shadow: var(--shadow-ring); animation: pulse var(--duration-pulse) var(--easing-in-out) infinite; }
 			.who-row { display: flex; align-items: center; gap: var(--space-2); }
 		</style>
 	</head>
 		<body>
-<main class="page"><div class="thread"><div class="msg agent working" data-component="message" data-state="agent-working"><span class="who-row"><span class="dot"></span><span class="who">Agent</span></span><button class="fold" type="button">See more ›</button><p class="hint">Working…</p></div></div></main>
+<main class="page"><div class="thread"><div class="msg agent" data-component="message" data-state="agent-working"><span class="who-row"><span class="dot live"></span><span class="who">Agent</span></span><button class="fold" type="button">See more ›</button><p class="hint">Working…</p></div></div></main>
 	</body>
 </html>
