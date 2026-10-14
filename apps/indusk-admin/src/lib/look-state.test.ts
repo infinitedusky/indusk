@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { briefLookState, planLookState } from "@/lib/look-state";
+import { briefLookState, navLookState, planLookState } from "@/lib/look-state";
 
 const base = {
   archived: false,
@@ -36,5 +36,22 @@ describe("briefLookState — what the brief page says it draws", () => {
     expect(briefLookState({ approved_brief: "abc" })).toBe("brief.approved");
     expect(briefLookState({})).toBe("brief.writing");
     expect(briefLookState(undefined)).toBe("brief.writing");
+  });
+});
+
+describe("navLookState — what the nav says it draws", () => {
+  it("is collapsed when folded, wider only past the opening width, else expanded", () => {
+    expect(navLookState({ folded: true, width: 440, opening: 280 })).toBe(
+      "nav.collapsed",
+    );
+    expect(navLookState({ folded: false, width: 440, opening: 280 })).toBe(
+      "nav.wide",
+    );
+    expect(navLookState({ folded: false, width: 280, opening: 280 })).toBe(
+      "nav.expanded",
+    );
+    expect(navLookState({ folded: false, width: null, opening: null })).toBe(
+      "nav.expanded",
+    );
   });
 });

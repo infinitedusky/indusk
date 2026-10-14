@@ -41,3 +41,25 @@ export function briefLookState(implFrontmatter?: object): BriefLookState {
     ?.approved_brief;
   return approved ? "brief.approved" : "brief.writing";
 }
+
+export type NavLookState = "nav.collapsed" | "nav.wide" | "nav.expanded";
+
+/**
+ * The nav's state: folded to its strip, dragged (or asked) wider than the
+ * foundation's width, or as it opens. `width` is null until the nav has been
+ * measured, which is the opening width.
+ */
+export function navLookState(input: {
+  folded: boolean;
+  width: number | null;
+  opening: number | null;
+}): NavLookState {
+  if (input.folded) return "nav.collapsed";
+  if (
+    input.width !== null &&
+    input.opening !== null &&
+    input.width > input.opening
+  )
+    return "nav.wide";
+  return "nav.expanded";
+}

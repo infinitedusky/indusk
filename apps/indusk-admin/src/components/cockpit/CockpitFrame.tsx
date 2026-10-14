@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { Nav } from "@/components/ui/Nav";
 import { NavHandle } from "@/components/ui/NavHandle";
 import { Shell } from "@/components/ui/Shell";
+import { navLookState } from "@/lib/look-state";
 
 export interface CockpitFrameProps {
   project: string;
@@ -138,13 +139,12 @@ export function CockpitFrame({
   };
   const folded = collapsed && wide;
   const dragged = wide && !folded && bounds !== null && width !== null;
-  // What the nav really draws, for the look check (`data-look-state`): folded
-  // to its strip, dragged wider than the foundation's width, or as it opens.
-  const lookState = folded
-    ? "nav.collapsed"
-    : dragged && width > bounds.min
-      ? "nav.wide"
-      : "nav.expanded";
+  // What the nav really draws, for the look check (`data-look-state`).
+  const lookState = navLookState({
+    folded,
+    width: dragged ? width : null,
+    opening: bounds?.min ?? null,
+  });
 
   return (
     <>
