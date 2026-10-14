@@ -11,6 +11,8 @@ gate_policy: ask
 approved_brief: "3e3375fecd0091e26e5509074031d8db5fa314caa90b65722edd210fae50419d"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-14T20:50:43.854Z"
+accepted: 2026-10-14T22:27:23.420Z
+accepted_by: person
 ---
 
 # New project flow
