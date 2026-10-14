@@ -562,6 +562,33 @@
 			"stylesheetHash": "3ed41e464559d87068eb714f423e304a5f9776143fda708cea97191180717f22"
 		},
 		{
+			"name": "layout-tree",
+			"file": "apps/indusk-admin/src/components/ui/LayoutTree.tsx",
+			"properties": [
+				{
+					"name": "children",
+					"type": "string",
+					"required": true,
+					"description": "The tree as text: one line per folder, indented, a note after the name."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-layouttree--default",
+					"snapshotHash": "77148b6d4129b04aa6a1490de46381f6bdc120bcddb98885772e371ea7cae033"
+				}
+			],
+			"stylesheet": "components/layout-tree.css",
+			"stylesheetHash": "05ac1143e283e11e614fd50f32d6f5270bb352eee3acbd99d07b1669a9f26691"
+		},
+		{
 			"name": "look-row",
 			"file": "apps/indusk-admin/src/components/ui/LookRow.tsx",
 			"properties": [
@@ -1198,6 +1225,67 @@
 			"stylesheetHash": "4b903290cb06d70c76454beeeafe3c195d7aabb93b73cf6e713b2d98fb2bf004"
 		},
 		{
+			"name": "recommendation",
+			"file": "apps/indusk-admin/src/components/ui/Recommendation.tsx",
+			"properties": [
+				{
+					"name": "state",
+					"type": "\"kept\" | \"declined\"",
+					"required": true
+				},
+				{
+					"name": "title",
+					"type": "string",
+					"required": true,
+					"description": "The practice, in a few words."
+				},
+				{
+					"name": "why",
+					"type": "string",
+					"required": false,
+					"description": "One line on why it is recommended."
+				},
+				{
+					"name": "reason",
+					"type": "string",
+					"required": false,
+					"description": "The person's reason, in their words; shown once it is declined."
+				},
+				{
+					"name": "action",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Decline, or Keep it after all: the button the page gives it."
+				},
+				{
+					"name": "children",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Anything under the reason: the field a decline asks for."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "kept",
+					"id": "ui-recommendation--kept",
+					"snapshotHash": "16726baf388ba8badafd652fbac21c3c14379838c3996e198ece8fabe7eae968"
+				},
+				{
+					"name": "declined",
+					"id": "ui-recommendation--declined",
+					"snapshotHash": "86d6bb342fec77eb89cfd3ea93c5fedfd1c302fdbae450a60c61df92bbc2d73f"
+				}
+			],
+			"stylesheet": "components/recommendation.css",
+			"stylesheetHash": "44221201ffe67d72eaf0cd0eccb2bfb16b325980e3485d6237d0b93cb8e000c3"
+		},
+		{
 			"name": "shell",
 			"file": "apps/indusk-admin/src/components/ui/Shell.tsx",
 			"properties": [
@@ -1488,6 +1576,33 @@
 			],
 			"stylesheet": "components/view-link.css",
 			"stylesheetHash": "45a31efe21223a0d5eb9efb0e3b9791b1bf642c4d37d4a80638fb1a04a11d162"
+		},
+		{
+			"name": "workflow-strip",
+			"file": "apps/indusk-admin/src/components/ui/WorkflowStrip.tsx",
+			"properties": [
+				{
+					"name": "documents",
+					"type": "unknown",
+					"required": true,
+					"description": "The planning documents in order."
+				},
+				{
+					"name": "className",
+					"type": "unknown",
+					"required": false,
+					"defaultValue": "\"\""
+				}
+			],
+			"states": [
+				{
+					"name": "default",
+					"id": "ui-workflowstrip--default",
+					"snapshotHash": "f5c21833c099ea33378d68108be5475250e645e485a762cc159799e7f5a97da7"
+				}
+			],
+			"stylesheet": "components/workflow-strip.css",
+			"stylesheetHash": "3473cfd6dbbea9d45cf908bc3fd92c5bda568b80ed4ac5f888d97902a7fbefca"
 		}
 	]
 }
