@@ -2,7 +2,7 @@
 title: "Plan titles and stories"
 description: "Every plan is shown by a short title a person would say, with its description beside it, instead of its folder name. A master plan's page tells its story: what it is for, then each of its plans in order, what each does and how far along it is."
 date: 2026-10-14
-status: draft
+status: accepted
 workflow: feature
 ---
 
