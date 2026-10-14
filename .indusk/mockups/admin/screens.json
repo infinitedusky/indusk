@@ -3,7 +3,8 @@
 	"sources": ["apps/indusk-admin/src"],
 	"ignore": ["nextjs-portal"],
 	"screens": [
-		{ "name": "nav", "states": ["expanded", "collapsed"], "path": "/p/dusk/promises" },
+		{ "name": "nav", "states": ["expanded", "collapsed", "wide"], "path": "/p/dusk/promises" },
+		{ "name": "nav-handle", "states": ["default", "dragging"], "path": "/p/dusk/promises" },
 		{ "name": "dashboard", "states": ["default", "empty"], "path": "/p/dusk/promises" },
 		{ "name": "promise", "states": ["broken", "enforced"], "path": "/p/dusk/promises" },
 		{ "name": "plan", "states": ["needs-you", "working", "released", "parts", "drafts", "new", "history", "phases", "documents"], "path": "/p/dusk/plan/ui-promises" },
@@ -23,6 +24,7 @@
 		{ "name": "prompt-box", "states": ["default"], "path": "/new" },
 		{ "name": "knowledge-list", "states": ["default"], "path": "/new" },
 		{ "name": "workflow-strip", "states": ["default"], "path": "/new" },
-		{ "name": "layout-tree", "states": ["default"], "path": "/new" }
+		{ "name": "layout-tree", "states": ["default"], "path": "/new" },
+		{ "name": "brief", "states": ["writing", "approved"], "path": "/p/dusk/plan/cockpit-redraw/brief" }
 	]
 }
