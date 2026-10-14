@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { isUsableSegment } from "../path-segment.js";
 import { coreDocumentIn, DOCUMENT_LABELS } from "../workflow-types.js";
+import type { Visibility } from "./github.js";
 import type { ProjectDraft } from "./store.js";
 
 /**
@@ -39,7 +40,8 @@ export interface Proposal {
 	recommendations: ProposalRecommendation[];
 	/** Planning documents the project does not write; never the brief or the test plan. */
 	documentsOff: string[];
-	remote: { github: boolean };
+	/** `visibility` is private unless the person chose public. */
+	remote: { github: boolean; visibility: Visibility };
 }
 
 /** What a proposal is, or why it is not one: every problem found, none repaired. */
@@ -135,6 +137,12 @@ export function validateProposal(raw: unknown): ProposalCheck {
 
 	if (!isObject(raw.remote) || typeof raw.remote.github !== "boolean") {
 		problems.push("remote must say github: true or false");
+	} else if (
+		raw.remote.visibility !== undefined &&
+		raw.remote.visibility !== "private" &&
+		raw.remote.visibility !== "public"
+	) {
+		problems.push("remote visibility must be private or public");
 	}
 
 	if (problems.length > 0) return { proposal: null, problems };
@@ -152,7 +160,10 @@ export function validateProposal(raw: unknown): ProposalCheck {
 				...(rec.kept ? {} : { reason: rec.reason }),
 			})),
 			documentsOff: documentsOff as string[],
-			remote: { github: (raw.remote as { github: boolean }).github },
+			remote: {
+				github: (raw.remote as { github: boolean }).github,
+				visibility: (raw.remote as { visibility?: Visibility }).visibility ?? "private",
+			},
 		},
 		problems: [],
 	};

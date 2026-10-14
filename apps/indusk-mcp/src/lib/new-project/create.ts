@@ -435,7 +435,15 @@ async function makeProject(
 		try {
 			await run(
 				"gh",
-				["repo", "create", first, "--private", "--source", join(root, first), "--push"],
+				[
+					"repo",
+					"create",
+					first,
+					`--${proposal.remote.visibility}`,
+					"--source",
+					join(root, first),
+					"--push",
+				],
 				join(root, first),
 			);
 			progress.set("github", "done");

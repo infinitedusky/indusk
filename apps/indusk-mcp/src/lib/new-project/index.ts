@@ -13,8 +13,8 @@ export {
 	createProject,
 	readCreation,
 } from "./create.js";
-export { type GhRunner, githubAccount, runGh, type Visibility } from "./github.js";
 export { type AddedDocument, addDocument, documentNotice } from "./documents.js";
+export { type GhRunner, githubAccount, runGh, type Visibility } from "./github.js";
 export { type KnowledgeEntry, type KnowledgeState, knowledgeOf } from "./knowledge.js";
 export { isUnderParent, type ParentSetBy, parentSetBy, readParent, setParent } from "./parent.js";
 export {

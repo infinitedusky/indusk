@@ -361,7 +361,9 @@ describe.skipIf(SHOULD_SKIP)("indusk new-project", () => {
 
 		const unknown = sandbox();
 		setParent(unknown);
-		const { id } = seed(unknown, { proposal: { remote: { github: true, visibility: "internal" } } });
+		const { id } = seed(unknown, {
+			proposal: { remote: { github: true, visibility: "internal" } },
+		});
 		const refused = run(unknown, ["accept", id]);
 		expect(refused.code, "a visibility other than private or public was accepted").not.toBe(0);
 		expect(refused.stderr).toContain("visibility");

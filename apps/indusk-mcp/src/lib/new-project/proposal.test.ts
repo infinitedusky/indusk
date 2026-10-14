@@ -27,7 +27,7 @@ const valid = () => ({
 		{ name: "adr", kept: false, reason: "Solo project for now" },
 	],
 	documentsOff: ["adr"],
-	remote: { github: false },
+	remote: { github: false, visibility: "private" },
 });
 
 const problemsOf = (over: Record<string, unknown>) =>
@@ -38,6 +38,15 @@ describe("a project proposal", () => {
 		const { proposal, problems } = validateProposal(valid());
 		expect(problems).toEqual([]);
 		expect(proposal).toEqual(valid());
+	});
+
+	it("reads a remote with no visibility as private and refuses any answer but private or public", () => {
+		const { proposal } = validateProposal({ ...valid(), remote: { github: true } });
+		expect(proposal?.remote).toEqual({ github: true, visibility: "private" });
+		expect(problemsOf({ remote: { github: true, visibility: "public" } })).toBe("");
+		expect(problemsOf({ remote: { github: true, visibility: "internal" } })).toContain(
+			"visibility",
+		);
 	});
 
 	it("refuses turning off the brief or the test plan, naming the document", () => {
