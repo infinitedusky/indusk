@@ -15,6 +15,9 @@ export type WaitingEvent = Extract<
   { type: "question" | "permission" }
 >;
 
+/** Where an agent turn stands: still going, replied, or ended before replying. */
+export type TurnStatus = "working" | "done" | "stopped";
+
 export type Turn =
   | { who: "you"; text: string }
   | {
@@ -25,6 +28,7 @@ export type Turn =
       working: string[];
       /** Questions and permission requests nobody has answered; never folded away. */
       waiting: WaitingEvent[];
+      status: TurnStatus;
     };
 
 export interface TurnOptions {
@@ -63,6 +67,8 @@ export function turnsOf(
   let waiting: WaitingEvent[] = [];
   let result: string | null = null;
   let failed = false;
+  // Whether each agent turn (by position in `turns`) ended with a result.
+  const ended = new Set<number>();
 
   const flush = () => {
     if (items.length === 0 && waiting.length === 0 && result === null) return;
@@ -76,11 +82,13 @@ export function turnsOf(
       }
     }
     const reply = replyAt >= 0 ? (items[replyAt]?.line ?? "") : (result ?? "");
+    if (result !== null) ended.add(turns.length);
     turns.push({
       who: "agent",
       reply,
       working: items.filter((_, i) => i !== replyAt).map((item) => item.line),
       waiting,
+      status: "stopped",
     });
     items = [];
     waiting = [];
@@ -116,7 +124,40 @@ export function turnsOf(
     }
   }
   flush();
-  return turns;
+  return withStatus(turns, ended, running);
+}
+
+/**
+ * Each agent turn's status. The turn the agent is on is the last one when it
+ * runs and has not ended it - and it exists as soon as the session starts,
+ * before any text (an agent that is running after the person spoke, or after
+ * nothing, is working). Any other turn is done when it replied, else stopped.
+ */
+function withStatus(
+  turns: Turn[],
+  ended: ReadonlySet<number>,
+  running: boolean,
+): Turn[] {
+  const last = turns[turns.length - 1];
+  const current = last?.who === "agent" && !ended.has(turns.length - 1);
+  if (running && !current && (last === undefined || last.who === "you"))
+    turns.push({
+      who: "agent",
+      reply: "",
+      working: [],
+      waiting: [],
+      status: "working",
+    });
+  return turns.map((turn, at) => {
+    if (turn.who === "you") return turn;
+    const status: TurnStatus =
+      running && at === turns.length - 1 && !ended.has(at)
+        ? "working"
+        : ended.has(at) || turn.reply !== ""
+          ? "done"
+          : "stopped";
+    return { ...turn, status };
+  });
 }
 
 /** The event types a session emits; the transcript's own lines (`session`, `fold-opened`) are not among them. */

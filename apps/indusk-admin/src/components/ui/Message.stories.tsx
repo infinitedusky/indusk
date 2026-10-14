@@ -72,3 +72,21 @@ export const AgentOpen: Story = {
     children: reply,
   },
 };
+
+/** The agent is still making its reply: the pulsing dot and "Working…". */
+export const AgentWorking: Story = {
+  args: {
+    state: "agent-working",
+    working: ["Read planner.md"],
+    children: null,
+  },
+};
+
+/** The agent ended before replying: the grey dot and the line that says how to go on. */
+export const AgentStopped: Story = {
+  args: {
+    state: "agent-stopped",
+    working: ["Read planner.md"],
+    children: null,
+  },
+};

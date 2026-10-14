@@ -1,7 +1,13 @@
 import type { HTMLAttributes, ReactNode } from "react";
 import { FileChip } from "./FileChip";
 
-export type MessageState = "you" | "agent" | "agent-folded" | "agent-open";
+export type MessageState =
+  | "you"
+  | "agent"
+  | "agent-folded"
+  | "agent-open"
+  | "agent-working"
+  | "agent-stopped";
 
 export interface MessageProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "onToggle"> {
@@ -9,7 +15,10 @@ export interface MessageProps
    * Whose words: the person's, set to the right on a wash, or the agent's, on
    * a surface. An agent's reply with working behind it is `agent-folded` (the
    * working hidden behind "See more ›") or `agent-open` (the working shown
-   * above the reply, "See less" to hide it).
+   * above the reply, "See less" to hide it), each with the green done dot. A
+   * reply still being made is `agent-working` (the pulsing dot, "Working…");
+   * one whose agent ended before replying is `agent-stopped` (the grey dot and
+   * a line saying to write below to pick it up).
    */
   state: MessageState;
   /** The words: paragraphs, and a numbered list when the agent asks. */
@@ -20,6 +29,8 @@ export interface MessageProps
   working?: readonly string[];
   /** The fold button was pressed; the page flips `state` between folded and open. */
   onToggle?: () => void;
+  /** Working and stopped replies show their working only when this is set. */
+  expanded?: boolean;
 }
 
 const SHAPE: Record<MessageState, string> = {
@@ -27,6 +38,22 @@ const SHAPE: Record<MessageState, string> = {
   agent: "border border-line bg-surface",
   "agent-folded": "border border-line bg-surface",
   "agent-open": "border border-line bg-surface",
+  "agent-working": "border border-line bg-surface",
+  "agent-stopped": "border border-line bg-surface",
+};
+
+/** The status dot an agent state carries; the plain `agent` state has none. */
+const DOT: Partial<Record<MessageState, string>> = {
+  "agent-folded": "bg-ok",
+  "agent-open": "bg-ok",
+  "agent-working": "pulse bg-dusk shadow-ring",
+  "agent-stopped": "bg-idle",
+};
+
+const NOTE: Partial<Record<MessageState, string>> = {
+  "agent-working": "Working…",
+  "agent-stopped":
+    "Stopped before replying. Write below to pick the conversation up again.",
 };
 
 const WHO: Record<MessageState, string> = {
@@ -34,6 +61,8 @@ const WHO: Record<MessageState, string> = {
   agent: "Agent",
   "agent-folded": "Agent",
   "agent-open": "Agent",
+  "agent-working": "Agent",
+  "agent-stopped": "Agent",
 };
 
 /**
@@ -48,11 +77,16 @@ export function Message({
   documents = [],
   working = [],
   onToggle,
+  expanded = false,
   className = "",
   ...rest
 }: MessageProps) {
-  const open = state === "agent-open";
-  const folds = state === "agent-folded" || open;
+  const unfinished = state === "agent-working" || state === "agent-stopped";
+  const open = state === "agent-open" || (unfinished && expanded);
+  const folds =
+    state === "agent-folded" ||
+    state === "agent-open" ||
+    (unfinished && working.length > 0);
   return (
     <div
       data-component="message"
@@ -60,9 +94,14 @@ export function Message({
       className={`grid measure-message gap-2 rounded-xl px-4 py-3 [&_ol]:grid [&_ol]:list-decimal [&_ol]:gap-1 [&_ol]:pl-5 ${SHAPE[state]} ${className}`}
       {...rest}
     >
-      <span className="text-2xs leading-1 font-semibold tracking-caps text-ink-faint uppercase">
-        {WHO[state]}
-      </span>
+      {DOT[state] ? (
+        <span className="flex items-center gap-2">
+          <span className={`size-dot flex-none rounded-pill ${DOT[state]}`} />
+          <Who>{WHO[state]}</Who>
+        </span>
+      ) : (
+        <Who>{WHO[state]}</Who>
+      )}
       {folds ? (
         <button
           type="button"
@@ -88,9 +127,20 @@ export function Message({
         </ul>
       ) : null}
       {children}
+      {NOTE[state] ? (
+        <p className="text-sm leading-3 text-ink-faint">{NOTE[state]}</p>
+      ) : null}
       {documents.map((name) => (
         <FileChip key={name}>{name}</FileChip>
       ))}
     </div>
+  );
+}
+
+function Who({ children }: { children: ReactNode }) {
+  return (
+    <span className="text-2xs leading-1 font-semibold tracking-caps text-ink-faint uppercase">
+      {children}
+    </span>
   );
 }

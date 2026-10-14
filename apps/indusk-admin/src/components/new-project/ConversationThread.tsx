@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Markdown } from "@/components/Markdown";
 import { EventView } from "@/components/session/SessionPanel";
 import { Button } from "@/components/ui/Button";
-import { Message } from "@/components/ui/Message";
+import { Message, type MessageState } from "@/components/ui/Message";
 import { type Turn, turnsOf } from "@/lib/conversation-turns";
 
 /**
@@ -117,6 +117,17 @@ export function ConversationThread({
   );
 }
 
+/** The look state an agent turn draws: its status, and for a reply whether its working is folded. */
+function agentState(
+  turn: Extract<Turn, { who: "agent" }>,
+  open: boolean,
+): MessageState {
+  if (turn.status === "working") return "agent-working";
+  if (turn.status === "stopped") return "agent-stopped";
+  if (turn.working.length === 0) return "agent";
+  return open ? "agent-open" : "agent-folded";
+}
+
 function TurnView({
   turn,
   open,
@@ -137,12 +148,11 @@ function TurnView({
       </Message>
     );
   }
-  const state =
-    turn.working.length === 0 ? "agent" : open ? "agent-open" : "agent-folded";
   return (
     <Message
-      state={state}
+      state={agentState(turn, open)}
       working={turn.working}
+      expanded={open}
       onToggle={() => onToggle(open)}
     >
       {turn.reply ? <Markdown>{turn.reply}</Markdown> : null}
