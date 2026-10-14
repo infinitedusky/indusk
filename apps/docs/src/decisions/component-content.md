@@ -98,3 +98,13 @@ attribute cannot hold a component, so containers would need a second syntax.
   copy keeps the story's words. Mitigation: A5 lists each fillable property
   per state; a property seen only in attributes is not listed, so a mockup
   cannot fill it and the lint says so.
+- Words that share a text node with a property (`· {summary}`): the marker
+  render merges them, so the place alone would replace the story's static
+  words. The place records them as `before` / `after`, and only the
+  property's words are replaced.
+- A property whose story words are several nodes (`children` rendered as a
+  paragraph and a row of buttons): the marker render has one node where the
+  snapshot has several. The place records the count (`nodes`) from aligning the
+  two renders parent by parent; every later sibling's path shifts by the
+  difference. Two properties in one parent whose counts differ are ambiguous
+  and record neither, so the lint refuses filling them rather than guessing.

@@ -113,20 +113,34 @@ properties a mockup may fill (`children` for bare content, or the named
 property for `<indusk-content for>`). A state that lists none takes no
 content — its words are the story's.
 
-### The two lint rules
+Each entry is a place: a child-index path from the snapshot's root, or an
+object `{ "at": [0, 0, 2, 0], "before": "· " }` when the story's words share
+a text node with static words (`before` / `after` are kept; only the property's
+words are replaced) or `{ "at": [0, 2], "nodes": 2 }` when the story's
+children are several nodes (all of them are replaced). A bare path, as older
+catalogs wrote, reads as `{ "at": path }`.
+
+### The lint rules
 
 `indusk looks lint` holds what sits inside a placed component to words and
-placed components:
+placed components. `<indusk-content>` always names the property with `for`,
+and is never written inside another `<indusk-content>`; a self-closing
+`<indusk-component … />` ends at its start tag.
 
 - **`content-not-words-or-components`** — an element other than
   `<indusk-component>` or `<indusk-content>` was written inside a reference
-  (`content not words or components: <file>:<line> <div> inside button`). A
-  placed component takes text and other placed components; to show something
-  else, make it a component.
+  (`content not words or components: <file>:<line> <div> inside button`), or
+  an `<indusk-content>` has no `for` or sits inside another. A placed
+  component takes text and other placed components; to show something else,
+  make it a component.
 - **`component-takes-no-content`** — content was given for a property the
   state's `content` in `components.json` does not list
   (`component takes no content: <file>:<line> button has no "label" to fill`).
   Name a property the state lists, or give the component a story that takes it.
+- **`content-given-twice`** — one property was given two times: two
+  `<indusk-content for="name">`, or `for="children"` beside bare words
+  (`content given twice: <file>:<line> button "children" is also given at line
+  <n>`). Keep one.
 
 ## Approval, and taking it back
 
