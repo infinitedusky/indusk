@@ -61,6 +61,8 @@ are in [research.md](research.md).
 
 11. **`a-project-conversation-is-a-back-and-forth`** (state). A project conversation reads as a back-and-forth: the person's messages and the agent's replies alternate as "you" and "agent" bubbles, each reply formatted as Markdown, and the person answers in the same thread. Everything the agent did between replies is folded inside its bubble behind "See more", one click from view.
 
+12. **`a-look-says-whether-it-is-a-mockup-or-a-story`** (state). Every look on the looks page says whether it is a mockup — a drawing approved before the build — or a story — the built component, approved when it matches its mockup.
+
 ### Existing promises
 
 **Must not break**
@@ -114,6 +116,8 @@ None.
 18. **`message.agent-working`**. The agent's bubble while it works: shown the moment the conversation starts, its dot pulsing with a ring of the same colour, "Working…" and its working so far behind "See more ›", until its reply arrives.
 19. **`message.agent-stopped`**. The agent's bubble when it stopped before replying: a grey dot, its working behind "See more ›", and a line saying the person can write to pick the conversation up again. Every agent bubble carries one of the three dots: working, done or stopped.
 20. **`new-project.no-parent`**. The start page before anyone has said where new projects go: one field, "Where should new projects go?", saved from the page, so no command is typed.
+21. **`look-row.mockup`**. A row on the looks page labelled Mockup: a drawing approved before the build.
+22. **`look-row.story`**. A row on the looks page labelled Story: the built component, approved when it matches its mockup.
 
 ### Existing looks
 
