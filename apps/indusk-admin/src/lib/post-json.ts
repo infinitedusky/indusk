@@ -7,7 +7,9 @@
  * promise: one-definition-per-shared-rule
  */
 
-export type Posted<T> = { ok: true; body: T } | { ok: false; error: string };
+export type Posted<T> =
+  | { ok: true; body: T }
+  | { ok: false; error: string; body?: Record<string, unknown> };
 
 export async function postJson<T = Record<string, unknown>>(
   url: string,
@@ -24,6 +26,14 @@ export async function postJson<T = Record<string, unknown>>(
     return { ok: false, error: (err as Error).message };
   }
   const parsed = (await r.json().catch(() => ({}))) as T & { error?: string };
-  if (!r.ok) return { ok: false, error: parsed.error ?? `HTTP ${r.status}` };
+  if (!r.ok) {
+    // What the refusal carries beyond its error (a session to continue), only when it does.
+    const { error, ...rest } = parsed as Record<string, unknown>;
+    return {
+      ok: false,
+      error: typeof error === "string" ? error : `HTTP ${r.status}`,
+      ...(Object.keys(rest).length > 0 ? { body: rest } : {}),
+    };
+  }
   return { ok: true, body: parsed };
 }

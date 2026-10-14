@@ -47,6 +47,7 @@ vi.mock("@infinitedusky/indusk-mcp/drafts", async (importActual) => ({
 }));
 
 import { POST as talk } from "@/app/api/drafts/[id]/talk/route";
+import { POST as startSession } from "@/app/api/sessions/route";
 import { startBuild } from "@/lib/build-host";
 import { readWaiting } from "@/lib/decisions-reader";
 import type { Plan } from "@/lib/planning-reader";
@@ -156,5 +157,35 @@ describe("A6 — each plan's waiting entry shows its own session and question", 
       ["one", "Which map for one?"],
       ["two", "Which map for two?"],
     ]);
+  });
+});
+
+describe("A12 — a second session on the same plan offers to continue the running one", () => {
+  it("A12 the refusal says this plan has one, asks to continue it here, and hands back its id", async () => {
+    const manager = install();
+    const { id } = manager.start(planning("one"));
+    const res = await startSession(
+      new NextRequest("http://127.0.0.1:3996/api/sessions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          project: "proj",
+          plan: "one",
+          kind: "planning",
+          prompt: "/planner",
+        }),
+      }),
+    );
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as {
+      error: string;
+      running?: { id: string };
+    };
+    expect(body.error).toContain(
+      "A planning session is already running on this plan",
+    );
+    expect(body.error).toContain("Do you want to continue that session here?");
+    expect(body.running?.id).toBe(id);
+    expect(manager.running()).toHaveLength(1);
   });
 });

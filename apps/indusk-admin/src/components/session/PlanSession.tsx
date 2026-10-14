@@ -71,6 +71,8 @@ export function PlanSession({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** The session already running on this plan, offered to continue here. */
+  const [runningId, setRunningId] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -111,9 +113,22 @@ export function PlanSession({
     setBusy(false);
     if (!r.ok || !r.body.id) {
       setProblem(r.ok ? "the admin started no session" : r.error);
+      const running = r.ok ? undefined : r.body?.running;
+      setRunningId(
+        running && typeof running === "object" && "id" in running
+          ? String(running.id)
+          : null,
+      );
       return;
     }
     setSessionId(r.body.id);
+  };
+
+  const continueRunning = () => {
+    if (!runningId) return;
+    setSessionId(runningId);
+    setRunningId(null);
+    setProblem(null);
   };
 
   if (!sessionId && !canApprove && !canPlan) return null;
@@ -148,6 +163,13 @@ export function PlanSession({
       ) : null}
       {problem ? (
         <pre className="whitespace-pre-wrap text-sm text-bad">{problem}</pre>
+      ) : null}
+      {runningId && !sessionId ? (
+        <div>
+          <Button size="sm" onClick={continueRunning}>
+            Continue it here
+          </Button>
+        </div>
       ) : null}
       {sessionId ? (
         <SessionConnector sessionId={sessionId} fill={fill} />

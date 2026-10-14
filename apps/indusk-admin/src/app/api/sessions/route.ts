@@ -76,6 +76,15 @@ export async function POST(request: NextRequest): Promise<Response> {
       { status: 201 },
     );
   } catch (err) {
+    // The same plan's session: say so, and hand its id back so the page can
+    // offer to continue it here instead of starting another.
+    const running = (err as { running?: { id: string } }).running;
+    if (running) {
+      return Response.json(
+        { error: (err as Error).message, running: { id: running.id } },
+        { status: 409 },
+      );
+    }
     return refuse(409, (err as Error).message);
   }
 }
