@@ -5,6 +5,7 @@ import {
   refuse,
   sessionManager,
 } from "@/lib/session-host";
+import { ownsSession } from "@/lib/session-owner";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +20,9 @@ export function GET(request: NextRequest): Response {
 /**
  * Start a session for a plan: `{ project, plan, kind, prompt }`. It runs in the
  * plan's worktree while it has one. One at a time; a second is refused,
- * naming the first.
+ * naming the first — unless the first is this same project, plan and kind
+ * (`ownsSession`, the one rule for whose session it is): then the person is
+ * coming back to it, and the answer is its id, so the page attaches.
  */
 export async function POST(request: NextRequest): Promise<Response> {
   const refused = adminOnly(
@@ -43,6 +46,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       400,
       "a session needs project, plan, prompt, and kind planning or build",
     );
+  }
+  const running = sessionManager().current();
+  if (ownsSession(running, body.project, body.plan, body.kind)) {
+    return Response.json({ id: running.id, attached: true });
   }
   const where = await planLocation(body.project, body.plan);
   if ("error" in where) return refuse(404, where.error);
