@@ -110,7 +110,11 @@ draft prompt), `bin/commands/init.ts` (`init(projectRoot, options)`),
    asks for a few sentences of Markdown and at most three questions at a
    time. Only the project conversation changes; the plan conversation,
    builds and Fix with Claude keep the session panel until a later plan
-   moves them onto the same thread.
+   moves them onto the same thread. Start launches the agent as it creates
+   the draft, and every agent reply carries a status dot (`turnsOf` gives each
+   agent turn `working`, `done` or `stopped`): a pulsing dot and "Working…"
+   while it runs, a green dot once it has replied, a grey dot and a line to
+   write below when it ended before replying.
 
 ## Alternatives Considered
 

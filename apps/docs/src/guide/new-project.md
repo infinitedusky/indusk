@@ -15,6 +15,14 @@ flowchart LR
 
 ## The conversation
 
+**Start** launches the agent at once: the conversation opens with the agent
+already working, and there is no second button to press. Every reply from the
+agent carries a dot that says where it stands: a pulsing dot and **Working…**
+while it works, a green dot once it has replied, and a grey dot with a line
+saying to write below to pick the conversation up when it stopped before
+replying. (A conversation whose agent is not running offers **Talk to the
+agent** or **Reopen the conversation** instead.)
+
 The conversation reads as a thread: your words to the right, the agent's replies
 on the left. A reply is a few sentences of Markdown, with at most three
 questions at a time. The agent's working - the files it read, the notes it
