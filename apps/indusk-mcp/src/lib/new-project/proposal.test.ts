@@ -53,6 +53,10 @@ describe("a project proposal", () => {
 		);
 	});
 
+	it("A33 refuses a repository named worktrees, the folder plan worktrees go in", () => {
+		expect(problemsOf({ repos: [{ name: "worktrees" }] })).toContain("worktrees");
+	});
+
 	it("needs the person's reason beside a declined recommendation", () => {
 		expect(problemsOf({ recommendations: [{ name: "adr", kept: false }] })).toContain(
 			"declining adr needs the person's reason",

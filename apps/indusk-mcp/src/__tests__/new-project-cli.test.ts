@@ -7,10 +7,11 @@ import {
 	readFileSync,
 	realpathSync,
 	rmSync,
+	symlinkSync,
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { readPlanDeclarations } from "../lib/plan-parser.js";
 import { git, runCli, SHOULD_SKIP } from "./helpers/cli.js";
@@ -283,6 +284,36 @@ describe.skipIf(SHOULD_SKIP)("indusk new-project", () => {
 			expect(refused.stderr, `${off}: refusal does not name it`).toContain(off);
 			expect(existsSync(proposalFor(sb).location), `${off}: something was created`).toBe(false);
 		}
+	});
+
+	it("A31 a location reached through a symbolic link that leads out of the parent is refused and nothing is made outside it", () => {
+		const sb = sandbox();
+		setParent(sb);
+		const outside = join(dirname(sb.parent), "elsewhere");
+		mkdirSync(outside, { recursive: true });
+		symlinkSync(outside, join(sb.parent, "link"));
+		const { id } = seed(sb, { proposal: { location: join(sb.parent, "link", "escaped") } });
+
+		const refused = run(sb, ["accept", id]);
+		expect(refused.code, "accept was not refused").not.toBe(0);
+		expect(refused.stderr).toContain("outside the parent");
+		expect(readdirSync(outside), "something was made outside the parent").toEqual([]);
+	});
+
+	it("A32 a location inside an existing git repository under the parent is refused and that repository is untouched", () => {
+		const sb = sandbox();
+		setParent(sb);
+		const existing = join(sb.parent, "existing");
+		mkdirSync(existing, { recursive: true });
+		git(existing, ["init", "-q", "-b", "main"]);
+		const before = tree(existing);
+		const { id } = seed(sb, { proposal: { location: join(existing, "inner", "project") } });
+
+		const refused = run(sb, ["accept", id]);
+		expect(refused.code, "accept was not refused").not.toBe(0);
+		expect(refused.stderr).toContain("existing");
+		expect(refused.stderr).toContain("repository");
+		expect(tree(existing), "the repository was changed").toEqual(before);
 	});
 
 	it("A13 creating without confirming the remote runs no GitHub command and leaves no remote", () => {
