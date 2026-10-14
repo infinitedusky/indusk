@@ -46,6 +46,8 @@ export function SessionPanel({
     const el = log.current;
     if (el && following.current) el.scrollTop = el.scrollHeight;
   }, [events.length]);
+  // How each request was decided, from the log: the record a reload keeps.
+  const decisions = decisionsOf(events);
   const done = (requestId: string) =>
     setAnswered((prev) => new Set(prev).add(requestId));
 
@@ -79,7 +81,13 @@ export function SessionPanel({
             <EventView
               ev={ev}
               repeatsReply={replyRepeated(events, i)}
-              open={"requestId" in ev && !answered.has(ev.requestId) && running}
+              decision={"requestId" in ev ? decisions.get(ev.requestId) : undefined}
+              open={
+                "requestId" in ev &&
+                running &&
+                !decisions.has(ev.requestId) &&
+                !answered.has(ev.requestId)
+              }
               onAnswer={(answers) => {
                 if (ev.type !== "question") return;
                 onAnswer(ev.requestId, answers);
@@ -138,9 +146,23 @@ export function replyRepeated(events: StartedEvent[], i: number): boolean {
   return false;
 }
 
+/** A request's decision, as its `decided` event recorded it. */
+export type Decision = Extract<StartedEvent, { type: "decided" }>;
+
+/** Each decided request's `decided` event, by request id. */
+export function decisionsOf(
+  events: readonly StartedEvent[],
+): Map<string, Decision> {
+  const decisions = new Map<string, Decision>();
+  for (const ev of events)
+    if (ev.type === "decided") decisions.set(ev.requestId, ev);
+  return decisions;
+}
+
 export function EventView({
   ev,
   repeatsReply = false,
+  decision,
   open,
   onAnswer,
   onDecide,
@@ -148,6 +170,8 @@ export function EventView({
   ev: StartedEvent;
   /** A finished turn's text is the reply shown above it: say "Turn done" alone. Absent: say it with its text. */
   repeatsReply?: boolean;
+  /** How the request was decided, when it has been: its outcome replaces the buttons. */
+  decision?: Decision;
   open: boolean;
   onAnswer: (answers: Record<string, string>) => void;
   onDecide: (allow: boolean) => void;
@@ -191,6 +215,7 @@ export function EventView({
         <QuestionView
           questions={ev.questions}
           open={open}
+          declined={decision && !decision.allow ? decision : undefined}
           onAnswer={onAnswer}
         />
       );
@@ -201,6 +226,13 @@ export function EventView({
             Claude asks to use <span className="font-semibold">{ev.tool}</span>{" "}
             <span className="font-mono text-xs">{describeInput(ev.input)}</span>
           </p>
+          {decision ? (
+            <p className={`mt-2 ${decision.allow ? "text-ok" : "text-bad"}`}>
+              {decision.allow
+                ? "Allowed"
+                : `Denied${decision.message ? ` — ${decision.message}` : ""}`}
+            </p>
+          ) : null}
           {open ? (
             <div className="mt-2 flex gap-2">
               <Button size="sm" onClick={() => onDecide(true)}>
@@ -272,10 +304,13 @@ const OTHER = "Other";
 function QuestionView({
   questions,
   open,
+  declined,
   onAnswer,
 }: {
   questions: Question[];
   open: boolean;
+  /** The decision that declined it, when the session declined it on its own. */
+  declined?: Decision;
   onAnswer: (answers: Record<string, string>) => void;
 }) {
   const [chosen, setChosen] = useState<Record<string, string[]>>({});
@@ -356,6 +391,12 @@ function QuestionView({
           </fieldset>
         );
       })}
+      {declined ? (
+        <p className="text-bad">
+          Declined
+          {declined.message ? ` — ${declined.message}` : ""}
+        </p>
+      ) : null}
       {open ? (
         <Button
           size="sm"
