@@ -1,9 +1,11 @@
 "use client";
 
 import type { Proposal } from "@infinitedusky/indusk-mcp/new-project";
+import { creationStepIds } from "@infinitedusky/indusk-mcp/new-project/steps";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { postJson } from "@/lib/post-json";
+import { NewProjectCreatingPanel } from "./NewProjectCreatingPanel";
 import { NewProjectProposal } from "./NewProjectProposal";
 
 /**
@@ -28,30 +30,61 @@ export function NewProjectProposalPanel({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [creating, setCreating] = useState<Proposal | null>(null);
 
   const create = async (edited: Proposal) => {
     setBusy(true);
     setProblem(null);
-    const saved = await postJson(`/api/new-projects/${draft}/proposal`, edited);
+    const saved = await postJson<{ proposal: Proposal }>(
+      `/api/new-projects/${draft}/proposal`,
+      edited,
+    );
     if (!saved.ok) {
       setBusy(false);
       setProblem(saved.error);
       return;
     }
-    const made = await postJson(`/api/new-projects/${draft}/accept`, {});
     setBusy(false);
-    if (!made.ok) setProblem(made.error);
+    setCreating(saved.body.proposal);
   };
 
+  if (creating) {
+    return (
+      <NewProjectCreatingPanel
+        draft={draft}
+        name={creating.name}
+        location={creating.location}
+        stepIds={creationStepIds(creating.remote.github)}
+        onBack={() => {
+          window.history.replaceState(null, "", `/new/${draft}`);
+          setCreating(null);
+        }}
+      />
+    );
+  }
+
   return (
-    <NewProjectProposal
-      proposal={proposal}
-      documents={documents}
-      briefView={briefView}
-      busy={busy}
-      problem={problem}
-      onCreate={(edited) => void create(edited)}
-      onKeepTalking={() => router.push(`/new/${draft}?talk=1`)}
-    />
+    <>
+      <header>
+        <div className="text-sm leading-3 text-ink-faint">
+          <b className="font-medium text-ink-soft">Projects</b> / New
+        </div>
+        <h1 className="font-display text-4xl leading-7 font-bold">
+          {proposal.name}
+        </h1>
+        <p className="text-sm leading-3 text-ink-faint">
+          The agent's proposal. Change anything, then create it.
+        </p>
+      </header>
+      <NewProjectProposal
+        proposal={proposal}
+        documents={documents}
+        briefView={briefView}
+        busy={busy}
+        problem={problem}
+        onCreate={(edited) => void create(edited)}
+        onKeepTalking={() => router.push(`/new/${draft}?talk=1`)}
+      />
+    </>
   );
 }

@@ -8,6 +8,7 @@ import * as draftTalk from "@/app/api/drafts/[id]/talk/route";
 import * as drafts from "@/app/api/drafts/route";
 import * as looksApprove from "@/app/api/looks/[app]/approve/route";
 import * as looksUnapprove from "@/app/api/looks/[app]/unapprove/route";
+import * as newProjectAccept from "@/app/api/new-projects/[id]/accept/route";
 import * as newProjectAdd from "@/app/api/new-projects/[id]/add/route";
 import * as newProjectDiscard from "@/app/api/new-projects/[id]/discard/route";
 import * as newProjectProposal from "@/app/api/new-projects/[id]/proposal/route";
@@ -63,6 +64,7 @@ const MODULES: Record<string, Record<string, unknown>> = {
   "sessions/[id]/say": say,
   "sessions/[id]/stop": stop,
   "new-projects": newProjects,
+  "new-projects/[id]/accept": newProjectAccept,
   "new-projects/[id]/add": newProjectAdd,
   "new-projects/[id]/discard": newProjectDiscard,
   "new-projects/[id]/proposal": newProjectProposal,

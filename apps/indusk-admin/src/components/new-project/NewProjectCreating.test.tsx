@@ -1,5 +1,5 @@
 import "@/app/globals.css";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { type CreatingStep, NewProjectCreating } from "./NewProjectCreating";
 
@@ -9,6 +9,20 @@ import { type CreatingStep, NewProjectCreating } from "./NewProjectCreating";
  * new-project-flow A5: the creation shows each step as it runs and ends with
  * a way into the new project.
  */
+
+// next/link needs Next's runtime (`process`); a link is an anchor for this test.
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({
+    href,
+    children,
+    ...rest
+  }: { href: string; children: React.ReactNode } & Record<string, unknown>) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
 
 const done = (label: string): CreatingStep => ({ label, state: "done" });
 const working = (label: string): CreatingStep => ({ label, state: "working" });

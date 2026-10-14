@@ -4,17 +4,20 @@ import {
   loadProposal,
   newProjectSessionPlan,
   type Proposal,
+  readCreation,
   readProjectDraft,
 } from "@infinitedusky/indusk-mcp/new-project";
+import { creationStepIds } from "@infinitedusky/indusk-mcp/new-project/steps";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Markdown } from "@/components/Markdown";
 import { NewProjectConversation } from "@/components/new-project/NewProjectConversation";
+import { NewProjectCreatingPanel } from "@/components/new-project/NewProjectCreatingPanel";
 import { NewProjectProposalPanel } from "@/components/new-project/NewProjectProposalPanel";
 
 interface Props {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ talk?: string }>;
+  searchParams: Promise<{ talk?: string; creating?: string }>;
 }
 
 /** The look states the proposal draws: the screen, and each component it places. */
@@ -60,12 +63,33 @@ export default async function NewProjectConversationPage({
   searchParams,
 }: Props) {
   const { id } = await params;
-  const { talk } = await searchParams;
+  const { talk, creating } = await searchParams;
   const draft = readProjectDraft(induskHome(), id);
   if (!draft) notFound();
   const { proposal, problems } = draft.hasProposal
     ? loadProposal(draft)
     : { proposal: null, problems: [] };
+  const creation =
+    proposal && creating !== undefined ? readCreation(draft) : null;
+  if (proposal && creation) {
+    return (
+      <main
+        className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
+        data-draft={id}
+      >
+        <NewProjectCreatingPanel
+          draft={id}
+          name={proposal.name}
+          location={proposal.location}
+          stepIds={creationStepIds(proposal.remote.github)}
+          initial={creation.steps}
+          initialProblem={creation.error ?? null}
+          start={false}
+          backHref={`/new/${id}`}
+        />
+      </main>
+    );
+  }
   if (proposal && talk === undefined) {
     return (
       <main
@@ -76,17 +100,6 @@ export default async function NewProjectConversationPage({
         )}
         data-draft={id}
       >
-        <header>
-          <div className="text-sm leading-3 text-ink-faint">
-            <b className="font-medium text-ink-soft">Projects</b> / New
-          </div>
-          <h1 className="font-display text-4xl leading-7 font-bold">
-            {proposal.name}
-          </h1>
-          <p className="text-sm leading-3 text-ink-faint">
-            The agent's proposal. Change anything, then create it.
-          </p>
-        </header>
         <NewProjectProposalPanel
           draft={id}
           proposal={proposal}
