@@ -77,6 +77,7 @@ export function SessionPanel({
           <li key={i}>
             <EventView
               ev={ev}
+              repeatsReply={replyRepeated(events, i)}
               open={"requestId" in ev && !answered.has(ev.requestId) && running}
               onAnswer={(answers) => {
                 if (ev.type !== "question") return;
@@ -120,13 +121,32 @@ export function SessionPanel({
   );
 }
 
+/**
+ * Whether a finished turn's text is the reply the log already shows just
+ * above it: Claude Code's result carries the turn's last message again, and
+ * the log should not say it twice.
+ */
+export function replyRepeated(events: StartedEvent[], i: number): boolean {
+  const ev = events[i];
+  if (!ev || ev.type !== "result" || !ev.text) return false;
+  for (let n = i - 1; n >= 0; n--) {
+    const before = events[n];
+    if (before?.type === "text") return before.text.trim() === ev.text.trim();
+    if (before?.type === "result") return false;
+  }
+  return false;
+}
+
 function EventView({
   ev,
+  repeatsReply,
   open,
   onAnswer,
   onDecide,
 }: {
   ev: StartedEvent;
+  /** A finished turn's text is the reply shown above it: say "Turn done" alone. */
+  repeatsReply: boolean;
   open: boolean;
   onAnswer: (answers: Record<string, string>) => void;
   onDecide: (allow: boolean) => void;
@@ -201,7 +221,9 @@ function EventView({
     // promise: a-session-says-how-it-ended
     case "result":
       return ev.ok ? (
-        <p className="text-ok">Turn done{ev.text ? ` — ${ev.text}` : ""}</p>
+        <p className="text-ok">
+          Turn done{ev.text && !repeatsReply ? ` — ${ev.text}` : ""}
+        </p>
       ) : (
         <p className="text-bad">
           Failed —{" "}
