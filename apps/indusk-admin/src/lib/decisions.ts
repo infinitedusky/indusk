@@ -33,7 +33,7 @@ export type DecisionChoice =
   | { choice: "reply"; text: string };
 
 export interface DecisionSessions {
-  current(): { id: string; project: string; plan: string } | undefined;
+  forPlan(project: string, plan: string): { id: string } | undefined;
   reply(
     id: string,
     reply: { requestId: string; answers: Record<string, string> },
@@ -107,11 +107,7 @@ async function deliver(
   choice: DecisionChoice,
   answer: string,
 ): Promise<Pick<Answered, "via" | "sessionId">> {
-  const running = deps.sessions.current();
-  const ours =
-    running && running.project === project && running.plan === waiting.plan
-      ? running
-      : undefined;
+  const ours = deps.sessions.forPlan(project, waiting.plan);
 
   if (waiting.on === "question") {
     if (!ours || !waiting.requestId) {
