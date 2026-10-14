@@ -1,7 +1,7 @@
 ---
 title: "cockpit-redraw — the nav from the original cockpit, the brief page drawn, re-approval a person's"
 date: 2026-10-13
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
