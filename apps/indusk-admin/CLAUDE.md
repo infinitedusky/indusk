@@ -34,6 +34,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   conversation, builds and Fix with Claude still use the session panel until
   they move. Guarded by `conversation-turns.test.ts` and
   `ConversationThread.test.tsx`. — `promise: a-project-conversation-is-a-back-and-forth`
+- **A view reads whether a request is decided from its `decided` event**, never from a set of its own: a click may close a prompt early, but the event is the record, and a reload keeps it. Guarded by `SessionPanel.test.tsx` (A6) and `conversation-turns.test.ts` (A4). — `promise: a-decided-request-stays-decided`
 - **What a plan's page offers is one rule, `planActions`**: a plan is started
   by its worktree in normal mode or its `code.json` in a workbench, and gets
   the same buttons either way; a workbench session runs at the root with the
