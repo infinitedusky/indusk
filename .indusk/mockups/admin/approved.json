@@ -6815,6 +6815,25 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T22:56:06.793Z",
 			"plan": "cockpit-redraw"
+		},
+		{
+			"mockup": "plan.master",
+			"mockupHash": "20c35dd5ea5e81d70544bd589e73cf3ab07599a3799bba5f185a2755d57c74e0",
+			"componentsHash": "ad7dca0784be868348a2cb88ce26478ab0789829714934775d28e3ab3a034003",
+			"components": {
+				"nav.plan-current": "3470475f1b717c94b9e492bd191d67f517a101705fd0ef6a2e6eee1b995ac430",
+				"tag.default": "c09fe1154e1132765ef262fa4c46b09a3f10fd07ff22d251f80372c6224fd3e2",
+				"badge.released": "070b75990ca2eea91ac042324db4768e897a93f4d6af7d36b9653e69a8630010",
+				"badge.idle": "df00a00978ceef86c44c8af03ec9f7aa0c8334c8916def79c45deee3399b8796",
+				"badge.css": "52b8bf01d6454a3a647ec27811294e986d483d6eecc67c7548962ba529c6b15f",
+				"nav.css": "c57723f174d0839b7aa9be7522e43f62e3db3f1120c45bf3015f2821488e7a41",
+				"tag.css": "30d7bf10c27edc0deecf29411b623d76dc69248619af47401101eaa7500bba2c"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T23:22:42.112Z",
+			"plan": "plan-stories"
 		}
 	]
 }
