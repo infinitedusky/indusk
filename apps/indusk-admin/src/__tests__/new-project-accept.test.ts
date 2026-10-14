@@ -56,12 +56,18 @@ const request = () =>
 
 describe("A30 — creating a project ends its conversation's agent", () => {
   it("A30 stops the draft's running session before creation, leaving the slot free", async () => {
-    const { createProjectDraft } = await import("@infinitedusky/indusk-mcp/new-project");
-    const draft = createProjectDraft(home, { message: "A parental control system" });
+    const { createProjectDraft } = await import(
+      "@infinitedusky/indusk-mcp/new-project"
+    );
+    const draft = createProjectDraft(home, {
+      message: "A parental control system",
+    });
     running = { id: "s-9", plan: `new-project:${draft.id}` };
 
     const { POST } = await import("@/app/api/new-projects/[id]/accept/route");
-    const res = await POST(request(), { params: Promise.resolve({ id: draft.id }) });
+    const res = await POST(request(), {
+      params: Promise.resolve({ id: draft.id }),
+    });
     await res.text();
 
     expect(stopped).toEqual(["s-9"]);

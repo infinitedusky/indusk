@@ -27,6 +27,7 @@ vi.mock("@/lib/session-host", () => ({
   adminOnly: () => null,
   refuse: (status: number, message: string) =>
     Response.json({ error: message }, { status }),
+  sessionManager: () => ({ current: () => undefined }),
 }));
 
 vi.mock("@infinitedusky/indusk-mcp/new-project", async (importOriginal) => ({

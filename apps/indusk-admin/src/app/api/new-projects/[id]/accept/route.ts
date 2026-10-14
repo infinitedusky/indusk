@@ -3,9 +3,10 @@ import {
   createProject,
   findProjectDraft,
   induskHome,
+  newProjectSessionPlan,
 } from "@infinitedusky/indusk-mcp/new-project";
 import type { NextRequest } from "next/server";
-import { adminOnly, refuse } from "@/lib/session-host";
+import { adminOnly, refuse, sessionManager } from "@/lib/session-host";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +16,8 @@ export const dynamic = "force-dynamic";
  * steps happen: one JSON object per line - `{ type: "step", id, state }` as
  * each step starts or ends, then `{ type: "done", name, href }` or
  * `{ type: "error", message }`. The package makes the project; this route only
- * carries what it reports. Nothing is made unless the page asks.
+ * carries what it reports. Nothing is made unless the page asks. The draft's
+ * running session is stopped first, as discard does.
  *
  * promise: a-new-project-is-made-by-the-agent
  */
@@ -31,6 +33,12 @@ export async function POST(
   const { id } = await ctx.params;
   if (!findProjectDraft(induskHome(), id)) {
     return refuse(404, `no project conversation ${id}`);
+  }
+  // The conversation is over once the project is made: its agent would keep
+  // running in the deleted draft folder and hold the one session slot.
+  const running = sessionManager().current();
+  if (running?.plan === newProjectSessionPlan(id)) {
+    await sessionManager().get(running.id)?.stop();
   }
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
