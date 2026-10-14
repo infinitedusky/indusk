@@ -10,6 +10,8 @@ import { runStepSession, stepEnv, stepPrompt } from "./build-session.js";
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the build session's half.
  * promise: nothing-ships-until-accepted — admin-plan-authoring A35, the marking half.
  * promise: a-build-runs-to-review-unasked — workbench-plan-authoring A13, a workbench build's two roots.
+ * promise: a-prompt-shows-only-when-a-person-must-choose — decided-prompts-stay-closed A1, A2, the package half.
+ * promise: a-decided-request-stays-decided — decided-prompts-stay-closed A7, the package half.
  *
  * One step of a build is one session that nobody answers: it runs under
  * `INDUSK_GATE_POLICY=auto`, its writes outside the worktree are refused, its
@@ -186,5 +188,48 @@ describe("A13 — a workbench build writes in its code worktree and at the root,
 		expect(by.code).toEqual({ allow: true });
 		expect(by.plan).toEqual({ allow: true });
 		expect(by.out).toMatchObject({ allow: false });
+	});
+});
+
+describe("decided-prompts-stay-closed A1, A2, A7 — every request a build decides is recorded as decided, by rule", () => {
+	it("an inside write is followed by an allowed decision, an outside write by a denial with the reason, a question by its decline", async () => {
+		const m = scriptedManager([
+			[
+				{
+					type: "permission",
+					requestId: "in",
+					tool: "Write",
+					input: { file_path: `${WORKTREE}/src/a.ts` },
+				},
+				{
+					type: "permission",
+					requestId: "out",
+					tool: "Write",
+					input: { file_path: "/w/proj/src/a.ts" },
+				},
+				{ type: "question", requestId: "q", questions: [], input: {} },
+				ok,
+			],
+		]);
+		const heard: Array<Record<string, unknown>> = [];
+		await runStepSession("work", {
+			...opts(m.manager),
+			onEvent: (ev) => heard.push(ev as unknown as Record<string, unknown>),
+		});
+		// The event's type is read as a string so this file loads before the type exists.
+		const decided = Object.fromEntries(
+			heard.filter((e) => e.type === "decided").map((e) => [e.requestId, e]),
+		);
+		expect(decided.in).toMatchObject({ allow: true, by: "rule" });
+		expect(decided.out).toMatchObject({
+			allow: false,
+			by: "rule",
+			message: expect.stringContaining(WORKTREE),
+		});
+		expect(decided.q).toMatchObject({
+			allow: false,
+			by: "rule",
+			message: expect.stringMatching(/own judgement/),
+		});
 	});
 });
