@@ -129,11 +129,11 @@ Several plans can each have an agent at once: the session manager refuses only a
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a route asks for its own plan's session (`forPlan`), never "the" session — guarded by `sessions-per-plan.test.ts` (A6)
+- [x] `apps/indusk-admin/CLAUDE.md`: a route asks for its own plan's session (`forPlan`), never "the" session — guarded by `sessions-per-plan.test.ts` (A6)
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md` (sessions: one per plan and kind, the cap and where it is set) and `apps/docs/src/guide/multi-agent.md` (several plans' agents at once); changelog: Changed — "Several plans can each have an agent at once; a machine runs at most `sessions.max` (4) sessions, set in `~/.indusk/config.json`."
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (sessions: one per plan and kind, the cap and where it is set) and `apps/docs/src/guide/multi-agent.md` (several plans' agents at once); changelog: Changed — "Several plans can each have an agent at once; a machine runs at most `sessions.max` (4) sessions, set in `~/.indusk/config.json`."
 
 ## Files Affected
 
