@@ -1,6 +1,6 @@
 # Cockpit redraw — the nav from the original cockpit, a width you can drag, re-approval a person's
 
-**Decided 2026-10-13.** Full ADR: `.indusk/planning/cockpit-redraw/adr.md`.
+**Decided 2026-10-13.** Full ADR: `.indusk/planning/archive/cockpit-redraw/adr.md`.
 
 ## Goal
 
@@ -32,9 +32,12 @@ brief-as-the-contract built the brief page and the plan's description by working
 - **A page says which look it draws.** The value check counts a state only when the page reports it (`data-look-state`), and a page opened with `?state=` drew the same thing for every state. So the nav, the brief page and the plan page each report the state they really draw from their own data, and `screens.json` lists one path per state; A10 serves a fixture plan in each condition. The nav's width can be asked for with `?nav=<px>` for one page (nothing is kept), so a check that opens a fresh browser can reach `nav.wide`.
 - **`nav.wide` is not drawn below 760 px.** There the nav is a drawer with no edge, so the page does not report it and A10 does not count that as a finding.
 - **A test's `next dev` builds into `.next-tests`**, so it runs beside a person's admin.
+- **The plan and brief screens are held against fixture plans.** Their `screens.json` paths name `looks-fixture-*` plans that exist only in A10's throwaway project; `indusk looks check admin` against a real project records a look whose page answers 404 as unchecked and checks the rest (a 500 or a refused connection still ends the run).
+- **`brief.empty`** was drawn during the build: a plan with no brief file shows its three parts at 0, as plain rows.
+- **Falsification** tightened the guard (substitutions under a reader, `reapprovePlan` through an interpreter), ended a drag the browser cancels, and counted a waiting amendment as the plan page's `needs-you`. The nav's *Needs you* group does not count amendments yet — a follow-up.
 
 ## References
-- Full ADR: `.indusk/planning/cockpit-redraw/adr.md`
+- Full ADR: `.indusk/planning/archive/cockpit-redraw/adr.md`
 - [Brief as the contract](/decisions/brief-as-the-contract) — the pages this redraws
 - [UI promises](/decisions/ui-promises) — the look check and the foundation
 - [The admin overview](/reference/admin-ui/overview#the-nav), [`indusk plans`](/reference/cli/plans)

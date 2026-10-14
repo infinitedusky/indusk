@@ -112,7 +112,7 @@ Below them, **Read the brief** goes to `/p/{project}/plan/{name}/brief`. When a 
 
 The plan page is where a plan is followed. It opens with the plan's **description** (the brief's `description:` field, read as YAML) and a link to the brief. Until the brief is finished by the rail's own rule (`accepted` or `complete`), "The brief is incomplete" is the plan's current step, with **Work on the brief**; a `superseded` brief and an archived plan have none. A draft accepted as a `spike` has no brief and lands on the plan page. The plan page's agent answers questions and sends a change to what was agreed back to the brief.
 
-The page is drawn as `brief.writing` (the plan is being written) and `brief.approved` (the plan is approved, the agent's column offering to amend), and says which it draws from the plan's own facts: approved once its impl carries the approval of its brief. The plan page likewise says `plan.released`, `plan.needs-you`, `plan.parts` (the brief not finished) or `plan.working`. See [Cockpit redraw](/decisions/cockpit-redraw).
+The page is drawn as `brief.writing` (the plan is being written), `brief.approved` (the plan is approved, the agent's column offering to amend) and `brief.empty` (the plan has no brief file: its parts drawn at 0 as plain rows), and says which it draws from the plan's own facts: approved once its impl carries the approval of its brief. The plan page likewise says `plan.released`, `plan.needs-you` (a session question, a stopped build, or an amendment waiting), `plan.parts` (the brief not finished) or `plan.working`. See [Cockpit redraw](/decisions/cockpit-redraw).
 
 ### The nav
 
