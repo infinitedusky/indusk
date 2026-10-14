@@ -10,6 +10,7 @@ export {
 	draftSessionPlan,
 } from "./draft.js";
 export { isAdminHost } from "./hosts.js";
+export { DEFAULT_SESSIONS_MAX, readSessionsMax } from "./limits.js";
 export {
 	defaultRecordPath,
 	type ManagedStart,

@@ -88,7 +88,8 @@ Several plans can each have an agent at once: the session manager refuses only a
   running(): SessionRecord[]
   ```
 - [x] `readSessionsMax(home = induskHome()): number` in `apps/indusk-mcp/src/lib/session/limits.ts`: `sessions.max` from `<home>/config.json`, a positive integer, else 4; an absent or malformed file is 4, never a throw. The manager reads it when no `max` is given
-- [ ] Remove `current()`; export `forPlan`, `running` and `readSessionsMax` through `./session`
+- [x] Remove `current()`; export `forPlan`, `running` and `readSessionsMax` through `./session`
+  - Note: `current()` was removed in the manager commit (`b7159a35`); `forPlan`/`running` are methods of the already-exported `SessionManager`, and `readSessionsMax` and `DEFAULT_SESSIONS_MAX` are exported here. Callers of `.current()` found by grep, all left for Build Phase 2 and breaking the admin's typecheck until then: `app/api/plans/build/route.ts`, `app/api/drafts/[id]/{talk,discard,accept}/route.ts`, `app/api/sessions/route.ts`, `lib/decisions-reader.ts`, `lib/decisions.ts`, `lib/build-host.ts` (two), and `lib/decisions.test.ts` (two). No caller outside the admin.
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 1 Verification
