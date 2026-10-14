@@ -14,7 +14,7 @@ Background and findings are in [research.md](research.md).
 
 1. **new-project-flow's screens draw nothing but their declared new components.**
    - Measure: `indusk looks lint admin` on new-project-flow's five screen mockups, with buttons, steps and containers placed by name, reports no component drawn in a mockup.
-   - Look: when new-project-flow's brief is accepted.
+   - Look: when this plan lands, after new-project-flow is built (Sandy, 2026-10-13: new-project-flow goes first; this plan then converts its screens).
 
 ## Promises
 
@@ -54,4 +54,4 @@ None.
 
 ## Blocks
 
-- `.indusk/planning/new-project-flow/` — its screens place buttons, steps and containers with their own words.
+None. new-project-flow is built first with its buttons, steps and containers drawn inline; this plan then converts them.
