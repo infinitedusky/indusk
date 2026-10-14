@@ -3649,6 +3649,15 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T00:01:26.199Z",
 			"plan": "new-project-flow"
+		},
+		{
+			"mockup": "project-card.default",
+			"mockupHash": "574b4bd8ff4b38c6d1112225e8916f4b9fe7b0bc5f356b0092f20f46bb1c2354",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T00:01:26.513Z",
+			"plan": "new-project-flow"
 		}
 	]
 }
