@@ -60,7 +60,7 @@ export default async function PlanBriefPage({ params }: BriefPageProps) {
         <PlanFrame
           project={project}
           plan={plan}
-          lookState={briefLookState(plan.impl?.frontmatter)}
+          lookState={briefLookState(plan.impl?.frontmatter, parts.hasBriefFile)}
         >
           <TrustNotice
             project={project}

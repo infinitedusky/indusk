@@ -33,9 +33,18 @@ describe("planLookState — what the plan page says it draws", () => {
 
 describe("briefLookState — what the brief page says it draws", () => {
   it("is approved once the impl carries the brief's approval, else writing", () => {
-    expect(briefLookState({ approved_brief: "abc" })).toBe("brief.approved");
-    expect(briefLookState({})).toBe("brief.writing");
-    expect(briefLookState(undefined)).toBe("brief.writing");
+    expect(briefLookState({ approved_brief: "abc" }, true)).toBe(
+      "brief.approved",
+    );
+    expect(briefLookState({}, true)).toBe("brief.writing");
+    expect(briefLookState(undefined, true)).toBe("brief.writing");
+  });
+
+  it("is empty while the plan has no brief file, whatever its impl says", () => {
+    expect(briefLookState(undefined, false)).toBe("brief.empty");
+    expect(briefLookState({ approved_brief: "abc" }, false)).toBe(
+      "brief.empty",
+    );
   });
 });
 

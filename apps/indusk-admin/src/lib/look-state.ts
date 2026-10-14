@@ -15,7 +15,7 @@ export type PlanLookState =
   | "plan.parts"
   | "plan.working";
 
-export type BriefLookState = "brief.approved" | "brief.writing";
+export type BriefLookState = "brief.approved" | "brief.writing" | "brief.empty";
 
 /**
  * The plan page's state: released once archived or in monitor; else
@@ -35,8 +35,16 @@ export function planLookState(input: {
   return "plan.working";
 }
 
-/** The brief page's state: approved once the plan's impl carries the approval of its brief. */
-export function briefLookState(implFrontmatter?: object): BriefLookState {
+/**
+ * The brief page's state: empty while the plan has no brief file; else
+ * approved once the plan's impl carries the approval of its brief, writing
+ * before.
+ */
+export function briefLookState(
+  implFrontmatter: object | undefined,
+  hasBriefFile: boolean,
+): BriefLookState {
+  if (!hasBriefFile) return "brief.empty";
   const approved = (implFrontmatter as Record<string, unknown> | undefined)
     ?.approved_brief;
   return approved ? "brief.approved" : "brief.writing";
