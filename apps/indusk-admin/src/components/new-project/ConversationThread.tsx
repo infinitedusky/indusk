@@ -49,6 +49,11 @@ export function ConversationThread({
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const [toggled, setToggled] = useState<Set<number>>(new Set());
   const [draft, setDraft] = useState("");
+  const send = () => {
+    if (!onSay || !draft.trim()) return;
+    onSay(draft);
+    setDraft("");
+  };
   const turns = turnsOf(events, { answered, running });
   const done = (requestId: string) =>
     setAnswered((prev) => new Set(prev).add(requestId));
@@ -88,9 +93,7 @@ export function ConversationThread({
           className="grid gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!draft.trim()) return;
-            onSay(draft);
-            setDraft("");
+            send();
           }}
         >
           <textarea
@@ -98,12 +101,19 @@ export function ConversationThread({
             rows={3}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              // Enter sends, as in any chat; Shift+Enter is a new line.
+              if (e.key !== "Enter" || e.shiftKey || e.nativeEvent.isComposing)
+                return;
+              e.preventDefault();
+              send();
+            }}
             className="w-full resize-y rounded-xl border border-line bg-surface px-4 py-3 text-ink"
           />
           <div className="flex flex-wrap items-center gap-3">
             {actions}
             {running && onStop ? (
-              <Button variant="ghost" size="sm" onClick={onStop}>
+              <Button type="button" variant="ghost" size="sm" onClick={onStop}>
                 Stop
               </Button>
             ) : null}

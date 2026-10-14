@@ -131,3 +131,38 @@ describe("A25 — what the agent waits on is never folded", () => {
     expect(answered).toHaveBeenCalledWith("q1", { "Where?": "Fly" });
   });
 });
+
+describe("the reply box sends what was typed, once", () => {
+  const box = (onSay: (text: string) => void, onStop = noop) => (
+    <ConversationThread
+      events={worked}
+      running
+      onAnswer={noop}
+      onDecide={noop}
+      onSay={onSay}
+      onStop={onStop}
+    />
+  );
+
+  it("Enter sends; Shift+Enter is a new line", async () => {
+    const onSay = vi.fn();
+    const screen = await render(box(onSay));
+    const reply = screen.getByRole("textbox", { name: /reply to the agent/i });
+    await userEvent.type(reply, "this is{Shift>}{Enter}{/Shift}a test{Enter}");
+    expect(onSay).toHaveBeenCalledExactlyOnceWith("this is\na test");
+    await expect.element(reply).toHaveValue("");
+  });
+
+  it("Stop stops and sends nothing", async () => {
+    const onSay = vi.fn();
+    const onStop = vi.fn();
+    const screen = await render(box(onSay, onStop));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: /reply to the agent/i }),
+      "half a thought",
+    );
+    await screen.getByRole("button", { name: "Stop" }).click();
+    expect(onStop).toHaveBeenCalledOnce();
+    expect(onSay).not.toHaveBeenCalled();
+  });
+});
