@@ -1,7 +1,7 @@
 ---
 title: "Decided prompts stay closed"
 date: 2026-10-14
-status: approved
+status: in-progress
 workflow: bugfix
 trajectory: required
 test_phases: required
@@ -46,7 +46,7 @@ Every request a session makes is recorded in its log together with how it was de
 | A2 | During a build, a request to write outside the worktree shows already denied, with the build's reason, and no Allow or Deny | Test Phase 1 | Build Phase 2 | written | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A3 | A request nothing has decided, in a running session, still shows Allow and Deny | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A4 | In the new-project conversation, a request its agent's rule decided is not waiting on the person | Test Phase 1 | Build Phase 2 | written | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/lib/conversation-turns.test.ts |
-| A5 | A request a planning session allowed on its own rule appears in the log as allowed | Test Phase 1 | Build Phase 1 | written | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A5 | A request a planning session allowed on its own rule appears in the log as allowed | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A6 | A request the person allowed or denied shows the outcome they chose, and a panel connecting afterwards shows it decided, with no buttons | Test Phase 1 | Build Phase 2 | written | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A7 | A question a build declined on its own shows as declined, with the reason, never as waiting | Test Phase 1 | Build Phase 2 | written | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A8 | Watching a real build in the cockpit, no prompt is left looking undecided, and a reload leaves every one decided | Build Phase 2 | Build Phase 2 | planned | live check | the brief's expectation: watching a build shows no prompt waiting unless it is | recorded in this impl, Build Phase 2 |
@@ -85,27 +85,29 @@ Every request a session makes is recorded in its log together with how it was de
 
 **Goal**: one `decided` event, recorded by the manager wherever a request is decided.
 
-- [ ] `session/start.ts`: add to `StartedEvent`
+- [x] `session/start.ts`: add to `StartedEvent`
   ```typescript
   /** How a request was decided, recorded after its decision: by the session's own rule or by a person. */
   | { type: "decided"; requestId: string; allow: boolean; message?: string; by: "rule" | "person" }
   ```
-- [ ] `session/manager.ts`: one private `record(holder, opts, ev)` that pushes, calls `opts.onEvent` and notifies listeners (today's three lines in `onEvent`), used for every event. The confined and planning paths record the permission, decide it, then record its `decided` (`by: "rule"`), instead of returning before the log. `reply` takes `by: "rule" | "person" = "person"` and records `decided` after `h.answered.add`
-- [ ] `build/build-session.ts`: both of its `manager.reply` calls pass `by: "rule"`
-- [ ] A draft's `transcript.jsonl` is appended through `opts.onEvent`, so a reopened draft keeps its decisions; confirm by reading `startProjectConversation`
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] `session/manager.ts`: one private `record(holder, opts, ev)` that pushes, calls `opts.onEvent` and notifies listeners (today's three lines in `onEvent`), used for every event. The confined and planning paths record the permission, decide it, then record its `decided` (`by: "rule"`), instead of returning before the log. `reply` takes `by: "rule" | "person" = "person"` and records `decided` after `h.answered.add`
+- [x] `build/build-session.ts`: both of its `manager.reply` calls pass `by: "rule"`
+- [x] A draft's `transcript.jsonl` is appended through `opts.onEvent`, so a reopened draft keeps its decisions; confirm by reading `startProjectConversation`
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`manager.ts`) — the confined and planning paths repeated record, decide, record; extracted `decideByRule`
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing further to change.
 
 #### Build Phase 1 Verification
 
-- [ ] A5 passes, and the package halves of A1, A2, A6 and A7 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/build/build-session.test.ts src/lib/session/manager.test.ts && pnpm exec vitest related src/lib/session/manager.ts src/lib/session/start.ts src/lib/build/build-session.ts --run`); tsc and biome clean on the changed files
+- [x] A5 passes, and the package halves of A1, A2, A6 and A7 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/build/build-session.test.ts src/lib/session/manager.test.ts && pnpm exec vitest related src/lib/session/manager.ts src/lib/session/start.ts src/lib/build/build-session.ts --run`); tsc and biome clean on the changed files
 
 #### Build Phase 1 Context
 
-- [ ] `apps/indusk-mcp/CLAUDE.md` (Run, verify, Shape, cleanup → `lib/build/`): every request a session makes is recorded with a `decided` event by the manager, by rule or by person; a decision is never made off the log. Guarded by `manager.test.ts` (A5, A6)
+- [x] `apps/indusk-mcp/CLAUDE.md` (Run, verify, Shape, cleanup → `lib/build/`): every request a session makes is recorded with a `decided` event by the manager, by rule or by person; a decision is never made off the log. Guarded by `manager.test.ts` (A5, A6)
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: every request a session makes is recorded with how it was decided, by the session's rule or by the person
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: every request a session makes is recorded with how it was decided, by the session's rule or by the person
 
 ### Build Phase 2: The panel and the thread read the decision
 
