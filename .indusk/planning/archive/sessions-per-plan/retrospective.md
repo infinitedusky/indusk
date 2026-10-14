@@ -66,4 +66,5 @@ Shape raised 3 findings across all phases: Build Phase 1 (`refusalFor` extractio
 ## Close-out record
 
 - Context: the session rules were written during the build, each one line plus a pointer to the decision page: the root `CLAUDE.md` (Key Decisions), `apps/indusk-mcp/CLAUDE.md` and `apps/indusk-admin/CLAUDE.md`. Build Phase 5 added no rule.
+- Confirm: `indusk promises confirm` first refused twice. The live-check row A7 named a manual step as its test, and no code carried the `a-session-belongs-to-its-plan` token. A7's `For` cell now says it is a live check and not the promise's proof, and the token sits on `refusalFor` in `manager.ts` (a comment only). Both promises are then `enforced`.
 - Release: the build is installed by landing (`pnpm install:local`) and nothing is published; Steps 10 and 11 follow separately.
