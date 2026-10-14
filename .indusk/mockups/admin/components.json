@@ -697,11 +697,11 @@
 				{
 					"name": "agent-open",
 					"id": "ui-message--agent-open",
-					"snapshotHash": "fe07d1bd3b6894080026b60a0955273c27cc23719cb22f99ae2a0562b510412d"
+					"snapshotHash": "cc0c8f211ca46aa88bb191f3afce81bc89921eab7a0169d097177d4a8155eccd"
 				}
 			],
 			"stylesheet": "components/message.css",
-			"stylesheetHash": "1da843a71f8e491f2197e3e3b41b9f53b4d51e7e23da377a8af7fe868125dbd6"
+			"stylesheetHash": "6bb8f74a9eb7e58f978e65279ff6560b774dd9d6d0431fc75bab9be0bc791be3"
 		},
 		{
 			"name": "nav",

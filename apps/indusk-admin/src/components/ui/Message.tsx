@@ -80,7 +80,7 @@ export function Message({
               // The working is an append-only record: position is identity.
               // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list
               key={i}
-              className="font-mono text-xs leading-2 break-words text-ink-faint [overflow-wrap:anywhere] whitespace-pre-wrap"
+              className="font-mono text-xs leading-2 break-words text-ink-faint whitespace-pre-wrap"
             >
               {line}
             </li>
