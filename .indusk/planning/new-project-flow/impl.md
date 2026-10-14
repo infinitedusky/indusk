@@ -431,7 +431,9 @@ Deferred-body review (Test Phase 1):
 - [x] The proposal's `remote` gains `visibility: "private" | "public"` (default `private`; `validateProposal` refuses anything else); `createProject` passes `--private` or `--public` from it
 - [x] The proposal page reads the account (a `/api/new-projects/github` route or the page's server read): signed in, the offer names it and offers Private — only you / Public — anyone, Private chosen (`new-project.proposal`); signed out, the box cannot be ticked and says to run `gh auth login` and reload (`new-project.github-signed-out`); `screens.json` reaches `github-signed-out`
 - [x] Found by the looks lint after Build Phase 7: `components/ui/LookRow.tsx:62` uses the arbitrary class `[overflow-wrap:anywhere]` — use a class from the foundation's theme (add a utility to the theme if none exists), and the stories re-render
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-admin/src/components/new-project/NewProjectProposal.tsx`) — the GitHub offer grew to a 60-line inline branch (signed out / signed in with a visibility choice) inside a component that already holds four other cards; extract it as `GithubOffer` in its own file so the proposal reads as its sections and the offer is testable alone. Rule: Shape: should this inline block have been a named function
+- [x] Shape — reviewed `lib/new-project/github.ts`, `proposal.ts`, `create.ts` and `app/new/[id]/page.tsx`; nothing else to change (the `?github=signed-out` read in the page is a single line beside the account read it overrides)
 
 #### Build Phase 8 OTel
 
@@ -444,7 +446,7 @@ Deferred-body review (Test Phase 1):
 
 #### Build Phase 8 Context
 
-- [ ] mcp: the docblock of `lib/new-project/github.ts` — the account is read, never assumed; a repository is private unless the person chose public — `promise: a-remote-repository-says-whose-and-who-can-see-it`
+- [x] mcp: the docblock of `lib/new-project/github.ts` — the account is read, never assumed; a repository is private unless the person chose public — `promise: a-remote-repository-says-whose-and-who-can-see-it`
 
 #### Build Phase 8 Document
 

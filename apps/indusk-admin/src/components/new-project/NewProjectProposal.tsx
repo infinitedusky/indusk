@@ -7,6 +7,7 @@ import { FileChip } from "@/components/ui/FileChip";
 import { LayoutTree } from "@/components/ui/LayoutTree";
 import { Recommendation } from "@/components/ui/Recommendation";
 import { WorkflowStrip } from "@/components/ui/WorkflowStrip";
+import { GithubOffer } from "./GithubOffer";
 import {
   decline,
   keep,
@@ -14,11 +15,6 @@ import {
   titleOf,
   workflowDocuments,
 } from "./proposal-edit";
-
-const VISIBILITIES = [
-  { value: "private", label: "Private — only you can see it" },
-  { value: "public", label: "Public — anyone can see it" },
-] as const;
 
 const field =
   "rounded-md border border-line bg-surface px-2 py-1 font-mono text-sm text-ink";
@@ -241,62 +237,12 @@ export function NewProjectProposal({
         {reading ? briefView : null}
       </section>
 
-      <section className="grid gap-3 rounded-xl border border-line bg-surface p-4">
-        {githubAccount === null ? (
-          <label className="flex items-start gap-3 text-sm leading-3 text-ink-faint">
-            <input type="checkbox" disabled checked={false} readOnly />
-            <span>
-              A GitHub repository can be created once you are signed in to
-              GitHub on this machine. Run{" "}
-              <span className="font-mono text-xs text-ink-faint">
-                gh auth login
-              </span>{" "}
-              in a terminal, then reload this page.
-            </span>
-          </label>
-        ) : (
-          <>
-            <label className="flex items-start gap-3 text-sm leading-3 text-ink-soft">
-              <input
-                type="checkbox"
-                checked={edited.remote.github}
-                onChange={(e) =>
-                  setEdited((p) => ({
-                    ...p,
-                    remote: { ...p.remote, github: e.target.checked },
-                  }))
-                }
-              />
-              <span>
-                Also create a GitHub repository for{" "}
-                <span className="font-mono text-xs text-ink-faint">
-                  {edited.repos[0]?.name ?? edited.name}
-                </span>{" "}
-                as <b>{githubAccount}</b>. This is the only step that sends
-                anything off this machine.
-              </span>
-            </label>
-            <div className="flex flex-wrap gap-4 pl-6 text-sm leading-3 text-ink-soft">
-              {VISIBILITIES.map(({ value, label }) => (
-                <label key={value} className="inline-flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="visibility"
-                    checked={edited.remote.visibility === value}
-                    onChange={() =>
-                      setEdited((p) => ({
-                        ...p,
-                        remote: { ...p.remote, visibility: value },
-                      }))
-                    }
-                  />{" "}
-                  {label}
-                </label>
-              ))}
-            </div>
-          </>
-        )}
-      </section>
+      <GithubOffer
+        account={githubAccount}
+        repository={edited.repos[0]?.name ?? edited.name}
+        remote={edited.remote}
+        onChange={(remote) => setEdited((p) => ({ ...p, remote }))}
+      />
 
       <div className="flex flex-wrap items-center gap-3">
         <Button disabled={busy} onClick={() => onCreate?.(edited)}>
