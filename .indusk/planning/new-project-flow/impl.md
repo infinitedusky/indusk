@@ -10,7 +10,7 @@ rationale: required
 gate_policy: ask
 approved_brief: "993ef4e0e1536ed600631a1d2ec4c159af37043f3827e96a44e1759e7513f94f"
 approved_by: "Sandy Corsillo"
-approved_at: "2026-10-14T00:38:44.067Z"
+approved_at: "2026-10-14T00:39:49.320Z"
 ---
 
 # New project flow
