@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import * as check from "../lib/looks/check.js";
-import { LooksCheckError, openWithinTime } from "../lib/looks/check.js";
-
-// The 404 failure, as `measure` throws it: LookNotHere once it exists.
-const NotHere: new (message: string) => Error =
-	(check as unknown as { LookNotHere?: new (message: string) => Error }).LookNotHere ?? Error;
+import { LookNotHere, LooksCheckError, openWithinTime } from "../lib/looks/check.js";
 
 const timeout = () =>
 	Object.assign(new Error("page.goto: Timeout 30000ms exceeded.\nCall log: …"), {
@@ -55,7 +50,7 @@ describe("a look that runs out of time is unchecked, not the end of the run", ()
 		let calls = 0;
 		const seen = await openWithinTime(async () => {
 			calls++;
-			throw new NotHere("http://localhost:3939/p/dusk/plan/looks-fixture-a answered 404");
+			throw new LookNotHere("http://localhost:3939/p/dusk/plan/looks-fixture-a answered 404");
 		});
 		expect(calls).toBe(1);
 		expect(seen).toEqual({
