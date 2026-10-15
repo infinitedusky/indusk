@@ -24,7 +24,7 @@ The string→variant maps themselves are shared, not per-component: `src/compone
 
 ## The components the mockups name
 
-Every component an approved mockup of a **landed** plan names is implemented **once** (approval merges a plan's mockups before its code, so a plan still active under `.indusk/planning/` is not held to it until it is archived); the exemption is per component, so a re-approval in flight by an unlanded plan keeps holding the components the landed approval bound and exempts only what it adds, in one file whose root element carries its `data-component="<name>"` marker, with **a story per state** the mockups show (`*.stories.tsx` beside it). Nineteen exist, each presentational — data arrives as props, nothing is read inside — so a screen composes them and a story renders them the same way.
+Every component an approved mockup of a **landed** plan names is implemented **once** (approval merges a plan's mockups before its code, so a plan still active under `.indusk/planning/` is not held to it until it is archived); the exemption is per component, so a re-approval in flight by an unlanded plan keeps holding the components the landed approval bound and exempts only what it adds — when the landed approval recorded its components; when it recorded none, there is no record of what landed and the mockup is held in full — in one file whose root element carries its `data-component="<name>"` marker, with **a story per state** the mockups show (`*.stories.tsx` beside it). Nineteen exist, each presentational — data arrives as props, nothing is read inside — so a screen composes them and a story renders them the same way.
 
 | Component | File | Stories (states) |
 |-----------|------|------------------|
