@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { WorktreeChip } from "@/components/Worktrees";
+import { declaredWithin } from "@/lib/path-nesting";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanListProps {
@@ -122,9 +123,12 @@ function buildGroups(
       released: 0,
     };
     let number = 0;
+    // A plan a Path inside this one also declares is listed there, innermost.
+    const listedInside = declaredWithin(grouping.subplans, parentName);
     for (const childName of declared) {
       // A master naming its own ancestor stops at the repeat.
       if (lineage.includes(childName)) continue;
+      if (listedInside.has(childName)) continue;
       const nested = open(childName, depth + 1, lineage);
       number += 1;
       if (nested) {

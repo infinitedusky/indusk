@@ -1,7 +1,7 @@
 ---
 title: "Cockpit audit fixes — what plan-cockpit's cold audit found"
 date: 2026-10-11
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -49,7 +49,7 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 | A6 | The dashboard and the promise page count the same thirty days: a violation on the first of the page's thirty days appears on both, and one on the day before appears on neither | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
 | A7 | An agent that asks two questions at once has both shown on the plan's card, and answering them gives the agent an answer to each | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-question-is-answered-in-full | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx, apps/indusk-admin/src/lib/decisions.test.ts |
 | A8 | A plan whose impl is a draft while a session is still writing it is not under Needs you for approval; once the session ends, it is | Test Phase 1 | Build Phase 2 | passing | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A9 | A plan declared by an outer Path and by a Path inside it is grouped under the inner Path on the dashboard, and the nav lists it there | Test Phase 1 | Build Phase 3 | written | unit | promise: a-promise-sits-in-its-innermost-path | apps/indusk-admin/src/app/p/[project]/promises/dashboard.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
+| A9 | A plan declared by an outer Path and by a Path inside it is grouped under the inner Path on the dashboard, and the nav lists it there | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-promise-sits-in-its-innermost-path | apps/indusk-admin/src/app/p/[project]/promises/dashboard.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
 | A10 | For one project, `indusk promises status`, the dashboard and a promise's page report the same state for each promise and source | Test Phase 1 | Build Phase 3 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/same-health-three-surfaces.test.ts |
 | A11 | When `main` cannot take the history commit, an answered decision says it was sent and that the history was left uncommitted, with the reason, and nothing else on `main` is touched | Test Phase 1 | Test Phase 1 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/plans/history.test.ts |
 
@@ -128,21 +128,21 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 
 **Goal**: a promise under the Path closest to its plan, and one test that holds the three surfaces to one state.
 
-- [ ] `promise-dashboard.ts` `pathOf` and the nav's grouping: the innermost declaring Path (A9)
-- [ ] A10 passes; if it is already green on arrival, say so in the phase and keep it as the guard it is
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] `promise-dashboard.ts` `pathOf` and the nav's grouping: the innermost declaring Path (A9)
+- [x] A10 passes — it was already green on arrival (see Test Phase 1): kept as the guard it is; `reportRows`, `readStanding` and `proofOf` agree over one fixture, re-run green after Build Phases 1 and 2
+- [x] Shape — reviewed `path-nesting.ts`, `promise-dashboard.ts`, `PlanList.tsx`: nothing found. The nesting question is one module (`pathsInside`/`declaredWithin`/`innermostPath`) read by both surfaces
 
 #### Build Phase 3 Verification
 
-- [ ] A9, A10 pass (`cd apps/indusk-admin && pnpm exec vitest run "src/app/p/[project]/promises/dashboard.test.tsx" "src/app/p/[project]/cockpit-nav.test.tsx"; cd ../indusk-mcp && pnpm exec vitest run src/__tests__/same-health-three-surfaces.test.ts`); tsc and biome clean on changed files
+- [x] A9, A10 pass (`cd apps/indusk-admin && pnpm exec vitest run "src/app/p/[project]/promises/dashboard.test.tsx" "src/app/p/[project]/cockpit-nav.test.tsx"; cd ../indusk-mcp && pnpm exec vitest run src/__tests__/same-health-three-surfaces.test.ts`); tsc and biome clean on changed files
 
 #### Build Phase 3 Context
 
-- [ ] (none — no convention changed: the Path rule follows the planning rule that hierarchy is declared top-down in `master.md`, already written there)
+- [x] (none needed — no convention changed: the Path rule follows the planning rule that hierarchy is declared top-down in `master.md`, already written there)
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: a promise and a plan sit under the innermost Path that declares them
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: a promise and a plan sit under the innermost Path that declares them
 
 ## Files Affected
 

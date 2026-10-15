@@ -3,6 +3,7 @@ import type {
   Standing,
   StandingRow,
 } from "@infinitedusky/indusk-mcp/promises/standing";
+import { innermostPath } from "./path-nesting";
 
 /**
  * The promises dashboard, worked out (plan-cockpit, ADR decision 5): one row
@@ -74,17 +75,6 @@ export interface RowContext {
   declarations: Pick<PlanDeclarations, "subplans">;
 }
 
-/** The innermost Path whose declared plans include `plan`. */
-function pathOf(
-  subplans: PlanDeclarations["subplans"],
-  plan: string,
-): string | null {
-  for (const [path, plans] of Object.entries(subplans)) {
-    if (plans.includes(plan)) return path;
-  }
-  return null;
-}
-
 /** One row per promise, from the package's standing and thirty days, in words, with its plan's title and Path. */
 export function buildRows(
   standing: StandingRow[],
@@ -97,7 +87,7 @@ export function buildRows(
       sentence: ctx.sentenceOf(name),
       plan: s.entry.owner,
       planTitle: ctx.planTitles[s.entry.owner] ?? s.entry.owner,
-      path: pathOf(ctx.declarations.subplans, s.entry.owner),
+      path: innermostPath(ctx.declarations.subplans, s.entry.owner),
       standing: s.standing,
       tests: s.tests,
       held: s.thirtyDays.held,
