@@ -7,14 +7,14 @@ status: living
 # 2026-10-15 every open plan sits here: Dawn, Day and the demo masters are closed.
 # A name with no folder renders as a placeholder.
 subplans:
-  # 0. run-the-master — questions by cost, the daily list, the graph scheduler
-  - run-the-master
   # 1. mark-first — a plan is one promise; clauses proved by marks
   - mark-first
   - telemetry-destinations
   - workbench-watch-provisioning
   - demo-scenarios
   - embedded-browser
+  # 1b. run-the-master — questions by cost, the daily list, the graph scheduler
+  - run-the-master
   # 2. expectations-loop — expectations read back into what is built next
   - expectations-loop
   - plan-premises
@@ -193,16 +193,16 @@ switching.
 **The plans, in order** — each headline child below gathers the open plans
 listed under it in `subplans:`.
 
-0. **`run-the-master`** — first: decisions as questions with a cost (cheap
-   five minutes, moderate an hour, expensive waits, red); one question thread;
-   the daily list; main cascading into every worktree; the graph of plans and phases run in parallel, blocked only
-   downstream of an unanswered question, re-evaluated continuously. Its first
-   master to run is Homework Gate's milestones, not this one. Built first on
-   `Depends On`; promise-derived dependencies arrive with `mark-first`.
 1. **`mark-first`** — merged with `promise-first-build`: clauses, marks
    (server and browser), the close rule, layering, the diagnosis; and a plan
    being one promise. Proved on Homework Gate, not on dusk. Its accepted brief
    is reworked around "a plan is one promise" and approved again.
+1b. **`run-the-master`** — second, after `mark-first` (Sandy, 2026-10-15: build it
+   on what a plan *is* once that has settled, not before): decisions as questions with a cost (cheap
+   five minutes, moderate an hour, expensive waits, red); one question thread;
+   the daily list; main cascading into every worktree; the graph of plans and phases run in parallel, blocked only
+   downstream of an unanswered question, re-evaluated continuously. Its first
+   master to run is Homework Gate's milestones, not this one. Its dependencies come from promises from the start.
 2. **`expectations-loop`** — expectations read back at their look time into
    what is built next.
 3. **`looks-as-promises`** — visual promises; approvals on the plan page; the
