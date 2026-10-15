@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { Replied } from "./SessionPanel";
+
+/**
+ * What a reply handler gives back: whether the server took the reply
+ * (`false` reopens the request), or nothing from a handler that cannot say.
+ */
+// biome-ignore lint/suspicious/noConfusingVoidType: a handler that cannot say returns nothing
+export type Replied = Promise<boolean> | void;
 
 /**
  * The requests a person's click has closed before the log caught up. A click

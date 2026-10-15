@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { describeToolInput as describeInput } from "@/lib/conversation-turns";
 import { type Decision, decisionsOf } from "@/lib/request-decisions";
 import { QuestionView } from "./QuestionView";
-import { useAnsweredRequests } from "./use-answered-requests";
+import { type Replied, useAnsweredRequests } from "./use-answered-requests";
 
 /**
  * A session of the developer's own `claude`, as a person sees it
@@ -16,13 +16,6 @@ import { useAnsweredRequests } from "./use-answered-requests";
  * callbacks. It never reads Claude's protocol — the package's `protocol.ts`
  * turned that into these events.
  */
-
-/**
- * What a reply handler gives back: whether the server took the reply
- * (`false` reopens the request), or nothing from a handler that cannot say.
- */
-// biome-ignore lint/suspicious/noConfusingVoidType: a handler that cannot say returns nothing
-export type Replied = Promise<boolean> | void;
 
 export interface SessionPanelProps {
   events: StartedEvent[];

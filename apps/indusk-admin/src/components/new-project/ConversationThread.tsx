@@ -4,8 +4,11 @@ import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Markdown } from "@/components/Markdown";
-import { EventView, type Replied } from "@/components/session/SessionPanel";
-import { useAnsweredRequests } from "@/components/session/use-answered-requests";
+import { EventView } from "@/components/session/SessionPanel";
+import {
+  type Replied,
+  useAnsweredRequests,
+} from "@/components/session/use-answered-requests";
 import { Button } from "@/components/ui/Button";
 import { Message } from "@/components/ui/Message";
 import { agentState, type Turn, turnsOf } from "@/lib/conversation-turns";

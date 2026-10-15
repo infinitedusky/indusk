@@ -52,7 +52,7 @@ Every request a session makes is recorded in its log together with how it was de
 | A8 | Watching a real build in the cockpit, no prompt is left looking undecided, and a reload leaves every one decided | Build Phase 2 | Build Phase 2 | passing | live check | the brief's expectation: watching a build shows no prompt waiting unless it is | recorded in this impl, Build Phase 2 |
 | A9 | A question the person answered shows the answer they gave, and a panel connecting afterwards (a reload) still shows it answered with that answer, not a blank question with every option disabled | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A10 | A click on Allow, Deny or Answer whose reply the server refuses leaves the request waiting with its buttons back, never with neither buttons nor an outcome | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/SessionPanel.test.tsx, apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
-| A11 | A click closes its request at once; a reply the server refuses reopens it, and an accepted one keeps it closed — one hook the panel and the thread both use | Build Phase 4 | Build Phase 4 | written | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/use-answered-requests.test.tsx |
+| A11 | A click closes its request at once; a reply the server refuses reopens it, and an accepted one keeps it closed — one hook the panel and the thread both use | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/use-answered-requests.test.tsx |
 
 ## Checklist
 
@@ -183,12 +183,15 @@ Every request a session makes is recorded in its log together with how it was de
 - [x] (reviewed `SessionPanel.test.tsx` (402) and `manager.test.ts` (513) — left as-is: each is one subject's tests grouped by trajectory row; splitting by row would scatter shared fakes)
 - [x] (reviewed `build-session.ts`, `start.ts`, `SessionConnector.tsx`, `use-project-session.ts` — left as-is: small edits, under cap, no repeat across files)
 
+- [x] Shape — reviewed the files this phase wrote (`use-answered-requests.ts`, `request-decisions.ts`, `QuestionView.tsx`, and the edited `SessionPanel.tsx`, `ConversationThread.tsx`, `conversation-turns.ts`) against the enabled extensions' craft rules.
+  - Found: `Replied` lived in `SessionPanel.tsx`, so the hook imported a type from the component that imports the hook (a cycle, erased but backwards); moved `Replied` into `use-answered-requests.ts` and pointed `SessionPanel` and `ConversationThread` at it. Nothing else to change.
+
 #### Build Phase 4 Verification
-- [ ] A11: the hook's own test (`cd apps/indusk-admin && pnpm exec vitest run src/components/session/use-answered-requests.test.tsx`)
-- [ ] Behaviour parity: A1–A10 still pass (`cd apps/indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx src/components/new-project/ConversationThread.test.tsx src/lib/conversation-turns.test.ts && pnpm exec vitest related src/components/session/SessionPanel.tsx src/components/session/QuestionView.tsx src/components/new-project/ConversationThread.tsx src/lib/conversation-turns.ts --run`); tsc and biome clean on the changed files
+- [x] A11: the hook's own test (`cd apps/indusk-admin && pnpm exec vitest run src/components/session/use-answered-requests.test.tsx`)
+- [x] Behaviour parity: A1–A10 still pass (`cd apps/indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx src/components/new-project/ConversationThread.test.tsx src/lib/conversation-turns.test.ts && pnpm exec vitest related src/components/session/SessionPanel.tsx src/components/session/QuestionView.tsx src/components/new-project/ConversationThread.tsx src/lib/conversation-turns.ts --run`); tsc and biome clean on the changed files
 
 #### Build Phase 4 Context
-- [ ] `apps/indusk-admin/CLAUDE.md`: the decided-event entry names its two units — `lib/request-decisions.ts` (`decisionsOf`) is the one reader of a request's decision, `useAnsweredRequests` the one early close of a click
+- [x] `apps/indusk-admin/CLAUDE.md`: the decided-event entry names its two units — `lib/request-decisions.ts` (`decisionsOf`) is the one reader of a request's decision, `useAnsweredRequests` the one early close of a click
 
 #### Build Phase 4 Document
 - [ ] (none — internal decomposition; asked/user proof to be recorded at `/work` per `gate_policy: ask`)
