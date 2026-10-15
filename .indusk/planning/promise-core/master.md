@@ -179,7 +179,8 @@ parent with its own `master.md` naming them.
 1. **`mark-first`** — merged with `promise-first-build`: clauses, marks
    (server and browser), the close rule, layering, the diagnosis; and a plan
    being one promise. Proved on Homework Gate, not on dusk. Its accepted brief
-   is reworked around "a plan is one promise" and approved again.
+   is reworked around "a plan is one promise" and approved again. A plan, not a
+   parent: nothing is gathered under it.
 1b. **`run-the-master`** — second, after `mark-first` (Sandy, 2026-10-15: build it
    on what a plan *is* once that has settled, not before): decisions as questions with a cost (cheap
    five minutes, moderate an hour, expensive waits, red); one question thread;
@@ -198,7 +199,8 @@ parent with its own `master.md` naming them.
    machine-global home; `house-rules-out` is folded in (dusk's own practice
    leaves the package). Ships with visual promises in the core.
 5. **`workbench-server`** — one box per team, per-person Claude accounts,
-   sync; Anthropic's own cloud sessions checked first.
+   sync; Anthropic's own cloud sessions checked first. Gathers
+   `workbench-watch-provisioning` and `telemetry-destinations`.
 6. **`adopt-existing-project`** — bringing an existing codebase (Numero) in:
    name its parts, its founding brief, first promises with marks.
 7. **`cockpit-around-promises`** — the cockpit organised around promises: `one-conversation-view` (on a
@@ -206,7 +208,8 @@ parent with its own `master.md` naming them.
    matching the new-project conversation's thread), `contract-ui` (the admin
    organised around premises, promises and phases), and the in-flight
    `cockpit-audit-fixes`, `decided-prompts-stay-closed`,
-   `template-reload-on-cold-cache`.
+   `template-reload-on-cold-cache`; and `demo-scenarios`, `embedded-browser` (a
+   promise seen holding and breaking beside the running app).
 8. **`workflow-builder`** — kept, not yet reconsidered against the above.
 
 **What changes in what exists:** the test plan becomes the clause plan (each

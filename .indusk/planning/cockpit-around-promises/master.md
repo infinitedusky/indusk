@@ -1,6 +1,6 @@
 ---
 title: "The cockpit around promises"
-description: "The admin organised around promises: one agent present on every page of a plan, one way to read it."
+description: "The admin organised around promises: one agent present on every page of a plan, one way to read it; a promise seen holding and breaking beside the running app."
 date: 2026-10-15
 status: living
 subplans:
@@ -9,6 +9,8 @@ subplans:
   - cockpit-audit-fixes
   - decided-prompts-stay-closed
   - template-reload-on-cold-cache
+  - demo-scenarios
+  - embedded-browser
 ---
 
 # The cockpit around promises
