@@ -8,6 +8,8 @@ status: living
 # here: Dawn, Day and the demo masters are closed. A name with no folder renders
 # as a placeholder.
 subplans:
+  - one-promise-language
+  - plans-are-promises
   - mark-first
   - run-the-master
   - expectations-loop
@@ -190,11 +192,20 @@ switching.
 **The plans, in order** — each headline child that gathers open plans is a
 parent with its own `master.md` naming them.
 
-1. **`mark-first`** — merged with `promise-first-build`: clauses, marks
-   (server and browser), the close rule, layering, the diagnosis; and a plan
-   being one promise. Proved on Homework Gate, not on dusk. Its accepted brief
-   is reworked around "a plan is one promise" and approved again. A plan, not a
-   parent: nothing is gathered under it.
+1. **The first cut, in three plans** (Sandy, 2026-10-15: "not all these clauses
+   fit within one promise … the goal isn't to force that"), each one promise:
+   - **`one-promise-language`** — `a-promise-is-upheld-or-broken`: the words,
+     everywhere. First: cheap, and every later plan uses them.
+   - **`plans-are-promises`** — `a-plan-is-one-promise`: a plan is one promise
+     of clauses; the clause plan replaces the test plan; a clause can rest on
+     another promise.
+   - **`mark-first`** ("Signal first") — `a-clause-is-proved-twice`: verified by
+     its tests before release, upheld by its signal in use; plans in the new
+     shape close on both.
+   Only what `run-the-master` needs; the later cut (a break leading to its
+   cause, diagnosis, broken traces kept, browser signals, every break becoming a
+   test, approvals as questions, clause views) follows `run-the-master` — see
+   `mark-first`'s research, "First cut". Proved on Homework Gate, not on dusk.
 1b. **`run-the-master`** — second, after `mark-first` (Sandy, 2026-10-15: build it
    on what a plan *is* once that has settled, not before): decisions as questions with a cost (cheap
    five minutes, moderate an hour, expensive waits, red); one question thread;
