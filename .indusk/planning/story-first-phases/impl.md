@@ -443,7 +443,7 @@ This phase tests two ways the finished plan may still break its promises, and fi
 
 #### Build Phase 4 Context
 
-- [ ] The package rules say ritual-phase and verification checks skip folded detail and code blocks, while still seeing other indented unchecked items
+- [x] The package rules say ritual-phase and verification checks skip folded detail and code blocks, while still seeing other indented unchecked items
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, "Run, verify, Shape, cleanup": amend "ritual-phase terminality needs ≥1 item and sees nested unchecked items" and the `verificationIsGreen` clause to add "— never a box inside a task's `<details>` fold or a fence" — guarded by `detail-is-only-read.test.ts` (`promise: hidden-detail-is-only-read`).
