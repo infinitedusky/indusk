@@ -260,7 +260,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/guide/briefs.md`: `title:` is a short name a person would say, `description:` a separate field; a plan with no title written reads as its handle in words
+- [x] `apps/docs/src/guide/briefs.md`: `title:` is a short name a person would say, `description:` a separate field; a plan with no title written reads as its handle in words
 - [ ] `apps/docs/src/reference/cli/plans.md`: a `subplans:` entry may be `{ name, title, description }` for a plan not started yet; its own brief wins once it exists
 
 ### Build Phase 2: Needs you counts an amendment
