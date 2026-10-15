@@ -160,7 +160,7 @@ Before any code changes, this phase writes down what "done" means as tests that 
 
 #### Test Phase 1 Verification
 
-- [x] Every new test fails on its own assertion rather than on a missing file, and the two guards pass (A1, A2, A3, A4, A5, A7, A9, A10, A11, A12, A14, A15, A16)
+- [x] Every new test fails on its own assertion rather than on a missing file, and the two guards pass
   <details><summary>Technical</summary>
 
   Red: A1–A5, A7, A9, A10, A14–A16. Green: A11, A12. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/phase-summary-rule.test.ts src/__tests__/planner-impl-summary-template.test.ts src/lib/impl-parser.test.ts src/lib/trajectory/validator.test.ts src/__tests__/detail-is-only-read.test.ts src/__tests__/phase-summary-existing-impls.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/ui/PhaseRow.test.tsx`.
@@ -198,7 +198,7 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
   The cross-reference rule (`validateCrossReferenceIntegrity` in `validate-impl-structure.js`, and its twin in `src/lib/trajectory/validator.ts`): when `phase_summary: required`, also collect `\b[TA]\d+\b` from the indented lines under each Verification item, up to the next column-zero line. Unknown labels there are refused as they are on the line. Reading a label ticks nothing and skips nothing, so `hidden-detail-is-only-read` holds.
 
   </details>
-- [ ] This plan's own Verification sentences drop their bracketed row labels, which now sit only in the fold, and this impl passes its own rule
+- [x] This plan's own Verification sentences drop their bracketed row labels, which now sit only in the fold, and this impl passes its own rule
   <details><summary>Technical</summary>
 
   Until the two tasks above land, the save check requires labels on the Verification line, so this impl carries them in a trailing bracket. Remove each bracket (the Test Phase 1 and Build Phase 1–3 Verification lines), keeping the labels in the details; the save of that edit runs the new rule over this file.
@@ -222,7 +222,7 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
 
 #### Build Phase 1 Verification
 
-- [x] The save check refuses the shapes it should, folded detail moves nothing, and every existing plan still validates (A1, A2, A3, A9, A10, A11, A12, A14, A15)
+- [x] The save check refuses the shapes it should, folded detail moves nothing, and every existing plan still validates
   <details><summary>Technical</summary>
 
   Green: A1–A3, A9, A10, A14, A15; still green: A11, A12. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/phase-summary-rule.test.ts src/lib/trajectory/validator.test.ts src/__tests__/detail-is-only-read.test.ts src/__tests__/phase-summary-existing-impls.test.ts && pnpm exec vitest related hooks/check-gates.js hooks/validate-impl-structure.js src/lib/trajectory/validator.ts`.
@@ -304,7 +304,7 @@ This phase is the part Sandy sees in the admin. The code that reads an impl for 
 
 #### Build Phase 2 Verification
 
-- [ ] The plan page shows the paragraph and the fold, the detail arrives whole, and Sandy has approved the look (A5, A6, A7, A8)
+- [ ] The plan page shows the paragraph and the fold, the detail arrives whole, and Sandy has approved the look
   <details><summary>Technical</summary>
 
   Green: A5, A6, A7; A8 recorded with Sandy's approval. `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/impl-parser.test.ts && pnpm exec vitest related src/lib/impl-parser-core.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/ui/PhaseRow.test.tsx src/components/plan/PhaseItems.test.tsx`; `indusk looks lint admin` reports no raw value.
@@ -362,7 +362,7 @@ The save check and the plan page are ready. This phase makes the planner use the
 
 #### Build Phase 3 Verification
 
-- [ ] The planner's template and instructions follow the shape, component-content reads well on its page, and the copies of the skill and rules still match their sources (A4, A13, A16)
+- [ ] The planner's template and instructions follow the shape, component-content reads well on its page, and the copies of the skill and rules still match their sources
   <details><summary>Technical</summary>
 
   Green: A4, A16; A13 recorded with Sandy's read of component-content's page. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/planner-impl-summary-template.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/planner-tier-line.test.ts src/__tests__/planner-verification-template.test.ts`.
@@ -414,4 +414,4 @@ The save check and the plan page are ready. This phase makes the planner use the
 ## Notes
 
 - Whether a sentence is plain is not checked beyond code and row labels; the brief's expectation measures the rest over the next three approvals.
-- This impl's Verification sentences carry their row labels in a trailing bracket only because the save check requires labels on the line until Build Phase 1 changes it; Build Phase 1's fifth task removes the brackets.
+- This impl's Verification sentences carried their row labels in a trailing bracket until Build Phase 1 let the save check read them from the fold; Build Phase 1's fifth task removed the brackets.
