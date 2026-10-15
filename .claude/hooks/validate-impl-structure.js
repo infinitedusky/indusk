@@ -32,7 +32,7 @@ import {
 	phaseSequence,
 	unterminatedFenceLine,
 } from "./_impl-headings.js";
-import { phaseSummaryProblems, ROW_LABEL } from "./_phase-summary.js";
+import { phaseSummaryProblems, phaseSummaryProblemsAdded, ROW_LABEL } from "./_phase-summary.js";
 import { tierConfigProblems, tierRuleProblems, workDefaultTier } from "./_phase-tier.js";
 import { parseRegister } from "./_register.js";
 import { isTestLevel, TEST_LEVELS } from "./_test-levels.js";
@@ -232,26 +232,16 @@ function phaseSummaryRefusal(problems) {
 // problems this edit ADDS are refused, so a file with an old problem can still
 // be edited elsewhere (story-first-phases A21).
 {
-	const optedIn = /^phase_summary:\s*required/m.test(
-		newFullContent.match(/^---\n([\s\S]*?)\n---\n/)?.[1] ?? "",
-	);
-	if (optedIn) {
-		const bodyOf = (text) => {
-			const m = text.match(/^---\n([\s\S]*?)\n---\n/);
-			return m ? text.slice(m[0].length) : text;
-		};
-		let oldBody = "";
-		try {
-			oldBody = bodyOf(readFileSync(filePath, "utf-8"));
-		} catch {
-			// a file that does not exist yet has no earlier problems
-		}
-		const had = new Set(phaseSummaryProblems(oldBody, true));
-		const added = phaseSummaryProblems(bodyOf(newFullContent), true).filter((p) => !had.has(p));
-		if (added.length > 0) {
-			process.stderr.write(phaseSummaryRefusal(added));
-			process.exit(2);
-		}
+	let onDisk = "";
+	try {
+		onDisk = readFileSync(filePath, "utf-8");
+	} catch {
+		// a file that does not exist yet has no earlier problems
+	}
+	const added = phaseSummaryProblemsAdded(onDisk, newFullContent);
+	if (added.length > 0) {
+		process.stderr.write(phaseSummaryRefusal(added));
+		process.exit(2);
 	}
 }
 

@@ -137,3 +137,23 @@ export function phaseSummaryProblems(implBody, required) {
 	closeIntro();
 	return problems;
 }
+
+/**
+ * The problems an edit ADDS to an impl that has opted in: the file as it would
+ * be left (`newText`, frontmatter included) held to the rule, less what the
+ * file as it was (`oldText`, empty for a new file) already had. Judging only
+ * the difference lets an unrelated edit through a file with an old problem.
+ * An impl that has not opted in adds nothing.
+ *
+ * promise: an-impl-phase-explains-itself
+ */
+export function phaseSummaryProblemsAdded(oldText, newText) {
+	const split = (text) => {
+		const m = text.match(/^---\n([\s\S]*?)\n---\n/);
+		return { frontmatter: m?.[1] ?? "", body: m ? text.slice(m[0].length) : text };
+	};
+	const after = split(newText);
+	if (!/^phase_summary:\s*required/m.test(after.frontmatter)) return [];
+	const had = new Set(phaseSummaryProblems(split(oldText).body, true));
+	return phaseSummaryProblems(after.body, true).filter((problem) => !had.has(problem));
+}
