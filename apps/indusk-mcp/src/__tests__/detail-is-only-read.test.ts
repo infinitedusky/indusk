@@ -10,8 +10,8 @@ import { runHook, validateWrite } from "./helpers/hook-runner.js";
 import { NO_TESTS_FLIP, summaryImpl, type TaskSpec } from "./helpers/phase-summary-fixture.js";
 
 /**
- * promise: hidden-detail-is-only-read — A9, A10, A11 of the story-first-phases
- * impl.
+ * promise: hidden-detail-is-only-read — A9, A10, A11, A17, A23, A24 of the
+ * story-first-phases impl.
  *
  * What is folded under a task is only read: it never ticks a box, skips a gate
  * or adds a task. The two scripts that check an impl file (check-gates.js when
@@ -244,5 +244,138 @@ describe("A17 — a box line quoted in a task's fold does not hold a phase open"
 			});
 			expect(notGreen(o)).toBe(true);
 		});
+	});
+});
+
+/**
+ * A23 of the story-first-phases impl: a task fold opened and never closed hides
+ * every line after it, real unticked tasks included, from the readers that skip
+ * folded text. The save check refuses it; the readers stop the fold at the next
+ * column-zero task or heading, as an unterminated fence masks nothing.
+ */
+describe("A23 — a task fold that is never closed hides nothing and is refused when saved", () => {
+	const OPEN_FOLD = [
+		"- [x] The first fix is made",
+		"  <details><summary>Technical</summary>",
+		"",
+		"  Steps to try by hand:",
+		"  - [ ] example",
+		"",
+		"- [ ] The second fix is made",
+	];
+	const ritualImpl = (word: string) =>
+		[
+			"# Plan",
+			"",
+			`### Build Phase 5: ${word} — a theme`,
+			"",
+			"**Tier**: med — the work step's default",
+			"",
+			"The phase does its work.",
+			"",
+			...OPEN_FOLD,
+			"",
+		].join("\n");
+
+	it("a cleanup phase with a real unticked task after the open fold is not finished", () => {
+		expect(isCleanupPhaseTerminal(ritualImpl("Cleanup"))).toBe(false);
+	});
+
+	it("a falsification phase with a real unticked task after the open fold is not finished", () => {
+		expect(isFalsificationPhaseTerminal(ritualImpl("Falsification"))).toBe(false);
+	});
+
+	it("Shape does not read a Verification section as green past an open fold", async () => {
+		const { root } = project("");
+		const good = summaryImpl("demo", {
+			verificationTask: {
+				sentence: `The save check refuses the shapes it should ${NO_TESTS_FLIP}`,
+				checked: true,
+				detail: "Steps.",
+			},
+		});
+		const open = good.replace(
+			/(- \[x\] The save check refuses the shapes it should[^\n]*\n {2}<details>[\s\S]*?)\n {2}<\/details>\n/,
+			"$1\n\n- [ ] A second check that is still to do\n",
+		);
+		expect(open).not.toBe(good);
+		let outcome: Awaited<ReturnType<typeof prepareShapeReview>> | { kind: "past" };
+		try {
+			outcome = await prepareShapeReview({
+				root,
+				plan: "demo",
+				phase: { kind: "build", number: 1 },
+				implBody: open,
+			});
+		} catch {
+			outcome = { kind: "past" };
+		}
+		expect(
+			outcome.kind === "skipped" && /verification is not green/.test(outcome.reason),
+			"an unticked task after an unclosed fold",
+		).toBe(true);
+	});
+
+	const task: TaskSpec = {
+		sentence: "The save check refuses a phase with no summary",
+		detail: "Steps.",
+	};
+
+	function leftOpen(spec: Parameters<typeof summaryImpl>[1] = {}): string {
+		const impl = summaryImpl("demo", { buildTask: task, ...spec });
+		const at = impl.indexOf(task.sentence);
+		const close = impl.indexOf("  </details>\n", at);
+		return impl.slice(0, close) + impl.slice(close + "  </details>\n".length);
+	}
+
+	it("the control: the same impl with its fold closed passes the save check", async () => {
+		const r = await validateWrite(summaryImpl("demo", { buildTask: task }));
+		expect(r.exitCode, r.stderr).toBe(0);
+	});
+
+	it("an opted-in impl with a task fold left open is refused, naming the task", async () => {
+		const r = await validateWrite(leftOpen());
+		expect(r.exitCode, "a fold opened under the Build Phase 1 task and never closed").toBe(2);
+		expect(r.stderr).toContain(task.sentence);
+		expect(r.stderr).toMatch(/details|fold/i);
+	});
+});
+
+/**
+ * A24 of the story-first-phases impl: an Edit whose old text begins at a folded
+ * box's dash carries no indent, so the tick check must judge the box by its
+ * place in the whole file, not by the edit's own text.
+ */
+describe("A24 — ticking a box inside a fold, the edit starting at its dash, is not a checkoff", () => {
+	const task: TaskSpec = {
+		sentence: "The save check refuses a phase with no summary",
+		detail: "Steps to try by hand:\n- [ ] example",
+	};
+
+	function tick(status: string) {
+		const { root, implPath } = project(summaryImpl("demo", { status, buildTask: task }));
+		return runHook(
+			"check-gates.js",
+			{
+				tool_name: "Edit",
+				tool_input: {
+					file_path: implPath,
+					old_string: "- [ ] example",
+					new_string: "- [x] example",
+				},
+				cwd: root,
+			},
+			{ cwd: root },
+		);
+	}
+
+	it("lets the edit through on a plan being drafted", async () => {
+		const r = await tick("draft");
+		expect(r.exitCode, `an edit starting at a folded box's dash, on a draft: ${r.stderr}`).toBe(0);
+	});
+
+	it("lets the edit through on a plan being built, with its gates still open", async () => {
+		const r = await tick("in-progress");
+		expect(r.exitCode, r.stderr).toBe(0);
 	});
 });
