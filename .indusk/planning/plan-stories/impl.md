@@ -286,7 +286,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md` (Needs you): a plan waiting on an amendment is listed, and is answered on its amendment card
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (Needs you): a plan waiting on an amendment is listed, and is answered on its amendment card
 
 ### Build Phase 3: Titles in the admin
 
