@@ -4,14 +4,13 @@ import { join } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   checkRetrospectiveReadiness,
-  isCleanupSkipped,
+  skippedRitualsOf,
 } from "@infinitedusky/indusk-mcp/cleanup/gate";
 import {
   isFalsificationComplete,
   type LogEntry,
   readFalsificationLog,
 } from "@infinitedusky/indusk-mcp/falsification/log";
-import { isFalsificationSkipped } from "@infinitedusky/indusk-mcp/falsification/skip";
 import { parseImplString } from "@infinitedusky/indusk-mcp/impl-parser";
 import {
   derivePlanPosition,
@@ -134,11 +133,11 @@ export interface Plan {
   impl?: ImplData;
   falsification?: FalsificationData;
   /**
-   * Falsification or cleanup the impl skipped with its reason
+   * Falsification, cleanup or audit the impl skipped with its reason
    * (admin-plan-authoring) — read through the package's own skip readers.
    */
   skippedRituals?: Array<{
-    ritual: "falsification" | "cleanup";
+    ritual: "falsification" | "cleanup" | "audit";
     reason: string;
   }>;
   retrospective?: RetroData;
@@ -371,18 +370,7 @@ async function readPlanFolder(
       : null;
   const readiness =
     implRaw !== null ? checkRetrospectiveReadiness(planDir, implRaw) : null;
-  const skippedRituals =
-    implRaw === null
-      ? []
-      : [
-          {
-            ritual: "falsification" as const,
-            check: isFalsificationSkipped(implRaw),
-          },
-          { ritual: "cleanup" as const, check: isCleanupSkipped(implRaw) },
-        ]
-          .filter((r) => r.check.skipped)
-          .map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" }));
+  const skippedRituals = implRaw === null ? [] : skippedRitualsOf(implRaw);
   // A closed plan may be back in motion — reopened by an incident, or in
   // `monitor` — derived from files by the same function `list_plans` reads.
   const after =

@@ -207,6 +207,12 @@ body {
 .cols-step {
   grid-template-columns: var(--space-5) minmax(0, 1fr) auto;
 }
+.cols-step-reason {
+  grid-template-columns: var(--space-5) minmax(0, 1fr) auto auto;
+}
+.underline-hair {
+  text-underline-offset: var(--space-hair);
+}
 .cols-look-row {
   grid-template-columns: minmax(0, 1fr) auto auto;
 }

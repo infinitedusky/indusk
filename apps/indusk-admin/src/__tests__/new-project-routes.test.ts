@@ -24,7 +24,8 @@ vi.mock("@/lib/session-host", () => ({
   refuse: (status: number, message: string) =>
     Response.json({ error: message }, { status }),
   sessionManager: () => ({
-    current: () => undefined,
+    forPlan: () => undefined,
+    capRefusal: () => undefined,
     subscribe: (_id: string, listen: (ev: unknown) => void) => {
       heard = listen;
       return () => {};

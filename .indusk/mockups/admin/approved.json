@@ -3871,6 +3871,15 @@
 			"plan": "cockpit-redraw"
 		},
 		{
+			"mockup": "agent-panel.already-running",
+			"mockupHash": "bfa2f0c1d5c5f218636676c3f52148b0e19409d6b539252adf0466018663813a",
+			"foundationHash": "106bec54ed5179a376c18c16cfd03b23d8d86c18ba0d37617316af14acb725be",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-14T23:42:49.119Z",
+			"plan": "sessions-per-plan"
+		},
+		{
 			"kind": "story",
 			"story": "file-chip.default",
 			"snapshotHash": "96bc93a92232be00a886a181330b2f2c43897c7cdc9c26d902dd2ba7362ad139",
@@ -6860,6 +6869,81 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-14T23:26:21.570Z",
 			"plan": "skip-reason-why"
+		},
+		{
+			"kind": "story",
+			"story": "step.done",
+			"snapshotHash": "7bebc9159ef521dd1d098fb20f2c31516b4009790f9078694b83c2557d60804a",
+			"stylesheetHash": "436b1ee037f932c0bd020b2c791b2fc7045f76bea51407348e04d250efbf84d9",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-15T00:09:16.268Z",
+			"plan": "skip-reason-why"
+		},
+		{
+			"kind": "story",
+			"story": "step.needs",
+			"snapshotHash": "80c31e0fa8a2368f09aad0581138e7a97d5938036b503675bcf8dd573d8c7dd2",
+			"stylesheetHash": "436b1ee037f932c0bd020b2c791b2fc7045f76bea51407348e04d250efbf84d9",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-15T00:09:16.512Z",
+			"plan": "skip-reason-why"
+		},
+		{
+			"kind": "story",
+			"story": "step.skipped-open",
+			"snapshotHash": "b229e802a5987a4fda1c0fc1429725fbd85ffc3542895dba2e9a8e8b66b9c39d",
+			"stylesheetHash": "436b1ee037f932c0bd020b2c791b2fc7045f76bea51407348e04d250efbf84d9",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-15T00:09:16.775Z",
+			"plan": "skip-reason-why"
+		},
+		{
+			"kind": "story",
+			"story": "step.skipped",
+			"snapshotHash": "f03843144e701e5809a76032848986f7acbc3c2d68bd440cd089583333806b8f",
+			"stylesheetHash": "436b1ee037f932c0bd020b2c791b2fc7045f76bea51407348e04d250efbf84d9",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-15T00:09:16.998Z",
+			"plan": "skip-reason-why"
+		},
+		{
+			"kind": "story",
+			"story": "step.waiting",
+			"snapshotHash": "e1b554c8cbe66ad54a7cb4434402f56d0dbf4469bc07e18fb75502ff481860ab",
+			"stylesheetHash": "436b1ee037f932c0bd020b2c791b2fc7045f76bea51407348e04d250efbf84d9",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-15T00:09:17.223Z",
+			"plan": "skip-reason-why"
+		},
+		{
+			"kind": "story",
+			"story": "step.working",
+			"snapshotHash": "645b5d972049aefc6b15abb993d7a81c013214771a45e2cba5b38d2d2ebba97e",
+			"stylesheetHash": "436b1ee037f932c0bd020b2c791b2fc7045f76bea51407348e04d250efbf84d9",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-15T00:09:17.436Z",
+			"plan": "skip-reason-why"
+		},
+		{
+			"mockup": "agent-panel.already-running",
+			"mockupHash": "bfa2f0c1d5c5f218636676c3f52148b0e19409d6b539252adf0466018663813a",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-15T00:02:00.472Z",
+			"plan": "sessions-per-plan"
 		},
 		{
 			"mockup": "phase-row.open",

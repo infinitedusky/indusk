@@ -34,6 +34,7 @@ function positionOf(
 			missing: over.missing ?? [],
 			nonTerminalRows: [],
 			unprovenPromises: [],
+			longSkipReasons: [],
 		} as never,
 		archived: false,
 	});

@@ -20,6 +20,7 @@
 		{ "name": "amendment-card", "states": ["waiting"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "part-section", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "phase-row", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
+		{ "name": "agent-panel", "states": ["already-running"], "path": "/p/dusk/plan/sessions-per-plan/brief" },
 		{ "name": "history-panel", "states": ["closed", "open"], "path": "/p/dusk/plan/ui-promises" },
 		{ "name": "looks", "states": ["default", "uncovered"], "path": "/p/dusk/looks" },
 		{ "name": "home", "states": ["default"], "path": "/" },

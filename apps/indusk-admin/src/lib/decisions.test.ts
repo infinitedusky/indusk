@@ -260,9 +260,12 @@ describe("A16 — a reply in words reaches the plan's agent, running or not", ()
     expect(launched[0]?.cwd).toBe(WORKTREE);
     expect(launched[0]?.prompt).toContain(approvalWaiting.decision);
     expect(launched[0]?.prompt).toContain("Split Build Phase 2 in two first.");
-    expect(manager.current()).toMatchObject({ project: PROJECT, plan: PLAN });
+    expect(manager.forPlan(PROJECT, PLAN)).toMatchObject({
+      project: PROJECT,
+      plan: PLAN,
+    });
     expect(r.via).toBe("session");
-    expect(r.sessionId).toBe(manager.current()?.id);
+    expect(r.sessionId).toBe(manager.forPlan(PROJECT, PLAN)?.id);
   });
 
   it("A16 the alternative on review goes to the agent as words", async () => {

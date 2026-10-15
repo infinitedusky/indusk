@@ -26,6 +26,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 
+- **Several plans can each have an agent at once** (sessions-per-plan): a machine runs at most `sessions.max` (4) sessions, set in `~/.indusk/config.json`. Only a second session of the same kind on the same plan is refused. See [Sessions](/reference/admin-ui/overview#sessions) and [the decision](/decisions/sessions-per-plan).
 - **The cockpit is redrawn** (cockpit-redraw): the nav lists every plan as the original cockpit did and drags wider, and the brief page is drawn; re-approving a brief is a person's alone. The nav, brief page and plan page each report which look they draw, so the value check opens every state. See [the decision](/decisions/cockpit-redraw).
 - **Fix with Claude opens a Claude Code tab in VS Code** (fix-opens-claude-tab): with the Claude Code extension installed, the fix opens a new Claude Code tab with the prompt filled in, not sent; in Cursor or without the extension it starts `claude` in a terminal as before. See [Promises in your editor](/guide/promises-in-your-editor#fix-with-claude).
 - **The Promises panel reads in words** (display-names): promises show as "A break reaches the editor" rather than their handle, on cards, rows, the activity and the hover; plan groups are headed by the plan's title with "started …, landed …, released X.Y.Z (date)" or "not released yet". The marker at the end of a code line keeps the handle. See [Promises in your editor](/guide/promises-in-your-editor).

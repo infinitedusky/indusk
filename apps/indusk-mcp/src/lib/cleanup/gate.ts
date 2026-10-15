@@ -8,6 +8,7 @@ import { RITUAL_ORDER } from "../lifecycle.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { readPromises } from "../promises/registry.js";
 import { rowProofs } from "../promises/rows.js";
+import { reasonFits, sentenceCount } from "../rituals/reason.js";
 import { isRitualSkipped, type SkipCheck } from "../rituals/skip.js";
 import { findNonTerminalRows } from "../trajectory/audit.js";
 import { parseTrajectory } from "../trajectory/parser.js";
@@ -102,6 +103,25 @@ export function isAuditSkipped(implContent: string): SkipCheck {
 }
 
 /**
+ * The one list of skippable rituals a reader uses: every ritual the impl skips
+ * (falsification, cleanup, audit) with its reason, in that order. The build
+ * review and the admin's plan page both read this rather than build the list.
+ *
+ * promise: a-skipped-step-shows-why-on-request
+ */
+export function skippedRitualsOf(
+	implContent: string,
+): Array<{ ritual: "falsification" | "cleanup" | "audit"; reason: string }> {
+	return [
+		{ ritual: "falsification" as const, check: isFalsificationSkipped(implContent) },
+		{ ritual: "cleanup" as const, check: isCleanupSkipped(implContent) },
+		{ ritual: "audit" as const, check: isAuditSkipped(implContent) },
+	]
+		.filter((r) => r.check.skipped)
+		.map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" }));
+}
+
+/**
  * True iff `<planRoot>/audit.md` exists. Its content is never read: an audit
  * is advisory, and what it says changes no gate.
  *
@@ -109,6 +129,32 @@ export function isAuditSkipped(implContent: string): SkipCheck {
  */
 export function isAuditComplete(planRoot: string): boolean {
 	return existsSync(join(planRoot, "audit.md"));
+}
+
+type SkippableRitual = "falsification" | "cleanup" | "audit";
+
+/**
+ * A skip satisfies its ritual only when it is a skip and its reason is one
+ * sentence of at most SKIP_REASON_MAX characters (`reasonFits`, rituals/reason.ts).
+ *
+ * promise: a-skip-reason-is-one-sentence
+ */
+function skipIsOneSentence(skip: SkipCheck): boolean {
+	const reason = skip.reason ?? "";
+	return skip.skipped && reasonFits(reason);
+}
+
+/** Records a skip as too long when it is the only thing that would have satisfied the ritual. */
+function noteLongSkip(
+	into: RetrospectiveReadiness["longSkipReasons"],
+	ritual: SkippableRitual,
+	skip: SkipCheck,
+	satisfied: boolean,
+): void {
+	const reason = skip.reason ?? "";
+	if (!satisfied && skip.skipped && !skipIsOneSentence(skip)) {
+		into.push({ ritual, length: reason.length, sentences: sentenceCount(reason) });
+	}
 }
 
 export interface RetrospectiveReadiness {
@@ -124,8 +170,21 @@ export interface RetrospectiveReadiness {
 	promisesOk: boolean;
 	/** The promises that are not, by name — what the skill's refusal names. */
 	unprovenPromises: string[];
+	/**
+	 * Rituals whose skip would satisfy them but whose reason is more than one sentence or over
+	 * SKIP_REASON_MAX characters (skip-reason-why). Each also lands in
+	 * `missing` under its own word, so a caller that refuses on `missing`
+	 * refuses on this too; this names the length. A ritual satisfied some
+	 * other way (a log, a terminal phase, audit.md) is not listed.
+	 *
+	 * promise: a-skip-reason-is-one-sentence
+	 */
+	longSkipReasons: Array<{ ritual: SkippableRitual; length: number; sentences: number }>;
 	passes: boolean;
-	/** What is not yet satisfied (subset of ["falsification", "cleanup", "audit", "rows", "promises"]). */
+	/**
+	 * What is not yet satisfied (subset of ["falsification", "cleanup", "audit", "rows", "promises"]).
+	 * A ritual skipped with a reason over SKIP_REASON_MAX, or of more than one sentence, is named here too.
+	 */
 	missing: string[];
 }
 
@@ -175,12 +234,19 @@ export function checkRetrospectiveReadiness(
 	planRoot: string,
 	implContent: string,
 ): RetrospectiveReadiness {
+	const longSkipReasons: RetrospectiveReadiness["longSkipReasons"] = [];
+	const falsificationSkip = isFalsificationSkipped(implContent);
 	const falsificationOk =
 		isFalsificationComplete(planRoot) ||
-		isFalsificationSkipped(implContent).skipped ||
+		skipIsOneSentence(falsificationSkip) ||
 		isFalsificationPhaseTerminal(implContent);
-	const cleanupOk = isCleanupComplete(planRoot) || isCleanupSkipped(implContent).skipped;
-	const auditOk = isAuditComplete(planRoot) || isAuditSkipped(implContent).skipped;
+	noteLongSkip(longSkipReasons, "falsification", falsificationSkip, falsificationOk);
+	const cleanupSkip = isCleanupSkipped(implContent);
+	const cleanupOk = isCleanupComplete(planRoot) || skipIsOneSentence(cleanupSkip);
+	noteLongSkip(longSkipReasons, "cleanup", cleanupSkip, cleanupOk);
+	const auditSkip = isAuditSkipped(implContent);
+	const auditOk = isAuditComplete(planRoot) || skipIsOneSentence(auditSkip);
+	noteLongSkip(longSkipReasons, "audit", auditSkip, auditOk);
 	// The check the skill's text always promised and the code never performed:
 	// a row left `written` after its phase closed is invisible to the two
 	// ritual walks above, which see checkboxes and not rows.
@@ -203,6 +269,7 @@ export function checkRetrospectiveReadiness(
 		nonTerminalRows,
 		promisesOk,
 		unprovenPromises,
+		longSkipReasons,
 		passes: missing.length === 0,
 		missing,
 	};
