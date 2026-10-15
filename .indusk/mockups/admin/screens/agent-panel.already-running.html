@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>agent-panel — already-running</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<style>
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--color-ground); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-regular); }
+			h2, p { margin: 0; padding: 0; }
+			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+			.agent { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--size-content); border-left-width: var(--border-1); border-left-style: solid; border-left-color: var(--color-line); background: var(--color-surface); padding: var(--space-5) var(--space-4) var(--space-4); }
+			.agent h2 { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--leading-4); font-weight: var(--font-weight-bold); }
+			.refusal { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-bad); }
+			.btn { display: inline-flex; align-items: center; justify-content: center; border-width: var(--border-1); border-style: solid; border-color: var(--color-ink); background: var(--color-ink); color: var(--color-surface); border-radius: var(--radius-lg); padding: var(--space-tight) var(--space-4); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-semibold); }
+		</style>
+	</head>
+	<body>
+<div style="padding:var(--space-6)"><aside class="agent"><h2>Agent</h2><p class="refusal">A planning session is already running on this plan (sessions-per-plan). Do you want to continue that session here?</p><div><button class="btn" type="button">Continue it here</button></div></aside></div>
+	</body>
+</html>

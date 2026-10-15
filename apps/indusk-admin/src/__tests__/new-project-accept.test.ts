@@ -22,7 +22,9 @@ vi.mock("@/lib/session-host", () => ({
   refuse: (status: number, message: string) =>
     Response.json({ error: message }, { status }),
   sessionManager: () => ({
-    current: () => running,
+    forPlan: (_project: string, plan: string) =>
+      running && running.plan === plan ? running : undefined,
+    capRefusal: () => undefined,
     get: (id: string) => ({
       stop: async () => {
         stopped.push(id);

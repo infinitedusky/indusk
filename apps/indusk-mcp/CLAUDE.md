@@ -253,6 +253,8 @@ pointer; the pointer holds the story.
   `prepublishOnly` packs the `.vsix`.
   `lib/release/` has its own `CLAUDE.md`. — see `/reference/cli/release`
 
+- **A session is owned by its project, plan and kind** — `SessionManager.start` refuses only a second session of the same owner, and a start at the machine's cap (`sessions.max` in the InDusk home's `config.json`, default 4, a malformed file reads as 4); readers ask `forPlan(project, plan, kind?)` or `running()`, never "the" session. Guarded by `session/manager.test.ts` (A2, A9). — see `/decisions/sessions-per-plan`
+
 ## Tests
 
 - commander@13 drops duplicate parent+subcommand options — declare on the

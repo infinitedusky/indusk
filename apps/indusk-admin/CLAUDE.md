@@ -244,6 +244,13 @@ Each entry is a rule and a pointer; the pointer holds the story.
   no current step; a hand-written `=== "accepted"` showed "The brief is
   incomplete" on finished plans. Guarded by `PlanSummary.test.tsx` (A28). — see
   `/reference/admin-ui/overview`
+- **A route asks for its own plan's session (`forPlan(project, plan, kind?)`),
+  never "the" session**: one `SessionManager` holds a session per plan and
+  kind. `running()` is for the caller that needs every session (`readWaiting`).
+  An answer goes to the session that asked, found by its `pendingQuestion`
+  request id (a build and a planning session share a plan); words go to the
+  planning session. Guarded by `sessions-per-plan.test.ts` (A6, A13). — see
+  `/decisions/sessions-per-plan`
 - **The nav's width is the person's, per browser; its tree is drawn by
   `nav.expanded`**: `CockpitFrame` keeps the width in `localStorage`
   (`indusk-admin.nav.width`), no `NavHandle` below 760 px; every width goes
