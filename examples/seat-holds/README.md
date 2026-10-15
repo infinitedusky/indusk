@@ -77,7 +77,7 @@ again to fix it.
 ## What's in it
 
 - `src/seats.ts` — the rules: hold, book, release, and whether a release was on time. The clock is an argument, so the tests never wait.
-- `src/telemetry.ts` — OpenTelemetry, and one mark per release.
+- `src/telemetry.ts` — OpenTelemetry, and one signal per release.
 - `src/server.ts` — the page, the API, the fault switch, and the sweeper that releases lapsed holds once a second.
 - `public/index.html` — the page.
 - `.indusk/` — the example's promise and the plan it came from.
