@@ -374,7 +374,7 @@ The save check and the plan page are ready. This phase makes the planner use the
 
 #### Build Phase 3 Verification
 
-- [ ] The planner's template and instructions follow the shape, component-content reads well on its page, and the copies of the skill and rules still match their sources
+- [x] The planner's template and instructions follow the shape, component-content reads well on its page, and the copies of the skill and rules still match their sources
   <details><summary>Technical</summary>
 
   Green: A4, A16; A13 recorded with Sandy's read of component-content's page. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/planner-impl-summary-template.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/planner-tier-line.test.ts src/__tests__/planner-verification-template.test.ts`.
