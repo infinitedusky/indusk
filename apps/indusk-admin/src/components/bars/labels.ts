@@ -35,9 +35,9 @@ export const PROMISE_STATE_CHIP = {
     aria: "declared, not yet observed",
     className: "border border-ok bg-surface text-ok",
   },
-  "known-violated": {
-    label: "known-violated",
-    aria: "known-violated — an incident says why",
+  "known-broken": {
+    label: "known broken",
+    aria: "known broken — an incident says why",
     className: "border border-warn bg-warn-wash text-warn",
   },
   retired: {
@@ -78,8 +78,8 @@ export const PROMISE_HEALTH_CHIP = {
     className: "border border-ink-faint bg-surface text-ink-soft",
   },
   amber: {
-    label: "known-violated",
-    aria: "declared known-violated",
+    label: "known broken",
+    aria: "declared known broken",
     className: "border border-warn bg-warn-wash text-warn",
   },
   grey: {
