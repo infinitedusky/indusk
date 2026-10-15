@@ -79,10 +79,16 @@ This phase writes the tests that fail today for the reasons the research found. 
   The config imports cleanly from a node test, so it is read as a module. Red: all 11 `@opentelemetry/*` packages the template and its test import are reported as "packages the templates project's server would only find mid-run"; the assertion, not a load error.
 
   </details>
-- [ ] A test fails today because landing's install builds without first syncing dependencies to the lockfile
+- [x] A test fails today because landing's install builds without first syncing dependencies to the lockfile
   <details><summary>Technical</summary>
 
   A3 in `apps/indusk-mcp/src/__tests__/install-local.test.ts` (`// promise: landing-installs-after-a-dependency-change`): read the root `package.json`; assert `scripts["install:local"]`, split on `&&`, starts with `pnpm install --frozen-lockfile`, before the `prepublishOnly` build; and that `.indusk/config.json` `workflow.steps.land.install` still runs `pnpm install:local`. Red today.
+
+  </details>
+  The test is written and fails on its own assertion.
+  <details><summary>Note</summary>
+
+  Red: the first step expected `pnpm install --frozen-lockfile` and received `pnpm --filter @infinitedusky/indusk-mcp prepublishOnly`. The second case (landing still runs `pnpm install:local`) passes today, as it should.
 
   </details>
 - [ ] The end-to-end monitor test looks for the fake model's name, and fails today only where it still expects Claude Code's old wording
