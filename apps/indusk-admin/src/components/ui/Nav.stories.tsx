@@ -21,7 +21,7 @@ const tree = (current: "promises" | "looks" | "plan") => (
     <PlanRow
       initials="CR"
       state="needs"
-      name="cockpit-redraw"
+      name="Cockpit redraw"
       stage="Approve 10 looks"
       current={current === "plan"}
     />
@@ -34,34 +34,34 @@ const tree = (current: "promises" | "looks" | "plan") => (
     />
     <ViewLink icon="L" label="Looks" current={current === "looks"} />
     <NavGroup label="Paths" count={2} />
-    <NavPath name="indusk-v2-dawn" count="5/8" defaultOpen={false} />
-    <NavPath name="indusk-v4-day" count="17/26">
+    <NavPath name="InDusk v2: Dawn" count="5/8" defaultOpen={false} />
+    <NavPath name="InDusk v4: Day" count="17/26">
       <PlanRow
         number={1}
         initials="WT"
         state="released"
-        name="workbench-trust-fixes"
+        name="Workbench trust fixes"
         stage="Released"
       />
       <PlanRow
         number={2}
-        initials="HC"
+        initials="HF"
         state="released"
-        name="hook-cwd-independence"
+        name="Hooks from any folder"
         stage="Released"
       />
       <PlanRow
         number={3}
-        initials="DW"
+        initials="WE"
         state="working"
-        name="dawn-workbench-execution"
+        name="Workbench execution"
         stage="Building · 2 of 5"
       />
       <PlanRow
         number={4}
-        initials="AU"
+        initials="LP"
         state="idle"
-        name="admin-ui-phase-progress"
+        name="Live phase progress"
         stage="Queued"
         queued
       />
@@ -71,22 +71,22 @@ const tree = (current: "promises" | "looks" | "plan") => (
       number=""
       initials="CR"
       state="working"
-      name="clean-release-build"
+      name="Clean release build"
       stage="Building · 1 of 3"
     />
     <PlanRow
       number=""
-      initials="CR"
+      initials="CI"
       state="idle"
-      name="context-reaches-every-session"
+      name="Context in every session"
       stage="Brief · draft"
     />
     <NavGroup label="Unordered" count={1} />
     <PlanRow
       number=""
-      initials="LC"
+      initials="FL"
       state="working"
-      name="looks-check-speed"
+      name="Faster look checks"
       stage="Brief · writing"
     />
     <NavPath apart defaultOpen={false} name="Archived" count={92} />
