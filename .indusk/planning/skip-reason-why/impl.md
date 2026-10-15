@@ -42,9 +42,9 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A skipped Falsify step reads "skipped" with a "why?", and the reason is not on the page | Test Phase 1 | Build Phase 2 | written | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
-| A2 | Opening "why?" shows the reason beneath the step; opening it again hides it | Test Phase 1 | Build Phase 2 | written | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
-| A3 | A 950-character reason leaves the status exactly "skipped" until "why?" is opened | Test Phase 1 | Build Phase 2 | written | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
+| A1 | A skipped Falsify step reads "skipped" with a "why?", and the reason is not on the page | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
+| A2 | Opening "why?" shows the reason beneath the step; opening it again hides it | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
+| A3 | A 950-character reason leaves the status exactly "skipped" until "why?" is opened | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
 | A4 | A cleanup skipped with a reason over 120 characters is not ready for the retrospective, cleanup named | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 | A5 | The same for a skipped falsification and a skipped audit | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 | A6 | Such a plan's status says the skip reason is too long, not that it awaits the ritual | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
@@ -119,18 +119,23 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 - [x] `PlanWorkflows.tsx:124`: pass `status={LABEL[step.state]}` and `reason={step.reason}`; the reason is never joined into the status again
 - [ ] `indusk looks stories admin` to regenerate `components.json` and `components/step.css`; `indusk looks lint admin` clean; the person approves the `step.skipped` and `step.skipped-open` stories against their mockups in the cockpit
 
+  - note: regenerated and lint clean; the story approvals in the cockpit await the person. Discovered while verifying: Build Phase 1's value import of `SKIP_REASON_MAX` from `cleanup/gate.ts` into `lifecycle.ts` pulled `node:fs` into the admin's browser bundle, so the constant now lives in `lifecycle.ts` and `gate.ts` re-exports it. The test's `span:last-of-type` read needs the "why?" outside the status span, so a reasoned step uses a four-column `cols-step-reason` grid, and the toggle uses `flushSync` because the test reads the DOM right after `click()`.
+
 #### Build Phase 2 Verification
 
-- [ ] A1–A3 go green and A8 stays green (`pnpm exec vitest run "apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx" && pnpm exec vitest related apps/indusk-admin/src/components/ui/Step.tsx apps/indusk-admin/src/components/PlanWorkflows.tsx`)
-- [ ] `indusk looks lint admin` and `indusk looks coverage admin` report nothing new
+- [x] A1–A3 go green and A8 stays green (`pnpm exec vitest run "apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx" && pnpm exec vitest related apps/indusk-admin/src/components/ui/Step.tsx apps/indusk-admin/src/components/PlanWorkflows.tsx`)
+- [x] `indusk looks lint admin` and `indusk looks coverage admin` report nothing new
+  - note: lint clean; coverage lists the six step stories as uncovered (no mockup approved against them in this worktree, step.done etc. included) — the two new ones await the person
+
+- [x] Shape (craft review of `Step.tsx`): reviewed nothing found beyond the reason branch sharing the root shape with the plain branch, left as is — it is one component with two roots, and splitting it would change the approved markup of the four existing stories
 
 #### Build Phase 2 Context
 
-- [ ] admin (`apps/indusk-admin/CLAUDE.md`): a step's reason is `Step`'s `reason` prop, opened by its "why?", never joined into its status — one line, beside the `PlanSummary` entry
+- [x] admin (`apps/indusk-admin/CLAUDE.md`): a step's reason is `Step`'s `reason` prop, opened by its "why?", never joined into its status — one line, beside the `PlanSummary` entry
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: a skipped step reads "skipped" with a "why?" that opens its reason
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: a skipped step reads "skipped" with a "why?" that opens its reason
 
 ## Files Affected
 
