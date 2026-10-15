@@ -1,7 +1,7 @@
 ---
 title: "skip-reason-why"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -54,6 +54,7 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 | A10 | On the page of a plan whose audit was skipped with a reason, the Audit step reads "skipped" with a "why?" that opens the reason | Phase 0 | Build Phase 3 | passing | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
 | A11 | A cleanup skipped with a reason of three short sentences ("Done. Nothing here. Fine.", under 120 characters) is not ready for the retrospective, cleanup named | Phase 0 | Build Phase 3 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 | A12 | A one-sentence reason containing "e.g." or a file name such as "gate.ts" is still ready for the retrospective | Phase 0 | Build Phase 3 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
+| A13 | A plan that skips falsification, cleanup and audit, each with a reason, lists all three skips with their reasons, and a plan that skips none lists none | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 
 ## Checklist
 
@@ -174,6 +175,31 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 #### Build Phase 3 Hunt record
 
 Searched without finding an attack vector: the readiness gate's other satisfiers (a complete log, a terminal falsification phase, `audit.md` — a long skip beside them is ignored, by design and A9); every JS hook (none reads a skip reason); the lifecycle ordering (a long reason holds the plan at its ritual's position, so it never reaches review, where `ReviewPanel` prints reasons whole); the `Step` component with no reason (A8). Not investigated: the build runner's response to a plan held at "cleanup skip reason is too long" — it re-runs `/cleanup`, whose skill now states the limit; whether that session rewrites an existing skip is a skill-following question, not this code's.
+
+### Build Phase 4: Cleanup — one reader for a plan's skipped rituals, the reason rule in its own module
+
+**Tier**: med — the work step's default
+
+**Goal**: decompose what this plan spread across files per the rule of two-and-growing and settled module boundaries. No changed file is over its cap (`listOversizedChangedFiles` returned none); each item is a cross-file repeat or a rule living in the wrong module.
+
+- [ ] Extract `skippedRitualsOf(implContent): Array<{ ritual: "falsification" | "cleanup" | "audit"; reason: string }>` into `apps/indusk-mcp/src/lib/cleanup/gate.ts` beside `isAuditSkipped`; `apps/indusk-mcp/src/lib/build/review.ts:142-148` and `apps/indusk-admin/src/lib/planning-reader.ts:354-366` both call it — the same three-ritual list is built twice today, and the admin's copy is the one line A10 cannot reach (Build Phase 3's test gap)
+- [ ] Move `SKIP_REASON_MAX` and `sentenceCount` from `lifecycle.ts` into a new dependency-free `apps/indusk-mcp/src/lib/rituals/reason.ts`, with `reasonFits(reason): boolean` as the one rule; `lifecycle.ts` and `cleanup/gate.ts` import it and gate.ts drops its re-export — `lifecycle.ts` is the plan-position module, and the reason rule sits there only because it had to be browser-reachable, which a module with no imports is too
+- [ ] Remove `flushSync` from `Step.tsx`'s "why?" handler; the tests that click it (`workflows.test.tsx`'s `click` helper, line 231, used by A2 and A10) wait for the reason with `expect.element(…)` / `vi.waitFor` instead — the component was changed to suit a test's timing, which react's rendering model does not need; the assertions themselves stay as written
+- [ ] (reviewed `Step.tsx` — left as-is beyond the `flushSync` removal: its reason branch repeats the node, name and status spans of the link/button branch, but that is intra-unit craft Shape reviewed in Build Phase 2 and recorded; the two roots differ in element and interactivity, so a shared fragment would need the root passed in)
+- [ ] (reviewed `steps.ts`, `PlanWorkflows.tsx`, `globals.css`, the three skills — left as-is: each change is a few lines in place, with no repeat across files)
+
+#### Build Phase 4 Verification
+
+- [ ] A13 goes green (`pnpm exec vitest run apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts`), and A4–A7, A9, A11, A12 stay green
+- [ ] A1–A3, A8, A10 stay green without `flushSync` (`cd apps/indusk-admin && pnpm exec vitest run "src/app/p/[project]/plan/[name]/workflows.test.tsx"`); `tsc --noEmit` clean in both packages
+
+#### Build Phase 4 Context
+
+- [ ] guard: `rituals/reason.ts`'s header names `promise: a-skip-reason-is-one-sentence`, and `skippedRitualsOf`'s doc says it is the one list of skippable rituals a reader uses
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/reference/skills/retrospective.md`: name `rituals/reason.ts` as where the reason rule lives, replacing any mention of `lifecycle.ts`
 
 ## Files Affected
 
