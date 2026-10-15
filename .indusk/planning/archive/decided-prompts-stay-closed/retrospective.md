@@ -21,6 +21,7 @@ The branch touched 23 files (+895/−218), 20 of them under `apps/` (+748/−185
 ## Getting to Done
 
 - Build Phase 1 assumed a draft's `transcript.jsonl` is written through the manager's `opts.onEvent`. It is written by a `subscribe` listener (`new-project-session.ts`). The outcome was right, since listeners hear every event, but the assumption was wrong and nobody checked it until falsification.
+- **Acceptance refused** because the branch changed the admin's interface while the brief said "None" for its looks. Approval accepts "None — reason" (`contract.ts:251`), acceptance does not (`accept.ts:121`), by design: the diff proves a look changed. The panel's outcome line was drawn as `agent-panel.decided`, the brief amended, and Sandy approved both. `plans amendments` and `reapprove` cannot read an archived plan's approved brief (they look for it at the archive path in the approval commit), so the plan was moved out of the archive for the amendment and archived again after acceptance.
 - The audit's reader could not confirm the live check, because its evidence is in the working impl, which the reader is not allowed to read. The evidence is there (Build Phase 2).
 
 ## What We Learned
@@ -31,6 +32,7 @@ The branch touched 23 files (+895/−218), 20 of them under `apps/` (+748/−185
 
 ## What We'd Do Differently
 
+- Ask "does this change how anything looks?" against the diff, not only the brief, before archiving: the session panel had no approved look, which made "None" true at approval and false at acceptance.
 - Read every kind of request a promise covers (tool, question, a person's reply, a rule's reply) against its wording at brief time. The answered-question gap was visible from the brief.
 - Write a view's early-close state with its undo from the start. A local "answered" set that is never cleared is a second record that can disagree with the real one.
 
