@@ -1,7 +1,6 @@
 "use client";
 
 import { type ButtonHTMLAttributes, useId, useState } from "react";
-import { flushSync } from "react-dom";
 
 export type StepState = "done" | "working" | "needs" | "waiting";
 
@@ -81,8 +80,7 @@ export function Step({
           type="button"
           aria-expanded={shown}
           aria-controls={reasonId}
-          // flushSync: the reason is on the page when the click returns.
-          onClick={() => flushSync(() => setShown((was) => !was))}
+          onClick={() => setShown((was) => !was)}
           className="cursor-pointer font-mono text-2xs font-medium leading-1 text-dusk underline underline-hair"
         >
           why?

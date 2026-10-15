@@ -228,7 +228,14 @@ describe('skip-reason-why — a skipped step reads "skipped" with a "why?" that 
     [...root.querySelectorAll(`[data-step="${step}"] button`)].find(
       (b) => b.textContent?.trim() === "why?",
     ) as HTMLElement | undefined;
-  const click = (el: HTMLElement) => el.click();
+  // Clicks "why?" and waits for React to render the toggle (aria-expanded flips).
+  const click = async (el: HTMLElement) => {
+    const was = el.getAttribute("aria-expanded");
+    el.click();
+    await vi.waitFor(() =>
+      expect(el.getAttribute("aria-expanded")).not.toBe(was),
+    );
+  };
 
   it('A1 reads "skipped" with a "why?" and keeps the reason off the page', async () => {
     const { root } = await pageFor("skipped-ritual");
@@ -243,10 +250,10 @@ describe('skip-reason-why — a skipped step reads "skipped" with a "why?" that 
     const { root } = await pageFor("skipped-ritual");
     const why = whyOf(root, "Falsify");
     expect(why, 'no "why?" button in the Falsify step').toBeDefined();
-    click(why as HTMLElement);
+    await click(why as HTMLElement);
     expect(why?.getAttribute("aria-expanded")).toBe("true");
     expect(root.textContent).toContain("a docs-only plan");
-    click(why as HTMLElement);
+    await click(why as HTMLElement);
     expect(why?.getAttribute("aria-expanded")).toBe("false");
     expect(root.textContent).not.toContain("a docs-only plan");
   });
@@ -258,7 +265,7 @@ describe('skip-reason-why — a skipped step reads "skipped" with a "why?" that 
     expect(root.textContent).not.toContain(LONG_SKIP_REASON.slice(0, 80));
     const why = whyOf(root, "Falsify");
     expect(why, 'no "why?" button in the Falsify step').toBeDefined();
-    click(why as HTMLElement);
+    await click(why as HTMLElement);
     expect(root.textContent).toContain(LONG_SKIP_REASON.slice(0, 80));
   });
 
@@ -270,7 +277,7 @@ describe('skip-reason-why — a skipped step reads "skipped" with a "why?" that 
     expect(root.textContent).not.toContain(
       "a docs-only plan, nothing to audit",
     );
-    click(why as HTMLElement);
+    await click(why as HTMLElement);
     expect(root.textContent).toContain("a docs-only plan, nothing to audit");
   });
 });
