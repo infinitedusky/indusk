@@ -6,9 +6,11 @@ status: living
 # Ordered children. None is created yet; a name with no folder renders as a
 # placeholder. The names are provisional until each is opened with /planner.
 subplans:
-  - house-rules-out
+  - mark-first
+  - expectations-loop
+  - open-core-boundary
+  - workbench-server
   - workflow-builder
-  - promise-first-build
 ---
 
 # Promise core — Master
@@ -23,6 +25,72 @@ master was reconciled with the [Day master](../indusk-v4-day/master.md): three
 decisions are recorded under Decided, and `planner-promises`' brief and the Day
 master were edited to match. No other plan has been edited. This is the record
 to work from.
+
+## Settled 2026-10-14/15 — the promise is proved by watching it
+
+A conversation during `new-project-flow`'s close (Sandy) sharpened the
+primitive. Where this section and the older text below disagree, this section
+holds; the older text is kept as the record of 2026-10-05.
+
+**The primitive**
+
+- **A plan is one promise.** Its goal is to build whatever fulfils it.
+- **A promise is made of clauses**: *splits* — progress against a budget on the
+  way to the promise's goal, worked backward from it (the 100 m dash's split
+  times) — and *limits* — bounds that always hold (an engine's heat).
+- **Every clause has a mark**: telemetry in the running system that reports it
+  kept or broken. A clause is kept only when its mark says so in real use. The
+  mark is the proof.
+- **A clause may also have tests**: the rehearsal before release and the guard
+  while code changes. Needed to build it; never enough to call it kept.
+  Removing them would leave nothing to say, before a deploy, that a change
+  broke a clause — "the regression is fucked if you remove the tests" (Sandy).
+- **A plan is done when every clause's mark has reported**, its tests passing
+  on the way.
+- **Every break a mark finds becomes a test on that clause** as part of fixing
+  it: telemetry discovers, tests pin (the principle below, *search discovers,
+  tests pin*, applied to production). Tests grow from what really broke, not
+  only from guesses made in advance.
+- **Promises build up.** A clause can be the promise of the part beneath it;
+  the marks share a trace, so a break leads down to its cause. Depth grows
+  where incidents land.
+
+**Two loops read the telemetry back**
+
+- **Promises → fixing.** A broken clause becomes an incident carrying its trace
+  and an agent's diagnosis and proposed fix.
+- **Expectations → deciding.** At its look time an expectation's measure is
+  read back and proposes what to build next. An expectation is not a promise;
+  a miss is information, not a defect. Expectations exist in every brief
+  today; nothing reads them back yet.
+
+**How it ships** — see `.indusk/research/open-core-and-workbench-server.md`
+
+- **Open core** — local, no server, free: it detects, when you run it.
+- **Workbench server** — a team's own box, a subscription, each person on their
+  own Claude account: it closes both loops continuously.
+- **The sorting rule:** server only if it must run continuously or know more
+  than one person; the server holds nothing the files do not.
+
+**The plans, in order**
+
+1. **`mark-first`** — merged with `promise-first-build`: clauses, marks
+   (server and browser), the close rule, layering, the diagnosis; and a plan
+   being one promise. Proved on Homework Gate, not on dusk. Its accepted brief
+   is reworked around "a plan is one promise" and approved again.
+2. **`expectations-loop`** — expectations read back at their look time into
+   what is built next.
+3. **`open-core-boundary`** — the core works without the admin daemon or a
+   machine-global home; `house-rules-out` is folded in (dusk's own practice
+   leaves the package).
+4. **`workbench-server`** — one box per team, per-person Claude accounts,
+   sync; Anthropic's own cloud sessions checked first.
+5. **`workflow-builder`** — kept, not yet reconsidered against the above.
+
+**What changes in what exists:** the test plan becomes the clause plan (each
+clause and its mark, its tests beside); `a-closed-plan-kept-its-promises` closes
+on marks; the planner's "assertions must be behavioural" rule moves to clauses.
+Open: whether a *structure* promise's mark is a check run at build time.
 
 ## The primitive
 
@@ -55,7 +123,8 @@ large to build in one go. This is called the short path below.
    today are selections already.
 3. **House.** How this repository itself is run. It never ships.
 
-**What the core requires, whatever the workflow.** Every promise is named by a
+**What the core requires, whatever the workflow.** *(Superseded 2026-10-15:
+every clause has a mark; tests are its rehearsal and guard — see above.)* Every promise is named by a
 test. That test is seen failing before the code is written. Work is not done
 while it is missing or failing. A person can select a workflow with no test
 step, so this cannot live in a step.
