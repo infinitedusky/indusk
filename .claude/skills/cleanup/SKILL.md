@@ -84,7 +84,7 @@ When you've formed one or more recommendations, **append a new phase to the plan
 - [ ] {docs update if the public surface changed, or "(none — internal decomposition)" with proof}
 ```
 
-**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses a code span or a row label on the paragraph or a task line. A reasoned leave-as-is is a task too: its sentence says what was reviewed and why it stays, its file in the fold.
+**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses code or a row label on a task line, and a row label in the paragraph. A reasoned leave-as-is is a task too: its sentence says what was reviewed and why it stays, its file in the fold.
 
 <!-- template: phase_summary required -->
 ```markdown

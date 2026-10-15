@@ -60,7 +60,7 @@ When you've formed one or more specific hypotheses, **append a new phase to the 
 - [ ] {docs page to update, or "(none — internal-only fix)" with proof}
 ```
 
-**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses a code span or a row label on the paragraph or a task line.
+**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses code or a row label on a task line, and a row label in the paragraph.
 
 <!-- template: phase_summary required -->
 ```markdown
