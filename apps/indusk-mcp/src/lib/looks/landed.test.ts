@@ -1,8 +1,8 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { app, MOCKUPS, removeApps } from "../../__tests__/helpers/looks-cli.js";
+import { addApprovedMockup, app, MOCKUPS, removeApps } from "../../__tests__/helpers/looks-cli.js";
 import { readApprovals } from "./approvals.js";
 import { coverageOf } from "./coverage.js";
 import { planHasLanded } from "./landed.js";
@@ -39,39 +39,22 @@ describe("planHasLanded", () => {
 describe("A10 — a re-approval in flight keeps holding the components a landed approval bound", () => {
 	it("reports plan-row, bound by the landed approval, and not ghost-row, which only the active re-approval adds", async () => {
 		const root = app();
-		const mockups = join(root, MOCKUPS);
-		const screens = JSON.parse(readFileSync(join(mockups, "screens.json"), "utf-8"));
-		screens.screens.push({ name: "rows", states: ["default"] });
-		writeFileSync(join(mockups, "screens.json"), JSON.stringify(screens));
-		const html = readFileSync(join(mockups, "screens/home.empty.html"), "utf-8").replace(
-			'<main class="card" data-component="card">Nothing here yet.</main>',
-			'<main class="card" data-component="plan-row"><p data-component="ghost-row">A ghost.</p></main>',
-		);
-		writeFileSync(join(mockups, "screens/rows.default.html"), html);
+		await addApprovedMockup(root, {
+			screen: "rows",
+			markup:
+				'<main class="card" data-component="plan-row"><p data-component="ghost-row">A ghost.</p></main>',
+			approvals: [
+				{
+					at: "2026-10-01T09:00:00.000Z",
+					plan: "landed-plan",
+					components: { "plan-row.open": "h1" },
+				},
+				{ at: "2026-10-14T09:00:00.000Z", plan: "active-plan" },
+			],
+		});
 		mkdirSync(join(root, ".indusk", "planning", "archive", "landed-plan"), { recursive: true });
 		mkdirSync(join(root, ".indusk", "planning", "active-plan"), { recursive: true });
-
 		const looks = await readApp(root, "demo");
-		const rows = looks.mockups.find((m) => m.name === "rows.default");
-		if (!rows) throw new Error("the fixture's rows mockup was not read");
-		const entry = {
-			mockup: "rows.default",
-			mockupHash: rows.hash,
-			foundationHash: looks.foundation.hash,
-			declarationsHash: looks.declarationsHash,
-			by: "sandy",
-		};
-		const record = JSON.parse(readFileSync(join(mockups, "approved.json"), "utf-8"));
-		record.approvals.push(
-			{
-				...entry,
-				at: "2026-10-01T09:00:00.000Z",
-				plan: "landed-plan",
-				components: { "plan-row.open": "h1" },
-			},
-			{ ...entry, at: "2026-10-14T09:00:00.000Z", plan: "active-plan" },
-		);
-		writeFileSync(join(mockups, "approved.json"), JSON.stringify(record));
 
 		const coverage = await coverageOf(root, looks, readApprovals(looks));
 		expect(coverage.unimplemented).toContain("plan-row");

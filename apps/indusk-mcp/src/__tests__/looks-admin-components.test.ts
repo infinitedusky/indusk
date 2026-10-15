@@ -5,7 +5,7 @@ import { readApprovals } from "../lib/looks/approvals.js";
 import { heldComponentNames } from "../lib/looks/landed.js";
 import { readApp } from "../lib/looks/mockups.js";
 import { REPO_ROOT, runCli } from "./helpers/cli.js";
-import { app, MOCKUPS, removeApps, run } from "./helpers/looks-cli.js";
+import { addApprovedMockup, app, removeApps, run } from "./helpers/looks-cli.js";
 
 /**
  * promise: a-component-has-one-implementation — storybook-components A2.
@@ -96,30 +96,11 @@ describe("A8 — a component an unlanded plan's mockup names is not unimplemente
 	/** The fixture app plus an approved mockup naming `ghost-row`, approved in `plan`, whose folder is at `planFolder`. */
 	async function appWithGhost(planFolder: string): Promise<string> {
 		const root = app();
-		const mockups = join(root, MOCKUPS);
-		const screens = JSON.parse(readFileSync(join(mockups, "screens.json"), "utf-8"));
-		screens.screens.push({ name: "ghost", states: ["default"] });
-		writeFileSync(join(mockups, "screens.json"), JSON.stringify(screens));
-		const html = readFileSync(join(mockups, "screens/home.empty.html"), "utf-8").replace(
-			'<main class="card" data-component="card">Nothing here yet.</main>',
-			'<main class="card" data-component="ghost-row">A ghost.</main>',
-		);
-		writeFileSync(join(mockups, "screens/ghost.default.html"), html);
-
-		const looks = await readApp(root, "demo");
-		const ghost = looks.mockups.find((m) => m.name === "ghost.default");
-		if (!ghost) throw new Error("the fixture's ghost mockup was not read");
-		const record = JSON.parse(readFileSync(join(mockups, "approved.json"), "utf-8"));
-		record.approvals.push({
-			mockup: "ghost.default",
-			mockupHash: ghost.hash,
-			foundationHash: looks.foundation.hash,
-			declarationsHash: looks.declarationsHash,
-			by: "sandy",
-			at: "2026-10-14T09:00:00.000Z",
-			plan: "ghost-plan",
+		await addApprovedMockup(root, {
+			screen: "ghost",
+			markup: '<main class="card" data-component="ghost-row">A ghost.</main>',
+			approvals: [{ at: "2026-10-14T09:00:00.000Z", plan: "ghost-plan" }],
 		});
-		writeFileSync(join(mockups, "approved.json"), JSON.stringify(record));
 
 		const brief = join(root, planFolder, "brief.md");
 		mkdirSync(dirname(brief), { recursive: true });
