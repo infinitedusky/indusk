@@ -7,6 +7,8 @@ status: living
 # 2026-10-15 every open plan sits here: Dawn, Day and the demo masters are closed.
 # A name with no folder renders as a placeholder.
 subplans:
+  # 0. run-the-master — questions by cost, the daily list, the graph scheduler
+  - run-the-master
   # 1. mark-first — a plan is one promise; clauses proved by marks
   - mark-first
   - telemetry-destinations
@@ -129,6 +131,33 @@ the design system**: the foundation, components and their states, screens as
 they are — browsed and linked, with no approvals, no proposed queue, no checkout
 switching.
 
+**How the work runs** (Sandy, 2026-10-15)
+
+- **The person's job is briefs.** A plan starts as a conversation and ends with
+  a brief the person approves: the promises and their clauses. That is where
+  the person's time goes. From an approved brief, execution runs on its own.
+- **Every decision carries a cost, and the cost sets how long it waits:**
+  *cheap* — proceeds on the agent's recommendation after five minutes
+  unanswered; *moderate* — after an hour; *expensive* — waits for the person,
+  shown bright red and flashing. Expensive is: what to promise, anything
+  outward-facing or permanent (publishing, a public repository, deleting,
+  spending), and a look the person would reject. The agent classifies each
+  decision; the person can reclassify. Most of today's approvals — test plans,
+  ADRs, impls, stories, re-approving a brief already agreed — are cheap.
+- **Questions, not approval screens.** Every decision arrives as a question in
+  one place — a thread beside everything — carrying the agent's
+  recommendation. The person answers when it comes, or adds context.
+- **A daily list replaces sitting in a plan:** what is building, what is
+  breaking, what needs the person today, across every plan.
+- **The work is a graph, run in parallel.** Nodes are plans and, within a plan,
+  phases; each declares what it depends on and what it touches. Every node
+  whose dependencies are met and whose files no running node touches runs at
+  once (up to the machine's session limit). An unanswered question blocks only
+  the nodes downstream of it, never the rest. The graph is re-evaluated
+  continuously as answers, landings and touched files change. Dependencies come
+  from promises — a clause resting on another promise — with `Depends On` for
+  what promises do not express.
+
 **Two loops read the telemetry back**
 
 - **Promises → fixing.** A broken clause becomes an incident carrying its trace
@@ -149,6 +178,12 @@ switching.
 **The plans, in order** — each headline child below gathers the open plans
 listed under it in `subplans:`.
 
+0. **`run-the-master`** — first: decisions as questions with a cost (cheap
+   five minutes, moderate an hour, expensive waits, red); one question thread;
+   the daily list; the graph of plans and phases run in parallel, blocked only
+   downstream of an unanswered question, re-evaluated continuously. Its first
+   master to run is Homework Gate's milestones, not this one. Built first on
+   `Depends On`; promise-derived dependencies arrive with `mark-first`.
 1. **`mark-first`** — merged with `promise-first-build`: clauses, marks
    (server and browser), the close rule, layering, the diagnosis; and a plan
    being one promise. Proved on Homework Gate, not on dusk. Its accepted brief
