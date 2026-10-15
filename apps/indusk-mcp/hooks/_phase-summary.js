@@ -19,9 +19,10 @@ const ROW_LABEL_G = new RegExp(ROW_LABEL.source, "g");
 /**
  * With `phase_summary: required`, every phase opens with a summary paragraph
  * (the lines between its heading and its first task or `####`, label lines
- * such as `**Tier**:` and `**Goal**:` aside), and that paragraph and every
- * column-zero task line carry no code span and no row label. The folded detail
- * under a task is not read here. Register sections (`#### Deferred to …`,
+ * such as `**Tier**:` and `**Goal**:` aside) and carries no row label; every
+ * column-zero task line has a sentence and carries no code span and no row
+ * label; and a task's fold closes before the next task or heading. The folded
+ * detail under a task is otherwise not read here. Register sections (`#### Deferred to …`,
  * `#### Regression Guards`) and Forward Intelligence hold entries and notes,
  * not tasks, and are not read either.
  *
@@ -40,6 +41,13 @@ export function phaseSummaryProblems(implBody, required) {
 	let phase = null;
 	let intro = null; // the summary lines while the phase's opening is being read
 	let readTasks = true;
+	// The task whose Technical fold is open, and its phase: a fold must close
+	// before the next task or heading, or it hides every line after it from the
+	// readers that skip folded text (`hidden-detail-is-only-read`).
+	let lastTask = null;
+	let openFold = null;
+	const unclosedFold = () =>
+		`The task "${openFold.task}" in ${openFold.phase} opens a Technical fold and never closes it: close it with </details> before the next task or heading, or every line after it is hidden from the checks that skip folded text.`;
 
 	const closeIntro = () => {
 		if (intro === null) return;
@@ -61,11 +69,16 @@ export function phaseSummaryProblems(implBody, required) {
 	for (let i = 0; i < lines.length; i++) {
 		if (fenced[i]) continue;
 		const line = lines[i];
+		if (openFold !== null && (ITEM.test(line) || /^#{1,6}\s/.test(line))) {
+			problems.push(unclosedFold());
+			openFold = null;
+		}
 		if (ANY_PHASE_HEADING.test(line)) {
 			closeIntro();
 			phase = line.replace(/^###\s+/, "").trim();
 			intro = [];
 			readTasks = true;
+			lastTask = null;
 			continue;
 		}
 		if (/^#{1,3}\s/.test(line)) {
@@ -78,13 +91,16 @@ export function phaseSummaryProblems(implBody, required) {
 		if (/^####\s/.test(line)) {
 			closeIntro();
 			readTasks = !NOT_TASKS.test(line);
+			lastTask = null;
 			continue;
 		}
 		const item = line.match(ITEM);
 		if (item) {
 			closeIntro();
+			lastTask = null;
 			if (!readTasks) continue;
 			const text = item[1].trim();
+			lastTask = text;
 			if (text === "") {
 				problems.push(
 					`A task in ${phase} has no sentence: a task is one plain sentence for someone who knows the project but none of its shorthand.`,
@@ -104,8 +120,16 @@ export function phaseSummaryProblems(implBody, required) {
 			}
 			continue;
 		}
+		if (lastTask !== null) {
+			if (openFold === null && /^\s+<details[\s>]/.test(line) && !line.trim().endsWith("</details>")) {
+				openFold = { task: lastTask, phase };
+			} else if (openFold !== null && line.trim().endsWith("</details>")) {
+				openFold = null;
+			}
+		}
 		if (intro !== null && line.trim() !== "" && !LABEL_LINE.test(line)) intro.push(line);
 	}
+	if (openFold !== null) problems.push(unclosedFold());
 	closeIntro();
 	return problems;
 }

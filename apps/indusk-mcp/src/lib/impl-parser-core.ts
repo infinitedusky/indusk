@@ -98,6 +98,11 @@ function closesFold(line: string): boolean {
 	return line.trim().endsWith("</details>");
 }
 
+/** A column-zero task or heading: where a fold that was never closed stops hiding lines. */
+function endsTaskFold(line: string): boolean {
+	return /^-\s+\[[ xX]\]/.test(line) || /^#{1,6}\s/.test(line);
+}
+
 /**
  * Which lines of an impl are a task's folded detail or a fenced block, as a
  * mask parallel to `lines`: the text a reader of boxes must leave alone, since
@@ -110,13 +115,17 @@ export function foldedLineMask(lines: string[]): boolean[] {
 	for (let i = 0; i < lines.length; i++) {
 		if (fenced[i]) {
 			mask.push(true);
-		} else if (inFold) {
+		} else if (inFold && !endsTaskFold(lines[i])) {
 			mask.push(true);
 			if (closesFold(lines[i])) inFold = false;
 		} else if (opensFold(lines[i])) {
 			mask.push(true);
 			inFold = true;
 		} else {
+			// Not in a fold, or a fold that never closed and met the next task or
+			// heading: that line is read as itself (an unclosed fold fails open, as
+			// an unterminated fence masks nothing).
+			inFold = false;
 			mask.push(false);
 		}
 	}
