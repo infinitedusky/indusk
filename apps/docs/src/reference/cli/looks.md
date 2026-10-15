@@ -272,7 +272,7 @@ unimplemented component: ghost
 | `uncovered state: <screen>.<state>` | the screen has an approved state, but not this one |
 | `uncovered component: <name>` | the app renders it and no approved mockup shows it on an element |
 | `unresolved component: <file>:<line>` | a source's `data-component={…}` is not a string literal, so no mockup can be said to cover it |
-| `unimplemented component: <name>` | a mockup of a landed plan (read composed; one approved in a plan still active, not archived, is left out) places or declares new a `data-component` that no non-test, non-story file in the app's sources marks |
+| `unimplemented component: <name>` | a held mockup (read composed) places or declares new a `data-component` that no non-test, non-story file in the app's sources marks. Held: every mockup whose latest approval names no plan or a landed (archived) one; a mockup re-approved by a plan still active keeps the components its landed approval recorded (all of them when that approval recorded none); a mockup only an active plan has approved is left out until it lands |
 | `not in catalog: <name>` | a marked component missing from `components.json` (an app with no catalog reports none) |
 | `no story: <name>.<state>` | a mockup places the state by name and the catalog lists no story for it |
 | `uncovered story: <name>.<state>` | the app has the story's snapshot and no person has approved it as it is now — a component state is covered by its approved story |
