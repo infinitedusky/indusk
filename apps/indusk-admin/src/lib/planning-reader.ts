@@ -4,15 +4,13 @@ import { join } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   checkRetrospectiveReadiness,
-  isAuditSkipped,
-  isCleanupSkipped,
+  skippedRitualsOf,
 } from "@infinitedusky/indusk-mcp/cleanup/gate";
 import {
   isFalsificationComplete,
   type LogEntry,
   readFalsificationLog,
 } from "@infinitedusky/indusk-mcp/falsification/log";
-import { isFalsificationSkipped } from "@infinitedusky/indusk-mcp/falsification/skip";
 import { parseImplString } from "@infinitedusky/indusk-mcp/impl-parser";
 import {
   derivePlanPosition,
@@ -352,19 +350,7 @@ async function readPlanFolder(
       : null;
   const readiness =
     implRaw !== null ? checkRetrospectiveReadiness(planDir, implRaw) : null;
-  const skippedRituals =
-    implRaw === null
-      ? []
-      : [
-          {
-            ritual: "falsification" as const,
-            check: isFalsificationSkipped(implRaw),
-          },
-          { ritual: "cleanup" as const, check: isCleanupSkipped(implRaw) },
-          { ritual: "audit" as const, check: isAuditSkipped(implRaw) },
-        ]
-          .filter((r) => r.check.skipped)
-          .map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" }));
+  const skippedRituals = implRaw === null ? [] : skippedRitualsOf(implRaw);
   // A closed plan may be back in motion — reopened by an incident, or in
   // `monitor` — derived from files by the same function `list_plans` reads.
   const after =

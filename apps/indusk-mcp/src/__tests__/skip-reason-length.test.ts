@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { checkRetrospectiveReadiness } from "../lib/cleanup/gate.js";
+import { checkRetrospectiveReadiness, skippedRitualsOf } from "../lib/cleanup/gate.js";
 import { derivePlanPosition } from "../lib/lifecycle.js";
 import type { PlanSummary } from "../lib/plan-parser.js";
 
@@ -133,5 +133,26 @@ describe("A12 — a dot inside one sentence is not a sentence end (regression gu
 		const r = checkRetrospectiveReadiness(planRoot, content);
 		expect(r.passes).toBe(true);
 		expect(r.missing).toEqual([]);
+	});
+});
+
+// promise: a-skipped-step-shows-why-on-request
+describe("A13 — one list of a plan's skipped rituals, with their reasons", () => {
+	it("A13 lists falsification, cleanup and audit skips with their reasons", () => {
+		const { content } = planWith({
+			falsification: "no new surface",
+			cleanup: "a few lines in place",
+			audit: "a small fix",
+		});
+		expect(skippedRitualsOf(content)).toEqual([
+			{ ritual: "falsification", reason: "no new surface" },
+			{ ritual: "cleanup", reason: "a few lines in place" },
+			{ ritual: "audit", reason: "a small fix" },
+		]);
+	});
+
+	it("A13 lists none for a plan that skips none", () => {
+		const content = "---\ntitle: x\n---\n\n## Checklist\n\n### Phase 1: Config\n\n- [x] do the thing\n";
+		expect(skippedRitualsOf(content)).toEqual([]);
 	});
 });

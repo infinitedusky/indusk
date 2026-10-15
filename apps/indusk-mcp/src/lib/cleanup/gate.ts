@@ -102,6 +102,25 @@ export function isAuditSkipped(implContent: string): SkipCheck {
 }
 
 /**
+ * The one list of skippable rituals a reader uses: every ritual the impl skips
+ * (falsification, cleanup, audit) with its reason, in that order. The build
+ * review and the admin's plan page both read this rather than build the list.
+ *
+ * promise: a-skipped-step-shows-why-on-request
+ */
+export function skippedRitualsOf(
+	implContent: string,
+): Array<{ ritual: "falsification" | "cleanup" | "audit"; reason: string }> {
+	return [
+		{ ritual: "falsification" as const, check: isFalsificationSkipped(implContent) },
+		{ ritual: "cleanup" as const, check: isCleanupSkipped(implContent) },
+		{ ritual: "audit" as const, check: isAuditSkipped(implContent) },
+	]
+		.filter((r) => r.check.skipped)
+		.map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" }));
+}
+
+/**
  * True iff `<planRoot>/audit.md` exists. Its content is never read: an audit
  * is advisory, and what it says changes no gate.
  *

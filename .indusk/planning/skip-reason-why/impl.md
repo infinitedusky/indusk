@@ -54,7 +54,7 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 | A10 | On the page of a plan whose audit was skipped with a reason, the Audit step reads "skipped" with a "why?" that opens the reason | Phase 0 | Build Phase 3 | passing | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
 | A11 | A cleanup skipped with a reason of three short sentences ("Done. Nothing here. Fine.", under 120 characters) is not ready for the retrospective, cleanup named | Phase 0 | Build Phase 3 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 | A12 | A one-sentence reason containing "e.g." or a file name such as "gate.ts" is still ready for the retrospective | Phase 0 | Build Phase 3 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
-| A13 | A plan that skips falsification, cleanup and audit, each with a reason, lists all three skips with their reasons, and a plan that skips none lists none | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
+| A13 | A plan that skips falsification, cleanup and audit, each with a reason, lists all three skips with their reasons, and a plan that skips none lists none | Build Phase 4 | Build Phase 4 | written | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 
 ## Checklist
 
