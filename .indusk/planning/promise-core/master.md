@@ -10,6 +10,7 @@ subplans:
   - expectations-loop
   - open-core-boundary
   - workbench-server
+  - looks-as-promises
   - workflow-builder
 ---
 
@@ -78,6 +79,24 @@ them. A person approves promises and clauses; the cockpit shows clause health,
 never a test list. Tests exist to help the system keep its promises, not to be
 looked at.
 
+**Everything is a promise** (an advisor's point, adopted by Sandy, 2026-10-15).
+Promises are polymorphic: one concept, with types that prove themselves their
+own way. A **visual promise** is what a "look" is today — one per screen or
+component, its approved mockup as its statement, each state on each device and
+scheme a clause, upheld when the rendered page matches by value; its mark is the
+looks check (later, real browsers); its stories are its tests, the agents'
+alone. One list, one health view, one approval flow; the brief has one Promises
+section. Expectations stay separate — they decide what to build, not what is
+true. Built as its own child after `mark-first` (`looks-as-promises`).
+
+**Approvals happen on the plan page** (Sandy, 2026-10-15). Every promise a plan
+makes or changes — visual ones included — is approved on that plan's page, one
+line each, opened on demand. A shared component that reopens screens other plans
+own shows them on the page of the plan that changed it. The **looks page becomes
+design documentation**: the foundation, components and their states, screens as
+they are — browsed and linked, with no approvals, no proposed queue, no checkout
+switching.
+
 **Two loops read the telemetry back**
 
 - **Promises → fixing.** A broken clause becomes an incident carrying its trace
@@ -108,7 +127,9 @@ looked at.
    leaves the package).
 4. **`workbench-server`** — one box per team, per-person Claude accounts,
    sync; Anthropic's own cloud sessions checked first.
-5. **`workflow-builder`** — kept, not yet reconsidered against the above.
+5. **`looks-as-promises`** — visual promises; approvals on the plan page; the
+   looks page as design documentation.
+6. **`workflow-builder`** — kept, not yet reconsidered against the above.
 
 **What changes in what exists:** the test plan becomes the clause plan (each
 clause and its mark, its tests beside); `a-closed-plan-kept-its-promises` closes
