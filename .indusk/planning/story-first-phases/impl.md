@@ -69,8 +69,8 @@ This impl is written in the shape it introduces.
 | A13 | component-content's impl, rewritten in this shape, passes the save check and reads on its plan page as the mockup shows | Build Phase 3 | Build Phase 3 | passing | live check | the first plan converted, the example Sandy asked for | |
 | A17 | A ritual phase whose only task is ticked reads as finished, and a Verification section whose only task is ticked reads as green, even when that task's folded detail quotes an unticked box line | Build Phase 4 | Build Phase 4 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
 | A18 | The falsification and cleanup skills' phase templates, filled in as written, pass the save check on an impl that has opted in to phase summaries | Build Phase 4 | Build Phase 4 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
-| A19 | The phase-summary rule, read from its own hook module, names the same problems for a missing paragraph, code on a task line and a row label in a paragraph or a task as the save check does | Build Phase 5 | Build Phase 5 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/phase-summary-module.test.ts |
-| A20 | Both phase-row stories, drawn by the plan page's real task list instead of copied markup, are approved again in the cockpit | Build Phase 5 | Build Phase 5 | planned | live check | the look phase-row.open and phase-row.closed, held by their approval in the cockpit | |
+| A19 | The phase-summary rule, read from its own hook module, names the same problems for a missing paragraph, code on a task line and a row label in a paragraph or a task as the save check does | Build Phase 5 | Build Phase 5 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/phase-summary-module.test.ts |
+| A20 | Both phase-row stories, drawn by the plan page's real task list instead of copied markup, are approved again in the cockpit | Build Phase 5 | Build Phase 5 | written | live check | the look phase-row.open and phase-row.closed, held by their approval in the cockpit | |
 
 ## Checklist
 
@@ -472,8 +472,10 @@ This phase tests two ways the finished plan may still break its promises, and fi
 
 The plan is correct and its tests are hardened; this phase tidies what it spread across files. The new rule that every phase opens with a summary and every task is a plain sentence was written inline in the save check, which already keeps each of its other rules in a module of its own, so it moves into one. And the plan page's task list, with its Technical fold, was copied by hand into the phase-row stories instead of being used there, so the look Sandy approved is a drawing of the component rather than the component itself. After this phase, the stories draw the real task list and are approved again. The other files this plan grew were reviewed and stay as they are, each with its reason below.
 
-- [ ] The save check's rule for phase summaries and plain task sentences moves into a hook module of its own, beside the save check's other rule modules
+- [x] The save check's rule for phase summaries and plain task sentences moves into a hook module of its own, beside the save check's other rule modules
   <details><summary>Technical</summary>
+
+  A19's test, `phase-summary-module.test.ts`, was authored after this extraction because its subject is the new module: importing it before it existed would have been a load error, not a red.
 
   Extract `phaseSummaryProblems` from `apps/indusk-mcp/hooks/validate-impl-structure.js` into `hooks/_phase-summary.js`, exported, following `_phase-tier.js` (`tierRuleProblems`), `_test-levels.js` and `_register.js` — one module per rule. Export the row-label pattern from it once and use it in the hook's `validateCrossReferenceIntegrity` too, replacing the second `\b[TA]\d+\b` in the same file (the TypeScript `TEST_ID_PATTERN` in `lib/trajectory/validator.ts` stays: hooks cannot import TypeScript, and that file is the deliberate mirror). Sync `.claude/hooks/` byte-equal. `hooks/` ships whole in `package.json` `files`, so the new module installs with the rest.
 
