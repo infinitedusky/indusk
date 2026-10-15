@@ -333,6 +333,18 @@ export interface PlanDeclarations {
 	roadmap: string[];
 	/** Parent folder name → its declared, ordered subplan names. */
 	subplans: Record<string, string[]>;
+	/**
+	 * Parent folder name → the title and description its master wrote for a
+	 * subplan beside its name (a `subplans:` entry may be a mapping), for a
+	 * plan not yet started. A plan's own brief wins once it exists.
+	 */
+	declaredTitles: Record<string, Record<string, DeclaredTitle>>;
+}
+
+/** The words a master wrote for one of its subplans. */
+export interface DeclaredTitle {
+	title?: string;
+	description?: string;
 }
 
 // A declaration name must be a single clean path segment — it gets joined into
@@ -355,6 +367,37 @@ function stringArray(data: Record<string, unknown>, key: string): string[] {
 		out.push(entry);
 	}
 	return out;
+}
+
+/**
+ * Read a `subplans:` list: each entry is a name, or a mapping
+ * `{ name, title?, description? }`. Both keep their declared order through the
+ * same segment guard; the words a mapping carries are reported beside the names.
+ * Non-segment names and duplicates are dropped — duplicates collapse to the first.
+ */
+function subplanEntries(data: Record<string, unknown>): {
+	names: string[];
+	titles: Record<string, DeclaredTitle>;
+} {
+	const names: string[] = [];
+	const titles: Record<string, DeclaredTitle> = {};
+	const value = data.subplans;
+	if (!Array.isArray(value)) return { names, titles };
+	for (const entry of value) {
+		const mapping =
+			typeof entry === "object" && entry !== null ? (entry as Record<string, unknown>) : null;
+		const name = mapping ? mapping.name : entry;
+		if (typeof name !== "string" || !isCleanSegment(name) || names.includes(name)) continue;
+		names.push(name);
+		if (!mapping) continue;
+		const words: DeclaredTitle = {};
+		for (const key of ["title", "description"] as const) {
+			const text = mapping[key];
+			if (typeof text === "string" && text.trim() !== "") words[key] = text.trim();
+		}
+		if (Object.keys(words).length > 0) titles[name] = words;
+	}
+	return { names, titles };
 }
 
 /**
@@ -385,7 +428,7 @@ function readMasterFrontmatter(masterPath: string): Record<string, unknown> | nu
  * Losing structure is acceptable; losing a plan is not.
  */
 export function readPlanDeclarations(planningDir: string): PlanDeclarations {
-	const empty: PlanDeclarations = { parents: [], roadmap: [], subplans: {} };
+	const empty: PlanDeclarations = { parents: [], roadmap: [], subplans: {}, declaredTitles: {} };
 	if (!existsSync(planningDir)) return empty;
 
 	const rootPath = join(planningDir, "master.md");
@@ -412,13 +455,16 @@ export function readPlanDeclarations(planningDir: string): PlanDeclarations {
 	}
 
 	const subplans: Record<string, string[]> = {};
+	const declaredTitles: Record<string, Record<string, DeclaredTitle>> = {};
 	for (const parent of candidates) {
 		const data = readMasterFrontmatter(join(planningDir, parent, "master.md"));
 		if (!data) continue;
-		subplans[parent] = stringArray(data, "subplans");
+		const { names, titles } = subplanEntries(data);
+		subplans[parent] = names;
+		declaredTitles[parent] = titles;
 	}
 
-	return { ...(root ? { root } : {}), parents, roadmap, subplans };
+	return { ...(root ? { root } : {}), parents, roadmap, subplans, declaredTitles };
 }
 
 export function parseAllPlans(projectRoot: string): PlanSummary[] {

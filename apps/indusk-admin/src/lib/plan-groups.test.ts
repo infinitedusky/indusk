@@ -24,6 +24,7 @@ const declare = (
   parents: Object.keys(subplans),
   roadmap,
   subplans,
+  declaredTitles: {},
 });
 
 const never = () => false;

@@ -58,6 +58,7 @@ const dawnGrouping = {
       "dawn-verify",
     ],
   },
+  declaredTitles: {},
 };
 
 const dawnPlans = [

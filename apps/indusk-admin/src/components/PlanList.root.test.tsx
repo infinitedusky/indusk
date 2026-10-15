@@ -51,6 +51,7 @@ const grouping = {
     dawn: ["dawn-verify", "dawn-workbench-execution"],
     day: ["dawn-workbench-execution", "admin-ui-phase-progress"],
   },
+  declaredTitles: {},
 } as unknown as Parameters<typeof PlanList>[0]["grouping"];
 
 const plans = [

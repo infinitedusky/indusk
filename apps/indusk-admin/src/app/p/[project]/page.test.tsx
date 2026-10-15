@@ -52,6 +52,7 @@ vi.mock("@/lib/planning-reader", () => ({
     parents: [],
     roadmap: ["alpha", "beta"],
     subplans: {},
+    declaredTitles: {},
   }),
 }));
 

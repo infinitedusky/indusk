@@ -51,6 +51,7 @@ vi.mock("@/lib/planning-reader", () => ({
     parents: ["parent"],
     roadmap: [],
     subplans: { parent: ["twin"] },
+    declaredTitles: {},
   }),
   readPlanMasterContent: async () => null,
 }));

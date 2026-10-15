@@ -54,6 +54,7 @@ describe("T11 — an archived subplan is not a placeholder", () => {
       parents: ["parent"],
       roadmap: ["parent"],
       subplans: { parent: ["done-child"] },
+      declaredTitles: {},
     };
     const { container } = await render(
       <PlanList
@@ -90,6 +91,7 @@ describe("T13 — sidebar groups follow roadmap order", () => {
       parents: ["parent-b", "parent-a"],
       roadmap: ["parent-a", "parent-b"],
       subplans: { "parent-b": ["child-b"], "parent-a": ["child-a"] },
+      declaredTitles: {},
     };
     const { container } = await render(
       <PlanList
