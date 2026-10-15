@@ -34,11 +34,12 @@ describe("parseAllPlans", () => {
 		expect(plans.length).toBeGreaterThanOrEqual(2);
 
 		const names = plans.map((p) => p.name);
-		// Pin on the two parent masters, which are living documents and never
-		// archived. (This used to pin on react-native-support, "unlikely to be
-		// archived in the near term" — it was archived 2026-09-14.)
-		expect(names).toContain("indusk-v2-dawn");
-		expect(names).toContain("indusk-v4-day");
+		// Pin on the root's parent master and one of its children, living
+		// documents. (This pinned on react-native-support until it was archived
+		// 2026-09-14, then on the Dawn and Day masters until both were folded
+		// into promise-core 2026-10-15 — any named plan can be archived.)
+		expect(names).toContain("promise-core");
+		expect(names).toContain("cockpit-around-promises");
 
 		// Verify sorted
 		const sorted = [...names].sort();
