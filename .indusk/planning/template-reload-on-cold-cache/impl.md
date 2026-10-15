@@ -277,11 +277,11 @@ The test that keeps the browser template's packages bundled before its page load
 
 #### Build Phase 2 Context
 
-- [ ] (none — the rule this phase guards was already written into the guard's failure message by the first build phase, and no convention changed)
+- [x] (none needed — asked: "Build Phase 2 only widens a test file (the pre-bundle guard). Can I skip its Context gate (the rule is already in the guard's failure message)?" — user: "Skip both (Recommended)")
 
 #### Build Phase 2 Document
 
-- [ ] (none — internal-only fix to a test; no docs page describes the guard)
+- [x] (none needed — asked: "Can I skip its Document gate (no docs page describes the guard)?" — user: "Skip both (Recommended)")
 
 ## Files Affected
 
