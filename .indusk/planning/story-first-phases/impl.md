@@ -174,7 +174,7 @@ Before any code changes, this phase writes down what "done" means as tests that 
 
 Two scripts check an impl file: one when the file is saved (`validate-impl-structure.js`), and one when a box is ticked (`check-gates.js`). This phase changes both. The save check learns the new rule for impls that opt in: it refuses a phase with no summary paragraph, a task with code on its line, and a row label in a paragraph or sentence. It also reads a Verification task's row labels from its folded detail, so the sentence can stay plain. Both scripts stop reading anything indented under a task as a ticked box or a skipped gate, which is what makes it safe to fold text there. After this phase, a plan can be written in the new shape and be held to it. The plan page still shows the fold as raw text until Build Phase 2.
 
-- [ ] A ticked box is counted only from a top-level line, never from text folded under a task
+- [x] A ticked box is counted only from a top-level line, never from text folded under a task
   <details><summary>Technical</summary>
 
   `hooks/check-gates.js`, the Edit and Write transition counts: replace `/- \[x\]/g` and `/- \[ \]/g` with `/^-\s+\[x\]/gm` and `/^-\s+\[ \]/gm`. Applies to every impl, opted in or not — an indented box was never an item to either impl reader.
