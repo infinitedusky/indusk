@@ -47,3 +47,6 @@ The branch touched 23 files (+895/−218), 20 of them under `apps/` (+748/−185
 - **Trajectory audit:** A1–A12 all `passing`; no deferred, blocked or non-terminal rows.
 - **Quality:** the only recurring mistake was formatting, caught by `biome check`; no new rule is warranted. Shape: 2 findings (`decideByRule` extracted in Build Phase 1, `Replied` moved in Build Phase 4), 0 judged wrong by a person.
 - **Open, not fixed here:** a build step's requests leave the log once that step's session ends, because the manager keeps a session's events only in memory and the events route returns 404 after it stops. "Stays done after a reload" holds while the step runs. Keeping a build's requests across steps needs a persisted build log, which is a new plan.
+- **Landing (2026-10-15):** main merged into the branch cleanly. The root run on the merged branch failed on two timeouts in files this plan did not touch, `looks.test.tsx` A2 (5 s) and `new-project-cli.test.ts` A44 (21.5 s); each file passes alone (15/15, 21/21). Landed with them recorded; their cause is open. Installed with `pnpm install:local` (`indusk --version` 1.70.0); nothing published.
+
+Landed on main at c10126bd2, 2026-10-15.
