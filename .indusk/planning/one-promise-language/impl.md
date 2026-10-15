@@ -383,7 +383,7 @@ A fresh reader went looking for places where the plan's promise does not yet hol
   A17. `apps/indusk-mcp/scripts/suite-speed.js`: the outcome object stays `violated` on the wire (`:37`, `:50`). The line at `:117` prints `signal sent: <promise> broken|upheld (N s)`, and the `not marked:` lines become `no signal sent:`. Test in `suite-speed.test.ts`: the attribute is `violated` and the printed line has no `violated` or `marked`.
 
   </details>
-- [ ] Make the trace-shape helper's failure messages say broken.
+- [x] Make the trace-shape helper's failure messages say broken.
   <details><summary>Technical</summary>
 
   A18. `apps/indusk-mcp/src/lib/testing/trace-shape.ts:156,163`: "marks promise … broken but carries no `indusk.promise.violated` event" and "no span signalled promise … broken". The function name `expectPromiseViolated` stays, as an internal name. The test calls it on spans with no break and asserts that the thrown message does not match `/\bviolated\b(?!\s*event|`)/`, ignoring the event name.

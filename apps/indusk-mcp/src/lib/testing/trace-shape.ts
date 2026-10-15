@@ -140,8 +140,10 @@ export function expectPromiseUpheld(
 }
 
 /**
- * Assert a captured span marks `token`'s promise violated, with the
- * violation event. Returns the span and the event's symptom.
+ * Assert a captured span signals `token`'s promise broken, with the break
+ * event (`indusk.promise.violated`, the event's wire name). Returns the span
+ * and the event's symptom. The function's own name keeps the old word as an
+ * internal name.
  */
 export function expectPromiseViolated(
 	spans: CapturedSpan[],
@@ -153,13 +155,13 @@ export function expectPromiseViolated(
 		const event = span.events.find((e) => e.name === PROMISE_MARK.violatedEvent);
 		if (!event) {
 			throw new Error(
-				`expectPromiseViolated: span "${span.name}" marks promise "${name}" violated but carries no ${PROMISE_MARK.violatedEvent} event`,
+				`expectPromiseViolated: span "${span.name}" signals promise "${name}" broken but carries no ${PROMISE_MARK.violatedEvent} event`,
 			);
 		}
 		const symptom = event.attributes[PROMISE_MARK.symptom];
 		return { span, symptom: typeof symptom === "string" ? symptom : null };
 	}
 	throw new Error(
-		`expectPromiseViolated: no span marked promise "${name}" violated; ${describeMarks(spans)}`,
+		`expectPromiseViolated: no span signalled promise "${name}" broken; ${describeMarks(spans)}`,
 	);
 }
