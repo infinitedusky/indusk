@@ -47,7 +47,7 @@ const PROMISES: PromiseEntry[] = [
     name: "seat-released",
     kind: "behaviour",
     lifetime: "holds",
-    state: "known-violated",
+    state: "known-broken",
     domain: "seating",
     owner: OWNER,
     statement: "A held seat is released after its timeout.",
