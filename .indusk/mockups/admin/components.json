@@ -2044,6 +2044,12 @@
 					"description": "Opens the row's own page instead of unfolding."
 				},
 				{
+					"name": "summary",
+					"type": "string",
+					"required": false,
+					"description": "The phase's paragraph: what it does for the whole plan, drawn above its items when unfolded."
+				},
+				{
 					"name": "children",
 					"type": "ReactNode",
 					"required": false,
@@ -2108,7 +2114,7 @@
 				{
 					"name": "open",
 					"id": "ui-phaserow--open",
-					"snapshotHash": "187726b52f97f40858ee3f2bf82cea0e5d558d678cc969c10f4a3a55b754b001",
+					"snapshotHash": "4b01a97caad39a53194a804495e7a96773a8557409bda0b1652ec897e4dd7a96",
 					"content": {
 						"name": [
 							[
@@ -2137,18 +2143,26 @@
 								0
 							]
 						],
+						"summary": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
 						"children": [
 							[
 								0,
 								1,
-								0
+								1
 							]
 						]
 					}
 				}
 			],
 			"stylesheet": "components/phase-row.css",
-			"stylesheetHash": "a78715d6a6d6466f96f814234ebb7d785f70d26e7f973e26950f8f9ed606328b"
+			"stylesheetHash": "ed6cadfbbeb24a4d987d0efaedbb2a45132b1788b1686910ded1d8be34e54636"
 		},
 		{
 			"name": "plan-row",
