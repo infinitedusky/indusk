@@ -26,6 +26,7 @@ const ready = (missing: string[] = []): RetrospectiveReadiness => ({
 	nonTerminalRows: [],
 	promisesOk: true,
 	unprovenPromises: [],
+	longSkipReasons: [],
 	passes: missing.length === 0,
 	missing,
 });
@@ -191,5 +192,35 @@ describe("A20 — with auto-accept, a built plan goes on to release without the 
 		const stop = await runBuild({ ...s.deps, autoAccept: false });
 		expect(stop).toEqual({ step: "review" });
 		expect(s.accepted).toEqual([]);
+	});
+});
+
+// promise: a-skip-reason-is-one-sentence
+describe("skip-reason-why A15, at the runner — an over-long reason is a shorten-reason session", () => {
+	it("runs shorten-reason with the reason's details instead of the audit, then reaches review", async () => {
+		const long = {
+			...planOf([phase("Seats", true)], ["audit"]),
+			readiness: {
+				...ready(["audit"]),
+				longSkipReasons: [{ ritual: "audit" as const, length: 300, sentences: 1 }],
+			},
+		};
+		const given: unknown[] = [];
+		const ran: BuildStepName[] = [];
+		let at = 0;
+		const stop = await runBuild({
+			autoAccept: false,
+			read: async () => (at === 0 ? long : BUILT),
+			run: async (step, _phase, reason) => {
+				ran.push(step);
+				given.push(reason);
+				at += 1;
+				return { error: null };
+			},
+			accept: async () => {},
+		});
+		expect(ran).toEqual(["shorten-reason"]);
+		expect(given).toEqual([{ ritual: "audit", length: 300, sentences: 1 }]);
+		expect(stop).toEqual({ step: "review" });
 	});
 });

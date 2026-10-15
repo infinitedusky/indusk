@@ -7,6 +7,7 @@ import {
   runBuild,
   runRelease,
   runStepSession,
+  type ShortenReason,
 } from "@infinitedusky/indusk-mcp/build";
 import { acceptPlan } from "@infinitedusky/indusk-mcp/plans";
 import { getProjectPath } from "./registry-client";
@@ -56,7 +57,7 @@ export function buildState(project: string, plan: string): BuildState | null {
 async function stepModelOption(
   root: string,
   plan: string,
-  step: BuildStepName,
+  step: Exclude<BuildStepName, "shorten-reason">,
   phase: string | undefined,
 ): Promise<{ model?: string } | { error: string }> {
   try {
@@ -76,8 +77,18 @@ async function depsFor(project: string, plan: string, state: BuildState) {
     root,
     deps: {
       read: () => readBuildPlan(root, plan),
-      run: async (step: BuildStepName, phase?: string) => {
-        const chosen = await stepModelOption(root, plan, step, phase);
+      run: async (
+        step: BuildStepName,
+        phase?: string,
+        reason?: ShortenReason,
+      ) => {
+        // A shortened reason is one line rewritten: it runs on the work step's default tier.
+        const chosen = await stepModelOption(
+          root,
+          plan,
+          step === "shorten-reason" ? "work" : step,
+          phase,
+        );
         if ("error" in chosen) return { error: chosen.error };
         return runStepSession(step, {
           manager: sessionManager(),
@@ -85,6 +96,7 @@ async function depsFor(project: string, plan: string, state: BuildState) {
           ...(where.addDirs ? { addDirs: where.addDirs } : {}),
           project,
           plan,
+          ...(reason ? { reason } : {}),
           ...chosen,
         });
       },

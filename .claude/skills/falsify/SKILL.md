@@ -98,8 +98,10 @@ If after investigation you genuinely cannot form any specific hypothesis, **do n
 
 ```yaml
 falsification: skipped
-falsification_reason: "investigated X, Y, Z regions; all invariants appeared to hold; no concrete hypothesis formed"
+falsification_reason: "investigated the changed regions; every invariant held and no concrete hypothesis formed"
 ```
+
+The reason is one sentence of at most 120 characters (`promise: a-skip-reason-is-one-sentence`); the detail goes in the impl body or the retrospective, and the retrospective refuses a longer one.
 
 This is a confession, not a bypass — it's visible in the retrospective audit and documents what you did look at. Use it when you really couldn't find anything, not when you didn't want to spend time hunting.
 

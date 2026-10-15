@@ -70,6 +70,8 @@ flowchart TD
 - `isFalsificationComplete(planRoot)` is `true` — the plan has a `falsification.md` log with a terminator entry, OR
 - `isFalsificationSkipped(implContent).skipped` is `true` — the impl frontmatter has BOTH `falsification: skipped` AND `falsification_reason: "{non-empty text}"`
 
+The readiness check also refuses a skip reason over 120 characters or of more than one sentence (a sentence ends at `.`, `!` or `?` followed by a space and a capital letter, so `e.g.` and `gate.ts` do not count). The ritual stays in `missing`, and `longSkipReasons` names it with the reason's length and sentence count; the fix is a one-line edit of the reason. The rule lives in `lib/rituals/reason.ts` (`SKIP_REASON_MAX`, `sentenceCount`, `reasonFits`).
+
 If neither holds, the skill surfaces a gate-refusal message directing the user to run `/falsify {plan}` first, or to add the skip frontmatter with a recorded reason.
 
 This is the structural enforcement layer for the [Falsification Ritual](/guide/falsification-ritual). The two helper functions live in [`apps/indusk-mcp/src/lib/falsification/`](/reference/falsification/log); the retrospective skill invokes them via `tsx` or MCP wrappers the same way other skill-level checks do.
@@ -557,3 +559,5 @@ The retrospective draws on tools from across the InDusk MCP server:
 - **Not every plan produces a lessons page.** The knowledge handoff creates a decisions page for every plan (every plan has an ADR), but lessons pages are only for plans with genuinely reusable insights. Do not force it.
 
 - **Run the retrospective in order.** The nine steps build on each other. The structural audit (Step 2) feeds into the retrospective document (Step 1 gets updated). The quality audit (Step 5) may surface issues that affect the context audit (Step 7). Sequential execution is intentional.
+
+An unattended build that meets an over-long skip reason (Step 0 refuses it) runs a `shorten-reason` session instead of the skipped ritual: it rewrites that one `<ritual>_reason` line to one sentence of at most 120 characters, changes nothing else, and commits. See [`plans next`](/reference/cli/plans).

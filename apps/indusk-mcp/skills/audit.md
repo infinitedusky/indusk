@@ -81,8 +81,10 @@ A trivial plan (a typo, a changelog line) may skip the audit with both fields in
 
 ```yaml
 audit: skipped
-audit_reason: "why skipping is acceptable for this specific plan"
+audit_reason: "a one-line copy change; a fresh reader would find nothing to question"
 ```
+
+The reason is one sentence of at most 120 characters (`promise: a-skip-reason-is-one-sentence`); the detail goes in the impl body or the retrospective, and the retrospective refuses a longer one.
 
 `/retrospective` Step 0 accepts the pair and refuses a bare `audit: skipped`. Under `gate_policy: ask`, ask the person before writing it.
 

@@ -236,7 +236,9 @@ pointer; the pointer holds the story.
   the text, never with a hook. Skills and hooks are package-owned: edit
   `skills/` and `hooks/` here, resync `.claude/skills/` and `.claude/hooks/`;
   `skill-sync-parity` pins byte-equality and the planning context template
-  likewise. **A library the skills call is not shipped until it is in
+  likewise. A phase that edits `skills/` resyncs `.claude/skills/` in the same
+  phase and runs `skill-sync-parity.test.ts` — `vitest related` does not reach it.
+  **A library the skills call is not shipped until it is in
   `package.json` `exports` AND its documented invocation has run verbatim.**
 - **Extensions own tool knowledge**; required-by-default ones flow through
   `autoEnableExtensions` Pass 1 (`disabled_extensions` opts out); they ship

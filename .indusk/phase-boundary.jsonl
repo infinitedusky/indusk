@@ -321,3 +321,9 @@
 {"plan":"new-project-flow","phase":6,"kind":"build","sha":"6a8e43aa8f61bd032f048b6da53542236f4e9454","timestamp":"2026-10-14T17:36:58.439Z"}
 {"plan":"new-project-flow","phase":7,"kind":"build","sha":"570c80dd5073b8961122502818cef6206f3b9983","timestamp":"2026-10-14T19:01:14.692Z"}
 {"plan":"new-project-flow","phase":8,"kind":"build","sha":"4e3b7e75cdc7c31b9960503204f2f13514e74013","timestamp":"2026-10-14T20:51:36.105Z"}
+{"plan":"skip-reason-why","phase":1,"kind":"test","sha":"30886466f09ac5fbe4fc276ce4dd54630a7473a8","timestamp":"2026-10-14T23:55:24.925Z"}
+{"plan":"skip-reason-why","phase":1,"kind":"build","sha":"3361dbb78668d6e885027480ef31114fc3ae321d","timestamp":"2026-10-14T23:56:42.476Z"}
+{"plan":"skip-reason-why","phase":2,"kind":"build","sha":"f6338b520873d15c3faaaf04e3838f5023ad6469","timestamp":"2026-10-15T00:02:02.909Z"}
+{"plan":"skip-reason-why","phase":3,"kind":"build","sha":"ad2145093dbaf7b20ae37962e1c78fe4a60b0946","timestamp":"2026-10-15T00:30:50.402Z"}
+{"plan":"skip-reason-why","phase":4,"kind":"build","sha":"b631f306d1db12dc6e4f901ed34ae5e3b8e8c503","timestamp":"2026-10-15T00:39:04.564Z"}
+{"plan":"skip-reason-why","phase":5,"kind":"build","sha":"878b94fc29b5aa34a58a0ff32f88ada8087ae019","timestamp":"2026-10-15T01:41:29.700Z"}

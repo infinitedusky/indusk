@@ -26,3 +26,15 @@ export const Needs: Story = {
 export const Waiting: Story = {
   args: { name: "Land", status: "waiting", state: "waiting" },
 };
+export const Skipped: Story = {
+  args: {
+    name: "Cleanup",
+    status: "skipped",
+    state: "waiting",
+    reason:
+      "Nothing to extract: the changed files are cohesive and none repeats another.",
+  },
+};
+export const SkippedOpen: Story = {
+  args: { ...Skipped.args, open: true },
+};

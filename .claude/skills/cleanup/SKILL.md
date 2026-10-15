@@ -106,8 +106,10 @@ If after investigation there is genuinely nothing worth decomposing — every ch
 
 ```yaml
 cleanup: skipped
-cleanup_reason: "reviewed changed files X, Y, Z; all under threshold or cohesive; nothing warrants extraction"
+cleanup_reason: "reviewed the changed files; all cohesive and under threshold, nothing warrants extraction"
 ```
+
+The reason is one sentence of at most 120 characters (`promise: a-skip-reason-is-one-sentence`); the detail goes in the impl body or the retrospective, and the retrospective refuses a longer one.
 
 This is a confession, not a bypass — it is visible in the retrospective audit and records what you reviewed. Use it when there is truly nothing to do, or for trivial plans (typo, changelog) where the ritual cost exceeds the value.
 

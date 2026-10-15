@@ -9,6 +9,7 @@ import { runStepSession, stepEnv, stepPrompt } from "./build-session.js";
 /**
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the build session's half.
  * promise: nothing-ships-until-accepted — admin-plan-authoring A35, the marking half.
+ * promise: a-skip-reason-is-one-sentence — skip-reason-why A16, the shortening session's prompt.
  * promise: a-build-runs-to-review-unasked — workbench-plan-authoring A13, a workbench build's two roots.
  *
  * One step of a build is one session that nobody answers: it runs under
@@ -186,5 +187,20 @@ describe("A13 — a workbench build writes in its code worktree and at the root,
 		expect(by.code).toEqual({ allow: true });
 		expect(by.plan).toEqual({ allow: true });
 		expect(by.out).toMatchObject({ allow: false });
+	});
+});
+
+describe("A16 — the shortening session is told which reason to rewrite", () => {
+	const detail = { ritual: "audit", length: 300, sentences: 1 } as const;
+
+	it("names the field, the limit, one sentence, and to change nothing else", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: the step is added with its implementation
+		const prompt = (stepPrompt as any)("shorten-reason", "seats", detail) as string;
+		expect(prompt).toContain("audit_reason");
+		expect(prompt).toContain("120");
+		expect(prompt).toContain("one sentence");
+		expect(prompt).toMatch(/change nothing else/);
+		expect(prompt).toContain("300");
+		expect(prompt).toContain("INDUSK_GATE_POLICY=auto");
 	});
 });

@@ -244,6 +244,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
   no current step; a hand-written `=== "accepted"` showed "The brief is
   incomplete" on finished plans. Guarded by `PlanSummary.test.tsx` (A28). — see
   `/reference/admin-ui/overview`
+- **A step's reason is `Step`'s `reason` prop, opened by its "why?", never joined
+  into its status** — a 950-character reason in the status buried the rail.
+  Guarded by `workflows.test.tsx` (A1–A3), `promise: a-skipped-step-shows-why-on-request`.
+  — see `/reference/admin-ui/overview`
 - **A route asks for its own plan's session (`forPlan(project, plan, kind?)`),
   never "the" session**: one `SessionManager` holds a session per plan and
   kind. `running()` is for the caller that needs every session (`readWaiting`).
