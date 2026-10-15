@@ -209,10 +209,16 @@ const UNCHECKED_BOX = /^-\s+\[ \]/gm;
 const countOf = (text, re) => (text.match(re) || []).length;
 
 if (event.tool_name === "Edit" && oldContent && newContent) {
-	const oldUnchecked = countOf(oldContent, UNCHECKED_BOX);
-	const newUnchecked = countOf(newContent, UNCHECKED_BOX);
-	const oldChecked = countOf(oldContent, CHECKED_BOX);
-	const newChecked = countOf(newContent, CHECKED_BOX);
+	// Counted over the whole file before and after the edit, never over the
+	// edit's own strings: a fragment that begins at a folded box's dash has lost
+	// the indent that says the box is detail (story-first-phases A24). Only an
+	// edit that cannot be applied falls back to its strings.
+	const wholeAfter = onDisk === null ? null : applyEdit(onDisk);
+	const [before, after] = wholeAfter === null ? [oldContent, newContent] : [onDisk, wholeAfter];
+	const oldUnchecked = countOf(before, UNCHECKED_BOX);
+	const newUnchecked = countOf(after, UNCHECKED_BOX);
+	const oldChecked = countOf(before, CHECKED_BOX);
+	const newChecked = countOf(after, CHECKED_BOX);
 	hasCheckboxTransition = newChecked > oldChecked || newUnchecked < oldUnchecked;
 } else if (event.tool_name === "Write") {
 	// For Write, compare with file on disk
