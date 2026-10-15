@@ -305,7 +305,7 @@ The last phase brings everything people read outside the apps into the same voca
   `apps/indusk-mcp/skills/{catchup,falsify,planner,verify}.md` (then `indusk update` syncs `.claude/skills/`); `templates/planning/CLAUDE.md:140` ("each such commit is recorded as a break of `a-plan-is-written-on-its-own-branch`"); `hooks/check-gates.js` messages; `templates/server/{fly.toml,Dockerfile}` comments.
 
   </details>
-- [ ] Publish this decision on the docs site.
+- [x] Publish this decision on the docs site.
   <details><summary>Technical</summary>
 
   `apps/docs/src/decisions/one-promise-language.md` from `adr.md`, linked from the decisions index.
