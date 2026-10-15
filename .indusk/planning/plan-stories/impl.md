@@ -256,7 +256,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 #### Build Phase 1 Context
 
 - [x] root (Key Decisions): "Plan titles and stories: a plan is named by its title (brief or master, else its handle in words) through one rule in the package; a master's page tells its story from `subplan-row`; Needs you counts amendments — see `/decisions/plan-stories`" — always-on because it is design intent every page and the editor name plans under
-- [ ] `apps/indusk-mcp/CLAUDE.md`: a plan's name comes from `readPlanName` / `planTitle` in `promises/display`; nothing else turns a handle into words (guarded by `display-names-single-definition.test.ts`)
+- [x] `apps/indusk-mcp/CLAUDE.md`: a plan's name comes from `readPlanName` / `planTitle` in `promises/display`; nothing else turns a handle into words (guarded by `display-names-single-definition.test.ts`)
 
 #### Build Phase 1 Document
 
