@@ -8,4 +8,4 @@ Found 2026-07-26 building dawn-external-orchestrator under `/work --autopilot`: 
 
 **Fix (queued, not yet shipped as of this lesson):** in `apps/indusk-mcp/src/lib/trajectory/` (and its JS hook ports `validate-impl-structure.js` / `check-gates.js` — change both together per the existing mirror-parity gotcha), reject an impl that has `trajectory: required` or checklist items but parses to 0 `### Phase N` headers, rather than exiting clean.
 
-See `.indusk/planning/indusk-v2-dawn/` (Dawn v1 build) for the discovery context and `.indusk/current.md` Session 80563054 for the fuller cursor note.
+See `.indusk/planning/archive/indusk-v2-dawn/` (Dawn v1 build) for the discovery context and `.indusk/current.md` Session 80563054 for the fuller cursor note.

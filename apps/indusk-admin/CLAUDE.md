@@ -6,11 +6,12 @@ Loaded by Claude Code when a file under `apps/indusk-admin/` is read. Rules that
 apply only here; cross-cutting design intent stays in the root `CLAUDE.md`.
 Each entry is a rule and a pointer; the pointer holds the story.
 
-- **The admin writes only through the package**: its routes (`app/api/sessions/`)
-  start, answer and stop sessions through `@infinitedusky/indusk-mcp/session`,
-  and plans change through `/plans`; no file in this app writes a plan file,
-  spawns a process (beyond the two read-only git readers) or parses Claude's
-  protocol. Guarded by `admin-uses-package-commands.test.ts`.
+- **The admin writes only through the package**: its routes start, answer and
+  stop sessions through `@infinitedusky/indusk-mcp/session`, change plans
+  through `/plans`, and keep a project conversation through `./new-project`;
+  no file in this app writes a plan or project file, spawns a process (beyond
+  the two read-only git readers) or parses Claude's protocol. Guarded by
+  `admin-uses-package-commands.test.ts`.
 - **Every handler under `app/api` calls `adminOnly(request)` first**: the
   `Host` must be the admin's own (`isAdminHost`), and a `POST`'s `Origin`
   must match it. Listening on 127.0.0.1 is not enough: DNS rebinding points
@@ -21,6 +22,17 @@ Each entry is a rule and a pointer; the pointer holds the story.
   and sends a person's choices back through the routes; a client component
   imports only *types* from `/session`, whose code is Node's. — see
   `/reference/admin-ui/sessions`
+- **The project conversation renders a thread, not the session panel**:
+  `lib/conversation-turns`'s `turnsOf(events)` reads a session's events as
+  alternating you/agent turns (the reply is the last text, the tools and
+  earlier text are its working, an open question or permission is *waiting* and
+  never folded; each agent turn has a `status` - working, done or stopped - drawn
+  as `Message`'s dot, and Start launches the agent so the thread opens with it
+  working); `ConversationThread` draws them as `Message` bubbles, the
+  reply through `Markdown`; the draft's `transcript.jsonl` (appended by
+  `startProjectConversation`) is what a reopened page shows. Other conversations still use the session panel. Guarded by `conversation-turns.test.ts` and
+  `ConversationThread.test.tsx`. — `promise: a-project-conversation-is-a-back-and-forth`
+- **A view reads whether a request is decided from its `decided` event**, never from a set of its own: a click may close a prompt early, but the event is the record, and a reload keeps it. A click's early close is undone when the reply is refused (`onAnswer`/`onDecide` resolve to whether it was accepted), and an answered question's outcome is read from the event's `answers`. `lib/request-decisions.ts`'s `decisionsOf` is the one reader of a request's decision (the panel and `turnsOf` both use it); `useAnsweredRequests` is the one early close of a click. Guarded by `SessionPanel.test.tsx` (A6, A9, A10), `ConversationThread.test.tsx` (A10) and `conversation-turns.test.ts` (A4). — `promise: a-decided-request-stays-decided`
 - **What a plan's page offers is one rule, `planActions`**: a plan is started
   by its worktree in normal mode or its `code.json` in a workbench, and gets
   the same buttons either way; a workbench session runs at the root with the
@@ -37,17 +49,16 @@ Each entry is a rule and a pointer; the pointer holds the story.
   the tarball by `prepublishOnly`. Why a standalone read-only viewer — see
   `/decisions/indusk-admin-ui`; why one daemon and a registry — see
   `/decisions/admin-ui-hosting`
-- Tailwind 4 needs Node 22 ("Cannot find native binding" on 18).
 - **The plan page is live**: `LiveRefresh` probes the page and
   `router.refresh()`es every `admin.refresh_ms` (default 5000), pauses when
   hidden, stops visibly on failure; the Promises page is live the same way (also
   its health cache); no other page polls. — see `/reference/admin-ui/overview`
 - **The sidebar tree is derived entirely from declarations** — one root node
   (`readPlanDeclarations().root`) with parents and unclaimed plans beneath it;
-  directly under the root means unclaimed. Grouping lives in
-  `PlanList.buildGroups`; subplan children resolve against active + archived
-  with active winning, identically in sidebar and detail; parents render
-  additively via `ParentPlanView`, doc-less plans header-only.
+  directly under it means unclaimed. Grouping is
+  `lib/plan-groups.ts`; subplan children resolve against active + archived
+  with active winning. A master's page is a plan page with its story
+  (`plan.master`) for the rail: it keeps every control.
 - **Phases render through `parseImplString`** (the `impl-parser` subpath) —
   never a local heading regex; rows attach by `(passesAtKind, passesAt)`. The
   active phase is the most recent boundary record among open phases;
@@ -55,13 +66,14 @@ Each entry is a rule and a pointer; the pointer holds the story.
   file is an error block, never a guess. The rows table shows `Level` and
   `For` from the package's parser (`levelText`, `purpose`), never its own
   reading of a cell; the copied markdown carries the same columns.
-- **One home per piece**: rows table in `components/phases/`,
-  progress lines in `bars/ProgressLines`, display vocabulary (incl. `phaseTitle`
-  — the page says `Phase 4`; the package's `phaseLabel` is for logs, never a
-  component) and every chip/label map in `bars/labels.ts`, badge maps in
-  `ui/badge-variant.ts`, research reads in `lib/research-reader.ts`, project
-  reads in `lib/project-reader.ts` (config via the `./config` subpath, never
-  parsed by hand). Pinned by `cleanup-pins.test.ts`.
+- **One home per piece**: rows table `components/phases/`,
+  progress lines `bars/ProgressLines`, display vocabulary (`phaseTitle`:
+  `Phase 4`, not `phaseLabel`; a plan is `plan.title`, initials from it, the
+  handle only for links, data attributes; its stage is `planStage`, a queued
+  plan's title rides its `buildGroups` placeholder) and chip/label maps in
+  `bars/labels.ts`, badge maps `ui/badge-variant.ts`, research reads
+  `lib/research-reader.ts`, project reads `lib/project-reader.ts` (config
+  via `./config`, never hand-parsed). Pinned by `cleanup-pins.test.ts`.
 - The label maps are `satisfies Record<…>` over the lifecycle's unions and
   `lifecycle-render-parity.test.ts` names any member without a renderer;
   phases are keyed `{kind, number}`, an absent kind a build phase
@@ -97,9 +109,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `recordBreaks`; a local-only project gets none, and `ui stop` ends the loops
   with the process. The admin composes; the writing is the package's. Guarded
   by `admin-recorder.test.ts` (system tier). An HTTP test whose fixture names a
-  production source (`promises.jaeger`) runs this recorder too: its breaks become
-  incidents and its promises `known-violated`, so assert through the recorder's
-  incidents, never a hand-written one beside them. — see `/decisions/incident-recording`
+  `promises.jaeger` runs this recorder too: assert through its incidents, never a
+  hand-written one beside them. — see `/decisions/incident-recording`
 - **Active plans and their boundary records are read from each plan's live
   root** (`worktree/plan-worktrees`); `components/Worktrees.tsx` renders the
   worktree chip, a broken assignment, unassigned worktrees and the record error.
@@ -111,27 +122,30 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `__tests__/helpers/next-dev.ts`, one at a time — Next locks `.next/`, so
   `fileParallelism: false` is load-bearing and a stray dev server on the app
   dir fails every smoke; the live rows drive it with Playwright from the node
-  project. `typecheck.test.ts` makes `tsc` a test. — see
+  project. `typecheck.test.ts` makes `tsc` a test. A node test imports the route
+  it calls at the top of the file, never `await import(...)` inside an `it`: the
+  cold import of the package's graph timed out at 5 s in a root run
+  (`the-everyday-suite-passes-on-main`). — see
   `/reference/admin-ui/component-conventions`
 - `dynamic = "force-dynamic"` in the root layout is load-bearing; markdown
   renders only through `<Markdown>`; the registry is never auto-pruned
   (`indusk ui prune [--dry-run]` backs up first); `runCli` pins `INDUSK_HOME`
   to a temp dir; malformed files quarantine to `.corrupt.{ISO}.bak`; daemon
   identity = PID liveness AND its command line, never its port
-  (`lib/process-identity.ts`); the scorecard-to-plan join is date-range
-  approximate.
-- **Promise timeline** (moved from the root, 2026-10-08): compact sliced reads;
+  (`lib/process-identity.ts`); the scorecard join is date-range approximate.
+- **Promise timeline**: compact sliced reads;
   an admin store that reads only what is new plus a late tail; one
   `violationState` (unrecorded / open / fixed) for chip and timeline;
   incidents record `fixed` via `promises fix`. — see
   `/decisions/promise-timeline`
-- **Admin plan authoring** (moved from the root, 2026-10-08): `plans start →
+- **Admin plan authoring**: `plans start →
   approve → build → accept → land`, through the developer's own `claude`;
   nothing lands unaccepted. — see `/decisions/admin-plan-authoring`
 - **A fact the cockpit shows is read from a package module** (`promises/standing`,
   `proof`, `fix`; `plans/steps`, `waiting`, `history`); the admin's `lib/` holds
-  only fs-to-props glue, never a second definition. Guarded by
-  `apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts`. — see
+  only fs-to-props glue, never a second definition. What a plan waits on is
+  `planWaiting`'s answer alone, amendments included; the nav and the page add
+  none. Guarded by `cockpit-single-definition.test.ts`. — see
   `/decisions/plan-cockpit`
 - **A look's state is read from `promises/standing` and `looks/*`, never
   computed here**: the Looks page reads `looks/overview`, the dashboard and the
@@ -153,8 +167,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   class has no value to compile. A new screen, state or `data-component` needs
   its mockup approved first. Guarded by `looks-admin-foundation.test.ts`,
   `indusk looks coverage admin` and `indusk looks check admin`. Two traps: layout
-  is not a token and the value check does not see it (`translate-x-0` once
-  compiled to nothing and left the nav off-screen), so a restyle is also looked
+  is not a token and the value check does not see it, so a restyle is also looked
   at; and the Typography plugin is gone — `.prose` is written on the foundation
   in `globals.css`. — see `/decisions/ui-promises`
 - **A plan's page shows its brief's three parts from `plans/parts` and computes
@@ -165,11 +178,24 @@ Each entry is a rule and a pointer; the pointer holds the story.
   on an amendment posts to `plans/[name]/reapprove`. The review's `evidence`
   group is read, not signed off. Guarded by `cockpit-single-definition.test.ts`
   and `plan-parts.test.tsx` (A15). — see `/reference/admin-ui/overview`
+- **A task's Technical detail renders through `components/Markdown.tsx` in
+  `PhaseItems`, never as raw text**: the phase's paragraph and each task's
+  folded detail come from the package parser (`summary`, `detail`); the fold
+  is closed until opened and the detail shows as formatted markdown, code as
+  code. Guarded by `PhaseItems.test.tsx` (A6) and `PhaseRow.test.tsx` (A5). —
+  `promise: technical-detail-opens-on-request`
 - **A decision's card is read again from what the daemon holds after every
   answer**: a started release clears the build's stop and a second accept is
   refused while it runs, and an answer delivered but not recorded is reported
   sent, never failed. Guarded by `src/lib/build-host.release.test.ts` and
-  `src/lib/decisions.test.ts`. — see `/decisions/plan-cockpit`
+  `src/lib/decisions.test.ts`. **A decision's card shows everything the agent
+  asked, never the first of it**: an ask of several questions is shown whole and
+  answered under each question's text (`choice: "answers"`), and an answer
+  that leaves one out is refused — guarded by A7 in `DecisionCard.test.tsx` and
+  `decisions.test.ts`. **A session is "writing" only while its turn is open**:
+  an idle session waiting for the person does not hold approval back
+  (`SessionManager.isWriting`) — guarded by A12 in `waiting.test.ts`. — see
+  `/decisions/plan-cockpit`
 - **Storybook is `@storybook/nextjs-vite`; its story tests are the system
   tier's**: the `storybook` vitest project is named in `SYSTEM_PROJECTS`
   (`vitest.tiers.ts`) and defined by `vitest.config.ts` only for a run the
@@ -232,3 +258,30 @@ Each entry is a rule and a pointer; the pointer holds the story.
   no current step; a hand-written `=== "accepted"` showed "The brief is
   incomplete" on finished plans. Guarded by `PlanSummary.test.tsx` (A28). — see
   `/reference/admin-ui/overview`
+- **A step's reason is `Step`'s `reason` prop, opened by its "why?", never joined
+  into its status** — a 950-character reason in the status buried the rail.
+  Guarded by `workflows.test.tsx` (A1–A3), `promise: a-skipped-step-shows-why-on-request`.
+  — see `/reference/admin-ui/overview`
+- **A route asks for its own plan's session (`forPlan(project, plan, kind?)`),
+  never "the" session**: one `SessionManager` holds a session per plan and
+  kind. `running()` is for the caller that needs every session (`readWaiting`).
+  An answer goes to the session that asked, found by its `pendingQuestion`
+  request id (a build and a planning session share a plan); words go to the
+  planning session. Guarded by `sessions-per-plan.test.ts` (A6, A13). — see
+  `/decisions/sessions-per-plan`
+- **The nav's width is the person's, per browser; its tree is drawn by
+  `nav.expanded`**: `CockpitFrame` keeps the width in `localStorage`
+  (`indusk-admin.nav.width`), no `NavHandle` below 760 px; every width goes
+  through `NavHandle`'s `clampNavWidth` (drag, key step, kept width, `?nav=`).
+  `PlanList` only draws the tree (`NavPath`, `PlanRow`, `NavGroup`), never its
+  own markup. Guarded by `CockpitFrame.test.tsx` (A1–A4) and
+  `PlanList.test.tsx`. — see `/decisions/cockpit-redraw`
+- **The brief page and plan page are held to `brief.*` and `plan.*`**: each
+  reports its state with `data-look-state` (`lib/look-state.ts`), never a
+  `?state=`; `screens.json` lists one path per state at A10's fixture plans,
+  which the real project lacks, so there the check names them `unchecked …
+  answered 404`, never a failure. A change to either page is drawn and approved
+  first; `?nav=<px>` sets the nav's width for one page. Guarded by
+  `look-state.test.ts`, `cockpit-redraw.contract.test.ts` (A10). — see
+  `/decisions/cockpit-redraw`
+- **A running agent's events are heard through `useSessionEvents`** — `components/session/use-session-events.ts`, the one subscription every conversation uses (the `EventSource` on `/api/sessions/:id/events`, `running`, a refresh on a write and on exit, an `onWrite` callback). A new view of a session uses it rather than opening its own `EventSource`; a draft's agent is found with `draftSession`/`stopDraftSession` in `lib/new-project-session.ts`, never by comparing `sessionManager().current()?.plan`. Guarded by `use-session-events.test.tsx` (A34).

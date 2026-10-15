@@ -1,0 +1,458 @@
+{
+	"c060f24d18c56231": {
+		"impl": ".indusk/planning/archive/admin-plan-authoring/impl.md",
+		"exitCode": 0
+	},
+	"eaeb892c913d24d7": {
+		"impl": ".indusk/planning/archive/admin-plan-type/impl.md",
+		"exitCode": 0
+	},
+	"83051603ff367dcd": {
+		"impl": ".indusk/planning/archive/admin-plan-worktrees/impl.md",
+		"exitCode": 0
+	},
+	"2d36b346db7cb5ac": {
+		"impl": ".indusk/planning/archive/admin-ui-hosting/impl.md",
+		"exitCode": 0
+	},
+	"2f76d32f4324e156": {
+		"impl": ".indusk/planning/archive/admin-ui-phase-progress/impl.md",
+		"exitCode": 0
+	},
+	"3a069dc277e491d0": {
+		"impl": ".indusk/planning/archive/agent-roles/impl.md",
+		"exitCode": 0
+	},
+	"09d24c1961ed670e": {
+		"impl": ".indusk/planning/archive/bookkeeping-lives-where-it-is-read/impl.md",
+		"exitCode": 0
+	},
+	"773be364c3eb168d": {
+		"impl": ".indusk/planning/archive/brief-as-the-contract/impl.md",
+		"exitCode": 0
+	},
+	"ff6309136a74e1ef": {
+		"impl": ".indusk/planning/archive/browser-telemetry-leftovers/impl.md",
+		"exitCode": 0
+	},
+	"570e7ead7a0865db": {
+		"impl": ".indusk/planning/archive/browser-template-claims/impl.md",
+		"exitCode": 2
+	},
+	"9363cbab617164f8": {
+		"impl": ".indusk/planning/archive/bug-fix-eval-agent/impl.md",
+		"exitCode": 0
+	},
+	"7fb638c672bd2cf1": {
+		"impl": ".indusk/planning/archive/cgc-graphiti-bridge/impl.md",
+		"exitCode": 0
+	},
+	"19d616761a74149e": {
+		"impl": ".indusk/planning/archive/cleanup-ritual/impl.md",
+		"exitCode": 0
+	},
+	"568be4ddefac9211": {
+		"impl": ".indusk/planning/archive/cockpit-redraw/impl.md",
+		"exitCode": 0
+	},
+	"b47a90cd62482d5e": {
+		"impl": ".indusk/planning/archive/code-quality-system/impl.md",
+		"exitCode": 2
+	},
+	"8b14ccec690b5a97": {
+		"impl": ".indusk/planning/archive/code-reviewer-agent/impl.md",
+		"exitCode": 0
+	},
+	"28431ed2476d592a": {
+		"impl": ".indusk/planning/archive/codegraph-context/impl.md",
+		"exitCode": 2
+	},
+	"84c0d39c4177bfac": {
+		"impl": ".indusk/planning/archive/component-content/impl.md",
+		"exitCode": 0
+	},
+	"8e182ccdfc184991": {
+		"impl": ".indusk/planning/archive/context-beam/impl.md",
+		"exitCode": 0
+	},
+	"9ba381a27cedf2c7": {
+		"impl": ".indusk/planning/archive/context-budget/impl.md",
+		"exitCode": 0
+	},
+	"61d5473dd0cee782": {
+		"impl": ".indusk/planning/archive/context-skill/impl.md",
+		"exitCode": 2
+	},
+	"5c773712860c93d6": {
+		"impl": ".indusk/planning/archive/context-tiers/impl.md",
+		"exitCode": 0
+	},
+	"59ff91e83adb1e91": {
+		"impl": ".indusk/planning/archive/dawn-external-orchestrator/impl.md",
+		"exitCode": 0
+	},
+	"ec44dbae524c6ee2": {
+		"impl": ".indusk/planning/archive/dawn-hook-parity/impl.md",
+		"exitCode": 0
+	},
+	"c0d94c20975e4e0e": {
+		"impl": ".indusk/planning/archive/dawn-ui-plan-grouping/impl.md",
+		"exitCode": 0
+	},
+	"e97637fb4ff66396": {
+		"impl": ".indusk/planning/archive/dawn-verify/impl.md",
+		"exitCode": 0
+	},
+	"d4b6982d5d91dbdb": {
+		"impl": ".indusk/planning/archive/dawn-workbench-execution/impl.md",
+		"exitCode": 0
+	},
+	"9a4d3ad961273f9d": {
+		"impl": ".indusk/planning/archive/day-always-on/impl.md",
+		"exitCode": 0
+	},
+	"8296d7b98ed8272a": {
+		"impl": ".indusk/planning/archive/day-always-on-deploy/impl.md",
+		"exitCode": 0
+	},
+	"10366338f92feecd": {
+		"impl": ".indusk/planning/archive/day-monitor/impl.md",
+		"exitCode": 0
+	},
+	"87ef13249df9084e": {
+		"impl": ".indusk/planning/archive/day-promises/impl.md",
+		"exitCode": 0
+	},
+	"3edfad4b80ebd79f": {
+		"impl": ".indusk/planning/archive/demo-app-template/impl.md",
+		"exitCode": 0
+	},
+	"9a40373ca3fdd0ad": {
+		"impl": ".indusk/planning/archive/display-names/impl.md",
+		"exitCode": 0
+	},
+	"cb0db0239c4117a4": {
+		"impl": ".indusk/planning/archive/document-skill/impl.md",
+		"exitCode": 2
+	},
+	"6ed6a666c533f288": {
+		"impl": ".indusk/planning/archive/doppler-extension/impl.md",
+		"exitCode": 0
+	},
+	"b8461b3ea499dd8d": {
+		"impl": ".indusk/planning/archive/enforce-impl-structure/impl.md",
+		"exitCode": 0
+	},
+	"200ce82fe103501a": {
+		"impl": ".indusk/planning/archive/enforce-plan-gates/impl.md",
+		"exitCode": 0
+	},
+	"1e26ad7069f55967": {
+		"impl": ".indusk/planning/archive/eval-agent-mcp-access/impl.md",
+		"exitCode": 0
+	},
+	"58ce00ddeab90ef9": {
+		"impl": ".indusk/planning/archive/eval-scorecard-format-fix/impl.md",
+		"exitCode": 0
+	},
+	"cdfbbe4d2b05760f": {
+		"impl": ".indusk/planning/archive/evaluator-waits-out-limits/impl.md",
+		"exitCode": 0
+	},
+	"3d925114388d6b49": {
+		"impl": ".indusk/planning/archive/excalidraw-extension/impl.md",
+		"exitCode": 0
+	},
+	"15f13c880b045846": {
+		"impl": ".indusk/planning/archive/extension-system/impl.md",
+		"exitCode": 2
+	},
+	"8a5452184b7e5678": {
+		"impl": ".indusk/planning/archive/falsification-ritual/impl.md",
+		"exitCode": 0
+	},
+	"637ab4ebfc1b4f78": {
+		"impl": ".indusk/planning/archive/falsify-phase-authoring/impl.md",
+		"exitCode": 0
+	},
+	"c8ba720f312b01b9": {
+		"impl": ".indusk/planning/archive/fix-opens-claude-tab/impl.md",
+		"exitCode": 0
+	},
+	"aba4ceb4e430fc67": {
+		"impl": ".indusk/planning/archive/gate-policy-enforcement/impl.md",
+		"exitCode": 2
+	},
+	"3980bdd86b039225": {
+		"impl": ".indusk/planning/archive/git-only-substrate/impl.md",
+		"exitCode": 0
+	},
+	"51e2eb95255a07ad": {
+		"impl": ".indusk/planning/archive/git-or-jj-substrate/impl.md",
+		"exitCode": 0
+	},
+	"288ce7bdf2824efb": {
+		"impl": ".indusk/planning/archive/graph-knowledge-architecture/impl.md",
+		"exitCode": 0
+	},
+	"18b054aaf4b2110a": {
+		"impl": ".indusk/planning/archive/graphiti-infrastructure/impl.md",
+		"exitCode": 2
+	},
+	"8fdd58c43747313c": {
+		"impl": ".indusk/planning/archive/gsd-inspired-improvements/impl.md",
+		"exitCode": 2
+	},
+	"d120fc40124116c4": {
+		"impl": ".indusk/planning/archive/handoff-multi-agent/impl.md",
+		"exitCode": 0
+	},
+	"886f8bd99057c7f4": {
+		"impl": ".indusk/planning/archive/handoff-multi-agent-section-shape/impl.md",
+		"exitCode": 2
+	},
+	"5bd94c8438ec5ddd": {
+		"impl": ".indusk/planning/archive/hook-cwd-independence/impl.md",
+		"exitCode": 0
+	},
+	"d3c71cd9812d6245": {
+		"impl": ".indusk/planning/archive/improvement-eval-agent-open-telemetry/impl.md",
+		"exitCode": 0
+	},
+	"2f741baef2706f70": {
+		"impl": ".indusk/planning/archive/incident-recording/impl.md",
+		"exitCode": 0
+	},
+	"9bdf131d3b0be879": {
+		"impl": ".indusk/planning/archive/indusk-admin-ui/impl.md",
+		"exitCode": 0
+	},
+	"6a9e558a8080c58f": {
+		"impl": ".indusk/planning/archive/indusk-makeover/impl.md",
+		"exitCode": 0
+	},
+	"b82a01088f1841cb": {
+		"impl": ".indusk/planning/archive/indusk-worktree-extension/impl.md",
+		"exitCode": 0
+	},
+	"72d7ec1e5fdfdf50": {
+		"impl": ".indusk/planning/archive/jj-residue-rip-out/impl.md",
+		"exitCode": 0
+	},
+	"20470cfa78fe5df1": {
+		"impl": ".indusk/planning/archive/lifecycle-rebalance/impl.md",
+		"exitCode": 0
+	},
+	"61121008fd93a734": {
+		"impl": ".indusk/planning/archive/local-init-mode/impl.md",
+		"exitCode": 0
+	},
+	"b35b28abb203f390": {
+		"impl": ".indusk/planning/archive/local-telemetry/impl.md",
+		"exitCode": 0
+	},
+	"af27c06e90a4cef2": {
+		"impl": ".indusk/planning/archive/mcp-dev-system/impl.md",
+		"exitCode": 2
+	},
+	"b28c5cdfb5579ea0": {
+		"impl": ".indusk/planning/archive/model-per-phase/impl.md",
+		"exitCode": 0
+	},
+	"324d81443d33b8a1": {
+		"impl": ".indusk/planning/archive/new-project-flow/impl.md",
+		"exitCode": 0
+	},
+	"96b828cf1e84f0b7": {
+		"impl": ".indusk/planning/archive/otel-core-skill/impl.md",
+		"exitCode": 0
+	},
+	"f71decf74b3237e7": {
+		"impl": ".indusk/planning/archive/panel-last-broke-time/impl.md",
+		"exitCode": 0
+	},
+	"4535d8630a49e94a": {
+		"impl": ".indusk/planning/archive/plan-cockpit/impl.md",
+		"exitCode": 0
+	},
+	"4a0d29ad13f6c52b": {
+		"impl": ".indusk/planning/archive/plan-review-subagent/impl.md",
+		"exitCode": 0
+	},
+	"6803b86b82020b77": {
+		"impl": ".indusk/planning/archive/planner-hotfix-mode/impl.md",
+		"exitCode": 0
+	},
+	"d8266b710493186b": {
+		"impl": ".indusk/planning/archive/planner-promises/impl.md",
+		"exitCode": 0
+	},
+	"b13fed667fbaf3a0": {
+		"impl": ".indusk/planning/archive/promise-sources/impl.md",
+		"exitCode": 0
+	},
+	"dc0486200e3793a6": {
+		"impl": ".indusk/planning/archive/promise-timeline/impl.md",
+		"exitCode": 0
+	},
+	"98137a5f6ae3bbbd": {
+		"impl": ".indusk/planning/archive/publish-hygiene/impl.md",
+		"exitCode": 0
+	},
+	"24cf4cd975d45b60": {
+		"impl": ".indusk/planning/archive/rationale-baseline-frontmatter/impl.md",
+		"exitCode": 0
+	},
+	"fe6408dfe0fa37d7": {
+		"impl": ".indusk/planning/archive/react-native-support/impl.md",
+		"exitCode": 2
+	},
+	"2a4469b49cabd01d": {
+		"impl": ".indusk/planning/archive/release-checks-run-once/impl.md",
+		"exitCode": 0
+	},
+	"bee47181a9ddcc81": {
+		"impl": ".indusk/planning/archive/release-records-its-failures/impl.md",
+		"exitCode": 0
+	},
+	"6628e680491d1534": {
+		"impl": ".indusk/planning/archive/release-ritual/impl.md",
+		"exitCode": 0
+	},
+	"c076382c20ef36c1": {
+		"impl": ".indusk/planning/archive/rename-to-dusk/impl.md",
+		"exitCode": 0
+	},
+	"beb891b11b24c357": {
+		"impl": ".indusk/planning/archive/semantic-graph-eval/impl.md",
+		"exitCode": 0
+	},
+	"33c25c6aeadb0c21": {
+		"impl": ".indusk/planning/archive/server-provisioning/impl.md",
+		"exitCode": 0
+	},
+	"d8a5021a52286c9f": {
+		"impl": ".indusk/planning/archive/small-fixes/impl.md",
+		"exitCode": 0
+	},
+	"696611d264ba95bb": {
+		"impl": ".indusk/planning/archive/stale-indusk-docs-path/impl.md",
+		"exitCode": 2
+	},
+	"e1abcbb582ad4468": {
+		"impl": ".indusk/planning/archive/storybook-components/impl.md",
+		"exitCode": 0
+	},
+	"dc8bd51012e68df8": {
+		"impl": ".indusk/planning/archive/system-tests-catch-up/impl.md",
+		"exitCode": 0
+	},
+	"fd9e7a9d9e150a13": {
+		"impl": ".indusk/planning/archive/telemetry-stop-stops-what-it-started/impl.md",
+		"exitCode": 0
+	},
+	"c42d3eb3efaa4b7a": {
+		"impl": ".indusk/planning/archive/test-daemons-never-leak/impl.md",
+		"exitCode": 0
+	},
+	"88d23110a6858b07": {
+		"impl": ".indusk/planning/archive/test-kinds/impl.md",
+		"exitCode": 0
+	},
+	"2cfc3f66c6cae5bd": {
+		"impl": ".indusk/planning/archive/test-phase-structure/impl.md",
+		"exitCode": 0
+	},
+	"99330dc873b2ab39": {
+		"impl": ".indusk/planning/archive/tests-first-planning/impl.md",
+		"exitCode": 0
+	},
+	"bd1250fa4378fe45": {
+		"impl": ".indusk/planning/archive/trunk-guard/impl.md",
+		"exitCode": 0
+	},
+	"31aade923eafa70a": {
+		"impl": ".indusk/planning/archive/ui-promises/impl.md",
+		"exitCode": 0
+	},
+	"a915ef495745bd4e": {
+		"impl": ".indusk/planning/archive/untrack-mcp-json/impl.md",
+		"exitCode": 2
+	},
+	"cece4cc40fc6a252": {
+		"impl": ".indusk/planning/archive/verify-skill/impl.md",
+		"exitCode": 2
+	},
+	"713ee558db73e0bc": {
+		"impl": ".indusk/planning/archive/versioned-workbench/impl.md",
+		"exitCode": 0
+	},
+	"20ad1ef2cf26cc0d": {
+		"impl": ".indusk/planning/archive/vitepress-extension/impl.md",
+		"exitCode": 0
+	},
+	"140f29b1ae19e17c": {
+		"impl": ".indusk/planning/archive/vscode-extension/impl.md",
+		"exitCode": 0
+	},
+	"4493493a5d1072d9": {
+		"impl": ".indusk/planning/archive/watch-reopen-collision/impl.md",
+		"exitCode": 0
+	},
+	"405e2df7f914c8a1": {
+		"impl": ".indusk/planning/archive/watcher-heartbeat/impl.md",
+		"exitCode": 0
+	},
+	"a56cd629ec35b50a": {
+		"impl": ".indusk/planning/archive/workbench-mode-rail-integrity/impl.md",
+		"exitCode": 0
+	},
+	"a078fb5bf752c597": {
+		"impl": ".indusk/planning/archive/workbench-plan-authoring/impl.md",
+		"exitCode": 0
+	},
+	"e2324dd12f333356": {
+		"impl": ".indusk/planning/archive/workbench-setup-command/impl.md",
+		"exitCode": 0
+	},
+	"946fe712f0e4cb75": {
+		"impl": ".indusk/planning/archive/workbench-trust-fixes/impl.md",
+		"exitCode": 0
+	},
+	"d8095096b04162ad": {
+		"impl": ".indusk/planning/archive/worktree-config-schema-pointer/impl.md",
+		"exitCode": 0
+	},
+	"c521196383edf52e": {
+		"impl": ".indusk/planning/archive/worktree-visibility/impl.md",
+		"exitCode": 0
+	},
+	"9544e57dc47d3037": {
+		"impl": ".indusk/planning/archive/writing-skill/impl.md",
+		"exitCode": 0
+	},
+	"6511069082c450cc": {
+		"impl": ".indusk/planning/clean-release-build/impl.md",
+		"exitCode": 0
+	},
+	"a7abdeb45f2887e6": {
+		"impl": ".indusk/planning/cockpit-audit-fixes/impl.md",
+		"exitCode": 0
+	},
+	"e5ee6d6d144e28a2": {
+		"impl": ".indusk/planning/decided-prompts-stay-closed/impl.md",
+		"exitCode": 0
+	},
+	"c38ef3cec7cffaea": {
+		"impl": ".indusk/planning/plan-page-shows-its-looks/impl.md",
+		"exitCode": 0
+	},
+	"9810a1ecd293c074": {
+		"impl": ".indusk/planning/sessions-per-plan/impl.md",
+		"exitCode": 0
+	},
+	"91d77ce2586fc465": {
+		"impl": ".indusk/planning/skip-reason-why/impl.md",
+		"exitCode": 0
+	}
+}

@@ -2,11 +2,13 @@
 name: a-project-keeps-its-founding-brief
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: planning
 owner: new-project-flow
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/new-project/create.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/new-project-cli.test.ts
 incidents: []
 ---
 
@@ -14,3 +16,4 @@ Every project created this way opens with a founding brief the person accepted, 
 
 ## History
 - 2026-10-14 — declared (new-project-flow), from its planning conversation.
+- 2026-10-14 — enforced, confirmed for new-project-flow: proven by row A7, row A8.

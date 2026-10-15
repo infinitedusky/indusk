@@ -70,6 +70,8 @@ flowchart TD
 - `isFalsificationComplete(planRoot)` is `true` — the plan has a `falsification.md` log with a terminator entry, OR
 - `isFalsificationSkipped(implContent).skipped` is `true` — the impl frontmatter has BOTH `falsification: skipped` AND `falsification_reason: "{non-empty text}"`
 
+The readiness check also refuses a skip reason over 120 characters or of more than one sentence (a sentence ends at `.`, `!` or `?` followed by a space and a capital letter, so `e.g.` and `gate.ts` do not count). The ritual stays in `missing`, and `longSkipReasons` names it with the reason's length and sentence count; the fix is a one-line edit of the reason. The rule lives in `lib/rituals/reason.ts` (`SKIP_REASON_MAX`, `sentenceCount`, `reasonFits`).
+
 If neither holds, the skill surfaces a gate-refusal message directing the user to run `/falsify {plan}` first, or to add the skip frontmatter with a recorded reason.
 
 This is the structural enforcement layer for the [Falsification Ritual](/guide/falsification-ritual). The two helper functions live in [`apps/indusk-mcp/src/lib/falsification/`](/reference/falsification/log); the retrospective skill invokes them via `tsx` or MCP wrappers the same way other skill-level checks do.
@@ -242,9 +244,16 @@ branch. It also refuses when the `indusk` running it is installed from the
 plan's worktree, which an install run on the branch does: landing would delete
 the build it runs from, so install from the trunk first. Afterwards, verify on trunk; if the project declares how it installs
 the landed build (`workflow.steps.land.install` — dusk's is `pnpm
-install:local`, which builds what a publish builds and links the checkout into
-the global `indusk`), run that, so the machine's `indusk` is the landed build
-with nothing published; then record the landing sha in the archived
+install:local`, which first syncs dependencies with `pnpm install
+--frozen-lockfile` (so a merge that changed the lockfile installs without a
+hand-run `pnpm install`, and a lockfile that does not match refuses the
+install), then builds what a publish builds and links the checkout into the
+global `indusk`), run that, so the machine's `indusk` is the landed build
+with nothing published. A refused install means trunk's `pnpm-lock.yaml` was
+committed out of step with the workspace's `package.json` files: run `pnpm
+install` on trunk, commit the updated lockfile as its own commit, rerun the
+install step, and record the refusal on the retrospective's install line.
+Then record the landing sha in the archived
 retrospective. With reviewers, merge the PR instead, then release, remove the
 worktree and delete the branch by hand. See [`indusk plans`](/reference/cli/plans).
 
@@ -557,3 +566,5 @@ The retrospective draws on tools from across the InDusk MCP server:
 - **Not every plan produces a lessons page.** The knowledge handoff creates a decisions page for every plan (every plan has an ADR), but lessons pages are only for plans with genuinely reusable insights. Do not force it.
 
 - **Run the retrospective in order.** The nine steps build on each other. The structural audit (Step 2) feeds into the retrospective document (Step 1 gets updated). The quality audit (Step 5) may surface issues that affect the context audit (Step 7). Sequential execution is intentional.
+
+An unattended build that meets an over-long skip reason (Step 0 refuses it) runs a `shorten-reason` session instead of the skipped ritual: it rewrites that one `<ritual>_reason` line to one sentence of at most 120 characters, changes nothing else, and commits. See [`plans next`](/reference/cli/plans).

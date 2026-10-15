@@ -1,10 +1,9 @@
 "use client";
 
-import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { postJson } from "@/lib/post-json";
 import { SessionPanel } from "./SessionPanel";
+import { useSessionEvents } from "./use-session-events";
 
 /**
  * Connects the panel to a running session (admin-plan-authoring, ADR D2): its
@@ -20,44 +19,24 @@ export function SessionConnector({
   /** Fill the column it sits in (the brief page's agent). */
   fill?: boolean;
 }) {
-  const router = useRouter();
-  const [events, setEvents] = useState<StartedEvent[]>([]);
-  const [running, setRunning] = useState(true);
   const [problem, setProblem] = useState<string | null>(null);
-
-  useEffect(() => {
-    setEvents([]);
-    setRunning(true);
-    const source = new EventSource(`/api/sessions/${sessionId}/events`);
-    source.onmessage = (message) => {
-      const ev = JSON.parse(message.data) as StartedEvent;
-      setEvents((prev) => [...prev, ev]);
-      if (ev.type === "tool" && WRITES.includes(ev.name)) {
-        router.refresh();
-        // Tell the page what the agent wrote, so it can bring that part into
-        // view (`FollowAgent`).
-        const file = ev.input.file_path ?? ev.input.notebook_path;
-        if (typeof file === "string")
-          window.dispatchEvent(
-            new CustomEvent(AGENT_WROTE, { detail: { file, input: ev.input } }),
-          );
-      }
-      if (ev.type === "exit") {
-        setRunning(false);
-        source.close();
-        router.refresh();
-      }
-    };
-    source.onerror = () => {
-      setRunning(false);
-      source.close();
-    };
-    return () => source.close();
-  }, [sessionId, router]);
+  const { events, running } = useSessionEvents(sessionId, {
+    onWrite: (ev) => {
+      // Tell the page what the agent wrote, so it can bring that part into
+      // view (`FollowAgent`).
+      if (ev.type !== "tool") return;
+      const file = ev.input.file_path ?? ev.input.notebook_path;
+      if (typeof file === "string")
+        window.dispatchEvent(
+          new CustomEvent(AGENT_WROTE, { detail: { file, input: ev.input } }),
+        );
+    },
+  });
 
   const post = async (path: string, body: unknown) => {
     const r = await postJson(`/api/sessions/${sessionId}/${path}`, body);
     if (!r.ok) setProblem(r.error);
+    return r.ok;
   };
 
   return (
@@ -66,12 +45,8 @@ export function SessionConnector({
       <SessionPanel
         events={events}
         running={running}
-        onAnswer={(requestId, answers) =>
-          void post("reply", { requestId, answers })
-        }
-        onDecide={(requestId, allow) =>
-          void post("reply", { requestId, allow })
-        }
+        onAnswer={(requestId, answers) => post("reply", { requestId, answers })}
+        onDecide={(requestId, allow) => post("reply", { requestId, allow })}
         onStop={() => void post("stop", {})}
         onSay={(text) => void post("say", { text })}
         fill={fill}
@@ -79,8 +54,6 @@ export function SessionConnector({
     </div>
   );
 }
-
-const WRITES = ["Write", "Edit", "MultiEdit", "NotebookEdit"];
 
 /** The window event a session fires for each file its agent writes. */
 export const AGENT_WROTE = "indusk:agent-wrote";

@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { getProjectGroupId, sanitizeGroupId } from "./config.js";
+import { getProjectGroupId, readConfig, sanitizeGroupId } from "./config.js";
 
 describe("sanitizeGroupId", () => {
 	it("replaces hyphens with underscores (the chitin-sportsbook bug)", () => {
@@ -89,5 +89,34 @@ describe("getProjectGroupId", () => {
 			}),
 		);
 		expect(getProjectGroupId(projectDir)).toBe("explicit-with-hyphens");
+	});
+});
+
+// promise: the-core-is-always-kept
+describe("planning.documents_off", () => {
+	let root: string;
+	beforeEach(() => {
+		root = mkdtempSync(join(tmpdir(), "documents-off-config-"));
+		mkdirSync(join(root, ".indusk"), { recursive: true });
+	});
+	afterEach(() => {
+		rmSync(root, { recursive: true, force: true });
+	});
+	const configWith = (documents_off: string[]) =>
+		writeFileSync(
+			join(root, ".indusk/config.json"),
+			JSON.stringify({ mode: "full", verify: {}, detected: {}, planning: { documents_off } }),
+		);
+
+	it("reads a config that turns off documents other than the core", () => {
+		configWith(["adr", "research"]);
+		expect(readConfig(root)?.planning?.documents_off).toEqual(["adr", "research"]);
+	});
+
+	it("refuses a config that turns off the brief or the test plan, naming it", () => {
+		configWith(["adr", "brief"]);
+		expect(() => readConfig(root)).toThrow(/"brief"/);
+		configWith(["test-plan"]);
+		expect(() => readConfig(root)).toThrow(/"test-plan"/);
 	});
 });

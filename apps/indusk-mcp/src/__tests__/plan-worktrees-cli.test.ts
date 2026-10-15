@@ -13,6 +13,8 @@ import {
 import { git } from "./helpers/test-git.js";
 import { toolCaller } from "./helpers/tool-call.js";
 
+// promise: the-everyday-suite-passes-on-main
+
 /**
  * admin-plan-worktrees — A8–A13: making and ending an assignment, at the CLI.
  *

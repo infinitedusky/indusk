@@ -1,5 +1,6 @@
 ---
-title: "Premises — why we are building this, scored over time, and never a gate"
+title: "Project premises"
+description: "Why we are building this, scored over time, and never a gate."
 date: 2026-10-01
 status: draft
 rewritten: 2026-10-01
@@ -129,7 +130,7 @@ in view — and in a single sentence when the developer asked for one.
   are both outside systems read against InDusk, each ending in a verdict in
   prose and no movement recorded anywhere.
 - **The rule this appears to break, and does not.** The pull-request shape
-  ([indusk-v4-day/pr-shape.md](../indusk-v4-day/pr-shape.md)) says verdicts are
+  ([indusk-v4-day/pr-shape.md](../archive/indusk-v4-day/pr-shape.md)) says verdicts are
   binary and never a score, because a score is a target the *builder*
   goal-seeks. This score is set by the human about their own aims; no agent
   writes it and nothing is built toward it.

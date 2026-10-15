@@ -12,6 +12,7 @@ import type { SourceHealthRead } from "./health.js";
 import { appendHeard } from "./heard.js";
 import { type ProofDeps, proofOf } from "./proof.js";
 import type { SourceRead } from "./sources.js";
+import { readStanding } from "./standing.js";
 import type { MarkedSpan, MarkedSpansResult } from "./telemetry.js";
 import type { TimelineMark, TimelineRead } from "./timeline.js";
 
@@ -488,5 +489,51 @@ describe("A42 — a change line is a change", () => {
 		const proof = await proofOf(fx.planRoot, PROMISE, deps());
 		const line = (proof?.history ?? []).find((e) => e.at === "2026-10-02");
 		expect(line?.kind).toBe("changed");
+	});
+});
+
+describe("cockpit-audit-fixes A5, A6 — the dashboard and the page count alike", () => {
+	// promise: the-thirty-days-say-only-what-was-seen
+	const countsOf = (days: { held: number; broken: number }[]) => ({
+		held: days.filter((d) => d.held > 0 && d.broken === 0).length,
+		broke: days.filter((d) => d.broken > 0).length,
+	});
+
+	it("A5 one promise gives the dashboard's row and the page the same held and broken days", async () => {
+		const fx = project();
+		appendHeard(home, [
+			{ at: day(3), promise: PROMISE, trace: "h1", incident: "i1", source: "deployed" },
+			{ at: day(3), promise: PROMISE, trace: "h2", incident: "i1", source: "deployed" },
+			{ at: day(9), promise: PROMISE, trace: "h3", incident: "i1", source: "deployed" },
+		]);
+		const d = deps({
+			...storeOf({
+				production: [upheld(day(3), "p1"), upheld(day(4), "p2"), upheld(day(5), "p3")],
+			}),
+		});
+		const proof = await proofOf(fx.planRoot, PROMISE, d);
+		const row = (await readStanding(fx.planRoot, { ...d, health: healthRead(false) })).find(
+			(s) => s.entry.name === PROMISE,
+		);
+		const page = countsOf(proof?.days.production ?? []);
+		expect(page).toEqual({ held: 2, broke: 2 });
+		expect(row?.thirtyDays).toEqual({ broke: page.broke, held: page.held });
+		expect(proof?.standing.thirtyDays).toEqual(row?.thirtyDays);
+	});
+
+	it("A6 a violation on the first of the page's thirty days is on both; one the day before is on neither", async () => {
+		const fx = project();
+		appendHeard(home, [
+			{ at: day(1), promise: PROMISE, trace: "first", incident: "i1", source: "deployed" },
+			{ at: day(0), promise: PROMISE, trace: "before", incident: "i1", source: "deployed" },
+		]);
+		const d = deps();
+		const proof = await proofOf(fx.planRoot, PROMISE, d);
+		const row = (await readStanding(fx.planRoot, { ...d, health: healthRead(false) })).find(
+			(s) => s.entry.name === PROMISE,
+		);
+		expect(proof?.days.production?.[0]).toMatchObject({ day: "2026-09-11", broken: 1 });
+		expect(proof?.days.production?.filter((x) => x.broken > 0)).toHaveLength(1);
+		expect(row?.thirtyDays.broke).toBe(1);
 	});
 });

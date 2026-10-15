@@ -36,3 +36,10 @@ pointer; the pointer holds the story.
   owned by a plan without a second registry, and a redrawn look's earlier
   entry stays beside the new one as its history. `looks/overview` returns each
   look's `plan`. Guarded by `look-ownership.test.ts` (A4, A7).
+- **A test file is never an app's interface or a component's implementation;
+  a story is interface**, since it renders an approved snapshot. One
+  `isTestFile` in `components.ts`, read by `interfaceFilesAmong`. Guarded by
+  `interface-files.test.ts` (A14).
+- **A mockup places a component with its own words** — text and placed
+  components only; paths are recorded from a second render and held to one
+  node structure. See `/decisions/component-content`.

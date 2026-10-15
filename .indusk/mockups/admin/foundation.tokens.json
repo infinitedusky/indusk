@@ -391,6 +391,12 @@
 				"unit": "px"
 			}
 		},
+		"nav-max": {
+			"$value": {
+				"value": 440,
+				"unit": "px"
+			}
+		},
 		"nav-rail": {
 			"$value": {
 				"value": 64,

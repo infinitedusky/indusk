@@ -10,6 +10,7 @@ import {
 	parseFrontmatter,
 	readPromises,
 } from "../promises/registry.js";
+import { briefStandingOf } from "./approved-brief.js";
 
 /**
  * An amendment is the brief's difference from what was approved
@@ -141,6 +142,22 @@ export async function amendmentsOf(folder: string): Promise<Amendment[]> {
 		},
 		{ brief: briefNow, statements: inRepo ? await statementsFrom(names, plan, onDisk) : new Map() },
 	);
+}
+
+/**
+ * The amendments waiting in `planDir` for the nav and the plan page to count
+ * (plan-stories, ADR decision 5): none unless the brief no longer matches its
+ * approval hash, so a plan that never changed costs no git read. An approval
+ * that cannot be read counts as none, as the plan page reads it.
+ */
+export async function amendmentsWaiting(planDir: string): Promise<Amendment[]> {
+	if (briefStandingOf(planDir).state !== "changed") return [];
+	try {
+		return await amendmentsOf(planDir);
+	} catch (err) {
+		if (err instanceof AmendmentsUnreadable) return [];
+		throw err;
+	}
 }
 
 /** How a history line names an approved amendment: `amendment to the <part> <name>: was <json>, now <json>`. */

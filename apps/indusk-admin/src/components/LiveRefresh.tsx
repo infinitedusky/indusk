@@ -71,7 +71,7 @@ export function LiveRefresh({ intervalMs }: { intervalMs: number }) {
     <p
       role="status"
       data-testid="last-updated"
-      className="sr-only"
+      className="absolute h-px w-px overflow-hidden whitespace-nowrap"
       data-interval-ms={intervalMs}
     >
       {updatedAt

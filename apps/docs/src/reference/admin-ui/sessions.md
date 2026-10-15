@@ -6,10 +6,14 @@ The admin plans and builds through the developer's own Claude Code: it starts th
 
 | Kind | Started for | Permission mode | What is asked |
 |---|---|---|---|
-| **planning** | a planning conversation (`/planner <type> <name>`) | `default` | every write, and every question the planner asks — the person answers in the panel |
+| **planning** | a planning conversation (`/planner <type> <name>`) | `acceptEdits` | decided in code: a tool given a path inside the plan's folder, or given none, is allowed unasked; a path outside it, and every question the planner asks, reaches the person in the panel |
 | **build** | one step of an unattended build (`/work`, `/falsify`, `/cleanup`) | `acceptEdits` | nobody: a tool given a path is allowed inside the plan's worktree and refused outside it; a tool given none runs in the worktree, judged by the project's hooks; a question is answered by telling the session to decide and record why |
 
-A planning session uses `default` whatever the developer's own Claude Code is set to. In the spike, a session that inherited `auto` wrote a file outside its project without asking. Neither kind ever bypasses permissions.
+Both kinds run `acceptEdits` whatever the developer's own Claude Code is set to, and decide in code (`protocol.ts`, `permissions.ts`). In the spike, a session that inherited `auto` wrote a file outside its project without asking; `bypassPermissions` let a draft's agent write into the repository unasked. Neither kind ever bypasses permissions.
+
+**Every request is recorded with how it was decided.** A request a session makes goes in its log, followed by a `decided` event: allowed, or denied with the reason, and whether the session's own rule decided it (a build, a planning session's writes in its folder, a project conversation's draft) or you did. A planning session's writes inside its folder, decided by rule, are in the log too.
+
+**A decided request shows its outcome.** In the panel, a request with a `decided` event has no Allow, Deny or Answer buttons: a tool shows *Allowed* or *Denied — the reason*, a question the session declined on its own shows *Declined — the reason*, and a question you answered shows *Answered* with the answer you gave. In the project conversation's thread, a decided request is no longer listed as waiting; the thread draws no outcome line. The state is read from the log, so a reload shows the same; a click may close a prompt a moment early, but the event is the record. When the server refuses a click's reply, the request stays open with its buttons back beside the problem shown, never with neither buttons nor an outcome.
 
 ## The protocol
 
@@ -63,8 +67,8 @@ A plan that waits on you waits in one place. Introduced by plan-cockpit; the dec
 
 | Waiting on | When | Accept does | The alternative |
 |---|---|---|---|
-| a **question** | a session the admin runs for the plan asked (`AskUserQuestion`) and nobody answered (`SessionManager.pendingQuestion`) | answers with the first option, as the panel does | answers with the second option |
-| **approval** | the impl is a `draft` and every document before it that the plan's type requires is accepted | `indusk plans approve` | *Not yet — keep planning*, sent to the agent as words |
+| a **question** | a session the admin runs for the plan asked (`AskUserQuestion`) and nobody answered (`SessionManager.pendingQuestion`) | answers with the first option, as the panel does; an ask of several questions shows each with its two answers and a box for your own words (words replace the chosen option for that question) and sends them together, an answer under each question's text — never the first alone | answers with the second option |
+| **approval** | the impl is a `draft`, every document before it that the plan's type requires is accepted, and no session the admin runs for the plan is still writing it (its turn open, nothing asked) — once its turn ends, the plan appears here, even while the session stays alive waiting for you | `indusk plans approve` | *Not yet — keep planning*, sent to the agent as words |
 | **review** | the build stopped at review, or the plan stands at review (so it is still listed after the admin restarts) | accepts the plan and starts the release, as the build's Accept does | *Not yet — send it back*, sent to the agent as words |
 
 A question outranks the rest: an agent blocked on an answer is the most urgent thing a plan can wait on. A question asked in a terminal session is not seen here; the cockpit shows what the admin runs.

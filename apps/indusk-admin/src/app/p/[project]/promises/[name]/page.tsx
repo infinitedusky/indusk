@@ -1,4 +1,5 @@
 import {
+  planTitle,
   promiseWords,
   readHealthNames,
 } from "@infinitedusky/indusk-mcp/promises/display";
@@ -52,7 +53,7 @@ export default async function PromisePage({ params }: PromisePageProps) {
     : null;
   if (!registry || !entry || !proof) notFound();
 
-  const names = readHealthNames(projectPath);
+  const names = await readHealthNames(projectPath);
   const sentenceOf = (n: string) => promiseWords(n, names.words);
   const planHrefPrefix = `/p/${project}/plan/`;
   const beside = registry.promises.filter(
@@ -79,7 +80,8 @@ export default async function PromisePage({ params }: PromisePageProps) {
             href={`${planHrefPrefix}${entry.owner}`}
             className="hover:underline"
           >
-            {names.planTitles[entry.owner] ?? entry.owner}
+            {names.planTitles[entry.owner] ??
+              planTitle(undefined, entry.owner, names.words)}
           </Link>
         </p>
       </header>

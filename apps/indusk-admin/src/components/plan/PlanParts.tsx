@@ -15,6 +15,7 @@ import {
   promisesSummary,
 } from "@/lib/plan-parts-view";
 import { ApproveAmendments } from "./ApproveAmendments";
+import { PhaseItems } from "./PhaseItems";
 import { PlanLook } from "./PlanLook";
 
 /**
@@ -45,18 +46,29 @@ const DOT: Record<string, string> = {
 export function PlanParts({
   parts,
   looksHref,
+  zeroWithoutBrief = false,
 }: {
   parts: Parts;
   /** The Looks page in the plan's checkout; a look's address is added to it. */
   looksHref: string;
+  /**
+   * A plan with no brief file still shows the three parts, each saying 0, as
+   * plain rows (`brief.empty`) — the brief page's. A brief outside the
+   * contract shape is a file and still shows nothing: it must not read as a
+   * brief with 0 promises.
+   */
+  zeroWithoutBrief?: boolean;
 }) {
-  if (!parts.hasBrief) return null;
+  const noBrief = !parts.hasBriefFile;
+  if (!parts.hasBrief && !(zeroWithoutBrief && noBrief)) return null;
+  // A part with nothing in it is a plain row: nothing to open.
   return (
     <>
       <PartSection
         data-part="promises"
         title="Promises"
-        summary={promisesSummary(parts)}
+        summary={noBrief ? "0 · 0 enforced" : promisesSummary(parts)}
+        empty={parts.promises.length === 0}
       >
         <div className="flex flex-wrap gap-2">
           {parts.promises.map((p) => (
@@ -79,7 +91,8 @@ export function PlanParts({
       <PartSection
         data-part="expectations"
         title="Expectations"
-        summary={expectationsSummary(parts)}
+        summary={noBrief ? "0" : expectationsSummary(parts)}
+        empty={parts.expectations.length === 0}
       >
         <div className="-mx-4 -my-3">
           {parts.expectations.map((e) => (
@@ -95,7 +108,8 @@ export function PlanParts({
       <PartSection
         data-part="looks"
         title="Looks"
-        summary={looksSummary(parts)}
+        summary={noBrief ? "0" : looksSummary(parts)}
+        empty={parts.looks.length === 0}
       >
         <div className="-mx-4 -my-3">
           {parts.looks.map((l) => (
@@ -141,24 +155,13 @@ export function PhasesPart({
               count={view.count}
               state={view.state}
               tone={view.tone}
+              summary={
+                view.summary ? (
+                  <Markdown className="text-ink-soft">{view.summary}</Markdown>
+                ) : undefined
+              }
             >
-              <ul className="grid list-none gap-2">
-                {view.items.map((item) => (
-                  <li key={item.text} className="flex items-baseline gap-2">
-                    <span className="font-mono text-sm leading-3 text-ink-soft">
-                      {item.checked ? "☑" : "☐"}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-sm leading-3">{item.text}</div>
-                      {item.note ? (
-                        <div className="mt-hair whitespace-pre-line text-xs leading-2 text-ink-faint">
-                          {item.note}
-                        </div>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <PhaseItems items={view.items} />
             </PhaseRow>
           );
         })}

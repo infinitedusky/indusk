@@ -4,7 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { postJson } from "@/lib/post-json";
-import { ownsSession, type RunningSession } from "@/lib/session-owner";
+import {
+  ownsSession,
+  type RunningSession,
+  sessionUrl,
+} from "@/lib/session-owner";
 import { SessionConnector } from "./SessionConnector";
 
 /**
@@ -67,16 +71,25 @@ export function PlanSession({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** The session already running on this plan, offered to continue here. */
+  const [runningId, setRunningId] = useState<string | null>(null);
+  // Whether the running session has been looked up. Until it has, the page
+  // does not know whether to offer Start: a Start shown over a session that is
+  // about to reattach is a click that is refused.
+  const [looked, setLooked] = useState(false);
 
   useEffect(() => {
     let live = true;
-    void fetch("/api/sessions")
+    void fetch(sessionUrl(project, plan, "planning"))
       .then((r) => r.json())
       .then((body: { session: RunningSession | null }) => {
         if (live && ownsSession(body.session, project, plan, "planning"))
           setSessionId(body.session.id);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (live) setLooked(true);
+      });
     return () => {
       live = false;
     };
@@ -107,9 +120,22 @@ export function PlanSession({
     setBusy(false);
     if (!r.ok || !r.body.id) {
       setProblem(r.ok ? "the admin started no session" : r.error);
+      const running = r.ok ? undefined : r.body?.running;
+      setRunningId(
+        running && typeof running === "object" && "id" in running
+          ? String(running.id)
+          : null,
+      );
       return;
     }
     setSessionId(r.body.id);
+  };
+
+  const continueRunning = () => {
+    if (!runningId) return;
+    setSessionId(runningId);
+    setRunningId(null);
+    setProblem(null);
   };
 
   if (!sessionId && !canApprove && !canPlan) return null;
@@ -126,7 +152,12 @@ export function PlanSession({
           </span>
         </div>
       ) : null}
-      {canPlan && !sessionId ? (
+      {canPlan && !sessionId && !looked ? (
+        <p className="text-xs text-ink-faint" data-testid="session-connecting">
+          Connecting…
+        </p>
+      ) : null}
+      {canPlan && !sessionId && looked ? (
         <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
@@ -144,6 +175,13 @@ export function PlanSession({
       ) : null}
       {problem ? (
         <pre className="whitespace-pre-wrap text-sm text-bad">{problem}</pre>
+      ) : null}
+      {runningId && !sessionId ? (
+        <div>
+          <Button size="sm" onClick={continueRunning}>
+            Continue it here
+          </Button>
+        </div>
       ) : null}
       {sessionId ? (
         <SessionConnector sessionId={sessionId} fill={fill} />

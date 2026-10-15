@@ -63,6 +63,7 @@ None.
 title: "{Title}"
 date: {YYYY-MM-DD}
 status: draft
+phase_summary: required
 ---
 
 # {Title}
@@ -78,11 +79,29 @@ status: draft
 
 ## Checklist
 ### Phase 1: {Name}
-- [ ] {Refactoring step}
+
+{A paragraph saying what this phase does for the whole plan and how it hands to the next, written for someone who has worked on the project but knows none of this plan's shorthand.}
+
+- [ ] {One plain sentence saying what will be true once this step is done.}
+  <details><summary>Technical</summary>
+
+  {The refactoring step: names, paths and code go here.}
+
+  </details>
 
 #### Phase 1 Verification
-- [ ] {All existing tests pass}
-- [ ] {No behavior changes — same inputs produce same outputs}
+- [ ] {One plain sentence saying what proves nothing broke.}
+  <details><summary>Technical</summary>
+
+  {All existing tests pass}
+
+  </details>
+- [ ] {One plain sentence saying behavior is unchanged.}
+  <details><summary>Technical</summary>
+
+  {No behavior changes — same inputs produce same outputs}
+
+  </details>
 
 ## Files Affected
 | File | Change |

@@ -1,5 +1,6 @@
 ---
-title: "Looks check speed — check what changed, load each page once, sample in production"
+title: "Faster look checks"
+description: "Check what changed, load each page once, sample in production."
 date: 2026-10-12
 status: draft
 workflow: feature

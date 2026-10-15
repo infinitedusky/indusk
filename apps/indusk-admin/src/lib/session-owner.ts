@@ -25,3 +25,12 @@ export function ownsSession(
     session.kind === kind
   );
 }
+
+/** The sessions route's read of one plan's session of `kind`: `GET ?project&plan&kind`. */
+export function sessionUrl(
+  project: string,
+  plan: string,
+  kind: "planning" | "build",
+): string {
+  return `/api/sessions?${new URLSearchParams({ project, plan, kind })}`;
+}

@@ -202,7 +202,7 @@ by promises.
 
 ### 8. What is already designed for those gaps
 
-The pull-request shape, [pr-shape.md](../indusk-v4-day/pr-shape.md) in the Day
+The pull-request shape, [pr-shape.md](../archive/indusk-v4-day/pr-shape.md) in the Day
 master plan, lists ten artefacts a change must carry. Three are specified and
 unbuilt, and each answers a gap above:
 
@@ -232,6 +232,6 @@ the Day master plan.
 - `apps/indusk-mcp/` at `main`, 2026-10-05: `package.json`, `skills/`,
   `hooks/`, `templates/`, `lessons/`, `src/lib/promises/`.
 - `.indusk/promises/` in this repository.
-- [indusk-v4-day/pr-shape.md](../indusk-v4-day/pr-shape.md) and
-  [indusk-v4-day/master.md](../indusk-v4-day/master.md).
+- [indusk-v4-day/pr-shape.md](../archive/indusk-v4-day/pr-shape.md) and
+  [indusk-v4-day/master.md](../archive/indusk-v4-day/master.md).
 - The conversation of 2026-10-05 in which these were measured.

@@ -1,0 +1,7 @@
+# Confine an agent session to its job the day it is given one — a prompt line is not a boundary
+
+In new-project-flow the project conversation's agent shipped with one thing keeping it inside its draft folder: a sentence in its prompt. The audit (`.indusk/planning/new-project-flow/audit.md`) found it ran as a `planning` session that allowed Bash, WebFetch and any path-less tool without asking, so the promises "an abandoned conversation leaves nothing on disk" and "nothing is sent off the machine unasked" rested on the agent behaving. The fix came a phase later (Build Phase 7, `decideConfinedPermission` in `lib/session/permissions.ts`).
+
+Why it matters: a test of the CLI path proves nothing about what the agent can do; the promise's sentence is about the agent. A promise that depends on an agent staying in its lane is only as strong as the mechanism that stops it.
+
+What to do: when a feature first gives an agent a session, decide its tool set and paths in the same plan — before the promises that depend on it are marked passing — and state in the test what a refused request looks like. Note the limit of a reactive decider: `decideConfinedPermission` only sees requests the CLI raises as permission events (the session runs in `acceptEdits`, and a tool the user's settings already allow never asks), so a launch-time tool list is the stronger half and a test that a pre-allowed tool is still refused is the proof. See `.indusk/planning/new-project-flow/audit.md` and `.indusk/planning/new-project-flow/impl.md`, Build Phase 7.

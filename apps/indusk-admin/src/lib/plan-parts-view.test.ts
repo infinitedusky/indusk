@@ -6,12 +6,15 @@ import {
   looksSummary,
   phasesSummary,
   phaseView,
+  planDocuments,
   promisesSummary,
 } from "@/lib/plan-parts-view";
+import type { Plan } from "@/lib/planning-reader";
 
 const parts = (over: Partial<PlanParts>): PlanParts => ({
   plan: "p",
   hasBrief: true,
+  hasBriefFile: true,
   promises: [],
   expectations: [],
   looks: [],
@@ -100,6 +103,20 @@ describe("a phase as a row", () => {
     expect(phaseView(phases[2], null)).toMatchObject({
       state: "not started",
       tone: "idle",
+    });
+  });
+});
+
+describe("planDocuments — a master's own document", () => {
+  const plan = { name: "m", brief: undefined } as unknown as Plan;
+
+  it("lists master first, as Master plan, only when its body was read", () => {
+    expect(planDocuments(plan).map((d) => d.slug)).toEqual([]);
+    const [first] = planDocuments(plan, "# The order");
+    expect(first).toMatchObject({
+      slug: "master",
+      label: "Master plan",
+      content: "# The order",
     });
   });
 });

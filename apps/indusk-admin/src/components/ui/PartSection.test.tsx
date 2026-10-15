@@ -39,4 +39,15 @@ describe("PartSection", () => {
       (container.querySelector("details") as HTMLDetailsElement).open,
     ).toBe(true);
   });
+
+  it("an empty part is a plain row: its name and one line, no disclosure to open", async () => {
+    const { container } = await render(
+      <PartSection title="Promises" summary="0 · 0 enforced" empty />,
+    );
+    expect(container.querySelector("details")).toBeNull();
+    expect(container.querySelector("summary")).toBeNull();
+    expect(container.textContent).toContain("Promises");
+    expect(container.textContent).toContain("0 · 0 enforced");
+    expect(container.textContent).not.toMatch(/[▸▾]/);
+  });
 });

@@ -7,6 +7,7 @@ import {
 	storyApprovalOf,
 } from "./approvals.js";
 import { catalogGaps, MARKER_PATTERN, MARKUP_EXTENSIONS } from "./components.js";
+import { heldComponentNames } from "./landed.js";
 import { markedComponentsOf } from "./markup.js";
 import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
 
@@ -104,7 +105,7 @@ function componentsOfApprovedStories(app: LooksApp): Set<string> {
 	const approvals = readStoryApprovals(app);
 	const standing = new Map<string, boolean>();
 	for (const story of app.stories) {
-		const name = story.name.split(".")[0] as string;
+		const name = story.component;
 		const ok = storyApprovalOf(app, story, approvals).state === "approved";
 		standing.set(name, (standing.get(name) ?? true) && ok);
 	}
@@ -138,12 +139,17 @@ async function uncoveredComponents(
 /**
  * Component names the app's mockups (read composed) place that no
  * implementation file marks — a mockup asking for what the app does not have.
+ * Only components of landed plans are held to it (`looks/landed`): approval
+ * merges a plan's looks before its code, and a re-approval in flight exempts
+ * only what it adds.
  */
 function unimplementedComponents(
+	root: string,
 	app: LooksApp,
+	approvals: readonly ApprovalEntry[],
 	implemented: ReadonlyMap<string, unknown>,
 ): string[] {
-	const named = new Set(app.mockups.flatMap((m) => [...markedComponentsOf(m.html)]));
+	const named = heldComponentNames(root, app.mockups, approvals);
 	return [...named].filter((n) => !implemented.has(n)).sort();
 }
 
@@ -158,7 +164,7 @@ export async function coverageOf(
 	return {
 		...uncoveredScreens(app, approved),
 		...(await uncoveredComponents(root, app, approved)),
-		unimplemented: unimplementedComponents(app, gaps.scan.components),
+		unimplemented: unimplementedComponents(root, app, approvals, gaps.scan.components),
 		notInCatalog: gaps.notInCatalog.map((c) => c.name).sort(),
 		noStory: [...new Set(gaps.noStory.map((r) => `${r.name}.${r.state}`))].sort(),
 		stories: uncoveredStories(app),

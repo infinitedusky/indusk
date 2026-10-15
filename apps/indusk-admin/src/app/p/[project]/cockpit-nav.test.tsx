@@ -3,17 +3,21 @@
 // promise: a-plan-can-start-from-the-admin
 // promise: decisions-wait-in-one-place
 // promise: broken-promises-come-first
+// promise: a-plan-reads-by-its-title
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import {
+  AMENDED,
   activePlanNames,
   BROKEN,
   PROJECT,
   resetFixture,
+  titleOf,
   WAITING,
 } from "@/__tests__/helpers/cockpit-fixture";
+import { initialsOf } from "@/lib/initials";
 
 /**
  * plan-cockpit, Test Phase 1: the nav, rendered by the project layout around
@@ -245,8 +249,8 @@ describe("A4 — each Path shows how many of its plans a release has shipped", (
           `[data-testid="plan-group-${name}"] [data-testid="path-released"]`,
         )
         ?.textContent?.trim();
-    // beta-one shipped in 1.60.0; beta-two landed but no release has it.
-    expect(released("path-beta")).toBe("1/2");
+    // beta-one shipped in 1.60.0; beta-two landed but no release has it; beta-three is declared, not started.
+    expect(released("path-beta")).toBe("1/3");
     // gamma-one has neither landed nor shipped.
     expect(released("path-gamma")).toBe("0/1");
   });
@@ -322,6 +326,76 @@ describe("A13 — plans waiting on the person are listed under Needs you, with t
   });
 });
 
+describe("A11 (plan-stories) — every plan and Path in the nav reads by its title", () => {
+  const plans = [
+    "alpha-one",
+    "beta-one",
+    "beta-two",
+    "gamma-one",
+    "undeclared-plan",
+  ];
+  const nameOf = (row: Element | null | undefined) =>
+    row?.querySelector("span[title]")?.textContent?.trim();
+
+  it("A11 each plan's row reads its title, with initials from the title, and still links to its handle", async () => {
+    const root = await layoutAround(planPage, `${base}/plan/beta-one`);
+    for (const handle of plans) {
+      const row = root.querySelector(
+        `[data-testid="cockpit-nav"] a[data-plan-name="${handle}"]`,
+      );
+      expect(nameOf(row), `the row for ${handle}`).toBe(titleOf(handle));
+      expect(
+        row?.querySelector('[data-component="badge"]')?.textContent?.trim(),
+        `the mark for ${handle}`,
+      ).toBe(initialsOf(titleOf(handle)));
+      expect(row?.getAttribute("href")).toBe(`${base}/plan/${handle}`);
+    }
+  });
+
+  it("A11 a Path reads its parent's title, and still links to the parent's handle", async () => {
+    const root = await layoutAround(planPage, `${base}/plan/beta-one`);
+    for (const handle of ["path-alpha", "path-beta", "path-gamma"]) {
+      const link = root.querySelector(
+        `[data-testid="plan-group-${handle}"] > div a[data-plan-name="${handle}"]`,
+      );
+      expect(link?.textContent?.trim(), `the Path ${handle}`).toBe(
+        titleOf(handle),
+      );
+      expect(link?.getAttribute("href")).toBe(`${base}/plan/${handle}`);
+    }
+  });
+
+  it("A11 each plan under Needs you reads its title, with initials from it, and links to its handle", async () => {
+    const root = await layoutAround(planPage, `${base}/plan/beta-one`);
+    for (const [handle] of WAITING) {
+      const row = root.querySelector(`a[data-needs-you="${handle}"]`);
+      expect(nameOf(row), `Needs you: ${handle}`).toBe(titleOf(handle));
+      expect(
+        row?.querySelector('[data-component="badge"]')?.textContent?.trim(),
+      ).toBe(initialsOf(titleOf(handle)));
+      expect(row?.getAttribute("href")).toBe(`${base}/plan/${handle}`);
+    }
+  });
+});
+
+describe("A15 (plan-stories) — a plan waiting only on an amendment is under Needs you on every page", () => {
+  it("A15 lists the amended plan on the plan page, the dashboard and a promise page", async () => {
+    for (const [child, path] of [
+      [planPage, `${base}/plan/beta-one`],
+      [dashboard, `${base}/promises`],
+      [promisePage, `${base}/promises/seat-holds-never-double-book`],
+    ] as const) {
+      const root = await layoutAround(child, path);
+      expect(
+        root.querySelector(
+          `[data-testid="needs-you"] a[data-needs-you="${AMENDED[0]}"]`,
+        ),
+        `${AMENDED[0]} under Needs you on ${path}`,
+      ).not.toBeNull();
+    }
+  });
+});
+
 describe("A36 — a new plan can still be started from the admin (regression guard)", () => {
   // brief-as-the-contract changed the way in: the form that asked for a type
   // and a name is a button that asks for nothing (that plan's A18); the guard
@@ -338,5 +412,85 @@ describe("A36 — a new plan can still be started from the admin (regression gua
     expect(root.querySelector("main select, main input")).toBeNull();
     // the nav is still the frame around it
     expect(root.querySelector('a[data-plan-name="mid-build"]')).not.toBeNull();
+  });
+});
+
+// promise: a-promise-sits-in-its-innermost-path
+describe("cockpit-audit-fixes A9 — the nav lists a plan under its innermost Path", () => {
+  it("A9 a plan declared by an outer Path and by a Path inside it is listed in the inner Path only", async () => {
+    const { PlanList } = await import("@/components/PlanList");
+    const plan = (name: string) => ({
+      name,
+      title: name,
+      status: "draft",
+      archived: false,
+    });
+    const { container } = await render(
+      <PlanList
+        active={["outer-path", "inner-path", "shared-plan"].map(plan) as never}
+        archived={[]}
+        masterOrder={[]}
+        grouping={{
+          parents: ["outer-path", "inner-path"],
+          roadmap: ["outer-path"],
+          subplans: {
+            "outer-path": ["inner-path", "shared-plan"],
+            "inner-path": ["shared-plan"],
+          },
+          declaredTitles: {},
+        }}
+      />,
+    );
+    const links = (group: string) =>
+      Array.from(
+        container.querySelectorAll(
+          `[data-testid="plan-group-${group}"] a[data-plan-name="shared-plan"]`,
+        ),
+      );
+    const inner = container.querySelector(
+      '[data-testid="plan-group-inner-path"]',
+    );
+    expect(
+      inner?.querySelectorAll('a[data-plan-name="shared-plan"]'),
+    ).toHaveLength(1);
+    expect(links("outer-path")).toHaveLength(1);
+  });
+});
+
+// promise: a-promise-sits-in-its-innermost-path
+describe("cockpit-audit-fixes A13 — two Paths that declare each other both list a shared plan", () => {
+  it("A13 a plan declared by both Paths of a cycle is listed under each, not dropped into the rest", async () => {
+    const { PlanList } = await import("@/components/PlanList");
+    const plan = (name: string) => ({
+      name,
+      title: name,
+      status: "draft",
+      archived: false,
+    });
+    const { container } = await render(
+      <PlanList
+        active={["path-a", "path-b", "shared-plan"].map(plan) as never}
+        archived={[]}
+        masterOrder={[]}
+        grouping={{
+          parents: ["path-a", "path-b"],
+          roadmap: ["path-a"],
+          subplans: {
+            "path-a": ["path-b", "shared-plan"],
+            "path-b": ["path-a", "shared-plan"],
+          },
+          declaredTitles: {},
+        }}
+      />,
+    );
+    // path-b opens inside path-a (the roadmap's Path), so path-a's group holds
+    // the plan twice over: once of its own, once through path-b.
+    const shared = 'a[data-plan-name="shared-plan"]';
+    expect(container.querySelectorAll(shared)).toHaveLength(2);
+    expect(
+      container
+        .querySelector('[data-testid="plan-group-path-b"]')
+        ?.querySelectorAll(shared),
+    ).toHaveLength(1);
   });
 });

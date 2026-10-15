@@ -8,6 +8,14 @@ import * as draftTalk from "@/app/api/drafts/[id]/talk/route";
 import * as drafts from "@/app/api/drafts/route";
 import * as looksApprove from "@/app/api/looks/[app]/approve/route";
 import * as looksUnapprove from "@/app/api/looks/[app]/unapprove/route";
+import * as newProjectAccept from "@/app/api/new-projects/[id]/accept/route";
+import * as newProjectAdd from "@/app/api/new-projects/[id]/add/route";
+import * as newProjectDiscard from "@/app/api/new-projects/[id]/discard/route";
+import * as newProjectFold from "@/app/api/new-projects/[id]/fold/route";
+import * as newProjectProposal from "@/app/api/new-projects/[id]/proposal/route";
+import * as newProjectTalk from "@/app/api/new-projects/[id]/talk/route";
+import * as newProjectParent from "@/app/api/new-projects/parent/route";
+import * as newProjects from "@/app/api/new-projects/route";
 import * as decision from "@/app/api/plans/[name]/decision/route";
 import * as reapprove from "@/app/api/plans/[name]/reapprove/route";
 import * as accept from "@/app/api/plans/accept/route";
@@ -57,6 +65,14 @@ const MODULES: Record<string, Record<string, unknown>> = {
   "sessions/[id]/reply": reply,
   "sessions/[id]/say": say,
   "sessions/[id]/stop": stop,
+  "new-projects": newProjects,
+  "new-projects/[id]/accept": newProjectAccept,
+  "new-projects/[id]/add": newProjectAdd,
+  "new-projects/[id]/discard": newProjectDiscard,
+  "new-projects/[id]/fold": newProjectFold,
+  "new-projects/[id]/proposal": newProjectProposal,
+  "new-projects/[id]/talk": newProjectTalk,
+  "new-projects/parent": newProjectParent,
   trust,
 };
 

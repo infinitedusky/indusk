@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
+import { coreDocumentIn } from "./workflow-types.js";
 
 /**
  * Resolve the InDusk project root by walking up from the given directory
@@ -272,7 +273,20 @@ export interface InduskConfig {
 	 */
 	planning?: {
 		dead_draft_days?: number;
+		/**
+		 * Planning documents this project does not write (new-project-flow): a
+		 * plan in it reads each as skipped, never missing. The brief and the
+		 * test plan are the core and cannot be named - reading a config that
+		 * does refuses, naming it.
+		 */
+		documents_off?: string[];
 	};
+	/**
+	 * Practices the project's creation recommended and the person kept or
+	 * declined (new-project-flow). A declined one carries the person's reason,
+	 * in their words.
+	 */
+	recommendations?: { name: string; kept: boolean; reason?: string }[];
 	/** Conversations not yet kept as plans, held in the project's home. */
 	drafts?: {
 		/** A draft untouched this many days is discarded by `indusk plans archive-dead` (default 30). */
@@ -455,7 +469,15 @@ export function getConfigPath(projectRoot: string): string {
 export function readConfig(projectRoot: string): InduskConfig | null {
 	const configPath = getConfigPath(projectRoot);
 	if (!existsSync(configPath)) return null;
-	return JSON.parse(readFileSync(configPath, "utf-8"));
+	const config: InduskConfig = JSON.parse(readFileSync(configPath, "utf-8"));
+	const off = config.planning?.documents_off;
+	const core = Array.isArray(off) ? coreDocumentIn(off) : null;
+	if (core !== null) {
+		throw new Error(
+			`${configPath}: planning.documents_off names "${core}", which cannot be turned off - a plan always keeps its brief and its test plan`,
+		);
+	}
+	return config;
 }
 
 export function writeConfig(projectRoot: string, config: InduskConfig): void {

@@ -58,10 +58,19 @@ export function trajectoryTableMarkdown(rows: TrajectoryRow[]): string {
   return [line(header), line(header.map(() => "---")), ...body].join("\n");
 }
 
-export function checklistMarkdown(items: ChecklistItem[]): string {
-  return items
-    .map((item) => `- [${item.checked ? "x" : " "}] ${item.text}`)
+/** One task as markdown: its checkbox line, then its detail folded beneath it as it was written. */
+function itemMarkdown(item: ChecklistItem): string {
+  const line = `- [${item.checked ? "x" : " "}] ${item.text}`;
+  if (!item.detail) return line;
+  const body = item.detail
+    .split("\n")
+    .map((l) => (l ? `  ${l}` : l))
     .join("\n");
+  return `${line}\n  <details><summary>Technical</summary>\n\n${body}\n\n  </details>`;
+}
+
+export function checklistMarkdown(items: ChecklistItem[]): string {
+  return items.map(itemMarkdown).join("\n");
 }
 
 export function phaseMarkdown(phase: Phase): string {

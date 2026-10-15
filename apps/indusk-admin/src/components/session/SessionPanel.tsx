@@ -1,8 +1,12 @@
 "use client";
 
-import type { Question, StartedEvent } from "@infinitedusky/indusk-mcp/session";
+import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { describeToolInput as describeInput } from "@/lib/conversation-turns";
+import { type Decision, decisionsOf } from "@/lib/request-decisions";
+import { QuestionView } from "./QuestionView";
+import { type Replied, useAnsweredRequests } from "./use-answered-requests";
 
 /**
  * A session of the developer's own `claude`, as a person sees it
@@ -16,8 +20,8 @@ import { Button } from "@/components/ui/Button";
 export interface SessionPanelProps {
   events: StartedEvent[];
   running: boolean;
-  onAnswer: (requestId: string, answers: Record<string, string>) => void;
-  onDecide: (requestId: string, allow: boolean) => void;
+  onAnswer: (requestId: string, answers: Record<string, string>) => Replied;
+  onDecide: (requestId: string, allow: boolean) => Replied;
   onStop: () => void;
   /** Reply in the person's own words; absent, the panel offers no message box. */
   onSay?: (text: string) => void;
@@ -34,7 +38,7 @@ export function SessionPanel({
   onSay,
   fill = false,
 }: SessionPanelProps) {
-  const [answered, setAnswered] = useState<Set<string>>(new Set());
+  const { answered, settle } = useAnsweredRequests();
   const [draft, setDraft] = useState("");
   // About ten lines tall, then it scrolls (Sandy, 2026-10-06). It follows new
   // events unless the person has scrolled up to read.
@@ -45,8 +49,9 @@ export function SessionPanel({
     const el = log.current;
     if (el && following.current) el.scrollTop = el.scrollHeight;
   }, [events.length]);
-  const done = (requestId: string) =>
-    setAnswered((prev) => new Set(prev).add(requestId));
+  // How each request was decided, from the log: the record a reload keeps.
+  // promise: a-prompt-shows-only-when-a-person-must-choose
+  const decisions = decisionsOf(events);
 
   return (
     <section
@@ -71,26 +76,36 @@ export function SessionPanel({
             el.scrollHeight - el.scrollTop - el.clientHeight < 24;
         }}
       >
-        {events.map((ev, i) => (
-          // Events never reorder or disappear, so their position is their identity.
-          // biome-ignore lint/suspicious/noArrayIndexKey: an append-only log
-          <li key={i}>
-            <EventView
-              ev={ev}
-              open={"requestId" in ev && !answered.has(ev.requestId) && running}
-              onAnswer={(answers) => {
-                if (ev.type !== "question") return;
-                onAnswer(ev.requestId, answers);
-                done(ev.requestId);
-              }}
-              onDecide={(allow) => {
-                if (ev.type !== "permission") return;
-                onDecide(ev.requestId, allow);
-                done(ev.requestId);
-              }}
-            />
-          </li>
-        ))}
+        {events.map((ev, i) =>
+          // A decision is drawn on its request, never as a row of its own.
+          ev.type === "decided" ? null : (
+            // Events never reorder or disappear, so their position is their identity.
+            // biome-ignore lint/suspicious/noArrayIndexKey: an append-only log
+            <li key={i}>
+              <EventView
+                ev={ev}
+                repeatsReply={replyRepeated(events, i)}
+                decision={
+                  "requestId" in ev ? decisions.get(ev.requestId) : undefined
+                }
+                open={
+                  "requestId" in ev &&
+                  running &&
+                  !decisions.has(ev.requestId) &&
+                  !answered.has(ev.requestId)
+                }
+                onAnswer={(answers) => {
+                  if (ev.type !== "question") return;
+                  settle(ev.requestId, onAnswer(ev.requestId, answers));
+                }}
+                onDecide={(allow) => {
+                  if (ev.type !== "permission") return;
+                  settle(ev.requestId, onDecide(ev.requestId, allow));
+                }}
+              />
+            </li>
+          ),
+        )}
       </ol>
       {running && onSay ? (
         <form
@@ -120,13 +135,35 @@ export function SessionPanel({
   );
 }
 
-function EventView({
+/**
+ * Whether a finished turn's text is the reply the log already shows just
+ * above it: Claude Code's result carries the turn's last message again, and
+ * the log should not say it twice.
+ */
+export function replyRepeated(events: StartedEvent[], i: number): boolean {
+  const ev = events[i];
+  if (!ev || ev.type !== "result" || !ev.text) return false;
+  for (let n = i - 1; n >= 0; n--) {
+    const before = events[n];
+    if (before?.type === "text") return before.text.trim() === ev.text.trim();
+    if (before?.type === "result") return false;
+  }
+  return false;
+}
+
+export function EventView({
   ev,
+  repeatsReply = false,
+  decision,
   open,
   onAnswer,
   onDecide,
 }: {
   ev: StartedEvent;
+  /** A finished turn's text is the reply shown above it: say "Turn done" alone. Absent: say it with its text. */
+  repeatsReply?: boolean;
+  /** How the request was decided, when it has been: its outcome replaces the buttons. */
+  decision?: Decision;
   open: boolean;
   onAnswer: (answers: Record<string, string>) => void;
   onDecide: (allow: boolean) => void;
@@ -170,6 +207,7 @@ function EventView({
         <QuestionView
           questions={ev.questions}
           open={open}
+          decision={decision}
           onAnswer={onAnswer}
         />
       );
@@ -180,6 +218,13 @@ function EventView({
             Claude asks to use <span className="font-semibold">{ev.tool}</span>{" "}
             <span className="font-mono text-xs">{describeInput(ev.input)}</span>
           </p>
+          {decision ? (
+            <p className={`mt-2 ${decision.allow ? "text-ok" : "text-bad"}`}>
+              {decision.allow
+                ? "Allowed"
+                : `Denied${decision.message ? ` — ${decision.message}` : ""}`}
+            </p>
+          ) : null}
           {open ? (
             <div className="mt-2 flex gap-2">
               <Button size="sm" onClick={() => onDecide(true)}>
@@ -201,7 +246,9 @@ function EventView({
     // promise: a-session-says-how-it-ended
     case "result":
       return ev.ok ? (
-        <p className="text-ok">Turn done{ev.text ? ` — ${ev.text}` : ""}</p>
+        <p className="text-ok">
+          Turn done{ev.text && !repeatsReply ? ` — ${ev.text}` : ""}
+        </p>
       ) : (
         <p className="text-bad">
           Failed —{" "}
@@ -237,132 +284,4 @@ function failedWithoutText(subtype: string): string {
   if (subtype === "error_during_execution")
     return "it stopped on an error while running";
   return "it stopped without a result";
-}
-
-const OTHER = "Other";
-
-/**
- * A question with its choices, as Claude Code asks it: one choice, or several
- * when the question allows it, or Other — an answer in the person's own
- * words. Several labels go back joined by ", ".
- */
-function QuestionView({
-  questions,
-  open,
-  onAnswer,
-}: {
-  questions: Question[];
-  open: boolean;
-  onAnswer: (answers: Record<string, string>) => void;
-}) {
-  const [chosen, setChosen] = useState<Record<string, string[]>>({});
-  const [other, setOther] = useState<Record<string, string>>({});
-  const answerFor = (q: Question): string => {
-    const picks = chosen[q.question] ?? [];
-    return picks
-      .map((label) =>
-        label === OTHER ? (other[q.question] ?? "").trim() : label,
-      )
-      .filter(Boolean)
-      .join(", ");
-  };
-  const complete = questions.every((q) => answerFor(q) !== "");
-  const toggle = (q: Question, label: string) =>
-    setChosen((prev) => {
-      const picks = prev[q.question] ?? [];
-      if (!q.multiSelect) return { ...prev, [q.question]: [label] };
-      return {
-        ...prev,
-        [q.question]: picks.includes(label)
-          ? picks.filter((l) => l !== label)
-          : [...picks, label],
-      };
-    });
-  return (
-    <div className="rounded-md border border-dusk bg-dusk-wash p-2">
-      {questions.map((q) => {
-        const picks = chosen[q.question] ?? [];
-        return (
-          <fieldset key={q.question} className="mb-2">
-            <legend className="font-medium text-ink">
-              {q.question}
-              {q.multiSelect ? (
-                <span className="ml-1 text-xs text-ink-faint">
-                  (choose any)
-                </span>
-              ) : null}
-            </legend>
-            <div className="mt-1 flex flex-col gap-1">
-              {[
-                ...q.options,
-                { label: OTHER, description: "Answer in your own words" },
-              ].map((o) => (
-                <button
-                  key={o.label}
-                  type="button"
-                  disabled={!open}
-                  onClick={() => toggle(q, o.label)}
-                  className={`rounded-md border px-2 py-1 text-left ${
-                    picks.includes(o.label)
-                      ? "border-dusk bg-surface"
-                      : "border-transparent"
-                  }`}
-                >
-                  <span className="font-medium">{o.label}</span>
-                  {o.description ? (
-                    <span className="block text-xs text-ink-soft">
-                      {o.description}
-                    </span>
-                  ) : null}
-                </button>
-              ))}
-              {picks.includes(OTHER) && open ? (
-                <input
-                  aria-label="Other answer"
-                  className="rounded-md border border-line px-2 py-1"
-                  value={other[q.question] ?? ""}
-                  onChange={(e) =>
-                    setOther((prev) => ({
-                      ...prev,
-                      [q.question]: e.target.value,
-                    }))
-                  }
-                />
-              ) : null}
-            </div>
-          </fieldset>
-        );
-      })}
-      {open ? (
-        <Button
-          size="sm"
-          disabled={!complete}
-          onClick={() =>
-            onAnswer(
-              Object.fromEntries(
-                questions.map((q) => [q.question, answerFor(q)]),
-              ),
-            )
-          }
-        >
-          Answer
-        </Button>
-      ) : null}
-    </div>
-  );
-}
-
-/** A tool's input in a few words: the path it names, or its command, or nothing. */
-function describeInput(input: Record<string, unknown>): string {
-  for (const key of [
-    "file_path",
-    "path",
-    "notebook_path",
-    "command",
-    "pattern",
-    "skill",
-  ]) {
-    if (typeof input[key] === "string") return String(input[key]);
-  }
-  return "";
 }

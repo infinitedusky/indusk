@@ -2,11 +2,14 @@
 name: a-promise-sits-in-its-innermost-path
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: admin
 owner: cockpit-audit-fixes
-sites: []
-tests: []
+sites:
+  - apps/indusk-admin/src/lib/path-nesting.ts
+tests:
+  - 'apps/indusk-admin/src/app/p/[project]/promises/dashboard.test.tsx'
+  - 'apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx'
 incidents: []
 ---
 
@@ -14,3 +17,4 @@ The dashboard groups a promise under the innermost Path that declares its plan, 
 
 ## History
 - 2026-10-11 — declared (cockpit-audit-fixes), from its planning conversation.
+- 2026-10-15 — enforced, confirmed for cockpit-audit-fixes: proven by row A9, row A13.

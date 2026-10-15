@@ -1,9 +1,10 @@
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REPO_ROOT } from "../../__tests__/helpers/cli.js";
 import { git, initRepoWithCommit } from "../../__tests__/helpers/test-git.js";
+import { gitCommonDirOf } from "../worktree/layout.js";
 import { planDates, planTitle, promiseWords, readHealthNames } from "./display.js";
 
 /**
@@ -51,15 +52,48 @@ describe("A3 — a project names its own product words", () => {
 	});
 });
 
-describe("A6 — a plan with no title reads by its folder", () => {
-	it("falls back to the folder for no brief title or an empty one", () => {
-		expect(planTitle(undefined, "my-plan")).toBe("my-plan");
-		expect(planTitle("", "my-plan")).toBe("my-plan");
+describe("A6 — a plan with no title reads as its handle in words", () => {
+	it("falls back to the handle in words for no brief title or an empty one", () => {
+		expect(planTitle(undefined, "my-plan")).toBe("My plan");
+		expect(planTitle("", "my-plan")).toBe("My plan");
 	});
 	it("reads the part of the brief's title before ' — '", () => {
 		expect(planTitle("VS Code extension — promises in the editor", "vscode-extension")).toBe(
 			"VS Code extension",
 		);
+	});
+});
+
+/**
+ * plan-stories A8, A9: a plan is named by its short title; one with no title, or a
+ * title that is only its handle, reads as its handle in words; a master is named by
+ * the title written in its master.md.
+ *
+ * promise: a-plan-reads-by-its-title
+ */
+describe("A8 — a plan reads by its title, else its handle in words", () => {
+	it("reads no title, or a title that is only the handle, as the handle in words", () => {
+		expect(planTitle(undefined, "cockpit-redraw")).toBe("Cockpit redraw");
+		expect(planTitle("cockpit-redraw", "cockpit-redraw")).toBe("Cockpit redraw");
+	});
+	it("spells product words their way", () => {
+		expect(planTitle(undefined, "vscode-extension")).toBe("VS Code extension");
+	});
+	it("a short written title names the plan", () => {
+		expect(planTitle("Cockpit redraw", "cockpit-redraw")).toBe("Cockpit redraw");
+	});
+});
+
+describe("A9 — a master plan is named by the title written in its master.md", () => {
+	it("readHealthNames names a plan folder holding only a master.md by that title", async () => {
+		const root = mkdtempSync(join(tmpdir(), "display-master-"));
+		const dir = join(root, ".indusk", "planning", "day");
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(
+			join(dir, "master.md"),
+			'---\ntitle: "InDusk v4: Day"\ndescription: "Watches your software running."\n---\n\n# Day\n',
+		);
+		expect((await readHealthNames(root)).planTitles.day).toBe("InDusk v4: Day");
 	});
 });
 
@@ -129,7 +163,7 @@ describe("A14 — an archived plan with no landing line is still landed", () => 
 		const dir = folderWith({ "brief.md": BRIEF, "retrospective.md": RETRO_NO_LINE });
 		expect(planDates(dir, CHANGELOG).landed).toBeNull();
 	});
-	it("reads through readHealthNames for a plan under archive/", () => {
+	it("reads through readHealthNames for a plan under archive/", async () => {
 		const root = mkdtempSync(join(tmpdir(), "display-project-"));
 		const planDir = join(root, ".indusk", "planning", "archive", "my-plan");
 		mkdirSync(planDir, { recursive: true });
@@ -146,7 +180,7 @@ describe("A14 — an archived plan with no landing line is still landed", () => 
 			}),
 		);
 		writeFileSync(join(root, "CHANGELOG.md"), CHANGELOG);
-		expect(readHealthNames(root).planDates["my-plan"]).toEqual({
+		expect((await readHealthNames(root)).planDates["my-plan"]).toEqual({
 			started: "2026-10-08",
 			landed: "2026-09-10",
 			released: { version: "1.68.0", date: "2026-10-09" },
@@ -189,7 +223,7 @@ function retro(dir: string, plan: string, text: string): void {
 }
 
 describe("A16 — a plan shows the release that shipped it, whatever the changelog says", () => {
-	it("is the first release commit after the plan's landing commit on the trunk", () => {
+	it("is the first release commit after the plan's landing commit on the trunk", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "display-trunk-"));
 		initRepoWithCommit(dir);
 		const p1 = commitOn(dir, "2026-02-01", "feat: p1 lands");
@@ -216,14 +250,14 @@ describe("A16 — a plan shows the release that shipped it, whatever the changel
 			join(dir, ".indusk", "config.json"),
 			JSON.stringify({ workflow: { steps: { release: { changelog: "docs/changelog.md" } } } }),
 		);
-		const dates = readHealthNames(dir).planDates;
+		const dates = (await readHealthNames(dir)).planDates;
 		expect(dates.p1.released).toEqual({ version: "1.2.0", date: "2026-02-05" });
 		expect(dates.p3.released).toEqual({ version: "1.2.0", date: "2026-02-05" });
 		expect(dates.p2.landed).toBe("2026-02-10");
 		expect(dates.p2.released).toBeNull();
 	});
 
-	it("reads the changelog, never the earliest release commit, for a plan landed before the first one", () => {
+	it("reads the changelog, never the earliest release commit, for a plan landed before the first one", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "display-prehistory-"));
 		initRepoWithCommit(dir);
 		const old = commitOn(dir, "2026-01-05", "feat: old lands");
@@ -242,7 +276,7 @@ describe("A16 — a plan shows the release that shipped it, whatever the changel
 			join(dir, ".indusk", "config.json"),
 			JSON.stringify({ workflow: { steps: { release: { changelog: "docs/changelog.md" } } } }),
 		);
-		const dates = readHealthNames(dir).planDates;
+		const dates = (await readHealthNames(dir)).planDates;
 		// Named in the changelog: that release.
 		expect(dates.old.released).toEqual({ version: "1.10.0", date: "2026-01-10" });
 		// Not named: the first changelog release on or after its landing — never 1.36.1, the first commit.
@@ -251,9 +285,42 @@ describe("A16 — a plan shows the release that shipped it, whatever the changel
 	});
 
 	const onDusk = existsSync(join(REPO_ROOT, ".indusk/planning/archive/day-promises"));
-	it.skipIf(!onDusk)("shows day-promises and dawn-verify released on this repository", () => {
-		const dates = readHealthNames(REPO_ROOT).planDates;
+	it.skipIf(!onDusk)("shows day-promises and dawn-verify released on this repository", async () => {
+		const dates = (await readHealthNames(REPO_ROOT)).planDates;
 		expect(dates["day-promises"]?.released).not.toBeNull();
 		expect(dates["dawn-verify"]?.released).not.toBeNull();
+	});
+});
+
+describe("A22 — a plan worked in its own worktree is named by that worktree's title", () => {
+	it("A22 readHealthNames names a worktree plan by its worktree's brief, as the nav does", async () => {
+		const base = realpathSync(mkdtempSync(join(tmpdir(), "display-worktree-")));
+		const root = join(base, "proj");
+		mkdirSync(join(root, ".indusk", "planning", "p"), { recursive: true });
+		writeFileSync(join(root, ".indusk", "config.json"), '{ "mode": "full" }\n');
+		writeFileSync(
+			join(root, ".indusk", "planning", "p", "brief.md"),
+			'---\ntitle: "Trunk name"\nstatus: draft\n---\n\n# p\n',
+		);
+		git(root, ["init", "-q", "-b", "main"]);
+		git(root, ["add", "-A"]);
+		git(root, ["commit", "-qm", "init"]);
+		const wt = join(base, "proj-worktrees", "p");
+		git(root, ["worktree", "add", "-q", wt, "-b", "plan/p", "main"]);
+		writeFileSync(
+			join(wt, ".indusk", "planning", "p", "brief.md"),
+			'---\ntitle: "Worktree name"\nstatus: draft\n---\n\n# p\n',
+		);
+		const common = gitCommonDirOf(root) ?? "";
+		writeFileSync(
+			join(common, "indusk-plan-worktrees.json"),
+			JSON.stringify({
+				version: 1,
+				assignments: [
+					{ plan: "p", path: realpathSync(wt), branch: "plan/p", at: "2026-10-06T00:00:00Z" },
+				],
+			}),
+		);
+		expect((await readHealthNames(root)).planTitles.p).toBe("Worktree name");
 	});
 });

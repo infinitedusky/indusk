@@ -5,7 +5,7 @@ import type {
 	RitualWord,
 	SegmentState,
 } from "../lifecycle.js";
-import { DOCUMENT_LABELS, WORKFLOW_DEFINITIONS, type WorkflowType } from "../workflow-types.js";
+import { DOCUMENT_LABELS, requiredDocuments, type WorkflowType } from "../workflow-types.js";
 
 /**
  * A plan's two workflows as lists of steps (plan-cockpit, ADR decision 3):
@@ -46,16 +46,24 @@ export interface PlanStep<Name extends string> {
 	reason?: string;
 }
 
+/**
+ * The rituals a plan can skip with a reason: the two that have phases
+ * (`RitualWord`, `RITUAL_ORDER` stays those two) and the audit, which has none.
+ */
+export type SkippedRitual = RitualWord | "audit";
+
 /** What `planSteps` needs of a plan — the facts, not the page's own `Plan`. */
 export interface PlanSnapshot {
 	/** The declared type; null when none is declared or the word is not a type. */
 	workflow: WorkflowType | null;
+	/** Documents the plan's project turned off; they are not part of its planning. */
+	documentsOff?: readonly string[];
 	/** Where the plan stands; absent when it could not be read (a malformed plan). */
 	position?: PlanPositionState;
 	/** Each document the plan has, with its status. */
 	documents: Partial<Record<DocumentPosition, { status?: string }>>;
-	/** Falsification or cleanup skipped with a reason. */
-	skippedRituals?: ReadonlyArray<{ ritual: RitualWord; reason?: string }>;
+	/** Falsification, cleanup or audit skipped with a reason. */
+	skippedRituals?: ReadonlyArray<{ ritual: SkippedRitual; reason?: string }>;
 }
 
 export interface PlanWorkflows {
@@ -123,7 +131,14 @@ function releaseStep(name: ReleaseStepName, plan: PlanSnapshot): PlanStep<Releas
 		state,
 		...(reason ? { reason } : {}),
 	});
-	const ritual = name === "Falsify" ? "falsification" : name === "Cleanup" ? "cleanup" : null;
+	const ritual: SkippedRitual | null =
+		name === "Falsify"
+			? "falsification"
+			: name === "Cleanup"
+				? "cleanup"
+				: name === "Audit"
+					? "audit"
+					: null;
 	if (ritual) {
 		const skipped = plan.skippedRituals?.find((r) => r.ritual === ritual);
 		if (skipped) return named("skipped", skipped.reason);
@@ -173,7 +188,8 @@ const RELEASE_STEPS: readonly ReleaseStepName[] = [
  * with an impl goes through; for a type with none they all read `skipped`.
  */
 export function planSteps(plan: PlanSnapshot): PlanWorkflows {
-	const required = plan.workflow === null ? null : WORKFLOW_DEFINITIONS[plan.workflow].requires;
+	const required =
+		plan.workflow === null ? null : requiredDocuments(plan.workflow, plan.documentsOff);
 	return {
 		planning: PLANNING.filter((s) => required === null || required.includes(s.document)).map((s) =>
 			planningStep(s, plan),

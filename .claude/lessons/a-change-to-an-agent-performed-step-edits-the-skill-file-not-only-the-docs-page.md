@@ -1,0 +1,3 @@
+# A change to a step an agent performs must edit the skill file (and resync .claude/skills), not only the docs page; list the skill in Files Affected from the start
+
+In template-reload-on-cold-cache the landing install change was documented in apps/docs reference/skills/retrospective.md, but apps/indusk-mcp/skills/retrospective.md, the file the landing agent actually follows, still described the old step until the cold audit caught it. Updating the docs page is not updating the instructions. When a plan changes a step an agent performs, put the skill file in Files Affected at planning time, edit it in apps/indusk-mcp/skills/, and run the skill sync. Source: highlights h-20261015-037 and h-20261015-038.

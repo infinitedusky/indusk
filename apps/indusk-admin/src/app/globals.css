@@ -195,11 +195,23 @@ body {
 .cols-plan-row {
   grid-template-columns: var(--size-badge) minmax(0, 1fr);
 }
+.cols-plan-row-numbered {
+  grid-template-columns: var(--space-3) var(--size-badge) minmax(0, 1fr);
+}
+.cols-nav-path {
+  grid-template-columns: var(--space-3) var(--space-3) minmax(0, 1fr) auto auto;
+}
 .cols-view-link {
   grid-template-columns: var(--size-badge) minmax(0, 1fr) auto;
 }
 .cols-step {
   grid-template-columns: var(--space-5) minmax(0, 1fr) auto;
+}
+.cols-step-reason {
+  grid-template-columns: var(--space-5) minmax(0, 1fr) auto auto;
+}
+.underline-hair {
+  text-underline-offset: var(--space-hair);
 }
 .cols-look-row {
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -209,6 +221,15 @@ body {
 }
 .cols-draft-row {
   grid-template-columns: minmax(0, 1fr) auto;
+}
+.story-link {
+  margin-left: auto;
+}
+.cols-subplan-row {
+  grid-template-columns: var(--space-5) var(--size-badge) minmax(0, 1fr) auto;
+}
+.cols-recommendation {
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 .cols-promise-row {
   grid-template-columns:
@@ -224,6 +245,23 @@ body {
 .cols-plan-stage {
   grid-template-columns: var(--size-rail) minmax(0, 1fr);
 }
+/* A line of reading: a message holds to 60 characters, a prompt's question to 30. */
+.measure-message {
+  max-width: 60ch;
+}
+.measure-question {
+  max-width: 30ch;
+}
+/* A phase's paragraph is read at a measure of 70 characters. */
+.measure-story {
+  max-width: 70ch;
+}
+.cols-conversation {
+  grid-template-columns: minmax(0, 1fr) var(--size-side);
+}
+.cols-project-grid {
+  grid-template-columns: repeat(auto-fill, minmax(var(--size-side), 1fr));
+}
 @media (max-width: 759px) {
   .cols-shell,
   .cols-shell-rail {
@@ -234,9 +272,22 @@ body {
   }
   .cols-promise-page,
   .cols-plan-stage,
+  .cols-conversation,
   .cols-draft-row,
   .cols-expectation-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .cols-subplan-row {
+    grid-template-columns: var(--size-badge) minmax(0, 1fr);
+  }
+  .story-link {
+    margin-left: 0;
+  }
+  .subplan-row-number {
+    display: none;
+  }
+  .subplan-row-stage {
+    grid-column: 2;
   }
 }
 

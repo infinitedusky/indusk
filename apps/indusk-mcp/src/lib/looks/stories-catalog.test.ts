@@ -9,6 +9,7 @@ const input = (rendered: Record<string, string>) => ({
 	sources: ["src"],
 	properties: new Map(),
 	order: new Map<string, number>(),
+	content: new Map<string, Record<string, number[][]>>(),
 });
 
 describe("buildCatalog", () => {
@@ -27,6 +28,18 @@ describe("buildCatalog", () => {
 		const written = snapshotBytes(chip("passing"));
 		expect(components[0]?.states[0]?.snapshotHash).toMatch(/^[0-9a-f]{64}$/);
 		expect(written.endsWith("\n")).toBe(true);
+	});
+
+	it("records each state's content paths, and none for a story that wrote none", () => {
+		// promise: a-placed-component-shows-its-content
+		const base = input({ "ui-badge--a": chip("a"), "ui-badge--b": chip("b") });
+		const { components } = buildCatalog({
+			...base,
+			content: new Map([["ui-badge--a", { children: [[0, 0]] }]]),
+		});
+		const state = (n: string) => components[0]?.states.find((s) => s.name === n);
+		expect(state("a")?.content).toEqual({ children: [[0, 0]] });
+		expect(state("b")?.content).toEqual({});
 	});
 
 	it("lists states in the order their stories are written", () => {

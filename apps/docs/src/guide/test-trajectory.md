@@ -194,6 +194,45 @@ If a phase has no tests flipping at it, declare so explicitly — NOT silently:
 
 The allowed reasons are: `schema-only`, `delete`, `refactor`, `infra`. Any other reason fails the validator.
 
+## Phase summaries: a phase that explains itself
+
+An impl is read by two audiences: the person who approves and follows the plan, and the agent that builds from it. A phase written only as technical instructions — type names, paths, commands — serves the second and loses the first. An impl that sets `phase_summary: required` in its frontmatter is written for both:
+
+````markdown
+### Build Phase 1: The save check holds the shape
+
+**Tier**: med — the work step's default
+
+The script that checks an impl file when it is saved learns the new rule, so a
+plan can be written in the shape and be held to it. The plan page still shows
+the fold as raw text until the next phase.
+
+- [ ] A phase with no summary is refused when the impl is saved
+  <details><summary>Technical</summary>
+
+  `hooks/validate-impl-structure.js`: a new rule beside the tier rule, gated on
+  `phase_summary: required`.
+
+  </details>
+
+#### Build Phase 1 Verification
+
+- [ ] The save check refuses the shapes it should
+  <details><summary>Technical</summary>
+
+  Green: T1, T2. `pnpm exec vitest run src/__tests__/phase-summary-rule.test.ts`.
+
+  </details>
+````
+
+- **Each phase opens with a paragraph** between its `**Tier**:` line and its first task: what the phase does for the whole plan, and how it hands to the next.
+- **Each task is one plain sentence**, written for someone who has worked on the project but knows none of the plan's shorthand. The instruction an agent needs — names, paths, commands, code, row labels — goes in the indented `<details><summary>Technical</summary>` block beneath it, which folds on GitHub, in this site and on the plan page alike.
+- **The save check refuses** a phase with no paragraph, a paragraph naming a row label, and a task line carrying code (a backtick) or a row label (`T3`, `A2`), naming the phase or the task. Gate tasks — Verification, Context, Document — follow the same shape. Register entries (`#### Deferred to …`, `#### Regression Guards`) are not tasks and are not read.
+- **A Verification task names its rows in its detail.** In an opted-in impl the cross-reference rule reads row labels from the folded detail as well as the line, so the sentence can stay plain.
+- **Folded detail is only read.** For every impl, opted in or not, a checkbox or an opt-out (`(none needed)`, `skip-reason:`) counts only on a column-zero line: a box-shaped or opt-out-shaped line indented under a task never ticks a box, skips a gate or adds a task.
+
+Whether a sentence is actually plain is not checked beyond code and row labels; that stays a person's judgement at approval. See [Phase summaries](/decisions/phase-summaries).
+
 ## The validator rules
 
 The `validate-impl-structure.js` hook enforces four core rules when the impl has a Test Trajectory section or `trajectory: required` in frontmatter, plus a fifth rule that fires only when the impl opts in via `rationale: required`:
