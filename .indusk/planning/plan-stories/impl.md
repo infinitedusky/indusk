@@ -445,7 +445,7 @@ Titles and descriptions come from research.md's tables. A description already wr
 
 - [x] The master page draws the plan page's own frame around the story: `TrustNotice`, `WaitingAmendments`, `DecisionCard` (with the real `waiting`, not `false`), `PlanSession` ("Ask about this plan"), the build controls where a master has them, and `HistoryPanel`; the story stands where a plan's rail, status card and parts stand. If the look check then reads `plan.master` as changed, draw the added parts into `plan.master` from their components and ask Sandy to approve it, recording when
 - [x] A Path group's heading on the Promises page reads its master's title; the dashboard's and the promise page's fallback for an owner with no name is `planTitle(undefined, owner, words)`, never the bare owner
-- [ ] `IncidentsTable` names an incident's owner plan by its title, and the Looks page's checkout picker names a plan worktree by its plan's title, both through the names the page already reads
+- [x] `IncidentsTable` names an incident's owner plan by its title, and the Looks page's checkout picker names a plan worktree by its plan's title, both through the names the page already reads
 - [ ] A declared `subplans:` title goes through `planTitle` (`plan-groups.ts`), so a title equal to its handle reads as words and a title with " — " is cut at the dash, as every other title is
 - [ ] `amendmentsWaiting` gets its own test (changed brief → its amendments; unchanged brief → none; unreadable approval → none), and `decisions-reader`'s amendment read is tested against a real plan folder in a worktree, not the cockpit fixture's stand-in
 

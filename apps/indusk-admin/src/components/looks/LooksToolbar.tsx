@@ -63,9 +63,13 @@ function ChoiceLink({
 }
 
 /** How a checkout is named: the plan whose worktree it is, or the project's own. */
-function checkoutName(plan: string | null, branch: string | null): string {
+function checkoutName(
+  plan: string | null,
+  branch: string | null,
+  titles: Record<string, string>,
+): string {
   return plan
-    ? `plan ${plan}`
+    ? (titles[plan] ?? plan)
     : `project checkout${branch ? ` (${branch})` : ""}`;
 }
 
@@ -75,7 +79,10 @@ export function LooksToolbar({
   view,
   checkout,
   checkouts,
+  planTitles = {},
 }: {
+  /** Each plan worktree's plan by its title, as the page reads it. */
+  planTitles?: Record<string, string>;
   path: string;
   show: Show;
   view: "list" | "cascade";
@@ -115,7 +122,7 @@ export function LooksToolbar({
       >
         Reading{" "}
         <b className="font-medium text-ink">
-          {checkoutName(checkout, reading?.branch ?? null)}
+          {checkoutName(checkout, reading?.branch ?? null, planTitles)}
         </b>
         {reading ? (
           <>
@@ -139,7 +146,7 @@ export function LooksToolbar({
               current={c.plan === checkout}
               title={c.branch ?? undefined}
             >
-              {checkoutName(c.plan, c.branch)} · {c.proposed} proposed
+              {checkoutName(c.plan, c.branch, planTitles)} · {c.proposed} proposed
             </ChoiceLink>
           ))}
         </Choice>

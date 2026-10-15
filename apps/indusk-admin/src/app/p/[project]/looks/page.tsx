@@ -1,4 +1,8 @@
 import {
+  planTitle,
+  readHealthNames,
+} from "@infinitedusky/indusk-mcp/promises/display";
+import {
   countedCheckouts,
   readLooks,
   resolveLooksCheckout,
@@ -72,6 +76,17 @@ export default async function PerProjectLooksPage({
       </p>
     );
   }
+  // A plan worktree is named by its plan's title; one the package reads no
+  // title for reads as its handle in words, never as the folder name.
+  const checkouts = await countedCheckouts(projectPath);
+  const { planTitles, words } = await readHealthNames(projectPath);
+  const titles = Object.fromEntries(
+    checkouts.flatMap((c) =>
+      c.plan
+        ? [[c.plan, planTitles[c.plan] ?? planTitle(undefined, c.plan, words)]]
+        : [],
+    ),
+  );
   return (
     <LooksBody
       project={project}
@@ -82,7 +97,8 @@ export default async function PerProjectLooksPage({
       view={query.view === "cascade" ? "cascade" : "list"}
       show={showOf(query.show)}
       checkout={checkout.plan}
-      checkouts={await countedCheckouts(projectPath)}
+      checkouts={checkouts}
+      planTitles={titles}
     />
   );
 }
