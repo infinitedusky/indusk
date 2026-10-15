@@ -267,7 +267,9 @@ describe('skip-reason-why — a skipped step reads "skipped" with a "why?" that 
     expect(statusOf(root, "Audit")).toBe("skipped");
     const why = whyOf(root, "Audit");
     expect(why, 'no "why?" button in the Audit step').toBeDefined();
-    expect(root.textContent).not.toContain("a docs-only plan, nothing to audit");
+    expect(root.textContent).not.toContain(
+      "a docs-only plan, nothing to audit",
+    );
     click(why as HTMLElement);
     expect(root.textContent).toContain("a docs-only plan, nothing to audit");
   });

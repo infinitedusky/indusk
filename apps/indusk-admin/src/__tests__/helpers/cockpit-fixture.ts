@@ -198,7 +198,9 @@ const PAGE_PLANS: PlanSpec[] = [
     name: "skipped-audit",
     at: "review",
     docs: ALL_DOCS,
-    skipped: [{ ritual: "audit", reason: "a docs-only plan, nothing to audit" }],
+    skipped: [
+      { ritual: "audit", reason: "a docs-only plan, nothing to audit" },
+    ],
   },
   {
     name: "asking-plan",
