@@ -1,7 +1,7 @@
 ---
 title: "main-suite-green"
 date: 2026-10-14
-status: draft
+status: accepted
 workflow: bugfix
 description: "Makes `pnpm test` pass on main again: fixes the contract check that refuses a large impl at random, brings four stale tests up to the behaviour they guard, stops in-flight plans' approved looks from failing the component check, and fixes two admin tests that time out when every package runs at once."
 ---
@@ -18,7 +18,7 @@ description: "Makes `pnpm test` pass on main again: fixes the contract check tha
 
 ### This plan makes
 
-1. **`the-everyday-suite-passes-on-main`** (state). `pnpm test`, run from the root of a clean main with every package at once, passes.
+1. **`the-everyday-suite-passes-on-main`** (state). pnpm test, run from the root of a clean main with every package at once, passes.
 2. **`a-large-impl-gets-the-same-contract-answer`** (state). The contract check gives the same answer for an impl of any size every time it runs, so a large impl is never refused at random when it is written.
 
 ### Existing promises
