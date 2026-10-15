@@ -150,6 +150,8 @@ Every request a session makes is recorded in its log together with how it was de
 - [x] `SessionPanel.tsx` `QuestionView`: a question with an allowing decision shows "Answered — {each question: answer}" from the decision, in place of the Answer button (options stay disabled)
 - [x] `SessionPanel.tsx` + `SessionConnector.tsx`: `onAnswer`/`onDecide` resolve to whether the reply was accepted; on a refusal the panel removes the request from its local `answered` set, so its buttons come back beside the shown problem
 - [x] `ConversationThread.tsx` + `NewProjectConversation.tsx` (`session.answer`/`session.decide`): the same — a refused reply reopens the request in the thread
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+  - `settle` (close a prompt at once, reopen it on a refusal) is written in `SessionPanel.tsx` and in `ConversationThread.tsx`; two copies across files is `/cleanup`'s to judge, not Shape's
 
 #### Build Phase 3 Verification
 - [x] A9: a person's `reply` with answers records `decided` carrying them; a fresh panel rendered with `[question, decided{answers}]` shows "Answered" with the answer and no Answer button — fails today (no answers on the event, no outcome line) (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/manager.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx`)
@@ -157,10 +159,10 @@ Every request a session makes is recorded in its log together with how it was de
 - [x] A1–A8 still pass; tsc and biome clean on the changed files (`cd apps/indusk-admin && pnpm exec vitest related src/components/session/SessionPanel.tsx src/components/new-project/ConversationThread.tsx --run`)
 
 #### Build Phase 3 Context
-- [ ] `apps/indusk-admin/CLAUDE.md`: amend the decided-event entry — a click's early close is undone when the reply is refused; an answered question's outcome is read from its `decided` event's answers. Guarded by `SessionPanel.test.tsx` (A9, A10)
+- [x] `apps/indusk-admin/CLAUDE.md`: amend the decided-event entry — a click's early close is undone when the reply is refused; an answered question's outcome is read from its `decided` event's answers. Guarded by `SessionPanel.test.tsx` (A9, A10)
 
 #### Build Phase 3 Document
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: an answered question shows the answer given; a refused click leaves the request open with the problem shown
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: an answered question shows the answer given; a refused click leaves the request open with the problem shown
 
 #### Build Phase 3 — what the falsification looked at
 - Searched without an attack vector: the confined and planning rule paths (`decideByRule`; the draft's `transcript.jsonl` is written by a `subscribe` listener in `new-project-session.ts`, not `opts.onEvent` as Build Phase 1 assumed, and `record(…, false)` still notifies listeners, so a reopened draft keeps both events); a double reply (refused by `h.answered`); the build's question decline (its message is never empty); `pendingQuestion` and Needs you (read `h.answered`, which `reply` still fills); `turnsOf` (collects decisions in a first pass, so order does not matter).
