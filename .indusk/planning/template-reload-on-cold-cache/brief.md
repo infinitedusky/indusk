@@ -1,7 +1,7 @@
 ---
 title: "Tests and landing work from a cold machine"
 date: 2026-10-15
-status: draft
+status: accepted
 workflow: bugfix
 description: "Makes the browser template tests pass on the first run after Vite's dependency cache is cleared, and makes landing install the landed build even when the merge changed dependencies, so neither a fresh checkout nor a merged lockfile turns `pnpm test` or the install red. Also brings the day-monitor end-to-end test up to the error text today's `claude` prints."
 ---
