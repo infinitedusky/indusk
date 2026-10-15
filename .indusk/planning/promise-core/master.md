@@ -3,48 +3,19 @@ title: "Promise core"
 description: "Makes the promise the first thing a person meets in InDusk; plans and gates are extras for larger work."
 date: 2026-10-05
 status: living
-# Ordered children, grouped under the eight headline children (comments). Since
-# 2026-10-15 every open plan sits here: Dawn, Day and the demo masters are closed.
-# A name with no folder renders as a placeholder.
+# The headline children, in order. Each that gathers open plans is a parent with
+# its own master.md naming them. Since 2026-10-15 every open plan sits under
+# here: Dawn, Day and the demo masters are closed. A name with no folder renders
+# as a placeholder.
 subplans:
-  # 1. mark-first — a plan is one promise; clauses proved by marks
   - mark-first
-  - telemetry-destinations
-  - workbench-watch-provisioning
-  - demo-scenarios
-  - embedded-browser
-  # 1b. run-the-master — questions by cost, the daily list, the graph scheduler
   - run-the-master
-  # 2. expectations-loop — expectations read back into what is built next
   - expectations-loop
-  - plan-premises
-  # 3. looks-as-promises — visual promises; the design system
   - looks-as-promises
-  - stories-replace-mockups
-  - mockup-matching
-  - looks-check-speed
-  - approvals-merge-cleanly
-  - owned-changes
-  - plan-page-shows-its-looks
-  # 4. open-core-boundary — the core ships on its own
   - open-core-boundary
-  - house-rules-out
-  - context-reaches-every-session
-  - instance-ports
-  - indusk-release
-  - release-preconditions
-  - clean-release-build
-  # 5. workbench-server
   - workbench-server
-  # 6. adopt-existing-project
   - adopt-existing-project
-  # 7. the cockpit, organised around promises
-  - one-conversation-view
-  - contract-ui
-  - cockpit-audit-fixes
-  - decided-prompts-stay-closed
-  - template-reload-on-cold-cache
-  # 8. workflow-builder
+  - cockpit-around-promises
   - workflow-builder
 ---
 
@@ -202,8 +173,8 @@ switching.
 - **The sorting rule:** server only if it must run continuously or know more
   than one person; the server holds nothing the files do not.
 
-**The plans, in order** — each headline child below gathers the open plans
-listed under it in `subplans:`.
+**The plans, in order** — each headline child that gathers open plans is a
+parent with its own `master.md` naming them.
 
 1. **`mark-first`** — merged with `promise-first-build`: clauses, marks
    (server and browser), the close rule, layering, the diagnosis; and a plan
@@ -230,7 +201,7 @@ listed under it in `subplans:`.
    sync; Anthropic's own cloud sessions checked first.
 6. **`adopt-existing-project`** — bringing an existing codebase (Numero) in:
    name its parts, its founding brief, first promises with marks.
-7. **The cockpit, organised around promises** — `one-conversation-view` (on a
+7. **`cockpit-around-promises`** — the cockpit organised around promises: `one-conversation-view` (on a
    plan, one agent present on every page, rendered the same everywhere, and
    matching the new-project conversation's thread), `contract-ui` (the admin
    organised around premises, promises and phases), and the in-flight
