@@ -7,7 +7,7 @@ import {
 	storyApprovalOf,
 } from "./approvals.js";
 import { catalogGaps, MARKER_PATTERN, MARKUP_EXTENSIONS } from "./components.js";
-import { mockupsOfLandedPlans } from "./landed.js";
+import { heldComponentNames } from "./landed.js";
 import { markedComponentsOf } from "./markup.js";
 import { appSourceFiles, type LooksApp, type Mockup } from "./mockups.js";
 
@@ -139,8 +139,9 @@ async function uncoveredComponents(
 /**
  * Component names the app's mockups (read composed) place that no
  * implementation file marks — a mockup asking for what the app does not have.
- * Only mockups of landed plans are held to it (`looks/landed`): approval merges
- * a plan's looks before its code.
+ * Only components of landed plans are held to it (`looks/landed`): approval
+ * merges a plan's looks before its code, and a re-approval in flight exempts
+ * only what it adds.
  */
 function unimplementedComponents(
 	root: string,
@@ -148,11 +149,7 @@ function unimplementedComponents(
 	approvals: readonly ApprovalEntry[],
 	implemented: ReadonlyMap<string, unknown>,
 ): string[] {
-	const named = new Set(
-		mockupsOfLandedPlans(root, app.mockups, approvals).flatMap((m) => [
-			...markedComponentsOf(m.html),
-		]),
-	);
+	const named = heldComponentNames(root, app.mockups, approvals);
 	return [...named].filter((n) => !implemented.has(n)).sort();
 }
 
