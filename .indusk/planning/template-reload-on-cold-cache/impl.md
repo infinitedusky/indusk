@@ -118,13 +118,25 @@ This phase writes the tests that fail today for the reasons the research found. 
   The node run: 2 failed, 1 passed (the "landing still runs install:local" case). A1 reports 11 packages missing from the list the project sees; A3 expects `pnpm install --frozen-lockfile` first and receives the `prepublishOnly` build step. The e2e run fails at line 162 on `issue with the selected model`.
 
   </details>
+- [x] Shape — the two new test files were reviewed against the enabled extensions' craft rules and need no change
+  <details><summary>Note</summary>
+
+  `prepareShapeReview` for Test Phase 1 returned a review of the two new files. Each file has small named helpers (`importedPackages`, `listTheProjectSees`, `readJson`) and one reason to change; no findings, so no items were added.
+
+  </details>
 
 #### Test Phase 1 Context
 
-- [ ] Each new test file says which promise it holds
+- [x] Each new test file says which promise it holds
   <details><summary>Technical</summary>
 
   guard: `templates-prebundle.test.ts` carries `promise: a-browser-test-passes-on-a-cold-cache`; `install-local.test.ts` carries `promise: landing-installs-after-a-dependency-change`.
+
+  </details>
+  Both files name their promise in the header comment.
+  <details><summary>Note</summary>
+
+  Confirmed with a grep for `promise: ` in both files.
 
   </details>
 
