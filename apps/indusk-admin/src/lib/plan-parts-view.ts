@@ -2,6 +2,7 @@ import type { PlanParts } from "@infinitedusky/indusk-mcp/plans/parts";
 import { phaseTitle } from "@/components/bars/labels";
 import type { PhaseRowTone } from "@/components/ui/PhaseRow";
 import {
+  type ChecklistItem,
   extractPhases,
   type Phase,
   phaseItems,
@@ -64,7 +65,9 @@ export interface PhaseView {
   count: string;
   state: string;
   tone: PhaseRowTone;
-  items: Array<{ text: string; checked: boolean; note?: string }>;
+  /** The phase's opening paragraph, when the impl has one. */
+  summary?: string;
+  items: ChecklistItem[];
 }
 
 /** One phase as a row: its name, items done of total, and where it stands. */
@@ -81,6 +84,7 @@ export function phaseView(phase: Phase, activeKey: string | null): PhaseView {
     count: `${done} of ${total}`,
     state,
     tone,
+    ...(phase.summary ? { summary: phase.summary } : {}),
     items: phaseItems(phase),
   };
 }

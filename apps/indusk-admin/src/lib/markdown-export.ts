@@ -60,7 +60,16 @@ export function trajectoryTableMarkdown(rows: TrajectoryRow[]): string {
 
 export function checklistMarkdown(items: ChecklistItem[]): string {
   return items
-    .map((item) => `- [${item.checked ? "x" : " "}] ${item.text}`)
+    .map((item) => {
+      const line = `- [${item.checked ? "x" : " "}] ${item.text}`;
+      if (!item.detail) return line;
+      // The detail goes back under its task as it was written: folded, indented.
+      const body = item.detail
+        .split("\n")
+        .map((l) => (l ? `  ${l}` : l))
+        .join("\n");
+      return `${line}\n  <details><summary>Technical</summary>\n\n${body}\n\n  </details>`;
+    })
     .join("\n");
 }
 
