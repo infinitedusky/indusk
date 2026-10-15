@@ -610,6 +610,18 @@ A reader who had not seen the build audited the plan and found places where its 
   `apps/indusk-mcp/skills/falsify.md` and `skills/cleanup.md` ("The save check refuses a code span or a row label on the paragraph or a task line") and `templates/planning/CLAUDE.md` ("refuses a missing paragraph, a code span or a row label on those lines"): say a task line may carry neither code nor a row label, and a paragraph no row label — matching the ADR's decision. Sync `.claude/skills/` and `.indusk/planning/CLAUDE.md`.
 
   </details>
+- [x] Shape review of the changed save check, tick check, loop, repair-phase writer and plan-page components
+  <details><summary>Technical</summary>
+
+  Per `/work`, over `validate-impl-structure.js`, `_phase-summary.js`, `check-gates.js`, `commit-cadence.ts`, `impl-parser-core.ts`, `reopen.ts`, `PhaseRow.tsx`, `PlanParts.tsx`.
+
+  </details>
+- [x] Shape: Give the edit-time check, which sits inline in the save check's script, a name of its own in the summary-rule module so a test can reach it
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/hooks/validate-impl-structure.js`. Rule: Should this inline block have been a named function? It has its own job and can then be tested alone. Move the opted-in test and the old-versus-new comparison into `_phase-summary.js` as `phaseSummaryProblemsAdded(oldText, newText)`; the script calls it. Sync `.claude/hooks/`.
+
+  </details>
 
 #### Build Phase 6 Verification
 
