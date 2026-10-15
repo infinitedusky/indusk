@@ -315,7 +315,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md` (The nav, The plan page): plans and Paths read by their titles; the note from Test Phase 1 removed
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (The nav, The plan page): plans and Paths read by their titles; the note from Test Phase 1 removed
 
 ### Build Phase 4: The master plan tells its story
 
