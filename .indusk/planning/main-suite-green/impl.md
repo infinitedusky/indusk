@@ -1,7 +1,7 @@
 ---
 title: "main-suite-green"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -55,6 +55,8 @@ approved_at: "2026-10-15T02:24:53.058Z"
 | A9 | `pnpm test` from the root of the branch, merged with main, passes | Build Phase 3 | Build Phase 3 | passing | live check | the live proof of the suite promise; rows A2–A8 name its files | (recorded in the impl with its result) |
 | A10 | A mockup held under a landed plan and then re-approved under an unlanded one still has the components its landed approval bound held: delete one of those components' implementations and the check reports it unimplemented, while a component only the unlanded re-approval adds is not reported | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
 | A11 | A story name's component is read by one rule: `componentOfStory` gives `plan-row` for `plan-row.open` and for `plan-row.open.wide`, the story reader's `component` agrees with it, and A8 and A10 still hold | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
+| A12 | A mockup whose most recent held approval records no components (absent or empty), re-approved by an unlanded plan, is held in full: a component its markup names and the app lacks is reported unimplemented — the exemption needs a record of what landed | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
+| A13 | In the root `pnpm test`, indusk-mcp's test task waits for indusk-mcp's own build, so the tests that spawn the built CLI (A1 among them) run against this checkout's build and are not skipped for a missing one (`turbo run test --dry=json`: `@infinitedusky/indusk-mcp#test` depends on `@infinitedusky/indusk-mcp#build`) | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-large-impl-gets-the-same-contract-answer, promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/contract-stdin.test.ts |
 
 ## Checklist
 
@@ -220,6 +222,29 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 - [x] `apps/docs/src/reference/admin-ui/component-conventions.md`: its story-naming sentence says the component is the name before the first dot, as `componentOfStory` reads it; edit only where it says otherwise, and note the result under this item
   - Note, 2026-10-15: line 53 says "A story's name is `<component>.<state>`" — it does not contradict the first-dot rule (a state may itself hold dots, as `plan-row.open.wide`), so no edit.
+
+### Build Phase 6: Audit findings — an exemption needs a record, the CLI tests need their build
+
+**Tier**: med — the work step's default
+
+**Goal**: close two gaps the audit (`audit.md`, a cold reader's findings; Sandy, 2026-10-15: "Yes 1 and 2") found. First: `heldComponentNames` (`lib/looks/landed.ts`) exempts a mockup re-approved by an unlanded plan whenever its most recent held approval binds no components — 230 of 587 approvals name a plan and record none, and `phase-row.open` (last held under the archived cockpit-redraw, with empty `components`, re-approved by the active story-first-phases) is held today only because other mockups name its components. Second: the root `pnpm test` builds indusk-mcp (for the admin's `^build`) at the same time as it runs indusk-mcp's tests, so on a clean checkout every test behind `SHOULD_SKIP` (no `dist/bin/cli.js`) skips silently — A1, the only row for `a-large-impl-gets-the-same-contract-answer`, among them — or runs against a stale or half-written build.
+
+- [ ] Author A12 in `apps/indusk-mcp/src/lib/looks/landed.test.ts` (red today: the re-approved mockup whose landed approval has no `components` exempts everything), through `addApprovedMockup`
+- [ ] Author A13 in `apps/indusk-mcp/src/__tests__/contract-stdin.test.ts`: run `turbo run test --dry=json` from the repo root (`pnpm exec turbo`) and assert `@infinitedusky/indusk-mcp#test`'s dependencies include `@infinitedusky/indusk-mcp#build` (red today: it depends only on its dependencies' builds)
+- [ ] `lib/looks/landed.ts` `heldComponentNames`: a mockup whose latest approval is an unlanded plan's holds the components its most recent held approval bound only when that approval records a non-empty `components`; otherwise (absent, empty, or no held approval at all) it holds every component its markup names. Then run `indusk looks coverage admin` on this branch and note the result under this item: if real components are reported unimplemented, stop and report them rather than changing the rule
+- [ ] `turbo.json`: add a task `@infinitedusky/indusk-mcp#test` with `dependsOn: ["^build", "build"]` and `cache: false`, so its tests wait for its own build; leave every other package's `test` as it is
+
+#### Build Phase 6 Verification
+
+- [ ] A12, A13 green, A8, A10, A11 still green (`pnpm exec vitest run src/lib/looks/landed.test.ts src/__tests__/looks-admin-components.test.ts src/__tests__/contract-stdin.test.ts`, from `apps/indusk-mcp`); `pnpm exec vitest related src/lib/looks/landed.ts --run`; `tsc --noEmit` and `biome check` on the changed files; then `pnpm test` from the repo root once, exit 0, result noted under this item
+
+#### Build Phase 6 Context
+
+- [ ] `apps/indusk-mcp/CLAUDE.md`, where its test rules are: one line — the root run builds this package before its tests (`turbo.json` `@infinitedusky/indusk-mcp#test`), because a test behind `SHOULD_SKIP` skips silently without `dist/`, so a row resting on the built CLI must not depend on a build someone remembered
+
+#### Build Phase 6 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md`: the landed-plans sentence adds that a re-approval in flight exempts only what it adds when the landed approval recorded its components, and otherwise the mockup is held in full
 
 ## Files Affected
 
