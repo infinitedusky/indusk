@@ -1,7 +1,7 @@
 ---
 title: "Phase summaries"
 date: 2026-10-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -643,7 +643,7 @@ A reader who had not seen the build audited the plan and found places where its 
 
 #### Build Phase 6 Document
 
-- [ ] The planner's reference page says the rule is checked on every edit and that an unclosed fold is refused
+- [x] The planner's reference page says the rule is checked on every edit and that an unclosed fold is refused
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/skills/plan.md`, the "Phase summaries for a reader without the shorthand" section: one paragraph on edit-time enforcement and the unclosed-fold refusal.
