@@ -67,10 +67,16 @@ This phase writes the tests that fail today for the reasons the research found. 
   `git worktree list` shows `dusk-worktrees/template-reload-on-cold-cache` on `plan/template-reload-on-cold-cache`. `indusk worktree list` refuses ("not a workbench"), so there is no separate assignment record in this normal-mode repo and none was needed.
 
   </details>
-- [ ] A test fails today because the browser template's test page does not get the packages the template imports bundled up front
+- [x] A test fails today because the browser template's test page does not get the packages the template imports bundled up front
   <details><summary>Technical</summary>
 
   A1 in `apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts` (`// promise: a-browser-test-passes-on-a-cold-cache`): import the default export of `vitest.templates.config.ts`; take the `templates` project; the list the project's server sees is the root's `optimizeDeps.include` when the project sets `extends: true`, else the project's own `optimizeDeps?.include ?? []`. Read every bare `@opentelemetry/*` import specifier from `templates/instrumentation.web.ts` (and its test file); assert each is in that list. Red today: the project neither extends nor has its own list.
+
+  </details>
+  The test is written and fails on its own assertion.
+  <details><summary>Note</summary>
+
+  The config imports cleanly from a node test, so it is read as a module. Red: all 11 `@opentelemetry/*` packages the template and its test import are reported as "packages the templates project's server would only find mid-run"; the assertion, not a load error.
 
   </details>
 - [ ] A test fails today because landing's install builds without first syncing dependencies to the lockfile
