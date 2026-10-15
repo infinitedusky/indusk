@@ -187,7 +187,7 @@ describe.skipIf(SHOULD_SKIP)("A30 — an enforced promise with an open incident 
 		expect(r.stderr).toContain("seat-never-double-booked");
 		expect(r.stderr).toContain("i-2026-09-18-double-hold");
 		expect(r.stderr).toMatch(/open/);
-		expect(r.stderr).toMatch(/known-violated/);
+		expect(r.stderr).toMatch(/known-broken/);
 	});
 
 	it("a fixed incident on an enforced promise is history, not a refusal", () => {
