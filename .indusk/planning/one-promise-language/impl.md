@@ -69,13 +69,13 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 | A11 | A production signal saying `broken` becomes an incident with its owning plan reopened, exactly as a `violated` one does | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/record-broken.test.ts |
 | A12 | The always-on server announces a production signal saying `broken` exactly as one saying `violated` | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/always-on/announce-broken.test.ts |
 | A13 | The thirty days count held, broken and neither the same way for signals saying `broken`, `violated` or a mix | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/standing.test.ts |
-| A14 | An editor installed before this plan still reads a broken run in `indusk promises health --json` as broke: the line's runs carry `violated` this release, for a signal written either way | Build Phase 4 | Build Phase 4 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
-| A15 | The editor shows a retired promise as retired, never holding or in the ok tone; a promise that broke and was fixed as broke — fixed; and an empty activity section as no signal | Build Phase 4 | Build Phase 4 | written | unit | promise: a-promise-is-upheld-or-broken | apps/vscode-extension/src/core/view-words.test.ts, apps/vscode-extension/src/core/activity.test.ts |
-| A16 | The admin's dashboard row and the promise page's thirty-day legend say no signal where nothing has reported, never never seen or nothing seen | Build Phase 4 | Build Phase 4 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx |
-| A17 | The everyday-suite signal still writes `violated` this release, and the line it prints says broken and signal, never violated or marked | Build Phase 4 | Build Phase 4 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/suite-speed.test.ts |
-| A18 | The trace-shape helper's failure messages say broken, never violated | Build Phase 4 | Build Phase 4 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
-| A19 | The word scan also reads the extension skills and the `docker/` image and Fly files, and refuses mark in any promise sense (production marks, a promise's mark, sends marks, what has been marked) | Build Phase 4 | Build Phase 4 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
-| A20 | No page people read says InDusk's own signals or the demo's are written `broken` this release | Build Phase 4 | Build Phase 4 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
+| A14 | An editor installed before this plan still reads a broken run in `indusk promises health --json` as broke: the line's runs carry `violated` this release, for a signal written either way | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
+| A15 | The editor shows a retired promise as retired, never holding or in the ok tone; a promise that broke and was fixed as broke — fixed; and an empty activity section as no signal | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/vscode-extension/src/core/view-words.test.ts, apps/vscode-extension/src/core/activity.test.ts |
+| A16 | The admin's dashboard row and the promise page's thirty-day legend say no signal where nothing has reported, never never seen or nothing seen | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx |
+| A17 | The everyday-suite signal still writes `violated` this release, and the line it prints says broken and signal, never violated or marked | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/suite-speed.test.ts |
+| A18 | The trace-shape helper's failure messages say broken, never violated | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
+| A19 | The word scan also reads the extension skills and the `docker/` image and Fly files, and refuses mark in any promise sense (production marks, a promise's mark, sends marks, what has been marked) | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
+| A20 | No page people read says InDusk's own signals or the demo's are written `broken` this release | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
 
 ## Checklist
 
@@ -401,12 +401,17 @@ A fresh reader went looking for places where the plan's promise does not yet hol
   A20. `guide/try-it.md:35`, `guide/promises.md:217`, `reference/cli/demo.md:40` and `reference/cli/looks.md:415` give the attribute value as `violated` this release, read as broken (the sentence form `ALLOWED` already permits). The scan refuses a line that says InDusk's own signals or the demo's are marked or set to `` `broken` ``.
 
   </details>
-- [x] Carried to `.indusk/planning/mark-first/research.md`, the plan that switches every writer to `broken` next release (commit `24205d54e` on `plan/mark-first`): the two writers outside `markPromise` (`scripts/suite-speed.js` and the health line's runs), the `known-broken` state an older InDusk refuses, and the dashboard dot drawn green for an enforced promise with no signal (an approved look).
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Carry the three findings that belong to the next release's plan, which switches every writer, into that plan's research.
+  <details><summary>Technical</summary>
+
+  Carried to `.indusk/planning/mark-first/research.md`, the plan that switches every writer to `broken` next release (commit `24205d54e` on `plan/mark-first`): the two writers outside `markPromise` (`scripts/suite-speed.js` and the health line's runs), the `known-broken` state an older InDusk refuses, and the dashboard dot drawn green for an enforced promise with no signal (an approved look).
+
+  </details>
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
 
 #### Build Phase 4 Verification
 
-- [ ] An editor from before this release reads a break as broke; the editor, the admin, the suite's line and the helper's messages say retired, broke — fixed and no signal, never holding for a retired promise; the widened scan is green over the extension skills, the docker files and every promise sense of mark; no page says the writers send broken this release.
+- [x] An editor from before this release reads a break as broke; the editor, the admin, the suite's line and the helper's messages say retired, broke — fixed and no signal, never holding for a retired promise; the widened scan is green over the extension skills, the docker files and every promise sense of mark; no page says the writers send broken this release.
   <details><summary>Technical</summary>
 
   Red first on today's code, then green: A14–A20. `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises/outcome-words.test.ts src/__tests__/suite-speed.test.ts src/__tests__/promise-words.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/PromiseWords.test.tsx`; `cd apps/vscode-extension && pnpm exec vitest run src/core/view-words.test.ts src/core/activity.test.ts`. A1–A13 still pass (same commands with Build Phase 3's files). `pnpm --filter docs build` succeeds.
