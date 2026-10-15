@@ -39,10 +39,10 @@ holds; the older text is kept as the record of 2026-10-05.
   way to the promise's goal, worked backward from it (the 100 m dash's split
   times) — and *limits* — bounds that always hold (an engine's heat).
 - **Every clause has a mark**: telemetry in the running system that reports it
-  kept or broken. A clause is kept only when its mark says so in real use. The
+  upheld or broken. A clause is upheld only when its mark says so in real use. The
   mark is the proof.
 - **A clause may also have tests**: the rehearsal before release and the guard
-  while code changes. Needed to build it; never enough to call it kept.
+  while code changes. Needed to build it; never enough to call it upheld.
   Removing them would leave nothing to say, before a deploy, that a change
   broke a clause — "the regression is fucked if you remove the tests" (Sandy).
 - **A plan is done when every clause's mark has reported**, its tests passing
@@ -54,6 +54,13 @@ holds; the older text is kept as the record of 2026-10-05.
 - **Promises build up.** A clause can be the promise of the part beneath it;
   the marks share a trace, so a break leads down to its cause. Depth grows
   where incidents land.
+
+**The words** (Sandy, 2026-10-15): a promise, and each clause, is **upheld**
+or **broken** — the words people use of promises. Never *failed*, *passed*,
+*held*, *kept* or *violated*. Today InDusk mixes three vocabularies: the admin
+says *held/broken*, a mark reports `upheld`/`violated`, the registry's state is
+`known-violated`. `mark-first` settles all three on upheld/broken — a mark's
+`violated` is still read, so applications already marked keep working.
 
 **What people think about** (Sandy, 2026-10-15): promises and clauses, and
 whether they hold — that is what wakes anyone at night. Tests, regressions and
