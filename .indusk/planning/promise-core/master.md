@@ -55,6 +55,14 @@ holds; the older text is kept as the record of 2026-10-05.
   the marks share a trace, so a break leads down to its cause. Depth grows
   where incidents land.
 
+**What people think about** (Sandy, 2026-10-15): promises and clauses, and
+whether they hold — that is what wakes anyone at night. Tests, regressions and
+their upkeep are fully automated and the agents' alone: written, run, grown
+from breaks and kept passing without a person deciding, approving or reading
+them. A person approves promises and clauses; the cockpit shows clause health,
+never a test list. Tests exist to help the system keep its promises, not to be
+looked at.
+
 **Two loops read the telemetry back**
 
 - **Promises → fixing.** A broken clause becomes an incident carrying its trace
