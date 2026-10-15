@@ -304,7 +304,7 @@ This phase is the part Sandy sees in the admin. The code that reads an impl for 
 
 #### Build Phase 2 Verification
 
-- [ ] The plan page shows the paragraph and the fold, the detail arrives whole, and Sandy has approved the look
+- [x] The plan page shows the paragraph and the fold, the detail arrives whole, and Sandy has approved the look
   <details><summary>Technical</summary>
 
   Green: A5, A6, A7; A8 recorded with Sandy's approval. `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/impl-parser.test.ts && pnpm exec vitest related src/lib/impl-parser-core.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/ui/PhaseRow.test.tsx src/components/plan/PhaseItems.test.tsx`; `indusk looks lint admin` reports no raw value.
