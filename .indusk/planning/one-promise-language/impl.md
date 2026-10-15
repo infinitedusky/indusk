@@ -421,7 +421,7 @@ A fresh reader went looking for places where the plan's promise does not yet hol
 
 #### Build Phase 4 Context
 
-- [ ] The editor's context says a retired promise is never shown as holding, and the promise code's context says the health line keeps the old outcome word until the writers switch.
+- [x] The editor's context says a retired promise is never shown as holding, and the promise code's context says the health line keeps the old outcome word until the writers switch.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: "`promises health --json` is a wire: its `runs[].outcome` stays `violated` until `mark-first` switches every writer, because an installed editor is not updated with the package." The extension's rule lives in `apps/vscode-extension/` (its CLAUDE.md, beside the app rules): "grey is retired, never holding — `promise: a-promise-is-upheld-or-broken`".
