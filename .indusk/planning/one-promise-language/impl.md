@@ -1,7 +1,7 @@
 ---
 title: "One promise language"
 date: 2026-10-15
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "958e42c0874fe4ae6c0d9dfc541d7a5d5a81f28c882c0a7ca714484d7fe8d766"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-15T19:26:41.174Z"
 ---
 
 # One promise language
