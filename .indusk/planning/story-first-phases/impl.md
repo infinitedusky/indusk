@@ -325,7 +325,7 @@ This phase is the part Sandy sees in the admin. The code that reads an impl for 
 
 #### Build Phase 2 Context
 
-- [ ] The admin's own rules say a task's folded detail is drawn by the shared markdown component, never as raw text
+- [x] The admin's own rules say a task's folded detail is drawn by the shared markdown component, never as raw text
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`: "a task's Technical detail renders through `components/Markdown.tsx` in `PhaseItems`, never as raw text" — `promise: technical-detail-opens-on-request`.
