@@ -4,6 +4,7 @@ import type { Question, StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { describeToolInput as describeInput } from "@/lib/conversation-turns";
+import { useAnsweredRequests } from "./use-answered-requests";
 
 /**
  * A session of the developer's own `claude`, as a person sees it
@@ -42,7 +43,7 @@ export function SessionPanel({
   onSay,
   fill = false,
 }: SessionPanelProps) {
-  const [answered, setAnswered] = useState<Set<string>>(new Set());
+  const { answered, settle } = useAnsweredRequests();
   const [draft, setDraft] = useState("");
   // About ten lines tall, then it scrolls (Sandy, 2026-10-06). It follows new
   // events unless the person has scrolled up to read.
@@ -55,18 +56,6 @@ export function SessionPanel({
   }, [events.length]);
   // How each request was decided, from the log: the record a reload keeps.
   const decisions = decisionsOf(events);
-  // A click closes its prompt at once; a reply the server refuses opens it again.
-  const settle = (requestId: string, reply: Replied) => {
-    setAnswered((prev) => new Set(prev).add(requestId));
-    void Promise.resolve(reply).then((accepted) => {
-      if (accepted === false)
-        setAnswered((prev) => {
-          const next = new Set(prev);
-          next.delete(requestId);
-          return next;
-        });
-    });
-  };
 
   return (
     <section

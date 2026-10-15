@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { Markdown } from "@/components/Markdown";
 import { EventView, type Replied } from "@/components/session/SessionPanel";
+import { useAnsweredRequests } from "@/components/session/use-answered-requests";
 import { Button } from "@/components/ui/Button";
 import { Message } from "@/components/ui/Message";
 import { agentState, type Turn, turnsOf } from "@/lib/conversation-turns";
@@ -46,7 +47,7 @@ export function ConversationThread({
   /** What sits beside Send in the reply box's row (attaching a document). */
   actions?: ReactNode;
 }) {
-  const [answered, setAnswered] = useState<Set<string>>(new Set());
+  const { answered, settle } = useAnsweredRequests();
   const [toggled, setToggled] = useState<Set<number>>(new Set());
   const [draft, setDraft] = useState("");
   const send = () => {
@@ -55,18 +56,6 @@ export function ConversationThread({
     setDraft("");
   };
   const turns = turnsOf(events, { answered, running });
-  // A click closes its prompt at once; a reply the server refuses opens it again.
-  const settle = (requestId: string, reply: Replied) => {
-    setAnswered((prev) => new Set(prev).add(requestId));
-    void Promise.resolve(reply).then((accepted) => {
-      if (accepted === false)
-        setAnswered((prev) => {
-          const next = new Set(prev);
-          next.delete(requestId);
-          return next;
-        });
-    });
-  };
   const toggle = (at: number, open: boolean) => {
     setToggled((prev) => {
       const next = new Set(prev);

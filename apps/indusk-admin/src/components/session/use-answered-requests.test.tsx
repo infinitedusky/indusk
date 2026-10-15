@@ -24,25 +24,30 @@ describe("A11 useAnsweredRequests", () => {
       );
     });
     expect(result.current.answered.has("r1")).toBe(true);
-    release(true);
+    await act(async () => {
+      release(true);
+      await later(null);
+    });
   });
 
   it("a reply resolving false reopens the request", async () => {
     const { result, act } = await renderHook(() => useAnsweredRequests());
-    await act(() => {
+    await act(async () => {
       result.current.settle("r1", later(false));
+      await later(null);
+      await later(null);
     });
-    await expect.poll(() => result.current.answered.has("r1")).toBe(false);
+    expect(result.current.answered.has("r1")).toBe(false);
   });
 
   it("a reply resolving true, or nothing, keeps it closed", async () => {
     const { result, act } = await renderHook(() => useAnsweredRequests());
-    await act(() => {
+    await act(async () => {
       result.current.settle("r1", later(true));
       result.current.settle("r2", undefined);
+      await later(null);
+      await later(null);
     });
-    await later(null);
-    await later(null);
     expect(result.current.answered.has("r1")).toBe(true);
     expect(result.current.answered.has("r2")).toBe(true);
   });
