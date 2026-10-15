@@ -516,10 +516,11 @@ The plan is correct and its tests are hardened; this phase tidies what it spread
   Found while running the full suite for Verification: `context-tiers-register.test.ts` (the root held 20 % under the 18432-byte budget) failed on this branch at 14828 bytes against 14745.6, and passes on `main` at 14730. The Key Decisions entry added by Build Phase 1 is shortened to rule and pointer; the root is now 14725 bytes. `main` has since added a Sessions-per-plan entry of about 115 bytes, so the merge will need the retrospective's compaction step (one old root entry collapsed) to stay under.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 5 Verification
 
-- [ ] The moved rule reads the same, the save check still refuses and accepts what it did, and Sandy has approved the redrawn stories
+- [x] The moved rule reads the same, the save check still refuses and accepts what it did, and Sandy has approved the redrawn stories
   <details><summary>Technical</summary>
 
   Green: A19; still green: A1–A3, A14, A15, A5, A6; A20 recorded with Sandy's approval. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/phase-summary-module.test.ts src/__tests__/phase-summary-rule.test.ts src/__tests__/phase-summary-existing-impls.test.ts && pnpm exec vitest related hooks/validate-impl-structure.js hooks/_phase-summary.js`; `cd apps/indusk-admin && pnpm exec vitest run src/components/ui/PhaseRow.test.tsx src/components/plan/PhaseItems.test.tsx`; `indusk looks lint admin` and `indusk looks status admin` show both stories approved.
