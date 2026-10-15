@@ -121,7 +121,11 @@ export function phaseSummaryProblems(implBody, required) {
 			continue;
 		}
 		if (lastTask !== null) {
-			if (openFold === null && /^\s+<details[\s>]/.test(line) && !line.trim().endsWith("</details>")) {
+			if (
+				openFold === null &&
+				/^\s+<details[\s>]/.test(line) &&
+				!line.trim().endsWith("</details>")
+			) {
 				openFold = { task: lastTask, phase };
 			} else if (openFold !== null && line.trim().endsWith("</details>")) {
 				openFold = null;
