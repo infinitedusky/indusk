@@ -1,7 +1,7 @@
 ---
 title: "skip-reason-why"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -51,6 +51,9 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 | A7 | Each of the cleanup, falsify and audit skills states the one-sentence, 120-character limit beside a skip example within it | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 | A8 | A step with no reason draws with no "why?" | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the four existing step looks must not change | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
 | A9 | A skip with a reason of 120 characters or fewer is still ready for the retrospective | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: a short skip stays valid, and an audit skip with a reason is still accepted | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
+| A10 | On the page of a plan whose audit was skipped with a reason, the Audit step reads "skipped" with a "why?" that opens the reason | Phase 0 | Build Phase 3 | planned | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
+| A11 | A cleanup skipped with a reason of three short sentences ("Done. Nothing here. Fine.", under 120 characters) is not ready for the retrospective, cleanup named | Phase 0 | Build Phase 3 | planned | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
+| A12 | A one-sentence reason containing "e.g." or a file name such as "gate.ts" is still ready for the retrospective | Phase 0 | Build Phase 3 | planned | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 
 ## Checklist
 
@@ -136,6 +139,37 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 #### Build Phase 2 Document
 
 - [x] `apps/docs/src/reference/admin-ui/overview.md`: a skipped step reads "skipped" with a "why?" that opens its reason
+
+### Build Phase 3: Falsification — the audit step, and a reason that is short but not one sentence
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds for the third skippable ritual and for the "one sentence" half of the promise. Each row captures one hypothesis found by reading the built code (nothing was run):
+
+- **An audit skipped with a reason never reads "skipped"** (A10). The brief's promise covers falsification, cleanup and audit, but `releaseStep` in `apps/indusk-mcp/src/lib/plans/steps.ts` maps only Falsify and Cleanup to a ritual, and `apps/indusk-admin/src/lib/planning-reader.ts:354-366` builds `skippedRituals` from falsification and cleanup only. An audit skip satisfies readiness, so the Audit step reads its segment state (done) with no "skipped" and no "why?" — its reason is never shown at all.
+- **The check measures length, not sentences** (A11, A12). `skipIsOneSentence` in `cleanup/gate.ts` tests only `reason.length <= 120`; "Done. Nothing here. Fine." passes, though the promise says one sentence. A sentence-end count must not refuse "e.g." or "gate.ts" (A12), which is why a dot alone cannot be the rule.
+
+- [ ] `steps.ts`: the Audit step reads `skipped` with its reason when the plan's skipped rituals include the audit; `PlanSnapshot.skippedRituals` takes `"audit"` beside the two `RitualWord`s (a local union — `RITUAL_ORDER` stays the two rituals that have phases)
+- [ ] `planning-reader.ts`: add `{ ritual: "audit", check: isAuditSkipped(implRaw) }` to `skippedRituals` (import from `@infinitedusky/indusk-mcp/cleanup/gate`, as `isCleanupSkipped` is); give the cockpit fixture a plan with `audit: skipped` + a one-sentence `audit_reason`
+- [ ] `cleanup/gate.ts` `skipIsOneSentence`: also refuse a reason with more than one sentence end, where a sentence end is `.`, `!` or `?` followed by whitespace and an uppercase letter; the one rule lives in `lifecycle.ts` beside `SKIP_REASON_MAX` (browser-reachable, as Build Phase 2 found) and `longSkipReasons` keeps its name, its entries gaining `sentences: number`; the lifecycle wording says "one sentence" when that is the cause
+- [ ] The three skills' limit sentence already says one sentence; confirm it reads as the rule the code applies (no edit if it does)
+
+#### Build Phase 3 Verification
+
+- [ ] A10 goes green (`cd apps/indusk-admin && pnpm exec vitest run "src/app/p/[project]/plan/[name]/workflows.test.tsx"`), and A1–A3, A8 stay green
+- [ ] A11 and A12 go green and A4–A7, A9 stay green (`pnpm exec vitest run apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts && pnpm exec vitest related apps/indusk-mcp/src/lib/cleanup/gate.ts apps/indusk-mcp/src/lib/plans/steps.ts apps/indusk-mcp/src/lib/lifecycle.ts --run`)
+
+#### Build Phase 3 Context
+
+- [ ] guard: the sentence rule's code comment names `promise: a-skip-reason-is-one-sentence`, so the rule reaches an agent from its enforcer
+
+#### Build Phase 3 Document
+
+- [ ] `apps/docs/src/reference/skills/retrospective.md`: the Step 0 check refuses a reason of more than one sentence as well as one over 120 characters; `apps/docs/src/reference/admin-ui/overview.md`: the Audit step reads "skipped" too
+
+#### Build Phase 3 Hunt record
+
+Searched without finding an attack vector: the readiness gate's other satisfiers (a complete log, a terminal falsification phase, `audit.md` — a long skip beside them is ignored, by design and A9); every JS hook (none reads a skip reason); the lifecycle ordering (a long reason holds the plan at its ritual's position, so it never reaches review, where `ReviewPanel` prints reasons whole); the `Step` component with no reason (A8). Not investigated: the build runner's response to a plan held at "cleanup skip reason is too long" — it re-runs `/cleanup`, whose skill now states the limit; whether that session rewrites an existing skip is a skill-following question, not this code's.
 
 ## Files Affected
 
