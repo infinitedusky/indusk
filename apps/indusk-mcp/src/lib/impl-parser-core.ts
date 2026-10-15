@@ -88,6 +88,16 @@ const GATE_SUFFIXES: Record<string, GateType> = {
 /** A line that is only the fold's own tags: `<details>`, `<summary>…</summary>`, `</details>`. */
 const FOLD_TAGS_ONLY = /^(<details[^>]*>)?\s*(<summary>.*?<\/summary>)?\s*(<\/details>)?$/;
 
+/** A line that opens a task's fold and does not close it on the same line. */
+function opensFold(line: string): boolean {
+	return /^\s+<details[\s>]/.test(line) && !closesFold(line);
+}
+
+/** A line that ends a task's fold. */
+function closesFold(line: string): boolean {
+	return line.trim().endsWith("</details>");
+}
+
 /** A phase's label lines (`**Tier**: …`, `**Goal**: …`) are not its paragraph. */
 const PHASE_LABEL = /^\*\*(Tier|Goal)\*\*:/;
 
@@ -127,9 +137,9 @@ function parseChecklistItems(lines: string[]): ChecklistItem[] {
 			const trimmed = line.trim();
 			if (inFold) {
 				details[last].push(line);
-				if (!fenced[i] && trimmed.endsWith("</details>")) inFold = false;
+				if (!fenced[i] && closesFold(line)) inFold = false;
 			} else if (!fenced[i] && /^\s+<details[\s>]/.test(line)) {
-				inFold = !trimmed.endsWith("</details>");
+				inFold = opensFold(line);
 				details[last].push(line);
 			} else if (/^\s+\S/.test(line)) {
 				notes[last].push(trimmed.replace(/^-\s+/, ""));
@@ -200,8 +210,8 @@ export function parseImplString(raw: string): ParsedImpl {
 			continue;
 		}
 		if (preamble === null) {
-			if (/^\s+<details[\s>]/.test(line) && !line.trim().endsWith("</details>")) inFold = true;
-			else if (inFold && line.trim().endsWith("</details>")) inFold = false;
+			if (opensFold(line)) inFold = true;
+			else if (inFold && closesFold(line)) inFold = false;
 		}
 
 		// Phase header: ### Phase N / ### Build Phase N / ### Test Phase N
