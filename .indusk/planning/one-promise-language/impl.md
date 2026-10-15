@@ -163,12 +163,13 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
   `vocabulary.ts`: `PROMISE_STATES = ["declared", "enforced", "known-broken", "retired"]`, docblock updated. `registry.ts`: map `known-violated` → `known-broken` before `promiseProblem` validates. `incidents.ts` writes `known-broken` on open; on the last fix returns either word to `enforced` (reading the raw file). `check.ts`, `health.ts`, `standing.ts`, `proof.ts` compare to `known-broken`. Admin `components/bars/labels.ts` and `components/plan/PlanParts.tsx` keys, and `__tests__/helpers/promises-fixture.ts`'s `PromiseState`, follow. Existing tests that write `known-violated` fixtures keep doing so (they now prove the alias); assertions that read the state back expect `known-broken`.
 
   </details>
-- [ ] Review the shape of the changed reading and writing code.
+- [x] Review the shape of the changed reading and writing code.
   <details><summary>Technical</summary>
 
   Shape per `/work`, over `vocabulary.ts`, `telemetry.ts`, `registry.ts`, `incidents.ts`, `pass.ts`, `mark.ts`.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
