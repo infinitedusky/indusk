@@ -295,10 +295,22 @@ This phase is the part Sandy sees in the admin. The code that reads an impl for 
   The changed mockup `phase-row.open` and its re-rendered story, both on the Looks page; the agent proposes, only a person approves. A8 records the result.
 
   </details>
-- [ ] Shape review of the changed reading code and plan-page components
+- [x] Shape review of the changed reading code and plan-page components
   <details><summary>Technical</summary>
 
   Per `/work`, over `impl-parser-core.ts`, `PhaseRow.tsx`, `PhaseItems.tsx`, `PlanParts.tsx`.
+
+  </details>
+- [x] Shape: Name the two fold-edge tests, which the main loop and the item reader each spell out inline, so one place says what opens and closes a task's fold
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/impl-parser-core.ts`. Rule: Should this inline block have been a named function? The same test written twice can drift apart
+
+  </details>
+- [x] Shape: Give the code that writes one task back to markdown, detail included, a name of its own instead of an inline block inside the list mapper
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/src/lib/markdown-export.ts`. Rule: Should this inline block have been a named function? It has its own job and can then be tested alone
 
   </details>
 
