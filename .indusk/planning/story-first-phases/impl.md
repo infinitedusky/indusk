@@ -192,7 +192,7 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
   New rule in `validate-impl-structure.js`, gated on `/^phase_summary:\s*required/m` like `test_phases`. For each `###` phase: the lines between its heading (or `**Tier**:` / `**Goal**:` line) and its first item or `####` must hold at least one non-blank, non-label paragraph line — refused naming the phase; that paragraph must hold no `\b[TA]\d+\b` — refused naming the phase and the label. For each column-zero item: its text after the box must hold no backtick and no `\b[TA]\d+\b` — refused naming the item: "a task is one plain sentence for someone who knows the project but none of its shorthand; code and row labels belong in its Technical detail". The Verification exemption below applies only to the cross-reference rule, not to this one. Register sections (`#### Deferred to …`, `#### Regression Guards`) hold entries, not items, and are not read. Message ends `promise: an-impl-phase-explains-itself`.
 
   </details>
-- [ ] For an impl that opts in, a Verification task may name the tests it proves in its folded detail instead of its sentence
+- [x] For an impl that opts in, a Verification task may name the tests it proves in its folded detail instead of its sentence
   <details><summary>Technical</summary>
 
   The cross-reference rule (`validateCrossReferenceIntegrity` in `validate-impl-structure.js`, and its twin in `src/lib/trajectory/validator.ts`): when `phase_summary: required`, also collect `\b[TA]\d+\b` from the indented lines under each Verification item, up to the next column-zero line. Unknown labels there are refused as they are on the line. Reading a label ticks nothing and skips nothing, so `hidden-detail-is-only-read` holds.

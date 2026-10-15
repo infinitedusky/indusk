@@ -474,6 +474,7 @@ if (trajectoryValidationEnabled) {
 		rationaleRequiredFrontmatter,
 		rationaleBaseline,
 		testPhasesRequiredFrontmatter,
+		phaseSummaryRequiredFrontmatter,
 	);
 	trajectoryErrors.push(...validateTestLevels(body, testLevelsRequiredFrontmatter));
 	trajectoryErrors.push(...validateRowShape(body, testPurposeRequiredFrontmatter));
@@ -682,6 +683,7 @@ function validateTrajectory(
 	rationaleRequired,
 	rationaleBaseline = 0,
 	testPhasesRequired = false,
+	phaseSummaryRequired = false,
 ) {
 	const errors = [];
 
@@ -711,7 +713,7 @@ function validateTrajectory(
 	const trajectory = parseTrajectoryFromBody(implBody);
 	const sequence = phaseSequence(implBody);
 	const hasTestPhase = sequence.some((p) => p.kind === "test");
-	errors.push(...validateCrossReferenceIntegrity(implBody, trajectory));
+	errors.push(...validateCrossReferenceIntegrity(implBody, trajectory, phaseSummaryRequired));
 	errors.push(...validateTemporalCoherence(trajectory, sequence));
 	errors.push(...validateDeferredCompleteness(trajectory));
 	errors.push(...validateTestPhasePresence(sequence, testPhasesRequired));
@@ -830,7 +832,14 @@ function validateRegressionGuards(implBody, trajectory, sequence) {
 		}));
 }
 
-function validateCrossReferenceIntegrity(implBody, trajectory) {
+/**
+ * Mirrors `validateCrossReferenceIntegrity` in `src/lib/trajectory/validator.ts`.
+ * With `phase_summary: required` (`readDetail`), a Verification task's row
+ * labels are read from its folded detail — the indented lines under it, up to
+ * the next column-zero line — as well as from its line. Reading a label there
+ * ticks nothing and skips nothing (promise: hidden-detail-is-only-read).
+ */
+function validateCrossReferenceIntegrity(implBody, trajectory, readDetail = false) {
 	const errors = [];
 	const knownIds = new Set(trajectory.rows.map((r) => r.id));
 	const allowed = new Set(["schema-only", "delete", "refactor", "infra"]);
@@ -845,6 +854,20 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 	let foundRef = false;
 	let foundDecl = false;
 	let itemCount = 0;
+	let underItem = false;
+
+	const checkIds = (ids, i) => {
+		foundRef = true;
+		for (const id of ids) {
+			if (!knownIds.has(id)) {
+				errors.push({
+					rule: "cross-reference-integrity",
+					line: i + 1,
+					message: `Phase ${currentPhase} Verification references test ID \`${id}\` but no such row exists in the Test Trajectory table.`,
+				});
+			}
+		}
+	};
 
 	const flushPhase = () => {
 		if (currentPhase !== null && inVerification && itemCount > 0 && !foundRef && !foundDecl) {
@@ -881,9 +904,16 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 			inVerification = false;
 			continue;
 		}
+		if (/^\S/.test(line)) underItem = false;
+		if (inVerification && readDetail && underItem && /^\s+\S/.test(line)) {
+			const ids = line.match(testIdPattern);
+			if (ids) checkIds(ids, i);
+			continue;
+		}
 		if (inVerification) {
 			const item = line.match(/^-\s+\[[ xX]\]\s+(.*)/);
 			if (item) {
+				underItem = true;
 				itemCount++;
 				const text = item[1];
 				const noTests = text.match(noTestsRegex);
@@ -900,18 +930,7 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 					continue;
 				}
 				const ids = text.match(testIdPattern);
-				if (ids) {
-					foundRef = true;
-					for (const id of ids) {
-						if (!knownIds.has(id)) {
-							errors.push({
-								rule: "cross-reference-integrity",
-								line: i + 1,
-								message: `Phase ${currentPhase} Verification references test ID \`${id}\` but no such row exists in the Test Trajectory table.`,
-							});
-						}
-					}
-				}
+				if (ids) checkIds(ids, i);
 			}
 		}
 	}
