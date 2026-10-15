@@ -1,6 +1,6 @@
 import { rmSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
-import { type SourceHealthRead, reportRows } from "../lib/promises/health.js";
+import { reportRows, type SourceHealthRead } from "../lib/promises/health.js";
 import { proofOf } from "../lib/promises/proof.js";
 import { readPromises } from "../lib/promises/registry.js";
 import { readStanding } from "../lib/promises/standing.js";
@@ -79,7 +79,11 @@ describe("A10 — one state per promise and source on all three surfaces", () =>
 			at: at(30).toISOString(),
 			marks,
 		}));
-		const standing = await readStanding(p.planRoot, { health: reads, now: () => NOW });
+		const standing = await readStanding(p.planRoot, {
+			health: reads,
+			now: () => NOW,
+			resolve: async () => [],
+		});
 		for (const name of ["seats-held", "seats-released"]) {
 			const proof = await proofOf(p.planRoot, name, {
 				health: reads,

@@ -10,9 +10,9 @@ import {
 } from "../../__tests__/helpers/promises-fixture.js";
 import type { SourceHealthRead } from "./health.js";
 import { appendHeard } from "./heard.js";
-import { readStanding } from "./standing.js";
 import { type ProofDeps, proofOf } from "./proof.js";
 import type { SourceRead } from "./sources.js";
+import { readStanding } from "./standing.js";
 import type { MarkedSpan, MarkedSpansResult } from "./telemetry.js";
 import type { TimelineMark, TimelineRead } from "./timeline.js";
 
@@ -507,7 +507,9 @@ describe("cockpit-audit-fixes A5, A6 — the dashboard and the page count alike"
 			{ at: day(9), promise: PROMISE, trace: "h3", incident: "i1", source: "deployed" },
 		]);
 		const d = deps({
-			...storeOf({ production: [upheld(day(3), "p1"), upheld(day(4), "p2"), upheld(day(5), "p3")] }),
+			...storeOf({
+				production: [upheld(day(3), "p1"), upheld(day(4), "p2"), upheld(day(5), "p3")],
+			}),
 		});
 		const proof = await proofOf(fx.planRoot, PROMISE, d);
 		const row = (await readStanding(fx.planRoot, { ...d, health: healthRead(false) })).find(

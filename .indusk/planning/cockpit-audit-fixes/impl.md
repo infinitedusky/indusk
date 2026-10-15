@@ -41,12 +41,12 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A promise seen upheld on three days and broken on one shows "held 3 · broke 1" on the dashboard | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
-| A2 | A promise that was never seen shows no held days, not thirty | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A1 | A promise seen upheld on three days and broken on one shows "held 3 · broke 1" on the dashboard | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A2 | A promise that was never seen shows no held days, not thirty | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
 | A3 | Five violations heard on one day count as one broken day | Test Phase 1 | Test Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
-| A4 | A violation heard under a promise's earlier name is counted on its day, on the dashboard and on the promise page alike | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
-| A5 | For one promise, the dashboard row and the promise page give the same number of held days and broken days | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
-| A6 | The dashboard and the promise page count the same thirty days: a violation on the first of the page's thirty days appears on both, and one on the day before appears on neither | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
+| A4 | A violation heard under a promise's earlier name is counted on its day, on the dashboard and on the promise page alike | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A5 | For one promise, the dashboard row and the promise page give the same number of held days and broken days | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
+| A6 | The dashboard and the promise page count the same thirty days: a violation on the first of the page's thirty days appears on both, and one on the day before appears on neither | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
 | A7 | An agent that asks two questions at once has both shown on the plan's card, and answering them gives the agent an answer to each | Test Phase 1 | Build Phase 2 | written | unit | promise: a-question-is-answered-in-full | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx, apps/indusk-admin/src/lib/decisions.test.ts |
 | A8 | A plan whose impl is a draft while a session is still writing it is not under Needs you for approval; once the session ends, it is | Test Phase 1 | Build Phase 2 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
 | A9 | A plan declared by an outer Path and by a Path inside it is grouped under the inner Path on the dashboard, and the nav lists it there | Test Phase 1 | Build Phase 3 | written | unit | promise: a-promise-sits-in-its-innermost-path | apps/indusk-admin/src/app/p/[project]/promises/dashboard.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
@@ -84,21 +84,21 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 
 **Goal**: one window and one counting rule for the dashboard's days and the page's, read from the same module.
 
-- [ ] `promises/standing`: the thirty days are the page's — thirty UTC days ending today — and held is days with an upheld run and no break; a day nobody watched is neither; a promise never seen has none (A1, A2, A6)
-- [ ] `promises/proof`: its days come from the same function as the dashboard's, so the two cannot count differently (A4, A5)
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] `promises/standing`: the thirty days are the page's — thirty UTC days ending today — and held is days with an upheld run and no break; a day nobody watched is neither; a promise never seen has none (A1, A2, A6)
+- [x] `promises/proof`: its days come from the same function as the dashboard's, so the two cannot count differently (A4, A5)
+- [x] Shape — reviewed `standing.ts` and `proof.ts` by hand: nothing found (the day counter is one named, pure, tested function; `proof.daysOf` lost its private bucket maths). Left as is: `standing.ts` now also reads the store for upheld runs — one reason to change (what the thirty days hold), kept beside the counter so the two cannot drift
 
 #### Build Phase 1 Verification
 
-- [ ] A1–A6 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/standing.test.ts src/lib/promises/proof.test.ts && pnpm exec vitest related src/lib/promises/standing.ts src/lib/promises/proof.ts --run`); admin dashboard and promise page tests still pass; tsc and biome clean on changed files
+- [x] A1–A6 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/standing.test.ts src/lib/promises/proof.test.ts && pnpm exec vitest related src/lib/promises/standing.ts src/lib/promises/proof.ts --run`); admin dashboard and promise page tests still pass; tsc and biome clean on changed files
 
 #### Build Phase 1 Context
 
-- [ ] `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: the dashboard's days and the page's are one function's, never two — guarded by A5
+- [x] `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: the dashboard's days and the page's are one function's, never two — guarded by A5
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/promise-page.md`: what a held day, a broken day and an unwatched day are
+- [x] `apps/docs/src/reference/admin-ui/promise-page.md`: what a held day, a broken day and an unwatched day are
 
 ### Build Phase 2: Every question, and approval for a finished plan
 
@@ -159,5 +159,7 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 - plan-cockpit (closed 2026-10-10): the modules and pages this plan corrects
 
 ## Notes
+
+- Decision (unattended build): a promise seen only by a sighting with no upheld day on record shows `held 0`, never thirty — the days say only what was seen. `readStanding` now reads the store's window itself (and honours `home`), the same read the page's days use.
 
 - Parked on purpose (Sandy, 2026-10-11): approved so it is ready, and built when the cockpit's own use shows which of these matter. The brief's *Settled by default* names the two readings to revisit first.

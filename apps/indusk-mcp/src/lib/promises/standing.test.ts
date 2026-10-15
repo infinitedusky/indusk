@@ -182,7 +182,7 @@ describe("A33 — standing reports the health the CLI and the editor report", ()
 			marks,
 		}));
 
-		const standing = await readStanding(p.planRoot, { health: reads });
+		const standing = await readStanding(p.planRoot, { health: reads, resolve: async () => [] });
 		expect(standing.map((s) => s.entry.name).sort()).toEqual([
 			"seats-held",
 			"seats-quiet",
@@ -236,7 +236,8 @@ describe("the dashboard's thirty days are the package's (plan-cockpit Build Phas
 				],
 			},
 		);
-		expect(r.thirtyDays).toEqual({ broke: 2, held: 28 });
+		// held is days an upheld run was seen (none handed in), not thirty minus broke.
+		expect(r.thirtyDays).toEqual({ broke: 2, held: 0 });
 	});
 
 	it("a promise nothing has seen or heard has held null, not thirty", () => {
@@ -277,7 +278,7 @@ describe("the dashboard's thirty days are the package's (plan-cockpit Build Phas
 describe("A40 — the thirty days count days", () => {
 	const now = Date.UTC(2026, 9, 10, 12, 0);
 
-	it("five violations heard on one day are one broken day, and held plus broke is thirty", () => {
+	it("five violations heard on one day are one broken day", () => {
 		const r = standingOf(
 			entry(),
 			[seen("production", "green", "2026-10-09T10:00:00.000Z")],
@@ -288,8 +289,7 @@ describe("A40 — the thirty days count days", () => {
 				heard: [1, 2, 3, 4, 5].map((n) => heardRow("seats-held", `2026-10-08T0${n}:00:00.000Z`)),
 			},
 		);
-		expect(r.thirtyDays).toEqual({ broke: 1, held: 29 });
-		expect((r.thirtyDays.held ?? 0) + r.thirtyDays.broke).toBe(30);
+		expect(r.thirtyDays).toEqual({ broke: 1, held: 0 });
 	});
 });
 
@@ -299,11 +299,17 @@ describe("cockpit-audit-fixes A1–A4 — thirty days that say only what was see
 	const upheld = (...days: string[]) => days.map((d) => `${d}T10:00:00.000Z`);
 
 	it("A1 upheld on three days and broken on one is held 3, broke 1", () => {
-		const r = standingOf(entry(), [seen("production", "green", "2026-10-09T10:00:00.000Z")], [], undefined, {
-			now,
-			heard: [heardRow("seats-held", "2026-10-08T09:00:00.000Z")],
-			upheld: upheld("2026-10-05", "2026-10-06", "2026-10-07"),
-		} as never);
+		const r = standingOf(
+			entry(),
+			[seen("production", "green", "2026-10-09T10:00:00.000Z")],
+			[],
+			undefined,
+			{
+				now,
+				heard: [heardRow("seats-held", "2026-10-08T09:00:00.000Z")],
+				upheld: upheld("2026-10-05", "2026-10-06", "2026-10-07"),
+			} as never,
+		);
 		expect(r.thirtyDays).toEqual({ broke: 1, held: 3 });
 	});
 
