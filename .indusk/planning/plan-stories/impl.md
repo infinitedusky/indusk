@@ -397,12 +397,13 @@ Titles and descriptions come from research.md's tables. A description already wr
 
 #### Build Phase 6 Verification
 - [x] A22: a fixture project with a plan assigned to a worktree whose brief's title differs from the trunk copy's; `readHealthNames` returns the worktree's title, and the admin's `readActivePlans` returns the same (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts`, plus `pnpm exec vitest related` over the changed files in both packages); A8–A13 and A21 still pass; tsc and biome clean
+- [x] Shape — reviewed the 7 files this phase changed (`rules.unreadable` empty, so every enabled extension's craft prose was read); nothing to change. `readHealthNames` reads the changelog, then names each folder, then names branch-only plans, each step a few lines over named helpers (`readPlanName`, `planDates`); the callers changed by one `await`.
 
 #### Build Phase 6 Context
-- [ ] `apps/indusk-mcp/CLAUDE.md` (over budget, shrinking edits only): fold into the display-names entry that a plan's names are read from the copy the nav reads, worktree first
+- [x] `apps/indusk-mcp/CLAUDE.md` (over budget, shrinking edits only): fold into the display-names entry that a plan's names are read from the copy the nav reads, worktree first
 
 #### Build Phase 6 Document
-- [ ] `apps/docs/src/reference/admin-ui/overview.md` (the Promises page): a plan reads by the title in its own worktree while it is worked there, as in the nav
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (the Promises page): a plan reads by the title in its own worktree while it is worked there, as in the nav
 
 #### Build Phase 6 Falsification Summary
 - Searched without a hypothesis: `subplans:` entries as mappings (every reader goes through `plan-parser`'s `subplanEntries`); a non-string or date `title:` (the frontmatter reader returns a string or nothing); an empty part before the dash (falls back to the handle in words); the master story's counts against the nav's Path count (one group, one rule); nested Paths in a master's story; `answerDecision` on an amendment wait (refused); initials from titles (Paths draw none; plan marks could collide before this plan too).
