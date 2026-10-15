@@ -1,5 +1,3 @@
-import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
-import { planTitle } from "@infinitedusky/indusk-mcp/promises/display";
 import { initialsOf } from "@/lib/initials";
 import type { PathEntry, PlanGroup } from "@/lib/plan-groups";
 import { planStage } from "@/lib/plan-stage";
@@ -54,21 +52,18 @@ const queuedIn = (group: PlanGroup): number =>
  */
 export function masterStory(
   group: PlanGroup,
-  declaredTitles: PlanDeclarations["declaredTitles"] | undefined,
   isReleased: (plan: string) => boolean,
   options: { prefix: string; waiting?: Record<string, string> },
 ): MasterStory {
-  const written = declaredTitles?.[group.parent.name] ?? {};
   const rowOf = (entry: PathEntry): StoryRow => {
     if (entry.kind === "placeholder") {
-      const own = written[entry.name];
-      const title = own?.title ?? planTitle(undefined, entry.name);
+      const { title } = entry;
       return {
         number: entry.number,
         handle: entry.name,
         title,
         initials: initialsOf(title),
-        description: own?.description ?? "",
+        description: entry.description,
         state: "queued",
         stage: "Queued",
       };

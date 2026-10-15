@@ -33,7 +33,7 @@ const build = (released: string[]) => {
   const { groups } = buildGroups(active, archived, grouping, isReleased);
   const group = groups[0];
   if (!group) throw new Error("no group");
-  return masterStory(group, grouping.declaredTitles, isReleased, {
+  return masterStory(group, isReleased, {
     prefix: "/p/x/plan/",
     waiting: { two: "Review" },
   });

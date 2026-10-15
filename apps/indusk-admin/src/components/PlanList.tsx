@@ -1,8 +1,5 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
-import {
-  type PlanDates,
-  planTitle,
-} from "@infinitedusky/indusk-mcp/promises/display";
+import type { PlanDates } from "@infinitedusky/indusk-mcp/promises/display";
 import { NavPlanRow } from "@/components/cockpit/NavItems";
 import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
 import { HoldingBadge } from "@/components/HoldingBadge";
@@ -58,6 +55,8 @@ interface PlanListProps {
    * does in the nav's Needs you group.
    */
   waiting?: Record<string, string>;
+  /** The project's product words, for a queued plan with no title declared. */
+  words?: Record<string, string>;
 }
 
 /**
@@ -82,6 +81,7 @@ export function PlanList({
   red,
   dates,
   waiting,
+  words,
 }: PlanListProps) {
   if (active.length === 0 && archived.length === 0) {
     return <EmptyPlansSidebarSlot />;
@@ -94,6 +94,7 @@ export function PlanList({
     archived,
     grouping,
     isReleased,
+    words,
   );
   const orderedActive = orderByMaster(rest, masterOrder);
   const unordered = rest.filter((p) => !masterOrder.includes(p.name));
@@ -112,7 +113,6 @@ export function PlanList({
           red={red}
           waiting={waiting}
           isReleased={isReleased}
-          declaredTitles={grouping?.declaredTitles}
         />
       ))}
 
@@ -212,7 +212,6 @@ function PlanGroupSection({
   red,
   waiting,
   isReleased,
-  declaredTitles,
   number,
 }: {
   group: PlanGroup;
@@ -220,7 +219,6 @@ function PlanGroupSection({
   red?: Set<string>;
   waiting?: Record<string, string>;
   isReleased: (plan: string) => boolean;
-  declaredTitles?: PlanDeclarations["declaredTitles"];
   number?: number;
 }) {
   const name = group.parent.name;
@@ -263,18 +261,11 @@ function PlanGroupSection({
             red={red}
             waiting={waiting}
             isReleased={isReleased}
-            declaredTitles={declaredTitles}
             number={entry.number}
           />
         ) : (
           <div key={entry.name} data-testid={`plan-placeholder-${entry.name}`}>
-            <PlaceholderRow
-              title={
-                declaredTitles?.[name]?.[entry.name]?.title ??
-                planTitle(undefined, entry.name)
-              }
-              number={entry.number}
-            />
+            <PlaceholderRow title={entry.title} number={entry.number} />
           </div>
         ),
       )}

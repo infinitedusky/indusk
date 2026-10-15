@@ -222,15 +222,15 @@ async function masterPage(
     readActivePlans(projectPath),
     readArchivedPlans(projectPath),
   ]);
-  const { planDates } = await readHealthNames(projectPath);
+  const { planDates, words } = await readHealthNames(projectPath);
   const isReleased = (n: string) => (planDates[n]?.released ?? null) !== null;
   const group = groupOf(
-    buildGroups(active, archived, grouping, isReleased).groups,
+    buildGroups(active, archived, grouping, isReleased, words).groups,
     name,
   );
   if (!group) return undefined;
   const waiting = await readWaiting(project, projectPath, active);
-  return masterStory(group, grouping.declaredTitles, isReleased, {
+  return masterStory(group, isReleased, {
     prefix: `/p/${project}/plan/`,
     waiting: Object.fromEntries(waiting.map((w) => [w.plan, w.step])),
   });
