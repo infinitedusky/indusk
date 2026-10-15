@@ -229,7 +229,7 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
   planning: `apps/indusk-mcp/templates/planning/CLAUDE.md`, "The impl", beside the fences entry — "a checkbox or an opt-out is read only from a column-zero line; anything indented under a task is its detail, read for row labels by the cross-reference rule and for nothing else" — guarded by `detail-is-only-read.test.ts` (`promise: hidden-detail-is-only-read`). Sync `.indusk/planning/CLAUDE.md`.
 
   </details>
-- [ ] The root project instructions list this decision among the key decisions
+- [x] The root project instructions list this decision among the key decisions
   <details><summary>Technical</summary>
 
   root (Key Decisions): `- Phase summaries: a summary per phase, one plain sentence per task for a reader without the plan's shorthand, technical detail folded beneath; opt-in phase_summary: required — see /decisions/phase-summaries` — always-on because every planning session writes impls and must know the shape exists before reading any plan.
