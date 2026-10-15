@@ -49,7 +49,7 @@ Every request a session makes is recorded in its log together with how it was de
 | A5 | A request a planning session allowed on its own rule appears in the log as allowed | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts |
 | A6 | A request the person allowed or denied shows the outcome they chose, and a panel connecting afterwards shows it decided, with no buttons | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A7 | A question a build declined on its own shows as declined, with the reason, never as waiting | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
-| A8 | Watching a real build in the cockpit, no prompt is left looking undecided, and a reload leaves every one decided | Build Phase 2 | Build Phase 2 | planned | live check | the brief's expectation: watching a build shows no prompt waiting unless it is | recorded in this impl, Build Phase 2 |
+| A8 | Watching a real build in the cockpit, no prompt is left looking undecided, and a reload leaves every one decided | Build Phase 2 | Build Phase 2 | passing | live check | the brief's expectation: watching a build shows no prompt waiting unless it is | recorded in this impl, Build Phase 2 |
 
 ## Checklist
 
@@ -117,14 +117,17 @@ Every request a session makes is recorded in its log together with how it was de
 
 - [x] `SessionPanel.tsx`: build a `requestId → decided` map from `events`; `open` is `running && !decided.has(id) && !answered.has(id)` (the local set stays, so a click closes the prompt before the event arrives); a permission with a decision shows its outcome line, "Allowed", or "Denied — {message}", in place of the buttons; a question with a declining decision shows "Declined — {message}"
 - [x] `lib/conversation-turns.ts`: `turnsOf` treats a request with a `decided` event as answered, whatever `answered` set it is handed; a `decided` event is not drawn as a line of its own
-- [ ] A8 live check: run a build of a small approved plan from the cockpit, watch the panel, reload mid-build, and record here what was seen (the plan, the number of requests, any left open)
+- [x] A8 live check: run a build of a small approved plan from the cockpit, watch the panel, reload mid-build, and record here what was seen (the plan, the number of requests, any left open)
   - Seen 2026-10-14, `cockpit-audit-fixes` built from this branch's admin (`next dev -p 3942` in the worktree), a scripted Chromium sampling the panel every 20s. Build step: requests rose 1 → 23, every one "Allowed", no Allow, Deny or Answer button at any sample. A fresh page connecting mid-build (the reload) showed 17 of 17 "Allowed", no buttons; a second reload after the build moved to falsify showed the new session, nothing waiting. No request was denied or declined, so those outcomes were not seen live (A2, A7 hold them in tests). No blank row for a `decided` event. Seen, not yet judged: a decided request still sits in the yellow `border-warn bg-warn-wash` card a waiting prompt uses (`SessionPanel.tsx:226`), with "Allowed" inside it
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+  - Judged 2026-10-15 by Sandy, shown the screenshot: "that look fine". The yellow card stays; a decided request's look is `one-conversation-view`'s to draw
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+  - The review's file list also held everything the merge of main brought in (the phase opened before it); the files this phase wrote are `SessionPanel.tsx` and `conversation-turns.ts`. `decisionsOf` is one named reader; the thread's own set of decided ids is the same idea in a second file, which is `/cleanup`'s to judge, not Shape's
 
 #### Build Phase 2 Verification
 
 - [x] A1, A2, A4, A6, A7 pass, A3 still passes (`cd apps/indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx src/lib/conversation-turns.test.ts && pnpm exec vitest related src/components/session/SessionPanel.tsx src/lib/conversation-turns.ts --run`); tsc and biome clean on the changed files
-- [ ] A8 recorded above with what was seen
+- [x] A8 recorded above with what was seen
 
 #### Build Phase 2 Context
 
