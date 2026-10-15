@@ -70,7 +70,7 @@ This impl is written in the shape it introduces.
 | A17 | A ritual phase whose only task is ticked reads as finished, and a Verification section whose only task is ticked reads as green, even when that task's folded detail quotes an unticked box line | Build Phase 4 | Build Phase 4 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
 | A18 | The falsification and cleanup skills' phase templates, filled in as written, pass the save check on an impl that has opted in to phase summaries | Build Phase 4 | Build Phase 4 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
 | A19 | The phase-summary rule, read from its own hook module, names the same problems for a missing paragraph, code on a task line and a row label in a paragraph or a task as the save check does | Build Phase 5 | Build Phase 5 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/phase-summary-module.test.ts |
-| A20 | Both phase-row stories, drawn by the plan page's real task list instead of copied markup, are approved again in the cockpit | Build Phase 5 | Build Phase 5 | written | live check | the look phase-row.open and phase-row.closed, held by their approval in the cockpit | |
+| A20 | Both phase-row stories, drawn by the plan page's real task list instead of copied markup, are approved again in the cockpit | Build Phase 5 | Build Phase 5 | passing | live check | the look phase-row.open and phase-row.closed, held by their approval in the cockpit | |
 
 ## Checklist
 
@@ -486,7 +486,7 @@ The plan is correct and its tests are hardened; this phase tidies what it spread
   `apps/indusk-admin/src/components/ui/PhaseRow.stories.tsx`: the Closed and Open stories' `children` become `<PhaseItems items={…} />` (from `components/plan/PhaseItems.tsx`) with items carrying `text`, `checked`, `note` or `detail`; delete the `FOLD` / `FOLD_BODY` copies, whose classes already differ from `PhaseItems`'. Basis: admin rules — "a composed component must draw as its story does" and "a page composes components … renders no component's markup itself". Re-render with `indusk looks stories admin`; both stories turn proposed.
 
   </details>
-- [ ] Pause for a person: Sandy approves both phase-row stories again in the cockpit
+- [x] Pause for a person: Sandy approves both phase-row stories again in the cockpit
   <details><summary>Technical</summary>
 
   `story phase-row.open` and `story phase-row.closed` on the Looks page, read from this plan's branch; only a person approves. A20 records the result.
