@@ -352,4 +352,42 @@ describe("decided-prompts-stay-closed — a decided request is drawn decided, fr
     expect(await button(rendered, "Allow")).toBeDefined();
     expect(await button(rendered, "Deny")).toBeDefined();
   });
+
+  it("A9 a panel connecting after a person answered a question shows their answer, not an open question", async () => {
+    const { rendered } = panel([
+      init,
+      question,
+      decided({
+        requestId: "q1",
+        allow: true,
+        by: "person",
+        answers: { "Which workflow?": "feature" },
+      }),
+    ]);
+    const text = await textOf(rendered);
+    expect(text).toContain("Answered");
+    expect(text).toContain("feature");
+    expect(await button(rendered, "Answer")).toBeUndefined();
+  });
+});
+
+describe("decided-prompts-stay-closed A10 — a refused click leaves the request waiting", () => {
+  it("A10 Allow and Deny come back when the reply is refused", async () => {
+    const { rendered, handlers } = panel([init, permission], {
+      onDecide: vi.fn().mockResolvedValue(false),
+    });
+    await userEvent.click((await button(rendered, "Allow")) as HTMLButtonElement);
+    expect(handlers.onDecide).not.toBe(undefined);
+    await expect.poll(async () => await button(rendered, "Allow")).toBeDefined();
+    expect(await button(rendered, "Deny")).toBeDefined();
+  });
+
+  it("A10 Answer comes back when the reply is refused", async () => {
+    const { rendered } = panel([init, question], {
+      onAnswer: vi.fn().mockResolvedValue(false),
+    });
+    await userEvent.click((await button(rendered, "feature")) as HTMLButtonElement);
+    await userEvent.click((await button(rendered, "Answer")) as HTMLButtonElement);
+    await expect.poll(async () => await button(rendered, "Answer")).toBeDefined();
+  });
 });
