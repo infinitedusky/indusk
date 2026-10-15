@@ -50,7 +50,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 | A4 | Create, assign, read and release of a plan worktree leave git status clean, with its `.mcp.json` written | Test Phase 1 | Build Phase 2 | passing | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/plan-worktrees-cli.test.ts |
 | A5 | The registry scan names a direct CLI spawn without `INDUSK_HOME` and not a spawn through the helper that sets it | Test Phase 1 | Build Phase 2 | passing | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/registry-leak-scan.test.ts |
 | A6 | A break for a new incident adds one inbox entry whatever today's date; an incident over a day old still gets its reminder | Test Phase 1 | Build Phase 2 | passing | unit | promise: the-everyday-suite-passes-on-main, promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/lib/promises/inbox.test.ts |
-| A7 | Accepting a new project ends its agent and streams each step in a run where every package's tests run at once | Test Phase 1 | Build Phase 3 | written | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-admin/src/__tests__/new-project-accept.test.ts, apps/indusk-admin/src/__tests__/new-project-accept-route.test.ts |
+| A7 | Accepting a new project ends its agent and streams each step in a run where every package's tests run at once | Test Phase 1 | Build Phase 3 | passing | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-admin/src/__tests__/new-project-accept.test.ts, apps/indusk-admin/src/__tests__/new-project-accept-route.test.ts |
 | A8 | A component named only by an unlanded plan's approved mockups is not reported unimplemented; one named by a landed plan's and missing is | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-component-has-one-implementation, promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts |
 | A9 | `pnpm test` from the root of the branch, merged with main, passes | Build Phase 3 | Build Phase 3 | planned | live check | the live proof of the suite promise; rows A2–A8 name its files | (recorded in the impl with its result) |
 
@@ -142,6 +142,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 - [x] Fix A7 at its cause (a seam for its clock or process, a shared resource made per-test, or a timeout raised only with the measured reason); never a retry
   - Note: the route and the package's `new-project` are imported at the top of `new-project-accept.test.ts`, `new-project-accept-route.test.ts` and `new-project-routes.test.ts` (A2 there timed out in the same root run, same cause), so the cold import falls in the file's import, which has no per-test timeout, not in a test's 5 s. `vi.mock` is hoisted above the imports, so the stubs still apply. No timeout raised, no retry.
 - [ ] A9: `git merge main` into the branch, then `pnpm test` from the root; record the result in this item's note
+  - Note, 2026-10-14 (merge done, A9 not passing, item left unchecked): `git merge main` merged cleanly (a09731cc0, four lesson files). Root runs after the merge: run 2 admin 683/685, `new-project-parent` timed out on its lazy route import (fixed the same way). Runs 3 and 4: admin 109 files / 685 passed both times (A7 green twice), seat-holds 3/3, indusk 48/48; but `indusk-mcp` failed 4 then 3 tests, each `Test timed out in 5000ms` (run 3: plans-accept-stories A25 and A33, plans-workbench A18, release-report A6; run 4: amendments A12, plans-accept-stories A25 and A33). They are real git/CLI-spawning tests that pass alone (1.2-3.3 s each with four such files running together, 43/43) and cross 5 s only under the root run's contention. The mcp suite's root-run result was not seen before (turbo stopped on the admin failure). Needs a decision: a measured `testTimeout` for those tests, or less concurrency between packages in `pnpm test`.
 
 #### Build Phase 3 Verification
 
@@ -149,11 +150,11 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 #### Build Phase 3 Context
 
-- [ ] admin (`apps/indusk-admin/CLAUDE.md`): one line naming A7's cause and the rule that prevents it, where the file's test rules are
+- [x] admin (`apps/indusk-admin/CLAUDE.md`): one line naming A7's cause and the rule that prevents it, where the file's test rules are
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md` or the testing guide page that covers the admin's tests: the rule from A7, if it is one a test author must follow; otherwise the retrospective records why none
+- [x] `apps/docs/src/reference/admin-ui/component-conventions.md` or the testing guide page that covers the admin's tests: the rule from A7, if it is one a test author must follow; otherwise the retrospective records why none
 
 ## Files Affected
 
