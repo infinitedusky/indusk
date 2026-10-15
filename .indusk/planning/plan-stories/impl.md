@@ -311,7 +311,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 #### Build Phase 3 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a plan is named by `plan.title` and its initials come from it; the handle is for links, addresses and data attributes only
+- [x] `apps/indusk-admin/CLAUDE.md`: a plan is named by `plan.title` and its initials come from it; the handle is for links, addresses and data attributes only
 
 #### Build Phase 3 Document
 

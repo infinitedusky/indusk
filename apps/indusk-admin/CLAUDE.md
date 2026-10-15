@@ -67,13 +67,13 @@ Each entry is a rule and a pointer; the pointer holds the story.
   file is an error block, never a guess. The rows table shows `Level` and
   `For` from the package's parser (`levelText`, `purpose`), never its own
   reading of a cell; the copied markdown carries the same columns.
-- **One home per piece**: rows table in `components/phases/`,
-  progress lines in `bars/ProgressLines`, display vocabulary (incl. `phaseTitle`
-  — the page says `Phase 4`; the package's `phaseLabel` is for logs, never a
-  component) and every chip/label map in `bars/labels.ts`, badge maps in
-  `ui/badge-variant.ts`, research reads in `lib/research-reader.ts`, project
-  reads in `lib/project-reader.ts` (config via the `./config` subpath, never
-  parsed by hand). Pinned by `cleanup-pins.test.ts`.
+- **One home per piece**: rows table `components/phases/`,
+  progress lines `bars/ProgressLines`, display vocabulary (`phaseTitle`:
+  `Phase 4`, not `phaseLabel`; a plan is `plan.title`, initials from it, the
+  handle only for links, data attributes) and chip/label maps in
+  `bars/labels.ts`, badge maps `ui/badge-variant.ts`, research reads
+  `lib/research-reader.ts`, project reads `lib/project-reader.ts` (config
+  via `./config`, never hand-parsed). Pinned by `cleanup-pins.test.ts`.
 - The label maps are `satisfies Record<…>` over the lifecycle's unions and
   `lifecycle-render-parity.test.ts` names any member without a renderer;
   phases are keyed `{kind, number}`, an absent kind a build phase
