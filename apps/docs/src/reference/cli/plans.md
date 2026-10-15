@@ -20,6 +20,8 @@ Every command acts on the plan's worktree, from any checkout of the project. Eac
 
 Creates `plan/<name>` from the trunk branch, its worktree at `<project>-worktrees/<name>`, and the assignment that tells every reader where the plan lives — the admin and the plan tools read it from there even though the trunk has no folder for it. Writes and commits the first document in the worktree: `brief.md`, or `research.md` for a spike, as a draft declaring `workflow: <type>`. Nothing is written on the trunk.
 
+A new plan's `title:` is its handle, which the admin and the editor read as words ("cockpit-redraw" reads "Cockpit redraw") until a person writes a short title and a `description:` in the brief's front matter.
+
 Refuses:
 
 - a `<type>` that is not `feature`, `bugfix`, `refactor` or `spike`;
