@@ -377,7 +377,7 @@ A fresh reader went looking for places where the plan's promise does not yet hol
   A16. `apps/indusk-admin/src/components/Promises.tsx:376` `"never seen"` → `"no signal"`; `promise/PromiseProof.tsx:266` `"Grey: nothing seen."` → `"Grey: no signal."`. Assertions in `PromiseWords.test.tsx`.
 
   </details>
-- [ ] Make the everyday suite's printed line say broken and signal, while it still writes violated.
+- [x] Make the everyday suite's printed line say broken and signal, while it still writes violated.
   <details><summary>Technical</summary>
 
   A17. `apps/indusk-mcp/scripts/suite-speed.js`: the outcome object stays `violated` on the wire (`:37`, `:50`). The line at `:117` prints `signal sent: <promise> broken|upheld (N s)`, and the `not marked:` lines become `no signal sent:`. Test in `suite-speed.test.ts`: the attribute is `violated` and the printed line has no `violated` or `marked`.

@@ -58,7 +58,7 @@ describe("everyday-suite-stays-fast — test-kinds A16, A17", () => {
 			},
 		]);
 		expect(said, "lesson: a-suites-speed-is-a-promise-not-a-gate").toMatch(
-			/marked .* violated \(130 s\)/,
+			/signal sent: .* broken \(130 s\)/,
 		);
 	});
 
@@ -70,7 +70,7 @@ describe("everyday-suite-stays-fast — test-kinds A16, A17", () => {
 			body: () => ({ body: {} }),
 			send: async () => {},
 		});
-		expect(noDaemon).toBe("not marked: no telemetry daemon is running");
+		expect(noDaemon).toBe("no signal sent: no telemetry daemon is running");
 		const refused = await sendSuiteMark("/repo", mark, {
 			status: async () => ({ running: true, otlpPort: 4318 }),
 			project: () => "dusk",
@@ -79,7 +79,7 @@ describe("everyday-suite-stays-fast — test-kinds A16, A17", () => {
 				throw new Error("http://localhost:4318/v1/traces refused the span (500)");
 			},
 		});
-		expect(refused).toMatch(/^not marked: .*refused the span/);
+		expect(refused).toMatch(/^no signal sent: .*refused the span/);
 	});
 
 	it("one-promise-language A17: the signal still writes violated this release; the line it prints says broken and signal, never violated or marked", async () => {
