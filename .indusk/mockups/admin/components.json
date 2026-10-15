@@ -2073,7 +2073,7 @@
 				{
 					"name": "closed",
 					"id": "ui-phaserow--closed",
-					"snapshotHash": "04f6cd0c7dc1627b42b386fc40ab7f316437bcc23c15db7951b4a0cffbcb0868",
+					"snapshotHash": "12d1c785806c29afd9b92ef5323ee7515e2aa71e0a1fbdf366c242f130a4bf7f",
 					"content": {
 						"name": [
 							[
@@ -2114,7 +2114,7 @@
 				{
 					"name": "open",
 					"id": "ui-phaserow--open",
-					"snapshotHash": "4b01a97caad39a53194a804495e7a96773a8557409bda0b1652ec897e4dd7a96",
+					"snapshotHash": "8ca18aabf41948a3755da4521b8de97374864c205250459d9f2c8b0ec090aeb3",
 					"content": {
 						"name": [
 							[
@@ -2162,7 +2162,7 @@
 				}
 			],
 			"stylesheet": "components/phase-row.css",
-			"stylesheetHash": "ed6cadfbbeb24a4d987d0efaedbb2a45132b1788b1686910ded1d8be34e54636"
+			"stylesheetHash": "e996949336c8a9c781faec77fcd2c50bbff776c4700884eb54aca0a9c93b8c26"
 		},
 		{
 			"name": "plan-row",

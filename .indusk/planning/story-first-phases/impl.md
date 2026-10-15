@@ -480,7 +480,7 @@ The plan is correct and its tests are hardened; this phase tidies what it spread
   Extract `phaseSummaryProblems` from `apps/indusk-mcp/hooks/validate-impl-structure.js` into `hooks/_phase-summary.js`, exported, following `_phase-tier.js` (`tierRuleProblems`), `_test-levels.js` and `_register.js` — one module per rule. Export the row-label pattern from it once and use it in the hook's `validateCrossReferenceIntegrity` too, replacing the second `\b[TA]\d+\b` in the same file (the TypeScript `TEST_ID_PATTERN` in `lib/trajectory/validator.ts` stays: hooks cannot import TypeScript, and that file is the deliberate mirror). Sync `.claude/hooks/` byte-equal. `hooks/` ships whole in `package.json` `files`, so the new module installs with the rest.
 
   </details>
-- [ ] The phase-row stories draw the plan page's real task list instead of a hand-copied version of it
+- [x] The phase-row stories draw the plan page's real task list instead of a hand-copied version of it
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/components/ui/PhaseRow.stories.tsx`: the Closed and Open stories' `children` become `<PhaseItems items={…} />` (from `components/plan/PhaseItems.tsx`) with items carrying `text`, `checked`, `note` or `detail`; delete the `FOLD` / `FOLD_BODY` copies, whose classes already differ from `PhaseItems`'. Basis: admin rules — "a composed component must draw as its story does" and "a page composes components … renders no component's markup itself". Re-render with `indusk looks stories admin`; both stories turn proposed.
