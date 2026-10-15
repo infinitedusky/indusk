@@ -66,7 +66,7 @@ This impl is written in the shape it introduces.
 | A10 | A gate section whose only real task has a detail containing an opt-out phrase is held as a real task, not a skipped gate | Test Phase 1 | Build Phase 1 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
 | A11 | A box-shaped line inside a task's detail adds no task to the parser's count or to the tick check's count | Test Phase 1 | Test Phase 1 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
 | A12 | Every impl in the repository that has not opted in validates exactly as it did before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over the existing plans: the shape is opt-in and must break none of them | apps/indusk-mcp/src/__tests__/phase-summary-existing-impls.test.ts |
-| A13 | component-content's impl, rewritten in this shape, passes the save check and reads on its plan page as the mockup shows | Build Phase 3 | Build Phase 3 | planned | live check | the first plan converted, the example Sandy asked for | |
+| A13 | component-content's impl, rewritten in this shape, passes the save check and reads on its plan page as the mockup shows | Build Phase 3 | Build Phase 3 | written | live check | the first plan converted, the example Sandy asked for | |
 
 ## Checklist
 
@@ -347,7 +347,7 @@ This phase is the part Sandy sees in the admin. The code that reads an impl for 
 
 The save check and the plan page are ready. This phase makes the planner use them. The planner skill's impl template and its instructions, the planning rules and the plan templates all switch to the shape, so every impl written from now on opens each phase with its summary and folds its detail. The planner also gets a writing prompt: write every paragraph and sentence for someone who has worked on the project but knows none of the plan's shorthand, with a before-and-after example. Then component-content's impl, the plan whose unreadable phases started this, is rewritten in the shape as the first real example.
 
-- [ ] The planner's impl template is written in the shape and opts in
+- [x] The planner's impl template is written in the shape and opts in
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/planner.md`: the impl template's frontmatter gains `phase_summary: required`; each phase in it gets a summary placeholder after `**Tier**:`; every item becomes a sentence with an indented `<details><summary>Technical</summary>` block, the existing snippets and row labels moved inside. Keep the strings `planner-tier-line.test.ts` and `planner-verification-template.test.ts` pin (`vitest related`) — inside the detail is fine. Sync `.claude/skills/planner/SKILL.md` byte-equal.
