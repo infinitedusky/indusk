@@ -150,7 +150,7 @@ export function buildStrip(input: {
     const t = Date.parse(m.at);
     if (
       t < start &&
-      m.outcome === "violated" &&
+      m.outcome === "broken" &&
       stateOf(m, input.incidents) === "red"
     )
       older.push(t);
