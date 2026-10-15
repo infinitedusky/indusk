@@ -78,43 +78,43 @@ Before any code changes, this phase writes down what "done" means as tests that 
 
 **Goal**: author every test that can honestly be authored now, and record every test that cannot.
 
-- [ ] This plan has its own worktree
+- [x] This plan has its own worktree
   <details><summary>Technical</summary>
 
   `indusk worktree create story-first-phases`, or `indusk worktree assign story-first-phases <path>` for the one `plans start` made — worktree-per-plan default.
 
   </details>
-- [ ] Tests that the save check refuses a phase with no summary, a task with code on its line, and a row label in either, failing for now
+- [x] Tests that the save check refuses a phase with no summary, a task with code on its line, and a row label in either, failing for now
   <details><summary>Technical</summary>
 
   A1–A3, A14, A15 in `phase-summary-rule.test.ts`, driven through the real hook as `phase-tier-rule.test.ts` does (`runHook("validate-impl-structure.js", …)` over `implText(...)` with `phase_summary: required` added to the frontmatter). A1: no paragraph between `**Tier**:` and the first item → exit 2 naming `Build Phase 1`. A2: an item line with a backticked name → exit 2 naming the item. A3: the same for a Test Phase 1 item and a Verification item. A14: a paragraph holding `A2`, and an item sentence holding `T3` → exit 2 naming each and the label. A15: a Verification item whose line has no label and whose detail names a trajectory row → no cross-reference error (red today: the rule reads the line only). Each also asserts the well-formed shape passes, so red is on the refusal, not on a broken fixture. Add the same A15 case to `src/lib/trajectory/validator.test.ts` for the TypeScript twin of the rule.
 
   </details>
-- [ ] Tests that the planner's impl template follows the shape and its instructions ask for writing without shorthand, failing for now
+- [x] Tests that the planner's impl template follows the shape and its instructions ask for writing without shorthand, failing for now
   <details><summary>Technical</summary>
 
   `planner-impl-summary-template.test.ts`. A4: extract the impl template's fenced block from `skills/planner.md` (the block after `### impl.md`), fill its `{…}` placeholders with fixed words, run it through `validate-impl-structure.js`; assert its frontmatter carries `phase_summary: required`. A16: step 7 of `skills/planner.md` contains the phrase "knows none of its shorthand" and a before/after pair. Red today on both.
 
   </details>
-- [ ] A test that an open phase on the plan page shows its paragraph, failing for now
+- [x] A test that an open phase on the plan page shows its paragraph, failing for now
   <details><summary>Technical</summary>
 
   A5 in `PhaseRow.test.tsx`: render with a `summary="…"` prop and assert the text appears in the open row before the children. Red today: the prop is unknown and nothing draws it (vitest does not type-check, so the file loads).
 
   </details>
-- [ ] A test that reading an impl keeps a task's folded detail whole, code included, failing for now
+- [x] A test that reading an impl keeps a task's folded detail whole, code included, failing for now
   <details><summary>Technical</summary>
 
   A7 in `impl-parser.test.ts`: an item followed by an indented `<details><summary>Technical</summary>` block holding prose and a fenced block; assert `item.detail` holds the prose and the fence's body with the wrappers removed, and `phase.summary` holds the paragraph. Red today: neither field exists and the fence is skipped.
 
   </details>
-- [ ] Tests that folded detail never ticks a box, skips a gate or adds a task
+- [x] Tests that folded detail never ticks a box, skips a gate or adds a task
   <details><summary>Technical</summary>
 
   `detail-is-only-read.test.ts`. A9: an Edit whose `old_string`/`new_string` change only an indented `  - [x] example` line inside a detail → `check-gates.js` exits 0 without judging gates (red today: its unanchored count sees a new checked box and judges, refusing on the open gates). A10: a Verification section whose single item has a detail line `(none needed)` → `validate-impl-structure.js` does not treat the gate as opted out (red today on a `strict`-policy fixture, where an opt-out is refused at write). A11: an indented box line in a detail → `parseImplString` and `_impl-phases.js` count the same items as without it (green today).
 
   </details>
-- [ ] A test that every existing impl still validates exactly as before
+- [x] A test that every existing impl still validates exactly as before
   <details><summary>Technical</summary>
 
   A12 in `phase-summary-existing-impls.test.ts`: for every `impl.md` under `.indusk/planning/` and `.indusk/planning/archive/` without `phase_summary:`, run the save check's Write path and record the exit code; assert each matches a snapshot taken now. No server, no clock — one spawned node per impl.
@@ -160,13 +160,13 @@ Before any code changes, this phase writes down what "done" means as tests that 
 
 #### Test Phase 1 Verification
 
-- [ ] Every new test fails on its own assertion rather than on a missing file, and the two guards pass (A1, A2, A3, A4, A5, A7, A9, A10, A11, A12, A14, A15, A16)
+- [x] Every new test fails on its own assertion rather than on a missing file, and the two guards pass (A1, A2, A3, A4, A5, A7, A9, A10, A11, A12, A14, A15, A16)
   <details><summary>Technical</summary>
 
   Red: A1–A5, A7, A9, A10, A14–A16. Green: A11, A12. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/phase-summary-rule.test.ts src/__tests__/planner-impl-summary-template.test.ts src/lib/impl-parser.test.ts src/lib/trajectory/validator.test.ts src/__tests__/detail-is-only-read.test.ts src/__tests__/phase-summary-existing-impls.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/ui/PhaseRow.test.tsx`.
 
   </details>
-- [ ] The plan-page fold test's body, kept in the register above, is checked: it will load once its component exists, and it asserts what its row claims
+- [x] The plan-page fold test's body, kept in the register above, is checked: it will load once its component exists, and it asserts what its row claims
 
 ### Build Phase 1: The save check and the tick check hold the shape
 
