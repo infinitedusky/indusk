@@ -268,6 +268,10 @@ accepted_by: person
 - [x] A14 green (`pnpm exec vitest run src/lib/promises/interface-files.test.ts`, from `apps/indusk-mcp`); `pnpm exec vitest related src/lib/looks/components.ts src/lib/promises/interface-files.ts --run`; `tsc --noEmit` and `biome check` on the changed files
   - Note, 2026-10-15: A14 1/1 passed; `vitest related` 34 files, 193 tests passed; `tsc --noEmit` exit 0; `biome check` on the three changed files clean.
 
+#### Build Phase 7 Shape
+
+- [x] Shape — reviewed the files this phase changed (`lib/looks/components.ts`, `lib/promises/interface-files.ts` and its test) against the enabled extensions' craft rules, `rules.unreadable` empty; nothing to change: `isTestFile` is one named predicate beside the story pattern, `isImplementationFile` composes the two, and `interfaceFilesAmong` gains one guard line with its reason beside it.
+
 #### Build Phase 7 Context
 
 - [ ] `apps/indusk-mcp/src/lib/looks/CLAUDE.md` (the looks folder's rules): one line — a test file is never an app's interface or a component's implementation (`isTestFile`, `components.ts`); a story is interface, since it renders an approved snapshot. Shrink something else in the file if its budget refuses the line
