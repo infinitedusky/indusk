@@ -4,7 +4,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { DecisionEntry } from "@infinitedusky/indusk-mcp/plans/history";
-import type { Waiting } from "@infinitedusky/indusk-mcp/plans/waiting";
+import {
+  AMENDMENT_DECISION,
+  type Waiting,
+} from "@infinitedusky/indusk-mcp/plans/waiting";
 import {
   type QuestionEvent,
   type Session,
@@ -296,5 +299,27 @@ describe("A38 — an answer delivered and not recorded is not a failed answer", 
     expect(r.via).toBe("approve");
     expect(r.commit.committed).toBe(false);
     expect(JSON.stringify(r.commit)).toContain("lock on current.md");
+  });
+});
+
+describe("A16 (plan-stories) — an amendment is answered on its own card", () => {
+  it("A16 an answer to an amendment's wait is refused and neither approves nor releases", async () => {
+    const approve = vi.fn(async () => ({}));
+    const release = vi.fn(async () => ({}));
+    const waiting: Waiting = {
+      plan: PLAN,
+      on: "amendment",
+      step: "Brief",
+      decision: AMENDMENT_DECISION,
+      accept: "Approve",
+      alternative: "Not yet",
+    };
+    await expect(
+      answerDecision(deps({ approve, release }), PROJECT, waiting, {
+        choice: "accept",
+      }),
+    ).rejects.toThrow(/amendment card/);
+    expect(approve).not.toHaveBeenCalled();
+    expect(release).not.toHaveBeenCalled();
   });
 });
