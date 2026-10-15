@@ -206,7 +206,7 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
   Run from a session started inside this worktree (decided with Sandy, 2026-10-15): a session started in the main checkout runs the main checkout's copy of the hooks, the old save check, which refuses this edit.
 
   </details>
-- [ ] A task added by the review step that follows each phase's tests is written as a plain sentence, with its file and rule in its fold, so the new rule never refuses it
+- [x] A task added by the review step that follows each phase's tests is written as a plain sentence, with its file and rule in its fold, so the new rule never refuses it
   <details><summary>Technical</summary>
 
   Found while building this phase (Sandy agreed, 2026-10-15): `appendFindingToPhase` (`src/lib/shape/findings.ts`) and `recordLeftAsIs` / `recordReviewedNothingFound` (`src/lib/shape/shape.ts`) write the file name in backticks on the task line, which the `phase_summary: required` rule refuses. When the impl opts in, write the sentence on the line ("Shape: {change}") and `file`, `rule` and the reason in an indented `<details><summary>Technical</summary>` block; leave the output for impls that have not opted in unchanged. Add cases to those modules' tests (an opted-in impl body run through the save check after each helper), carrying `promise: an-impl-phase-explains-itself`.
