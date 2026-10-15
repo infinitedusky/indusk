@@ -59,7 +59,7 @@ accepted_by: person
 | A11 | A story name's component is read by one rule: `componentOfStory` gives `plan-row` for `plan-row.open` and for `plan-row.open.wide`, the story reader's `component` agrees with it, and A8 and A10 still hold | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
 | A12 | A mockup whose most recent held approval records no components (absent or empty), re-approved by an unlanded plan, is held in full: a component its markup names and the app lacks is reported unimplemented — the exemption needs a record of what landed | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
 | A13 | In the root `pnpm test`, indusk-mcp's test task waits for indusk-mcp's own build, so the tests that spawn the built CLI (A1 among them) run against this checkout's build and are not skipped for a missing one (`turbo run test --dry=json`: `@infinitedusky/indusk-mcp#test` depends on `@infinitedusky/indusk-mcp#build`) | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-large-impl-gets-the-same-contract-answer, promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/contract-stdin.test.ts |
-| A14 | A test file under an app's declared sources (`*.test.*`, `*.spec.*`, or under `__tests__/`) is not counted as that app's interface, so a plan whose brief says None for its looks and changes only such files is not refused at accept or by the contract check; a story file and an implementation file under the same sources still are | Build Phase 7 | Build Phase 7 | written | unit | not for a promise — accept refused this plan's landing over its own admin test files; `a-brief-lists-its-looks` keeps its sentence, since a test was never an interface | apps/indusk-mcp/src/lib/promises/interface-files.test.ts |
+| A14 | A test file under an app's declared sources (`*.test.*`, `*.spec.*`, or under `__tests__/`) is not counted as that app's interface, so a plan whose brief says None for its looks and changes only such files is not refused at accept or by the contract check; a story file and an implementation file under the same sources still are | Build Phase 7 | Build Phase 7 | passing | unit | not for a promise — accept refused this plan's landing over its own admin test files; `a-brief-lists-its-looks` keeps its sentence, since a test was never an interface | apps/indusk-mcp/src/lib/promises/interface-files.test.ts |
 
 ## Checklist
 
@@ -265,7 +265,8 @@ accepted_by: person
 
 #### Build Phase 7 Verification
 
-- [ ] A14 green (`pnpm exec vitest run src/lib/promises/interface-files.test.ts`, from `apps/indusk-mcp`); `pnpm exec vitest related src/lib/looks/components.ts src/lib/promises/interface-files.ts --run`; `tsc --noEmit` and `biome check` on the changed files
+- [x] A14 green (`pnpm exec vitest run src/lib/promises/interface-files.test.ts`, from `apps/indusk-mcp`); `pnpm exec vitest related src/lib/looks/components.ts src/lib/promises/interface-files.ts --run`; `tsc --noEmit` and `biome check` on the changed files
+  - Note, 2026-10-15: A14 1/1 passed; `vitest related` 34 files, 193 tests passed; `tsc --noEmit` exit 0; `biome check` on the three changed files clean.
 
 #### Build Phase 7 Context
 
