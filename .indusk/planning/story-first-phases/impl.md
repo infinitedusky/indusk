@@ -277,7 +277,7 @@ This phase is the part Sandy sees in the admin. The code that reads an impl for 
   `components/ui/PhaseRow.tsx`: a `summary?: string` prop drawn as the first child of the open body, `text-sm leading-3 text-ink-soft`, max 70ch — tokens as the mockup uses them. Update `PhaseRow.stories.tsx`'s open state to carry a story and render the stories (`indusk looks stories admin`).
 
   </details>
-- [ ] Each task on the plan page shows its sentence, with its detail in a closed Technical fold
+- [x] Each task on the plan page shows its sentence, with its detail in a closed Technical fold
   <details><summary>Technical</summary>
 
   Lift the item list out of `components/plan/PlanParts.tsx` into `components/plan/PhaseItems.tsx`; key items by index, not text. Each item with a `detail` gets `<details><summary>Technical</summary>` rendering the detail through `components/Markdown.tsx`; an item with only a `note` keeps today's note line.
