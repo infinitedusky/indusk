@@ -145,7 +145,7 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
   `apps/indusk-mcp/src/lib/promises/vocabulary.ts`: `PROMISE_OUTCOMES = ["upheld", "broken"] as const`; add `readOutcome(value: unknown): PromiseOutcome | null` (`upheld` → `upheld`; `broken`, `violated` → `broken`; else null), with a docblock carrying `promise: a-promise-is-upheld-or-broken`. Use it in `telemetry.ts` `parseMarkedSpan` and `lib/testing/trace-shape.ts`. Replace each in-memory `"violated"` comparison and type with `"broken"`: `store.ts`, `health.ts`, `look-standing.ts`, `proof.ts`, `record.ts`, `trunk-commit.ts`, `timeline.ts`, the admin's `lib/timeline-strip.ts`, the editor's `core/activity.ts` (which reads `--json`; accept both words there by the same rule, copied by value since the extension does not import the package).
 
   </details>
-- [ ] Make the always-on server ask Jaeger for signals saying either word.
+- [x] Make the always-on server ask Jaeger for signals saying either word.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/always-on/pass.ts` `violationsSince`: one `/api/traces` query per service per value (`broken`, `violated`), merged by span id as today; keep the outcome check through `readOutcome`.
