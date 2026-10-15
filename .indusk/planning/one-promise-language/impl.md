@@ -1,7 +1,7 @@
 ---
 title: "One promise language"
 date: 2026-10-15
-status: approved
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -64,7 +64,7 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 | A7 | A promise nothing has reported on reads no signal in the admin, the CLI and the editor, never green or holding | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx, apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts, apps/vscode-extension/src/core/view-words.test.ts |
 | A8 | The CLI's promise status, watch, check summary and refusals, and the always-on server's messages say broken, held or no signal, never violated or violation | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts |
 | A9 | The editor's labels say known broken and no signal, and its activity says held or broke for a signal written either way | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/vscode-extension/src/core/view-words.test.ts, apps/vscode-extension/src/core/activity.test.ts |
-| A10 | The docs' guide and reference, the skills, the planning template, the deploy files, the CLI help and the MCP tool descriptions carry no violated, violation or known-violated, and say signal, not mark, outside named attribute names | Test Phase 1 | Build Phase 3 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
+| A10 | The docs' guide and reference, the skills, the planning template, the deploy files, the CLI help and the MCP tool descriptions carry no violated, violation or known-violated, and say signal, not mark, outside named attribute names | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
 | A11 | A production signal saying `broken` becomes an incident with its owning plan reopened, exactly as a `violated` one does | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/record-broken.test.ts |
 | A12 | The always-on server announces a production signal saying `broken` exactly as one saying `violated` | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/always-on/announce-broken.test.ts |
 | A13 | The thirty days count held, broken and neither the same way for signals saying `broken`, `violated` or a mix | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/standing.test.ts |
@@ -314,13 +314,13 @@ The last phase brings everything people read outside the apps into the same voca
 
 #### Build Phase 3 Verification
 
-- [ ] Nothing people read says violated, violation or known-violated, or calls a promise's telemetry its mark, outside the named exceptions.
+- [x] Nothing people read says violated, violation or known-violated, or calls a promise's telemetry its mark, outside the named exceptions.
   <details><summary>Technical</summary>
 
   Green: A10. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-words.test.ts`; `pnpm --filter docs build` succeeds.
 
   </details>
-- [ ] The installed skills and planning rules match the package's copies.
+- [x] The installed skills and planning rules match the package's copies.
   <details><summary>Technical</summary>
 
   `indusk update` leaves `.claude/skills/` and `.indusk/planning/CLAUDE.md` equal to the package copies (`git diff --stat` shows only the synced files).
