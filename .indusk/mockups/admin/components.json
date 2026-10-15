@@ -3243,6 +3243,169 @@
 			"stylesheetHash": "347e90168a0eb8c6156fb94246690a466d81ed73cf0fb3674c31d1a5cad1c7de"
 		},
 		{
+			"name": "subplan-row",
+			"file": "apps/indusk-admin/src/components/ui/SubplanRow.tsx",
+			"properties": [
+				{
+					"name": "number",
+					"type": "number",
+					"required": true,
+					"description": "Its place in the master's order, 1-up."
+				},
+				{
+					"name": "initials",
+					"type": "string",
+					"required": true,
+					"description": "The plan's initials, two letters."
+				},
+				{
+					"name": "state",
+					"type": "\"released\" | \"draft\" | \"queued\"",
+					"required": true
+				},
+				{
+					"name": "title",
+					"type": "string",
+					"required": true,
+					"description": "The plan's title."
+				},
+				{
+					"name": "description",
+					"type": "string",
+					"required": false,
+					"defaultValue": "\"\"",
+					"description": "What the plan is for, in a line; empty when its master wrote none."
+				},
+				{
+					"name": "stage",
+					"type": "ReactNode",
+					"required": true,
+					"description": "Where the plan stands in words: \"Released\", \"Draft, parked\", \"Queued\"."
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": false,
+					"description": "Where the row goes. A link when given; a plan not made yet has none."
+				}
+			],
+			"states": [
+				{
+					"name": "released",
+					"id": "ui-subplanrow--released",
+					"snapshotHash": "6e9be503b93f748c96723076a5bd21060a35d0270eb25d6b67ab6c2f388a8dfc",
+					"content": {
+						"initials": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"title": [
+							[
+								0,
+								2,
+								0,
+								0
+							]
+						],
+						"description": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								3,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "draft",
+					"id": "ui-subplanrow--draft",
+					"snapshotHash": "597070154a9a19c3c7884d2ce146d1e53ca6f7b518b02548f514d2f6c2cf9a89",
+					"content": {
+						"initials": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"title": [
+							[
+								0,
+								2,
+								0,
+								0
+							]
+						],
+						"description": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								3,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "queued",
+					"id": "ui-subplanrow--queued",
+					"snapshotHash": "1527dc3b7da53c041666e2843ce4c9595e67231c53a69c9b944cffbab98e40a2",
+					"content": {
+						"initials": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"title": [
+							[
+								0,
+								2,
+								0,
+								0
+							]
+						],
+						"description": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								3,
+								0
+							]
+						]
+					}
+				}
+			],
+			"stylesheet": "components/subplan-row.css",
+			"stylesheetHash": "7ac283663a8853a183fc190165171bebf76b4c8b045fd74fa736a0a55f5f6506"
+		},
+		{
 			"name": "summary-bar",
 			"file": "apps/indusk-admin/src/components/ui/SummaryBar.tsx",
 			"properties": [

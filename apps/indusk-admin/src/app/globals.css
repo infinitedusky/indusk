@@ -216,6 +216,9 @@ body {
 .cols-draft-row {
   grid-template-columns: minmax(0, 1fr) auto;
 }
+.cols-subplan-row {
+  grid-template-columns: var(--space-5) var(--size-badge) minmax(0, 1fr) auto;
+}
 .cols-recommendation {
   grid-template-columns: auto minmax(0, 1fr) auto;
 }
@@ -260,6 +263,15 @@ body {
   .cols-draft-row,
   .cols-expectation-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .cols-subplan-row {
+    grid-template-columns: var(--size-badge) minmax(0, 1fr);
+  }
+  .subplan-row-number {
+    display: none;
+  }
+  .subplan-row-stage {
+    grid-column: 2;
   }
 }
 
