@@ -278,7 +278,7 @@ accepted_by: person
 
 #### Build Phase 7 Document
 
-- [ ] The docs page that states which files are an app's interface for a brief's Looks (find it: `grep -rln "interface" apps/docs/src/guide apps/docs/src/reference | xargs grep -ln "sources"`): say a test file under the sources is not interface, a story is
+- [x] The docs page that states which files are an app's interface for a brief's Looks (find it: `grep -rln "interface" apps/docs/src/guide apps/docs/src/reference | xargs grep -ln "sources"`): say a test file under the sources is not interface, a story is
 
 ## Files Affected
 
