@@ -8,9 +8,9 @@ status: living
 subplans:
   - mark-first
   - expectations-loop
+  - looks-as-promises
   - open-core-boundary
   - workbench-server
-  - looks-as-promises
   - workflow-builder
 ---
 
@@ -87,13 +87,13 @@ scheme a clause, upheld when the rendered page matches by value; its mark is the
 looks check (later, real browsers); its stories are its tests, the agents'
 alone. One list, one health view, one approval flow; the brief has one Promises
 section. Expectations stay separate — they decide what to build, not what is
-true. Built as its own child after `mark-first` (`looks-as-promises`).
+true. Built as its own child, third (`looks-as-promises`).
 
 **Approvals happen on the plan page** (Sandy, 2026-10-15). Every promise a plan
 makes or changes — visual ones included — is approved on that plan's page, one
 line each, opened on demand. A shared component that reopens screens other plans
 own shows them on the page of the plan that changed it. The **looks page becomes
-design documentation**: the foundation, components and their states, screens as
+the design system**: the foundation, components and their states, screens as
 they are — browsed and linked, with no approvals, no proposed queue, no checkout
 switching.
 
@@ -122,13 +122,17 @@ switching.
    is reworked around "a plan is one promise" and approved again.
 2. **`expectations-loop`** — expectations read back at their look time into
    what is built next.
-3. **`open-core-boundary`** — the core works without the admin daemon or a
+3. **`looks-as-promises`** — visual promises; approvals on the plan page; the
+   looks page becomes the project's **design system** — the foundation,
+   components and their states, screens, browsed and linked. Folds in
+   `stories-replace-mockups` (its research holds today's story-viewing
+   findings: stories framed like pages, drawn without the app's base reset,
+   a placed story differing from its screen's drawing).
+4. **`open-core-boundary`** — the core works without the admin daemon or a
    machine-global home; `house-rules-out` is folded in (dusk's own practice
-   leaves the package).
-4. **`workbench-server`** — one box per team, per-person Claude accounts,
+   leaves the package). Ships with visual promises in the core.
+5. **`workbench-server`** — one box per team, per-person Claude accounts,
    sync; Anthropic's own cloud sessions checked first.
-5. **`looks-as-promises`** — visual promises; approvals on the plan page; the
-   looks page as design documentation.
 6. **`workflow-builder`** — kept, not yet reconsidered against the above.
 
 **What changes in what exists:** the test plan becomes the clause plan (each
