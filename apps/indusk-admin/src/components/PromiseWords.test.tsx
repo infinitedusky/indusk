@@ -37,7 +37,10 @@ import {
 } from "@/components/bars/labels";
 import { PlanList } from "@/components/PlanList";
 import { HealthChip, HealthDetail } from "@/components/PromiseHealth";
+import { PromisesDashboard } from "@/components/Promises";
 import { PromiseTimeline, TimelineEmpty } from "@/components/PromiseTimeline";
+import { LastThirtyDays } from "@/components/promise/PromiseProof";
+import { type DashboardRow, parseQuery } from "@/lib/promise-dashboard";
 
 // promise: a-promise-is-upheld-or-broken
 
@@ -197,5 +200,51 @@ describe("A7 — a promise nothing has reported on reads no signal in the admin"
     const { container } = await render(<TimelineEmpty />);
     expect(container.textContent).toContain("no signal");
     expect(container.textContent).not.toMatch(OLD_WORDS);
+  });
+});
+
+describe("A16 — where nothing has reported, the dashboard row and the legend say no signal", () => {
+  const SILENT: DashboardRow = {
+    name: "seat-released",
+    sentence: "seat-released",
+    plan: "seat-holds",
+    planTitle: "Seat holds",
+    path: null,
+    pathTitle: null,
+    standing: "enforced",
+    tests: { passing: 0, total: 0 },
+    held: null,
+    broke: null,
+    lastActivity: null,
+    lastBreak: null,
+  } as unknown as DashboardRow;
+
+  it("the dashboard row's last-activity cell reads no signal, not never seen", async () => {
+    const { container } = await render(
+      <PromisesDashboard
+        rows={[SILENT]}
+        query={parseQuery({})}
+        pathOrder={[]}
+        incidents={[]}
+        promises={[]}
+        path="/p/demo/promises"
+        planHrefPrefix="/p/demo/plan/"
+        promiseHrefPrefix="/p/demo/promises/"
+      />,
+    );
+    expect(container.textContent).not.toMatch(/never seen/i);
+    expect(container.textContent).toMatch(/\bno signal\b(?! yet)/);
+  });
+
+  it("the promise page's thirty-day legend says grey is no signal, not nothing seen", async () => {
+    const proof = {
+      days: { local: [{ day: "2026-10-14", held: 0, broken: 0 }] },
+      unread: {},
+    };
+    const { container } = await render(
+      <LastThirtyDays proof={proof as never} />,
+    );
+    expect(container.textContent).toContain("Grey: no signal.");
+    expect(container.textContent).not.toMatch(/nothing seen/i);
   });
 });
