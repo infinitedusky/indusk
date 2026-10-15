@@ -249,8 +249,8 @@ describe("A4 — each Path shows how many of its plans a release has shipped", (
           `[data-testid="plan-group-${name}"] [data-testid="path-released"]`,
         )
         ?.textContent?.trim();
-    // beta-one shipped in 1.60.0; beta-two landed but no release has it.
-    expect(released("path-beta")).toBe("1/2");
+    // beta-one shipped in 1.60.0; beta-two landed but no release has it; beta-three is declared, not started.
+    expect(released("path-beta")).toBe("1/3");
     // gamma-one has neither landed nor shipped.
     expect(released("path-gamma")).toBe("0/1");
   });
