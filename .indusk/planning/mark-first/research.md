@@ -151,6 +151,40 @@ telemetry gaps; Sandy moved them here.
   outside the draft, a `git`/`gh` command, a project made outside the parent,
   each marked broken where it happens.
 
+### First cut — only what `run-the-master` needs (2026-10-15)
+
+Sandy: build this only as far as `run-the-master` needs, in order of
+importance. Proposed first cut (to settle in the brief, in the UI):
+
+- `a-plan-is-one-promise`, `a-promise-is-made-of-clauses`,
+  `a-promise-can-rest-on-another`, `a-plan-plans-its-clauses`,
+  `a-promise-is-upheld-or-broken`;
+- `a-clause-is-upheld-by-its-signal` (renamed from `…-kept-by-its-mark`; "a
+  passing test never stands in for its signal");
+- **`a-clause-is-verified-before-release`** (Sandy: "that's really good"): a
+  clause's tests must pass before anything ships; a change that makes one fail
+  is stopped before release — verified by its tests before release, proved by
+  its signal in use;
+- change `a-closed-plan-kept-its-promises` to close on signals.
+
+Two stages, one clause: **before release and on every change** — its tests,
+*verified* or the change is stopped; **in use** — its signal, *holding*,
+*broken* or *no signal*.
+
+**The clause plan** (replacing the test plan): each clause with its signal
+(where it is read, what counts as upheld — a budget for a split, a bound for a
+limit — and what it reports when broken), and the tests tied to that clause,
+chosen by the agents. The impl may add tests for pieces of implementation
+besides. Tests are the agents', automated, never approved.
+
+**Later cut**, after `run-the-master`: `a-break-leads-to-its-cause`,
+`a-break-comes-with-a-diagnosis`, `every-broken-trace-is-kept`,
+`a-page-can-mark-a-promise` (browser signals), `every-break-becomes-a-test`,
+`a-person-sees-promises-not-tests`, and the promise page's clause looks. The
+already-declared ones among them, and `a-message-sent-gets-a-reply`, are
+withdrawn now (never in force) and re-declared then. "Mark" becomes "signal"
+throughout, and the plan may be renamed to match.
+
 ### The merged plan — proposed rework of the brief (2026-10-15, parked)
 
 `mark-first` merges with `promise-first-build` (see `promise-core`'s master,
