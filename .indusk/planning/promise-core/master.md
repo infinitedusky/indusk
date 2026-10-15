@@ -157,6 +157,13 @@ switching.
   continuously as answers, landings and touched files change. Dependencies come
   from promises — a clause resting on another promise — with `Depends On` for
   what promises do not express.
+- **Main cascades.** Whenever something lands on `main`, every open worktree
+  merges it (merge, never rebase), so every branch stays in step. A worktree
+  with no running session merges at once; one with a running phase merges when
+  that phase ends, and its next phase does not start until it has. A merge
+  that conflicts becomes a question (its cost set by its size); the agent
+  proposes the resolution. On the workbench server there is one copy, so the
+  cascade is the box's; locally, each machine's open worktrees.
 
 **Two loops read the telemetry back**
 
@@ -180,7 +187,7 @@ listed under it in `subplans:`.
 
 0. **`run-the-master`** — first: decisions as questions with a cost (cheap
    five minutes, moderate an hour, expensive waits, red); one question thread;
-   the daily list; the graph of plans and phases run in parallel, blocked only
+   the daily list; main cascading into every worktree; the graph of plans and phases run in parallel, blocked only
    downstream of an unanswered question, re-evaluated continuously. Its first
    master to run is Homework Gate's milestones, not this one. Built first on
    `Depends On`; promise-derived dependencies arrive with `mark-first`.
