@@ -11,7 +11,7 @@ it, it is released, and the app promises that release is never late:
 Every release is marked with plain OpenTelemetry on the span that does the
 work: `indusk.promise = a-held-seat-is-released-in-time` and
 `indusk.promise.outcome = upheld` or `violated`, with a symptom like
-`seat 2 released 3.2 s late`. Nothing else in the app knows InDusk exists.
+`seat 2 released 3.2 s late`. InDusk reads `violated` as broken, and `broken` the same. Nothing else in the app knows InDusk exists.
 InDusk reads those marks from your local telemetry daemon (or your project's
 server) and shows the promise holding, or broken.
 

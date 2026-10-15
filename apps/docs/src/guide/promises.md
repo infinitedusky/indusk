@@ -171,6 +171,8 @@ span.addEvent("indusk.promise.violated", {
 });
 ```
 
+InDusk reads `violated` as broken, and reads `broken` the same.
+
 That is the whole convention: two attributes, and an event carrying what was
 observed. The application imports nothing from InDusk and runs the same with
 InDusk deleted. Anyone holding the raw trace — in Jaeger, in any

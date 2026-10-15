@@ -136,6 +136,8 @@ if (!ok) {
 }
 ```
 
+`violated` is read as broken; `broken` is read the same.
+
 **2. Point the exporter at the server**, the ordinary way:
 
 ```bash

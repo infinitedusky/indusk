@@ -209,7 +209,7 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
   `apps/docs/src/changelog.md` (Unreleased): "Every reader accepts a signal saying `broken` as well as `violated`; signals keep writing `violated` this release. The registry state `known-violated` is now `known-broken`; old files are still read."
 
   </details>
-- [ ] The promises guide says a signal written either way is read as broken.
+- [x] The promises guide says a signal written either way is read as broken.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/promises.md` snippet (lines 160-170) and `guide/always-on.md:131` keep writing `"violated"`, with one line beside each: "read as broken; `broken` is read the same". `examples/seat-holds/README.md` likewise.
