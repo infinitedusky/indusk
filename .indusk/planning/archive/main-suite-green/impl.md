@@ -260,7 +260,8 @@ accepted_by: person
 
 - [x] Author A14 in `apps/indusk-mcp/src/lib/promises/interface-files.test.ts` (a new file if none exists; follow the fixture style of the nearest interface test): a project whose `screens.json` declares `sources: ["app/src"]`; `interfaceFilesAmong` over `app/src/__tests__/x.test.ts`, `app/src/a.test.tsx`, `app/src/b.spec.ts`, `app/src/Button.stories.tsx`, `app/src/Button.tsx` returns only the story and the component. Red today on its own assertion
 - [x] `lib/looks/components.ts`: split `NOT_AN_IMPLEMENTATION` into an exported `isTestFile(path)` (`*.test.*`, `*.spec.*`, `__tests__/`) and the story pattern, `isImplementationFile` unchanged in behaviour; `interfaceFilesAmong` skips a path `isTestFile` matches, with a comment saying why a story is still interface
-- [ ] From the trunk, `indusk plans accept main-suite-green` after `pnpm build` in the worktree (with `INDUSK_BIN` pointing at the worktree's `dist/bin/cli.js` if the installed `indusk` is not this build): no longer refused on the test files; record the output under this item, and stop if it refuses on anything else
+- [x] From the trunk, `indusk plans accept main-suite-green` after `pnpm build` in the worktree (with `INDUSK_BIN` pointing at the worktree's `dist/bin/cli.js` if the installed `indusk` is not this build): no longer refused on the test files; record the output under this item, and stop if it refuses on anything else
+  - Note, 2026-10-15: run from the trunk as `node <worktree>/apps/indusk-mcp/dist/bin/cli.js plans accept main-suite-green` (the installed `indusk` predates the fix): `Accepted main-suite-green at 2026-10-15T12:51:17.568Z.`, exit 0; it committed `plan(main-suite-green): accepted` on the branch (a96b26617). Sandy: "Accept and land".
 
 #### Build Phase 7 Verification
 
