@@ -114,9 +114,9 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 
 **Tier**: med — the work step's default
 
-- [ ] `Step.tsx`: optional `reason?: string` and `open?: boolean` (initial state, for a story). With a reason, the root is a `div` (never a link — a skipped step has no document), its status the given words followed by a `why?` button (`aria-expanded`, `aria-controls`), and when open the reason in a `p` spanning the name and status columns beneath the row. No reason: exactly today's markup
-- [ ] `Step.stories.tsx`: `Skipped` (`state: "waiting"`, `status: "skipped"`, a one-sentence reason) and `SkippedOpen` (the same, `open: true`)
-- [ ] `PlanWorkflows.tsx:124`: pass `status={LABEL[step.state]}` and `reason={step.reason}`; the reason is never joined into the status again
+- [x] `Step.tsx`: optional `reason?: string` and `open?: boolean` (initial state, for a story). With a reason, the root is a `div` (never a link — a skipped step has no document), its status the given words followed by a `why?` button (`aria-expanded`, `aria-controls`), and when open the reason in a `p` spanning the name and status columns beneath the row. No reason: exactly today's markup
+- [x] `Step.stories.tsx`: `Skipped` (`state: "waiting"`, `status: "skipped"`, a one-sentence reason) and `SkippedOpen` (the same, `open: true`)
+- [x] `PlanWorkflows.tsx:124`: pass `status={LABEL[step.state]}` and `reason={step.reason}`; the reason is never joined into the status again
 - [ ] `indusk looks stories admin` to regenerate `components.json` and `components/step.css`; `indusk looks lint admin` clean; the person approves the `step.skipped` and `step.skipped-open` stories against their mockups in the cockpit
 
 #### Build Phase 2 Verification
