@@ -46,8 +46,8 @@ approved_at: "2026-10-15T16:09:05.019Z"
 | A2 | The template tests, run three times, each from a deleted Vite cache, pass every time, and Vite never reports that it reloaded a test | Build Phase 1 | Build Phase 1 | passing | live check | promise: a-browser-test-passes-on-a-cold-cache | (recorded in the impl with its result) |
 | A3 | Landing's install step syncs the checkout's dependencies to the lockfile, refusing a lockfile that does not match, before it builds anything | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-installs-after-a-dependency-change | apps/indusk-mcp/src/__tests__/install-local.test.ts |
 | A4 | An evaluator run with a model that does not exist is recorded as a failure naming that model, and the promise status shows the violation, with the Claude Code installed today | Test Phase 1 | Build Phase 1 | passing | contract | keeps the day-monitor end-to-end test about the monitor, not about Claude Code's wording | apps/indusk-mcp/e2e/day-monitor.e2e.test.ts |
-| A5 | A package the browser template imports only for its side effect, or one outside OpenTelemetry, and missing from the pre-bundle list, turns the pre-bundle guard red; today the guard sees only named imports of OpenTelemetry packages | Phase 0 | Build Phase 2 | written | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
-| A6 | Every test file the browser project runs, and every local module those files and the template import, is read by the pre-bundle guard; today it reads two named files, so a second browser test under the templates folder goes unchecked | Phase 0 | Build Phase 2 | written | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
+| A5 | A package the browser template imports only for its side effect, or one outside OpenTelemetry, and missing from the pre-bundle list, turns the pre-bundle guard red; today the guard sees only named imports of OpenTelemetry packages | Phase 0 | Build Phase 2 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
+| A6 | Every test file the browser project runs, and every local module those files and the template import, is read by the pre-bundle guard; today it reads two named files, so a second browser test under the templates folder goes unchecked | Phase 0 | Build Phase 2 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
 
 ## Checklist
 
@@ -257,10 +257,15 @@ The test that keeps the browser template's packages bundled before its page load
 
 #### Build Phase 2 Verification
 
-- [ ] The guard turns red for a side-effect import, a package from outside OpenTelemetry and a second browser test, and is green on the template as it is
+- [x] The guard turns red for a side-effect import, a package from outside OpenTelemetry and a second browser test, and is green on the template as it is
   <details><summary>Technical</summary>
 
   A5 and A6: the extraction is exercised on fixture source strings (a side-effect import, a non-OpenTelemetry package, a deep import, a `node:` import, a relative `?fresh=` import) and on a temporary extra test file the include globs pick up; A1 still green on today's template. Run `pnpm exec vitest run src/__tests__/templates-prebundle.test.ts` from `apps/indusk-mcp`; `biome check` on the file; output noted under this item.
+
+  </details>
+  <details><summary>Note</summary>
+
+  Red first (commit `bd62551d0`): A5 and A6 each failed on their own assertion (A5 received `[]` for the fixture's five packages; A6 did not find the temporary `second.test.ts`), not on a load error. Green now: `pnpm exec vitest run src/__tests__/templates-prebundle.test.ts` 1 file, 3 tests passed (A1, A5, A6); `biome check` on the file is clean. A1 stayed green on today's template. One thing the work found: the template's header comment shows `import './instrumentation';`, which the follower read as a real import of the Node template, so comments are stripped before scanning (the A5 fixture includes commented-out imports).
 
   </details>
 
