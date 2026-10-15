@@ -7613,6 +7613,32 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-15T01:42:53.036Z",
 			"plan": "plan-stories"
+		},
+		{
+			"mockup": "promise.broken",
+			"mockupHash": "b4795b53f2982431ab33eac169ee07873111d871e59f5997d2c28235af6167cc",
+			"componentsHash": "bf09dcf2227a729397d8b4261e07abf079613e5082991868dba53c2e50acd3f8",
+			"components": {
+				"nav.expanded": "8ea839eabe75b2aa760946febc2d757ab7da5e3898bc7a519f7f8573e542b628",
+				"chip.broken": "b5436ad74255aabc2199681f28e0de9dd86cc41e92151dd00bf859c72bcfac9e",
+				"decision-card.alert": "a990826ab239bc94e414cc39333f94e54d6278e6320a075f31d21632ae90e5fc",
+				"stat.default": "c5f3e66faf5b6a85a955467a5b8ac1319ae016e0335dcc780509a174cad5f6ea",
+				"stat.ok": "b1f7e004ac86c10f4552fd6c44bdb588b3c14685366ff1365e3d6b4cc7ee065d",
+				"stat.bad": "41184063e2d931c5c0cc66e102fed8dd46d00dda2bcbc0daf01ef73f13f3a7fc",
+				"timeline.default": "95d42b3bf92781f16b1a26f362f49a7fa5b41a4b6b392521ef4b99bc5dc2fb37",
+				"box.default": "7402034edd33d3fd922a411764e777346806db20f31f6cd3bc4657f2e925cf2f",
+				"box.css": "eb9661970939a51d17e5182027d0f7772b41a60fe6328136669d8e50a78b4c57",
+				"chip.css": "090fbf26c88aba8de609fc1ec0b32af47ecc440a768232e500244f814017a789",
+				"decision-card.css": "f524512e5face4aada9c350e02e8d72fce81ba1b1b12264f26b967a0c95216c4",
+				"nav.css": "c57723f174d0839b7aa9be7522e43f62e3db3f1120c45bf3015f2821488e7a41",
+				"stat.css": "b32b64f0509ea27f635bb828bffc87ee03090cd9640a3d7bb32f91942f199960",
+				"timeline.css": "fea8031417cb7180c0978b574b41a9d8b14218826cb9ad9e5f8d51a099842c62"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-15T01:42:53.472Z",
+			"plan": "plan-stories"
 		}
 	]
 }
