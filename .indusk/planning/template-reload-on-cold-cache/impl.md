@@ -242,7 +242,7 @@ This phase makes the three tests pass. The browser template's test project is to
 
 The test that keeps the browser template's packages bundled before its page loads reads only some of what the page imports. It looks for named imports of OpenTelemetry packages in two files, so a package imported only for its side effect, a package from anywhere else, or a second browser test added next to the first can be missing from the list and the guard stays green while the mid-run reload comes back. This phase makes the guard read what the browser project actually loads, and closes once it turns red for each of those cases.
 
-- [ ] The pre-bundle guard counts every package a file imports, whatever form the import takes and whoever publishes the package
+- [x] The pre-bundle guard counts every package a file imports, whatever form the import takes and whoever publishes the package
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts` `importedPackages`: match every bare specifier, not only `@opentelemetry/*` — `import … from "x"`, `export … from "x"`, side-effect `import "x"`, and `import("x")` — reducing a deep import to its package name (`@scope/name` or `name`), and skipping relative paths, `node:` built-ins and `vitest` (the runner, served by Vitest itself). Answers A5: today `import "@opentelemetry/context-zone"` or `import { onLCP } from "web-vitals"` added to `instrumentation.web.ts` leaves A1 green while a cold run re-optimizes and reloads.

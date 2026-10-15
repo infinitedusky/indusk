@@ -22,15 +22,35 @@ interface ProjectShape {
 	test?: { name?: string; include?: string[] };
 }
 
-/** The bare package names a source string imports (today: named OpenTelemetry imports only). */
-function packagesIn(source: string): string[] {
+/** `@scope/name/sub` -> `@scope/name`, `name/sub` -> `name`. */
+function packageName(specifier: string): string {
+	const parts = specifier.split("/");
+	return specifier.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0];
+}
+
+/** Specifiers Vite pre-bundles nothing for: local files, Node built-ins, the runner itself. */
+function isBundledByVite(specifier: string): boolean {
+	return !(
+		specifier.startsWith(".") ||
+		specifier.startsWith("/") ||
+		specifier.startsWith("node:") ||
+		specifier === "vitest" ||
+		specifier.startsWith("vitest/")
+	);
+}
+
+/** Every module specifier a source string imports: `from`, side-effect `import "x"`, `import("x")`. */
+function specifiersIn(source: string): string[] {
 	const found = new Set<string>();
-	for (const match of source.matchAll(
-		/(?:from\s+|import\s*\(\s*)["'](@opentelemetry\/[^"']+)["']/g,
-	)) {
+	for (const match of source.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)["']([^"'\n]+)["']/g)) {
 		found.add(match[1]);
 	}
-	return [...found].sort();
+	return [...found];
+}
+
+/** The bare package names a source string imports, whoever publishes them. */
+function packagesIn(source: string): string[] {
+	return [...new Set(specifiersIn(source).filter(isBundledByVite).map(packageName))].sort();
 }
 
 /** The files the browser project loads, relative to `root` (today: two hard-coded names). */
