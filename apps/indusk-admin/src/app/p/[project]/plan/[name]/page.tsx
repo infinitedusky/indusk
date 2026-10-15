@@ -51,41 +51,6 @@ export default async function PlanPage({ params }: PlanPageProps) {
   if (!found) return null;
   const { projectPath, plan } = found;
 
-  // A master (a plan that declares subplans) tells its story instead of
-  // showing a plan's stage: `plan.master`, its rows the Path group the nav
-  // counts. Missing or corrupt declarations leave the standard page — grouping
-  // never hides a plan.
-  const grouping = readPlanHierarchy(projectPath);
-  if ((grouping.subplans[name] ?? []).length > 0) {
-    const master = await masterPage(project, projectPath, name, grouping);
-    if (master) {
-      return (
-        <>
-          <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
-          <PlanFrame
-            project={project}
-            plan={plan}
-            lookState={planLookState({
-              archived: false,
-              waiting: false,
-              briefStatus: null,
-              master: true,
-            })}
-            master
-          >
-            <PlanCopyNotice plan={plan} />
-            {plan.malformed ? <MalformedNotice /> : null}
-            <MasterStory
-              purpose={plan.description}
-              story={master}
-              masterHref={`/p/${project}/plan/${name}/doc/master`}
-            />
-          </PlanFrame>
-        </>
-      );
-    }
-  }
-
   // The dates the released card reads come from the package.
   const dates = (await readHealthNames(projectPath)).planDates[name];
 
@@ -112,6 +77,73 @@ export default async function PlanPage({ params }: PlanPageProps) {
   const parts = await readPlanParts(checkout, name, {
     archived: plan.archived || Boolean(plan.archivedInWorktree),
   });
+
+  // A master (a plan that declares subplans) tells its story where a plan's
+  // rail, status card and parts stand: `plan.master`, its rows the Path group
+  // the nav counts. Everything else a plan page offers stays — the trust
+  // notice, what the master waits on, the way to ask about it, its history —
+  // so a master that waits on the person is answered from its page. Missing or
+  // corrupt declarations leave the standard page — grouping never hides a plan.
+  const grouping = readPlanHierarchy(projectPath);
+  const story =
+    (grouping.subplans[name] ?? []).length > 0
+      ? await masterPage(project, projectPath, name, grouping)
+      : undefined;
+  const sessionControl = (
+    <PlanSession
+      project={project}
+      plan={name}
+      canApprove={actions.canApprove && waiting?.on !== "approval"}
+      canPlan={actions.canPlan}
+      opening={planOpening}
+      startLabel="Ask about this plan"
+    />
+  );
+  const buildControls = actions.showBuild ? (
+    <BuildControls
+      project={project}
+      plan={name}
+      canBuild={actions.canBuild}
+      inReview={actions.inReview && waiting?.on !== "review"}
+    />
+  ) : null;
+  if (story) {
+    return (
+      <>
+        <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
+        <PlanFrame
+          project={project}
+          plan={plan}
+          lookState={planLookState({
+            archived: false,
+            waiting: waiting !== undefined,
+            briefStatus: null,
+            master: true,
+          })}
+          master
+        >
+          <PlanCopyNotice plan={plan} />
+          <TrustNotice
+            project={project}
+            trusted={projectTrusted(projectPath)}
+          />
+          {plan.malformed ? <MalformedNotice /> : null}
+          <WaitingAmendments project={project} plan={name} parts={parts} />
+          {waiting && waiting.on !== "amendment" ? (
+            <DecisionCard project={project} waiting={waiting} />
+          ) : null}
+          <MasterStory
+            purpose={plan.description}
+            story={story}
+            masterHref={`/p/${project}/plan/${name}/doc/master`}
+          />
+          {sessionControl}
+          {buildControls}
+          <HistoryPanel entries={readPlanHistory(projectPath, name)} />
+        </PlanFrame>
+      </>
+    );
+  }
 
   // The page draws what its approved mockups draw (`plan.working`,
   // `plan.phases`, `plan.documents`, ...): the frame's crumb, name and tag; the
@@ -143,22 +175,8 @@ export default async function PlanPage({ params }: PlanPageProps) {
       ) : (
         <PlanStatusCard plan={plan} dates={dates} />
       )}
-      <PlanSession
-        project={project}
-        plan={name}
-        canApprove={actions.canApprove && waiting?.on !== "approval"}
-        canPlan={actions.canPlan}
-        opening={planOpening}
-        startLabel="Ask about this plan"
-      />
-      {actions.showBuild ? (
-        <BuildControls
-          project={project}
-          plan={name}
-          canBuild={actions.canBuild}
-          inReview={actions.inReview && waiting?.on !== "review"}
-        />
-      ) : null}
+      {sessionControl}
+      {buildControls}
     </>
   );
 

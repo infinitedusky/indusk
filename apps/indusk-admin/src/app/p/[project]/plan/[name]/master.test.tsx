@@ -24,6 +24,7 @@ import {
 // and which amendments the package reads for the plan (plan-stories A25).
 const state = vi.hoisted(() => ({
   trusted: true,
+  worktree: false,
   amendments: [] as unknown[],
 }));
 
@@ -50,9 +51,25 @@ vi.mock("next/navigation", () => ({
     throw new Error("not found");
   },
 }));
-vi.mock("@/lib/planning-reader", async () =>
-  (await import("@/__tests__/helpers/cockpit-fixture")).planningReaderMock(),
-);
+// A master worked in its own worktree is one a session can be started in: the
+// mock hands `path-beta` a worktree when a test says so.
+vi.mock("@/lib/planning-reader", async () => {
+  const mock = (
+    await import("@/__tests__/helpers/cockpit-fixture")
+  ).planningReaderMock();
+  return {
+    ...mock,
+    readActivePlans: async () =>
+      (await mock.readActivePlans()).map((p) =>
+        state.worktree && p.name === "path-beta"
+          ? {
+              ...p,
+              worktree: { path: "/mock/wt/path-beta", branch: "plan/path-beta" },
+            }
+          : p,
+      ),
+  };
+});
 vi.mock("@/lib/promises-reader", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).promisesReaderMock(),
 );
@@ -100,6 +117,7 @@ import PlanPage from "./page";
 beforeEach(() => {
   resetFixture();
   state.trusted = true;
+  state.worktree = false;
   state.amendments = [];
 });
 
@@ -208,6 +226,7 @@ describe("a master plan's page keeps what any plan page shows around its story",
 
   it("A25 a master shows the trust notice, its history and the way to ask about the plan", async () => {
     state.trusted = false;
+    state.worktree = true;
     HISTORY["path-beta"] = [
       {
         decision: "The master is written. Approve it?",
@@ -221,6 +240,6 @@ describe("a master plan's page keeps what any plan page shows around its story",
     expect(
       screen.container.querySelectorAll('[data-testid="history-entry"]'),
     ).toHaveLength(1);
-    expect(screen.container.textContent).toContain("Ask about this plan");
+    await expect.element(screen.getByText("Ask about this plan")).toBeVisible();
   });
 });
