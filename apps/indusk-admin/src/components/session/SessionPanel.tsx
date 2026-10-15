@@ -75,33 +75,36 @@ export function SessionPanel({
             el.scrollHeight - el.scrollTop - el.clientHeight < 24;
         }}
       >
-        {events.map((ev, i) => (
-          // Events never reorder or disappear, so their position is their identity.
-          // biome-ignore lint/suspicious/noArrayIndexKey: an append-only log
-          <li key={i}>
-            <EventView
-              ev={ev}
-              repeatsReply={replyRepeated(events, i)}
-              decision={
-                "requestId" in ev ? decisions.get(ev.requestId) : undefined
-              }
-              open={
-                "requestId" in ev &&
-                running &&
-                !decisions.has(ev.requestId) &&
-                !answered.has(ev.requestId)
-              }
-              onAnswer={(answers) => {
-                if (ev.type !== "question") return;
-                settle(ev.requestId, onAnswer(ev.requestId, answers));
-              }}
-              onDecide={(allow) => {
-                if (ev.type !== "permission") return;
-                settle(ev.requestId, onDecide(ev.requestId, allow));
-              }}
-            />
-          </li>
-        ))}
+        {events.map((ev, i) =>
+          // A decision is drawn on its request, never as a row of its own.
+          ev.type === "decided" ? null : (
+            // Events never reorder or disappear, so their position is their identity.
+            // biome-ignore lint/suspicious/noArrayIndexKey: an append-only log
+            <li key={i}>
+              <EventView
+                ev={ev}
+                repeatsReply={replyRepeated(events, i)}
+                decision={
+                  "requestId" in ev ? decisions.get(ev.requestId) : undefined
+                }
+                open={
+                  "requestId" in ev &&
+                  running &&
+                  !decisions.has(ev.requestId) &&
+                  !answered.has(ev.requestId)
+                }
+                onAnswer={(answers) => {
+                  if (ev.type !== "question") return;
+                  settle(ev.requestId, onAnswer(ev.requestId, answers));
+                }}
+                onDecide={(allow) => {
+                  if (ev.type !== "permission") return;
+                  settle(ev.requestId, onDecide(ev.requestId, allow));
+                }}
+              />
+            </li>
+          ),
+        )}
       </ol>
       {running && onSay ? (
         <form
