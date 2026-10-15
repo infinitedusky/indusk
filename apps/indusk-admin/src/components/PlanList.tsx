@@ -14,6 +14,7 @@ import { PlanRow } from "@/components/ui/PlanRow";
 import { WorktreeChip } from "@/components/Worktrees";
 import { initialsOf } from "@/lib/initials";
 import { buildGroups, orderByMaster, type PlanGroup } from "@/lib/plan-groups";
+import { planStage } from "@/lib/plan-stage";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanListProps {
@@ -336,7 +337,7 @@ function PlanItem({
 }) {
   const step = waiting?.[plan.name];
   const mark = statusToNavMark(plan.status, plan.archived);
-  const stage = step ?? (released ? "Released" : mark.stage);
+  const stage = planStage(plan, released, waiting);
   return (
     <li>
       <NavPlanRow

@@ -133,7 +133,10 @@ describe("buildGroups — A24 a queued plan reads by its title", () => {
     const out = buildGroups(
       [plan("parent")],
       [],
-      { ...declare({ parent: ["ghost-plan", "vscode-hooks"] }), declaredTitles },
+      {
+        ...declare({ parent: ["ghost-plan", "vscode-hooks"] }),
+        declaredTitles,
+      },
       never,
       words,
     );

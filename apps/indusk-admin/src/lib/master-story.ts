@@ -1,9 +1,8 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import { planTitle } from "@infinitedusky/indusk-mcp/promises/display";
-import { statusToNavMark } from "@/components/ui/badge-variant";
 import { initialsOf } from "@/lib/initials";
 import type { PathEntry, PlanGroup } from "@/lib/plan-groups";
-import type { Plan } from "@/lib/planning-reader";
+import { planStage } from "@/lib/plan-stage";
 
 /** One plan in its master's story, in declared order. */
 export interface StoryRow {
@@ -96,7 +95,7 @@ export function masterStory(
       initials: initialsOf(plan.title),
       description: plan.description ?? "",
       state: released ? "released" : "draft",
-      stage: stageOf(plan, released, options.waiting),
+      stage: planStage(plan, released, options.waiting),
       href: `${options.prefix}${plan.name}`,
     };
   };
@@ -110,15 +109,4 @@ export function masterStory(
       total: group.total,
     },
   };
-}
-
-function stageOf(
-  plan: Plan,
-  released: boolean,
-  waiting: Record<string, string> | undefined,
-): string {
-  return (
-    waiting?.[plan.name] ??
-    (released ? "Released" : statusToNavMark(plan.status, plan.archived).stage)
-  );
 }
