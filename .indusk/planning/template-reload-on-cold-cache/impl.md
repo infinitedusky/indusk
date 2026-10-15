@@ -1,7 +1,7 @@
 ---
 title: "Tests and landing work from a cold machine"
 date: 2026-10-15
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
