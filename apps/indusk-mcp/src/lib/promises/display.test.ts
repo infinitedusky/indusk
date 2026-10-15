@@ -51,15 +51,48 @@ describe("A3 — a project names its own product words", () => {
 	});
 });
 
-describe("A6 — a plan with no title reads by its folder", () => {
-	it("falls back to the folder for no brief title or an empty one", () => {
-		expect(planTitle(undefined, "my-plan")).toBe("my-plan");
-		expect(planTitle("", "my-plan")).toBe("my-plan");
+describe("A6 — a plan with no title reads as its handle in words", () => {
+	it("falls back to the handle in words for no brief title or an empty one", () => {
+		expect(planTitle(undefined, "my-plan")).toBe("My plan");
+		expect(planTitle("", "my-plan")).toBe("My plan");
 	});
 	it("reads the part of the brief's title before ' — '", () => {
 		expect(planTitle("VS Code extension — promises in the editor", "vscode-extension")).toBe(
 			"VS Code extension",
 		);
+	});
+});
+
+/**
+ * plan-stories A8, A9: a plan is named by its short title; one with no title, or a
+ * title that is only its handle, reads as its handle in words; a master is named by
+ * the title written in its master.md.
+ *
+ * promise: a-plan-reads-by-its-title
+ */
+describe("A8 — a plan reads by its title, else its handle in words", () => {
+	it("reads no title, or a title that is only the handle, as the handle in words", () => {
+		expect(planTitle(undefined, "cockpit-redraw")).toBe("Cockpit redraw");
+		expect(planTitle("cockpit-redraw", "cockpit-redraw")).toBe("Cockpit redraw");
+	});
+	it("spells product words their way", () => {
+		expect(planTitle(undefined, "vscode-extension")).toBe("VS Code extension");
+	});
+	it("a short written title names the plan", () => {
+		expect(planTitle("Cockpit redraw", "cockpit-redraw")).toBe("Cockpit redraw");
+	});
+});
+
+describe("A9 — a master plan is named by the title written in its master.md", () => {
+	it("readHealthNames names a plan folder holding only a master.md by that title", () => {
+		const root = mkdtempSync(join(tmpdir(), "display-master-"));
+		const dir = join(root, ".indusk", "planning", "day");
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(
+			join(dir, "master.md"),
+			'---\ntitle: "InDusk v4: Day"\ndescription: "Watches your software running."\n---\n\n# Day\n',
+		);
+		expect(readHealthNames(root).planTitles.day).toBe("InDusk v4: Day");
 	});
 });
 
