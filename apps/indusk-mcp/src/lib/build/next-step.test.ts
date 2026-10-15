@@ -96,7 +96,10 @@ describe("A13 — a build that cannot continue stops and says why", () => {
 
 // promise: a-skip-reason-is-one-sentence
 describe("A15 — an over-long skip reason is shortened, not re-run", () => {
-	const closed = (missing: string[], longSkipReasons: RetrospectiveReadiness["longSkipReasons"]) => {
+	const closed = (
+		missing: string[],
+		longSkipReasons: RetrospectiveReadiness["longSkipReasons"],
+	) => {
 		const plan = fixturePlan({ open: false });
 		return { ...plan, readiness: { ...ready, passes: false, missing, longSkipReasons } };
 	};
