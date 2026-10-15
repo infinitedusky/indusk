@@ -1,6 +1,6 @@
 # Plan titles and stories — a plan read by its title, a master that tells its story
 
-**Decided 2026-10-14.** Full ADR: `.indusk/planning/plan-stories/adr.md`.
+**Decided 2026-10-14.** Full ADR: `.indusk/planning/archive/plan-stories/adr.md`.
 
 ## Goal
 
@@ -68,6 +68,11 @@ the display module is already the one place a plan is named, the declarations al
    is `released` when a release shipped the plan (the Path count's rule),
    `queued` when the plan has no folder, else `draft` with the stage words the
    nav row shows. The page reports `data-look-state="plan.master"`.
+   *As built:* the story replaces only a plan's rail, status card and parts;
+   the master page keeps the trust notice, the amendment or decision card,
+   *Ask about this plan*, the build controls and the history, so a master
+   that waits on the person is answered from its own page (found by the
+   cold audit, fixed in Build Phase 8).
 
 4. **`subplan-row` is a component.** `SubplanRow` with stories `released`,
    `draft` and `queued`, approved against their mockups; `plan.master` is

@@ -6,11 +6,18 @@ state: enforced
 domain: editor
 owner: plan-stories
 sites:
+  - apps/indusk-admin/src/components/Promises.incidents.test.tsx
+  - apps/indusk-admin/src/components/looks/LooksToolbar.test.tsx
   - apps/indusk-mcp/src/lib/promises/display.ts
 tests:
-  - apps/vscode-extension/src/core/names.test.ts
   - apps/indusk-mcp/src/lib/promises/display.test.ts
   - apps/indusk-mcp/src/__tests__/promise-health-names.test.ts
+  - 'apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx'
+  - 'apps/indusk-admin/src/app/p/[project]/plan/[name]/header.test.tsx'
+  - apps/indusk-admin/src/lib/planning-reader.title.test.ts
+  - apps/indusk-admin/src/lib/plan-groups.test.ts
+  - apps/indusk-admin/src/lib/promise-dashboard.test.ts
+  - apps/vscode-extension/src/core/names.test.ts
 incidents: []
 ---
 
@@ -20,3 +27,4 @@ Wherever InDusk names a plan, in the admin and in the editor, it shows the plan'
 - 2026-10-09 — declared (display-names), from its planning conversation.
 - 2026-10-10 — enforced, confirmed for display-names: proven by row A5, row A6, row A7.
 - 2026-10-15 — changed by plan-stories: titles are short names now, with the description its own field, and an unwritten title reads as words, not the handle. It read: "Wherever the editor names a plan, it shows the plan's title from its brief, the part before the dash, rather than its folder name." Owned before by display-names; plan-stories takes it over.
+- 2026-10-15 — links updated, confirmed for plan-stories: tests apps/indusk-mcp/src/lib/promises/display.test.ts, apps/indusk-mcp/src/__tests__/promise-health-names.test.ts, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx, apps/indusk-admin/src/app/p/[project]/plan/[name]/header.test.tsx, apps/indusk-admin/src/lib/planning-reader.title.test.ts, apps/indusk-admin/src/lib/plan-groups.test.ts, apps/indusk-admin/src/lib/promise-dashboard.test.ts, apps/vscode-extension/src/core/names.test.ts; sites apps/indusk-admin/src/components/Promises.incidents.test.tsx, apps/indusk-admin/src/components/looks/LooksToolbar.test.tsx, apps/indusk-mcp/src/lib/promises/display.ts.
