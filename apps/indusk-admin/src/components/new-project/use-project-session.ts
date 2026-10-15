@@ -16,9 +16,10 @@ export function useProjectSession(sessionId: string | null) {
   const [problem, setProblem] = useState<string | null>(null);
 
   const post = async (path: string, body: unknown) => {
-    if (!sessionId) return;
+    if (!sessionId) return false;
     const r = await postJson(`/api/sessions/${sessionId}/${path}`, body);
     if (!r.ok) setProblem(r.error);
+    return r.ok;
   };
 
   return {
@@ -26,9 +27,9 @@ export function useProjectSession(sessionId: string | null) {
     running,
     problem,
     answer: (requestId: string, answers: Record<string, string>) =>
-      void post("reply", { requestId, answers }),
+      post("reply", { requestId, answers }),
     decide: (requestId: string, allow: boolean) =>
-      void post("reply", { requestId, allow }),
+      post("reply", { requestId, allow }),
     say: (text: string) => void post("say", { text }),
     stop: () => void post("stop", {}),
   };
