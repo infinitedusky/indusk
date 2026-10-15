@@ -32,7 +32,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   reply through `Markdown`; the draft's `transcript.jsonl` (appended by
   `startProjectConversation`) is what a reopened page shows. Other conversations still use the session panel. Guarded by `conversation-turns.test.ts` and
   `ConversationThread.test.tsx`. — `promise: a-project-conversation-is-a-back-and-forth`
-- **A view reads whether a request is decided from its `decided` event**, never from a set of its own: a click may close a prompt early, but the event is the record, and a reload keeps it. Guarded by `SessionPanel.test.tsx` (A6) and `conversation-turns.test.ts` (A4). — `promise: a-decided-request-stays-decided`
+- **A view reads whether a request is decided from its `decided` event**, never from a set of its own: a click may close a prompt early, but the event is the record, and a reload keeps it. A click's early close is undone when the reply is refused (`onAnswer`/`onDecide` resolve to whether it was accepted), and an answered question's outcome is read from the event's `answers`. Guarded by `SessionPanel.test.tsx` (A6, A9, A10), `ConversationThread.test.tsx` (A10) and `conversation-turns.test.ts` (A4). — `promise: a-decided-request-stays-decided`
 - **What a plan's page offers is one rule, `planActions`**: a plan is started
   by its worktree in normal mode or its `code.json` in a workbench, and gets
   the same buttons either way; a workbench session runs at the root with the
