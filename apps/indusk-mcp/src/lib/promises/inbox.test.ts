@@ -66,6 +66,21 @@ describe("A17 — a recorded break lands in the project's inbox", () => {
 		expect(entries[0].incident).toBe(entries[1].incident);
 		expect(new Set(entries.map((e) => e.id)).size).toBe(2);
 	});
+
+	// Regression guard for main-suite-green A6 (promise: the-everyday-suite-passes-on-main):
+	// the two cases above run on the real clock and their fixture's violation is pinned
+	// to 2026-10-08, so they are red from a day after it. This one pins `now` and passes
+	// today: an incident over a day old is reminded (incident-recording ADR D7).
+	// lesson: code-that-decides-takes-its-clock-and-its-reads
+	it("an incident over a day old gets a reminder after its break", async () => {
+		const fx = recordingProject();
+		cleanups.push(fx.cleanup);
+		const now = new Date("2026-10-10T20:00:00Z");
+		await recordBreaks(fx.root, { by: "admin", source: "deployed", now }, deps([TRACE]));
+		const entries = jsonLines<{ kind: string; incident: string }>(home, "inbox.jsonl");
+		expect(entries.map((e) => e.kind)).toEqual(["break", "reminder"]);
+		expect(entries[1].incident).toBe(entries[0].incident);
+	});
 });
 
 /** Build Phase 8 — promise: a-break-reaches-the-working-agent. The hook's rule, for the extension's reader. */
