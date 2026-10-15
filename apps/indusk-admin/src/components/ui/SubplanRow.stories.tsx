@@ -11,7 +11,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Released: Story = {
   args: {
-    number: 5,
+    number: "5",
     initials: "DP",
     state: "released",
     title: "Day promises",
@@ -23,7 +23,7 @@ export const Released: Story = {
 };
 export const Draft: Story = {
   args: {
-    number: 18,
+    number: "18",
     initials: "WF",
     state: "draft",
     title: "Watched from day one",
@@ -36,7 +36,7 @@ export const Draft: Story = {
 // Declared in the master, not made yet: dimmed, nothing behind it.
 export const Queued: Story = {
   args: {
-    number: 19,
+    number: "19",
     initials: "CC",
     state: "queued",
     title: "Check at change time",

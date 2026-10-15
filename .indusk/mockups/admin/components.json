@@ -3248,7 +3248,7 @@
 			"properties": [
 				{
 					"name": "number",
-					"type": "number",
+					"type": "ReactNode",
 					"required": true,
 					"description": "Its place in the master's order, 1-up."
 				},
@@ -3295,6 +3295,13 @@
 					"id": "ui-subplanrow--released",
 					"snapshotHash": "6e9be503b93f748c96723076a5bd21060a35d0270eb25d6b67ab6c2f388a8dfc",
 					"content": {
+						"number": [
+							[
+								0,
+								0,
+								0
+							]
+						],
 						"initials": [
 							[
 								0,
@@ -3332,6 +3339,13 @@
 					"id": "ui-subplanrow--draft",
 					"snapshotHash": "597070154a9a19c3c7884d2ce146d1e53ca6f7b518b02548f514d2f6c2cf9a89",
 					"content": {
+						"number": [
+							[
+								0,
+								0,
+								0
+							]
+						],
 						"initials": [
 							[
 								0,
@@ -3369,6 +3383,13 @@
 					"id": "ui-subplanrow--queued",
 					"snapshotHash": "1527dc3b7da53c041666e2843ce4c9595e67231c53a69c9b944cffbab98e40a2",
 					"content": {
+						"number": [
+							[
+								0,
+								0,
+								0
+							]
+						],
 						"initials": [
 							[
 								0,
