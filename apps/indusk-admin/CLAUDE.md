@@ -109,9 +109,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `recordBreaks`; a local-only project gets none, and `ui stop` ends the loops
   with the process. The admin composes; the writing is the package's. Guarded
   by `admin-recorder.test.ts` (system tier). An HTTP test whose fixture names a
-  production source (`promises.jaeger`) runs this recorder too: its breaks become
-  incidents and its promises `known-violated`, so assert through the recorder's
-  incidents, never a hand-written one beside them. — see `/decisions/incident-recording`
+  `promises.jaeger` runs this recorder too: assert through its incidents, never a
+  hand-written one beside them. — see `/decisions/incident-recording`
 - **Active plans and their boundary records are read from each plan's live
   root** (`worktree/plan-worktrees`); `components/Worktrees.tsx` renders the
   worktree chip, a broken assignment, unassigned worktrees and the record error.
@@ -132,18 +131,19 @@ Each entry is a rule and a pointer; the pointer holds the story.
   identity = PID liveness AND its command line, never its port
   (`lib/process-identity.ts`); the scorecard-to-plan join is date-range
   approximate.
-- **Promise timeline** (moved from the root, 2026-10-08): compact sliced reads;
+- **Promise timeline**: compact sliced reads;
   an admin store that reads only what is new plus a late tail; one
   `violationState` (unrecorded / open / fixed) for chip and timeline;
   incidents record `fixed` via `promises fix`. — see
   `/decisions/promise-timeline`
-- **Admin plan authoring** (moved from the root, 2026-10-08): `plans start →
+- **Admin plan authoring**: `plans start →
   approve → build → accept → land`, through the developer's own `claude`;
   nothing lands unaccepted. — see `/decisions/admin-plan-authoring`
 - **A fact the cockpit shows is read from a package module** (`promises/standing`,
   `proof`, `fix`; `plans/steps`, `waiting`, `history`); the admin's `lib/` holds
-  only fs-to-props glue, never a second definition. Guarded by
-  `apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts`. — see
+  only fs-to-props glue, never a second definition. What a plan waits on is
+  `planWaiting`'s answer alone, amendments included; the nav and the page add
+  none. Guarded by `cockpit-single-definition.test.ts`. — see
   `/decisions/plan-cockpit`
 - **A look's state is read from `promises/standing` and `looks/*`, never
   computed here**: the Looks page reads `looks/overview`, the dashboard and the

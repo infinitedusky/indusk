@@ -282,7 +282,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: what a plan waits on is `planWaiting`'s answer alone, amendments included; the nav and the plan page never add a wait of their own
+- [x] `apps/indusk-admin/CLAUDE.md`: what a plan waits on is `planWaiting`'s answer alone, amendments included; the nav and the plan page never add a wait of their own
 
 #### Build Phase 2 Document
 
