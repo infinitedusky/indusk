@@ -202,9 +202,9 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 - [x] Extract `componentOfStory(name)` into `lib/looks/mockups.ts`, beside the story reader that already derives `Story.component` from the first dot (`mockups.ts:369`); the reader, `landed.ts`'s private `componentOf`, and `coverage.ts:108`'s `story.name.split(".")[0]` (which can read `story.component`) are three copies of the one `<component>.<state>` naming rule
 - [x] Extract `addApprovedMockup(root, { screen, markup, approvals })` into `__tests__/helpers/looks-cli.ts`, beside `app()`: `landed.test.ts` A10 and `looks-admin-components.test.ts` `appWithGhost` repeat the same ~25 lines (push a screen into `screens.json`, write its markup from `home.empty.html`, read the app, push approvals bound to its hashes); both tests then read it
-- [ ] (reviewed `src/bin/cli.ts` (1,418 lines) and `src/bin/commands/promises.ts` (505) — left as-is: over the cap before this plan, which changed one `await` and the stdin read; decomposing the CLI is its own plan, not this one's)
-- [ ] (reviewed `apps/docs/src/reference/cli/promises.md` (855) and `cli/looks.md` (427) — left as-is: reference pages, one entry per command, touched by one sentence each)
-- [ ] (reviewed `contract-stdin.test.ts` — left as-is: it builds its project through the shared `promiseProject` and plan-fixture helpers; only the stdin spawn is its own)
+- [x] (reviewed `src/bin/cli.ts` (1,418 lines) and `src/bin/commands/promises.ts` (505) — left as-is: over the cap before this plan, which changed one `await` and the stdin read; decomposing the CLI is its own plan, not this one's)
+- [x] (reviewed `apps/docs/src/reference/cli/promises.md` (855) and `cli/looks.md` (427) — left as-is: reference pages, one entry per command, touched by one sentence each)
+- [x] (reviewed `contract-stdin.test.ts` — left as-is: it builds its project through the shared `promiseProject` and plan-fixture helpers; only the stdin spawn is its own)
 
 #### Build Phase 5 Verification
 
