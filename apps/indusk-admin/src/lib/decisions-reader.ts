@@ -46,7 +46,21 @@ export async function readWaiting(
     plan: p.name,
     stoppedAt: buildState(project, p.name)?.stop?.step ?? null,
   }));
-  const amendments = await Promise.all(
+  const amendments = await amendmentCounts(projectPath, plans);
+  return planWaiting({
+    sessions,
+    plans: plans.map(snapshotOf),
+    builds,
+    amendments,
+  });
+}
+
+/** Each plan's waiting amendments, read in the checkout the plan is worked in. */
+async function amendmentCounts(
+  projectPath: string,
+  plans: Plan[],
+): Promise<{ plan: string; count: number }[]> {
+  return Promise.all(
     plans.map(async (p) => ({
       plan: p.name,
       count: (
@@ -56,12 +70,6 @@ export async function readWaiting(
       ).length,
     })),
   );
-  return planWaiting({
-    sessions,
-    plans: plans.map(snapshotOf),
-    builds,
-    amendments,
-  });
 }
 
 /** `plan`'s recorded decisions, oldest first; none when they cannot be read. */
