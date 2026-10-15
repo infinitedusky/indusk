@@ -244,8 +244,11 @@ branch. It also refuses when the `indusk` running it is installed from the
 plan's worktree, which an install run on the branch does: landing would delete
 the build it runs from, so install from the trunk first. Afterwards, verify on trunk; if the project declares how it installs
 the landed build (`workflow.steps.land.install` — dusk's is `pnpm
-install:local`, which builds what a publish builds and links the checkout into
-the global `indusk`), run that, so the machine's `indusk` is the landed build
+install:local`, which first syncs dependencies with `pnpm install
+--frozen-lockfile` (so a merge that changed the lockfile installs without a
+hand-run `pnpm install`, and a lockfile that does not match refuses the
+install), then builds what a publish builds and links the checkout into the
+global `indusk`), run that, so the machine's `indusk` is the landed build
 with nothing published; then record the landing sha in the archived
 retrospective. With reviewers, merge the PR instead, then release, remove the
 worktree and delete the branch by hand. See [`indusk plans`](/reference/cli/plans).

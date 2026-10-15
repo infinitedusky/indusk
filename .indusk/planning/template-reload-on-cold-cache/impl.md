@@ -222,10 +222,15 @@ This phase makes the three tests pass. The browser template's test project is to
 
 #### Build Phase 1 Document
 
-- [ ] The retrospective reference says landing's install syncs dependencies to the lockfile before it builds
+- [x] The retrospective reference says landing's install syncs dependencies to the lockfile before it builds
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/skills/retrospective.md` (the install step of landing): `pnpm install:local` starts with `pnpm install --frozen-lockfile`, so a merge that changed the lockfile installs without a hand-run `pnpm install`; a lockfile that does not match refuses the install.
+
+  </details>
+  <details><summary>Note</summary>
+
+  The landing paragraph of Step 10 now says the install syncs to the lockfile first, and refuses a lockfile that does not match.
 
   </details>
 
