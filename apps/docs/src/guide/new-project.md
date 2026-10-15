@@ -48,8 +48,8 @@ conversation leaves nothing behind it but the folder, which discarding removes.
 Everything said is kept in the conversation's draft as `transcript.jsonl`. Leave
 the page and come back with no agent running and the same thread is there, with
 a reply box; sending a message starts the agent again with your words. Discarding
-the conversation removes the transcript with the rest of the draft. `indusk
-new-project transcript <id>` prints it, one JSON line per event.
+the conversation removes the transcript with the rest of the draft.
+`indusk new-project transcript <id>` prints it, one JSON line per event.
 
 The plan conversation, builds and **Fix with Claude** still use the session
 panel; the project conversation goes first.
@@ -171,8 +171,8 @@ Creating a project sends nothing off your machine. The GitHub repository is
 its own confirm on the proposal, off by default. The proposal reads the account
 from `gh` and names it; to change it, sign in with `gh auth login` (or
 `gh auth switch`) and reload the page. Private is chosen unless you choose
-public. When the confirm is on, the last step runs `gh repo create
-<repository> --private --source <path> --push` once (`--public` when you chose
+public. When the confirm is on, the last step runs 
+`gh repo create <repository> --private --source <path> --push` once (`--public` when you chose
 public). If `gh` fails at that point, the step reports the failure and the
 finished local project is left as it is - nothing else is undone, and you can
 create the repository yourself.
