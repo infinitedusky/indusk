@@ -1,4 +1,5 @@
 import {
+  planTitle,
   promiseWords,
   readHealthNames,
 } from "@infinitedusky/indusk-mcp/promises/display";
@@ -79,7 +80,8 @@ export default async function PromisePage({ params }: PromisePageProps) {
             href={`${planHrefPrefix}${entry.owner}`}
             className="hover:underline"
           >
-            {names.planTitles[entry.owner] ?? entry.owner}
+            {names.planTitles[entry.owner] ??
+              planTitle(undefined, entry.owner, names.words)}
           </Link>
         </p>
       </header>
