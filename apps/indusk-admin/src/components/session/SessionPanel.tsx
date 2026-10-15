@@ -50,6 +50,7 @@ export function SessionPanel({
     if (el && following.current) el.scrollTop = el.scrollHeight;
   }, [events.length]);
   // How each request was decided, from the log: the record a reload keeps.
+  // promise: a-prompt-shows-only-when-a-person-must-choose
   const decisions = decisionsOf(events);
 
   return (

@@ -3,7 +3,11 @@ import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 /** A request's decision, as its `decided` event recorded it. */
 export type Decision = Extract<StartedEvent, { type: "decided" }>;
 
-/** Each decided request's `decided` event, by request id. */
+/**
+ * Each decided request's `decided` event, by request id.
+ * promise: a-decided-request-stays-decided
+ * promise: a-prompt-shows-only-when-a-person-must-choose
+ */
 export function decisionsOf(
   events: readonly StartedEvent[],
 ): Map<string, Decision> {
