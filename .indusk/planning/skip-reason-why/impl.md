@@ -1,7 +1,7 @@
 ---
 title: "skip-reason-why"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -55,6 +55,9 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 | A11 | A cleanup skipped with a reason of three short sentences ("Done. Nothing here. Fine.", under 120 characters) is not ready for the retrospective, cleanup named | Phase 0 | Build Phase 3 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 | A12 | A one-sentence reason containing "e.g." or a file name such as "gate.ts" is still ready for the retrospective | Phase 0 | Build Phase 3 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 | A13 | A plan that skips falsification, cleanup and audit, each with a reason, lists all three skips with their reasons, and a plan that skips none lists none | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
+| A14 | The skills an agent in this repo loads (`.claude/skills/`) say a skip reason is one sentence of at most 120 characters, byte-identical to the package's sources | Phase 0 | Build Phase 5 | planned | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts |
+| A15 | An unattended build whose only unmet ritual is an audit skipped with an over-long reason asks for the reason to be shortened, not for a full audit; the same for falsification and cleanup | Phase 0 | Build Phase 5 | planned | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/lib/build/next-step.test.ts |
+| A16 | The shortening session is told which ritual's reason to rewrite, the limit, and to change nothing else in the plan | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/lib/build/build-session.test.ts |
 
 ## Checklist
 
@@ -202,6 +205,29 @@ Searched without finding an attack vector: the readiness gate's other satisfiers
 #### Build Phase 4 Document
 
 - [x] `apps/docs/src/reference/skills/retrospective.md`: name `rituals/reason.ts` as where the reason rule lives, replacing any mention of `lifecycle.ts`
+
+### Build Phase 5: The installed skills, and a long reason is shortened, not re-run
+
+**Tier**: med — the work step's default
+
+**Goal**: act on two audit findings the person chose to fix (2026-10-14: "lets fix 1 and 2"). (1) `.claude/skills/{cleanup,falsify,audit,retrospective}/SKILL.md` — the copies an agent in this repo loads — still carry the old examples and no limit: Build Phase 1 edited the package sources and skipped the sync, and its note that landing syncs them is wrong (`install:local` does not). `skill-sync-parity.test.ts` already pins the copies to the sources; no phase ran it, because each ran only `vitest related`. (2) `nextBuildStep` (`lib/build/next-step.ts:63-66`) answers a ritual in `missing` by running that ritual, so an over-long skip reason starts a whole `/falsify`, `/cleanup` or `/audit` — for the audit, a skip quietly becomes a full audit.
+
+- [ ] Resync the four installed copies from `apps/indusk-mcp/skills/` (`cp apps/indusk-mcp/skills/<name>.md .claude/skills/<name>/SKILL.md`, as the parity test's message says); add `// promise: a-skip-reason-is-one-sentence` to `skill-sync-parity.test.ts` beside its lesson; strike Build Phase 1's "the sync happens at landing" note with a correction
+- [ ] `next-step.ts`: a new step `{ step: "shorten-reason"; ritual: "falsification" | "cleanup" | "audit"; length: number; sentences: number }`, returned before the per-ritual steps when `readiness.longSkipReasons` names that ritual (the first in falsify → cleanup → audit order); `describeStep` in `bin/commands/plans.ts` words it
+- [ ] `runner.ts` / `build-session.ts`: `"shorten-reason"` is a session step; its prompt names the ritual's `<ritual>_reason` field in the impl's frontmatter, the reason's length and sentence count, the rule (one sentence, at most 120 characters, `rituals/reason.ts`), and says to rewrite that one line, change nothing else, commit, and end. Grep `BuildStepName` consumers (admin `lib/build-host.ts`) for fallout
+
+#### Build Phase 5 Verification
+
+- [ ] A14 goes green (`pnpm exec vitest run apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts`) — red before the resync, on the four STALE lines
+- [ ] A15 and A16 go green (`pnpm exec vitest run apps/indusk-mcp/src/lib/build/next-step.test.ts apps/indusk-mcp/src/lib/build/build-session.test.ts && pnpm exec vitest related apps/indusk-mcp/src/lib/build/next-step.ts apps/indusk-mcp/src/lib/build/runner.ts apps/indusk-mcp/src/lib/build/build-session.ts --run`); `tsc --noEmit` clean in both packages
+
+#### Build Phase 5 Context
+
+- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`): a phase that edits `apps/indusk-mcp/skills/` resyncs `.claude/skills/` in the same phase and runs `skill-sync-parity.test.ts` — `vitest related` does not reach it — one line where the file's skills rules live
+
+#### Build Phase 5 Document
+
+- [ ] `apps/docs/src/reference/skills/retrospective.md` (or the build reference page that lists build steps, if one exists): an unattended build meets an over-long skip reason with a `shorten-reason` session that rewrites the one line
 
 ## Files Affected
 
