@@ -248,7 +248,7 @@ The test that keeps the browser template's packages bundled before its page load
   `apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts` `importedPackages`: match every bare specifier, not only `@opentelemetry/*` — `import … from "x"`, `export … from "x"`, side-effect `import "x"`, and `import("x")` — reducing a deep import to its package name (`@scope/name` or `name`), and skipping relative paths, `node:` built-ins and `vitest` (the runner, served by Vitest itself). Answers A5: today `import "@opentelemetry/context-zone"` or `import { onLCP } from "web-vitals"` added to `instrumentation.web.ts` leaves A1 green while a cold run re-optimizes and reloads.
 
   </details>
-- [ ] The pre-bundle guard reads every test the browser project runs, and the local files they import
+- [x] The pre-bundle guard reads every test the browser project runs, and the local files they import
   <details><summary>Technical</summary>
 
   Same file: take the `templates` project's `test.include` globs from `vitest.templates.config.ts`, expand them under the package root, and follow relative imports (static and `?query`-suffixed dynamic, as `instrumentation.web.test.ts` does with `./instrumentation.web.ts?fresh=`) to collect the files whose bare imports are checked, instead of the two hard-coded names. Answers A6: a second `templates/*.test.ts` with an unlisted import is unchecked today.

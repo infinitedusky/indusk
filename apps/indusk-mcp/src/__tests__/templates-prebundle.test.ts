@@ -1,6 +1,15 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	statSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { globSync } from "glob";
 import { describe, expect, it } from "vitest";
 import templatesConfig from "../../vitest.templates.config.js";
 
@@ -39,10 +48,17 @@ function isBundledByVite(specifier: string): boolean {
 	);
 }
 
+/** Source without comments: a JSDoc usage example is not an import. */
+function withoutComments(source: string): string {
+	return source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|\s)\/\/.*$/gm, "$1");
+}
+
 /** Every module specifier a source string imports: `from`, side-effect `import "x"`, `import("x")`. */
 function specifiersIn(source: string): string[] {
 	const found = new Set<string>();
-	for (const match of source.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)["']([^"'\n]+)["']/g)) {
+	for (const match of withoutComments(source).matchAll(
+		/(?:\bfrom\s*|\bimport\s*\(?\s*)["']([^"'\n]+)["']/g,
+	)) {
 		found.add(match[1]);
 	}
 	return [...found];
@@ -53,9 +69,39 @@ function packagesIn(source: string): string[] {
 	return [...new Set(specifiersIn(source).filter(isBundledByVite).map(packageName))].sort();
 }
 
-/** The files the browser project loads, relative to `root` (today: two hard-coded names). */
-function collectBrowserFiles(_root: string, _globs: string[]): string[] {
-	return ["templates/instrumentation.web.ts", "templates/instrumentation.web.test.ts"];
+/** Relative imports in a source string; a `?query` or a `${` template tail is dropped. */
+function relativeImportsIn(source: string): string[] {
+	const found = new Set<string>();
+	for (const match of withoutComments(source).matchAll(
+		/(?:\bfrom\s*|\bimport\s*\(?\s*)["'`](\.[^"'`\n]*)["'`]/g,
+	)) {
+		found.add(match[1].split(/[?$]/)[0]);
+	}
+	return [...found];
+}
+
+function resolveLocalFile(root: string, fromFile: string, specifier: string): string | undefined {
+	const base = join(dirname(fromFile), specifier);
+	const candidates = [base, `${base}.ts`, base.replace(/\.js$/, ".ts"), join(base, "index.ts")];
+	return candidates.find((c) => existsSync(join(root, c)) && statSync(join(root, c)).isFile());
+}
+
+/**
+ * The files the browser project loads, relative to `root`: every file its
+ * `include` globs match, plus the local modules they import, transitively.
+ */
+function collectBrowserFiles(root: string, globs: string[]): string[] {
+	const queue = globs.flatMap((pattern) => globSync(pattern, { cwd: root, posix: true }));
+	const seen = new Set<string>();
+	for (let file = queue.pop(); file !== undefined; file = queue.pop()) {
+		if (seen.has(file)) continue;
+		seen.add(file);
+		for (const specifier of relativeImportsIn(readFileSync(join(root, file), "utf-8"))) {
+			const local = resolveLocalFile(root, file, specifier);
+			if (local) queue.push(local);
+		}
+	}
+	return [...seen].sort();
 }
 
 function importedPackages(file: string): string[] {
@@ -87,9 +133,7 @@ function listTheProjectSees(): string[] {
 describe("the browser template's pre-bundle list (a-browser-test-passes-on-a-cold-cache)", () => {
 	it("A1: bundles every package the template and its test import before the page loads", () => {
 		const imported = [
-			...new Set(
-				collectBrowserFiles(PACKAGE_ROOT, templatesInclude()).flatMap(importedPackages),
-			),
+			...new Set(collectBrowserFiles(PACKAGE_ROOT, templatesInclude()).flatMap(importedPackages)),
 		].sort();
 		expect(imported.length).toBeGreaterThan(0);
 		const seen = new Set(listTheProjectSees());
@@ -112,6 +156,8 @@ describe("the browser template's pre-bundle list (a-browser-test-passes-on-a-col
 			'import { c } from "node:fs";',
 			'import { d } from "vitest";',
 			'import { e } from "vitest/browser";',
+			'// import "commented-out";',
+			'/* import "also-commented"; */',
 		].join("\n");
 		expect(packagesIn(source)).toEqual(
 			["@opentelemetry/context-zone", "@scope/name", "dyn-pkg", "plain", "web-vitals"].sort(),
@@ -128,7 +174,7 @@ describe("the browser template's pre-bundle list (a-browser-test-passes-on-a-col
 			mkdirSync(join(dir, "templates"));
 			writeFileSync(
 				join(dir, "templates", "second.test.ts"),
-				'import "web-vitals";\nawait import(`./helper.ts?fresh=${1}`);\n',
+				`import "web-vitals";\nawait import(\`./helper.ts?fresh=\${1}\`);\n`,
 			);
 			writeFileSync(join(dir, "templates", "helper.ts"), 'import "other-pkg";\n');
 			const found = collectBrowserFiles(dir, ["templates/**/*.test.ts"]);
