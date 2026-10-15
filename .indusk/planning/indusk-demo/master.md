@@ -1,5 +1,6 @@
 ---
-title: "Demo — a new project, start to finish"
+title: "InDusk demo"
+description: "Builds the recorded demo of starting a new project with InDusk and watching its promises hold in production."
 date: 2026-10-04
 updated: 2026-10-08
 status: living

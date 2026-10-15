@@ -1,5 +1,6 @@
 ---
-title: "Contract UI — the admin organised around premises, promises and phases"
+title: "Contract UI"
+description: "The admin organised around premises, promises and phases."
 date: 2026-10-05
 status: draft
 workflow: feature
