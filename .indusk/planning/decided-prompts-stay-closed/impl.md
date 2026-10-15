@@ -1,7 +1,7 @@
 ---
 title: "Decided prompts stay closed"
 date: 2026-10-14
-status: completed
+status: in-progress
 workflow: bugfix
 trajectory: required
 test_phases: required
@@ -50,6 +50,8 @@ Every request a session makes is recorded in its log together with how it was de
 | A6 | A request the person allowed or denied shows the outcome they chose, and a panel connecting afterwards shows it decided, with no buttons | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A7 | A question a build declined on its own shows as declined, with the reason, never as waiting | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/build/build-session.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A8 | Watching a real build in the cockpit, no prompt is left looking undecided, and a reload leaves every one decided | Build Phase 2 | Build Phase 2 | passing | live check | the brief's expectation: watching a build shows no prompt waiting unless it is | recorded in this impl, Build Phase 2 |
+| A9 | A question the person answered shows the answer they gave, and a panel connecting afterwards (a reload) still shows it answered with that answer, not a blank question with every option disabled | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
+| A10 | A click on Allow, Deny or Answer whose reply the server refuses leaves the request waiting with its buttons back, never with neither buttons nor an outcome | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/SessionPanel.test.tsx, apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
 
 ## Checklist
 
@@ -136,6 +138,34 @@ Every request a session makes is recorded in its log together with how it was de
 #### Build Phase 2 Document
 
 - [x] `apps/docs/src/reference/admin-ui/sessions.md`: a decided request shows its outcome in the panel and the thread; and correct the page's stale line that a planning session runs under `default` (it runs `acceptEdits`, deciding in code, `protocol.ts`)
+
+### Build Phase 3: Falsification — an answered question's outcome, and a refused click
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds against two failure modes found by reading the code. (1) The `decided` event a person's answer records carries only `allow: true` (`manager.ts` `reply` → `decidedBy(…, { allow: true })`), and `QuestionView` keeps the picks in component state (`chosen`), so after a reload an answered question renders every option disabled, none selected, and no outcome line: it looks like an unanswered question, not "done with its outcome" as `a-decided-request-stays-decided` promises. (2) `SessionPanel` and `ConversationThread` still add the request to their local `answered` set on click, and `SessionConnector.post` only sets `problem` when the reply route refuses (409) or the request fails; the set is never undone, so the request is still waiting in the manager while the panel shows neither buttons nor an outcome until a reload.
+
+- [ ] `session/start.ts`: the `decided` event carries `answers?: Record<string, string>` for a question a person answered
+- [ ] `session/manager.ts` `reply`: a reply with `answers` records `decided` with those answers
+- [ ] `SessionPanel.tsx` `QuestionView`: a question with an allowing decision shows "Answered — {each question: answer}" from the decision, in place of the Answer button (options stay disabled)
+- [ ] `SessionPanel.tsx` + `SessionConnector.tsx`: `onAnswer`/`onDecide` resolve to whether the reply was accepted; on a refusal the panel removes the request from its local `answered` set, so its buttons come back beside the shown problem
+- [ ] `ConversationThread.tsx` + `NewProjectConversation.tsx` (`session.answer`/`session.decide`): the same — a refused reply reopens the request in the thread
+
+#### Build Phase 3 Verification
+- [ ] A9: a person's `reply` with answers records `decided` carrying them; a fresh panel rendered with `[question, decided{answers}]` shows "Answered" with the answer and no Answer button — fails today (no answers on the event, no outcome line) (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/manager.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx`)
+- [ ] A10: a running panel and a running thread whose `onDecide`/`onAnswer` resolve `false` show Allow and Deny (or Answer) again after the click — fails today (the buttons stay gone) (`cd apps/indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx src/components/new-project/ConversationThread.test.tsx`)
+- [ ] A1–A8 still pass; tsc and biome clean on the changed files (`cd apps/indusk-admin && pnpm exec vitest related src/components/session/SessionPanel.tsx src/components/new-project/ConversationThread.tsx --run`)
+
+#### Build Phase 3 Context
+- [ ] `apps/indusk-admin/CLAUDE.md`: amend the decided-event entry — a click's early close is undone when the reply is refused; an answered question's outcome is read from its `decided` event's answers. Guarded by `SessionPanel.test.tsx` (A9, A10)
+
+#### Build Phase 3 Document
+- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: an answered question shows the answer given; a refused click leaves the request open with the problem shown
+
+#### Build Phase 3 — what the falsification looked at
+- Searched without an attack vector: the confined and planning rule paths (`decideByRule`; the draft's `transcript.jsonl` is written by a `subscribe` listener in `new-project-session.ts`, not `opts.onEvent` as Build Phase 1 assumed, and `record(…, false)` still notifies listeners, so a reopened draft keeps both events); a double reply (refused by `h.answered`); the build's question decline (its message is never empty); `pendingQuestion` and Needs you (read `h.answered`, which `reply` still fills); `turnsOf` (collects decisions in a first pass, so order does not matter).
+- Seen, not authored: in a build a live subscriber hears `decided` before its `permission` (`record` calls the build's `onEvent`, which replies, before the listeners run), while the log replayed to a reconnecting panel is in order. Every reader builds a map first, so nothing draws it wrong.
+- Not investigated: what a panel shows once the manager drops a session's events at `stop` (a finished build step); that is the session's lifetime, not how a decision is recorded.
 
 ## Files Affected
 
