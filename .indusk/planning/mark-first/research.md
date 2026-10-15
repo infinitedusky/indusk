@@ -176,6 +176,18 @@ telemetry gaps; Sandy moved them here.
 - **Changes:** `a-closed-plan-kept-its-promises` closes on marks;
   `a-promise-page-shows-its-proof` shows clauses.
 - **Looks:** unchanged; approval screens fold into `looks-as-promises`.
+- **Task wording** (Sandy, 2026-10-15): an impl's tasks are written in the
+  imperative — "Make the browser template's test project read the pre-bundle
+  list from the root configuration" — so an unticked task reads as work to do;
+  verification items stay as end states that must hold ("The two new tests
+  pass…"). Today's end-state task wording read as already done. A change to the
+  planner's phase-summary rule (`skills/planner.md`, the planning `CLAUDE.md`
+  template), for new impls only.
+- **Task tags — later, with `run-the-master`** (Sandy, 2026-10-15, "we don't
+  have to do that right now"): each task says which files it will touch and what
+  kind of change it is (state, refactor, new behaviour, …), so a person sees the
+  shape of the work at a glance and the scheduler knows which phases can run in
+  parallel.
 
 ## Decisions
 
