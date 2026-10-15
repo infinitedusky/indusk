@@ -3,29 +3,26 @@ title: "Signal first"
 date: 2026-10-14
 status: accepted
 workflow: feature
-description: "A plan makes one promise, stated as clauses. Each clause is verified by its tests before release and upheld by its signal — telemetry from the running system — in use. The first cut: only what run-the-master needs."
+description: "Each clause of a promise is verified by its tests before release and upheld by its signal — telemetry from the running system — in use; a plan written as clauses closes when both say so."
 ---
 
 # Signal first — Brief
 
-A plan is one promise, made of clauses; each clause is verified by its tests
-before release and upheld by its signal in use. This is the first cut — only
-what `run-the-master` needs (Sandy, 2026-10-15: in order of importance). The
+A clause is proved twice: verified by its tests before release, upheld by its
+signal in use. One of three plans that split the first cut of the merged
+`mark-first` (Sandy, 2026-10-15): `one-promise-language` (the words),
+`plans-are-promises` (a plan is one promise of clauses), and this one. The
 background, the merge with `promise-first-build`, and the later cut are in
 [research.md](research.md); the principles are `promise-core`'s ("Settled
 2026-10-14/15").
 
 ## Expectations
 
-1. **Plans are written as one promise of clauses.**
-   - Measure: of plans whose brief is accepted after this lands, the share stating one promise as clauses, each clause with a signal, read from their briefs.
-   - Look: after the first five such plans.
-
-2. **Clauses get signals that report.**
+1. **Clauses get signals that report.**
    - Measure: of clauses in force, the share whose signal has reported at least once (holding or broken) against those still reading no signal, from the registry and the local daemon.
    - Look: 30 and 90 days after release.
 
-3. **Signals cost little.**
+2. **Signals cost little.**
    - Measure: on Homework Gate's first plan, the time each split takes with its signals on and off, and the trace storage the daemon uses per day; expect a few percent at most.
    - Look: when that plan closes.
 
@@ -33,19 +30,15 @@ background, the merge with `promise-first-build`, and the later cut are in
 
 ### This plan makes
 
-1. **`a-plan-is-one-promise`** (state). A plan makes one promise, and it is done when every clause of that promise is verified by its tests and its signal has reported it upheld.
+1. **`a-clause-is-proved-twice`** (state). A clause is verified by its tests before release and upheld by its signal in use, and is upheld only when both say so.
 
-2. **`a-promise-is-made-of-clauses`** (state). A promise is stated as named clauses — splits, each a point reached within its budget on the way to the promise's goal, and limits, each a bound that always holds — and each clause has its own signal and the tests tied to it.
-
-3. **`a-clause-is-upheld-by-its-signal`** (state). A clause is upheld only when its signal has reported it upheld in a run of the real system; a passing test never stands in for its signal, and a clause whose signal has never reported reads no signal, never holding.
-
-4. **`a-clause-is-verified-before-release`** (state). A clause's tests must pass before anything ships; a change that makes one fail is stopped before release.
-
-5. **`a-promise-can-rest-on-another`** (state). A clause can be another promise, of the part beneath it, and its health is that promise's health.
-
-6. **`a-plan-plans-its-clauses`** (state). In place of a test plan, a plan's clause plan names each clause's signal — where it is read, what counts as upheld and what it reports when broken — and the tests tied to that clause, which the agents choose and keep.
-
-7. **`a-promise-is-upheld-or-broken`** (state). Every signal, record and page says a promise or a clause is upheld or broken — holding or broken when live, no signal when unknown — and never failed, passed or violated; a signal written with the old word is still read.
+Its clauses — written here as prose until `plans-are-promises` teaches the
+brief to hold clauses: **verified before release** — a clause's tests must pass
+before anything ships, and a change that makes one fail is stopped before
+release; **upheld by its signal** — a clause is upheld only when its signal has
+reported it upheld in a run of the real system, and a passing test never stands
+in for its signal; **no signal is not holding** — a clause whose signal has
+never reported, or whose watcher is blind, reads no signal, never holding.
 
 ### Existing promises
 
@@ -77,7 +70,8 @@ None — the first cut changes what plans and promises say and how a plan closes
 
 ## Depends On
 
-None.
+- `.indusk/planning/plans-are-promises/` — a clause must exist before it can be proved.
+- `.indusk/planning/one-promise-language/` — the words this plan's pages and records use.
 
 ## Blocks
 

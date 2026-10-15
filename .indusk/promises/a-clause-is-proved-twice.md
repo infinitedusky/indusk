@@ -1,5 +1,5 @@
 ---
-name: a-plan-is-one-promise
+name: a-clause-is-proved-twice
 kind: state
 lifetime: holds
 state: declared
@@ -10,7 +10,7 @@ tests: []
 incidents: []
 ---
 
-A plan makes one promise, and it is done when every clause of that promise is verified by its tests and its signal has reported it upheld.
+A clause is verified by its tests before release and upheld by its signal in use, and is upheld only when both say so.
 
 ## History
 - 2026-10-15 — declared (mark-first), from its planning conversation.
