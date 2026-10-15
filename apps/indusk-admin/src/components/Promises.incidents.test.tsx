@@ -1,3 +1,4 @@
+// promise: a-plan-reads-by-its-title
 import type {
   IncidentEntry,
   PromiseEntry,
@@ -140,5 +141,43 @@ describe("A12 — the incidents table shows age and the owner's Maintenance phas
     const row = rowFor(container, FIXED);
     expect(row.textContent).toMatch(/fixed 2026-10-02/);
     expect(row.textContent).not.toMatch(/\bdays?\b/);
+  });
+});
+
+describe("A26 — the incidents table names the owner plan by its title", () => {
+  it("reads an open incident's owner and a fixed one's by the plan's title, not its folder name", async () => {
+    // The promise's row carries its plan's title, as the page builds it.
+    const rows = [
+      {
+        name: "seat-released",
+        sentence: "A held seat is released after its timeout.",
+        plan: OWNER,
+        planTitle: "Seat holds",
+        path: null,
+        standing: "declared",
+        tests: { passing: 0, total: 0 },
+        held: null,
+        broke: 0,
+        lastActivity: null,
+        lastBreak: null,
+      },
+    ] as unknown as React.ComponentProps<typeof PromisesDashboard>["rows"];
+    const { container } = await render(
+      <PromisesDashboard
+        rows={rows}
+        query={parseQuery({})}
+        pathOrder={[]}
+        promises={PROMISES}
+        incidents={INCIDENTS}
+        path="/p/demo/promises"
+        planHrefPrefix={PREFIX}
+        promiseHrefPrefix="/p/demo/promises/"
+      />,
+    );
+    const open = rowFor(container, OPEN);
+    expect(open.textContent).toContain("Seat holds · Maintenance");
+    expect(open.textContent).not.toContain(OWNER);
+    expect(rowFor(container, FIXED).textContent).toContain("Seat holds");
+    expect(rowFor(container, FIXED).textContent).not.toContain(OWNER);
   });
 });

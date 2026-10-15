@@ -1,5 +1,6 @@
 ---
-title: "indusk release — a release names the plans it carries"
+title: "Release names its plans"
+description: "A release names the plans it carries."
 date: 2026-09-17
 status: draft
 workflow: feature

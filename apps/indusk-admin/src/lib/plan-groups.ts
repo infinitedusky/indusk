@@ -1,11 +1,20 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
+import { planTitle } from "@infinitedusky/indusk-mcp/promises/display";
 import type { Plan } from "@/lib/planning-reader";
 
 /** One declared entry of a Path, in the order its master declares it. */
 export type PathEntry =
   | { kind: "plan"; plan: Plan; number: number }
   | { kind: "path"; group: PlanGroup; number: number }
-  | { kind: "placeholder"; name: string; number: number };
+  | {
+      kind: "placeholder";
+      name: string;
+      number: number;
+      /** Declared, else the handle in words through the project's product words. */
+      title: string;
+      /** Declared, else empty. */
+      description: string;
+    };
 
 /** A Path: a parent plan with its declared entries, nested as deep as declared. */
 export interface PlanGroup {
@@ -42,6 +51,7 @@ export function buildGroups(
   archived: Plan[],
   grouping: PlanDeclarations | undefined,
   isReleased: (plan: string) => boolean,
+  words?: Record<string, string>,
 ): {
   root: { name: string; title: string } | null;
   groups: PlanGroup[];
@@ -95,7 +105,14 @@ export function buildGroups(
         group.total += 1;
         if (isReleased(childName)) group.released += 1;
       } else {
-        group.entries.push({ kind: "placeholder", name: childName, number });
+        const written = grouping.declaredTitles?.[parentName]?.[childName];
+        group.entries.push({
+          kind: "placeholder",
+          name: childName,
+          number,
+          title: planTitle(written?.title, childName, words),
+          description: written?.description ?? "",
+        });
         group.total += 1;
       }
     }
@@ -140,4 +157,20 @@ export function orderByMaster(plans: Plan[], masterOrder: string[]): Plan[] {
     if (p) out.push(p);
   }
   return out;
+}
+
+/** The Path a plan opens, wherever it sits: at the top or declared inside another. */
+export function groupOf(
+  groups: PlanGroup[],
+  name: string,
+): PlanGroup | undefined {
+  for (const group of groups) {
+    if (group.parent.name === name) return group;
+    const inside = groupOf(
+      group.entries.flatMap((e) => (e.kind === "path" ? [e.group] : [])),
+      name,
+    );
+    if (inside) return inside;
+  }
+  return undefined;
 }

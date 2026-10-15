@@ -132,7 +132,7 @@ describe("A5 — a build of one plan is not refused for another plan's session",
 });
 
 describe("A6 — each plan's waiting entry shows its own session and question", () => {
-  it("A6 two running sessions each asking give one waiting entry per plan, each with its own question", () => {
+  it("A6 two running sessions each asking give one waiting entry per plan, each with its own question", async () => {
     const manager = install();
     const plans = ["one", "two"].map(
       (name) =>
@@ -160,7 +160,7 @@ describe("A6 — each plan's waiting entry shows its own session and question", 
         input: {},
       });
     }
-    const waiting = readWaiting("proj", plans);
+    const waiting = await readWaiting("proj", dirs[0] ?? tmpdir(), plans);
     expect(waiting.map((w) => [w.plan, w.decision])).toEqual([
       ["one", "Which map for one?"],
       ["two", "Which map for two?"],

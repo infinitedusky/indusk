@@ -109,11 +109,16 @@ export default async function PerProjectLayout({
 
   // Each Path's released count: when a release shipped a plan, from the
   // package's `planDates` (display-names), read once for the whole nav.
-  const { planDates, planTitles } = readHealthNames(projectPath);
+  const { planDates, words } = await readHealthNames(projectPath);
+  // Each plan's title, from the copy the admin reads it from (its worktree
+  // first), so Needs you names a worktree plan by its own title.
+  const planTitles = Object.fromEntries(
+    [...active, ...archived].map((p) => [p.name, p.title]),
+  );
 
   // Needs you: each plan waiting on the person, with the step it waits at —
   // the package's `planWaiting`, over what the admin holds (ADR decision 2).
-  const waiting = readWaiting(project, active);
+  const waiting = await readWaiting(project, projectPath, active);
 
   const summary = `${active.length} ${active.length === 1 ? "plan" : "plans"}`;
 
@@ -169,6 +174,7 @@ export default async function PerProjectLayout({
               holding={holding}
               red={red}
               dates={planDates}
+              words={words}
               waiting={Object.fromEntries(waiting.map((w) => [w.plan, w.step]))}
               planHrefPrefix={`/p/${project}/plan/`}
             />
