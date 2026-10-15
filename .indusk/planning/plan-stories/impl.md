@@ -1,7 +1,7 @@
 ---
 title: "Plan titles and stories"
 date: 2026-10-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -448,6 +448,8 @@ Titles and descriptions come from research.md's tables. A description already wr
 - [x] `IncidentsTable` names an incident's owner plan by its title, and the Looks page's checkout picker names a plan worktree by its plan's title, both through the names the page already reads
 - [x] A declared `subplans:` title goes through `planTitle` (`plan-groups.ts`), so a title equal to its handle reads as words and a title with " — " is cut at the dash, as every other title is
 - [x] `amendmentsWaiting` gets its own test (changed brief → its amendments; unchanged brief → none; unreadable approval → none), and `decisions-reader`'s amendment read is tested against a real plan folder in a worktree, not the cockpit fixture's stand-in
+- [x] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — reviewed the 20 files this phase changed (`rules.unreadable` empty, so every enabled extension's craft prose was read); nothing to change. The master branch of `PlanPage` is a short early return over the page's own named parts (`sessionControl`, `buildControls`, `masterPage`), `titled` in `promise-dashboard.ts` is the one place the dashboard turns a handle into a name, and `IncidentOwner`, `checkoutName` and `planTitles` each take the title as an input rather than reading it.
 
 #### Build Phase 8 Verification
 - [x] A25, A26, A27 pass (`cd apps/indusk-admin && pnpm exec vitest run 'src/app/p/[project]/plan/[name]/master.test.tsx' src/lib/promise-dashboard.test.ts`; `cd apps/indusk-mcp && pnpm exec vitest run src/lib/plans/amendments.test.ts`); A1–A5, A11–A16, A23, A24 still pass; `pnpm exec vitest related` over the changed files in both packages; A6 passes in the system tier; tsc and biome clean on changed files
