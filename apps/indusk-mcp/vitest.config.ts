@@ -47,6 +47,7 @@ export default defineConfig({
 		// root `pnpm test` they crossed the 5 s default, a different few each run
 		// (main-suite-green A9). One package-wide budget, since per-file raises would
 		// chase whichever spawned next; a test that hangs still fails.
+		// promise: the-everyday-suite-passes-on-main
 		testTimeout: 15_000,
 	},
 });
