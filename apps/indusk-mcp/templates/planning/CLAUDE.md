@@ -115,7 +115,7 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   missing paragraph, a code span or a row label on those lines; whether a
   sentence is plain is a person's, at approval. — guarded by
   `phase-summary-rule.test.ts` (`promise: an-impl-phase-explains-itself`); the
-  full shape and a before-and-after example are in `/reference/skills/planner`
+  full shape and a before-and-after example are in `/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand`
 - `validate-impl-structure.js` re-validates the whole file when an edit's
   `new_string` contains a phase header — scope edits to checklist items.
 - Verification items are runnable commands with expected output, never "verify
