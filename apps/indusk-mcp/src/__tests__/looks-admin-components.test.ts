@@ -1,6 +1,8 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { readApprovals } from "../lib/looks/approvals.js";
+import { mockupsOfLandedPlans } from "../lib/looks/landed.js";
 import { readApp } from "../lib/looks/mockups.js";
 import { REPO_ROOT, runCli } from "./helpers/cli.js";
 import { app, MOCKUPS, removeApps, run } from "./helpers/looks-cli.js";
@@ -32,10 +34,11 @@ function walk(dir: string): string[] {
 	});
 }
 
-/** The component names the admin's mockups name, composed, sorted. */
+/** The component names the admin's mockups of landed plans name, composed, sorted. */
 async function mockupComponents(): Promise<string[]> {
 	const names = new Set<string>();
-	for (const mockup of (await readApp(REPO_ROOT, "admin")).mockups) {
+	const admin = await readApp(REPO_ROOT, "admin");
+	for (const mockup of mockupsOfLandedPlans(REPO_ROOT, admin.mockups, readApprovals(admin))) {
 		for (const m of mockup.html.matchAll(/\bdata-component\s*=\s*["']([^"']+)["']/g)) {
 			names.add(m[1]);
 		}
