@@ -17,7 +17,7 @@
 			.menubtn { display: none; align-items: center; gap: var(--space-2); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface); padding: var(--space-tight) var(--space-snug); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); }
 			.vcount { font-family: var(--font-mono); font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); color: var(--color-bad); background: var(--color-bad-wash); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-tight); }
 			.top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); padding: var(--space-5) 0 var(--space-1); }
-			.crumb { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.crumb { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); margin-bottom: var(--space-2); }
 			.crumb b { color: var(--color-ink-soft); font-weight: var(--font-weight-medium); }
 			.title { font-family: var(--font-display); font-size: var(--text-4xl); line-height: var(--leading-7); font-weight: var(--font-weight-bold); }
 			.meta { margin-left: auto; display: flex; gap: var(--space-2); flex-wrap: wrap; }
@@ -100,7 +100,7 @@
 <div class="shell">
 <indusk-component name="nav" state="plan-current"></indusk-component>
 <main class="content"><div class="wrap">
-<header class="top"><div><div class="crumb"><b>dusk</b> / Plans / cockpit-redraw</div><h1 class="title">cockpit-redraw</h1></div><button class="menubtn" type="button">Menu <span class="vcount">1</span></button><div class="meta"><indusk-component name="tag" state="default"></indusk-component></div></header>
+<header class="top"><div><div class="crumb"><b>dusk</b> / Plans / Cockpit redraw</div><h1 class="title">Cockpit redraw</h1></div><button class="menubtn" type="button">Menu <span class="vcount">1</span></button><div class="meta"><indusk-component name="tag" state="default"></indusk-component></div></header>
 <section class="status"><div class="stagebody"><aside class="rail"><indusk-component name="rail-group" state="default"></indusk-component><indusk-component name="rail-group" state="current"></indusk-component></aside><div class="main"><div class="summary"><p class="desc">The cockpit's nav, plan page and brief page are redrawn to look as Sandy meant them — the nav from the original cockpit mockup, with every plan, Scorecards and a width you can drag — and each look is approved once. Re-approving a changed brief becomes something only a person can do.</p><a class="brieflink" href="/p/dusk/plan/cockpit-redraw/brief">Brief: accepted — open it</a></div><indusk-component name="amendment-card" state="waiting"></indusk-component><indusk-component name="decision-card" state="ask"></indusk-component></div></div></section>
 <div class="collapsed"><indusk-component name="part-section" state="closed"></indusk-component><indusk-component name="part-section" state="expectations"></indusk-component><indusk-component name="part-section" state="looks-two-of-three"></indusk-component><indusk-component name="part-section" state="phases-in-review"></indusk-component><indusk-component name="part-section" state="documents"></indusk-component><indusk-component name="history-panel" state="closed"></indusk-component></div>
 </div></main>
