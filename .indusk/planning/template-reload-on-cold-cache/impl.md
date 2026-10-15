@@ -1,7 +1,7 @@
 ---
 title: "Tests and landing work from a cold machine"
 date: 2026-10-15
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -42,10 +42,10 @@ approved_at: "2026-10-15T16:09:05.019Z"
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | Every package the browser template imports is bundled for its test page before the page loads, so none is discovered while a test runs | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
+| A1 | Every package the browser template imports is bundled for its test page before the page loads, so none is discovered while a test runs | Test Phase 1 | Build Phase 1 | written | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
 | A2 | The template tests, run three times, each from a deleted Vite cache, pass every time, and Vite never reports that it reloaded a test | Build Phase 1 | Build Phase 1 | planned | live check | promise: a-browser-test-passes-on-a-cold-cache | (recorded in the impl with its result) |
-| A3 | Landing's install step syncs the checkout's dependencies to the lockfile, refusing a lockfile that does not match, before it builds anything | Test Phase 1 | Build Phase 1 | planned | unit | promise: landing-installs-after-a-dependency-change | apps/indusk-mcp/src/__tests__/install-local.test.ts |
-| A4 | An evaluator run with a model that does not exist is recorded as a failure naming that model, and the promise status shows the violation, with the Claude Code installed today | Test Phase 1 | Build Phase 1 | planned | contract | keeps the day-monitor end-to-end test about the monitor, not about Claude Code's wording | apps/indusk-mcp/e2e/day-monitor.e2e.test.ts |
+| A3 | Landing's install step syncs the checkout's dependencies to the lockfile, refusing a lockfile that does not match, before it builds anything | Test Phase 1 | Build Phase 1 | written | unit | promise: landing-installs-after-a-dependency-change | apps/indusk-mcp/src/__tests__/install-local.test.ts |
+| A4 | An evaluator run with a model that does not exist is recorded as a failure naming that model, and the promise status shows the violation, with the Claude Code installed today | Test Phase 1 | Build Phase 1 | written | contract | keeps the day-monitor end-to-end test about the monitor, not about Claude Code's wording | apps/indusk-mcp/e2e/day-monitor.e2e.test.ts |
 
 ## Checklist
 
@@ -55,10 +55,16 @@ approved_at: "2026-10-15T16:09:05.019Z"
 
 This phase writes the tests that fail today for the reasons the research found. One checks that every package the browser template imports reaches its test page's pre-bundle list. One checks that landing's install brings dependencies to the lockfile before it builds. The end-to-end monitor test is changed to look for the fake model's name instead of Claude Code's wording, and run against today's Claude Code. Each must fail on its own assertion. The build phase then makes all three pass.
 
-- [ ] The plan's own worktree is confirmed as the place this plan is built
+- [x] The plan's own worktree is confirmed as the place this plan is built
   <details><summary>Technical</summary>
 
   `indusk plans start` created `dusk-worktrees/template-reload-on-cold-cache` on `plan/template-reload-on-cold-cache`; confirm with `git worktree list` and that the assignment is recorded (`indusk worktree assign template-reload-on-cold-cache <path>` if it is not) — worktree-per-plan default.
+
+  </details>
+  The checkout is the plan's own worktree on its own branch.
+  <details><summary>Note</summary>
+
+  `git worktree list` shows `dusk-worktrees/template-reload-on-cold-cache` on `plan/template-reload-on-cold-cache`. `indusk worktree list` refuses ("not a workbench"), so there is no separate assignment record in this normal-mode repo and none was needed.
 
   </details>
 - [ ] A test fails today because the browser template's test page does not get the packages the template imports bundled up front
