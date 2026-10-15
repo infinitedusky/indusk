@@ -44,6 +44,11 @@ are about keeping the two lanes in step.
   the TS and the port together. `STEPS` must name every step `TIER_STEPS`
   names; the parity test builds a case from `TIER_STEPS`, so a step added to
   one and not the other fails.
+- **`_phase-summary.js` holds the `phase_summary: required` rule** (`phaseSummaryProblems`)
+  and the row-label pattern (`ROW_LABEL`), one module per rule like `_phase-tier.js`;
+  `validate-impl-structure.js` reads labels through `ROW_LABEL` in its cross-reference
+  rule too. `TEST_ID_PATTERN` in `lib/trajectory/validator.ts` stays its TypeScript
+  mirror. — guarded by `phase-summary-module.test.ts` (`promise: an-impl-phase-explains-itself`)
 - **The validator's "no phase structure touched" fast path is a list of the
   edit shapes that carry structure** — a phase heading, an unchecked item, a
   `**Tier**:` line. A rule over a new line shape adds its marker there, or an

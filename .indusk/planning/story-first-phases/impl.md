@@ -529,7 +529,7 @@ The plan is correct and its tests are hardened; this phase tidies what it spread
 
 #### Build Phase 5 Context
 
-- [ ] The hook rules list the new phase-summary module among the save check's rule modules
+- [x] The hook rules list the new phase-summary module among the save check's rule modules
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/hooks/CLAUDE.md`: name `_phase-summary.js` (`phaseSummaryProblems`, the row-label pattern) beside the other `_`-modules — guarded by `phase-summary-module.test.ts` (`promise: an-impl-phase-explains-itself`).
