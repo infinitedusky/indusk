@@ -393,7 +393,7 @@ The save check and the plan page are ready. This phase makes the planner use the
 
 #### Build Phase 3 Document
 
-- [ ] The planner's reference page and the changelog describe the shape
+- [x] The planner's reference page and the changelog describe the shape
   <details><summary>Technical</summary>
 
   Update `apps/docs/src/reference/skills/planner.md` with `phase_summary: required`, the shape and the reader without shorthand; changelog: "Impl phases open with what they do for the plan; tasks are plain sentences, written for a reader without the plan's shorthand, with their technical detail folded beneath."
