@@ -305,7 +305,7 @@ A fresh reader found three gaps after the build. The retrospective skill, which 
   `--frozen-lockfile` refuses when `pnpm-lock.yaml` does not match the workspace's `package.json` files — trunk was committed with a lockfile out of step, which is not the merged-lockfile case the brief's second expectation measures. Item 7 says so: run `pnpm install` on trunk, commit the updated lockfile as its own commit, then rerun the install step; record the refusal on the retrospective's install line so the expectation's measure reads it. Add the recovery sentence to the docs page too. Audit finding: `audit.md`, "What does the code do that the brief never promised?"
 
   </details>
-- [ ] The pre-bundle guard requires a subpath import to be listed as the subpath, not as its package
+- [x] The pre-bundle guard requires a subpath import to be listed as the subpath, not as its package
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts` `packageName`/`packagesIn` (:35, :68): keep a deep bare specifier whole (`@scope/name/sub`, `name/sub`) as Vite's `optimizeDeps.include` treats it as its own entry; a specifier equal to its package name is unchanged. A7 authored red first with a fixture subpath import against a list naming only the package. No template imports a subpath today, so A1 stays green. Audit finding: `audit.md`, "Does each row prove its promise's sentence".

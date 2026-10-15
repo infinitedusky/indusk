@@ -31,12 +31,6 @@ interface ProjectShape {
 	test?: { name?: string; include?: string[] };
 }
 
-/** `@scope/name/sub` -> `@scope/name`, `name/sub` -> `name`. */
-function packageName(specifier: string): string {
-	const parts = specifier.split("/");
-	return specifier.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0];
-}
-
 /** Specifiers Vite pre-bundles nothing for: local files, Node built-ins, the runner itself. */
 function isBundledByVite(specifier: string): boolean {
 	return !(
@@ -64,9 +58,13 @@ function specifiersIn(source: string): string[] {
 	return [...found];
 }
 
-/** The bare package names a source string imports, whoever publishes them. */
+/**
+ * The bare specifiers a source string imports, whoever publishes them. A deep
+ * one (`@scope/name/sub`, `name/sub`) stays whole: Vite pre-bundles a subpath
+ * as its own entry, so listing only the package leaves the subpath to be found mid-run.
+ */
 function packagesIn(source: string): string[] {
-	return [...new Set(specifiersIn(source).filter(isBundledByVite).map(packageName))].sort();
+	return [...new Set(specifiersIn(source).filter(isBundledByVite))].sort();
 }
 
 /** Relative imports in a source string; a `?query` or a `${` template tail is dropped. */
@@ -144,7 +142,7 @@ describe("the browser template's pre-bundle list (a-browser-test-passes-on-a-col
 		).toEqual([]);
 	});
 
-	it("A5: finds side-effect, non-OpenTelemetry, export-from and dynamic imports, as package names", () => {
+	it("A5: finds side-effect, non-OpenTelemetry, export-from and dynamic imports, deep ones whole", () => {
 		const source = [
 			'import "@opentelemetry/context-zone";',
 			'import { onLCP } from "web-vitals";',
@@ -160,7 +158,13 @@ describe("the browser template's pre-bundle list (a-browser-test-passes-on-a-col
 			'/* import "also-commented"; */',
 		].join("\n");
 		expect(packagesIn(source)).toEqual(
-			["@opentelemetry/context-zone", "@scope/name", "dyn-pkg", "plain", "web-vitals"].sort(),
+			[
+				"@opentelemetry/context-zone",
+				"@scope/name/sub",
+				"dyn-pkg",
+				"plain/deep/path",
+				"web-vitals",
+			].sort(),
 		);
 	});
 
