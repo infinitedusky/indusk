@@ -158,3 +158,20 @@ describe("cockpit-audit-fixes A8 — approval waits for a finished plan", () => 
 		expect(after).toEqual([expect.objectContaining({ plan: "awaiting-approval", on: "approval" })]);
 	});
 });
+
+describe("cockpit-audit-fixes A12 — an idle author does not hide approval", () => {
+	// promise: approval-waits-for-a-finished-plan
+	it("A12 a live session that finished its turn and asked nothing leaves the draft impl under approval; while its turn is open it does not", () => {
+		const idle: WaitingSession = {
+			plan: "awaiting-approval",
+			kind: "planning",
+			question: null,
+			writing: false,
+		};
+		const open: WaitingSession = { ...idle, writing: true };
+		expect(planWaiting({ sessions: [open], plans: [approval], builds: [] })).toEqual([]);
+		expect(planWaiting({ sessions: [idle], plans: [approval], builds: [] })).toEqual([
+			expect.objectContaining({ plan: "awaiting-approval", on: "approval" }),
+		]);
+	});
+});

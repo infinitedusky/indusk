@@ -322,3 +322,30 @@ describe("cockpit-audit-fixes A9 — the dashboard groups under the innermost Pa
     expect(row?.path).toBe("inner-path");
   });
 });
+
+// promise: a-promise-sits-in-its-innermost-path
+describe("cockpit-audit-fixes A13 — a Path cycle puts a shared plan under one of its Paths", () => {
+  it("A13 a plan declared by two Paths that declare each other is in one of them", async () => {
+    const { buildRows } = await import("@/lib/promise-dashboard");
+    const standing = [
+      {
+        entry: { name: "seats-held", owner: "seat-holds" },
+        standing: "enforced",
+        tests: { passing: 1, total: 1 },
+        thirtyDays: { held: 1, broke: 0 },
+        lastActivity: null,
+        lastBreak: null,
+      },
+    ] as never;
+    const subplans = {
+      "path-a": ["path-b", "seat-holds"],
+      "path-b": ["path-a", "seat-holds"],
+    };
+    const [row] = buildRows(standing, {
+      planTitles: {},
+      sentenceOf: (n) => n,
+      declarations: { subplans },
+    });
+    expect(["path-a", "path-b"]).toContain(row?.path);
+  });
+});

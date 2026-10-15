@@ -30,6 +30,7 @@ export function readWaiting(project: string, plans: Plan[]): Waiting[] {
             plan: running.plan,
             kind: running.kind,
             question: manager.pendingQuestion(running.id) ?? null,
+            writing: manager.isWriting(running.id),
           },
         ]
       : [];

@@ -12,8 +12,8 @@ import { postJson } from "@/lib/post-json";
  * The one decision a plan waits on (plan-cockpit, ADR decisions 3 and 4):
  * the decision in words, the step it waits at, and three ways to answer —
  * accept, the alternative, or a reply in words. An ask of several questions
- * shows each, with its two answers, and sends them together — one answer under
- * each question's text. A plan stopped for review
+ * shows each, with its two answers and a box for the person's own words, and
+ * sends them together — one answer under each question's text. A plan stopped for review
  * shows its evidence here, as the build controls show it (`ReviewPanel`,
  * read from `indusk plans review`). Every answer goes to the plan's decision
  * route, which routes it and records it; this asks and shows.
@@ -42,8 +42,12 @@ export function DecisionCard({
   const [problem, setProblem] = useState<string | null>(null);
   const [sent, setSent] = useState<string | null>(null);
   const [chosen, setChosen] = useState<Record<string, string>>({});
+  const [said, setSaid] = useState<Record<string, string>>({});
   const asked = waiting.on === "question" ? (waiting.questions ?? []) : [];
   const several = asked.length > 1;
+  /** A question's answer: the person's own words, else the option chosen. */
+  const answerTo = (question: string) =>
+    said[question]?.trim() || chosen[question] || "";
 
   useEffect(() => {
     if (waiting.on !== "review") return;
@@ -73,7 +77,13 @@ export function DecisionCard({
         project,
         choice,
         ...(choice === "reply" ? { text } : {}),
-        ...(choice === "answers" ? { answers: chosen } : {}),
+        ...(choice === "answers"
+          ? {
+              answers: Object.fromEntries(
+                asked.map((q) => [q.question, answerTo(q.question)]),
+              ),
+            }
+          : {}),
       },
     );
     setBusy(false);
@@ -115,25 +125,41 @@ export function DecisionCard({
                     key={label}
                     size="sm"
                     variant={
-                      chosen[q.question] === label ? "primary" : "secondary"
+                      chosen[q.question] === label && !said[q.question]?.trim()
+                        ? "primary"
+                        : "secondary"
                     }
-                    aria-pressed={chosen[q.question] === label}
+                    aria-pressed={
+                      chosen[q.question] === label && !said[q.question]?.trim()
+                    }
                     disabled={busy}
-                    onClick={() =>
-                      setChosen((c) => ({ ...c, [q.question]: label }))
-                    }
+                    onClick={() => {
+                      setChosen((c) => ({ ...c, [q.question]: label }));
+                      setSaid((w) => ({ ...w, [q.question]: "" }));
+                    }}
                   >
                     {label}
                   </Button>
                 ))}
               </div>
+              <textarea
+                aria-label={`Your own words for: ${q.question}`}
+                data-testid="decision-question-words"
+                placeholder="Or say it in your own words"
+                className="min-h-12 w-full rounded border border-gray-300 bg-white p-2"
+                value={said[q.question] ?? ""}
+                disabled={busy}
+                onChange={(e) =>
+                  setSaid((w) => ({ ...w, [q.question]: e.target.value }))
+                }
+              />
             </fieldset>
           ))}
           <div>
             <Button
               size="sm"
               data-testid="decision-send-answers"
-              disabled={busy || asked.some((q) => !chosen[q.question])}
+              disabled={busy || asked.some((q) => !answerTo(q.question))}
               onClick={() => void answer("answers")}
             >
               Send answers

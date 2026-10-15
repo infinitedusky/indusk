@@ -43,6 +43,8 @@ interface Held {
 	events: StartedEvent[];
 	listeners: Set<(ev: StartedEvent) => void>;
 	answered: Set<string>;
+	/** The session's turn is open: started or spoken to, no `result` yet. */
+	turnOpen: boolean;
 }
 
 export function defaultRecordPath(): string {
@@ -74,11 +76,13 @@ export class SessionManager {
 			events: [],
 			listeners: new Set(),
 			answered: new Set(),
+			turnOpen: true,
 		};
 		const session = this.launch({
 			...opts,
 			onEvent: (ev) => {
 				holder.events.push(ev);
+				if (ev.type === "result") holder.turnOpen = false;
 				opts.onEvent(ev);
 				for (const listen of holder.listeners) listen(ev);
 			},
@@ -126,6 +130,15 @@ export class SessionManager {
 			if (ev?.type === "question" && !h.answered.has(ev.requestId)) return ev;
 		}
 		return undefined;
+	}
+
+	/**
+	 * Whether session `id` is working: true from start, and from each `say` or
+	 * `reply`, until its next `result`. A live session whose turn ended is idle,
+	 * waiting for the person — not writing (cockpit-audit-fixes, A12).
+	 */
+	isWriting(id: string): boolean {
+		return this.held.get(id)?.turnOpen ?? false;
 	}
 
 	/** Every event so far, then each new one, until the returned function is called. */
@@ -184,6 +197,7 @@ export class SessionManager {
 			);
 		}
 		h.answered.add(reply.requestId);
+		h.turnOpen = true;
 	}
 
 	/**
@@ -196,6 +210,7 @@ export class SessionManager {
 		if (!h) throw new Error(`no session ${id} is running`);
 		if (!text.trim()) throw new Error("a message to the session cannot be empty");
 		h.session.say(text);
+		h.turnOpen = true;
 		const ev: StartedEvent = { type: "you", text };
 		h.events.push(ev);
 		for (const listen of h.listeners) listen(ev);

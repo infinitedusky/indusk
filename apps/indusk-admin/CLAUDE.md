@@ -137,4 +137,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   asked, never the first of it**: an ask of several questions is shown whole and
   answered under each question's text (`choice: "answers"`), and an answer
   that leaves one out is refused — guarded by A7 in `DecisionCard.test.tsx` and
-  `decisions.test.ts`. — see `/decisions/plan-cockpit`
+  `decisions.test.ts`. **A session is "writing" only while its turn is open**:
+  an idle session waiting for the person does not hold approval back
+  (`SessionManager.isWriting`) — guarded by A12 in `waiting.test.ts`. — see
+  `/decisions/plan-cockpit`

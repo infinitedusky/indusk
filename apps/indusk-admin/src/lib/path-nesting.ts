@@ -4,7 +4,8 @@
  * one", so a promise and its plan are put under the same, innermost Path in
  * both. `subplans` maps a parent plan to the names it declares; a name that is
  * itself a key is a Path inside it, to any depth. A master naming its own
- * ancestor stops at the repeat.
+ * ancestor stops at the repeat, and two Paths that declare each other sit
+ * inside neither: nesting is strict.
  *
  * promise: a-promise-sits-in-its-innermost-path
  */
@@ -22,7 +23,29 @@ export function pathsInside(
       pending.push(child);
     }
   }
+  for (const other of inside) {
+    if (pathsReach(subplans, other, path)) inside.delete(other);
+  }
   return inside;
+}
+
+/** Whether `from` declares `target`, directly or through Paths it declares. */
+function pathsReach(
+  subplans: Record<string, readonly string[]>,
+  from: string,
+  target: string,
+): boolean {
+  const seen = new Set<string>([from]);
+  const pending = [from];
+  while (pending.length > 0) {
+    for (const child of subplans[pending.pop() as string] ?? []) {
+      if (child === target) return true;
+      if (seen.has(child) || !(child in subplans)) continue;
+      seen.add(child);
+      pending.push(child);
+    }
+  }
+  return false;
 }
 
 /** The names declared by the Paths inside `path`, not by `path` itself. */

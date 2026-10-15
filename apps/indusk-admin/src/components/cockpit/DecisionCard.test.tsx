@@ -221,3 +221,48 @@ describe("cockpit-audit-fixes A7 — every question the agent asked is on the ca
     });
   });
 });
+
+// promise: a-question-is-answered-in-full
+describe("cockpit-audit-fixes A14 — a several-question ask takes the person's own words per question", () => {
+  const two = {
+    ...question,
+    plan: "asking-two",
+    questions: [
+      {
+        question: "Which seat map should holds use?",
+        accept: "The venue's map",
+        alternative: "Our own grid",
+      },
+      {
+        question: "How long should a hold last?",
+        accept: "Ten minutes",
+        alternative: "One hour",
+      },
+    ],
+  } as Waiting;
+
+  it("A14 words typed under a question are sent as its answer, beside a chosen option for the other", async () => {
+    const screen = await render(
+      <DecisionCard project={PROJECT} waiting={two} />,
+    );
+    const fields = screen.container.querySelectorAll(
+      '[data-testid="decision-question-words"]',
+    );
+    expect(fields).toHaveLength(2);
+    await screen.getByText("Our own grid").click();
+    await screen
+      .getByTestId("decision-question-words")
+      .nth(1)
+      .fill("Until the show starts");
+    await screen.getByTestId("decision-send-answers").click();
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]?.body).toEqual({
+      project: PROJECT,
+      choice: "answers",
+      answers: {
+        "Which seat map should holds use?": "Our own grid",
+        "How long should a hold last?": "Until the show starts",
+      },
+    });
+  });
+});

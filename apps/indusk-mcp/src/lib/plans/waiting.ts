@@ -14,7 +14,8 @@ import { documentFinished, type PlanSnapshot, planSteps } from "./steps.js";
  *     (the build's stop is held in memory; the position is on disk, so it
  *     survives a restart of the admin).
  *   - **approval** — its impl is a draft, every other document its type
- *     requires is accepted, and no session is still writing it: approving a
+ *     requires is accepted, and no session's turn is still open on it (an idle
+ *     session waiting for the person is not writing): approving a
  *     plan its author has not finished would approve half of it.
  *
  * Each names the decision in words, what accepting it is called and the
@@ -35,6 +36,11 @@ export interface WaitingSession {
 	kind: "planning" | "build";
 	/** The question the session asked and nobody has answered yet, if any. */
 	question: { requestId: string; questions: Question[] } | null;
+	/**
+	 * The session's turn is open — it is working, not idle waiting for the
+	 * person. Absent means writing: approval is withheld rather than offered early.
+	 */
+	writing?: boolean;
 }
 
 export interface WaitingBuild {
@@ -113,12 +119,12 @@ function askedOf(
 	};
 }
 
-/** A session is running for the plan and has asked nothing: it is still writing. */
+/** A session for the plan is mid-turn and has asked nothing: it is still writing. */
 function beingWritten(
 	plan: PlanSnapshot & { name: string },
 	sessions: ReadonlyArray<WaitingSession>,
 ): boolean {
-	return sessions.some((s) => s.plan === plan.name && !s.question);
+	return sessions.some((s) => s.plan === plan.name && !s.question && s.writing !== false);
 }
 
 /** The first step in either list that is being worked or waits on the person. */
