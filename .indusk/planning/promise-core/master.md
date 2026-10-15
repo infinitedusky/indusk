@@ -110,6 +110,14 @@ alone. One list, one health view, one approval flow; the brief has one Promises
 section. Expectations stay separate — they decide what to build, not what is
 true. Built as its own child, third (`looks-as-promises`).
 
+**A promise carries artifacts** (Sandy, 2026-10-15). Any promise can carry one
+or many artifacts that show what it means — a mockup, a diagram, a sample of
+its output, a clip of the flow; a visual promise's mockup is one kind. Wherever
+a promise appears — the daily list, the graph, the plan page — its artifacts
+are a hover or a click away, so the work is seen, not only read. Built in
+`looks-as-promises` (artifacts on promises); the hover in the daily list and the
+graph in `run-the-master`.
+
 **Approvals happen on the plan page** (Sandy, 2026-10-15). Every promise a plan
 makes or changes — visual ones included — is approved on that plan's page, one
 line each, opened on demand. A shared component that reopens screens other plans
