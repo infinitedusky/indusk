@@ -35,10 +35,10 @@ export function PlanFrame({
         <div>
           <div className="text-sm leading-3 text-ink-faint">
             <b className="font-medium text-ink-soft">{project}</b> / Plans /{" "}
-            {plan.name}
+            {plan.title}
           </div>
           <h1 className="font-display text-4xl font-bold leading-7">
-            {plan.name}
+            {plan.title}
           </h1>
         </div>
         {plan.worktree ? (
