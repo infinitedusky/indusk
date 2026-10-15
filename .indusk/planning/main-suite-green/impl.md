@@ -1,7 +1,7 @@
 ---
 title: "main-suite-green"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -54,6 +54,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 | A8 | A component named only by an unlanded plan's approved mockups is not reported unimplemented; one named by a landed plan's and missing is | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-component-has-one-implementation, promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts |
 | A9 | `pnpm test` from the root of the branch, merged with main, passes | Build Phase 3 | Build Phase 3 | passing | live check | the live proof of the suite promise; rows A2–A8 name its files | (recorded in the impl with its result) |
 | A10 | A mockup held under a landed plan and then re-approved under an unlanded one still has the components its landed approval bound held: delete one of those components' implementations and the check reports it unimplemented, while a component only the unlanded re-approval adds is not reported | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
+| A11 | A story name's component is read by one rule: `componentOfStory` gives `plan-row` for `plan-row.open` and for `plan-row.open.wide`, the story reader's `component` agrees with it, and A8 and A10 still hold | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
 
 ## Checklist
 
@@ -192,6 +193,30 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 - Searched without a hypothesis: the async stdin read (`promises.ts`, its awaited caller in `cli.ts`, the hook's `spawnSync` with `input`, which closes stdin, so `text()` cannot hang); `planHasLanded`'s archive-before-land order (the retrospective archives at Step 9 before `plans land` runs its checks at Step 10, so a plan's own unimplemented component is caught at landing); the registry scan (no test overrides `INDUSK_HOME` to undefined through `runCli`); the URL-trim scan (the only `.trim().replace(/\/+$/, "")` is `telemetry.ts:101`; other trims are paths or `/v1/*` endpoint joins); the 15 s timeout and the pre-bundle entry (configuration, each with its measured reason).
 - Not authored: the admin browser tests that still `await import` a page inside an `it` — the same cold-import class as A7, but no timeout from them in root runs 3–5, so a row would be a guess rather than an observed failure.
+
+### Build Phase 5: Cleanup — one rule for a story's component, one fixture for an approved mockup
+
+**Tier**: med — the work step's default
+
+**Goal**: decompose what Build Phases 2 and 4 grew in `lib/looks/` and its tests, by the rule of three and the inter-file duplication the Shape step could not see. Each item below is a concrete extraction or a reasoned leave-as-is; the one new exported unit gets row A11.
+
+- [ ] Extract `componentOfStory(name)` into `lib/looks/mockups.ts`, beside the story reader that already derives `Story.component` from the first dot (`mockups.ts:369`); the reader, `landed.ts`'s private `componentOf`, and `coverage.ts:108`'s `story.name.split(".")[0]` (which can read `story.component`) are three copies of the one `<component>.<state>` naming rule
+- [ ] Extract `addApprovedMockup(root, { screen, markup, approvals })` into `__tests__/helpers/looks-cli.ts`, beside `app()`: `landed.test.ts` A10 and `looks-admin-components.test.ts` `appWithGhost` repeat the same ~25 lines (push a screen into `screens.json`, write its markup from `home.empty.html`, read the app, push approvals bound to its hashes); both tests then read it
+- [ ] (reviewed `src/bin/cli.ts` (1,418 lines) and `src/bin/commands/promises.ts` (505) — left as-is: over the cap before this plan, which changed one `await` and the stdin read; decomposing the CLI is its own plan, not this one's)
+- [ ] (reviewed `apps/docs/src/reference/cli/promises.md` (855) and `cli/looks.md` (427) — left as-is: reference pages, one entry per command, touched by one sentence each)
+- [ ] (reviewed `contract-stdin.test.ts` — left as-is: it builds its project through the shared `promiseProject` and plan-fixture helpers; only the stdin spawn is its own)
+
+#### Build Phase 5 Verification
+
+- [ ] A11 authored and green, A8 and A10 still green (`pnpm exec vitest run src/lib/looks/landed.test.ts src/__tests__/looks-admin-components.test.ts`, from `apps/indusk-mcp`); `pnpm exec vitest related src/lib/looks/mockups.ts src/lib/looks/landed.ts src/lib/looks/coverage.ts src/__tests__/helpers/looks-cli.ts --run`; `tsc --noEmit` and `biome check` on the changed files
+
+#### Build Phase 5 Context
+
+- [ ] guard: `componentOfStory`'s doc comment says it is the one reader of a story name's component (`<component>.<state>`, split at the first dot), so a new reader takes it rather than splitting again
+
+#### Build Phase 5 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md`: its story-naming sentence says the component is the name before the first dot, as `componentOfStory` reads it; edit only where it says otherwise, and note the result under this item
 
 ## Files Affected
 
