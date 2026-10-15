@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fakeJaegerFetch, type HeldSpan, jaegerSpan } from "../../__tests__/helpers/fake-jaeger.js";
 import { type CapturedSpan, expectPromiseViolated } from "../testing/trace-shape.js";
+import { healthLine } from "./health.js";
+import { newestRuns } from "./health-line.js";
 import { lookStandingFor } from "./look-standing.js";
 import {
 	jaegerEndpoint,
@@ -113,3 +115,75 @@ for (const { id, word, reads } of WORDS) {
 		});
 	});
 }
+
+/**
+ * A14 of one-promise-language (Build Phase 4): `indusk promises health --json`
+ * is a wire an editor installed before this plan reads with
+ * `r.outcome === "violated" ? "broke" : "held"`. Its runs keep the old word
+ * for a break this release, whichever way the signal was written.
+ */
+describe("A14 — the editor's input keeps saying violated for a break", () => {
+	it("a run from a signal saying broken and one saying violated both read broke by the old editor rule", () => {
+		const runs = newestRuns(
+			new Map([
+				[
+					PROMISE,
+					[
+						{ at: "2026-10-15T12:00:02.000Z", outcome: "broken", traceId: "t-b" },
+						{ at: "2026-10-15T12:00:01.000Z", outcome: "violated", traceId: "t-v" },
+						{ at: "2026-10-15T12:00:00.000Z", outcome: "upheld", traceId: "t-u" },
+					],
+				],
+			]),
+		);
+		const read = { name: "local", label: "local", ok: true, at: "x", marks: {}, runs } as never;
+		const line = healthLine({ promises: [], incidents: [] } as never, [read], new Date());
+		const oldEditor = (r: { outcome: string }) => (r.outcome === "violated" ? "broke" : "held");
+		expect(line.runs.map((r) => oldEditor(r))).toEqual(["broke", "broke", "held"]);
+	});
+});
+
+/**
+ * A18: the trace-shape helper's failure messages say broken in prose; the event
+ * name `indusk.promise.violated` is wire vocabulary and stays.
+ */
+describe("A18 — the trace-shape helper's failure messages say broken", () => {
+	const noBreak: CapturedSpan = {
+		name: "release-seat",
+		spanId: "s1",
+		parentSpanId: "",
+		parentName: null,
+		attributes: { "indusk.promise": PROMISE, "indusk.promise.outcome": "upheld" },
+		events: [],
+	};
+	const withoutEvent: CapturedSpan = {
+		...noBreak,
+		attributes: { "indusk.promise": PROMISE, "indusk.promise.outcome": "broken" },
+	};
+	const prose = (m: string) =>
+		m.replace(/indusk\.promise\.violated/g, "").replace(/expectPromiseViolated/g, "");
+
+	it("no span signalled a break", () => {
+		let message = "";
+		try {
+			expectPromiseViolated([noBreak], `promise: ${PROMISE}`);
+		} catch (e) {
+			message = (e as Error).message;
+		}
+		expect(message).not.toBe("");
+		expect(prose(message)).not.toMatch(/\bviolated\b/i);
+		expect(message).toMatch(/broken/);
+	});
+
+	it("a broken span carries no event", () => {
+		let message = "";
+		try {
+			expectPromiseViolated([withoutEvent], `promise: ${PROMISE}`);
+		} catch (e) {
+			message = (e as Error).message;
+		}
+		expect(message).not.toBe("");
+		expect(prose(message)).not.toMatch(/\bviolated\b/i);
+		expect(message).toMatch(/broken/);
+	});
+});

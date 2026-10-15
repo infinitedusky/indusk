@@ -49,6 +49,9 @@ function scanned(): Scanned[] {
 		...filesUnder("apps/docs/src/guide", [".md"]),
 		...filesUnder("apps/docs/src/reference", [".md"]),
 		...filesUnder("apps/indusk-mcp/skills", [".md"]),
+		...filesUnder("apps/indusk-mcp/extensions", ["skill.md"]),
+		"docker/Dockerfile.always-on",
+		"docker/fly.always-on.toml",
 		"apps/indusk-mcp/templates/planning/CLAUDE.md",
 		"apps/indusk-mcp/templates/server/Dockerfile",
 		"apps/indusk-mcp/templates/server/fly.toml",
@@ -98,8 +101,14 @@ const MARK_ALLOWED: { why: string; pattern: RegExp }[] = [
 ];
 
 const OLD_WORDS = /\bviolat\w*|known-violated/i;
-/** The promise sense of mark: `a mark`, `its mark`, `the mark`, `every mark`, `marked the promise`. */
-const MARK_SENSE = /\b(a|its|the|every) marks?\b|\bmarked the promise\b/i;
+/**
+ * The promise sense of mark: `a mark`, `its mark`, `the mark`, `every mark`,
+ * `marked the promise`, and the senses a page reaches for without the article:
+ * `production marks`, `a promise's mark`, `sends marks`, `mark a promise`,
+ * `has been marked`, `run, mark,`.
+ */
+const MARK_SENSE =
+	/\b(a|its|the|every) marks?\b|\bmarked the promise\b|\b(promise|promise's|production|one|that) marks?\b|\bsends? marks?\b|\bmarks? (a|the) promise\b|\bhas been marked\b|\brun, mark,/i;
 
 describe("A10 — the pages, skills, templates and descriptions carry no old promise word", () => {
 	const rows = scanned();
@@ -122,5 +131,75 @@ describe("A10 — the pages, skills, templates and descriptions carry no old pro
 			)
 			.map((r) => `${r.file}:${r.line}`);
 		expect(hits, `${hits.length} lines call a signal a mark`).toEqual([]);
+	});
+});
+
+describe("A19 — the scan reads the extension skills, the image's deploy files and every promise sense of mark", () => {
+	const rows = scanned();
+	const files = new Set(rows.map((r) => r.file));
+
+	it("reads the installed extension skills and the always-on image's files", () => {
+		expect(
+			[...files].filter((f) => /^apps\/indusk-mcp\/extensions\/[^/]+\/skill\.md$/.test(f)),
+		).not.toEqual([]);
+		expect(files.has("apps/indusk-mcp/extensions/testing/skill.md")).toBe(true);
+		expect(files.has("docker/Dockerfile.always-on")).toBe(true);
+		expect(files.has("docker/fly.always-on.toml")).toBe(true);
+	});
+
+	it("refuses mark in each promise sense, and lets the nav glyph stand", () => {
+		for (const said of [
+			"the server reads production marks",
+			"a promise's mark lands in Jaeger",
+			"the app sends marks to the server",
+			"it will mark a promise broken",
+			"what has been marked broken",
+			"run, mark, and record",
+			"the mark under a promise",
+		]) {
+			expect(MARK_SENSE.test(said), said).toBe(true);
+		}
+		expect(MARK_SENSE.test("the Postmark service")).toBe(false);
+	});
+
+	it("none of the scanned lines uses mark in a promise sense", () => {
+		const hits = rows
+			.filter((r) =>
+				MARK_SENSE.test(MARK_ALLOWED.reduce((t, a) => t.replace(a.pattern, ""), r.text)),
+			)
+			.map((r) => `${r.file}:${r.line}`);
+		expect(hits, `${hits.length} lines call a signal a mark`).toEqual([]);
+	});
+});
+
+/**
+ * A20: until the writers switch (the next plan, `mark-first`), InDusk's own
+ * signals and the demo's are written `violated` and read as broken. A page
+ * says that; it does not say they are marked, written or set to `broken`.
+ */
+const WRITES_BROKEN =
+	/\b(marked|marks|mark|written|writes|set to|sets|sends?|carrying|carries)\b[^.]*`broken`|`broken`[^.]*\b(is|are) (marked|written|set)\b/i;
+
+describe("A20 — no page says InDusk's own signals or the demo's are written broken this release", () => {
+	it("no sentence on a page says a signal is marked, written or set to `broken`", () => {
+		const paragraphs: { file: string; line: number; text: string }[] = [];
+		for (const r of scanned().filter((x) => x.file.endsWith(".md"))) {
+			const last = paragraphs[paragraphs.length - 1];
+			if (r.text.trim() === "") paragraphs.push({ file: r.file, line: r.line + 1, text: "" });
+			else if (last && last.file === r.file && last.text !== "") last.text += ` ${r.text}`;
+			else if (last && last.file === r.file && last.text === "") {
+				last.line = r.line;
+				last.text = r.text;
+			} else paragraphs.push({ file: r.file, line: r.line, text: r.text });
+		}
+		const hits: string[] = [];
+		for (const p of paragraphs) {
+			for (const sentence of p.text.replace(/\s+/g, " ").split(/(?<=[.!?])\s+/)) {
+				if (/\bread (as broken|the same)\b/i.test(sentence)) continue;
+				if (WRITES_BROKEN.test(sentence))
+					hits.push(`${p.file}:${p.line} — ${sentence.slice(0, 80)}`);
+			}
+		}
+		expect(hits, `${hits.length} sentences say a writer sends broken`).toEqual([]);
 	});
 });
