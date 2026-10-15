@@ -26,7 +26,8 @@ That line ends with the promise's name and its state:
 | `seat-never-double-booked · holding` | Seen holding. |
 | `seat-never-double-booked · broken (production)` | A live break in that source. |
 | `… · holding, broken (local)` | Production holds; a change on your machine breaks it. |
-| `… · fixed` | Every break in the window has a fixed incident. |
+| `… · broke — fixed` | Every break in the window has a fixed incident. |
+| `… · retired` | The promise was retired; it is never shown as holding. |
 | `… · known broken` | Declared known broken; an incident says why. |
 | `… · no signal` | No signal reported on it in the window. |
 | `… · watched by the tests` | A state or structure promise: the tests watch it, not telemetry. |
@@ -43,7 +44,7 @@ newest run; "last seen" is the newest signal of any outcome.
 **A break** also appears in the Problems list, and as one notification the
 first time it is read. It is not told again while it lasts, however many more
 breaks arrive or reads fail in between. Once the break's incident is marked
-fixed, the next read shows `fixed` and clears the Problem, with no reload. A
+fixed, the next read shows `broke — fixed` and clears the Problem, with no reload. A
 later break is told again.
 
 A folder inside your project that is its own InDusk project, such as dusk's

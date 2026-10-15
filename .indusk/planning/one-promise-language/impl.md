@@ -430,7 +430,7 @@ A fresh reader went looking for places where the plan's promise does not yet hol
 
 #### Build Phase 4 Document
 
-- [ ] The editor's guide shows retired and broke — fixed, and the testing extension's page says a signal written violated is read as broken.
+- [x] The editor's guide shows retired and broke — fixed, and the testing extension's page says a signal written violated is read as broken.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/promises-in-your-editor.md` (the state words list); the docs page that renders the testing extension's skill, if one exists under `apps/docs/src/reference/`, follows `extensions/testing/skill.md`.
