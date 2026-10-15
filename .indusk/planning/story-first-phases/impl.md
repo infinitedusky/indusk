@@ -510,6 +510,12 @@ The plan is correct and its tests are hardened; this phase tidies what it spread
   Reviewed `skills/planner.md`, `apps/docs/src/reference/skills/plan.md`, `apps/docs/src/changelog.md`, `apps/docs/src/guide/test-trajectory.md` (prose, over the cap before this plan), `src/__tests__/detail-is-only-read.test.ts` (one file per promise, already on the shared `helpers/phase-summary-fixture.ts`), `src/lib/trajectory/validator.test.ts` and `phase-summary-existing-impls.verdicts.json` (a generated snapshot) — left as-is: cohesive, or not code.
 
   </details>
+- [x] The root project instructions are shortened so they fit back under their size limit
+  <details><summary>Technical</summary>
+
+  Found while running the full suite for Verification: `context-tiers-register.test.ts` (the root held 20 % under the 18432-byte budget) failed on this branch at 14828 bytes against 14745.6, and passes on `main` at 14730. The Key Decisions entry added by Build Phase 1 is shortened to rule and pointer; the root is now 14725 bytes. `main` has since added a Sessions-per-plan entry of about 115 bytes, so the merge will need the retrospective's compaction step (one old root entry collapsed) to stay under.
+
+  </details>
 
 #### Build Phase 5 Verification
 
