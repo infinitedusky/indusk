@@ -9,7 +9,7 @@ import { SessionPanel } from "./SessionPanel";
  * promise: a-plan-can-start-from-the-admin — admin-plan-authoring A1, A2, A3, the panel's half.
  * promise: a-session-can-be-stopped — admin-plan-authoring A21, the panel's half.
  * promise: a-prompt-shows-only-when-a-person-must-choose — decided-prompts-stay-closed A1, A2, A3, the panel's half.
- * promise: a-decided-request-stays-decided — decided-prompts-stay-closed A6, A7, the panel's half.
+ * promise: a-decided-request-stays-decided — decided-prompts-stay-closed A6, A7, A12, the panel's half.
  *
  * What the session says appears as it says it; a question shows its choices
  * and the chosen answer goes back; a request to use a tool can be allowed or
@@ -398,5 +398,18 @@ describe("decided-prompts-stay-closed A10 — a refused click leaves the request
     await expect
       .poll(async () => await button(rendered, "Answer"))
       .toBeDefined();
+  });
+});
+
+describe("decided-prompts-stay-closed A12 — a decision is not a row of its own", () => {
+  it("a request and its decision are one entry in the log", async () => {
+    const { rendered } = panel([
+      permission,
+      decided({ requestId: "p1", allow: true }),
+    ]);
+    const log = (await rendered).container.querySelector(
+      '[data-testid="session-log"]',
+    );
+    expect(log?.querySelectorAll("li")).toHaveLength(1);
   });
 });

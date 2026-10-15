@@ -53,6 +53,7 @@ Every request a session makes is recorded in its log together with how it was de
 | A9 | A question the person answered shows the answer they gave, and a panel connecting afterwards (a reload) still shows it answered with that answer, not a blank question with every option disabled | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A10 | A click on Allow, Deny or Answer whose reply the server refuses leaves the request waiting with its buttons back, never with neither buttons nor an outcome | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/SessionPanel.test.tsx, apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
 | A11 | A click closes its request at once; a reply the server refuses reopens it, and an accepted one keeps it closed — one hook the panel and the thread both use | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/use-answered-requests.test.tsx |
+| A12 | A decided event adds no row of its own to the panel's log: a request and its decision are one entry | Build Phase 4 | Build Phase 4 | written | unit | promise: a-decided-request-stays-decided | apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 
 ## Checklist
 
@@ -182,6 +183,8 @@ Every request a session makes is recorded in its log together with how it was de
 - [x] (reviewed `apps/indusk-mcp/src/lib/session/manager.ts` — left as-is: 413 / 400, the overage is `record`, `decideByRule` and `decidedBy`, which exist to keep every event on one path through the class; moving them out would split the log from the manager that owns it)
 - [x] (reviewed `SessionPanel.test.tsx` (402) and `manager.test.ts` (513) — left as-is: each is one subject's tests grouped by trajectory row; splitting by row would scatter shared fakes)
 - [x] (reviewed `build-session.ts`, `start.ts`, `SessionConnector.tsx`, `use-project-session.ts` — left as-is: small edits, under cap, no repeat across files)
+- [ ] The panel's log skips a `decided` event instead of giving it an empty `<li>` (`SessionPanel.tsx`) — found by the audit (`audit.md`, "What does the diff change that no row touches?"): each decision added a blank, gap-spaced row
+- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: the outcome line is the panel's; in the project conversation's thread a decided request is simply no longer waiting — found by the audit: the page claimed the thread draws outcomes, which it never did
 
 - [x] Shape — reviewed the files this phase wrote (`use-answered-requests.ts`, `request-decisions.ts`, `QuestionView.tsx`, and the edited `SessionPanel.tsx`, `ConversationThread.tsx`, `conversation-turns.ts`) against the enabled extensions' craft rules.
   - Found: `Replied` lived in `SessionPanel.tsx`, so the hook imported a type from the component that imports the hook (a cycle, erased but backwards); moved `Replied` into `use-answered-requests.ts` and pointed `SessionPanel` and `ConversationThread` at it. Nothing else to change.
