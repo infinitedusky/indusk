@@ -98,6 +98,31 @@ function closesFold(line: string): boolean {
 	return line.trim().endsWith("</details>");
 }
 
+/**
+ * Which lines of an impl are a task's folded detail or a fenced block, as a
+ * mask parallel to `lines`: the text a reader of boxes must leave alone, since
+ * anything quoted there is only read (`hidden-detail-is-only-read`).
+ */
+export function foldedLineMask(lines: string[]): boolean[] {
+	const fenced = fencedLineMask(lines);
+	const mask: boolean[] = [];
+	let inFold = false;
+	for (let i = 0; i < lines.length; i++) {
+		if (fenced[i]) {
+			mask.push(true);
+		} else if (inFold) {
+			mask.push(true);
+			if (closesFold(lines[i])) inFold = false;
+		} else if (opensFold(lines[i])) {
+			mask.push(true);
+			inFold = true;
+		} else {
+			mask.push(false);
+		}
+	}
+	return mask;
+}
+
 /** A phase's label lines (`**Tier**: …`, `**Goal**: …`) are not its paragraph. */
 const PHASE_LABEL = /^\*\*(Tier|Goal)\*\*:/;
 

@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { isFalsificationComplete } from "../falsification/log.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
 import { parsePhaseHeading } from "../impl-headings.js";
+import { foldedLineMask } from "../impl-parser-core.js";
 import { RITUAL_ORDER } from "../lifecycle.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { readPromises } from "../promises/registry.js";
@@ -43,7 +44,8 @@ function isRitualPhaseTerminal(implContent: string, ritualWord: string): boolean
 	let inPhase = false;
 	let found = false;
 	let itemCount = 0;
-	for (const line of lines) {
+	const folded = foldedLineMask(lines);
+	for (const [i, line] of lines.entries()) {
 		const phaseMatch = parsePhaseHeading(line);
 		if (phaseMatch) {
 			if (startsWith.test(phaseMatch.name)) {
@@ -55,6 +57,8 @@ function isRitualPhaseTerminal(implContent: string, ritualWord: string): boolean
 			continue;
 		}
 		if (!inPhase) continue;
+		// A box quoted inside a task's folded detail or a fence is only read.
+		if (folded[i]) continue;
 		// Leading whitespace allowed — nested sub-items count (round-2 F3; the
 		// old column-0 anchor made an indented unchecked item invisible).
 		if (/^\s*-\s+\[[ xX]\]/.test(line)) {

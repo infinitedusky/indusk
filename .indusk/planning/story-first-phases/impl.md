@@ -412,7 +412,7 @@ The save check and the plan page are ready. This phase makes the planner use the
 
 This phase tests two ways the finished plan may still break its promises, and fixes whichever the tests confirm. First, two readers that never learned the new rule still count a box line wherever it sits: the check that decides whether a falsification or cleanup phase is finished, and the check that decides whether a phase's verification is done before its code review. A task whose folded detail quotes an unticked box, which this plan's own tasks do, would keep its phase open forever. Second, the falsification and cleanup skills hand out phase templates in the old shape, so following either skill on a plan that has opted in gets the new phase refused when it is saved. After this phase, folded detail is only read everywhere, and the two rituals that run next on this plan write phases the save check accepts.
 
-- [ ] The check for a finished falsification or cleanup phase ignores box lines inside a task's folded detail or a code block
+- [x] The check for a finished falsification or cleanup phase ignores box lines inside a task's folded detail or a code block
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/cleanup/gate.ts` `isRitualPhaseTerminal`: skip lines inside a task's `<details>`…`</details>` fold and lines `fencedLineMask` marks; keep counting other indented sub-items (round-2 F3's nested-unchecked strictness). Today `/^\s*-\s+\[ \]/` matches `  - [ ] example` in a fold and returns not-terminal, which blocks the retrospective's Step 0 and `plans next`.
