@@ -155,7 +155,11 @@ export function PhasesPart({
               count={view.count}
               state={view.state}
               tone={view.tone}
-              summary={view.summary}
+              summary={
+                view.summary ? (
+                  <Markdown className="text-ink-soft">{view.summary}</Markdown>
+                ) : undefined
+              }
             >
               <PhaseItems items={view.items} />
             </PhaseRow>

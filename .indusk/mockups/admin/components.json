@@ -2045,9 +2045,9 @@
 				},
 				{
 					"name": "summary",
-					"type": "string",
+					"type": "ReactNode",
 					"required": false,
-					"description": "The phase's paragraph: what it does for the whole plan, drawn above its items when unfolded."
+					"description": "The phase's paragraph: what it does for the whole plan, drawn above its\nitems when unfolded. Plain text, or a node the caller formats (the plan\npage passes the paragraph through markdown; this component imports none)."
 				},
 				{
 					"name": "children",
