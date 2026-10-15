@@ -224,7 +224,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 #### Test Phase 1 Context
 
-- [ ] `current.md` (Project, shared): plan-stories in flight; plans are being retitled, and worktree plans get their titles on their own branches in Build Phase 5
+- [x] `current.md` (Project, shared): plan-stories in flight; plans are being retitled, and worktree plans get their titles on their own branches in Build Phase 5
 
 #### Test Phase 1 Document
 
