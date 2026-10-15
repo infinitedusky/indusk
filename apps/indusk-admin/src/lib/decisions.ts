@@ -12,7 +12,8 @@ import type { ManagedStart } from "@infinitedusky/indusk-mcp/session";
  *
  *   - a **question**: the chosen option — or the person's words — as the
  *     answer, through the session manager's `reply`, as the session panel
- *     answers it.
+ *     answers it. An ask of several questions is answered in full: one answer
+ *     under each question's text, or it is refused.
  *   - **approval**: accept is `plans approve`; **review**: accept is
  *     `acceptPlan` and the release, as BuildControls' Accept does.
  *   - an **amendment** is never answered here: it is approved or sent back on
@@ -34,7 +35,9 @@ import type { ManagedStart } from "@infinitedusky/indusk-mcp/session";
 export type DecisionChoice =
   | { choice: "accept" }
   | { choice: "alternative" }
-  | { choice: "reply"; text: string };
+  | { choice: "reply"; text: string }
+  /** An answer to each question of an ask, by the question's own text. */
+  | { choice: "answers"; answers: Record<string, string> };
 
 export interface DecisionSessions {
   forPlan(
@@ -108,6 +111,11 @@ export async function answerDecision(
 
 /** The answer in words: the option or command chosen, or the person's own. */
 function answerOf(waiting: Waiting, choice: DecisionChoice): string {
+  if (choice.choice === "answers") {
+    return Object.entries(choice.answers)
+      .map(([question, answer]) => `${question} — ${answer}`)
+      .join("\n");
+  }
   if (choice.choice === "accept") return waiting.accept;
   if (choice.choice === "alternative") return waiting.alternative;
   const text = choice.text.trim();
@@ -131,7 +139,7 @@ async function deliver(
     }
     deps.sessions.reply(target.id, {
       requestId: waiting.requestId,
-      answers: { [waiting.decision]: answer },
+      answers: questionAnswers(waiting, choice, answer),
     });
     return { via: "question", sessionId: target.id };
   }
@@ -164,6 +172,31 @@ async function deliver(
     onEvent: () => {},
   });
   return { via: "session", sessionId: id };
+}
+
+/**
+ * The answers a question's reply carries: one under each question's text, none left out.
+ * promise: a-question-is-answered-in-full
+ */
+function questionAnswers(
+  waiting: Waiting,
+  choice: DecisionChoice,
+  answer: string,
+): Record<string, string> {
+  const asked = waiting.questions?.map((q) => q.question) ?? [waiting.decision];
+  if (choice.choice !== "answers") {
+    if (asked.length > 1) {
+      throw new Error(
+        `${waiting.plan} asked ${asked.length} questions; answer each one`,
+      );
+    }
+    return { [waiting.decision]: answer };
+  }
+  const missing = asked.filter((q) => !choice.answers[q]?.trim());
+  if (missing.length > 0) {
+    throw new Error(`no answer to: ${missing.join("; ")}`);
+  }
+  return Object.fromEntries(asked.map((q) => [q, choice.answers[q] as string]));
 }
 
 /**

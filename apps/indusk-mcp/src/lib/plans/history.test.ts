@@ -93,3 +93,19 @@ describe("A17 — a plan's decisions outlast the admin", () => {
 		expect(readHistory(f.main, "never-decided")).toEqual([]);
 	});
 });
+
+describe("cockpit-audit-fixes A11 — main cannot take the history commit", () => {
+	// promise: indusk-leaves-main-clean
+	it("A11 the line is written, left uncommitted with the reason, and nothing else on main is touched", () => {
+		f.git(f.main, "checkout", "-q", "-b", "elsewhere");
+		const head = f.git(f.main, "rev-parse", "HEAD");
+		const r = appendDecision(f.main, "seat-holds", entry("Approve"));
+		expect(r.commit.committed).toBe(false);
+		expect(!r.commit.committed && r.commit.reason).toMatch(/elsewhere/);
+		expect(f.git(f.main, "rev-parse", "HEAD")).toBe(head);
+		expect(f.git(f.main, "diff", "--cached", "--name-only")).toBe("");
+		expect(f.git(f.main, "status", "--porcelain", "-uall").split("\n").filter(Boolean)).toEqual([
+			expect.stringMatching(/plan-history\/seat-holds\.md$/),
+		]);
+	});
+});

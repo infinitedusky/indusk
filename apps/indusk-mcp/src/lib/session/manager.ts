@@ -68,6 +68,8 @@ interface Held {
 	events: StartedEvent[];
 	listeners: Set<(ev: StartedEvent) => void>;
 	answered: Set<string>;
+	/** The session's turn is open: started or spoken to, no `result` yet. */
+	turnOpen: boolean;
 	opts: SessionOptions;
 }
 
@@ -127,6 +129,7 @@ export class SessionManager {
 			events: [],
 			listeners: new Set(),
 			answered: new Set(),
+			turnOpen: true,
 			opts,
 		};
 		const session = this.launch({
@@ -178,6 +181,7 @@ export class SessionManager {
 	 */
 	private record(holder: Held, opts: SessionOptions, ev: StartedEvent, forward = true): void {
 		holder.events.push(ev);
+		if (ev.type === "result") holder.turnOpen = false;
 		if (forward) opts.onEvent(ev);
 		for (const listen of holder.listeners) listen(ev);
 	}
@@ -273,6 +277,15 @@ export class SessionManager {
 		return undefined;
 	}
 
+	/**
+	 * Whether session `id` is working: true from start, and from each `say` or
+	 * `reply`, until its next `result`. A live session whose turn ended is idle,
+	 * waiting for the person — not writing (cockpit-audit-fixes, A12).
+	 */
+	isWriting(id: string): boolean {
+		return this.held.get(id)?.turnOpen ?? false;
+	}
+
 	/** Whether some page is showing session `id` now: it has a subscriber to its events. */
 	isWatched(id: string): boolean {
 		return (this.held.get(id)?.listeners.size ?? 0) > 0;
@@ -335,6 +348,7 @@ export class SessionManager {
 			);
 		}
 		h.answered.add(reply.requestId);
+		h.turnOpen = true;
 		this.record(
 			h,
 			h.opts,
@@ -356,6 +370,7 @@ export class SessionManager {
 		if (!h) throw new Error(`no session ${id} is running`);
 		if (!text.trim()) throw new Error("a message to the session cannot be empty");
 		h.session.say(text);
+		h.turnOpen = true;
 		const ev: StartedEvent = { type: "you", text };
 		h.events.push(ev);
 		for (const listen of h.listeners) listen(ev);

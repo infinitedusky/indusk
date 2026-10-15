@@ -247,6 +247,42 @@ describe("plan-cockpit — the question a session waits on", () => {
 	});
 });
 
+describe("cockpit-audit-fixes A12 — a session's turn is open until its result", () => {
+	// promise: approval-waits-for-a-finished-plan
+	it("A12 isWriting is true from start, false after a result, true again after say and after reply", () => {
+		const { m, fake } = manager();
+		const { id } = m.start({ ...planning, ...meta });
+		expect(m.isWriting(id)).toBe(true);
+		fake.started[0]?.opts.onEvent({
+			type: "result",
+			ok: true,
+			subtype: "success",
+			text: "done",
+			sessionId: "s",
+		});
+		expect(m.isWriting(id)).toBe(false);
+		m.say(id, "approve it");
+		expect(m.isWriting(id)).toBe(true);
+		fake.started[0]?.opts.onEvent({
+			type: "result",
+			ok: true,
+			subtype: "success",
+			text: "done",
+			sessionId: "s",
+		});
+		expect(m.isWriting(id)).toBe(false);
+		fake.started[0]?.opts.onEvent({
+			type: "question",
+			requestId: "req-9",
+			questions: [{ question: "Q?", options: [{ label: "A" }, { label: "B" }] }],
+			input: {},
+		});
+		m.reply(id, { requestId: "req-9", answers: { "Q?": "A" } });
+		expect(m.isWriting(id)).toBe(true);
+		expect(m.isWriting("no-such-session")).toBe(false);
+	});
+});
+
 describe("decided-prompts-stay-closed A5, A6 — the log records every decision", () => {
 	function recording() {
 		const dir = mkdtempSync(join(tmpdir(), "session-manager-"));

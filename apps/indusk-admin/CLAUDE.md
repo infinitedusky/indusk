@@ -188,7 +188,14 @@ Each entry is a rule and a pointer; the pointer holds the story.
   answer**: a started release clears the build's stop and a second accept is
   refused while it runs, and an answer delivered but not recorded is reported
   sent, never failed. Guarded by `src/lib/build-host.release.test.ts` and
-  `src/lib/decisions.test.ts`. — see `/decisions/plan-cockpit`
+  `src/lib/decisions.test.ts`. **A decision's card shows everything the agent
+  asked, never the first of it**: an ask of several questions is shown whole and
+  answered under each question's text (`choice: "answers"`), and an answer
+  that leaves one out is refused — guarded by A7 in `DecisionCard.test.tsx` and
+  `decisions.test.ts`. **A session is "writing" only while its turn is open**:
+  an idle session waiting for the person does not hold approval back
+  (`SessionManager.isWriting`) — guarded by A12 in `waiting.test.ts`. — see
+  `/decisions/plan-cockpit`
 - **Storybook is `@storybook/nextjs-vite`; its story tests are the system
   tier's**: the `storybook` vitest project is named in `SYSTEM_PROJECTS`
   (`vitest.tiers.ts`) and defined by `vitest.config.ts` only for a run the
