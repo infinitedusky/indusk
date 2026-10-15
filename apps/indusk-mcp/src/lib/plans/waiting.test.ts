@@ -148,3 +148,13 @@ describe("A13 — what a plan waits on, and the step it waits at", () => {
 		expect(both[0]?.on).toBe("question");
 	});
 });
+
+describe("cockpit-audit-fixes A8 — approval waits for a finished plan", () => {
+	// promise: approval-waits-for-a-finished-plan
+	it("A8 a draft impl a session is still writing is not under approval; once the session ends, it is", () => {
+		const writing: WaitingSession = { plan: "awaiting-approval", kind: "planning", question: null };
+		expect(planWaiting({ sessions: [writing], plans: [approval], builds: [] })).toEqual([]);
+		const after = planWaiting({ sessions: [], plans: [approval], builds: [] });
+		expect(after).toEqual([expect.objectContaining({ plan: "awaiting-approval", on: "approval" })]);
+	});
+});

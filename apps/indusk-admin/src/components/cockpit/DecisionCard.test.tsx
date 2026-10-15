@@ -180,3 +180,44 @@ describe("A35 — a review shows its evidence with its decision, and accepting i
     });
   });
 });
+
+// promise: a-question-is-answered-in-full
+describe("cockpit-audit-fixes A7 — every question the agent asked is on the card", () => {
+  const two = {
+    ...question,
+    plan: "asking-two",
+    questions: [
+      {
+        question: "Which seat map should holds use?",
+        accept: "The venue's map",
+        alternative: "Our own grid",
+      },
+      {
+        question: "How long should a hold last?",
+        accept: "Ten minutes",
+        alternative: "One hour",
+      },
+    ],
+  } as Waiting;
+
+  it("A7 both questions are shown, and answering both posts an answer under each question's text", async () => {
+    const screen = await render(
+      <DecisionCard project={PROJECT} waiting={two} />,
+    );
+    const text = screen.container.textContent ?? "";
+    expect(text).toContain("Which seat map should holds use?");
+    expect(text).toContain("How long should a hold last?");
+    await screen.getByText("Our own grid").click();
+    await screen.getByText("Ten minutes").click();
+    await screen.getByTestId("decision-send-answers").click();
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]?.body).toEqual({
+      project: PROJECT,
+      choice: "answers",
+      answers: {
+        "Which seat map should holds use?": "Our own grid",
+        "How long should a hold last?": "Ten minutes",
+      },
+    });
+  });
+});

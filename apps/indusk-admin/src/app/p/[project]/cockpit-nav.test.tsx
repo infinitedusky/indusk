@@ -339,3 +339,41 @@ describe("A36 — a new plan can still be started from the admin (regression gua
     expect(root.querySelector('a[data-plan-name="mid-build"]')).not.toBeNull();
   });
 });
+
+// promise: a-promise-sits-in-its-innermost-path
+describe("cockpit-audit-fixes A9 — the nav lists a plan under its innermost Path", () => {
+  it("A9 a plan declared by an outer Path and by a Path inside it is listed in the inner Path only", async () => {
+    const { PlanList } = await import("@/components/PlanList");
+    const plan = (name: string) => ({
+      name,
+      status: "draft",
+      archived: false,
+    });
+    const { container } = await render(
+      <PlanList
+        active={["outer-path", "inner-path", "shared-plan"].map(plan) as never}
+        archived={[]}
+        masterOrder={[]}
+        grouping={{
+          parents: ["outer-path", "inner-path"],
+          roadmap: ["outer-path"],
+          subplans: {
+            "outer-path": ["inner-path", "shared-plan"],
+            "inner-path": ["shared-plan"],
+          },
+        }}
+      />,
+    );
+    const links = (group: string) =>
+      Array.from(
+        container.querySelectorAll(
+          `[data-testid="plan-group-${group}"] a[data-plan-name="shared-plan"]`,
+        ),
+      );
+    const inner = container.querySelector(
+      '[data-testid="plan-group-inner-path"]',
+    );
+    expect(inner?.querySelectorAll('a[data-plan-name="shared-plan"]')).toHaveLength(1);
+    expect(links("outer-path")).toHaveLength(1);
+  });
+});

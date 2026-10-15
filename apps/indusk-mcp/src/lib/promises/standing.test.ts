@@ -292,3 +292,44 @@ describe("A40 — the thirty days count days", () => {
 		expect((r.thirtyDays.held ?? 0) + r.thirtyDays.broke).toBe(30);
 	});
 });
+
+describe("cockpit-audit-fixes A1–A4 — thirty days that say only what was seen", () => {
+	// promise: the-thirty-days-say-only-what-was-seen
+	const now = Date.UTC(2026, 9, 10, 12, 0);
+	const upheld = (...days: string[]) => days.map((d) => `${d}T10:00:00.000Z`);
+
+	it("A1 upheld on three days and broken on one is held 3, broke 1", () => {
+		const r = standingOf(entry(), [seen("production", "green", "2026-10-09T10:00:00.000Z")], [], undefined, {
+			now,
+			heard: [heardRow("seats-held", "2026-10-08T09:00:00.000Z")],
+			upheld: upheld("2026-10-05", "2026-10-06", "2026-10-07"),
+		} as never);
+		expect(r.thirtyDays).toEqual({ broke: 1, held: 3 });
+	});
+
+	it("A2 a promise with one heard break and no upheld run has held 0, not twenty-nine", () => {
+		const r = standingOf(entry(), [], [], undefined, {
+			now,
+			heard: [heardRow("seats-held", "2026-10-08T09:00:00.000Z")],
+			upheld: [],
+		} as never);
+		expect(r.thirtyDays).toEqual({ broke: 1, held: 0 });
+	});
+
+	it("A3 five violations heard on one day are one broken day", () => {
+		const r = standingOf(entry(), [], [], undefined, {
+			now,
+			heard: [1, 2, 3, 4, 5].map((n) => heardRow("seats-held", `2026-10-08T0${n}:00:00.000Z`)),
+		});
+		expect(r.thirtyDays.broke).toBe(1);
+	});
+
+	it("A4 a break heard under an earlier name counts on its day, and a day with a break is not held", () => {
+		const r = standingOf(entry({ aliases: ["seat-held"] }), [], [], undefined, {
+			now,
+			heard: [heardRow("seat-held", "2026-10-08T09:00:00.000Z")],
+			upheld: upheld("2026-10-08", "2026-10-07"),
+		} as never);
+		expect(r.thirtyDays).toEqual({ broke: 1, held: 1 });
+	});
+});

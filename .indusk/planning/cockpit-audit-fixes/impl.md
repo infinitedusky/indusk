@@ -1,7 +1,7 @@
 ---
 title: "Cockpit audit fixes — what plan-cockpit's cold audit found"
 date: 2026-10-11
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -41,17 +41,17 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A promise seen upheld on three days and broken on one shows "held 3 · broke 1" on the dashboard | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
-| A2 | A promise that was never seen shows no held days, not thirty | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
-| A3 | Five violations heard on one day count as one broken day | Test Phase 1 | Test Phase 1 | planned | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
-| A4 | A violation heard under a promise's earlier name is counted on its day, on the dashboard and on the promise page alike | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
-| A5 | For one promise, the dashboard row and the promise page give the same number of held days and broken days | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
-| A6 | The dashboard and the promise page count the same thirty days: a violation on the first of the page's thirty days appears on both, and one on the day before appears on neither | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
-| A7 | An agent that asks two questions at once has both shown on the plan's card, and answering them gives the agent an answer to each | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-question-is-answered-in-full | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx, apps/indusk-admin/src/lib/decisions.test.ts |
-| A8 | A plan whose impl is a draft while a session is still writing it is not under Needs you for approval; once the session ends, it is | Test Phase 1 | Build Phase 2 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
-| A9 | A plan declared by an outer Path and by a Path inside it is grouped under the inner Path on the dashboard, and the nav lists it there | Test Phase 1 | Build Phase 3 | planned | unit | promise: a-promise-sits-in-its-innermost-path | apps/indusk-admin/src/app/p/[project]/promises/dashboard.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
-| A10 | For one project, `indusk promises status`, the dashboard and a promise's page report the same state for each promise and source | Test Phase 1 | Build Phase 3 | planned | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/same-health-three-surfaces.test.ts |
-| A11 | When `main` cannot take the history commit, an answered decision says it was sent and that the history was left uncommitted, with the reason, and nothing else on `main` is touched | Test Phase 1 | Test Phase 1 | planned | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/plans/history.test.ts |
+| A1 | A promise seen upheld on three days and broken on one shows "held 3 · broke 1" on the dashboard | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A2 | A promise that was never seen shows no held days, not thirty | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A3 | Five violations heard on one day count as one broken day | Test Phase 1 | Test Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A4 | A violation heard under a promise's earlier name is counted on its day, on the dashboard and on the promise page alike | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A5 | For one promise, the dashboard row and the promise page give the same number of held days and broken days | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
+| A6 | The dashboard and the promise page count the same thirty days: a violation on the first of the page's thirty days appears on both, and one on the day before appears on neither | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
+| A7 | An agent that asks two questions at once has both shown on the plan's card, and answering them gives the agent an answer to each | Test Phase 1 | Build Phase 2 | written | unit | promise: a-question-is-answered-in-full | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx, apps/indusk-admin/src/lib/decisions.test.ts |
+| A8 | A plan whose impl is a draft while a session is still writing it is not under Needs you for approval; once the session ends, it is | Test Phase 1 | Build Phase 2 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A9 | A plan declared by an outer Path and by a Path inside it is grouped under the inner Path on the dashboard, and the nav lists it there | Test Phase 1 | Build Phase 3 | written | unit | promise: a-promise-sits-in-its-innermost-path | apps/indusk-admin/src/app/p/[project]/promises/dashboard.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
+| A10 | For one project, `indusk promises status`, the dashboard and a promise's page report the same state for each promise and source | Test Phase 1 | Build Phase 3 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/same-health-three-surfaces.test.ts |
+| A11 | When `main` cannot take the history commit, an answered decision says it was sent and that the history was left uncommitted, with the reason, and nothing else on `main` is touched | Test Phase 1 | Test Phase 1 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/plans/history.test.ts |
 
 ## Checklist
 
@@ -61,13 +61,13 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 
 **Goal**: author each row against today's code and read each failure; two rows are guards that pass at once.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create cockpit-audit-fixes`; made by `indusk plans start`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
-- [ ] A1, A2, A4 in `standing.test.ts`; A5, A6 in `proof.test.ts`: the same fixture promise read through `standingOf` and `proofOf`, with heard rows and store days handed in. RED today: held is `30 − brokenDays`, the page's window is calendar days and the dashboard's rolling
-- [ ] A7 in `DecisionCard.test.tsx` and `decisions.test.ts`; A8 in `waiting.test.ts`. RED today: only the first question is carried; a draft impl is offered whatever a session is doing
-- [ ] A9 in `dashboard.test.tsx` and `cockpit-nav.test.tsx`. RED today: `pathOf` returns the first declaring Path
-- [ ] A10 in `same-health-three-surfaces.test.ts`: `indusk promises status --json`'s function, `readStanding` and `proofOf` over one fixture project, each source's state per promise compared
-- [ ] A3 (`standing.test.ts`) and A11 (`history.test.ts`): written to pass; they pin behaviour that has no row at its edge
-- [ ] Confirm each red test fails on its own assertion rather than on a missing import
+- [x] Create/confirm this plan's worktree — confirmed: this session runs in `dusk-worktrees/cockpit-audit-fixes` on `plan/cockpit-audit-fixes`
+- [x] A1, A2, A4 in `standing.test.ts`; A5, A6 in `proof.test.ts`: the same fixture promise read through `standingOf` and `proofOf`, with heard rows and store days handed in. RED today: held is `30 − brokenDays`, the page's window is calendar days and the dashboard's rolling
+- [x] A7 in `DecisionCard.test.tsx` and `decisions.test.ts`; A8 in `waiting.test.ts`. RED today: only the first question is carried; a draft impl is offered whatever a session is doing
+- [x] A9 in `dashboard.test.tsx` and `cockpit-nav.test.tsx`. RED today: `pathOf` returns the first declaring Path
+- [x] A10 in `same-health-three-surfaces.test.ts`: `indusk promises status --json`'s function, `readStanding` and `proofOf` over one fixture project, each source's state per promise compared
+- [x] A3 (`standing.test.ts`) and A11 (`history.test.ts`): written to pass; they pin behaviour that has no row at its edge
+- [x] Confirm each red test fails on its own assertion rather than on a missing import — confirmed by running each; A10 was green on arrival (decision: kept as a guard, state `passing`; `reportRows`, `readStanding` and `proofOf` already agree over one fixture)
 
 #### Regression Guards
 
@@ -76,7 +76,7 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 
 #### Test Phase 1 Verification
 
-- [ ] A1, A2, A4–A10 authored and each fails on its own assertion; A3 and A11 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/standing.test.ts src/lib/promises/proof.test.ts src/lib/plans/waiting.test.ts src/lib/plans/history.test.ts src/__tests__/same-health-three-surfaces.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/cockpit/DecisionCard.test.tsx src/lib/decisions.test.ts "src/app/p/[project]/promises/dashboard.test.tsx" "src/app/p/[project]/cockpit-nav.test.tsx"`)
+- [x] A1, A2, A4–A10 authored and each fails on its own assertion; A3 and A11 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/standing.test.ts src/lib/promises/proof.test.ts src/lib/plans/waiting.test.ts src/lib/plans/history.test.ts src/__tests__/same-health-three-surfaces.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/cockpit/DecisionCard.test.tsx src/lib/decisions.test.ts "src/app/p/[project]/promises/dashboard.test.tsx" "src/app/p/[project]/cockpit-nav.test.tsx"`)
 
 ### Build Phase 1: Thirty days that say only what was seen
 

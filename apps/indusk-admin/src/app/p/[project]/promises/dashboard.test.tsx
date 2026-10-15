@@ -295,3 +295,30 @@ describe("the dashboard's thirty days are the package's, not the admin's", () =>
     expect(thirty("exports-keep-their-columns")).toContain("not seen yet");
   });
 });
+
+// promise: a-promise-sits-in-its-innermost-path
+describe("cockpit-audit-fixes A9 — the dashboard groups under the innermost Path", () => {
+  it("A9 a plan declared by an outer Path and a Path inside it is in the inner Path", async () => {
+    const { buildRows } = await import("@/lib/promise-dashboard");
+    const standing = [
+      {
+        entry: { name: "seats-held", owner: "seat-holds" },
+        standing: "enforced",
+        tests: { passing: 1, total: 1 },
+        thirtyDays: { held: 1, broke: 0 },
+        lastActivity: null,
+        lastBreak: null,
+      },
+    ] as never;
+    const subplans = {
+      "outer-path": ["inner-path", "seat-holds"],
+      "inner-path": ["seat-holds"],
+    };
+    const [row] = buildRows(standing, {
+      planTitles: {},
+      sentenceOf: (n) => n,
+      declarations: { subplans },
+    });
+    expect(row?.path).toBe("inner-path");
+  });
+});
