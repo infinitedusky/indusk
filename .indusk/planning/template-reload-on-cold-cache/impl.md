@@ -91,10 +91,16 @@ This phase writes the tests that fail today for the reasons the research found. 
   Red: the first step expected `pnpm install --frozen-lockfile` and received `pnpm --filter @infinitedusky/indusk-mcp prepublishOnly`. The second case (landing still runs `pnpm install:local`) passes today, as it should.
 
   </details>
-- [ ] The end-to-end monitor test looks for the fake model's name, and fails today only where it still expects Claude Code's old wording
+- [x] The end-to-end monitor test looks for the fake model's name, and fails today only where it still expects Claude Code's old wording
   <details><summary>Technical</summary>
 
   A4 in `apps/indusk-mcp/e2e/day-monitor.e2e.test.ts`: confirm today's failure first (`pnpm exec vitest run --config vitest.e2e.config.ts e2e/day-monitor` from `apps/indusk-mcp`, which fails at line 162 on `issue with the selected model`). The change itself is Build Phase 1's: the test's subject exists, so the red is today's run and nothing is authored ahead.
+
+  </details>
+  The monitor test's current red is confirmed and is the one the research names.
+  <details><summary>Note</summary>
+
+  The built CLI existed in `dist/`. The run failed at line 162, expecting `issue with the selected model`; the recorded failure had `"error":true` and carried `[claude-code:unrecognized_model] {"model":"claude-does-not-exist-9",…}`. Nothing in the test file was changed.
 
   </details>
 
