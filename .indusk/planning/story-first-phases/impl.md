@@ -180,7 +180,7 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
   `hooks/check-gates.js`, the Edit and Write transition counts: replace `/- \[x\]/g` and `/- \[ \]/g` with `/^-\s+\[x\]/gm` and `/^-\s+\[ \]/gm`. Applies to every impl, opted in or not — an indented box was never an item to either impl reader.
 
   </details>
-- [ ] A gate is read as skipped only from a top-level line, never from text folded under a task
+- [x] A gate is read as skipped only from a top-level line, never from text folded under a task
   <details><summary>Technical</summary>
 
   `hooks/validate-impl-structure.js`, `isOptOutLine`: require the line to start at column zero (`!/^\s/.test(line)`) before matching `(none needed)`, `(not applicable)` or `skip-reason:`. Check `check-gates.js` and `_impl-phases.js` for the same unanchored read and anchor it alike.

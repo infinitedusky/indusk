@@ -313,11 +313,14 @@ for (const line of lines) {
 		currentPhase.hasImplementation = true;
 	}
 
-	// Track opt-out content in gate sections
+	// Track opt-out content in gate sections. Only a column-zero line opts a
+	// gate out: an indented line is a task's folded detail, which is only read
+	// (story-first-phases A10; promise: hidden-detail-is-only-read).
 	const isOptOutLine =
-		line.includes("(none needed)") ||
-		line.includes("(not applicable)") ||
-		line.includes("skip-reason:");
+		!/^\s/.test(line) &&
+		(line.includes("(none needed)") ||
+			line.includes("(not applicable)") ||
+			line.includes("skip-reason:"));
 	if (currentPhase && isOptOutLine) {
 		if (currentSection === "verification") currentPhase.verificationIsOptOut = true;
 		if (currentSection === "otel") currentPhase.otelIsOptOut = true;
