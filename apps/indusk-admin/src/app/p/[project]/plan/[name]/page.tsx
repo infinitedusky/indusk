@@ -87,7 +87,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
   }
 
   // The dates the released card reads come from the package.
-  const dates = readHealthNames(projectPath).planDates[name];
+  const dates = (await readHealthNames(projectPath)).planDates[name];
 
   // What the page offers, one rule for a normal-mode plan (its worktree) and
   // a workbench plan (its code file) — workbench-plan-authoring A10.
@@ -222,7 +222,7 @@ async function masterPage(
     readActivePlans(projectPath),
     readArchivedPlans(projectPath),
   ]);
-  const { planDates } = readHealthNames(projectPath);
+  const { planDates } = await readHealthNames(projectPath);
   const isReleased = (n: string) => (planDates[n]?.released ?? null) !== null;
   const group = groupOf(
     buildGroups(active, archived, grouping, isReleased).groups,

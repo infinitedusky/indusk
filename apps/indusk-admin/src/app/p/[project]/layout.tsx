@@ -109,7 +109,7 @@ export default async function PerProjectLayout({
 
   // Each Path's released count: when a release shipped a plan, from the
   // package's `planDates` (display-names), read once for the whole nav.
-  const { planDates } = readHealthNames(projectPath);
+  const { planDates } = await readHealthNames(projectPath);
   // Each plan's title, from the copy the admin reads it from (its worktree
   // first), so Needs you names a worktree plan by its own title.
   const planTitles = Object.fromEntries(

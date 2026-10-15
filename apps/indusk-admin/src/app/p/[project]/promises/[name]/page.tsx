@@ -52,7 +52,7 @@ export default async function PromisePage({ params }: PromisePageProps) {
     : null;
   if (!registry || !entry || !proof) notFound();
 
-  const names = readHealthNames(projectPath);
+  const names = await readHealthNames(projectPath);
   const sentenceOf = (n: string) => promiseWords(n, names.words);
   const planHrefPrefix = `/p/${project}/plan/`;
   const beside = registry.promises.filter(
