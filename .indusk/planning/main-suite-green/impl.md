@@ -46,12 +46,12 @@ approved_at: "2026-10-15T02:24:53.058Z"
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | A 200 KB impl given to the contract check on stdin in two parts with a pause gets the same answer on five runs, the answer it gives reading the file | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-large-impl-gets-the-same-contract-answer | apps/indusk-mcp/src/__tests__/contract-stdin.test.ts |
 | A2 | Every impl that validated still validates; the two archived impls citing rows they lack are the only new known failures | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/impl-corpus.test.ts |
-| A3 | The Jaeger URL is normalized in one place; a file path's trailing-slash trim is not counted | Test Phase 1 | Build Phase 2 | written | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/always-on-cleanup.test.ts |
-| A4 | Create, assign, read and release of a plan worktree leave git status clean, with its `.mcp.json` written | Test Phase 1 | Build Phase 2 | written | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/plan-worktrees-cli.test.ts |
-| A5 | The registry scan names a direct CLI spawn without `INDUSK_HOME` and not a spawn through the helper that sets it | Test Phase 1 | Build Phase 2 | written | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/registry-leak-scan.test.ts |
-| A6 | A break for a new incident adds one inbox entry whatever today's date; an incident over a day old still gets its reminder | Test Phase 1 | Build Phase 2 | written | unit | promise: the-everyday-suite-passes-on-main, promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/lib/promises/inbox.test.ts |
+| A3 | The Jaeger URL is normalized in one place; a file path's trailing-slash trim is not counted | Test Phase 1 | Build Phase 2 | passing | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/always-on-cleanup.test.ts |
+| A4 | Create, assign, read and release of a plan worktree leave git status clean, with its `.mcp.json` written | Test Phase 1 | Build Phase 2 | passing | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/plan-worktrees-cli.test.ts |
+| A5 | The registry scan names a direct CLI spawn without `INDUSK_HOME` and not a spawn through the helper that sets it | Test Phase 1 | Build Phase 2 | passing | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/registry-leak-scan.test.ts |
+| A6 | A break for a new incident adds one inbox entry whatever today's date; an incident over a day old still gets its reminder | Test Phase 1 | Build Phase 2 | passing | unit | promise: the-everyday-suite-passes-on-main, promise: a-break-reaches-the-working-agent | apps/indusk-mcp/src/lib/promises/inbox.test.ts |
 | A7 | Accepting a new project ends its agent and streams each step in a run where every package's tests run at once | Test Phase 1 | Build Phase 3 | written | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-admin/src/__tests__/new-project-accept.test.ts, apps/indusk-admin/src/__tests__/new-project-accept-route.test.ts |
-| A8 | A component named only by an unlanded plan's approved mockups is not reported unimplemented; one named by a landed plan's and missing is | Test Phase 1 | Build Phase 2 | written | unit | promise: a-component-has-one-implementation, promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts |
+| A8 | A component named only by an unlanded plan's approved mockups is not reported unimplemented; one named by a landed plan's and missing is | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-component-has-one-implementation, promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts |
 | A9 | `pnpm test` from the root of the branch, merged with main, passes | Build Phase 3 | Build Phase 3 | planned | live check | the live proof of the suite promise; rows A2–A8 name its files | (recorded in the impl with its result) |
 
 ## Checklist
@@ -117,11 +117,12 @@ approved_at: "2026-10-15T02:24:53.058Z"
 - [x] `inbox.test.ts:43,61-63`: pass `now: new Date("2026-10-08T21:00:00Z")` to each `recordBreaks` call
 - [x] `looks-admin-components.test.ts` `mockupComponents`: skip a mockup whose approval (`.indusk/mockups/admin/approved.json`, the record's `plan`) names a plan folder that is active under `.indusk/planning/` and not archived; put the rule in `lib/looks/` beside the other approval readers if one fits, so the test does not own it
   - Note, 2026-10-14: rule in `lib/looks/landed.ts` (`planHasLanded`, `mockupsOfLandedPlans`), used by `coverage.ts` `unimplementedComponents` and the test. A mockup is held only when its latest approval names no plan (made in the project's own checkout or before ownership) or a plan that has landed (folder under `.indusk/planning/archive/`). Only a folder that is active and not archived reads unlanded. An approval naming a plan with no folder at all reads landed: nothing says it is in flight, so legacy records stay strictly checked.
-- [ ] `indusk promises change a-component-has-one-implementation --plan main-suite-green --statement "Each component the mockups of a landed plan name is implemented once in the app, and every screen renders that one implementation rather than its own copy." --reason "approval merges a plan's looks to main before its code; until it lands its components cannot exist"`
+- [x] `indusk promises change a-component-has-one-implementation --plan main-suite-green --statement "Each component the mockups of a landed plan name is implemented once in the app, and every screen renders that one implementation rather than its own copy." --reason "approval merges a plan's looks to main before its code; until it lands its components cannot exist"`
 
 #### Build Phase 2 Verification
 
-- [ ] A3–A6 and A8 go green (`pnpm exec vitest run src/__tests__/always-on-cleanup.test.ts src/__tests__/plan-worktrees-cli.test.ts src/__tests__/registry-leak-scan.test.ts src/lib/promises/inbox.test.ts src/__tests__/looks-admin-components.test.ts`, from `apps/indusk-mcp`); `indusk promises contract main-suite-green` passes
+- [x] A3–A6 and A8 go green (`pnpm exec vitest run src/__tests__/always-on-cleanup.test.ts src/__tests__/plan-worktrees-cli.test.ts src/__tests__/registry-leak-scan.test.ts src/lib/promises/inbox.test.ts src/__tests__/looks-admin-components.test.ts`, from `apps/indusk-mcp`); `indusk promises contract main-suite-green` passes
+  - Note, 2026-10-14: the five files 22/22 green; `vitest related` (landed.ts, coverage.ts, plan-worktree-fixture.ts) 30 files / 179 tests; `tsc --noEmit` and `biome check` clean; `indusk promises change` output: "a-component-has-one-implementation changed by main-suite-green; its History keeps the sentence it replaced"; `promises check` 146 promises, 0 known-violated; `promises contract main-suite-green` exit 0.
 
 #### Build Phase 2 Context
 
@@ -129,7 +130,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md` (or the page that states the component check): it holds the looks of landed plans
+- [x] `apps/docs/src/reference/admin-ui/component-conventions.md` (or the page that states the component check): it holds the looks of landed plans
 
 ### Build Phase 3: The root run
 
