@@ -16,6 +16,7 @@ subplans:
     description: "Work done by an agent other than Claude is verified the same way."
   - dawn-linear
   - dawn-cloud
+closed_reason: "Closed 2026-10-15 by Sandy: served its purpose; promise-core is the master plan now leaned on, and holds the plans still open."
 ---
 
 # Dawn — Master Plan

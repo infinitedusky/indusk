@@ -70,6 +70,27 @@ interface Held {
 	answered: Set<string>;
 	/** The session's turn is open: started or spoken to, no `result` yet. */
 	turnOpen: boolean;
+	opts: SessionOptions;
+}
+
+/**
+ * The `decided` event for a request, from the decision made on it.
+ * promise: a-decided-request-stays-decided
+ */
+function decidedBy(
+	requestId: string,
+	decision: { allow: true; answers?: Record<string, string> } | { allow: false; message: string },
+	by: "rule" | "person",
+): StartedEvent {
+	return decision.allow
+		? {
+				type: "decided",
+				requestId,
+				allow: true,
+				...(decision.answers ? { answers: decision.answers } : {}),
+				by,
+			}
+		: { type: "decided", requestId, allow: false, message: decision.message, by };
 }
 
 export function defaultRecordPath(): string {
@@ -109,29 +130,28 @@ export class SessionManager {
 			listeners: new Set(),
 			answered: new Set(),
 			turnOpen: true,
+			opts,
 		};
 		const session = this.launch({
 			...opts,
 			onEvent: (ev) => {
 				// A planning session is asked only about a path outside its own
-				// folder (A26): the rest is decided here, as a build's is.
+				// folder (A26): the rest is decided here, as a build's is. Each
+				// request is recorded, then its decision, so the log says both.
 				if (opts.confined && ev.type === "permission") {
 					const decision = decideConfinedPermission(ev, opts.cwd);
-					holder.session.decide(ev, decision);
+					this.decideByRule(holder, opts, ev, decision);
 					if (!decision.allow) opts.onRefused?.(ev, decision.message);
 					return;
 				}
 				if (opts.kind === "planning" && ev.type === "permission") {
 					const decision = decideBuildPermission(ev, [opts.cwd, ...(opts.addDirs ?? [])]);
 					if (decision.allow) {
-						holder.session.decide(ev, decision);
+						this.decideByRule(holder, opts, ev, decision);
 						return;
 					}
 				}
-				holder.events.push(ev);
-				if (ev.type === "result") holder.turnOpen = false;
-				opts.onEvent(ev);
-				for (const listen of holder.listeners) listen(ev);
+				this.record(holder, opts, ev);
 			},
 		});
 		holder.session = session;
@@ -152,6 +172,30 @@ export class SessionManager {
 			this.write();
 		});
 		return { id, session };
+	}
+
+	/**
+	 * Keep one event in the log and tell every listener, and the starter too
+	 * unless `forward` is false: a request the manager decides by rule (and
+	 * its decision) is the log's, never the starter's to answer (A26, A39).
+	 */
+	private record(holder: Held, opts: SessionOptions, ev: StartedEvent, forward = true): void {
+		holder.events.push(ev);
+		if (ev.type === "result") holder.turnOpen = false;
+		if (forward) opts.onEvent(ev);
+		for (const listen of holder.listeners) listen(ev);
+	}
+
+	/** Log a request, answer it by the session's rule, log the decision; the starter hears neither. */
+	private decideByRule(
+		holder: Held,
+		opts: SessionOptions,
+		ev: PermissionEvent,
+		decision: { allow: true } | { allow: false; message: string },
+	): void {
+		this.record(holder, opts, ev, false);
+		holder.session.decide(ev, decision);
+		this.record(holder, opts, decidedBy(ev.requestId, decision, "rule"), false);
 	}
 
 	/** The session `id`, or undefined. */
@@ -267,6 +311,7 @@ export class SessionManager {
 			| { requestId: string; answers: Record<string, string> }
 			| { requestId: string; allow: true }
 			| { requestId: string; allow: false; message: string },
+		by: "rule" | "person" = "person",
 	): void {
 		const h = this.held.get(id);
 		if (!h) throw new Error(`no session ${id} is running`);
@@ -304,6 +349,15 @@ export class SessionManager {
 		}
 		h.answered.add(reply.requestId);
 		h.turnOpen = true;
+		this.record(
+			h,
+			h.opts,
+			decidedBy(
+				reply.requestId,
+				"answers" in reply ? { allow: true, answers: reply.answers } : reply,
+				by,
+			),
+		);
 	}
 
 	/**

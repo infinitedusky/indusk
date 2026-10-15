@@ -6,4 +6,4 @@
 
 **Fix direction:** any impl with `trajectory: required` (or with checklist items present) that parses to exactly 0 phases should be rejected outright by both `validate-impl-structure.js` and `check-gates.js`, not passed through. Apply to both hook JS ports and the underlying `apps/indusk-mcp/src/lib/trajectory/` TS source per the existing "change TS + every JS port together" rule.
 
-See `.indusk/planning/indusk-v2-dawn/` and `.indusk/current.md` (2026-07-26 handoff) for the incident context.
+See `.indusk/planning/archive/indusk-v2-dawn/` and `.indusk/current.md` (2026-07-26 handoff) for the incident context.

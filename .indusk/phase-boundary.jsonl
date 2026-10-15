@@ -321,6 +321,9 @@
 {"plan":"new-project-flow","phase":6,"kind":"build","sha":"6a8e43aa8f61bd032f048b6da53542236f4e9454","timestamp":"2026-10-14T17:36:58.439Z"}
 {"plan":"new-project-flow","phase":7,"kind":"build","sha":"570c80dd5073b8961122502818cef6206f3b9983","timestamp":"2026-10-14T19:01:14.692Z"}
 {"plan":"new-project-flow","phase":8,"kind":"build","sha":"4e3b7e75cdc7c31b9960503204f2f13514e74013","timestamp":"2026-10-14T20:51:36.105Z"}
+{"plan":"decided-prompts-stay-closed","phase":1,"kind":"test","sha":"43a5857a6bd342efa97f36344578f7e77e02e4c4","timestamp":"2026-10-14T23:14:16.257Z"}
+{"plan":"decided-prompts-stay-closed","phase":1,"kind":"build","sha":"afb423c0df7c755102f48480737ecd3c512884ef","timestamp":"2026-10-14T23:21:02.082Z"}
+{"plan":"decided-prompts-stay-closed","phase":2,"kind":"build","sha":"c00c49eb45d54b072d6cc5bbb6059c37e9a5bf3e","timestamp":"2026-10-14T23:25:12.940Z"}
 {"plan":"story-first-phases","phase":1,"kind":"test","sha":"7244dc1a260411d95262254d7788dcbcb9219731","timestamp":"2026-10-15T00:04:33.162Z"}
 {"plan":"story-first-phases","phase":1,"kind":"build","sha":"45a68e492e48b7946c3469c97748df80d9b7ffe2","timestamp":"2026-10-15T00:16:26.082Z"}
 {"plan":"story-first-phases","phase":2,"kind":"build","sha":"27b4d6424f9f96cb37a4b0327a0e2a0881b97bbf","timestamp":"2026-10-15T00:39:13.770Z"}
@@ -351,3 +354,5 @@
 {"plan":"main-suite-green","phase":5,"kind":"build","sha":"291de85959db10054917f5f102b8e7a87d8dd956","timestamp":"2026-10-15T05:20:25.916Z"}
 {"plan":"main-suite-green","phase":6,"kind":"build","sha":"e680b70432ae80ba238bd469f3e38e9c09d43d41","timestamp":"2026-10-15T11:17:54.991Z"}
 {"plan":"main-suite-green","phase":7,"kind":"build","sha":"10ae39ca597ea2ac036ec273408fbac8fdb4897c","timestamp":"2026-10-15T12:50:07.543Z"}
+{"plan":"decided-prompts-stay-closed","phase":3,"kind":"build","sha":"0709b0bf34e44d533ba98814f3af5aa06f1935e2","timestamp":"2026-10-15T16:03:23.605Z"}
+{"plan":"decided-prompts-stay-closed","phase":4,"kind":"build","sha":"171f8898d76d0470e70ec61ce6aab2caf86fa59c","timestamp":"2026-10-15T16:16:26.850Z"}

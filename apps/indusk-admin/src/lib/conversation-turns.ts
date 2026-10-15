@@ -1,5 +1,6 @@
 import type { TranscriptLine } from "@infinitedusky/indusk-mcp/new-project";
 import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
+import { decisionsOf } from "@/lib/request-decisions";
 
 /**
  * A session's events as a conversation (new-project-flow, ADR decision 9): the
@@ -32,7 +33,7 @@ export type Turn =
     };
 
 export interface TurnOptions {
-  /** Request ids already answered; those are no longer waiting. */
+  /** Request ids a click already answered before the log caught up; those are no longer waiting. A `decided` event closes a request too. */
   answered?: ReadonlySet<string>;
   /** False when no agent runs: nothing can be waiting on a person then. */
   running?: boolean;
@@ -74,6 +75,8 @@ export function turnsOf(
   { answered = new Set<string>(), running = true }: TurnOptions = {},
 ): Turn[] {
   const turns: Turn[] = [];
+  // A request the log records as decided is no longer waiting, whatever `answered` holds.
+  const decided = decisionsOf(events);
   let items: { text: boolean; line: string }[] = [];
   let waiting: WaitingEvent[] = [];
   let result: string | null = null;
@@ -124,7 +127,12 @@ export function turnsOf(
         break;
       case "question":
       case "permission":
-        if (running && !answered.has(ev.requestId)) waiting.push(ev);
+        if (
+          running &&
+          !decided.has(ev.requestId) &&
+          !answered.has(ev.requestId)
+        )
+          waiting.push(ev);
         break;
       case "result":
         result = ev.ok ? ev.text : failureOf(ev);

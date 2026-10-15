@@ -6,10 +6,14 @@ The admin plans and builds through the developer's own Claude Code: it starts th
 
 | Kind | Started for | Permission mode | What is asked |
 |---|---|---|---|
-| **planning** | a planning conversation (`/planner <type> <name>`) | `default` | every write, and every question the planner asks — the person answers in the panel |
+| **planning** | a planning conversation (`/planner <type> <name>`) | `acceptEdits` | decided in code: a tool given a path inside the plan's folder, or given none, is allowed unasked; a path outside it, and every question the planner asks, reaches the person in the panel |
 | **build** | one step of an unattended build (`/work`, `/falsify`, `/cleanup`) | `acceptEdits` | nobody: a tool given a path is allowed inside the plan's worktree and refused outside it; a tool given none runs in the worktree, judged by the project's hooks; a question is answered by telling the session to decide and record why |
 
-A planning session uses `default` whatever the developer's own Claude Code is set to. In the spike, a session that inherited `auto` wrote a file outside its project without asking. Neither kind ever bypasses permissions.
+Both kinds run `acceptEdits` whatever the developer's own Claude Code is set to, and decide in code (`protocol.ts`, `permissions.ts`). In the spike, a session that inherited `auto` wrote a file outside its project without asking; `bypassPermissions` let a draft's agent write into the repository unasked. Neither kind ever bypasses permissions.
+
+**Every request is recorded with how it was decided.** A request a session makes goes in its log, followed by a `decided` event: allowed, or denied with the reason, and whether the session's own rule decided it (a build, a planning session's writes in its folder, a project conversation's draft) or you did. A planning session's writes inside its folder, decided by rule, are in the log too.
+
+**A decided request shows its outcome.** In the panel, a request with a `decided` event has no Allow, Deny or Answer buttons: a tool shows *Allowed* or *Denied — the reason*, a question the session declined on its own shows *Declined — the reason*, and a question you answered shows *Answered* with the answer you gave. In the project conversation's thread, a decided request is no longer listed as waiting; the thread draws no outcome line. The state is read from the log, so a reload shows the same; a click may close a prompt a moment early, but the event is the record. When the server refuses a click's reply, the request stays open with its buttons back beside the problem shown, never with neither buttons nor an outcome.
 
 ## The protocol
 

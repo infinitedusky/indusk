@@ -106,8 +106,10 @@ pointer; the pointer holds the story.
   block). — see `/reference/cli/run`
 - **`lib/build/`**: `nextBuildStep` (pure), a runner that never starts the
   retrospective, steps under `stepEnv`. One rate-limit rule
-  (`session/rate-limit.ts`), one trunk reader (`trunk-branch.ts`). — see
-  `/reference/cli/plans`
+  (`session/rate-limit.ts`), one trunk reader (`trunk-branch.ts`). Every
+  request a session makes is recorded by the manager with a `decided` event,
+  by rule or by person; a decision is never made off the log. Guarded by
+  `manager.test.ts`. — see `/reference/cli/plans`
 - **`lib/audit/`**: the auditor's inputs. The approved impl is found by the
   approval merge's subject (`plan(<plan>): approved`), never by a line in the
   plan; a rewritten history is named by the refusal and answered with

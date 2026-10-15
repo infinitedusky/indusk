@@ -111,17 +111,25 @@ async function oneSession(
 			opts.onEvent?.(ev);
 			if (!holder.id) return;
 			if (ev.type === "permission") {
-				opts.manager.reply(holder.id, {
-					requestId: ev.requestId,
-					...decideBuildPermission(ev, [opts.worktree, ...(opts.addDirs ?? [])]),
-				});
+				opts.manager.reply(
+					holder.id,
+					{
+						requestId: ev.requestId,
+						...decideBuildPermission(ev, [opts.worktree, ...(opts.addDirs ?? [])]),
+					},
+					"rule",
+				);
 			} else if (ev.type === "question") {
 				const refusal = refuseBuildQuestion(ev);
-				opts.manager.reply(holder.id, {
-					requestId: ev.requestId,
-					allow: false,
-					message: refusal.allow ? "" : refusal.message,
-				});
+				opts.manager.reply(
+					holder.id,
+					{
+						requestId: ev.requestId,
+						allow: false,
+						message: refusal.allow ? "" : refusal.message,
+					},
+					"rule",
+				);
 			} else if (ev.type === "result") {
 				result = ev;
 				void opts.manager.stop(holder.id).catch(() => {});
