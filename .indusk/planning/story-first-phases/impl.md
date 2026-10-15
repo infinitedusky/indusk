@@ -418,7 +418,7 @@ This phase tests two ways the finished plan may still break its promises, and fi
   `apps/indusk-mcp/src/lib/cleanup/gate.ts` `isRitualPhaseTerminal`: skip lines inside a task's `<details>`…`</details>` fold and lines `fencedLineMask` marks; keep counting other indented sub-items (round-2 F3's nested-unchecked strictness). Today `/^\s*-\s+\[ \]/` matches `  - [ ] example` in a fold and returns not-terminal, which blocks the retrospective's Step 0 and `plans next`.
 
   </details>
-- [ ] The check that a phase's verification is done before its code review ignores box lines inside a task's folded detail or a code block
+- [x] The check that a phase's verification is done before its code review ignores box lines inside a task's folded detail or a code block
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/shape/shape.ts` `verificationIsGreen`: `UNCHECKED_AT_ANY_DEPTH` and `CHECKBOX_AT_ANY_DEPTH` get the same fold-and-fence exclusion; share one helper with `gate.ts` only if it already has a home (cross-file extraction is `/cleanup`'s). Today Shape reports "verification is not green" for a ticked Verification task whose detail quotes `- [ ]`.
