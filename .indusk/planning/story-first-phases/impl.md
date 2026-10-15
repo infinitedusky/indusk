@@ -334,7 +334,7 @@ This phase is the part Sandy sees in the admin. The code that reads an impl for 
 
 #### Build Phase 2 Document
 
-- [ ] The admin reference page for the plan page shows the paragraph and the fold
+- [x] The admin reference page for the plan page shows the paragraph and the fold
   <details><summary>Technical</summary>
 
   Update the plan page's phases section in `apps/docs/src/reference/admin-ui/` with the paragraph and the Technical fold.
