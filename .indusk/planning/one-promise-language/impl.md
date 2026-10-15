@@ -126,7 +126,7 @@ Before any code changes, this phase writes the tests that say what people will r
 
 #### Test Phase 1 Verification
 
-- [ ] The new tests exist and fail on their own assertions, and the guard over the old word passes.
+- [x] The new tests exist and fail on their own assertions, and the guard over the old word passes.
   <details><summary>Technical</summary>
 
   Red: A1, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13. Green: A2. `cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/outcome-words.test.ts src/lib/promises/standing.test.ts src/lib/promises/signal-writers.test.ts src/lib/promises/known-broken.test.ts src/lib/promises/record-broken.test.ts src/lib/always-on/announce-broken.test.ts src/__tests__/promises-cli-words.test.ts src/__tests__/promise-words.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/PromiseWords.test.tsx`; `cd apps/vscode-extension && pnpm exec vitest run src/core/view-words.test.ts src/core/activity.test.ts`; `cd examples/seat-holds && pnpm exec vitest run src/seats.test.ts`. No test fails on a missing import.
