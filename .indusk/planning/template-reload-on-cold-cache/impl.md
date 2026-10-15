@@ -268,6 +268,12 @@ The test that keeps the browser template's packages bundled before its page load
   Red first (commit `bd62551d0`): A5 and A6 each failed on their own assertion (A5 received `[]` for the fixture's five packages; A6 did not find the temporary `second.test.ts`), not on a load error. Green now: `pnpm exec vitest run src/__tests__/templates-prebundle.test.ts` 1 file, 3 tests passed (A1, A5, A6); `biome check` on the file is clean. A1 stayed green on today's template. One thing the work found: the template's header comment shows `import './instrumentation';`, which the follower read as a real import of the Node template, so comments are stripped before scanning (the A5 fixture includes commented-out imports).
 
   </details>
+- [x] Shape — the changed test file was reviewed against the enabled extensions' craft rules and needs no change
+  <details><summary>Note</summary>
+
+  `prepareShapeReview` for Build Phase 2 returned a review of `templates-prebundle.test.ts`. Each step is a small named helper (`packageName`, `isBundledByVite`, `withoutComments`, `specifiersIn`, `packagesIn`, `relativeImportsIn`, `resolveLocalFile`, `collectBrowserFiles`) with one reason to change, and the collector takes a root and globs so a test reaches it without touching `templates/`; no findings, so no items were added.
+
+  </details>
 
 #### Build Phase 2 Context
 
