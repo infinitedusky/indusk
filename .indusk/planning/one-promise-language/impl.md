@@ -234,7 +234,7 @@ With the stored words settled, this phase changes what people see on screen and 
   `lib/promises/status.ts` ("no breaks in …", "N break(s) in …", "no signal in …", "last seen holding …"); `watch.ts:177` ("No new breaks — nothing recorded."); `check.ts` refusals naming `known-broken`; `incidents.ts:212` default symptom ("The signal reported the promise broken and carried no symptom."); `always-on/heartbeat.ts:178,184` and `schedule.ts:33` ("breaks", "signals"); `bin/cli.ts:504,663,1283,1293,1327,1329` help.
 
   </details>
-- [ ] Make the descriptions agents read of the promise tools say breaks and signals.
+- [x] Make the descriptions agents read of the promise tools say breaks and signals.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/tools/promise-tools.ts:173,224` (`promise_health`, `record_breaks`): "breaks", "unrecorded breaks", "signal".
