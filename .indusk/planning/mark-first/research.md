@@ -173,6 +173,11 @@ Two stages, one clause: **before release and on every change** — its tests,
 
 Carried from one-promise-language (Sandy, 2026-10-15): switch InDusk's signal writers and the demo app from writing `violated` to `broken` — every reader accepts both since one-promise-language.
 
+Carried from one-promise-language's falsification (2026-10-15), three more for the same switch:
+- **Two writers sit outside `markPromise`.** `apps/indusk-mcp/scripts/suite-speed.js:37` writes `indusk.promise.outcome` itself, and `indusk promises health --json` writes `runs[].outcome` for the editor (`lib/promises/health-line.ts`, kept `violated` this release so an editor installed earlier still reads a break as broke). The switch to `broken` changes both. The health line changes only once the editor extension shipped with this release has been out a release.
+- **The registry state carries the same skew.** one-promise-language writes `known-broken` on opening an incident (`lib/promises/incidents.ts:232`), and an InDusk older than it refuses that state. Decide here whether a checkout on an older InDusk matters, and say so in this plan's ADR.
+- **No signal drawn green.** The dashboard's `PromiseRow` dot is `bg-ok` for an `enforced` promise with no signal in the window (`apps/indusk-admin/src/components/ui/PromiseRow.tsx:27`). "In use — holding, broken or no signal" needs that dot to follow the signal, which changes an approved look, so it goes through a person's approval here.
+
 **The clause plan** (replacing the test plan): each clause with its signal
 (where it is read, what counts as upheld — a budget for a split, a bound for a
 limit — and what it reports when broken), and the tests tied to that clause,
