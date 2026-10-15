@@ -272,7 +272,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 - [x] `amendments.ts`: `amendmentsWaiting(planDir)` answers `[]` unless `briefStandingOf(planDir)` is `changed`, else `amendmentsOf(planDir)`; `AmendmentsUnreadable` reads as none, as `readPlanParts` reads it for the plan page. Rebuild the dist
 - [x] `decisions-reader.ts`: `readWaiting(project, projectPath, plans)` is async and passes each active plan's waiting amendments (its folder in its worktree, else the project) to `planWaiting`; its three callers (`layout.tsx`, the plan page, `api/plans/[name]/decision/route.ts`) await it; `decisionsReaderMock` in `cockpit-fixture.ts` passes `AMENDED`
 - [x] The plan page: its look state's `waiting` is `waiting !== undefined`, and `planPageWaiting` is deleted from `look-state.ts` (grep importers); a wait `on: "amendment"` draws the amendment card alone, no `DecisionCard`
-- [ ] `decisions.ts`: `answerDecision` refuses a wait `on: "amendment"` before anything is delivered ("answered on the amendment card"), so its accept can never reach `release`; the route answers 409 with that message
+- [x] `decisions.ts`: `answerDecision` refuses a wait `on: "amendment"` before anything is delivered ("answered on the amendment card"), so its accept can never reach `release`; the route answers 409 with that message
 - [ ] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 2 Verification

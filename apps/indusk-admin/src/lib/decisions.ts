@@ -15,6 +15,10 @@ import type { ManagedStart } from "@infinitedusky/indusk-mcp/session";
  *     answers it.
  *   - **approval**: accept is `plans approve`; **review**: accept is
  *     `acceptPlan` and the release, as BuildControls' Accept does.
+ *   - an **amendment** is never answered here: it is approved or sent back on
+ *     the plan's amendment card, and an accept here would run a release
+ *     (plan-stories, ADR decision 5), so it is refused before anything is
+ *     delivered or recorded.
  *   - otherwise the words (or the alternative, which is words) go to the
  *     plan's agent: `say` to the session running for the plan, or a new
  *     session for the plan, in its worktree, with the decision and the words
@@ -70,6 +74,11 @@ export async function answerDecision(
   waiting: Waiting,
   choice: DecisionChoice,
 ): Promise<Answered> {
+  if (waiting.on === "amendment") {
+    throw new Error(
+      `${waiting.plan} waits on an amendment, which is answered on the amendment card`,
+    );
+  }
   const answer = answerOf(waiting, choice);
   const reached = await deliver(deps, project, waiting, choice, answer);
   // The answer has reached its target: a history that cannot be written is
