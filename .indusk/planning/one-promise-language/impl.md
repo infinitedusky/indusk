@@ -194,7 +194,7 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
   `apps/indusk-mcp/src/lib/promises/CLAUDE.md` (area): "A signal's outcome is read only through `readOutcome` — `broken` and `violated` both mean broken, so applications instrumented before 2026-10-15 keep working; the registry reads `known-violated` as `known-broken` and never rewrites it. — `promise: a-promise-is-upheld-or-broken`, see `/decisions/one-promise-language`".
 
   </details>
-- [ ] The root context lists this decision among the key decisions.
+- [x] The root context lists this decision among the key decisions.
   <details><summary>Technical</summary>
 
   root (Key Decisions): "One promise language: upheld/broken, holding/broken live, no signal unknown; every reader takes `broken` and `violated` as broken, writers keep `violated` until `mark-first`; `known-broken` with `known-violated` still read — see `/decisions/one-promise-language`" — always-on because Key Decisions is the one index of every ADR.
