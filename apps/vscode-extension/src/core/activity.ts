@@ -47,7 +47,7 @@ export function activityLines(
 	/** A promise's words from the health line; the handle when not given. */
 	titleOf: (promise: string) => string = (promise) => promise,
 ): string[] {
-	if (a.runs.length === 0) return ["No runs yet."];
+	if (a.runs.length === 0) return ["No signal yet."];
 	return a.runs.map(
 		(r) =>
 			`${titleOf(r.promise)} ${r.outcome === "upheld" ? "held" : "broke"} (${r.source}) · ${time(r.at)}`,

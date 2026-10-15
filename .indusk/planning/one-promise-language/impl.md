@@ -365,7 +365,7 @@ A fresh reader went looking for places where the plan's promise does not yet hol
   A14. `apps/indusk-mcp/src/lib/promises/health-line.ts` `newestRuns` / `healthLine` `runs`: map the in-memory `broken` to `"violated"` at the one point the line is written, as `markPromise` does (a docblock naming `.indusk/planning/mark-first/`). The extension already reads both (`activity.ts:7`). Test: build a line from a store read holding one `broken` and one `violated` signal and apply the pre-plan editor rule (`r.outcome === "violated" ? "broke" : "held"`) to its runs. Both read broke.
 
   </details>
-- [ ] Make the editor say retired for a retired promise, broke — fixed for a fixed one, and no signal for an empty activity section.
+- [x] Make the editor say retired for a retired promise, broke — fixed for a fixed one, and no signal for an empty activity section.
   <details><summary>Technical</summary>
 
   A15. `apps/vscode-extension/src/core/view.ts:33,37`: `fixed: "broke — fixed"`, `grey: "retired"` (add both to `Shown`); `markers.ts:84` gives the ok tone only to `holding` and `broke — fixed`. `activity.ts:50`: `"No runs yet."` → `"No signal yet."`. Tests in `view-words.test.ts` (grey, fixed) and `activity.test.ts` (empty).

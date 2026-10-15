@@ -18,7 +18,7 @@ const run = (i: number, outcome: Run["outcome"] = "upheld"): Run => ({
 
 describe("activity", () => {
 	it("A27 — says when no run has arrived yet", () => {
-		expect(activityLines(startActivity())).toEqual(["No runs yet."]);
+		expect(activityLines(startActivity())).toEqual(["No signal yet."]);
 	});
 
 	it("A15 — an empty activity section says no signal, never no runs", () => {

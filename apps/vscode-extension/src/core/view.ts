@@ -11,7 +11,8 @@ export type { HealthLine };
 export type Shown =
 	| "holding"
 	| "broken"
-	| "fixed"
+	| "broke — fixed"
+	| "retired"
 	| "no signal"
 	| "known broken"
 	| "watched by the tests"
@@ -30,11 +31,12 @@ export type Row = Extract<Source, { ok: true }>["rows"][number];
 
 const WORD: Record<string, Shown> = {
 	red: "broken",
-	fixed: "fixed",
+	fixed: "broke — fixed",
 	green: "holding",
 	unverified: "no signal",
 	amber: "known broken",
-	grey: "holding",
+	// Retired is never holding — promise: a-promise-is-upheld-or-broken
+	grey: "retired",
 };
 
 /** Production first, then local: the alarm source leads, as the admin's does. */
