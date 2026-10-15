@@ -424,7 +424,7 @@ This phase tests two ways the finished plan may still break its promises, and fi
   `apps/indusk-mcp/src/lib/shape/shape.ts` `verificationIsGreen`: `UNCHECKED_AT_ANY_DEPTH` and `CHECKBOX_AT_ANY_DEPTH` get the same fold-and-fence exclusion; share one helper with `gate.ts` only if it already has a home (cross-file extraction is `/cleanup`'s). Today Shape reports "verification is not green" for a ticked Verification task whose detail quotes `- [ ]`.
 
   </details>
-- [ ] The falsification and cleanup skills hand out phase templates in the new shape when the impl has opted in
+- [x] The falsification and cleanup skills hand out phase templates in the new shape when the impl has opted in
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/falsify.md` and `skills/cleanup.md`: beside the existing template, a variant for `phase_summary: required` — a `**Tier**:` line, a summary paragraph instead of the `**Goal**:` label alone, each task a plain sentence with its code and row labels in an indented `<details><summary>Technical</summary>` fold (the Verification template's `T{M}:` moves into the fold). Sync `.claude/skills/falsify/SKILL.md` and `.claude/skills/cleanup/SKILL.md` byte-equal.

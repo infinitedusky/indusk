@@ -84,6 +84,57 @@ When you've formed one or more recommendations, **append a new phase to the plan
 - [ ] {docs update if the public surface changed, or "(none — internal decomposition)" with proof}
 ```
 
+**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses a code span or a row label on the paragraph or a task line. A reasoned leave-as-is is a task too: its sentence says what was reviewed and why it stays, its file in the fold.
+
+<!-- template: phase_summary required -->
+```markdown
+### Phase N: Cleanup — {short summary of the decomposition theme}
+
+**Tier**: med — the work step's default
+
+{Two or three plain sentences: what this plan grew that is worth decomposing, the best-practice basis, and what is true once the phase closes. No row labels, no abbreviations, no code.}
+
+- [ ] {One plain sentence saying what is extracted or refactored and why}
+  <details><summary>Technical</summary>
+
+  Extract {unit} from {file} into {new file} — {best-practice basis}.
+
+  </details>
+- [ ] {One plain sentence saying what was reviewed and why it stays as it is}
+  <details><summary>Technical</summary>
+
+  Reviewed {file} — left as-is: {reason}.
+
+  </details>
+
+#### Phase N Verification
+
+- [ ] {One plain sentence saying that the new unit is tested, or that behaviour is unchanged}
+  <details><summary>Technical</summary>
+
+  T{M}: {new unit has a focused test / behavior-parity holds}.
+
+  </details>
+
+#### Phase N Context
+
+- [ ] {One plain sentence saying what the project's instructions now say about the new structure}
+  <details><summary>Technical</summary>
+
+  {The concrete CLAUDE.md edit and its tier.}
+
+  </details>
+
+#### Phase N Document
+
+- [ ] {One plain sentence saying which docs page changes if the public surface did}
+  <details><summary>Technical</summary>
+
+  {The page and the edit.}
+
+  </details>
+```
+
 Add any new-unit trajectory rows to the plan's `## Test Trajectory` table (`Writable at`/`Passes at: Phase N`). **The phase title must START with "Cleanup"** (`### Phase N: Cleanup — {summary}`) — the retrospective gate's `isCleanupComplete` detects the ritual phase by a title *beginning* with "cleanup" (case-insensitive), NOT a substring anywhere. A substring match would misdetect a topic-named phase like "The /cleanup skill" as the ritual phase.
 
 **What you do NOT do in the skill:**
