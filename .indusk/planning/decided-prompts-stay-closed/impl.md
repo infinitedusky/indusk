@@ -12,6 +12,8 @@ gate_policy: ask
 approved_brief: "06d03911dc67303e421b57bc7e8447d6b304b0ced43e88bebfaec527ec55de00"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-15T18:07:23.919Z"
+accepted: 2026-10-15T18:07:34.561Z
+accepted_by: person
 ---
 
 # Decided prompts stay closed
