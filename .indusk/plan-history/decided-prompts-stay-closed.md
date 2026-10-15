@@ -1,0 +1,6 @@
+# decided-prompts-stay-closed — decisions
+
+Each decision the plan waited on, the answer and who gave it, as the admin recorded them (`plans/history`). Not edited by hand.
+
+- 2026-10-15T18:07:23.919Z — amendment to the look (none): was "None — no approved look holds the session panel (it is no component with a story, and no screen state draws it); a decided request gains a one-line outcome inside it. one-conversation-view (`.indusk/planning/one-conversation-view/`) draws every session's look for approval.", now null — answered "Approve" by Sandy-Corsillo
+- 2026-10-15T18:07:23.919Z — amendment to the look agent-panel.decided: was null, now "The session panel with decided requests: a tool request the session allowed reads *Allowed*, one it refused reads *Denied* with the reason, a question the person answered reads *Answered* with their answer, and a question the build declined reads *Declined* with the reason; none offers a button. Drawn after the build, at acceptance (Sandy, 2026-10-15), since the acceptance check found the panel's change had no look; one-conversation-view (`.indusk/planning/one-conversation-view/`) still draws every session's look." — answered "Approve" by Sandy-Corsillo
