@@ -10,6 +10,8 @@ rationale: required
 gate_policy: ask
 cleanup: skipped
 cleanup_reason: "reviewed all 27 changed files: each under 340 lines, the duplication already consolidated, nothing to extract"
+accepted: 2026-10-15T18:27:44.128Z
+accepted_by: person
 ---
 
 # Cockpit audit fixes — what plan-cockpit's cold audit found
