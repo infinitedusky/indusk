@@ -151,6 +151,32 @@ telemetry gaps; Sandy moved them here.
   outside the draft, a `git`/`gh` command, a project made outside the parent,
   each marked broken where it happens.
 
+### The merged plan — proposed rework of the brief (2026-10-15, parked)
+
+`mark-first` merges with `promise-first-build` (see `promise-core`'s master,
+"Settled 2026-10-14/15"). Proposed to Sandy, not yet decided — parked while
+`template-reload-on-cold-cache`, `decided-prompts-stay-closed` and
+`cockpit-audit-fixes` finish:
+
+- **Keep:** `a-promise-is-made-of-clauses`, `a-promise-can-rest-on-another`,
+  `a-break-leads-to-its-cause`, `a-page-can-mark-a-promise`,
+  `every-broken-trace-is-kept`, `a-break-comes-with-a-diagnosis`.
+- **Rename:** `a-clause-is-kept-by-its-mark` → `a-clause-is-upheld-by-its-mark`.
+- **Add:** `a-plan-is-one-promise` (done when every clause's mark has reported
+  it upheld); `a-plan-plans-its-clauses` (the clause plan replaces the test
+  plan: each clause with its mark, tests beside); `a-person-sees-promises-not-tests`
+  (tests are the agents', never shown for approval);
+  `every-break-becomes-a-test` (fixing a break adds a test on that clause);
+  `a-promise-is-upheld-or-broken` (marks, registry and pages say
+  upheld/broken/holding; an old `violated` is still read).
+- **Drop:** `a-message-sent-gets-a-reply` — Homework Gate is its own project,
+  so its promises live in its own registry; the proof there becomes an
+  expectation: Homework Gate's first plan, written as one promise of clauses,
+  has every clause marked and reporting.
+- **Changes:** `a-closed-plan-kept-its-promises` closes on marks;
+  `a-promise-page-shows-its-proof` shows clauses.
+- **Looks:** unchanged; approval screens fold into `looks-as-promises`.
+
 ## Decisions
 
 - **Tests stay.** Sandy: "I don't want to remove tests." Marks become the
