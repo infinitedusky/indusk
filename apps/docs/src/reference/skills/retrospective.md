@@ -249,7 +249,11 @@ install:local`, which first syncs dependencies with `pnpm install
 hand-run `pnpm install`, and a lockfile that does not match refuses the
 install), then builds what a publish builds and links the checkout into the
 global `indusk`), run that, so the machine's `indusk` is the landed build
-with nothing published; then record the landing sha in the archived
+with nothing published. A refused install means trunk's `pnpm-lock.yaml` was
+committed out of step with the workspace's `package.json` files: run `pnpm
+install` on trunk, commit the updated lockfile as its own commit, rerun the
+install step, and record the refusal on the retrospective's install line.
+Then record the landing sha in the archived
 retrospective. With reviewers, merge the PR instead, then release, remove the
 worktree and delete the branch by hand. See [`indusk plans`](/reference/cli/plans).
 

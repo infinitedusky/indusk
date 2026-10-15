@@ -1,7 +1,7 @@
 ---
 title: "Tests and landing work from a cold machine"
 date: 2026-10-15
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -51,7 +51,7 @@ approved_at: "2026-10-15T16:09:05.019Z"
 | A4 | An evaluator run with a model that does not exist is recorded as a failure naming that model, and the promise status shows the violation, with the Claude Code installed today | Test Phase 1 | Build Phase 1 | passing | contract | keeps the day-monitor end-to-end test about the monitor, not about Claude Code's wording | apps/indusk-mcp/e2e/day-monitor.e2e.test.ts |
 | A5 | A package the browser template imports only for its side effect, or one outside OpenTelemetry, and missing from the pre-bundle list, turns the pre-bundle guard red; today the guard sees only named imports of OpenTelemetry packages | Phase 0 | Build Phase 2 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
 | A6 | Every test file the browser project runs, and every local module those files and the template import, is read by the pre-bundle guard; today it reads two named files, so a second browser test under the templates folder goes unchecked | Phase 0 | Build Phase 2 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
-| A7 | A browser template import of a package subpath (`pkg/sub`) that is not itself in the pre-bundle list turns the pre-bundle guard red; today the guard cuts it to `pkg`, which is listed, and stays green while Vite still discovers the subpath mid-run | Build Phase 3 | Build Phase 3 | written | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
+| A7 | A browser template import of a package subpath (`pkg/sub`) that is not itself in the pre-bundle list turns the pre-bundle guard red; today the guard cuts it to `pkg`, which is listed, and stays green while Vite still discovers the subpath mid-run | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
 
 ## Checklist
 
@@ -314,16 +314,22 @@ A fresh reader found three gaps after the build. The retrospective skill, which 
 
 #### Build Phase 3 Verification
 
-- [ ] The guard turns red on an unlisted subpath import and stays green on today's template, and the installed skill matches its source
+- [x] The guard turns red on an unlisted subpath import and stays green on today's template, and the installed skill matches its source
   <details><summary>Technical</summary>
 
   A7 red then green: `pnpm exec vitest run src/__tests__/templates-prebundle.test.ts` from `apps/indusk-mcp` (A1, A5, A6, A7). `pnpm exec vitest run src/__tests__/skill-sync-parity.test.ts`. `biome check` on the changed files.
 
   </details>
+- [x] Shape — the changed test file was reviewed against the enabled extensions' craft rules and needs no change
+  <details><summary>Note</summary>
+
+  `prepareShapeReview` for Build Phase 3 returned a review of `templates-prebundle.test.ts` plus the two skill copies (prose; no craft rules apply); `rules.unreadable` was empty. The phase removed the `packageName` helper, so `packagesIn` now returns whole specifiers, and its doc comment says why a deep one stays whole. Left as is: the names `packagesIn`/`importedPackages` still read as "what the pre-bundle list must name", which is what A1's failure message calls a package; renaming them touches A1, A5, A6 and A7 for no behavior change.
+
+  </details>
 
 #### Build Phase 3 Context
 
-- [ ] The retrospective skill is the context for the landing change, so no line is added to the project instructions
+- [x] The retrospective skill is the context for the landing change, so no line is added to the project instructions
   <details><summary>Technical</summary>
 
   (none needed — the landing rule is delivered by the skill the landing agent loads, edited above; the subpath rule lands in A7's failure message, as Build Phase 1 put A1's there.)
@@ -332,7 +338,7 @@ A fresh reader found three gaps after the build. The retrospective skill, which 
 
 #### Build Phase 3 Document
 
-- [ ] The retrospective skill's docs page gains the recovery sentence for a refused install
+- [x] The retrospective skill's docs page gains the recovery sentence for a refused install
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/skills/retrospective.md` around :247, the sentence from the second item.
