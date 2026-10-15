@@ -141,7 +141,8 @@ const TITLES: Record<string, string> = {
 export const DESCRIPTIONS: Record<string, string> = {
   "path-beta": "Everything a guest meets from the basket to the receipt.",
   "beta-one": "Rebuilds the checkout so a card is charged once per order.",
-  "beta-two": "Sends a receipt within a minute and reaches refunds to the card.",
+  "beta-two":
+    "Sends a receipt within a minute and reaches refunds to the card.",
 };
 
 interface DocSpec {

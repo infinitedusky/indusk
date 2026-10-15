@@ -44,10 +44,7 @@ describe("a worktree plan is named by its worktree's brief", () => {
     dirs.push(base);
     const root = join(base, "proj");
     mkdirSync(join(root, ".indusk", "planning", "p"), { recursive: true });
-    writeFileSync(
-      join(root, ".indusk", "config.json"),
-      '{ "mode": "full" }\n',
-    );
+    writeFileSync(join(root, ".indusk", "config.json"), '{ "mode": "full" }\n');
     writeFileSync(
       join(root, ".indusk", "planning", "p", "brief.md"),
       '---\ntitle: "Trunk name"\nstatus: draft\n---\n\n# p\n',
