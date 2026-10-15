@@ -60,3 +60,4 @@ Shape findings: 3 raised (two in Build Phase 2 — naming the fold-edge tests an
 - Commits on the branch: 115
 
 Landed on main at 61c6f5403, 2026-10-15.
+Installed on this machine with `pnpm install:local` (indusk 1.70.0); nothing published.
