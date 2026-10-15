@@ -604,7 +604,7 @@ A reader who had not seen the build audited the plan and found places where its 
   `apps/indusk-admin/src/components/ui/PhaseRow.tsx` takes `summary?: ReactNode` instead of `string`; `components/plan/PlanParts.tsx` passes `<Markdown>{view.summary}</Markdown>`. The ui component stays free of the markdown import, and the stories' plain-string paragraph draws as it did, so their approved snapshots should not change — confirm with `indusk looks stories admin` and `indusk looks status admin`; if either story turns proposed, add a pause item for Sandy's re-approval.
 
   </details>
-- [ ] The docs say what the save check refuses in a phase paragraph: a row label, not code
+- [x] The docs say what the save check refuses in a phase paragraph: a row label, not code
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/falsify.md` and `skills/cleanup.md` ("The save check refuses a code span or a row label on the paragraph or a task line") and `templates/planning/CLAUDE.md` ("refuses a missing paragraph, a code span or a row label on those lines"): say a task line may carry neither code nor a row label, and a paragraph no row label — matching the ADR's decision. Sync `.claude/skills/` and `.indusk/planning/CLAUDE.md`.
