@@ -452,10 +452,10 @@ This phase tests two ways the finished plan may still break its promises, and fi
 
 #### Build Phase 4 Document
 
-- [ ] The falsification and cleanup skill reference pages show the template for an impl that has opted in
+- [x] The falsification and cleanup skill reference pages show the template for an impl that has opted in
   <details><summary>Technical</summary>
 
-  `apps/docs/src/reference/skills/` falsify and cleanup pages (find the actual file names first): the opted-in template and a one-line pointer to `/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand`.
+  Found: `apps/docs/src/reference/skills/` has no falsify or cleanup page; the ritual guides `apps/docs/src/guide/falsification-ritual.md` and `cleanup-ritual.md` are the pages that describe the phase, so they carry the opted-in note. The opted-in template and a one-line pointer to `/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand`.
 
   </details>
 
