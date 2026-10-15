@@ -148,6 +148,8 @@ approved_at: "2026-10-15T02:24:53.058Z"
   - Note, 2026-10-15: decided (Sandy) — one package-wide `testTimeout`, and the template pre-bundle fix, both above. Root runs 3 and 4 after them: every package green both times (admin 109 files / 685, indusk-mcp 431 files / 2837 passed + templates 12 passed, indusk 48, seat-holds 3), but `pnpm test` exits 1 at its trailing daemon guard (`check-test-daemons`): four telemetry processes from other sessions' scratchpad homes, started 2026-10-13 20:55 and 2026-10-14 16:39, before these runs — not this suite's. A9 waits on those being stopped and one more root run.
   - Note, 2026-10-15: the four stopped (Sandy: "go ahead and kill"). Root run 5: `pnpm test` exit 0 — admin 109 files / 685, indusk-mcp 431 files / 2837 passed + templates 12 passed, indusk 48, seat-holds 3; `promises check` 146 promises, 0 known-violated; `check-test-daemons: no telemetry daemon left running from a temporary home`. A9 passing.
 
+- [x] Shape — reviewed the files this phase changed (the four admin route tests, the two vitest configs; the merged lesson files are main's) against the enabled extensions' craft rules, `rules.unreadable` empty; nothing to change: each test diff only moves an `await import` to a top-of-file import, and each config change is one value with its measured reason.
+
 #### Build Phase 3 Verification
 
 - [x] A7 goes green in a root run, twice; A9 recorded passing
