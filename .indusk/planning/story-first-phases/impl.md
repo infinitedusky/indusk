@@ -238,7 +238,7 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
 
 #### Build Phase 1 Document
 
-- [ ] The docs guide that shows an impl's shape shows the summary, the fold and the opt-in
+- [x] The docs guide that shows an impl's shape shows the summary, the fold and the opt-in
   <details><summary>Technical</summary>
 
   Update the impl-shape section of `apps/docs/src/guide/test-trajectory.md` (or the guide page that shows an impl's phase) with the phase paragraph, the fold and `phase_summary: required`; publish the ADR as `apps/docs/src/decisions/phase-summaries.md`.

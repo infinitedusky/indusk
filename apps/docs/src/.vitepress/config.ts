@@ -224,6 +224,7 @@ const config = defineConfig({
 						{ text: "Cockpit Redraw — the nav from the original cockpit, a width you can drag, re-approval a person's", link: "/decisions/cockpit-redraw" },
 						{ text: "Storybook Components — each component once, a story per state", link: "/decisions/storybook-components" },
 						{ text: "Component Content — a placed component takes its own words", link: "/decisions/component-content" },
+						{ text: "Phase Summaries — a phase that explains itself, its detail folded", link: "/decisions/phase-summaries" },
 						{ text: "Release Records Its Failures — the release as a declared step", link: "/decisions/release-records-its-failures" },
 						{ text: "Audit Step — a fresh reader before a plan closes", link: "/decisions/plan-review-subagent" },
 						{ text: "Admin Plan Authoring — plan to release from the admin", link: "/decisions/admin-plan-authoring" },
