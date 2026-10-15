@@ -34,6 +34,12 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   does not write it. The brief and the test plan cannot be turned off; a config
   naming either is refused when read. — guarded by `documents-off.test.ts` (A12)
   — see `/guide/new-project`
+- **A plan document says a promise or clause is upheld or broken** (live:
+  holding or broken; past: held or broke; unknown: no signal), and its
+  telemetry its signal — failed and passed are for tests only, and the old word
+  for a broken promise is not used. — guarded by `promise-words.test.ts`
+  (`promise: a-promise-is-upheld-or-broken`) — see
+  `/decisions/one-promise-language`
 - **Cross-reference related plans by path, and update both** when work in one
   changes something the other names — a plan never cites stale information.
 - **Plan hierarchy is declared top-down, in frontmatter**: the root `master.md`

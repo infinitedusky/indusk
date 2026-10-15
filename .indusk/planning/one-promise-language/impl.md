@@ -329,7 +329,7 @@ The last phase brings everything people read outside the apps into the same voca
 
 #### Build Phase 3 Context
 
-- [ ] The planning rules say a plan document speaks of promises as upheld or broken.
+- [x] The planning rules say a plan document speaks of promises as upheld or broken.
   <details><summary>Technical</summary>
 
   planning: `apps/indusk-mcp/templates/planning/CLAUDE.md`, under Documents — "A plan document says a promise or clause is upheld or broken (live: holding or broken; past: held or broke; unknown: no signal), and its telemetry its signal — never failed, passed or violated; tests still pass and fail. — guarded by `promise-words.test.ts` (`promise: a-promise-is-upheld-or-broken`); see `/decisions/one-promise-language`".
