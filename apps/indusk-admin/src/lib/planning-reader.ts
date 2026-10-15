@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   checkRetrospectiveReadiness,
+  isAuditSkipped,
   isCleanupSkipped,
 } from "@infinitedusky/indusk-mcp/cleanup/gate";
 import {
@@ -121,11 +122,11 @@ export interface Plan {
   impl?: ImplData;
   falsification?: FalsificationData;
   /**
-   * Falsification or cleanup the impl skipped with its reason
+   * Falsification, cleanup or audit the impl skipped with its reason
    * (admin-plan-authoring) — read through the package's own skip readers.
    */
   skippedRituals?: Array<{
-    ritual: "falsification" | "cleanup";
+    ritual: "falsification" | "cleanup" | "audit";
     reason: string;
   }>;
   retrospective?: RetroData;
@@ -360,6 +361,7 @@ async function readPlanFolder(
             check: isFalsificationSkipped(implRaw),
           },
           { ritual: "cleanup" as const, check: isCleanupSkipped(implRaw) },
+          { ritual: "audit" as const, check: isAuditSkipped(implRaw) },
         ]
           .filter((r) => r.check.skipped)
           .map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" }));
