@@ -156,3 +156,27 @@ describe("buildGroups — A24 a queued plan reads by its title", () => {
     expect(hooks.title).toBe("VS Code hooks");
   });
 });
+
+describe("buildGroups — A26 a declared title is read as every other title is", () => {
+  it("a declared title that is only its handle reads as words, and one with a dash is cut at it", () => {
+    const out = buildGroups(
+      [plan("parent")],
+      [],
+      {
+        ...declare({ parent: ["queued-one", "queued-two", "queued-three"] }),
+        declaredTitles: {
+          parent: {
+            "queued-one": { title: "queued-one", description: "" },
+            "queued-two": { title: "Second — the long form", description: "" },
+            "queued-three": { title: "Third, as written", description: "" },
+          },
+        },
+      },
+      never,
+    );
+    const titles = out.groups[0]?.entries.map((e) =>
+      e.kind === "placeholder" ? e.title : null,
+    );
+    expect(titles).toEqual(["Queued one", "Second", "Third, as written"]);
+  });
+});

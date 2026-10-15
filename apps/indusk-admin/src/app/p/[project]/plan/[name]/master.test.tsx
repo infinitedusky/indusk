@@ -1,9 +1,12 @@
 // promise: a-master-plan-tells-its-story
-import { beforeEach, describe, expect, it, vi } from "vitest";
+// promise: decisions-wait-in-one-place
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import {
   DESCRIPTIONS,
+  HISTORY,
   PROJECT,
+  SESSIONS,
   resetFixture,
   titleOf,
 } from "@/__tests__/helpers/cockpit-fixture";
@@ -16,6 +19,13 @@ import {
  * `data-testid="subplan-number"`, as the nav passes `PlanNumber`, so the
  * component's own markup holds no test hook.
  */
+
+// What a test changes about the master it opens: whether the project is trusted
+// and which amendments the package reads for the plan (plan-stories A25).
+const state = vi.hoisted(() => ({
+  trusted: true,
+  amendments: [] as unknown[],
+}));
 
 vi.mock("next/link", () => ({
   __esModule: true,
@@ -57,7 +67,7 @@ vi.mock("@infinitedusky/indusk-mcp/plans/parts", () => ({
     expectations: [],
     looks: [],
     noLooks: null,
-    amendments: [],
+    amendments: state.amendments,
     amendmentsUnreadable: null,
     description: null,
     briefStatus: null,
@@ -76,7 +86,9 @@ vi.mock("@/lib/project-reader", () => ({
   __esModule: true,
   readAdminRefreshMs: () => 5000,
 }));
-vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
+vi.mock("@/lib/trust-reader", () => ({
+  projectTrusted: () => state.trusted,
+}));
 // What plans wait on and their recorded decisions (plan-cockpit Build Phase 6):
 // the reader reaches the session manager and the history file, so it is mocked.
 vi.mock("@/lib/decisions-reader", async () =>
@@ -85,7 +97,11 @@ vi.mock("@/lib/decisions-reader", async () =>
 
 import PlanPage from "./page";
 
-beforeEach(() => resetFixture());
+beforeEach(() => {
+  resetFixture();
+  state.trusted = true;
+  state.amendments = [];
+});
 
 const open = async (name: string) =>
   render(
@@ -149,5 +165,62 @@ describe("a master plan's page tells its story", () => {
     expect(row("queued")?.tagName).not.toBe("A");
     expect(row("queued")?.textContent).toContain("Queued");
     expect(row("queued")?.textContent).toContain("The third, not started.");
+  });
+});
+
+describe("a master plan's page keeps what any plan page shows around its story", () => {
+  const asking = {
+    plan: "path-beta",
+    kind: "planning" as const,
+    question: {
+      requestId: "req-master",
+      questions: [
+        {
+          question: "Which beta plan goes first?",
+          options: [{ label: "beta-one" }, { label: "beta-two" }],
+        },
+      ],
+    },
+  };
+
+  afterEach(() => {
+    SESSIONS.splice(SESSIONS.indexOf(asking), 1);
+    delete HISTORY["path-beta"];
+  });
+
+  it("A25 a master that waits on a question shows the decision card with its question", async () => {
+    SESSIONS.push(asking);
+    const screen = await open("path-beta");
+    const card = screen.container.querySelector('[data-testid="decision-card"]');
+    expect(card?.getAttribute("data-on")).toBe("question");
+    expect(card?.textContent).toContain("Which beta plan goes first?");
+  });
+
+  it("A25 a master with a waiting amendment shows it, with the way to approve it", async () => {
+    state.amendments = [
+      { part: "promise", name: "a-master-plan-tells-its-story", was: "old", now: "new" },
+    ];
+    const screen = await open("path-beta");
+    expect(
+      screen.container.querySelector('[data-testid="waiting-amendments"]'),
+    ).not.toBeNull();
+  });
+
+  it("A25 a master shows the trust notice, its history and the way to ask about the plan", async () => {
+    state.trusted = false;
+    HISTORY["path-beta"] = [
+      {
+        decision: "The master is written. Approve it?",
+        answer: "Approve",
+        by: "person",
+        at: "2026-10-01T09:00:00.000Z",
+      },
+    ];
+    const screen = await open("path-beta");
+    expect(screen.container.textContent).toContain("doesn't trust this project");
+    expect(
+      screen.container.querySelectorAll('[data-testid="history-entry"]'),
+    ).toHaveLength(1);
+    expect(screen.container.textContent).toContain("Ask about this plan");
   });
 });
