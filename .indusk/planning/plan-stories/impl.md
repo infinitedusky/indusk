@@ -333,7 +333,8 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
   - Sandy approved on the Looks page, 2026-10-14
 - [x] `indusk promises change a-plan-reads-by-its-title --plan plan-stories --statement "Wherever InDusk names a plan, in the admin and in the editor, it shows the plan's title, a short name written in its brief or master, and its description is a separate field; a plan with no title written reads as its handle turned into words." --reason "titles are short names now, with the description its own field, and an unwritten title reads as words, not the handle"`, in double quotes because the sentence holds apostrophes; then `indusk promises check` clean
 - [x] Discovered by `vitest related`: six tests left red by Build Phase 3 (the nav's `planTitle` import reaches `node:fs` in the browser project; fixture plans had no `title`) — `planTitle` stubbed in `PlanList*.test.tsx`, `Promises.test.tsx` and `[project]/page.test.tsx`, and `title` added to their fixture plans
-- [ ] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — reviewed the 26 files this phase changed (`rules.unreadable` empty, so every enabled extension's craft prose was read); nothing to change. `SubplanRow`, `MasterStory`, `masterStory` and the page's `masterPage` each have one job and a name for it, and the master branch of `PlanPage` is a short early return over named parts.
 
 #### Build Phase 4 Verification
 
