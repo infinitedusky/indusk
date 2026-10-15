@@ -14,6 +14,8 @@ cleanup_reason: "one new test file is cohesive with no copy elsewhere; the only 
 approved_brief: "a5fe861cd6d3a0777b7086fd7e528932774fa2b9ffadb0f4e2a31abb87e1457c"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-15T16:09:05.019Z"
+accepted: 2026-10-15T18:44:19.258Z
+accepted_by: person
 ---
 
 # Tests and landing work from a cold machine
