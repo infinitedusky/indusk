@@ -1,7 +1,8 @@
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { rmSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { CLI_BIN, type RunResult, runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { CLI_BIN, REPO_ROOT, type RunResult, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { briefText, implText } from "./helpers/plan-fixture.js";
 import { type PromiseProject, promiseProject } from "./helpers/promises-fixture.js";
 
@@ -96,4 +97,28 @@ describe.skipIf(SHOULD_SKIP)("A1 — a large impl on stdin gets one answer", () 
 			expect(fromStdin.stderr, `run ${run}`).toBe(fromFile.stderr);
 		}
 	}, 60_000);
+});
+
+/**
+ * main-suite-green A13 — the root `pnpm test` builds indusk-mcp before its tests.
+ *
+ * Every test behind SHOULD_SKIP skips silently without `dist/bin/cli.js`, A1
+ * among them, so a row resting on the built CLI must not depend on a build
+ * someone remembered. Read from turbo's task graph, not the CLI, so it is not
+ * itself behind SHOULD_SKIP.
+ */
+describe("A13 — indusk-mcp's tests wait for indusk-mcp's own build", () => {
+	it("the root test run orders @infinitedusky/indusk-mcp#build before @infinitedusky/indusk-mcp#test", () => {
+		const out = execFileSync(join(REPO_ROOT, "node_modules/.bin/turbo"), ["run", "test", "--dry=json"], {
+			cwd: REPO_ROOT,
+			encoding: "utf-8",
+			maxBuffer: 64 * 1024 * 1024,
+			env: { ...process.env, TURBO_TELEMETRY_DISABLED: "1" },
+		});
+		const graph = JSON.parse(out.slice(out.indexOf("{\n"))) as {
+			tasks: Array<{ taskId: string; dependencies: string[] }>;
+		};
+		const test = graph.tasks.find((t) => t.taskId === "@infinitedusky/indusk-mcp#test");
+		expect(test?.dependencies).toContain("@infinitedusky/indusk-mcp#build");
+	}, 30_000);
 });
