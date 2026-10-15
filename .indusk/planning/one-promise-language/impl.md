@@ -270,7 +270,7 @@ With the stored words settled, this phase changes what people see on screen and 
 
 #### Build Phase 2 Context
 
-- [ ] The admin's context file says what a promise's words are on screen.
+- [x] The admin's context file says what a promise's words are on screen.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md` (area): "A promise is upheld or broken; live, holding or broken; past, held or broke; unknown, no signal — never violated, unverified or not seen, and no signal is never green. `PromiseWords.test.tsx` holds it — `promise: a-promise-is-upheld-or-broken`."
