@@ -1,10 +1,10 @@
 ---
-title: "Story-first impl phases"
+title: "Phase summaries"
 date: 2026-10-14
 status: complete
 ---
 
-# Story-first impl phases — Research
+# Phase summaries — Research
 
 ## Question
 

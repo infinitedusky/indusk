@@ -1252,7 +1252,7 @@
 				{
 					"name": "expanded",
 					"id": "ui-nav--expanded",
-					"snapshotHash": "f7f7da1765585eb6bfa81cc58ec87303ee7e66ec3a2eef6286e21d93d0580e81",
+					"snapshotHash": "8ea839eabe75b2aa760946febc2d757ab7da5e3898bc7a519f7f8573e542b628",
 					"content": {
 						"project": [
 							[
@@ -1286,7 +1286,7 @@
 				{
 					"name": "looks-current",
 					"id": "ui-nav--looks-current",
-					"snapshotHash": "e83691e46c22f263400180f470ba25d123b2f2cf9c715704064ea441cc2bbb8b",
+					"snapshotHash": "e6d991c9ecc875826e2ada68f593715080b7b0552cfe9f8f72baf4e4d27e107a",
 					"content": {
 						"project": [
 							[
@@ -1320,7 +1320,7 @@
 				{
 					"name": "plan-current",
 					"id": "ui-nav--plan-current",
-					"snapshotHash": "3470475f1b717c94b9e492bd191d67f517a101705fd0ef6a2e6eee1b995ac430",
+					"snapshotHash": "96b3e12dc691126e537845b4748091ac54706a40b73cffa59c3ea1928b2d2b0d",
 					"content": {
 						"project": [
 							[
@@ -1354,7 +1354,7 @@
 				{
 					"name": "collapsed",
 					"id": "ui-nav--collapsed",
-					"snapshotHash": "c920a32cd94ef62cc67fab5742824cb3c2e2a8dfaa630e325fa2e53775bcd3c9",
+					"snapshotHash": "a4efae2fa186e541d94c23bf1ad0f6914b148a12d72491e1be92eca57c6aa6bb",
 					"content": {
 						"project": [
 							[
@@ -2044,6 +2044,12 @@
 					"description": "Opens the row's own page instead of unfolding."
 				},
 				{
+					"name": "summary",
+					"type": "ReactNode",
+					"required": false,
+					"description": "The phase's paragraph: what it does for the whole plan, drawn above its\nitems when unfolded. Plain text, or a node the caller formats (the plan\npage passes the paragraph through markdown; this component imports none)."
+				},
+				{
 					"name": "children",
 					"type": "ReactNode",
 					"required": false,
@@ -2067,7 +2073,7 @@
 				{
 					"name": "closed",
 					"id": "ui-phaserow--closed",
-					"snapshotHash": "04f6cd0c7dc1627b42b386fc40ab7f316437bcc23c15db7951b4a0cffbcb0868",
+					"snapshotHash": "12d1c785806c29afd9b92ef5323ee7515e2aa71e0a1fbdf366c242f130a4bf7f",
 					"content": {
 						"name": [
 							[
@@ -2108,7 +2114,7 @@
 				{
 					"name": "open",
 					"id": "ui-phaserow--open",
-					"snapshotHash": "187726b52f97f40858ee3f2bf82cea0e5d558d678cc969c10f4a3a55b754b001",
+					"snapshotHash": "8ca18aabf41948a3755da4521b8de97374864c205250459d9f2c8b0ec090aeb3",
 					"content": {
 						"name": [
 							[
@@ -2137,18 +2143,26 @@
 								0
 							]
 						],
+						"summary": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
 						"children": [
 							[
 								0,
 								1,
-								0
+								1
 							]
 						]
 					}
 				}
 			],
 			"stylesheet": "components/phase-row.css",
-			"stylesheetHash": "a78715d6a6d6466f96f814234ebb7d785f70d26e7f973e26950f8f9ed606328b"
+			"stylesheetHash": "e996949336c8a9c781faec77fcd2c50bbff776c4700884eb54aca0a9c93b8c26"
 		},
 		{
 			"name": "plan-row",
@@ -3303,6 +3317,190 @@
 			],
 			"stylesheet": "components/step.css",
 			"stylesheetHash": "436b1ee037f932c0bd020b2c791b2fc7045f76bea51407348e04d250efbf84d9"
+		},
+		{
+			"name": "subplan-row",
+			"file": "apps/indusk-admin/src/components/ui/SubplanRow.tsx",
+			"properties": [
+				{
+					"name": "number",
+					"type": "ReactNode",
+					"required": true,
+					"description": "Its place in the master's order, 1-up."
+				},
+				{
+					"name": "initials",
+					"type": "string",
+					"required": true,
+					"description": "The plan's initials, two letters."
+				},
+				{
+					"name": "state",
+					"type": "\"released\" | \"draft\" | \"queued\"",
+					"required": true
+				},
+				{
+					"name": "title",
+					"type": "string",
+					"required": true,
+					"description": "The plan's title."
+				},
+				{
+					"name": "description",
+					"type": "string",
+					"required": false,
+					"defaultValue": "\"\"",
+					"description": "What the plan is for, in a line; empty when its master wrote none."
+				},
+				{
+					"name": "stage",
+					"type": "ReactNode",
+					"required": true,
+					"description": "Where the plan stands in words: \"Released\", \"Draft, parked\", \"Queued\"."
+				},
+				{
+					"name": "href",
+					"type": "string",
+					"required": false,
+					"description": "Where the row goes. A link when given; a plan not made yet has none."
+				}
+			],
+			"states": [
+				{
+					"name": "released",
+					"id": "ui-subplanrow--released",
+					"snapshotHash": "6e9be503b93f748c96723076a5bd21060a35d0270eb25d6b67ab6c2f388a8dfc",
+					"content": {
+						"number": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"initials": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"title": [
+							[
+								0,
+								2,
+								0,
+								0
+							]
+						],
+						"description": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								3,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "draft",
+					"id": "ui-subplanrow--draft",
+					"snapshotHash": "597070154a9a19c3c7884d2ce146d1e53ca6f7b518b02548f514d2f6c2cf9a89",
+					"content": {
+						"number": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"initials": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"title": [
+							[
+								0,
+								2,
+								0,
+								0
+							]
+						],
+						"description": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								3,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "queued",
+					"id": "ui-subplanrow--queued",
+					"snapshotHash": "1527dc3b7da53c041666e2843ce4c9595e67231c53a69c9b944cffbab98e40a2",
+					"content": {
+						"number": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"initials": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"title": [
+							[
+								0,
+								2,
+								0,
+								0
+							]
+						],
+						"description": [
+							[
+								0,
+								2,
+								1,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								3,
+								0
+							]
+						]
+					}
+				}
+			],
+			"stylesheet": "components/subplan-row.css",
+			"stylesheetHash": "7ac283663a8853a183fc190165171bebf76b4c8b045fd74fa736a0a55f5f6506"
 		},
 		{
 			"name": "summary-bar",

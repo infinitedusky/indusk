@@ -200,18 +200,32 @@ if (fromStatus === "draft" && toStatus && toStatus !== "draft" && toStatus !== "
 // For Write tool: we need to compare with the file on disk
 let hasCheckboxTransition = false;
 
+// promise: hidden-detail-is-only-read
+// A box is counted only from a column-zero line: an indented box sits in a
+// task's folded detail, which neither impl reader ever took as an item, so a
+// ticked one there is not a checkoff (story-first-phases A9).
+const CHECKED_BOX = /^-\s+\[x\]/gm;
+const UNCHECKED_BOX = /^-\s+\[ \]/gm;
+const countOf = (text, re) => (text.match(re) || []).length;
+
 if (event.tool_name === "Edit" && oldContent && newContent) {
-	const oldUnchecked = (oldContent.match(/- \[ \]/g) || []).length;
-	const newUnchecked = (newContent.match(/- \[ \]/g) || []).length;
-	const oldChecked = (oldContent.match(/- \[x\]/g) || []).length;
-	const newChecked = (newContent.match(/- \[x\]/g) || []).length;
+	// Counted over the whole file before and after the edit, never over the
+	// edit's own strings: a fragment that begins at a folded box's dash has lost
+	// the indent that says the box is detail (story-first-phases A24). Only an
+	// edit that cannot be applied falls back to its strings.
+	const wholeAfter = onDisk === null ? null : applyEdit(onDisk);
+	const [before, after] = wholeAfter === null ? [oldContent, newContent] : [onDisk, wholeAfter];
+	const oldUnchecked = countOf(before, UNCHECKED_BOX);
+	const newUnchecked = countOf(after, UNCHECKED_BOX);
+	const oldChecked = countOf(before, CHECKED_BOX);
+	const newChecked = countOf(after, CHECKED_BOX);
 	hasCheckboxTransition = newChecked > oldChecked || newUnchecked < oldUnchecked;
 } else if (event.tool_name === "Write") {
 	// For Write, compare with file on disk
 	try {
 		const diskContent = readFileSync(filePath, "utf-8");
-		const diskChecked = (diskContent.match(/- \[x\]/g) || []).length;
-		const writeChecked = (newContent.match(/- \[x\]/g) || []).length;
+		const diskChecked = countOf(diskContent, CHECKED_BOX);
+		const writeChecked = countOf(newContent, CHECKED_BOX);
 		hasCheckboxTransition = writeChecked > diskChecked;
 	} catch {
 		// File doesn't exist yet — new impl, allow

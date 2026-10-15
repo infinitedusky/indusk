@@ -1,14 +1,14 @@
 ---
-title: "Story-first impl phases"
+title: "Phase summaries"
 date: 2026-10-14
 status: accepted
 ---
 
-# Story-first impl phases
+# Phase summaries
 
 ## Goal
 
-**A person reads a plan's phases as a story, and opens the technical detail only when they want it.**
+**A person reads what each phase of a plan does, and opens the technical detail only when they want it.**
 
 Today a phase is a list of technical instructions: type names, file paths,
 commands. Reading component-content's phases, Sandy could not tell what each
@@ -25,10 +25,10 @@ an impl that is read by two audiences at once: a person who approves and follows
 a checklist whose item text is the technical instruction itself, so the person cannot follow it, and two scripts that check the file (`validate-impl-structure.js` when it is saved, `check-gates.js` when a box is ticked) that read box-shaped and opt-out-shaped text anywhere in the file, so any prose added under an item could move a gate.
 
 **We decided for:**
-a phase paragraph between the `**Tier**:` line and the first task, and each task as one sentence on the checkbox line with its detail in an indented `<details><summary>Technical</summary>` block beneath it; opted into with `phase_story: required` in the impl's frontmatter and checked by `validate-impl-structure.js`; both scripts reading only column-zero checkbox and opt-out lines; the parser keeping the phase paragraph and each item's detail whole, fences included; the admin rendering the paragraph and the detail as markdown in a closed disclosure.
+a phase paragraph between the `**Tier**:` line and the first task, and each task as one sentence on the checkbox line with its detail in an indented `<details><summary>Technical</summary>` block beneath it; opted into with `phase_summary: required` in the impl's frontmatter and checked by `validate-impl-structure.js`; both scripts reading only column-zero checkbox and opt-out lines; the parser keeping the phase paragraph and each item's detail whole, fences included; the admin rendering the paragraph and the detail as markdown in a closed disclosure.
 
 **And against:**
-a plain indented note the admin collapses on its own (the file would stay unreadable on GitHub and in the docs site, where `<details>` folds natively); a separate "story" document beside the impl (two homes for one phase, which drift); writing the story only in the admin (the agent and the person would read different plans); making the shape mandatory for every existing impl (dozens of archived impls would need rewriting for no reader).
+a plain indented note the admin collapses on its own (the file would stay unreadable on GitHub and in the docs site, where `<details>` folds natively); a separate summary document beside the impl (two homes for one phase, which drift); writing the summary only in the admin (the agent and the person would read different plans); making the shape mandatory for every existing impl (dozens of archived impls would need rewriting for no reader).
 
 **To achieve:**
 a phase a person can follow without reading code or knowing the plan's shorthand, the same text in the file, on GitHub and on the plan page, and folded detail that can never tick a box, skip a gate or add a task (the test plan's assertions under `hidden-detail-is-only-read`).
@@ -46,7 +46,7 @@ item and indented lines as its note, so the shape survives parsing; the two
 hazards are `check-gates.js` counting `- [x]` unanchored and
 `validate-impl-structure.js` reading `(none needed)` on any line; the admin
 shows the note raw and drops fences. The brief makes three promises
-(`an-impl-phase-tells-its-story`, `technical-detail-opens-on-request`,
+(`an-impl-phase-explains-itself`, `technical-detail-opens-on-request`,
 `hidden-detail-is-only-read`) and changes the look `phase-row.open`.
 
 ## Decision
@@ -75,7 +75,7 @@ shows the note raw and drops fences. The brief makes three promises
    Register entries (`#### Deferred to …`, `#### Regression Guards`) are not
    tasks and are unchanged.
 
-2. **The rule.** With `phase_story: required`, `validate-impl-structure.js`
+2. **The rule.** With `phase_summary: required`, `validate-impl-structure.js`
    refuses a phase with no paragraph between its Tier line (or heading) and its
    first task or `####`, naming the phase; and a task line holding a code span
    (backticks) or a row label (`\b[TA]\d+\b`), naming the task; and a
@@ -106,18 +106,18 @@ shows the note raw and drops fences. The brief makes three promises
    column-zero line of a gate section; both parsers already take items only
    from column zero.
 
-4. **The parser.** `parseImplString` gains `ImplPhase.story?: string` and
+4. **The parser.** `parseImplString` gains `ImplPhase.summary?: string` and
    `ChecklistItem.detail?: string`: the indented block under an item,
    de-indented, `<details>`/`<summary>` wrappers removed, fences kept. `note`
    stays as it is for impls that have not opted in.
 
-5. **The page.** `PhaseRow` gains a `story` slot drawn above its items;
+5. **The page.** `PhaseRow` gains a `summary` slot drawn above its items;
    `PlanParts` renders each item's `detail` through `components/Markdown.tsx`
    inside a closed `<details>` labelled "Technical", and keys items by index.
 
 6. **The rule is written down.** The planner skill's impl template and step-7
    guidance, the planning `CLAUDE.md` template's "The impl" section, and the
-   workflow templates carry the shape; new impls set `phase_story: required`.
+   workflow templates carry the shape; new impls set `phase_summary: required`.
 
 ## Alternatives Considered
 
@@ -126,12 +126,12 @@ shows the note raw and drops fences. The brief makes three promises
 Reads in the admin only. On GitHub and in the docs site the technical text
 would sit open under every task, which is the problem Sandy named.
 
-### A separate story document
+### A separate summary document
 
 Two documents describing one phase drift apart; the codebase has three lessons
 about two homes for one fact.
 
-### Story only in the admin
+### Summary only in the admin
 
 The agent building the plan would read a different plan from the person
 approving it.
@@ -152,7 +152,7 @@ approving it.
 ## Documentation Plan
 
 ### Pages
-- Update: `apps/docs/src/guide/test-trajectory.md` or the impl guide page that shows the impl shape — the story paragraph and the fold.
+- Update: `apps/docs/src/guide/test-trajectory.md` or the impl guide page that shows the impl shape — the summary and the fold.
 - Update: `apps/docs/src/reference/skills/planner.md` — the new frontmatter key and the rule.
 
 ### Diagrams
@@ -162,7 +162,7 @@ approving it.
 - "Impl phases open with what they do for the plan; tasks are plain sentences with their technical detail folded beneath."
 
 ### ADR in Docs
-- Yes: `decisions/story-first-phases.md`.
+- Yes: `decisions/phase-summaries.md`.
 
 ## References
 - `research.md`, `brief.md`, `test-plan.md` in this folder

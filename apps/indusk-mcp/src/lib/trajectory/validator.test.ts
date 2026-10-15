@@ -516,3 +516,41 @@ ${phases}
 		expect(rationaleErrors.length).toBeGreaterThanOrEqual(1);
 	});
 });
+
+// promise: an-impl-phase-explains-itself
+describe("phase-summaries A15: a Verification task may name its rows in its folded detail", () => {
+	// The TypeScript twin of the hook's cross-reference rule. `phaseSummaryRequired`
+	// is the option the key `phase_summary: required` becomes, beside
+	// `testPhasesRequired` and `rationaleRequired`.
+	const verification = (detail: string) => `
+### Phase 1: Start
+
+- [ ] A plain sentence about doing the thing
+
+#### Phase 1 Verification
+- [ ] The thing is done and holds
+  <details><summary>Technical</summary>
+
+  ${detail}
+
+  </details>
+`;
+	const crossReference = (detail: string) => {
+		const body = bodyWithTrajectory(
+			"| T1 | x | Phase 1 | Phase 1 | planned |",
+			verification(detail),
+		);
+		return validateTrajectory(body, { phaseSummaryRequired: true } as never).filter(
+			(e) => e.rule === "cross-reference-integrity",
+		);
+	};
+
+	it("accepts a Verification sentence with no label whose detail names a known row", () => {
+		expect(crossReference("Green: T1.")).toEqual([]);
+	});
+
+	it("refuses a label in the detail that is not in the trajectory, naming it", () => {
+		const errors = crossReference("Green: T1 and T99.");
+		expect(errors.some((e) => e.message.includes("T99"))).toBe(true);
+	});
+});

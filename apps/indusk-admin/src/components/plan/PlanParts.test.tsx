@@ -1,9 +1,11 @@
 // promise: a-plan-page-shows-the-parts-of-its-brief
+// promise: technical-detail-opens-on-request
 import "@/app/globals.css";
 import type { PlanParts as Parts } from "@infinitedusky/indusk-mcp/plans/parts";
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
-import { PlanParts } from "./PlanParts";
+import { extractPhases } from "@/lib/phases";
+import { PhasesPart, PlanParts } from "./PlanParts";
 
 /**
  * cockpit-redraw, `brief.empty` — a plan with no brief file shows the three
@@ -76,5 +78,79 @@ describe("a contract brief with a part that has nothing in it", () => {
       "true",
     );
     expect(part(container, "looks")?.getAttribute("data-empty")).toBe("true");
+  });
+});
+
+/**
+ * story-first-phases A27 — a parsed impl's phase paragraph and task detail
+ * reach the plan page whole: the page is drawn from `extractPhases` over impl
+ * text, not from hand-built props, so a dropped field between the parser and
+ * the page shows here. The paragraph is formatted (two paragraphs stay two,
+ * code shows as code) and the detail sits in a closed Technical fold.
+ */
+describe("a phase drawn from a parsed impl", () => {
+  const impl = [
+    "### Build Phase 1: The save check holds the shape",
+    "",
+    "**Tier**: med — the work step's default",
+    "",
+    "The script that checks an impl file learns the new rule in `validate-impl-structure.js`.",
+    "",
+    "After this phase a plan can be written in the shape.",
+    "",
+    "- [ ] The save check refuses a phase with no summary",
+    "  <details><summary>Technical</summary>",
+    "",
+    "  Runs `phaseSummaryProblems` over the body.",
+    "",
+    "  ```ts",
+    "  phaseSummaryProblems(body, true);",
+    "  ```",
+    "",
+    "  </details>",
+    "",
+  ].join("\n");
+
+  const drawn = () =>
+    render(<PhasesPart phases={extractPhases(impl)} activeKey={null} />);
+
+  it("shows the paragraph formatted: two paragraphs, its code shown as a code element", async () => {
+    const { container } = await drawn();
+    const row = container.querySelector(
+      '[data-testid="plan-phase"]',
+    ) as HTMLElement;
+    expect(row, "the phase row is not drawn").not.toBeNull();
+    expect(row.textContent).toContain("learns the new rule in");
+    expect(row.textContent).toContain("After this phase a plan can be written");
+    expect(
+      row.textContent,
+      "a literal backtick reached the page",
+    ).not.toContain("`validate-impl-structure.js`");
+    const code = [...row.querySelectorAll("code")].map((c) => c.textContent);
+    expect(code).toContain("validate-impl-structure.js");
+    const paragraphs = [...row.querySelectorAll("p")].map((p) => p.textContent);
+    expect(
+      paragraphs.filter((t) => t?.includes("After this phase")),
+      "the second paragraph runs into the first",
+    ).toHaveLength(1);
+    expect(
+      paragraphs.some(
+        (t) =>
+          t?.includes("learns the new rule") && t.includes("After this phase"),
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps the task's detail in a closed Technical fold, opened to code shown as code", async () => {
+    const { container } = await drawn();
+    const fold = container.querySelector(
+      '[data-testid="plan-phase"] li details',
+    ) as HTMLDetailsElement;
+    expect(fold, "the task has no Technical fold").not.toBeNull();
+    expect(fold.open).toBe(false);
+    expect(fold.querySelector("pre code")?.textContent).toContain(
+      "phaseSummaryProblems(body, true)",
+    );
+    expect(fold.textContent).not.toMatch(/<\/?(details|summary)/);
   });
 });

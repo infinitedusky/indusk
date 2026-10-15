@@ -38,8 +38,8 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/planning-reader", () => ({
   __esModule: true,
   readActivePlans: async () => [
-    { name: "alpha", status: "draft", archived: false },
-    { name: "beta", status: "in-progress", archived: false },
+    { name: "alpha", title: "Alpha", status: "draft", archived: false },
+    { name: "beta", title: "Beta", status: "in-progress", archived: false },
   ],
   readArchivedPlans: async () => [],
   // admin-plan-worktrees: the layout lists unassigned worktrees; none here.
@@ -52,6 +52,7 @@ vi.mock("@/lib/planning-reader", () => ({
     parents: [],
     roadmap: ["alpha", "beta"],
     subplans: {},
+    declaredTitles: {},
   }),
 }));
 
@@ -87,6 +88,7 @@ vi.mock("@infinitedusky/indusk-mcp/promises/standing", () => ({
 }));
 vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
   __esModule: true,
+  planTitle: (_title: unknown, handle: string) => handle,
   readHealthNames: () => ({ planTitles: {}, planDates: {}, words: {} }),
 }));
 
@@ -103,7 +105,7 @@ vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
 // the reader reaches the session manager and the history file; nothing waits here.
 vi.mock("@/lib/decisions-reader", () => ({
   __esModule: true,
-  readWaiting: () => [],
+  readWaiting: async () => [],
   readPlanHistory: () => [],
 }));
 

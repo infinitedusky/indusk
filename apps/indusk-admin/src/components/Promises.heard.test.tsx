@@ -62,6 +62,7 @@ const ROW: DashboardRow = {
   plan: "seat-holds",
   planTitle: "Seat holds",
   path: null,
+  pathTitle: null,
   standing: "broken",
   tests: { passing: 0, total: 0 },
   held: 28,

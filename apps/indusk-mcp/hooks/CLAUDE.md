@@ -4,6 +4,9 @@ Loaded by Claude Code when a file under `apps/indusk-mcp/hooks/` is read. The
 hooks are plain JS ports that cannot import the TS library, so these rules
 are about keeping the two lanes in step.
 
+- **Dawn's thin lane keeps the invariants and the eval rail**; a headless
+  `ask` is a pause, and `ask` is the default in both lanes — see
+  `/decisions/dawn-hook-parity`.
 - **Hooks discovery is globSync on BOTH sides** (init + update) — a hardcoded
   list ships a registration without its file. A new hook also needs a row
   in `HOOK_REGISTRATIONS` (`lib/hook-command.ts`), the one table `init`
@@ -44,6 +47,11 @@ are about keeping the two lanes in step.
   the TS and the port together. `STEPS` must name every step `TIER_STEPS`
   names; the parity test builds a case from `TIER_STEPS`, so a step added to
   one and not the other fails.
+- **`_phase-summary.js` holds the `phase_summary: required` rule** (`phaseSummaryProblems`)
+  and the row-label pattern (`ROW_LABEL`), one module per rule like `_phase-tier.js`;
+  `validate-impl-structure.js` reads labels through `ROW_LABEL` in its cross-reference
+  rule too. `TEST_ID_PATTERN` in `lib/trajectory/validator.ts` stays its TypeScript
+  mirror. — guarded by `phase-summary-module.test.ts` (`promise: an-impl-phase-explains-itself`)
 - **The validator's "no phase structure touched" fast path is a list of the
   edit shapes that carry structure** — a phase heading, an unchecked item, a
   `**Tier**:` line. A rule over a new line shape adds its marker there, or an

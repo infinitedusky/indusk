@@ -52,6 +52,8 @@ Two names differ from their files because the file's name was taken first: the m
 
 A story's name is `<component>.<state>`. The render step (`indusk looks stories admin`) writes each story's snapshot and `.indusk/mockups/admin/components.json`, the catalog an agent reads to find what exists. A story is approved by a person on the Looks page, bound to its snapshot hash; changing a component changes its snapshot, so the story reads **changed** and every mockup that composes it reopens.
 
+A story passes the real child component rather than copying its markup: the `PhaseRow` stories hand it `PhaseItems` for its tasks, so the approved snapshot is the component's own drawing and a change to the child reopens the story.
+
 ### Add a component
 
 1. Create `src/components/ui/<Name>.tsx` with the marker on its root and its data as props; no other file renders that marker (a second marker is a `duplicate component` finding).

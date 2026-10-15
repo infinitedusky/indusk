@@ -205,6 +205,26 @@ describe("A7 — at 400 px, with forty plans, no page scrolls sideways", () => {
   }
 });
 
+// promise: the-nav-fits-a-phone
+describe("A19 (plan-stories) — a plan with the longest written title leaves the open drawer within the page", () => {
+  it("A19 the drawer, open at 400 px with `mid-build` carrying the longest title written, makes no page scroll sideways", async () => {
+    await page.viewport(400, 800);
+    await shell("plan");
+    const menu = document.querySelector<HTMLElement>(
+      '[data-testid="nav-menu-button"]',
+    );
+    await userEvent.click(menu as HTMLElement);
+    await vi.waitFor(() =>
+      expect(nav()?.getAttribute("data-open")).toBe("true"),
+    );
+    const root = document.documentElement;
+    expect(
+      root.scrollWidth,
+      `the page is ${root.scrollWidth}px wide in a ${root.clientWidth}px window with the drawer open`,
+    ).toBeLessThanOrEqual(root.clientWidth);
+  });
+});
+
 describe("A8 — on a desktop, a collapsed nav is still collapsed after a reload", () => {
   it("A8 collapses to a strip and stays collapsed when the page is rendered again", async () => {
     await page.viewport(1280, 900);

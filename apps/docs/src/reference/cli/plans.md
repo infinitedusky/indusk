@@ -20,6 +20,8 @@ Every command acts on the plan's worktree, from any checkout of the project. Eac
 
 Creates `plan/<name>` from the trunk branch, its worktree at `<project>-worktrees/<name>`, and the assignment that tells every reader where the plan lives — the admin and the plan tools read it from there even though the trunk has no folder for it. Writes and commits the first document in the worktree: `brief.md`, or `research.md` for a spike, as a draft declaring `workflow: <type>`. Nothing is written on the trunk.
 
+A new plan's `title:` is its handle, which the admin and the editor read as words ("cockpit-redraw" reads "Cockpit redraw") until a person writes a short title and a `description:` in the brief's front matter.
+
 Refuses:
 
 - a `<type>` that is not `feature`, `bugfix`, `refactor` or `spike`;
@@ -281,6 +283,18 @@ subplans:
 ---
 ```
 
+A `subplans:` entry may be a name, or a mapping carrying the words for a plan that has no folder yet:
+
+```yaml
+subplans:
+  - dawn-verify
+  - name: dawn-ship
+    title: "Dawn ship"
+    description: "Publishes a plan's result where its people can see it."
+```
+
+Declared order holds either way. The parser reports the written title and description beside the names (`declaredTitles`), and a plan's own brief wins once it exists. A queued plan declared by name alone reads as its handle in words, with no description.
+
 A child declares **nothing** about its lineage. Only one place declares each parent→child link, so the two sides can never disagree and there is no drift to reconcile.
 
 ### Two rules that keep it safe
@@ -306,7 +320,7 @@ A subplan whose folder has moved to `archive/` is the opposite of uncreated — 
 
 ### API
 
-`readPlanDeclarations(planningDir)` in `apps/indusk-mcp/src/lib/plan-parser.ts` returns `{ parents, roadmap, subplans }`. It is exported for consumers at `@infinitedusky/indusk-mcp/planning/plan-parser` — the admin UI consumes it rather than re-reading frontmatter, per the never-duplicate-parsing rule.
+`readPlanDeclarations(planningDir)` in `apps/indusk-mcp/src/lib/plan-parser.ts` returns `{ parents, roadmap, subplans, declaredTitles }`. It is exported for consumers at `@infinitedusky/indusk-mcp/planning/plan-parser` — the admin UI consumes it rather than re-reading frontmatter, per the never-duplicate-parsing rule.
 
 ## Papers (`kind: paper`)
 

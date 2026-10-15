@@ -53,8 +53,17 @@ export const DECLARATIONS: PlanDeclarations = {
     "path-alpha-inner": ["inner-one", "path-deep"],
     // `path-alpha` is path-deep's own ancestor: the walk stops at the repeat.
     "path-deep": ["deep-one", "path-alpha"],
-    "path-beta": ["beta-one", "beta-two"],
+    // `beta-three` is declared with a title and description and has no folder yet.
+    "path-beta": ["beta-one", "beta-two", "beta-three"],
     "path-gamma": ["gamma-one"],
+  },
+  declaredTitles: {
+    "path-beta": {
+      "beta-three": {
+        title: "Beta three, queued",
+        description: "The third, not started.",
+      },
+    },
   },
 };
 
@@ -102,12 +111,38 @@ function position(current: PlanPosition): NonNullable<Plan["position"]> {
   return { position: current, segments, awaiting: null };
 }
 
+/**
+ * The short title each named plan is written with (plan-stories). A plan
+ * absent here has none written and reads as its handle. `mid-build` carries a
+ * title as long as the longest one written, for the phone fit (A19).
+ */
 const TITLES: Record<string, string> = {
+  "path-alpha": "Seat holds path",
+  "path-alpha-inner": "Inner holds path",
+  "path-deep": "Deep holds path",
+  "path-beta": "Checkout path",
+  "path-gamma": "Search path",
   "alpha-one": "Seat holds rework",
   "beta-one": "Checkout rebuild",
   "beta-two": "Receipts and refunds",
   "gamma-one": "Search ranking",
   "undeclared-plan": "Loose ends",
+  "at-review": "Review stop",
+  "asking-plan": "Seat map question",
+  "awaiting-approval": "Approval pending",
+  "mid-build":
+    "The admin organised around premises, promises and its phases, plan by plan",
+};
+
+/**
+ * The description each master and its plans in `path-beta` are written with
+ * (plan-stories A1, A2): what the master is for, and what each plan does.
+ */
+export const DESCRIPTIONS: Record<string, string> = {
+  "path-beta": "Everything a guest meets from the basket to the receipt.",
+  "beta-one": "Rebuilds the checkout so a card is charged once per order.",
+  "beta-two":
+    "Sends a receipt within a minute and reaches refunds to the card.",
 };
 
 interface DocSpec {
@@ -137,6 +172,8 @@ function build(spec: PlanSpec): Plan {
   const title = TITLES[name] ?? name;
   const plan: Plan = {
     name,
+    title,
+    description: DESCRIPTIONS[name] ?? null,
     status: spec.status ?? "in-progress",
     archived: false,
     workflow: spec.workflow ?? "feature",
@@ -303,9 +340,17 @@ export const SESSIONS: WaitingSession[] = [
   },
 ];
 
+/**
+ * Plans whose approved brief changed since approval, each waiting on nothing
+ * else (plan-stories A15). The decisions mock passes it to `planWaiting`,
+ * so the plan waits on the amendment at its Brief step.
+ */
+export const AMENDED = ["skipped-ritual"] as const;
+
 /** Plans that wait on the person, in nav order, with the step each waits at. */
 export const WAITING = [
   ["at-review", "Review"],
+  ["skipped-ritual", "Brief"],
   ["asking-plan", "Brief"],
   ["awaiting-approval", "Impl"],
 ] as const;
@@ -563,8 +608,12 @@ export function displayMock() {
       const words = name.split("-").join(" ");
       return words.charAt(0).toUpperCase() + words.slice(1);
     },
-    planTitle: (title: string | undefined, folder: string) =>
-      title?.split(" — ")[0]?.trim() || folder,
+    planTitle: (title: string | undefined, handle: string) => {
+      const short = title?.split(" — ")[0]?.trim();
+      if (short && short !== handle) return short;
+      const words = handle.split("-").join(" ");
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    },
     displayWords: () => ({}),
     planDates: (planDir: string) => datesOf(planDir.split("/").pop() ?? ""),
     readHealthNames: () => ({
@@ -862,8 +911,12 @@ export const PROOFS: Record<string, Proof> = {
 export function decisionsReaderMock() {
   return {
     __esModule: true,
-    readWaiting: (_project: string, plans: Plan[]) =>
-      planWaiting({ sessions: SESSIONS, plans: plans.map(snapshotOf) }),
+    readWaiting: async (_project: string, _path: string, plans: Plan[]) =>
+      planWaiting({
+        sessions: SESSIONS,
+        plans: plans.map(snapshotOf),
+        amendments: AMENDED.map((plan) => ({ plan, count: 1 })),
+      }),
     readPlanHistory: (_path: string, plan: string) => HISTORY[plan] ?? [],
   };
 }

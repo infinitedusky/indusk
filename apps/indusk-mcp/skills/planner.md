@@ -177,6 +177,8 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **Name every phase's tier.** Every phase carries `**Tier**: <tier>` under its heading, written when you write the phase: the step's default spelled out (`indusk plans model` answers from it), or a different tier with its reason (`**Tier**: strong — edits the readiness gate every plan's close goes through`). A tier other than the default needs its reason, or the impl is refused. The config names the model, not the plan.
 
+   **Open each phase with a summary, written for someone without the shorthand.** Set `phase_summary: required` in the impl frontmatter. Each phase opens, after its `**Tier**:` line, with a paragraph saying what the phase does for the whole plan and how it hands to the next. Each task is one plain sentence saying what will be true when it is done, and its instruction goes in an indented `<details><summary>Technical</summary>` fold beneath it: names, paths, commands, code and row labels live there, never in the paragraph or on the task line. Write for a reader who has worked on this project and knows none of its shorthand: no row labels, no abbreviations, no nicknames, no pronoun whose referent is unclear. The test before writing a sentence: would someone who has worked here, but never read this plan, know what every noun in it refers to? Before: "Build Phase 1: the checkers only read top-level lines." After: "The two scripts that check an impl file, one when it is saved and one when a box is ticked, stop reading text folded under a task as a ticked box or a skipped gate." The folded detail is only read: it never ticks a box, skips a gate or adds a task.
+
    **Open Phase 1 with a worktree kickoff item.** Worktree-per-plan is the default (see the `worktree-visibility` ADR): every impl's first phase begins with a checklist item that creates or confirms the plan's own worktree — e.g. `Create/confirm this plan's worktree (indusk worktree create <plan>, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs indusk worktree assign <plan> <path>) — worktree-per-plan default; skip only if worktree: none in frontmatter`. A plan opts out by setting `worktree: none` in the impl frontmatter (no workflow sets it by default — even hotfix gets a worktree). `/work`'s Worktree Kickoff step reads the frontmatter and nudges before code is written; the kickoff item makes the intent explicit in the checklist.
 
    **Derive the Test Trajectory from the test plan.** Every new impl opens with a `## Test Trajectory` table (after `## Boundary Map`, before `## Checklist`) that enumerates the tests the plan commits to. Columns: `ID | Asserts | Writable at | Passes at | State | Level | For | Test`. `Level` is one of the five, from the test plan; set `test_levels: required` in the frontmatter and the hook refuses a row with none or another word. `For` says what the row is for; set `test_purpose: required` and the hook refuses a row that does not say. `Test` names the row's test files. (An impl written with `Kind` and `test_kinds: required` still validates.) Test IDs are conventionally `T`-prefixed (`T1`, `T2`, …); `A`-prefixed IDs (`A1`, …) are also accepted — handy when the trajectory mirrors an acceptance-style test plan. For feature plans, walk the test plan's assertion list — each assertion becomes a trajectory row, with the assertion text becoming the `Asserts` column, the test plan's level its `Level`, and the promise it is grouped under its `For`. Then walk each planned phase and assign `Writable at` / `Passes at`. Every phase's Verification block references test IDs from the trajectory rather than restating the checks. A bugfix or a refactor has no ADR: its rows come from its test plan the same way.
@@ -532,6 +534,7 @@ test_phases: required
 test_levels: required
 test_purpose: required
 rationale: required
+phase_summary: required
 gate_policy: ask
 ---
 
@@ -579,10 +582,20 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 
 **Tier**: {tier — the step's default, or another with its reason}
 
-**Goal**: author every test that can honestly be authored now, and record every test that cannot.
+{Summary: a paragraph saying what this phase does for the whole plan and what it hands to the next, in words someone who has worked on the project but never read this plan would follow. No row labels.}
 
-- [ ] Author {T1, T2, …} against {the subject}, RED
-- [ ] Confirm each fails on its own assertion rather than on a missing import
+- [ ] {One plain sentence: every test that can honestly be written now is written and fails on its own assertion; the rest are recorded with the reason they wait.}
+  <details><summary>Technical</summary>
+
+  {Author T1, T2, … against the subject, RED. Names, paths, commands, code and row labels go here.}
+
+  </details>
+- [ ] {One plain sentence: no test fails only because a file it loads is missing.}
+  <details><summary>Technical</summary>
+
+  {Confirm each fails on its own assertion rather than on a missing import.}
+
+  </details>
 
 {Include a `#### Deferred to Test Phase N` block for EACH later test phase — required, and the impl is refused without it.}
 
@@ -602,36 +615,79 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 
 #### Test Phase 1 Verification
 
-- [ ] {T1, T2, …} are authored, and each red one fails on its own assertion
-- [ ] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
+- [ ] {One plain sentence: the tests this phase writes exist and fail for the right reason.}
+  <details><summary>Technical</summary>
+
+  {T1, T2, … are authored, and each red one fails on its own assertion.}
+
+  </details>
+- [ ] {One plain sentence: every deferred test body above has been read and judged.}
+  <details><summary>Technical</summary>
+
+  {Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?}
+
+  </details>
 
 ### Build Phase 1: {Name}
 
 **Tier**: {tier — the step's default, or another with its reason}
 
-- [ ] {Task — include code snippets when syntax matters}
+{Summary: a paragraph saying what this phase does for the whole plan and how it hands to the next, written for someone who has worked on the project but knows none of this plan's shorthand.}
+
+- [ ] {Task: one plain sentence saying what will be true when it is done. Code, paths, commands and row labels go in the fold below, with snippets when syntax matters.}
+  <details><summary>Technical</summary>
+
+  {The instruction itself, e.g. a signature that must match this shape:}
+
   ```typescript
   // Example: function signature that must match this shape
   function withdrawFor(wallet: address, player: address, amount: uint256, historyHash: bytes32)
   ```
 
+  </details>
+
 {OPTIONAL: #### Build Phase 1 OTel — include ONLY if the project's `otel.role` in `.indusk/config.json` is unset or `"service"`. Skip the entire OTel block for projects with `otel.role: "library" | "tool" | "none"`. Use `shouldEmitOtelGate(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to decide.}
 
 #### Build Phase 1 OTel
-- [ ] {Instrumentation check — are new code paths observable? See the OTel skill for patterns. Example items: "New endpoints have manual spans with `otel.category` and domain attributes", "Errors recorded with `recordException` + `setStatus(ERROR)` + trace-correlated log". Ask: "did this phase add endpoints, business logic, state transitions, or error paths?" If not, this section can be opted out per gate policy.}
+- [ ] {One plain sentence saying what is now observable.}
+  <details><summary>Technical</summary>
+
+  {Instrumentation check — are new code paths observable? See the OTel skill for patterns. Example items: "New endpoints have manual spans with `otel.category` and domain attributes", "Errors recorded with `recordException` + `setStatus(ERROR)` + trace-correlated log". Ask: "did this phase add endpoints, business logic, state transitions, or error paths?" If not, this section can be opted out per gate policy.}
+
+  </details>
 
 #### Build Phase 1 Verification
-- [ ] T1 passes (`{this phase's rows and related tests, e.g. pnpm exec vitest run <the row's test files> && pnpm exec vitest related <files this phase changed>}`) — the whole suite runs at landing, not here
-- [ ] T2 flips to `written` state (skipped until Phase 2)
+- [ ] {One plain sentence saying what the tests now prove.}
+  <details><summary>Technical</summary>
+
+  T1 passes (`{this phase's rows and related tests, e.g. pnpm exec vitest run <the row's test files> && pnpm exec vitest related <files this phase changed>}`) — the whole suite runs at landing, not here
+
+  </details>
+- [ ] {One plain sentence saying which test is written now and waits for a later phase.}
+  <details><summary>Technical</summary>
+
+  T2 flips to `written` state (skipped until Phase 2)
+
+  </details>
 
 {If a phase has no tests flipping at it, declare it explicitly — NOT silently:}
 {- [ ] (no tests flip at this phase — reason: {schema-only | delete | refactor | infra})}
 
 #### Build Phase 1 Context
-- [ ] {A rule this phase produces, naming its tier and destination — e.g., "guard: `<test>` carries `lesson: <name>`", "planning: …", "mcp: …", "current.md: …", "root (Conventions): … — always-on because …". An item aimed at the root must say why it must be always-on; one that cannot belongs at a lower tier (see the `/claude-md` tier table). Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
+- [ ] {One plain sentence saying what changes about how the project works.}
+  <details><summary>Technical</summary>
+
+  {A rule this phase produces, naming its tier and destination — e.g., "guard: `<test>` carries `lesson: <name>`", "planning: …", "mcp: …", "current.md: …", "root (Conventions): … — always-on because …". An item aimed at the root must say why it must be always-on; one that cannot belongs at a lower tier (see the `/claude-md` tier table). Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
+
+  </details>
 
 #### Build Phase 1 Document
-- [ ] {Docs page to write or update — e.g., "Write reference page at apps/indusk-docs/src/reference/tools/tool-name.md", "Update architecture diagram in docs". Ask: "what does a user or developer need to know about what this phase built?" If nothing user-facing, omit this section. See the document skill for guidance on what to document and how.}
+- [ ] {One plain sentence saying what a reader can now find in the docs.}
+  <details><summary>Technical</summary>
+
+  {Docs page to write or update — e.g., "Write reference page at apps/indusk-docs/src/reference/tools/tool-name.md", "Update architecture diagram in docs". Ask: "what does a user or developer need to know about what this phase built?" If nothing user-facing, omit this section. See the document skill for guidance on what to document and how.}
+
+  </details>
 
 ## Files Affected
 | File | Change |

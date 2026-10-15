@@ -183,6 +183,8 @@ describe("planMarkdown", () => {
   function makePlan(overrides: Partial<Plan> = {}): Plan {
     return {
       name: "demo-plan",
+      title: "demo-plan",
+      description: null,
       status: "in-progress",
       archived: false,
       ...overrides,

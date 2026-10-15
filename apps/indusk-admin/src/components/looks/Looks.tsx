@@ -65,7 +65,10 @@ export function LooksBody({
   show = "all",
   checkout = null,
   checkouts = [],
+  planTitles = {},
 }: {
+  /** Each plan worktree's plan by its title. */
+  planTitles?: Record<string, string>;
   project: string;
   apps: AppLooksRead[];
   /** The page's own path, for the device links. */
@@ -95,6 +98,7 @@ export function LooksBody({
         view={view}
         checkout={checkout}
         checkouts={checkouts}
+        planTitles={planTitles}
       />
       {apps.length === 0 ? (
         <p className="text-sm text-ink-soft" data-testid="looks-empty">

@@ -30,7 +30,9 @@ flowchart TD
 
 ## The shape
 
-A brief's frontmatter carries a `description:` — the plan in one to three tight sentences, what it does and for whom, not its background. The plan's page shows it at the top. The agent writes it as soon as the plan is clear and keeps it true as the brief changes; editing it is not an amendment.
+A brief's frontmatter carries a `title:`: a short name a person would say ("Cockpit redraw", not a sentence), kept apart from the `description:` below. A plan with no title written, or one whose title is only its handle, reads as its handle turned into words. A master plan's `master.md` carries the same two fields.
+
+It also carries a `description:` — the plan in one to three tight sentences, what it does and for whom, not its background. The plan's page shows it at the top. The agent writes it as soon as the plan is clear and keeps it true as the brief changes; editing it is not an amendment.
 
 ```markdown
 ## Expectations

@@ -63,6 +63,7 @@ None.
 title: "{Title}"
 date: {YYYY-MM-DD}
 status: draft
+phase_summary: required
 ---
 
 # {Title}
@@ -72,11 +73,29 @@ status: draft
 
 ## Checklist
 ### Phase 1: Fix
-- [ ] {The fix — be specific}
+
+{A paragraph saying what this phase does for the whole plan, written for someone who has worked on the project but knows none of this plan's shorthand.}
+
+- [ ] {One plain sentence saying what will be true once the fix is in.}
+  <details><summary>Technical</summary>
+
+  {The fix, be specific: names, paths and code go here.}
+
+  </details>
 
 #### Phase 1 Verification
-- [ ] {Command that proves the bug is fixed}
-- [ ] {Regression test if applicable}
+- [ ] {One plain sentence saying what proves the bug is fixed.}
+  <details><summary>Technical</summary>
+
+  {Command that proves the bug is fixed}
+
+  </details>
+- [ ] {One plain sentence saying what keeps it fixed.}
+  <details><summary>Technical</summary>
+
+  {Regression test if applicable}
+
+  </details>
 
 ## Files Affected
 | File | Change |

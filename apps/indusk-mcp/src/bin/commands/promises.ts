@@ -474,7 +474,7 @@ export async function promisesHealth(
 	const once = async () => {
 		const current = reread();
 		const reads = await readReads(projectRoot, current);
-		const names = readHealthNames(projectRoot);
+		const names = await readHealthNames(projectRoot);
 		// Looks ride the same line (ui-promises A24): the editor shows the
 		// standing the admin's dashboard reads, from the same reader.
 		const looks = await (deps.readLooks ?? readLookStanding)(projectRoot);

@@ -32,10 +32,13 @@ export function IncidentsTable({
   incidents,
   promises,
   planHrefPrefix,
+  planTitles = {},
 }: {
   incidents: IncidentEntry[];
   promises: PromiseEntry[];
   planHrefPrefix: string;
+  /** Each owner plan by its title, as the Promises page names it; a handle with none reads as itself. */
+  planTitles?: Record<string, string>;
 }) {
   const now = Date.now();
   const ownerOf = (i: IncidentEntry) =>
@@ -73,6 +76,7 @@ export function IncidentsTable({
               </TableCell>
               <TableCell>
                 <IncidentOwner
+                  title={planTitles[ownerOf(i) ?? ""]}
                   incident={i}
                   owner={ownerOf(i)}
                   planHrefPrefix={planHrefPrefix}
@@ -92,17 +96,20 @@ export function IncidentsTable({
 function IncidentOwner({
   incident,
   owner,
+  title = owner ?? "",
   planHrefPrefix,
 }: {
   incident: IncidentEntry;
   owner: string | null;
+  /** The owner plan by its title. */
+  title?: string;
   planHrefPrefix: string;
 }) {
   if (!owner) return <span className="text-ink-faint">—</span>;
-  if (incident.status !== "open") return <span>{owner}</span>;
+  if (incident.status !== "open") return <span>{title}</span>;
   return (
     <Link href={`${planHrefPrefix}${owner}`} className="hover:underline">
-      {owner} · Maintenance — {incident.id}
+      {title} · Maintenance — {incident.id}
     </Link>
   );
 }

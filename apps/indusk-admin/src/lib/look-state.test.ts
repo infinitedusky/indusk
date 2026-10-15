@@ -1,11 +1,8 @@
+// promise: a-master-plan-tells-its-story
 // promise: a-plan-page-shows-the-parts-of-its-brief
+import { planWaiting } from "@infinitedusky/indusk-mcp/plans/waiting";
 import { describe, expect, it } from "vitest";
-import {
-  briefLookState,
-  navLookState,
-  planLookState,
-  planPageWaiting,
-} from "@/lib/look-state";
+import { briefLookState, navLookState, planLookState } from "@/lib/look-state";
 
 const base = {
   archived: false,
@@ -34,6 +31,24 @@ describe("planLookState — what the plan page says it draws", () => {
 
   it("is working when the brief is finished and nothing waits", () => {
     expect(planLookState(base)).toBe("plan.working");
+  });
+});
+
+describe("planLookState — a master plan", () => {
+  it("A5 a master plan's page draws plan.master whatever its own documents say", () => {
+    for (const briefStatus of [null, "draft", "accepted"])
+      for (const waiting of [false, true])
+        for (const archived of [false, true])
+          for (const position of [undefined, "executing", "monitor"])
+            expect(
+              planLookState({
+                archived,
+                position,
+                waiting,
+                briefStatus,
+                master: true,
+              }),
+            ).toBe("plan.master");
   });
 });
 
@@ -71,19 +86,32 @@ describe("navLookState — what the nav says it draws", () => {
   });
 });
 
+/** The plan page's wait is `planWaiting`'s answer alone, amendments included (plan-stories, ADR decision 5). */
+const waitsOn = (
+  amendments: { plan: string; count: number }[],
+  builds: { plan: string; stoppedAt: string | null }[] = [],
+) =>
+  planWaiting({
+    sessions: [],
+    plans: [{ name: "p", workflow: "feature", documents: {} }],
+    builds,
+    amendments,
+  }).length > 0;
+
 describe("A16 — an amendment is a wait the plan page counts", () => {
   it("a plan whose only wait is an amendment reports plan.needs-you", () => {
-    const waiting = planPageWaiting(undefined, [{ id: "a1" }]);
+    const waiting = waitsOn([{ plan: "p", count: 1 }]);
     expect(planLookState({ ...base, waiting })).toBe("plan.needs-you");
   });
 
   it("a plan with no wait and no amendment is still working", () => {
-    const waiting = planPageWaiting(undefined, []);
+    const waiting = waitsOn([]);
     expect(planLookState({ ...base, waiting })).toBe("plan.working");
   });
 
-  it("a session question or a stopped build waits whether or not an amendment does", () => {
-    expect(planPageWaiting({ on: "question" }, [])).toBe(true);
-    expect(planPageWaiting({ on: "review" }, [{ id: "a1" }])).toBe(true);
+  it("a stopped build waits whether or not an amendment does", () => {
+    const stopped = [{ plan: "p", stoppedAt: "review" }];
+    expect(waitsOn([], stopped)).toBe(true);
+    expect(waitsOn([{ plan: "p", count: 1 }], stopped)).toBe(true);
   });
 });
