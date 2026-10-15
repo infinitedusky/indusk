@@ -274,7 +274,7 @@ accepted_by: person
 
 #### Build Phase 7 Context
 
-- [ ] `apps/indusk-mcp/src/lib/looks/CLAUDE.md` (the looks folder's rules): one line — a test file is never an app's interface or a component's implementation (`isTestFile`, `components.ts`); a story is interface, since it renders an approved snapshot. Shrink something else in the file if its budget refuses the line
+- [x] `apps/indusk-mcp/src/lib/looks/CLAUDE.md` (the looks folder's rules): one line — a test file is never an app's interface or a component's implementation (`isTestFile`, `components.ts`); a story is interface, since it renders an approved snapshot. Shrink something else in the file if its budget refuses the line
 
 #### Build Phase 7 Document
 
