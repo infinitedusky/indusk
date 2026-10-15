@@ -62,6 +62,26 @@ describe("A10 — a re-approval in flight keeps holding the components a landed 
 	});
 });
 
+describe("A12 — a landed approval that recorded no components holds the mockup in full", () => {
+	it("reports plan-row, named in the markup, when the landed approval recorded no components and an active plan re-approved", async () => {
+		const root = app();
+		await addApprovedMockup(root, {
+			screen: "rows",
+			markup: '<main class="card" data-component="plan-row">A row.</main>',
+			approvals: [
+				{ at: "2026-10-01T09:00:00.000Z", plan: "landed-plan" },
+				{ at: "2026-10-14T09:00:00.000Z", plan: "active-plan" },
+			],
+		});
+		mkdirSync(join(root, ".indusk", "planning", "archive", "landed-plan"), { recursive: true });
+		mkdirSync(join(root, ".indusk", "planning", "active-plan"), { recursive: true });
+		const looks = await readApp(root, "demo");
+
+		const coverage = await coverageOf(root, looks, readApprovals(looks));
+		expect(coverage.unimplemented).toContain("plan-row");
+	});
+});
+
 describe("A11 — a story name's component is read by one rule", () => {
 	it("is the name before the first dot, however many dots follow", () => {
 		expect(componentOfStory("plan-row.open")).toBe("plan-row");
