@@ -592,13 +592,13 @@ A reader who had not seen the build audited the plan and found places where its 
   `apps/indusk-mcp/src/lib/run/commit-cadence.ts` lines 103–104: `.map((l) => l.trim()).filter((l) => l.startsWith("- [x]"))` reads indented lines; keep only column-zero lines (and skip `foldedLineMask` lines), matching the tick check.
 
   </details>
-- [ ] The repair phase a broken promise adds is written in the new shape when the impl has opted in
+- [x] The repair phase a broken promise adds is written in the new shape when the impl has opted in
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/reopen.ts` `maintenancePhase`: when the owner impl's frontmatter has `phase_summary: required`, write a `**Tier**:` line, a plain paragraph naming the incident and the promise, task sentences, and the commands, paths and row label (`rowId`) in each task's Technical fold. The old shape is unchanged for impls that have not opted in.
 
   </details>
-- [ ] The plan page shows a phase's paragraph formatted, code included
+- [x] The plan page shows a phase's paragraph formatted, code included
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/components/ui/PhaseRow.tsx` takes `summary?: ReactNode` instead of `string`; `components/plan/PlanParts.tsx` passes `<Markdown>{view.summary}</Markdown>`. The ui component stays free of the markdown import, and the stories' plain-string paragraph draws as it did, so their approved snapshots should not change — confirm with `indusk looks stories admin` and `indusk looks status admin`; if either story turns proposed, add a pause item for Sandy's re-approval.
