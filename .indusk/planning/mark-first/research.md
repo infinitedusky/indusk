@@ -171,6 +171,8 @@ Two stages, one clause: **before release and on every change** — its tests,
 *verified* or the change is stopped; **in use** — its signal, *holding*,
 *broken* or *no signal*.
 
+Carried from one-promise-language (Sandy, 2026-10-15): switch InDusk's signal writers and the demo app from writing `violated` to `broken` — every reader accepts both since one-promise-language.
+
 **The clause plan** (replacing the test plan): each clause with its signal
 (where it is read, what counts as upheld — a budget for a split, a bound for a
 limit — and what it reports when broken), and the tests tied to that clause,
