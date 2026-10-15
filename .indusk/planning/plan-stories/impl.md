@@ -70,7 +70,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 | A19 | With a plan whose title is as long as the longest written, the drawer at 400 px still leaves no page scrolling sideways | Test Phase 1 | Test Phase 1 | passing | unit | promise: the-nav-fits-a-phone | apps/indusk-admin/src/app/p/[project]/cockpit-phone.test.tsx |
 | A20 | The plan page still opens with the description, now under the title, and whether the brief is finished, one click from the brief | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/components/plan/PlanSummary.test.tsx, apps/indusk-admin/src/__tests__/plan-page-layout.test.tsx |
 | A21 | The admin and the editor name a plan by the package's one title rule; neither holds a second | Test Phase 1 | Test Phase 1 | passing | unit | regression: display-names' single definition, which the title changes in the package, the admin and the editor touch | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
-| A22 | A plan whose title in its own worktree differs from its copy on the trunk is named by the worktree's title on the Promises page and in the editor, as the nav names it — one plan, one name everywhere | Build Phase 6 | Build Phase 6 | written | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A22 | A plan whose title in its own worktree differs from its copy on the trunk is named by the worktree's title on the Promises page and in the editor, as the nav names it — one plan, one name everywhere | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
 
 ### Deferred Verification
 
@@ -396,7 +396,7 @@ Titles and descriptions come from research.md's tables. A description already wr
 - [x] The editor gets its names from `promises health --json`, so it follows; confirm with `apps/vscode-extension/src/core/names.test.ts` unchanged and passing
 
 #### Build Phase 6 Verification
-- [ ] A22: a fixture project with a plan assigned to a worktree whose brief's title differs from the trunk copy's; `readHealthNames` returns the worktree's title, and the admin's `readActivePlans` returns the same (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts`, plus `pnpm exec vitest related` over the changed files in both packages); A8–A13 and A21 still pass; tsc and biome clean
+- [x] A22: a fixture project with a plan assigned to a worktree whose brief's title differs from the trunk copy's; `readHealthNames` returns the worktree's title, and the admin's `readActivePlans` returns the same (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts`, plus `pnpm exec vitest related` over the changed files in both packages); A8–A13 and A21 still pass; tsc and biome clean
 
 #### Build Phase 6 Context
 - [ ] `apps/indusk-mcp/CLAUDE.md` (over budget, shrinking edits only): fold into the display-names entry that a plan's names are read from the copy the nav reads, worktree first

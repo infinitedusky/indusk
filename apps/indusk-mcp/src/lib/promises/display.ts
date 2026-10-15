@@ -4,8 +4,8 @@ import matter from "gray-matter";
 import { readWorkflowSteps } from "../checks/steps.js";
 import { readConfig } from "../config.js";
 import { firstParentLogSync, type TrunkCommit } from "../git.js";
-import { type PlanCopy, resolvePlanCopies } from "../worktree/plan-worktrees.js";
 import { DOCUMENT_LABELS } from "../workflow-types.js";
+import { type PlanCopy, resolvePlanCopies } from "../worktree/plan-worktrees.js";
 import { planFolders } from "./plan-folder.js";
 
 /**
