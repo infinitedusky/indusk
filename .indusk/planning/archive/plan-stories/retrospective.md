@@ -52,3 +52,5 @@ The plan touched 107 files (+4133 / âˆ’773), 80 of them under `apps/` (+2877 / â
 ## Tests at close
 
 - Deferred verification: U1 (the retitled names say what each plan is), a scheduled review: Sandy reads the retitle commits; the second expectation's count lists every live plan still read by its handle.
+- `pnpm test` on the branch: 3 admin and 10 indusk-mcp files failed under the parallel run, nearly all 5 s timeouts. Rerun alone, every file passes except `plan-worktrees-cli.test.ts` A13 (`.mcp.json` left in a created worktree), which also fails on `main` and is not this plan's (cockpit-redraw recorded it too).
+- Nested-context probe (`vitest.e2e.config.ts context-tiers`): 4 of 4 pass. `pnpm e2e -- context-tiers` does not filter and ran the whole e2e set: one failure, the promise-loop test's Jaeger check, not this plan's.
