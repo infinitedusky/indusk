@@ -1,4 +1,5 @@
 // promise: paths-keep-their-order
+// promise: a-plan-reads-by-its-title
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import { describe, expect, it } from "vitest";
 import { buildGroups, type PathEntry, type PlanGroup } from "@/lib/plan-groups";
@@ -115,5 +116,40 @@ describe("buildGroups — A17 every plan passed in comes back out", () => {
       (n) => n === "x",
     );
     expect(out.groups[0]).toMatchObject({ total: 2, released: 1 });
+  });
+});
+
+/** The title and description a queued plan's entry carries (A24), read without a type that names them. */
+const queuedOf = (e: PathEntry) => ({
+  title: "title" in e ? e.title : undefined,
+  description: "description" in e ? e.description : undefined,
+});
+
+describe("buildGroups — A24 a queued plan reads by its title", () => {
+  const queued = (
+    declaredTitles: PlanDeclarations["declaredTitles"],
+    words?: Record<string, string>,
+  ) => {
+    const out = buildGroups(
+      [plan("parent")],
+      [],
+      { ...declare({ parent: ["ghost-plan", "vscode-hooks"] }), declaredTitles },
+      never,
+      words,
+    );
+    return out.groups[0].entries.map(queuedOf);
+  };
+
+  it("its declared title and description ride on the entry", () => {
+    const [ghost] = queued({
+      parent: { "ghost-plan": { title: "The ghost", description: "Not yet." } },
+    });
+    expect(ghost).toEqual({ title: "The ghost", description: "Not yet." });
+  });
+
+  it("with none declared it reads as its handle in words, through the project's product words", () => {
+    const [ghost, hooks] = queued({}, { ghost: "Spectre" });
+    expect(ghost).toEqual({ title: "Spectre plan", description: "" });
+    expect(hooks.title).toBe("VS Code hooks");
   });
 });
