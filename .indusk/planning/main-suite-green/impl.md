@@ -113,7 +113,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 - [x] `always-on-cleanup.test.ts:96`: count the URL form `.trim().replace(/\/+$/, "")` only
 - [x] `helpers/plan-worktree-fixture.ts`: write `.gitignore` with `.mcp.json` before the `git add -A` (line 89), as `init` does for a real project
-- [ ] `registry-leak-scan.test.ts:25`: stop counting `runCli(` / `runCliAsync(` as a spawn without `INDUSK_HOME` (the helper sets it, since `f67cf9bc0`); keep scanning direct `CLI_BIN` / `cli.js` spawns
+- [x] `registry-leak-scan.test.ts:25`: stop counting `runCli(` / `runCliAsync(` as a spawn without `INDUSK_HOME` (the helper sets it, since `f67cf9bc0`); keep scanning direct `CLI_BIN` / `cli.js` spawns
 - [ ] `inbox.test.ts:43,61-63`: pass `now: new Date("2026-10-08T21:00:00Z")` to each `recordBreaks` call
 - [ ] `looks-admin-components.test.ts` `mockupComponents`: skip a mockup whose approval (`.indusk/mockups/admin/approved.json`, the record's `plan`) names a plan folder that is active under `.indusk/planning/` and not archived; put the rule in `lib/looks/` beside the other approval readers if one fits, so the test does not own it
 - [ ] `indusk promises change a-component-has-one-implementation --plan main-suite-green --statement "Each component the mockups of a landed plan name is implemented once in the app, and every screen renders that one implementation rather than its own copy." --reason "approval merges a plan's looks to main before its code; until it lands its components cannot exist"`

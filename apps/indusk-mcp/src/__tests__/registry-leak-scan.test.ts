@@ -18,13 +18,15 @@ import { REPO_ROOT } from "./helpers/cli.js";
  * one of those commands must set `INDUSK_HOME`.
  *
  * Grep-based, like `component-reuse-audit`: simple beats clever until it is
- * wrong. It looks for the CLI-spawn shapes the suites use — `runCli(cwd,
- * ["init", …])`, `[CLI_BIN, "update", …]`, `cli.js", "ui"` — and the presence
+ * wrong. It looks for the direct CLI-spawn shapes the suites use —
+ * `[CLI_BIN, "update", …]`, `cli.js", "ui"` — and the presence
  * of `INDUSK_HOME` anywhere in the same file.
  */
 
+// `runCli` / `runCliAsync` are not shapes: since f67cf9bc0 the helper sets a
+// temp INDUSK_HOME on every call, so a spawn through it cannot reach the real
+// registry. Only a direct spawn of the built CLI can.
 const SPAWN_SHAPES: RegExp[] = [
-	/runCli\(\s*[^,]+,\s*\[\s*"(init|update|ui|setup)"/,
 	/\[\s*CLI_BIN\s*,\s*"(init|update|ui|setup)"/,
 	/cli\.js"?\s*,\s*"(init|update|ui|setup)"/,
 	/CLI_BIN\s*,\s*"(init|update|ui|setup)"/,
@@ -43,7 +45,7 @@ function testFiles(): string[] {
 
 describe("A31 — the scan recognizes every registering command", () => {
 	it("a `setup` spawn is a registering spawn: setup delegates to init", () => {
-		const fixture = 'const r = runCli(dir, ["setup", target]);';
+		const fixture = 'spawnSync("node", [CLI_BIN, "setup", target]);';
 		expect(
 			SPAWN_SHAPES.some((re) => re.test(fixture)),
 			"setup registers the project through init and must be scanned like init",
