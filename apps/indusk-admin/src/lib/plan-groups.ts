@@ -110,7 +110,7 @@ export function buildGroups(
           kind: "placeholder",
           name: childName,
           number,
-          title: written?.title ?? planTitle(undefined, childName, words),
+          title: planTitle(written?.title, childName, words),
           description: written?.description ?? "",
         });
         group.total += 1;
