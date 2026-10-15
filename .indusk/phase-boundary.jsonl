@@ -353,3 +353,4 @@
 {"plan":"main-suite-green","phase":7,"kind":"build","sha":"10ae39ca597ea2ac036ec273408fbac8fdb4897c","timestamp":"2026-10-15T12:50:07.543Z"}
 {"plan":"template-reload-on-cold-cache","phase":1,"kind":"test","sha":"575bee34ac6639bbb89a234316cebebe025c9b0e","timestamp":"2026-10-15T16:09:40.294Z"}
 {"plan":"template-reload-on-cold-cache","phase":1,"kind":"build","sha":"6138c099040823598677cd2706d4275b77a8d44c","timestamp":"2026-10-15T16:11:46.092Z"}
+{"plan":"template-reload-on-cold-cache","phase":2,"kind":"build","sha":"c5afde2a6517e15c1ce3882d3fe6d2169d77f40c","timestamp":"2026-10-15T17:48:06.666Z"}
