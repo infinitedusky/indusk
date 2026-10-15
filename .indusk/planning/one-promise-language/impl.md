@@ -60,10 +60,10 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 | A3 | InDusk's own signals (evaluator, recorder, trunk commit, looks check) and the demo app write `upheld` or `violated` this release, and every reader reads `broken` as broken | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/signal-writers.test.ts, examples/seat-holds/src/seats.test.ts |
 | A4 | A promise file saying `known-violated` is read as known-broken by the registry check, the admin and the editor | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/known-broken.test.ts |
 | A5 | Opening an incident on an enforced promise writes `known-broken`; fixing the last open one returns `known-broken` or `known-violated` to enforced | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/known-broken.test.ts |
-| A6 | The admin's chips, timeline cells, health lines and plan-list warning say upheld, holding, broken, held, broke or no signal — never violated, violation, unverified, not seen or no runs | Test Phase 1 | Build Phase 2 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx |
-| A7 | A promise nothing has reported on reads no signal in the admin, the CLI and the editor, never green or holding | Test Phase 1 | Build Phase 2 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx, apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts, apps/vscode-extension/src/core/view-words.test.ts |
-| A8 | The CLI's promise status, watch, check summary and refusals, and the always-on server's messages say broken, held or no signal, never violated or violation | Test Phase 1 | Build Phase 2 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts |
-| A9 | The editor's labels say known broken and no signal, and its activity says held or broke for a signal written either way | Test Phase 1 | Build Phase 2 | written | unit | promise: a-promise-is-upheld-or-broken | apps/vscode-extension/src/core/view-words.test.ts, apps/vscode-extension/src/core/activity.test.ts |
+| A6 | The admin's chips, timeline cells, health lines and plan-list warning say upheld, holding, broken, held, broke or no signal — never violated, violation, unverified, not seen or no runs | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx |
+| A7 | A promise nothing has reported on reads no signal in the admin, the CLI and the editor, never green or holding | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx, apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts, apps/vscode-extension/src/core/view-words.test.ts |
+| A8 | The CLI's promise status, watch, check summary and refusals, and the always-on server's messages say broken, held or no signal, never violated or violation | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts |
+| A9 | The editor's labels say known broken and no signal, and its activity says held or broke for a signal written either way | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/vscode-extension/src/core/view-words.test.ts, apps/vscode-extension/src/core/activity.test.ts |
 | A10 | The docs' guide and reference, the skills, the planning template, the deploy files, the CLI help and the MCP tool descriptions carry no violated, violation or known-violated, and say signal, not mark, outside named attribute names | Test Phase 1 | Build Phase 3 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
 | A11 | A production signal saying `broken` becomes an incident with its owning plan reopened, exactly as a `violated` one does | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/record-broken.test.ts |
 | A12 | The always-on server announces a production signal saying `broken` exactly as one saying `violated` | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/always-on/announce-broken.test.ts |
@@ -246,22 +246,23 @@ With the stored words settled, this phase changes what people see on screen and 
   `apps/vscode-extension/src/core/view.ts:16,35-36` (`"known broken"`, unverified → `"no signal"`); comments in `hover.ts`, `session.ts` follow.
 
   </details>
-- [ ] Review the shape of the changed screens and messages.
+- [x] Review the shape of the changed screens and messages.
   <details><summary>Technical</summary>
 
   Shape per `/work`, over the files above.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 2 Verification
 
-- [ ] The admin, the command line and the editor say holding, broken, held, broke and no signal, and nothing unreported reads green.
+- [x] The admin, the command line and the editor say holding, broken, held, broke and no signal, and nothing unreported reads green.
   <details><summary>Technical</summary>
 
   Green: A6, A7, A8, A9. `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/promises-cli-words.test.ts && pnpm exec vitest related src/lib/promises/status.ts src/lib/promises/watch.ts src/lib/promises/check.ts src/lib/always-on/heartbeat.ts src/bin/cli.ts src/tools/promise-tools.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/PromiseWords.test.tsx && pnpm exec vitest related src/components/bars/labels.ts src/components/PromiseTimeline.tsx src/components/PromiseHealth.tsx src/lib/timeline-strip.ts`; `cd apps/vscode-extension && pnpm exec vitest run src/core/view-words.test.ts src/core/activity.test.ts`.
 
   </details>
-- [ ] The approved looks of the promise pages still match.
+- [x] The approved looks of the promise pages still match.
   <details><summary>Technical</summary>
 
   `indusk looks check admin` exits 0 — the looks are held by value, so a text change leaves them matching.
