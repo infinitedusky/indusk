@@ -54,6 +54,9 @@ describe("the browser template's pre-bundle list (a-browser-test-passes-on-a-col
 		expect(imported.length).toBeGreaterThan(0);
 		const seen = new Set(listTheProjectSees());
 		const missing = imported.filter((pkg) => !seen.has(pkg));
-		expect(missing, "packages the templates project's server would only find mid-run").toEqual([]);
+		expect(
+			missing,
+			"packages the templates project's server would only find mid-run, reloading the page: add each to optimizeDeps.include, and keep `extends: true` on the project — a Vitest project inherits nothing from the root config without it",
+		).toEqual([]);
 	});
 });
