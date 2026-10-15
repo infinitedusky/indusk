@@ -171,7 +171,7 @@ This phase makes the three tests pass. The browser template's test project is to
 - [ ] The end-to-end monitor test checks for the fake model's name rather than Claude Code's wording
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/e2e/day-monitor.e2e.test.ts:162` and `:169`: replace `toContain("issue with the selected model")` with `toContain("claude-does-not-exist-9")` (the model the test sets), keeping `'"error":true'` at :161; a short comment says the CLI's wording is not this test's subject.
+  `apps/indusk-mcp/e2e/day-monitor.e2e.test.ts:162`, `:169` and `:182` (the incident file's content, found in Build Phase 1; the research listed only the first two): replace `toContain("issue with the selected model")` with `toContain("claude-does-not-exist-9")` (the model the test sets), keeping `'"error":true'` at :161; a short comment says the CLI's wording is not this test's subject.
 
   </details>
   <details><summary>Note</summary>
