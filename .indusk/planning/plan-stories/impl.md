@@ -96,7 +96,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 - [x] Author A6 in `plan-stories.contract.test.ts`, listed in `vitest.tiers.ts` `SYSTEM`. Move `cockpit-redraw.contract.test.ts`'s throwaway-project builder (`plan`, `doc`, `brief`, `impl`, the `looks-fixture-*` plans, the `dusk` registration) into `src/__tests__/helpers/looks-fixtures.ts`, with A10's assertions unchanged, and add a fixture master named `indusk-v4-day` (the path `screens.json` already declares for `plan.master` and `subplan-row`) with a `description:` and `subplans:` naming `looks-fixture-sub-released` (archived, its retrospective saying `Landed on main at abc1234, 2026-10-01.` and the fixture config's `workflow.steps.release.changelog` naming it in a dated release), `looks-fixture-sub-draft` (a draft brief) and `{ name: looks-fixture-sub-queued, title, description }`. Screens: `plan.master`, `plan.parts`, `plan.working`, `plan.needs-you`, `plan.released`, `nav.expanded`, `nav.wide`; stories: `subplan-row.released`, `subplan-row.draft`, `subplan-row.queued`; the same three checks as A10 (approved, held, never-checked fails), with A10's `nav.wide` carve-out below 760 px. RED: `plan.master` is not reported and the `subplan-row` stories do not exist
 - [x] A19: give one fixture plan in `cockpit-fixture.ts` a title as long as the longest written (`Contract UI — the admin organised around premises, promises and phases`, 72 characters), and add `promise: the-nav-fits-a-phone` beside `cockpit-phone.test.tsx`'s A7, which passes today and must keep passing once the nav draws titles
 - [x] Add the row tokens to the regression guards: `promise: every-plan-is-one-click-away` (already in `cockpit-nav.test.tsx`, A17), `promise: paths-keep-their-order` to `plan-groups.test.ts` (A18), `promise: a-plan-page-shows-the-parts-of-its-brief` (already in `PlanSummary.test.tsx` and `plan-page-layout.test.tsx`, A20); A21 is `display-names-single-definition.test.ts` as it stands
-- [ ] Confirm each red row fails on its own assertion rather than on a missing import
+- [x] Confirm each red row fails on its own assertion rather than on a missing import
 
 #### Deferred to Build Phase 1
 
@@ -106,6 +106,13 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
   // master.test.tsx — the cockpit fixture's path-beta as the master: beta-one
   // released, beta-two being built, and beta-three declared with a title and
   // description but no folder (added to DECLARATIONS.subplans and declaredTitles).
+  // Build Phase 1 also adds to cockpit-fixture.ts an exported `DESCRIPTIONS`
+  // (plan -> description, set on each fixture Plan beside its title from TITLES)
+  // covering path-beta, beta-one and beta-two. Adding beta-three to path-beta
+  // moves its nav count from 1/2 to 1/3 in cockpit-nav.test.tsx's A4; Build
+  // Phase 1 updates that expectation in the same edit. The row's number slot is
+  // a node the page passes in carrying data-testid="subplan-number", as the nav
+  // passes PlanNumber, so the component's own markup holds no test hook.
   const open = async (name: string) =>
     render((await PlanPage({ params: Promise.resolve({ project: PROJECT, name }) })) as React.ReactElement);
 
@@ -114,7 +121,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
     await expect.element(screen.getByRole("heading", { level: 1 })).toHaveTextContent(titleOf("path-beta"));
     await expect.element(screen.getByTestId("master-purpose")).toHaveTextContent(DESCRIPTIONS["path-beta"]);
     await expect.element(screen.getByTestId("master-counts")).toHaveTextContent("1 of 3 released");
-    await expect.element(screen.getByTestId("master-counts")).toHaveTextContent("1 drafts");
+    await expect.element(screen.getByTestId("master-counts")).toHaveTextContent("1 in draft");
     await expect.element(screen.getByTestId("master-counts")).toHaveTextContent("1 queued");
   });
 
@@ -143,11 +150,13 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 - **A13**: its subject is `Plan.title`, a field Build Phase 1 adds; `tsc` refuses it today. Written and passing in Build Phase 1. Body reviewed:
 
   ```ts
-  // planning-reader.title.test.ts — a temp project whose plan `p` is assigned to
-  // a worktree (the assignment record the reader reads, set up as
-  // planning-reader.workflow.test.ts sets up its plans), the trunk's brief
-  // saying `title: "Trunk name"`, the worktree's `title: "Worktree name"` and
-  // `description: "From the worktree."`.
+  // planning-reader.title.test.ts — a real repository, as http-plan-worktrees.test.ts
+  // builds one: `git init -b main` in a temp project, plan `p` committed with
+  // a brief saying `title: "Trunk name"`, `git worktree add <dir> -b plan/p main`,
+  // the worktree's brief rewritten to `title: "Worktree name"` and
+  // `description: "From the worktree."`, and the assignment record written by
+  // hand to `<git-common-dir>/indusk-plan-worktrees.json` as
+  // `{ version: 1, assignments: [{ plan: "p", path, branch: "plan/p", at }] }`.
   it("A13 names a worktree plan by its worktree's brief", async () => {
     const [p] = await readActivePlans(root);
     expect(p?.title).toBe("Worktree name");
@@ -160,16 +169,18 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 - **A16**: it builds a `Waiting` with `on: "amendment"`, a member `WaitingOn` gains in Build Phase 2; the admin's `tsc` refuses it today. Body reviewed:
 
   ```ts
+  // decisions.test.ts adds `import { AMENDMENT_DECISION } from "@infinitedusky/indusk-mcp/plans/waiting";`
+  // (Build Phase 2 exports it from waiting.ts beside APPROVAL_DECISION).
   it("A16 an answer to an amendment's wait is refused and neither approves nor releases", async () => {
-    const approve = vi.fn(async () => {});
-    const release = vi.fn(async () => {});
+    const approve = vi.fn(async () => ({}));
+    const release = vi.fn(async () => ({}));
     const waiting: Waiting = {
-      plan: "p", on: "amendment", step: "Brief", decision: AMENDMENT_DECISION,
+      plan: PLAN, on: "amendment", step: "Brief", decision: AMENDMENT_DECISION,
       accept: "Approve", alternative: "Not yet",
     };
-    // `deps` is the file's own DecisionDeps builder, with approve and release replaced.
+    // `deps` is the file's own DecisionDeps builder; its overrides replace approve and release.
     await expect(
-      answerDecision({ ...deps(), approve, release }, "proj", waiting, { choice: "accept" }),
+      answerDecision(deps({ approve, release }), PROJECT, waiting, { choice: "accept" }),
     ).rejects.toThrow(/amendment card/);
     expect(approve).not.toHaveBeenCalled();
     expect(release).not.toHaveBeenCalled();
@@ -184,7 +195,11 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
   it("A5 a master plan's page draws plan.master whatever its own documents say", () => {
     for (const briefStatus of [null, "draft", "accepted"])
       for (const waiting of [false, true])
-        expect(planLookState({ archived: false, waiting, briefStatus, master: true })).toBe("plan.master");
+        for (const archived of [false, true])
+          for (const position of [undefined, "executing", "monitor"])
+            expect(
+              planLookState({ archived, position, waiting, briefStatus, master: true }),
+            ).toBe("plan.master");
   });
   ```
 
