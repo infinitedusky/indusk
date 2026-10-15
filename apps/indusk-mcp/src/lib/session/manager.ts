@@ -71,7 +71,10 @@ interface Held {
 	opts: SessionOptions;
 }
 
-/** The `decided` event for a request, from the decision made on it. */
+/**
+ * The `decided` event for a request, from the decision made on it.
+ * promise: a-decided-request-stays-decided
+ */
 function decidedBy(
 	requestId: string,
 	decision: { allow: true; answers?: Record<string, string> } | { allow: false; message: string },
