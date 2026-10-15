@@ -92,6 +92,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 - [x] `impl-corpus.test.ts`: add `archive/browser-template-claims` and `archive/untrack-mcp-json` to `PRE_EXISTING_FAILURES`, each with its reason in the block comment above (cites rows another plan's file holds; cites T4, which has no row) — archived history, recorded not repaired
 - [x] `.indusk/planning/cockpit-audit-fixes/brief.md`: add `## Looks` — read its impl's Files Affected against `.indusk/mockups/admin/screens.json` `sources` to decide between `None — <reason>` and the looks it changes; the amendment waits for the person's re-approval in the cockpit
   - Note, 2026-10-14: the section lists `decision-card.ask`, `dashboard.default` and `nav.expanded` as Changes (impl Files Affected: DecisionCard.tsx, promise-dashboard.ts, PlanList.tsx) and four others as Must-not-break. Inserted before `## Depends On`; the branch `plan/cockpit-audit-fixes` (bc94a4d59) edits only the title and description lines of the brief, and `git merge-file` of this copy against that branch's has no conflict. The amendment waits for the person's re-approval in the cockpit.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
@@ -100,11 +101,11 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 #### Build Phase 1 Context
 
-- [ ] guard: the stdin read's comment names `promise: a-large-impl-gets-the-same-contract-answer` and why a sync read fails on a pipe
+- [x] guard: the stdin read's comment names `promise: a-large-impl-gets-the-same-contract-answer` and why a sync read fails on a pipe
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md` (the `contract` entry): `--impl-stdin` reads an impl of any size
+- [x] `apps/docs/src/reference/cli/promises.md` (the `contract` entry): `--impl-stdin` reads an impl of any size
 
 ### Build Phase 2: Four stale tests, and the landed-plans rule
 
