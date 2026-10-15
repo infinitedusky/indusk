@@ -70,6 +70,16 @@ or **broken** — the words people use of promises.
 | Right now — a live page | **holding** | **broken** |
 | What happened | **held** | **broke** |
 
+**Signal, not mark** (Sandy, 2026-10-15). The telemetry that reports a clause
+is its **signal** — observability's own word (OpenTelemetry calls traces,
+metrics and logs signals). A signal is neutral: it is the channel, and what it
+*reports* is the verdict. Each clause reads one of three: **holding** (its
+signal reports it upheld), **broken** (with the symptom), or **no signal**
+(nothing has reported, or the watcher is blind — unknown, never shown as
+holding). "Mark" retires from what people read; the telemetry attributes
+underneath (`indusk.promise.*`) can stay. Rejected: *verification* — it implies
+success, reads as a test, and collides with `indusk verify`.
+
 The system *upholds* a promise; a promise *holds* or *breaks*. Never *failed*,
 *passed* or *violated* — the words of tests and tickets. Today InDusk mixes
 them: a mark reports `upheld`/`violated` and the registry's state is
