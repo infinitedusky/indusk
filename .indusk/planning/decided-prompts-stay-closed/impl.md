@@ -184,7 +184,7 @@ Every request a session makes is recorded in its log together with how it was de
 - [x] (reviewed `SessionPanel.test.tsx` (402) and `manager.test.ts` (513) — left as-is: each is one subject's tests grouped by trajectory row; splitting by row would scatter shared fakes)
 - [x] (reviewed `build-session.ts`, `start.ts`, `SessionConnector.tsx`, `use-project-session.ts` — left as-is: small edits, under cap, no repeat across files)
 - [x] The panel's log skips a `decided` event instead of giving it an empty `<li>` (`SessionPanel.tsx`) — found by the audit (`audit.md`, "What does the diff change that no row touches?"): each decision added a blank, gap-spaced row
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: the outcome line is the panel's; in the project conversation's thread a decided request is simply no longer waiting — found by the audit: the page claimed the thread draws outcomes, which it never did
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: the outcome line is the panel's; in the project conversation's thread a decided request is simply no longer waiting — found by the audit: the page claimed the thread draws outcomes, which it never did
 
 - [x] Shape — reviewed the files this phase wrote (`use-answered-requests.ts`, `request-decisions.ts`, `QuestionView.tsx`, and the edited `SessionPanel.tsx`, `ConversationThread.tsx`, `conversation-turns.ts`) against the enabled extensions' craft rules.
   - Found: `Replied` lived in `SessionPanel.tsx`, so the hook imported a type from the component that imports the hook (a cycle, erased but backwards); moved `Replied` into `use-answered-requests.ts` and pointed `SessionPanel` and `ConversationThread` at it. Nothing else to change.
