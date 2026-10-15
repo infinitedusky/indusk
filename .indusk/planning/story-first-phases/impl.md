@@ -1,7 +1,7 @@
 ---
 title: "Phase summaries"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -71,6 +71,13 @@ This impl is written in the shape it introduces.
 | A18 | The falsification and cleanup skills' phase templates, filled in as written, pass the save check on an impl that has opted in to phase summaries | Build Phase 4 | Build Phase 4 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
 | A19 | The phase-summary rule, read from its own hook module, names the same problems for a missing paragraph, code on a task line and a row label in a paragraph or a task as the save check does | Build Phase 5 | Build Phase 5 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/phase-summary-module.test.ts |
 | A20 | Both phase-row stories, drawn by the plan page's real task list instead of copied markup, are approved again in the cockpit | Build Phase 5 | Build Phase 5 | passing | live check | the look phase-row.open and phase-row.closed, held by their approval in the cockpit | |
+| A21 | On an impl that has opted in, an edit that removes a phase's paragraph, or puts code or a row label on a task line, or a row label in a paragraph, is refused, while an edit that adds no new problem still goes through | Build Phase 6 | Build Phase 6 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/phase-summary-rule.test.ts |
+| A22 | On an impl that has opted in, a task line with nothing after its box is refused, naming the phase | Build Phase 6 | Build Phase 6 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/phase-summary-rule.test.ts |
+| A23 | A task fold that is opened and never closed is refused when the impl is saved, naming the task, and hides nothing, so an unticked task after it keeps a cleanup phase unfinished | Build Phase 6 | Build Phase 6 | planned | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
+| A24 | Ticking a box inside a task's fold, with the edit's old text starting at the box's dash, is not read as a checkoff by the tick check | Build Phase 6 | Build Phase 6 | planned | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
+| A25 | A box ticked inside a task's fold produces no checkoff commit in the gated loop | Build Phase 6 | Build Phase 6 | planned | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/lib/run/commit-cadence.test.ts |
+| A26 | The repair phase a broken promise adds to an impl that has opted in passes the save check | Build Phase 6 | Build Phase 6 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/lib/promises/reopen-phase-summary.test.ts |
+| A27 | A parsed impl's phase paragraph and task detail reach the plan page whole, the paragraph formatted, code shown as code | Build Phase 6 | Build Phase 6 | planned | unit | promise: technical-detail-opens-on-request | apps/indusk-admin/src/components/plan/PlanParts.test.tsx |
 
 ## Checklist
 
@@ -165,6 +172,10 @@ Before any code changes, this phase writes down what "done" means as tests that 
 
 - **A19** — its subject is the hook module Build Phase 5 extracts; importing it today would fail to load, which is an absent test, not a red one.
 - **A20** — a person's look in the cockpit once the stories draw the real task list, at the same phase.
+
+#### Deferred to Build Phase 6
+
+- **A21** to **A27** — found by the audit after Build Phase 5 closed, so no earlier phase could author them; every subject exists today, so Build Phase 6 writes them red on their own assertions at its start.
 
 #### Regression Guards
 
@@ -542,6 +553,88 @@ The plan is correct and its tests are hardened; this phase tidies what it spread
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/component-conventions.md`: one line under stories — a story passes the real child component (here `PhaseItems` inside `PhaseRow`) so the approved snapshot is the component's own drawing.
+
+  </details>
+
+### Build Phase 6: Audit fixes — the rule holds on every edit, an unclosed fold hides nothing, and every writer and reader follows the shape
+
+**Tier**: med — the work step's default
+
+A reader who had not seen the build audited the plan and found places where its three promises still do not hold; Sandy asked for all of them fixed before the plan closes. The save check enforces the new shape only when a whole file is written, so an edit can quietly delete a phase's paragraph or put code on a task line, and a task line with nothing on it passes. A task fold that is never closed hides every line after it, real unticked tasks included, so a cleanup phase can look finished when it is not. Two writers and readers the plan never touched still work the old way: the repair phase a broken promise adds is written in the old shape, and the gated loop reads a box ticked inside a fold as a checkoff. The tick check can misread an edit that begins at a folded box's dash, the plan page shows the phase paragraph as plain text, and the docs claim the save check refuses code in a paragraph when it refuses only row labels there. After this phase every one of those holds as the promises say, and the next step is the retrospective.
+
+- [ ] An edit to an impl that has opted in is held to the summary rule, refusing only the problems that edit adds
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/hooks/validate-impl-structure.js`: before the "doesn't touch phase structure" early exit (`!hasPhaseHeader && !hasChecklistItem && !hasTierLine` → exit 0), when the full new content's frontmatter has `phase_summary: required`, run `phaseSummaryProblems` (`hooks/_phase-summary.js`) over the old body and the new body and refuse with the existing message if the new set has a problem the old set lacks. Comparing sets keeps an unrelated edit to an impl with a pre-existing problem from being blocked. Sync `.claude/hooks/` byte-equal.
+
+  </details>
+- [ ] A task line with nothing after its box is refused on an impl that has opted in
+  <details><summary>Technical</summary>
+
+  `hooks/_phase-summary.js` `phaseSummaryProblems`: an item whose text is empty after trimming is a problem naming its phase ("a task with no sentence").
+
+  </details>
+- [ ] A task fold left open is refused when saved and hides nothing from the checks that skip folded text
+  <details><summary>Technical</summary>
+
+  Save check: on an opted-in impl, a `<details>` opened under a task with no `</details>` before the next column-zero task, gate heading or phase heading is refused, naming the task — like the unterminated fence (`fencedLineMask`). Reader: `foldedLineMask` in `apps/indusk-mcp/src/lib/impl-parser-core.ts` fails open on an unclosed fold, as an unterminated fence masks nothing, so `isRitualPhaseTerminal` (`lib/cleanup/gate.ts`) and `verificationIsGreen` (`lib/shape/shape.ts`) see the tasks after it. Decide whether the parser's `inFold` in `parseChecklistItems` should end at the next column-zero task (it already does) and leave it.
+
+  </details>
+- [ ] The tick check counts boxes over the whole file before and after an edit, not over the edit's own text
+  <details><summary>Technical</summary>
+
+  `hooks/check-gates.js`: for an Edit, build the full old content from disk and the full new content (the same way `validate-impl-structure.js` builds `newFullContent`), and count `CHECKED_BOX` / `UNCHECKED_BOX` over those, so a fragment beginning at a folded box's dash is not mistaken for a column-zero line. Today it counts `old_string` / `new_string` (lines 72, 111). Sync `.claude/hooks/`.
+
+  </details>
+- [ ] The gated loop reads ticked boxes only from top-level lines, so a box ticked inside a fold makes no checkoff commit
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/run/commit-cadence.ts` lines 103–104: `.map((l) => l.trim()).filter((l) => l.startsWith("- [x]"))` reads indented lines; keep only column-zero lines (and skip `foldedLineMask` lines), matching the tick check.
+
+  </details>
+- [ ] The repair phase a broken promise adds is written in the new shape when the impl has opted in
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/promises/reopen.ts` `maintenancePhase`: when the owner impl's frontmatter has `phase_summary: required`, write a `**Tier**:` line, a plain paragraph naming the incident and the promise, task sentences, and the commands, paths and row label (`rowId`) in each task's Technical fold. The old shape is unchanged for impls that have not opted in.
+
+  </details>
+- [ ] The plan page shows a phase's paragraph formatted, code included
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/src/components/ui/PhaseRow.tsx` takes `summary?: ReactNode` instead of `string`; `components/plan/PlanParts.tsx` passes `<Markdown>{view.summary}</Markdown>`. The ui component stays free of the markdown import, and the stories' plain-string paragraph draws as it did, so their approved snapshots should not change — confirm with `indusk looks stories admin` and `indusk looks status admin`; if either story turns proposed, add a pause item for Sandy's re-approval.
+
+  </details>
+- [ ] The docs say what the save check refuses in a phase paragraph: a row label, not code
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/skills/falsify.md` and `skills/cleanup.md` ("The save check refuses a code span or a row label on the paragraph or a task line") and `templates/planning/CLAUDE.md` ("refuses a missing paragraph, a code span or a row label on those lines"): say a task line may carry neither code nor a row label, and a paragraph no row label — matching the ADR's decision. Sync `.claude/skills/` and `.indusk/planning/CLAUDE.md`.
+
+  </details>
+
+#### Build Phase 6 Verification
+
+- [ ] Every audit finding has a test that failed before its fix and passes now, and the earlier rows stay green
+  <details><summary>Technical</summary>
+
+  Green: A21–A27; still green: A1–A3, A9–A12, A14, A15, A17–A19, A5–A7. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/phase-summary-rule.test.ts src/__tests__/detail-is-only-read.test.ts src/__tests__/phase-summary-module.test.ts src/__tests__/phase-summary-existing-impls.test.ts src/lib/run/commit-cadence.test.ts src/lib/promises/reopen-phase-summary.test.ts src/__tests__/skill-sync-parity.test.ts && pnpm exec vitest related src/lib/impl-parser-core.ts src/lib/run/commit-cadence.ts src/lib/promises/reopen.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/plan/PlanParts.test.tsx src/components/ui/PhaseRow.test.tsx src/components/plan/PhaseItems.test.tsx`; `indusk looks status admin` shows both phase-row stories approved.
+
+  </details>
+
+#### Build Phase 6 Context
+
+- [ ] The planning rules say the summary rule holds on every edit and an unclosed task fold is refused
+  <details><summary>Technical</summary>
+
+  planning: `apps/indusk-mcp/templates/planning/CLAUDE.md`, the phase-summary entry — add "held on every edit to an opted-in impl, refusing only what the edit adds; a task's `<details>` must close before the next task" — guarded by `phase-summary-rule.test.ts` and `detail-is-only-read.test.ts`. Sync `.indusk/planning/CLAUDE.md`.
+
+  </details>
+
+#### Build Phase 6 Document
+
+- [ ] The planner's reference page says the rule is checked on every edit and that an unclosed fold is refused
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/skills/plan.md`, the "Phase summaries for a reader without the shorthand" section: one paragraph on edit-time enforcement and the unclosed-fold refusal.
 
   </details>
 
