@@ -174,7 +174,10 @@ async function deliver(
   return { via: "session", sessionId: id };
 }
 
-/** The answers a question's reply carries: one under each question's text, none left out. */
+/**
+ * The answers a question's reply carries: one under each question's text, none left out.
+ * promise: a-question-is-answered-in-full
+ */
 function questionAnswers(
   waiting: Waiting,
   choice: DecisionChoice,
