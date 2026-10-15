@@ -188,7 +188,7 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
 
 #### Build Phase 1 Context
 
-- [ ] The promise code's own context file says where a signal's verdict and a promise's state words are decided.
+- [x] The promise code's own context file says where a signal's verdict and a promise's state words are decided.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/CLAUDE.md` (area): "A signal's outcome is read only through `readOutcome` — `broken` and `violated` both mean broken, so applications instrumented before 2026-10-15 keep working; the registry reads `known-violated` as `known-broken` and never rewrites it. — `promise: a-promise-is-upheld-or-broken`, see `/decisions/one-promise-language`".
