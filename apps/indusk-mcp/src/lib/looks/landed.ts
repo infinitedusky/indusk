@@ -33,8 +33,10 @@ export function planHasLanded(root: string, plan: string): boolean {
  * project's own checkout, before ownership, or merged) holds every component
  * its markup names. A mockup whose latest approval is an unlanded plan's holds
  * the components its most recent held approval bound (`components` keys,
- * `badge.ok` to `badge`); an entry without `components` binds none. A mockup
- * never approved is held in full, as before.
+ * `badge.ok` to `badge`) only when that approval recorded some; with none
+ * recorded (absent or empty) there is no record of what landed, so it is held
+ * in full. A mockup with no held approval at all is new with the unlanded plan
+ * and exempt. A mockup never approved is held in full, as before.
  */
 export function heldComponentNames(
 	root: string,
@@ -50,8 +52,17 @@ export function heldComponentNames(
 			for (const name of markedComponentsOf(m.html)) held.add(name);
 			continue;
 		}
-		const bound = [...mine].reverse().find(isHeld);
-		for (const story of Object.keys(bound?.components ?? {})) held.add(componentOfStory(story));
+		const heldApproval = [...mine].reverse().find(isHeld);
+		// No held approval at all: new with the unlanded plan, so exempt.
+		if (heldApproval === undefined) continue;
+		const bound = Object.keys(heldApproval.components ?? {});
+		// A held approval that recorded no components left no record of what
+		// landed: hold the mockup in full.
+		if (bound.length === 0) {
+			for (const name of markedComponentsOf(m.html)) held.add(name);
+			continue;
+		}
+		for (const story of bound) held.add(componentOfStory(story));
 	}
 	return held;
 }
