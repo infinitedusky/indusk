@@ -568,13 +568,13 @@ A reader who had not seen the build audited the plan and found places where its 
   `apps/indusk-mcp/hooks/validate-impl-structure.js`: before the "doesn't touch phase structure" early exit (`!hasPhaseHeader && !hasChecklistItem && !hasTierLine` → exit 0), when the full new content's frontmatter has `phase_summary: required`, run `phaseSummaryProblems` (`hooks/_phase-summary.js`) over the old body and the new body and refuse with the existing message if the new set has a problem the old set lacks. Comparing sets keeps an unrelated edit to an impl with a pre-existing problem from being blocked. Sync `.claude/hooks/` byte-equal.
 
   </details>
-- [ ] A task line with nothing after its box is refused on an impl that has opted in
+- [x] A task line with nothing after its box is refused on an impl that has opted in
   <details><summary>Technical</summary>
 
   `hooks/_phase-summary.js` `phaseSummaryProblems`: an item whose text is empty after trimming is a problem naming its phase ("a task with no sentence").
 
   </details>
-- [ ] A task fold left open is refused when saved and hides nothing from the checks that skip folded text
+- [x] A task fold left open is refused when saved and hides nothing from the checks that skip folded text
   <details><summary>Technical</summary>
 
   Save check: on an opted-in impl, a `<details>` opened under a task with no `</details>` before the next column-zero task, gate heading or phase heading is refused, naming the task — like the unterminated fence (`fencedLineMask`). Reader: `foldedLineMask` in `apps/indusk-mcp/src/lib/impl-parser-core.ts` fails open on an unclosed fold, as an unterminated fence masks nothing, so `isRitualPhaseTerminal` (`lib/cleanup/gate.ts`) and `verificationIsGreen` (`lib/shape/shape.ts`) see the tasks after it. Decide whether the parser's `inFold` in `parseChecklistItems` should end at the next column-zero task (it already does) and leave it.
