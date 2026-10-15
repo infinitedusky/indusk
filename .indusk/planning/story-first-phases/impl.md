@@ -59,7 +59,7 @@ This impl is written in the shape it introduces.
 | A15 | A Verification task with its row labels only in its folded detail satisfies the rule that each Verification section names the tests it proves | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/phase-summary-rule.test.ts |
 | A16 | The planner's impl instructions tell it to write for someone who knows the project but none of its shorthand, with a before-and-after example | Test Phase 1 | Build Phase 3 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
 | A5 | An open phase on the plan page shows the phase's paragraph above its tasks | Test Phase 1 | Build Phase 2 | passing | unit | promise: technical-detail-opens-on-request | apps/indusk-admin/src/components/ui/PhaseRow.test.tsx |
-| A6 | Each task shows only its sentence until "Technical" is opened; opened, code shows as code, a fenced block included, and no details or summary tag shows as text | Build Phase 2 | Build Phase 2 | planned | unit | promise: technical-detail-opens-on-request | apps/indusk-admin/src/components/plan/PhaseItems.test.tsx |
+| A6 | Each task shows only its sentence until "Technical" is opened; opened, code shows as code, a fenced block included, and no details or summary tag shows as text | Build Phase 2 | Build Phase 2 | passing | unit | promise: technical-detail-opens-on-request | apps/indusk-admin/src/components/plan/PhaseItems.test.tsx |
 | A7 | A code block inside a task's detail reaches the page whole: the parser keeps the detail, fences included | Test Phase 1 | Build Phase 2 | passing | unit | promise: technical-detail-opens-on-request | apps/indusk-mcp/src/lib/impl-parser.test.ts |
 | A8 | The open phase row drawn from the real component matches the mockup Sandy approved | Build Phase 2 | Build Phase 2 | planned | live check | the look phase-row.open, held by its approval in the cockpit | |
 | A9 | Editing a task's detail so it contains a ticked box is not treated as a checkoff: no gate is judged and the edit goes through | Test Phase 1 | Build Phase 1 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
@@ -283,7 +283,7 @@ This phase is the part Sandy sees in the admin. The code that reads an impl for 
   Lift the item list out of `components/plan/PlanParts.tsx` into `components/plan/PhaseItems.tsx`; key items by index, not text. Each item with a `detail` gets `<details><summary>Technical</summary>` rendering the detail through `components/Markdown.tsx`; an item with only a `note` keeps today's note line.
 
   </details>
-- [ ] The test for the Technical fold is written from its reviewed body and passes
+- [x] The test for the Technical fold is written from its reviewed body and passes
   <details><summary>Technical</summary>
 
   A6: copy the reviewed body from Test Phase 1's `#### Deferred to Build Phase 2` into `components/plan/PhaseItems.test.tsx`.
