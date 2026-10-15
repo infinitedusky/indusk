@@ -51,3 +51,8 @@ The branch touched 32 files (+762/−91), 27 of them under `apps/` and `turbo.js
 - **Quality:** the only recurring mistake was formatting, caught by `biome check`; no new rule is warranted. Shape: 8 reviews, 0 findings, 0 judged wrong by a person.
 - **Context:** the root's "Landing installs, publishing is deliberate" convention left the root, since the retrospective skill's Steps 10–11 state it where it applies. `apps/indusk-mcp/CLAUDE.md` is over its 16 KB nested budget (19,479 bytes, 19,446 on main before this plan), so nothing moved into it. Compacting it is outstanding.
 - **Open, not fixed here:** the daemon guard fails the root run on other sessions' leftovers, and admin browser tests still `await import` pages inside an `it`.
+- **Landing (2026-10-15):**
+  - **Merge:** main merged into the branch, with plan-stories and story-first-phases landed since. The only conflict was the docs sidebar, where both entries were kept.
+  - **Context probe:** `pnpm e2e` context-tiers passed 4/4.
+  - **The rest of the e2e run:** `day-monitor` fails because `claude` 2.1.296 reports an unknown model as `unrecognized_model`, not the "issue with the selected model" text it asserts. That is Claude Code's change, not this plan's.
+  - **Root runs:** the first was red only on `NewProjectProposal` A3 (new-project-flow's browser test, a "Create project" click waiting 14 s for a stable button under load). It passes alone, 7/7 twice. The second root run exited 0: admin 116 files / 721 tests, indusk-mcp 439 files / 2,941 tests plus templates 12, indusk 48, seat-holds 3, 146 promises with 0 known-violated, no leftover daemons. The browser flake is open: observed once, cause not found.
