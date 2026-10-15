@@ -7,6 +7,7 @@ import { type BuildPlan, nextBuildStep, type StepOutcome } from "./next-step.js"
 
 /**
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A13.
+ * promise: a-skip-reason-is-one-sentence — skip-reason-why A15, below.
  *
  * A build that cannot continue stops and says why, instead of trying again
  * without end. Three causes, from ADR D4: the step's session ended in an
@@ -90,5 +91,45 @@ describe("A13 — a build that cannot continue stops and says why", () => {
 	it("a phase that is closed is not stopped by the blocker it once had", () => {
 		const step = nextBuildStep(fixturePlan({ open: false, blocker: "resolved since" }));
 		expect(step.step).toBe("review");
+	});
+});
+
+// promise: a-skip-reason-is-one-sentence
+describe("A15 — an over-long skip reason is shortened, not re-run", () => {
+	const closed = (missing: string[], longSkipReasons: RetrospectiveReadiness["longSkipReasons"]) => {
+		const plan = fixturePlan({ open: false });
+		return { ...plan, readiness: { ...ready, passes: false, missing, longSkipReasons } };
+	};
+
+	it.each(["falsification", "cleanup", "audit"] as const)(
+		"%s skipped with a 300-character reason asks for the reason to be shortened",
+		(ritual) => {
+			const step = nextBuildStep(closed([ritual], [{ ritual, length: 300, sentences: 1 }]));
+			expect(step).toEqual({ step: "shorten-reason", ritual, length: 300, sentences: 1 });
+		},
+	);
+
+	it("a missing audit with no long reason still runs the audit", () => {
+		expect(nextBuildStep(closed(["audit"], []))).toEqual({ step: "audit" });
+	});
+
+	it("a long reason for a ritual that is not missing is not acted on", () => {
+		const step = nextBuildStep(
+			closed(["audit"], [{ ritual: "cleanup", length: 300, sentences: 1 }]),
+		);
+		expect(step).toEqual({ step: "audit" });
+	});
+
+	it("shortens in falsification, cleanup, audit order", () => {
+		const step = nextBuildStep(
+			closed(
+				["cleanup", "audit"],
+				[
+					{ ritual: "audit", length: 400, sentences: 2 },
+					{ ritual: "cleanup", length: 300, sentences: 1 },
+				],
+			),
+		);
+		expect(step).toMatchObject({ step: "shorten-reason", ritual: "cleanup" });
 	});
 });

@@ -17,6 +17,9 @@ import { describe, expect, it } from "vitest";
  * This test pins the invariant structurally: every package skill source must
  * have a byte-identical installed copy. A forgotten sync fails here, at test
  * time, instead of when a stale skill loads.
+ *
+ * promise: a-skip-reason-is-one-sentence — the installed ritual skills carry the 120-character rule
+ * only once resynced (skip-reason-why A14).
  */
 
 const REPO_ROOT = new URL("../../../..", import.meta.url).pathname;
