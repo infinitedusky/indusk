@@ -240,6 +240,10 @@ body {
 .measure-question {
   max-width: 30ch;
 }
+/* A phase's paragraph is read at a measure of 70 characters. */
+.measure-story {
+  max-width: 70ch;
+}
 .cols-conversation {
   grid-template-columns: minmax(0, 1fr) var(--size-side);
 }

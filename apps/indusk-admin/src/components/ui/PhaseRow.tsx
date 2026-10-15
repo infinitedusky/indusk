@@ -13,6 +13,8 @@ export interface PhaseRowProps
   tone?: PhaseRowTone;
   /** Opens the row's own page instead of unfolding. */
   href?: string;
+  /** The phase's paragraph: what it does for the whole plan, drawn above its items when unfolded. */
+  summary?: string;
   /** What the row holds when unfolded. */
   children?: ReactNode;
   /** Drawn open. Closed unless asked. */
@@ -39,6 +41,7 @@ export function PhaseRow({
   state,
   tone = "idle",
   href,
+  summary,
   children,
   open = false,
   className = "",
@@ -88,7 +91,14 @@ export function PhaseRow({
         </span>
         {head}
       </summary>
-      <div className="border-t border-line p-3">{children}</div>
+      <div className="border-t border-line p-3">
+        {summary ? (
+          <p className="measure-story mb-3 text-sm leading-3 text-ink-soft">
+            {summary}
+          </p>
+        ) : null}
+        {children}
+      </div>
     </details>
   );
 }
