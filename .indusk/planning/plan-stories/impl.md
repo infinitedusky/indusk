@@ -1,7 +1,7 @@
 ---
 title: "Plan titles and stories"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -71,6 +71,8 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 | A20 | The plan page still opens with the description, now under the title, and whether the brief is finished, one click from the brief | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/components/plan/PlanSummary.test.tsx, apps/indusk-admin/src/__tests__/plan-page-layout.test.tsx |
 | A21 | The admin and the editor name a plan by the package's one title rule; neither holds a second | Test Phase 1 | Test Phase 1 | passing | unit | regression: display-names' single definition, which the title changes in the package, the admin and the editor touch | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
 | A22 | A plan whose title in its own worktree differs from its copy on the trunk is named by the worktree's title on the Promises page and in the editor, as the nav names it — one plan, one name everywhere | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A23 | A plan's stage reads the same in the nav and on its master's page — waiting on the person, released, and each status — because both ask one rule | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/plan-stage.test.ts |
+| A24 | A plan declared in a master with no folder yet reads by its declared title, else its handle in words through the project's product words, the same in the nav and on the master's page | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/plan-groups.test.ts |
 
 ### Deferred Verification
 
@@ -408,6 +410,28 @@ Titles and descriptions come from research.md's tables. A description already wr
 #### Build Phase 6 Falsification Summary
 - Searched without a hypothesis: `subplans:` entries as mappings (every reader goes through `plan-parser`'s `subplanEntries`); a non-string or date `title:` (the frontmatter reader returns a string or nothing); an empty part before the dash (falls back to the handle in words); the master story's counts against the nav's Path count (one group, one rule); nested Paths in a master's story; `answerDecision` on an amendment wait (refused); initials from titles (Paths draw none; plan marks could collide before this plan too).
 - Not investigated: older installed versions reading the new `subplans:` mappings (they drop the queued placeholders only, never a plan with a folder; the always-on server reads no declarations); the CLI's own plan listings, which the promise does not cover.
+
+### Build Phase 7: Cleanup — one rule for a plan's stage, one for a queued plan's title
+
+**Tier**: med — the work step's default
+
+**Goal**: decompose what this plan grew across files, per the rule that one fact has one home (a second copy drifts). The master page was built to say each plan's stage "as the nav row says it", and both files now hold that rule; and a queued plan's title is worked out in both the nav and the master story, one of them without the project's product words.
+
+- [ ] Extract the stage rule — `step ?? (released ? "Released" : statusToNavMark(...).stage)`, in `components/PlanList.tsx`'s `PlanItem` and again as `stageOf` in `lib/master-story.ts` — into `planStage(plan, released, waiting)` in a new `lib/plan-stage.ts`, used by both; `PlanItem`'s row state (`needs` when waiting) stays where it is. Basis: one fact, two homes, and the master page's contract is to agree with the nav
+- [ ] Carry a queued plan's title and description on `buildGroups`' placeholder entry (`lib/plan-groups.ts`: `{ kind: "placeholder"; name; number; title; description }`, from `declaredTitles` else `planTitle(undefined, name, words)`), so `PlanList`'s `PlaceholderRow` and `master-story.ts` both read `entry.title` instead of each looking it up; `master-story.ts` today calls `planTitle` without the project's words. Basis: one fact, two homes, already drifting
+- [ ] (reviewed `apps/docs/src/changelog.md` — left as-is: an append-only log, one entry added)
+- [ ] (reviewed `__tests__/helpers/cockpit-fixture.ts` (906 lines) and `cockpit-nav.test.tsx` (416) — left as-is: the one fixture module the cockpit's tests share and the nav's one test file; this plan added titles and one Path entry, and splitting either is a reorganisation of the cockpit's tests, not this plan's)
+- [ ] (reviewed `lib/planning-reader.ts` (700), `bin/commands/promises.ts` (504), `lib/plan-parser.ts` (527) — left as-is: each is the established home of what this plan added — a plan's name read with its copy, an `await`, the `subplans:` mapping entries — and this plan's additions are small; decomposing them is not this plan's)
+- [ ] (reviewed the rest — `SubplanRow.tsx`, `MasterStory.tsx`, `master-story.ts`, `display.ts`, `waiting.ts`, `decisions-reader.ts`, `look-state.ts`, `looks-fixtures.ts` — left as-is: under their caps and one job each once the two extractions above land; the deleted `ParentPlanView` and `MasterBar` leave no stranded caller)
+
+#### Build Phase 7 Verification
+- [ ] A23 and A24 pass, A1–A5, A11 and A13 still pass (`cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-stage.test.ts src/lib/plan-groups.test.ts src/lib/master-story.test.ts 'src/app/p/[project]/cockpit-nav.test.tsx' 'src/app/p/[project]/plan/[name]/master.test.tsx' src/lib/planning-reader.title.test.ts`); `pnpm exec vitest related` over the changed files; `indusk looks stories admin` changes no snapshot; tsc and biome clean on changed files
+
+#### Build Phase 7 Context
+- [ ] `apps/indusk-admin/CLAUDE.md` (over budget, shrinking edits only): fold into the one-home entry that a plan's stage is `planStage` and a queued plan's title rides on its placeholder entry
+
+#### Build Phase 7 Document
+- [ ] (none — internal decomposition; no page, route or CLI changes; ask before checking)
 
 ## Files Affected
 
