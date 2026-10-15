@@ -20,6 +20,7 @@ export default defineConfig({
 			"@opentelemetry/instrumentation-fetch",
 			"@opentelemetry/instrumentation-document-load",
 			"@opentelemetry/instrumentation-user-interaction",
+			"@opentelemetry/instrumentation-xml-http-request",
 			"@opentelemetry/exporter-trace-otlp-http",
 			"@opentelemetry/resources",
 			"@opentelemetry/semantic-conventions",
