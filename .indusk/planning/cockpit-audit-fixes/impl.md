@@ -8,6 +8,8 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
+cleanup: skipped
+cleanup_reason: "reviewed all 27 changed files: every source file is under 340 lines. The plan's own purpose was to consolidate duplication — standing.ts dayCounts/windowStart/thirtyDaysOf is now the one counting place proof.ts and the dashboard both call; the tally helper there is a single-use closure, not a rule-of-three repeat. path-nesting.ts (78 lines) is one module used by nav and dashboard; DecisionCard.tsx (228 lines) keeps single- and several-question branches in one cohesive component sharing option/words state, and splitting would scatter tightly-coupled form logic. No cross-file duplication or misplaced unit found; nothing warrants extraction."
 ---
 
 # Cockpit audit fixes — what plan-cockpit's cold audit found
