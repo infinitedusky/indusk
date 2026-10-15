@@ -1,7 +1,7 @@
 ---
 title: "Plan titles and stories"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -70,6 +70,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 | A19 | With a plan whose title is as long as the longest written, the drawer at 400 px still leaves no page scrolling sideways | Test Phase 1 | Test Phase 1 | passing | unit | promise: the-nav-fits-a-phone | apps/indusk-admin/src/app/p/[project]/cockpit-phone.test.tsx |
 | A20 | The plan page still opens with the description, now under the title, and whether the brief is finished, one click from the brief | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/components/plan/PlanSummary.test.tsx, apps/indusk-admin/src/__tests__/plan-page-layout.test.tsx |
 | A21 | The admin and the editor name a plan by the package's one title rule; neither holds a second | Test Phase 1 | Test Phase 1 | passing | unit | regression: display-names' single definition, which the title changes in the package, the admin and the editor touch | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
+| A22 | A plan whose title in its own worktree differs from its copy on the trunk is named by the worktree's title on the Promises page and in the editor, as the nav names it — one plan, one name everywhere | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
 
 ### Deferred Verification
 
@@ -383,6 +384,28 @@ Titles and descriptions come from research.md's tables. A description already wr
 #### Build Phase 5 Document
 
 - [x] `apps/docs/src/reference/cli/plans.md` (`plans start`): a new plan's title is its handle, which reads as words until a person writes a short title
+
+### Build Phase 6: Falsification — the nav and the Promises page name a worktree plan differently
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether `a-plan-reads-by-its-title` holds for a plan whose worktree copy and trunk copy disagree. Found by reading the code (2026-10-14): the admin's nav reads each plan from its worktree copy first (`readActivePlans` via the package's `resolvePlanCopies`, A13), but `readHealthNames` — behind the admin's Promises page and promise page (`app/p/[project]/promises/page.tsx`, `promises/[name]/page.tsx`) and the editor's health line — reads only the trunk's folders (`planFolders(projectRoot)`). Concretely today: `story-first-phases` reads "Phase summaries" in its worktree and "Story-first impl phases" on `main`, so the nav and the Promises page give one plan two names.
+
+- [ ] `readHealthNames` names each plan from the same copy the nav reads: the plan's worktree copy when it is assigned one, else the trunk's — through the package's copy resolver, never a second walk of the assignments. `resolvePlanCopies` is async and `readHealthNames` is sync with callers in the CLI (`promises health --json`), the admin's two Promises pages and the editor's names: either add a sync read of the assignment record beside the resolver (one rule, tested to agree with it) or make `readHealthNames` async and update its callers — grep them first and record which
+- [ ] The editor gets its names from `promises health --json`, so it follows; confirm with `apps/vscode-extension/src/core/names.test.ts` unchanged and passing
+
+#### Build Phase 6 Verification
+- [ ] A22: a fixture project with a plan assigned to a worktree whose brief's title differs from the trunk copy's; `readHealthNames` returns the worktree's title, and the admin's `readActivePlans` returns the same (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts`, plus `pnpm exec vitest related` over the changed files in both packages); A8–A13 and A21 still pass; tsc and biome clean
+
+#### Build Phase 6 Context
+- [ ] `apps/indusk-mcp/CLAUDE.md` (over budget, shrinking edits only): fold into the display-names entry that a plan's names are read from the copy the nav reads, worktree first
+
+#### Build Phase 6 Document
+- [ ] `apps/docs/src/reference/admin-ui/overview.md` (the Promises page): a plan reads by the title in its own worktree while it is worked there, as in the nav
+
+#### Build Phase 6 Falsification Summary
+- Searched without a hypothesis: `subplans:` entries as mappings (every reader goes through `plan-parser`'s `subplanEntries`); a non-string or date `title:` (the frontmatter reader returns a string or nothing); an empty part before the dash (falls back to the handle in words); the master story's counts against the nav's Path count (one group, one rule); nested Paths in a master's story; `answerDecision` on an amendment wait (refused); initials from titles (Paths draw none; plan marks could collide before this plan too).
+- Not investigated: older installed versions reading the new `subplans:` mappings (they drop the queued placeholders only, never a plan with a folder; the always-on server reads no declarations); the CLI's own plan listings, which the promise does not cover.
 
 ## Files Affected
 
