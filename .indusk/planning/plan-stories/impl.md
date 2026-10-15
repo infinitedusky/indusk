@@ -346,7 +346,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md` (The master plan page) as drawn; `apps/docs/src/decisions/plan-stories.md` published from the ADR with its sidebar entry; changelog: Changed: "Plans read by their titles in the admin and the editor; a master plan's page tells its story, plan by plan; Needs you lists a plan waiting on an amendment."
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (The master plan page) as drawn; `apps/docs/src/decisions/plan-stories.md` published from the ADR with its sidebar entry; changelog: Changed: "Plans read by their titles in the admin and the editor; a master plan's page tells its story, plan by plan; Needs you lists a plan waiting on an amendment."
 
 ### Build Phase 5: Every live plan gets its title
 

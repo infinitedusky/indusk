@@ -367,14 +367,12 @@ Three more, from the falsification pass:
 
 Grouping is display-only — it does not change which plans the CLI or MCP report as active.
 
-## Parent plan detail view
+## The master plan page
 
-Opening a parent plan (one whose `master.md` declares `subplans:`) renders, before anything else:
+Opening a master plan (one whose `master.md` declares `subplans:`) draws `plan.master`, the approved mockup, in place of a plan's stage and parts:
 
-- **The parent's own `master.md` prose** first — the sequence and its reasoning on one page.
-- **A card per declared subplan**, in declared order. A real subplan's card shows its name, status badge, and stage (the furthest lifecycle document it carries), and links to its plan page.
-- **A placeholder card** for each declared-but-uncreated subplan — dashed border, greyed, `queued` badge, non-navigable. Same semantics as the sidebar placeholder.
+- **The master's title** as the heading, with the `master plan` tag, and **what the master is for** (its `description:`) beneath it.
+- **A count line**: how many of its plans are released, in draft and queued, and *Read the master plan*, which opens the master's own `master.md` at `/p/{project}/plan/{name}/doc/master`. The counts are the Path group's the nav counts, so the page and the nav's `released/total` cannot disagree.
+- **The plans, in order**: a `SubplanRow` for each declared plan, numbered from 1 in the order the master declares them, by its title and description. A released plan says *Released*; a plan in draft or being built says its stage as the nav says it; both open the plan. A declared plan with no folder yet says *Queued*, is dimmed and opens nothing, and shows the title and description its master wrote in the `subplans:` entry. A Path declared inside reads as one row, *N of M released*, opening its own master page.
 
-The parent view is **additive**: if the parent also carries standard documents (a brief, an impl), those sections render below the cards exactly as on any other plan — cards never suppress content. A typical parent carries only `master.md`, so usually the cards stand alone.
-
-The same degrade rules apply: if the parent's declarations are missing or corrupt, the page falls back to the standard document view. A plan with no documents at all renders its header only — no empty sections (through 1.35.x a doc-less plan rendered a stray empty "Falsification" heading; that was a bug, fixed by this view).
+The same degrade rules apply: if the master's declarations are missing or corrupt, the page falls back to the standard plan page. A plan with no documents at all renders its header only.
