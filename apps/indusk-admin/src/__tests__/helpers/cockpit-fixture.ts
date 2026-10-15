@@ -294,6 +294,14 @@ export const SESSIONS: WaitingSession[] = [
   },
 ];
 
+/**
+ * Plans whose approved brief changed since approval, each waiting on nothing
+ * else (plan-stories A15). The decisions mock ignores it until Build Phase 2
+ * teaches `planWaiting` amendments; Build Phase 2 passes it and adds the plan
+ * to `WAITING`.
+ */
+export const AMENDED = ["skipped-ritual"] as const;
+
 /** Plans that wait on the person, in nav order, with the step each waits at. */
 export const WAITING = [
   ["at-review", "Review"],

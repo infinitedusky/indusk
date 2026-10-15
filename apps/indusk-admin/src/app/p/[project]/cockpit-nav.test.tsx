@@ -9,6 +9,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import {
+  AMENDED,
   activePlanNames,
   BROKEN,
   PROJECT,
@@ -373,6 +374,24 @@ describe("A11 (plan-stories) — every plan and Path in the nav reads by its tit
         row?.querySelector('[data-component="badge"]')?.textContent?.trim(),
       ).toBe(initialsOf(titleOf(handle)));
       expect(row?.getAttribute("href")).toBe(`${base}/plan/${handle}`);
+    }
+  });
+});
+
+describe("A15 (plan-stories) — a plan waiting only on an amendment is under Needs you on every page", () => {
+  it("A15 lists the amended plan on the plan page, the dashboard and a promise page", async () => {
+    for (const [child, path] of [
+      [planPage, `${base}/plan/beta-one`],
+      [dashboard, `${base}/promises`],
+      [promisePage, `${base}/promises/seat-holds-never-double-book`],
+    ] as const) {
+      const root = await layoutAround(child, path);
+      expect(
+        root.querySelector(
+          `[data-testid="needs-you"] a[data-needs-you="${AMENDED[0]}"]`,
+        ),
+        `${AMENDED[0]} under Needs you on ${path}`,
+      ).not.toBeNull();
     }
   });
 });
