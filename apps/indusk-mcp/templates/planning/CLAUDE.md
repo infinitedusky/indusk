@@ -113,8 +113,11 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   abbreviations or labels, and names, code and row labels go in the task's
   folded `<details><summary>Technical</summary>`. The save check refuses a
   missing paragraph, a row label in the paragraph, and code or a row label on a
-  task line; whether a sentence is plain is a person's, at approval. — guarded by
-  `phase-summary-rule.test.ts` (`promise: an-impl-phase-explains-itself`); the
+  task line; whether a sentence is plain is a person's, at approval. The rule is
+  held on every edit to an opted-in impl, refusing only what the edit adds, and
+  a task's `<details>` must close before the next task. — guarded by
+  `phase-summary-rule.test.ts` (`promise: an-impl-phase-explains-itself`) and
+  `detail-is-only-read.test.ts` (`promise: hidden-detail-is-only-read`); the
   full shape and a before-and-after example are in `/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand`
 - `validate-impl-structure.js` re-validates the whole file when an edit's
   `new_string` contains a phase header — scope edits to checklist items.
