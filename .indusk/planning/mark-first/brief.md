@@ -1,74 +1,64 @@
 ---
-title: "Mark first"
+title: "Signal first"
 date: 2026-10-14
 status: accepted
 workflow: feature
-description: "Promises are proved by what the running system reports, not by tests alone. A promise is made of clauses — split times along the way and limits that always hold — each with its own mark, layered by component so a break leads down to its cause, and an agent reads the broken mark's trace and proposes the fix."
+description: "A plan makes one promise, stated as clauses. Each clause is verified by its tests before release and upheld by its signal — telemetry from the running system — in use. The first cut: only what run-the-master needs."
 ---
 
-# Mark first — Brief
+# Signal first — Brief
 
-InDusk becomes telemetry-driven: a promise is kept when its marks say so in
-real use, tests support it, and a break is narrowed to its cause by following
-marks down. Background, the 100 m dash, the cost and the first worked example
-are in [research.md](research.md).
+A plan is one promise, made of clauses; each clause is verified by its tests
+before release and upheld by its signal in use. This is the first cut — only
+what `run-the-master` needs (Sandy, 2026-10-15: in order of importance). The
+background, the merge with `promise-first-build`, and the later cut are in
+[research.md](research.md); the principles are `promise-core`'s ("Settled
+2026-10-14/15").
 
 ## Expectations
 
-1. **Breaks are found by marks, not by people.**
-   - Measure: of incidents opened on this project's promises, the share opened by a mark in a running system against those opened by a failing test or reported by a person, read from the incident records.
-   - Look: 60 days after release.
+1. **Plans are written as one promise of clauses.**
+   - Measure: of plans whose brief is accepted after this lands, the share stating one promise as clauses, each clause with a signal, read from their briefs.
+   - Look: after the first five such plans.
 
-2. **A break is narrowed to its cause quickly.**
-   - Measure: time from an incident opening to the clause and the cause being named in it, from the incident record's timestamps; expect under ten minutes for most.
-   - Look: after the first ten incidents with clauses.
-
-3. **Marks cost little.**
-   - Measure: on the project conversation, the time each split takes with its marks on and off, and the trace storage the daemon uses per day; expect a few percent at most.
-   - Look: at the close of this plan, and 30 days after release.
-
-4. **Promises gain marks.**
-   - Measure: the share of promises in force with at least one clause that has a mark, from the registry; 4 of 127 today.
+2. **Clauses get signals that report.**
+   - Measure: of clauses in force, the share whose signal has reported at least once (holding or broken) against those still reading no signal, from the registry and the local daemon.
    - Look: 30 and 90 days after release.
 
-5. **The agent's diagnosis is usually right.**
-   - Measure: the share of diagnoses whose proposed fix a person accepts, read from the incident records.
-   - Look: after the first ten diagnoses.
+3. **Signals cost little.**
+   - Measure: on Homework Gate's first plan, the time each split takes with its signals on and off, and the trace storage the daemon uses per day; expect a few percent at most.
+   - Look: when that plan closes.
 
 ## Promises
 
 ### This plan makes
 
-1. **`a-promise-is-made-of-clauses`** (state). A promise can be stated as named clauses — splits, each a point reached within its budget on the way to the promise's goal, and limits, each a bound that always holds — and each clause has its own mark, its own health and the tests that support it.
+1. **`a-plan-is-one-promise`** (state). A plan makes one promise, and it is done when every clause of that promise is verified by its tests and its signal has reported it upheld.
 
-2. **`a-clause-is-kept-by-its-mark`** (state). A clause counts as kept only when its mark has reported it kept in a run of the real system; a passing test supports a clause but never stands in for its mark.
+2. **`a-promise-is-made-of-clauses`** (state). A promise is stated as named clauses — splits, each a point reached within its budget on the way to the promise's goal, and limits, each a bound that always holds — and each clause has its own signal and the tests tied to it.
 
-3. **`a-promise-can-rest-on-another`** (state). A clause can be another promise, of the part beneath it, and its health is that promise's health.
+3. **`a-clause-is-upheld-by-its-signal`** (state). A clause is upheld only when its signal has reported it upheld in a run of the real system; a passing test never stands in for its signal, and a clause whose signal has never reported reads no signal, never holding.
 
-4. **`a-break-leads-to-its-cause`** (behaviour). When a promise breaks, its incident names the first clause that broke along the way and every clause beneath it that broke in the same trace.
+4. **`a-clause-is-verified-before-release`** (state). A clause's tests must pass before anything ships; a change that makes one fail is stopped before release.
 
-5. **`a-page-can-mark-a-promise`** (state). A mark set in a browser — on the admin's pages or a project's own — reaches the same telemetry as a server's and counts the same.
+5. **`a-promise-can-rest-on-another`** (state). A clause can be another promise, of the part beneath it, and its health is that promise's health.
 
-6. **`every-broken-trace-is-kept`** (behaviour). Every trace that carries a broken mark is kept whole; traces where every mark held may be thinned.
+6. **`a-plan-plans-its-clauses`** (state). In place of a test plan, a plan's clause plan names each clause's signal — where it is read, what counts as upheld and what it reports when broken — and the tests tied to that clause, which the agents choose and keep.
 
-7. **`a-break-comes-with-a-diagnosis`** (behaviour). When a clause breaks, an agent reads the broken mark and its trace, and the incident holds the cause it found and the fix it proposes before anyone asks.
-
-8. **`a-message-sent-gets-a-reply`** (behaviour). Every message a person sends in a project conversation shows in the thread at once and is answered there within thirty seconds, or the thread says why not.
+7. **`a-promise-is-upheld-or-broken`** (state). Every signal, record and page says a promise or a clause is upheld or broken — holding or broken when live, no signal when unknown — and never failed, passed or violated; a signal written with the old word is still read.
 
 ### Existing promises
 
 **Must not break**
 
-- **`a-break-reaches-the-working-agent`**. A broken clause reaches the agent the same way a broken promise does today.
-- **`a-production-break-is-recorded-unasked`**. A broken clause becomes an incident the same way, with nobody running a command.
-- **`an-incident-names-its-tests`**. An incident still names the tests that supported the promise, beside its clauses.
-- **`a-click-and-its-server-work-share-a-trace`**. Browser marks ride the same trace a click already carries.
-- **`everyday-suite-stays-fast`**. Marks add no waiting to the everyday suite.
+- **`a-production-break-is-recorded-unasked`**. A broken clause becomes an incident the same way a broken promise does today.
+- **`a-break-reaches-the-working-agent`**. A broken clause reaches the agent the same way.
+- **`an-incident-names-its-tests`**. An incident still names the tests tied to what broke.
+- **`everyday-suite-stays-fast`**. Signals add no waiting to the everyday suite.
 
 **Changes**
 
-- **`a-closed-plan-kept-its-promises`**. A plan cannot close while a clause of a promise it made has no mark that has reported in a run; the tests that name the promise are listed as its support. When it closes, its promises are enforced.
-- **`a-promise-page-shows-its-proof`**. Each promise has a page showing its clauses — each with its mark, how it was last seen and the tests that support it — thirty days held and broken per source, and its dated history; when it is broken while every test passes, the page says the tests miss the case.
+- **`a-closed-plan-kept-its-promises`**. A plan cannot close while a clause of its promise has a failing test or no signal that has reported it upheld; a plan written before clause plans closes, as before, on passing tests that name its promises. When it closes, its promise is enforced.
 
 **Replaces**
 
@@ -76,41 +66,19 @@ None.
 
 ### Not promised
 
-- **Removing tests.** Tests stay as support; nothing is deleted. Sandy, 2026-10-14.
-- **The no-tests Homework Gate challenge.** It waits on this plan and is its own piece of work.
-- **Marks on every line.** Line-level "where" comes from a sampling profiler, a later plan if incidents ask for it.
-- **Gradual rollout** (send a release to a share of users and watch the marks before widening). Follows once marks are in place.
-- **Fixing without a person.** The agent proposes the fix; applying it stays with the reopened plan's normal flow.
+- **The later cut**, after `run-the-master`: a break leading to its cause, a diagnosis with every break, every broken trace kept, signals from the browser, every break becoming a test, approvals giving way to questions, and the promise page's clause views (research.md, "First cut").
+- **Removing tests.** Tests verify before release and guard against regression (Sandy: "the regression is fucked if you remove the tests").
+- **Signals on every line**, and **gradual rollout** — later, if incidents ask for them.
+- **Homework Gate's own promises.** It is its own project, with its own registry; proving this plan there is expectation 3, and the run Sandy makes there.
 
 ## Looks
 
-### This plan makes
-
-1. **`promise.clauses`**. A promise's page with its clauses: each split or limit with its budget or bound, its dot (held, broken, not yet seen), when its mark last reported, and the tests that support it.
-2. **`clause-row.held`**. A new component: one clause, held — its name, its budget or bound, a green dot, last seen.
-3. **`clause-row.broken`**. The same row broken: a red dot, the symptom, and the clause beneath it that broke.
-4. **`clause-row.unseen`**. The same row whose mark has never reported: a grey dot and "not seen in a run yet".
-5. **`incident.diagnosis`**. An incident with the first broken clause, the trace walked down to the cause, and the agent's diagnosis and proposed fix.
-
-### Existing looks
-
-**Must not break**
-
-None.
-
-**Changes**
-
-- **`promise.broken`**. The broken promise's page leads with its first broken clause and the diagnosis; the approved look stays held until a person approves this.
-- **`promise.enforced`**. The kept promise's page lists its clauses held; the approved look stays held until a person approves this.
-
-**Replaces**
-
-None.
+None — the first cut changes what plans and promises say and how a plan closes, not how any screen is laid out; the clause views come with the later cut and `run-the-master`'s graph.
 
 ## Depends On
 
-- `.indusk/planning/new-project-flow/` — its project conversation is the first worked example, so it lands first; marking the conversation must not change what the person sees (`a-project-conversation-is-a-back-and-forth`, which that plan makes).
+None.
 
 ## Blocks
 
-- The Homework Gate no-tests challenge.
+- `run-the-master` — it runs plans as a graph of promises and clauses, and reads their state.
