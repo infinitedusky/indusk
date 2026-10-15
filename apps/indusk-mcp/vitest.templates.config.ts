@@ -31,6 +31,10 @@ export default defineConfig({
 		passWithNoTests: true,
 		projects: [
 			{
+				// A Vitest project inherits nothing from the root config without
+				// `extends: true`, so the root's optimizeDeps list above never reached
+				// this project's server (promise: a-browser-test-passes-on-a-cold-cache).
+				extends: true,
 				test: {
 					name: "templates",
 					include: ["templates/**/*.test.ts"],

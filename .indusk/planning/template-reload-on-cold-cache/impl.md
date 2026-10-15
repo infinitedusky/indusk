@@ -42,9 +42,9 @@ approved_at: "2026-10-15T16:09:05.019Z"
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | Every package the browser template imports is bundled for its test page before the page loads, so none is discovered while a test runs | Test Phase 1 | Build Phase 1 | written | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
-| A2 | The template tests, run three times, each from a deleted Vite cache, pass every time, and Vite never reports that it reloaded a test | Build Phase 1 | Build Phase 1 | planned | live check | promise: a-browser-test-passes-on-a-cold-cache | (recorded in the impl with its result) |
-| A3 | Landing's install step syncs the checkout's dependencies to the lockfile, refusing a lockfile that does not match, before it builds anything | Test Phase 1 | Build Phase 1 | written | unit | promise: landing-installs-after-a-dependency-change | apps/indusk-mcp/src/__tests__/install-local.test.ts |
+| A1 | Every package the browser template imports is bundled for its test page before the page loads, so none is discovered while a test runs | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
+| A2 | The template tests, run three times, each from a deleted Vite cache, pass every time, and Vite never reports that it reloaded a test | Build Phase 1 | Build Phase 1 | passing | live check | promise: a-browser-test-passes-on-a-cold-cache | (recorded in the impl with its result) |
+| A3 | Landing's install step syncs the checkout's dependencies to the lockfile, refusing a lockfile that does not match, before it builds anything | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-installs-after-a-dependency-change | apps/indusk-mcp/src/__tests__/install-local.test.ts |
 | A4 | An evaluator run with a model that does not exist is recorded as a failure naming that model, and the promise status shows the violation, with the Claude Code installed today | Test Phase 1 | Build Phase 1 | written | contract | keeps the day-monitor end-to-end test about the monitor, not about Claude Code's wording | apps/indusk-mcp/e2e/day-monitor.e2e.test.ts |
 
 ## Checklist
@@ -146,10 +146,15 @@ This phase writes the tests that fail today for the reasons the research found. 
 
 This phase makes the three tests pass. The browser template's test project is told to inherit the root configuration, so the pre-bundle list it was written with finally reaches its test page. Landing's install script first brings dependencies to the lockfile. The monitor test checks for the fake model's name. The phase ends by deleting Vite's cache three times and running the template tests after each, which is the only way to see that the mid-run reload is gone.
 
-- [ ] The browser template's test project reads the pre-bundle list from the root configuration
+- [x] The browser template's test project reads the pre-bundle list from the root configuration
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/vitest.templates.config.ts`: add `extends: true` to the `templates` project, with a comment that a Vitest project inherits nothing from the root without it, which is why the list was never applied (main-suite-green Build Phase 3 believed otherwise), carrying `promise: a-browser-test-passes-on-a-cold-cache`.
+
+  </details>
+  <details><summary>Note</summary>
+
+  `extends: true` added to the `templates` project with the comment and the promise token; A1 now passes.
 
   </details>
 - [ ] Landing's install brings the checkout's dependencies to the lockfile before it builds
