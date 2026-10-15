@@ -3,7 +3,9 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
+import { isCleanupPhaseTerminal, isFalsificationPhaseTerminal } from "../lib/cleanup/gate.js";
 import { parseImplString } from "../lib/impl-parser.js";
+import { prepareShapeReview } from "../lib/shape/shape.js";
 import { runHook, validateWrite } from "./helpers/hook-runner.js";
 import { NO_TESTS_FLIP, summaryImpl, type TaskSpec } from "./helpers/phase-summary-fixture.js";
 
@@ -138,5 +140,109 @@ describe("A11 — a box-shaped line in a task's detail adds no task", () => {
 		const count = (md: string) => parseImplPhases(md).reduce((n, p) => n + p.items.length, 0);
 		expect(count(lines(false))).toBe(3);
 		expect(count(lines(true))).toBe(count(lines(false)));
+	});
+});
+
+/**
+ * A17 of the story-first-phases impl: two readers that never learned the rule
+ * (the ritual-phase finished check, the Shape step's verification check) must
+ * not count a box line quoted inside a task's folded detail or a code block,
+ * and must still count a genuine indented unchecked sub-item outside any fold.
+ */
+describe("A17 — a box line quoted in a task's fold does not hold a phase open", () => {
+	const fold = (inner: string[]) => [
+		"- [x] The one task of this phase is done",
+		"  <details><summary>Technical</summary>",
+		"",
+		...inner,
+		"",
+		"  </details>",
+	];
+	const ritualImpl = (word: string, taskLines: string[]) =>
+		[
+			"# Plan",
+			"",
+			`### Build Phase 5: ${word} — a theme`,
+			"",
+			"**Tier**: med — the work step's default",
+			"",
+			"The phase does its work.",
+			"",
+			...taskLines,
+			"",
+		].join("\n");
+
+	const unfenced = fold(["  Steps to try by hand:", "  - [ ] example"]);
+	const fenced = fold(["  ```markdown", "  - [ ] example", "  ```"]);
+
+	for (const [label, lines] of [
+		["unfenced", unfenced],
+		["inside a fence", fenced],
+	] as const) {
+		it(`a falsification phase is finished with a quoted unticked box ${label}`, () => {
+			expect(isFalsificationPhaseTerminal(ritualImpl("Falsification", lines))).toBe(true);
+		});
+		it(`a cleanup phase is finished with a quoted unticked box ${label}`, () => {
+			expect(isCleanupPhaseTerminal(ritualImpl("Cleanup", lines))).toBe(true);
+		});
+	}
+
+	it("a genuine indented unchecked sub-item outside any fold still holds the phase open", () => {
+		const lines = ["- [x] The one task", "  - [ ] a real nested item still to do"];
+		expect(isFalsificationPhaseTerminal(ritualImpl("Falsification", lines))).toBe(false);
+		expect(isCleanupPhaseTerminal(ritualImpl("Cleanup", lines))).toBe(false);
+	});
+
+	it("a genuine indented unchecked sub-item after a fold has closed still holds the phase open", () => {
+		const lines = [...unfenced, "  - [ ] a real nested item after the fold"];
+		expect(isFalsificationPhaseTerminal(ritualImpl("Falsification", lines))).toBe(false);
+	});
+
+	describe("Shape reads a Verification section as green", () => {
+		const shapeOutcome = async (verification: TaskSpec) => {
+			const { root } = project("");
+			const body = summaryImpl("demo", { verificationTask: verification });
+			try {
+				return await prepareShapeReview({
+					root,
+					plan: "demo",
+					phase: { kind: "build", number: 1 },
+					implBody: body,
+				});
+			} catch (error) {
+				// Past the verification check, the review looks for the phase's
+				// boundary; a throw there means verification was read as green.
+				return { kind: "past-verification", error };
+			}
+		};
+		const notGreen = (o: Awaited<ReturnType<typeof shapeOutcome>>) =>
+			o.kind === "skipped" && /verification is not green/.test(o.reason);
+
+		it("with a ticked task whose fold quotes an unticked box", async () => {
+			const o = await shapeOutcome({
+				sentence: `The save check refuses the shapes it should ${NO_TESTS_FLIP}`,
+				checked: true,
+				detail: "Steps to try by hand:\n- [ ] example",
+			});
+			expect(notGreen(o), "a ticked Verification task, its detail quoting - [ ]").toBe(false);
+		});
+
+		it("with a ticked task whose fenced detail quotes an unticked box", async () => {
+			const o = await shapeOutcome({
+				sentence: `The save check refuses the shapes it should ${NO_TESTS_FLIP}`,
+				checked: true,
+				detail: "```markdown\n- [ ] example\n```",
+			});
+			expect(notGreen(o), "a ticked Verification task, a fence quoting - [ ]").toBe(false);
+		});
+
+		it("is not green when a real task in the section is unticked", async () => {
+			const o = await shapeOutcome({
+				sentence: `The save check refuses the shapes it should ${NO_TESTS_FLIP}`,
+				checked: false,
+				detail: "Steps.",
+			});
+			expect(notGreen(o)).toBe(true);
+		});
 	});
 });
