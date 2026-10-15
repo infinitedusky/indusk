@@ -304,7 +304,8 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 - [x] A11, A12 pass and A17–A20 still pass (`cd apps/indusk-admin && pnpm exec vitest run 'src/app/p/[project]/cockpit-nav.test.tsx' 'src/app/p/[project]/plan/[name]/header.test.tsx' 'src/app/p/[project]/cockpit-phone.test.tsx' src/lib/plan-groups.test.ts src/components/plan/PlanSummary.test.tsx src/__tests__/plan-page-layout.test.tsx`); `indusk looks lint admin` clean apart from the proposed mockups awaiting Sandy; tsc and biome clean
   - 45 tests in the six files pass; tsc clean; biome clean on every file this phase changed (two format errors remain in `http-promise-health.test.ts` and `new-project-routes.test.ts`, untouched here). `looks lint admin` leaves 22 findings: those naming a nav story are the reopened looks awaiting Sandy, 3 are `plan-looks` needing a story (another plan's), 4 are `subplan-row` needing a story (Build Phase 4)
-- [ ] Once Sandy has approved the reopened mockups, cockpit-redraw's A10 passes again in the system tier (`pnpm exec vitest run --config vitest.system.config.ts src/__tests__/cockpit-redraw.contract.test.ts`)
+- [x] Once Sandy has approved the reopened mockups, cockpit-redraw's A10 passes again in the system tier (`pnpm exec vitest run --config vitest.system.config.ts src/__tests__/cockpit-redraw.contract.test.ts`)
+  - A10 passed (72.7 s). The first run failed only in teardown (`ENOTEMPTY` removing `.next-tests`) with the test itself green; rerun once, clean pass
 
 #### Build Phase 3 Context
 
