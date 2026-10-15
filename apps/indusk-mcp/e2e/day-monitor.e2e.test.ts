@@ -159,14 +159,15 @@ describe("A24 — a broken evaluator is found from telemetry and reopens its own
 				: null,
 		);
 		expect(failure).toContain('"error":true');
-		expect(failure).toContain("issue with the selected model");
+		// The model name the test chose; the CLI's wording for it is not this test's subject.
+		expect(failure).toContain(BAD_MODEL);
 
 		// 3. The violation is in Jaeger, under this project.
 		const status = await until("the violation in Jaeger", 60_000, () => {
 			const r = runCli(scratch.root, ["promises", "status"], home);
 			return r.code === 0 && /1 violation\b/.test(r.stdout) ? r.stdout : null;
 		});
-		expect(status).toContain("issue with the selected model");
+		expect(status).toContain(BAD_MODEL);
 
 		// 4. One monitor pass.
 		const watch = runCli(scratch.root, ["promises", "watch"], home);
