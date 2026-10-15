@@ -41,7 +41,7 @@ interface PlanListProps {
    * resting state, and the count is what keeps a closed plan on the hook.
    */
   holding?: Map<string, number>;
-  /** Plans holding a violated promise (day-monitor): drawn red without being opened. */
+  /** Plans holding a broken promise (day-monitor): drawn red without being opened. */
   red?: Set<string>;
   /**
    * When each plan shipped, by name — the package's `planDates` (via
@@ -301,8 +301,8 @@ function RedDot({ plan }: { plan: string }) {
       data-testid="plan-health"
       data-plan={plan}
       data-health="red"
-      aria-label="holds a promise violated in the window"
-      title="holds a promise violated in the window"
+      aria-label="holds a promise broken in the window"
+      title="holds a promise broken in the window"
       className="block size-dot shrink-0 rounded-pill bg-bad"
     />
   );

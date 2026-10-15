@@ -368,7 +368,7 @@ function DashboardRowItem({
         evals={
           <span data-testid="promise-thirty">
             {row.held === null
-              ? "not seen yet"
+              ? "no signal yet"
               : `held ${row.held} · broke ${row.broke} of 30 days`}
           </span>
         }

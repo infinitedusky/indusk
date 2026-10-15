@@ -20,7 +20,7 @@ import type {
  * A promise's chip: its declared state, and nothing else (day-promises, ADR
  * D8). There is no health axis in this step — not a hidden one, none — so an
  * `enforced` promise is drawn HOLLOW (border, white fill) and says so in its
- * accessible name: declared, not yet observed. Green must mean "seen upheld",
+ * accessible name: declared, not yet observed. Green must mean "seen holding",
  * and nothing here has seen anything. `satisfies Record<PromiseState, …>` and
  * `lifecycle-render-parity.test.ts` name a state added without a chip.
  */
@@ -52,29 +52,29 @@ export const PROMISE_STATE_CHIP = {
 
 /**
  * A promise's observed health (day-monitor, ADR D9) — the second axis,
- * beside the declared-state chip. Green only ever means seen upheld; not seen,
- * and Jaeger unreachable, are hollow "unverified". Under the same
+ * beside the declared-state chip. Green only ever means seen holding; no signal,
+ * and Jaeger unreachable, are hollow "no signal". Under the same
  * `satisfies Record` pin as every other chip map.
  */
 export const PROMISE_HEALTH_CHIP = {
   red: {
-    label: "violated",
-    aria: "violated in the window",
+    label: "broken",
+    aria: "broken in the window",
     className: "border border-bad bg-bad text-surface",
   },
   fixed: {
-    label: "fixed",
-    aria: "violated in the window, every incident fixed",
+    label: "broke — fixed",
+    aria: "broke in the window, every incident fixed",
     className: "border border-ink-soft bg-ink-soft text-surface",
   },
   green: {
-    label: "upheld",
-    aria: "seen upheld in the window",
+    label: "holding",
+    aria: "seen holding in the window",
     className: "border border-ok bg-ok text-surface",
   },
   unverified: {
-    label: "unverified",
-    aria: "not seen in the window",
+    label: "no signal",
+    aria: "no signal in the window",
     className: "border border-ink-faint bg-surface text-ink-soft",
   },
   amber: {

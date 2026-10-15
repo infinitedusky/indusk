@@ -48,7 +48,7 @@ export function HealthChip({
   );
 }
 
-/** The line under a behaviour promise's chips: violations in the window and last seen. */
+/** The line under a behaviour promise's chips: breaks in the window and last seen. */
 export function HealthDetail({
   row,
   unknownSince,
@@ -63,7 +63,7 @@ export function HealthDetail({
   const parts: string[] = source ? [source] : [];
   if (row.violations !== null && row.violations > 0) {
     parts.push(
-      `${row.atLeast ? "at least " : ""}${row.violations} violation${row.violations === 1 ? "" : "s"}`,
+      `${row.atLeast ? "at least " : ""}${row.violations} break${row.violations === 1 ? "" : "s"}`,
     );
     // Where, when the span said: one server holds staging and production, and
     // a red row that cannot say which is a red row nobody can act on. A span
@@ -74,7 +74,7 @@ export function HealthDetail({
   // expect_every (watcher-heartbeat): a silence the promise said was too long.
   if (row.silence) parts.push(`needs attention — ${row.silence}`);
   else if (unknownSince === undefined && row.health === "unverified")
-    parts.push("not seen");
+    parts.push("no signal");
   if (parts.length === (source ? 1 : 0)) return null;
   return (
     <span

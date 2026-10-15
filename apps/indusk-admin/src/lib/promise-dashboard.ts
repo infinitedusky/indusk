@@ -63,10 +63,10 @@ export interface DashboardRow {
   tests: { passing: number; total: number };
   /** Days of the last thirty not broken; null while the promise has never been seen. */
   held: number | null;
-  /** Days of the last thirty with a violation heard. */
+  /** Days of the last thirty with a break heard. */
   broke: number;
   lastActivity: string | null;
-  /** The newest break: a heard violation, or the alarm source's last sighting while broken. */
+  /** The newest break: a heard break, or the alarm source's last sighting while broken. */
   lastBreak: string | null;
 }
 

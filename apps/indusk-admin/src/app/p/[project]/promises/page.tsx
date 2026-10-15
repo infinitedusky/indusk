@@ -60,7 +60,7 @@ interface PromisesRouteProps {
  * and the field, with every well-formed entry still listed beneath; no
  * registry at all is an empty state that says how to create one.
  *
- * Live like the plan page (day-always-on, ADR D8): a violation arriving from
+ * Live like the plan page (day-always-on, ADR D8): a break arriving from
  * a deployed system has to turn the chip red without anyone reloading, or the
  * page is a snapshot pretending to be a status board. Same `LiveRefresh` at
  * the project's `admin.refresh_ms`, which also bounds the health read's cache.
