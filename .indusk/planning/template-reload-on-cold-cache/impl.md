@@ -193,10 +193,15 @@ This phase makes the three tests pass. The browser template's test project is to
 
 #### Build Phase 1 Verification
 
-- [ ] The two new tests and the monitor test pass, and the code they touch still passes its tests
+- [x] The two new tests and the monitor test pass, and the code they touch still passes its tests
   <details><summary>Technical</summary>
 
   A1 and A3 green (`pnpm exec vitest run src/__tests__/templates-prebundle.test.ts src/__tests__/install-local.test.ts`, from `apps/indusk-mcp`); A4 green (`pnpm exec vitest run --config vitest.e2e.config.ts e2e/day-monitor`); A2 recorded passing; `biome check` on the changed files; results noted under this item.
+
+  </details>
+  <details><summary>Note</summary>
+
+  The two node test files: 2 files, 3 tests passed. The day-monitor e2e run: 1 passed. The three template runs are recorded above, all green. `biome check` on the three changed files is clean. A1, A2, A3 and A4 are `passing`.
 
   </details>
 
