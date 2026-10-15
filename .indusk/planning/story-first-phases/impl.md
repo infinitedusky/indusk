@@ -259,7 +259,7 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
 
 This phase is the part Sandy sees in the admin. The code that reads an impl for the admin starts keeping each phase's paragraph and each task's folded detail, code included. The plan page then draws them: the paragraph at the top of an open phase, each task as its sentence, and under each task a closed "Technical" fold that opens to the formatted detail. After this phase, a plan written in the new shape reads on its page the way the mockup Sandy approves here shows. Build Phase 3 then makes every new plan written that way.
 
-- [ ] Reading an impl keeps each phase's paragraph and each task's folded detail
+- [x] Reading an impl keeps each phase's paragraph and each task's folded detail
   <details><summary>Technical</summary>
 
   `src/lib/impl-parser-core.ts`: `ImplPhase.summary?: string` — the paragraph lines after the heading's `**Tier**:`/`**Goal**:` labels and before the first item or `####`. `ChecklistItem.detail?: string` — the indented block under an item, de-indented by its first line's indent, `<details>`/`<summary>…</summary>`/`</details>` lines removed, fences kept (the fence mask must not drop indented fences that belong to an item's detail). `note` is unchanged for items with no `<details>`. Mirror in `_impl-phases.js` only if a hook reads it (none does today).
