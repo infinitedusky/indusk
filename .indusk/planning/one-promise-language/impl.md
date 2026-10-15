@@ -55,19 +55,19 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A signal saying `broken` is read as broken by status, health, timeline, looks standing and the trace-shape helper | Test Phase 1 | Build Phase 1 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
+| A1 | A signal saying `broken` is read as broken by status, health, timeline, looks standing and the trace-shape helper | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
 | A2 | A signal saying `violated` is still read as broken everywhere A1 names | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
-| A3 | InDusk's own signals (evaluator, recorder, trunk commit, looks check) and the demo app write `upheld` or `violated` this release, and every reader reads `broken` as broken | Test Phase 1 | Build Phase 1 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/signal-writers.test.ts, examples/seat-holds/src/seats.test.ts |
-| A4 | A promise file saying `known-violated` is read as known-broken by the registry check, the admin and the editor | Test Phase 1 | Build Phase 1 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/known-broken.test.ts |
-| A5 | Opening an incident on an enforced promise writes `known-broken`; fixing the last open one returns `known-broken` or `known-violated` to enforced | Test Phase 1 | Build Phase 1 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/known-broken.test.ts |
+| A3 | InDusk's own signals (evaluator, recorder, trunk commit, looks check) and the demo app write `upheld` or `violated` this release, and every reader reads `broken` as broken | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/signal-writers.test.ts, examples/seat-holds/src/seats.test.ts |
+| A4 | A promise file saying `known-violated` is read as known-broken by the registry check, the admin and the editor | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/known-broken.test.ts |
+| A5 | Opening an incident on an enforced promise writes `known-broken`; fixing the last open one returns `known-broken` or `known-violated` to enforced | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/known-broken.test.ts |
 | A6 | The admin's chips, timeline cells, health lines and plan-list warning say upheld, holding, broken, held, broke or no signal — never violated, violation, unverified, not seen or no runs | Test Phase 1 | Build Phase 2 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx |
 | A7 | A promise nothing has reported on reads no signal in the admin, the CLI and the editor, never green or holding | Test Phase 1 | Build Phase 2 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx, apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts, apps/vscode-extension/src/core/view-words.test.ts |
 | A8 | The CLI's promise status, watch, check summary and refusals, and the always-on server's messages say broken, held or no signal, never violated or violation | Test Phase 1 | Build Phase 2 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts |
 | A9 | The editor's labels say known broken and no signal, and its activity says held or broke for a signal written either way | Test Phase 1 | Build Phase 2 | written | unit | promise: a-promise-is-upheld-or-broken | apps/vscode-extension/src/core/view-words.test.ts, apps/vscode-extension/src/core/activity.test.ts |
 | A10 | The docs' guide and reference, the skills, the planning template, the deploy files, the CLI help and the MCP tool descriptions carry no violated, violation or known-violated, and say signal, not mark, outside named attribute names | Test Phase 1 | Build Phase 3 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
-| A11 | A production signal saying `broken` becomes an incident with its owning plan reopened, exactly as a `violated` one does | Test Phase 1 | Build Phase 1 | written | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/record-broken.test.ts |
-| A12 | The always-on server announces a production signal saying `broken` exactly as one saying `violated` | Test Phase 1 | Build Phase 1 | written | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/always-on/announce-broken.test.ts |
-| A13 | The thirty days count held, broken and neither the same way for signals saying `broken`, `violated` or a mix | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A11 | A production signal saying `broken` becomes an incident with its owning plan reopened, exactly as a `violated` one does | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/record-broken.test.ts |
+| A12 | The always-on server announces a production signal saying `broken` exactly as one saying `violated` | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/always-on/announce-broken.test.ts |
+| A13 | The thirty days count held, broken and neither the same way for signals saying `broken`, `violated` or a mix | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/standing.test.ts |
 
 ## Checklist
 
@@ -172,13 +172,13 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
 
 #### Build Phase 1 Verification
 
-- [ ] A signal saying broken or violated is read, recorded, announced and counted as broken; InDusk and the demo app still send violated; a known-violated file reads known broken, and incidents move promises in and out of it.
+- [x] A signal saying broken or violated is read, recorded, announced and counted as broken; InDusk and the demo app still send violated; a known-violated file reads known broken, and incidents move promises in and out of it.
   <details><summary>Technical</summary>
 
   Green: A1, A3, A4, A5, A11, A12, A13; still green: A2. `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises/outcome-words.test.ts src/lib/promises/standing.test.ts src/lib/promises/signal-writers.test.ts src/lib/promises/known-broken.test.ts src/lib/promises/record-broken.test.ts src/lib/always-on/announce-broken.test.ts && pnpm exec vitest related src/lib/promises/vocabulary.ts src/lib/promises/telemetry.ts src/lib/promises/registry.ts src/lib/promises/incidents.ts src/lib/always-on/pass.ts src/lib/promises/mark.ts`; `cd examples/seat-holds && pnpm exec vitest run src/seats.test.ts`; `pnpm -w exec tsc -b` clean across the admin and the extension.
 
   </details>
-- [ ] The registry check still passes on this repository's own promises, and its summary names known-broken.
+- [x] The registry check still passes on this repository's own promises, and its summary names known-broken.
   <details><summary>Technical</summary>
 
   `indusk promises check` exits 0; its summary line names `known-broken`.
