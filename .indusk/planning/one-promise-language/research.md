@@ -145,7 +145,22 @@ across about 60 files with no reader helped.
 
 ## Decisions
 
-All three are **the planning agent's recommendation**, for Sandy at approval.
+Sandy answered the agent's three recommendations on 2026-10-15:
+
+- **Yes — `known-violated` becomes `known-broken`, old files still read**
+  (Sandy, 2026-10-15).
+- **Yes — one reading rule, used by every reader**: `upheld` is upheld,
+  `broken` or `violated` is broken; the always-on server asks Jaeger for both
+  values (Sandy, 2026-10-15).
+- **No version skew — writers keep `violated` this release** (Sandy,
+  2026-10-15). InDusk's own signals and the demo app keep *writing* `violated`
+  for this release, while every reader accepts both from now on. The switch to
+  writing `broken` is the next release, carried by
+  `.indusk/planning/mark-first/` (it touches the signal writers anyway). Nobody
+  reads the attribute value, so the brief's promise — what people read — still
+  holds. This replaces the agent's recommendation below to write `broken` now.
+
+The agent's original reasoning, kept as the record:
 
 - **Rename the registry state `known-violated` to `known-broken`, and keep
   reading the old one.** The state is printed by `pnpm test`'s summary, shown
@@ -171,13 +186,8 @@ All three are **the planning agent's recommendation**, for Sandy at approval.
 
 ## Open Questions
 
-- **Version skew**: an application writing `broken` read by an InDusk older
-  than this plan (or a recording server running an older image) is read as no
-  signal. The server image is published with each release, and InDusk's own
-  writers change in the same release as the readers, so InDusk's own signals
-  are safe; an application that copies the new docs snippet before upgrading
-  its server is not. The docs snippet can say so. Sandy may prefer that
-  applications keep writing `violated` until the next release cycle.
+- ~~Version skew~~ — settled by Sandy, 2026-10-15: writers keep `violated`
+  this release, so no reader older than this plan ever meets `broken`.
 - Whether `indusk promises check` should note a `known-violated` file it read
   (a one-line nudge) or read it silently. Recommended: silently — the state
   disappears on its own when the incident closes.
