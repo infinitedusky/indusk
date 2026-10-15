@@ -36,6 +36,7 @@ export function SessionConnector({
   const post = async (path: string, body: unknown) => {
     const r = await postJson(`/api/sessions/${sessionId}/${path}`, body);
     if (!r.ok) setProblem(r.error);
+    return r.ok;
   };
 
   return (
@@ -44,12 +45,8 @@ export function SessionConnector({
       <SessionPanel
         events={events}
         running={running}
-        onAnswer={(requestId, answers) =>
-          void post("reply", { requestId, answers })
-        }
-        onDecide={(requestId, allow) =>
-          void post("reply", { requestId, allow })
-        }
+        onAnswer={(requestId, answers) => post("reply", { requestId, answers })}
+        onDecide={(requestId, allow) => post("reply", { requestId, allow })}
         onStop={() => void post("stop", {})}
         onSay={(text) => void post("say", { text })}
         fill={fill}

@@ -14,11 +14,18 @@ import { describeToolInput as describeInput } from "@/lib/conversation-turns";
  * turned that into these events.
  */
 
+/**
+ * What a reply handler gives back: whether the server took the reply
+ * (`false` reopens the request), or nothing from a handler that cannot say.
+ */
+// biome-ignore lint/suspicious/noConfusingVoidType: a handler that cannot say returns nothing
+export type Replied = Promise<boolean> | void;
+
 export interface SessionPanelProps {
   events: StartedEvent[];
   running: boolean;
-  onAnswer: (requestId: string, answers: Record<string, string>) => void;
-  onDecide: (requestId: string, allow: boolean) => void;
+  onAnswer: (requestId: string, answers: Record<string, string>) => Replied;
+  onDecide: (requestId: string, allow: boolean) => Replied;
   onStop: () => void;
   /** Reply in the person's own words; absent, the panel offers no message box. */
   onSay?: (text: string) => void;
@@ -48,8 +55,18 @@ export function SessionPanel({
   }, [events.length]);
   // How each request was decided, from the log: the record a reload keeps.
   const decisions = decisionsOf(events);
-  const done = (requestId: string) =>
+  // A click closes its prompt at once; a reply the server refuses opens it again.
+  const settle = (requestId: string, reply: Replied) => {
     setAnswered((prev) => new Set(prev).add(requestId));
+    void Promise.resolve(reply).then((accepted) => {
+      if (accepted === false)
+        setAnswered((prev) => {
+          const next = new Set(prev);
+          next.delete(requestId);
+          return next;
+        });
+    });
+  };
 
   return (
     <section
@@ -92,13 +109,11 @@ export function SessionPanel({
               }
               onAnswer={(answers) => {
                 if (ev.type !== "question") return;
-                onAnswer(ev.requestId, answers);
-                done(ev.requestId);
+                settle(ev.requestId, onAnswer(ev.requestId, answers));
               }}
               onDecide={(allow) => {
                 if (ev.type !== "permission") return;
-                onDecide(ev.requestId, allow);
-                done(ev.requestId);
+                settle(ev.requestId, onDecide(ev.requestId, allow));
               }}
             />
           </li>
@@ -217,7 +232,7 @@ export function EventView({
         <QuestionView
           questions={ev.questions}
           open={open}
-          declined={decision && !decision.allow ? decision : undefined}
+          decision={decision}
           onAnswer={onAnswer}
         />
       );
@@ -306,13 +321,13 @@ const OTHER = "Other";
 function QuestionView({
   questions,
   open,
-  declined,
+  decision,
   onAnswer,
 }: {
   questions: Question[];
   open: boolean;
-  /** The decision that declined it, when the session declined it on its own. */
-  declined?: Decision;
+  /** How it was decided, when it has been: declined by the session, or answered by a person. */
+  decision?: Decision;
   onAnswer: (answers: Record<string, string>) => void;
 }) {
   const [chosen, setChosen] = useState<Record<string, string[]>>({});
@@ -393,10 +408,18 @@ function QuestionView({
           </fieldset>
         );
       })}
-      {declined ? (
+      {decision && !decision.allow ? (
         <p className="text-bad">
           Declined
-          {declined.message ? ` — ${declined.message}` : ""}
+          {decision.message ? ` — ${decision.message}` : ""}
+        </p>
+      ) : null}
+      {decision?.allow && decision.answers ? (
+        <p className="text-ok">
+          Answered —{" "}
+          {Object.entries(decision.answers)
+            .map(([question, answer]) => `${question}: ${answer}`)
+            .join("; ")}
         </p>
       ) : null}
       {open ? (

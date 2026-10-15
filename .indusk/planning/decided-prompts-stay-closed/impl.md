@@ -147,9 +147,9 @@ Every request a session makes is recorded in its log together with how it was de
 
 - [x] `session/start.ts`: the `decided` event carries `answers?: Record<string, string>` for a question a person answered
 - [x] `session/manager.ts` `reply`: a reply with `answers` records `decided` with those answers
-- [ ] `SessionPanel.tsx` `QuestionView`: a question with an allowing decision shows "Answered — {each question: answer}" from the decision, in place of the Answer button (options stay disabled)
-- [ ] `SessionPanel.tsx` + `SessionConnector.tsx`: `onAnswer`/`onDecide` resolve to whether the reply was accepted; on a refusal the panel removes the request from its local `answered` set, so its buttons come back beside the shown problem
-- [ ] `ConversationThread.tsx` + `NewProjectConversation.tsx` (`session.answer`/`session.decide`): the same — a refused reply reopens the request in the thread
+- [x] `SessionPanel.tsx` `QuestionView`: a question with an allowing decision shows "Answered — {each question: answer}" from the decision, in place of the Answer button (options stay disabled)
+- [x] `SessionPanel.tsx` + `SessionConnector.tsx`: `onAnswer`/`onDecide` resolve to whether the reply was accepted; on a refusal the panel removes the request from its local `answered` set, so its buttons come back beside the shown problem
+- [x] `ConversationThread.tsx` + `NewProjectConversation.tsx` (`session.answer`/`session.decide`): the same — a refused reply reopens the request in the thread
 
 #### Build Phase 3 Verification
 - [ ] A9: a person's `reply` with answers records `decided` carrying them; a fresh panel rendered with `[question, decided{answers}]` shows "Answered" with the answer and no Answer button — fails today (no answers on the event, no outcome line) (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/session/manager.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx`)
