@@ -46,10 +46,8 @@ export async function POST(
   if (!root) return refuse(404, `no project named ${body.project}`);
   const draft = findDraft(draftHomeOf(root), id);
   if (!draft) return refuse(404, `no draft ${id} in ${body.project}`);
-  const running = sessionManager().current();
-  if (running?.plan === draftSessionPlan(id)) {
-    await sessionManager().get(running.id)?.stop();
-  }
+  const running = sessionManager().forPlan(body.project, draftSessionPlan(id));
+  if (running) await sessionManager().get(running.id)?.stop();
   try {
     writeProposal(draft, {
       name: body.name,

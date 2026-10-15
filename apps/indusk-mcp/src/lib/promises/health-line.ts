@@ -5,7 +5,7 @@
  * rule with the admin; re-exported from `health.ts`, so the
  * `./promises/health` subpath is unchanged.
  */
-import { type HealthNames, type PlanDates, promiseWords } from "./display.js";
+import { type HealthNames, type PlanDates, planTitle, promiseWords } from "./display.js";
 import {
 	type HealthRun,
 	healthOf,
@@ -131,7 +131,7 @@ export function healthLine(
 				sites: p.sites ?? [],
 				plan: p.owner,
 				title: promiseWords(p.name, names?.words),
-				planTitle: names?.planTitles[p.owner] ?? p.owner,
+				planTitle: names?.planTitles[p.owner] ?? planTitle(undefined, p.owner, names?.words),
 				planDates: names?.planDates[p.owner] ?? { started: null, landed: null, released: null },
 			})),
 		sources: reads.map((read) => {

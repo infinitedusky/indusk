@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { fencedLineMask } from "../impl-headings.js";
+import { isTestFile } from "../looks/components.js";
 import { MOCKUPS_DIR, readJsonSync } from "../looks/mockups.js";
 import { listApps } from "../looks/overview.js";
 import type { BriefLooks } from "./brief-contract.js";
@@ -35,6 +36,8 @@ export function interfaceFilesAmong(root: string, paths: readonly string[]): Int
 	const sources = interfaceSources(root);
 	const out: InterfaceFile[] = [];
 	for (const path of paths) {
+		// A test changes no look. A story is still interface: it renders an approved snapshot.
+		if (isTestFile(path)) continue;
 		const hit = sources.find(
 			({ source }) => source !== "" && (path === source || path.startsWith(`${source}/`)),
 		);

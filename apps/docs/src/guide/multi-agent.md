@@ -86,6 +86,10 @@ Look at the `indusk agent list` output and the per-agent sections in `current.md
 
 For genuinely independent work (different subdirectories, different plans), just keep going. The worktree extension ensures your mid-session file edits don't bleed into the other agent's working tree.
 
+### Several plans' agents at once, from the admin
+
+The admin's agents are scoped to their plan, so you can start planning on one plan, build another and talk to a third without stopping any of them. Each plan lives in its own worktree, so their writes do not collide. Only a second session of the same kind on the same plan is refused. The machine caps what runs together at `sessions.max` (4 by default; set it in `~/.indusk/config.json`), and a start beyond it names the sessions running so you can stop one. See [the decision](/decisions/sessions-per-plan).
+
 ### Promoting state mid-session — `/handoff`
 
 When you reach a moment where the next session (or a hypothetical next agent) would want context — phase boundary, end of session, blocker hit — call `/handoff`. The skill walks you through the four-step ritual:

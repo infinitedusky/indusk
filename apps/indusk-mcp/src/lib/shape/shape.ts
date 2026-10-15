@@ -1,7 +1,8 @@
 import { type PhaseAddress, phaseLabel, toPhaseRef } from "../impl-headings.js";
 import { parseImplString } from "../impl-parser.js";
+import { foldedLineMask } from "../impl-parser-core.js";
 import { changedFilesForPhase } from "./changed.js";
-import { appendItemToPhase } from "./findings.js";
+import { appendItemToPhase, wantsFoldedDetail } from "./findings.js";
 import { blockLines, findHeadingIndex, gateHeading } from "./impl-blocks.js";
 import { type CraftRuleSet, collectCraftRules } from "./rules.js";
 
@@ -67,8 +68,11 @@ function verificationIsGreen(implBody: string, phase: PhaseAddress): boolean {
 
 	const block = verificationGateLines(implBody, phase);
 	if (block === null) return false;
-	if (!block.some((line) => CHECKBOX_AT_ANY_DEPTH.test(line))) return false;
-	return !block.some((line) => UNCHECKED_AT_ANY_DEPTH.test(line));
+	// A box quoted inside a task's folded detail or a fence is only read.
+	const folded = foldedLineMask(block);
+	const boxes = block.filter((_, i) => !folded[i]);
+	if (!boxes.some((line) => CHECKBOX_AT_ANY_DEPTH.test(line))) return false;
+	return !boxes.some((line) => UNCHECKED_AT_ANY_DEPTH.test(line));
 }
 
 /**
@@ -153,6 +157,14 @@ export function recordLeftAsIs(
 	file: string,
 	reason: string,
 ): string {
+	if (wantsFoldedDetail(implBody)) {
+		return appendItemToPhase(
+			implBody,
+			phase,
+			"- [x] Shape — reviewed a file this phase changed and left it as it is",
+			`\`${file}\`: ${reason}`,
+		);
+	}
 	return appendItemToPhase(
 		implBody,
 		phase,

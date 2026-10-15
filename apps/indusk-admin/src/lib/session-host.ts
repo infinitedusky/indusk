@@ -120,3 +120,17 @@ export async function planLocation(
 export function refuse(status: number, message: string): Response {
   return Response.json({ error: message }, { status });
 }
+
+/**
+ * A 409 for a plan that already has this session: the refusal, and the running
+ * session's id, which the page reads to offer Continue it here (PlanSession).
+ */
+export function refuseRunning(
+  message: string,
+  running: { id: string },
+): Response {
+  return Response.json(
+    { error: message, running: { id: running.id } },
+    { status: 409 },
+  );
+}

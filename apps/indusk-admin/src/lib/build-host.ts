@@ -7,6 +7,7 @@ import {
   runBuild,
   runRelease,
   runStepSession,
+  type ShortenReason,
 } from "@infinitedusky/indusk-mcp/build";
 import { acceptPlan } from "@infinitedusky/indusk-mcp/plans";
 import { getProjectPath } from "./registry-client";
@@ -56,7 +57,7 @@ export function buildState(project: string, plan: string): BuildState | null {
 async function stepModelOption(
   root: string,
   plan: string,
-  step: BuildStepName,
+  step: Exclude<BuildStepName, "shorten-reason">,
   phase: string | undefined,
 ): Promise<{ model?: string } | { error: string }> {
   try {
@@ -76,8 +77,18 @@ async function depsFor(project: string, plan: string, state: BuildState) {
     root,
     deps: {
       read: () => readBuildPlan(root, plan),
-      run: async (step: BuildStepName, phase?: string) => {
-        const chosen = await stepModelOption(root, plan, step, phase);
+      run: async (
+        step: BuildStepName,
+        phase?: string,
+        reason?: ShortenReason,
+      ) => {
+        // A shortened reason is one line rewritten: it runs on the work step's default tier.
+        const chosen = await stepModelOption(
+          root,
+          plan,
+          step === "shorten-reason" ? "work" : step,
+          phase,
+        );
         if ("error" in chosen) return { error: chosen.error };
         return runStepSession(step, {
           manager: sessionManager(),
@@ -85,6 +96,7 @@ async function depsFor(project: string, plan: string, state: BuildState) {
           ...(where.addDirs ? { addDirs: where.addDirs } : {}),
           project,
           plan,
+          ...(reason ? { reason } : {}),
           ...chosen,
         });
       },
@@ -106,18 +118,21 @@ async function depsFor(project: string, plan: string, state: BuildState) {
   };
 }
 
-/** Start the build in the background; refused while one runs for the plan or any session runs. */
+/** Start the build in the background; refused while a build runs or a build session is held for the plan. */
 export async function startBuild(
   project: string,
   plan: string,
 ): Promise<BuildState> {
   const existing = buildState(project, plan);
   if (existing?.running) throw new Error(`${plan} is already building`);
-  const running = sessionManager().current();
+  const running = sessionManager().forPlan(project, plan, "build");
   if (running)
     throw new Error(
-      `a session is already running: ${running.kind} for ${running.plan} — stop it first`,
+      `a build session is already running for ${plan}: ${running.id} — stop it first`,
     );
+  // Admitted once, here, and holding its place under the cap until it ends —
+  // between its steps too, so another plan's start cannot take it.
+  const free = sessionManager().admitBuild(project, plan);
   const state: BuildState = {
     running: true,
     step: null,
@@ -125,7 +140,14 @@ export async function startBuild(
     stop: null,
     release: null,
   };
-  const { root, deps } = await depsFor(project, plan, state);
+  let root: string;
+  let deps: Awaited<ReturnType<typeof depsFor>>["deps"];
+  try {
+    ({ root, deps } = await depsFor(project, plan, state));
+  } catch (err) {
+    free();
+    throw err;
+  }
   builds().set(key(project, plan), state);
   void runBuild({ ...deps, autoAccept: autoAccepts(root) })
     .then((stop) => {
@@ -137,6 +159,7 @@ export async function startBuild(
     .finally(() => {
       state.running = false;
       state.step = null;
+      free();
     });
   return state;
 }
@@ -155,10 +178,10 @@ export async function startRelease(
   const existing = buildState(project, plan);
   if (existing?.running)
     throw new Error(`${plan} is already building or releasing`);
-  const running = sessionManager().current();
+  const running = sessionManager().forPlan(project, plan, "build");
   if (running)
     throw new Error(
-      `a session is already running: ${running.kind} for ${running.plan} — stop it first`,
+      `a build session is already running for ${plan}: ${running.id} — stop it first`,
     );
   const state: BuildState = existing ?? {
     running: false,

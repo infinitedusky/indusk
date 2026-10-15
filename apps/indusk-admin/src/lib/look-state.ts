@@ -10,6 +10,7 @@ import { documentFinished } from "@infinitedusky/indusk-mcp/plans/steps";
  */
 
 export type PlanLookState =
+  | "plan.master"
   | "plan.released"
   | "plan.needs-you"
   | "plan.parts"
@@ -18,35 +19,27 @@ export type PlanLookState =
 export type BriefLookState = "brief.approved" | "brief.writing" | "brief.empty";
 
 /**
- * The plan page's state: released once archived or in monitor; else
+ * The plan page's state: `master` for a plan that declares subplans, whatever
+ * its own documents say (it draws its story, not their stage); released once
+ * archived or in monitor; else
  * `needs-you` while it waits on a person (a session question, a stopped build
- * or an amendment — `planPageWaiting` counts all three); else `parts` while its brief is not
- * finished (the page opens on it as the current step); else being built.
+ * or an amendment — the package's `planWaiting` counts all three, and this
+ * page asks nothing else); else `parts` while its brief is not finished (the
+ * page opens on it as the current step); else being built.
  */
 export function planLookState(input: {
   archived: boolean;
   position?: string;
   waiting: boolean;
   briefStatus: string | null;
+  master?: boolean;
 }): PlanLookState {
+  if (input.master) return "plan.master";
   if (input.archived || input.position === "monitor") return "plan.released";
   if (input.waiting) return "plan.needs-you";
   if (!documentFinished("brief", input.briefStatus ?? undefined))
     return "plan.parts";
   return "plan.working";
-}
-
-/**
- * Whether the plan page is waiting on a person, for its look state: a session
- * question or a stopped build (`waiting`, from the package's `planWaiting`), or
- * an amendment the person has not re-approved — the page draws the amendment
- * card for it, and the approved `plan.needs-you` mockup is the one that does.
- */
-export function planPageWaiting(
-  waiting: unknown | undefined,
-  amendments: readonly unknown[],
-): boolean {
-  return waiting !== undefined || amendments.length > 0;
 }
 
 /**

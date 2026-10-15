@@ -60,6 +60,57 @@ When you've formed one or more specific hypotheses, **append a new phase to the 
 - [ ] {docs page to update, or "(none — internal-only fix)" with proof}
 ```
 
+**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses code or a row label on a task line, and a row label in the paragraph.
+
+<!-- template: phase_summary required -->
+```markdown
+### Phase N: Falsification — {short summary of the hypothesis theme}
+
+**Tier**: med — the work step's default
+
+{Two or three plain sentences: what this phase tests about the finished plan, what it fixes if a hypothesis is confirmed, and what is true once it closes. No row labels, no abbreviations, no code.}
+
+- [ ] {One plain sentence saying what will be true once fix 1 is made}
+  <details><summary>Technical</summary>
+
+  {The concrete code change: files, symbols, the hypothesis it answers.}
+
+  </details>
+- [ ] {One plain sentence for the next fix}
+  <details><summary>Technical</summary>
+
+  {The concrete code change.}
+
+  </details>
+
+#### Phase N Verification
+
+- [ ] {One plain sentence saying which hypothesis now holds, failing today and passing after the fixes}
+  <details><summary>Technical</summary>
+
+  T{M}: {restate the hypothesis — the test should fail today and pass after the fixes land}. T{M+1}: {the next hypothesis}.
+
+  </details>
+
+#### Phase N Context
+
+- [ ] {One plain sentence saying what the falsification taught that the project's instructions should now say}
+  <details><summary>Technical</summary>
+
+  {The concrete CLAUDE.md edit and its tier.}
+
+  </details>
+
+#### Phase N Document
+
+- [ ] {One plain sentence saying which docs page changes}
+  <details><summary>Technical</summary>
+
+  {The page and the edit.}
+
+  </details>
+```
+
 Add the trajectory rows to the plan's `## Test Trajectory` table:
 
 ```markdown
@@ -98,8 +149,10 @@ If after investigation you genuinely cannot form any specific hypothesis, **do n
 
 ```yaml
 falsification: skipped
-falsification_reason: "investigated X, Y, Z regions; all invariants appeared to hold; no concrete hypothesis formed"
+falsification_reason: "investigated the changed regions; every invariant held and no concrete hypothesis formed"
 ```
+
+The reason is one sentence of at most 120 characters (`promise: a-skip-reason-is-one-sentence`); the detail goes in the impl body or the retrospective, and the retrospective refuses a longer one.
 
 This is a confession, not a bypass — it's visible in the retrospective audit and documents what you did look at. Use it when you really couldn't find anything, not when you didn't want to spend time hunting.
 

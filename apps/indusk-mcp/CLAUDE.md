@@ -29,7 +29,7 @@ pointer; the pointer holds the story.
   `parsePlan`, the retrospective gate and the admin) —
   `lifecycle-single-definition.test.ts`; promise health, `promises/health`
   — `promise-health-single-definition.test.ts`; display names and plan dates
-  (`promises/display`, travelling on the health line; see `/decisions/display-names`) — `display-names-single-definition.test.ts`. A git primitive belongs in
+  (`promises/display`: `readPlanName`, the nav's copy, worktree first) — `display-names-single-definition.test.ts`. A git primitive belongs in
   `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
   (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
@@ -134,7 +134,8 @@ pointer; the pointer holds the story.
   writer validates with the reader's predicate (`boundaryRecordProblem`). Every
   way a scope can be wrong is silent, so every fallback over-reports:
   `findPhaseStart` takes the earliest record, untracked files are dated by
-  mtime, `verificationIsGreen` counts nested unchecked items. — see
+  mtime, `verificationIsGreen` counts nested unchecked items — never a box inside a
+  task's `<details>` fold or a fence (`foldedLineMask`). — see
   `/guide/shape`
 - **Shape's craft rules come from enabled extensions and hardcode none**
   (`lib/shape/rules.ts`); the library supplies facts (`changedFilesForPhase`,
@@ -143,7 +144,8 @@ pointer; the pointer holds the story.
   boundary record without `kind` is build by rule.
 - **The cleanup lib throws on non-git roots and refuses workbench roots by
   declaration**; ritual-phase terminality needs ≥1 item and sees nested
-  unchecked items.
+  unchecked items — never a box inside a task's `<details>` fold or a fence
+  (`detail-is-only-read.test.ts`, `promise: hidden-detail-is-only-read`).
 - `phaseOrdinal` reduces to the phase number when a document has no test
   phase — that reduction is the backward-compatibility guarantee. Gate A
   compares `<=`. A validator parsing zero phases refuses. An unterminated
@@ -238,7 +240,9 @@ pointer; the pointer holds the story.
   the text, never with a hook. Skills and hooks are package-owned: edit
   `skills/` and `hooks/` here, resync `.claude/skills/` and `.claude/hooks/`;
   `skill-sync-parity` pins byte-equality and the planning context template
-  likewise. **A library the skills call is not shipped until it is in
+  likewise. A phase that edits `skills/` resyncs `.claude/skills/` in the same
+  phase and runs `skill-sync-parity.test.ts` — `vitest related` does not reach it.
+  **A library the skills call is not shipped until it is in
   `package.json` `exports` AND its documented invocation has run verbatim.**
 - **Extensions own tool knowledge**; required-by-default ones flow through
   `autoEnableExtensions` Pass 1 (`disabled_extensions` opts out); they ship
@@ -255,11 +259,14 @@ pointer; the pointer holds the story.
   `prepublishOnly` packs the `.vsix`.
   `lib/release/` has its own `CLAUDE.md`. — see `/reference/cli/release`
 
+- **A session is owned by its project, plan and kind** — `SessionManager.start` refuses only a second session of the same owner, and a start at the machine's cap (`sessions.max` in the InDusk home's `config.json`, default 4, a malformed file reads as 4); readers ask `forPlan(project, plan, kind?)` or `running()`, never "the" session. Guarded by `session/manager.test.ts` (A2, A9). — see `/decisions/sessions-per-plan`
+
 ## Tests
 
 - commander@13 drops duplicate parent+subcommand options — declare on the
   parent, read via `optsWithGlobals()`. gray-matter on malformed YAML throws in
   Node but returns `data: {}` under vitest — detect malformed structurally.
+- The root run builds this package before its tests (`turbo.json` `@infinitedusky/indusk-mcp#test`): a test behind `SHOULD_SKIP` skips silently without `dist/`, so a row on the built CLI must not rest on a build someone remembered.
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
   where code lives runs over all four); a promise-bearing project —

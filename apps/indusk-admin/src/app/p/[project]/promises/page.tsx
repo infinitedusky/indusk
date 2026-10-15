@@ -156,7 +156,7 @@ export default async function PerProjectPromisesPage({
   const looks = await readLookStanding(projectPath, {
     cacheMs: readAdminRefreshMs(projectPath),
   });
-  const planNames = readHealthNames(projectPath);
+  const planNames = await readHealthNames(projectPath);
   const declarations = readPlanHierarchy(projectPath);
   const rows = buildRows(standing, {
     planTitles: planNames.planTitles,

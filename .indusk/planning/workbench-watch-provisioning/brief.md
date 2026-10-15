@@ -1,5 +1,6 @@
 ---
-title: "Every workbench is watched from its first commit"
+title: "Watched from day one"
+description: "Every workbench is watched from its first commit."
 date: 2026-10-02
 status: draft
 workflow: feature

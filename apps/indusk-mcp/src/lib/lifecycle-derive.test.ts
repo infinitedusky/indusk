@@ -44,6 +44,7 @@ function readiness(missing: string[]): RetrospectiveReadiness {
 		nonTerminalRows: missing.includes("rows") ? ["A7"] : [],
 		promisesOk: !missing.includes("promises"),
 		unprovenPromises: missing.includes("promises") ? ["seat-released-on-timeout"] : [],
+		longSkipReasons: [],
 		passes: missing.length === 0,
 		missing,
 	};

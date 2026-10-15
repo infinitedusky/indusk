@@ -47,6 +47,31 @@ describe("A7 — the health line carries the names", () => {
 });
 
 /**
+ * plan-stories A10: a promise whose plan the checkout cannot read is grouped under
+ * its plan's handle in words, never the bare handle.
+ *
+ * promise: a-plan-reads-by-its-title
+ */
+describe("A10 — a plan the checkout cannot read reads as its handle in words", () => {
+	it("a promise owned by a plan with no planTitles entry carries the handle in words", () => {
+		const p = promiseProject({
+			promises: [
+				behaviourPromise("a-fly-deploy-is-one-command", { owner: "gone-plan", domain: "demo" }),
+			],
+			domains: ["demo"],
+		});
+		const read = readPromises(p.planRoot);
+		if (!read.ok) throw new Error("fixture registry did not read");
+		const line = healthLine(read.registry, [], new Date(0), {
+			planTitles: {},
+			planDates: {},
+			words: {},
+		});
+		expect(line.promises[0]?.planTitle).toBe("Gone plan");
+	});
+});
+
+/**
  * A3 of panel-last-broke-time: a row for a promise with violations carries the
  * newest violation's time, apart from the newest run's. Sources are fakes.
  *

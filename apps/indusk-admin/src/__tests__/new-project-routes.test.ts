@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { POST } from "@/app/api/new-projects/route";
 
 // promise: a-project-starts-as-a-conversation
 
@@ -24,7 +25,8 @@ vi.mock("@/lib/session-host", () => ({
   refuse: (status: number, message: string) =>
     Response.json({ error: message }, { status }),
   sessionManager: () => ({
-    current: () => undefined,
+    forPlan: () => undefined,
+    capRefusal: () => undefined,
     subscribe: (_id: string, listen: (ev: unknown) => void) => {
       heard = listen;
       return () => {};
@@ -73,7 +75,6 @@ const jsonRequest = (body: unknown) =>
 describe("A2 — the first message starts a conversation that holds it and the documents", () => {
   it("A2 starts a planning session for new-project:<id> whose prompt carries the message, with the document in the draft", async () => {
     mkdirSync(home, { recursive: true });
-    const { POST } = await import("@/app/api/new-projects/route");
     const res = await POST(
       jsonRequest({ message: "A parental control system", documents: [brief] }),
     );

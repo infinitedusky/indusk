@@ -9,6 +9,7 @@ import { runStepSession, stepEnv, stepPrompt } from "./build-session.js";
 /**
  * promise: a-build-runs-to-review-unasked — admin-plan-authoring A30, the build session's half.
  * promise: nothing-ships-until-accepted — admin-plan-authoring A35, the marking half.
+ * promise: a-skip-reason-is-one-sentence — skip-reason-why A16, the shortening session's prompt.
  * promise: a-build-runs-to-review-unasked — workbench-plan-authoring A13, a workbench build's two roots.
  * promise: a-prompt-shows-only-when-a-person-must-choose — decided-prompts-stay-closed A1, A2, the package half.
  * promise: a-decided-request-stays-decided — decided-prompts-stay-closed A7, the package half.
@@ -231,5 +232,20 @@ describe("decided-prompts-stay-closed A1, A2, A7 — every request a build decid
 			by: "rule",
 			message: expect.stringMatching(/own judgement/),
 		});
+	});
+});
+
+describe("A16 — the shortening session is told which reason to rewrite", () => {
+	const detail = { ritual: "audit", length: 300, sentences: 1 } as const;
+
+	it("names the field, the limit, one sentence, and to change nothing else", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: the step is added with its implementation
+		const prompt = (stepPrompt as any)("shorten-reason", "seats", detail) as string;
+		expect(prompt).toContain("audit_reason");
+		expect(prompt).toContain("120");
+		expect(prompt).toContain("one sentence");
+		expect(prompt).toMatch(/change nothing else/);
+		expect(prompt).toContain("300");
+		expect(prompt).toContain("INDUSK_GATE_POLICY=auto");
 	});
 });

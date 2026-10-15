@@ -1,5 +1,6 @@
 ---
-title: "Dawn — Master Plan"
+title: "InDusk v2: Dawn"
+description: "Runs a plan's work through whichever AI model or tool you already use, and checks the result can be trusted."
 date: 2026-08-02
 status: living
 # Ordered children. A name here that has no folder yet is normal — it renders
@@ -10,7 +11,9 @@ subplans:
   - dawn-hook-parity
   - dawn-verify
   - dawn-workbench-execution
-  - dawn-agents
+  - name: dawn-agents
+    title: "Any executor"
+    description: "Work done by an agent other than Claude is verified the same way."
   - dawn-linear
   - dawn-cloud
 ---

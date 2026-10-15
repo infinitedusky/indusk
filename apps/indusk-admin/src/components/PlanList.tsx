@@ -11,6 +11,7 @@ import { PlanRow } from "@/components/ui/PlanRow";
 import { WorktreeChip } from "@/components/Worktrees";
 import { initialsOf } from "@/lib/initials";
 import { buildGroups, orderByMaster, type PlanGroup } from "@/lib/plan-groups";
+import { planStage } from "@/lib/plan-stage";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanListProps {
@@ -54,6 +55,8 @@ interface PlanListProps {
    * does in the nav's Needs you group.
    */
   waiting?: Record<string, string>;
+  /** The project's product words, for a queued plan with no title declared. */
+  words?: Record<string, string>;
 }
 
 /**
@@ -78,6 +81,7 @@ export function PlanList({
   red,
   dates,
   waiting,
+  words,
 }: PlanListProps) {
   if (active.length === 0 && archived.length === 0) {
     return <EmptyPlansSidebarSlot />;
@@ -90,6 +94,7 @@ export function PlanList({
     archived,
     grouping,
     isReleased,
+    words,
   );
   const orderedActive = orderByMaster(rest, masterOrder);
   const unordered = rest.filter((p) => !masterOrder.includes(p.name));
@@ -222,7 +227,7 @@ function PlanGroupSection({
       data-testid={`plan-group-${name}`}
       data-parent={name}
       data-depth={group.depth}
-      name={name}
+      name={group.parent.title}
       number={number}
       href={`${prefix}${name}`}
       linkProps={{ "data-plan-name": name }}
@@ -260,7 +265,7 @@ function PlanGroupSection({
           />
         ) : (
           <div key={entry.name} data-testid={`plan-placeholder-${entry.name}`}>
-            <PlaceholderRow name={entry.name} number={entry.number} />
+            <PlaceholderRow title={entry.title} number={entry.number} />
           </div>
         ),
       )}
@@ -269,14 +274,14 @@ function PlanGroupSection({
 }
 
 /** A declared plan with no folder yet: a row with no page behind it, its stage "Queued". */
-function PlaceholderRow({ name, number }: { name: string; number: number }) {
+function PlaceholderRow({ title, number }: { title: string; number: number }) {
   return (
     <PlanRow
       disabled
       queued
-      initials={initialsOf(name)}
+      initials={initialsOf(title)}
       state="idle"
-      name={name}
+      name={title}
       number={<PlanNumber number={number} />}
       stage="Queued"
       title="Declared in the parent's master.md — not created yet"
@@ -323,15 +328,15 @@ function PlanItem({
 }) {
   const step = waiting?.[plan.name];
   const mark = statusToNavMark(plan.status, plan.archived);
-  const stage = step ?? (released ? "Released" : mark.stage);
+  const stage = planStage(plan, released, waiting);
   return (
     <li>
       <NavPlanRow
         href={`${prefix}${plan.name}`}
         data-plan-name={plan.name}
-        initials={initialsOf(plan.name)}
+        initials={initialsOf(plan.title)}
         state={step === undefined ? mark.state : "needs"}
-        name={plan.name}
+        name={plan.title}
         number={number === undefined ? "" : <PlanNumber number={number} />}
         stage={
           <>

@@ -13,5 +13,6 @@ Features use the full planning lifecycle. This is the default when no workflow t
 ## Notes
 - This is the full lifecycle documented in the plan skill
 - Use the standard templates from the plan skill
+- Write the impl with `phase_summary: required`: each phase opens with a paragraph, each task is one plain sentence, and its detail is folded under it
 - Include a boundary map in the impl if there are 2+ phases
 - Every phase gets verification, context, and document gates

@@ -84,6 +84,57 @@ When you've formed one or more recommendations, **append a new phase to the plan
 - [ ] {docs update if the public surface changed, or "(none — internal decomposition)" with proof}
 ```
 
+**For an impl that has opted in to phase summaries** (`phase_summary: required` in its frontmatter), use this shape instead: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels (`T{M}:` included) in an indented Technical fold. The save check refuses code or a row label on a task line, and a row label in the paragraph. A reasoned leave-as-is is a task too: its sentence says what was reviewed and why it stays, its file in the fold.
+
+<!-- template: phase_summary required -->
+```markdown
+### Phase N: Cleanup — {short summary of the decomposition theme}
+
+**Tier**: med — the work step's default
+
+{Two or three plain sentences: what this plan grew that is worth decomposing, the best-practice basis, and what is true once the phase closes. No row labels, no abbreviations, no code.}
+
+- [ ] {One plain sentence saying what is extracted or refactored and why}
+  <details><summary>Technical</summary>
+
+  Extract {unit} from {file} into {new file} — {best-practice basis}.
+
+  </details>
+- [ ] {One plain sentence saying what was reviewed and why it stays as it is}
+  <details><summary>Technical</summary>
+
+  Reviewed {file} — left as-is: {reason}.
+
+  </details>
+
+#### Phase N Verification
+
+- [ ] {One plain sentence saying that the new unit is tested, or that behaviour is unchanged}
+  <details><summary>Technical</summary>
+
+  T{M}: {new unit has a focused test / behavior-parity holds}.
+
+  </details>
+
+#### Phase N Context
+
+- [ ] {One plain sentence saying what the project's instructions now say about the new structure}
+  <details><summary>Technical</summary>
+
+  {The concrete CLAUDE.md edit and its tier.}
+
+  </details>
+
+#### Phase N Document
+
+- [ ] {One plain sentence saying which docs page changes if the public surface did}
+  <details><summary>Technical</summary>
+
+  {The page and the edit.}
+
+  </details>
+```
+
 Add any new-unit trajectory rows to the plan's `## Test Trajectory` table (`Writable at`/`Passes at: Phase N`). **The phase title must START with "Cleanup"** (`### Phase N: Cleanup — {summary}`) — the retrospective gate's `isCleanupComplete` detects the ritual phase by a title *beginning* with "cleanup" (case-insensitive), NOT a substring anywhere. A substring match would misdetect a topic-named phase like "The /cleanup skill" as the ritual phase.
 
 **What you do NOT do in the skill:**
@@ -106,8 +157,10 @@ If after investigation there is genuinely nothing worth decomposing — every ch
 
 ```yaml
 cleanup: skipped
-cleanup_reason: "reviewed changed files X, Y, Z; all under threshold or cohesive; nothing warrants extraction"
+cleanup_reason: "reviewed the changed files; all cohesive and under threshold, nothing warrants extraction"
 ```
+
+The reason is one sentence of at most 120 characters (`promise: a-skip-reason-is-one-sentence`); the detail goes in the impl body or the retrospective, and the retrospective refuses a longer one.
 
 This is a confession, not a bypass — it is visible in the retrospective audit and records what you reviewed. Use it when there is truly nothing to do, or for trivial plans (typo, changelog) where the ritual cost exceeds the value.
 

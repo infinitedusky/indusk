@@ -218,7 +218,9 @@ plans have made of its promises since.
 
 `--all` checks every plan folder, active and archived. `--impl-stdin` judges
 the impl given on stdin in place of the one on disk; the impl hook uses it,
-because it asks before a write lands.
+because it asks before a write lands. The impl may be of any size and arrive
+in parts: stdin is read to its end, so the same impl gets the same answer
+every run.
 
 **Who runs it.** The impl hook (`validate-impl-structure.js`) runs it on every
 write to an impl that sets `test_purpose: required` and is past `draft`, and

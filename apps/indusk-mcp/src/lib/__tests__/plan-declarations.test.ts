@@ -193,3 +193,42 @@ describe("T9 — the plan list itself is unchanged by declarations", () => {
 		expect(after.map((p) => p.stageStatus)).toEqual(before.map((p) => p.stageStatus));
 	});
 });
+
+/**
+ * plan-stories A4: a master's `subplans:` entry is a name, or a mapping with a
+ * title and description for a plan not yet started; the declared order holds either way.
+ *
+ * promise: a-master-plan-tells-its-story
+ */
+describe("A4 — a subplan entry is a name, or a name with a title and description", () => {
+	// The declared titles are the new field Build Phase 1 adds, so reach it through a cast.
+	type Titled = {
+		declaredTitles?: Record<string, Record<string, { title?: string; description?: string }>>;
+	};
+
+	it("keeps the declared order whether each entry is a name or a mapping, and reports the written words", () => {
+		writeFileSync(join(planning, "master.md"), "---\nparents: [parent]\n---\n", "utf8");
+		makePlan("parent", {
+			"master.md":
+				'---\nsubplans:\n  - one\n  - name: two\n    title: "Second"\n    description: "The second."\n  - three\n---\n',
+		});
+
+		const declarations = readPlanDeclarations(planning);
+
+		expect(declarations.subplans.parent).toEqual(["one", "two", "three"]);
+		expect((declarations as Titled).declaredTitles?.parent?.two).toEqual({
+			title: "Second",
+			description: "The second.",
+		});
+	});
+
+	it("a master of names alone declares as before, with no titles", () => {
+		writeFileSync(join(planning, "master.md"), "---\nparents: [parent]\n---\n", "utf8");
+		makePlan("parent", { "master.md": "---\nsubplans: [one, two]\n---\n" });
+
+		const declarations = readPlanDeclarations(planning);
+
+		expect(declarations.subplans.parent).toEqual(["one", "two"]);
+		expect((declarations as Titled).declaredTitles?.parent ?? {}).toEqual({});
+	});
+});

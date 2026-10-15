@@ -148,3 +148,43 @@ describe("A13 — what a plan waits on, and the step it waits at", () => {
 		expect(both[0]?.on).toBe("question");
 	});
 });
+
+/**
+ * plan-stories A14: a plan waiting only on an amendment waits on the person, at its
+ * Brief step; one with no amendment and nothing else waiting does not. The new
+ * input is passed through a cast, so the file compiles before the input exists.
+ *
+ * promise: decisions-wait-in-one-place
+ */
+describe("A14 — an amendment waits on the person, at the Brief", () => {
+	const withAmendments = (
+		amendments: { plan: string; count: number }[],
+		list: Plan[],
+		extra = {},
+	) =>
+		planWaiting({ sessions: [], plans: list, builds: [], amendments, ...extra } as Parameters<
+			typeof planWaiting
+		>[0]);
+
+	it("A14 an approved plan with an amendment and nothing else waiting is reported on the amendment", () => {
+		const w = withAmendments([{ plan: "mid-build", count: 1 }], [building]).find(
+			(x) => x.plan === "mid-build",
+		);
+		expect(w).toMatchObject({ plan: "mid-build", on: "amendment", step: "Brief" });
+	});
+
+	it("A14 the same plan with no amendment is not reported", () => {
+		expect(withAmendments([], [building]).map((w) => w.plan)).toEqual([]);
+	});
+
+	it("A14 a question still outranks the amendment", () => {
+		const w = planWaiting({
+			sessions: [{ ...question, plan: "mid-build" }],
+			plans: [building],
+			builds: [],
+			amendments: [{ plan: "mid-build", count: 1 }],
+		} as Parameters<typeof planWaiting>[0]);
+		expect(w).toHaveLength(1);
+		expect(w[0]?.on).toBe("question");
+	});
+});

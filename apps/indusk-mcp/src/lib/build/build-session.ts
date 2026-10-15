@@ -6,6 +6,7 @@ import {
 	rateLimitDelayMs,
 } from "../session/rate-limit.js";
 import type { StartedEvent } from "../session/start.js";
+import type { ShortenReason } from "./next-step.js";
 import type { BuildStepName } from "./runner.js";
 import { BUILD_STEP_ENV } from "./step-env.js";
 
@@ -32,7 +33,7 @@ const UNATTENDED =
 	"This build runs unattended (INDUSK_GATE_POLICY=auto): nobody will answer a question. Decide on your own judgement and record each decision and its reason in the plan. Skip a gate item only as `(none needed — <why>)`; the person reviewing the build reads every skip.";
 
 /** What each step asks for. The runner decides which step; this only words it. */
-export function stepPrompt(step: BuildStepName, plan: string): string {
+export function stepPrompt(step: BuildStepName, plan: string, reason?: ShortenReason): string {
 	switch (step) {
 		case "work":
 			return `/work ${plan}\n\n${UNATTENDED} Work the plan's open phases in order until every one is closed, then stop. Do not run /falsify, /cleanup, /audit or /retrospective.`;
@@ -42,6 +43,14 @@ export function stepPrompt(step: BuildStepName, plan: string): string {
 			return `/cleanup ${plan}\n\n${UNATTENDED} End the review yourself when nothing more is warranted; do not wait for confirmation.`;
 		case "audit":
 			return `/audit ${plan}\n\n${UNATTENDED} Write audit.md and end; its findings block nothing, so do not act on them.`;
+		case "shorten-reason": {
+			// promise: a-skip-reason-is-one-sentence
+			const field = `${reason?.ritual ?? "the skipped ritual"}_reason`;
+			const was = reason
+				? `${reason.length} characters in ${reason.sentences} sentence(s)`
+				: "too long";
+			return `The ritual skip in plan \`${plan}\` has a reason that is too long: \`${field}\` in the frontmatter of .indusk/planning/${plan}/impl.md is ${was}. A skip reason is one sentence of at most 120 characters (rituals/reason.ts); the detail belongs in the impl body or the retrospective.\n\nRewrite that one line as one sentence of at most 120 characters that keeps the reason; change nothing else in the plan, commit with a message naming \`${field}\`, and end. ${UNATTENDED} Do not run /falsify, /cleanup or /audit.`;
+		}
 		case "retrospective":
 			return `/retrospective ${plan}\n\nThe plan has been accepted. Run the retrospective to the end; it lands the plan with \`indusk plans land ${plan}\`. ${UNATTENDED}`;
 	}
@@ -60,6 +69,8 @@ export interface BuildSessionOptions {
 	retryDelaysMs?: number[];
 	sleep?: (ms: number) => Promise<void>;
 	onEvent?: (ev: StartedEvent) => void;
+	/** For a `shorten-reason` step: the reason to rewrite. */
+	reason?: ShortenReason;
 }
 
 /** Run one step to its end. `error` is null when the session finished its work. */
@@ -90,7 +101,7 @@ async function oneSession(
 		cwd: opts.worktree,
 		...(opts.addDirs?.length ? { addDirs: opts.addDirs } : {}),
 		kind: "build",
-		prompt: stepPrompt(step, opts.plan),
+		prompt: stepPrompt(step, opts.plan, opts.reason),
 		project: opts.project,
 		plan: opts.plan,
 		env: stepEnv(step),

@@ -1,0 +1,6 @@
+# story-first-phases — decisions
+
+Each decision the plan waited on, the answer and who gave it, as the admin recorded them (`plans/history`). Not edited by hand.
+
+- 2026-10-15T00:03:05.255Z — amendment to the promise an-impl-phase-tells-its-story: was "Every phase of a new impl opens with a plain paragraph saying what it does for the whole plan, and every task is one plain sentence with its technical detail beneath it, written for someone who has worked on the project but knows none of its shorthand: no row labels, no abbreviations, nothing named by a nickname or an unclear pronoun; an impl that leaves out the paragraph or the sentence, or puts a row label in either, is refused.", now null — answered "Approve" by Sandy-Corsillo
+- 2026-10-15T00:03:05.255Z — amendment to the promise an-impl-phase-explains-itself: was null, now "Every phase of a new impl opens with a plain summary saying what it does for the whole plan, and every task is one plain sentence with its technical detail beneath it, written for someone who has worked on the project but knows none of its shorthand: no row labels, no abbreviations, nothing named by a nickname or an unclear pronoun; an impl that leaves out the paragraph or the sentence, or puts a row label in either, is refused." — answered "Approve" by Sandy-Corsillo

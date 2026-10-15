@@ -2,6 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import type { Plan } from "@/lib/planning-reader";
 
+// PlanList names a queued plan by the package's title rule, whose module reads
+// the filesystem; the browser project cannot import it, so the rule is stubbed.
+vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
+  __esModule: true,
+  planTitle: (_title: unknown, handle: string) => handle,
+}));
+
 // Mock next/link — see PlanList.test.tsx for the canonical reason.
 vi.mock("next/link", () => {
   function MockLink({
@@ -37,7 +44,14 @@ import { PlanList } from "./PlanList";
  */
 
 function mockPlan(name: string, overrides: Partial<Plan> = {}): Plan {
-  return { name, status: "draft", archived: false, ...overrides };
+  return {
+    name,
+    title: name,
+    description: null,
+    status: "draft",
+    archived: false,
+    ...overrides,
+  };
 }
 
 // `root` lands with Build Phase 6 (the reader returns the root master's
@@ -51,6 +65,7 @@ const grouping = {
     dawn: ["dawn-verify", "dawn-workbench-execution"],
     day: ["dawn-workbench-execution", "admin-ui-phase-progress"],
   },
+  declaredTitles: {},
 } as unknown as Parameters<typeof PlanList>[0]["grouping"];
 
 const plans = [

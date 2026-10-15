@@ -208,14 +208,15 @@ describe("A2 — approval happens in the checkout the plan is worked in, never t
       sectionOf(html, "looks-reading").replace(/<[^>]*>/g, "");
     expect(reading(own)).toContain("project checkout");
     expect(reading(own)).toContain(`${proposedIn(own)} proposed`);
-    expect(reading(plan)).toContain("plan looks");
+    expect(reading(plan)).toContain("Reading Looks");
+    expect(reading(plan)).not.toContain("plan looks");
     expect(reading(plan)).toContain(`${proposedIn(plan)} proposed`);
 
     // each checkout in the choice carries its own count
     const choice = sectionOf(own, "looks-checkouts").replace(/<[^>]*>/g, "");
     expect(choice).toContain(`project checkout`);
     expect(choice).toContain(`${proposedIn(own)} proposed`);
-    expect(choice).toContain(`plan looks · ${proposedIn(plan)} proposed`);
+    expect(choice).toContain(`Looks · ${proposedIn(plan)} proposed`);
   });
 
   it("A2 a plan with no worktree holding mockups is refused, and so is a mockup the own checkout lacks", async () => {

@@ -1,5 +1,6 @@
 ---
-title: "Context reaches every session"
+title: "Context in every session"
+description: "An agent sees the rules for the folder it works in even when Claude Code does not load them itself."
 date: 2026-10-06
 status: draft
 workflow: feature
