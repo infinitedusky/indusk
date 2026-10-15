@@ -1,7 +1,7 @@
 ---
 title: "Decided prompts stay closed"
 date: 2026-10-14
-status: completed
+status: in-progress
 workflow: bugfix
 trajectory: required
 test_phases: required
@@ -52,6 +52,7 @@ Every request a session makes is recorded in its log together with how it was de
 | A8 | Watching a real build in the cockpit, no prompt is left looking undecided, and a reload leaves every one decided | Build Phase 2 | Build Phase 2 | passing | live check | the brief's expectation: watching a build shows no prompt waiting unless it is | recorded in this impl, Build Phase 2 |
 | A9 | A question the person answered shows the answer they gave, and a panel connecting afterwards (a reload) still shows it answered with that answer, not a blank question with every option disabled | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-decided-request-stays-decided | apps/indusk-mcp/src/lib/session/manager.test.ts, apps/indusk-admin/src/components/session/SessionPanel.test.tsx |
 | A10 | A click on Allow, Deny or Answer whose reply the server refuses leaves the request waiting with its buttons back, never with neither buttons nor an outcome | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/SessionPanel.test.tsx, apps/indusk-admin/src/components/new-project/ConversationThread.test.tsx |
+| A11 | A click closes its request at once; a reply the server refuses reopens it, and an accepted one keeps it closed — one hook the panel and the thread both use | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-prompt-shows-only-when-a-person-must-choose | apps/indusk-admin/src/components/session/use-answered-requests.test.tsx |
 
 ## Checklist
 
@@ -168,6 +169,29 @@ Every request a session makes is recorded in its log together with how it was de
 - Searched without an attack vector: the confined and planning rule paths (`decideByRule`; the draft's `transcript.jsonl` is written by a `subscribe` listener in `new-project-session.ts`, not `opts.onEvent` as Build Phase 1 assumed, and `record(…, false)` still notifies listeners, so a reopened draft keeps both events); a double reply (refused by `h.answered`); the build's question decline (its message is never empty); `pendingQuestion` and Needs you (read `h.answered`, which `reply` still fills); `turnsOf` (collects decisions in a first pass, so order does not matter).
 - Seen, not authored: in a build a live subscriber hears `decided` before its `permission` (`record` calls the build's `onEvent`, which replies, before the listeners run), while the log replayed to a reconnecting panel is in order. Every reader builds a map first, so nothing draws it wrong.
 - Not investigated: what a panel shows once the manager drops a session's events at `stop` (a finished build step); that is the session's lifetime, not how a decision is recorded.
+
+### Build Phase 4: Cleanup — one reader of a request's decision, one closer of a click
+
+**Tier**: med — the work step's default
+
+**Goal**: decompose what this plan grew twice in the admin, per the `typescript` extension's extract-a-module idiom (no `react`/`nextjs` extension is enabled). The plan wrote the same two pieces in two files: the "close on click, reopen when the reply is refused" state (`settle` plus a local `answered` set, identical in `SessionPanel.tsx` and `ConversationThread.tsx`), and the "which requests are decided" reading of the log (`decisionsOf` in `SessionPanel.tsx`, a hand-rolled `decided` set in `conversation-turns.ts`). Each pair holds one invariant the admin's `CLAUDE.md` now states, so each becomes one unit. `SessionPanel.tsx` is also over its cap (442 / 400).
+
+- [ ] Extract the click-closing state into `apps/indusk-admin/src/components/session/use-answered-requests.ts`: `useAnsweredRequests()` returning `{ answered, settle }`; `SessionPanel` and `ConversationThread` use it and drop their copies — two identical stateful copies of one invariant (a refused reply reopens the request); a third view would copy it again
+- [ ] Move `Decision` and `decisionsOf` from `SessionPanel.tsx` into `apps/indusk-admin/src/lib/request-decisions.ts`; `SessionPanel` imports them, and `turnsOf` (`conversation-turns.ts`) uses `decisionsOf(events)` in place of its own `decided` set — one reader of the `decided` record, in `lib/` where the non-component reader can import it without reaching into a component file
+- [ ] Extract `QuestionView` (and its `OTHER` constant) from `SessionPanel.tsx` into `apps/indusk-admin/src/components/session/QuestionView.tsx` — a self-contained component with its own state (`chosen`, `other`), about 130 lines, the panel's largest unit; brings `SessionPanel.tsx` under its cap
+- [ ] (reviewed `apps/indusk-mcp/src/lib/session/manager.ts` — left as-is: 413 / 400, the overage is `record`, `decideByRule` and `decidedBy`, which exist to keep every event on one path through the class; moving them out would split the log from the manager that owns it)
+- [ ] (reviewed `SessionPanel.test.tsx` (402) and `manager.test.ts` (513) — left as-is: each is one subject's tests grouped by trajectory row; splitting by row would scatter shared fakes)
+- [ ] (reviewed `build-session.ts`, `start.ts`, `SessionConnector.tsx`, `use-project-session.ts` — left as-is: small edits, under cap, no repeat across files)
+
+#### Build Phase 4 Verification
+- [ ] A11: the hook's own test (`cd apps/indusk-admin && pnpm exec vitest run src/components/session/use-answered-requests.test.tsx`)
+- [ ] Behaviour parity: A1–A10 still pass (`cd apps/indusk-admin && pnpm exec vitest run src/components/session/SessionPanel.test.tsx src/components/new-project/ConversationThread.test.tsx src/lib/conversation-turns.test.ts && pnpm exec vitest related src/components/session/SessionPanel.tsx src/components/session/QuestionView.tsx src/components/new-project/ConversationThread.tsx src/lib/conversation-turns.ts --run`); tsc and biome clean on the changed files
+
+#### Build Phase 4 Context
+- [ ] `apps/indusk-admin/CLAUDE.md`: the decided-event entry names its two units — `lib/request-decisions.ts` (`decisionsOf`) is the one reader of a request's decision, `useAnsweredRequests` the one early close of a click
+
+#### Build Phase 4 Document
+- [ ] (none — internal decomposition; asked/user proof to be recorded at `/work` per `gate_policy: ask`)
 
 ## Files Affected
 
