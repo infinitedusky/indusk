@@ -1,7 +1,7 @@
 ---
 title: "skip-reason-why"
 date: 2026-10-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -51,8 +51,8 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 | A7 | Each of the cleanup, falsify and audit skills states the one-sentence, 120-character limit beside a skip example within it | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 | A8 | A step with no reason draws with no "why?" | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: the four existing step looks must not change | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
 | A9 | A skip with a reason of 120 characters or fewer is still ready for the retrospective | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard: a short skip stays valid, and an audit skip with a reason is still accepted | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
-| A10 | On the page of a plan whose audit was skipped with a reason, the Audit step reads "skipped" with a "why?" that opens the reason | Phase 0 | Build Phase 3 | written | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
-| A11 | A cleanup skipped with a reason of three short sentences ("Done. Nothing here. Fine.", under 120 characters) is not ready for the retrospective, cleanup named | Phase 0 | Build Phase 3 | written | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
+| A10 | On the page of a plan whose audit was skipped with a reason, the Audit step reads "skipped" with a "why?" that opens the reason | Phase 0 | Build Phase 3 | passing | unit | promise: a-skipped-step-shows-why-on-request | apps/indusk-admin/src/app/p/[project]/plan/[name]/workflows.test.tsx |
+| A11 | A cleanup skipped with a reason of three short sentences ("Done. Nothing here. Fine.", under 120 characters) is not ready for the retrospective, cleanup named | Phase 0 | Build Phase 3 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 | A12 | A one-sentence reason containing "e.g." or a file name such as "gate.ts" is still ready for the retrospective | Phase 0 | Build Phase 3 | passing | unit | promise: a-skip-reason-is-one-sentence | apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts |
 
 ## Checklist
@@ -157,16 +157,19 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 
 #### Build Phase 3 Verification
 
-- [ ] A10 goes green (`cd apps/indusk-admin && pnpm exec vitest run "src/app/p/[project]/plan/[name]/workflows.test.tsx"`), and A1–A3, A8 stay green
-- [ ] A11 and A12 go green and A4–A7, A9 stay green (`pnpm exec vitest run apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts && pnpm exec vitest related apps/indusk-mcp/src/lib/cleanup/gate.ts apps/indusk-mcp/src/lib/plans/steps.ts apps/indusk-mcp/src/lib/lifecycle.ts --run`)
+- [x] A10 goes green (`cd apps/indusk-admin && pnpm exec vitest run "src/app/p/[project]/plan/[name]/workflows.test.tsx"`), and A1–A3, A8 stay green
+- [x] A11 and A12 go green and A4–A7, A9 stay green (`pnpm exec vitest run apps/indusk-mcp/src/__tests__/skip-reason-length.test.ts && pnpm exec vitest related apps/indusk-mcp/src/lib/cleanup/gate.ts apps/indusk-mcp/src/lib/plans/steps.ts apps/indusk-mcp/src/lib/lifecycle.ts --run`)
+
+- [x] Shape (craft review of `lifecycle.ts` `sentenceCount`, `gate.ts` `skipIsOneSentence`/`noteLongSkip`, `steps.ts`): reviewed, nothing found — one pure rule with one definition beside `SKIP_REASON_MAX`, the two gate helpers read it, the ritual union is local to `steps.ts`
+  - note: the cockpit fixture hands `Plan.skippedRituals` to the page directly, so A10 exercises `steps.ts` and the widened `Plan` type but not `planning-reader.ts`'s new `isAuditSkipped` entry (typechecked, same shape as the cleanup entry; `build/review.ts` already reads the audit skip the same way)
 
 #### Build Phase 3 Context
 
-- [ ] guard: the sentence rule's code comment names `promise: a-skip-reason-is-one-sentence`, so the rule reaches an agent from its enforcer
+- [x] guard: the sentence rule's code comment names `promise: a-skip-reason-is-one-sentence`, so the rule reaches an agent from its enforcer
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/skills/retrospective.md`: the Step 0 check refuses a reason of more than one sentence as well as one over 120 characters; `apps/docs/src/reference/admin-ui/overview.md`: the Audit step reads "skipped" too
+- [x] `apps/docs/src/reference/skills/retrospective.md`: the Step 0 check refuses a reason of more than one sentence as well as one over 120 characters; `apps/docs/src/reference/admin-ui/overview.md`: the Audit step reads "skipped" too
 
 #### Build Phase 3 Hunt record
 
