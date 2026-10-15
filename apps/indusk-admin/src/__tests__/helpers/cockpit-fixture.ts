@@ -102,12 +102,27 @@ function position(current: PlanPosition): NonNullable<Plan["position"]> {
   return { position: current, segments, awaiting: null };
 }
 
+/**
+ * The short title each named plan is written with (plan-stories). A plan
+ * absent here has none written and reads as its handle. `mid-build` carries a
+ * title as long as the longest one written, for the phone fit (A19).
+ */
 const TITLES: Record<string, string> = {
+  "path-alpha": "Seat holds path",
+  "path-alpha-inner": "Inner holds path",
+  "path-deep": "Deep holds path",
+  "path-beta": "Checkout path",
+  "path-gamma": "Search path",
   "alpha-one": "Seat holds rework",
   "beta-one": "Checkout rebuild",
   "beta-two": "Receipts and refunds",
   "gamma-one": "Search ranking",
   "undeclared-plan": "Loose ends",
+  "at-review": "Review stop",
+  "asking-plan": "Seat map question",
+  "awaiting-approval": "Approval pending",
+  "mid-build":
+    "The admin organised around premises, promises and its phases, plan by plan",
 };
 
 interface DocSpec {

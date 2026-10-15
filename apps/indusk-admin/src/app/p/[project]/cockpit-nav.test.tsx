@@ -3,6 +3,7 @@
 // promise: a-plan-can-start-from-the-admin
 // promise: decisions-wait-in-one-place
 // promise: broken-promises-come-first
+// promise: a-plan-reads-by-its-title
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page } from "vitest/browser";
@@ -12,8 +13,10 @@ import {
   BROKEN,
   PROJECT,
   resetFixture,
+  titleOf,
   WAITING,
 } from "@/__tests__/helpers/cockpit-fixture";
+import { initialsOf } from "@/lib/initials";
 
 /**
  * plan-cockpit, Test Phase 1: the nav, rendered by the project layout around
@@ -319,6 +322,58 @@ describe("A13 — plans waiting on the person are listed under Needs you, with t
     const needs = root.querySelector('[data-testid="needs-you"]');
     expect(needs?.querySelector('a[data-needs-you="mid-build"]')).toBeNull();
     expect(needs?.querySelector('a[data-needs-you="beta-one"]')).toBeNull();
+  });
+});
+
+describe("A11 (plan-stories) — every plan and Path in the nav reads by its title", () => {
+  const plans = [
+    "alpha-one",
+    "beta-one",
+    "beta-two",
+    "gamma-one",
+    "undeclared-plan",
+  ];
+  const nameOf = (row: Element | null | undefined) =>
+    row?.querySelector("span[title]")?.textContent?.trim();
+
+  it("A11 each plan's row reads its title, with initials from the title, and still links to its handle", async () => {
+    const root = await layoutAround(planPage, `${base}/plan/beta-one`);
+    for (const handle of plans) {
+      const row = root.querySelector(
+        `[data-testid="cockpit-nav"] a[data-plan-name="${handle}"]`,
+      );
+      expect(nameOf(row), `the row for ${handle}`).toBe(titleOf(handle));
+      expect(
+        row?.querySelector('[data-component="badge"]')?.textContent?.trim(),
+        `the mark for ${handle}`,
+      ).toBe(initialsOf(titleOf(handle)));
+      expect(row?.getAttribute("href")).toBe(`${base}/plan/${handle}`);
+    }
+  });
+
+  it("A11 a Path reads its parent's title, and still links to the parent's handle", async () => {
+    const root = await layoutAround(planPage, `${base}/plan/beta-one`);
+    for (const handle of ["path-alpha", "path-beta", "path-gamma"]) {
+      const link = root.querySelector(
+        `[data-testid="plan-group-${handle}"] > div a[data-plan-name="${handle}"]`,
+      );
+      expect(link?.textContent?.trim(), `the Path ${handle}`).toBe(
+        titleOf(handle),
+      );
+      expect(link?.getAttribute("href")).toBe(`${base}/plan/${handle}`);
+    }
+  });
+
+  it("A11 each plan under Needs you reads its title, with initials from it, and links to its handle", async () => {
+    const root = await layoutAround(planPage, `${base}/plan/beta-one`);
+    for (const [handle] of WAITING) {
+      const row = root.querySelector(`a[data-needs-you="${handle}"]`);
+      expect(nameOf(row), `Needs you: ${handle}`).toBe(titleOf(handle));
+      expect(
+        row?.querySelector('[data-component="badge"]')?.textContent?.trim(),
+      ).toBe(initialsOf(titleOf(handle)));
+      expect(row?.getAttribute("href")).toBe(`${base}/plan/${handle}`);
+    }
   });
 });
 
