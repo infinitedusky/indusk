@@ -88,6 +88,8 @@ export function windowStart(nowMs: number): number {
  * the dashboard's days and a promise page's are counted, so they cannot differ.
  * `broken` and `upheld` are the times (ISO) of the violations and the upheld
  * runs; anything outside the window is not counted.
+ *
+ * promise: the-thirty-days-say-only-what-was-seen
  */
 export function dayCounts(nowMs: number, broken: string[], upheld: string[]): DayCount[] {
 	const start = windowStart(nowMs);

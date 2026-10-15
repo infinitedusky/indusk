@@ -134,7 +134,10 @@ function askedOf(
 	};
 }
 
-/** A session for the plan is mid-turn and has asked nothing: it is still writing. */
+/**
+ * A session for the plan is mid-turn and has asked nothing: it is still writing.
+ * promise: approval-waits-for-a-finished-plan
+ */
 function beingWritten(
 	plan: PlanSnapshot & { name: string },
 	sessions: ReadonlyArray<WaitingSession>,
