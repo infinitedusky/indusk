@@ -1,6 +1,7 @@
 "use client";
 
 import { type ButtonHTMLAttributes, useId, useState } from "react";
+import { flushSync } from "react-dom";
 
 export type StepState = "done" | "working" | "needs" | "waiting";
 
@@ -52,7 +53,7 @@ export function Step({
 }: StepProps) {
   const [shown, setShown] = useState(open);
   const reasonId = useId();
-  const shape = `cols-step grid w-full items-center gap-snug rounded-lg border px-tight py-2 text-left ${
+  const shape = `${reason ? "cols-step-reason" : "cols-step"} grid w-full items-center gap-snug rounded-lg border px-tight py-2 text-left ${
     current ? "border-ink-faint bg-ground" : "border-transparent"
   } ${className}`;
   if (reason) {
@@ -72,19 +73,20 @@ export function Step({
           {name}
         </span>
         <span
-          className={`inline-flex items-baseline gap-snug whitespace-nowrap font-mono text-2xs font-medium leading-1 ${STATUS[state]}`}
+          className={`whitespace-nowrap font-mono text-2xs font-medium leading-1 ${STATUS[state]}`}
         >
           {status}
-          <button
-            type="button"
-            aria-expanded={shown}
-            aria-controls={reasonId}
-            onClick={() => setShown((was) => !was)}
-            className="cursor-pointer text-dusk underline underline-offset-[var(--space-hair)]"
-          >
-            why?
-          </button>
         </span>
+        <button
+          type="button"
+          aria-expanded={shown}
+          aria-controls={reasonId}
+          // flushSync: the reason is on the page when the click returns.
+          onClick={() => flushSync(() => setShown((was) => !was))}
+          className="cursor-pointer font-mono text-2xs font-medium leading-1 text-dusk underline underline-hair"
+        >
+          why?
+        </button>
         {shown && (
           <p
             id={reasonId}
