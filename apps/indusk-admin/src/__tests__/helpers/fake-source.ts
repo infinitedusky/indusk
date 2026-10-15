@@ -27,7 +27,7 @@ import type {
 
 export interface Run {
   promise: string;
-  outcome: "upheld" | "violated";
+  outcome: "upheld" | "broken";
   /** When the run ended, ms since the epoch. */
   at: number;
   traceId?: string;

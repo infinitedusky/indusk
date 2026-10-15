@@ -38,7 +38,12 @@ export const jaegerSpan = (held: HeldSpan): { span: JaegerSpan; service: string 
 	};
 };
 
-export function fakeJaegerFetch(spans: HeldSpan[], asked: string[] = []): typeof fetch {
+export function fakeJaegerFetch(held: HeldSpan[], asked: string[] = []): typeof fetch {
+	// "Now" is fixed when the fake is made, not when it answers: a reader that
+	// asks "up to now" and then drops a span ended after that instant would
+	// otherwise lose a span the fake stamped a millisecond later (a load flake).
+	const created = new Date();
+	const spans = held.map((s) => ({ ...s, at: s.at ?? created }));
 	return (async (input: RequestInfo | URL) => {
 		const url = new URL(String(input));
 		asked.push(`${url.pathname}${url.search}`);
