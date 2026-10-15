@@ -406,6 +406,71 @@ program
 		await verify(rootOrExit(), plan, { phase, fullSuite: opts.fullSuite });
 	});
 
+const newProjectCmd = program
+	.command("new-project")
+	.description(
+		"Start a project as a conversation: drafts held under the InDusk home, made into a project only when you accept",
+	);
+
+newProjectCmd
+	.command("start")
+	.description("Open a conversation about a project not yet made; prints its id")
+	.requiredOption("--message <text>", "What you want to build, in your own words")
+	.option(
+		"--document <file>",
+		"A document to write the brief from (repeatable)",
+		(file: string, all: string[]) => [...all, file],
+		[] as string[],
+	)
+	.action(async (opts: { message: string; document: string[] }) => {
+		const { newProjectStart } = await import("./commands/new-project.js");
+		newProjectStart(opts);
+	});
+
+newProjectCmd
+	.command("add <id> <file>")
+	.description(
+		"Add a document to a conversation; one with a name already added keeps the newer and prints what changed",
+	)
+	.action(async (id: string, file: string) => {
+		const { newProjectAdd } = await import("./commands/new-project.js");
+		newProjectAdd(id, file);
+	});
+
+newProjectCmd
+	.command("discard <id>")
+	.description("Remove a conversation and everything it held; nothing else was ever written")
+	.action(async (id: string) => {
+		const { newProjectDiscard } = await import("./commands/new-project.js");
+		newProjectDiscard(id);
+	});
+
+newProjectCmd
+	.command("accept <id>")
+	.description("Make the project a conversation's proposal describes, printing each step")
+	.action(async (id: string) => {
+		const { newProjectAccept } = await import("./commands/new-project.js");
+		await newProjectAccept(id);
+	});
+
+newProjectCmd
+	.command("transcript <id>")
+	.description(
+		"Print what a conversation has said, one JSON line per event, as the admin reads it back",
+	)
+	.action(async (id: string) => {
+		const { newProjectTranscript } = await import("./commands/new-project.js");
+		newProjectTranscript(id);
+	});
+
+newProjectCmd
+	.command("parent [dir]")
+	.description("Set the directory new projects are made in; with no argument, print it")
+	.action(async (dir?: string) => {
+		const { newProjectParent } = await import("./commands/new-project.js");
+		newProjectParent(dir);
+	});
+
 // Commander quirk: options declared on BOTH a parent and a subcommand cause
 // the subcommand to silently receive the default for duplicated flags (the
 // parent consumes the token). Declaring `--port`/`--no-open` only on the
@@ -958,7 +1023,11 @@ plansCmd
 		"Start a plan on its own branch and worktree (type: feature, bugfix, refactor, spike); nothing reaches the trunk until it is approved. In a workbench, the documents are written at the root and the code gets the branch",
 	)
 	.option("--repo <repo>", "in a workbench wrapping several repos, the one the plan's code goes in")
-	.action(async (type: string, name: string, opts: { repo?: string }) => {
+	.option(
+		"--from-draft <id>",
+		"make the plan from a draft conversation (its brief, or its research for a spike) and spend the draft; refused while the name is taken",
+	)
+	.action(async (type: string, name: string, opts: { repo?: string; fromDraft?: string }) => {
 		const { plansStart } = await import("./commands/plans.js");
 		await plansStart(process.cwd(), type, name, opts);
 	});
@@ -1033,6 +1102,28 @@ plansCmd
 	});
 
 plansCmd
+	.command("amendments <name>")
+	.description(
+		"What a plan's brief says now that it did not say at approval — each expectation, promise or look changed, waiting on the person (check-gates reads this)",
+	)
+	.option("--dir <dir>", "The plan's folder, when the caller knows which copy it means")
+	.option("--json", "Print the amendments as JSON")
+	.action(async (name: string, opts: { dir?: string; json?: boolean }) => {
+		const { plansAmendments } = await import("./commands/plans.js");
+		await plansAmendments(process.cwd(), name, opts);
+	});
+
+plansCmd
+	.command("reapprove <name>")
+	.description(
+		"Approve the amendments an approved plan waits on: its brief is checked again, recorded as the one approved, and each amendment written to the plan's history",
+	)
+	.action(async (name: string) => {
+		const { plansReapprove } = await import("./commands/plans.js");
+		await plansReapprove(process.cwd(), name);
+	});
+
+plansCmd
 	.command("review <name>")
 	.description(
 		"What a built plan's review shows: each promise with the tests that prove it, what falsification found and fixed, the files changed, every skipped gate item",
@@ -1089,6 +1180,97 @@ papersCmd
 	.action(async (target: string, opts: { to?: string; push?: boolean }) => {
 		const { papersPublish } = await import("./commands/papers.js");
 		await papersPublish(rootOrExit(), target, opts);
+	});
+
+const looksCmd = program
+	.command("looks")
+	.description("An app's look (.indusk/mockups/<app>/): the foundation, the mockups, what is held");
+
+looksCmd
+	.command("lint <app>")
+	.description(
+		"Refuse a raw value, an undefined token or a stock class in an app's mockups and declared sources, naming file, line and value. Exit 1 on any finding.",
+	)
+	.action(async (app: string) => {
+		const { looksLint } = await import("./commands/looks.js");
+		await looksLint(rootOrExit(), app);
+	});
+
+looksCmd
+	.command("status <app>")
+	.description(
+		"Each mockup approved or proposed. Approved means approved.json holds the mockup's and the foundation's current hashes; a changed one reads proposed and names the approved version the app is held to.",
+	)
+	.action(async (app: string) => {
+		const { looksStatus } = await import("./commands/looks.js");
+		await looksStatus(rootOrExit(), app);
+	});
+
+looksCmd
+	.command("coverage <app>")
+	.description(
+		"Name every declared screen, state and rendered data-component with no approved mockup. Exit 1 when any is uncovered.",
+	)
+	.action(async (app: string) => {
+		const { looksCoverage } = await import("./commands/looks.js");
+		await looksCoverage(rootOrExit(), app);
+	});
+
+looksCmd
+	.command("check <app>")
+	.description(
+		"Open each approved screen state at each reference device in Chromium and report every token and element held or broken by value, as spans. --url is the running app; else the app's screens.json url. Exit 1 on any broken look or when nothing was checked.",
+	)
+	.option("--url <url>", "the running app's base URL")
+	.action(async (app: string, opts: { url?: string }) => {
+		const { looksCheck } = await import("./commands/looks.js");
+		await looksCheck(rootOrExit(), app, opts);
+	});
+
+looksCmd
+	.command("stories <app>")
+	.description(
+		"Render each story of the app's Storybook to a snapshot (.indusk/mockups/<app>/components/<name>.<state>.html) and write components.json, the catalog of every component with its properties and states. Exit 1 when a story cannot render, naming it.",
+	)
+	.action(async (app: string) => {
+		const { looksStories } = await import("./commands/looks.js");
+		await looksStories(rootOrExit(), app);
+	});
+
+looksCmd
+	.command("tokens <app>")
+	.description(
+		"Print an app's foundation as CSS custom properties; --tailwind emits an @theme block that resets the stock theme to the foundation. --out writes it to a file.",
+	)
+	.option("--tailwind", "an @theme block for a Tailwind app")
+	.option("--out <file>", "write to this file, relative to the project root")
+	.action(async (app: string, opts: { tailwind?: boolean; out?: string }) => {
+		const { looksTokens } = await import("./commands/looks.js");
+		await looksTokens(rootOrExit(), app, opts);
+	});
+
+looksCmd
+	.command("approve")
+	.description(
+		"Refused (exit 2): a mockup is approved only by a person, with the cockpit's Approve on the app's Looks page.",
+	)
+	.allowUnknownOption()
+	.allowExcessArguments()
+	.action(async () => {
+		const { looksApprove } = await import("./commands/looks.js");
+		looksApprove();
+	});
+
+looksCmd
+	.command("unapprove")
+	.description(
+		"Refused (exit 2): an approval is taken back only by a person, with the cockpit's Unapprove on the app's Looks page.",
+	)
+	.allowUnknownOption()
+	.allowExcessArguments()
+	.action(async () => {
+		const { looksUnapprove } = await import("./commands/looks.js");
+		looksUnapprove();
 	});
 
 const promisesCmd = program
@@ -1230,7 +1412,7 @@ promisesCmd
 	.option("--impl-stdin", "judge the impl given on stdin in place of the one on disk")
 	.action(async function (this: Command, plan: string | undefined) {
 		const { promisesContract } = await import("./commands/promises.js");
-		promisesContract(rootOrExit(), plan, this.opts());
+		await promisesContract(rootOrExit(), plan, this.opts());
 	});
 
 program.parse();

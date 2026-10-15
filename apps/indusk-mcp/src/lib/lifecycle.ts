@@ -2,8 +2,9 @@ import type { RetrospectiveReadiness } from "./cleanup/gate.js";
 import type { GateKind } from "./impl-headings.js";
 import type { ImplPhase, ParsedImpl } from "./impl-parser.js";
 import type { PlanSummary } from "./plan-parser.js";
+import { SKIP_REASON_MAX } from "./rituals/reason.js";
 import type { PhaseBoundaryRecord } from "./shape/boundary.js";
-import { DOCUMENT_LABELS, WORKFLOW_DEFINITIONS, type WorkflowType } from "./workflow-types.js";
+import { DOCUMENT_LABELS, requiredDocuments, type WorkflowType } from "./workflow-types.js";
 
 /**
  * The one definition of a plan's lifecycle (admin-ui-phase-progress, ADR D1).
@@ -292,14 +293,30 @@ function resolvePosition(input: DerivePlanPositionInput): {
 				};
 			}
 			const missing = readiness.missing;
+			// skip-reason-why: a ritual skipped with a reason over the limit reads
+			// as that, at its own position, not as "awaiting /<ritual>".
+			// promise: a-skip-reason-is-one-sentence
+			const longReason = (ritual: "falsification" | "cleanup" | "audit") => {
+				const found = readiness.longSkipReasons.find((l) => l.ritual === ritual);
+				if (!found) return null;
+				return found.length > SKIP_REASON_MAX
+					? `${ritual} skip reason is too long, ${found.length} characters — one sentence, at most ${SKIP_REASON_MAX} characters`
+					: `${ritual} skip reason is ${found.sentences} sentences — one sentence, at most ${SKIP_REASON_MAX} characters`;
+			};
 			if (missing.includes("falsification")) {
-				return { position: "falsify", awaiting: "impl complete, awaiting /falsify" };
+				return {
+					position: "falsify",
+					awaiting: longReason("falsification") ?? "impl complete, awaiting /falsify",
+				};
 			}
 			if (missing.includes("cleanup")) {
-				return { position: "cleanup", awaiting: "falsified, awaiting /cleanup" };
+				return {
+					position: "cleanup",
+					awaiting: longReason("cleanup") ?? "falsified, awaiting /cleanup",
+				};
 			}
 			if (missing.includes("audit")) {
-				return { position: "audit", awaiting: "cleaned, awaiting /audit" };
+				return { position: "audit", awaiting: longReason("audit") ?? "cleaned, awaiting /audit" };
 			}
 			if (missing.includes("rows")) {
 				const rows = readiness.nonTerminalRows.join(", ");
@@ -345,7 +362,7 @@ function resolvePosition(input: DerivePlanPositionInput): {
 			// A22: the active label never claims a fact the reader does not
 			// hold. A spike's finished research awaits nothing.
 			const type = summary.workflow ?? null;
-			if (type !== null && nextRequiredDocument(stage, type) === undefined) {
+			if (type !== null && nextRequiredDocument(stage, type, summary.documentsOff) === undefined) {
 				return { position: stage, awaiting: `${noun} finished — a ${type} ends here` };
 			}
 			return { position: stage, awaiting: `${noun} accepted, awaiting the next document` };
@@ -376,7 +393,8 @@ export function derivePlanPosition(input: DerivePlanPositionInput): PlanPosition
 	const currentIndex = PLAN_POSITIONS.indexOf(position);
 	const docs = new Set(input.summary.documents);
 	const type = input.summary.workflow ?? null;
-	const required = type === null ? null : new Set(WORKFLOW_DEFINITIONS[type].requires);
+	const required =
+		type === null ? null : new Set(requiredDocuments(type, input.summary.documentsOff));
 	const segments = {} as Record<PlanPosition, SegmentState>;
 	for (const [index, candidate] of PLAN_POSITIONS.entries()) {
 		if (index === currentIndex) {
@@ -427,10 +445,11 @@ function restingState(
 export function nextRequiredDocument(
 	stage: string,
 	type: WorkflowType | null,
+	documentsOff: readonly string[] = [],
 ): DocumentPosition | undefined {
 	const index = (DOCUMENT_POSITIONS as readonly string[]).indexOf(stage);
 	return DOCUMENT_POSITIONS.slice(index + 1).find(
-		(doc) => type === null || WORKFLOW_DEFINITIONS[type].requires.includes(doc),
+		(doc) => type === null || requiredDocuments(type, documentsOff).includes(doc),
 	);
 }
 

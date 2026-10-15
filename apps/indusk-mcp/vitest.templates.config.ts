@@ -10,7 +10,8 @@ import { defineConfig } from "vitest/config";
  */
 export default defineConfig({
 	// Pre-bundled up front: dependencies the template imports are otherwise found
-	// while the test page runs, and Vite reloads the page to re-optimize.
+	// while the test page runs, and Vite reloads the page to re-optimize, failing
+	// a test mid-run (promise: the-everyday-suite-passes-on-main).
 	optimizeDeps: {
 		include: [
 			"@opentelemetry/api",
@@ -20,6 +21,7 @@ export default defineConfig({
 			"@opentelemetry/instrumentation-fetch",
 			"@opentelemetry/instrumentation-document-load",
 			"@opentelemetry/instrumentation-user-interaction",
+			"@opentelemetry/instrumentation-xml-http-request",
 			"@opentelemetry/exporter-trace-otlp-http",
 			"@opentelemetry/resources",
 			"@opentelemetry/semantic-conventions",

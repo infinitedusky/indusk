@@ -100,6 +100,18 @@
 			"types": "./dist/lib/build/index.d.ts",
 			"default": "./dist/lib/build/index.js"
 		},
+		"./drafts": {
+			"types": "./dist/lib/drafts/index.d.ts",
+			"default": "./dist/lib/drafts/index.js"
+		},
+		"./new-project": {
+			"types": "./dist/lib/new-project/index.d.ts",
+			"default": "./dist/lib/new-project/index.js"
+		},
+		"./new-project/steps": {
+			"types": "./dist/lib/new-project/steps.d.ts",
+			"default": "./dist/lib/new-project/steps.js"
+		},
 		"./plans": {
 			"types": "./dist/lib/plans/index.d.ts",
 			"default": "./dist/lib/plans/index.js"
@@ -184,6 +196,58 @@
 			"types": "./dist/lib/promises/rows.d.ts",
 			"default": "./dist/lib/promises/rows.js"
 		},
+		"./looks/foundation": {
+			"types": "./dist/lib/looks/foundation.d.ts",
+			"default": "./dist/lib/looks/foundation.js"
+		},
+		"./looks/mockups": {
+			"types": "./dist/lib/looks/mockups.d.ts",
+			"default": "./dist/lib/looks/mockups.js"
+		},
+		"./looks/lint": {
+			"types": "./dist/lib/looks/lint.d.ts",
+			"default": "./dist/lib/looks/lint.js"
+		},
+		"./looks/components": {
+			"types": "./dist/lib/looks/components.d.ts",
+			"default": "./dist/lib/looks/components.js"
+		},
+		"./looks/compose": {
+			"types": "./dist/lib/looks/compose.d.ts",
+			"default": "./dist/lib/looks/compose.js"
+		},
+		"./looks/stories": {
+			"types": "./dist/lib/looks/stories.d.ts",
+			"default": "./dist/lib/looks/stories.js"
+		},
+		"./looks/approve": {
+			"types": "./dist/lib/looks/approve.d.ts",
+			"default": "./dist/lib/looks/approve.js"
+		},
+		"./looks/approvals": {
+			"types": "./dist/lib/looks/approvals.d.ts",
+			"default": "./dist/lib/looks/approvals.js"
+		},
+		"./looks/coverage": {
+			"types": "./dist/lib/looks/coverage.d.ts",
+			"default": "./dist/lib/looks/coverage.js"
+		},
+		"./looks/verdict": {
+			"types": "./dist/lib/looks/verdict.d.ts",
+			"default": "./dist/lib/looks/verdict.js"
+		},
+		"./looks/check": {
+			"types": "./dist/lib/looks/check.d.ts",
+			"default": "./dist/lib/looks/check.js"
+		},
+		"./looks/report": {
+			"types": "./dist/lib/looks/report.d.ts",
+			"default": "./dist/lib/looks/report.js"
+		},
+		"./looks/overview": {
+			"types": "./dist/lib/looks/overview.d.ts",
+			"default": "./dist/lib/looks/overview.js"
+		},
 		"./promises/standing": {
 			"types": "./dist/lib/promises/standing.d.ts",
 			"default": "./dist/lib/promises/standing.js"
@@ -203,6 +267,14 @@
 		"./plans/history": {
 			"types": "./dist/lib/plans/history.d.ts",
 			"default": "./dist/lib/plans/history.js"
+		},
+		"./plans/parts": {
+			"types": "./dist/lib/plans/parts.d.ts",
+			"default": "./dist/lib/plans/parts.js"
+		},
+		"./plans/amendments": {
+			"types": "./dist/lib/plans/amendments.d.ts",
+			"default": "./dist/lib/plans/amendments.js"
 		},
 		"./promises/fix": {
 			"types": "./dist/lib/promises/fix.d.ts",
@@ -258,17 +330,25 @@
 		"gray-matter": "^4.0.3",
 		"lucide-react": "^1.8.0",
 		"next": "16.2.4",
+		"p-map": "7.0.3",
+		"parse5": "8.0.1",
+		"postcss": "8.5.28",
+		"postcss-value-parser": "4.2.0",
 		"react": "19.2.4",
 		"react-dom": "19.2.4",
 		"react-markdown": "^10.1.0",
 		"remark-gfm": "^4.0.1",
+		"style-dictionary": "5.6.1",
+		"stylelint": "17.16.0",
+		"stylelint-declaration-strict-value": "1.12.1",
 		"zod": "^4.3.6"
 	},
 	"optionalDependencies": {
 		"@infinitedusky/telemetry-binaries-darwin-arm64": "^1.28.0",
 		"@infinitedusky/telemetry-binaries-darwin-x64": "^1.28.0",
 		"@infinitedusky/telemetry-binaries-linux-arm64": "^1.28.0",
-		"@infinitedusky/telemetry-binaries-linux-x64": "^1.28.0"
+		"@infinitedusky/telemetry-binaries-linux-x64": "^1.28.0",
+		"playwright-core": "1.59.1"
 	},
 	"devDependencies": {
 		"@opentelemetry/instrumentation": "^0.214.0",

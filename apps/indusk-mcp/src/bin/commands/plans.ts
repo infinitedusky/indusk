@@ -3,18 +3,29 @@ import { type BuildStep, nextBuildStep } from "../../lib/build/next-step.js";
 import { BuildPlanUnreadable, readBuildPlan } from "../../lib/build/read-plan.js";
 import { buildReview, type Review } from "../../lib/build/review.js";
 import { buildStepModel } from "../../lib/build/step-model.js";
+import { getDraftMaxAgeDays } from "../../lib/config.js";
+import {
+	draftHomeOf,
+	findDraft,
+	startFromDraft,
+	sweepDrafts,
+	writeProposal,
+} from "../../lib/drafts/index.js";
 import { parsePhaseRef } from "../../lib/impl-headings.js";
 import { nextSessionForPlan } from "../../lib/models/next-session.js";
 import { phaseModel } from "../../lib/models/phase-model.js";
 import { isTierStep, TIER_STEPS, TierConfigError } from "../../lib/models/tier-names.js";
 import { archiveDeadPlans } from "../../lib/planning/archive-dead.js";
+import { type Amendment, AmendmentsUnreadable, amendmentsOf } from "../../lib/plans/amendments.js";
 import {
 	acceptPlan,
 	approvePlan,
 	landPlan,
 	PlanCommandRefusal,
+	reapprovePlan,
 	startPlan,
 } from "../../lib/plans/index.js";
+import { resolvePlanCopies } from "../../lib/worktree/plan-worktrees.js";
 
 /** Run a plan verb: print what it did, or its refusal on stderr and exit 1. */
 async function planVerb(run: () => Promise<string>): Promise<void> {
@@ -38,15 +49,31 @@ export function plansStart(
 	cwd: string,
 	type: string,
 	name: string,
-	opts: { repo?: string } = {},
+	opts: { repo?: string; fromDraft?: string } = {},
 ): Promise<void> {
 	return planVerb(async () => {
-		const s = await startPlan(cwd, type, name, new Date(), opts);
+		const s = opts.fromDraft
+			? await startFromDraftId(cwd, opts.fromDraft, type, name, opts.repo)
+			: await startPlan(cwd, type, name, new Date(), opts);
 		if (s.code) {
 			return `Started ${s.plan} (${s.type}): its ${s.document} is at the workbench root, and its code is on ${s.branch} in ${s.code.repo}, at ${s.code.worktree}.`;
 		}
 		return `Started ${s.plan} (${s.type}) in ${s.worktree} on ${s.branch}; its ${s.document} is there, and nothing is on the trunk until it is approved.`;
 	});
+}
+
+/** The draft `id` made a plan: `type` and `name` are the person's, over the agent's proposal. */
+async function startFromDraftId(
+	cwd: string,
+	id: string,
+	type: string,
+	name: string,
+	repo?: string,
+) {
+	const draft = findDraft(draftHomeOf(cwd), id);
+	if (!draft) throw new PlanCommandRefusal(`there is no draft ${id} in this project`);
+	writeProposal(draft, { name, type, ...(repo ? { repo } : {}) });
+	return startFromDraft(cwd, draft);
 }
 
 /** `indusk plans approve <name>` — the documents and promises reach the trunk. */
@@ -146,6 +173,8 @@ function describeStep(s: BuildStep): string {
 			return "cleanup: falsification is closed and the cleanup has not run";
 		case "audit":
 			return "audit: the cleanup is closed and no audit.md has been written (or the audit skipped with a reason)";
+		case "shorten-reason":
+			return `shorten-reason: the ${s.ritual} was skipped with a reason of ${s.length} characters (${s.sentences} sentence${s.sentences === 1 ? "" : "s"}) — one sentence, at most 120; rewrite that line, do not run the ritual`;
 		case "judgement":
 			return `judgement: ${s.phase} waits on a person — ${s.item}`;
 		case "review":
@@ -153,6 +182,67 @@ function describeStep(s: BuildStep): string {
 		case "cannot-continue":
 			return `cannot continue: ${s.why}`;
 	}
+}
+
+/** One amendment as a line: `promise x: was "a" — now "b"`. */
+export function describeAmendment(a: Amendment): string {
+	const said = (s: string | null) => (s === null ? "(not in the brief)" : JSON.stringify(s));
+	return `${a.part} ${a.name}: was ${said(a.was)} — now ${said(a.now)}`;
+}
+
+/**
+ * `indusk plans amendments <name> [--dir <folder>] [--json]` — what the brief
+ * says now that it did not at approval. `--dir` names the plan folder the
+ * caller means (check-gates hands the impl's own); otherwise the plan's live
+ * copy. Exit 0 with the list, empty or not; 1 when it cannot be told.
+ */
+export function plansAmendments(
+	cwd: string,
+	name: string,
+	opts: { dir?: string; json?: boolean },
+): Promise<void> {
+	return planVerb(async () => {
+		let dir = opts.dir;
+		if (dir === undefined) {
+			const copies = await resolvePlanCopies(cwd);
+			if (!copies.ok) {
+				throw new PlanCommandRefusal(
+					`the worktree record ${copies.file} cannot be read: ${copies.problem}`,
+				);
+			}
+			const copy = copies.copies.get(name);
+			if (!copy)
+				throw new PlanCommandRefusal(`no plan named ${name}, on the trunk or in a worktree`);
+			dir = copy.dir;
+		}
+		let amendments: Amendment[];
+		try {
+			amendments = await amendmentsOf(dir);
+		} catch (err) {
+			if (err instanceof AmendmentsUnreadable) throw new PlanCommandRefusal(err.message);
+			throw err;
+		}
+		if (opts.json) return JSON.stringify(amendments);
+		if (amendments.length === 0) return `${name}: nothing waits — the brief is the one approved`;
+		return [
+			`${name}: ${amendments.length} amendment(s) wait on the person:`,
+			...amendments.map((a) => `  ${describeAmendment(a)}`),
+		].join("\n");
+	});
+}
+
+/** `indusk plans reapprove <name>` — the person approves the amendments an approved plan waits on. */
+export function plansReapprove(cwd: string, name: string): Promise<void> {
+	return planVerb(async () => {
+		const r = await reapprovePlan(cwd, name);
+		if (r.amendments.length === 0) {
+			return `${r.plan}: no amendment waited; its brief is recorded as approved (${r.approvedBrief.slice(0, 8)}).`;
+		}
+		return [
+			`Approved ${r.amendments.length} amendment(s) to ${r.plan}; its brief is recorded as approved (${r.approvedBrief.slice(0, 8)}) and the build goes on:`,
+			...r.amendments.map((a) => `  ${describeAmendment(a)}`),
+		].join("\n");
+	});
 }
 
 /** `indusk plans review <name>` — what a person needs to decide whether a built plan may ship. */
@@ -182,6 +272,18 @@ function describeReview(r: Review): string {
 		lines.push("", `${f.phase}:`);
 		for (const row of f.rows) lines.push(`  ${row.id} (${row.state}) ${row.asserts}`);
 		for (const item of f.items) lines.push(`  ${item.done ? "[x]" : "[ ]"} ${item.text}`);
+	}
+	const amended = r.amendments;
+	if (
+		amended &&
+		(amended.approved.length > 0 || amended.waiting.length > 0 || amended.unreadable)
+	) {
+		lines.push("", "Amendments:");
+		for (const a of amended.approved)
+			lines.push(`  ✓ ${describeAmendment(a)} — approved by ${a.by}, ${a.at}`);
+		for (const a of amended.waiting)
+			lines.push(`  … ${describeAmendment(a)} — waiting on the person`);
+		if (amended.unreadable) lines.push(`  ? cannot be told: ${amended.unreadable}`);
 	}
 	lines.push("", `Files changed: ${r.files.length}`);
 	for (const f of r.files) lines.push(`  ${f.status} ${f.path}`);
@@ -213,6 +315,16 @@ export interface PlansArchiveDeadOptions {
  */
 export function plansArchiveDead(projectRoot: string, opts: PlansArchiveDeadOptions = {}): void {
 	const result = archiveDeadPlans(projectRoot, { dryRun: opts.dryRun });
+	// Conversations not kept age out of the project's home the same way (drafts.max_age_days).
+	const drafts = sweepDrafts(draftHomeOf(projectRoot), {
+		maxAgeDays: getDraftMaxAgeDays(projectRoot),
+		dryRun: opts.dryRun,
+	});
+	if (drafts.length > 0) {
+		console.info(
+			`${opts.dryRun ? "Would archive" : "Archived"} ${drafts.length} untouched draft(s) in the project home: ${drafts.join(", ")}`,
+		);
+	}
 	const verb = result.dryRun ? "Would archive" : "Archived";
 	if (result.archived.length === 0) {
 		console.info("No dead-draft plans found.");

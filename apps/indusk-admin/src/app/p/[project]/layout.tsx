@@ -3,13 +3,17 @@ import {
   readHealth,
   redPlans,
 } from "@infinitedusky/indusk-mcp/promises/health";
-import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
+import {
+  readLookStanding,
+  readStanding,
+} from "@infinitedusky/indusk-mcp/promises/standing";
+import { CockpitFrame } from "@/components/cockpit/CockpitFrame";
+import { NavViewLink } from "@/components/cockpit/NavItems";
 import { NeedsYou } from "@/components/cockpit/NeedsYou";
 import { NavLink } from "@/components/NavLink";
 import { PlanList } from "@/components/PlanList";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
-import { Sidebar } from "@/components/ui/Sidebar";
 import {
   UnassignedWorktrees,
   WorktreeRecordError,
@@ -91,103 +95,114 @@ export default async function PerProjectLayout({
   const red = registry && reads ? redPlans(registry, reads) : new Set<string>();
   // The nav's count is the dashboard's: the package's standing, from the same
   // health read (plan-cockpit, ADR decision 2).
-  const brokenCount = reads
+  // A broken look counts beside them (ui-promises ADR decision 7), from the
+  // package's look standing — the rows the dashboard lists first.
+  const brokenPromises = reads
     ? (await readStanding(projectPath, { health: reads })).filter(
         (s) => s.standing === "broken",
       ).length
     : 0;
+  const brokenLooks = (await readLookStanding(projectPath)).rows.filter(
+    (l) => l.standing === "broken",
+  ).length;
+  const brokenCount = brokenPromises + brokenLooks;
 
   // Each Path's released count: when a release shipped a plan, from the
   // package's `planDates` (display-names), read once for the whole nav.
-  const { planDates, planTitles } = readHealthNames(projectPath);
+  const { planDates, words } = await readHealthNames(projectPath);
+  // Each plan's title, from the copy the admin reads it from (its worktree
+  // first), so Needs you names a worktree plan by its own title.
+  const planTitles = Object.fromEntries(
+    [...active, ...archived].map((p) => [p.name, p.title]),
+  );
 
   // Needs you: each plan waiting on the person, with the step it waits at —
   // the package's `planWaiting`, over what the admin holds (ADR decision 2).
-  const waiting = readWaiting(project, active);
+  const waiting = await readWaiting(project, projectPath, active);
+
+  const summary = `${active.length} ${active.length === 1 ? "plan" : "plans"}`;
 
   return (
-    <div className="flex h-full w-full">
-      <Sidebar
-        header={
-          <div className="flex flex-col gap-2">
-            <div className="flex items-baseline justify-between">
-              <span className="truncate text-sm font-semibold text-gray-900">
-                {project}
-              </span>
-              <span className="text-xs text-gray-500">project</span>
-            </div>
+    <CockpitFrame
+      project={project}
+      summary={summary}
+      nav={
+        <>
+          <div className="nav-hide px-1 pb-1">
             <ProjectSwitcher projects={registered} currentProject={project} />
           </div>
-        }
-      >
-        <nav className="flex flex-col gap-1 pb-3">
-          <NavLink
+          <NeedsYou project={project} waiting={waiting} titles={planTitles} />
+          <NavViewLink
             href={`/p/${project}/scorecards`}
-            className="rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            Scorecards
-          </NavLink>
-          <NavLink
+            icon="S"
+            label="Scorecards"
+          />
+          <NavViewLink
             href={`/p/${project}/promises`}
             data-testid="nav-promises"
-            className="flex items-center justify-between rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            Promises
-            {brokenCount > 0 && (
-              <span
-                data-testid="broken-count"
-                title={`${brokenCount} broken`}
-                className="rounded-full bg-red-600 px-2 text-xs font-medium text-white"
-              >
-                {brokenCount}
-              </span>
-            )}
-          </NavLink>
-        </nav>
-        <NeedsYou project={project} waiting={waiting} titles={planTitles} />
-        {!worktrees.ok && (
-          <WorktreeRecordError
-            file={worktrees.file}
-            problem={worktrees.problem}
+            icon="P"
+            label="Promises"
+            count={
+              brokenCount > 0 ? (
+                <span
+                  data-testid="broken-count"
+                  title={`${brokenCount} broken`}
+                >
+                  {brokenCount}
+                </span>
+              ) : undefined
+            }
           />
-        )}
-        <PlanList
-          active={active}
-          archived={archived}
-          masterOrder={masterOrder}
-          grouping={hierarchy}
-          holding={holding}
-          red={red}
-          dates={planDates}
-          planHrefPrefix={`/p/${project}/plan/`}
-        />
-        {worktrees.ok && (
-          <UnassignedWorktrees worktrees={worktrees.unassigned} />
-        )}
-        {research.length > 0 && (
-          <nav
-            className="flex flex-col gap-1 pt-3 border-t border-gray-200 mt-3"
-            data-testid="research-group"
-          >
-            <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Research
-            </h3>
-            {research.map((entry) => (
-              <NavLink
-                key={entry.slug}
-                href={`/p/${project}/research/${entry.slug}`}
-                className="truncate rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
-                title={entry.title ?? entry.slug}
-              >
-                {entry.title ?? entry.slug}
-              </NavLink>
-            ))}
-          </nav>
-        )}
-      </Sidebar>
-      <main className="min-w-0 flex-1 overflow-y-auto p-6 max-[759px]:pt-14">
-        {children}
-      </main>
-    </div>
+          <NavViewLink
+            href={`/p/${project}/looks`}
+            data-testid="nav-looks"
+            icon="L"
+            label="Looks"
+          />
+          {!worktrees.ok && (
+            <WorktreeRecordError
+              file={worktrees.file}
+              problem={worktrees.problem}
+            />
+          )}
+          <div className="nav-hide flex flex-col gap-4">
+            <PlanList
+              active={active}
+              archived={archived}
+              masterOrder={masterOrder}
+              grouping={hierarchy}
+              holding={holding}
+              red={red}
+              dates={planDates}
+              words={words}
+              waiting={Object.fromEntries(waiting.map((w) => [w.plan, w.step]))}
+              planHrefPrefix={`/p/${project}/plan/`}
+            />
+            {worktrees.ok && (
+              <UnassignedWorktrees worktrees={worktrees.unassigned} />
+            )}
+            {research.length > 0 && (
+              <nav className="flex flex-col gap-1" data-testid="research-group">
+                <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-caps text-ink-faint">
+                  Research
+                </h3>
+                {research.map((entry) => (
+                  <NavLink
+                    key={entry.slug}
+                    href={`/p/${project}/research/${entry.slug}`}
+                    className="truncate rounded-md px-2 py-1 text-sm text-ink-soft hover:bg-idle-wash"
+                    title={entry.title ?? entry.slug}
+                  >
+                    {entry.title ?? entry.slug}
+                  </NavLink>
+                ))}
+              </nav>
+            )}
+          </div>
+        </>
+      }
+    >
+      {children}
+    </CockpitFrame>
   );
 }

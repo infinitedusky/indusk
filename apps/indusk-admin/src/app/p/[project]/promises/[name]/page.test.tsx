@@ -203,7 +203,9 @@ describe("A27 — thirty days, held and broken, per source", () => {
 describe("A28 — the history, dated", () => {
   it("A28 lists declared, confirmed and each incident, with dates, in order", async () => {
     const root = await open("seat-holds-never-double-book");
-    const lines = all(root, "history-event").map(text);
+    const lines = [
+      ...(q(root, "proof-history")?.querySelectorAll("li") ?? []),
+    ].map(text);
     expect(lines).toHaveLength(3);
     expect(lines[0]).toContain("2026-09-01");
     expect(lines[0]).toContain("declared");

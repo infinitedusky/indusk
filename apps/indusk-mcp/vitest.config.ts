@@ -42,5 +42,12 @@ export default defineConfig({
 		// templates/** runs in a browser (vitest.templates.config.ts), not here.
 		exclude: [...configDefaults.exclude, "e2e/**", "templates/**", ...SYSTEM],
 		passWithNoTests: true,
+		// Many tests here spawn real git and the CLI. Measured 2026-10-14: 1.2–3.3 s
+		// each with four such files running together; beside the admin's suite in a
+		// root `pnpm test` they crossed the 5 s default, a different few each run
+		// (main-suite-green A9). One package-wide budget, since per-file raises would
+		// chase whichever spawned next; a test that hangs still fails.
+		// promise: the-everyday-suite-passes-on-main
+		testTimeout: 15_000,
 	},
 });

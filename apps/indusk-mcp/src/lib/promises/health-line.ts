@@ -5,7 +5,7 @@
  * rule with the admin; re-exported from `health.ts`, so the
  * `./promises/health` subpath is unchanged.
  */
-import { type HealthNames, type PlanDates, promiseWords } from "./display.js";
+import { type HealthNames, type PlanDates, planTitle, promiseWords } from "./display.js";
 import {
 	type HealthRun,
 	healthOf,
@@ -16,6 +16,7 @@ import {
 } from "./health.js";
 import type { Registry } from "./registry.js";
 import type { SourceName } from "./sources.js";
+import type { LookRow, LookStandingRead } from "./standing.js";
 
 /** One promise's row in a `promises health --json` line. */
 export interface HealthLineRow {
@@ -98,6 +99,11 @@ export interface HealthLine {
 	)[];
 	/** The newest recorded runs across sources, newest first, at most `RUNS_PER_LINE`. */
 	runs: HealthLineRun[];
+	/**
+	 * Each look's standing, as `promises/standing`'s `readLookStanding` gave it
+	 * to the admin (ui-promises A24); absent when the project has no looks.
+	 */
+	looks?: LookRow[];
 }
 
 /**
@@ -110,8 +116,10 @@ export function healthLine(
 	reads: SourceHealthRead[],
 	now: Date,
 	names?: HealthNames,
+	looks?: LookStandingRead,
 ): HealthLine {
 	return {
+		...(looks && looks.rows.length > 0 ? { looks: looks.rows } : {}),
 		at: now.toISOString(),
 		promises: registry.promises
 			.filter((p) => p.state !== "retired")
@@ -123,7 +131,7 @@ export function healthLine(
 				sites: p.sites ?? [],
 				plan: p.owner,
 				title: promiseWords(p.name, names?.words),
-				planTitle: names?.planTitles[p.owner] ?? p.owner,
+				planTitle: names?.planTitles[p.owner] ?? planTitle(undefined, p.owner, names?.words),
 				planDates: names?.planDates[p.owner] ?? { started: null, landed: null, released: null },
 			})),
 		sources: reads.map((read) => {

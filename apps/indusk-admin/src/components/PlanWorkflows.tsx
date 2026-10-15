@@ -3,36 +3,24 @@ import {
   type StepState,
   stepCount,
 } from "@infinitedusky/indusk-mcp/plans/steps";
+import { Badge } from "@/components/ui/Badge";
+import { RailGroup } from "@/components/ui/RailGroup";
+import { Step } from "@/components/ui/Step";
 import { snapshotOf } from "@/lib/plan-snapshot";
 import type { Plan } from "@/lib/planning-reader";
 
 /**
  * The plan page's two workflows: Planning (the documents the plan's type
  * requires) and Release (build to release). Every step's state comes from the
- * package's `plans/steps`; this component only lays them out. It holds no
- * control — a step is read from the documents, never set here (A12).
+ * package's `plans/steps`; this component only lays them out as the rail's
+ * groups and steps. It holds no control — a step is read from the documents,
+ * never set here (A12); the rail's `Step` is the approved component's shape
+ * and carries no handler.
  *
  * promise: a-plan-shows-two-workflows
  */
 
-const MARK: Record<StepState, string> = {
-  done: "✓",
-  current: "●",
-  "needs-you": "!",
-  "not-yet": "○",
-  skipped: "–",
-  missing: "?",
-};
-
-const STYLE: Record<StepState, string> = {
-  done: "text-green-700",
-  current: "font-medium text-blue-700",
-  "needs-you": "font-medium text-amber-700",
-  "not-yet": "text-gray-400",
-  skipped: "text-gray-400 line-through",
-  missing: "text-red-700",
-};
-
+/** The words a step's state is told in beside its name. */
 const LABEL: Record<StepState, string> = {
   done: "done",
   current: "in progress",
@@ -42,14 +30,53 @@ const LABEL: Record<StepState, string> = {
   missing: "missing",
 };
 
-export function PlanWorkflows({ plan }: { plan: Plan }) {
+/** How the rail's `Step` draws each state: it has four, so a step the plan will not take reads as waiting. */
+const RAIL_STATE: Record<StepState, "done" | "working" | "needs" | "waiting"> =
+  {
+    done: "done",
+    current: "working",
+    "needs-you": "needs",
+    "not-yet": "waiting",
+    skipped: "waiting",
+    missing: "waiting",
+  };
+
+/** Where each Planning step's document is read: the brief on its own page, the rest as documents. */
+const DOCUMENT: Record<string, string> = {
+  Research: "doc/research",
+  Brief: "brief",
+  "Test plan": "doc/test-plan",
+  Decision: "doc/adr",
+  Impl: "doc/impl",
+};
+
+/** A step links to its document once the document exists; the brief always, since its page is where it is written. */
+const READABLE: StepState[] = ["done", "current", "needs-you"];
+
+export function PlanWorkflows({
+  plan,
+  project,
+}: {
+  plan: Plan;
+  /** The project the plan is in; with it, the Planning steps link to their documents. */
+  project?: string;
+}) {
   const { planning, release } = planSteps(snapshotOf(plan));
+  const hrefOf = (step: { name: string; state: StepState }) => {
+    const path = DOCUMENT[step.name];
+    if (!project || !path) return undefined;
+    if (step.name !== "Brief" && !READABLE.includes(step.state))
+      return undefined;
+    return `/p/${project}/plan/${plan.name}/${path}`;
+  };
   return (
-    <div
-      className="grid grid-cols-1 gap-4 md:grid-cols-2"
-      data-testid="plan-workflows"
-    >
-      <WorkflowList which="planning" title="Planning" steps={planning} />
+    <div className="flex flex-col gap-4" data-testid="plan-workflows">
+      <WorkflowList
+        which="planning"
+        title="Planning"
+        steps={planning}
+        hrefOf={hrefOf}
+      />
       <WorkflowList which="release" title="Release" steps={release} />
     </div>
   );
@@ -59,45 +86,49 @@ function WorkflowList({
   which,
   title,
   steps,
+  hrefOf = () => undefined,
 }: {
   which: "planning" | "release";
   title: string;
   steps: Array<{ name: string; state: StepState; reason?: string }>;
+  hrefOf?: (step: { name: string; state: StepState }) => string | undefined;
 }) {
   const { done, total } = stepCount(steps);
+  const now = steps.some(
+    (s) => s.state === "current" || s.state === "needs-you",
+  );
   return (
-    <section
-      className="rounded-md border border-gray-200 p-3"
-      data-testid={`workflow-${which}`}
-    >
-      <h2 className="mb-2 flex items-baseline justify-between text-sm font-semibold text-gray-900">
-        {title}
-        <span
-          className="text-xs font-normal text-gray-500"
-          data-testid="workflow-count"
-        >
-          {done} of {total}
-        </span>
-      </h2>
-      <ol className="flex flex-col gap-1">
+    <div data-testid={`workflow-${which}`}>
+      <RailGroup
+        title={title}
+        current={now}
+        chip={
+          <Badge
+            data-testid="workflow-count"
+            variant={done === total ? "enforced" : now ? "active" : "declared"}
+          >
+            {done} of {total}
+          </Badge>
+        }
+      >
         {steps.map((step) => (
-          <li
+          <div
             key={step.name}
+            className="contents"
             data-step={step.name}
             data-state={step.state}
-            className={`flex items-center gap-2 text-sm ${STYLE[step.state]}`}
           >
-            <span aria-hidden="true" className="w-4 text-center">
-              {MARK[step.state]}
-            </span>
-            <span>{step.name}</span>
-            <span className="text-xs text-gray-500">
-              {LABEL[step.state]}
-              {step.reason ? ` — ${step.reason}` : ""}
-            </span>
-          </li>
+            <Step
+              name={step.name}
+              state={RAIL_STATE[step.state]}
+              status={LABEL[step.state]}
+              reason={step.reason}
+              current={step.state === "current" || step.state === "needs-you"}
+              href={hrefOf(step)}
+            />
+          </div>
         ))}
-      </ol>
-    </section>
+      </RailGroup>
+    </div>
   );
 }

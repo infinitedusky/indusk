@@ -29,11 +29,19 @@ export interface StepOutcome {
 	error: string | null;
 }
 
+/**
+ * A ritual skipped with a reason longer than one sentence of at most 120 characters.
+ *
+ * promise: a-skip-reason-is-one-sentence
+ */
+export type ShortenReason = RetrospectiveReadiness["longSkipReasons"][number];
+
 export type BuildStep =
 	| { step: "work"; phase: string }
 	| { step: "falsify" }
 	| { step: "cleanup" }
 	| { step: "audit" }
+	| ({ step: "shorten-reason" } & ShortenReason)
 	| { step: "judgement"; phase: string; item: string; items: string[] }
 	| { step: "review" }
 	| { step: "cannot-continue"; why: string };
@@ -59,7 +67,15 @@ export function nextBuildStep(
 		return { step: "work", phase };
 	}
 
-	const { missing, nonTerminalRows } = plan.readiness;
+	const { missing, nonTerminalRows, longSkipReasons } = plan.readiness;
+	// An over-long skip reason leaves its ritual in `missing`; running the ritual would turn
+	// a skip into a full run (an audit, quietly). Rewrite the one line instead.
+	for (const ritual of ["falsification", "cleanup", "audit"] as const) {
+		const long = (longSkipReasons ?? []).find((r) => r.ritual === ritual);
+		if (long && missing.includes(ritual)) {
+			return { step: "shorten-reason", ritual, length: long.length, sentences: long.sentences };
+		}
+	}
 	if (missing.includes("falsification")) return { step: "falsify" };
 	if (missing.includes("cleanup")) return { step: "cleanup" };
 	// promise: a-plan-is-audited-by-a-fresh-reader-before-it-closes — read once, after cleanup, before review

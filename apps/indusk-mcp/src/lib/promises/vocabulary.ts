@@ -119,6 +119,20 @@ export const PROMISE_MARK = {
 	project: "indusk.project",
 } as const;
 
+/**
+ * Span attributes naming which look a look check's mark is for (ui-promises
+ * ADR decision 7): the app, the screen, its state and the reference device.
+ * Written by `looks/report`, read back by `parseMarkedSpan`.
+ */
+export const LOOK_MARK = {
+	app: "indusk.look.app",
+	screen: "indusk.look.screen",
+	state: "indusk.look.state",
+	device: "indusk.look.device",
+	/** `story` on a component story's span; absent on a screen's, which is the rule for every span recorded before it existed. */
+	kind: "indusk.look.kind",
+} as const;
+
 export const PROMISE_OUTCOMES = ["upheld", "violated"] as const;
 export type PromiseOutcome = (typeof PROMISE_OUTCOMES)[number];
 

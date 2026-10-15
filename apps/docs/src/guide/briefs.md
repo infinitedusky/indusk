@@ -2,12 +2,14 @@
 
 A brief is what a planning conversation produced. You say what you want; the
 agent asks, reads the promises already in force, and reads back what it
-understood. What you agree on is written down in two parts:
+understood. What you agree on is written down in three parts:
 
 - **Expectations**: why you are doing this, each with how you would know and
   when to look.
 - **Promises**: what will be true once it is built, each one sentence, each a
   file in the [registry](/guide/promises).
+- **Looks**: what a person will see, each one a mockup or a story, or the
+  reason the plan changes nothing visible. See [Looks](#looks).
 
 Everything else that came up on the way (what exists today, what was tried,
 what was decided and why) is [research](/guide/plan-lifecycle). How the
@@ -27,6 +29,10 @@ flowchart TD
 ```
 
 ## The shape
+
+A brief's frontmatter carries a `title:`: a short name a person would say ("Cockpit redraw", not a sentence), kept apart from the `description:` below. A plan with no title written, or one whose title is only its handle, reads as its handle turned into words. A master plan's `master.md` carries the same two fields.
+
+It also carries a `description:` — the plan in one to three tight sentences, what it does and for whom, not its background. The plan's page shows it at the top. The agent writes it as soon as the plan is clear and keeps it true as the brief changes; editing it is not an amendment.
 
 ```markdown
 ## Expectations
@@ -121,6 +127,122 @@ in one place.
 
 What you chose not to promise, and where it goes instead. It is not read by
 any check; it is there so the next person does not assume it was forgotten.
+
+## Looks
+
+A plan that changes how anything looks says so in its brief. `## Looks` has the
+shape of Promises: `### This plan makes` for a screen or component that is
+new, and `### Existing looks` with **Must not break**, **Changes** and
+**Replaces**. Each entry is a look's name: a mockup (`home.full`, the screen
+then its state) or a story (`badge.ok`, a component's state).
+
+```markdown
+## Looks
+
+### This plan makes
+
+1. **`home.full`**. The home screen with every seat shown.
+
+### Existing looks
+
+**Must not break**
+
+- **`home.empty`**. The empty home screen stays as approved.
+
+**Changes**
+
+- **`detail.default`**. The detail screen gains the seat's hold time.
+
+**Replaces**
+
+- **`badge.old`**, by **`badge.ok`**.
+```
+
+A plan that changes nothing under an app's interface writes `None — {reason}`
+instead.
+
+### The question
+
+Once the draft brief exists, the agent asks: *does this change how anything
+looks?* If it does, the look is named directly, or the agent draws a draft
+mockup so you can see it, proposed, in the cockpit. A story is never named
+without a mockup: a new component is drawn as its own mockup, one per state.
+The agent draws and proposes a look; only a person approves one.
+
+### The check
+
+An app's interface is the `sources` its `.indusk/mockups/<app>/screens.json`
+declares. A test file under the `sources` (`*.test.*`, `*.spec.*`, or under
+`__tests__/`) is not interface, since a test changes no look; a story file is,
+since it renders an approved snapshot. Two moments hold a plan to its brief:
+
+- **At approval**, `indusk plans approve` reads the impl's *Files Affected*. A
+  path under an app's `sources`, with no look listed and no reason given, is
+  refused, naming the paths and what the brief lacks. A path cell may carry a
+  note after the path (`` `src/Card.jsx` (new parts) ``) or several paths
+  (`` `a.tsx`, `b.tsx` ``, or joined by "and"); each is read on its own.
+- **At acceptance**, `indusk plans accept` reads the branch's real diff. A
+  brief that says `None`, or has no Looks section, but whose branch changed
+  those files is refused, naming them. The way forward is an amendment: the
+  brief gains the look and a person approves it.
+
+A brief written before the section existed is still approved when its plan
+changes nothing under an app's interface. Approval then waits on the mockups
+the brief names, which a person approves in the cockpit.
+
+```mermaid
+flowchart LR
+  D[Brief: draft] -->|"does this change how anything looks?"| Q{Looks listed?}
+  Q -->|"yes: named or drawn"| A[Brief: accepted]
+  Q -->|"None - reason"| A
+  A --> L[Looks approved by a person]
+  L --> P[Plan approved]
+  P --> B[Build]
+  B -->|"branch changed the interface, brief says None"| R[Refused at accept: amend the brief]
+```
+
+### Changing what was agreed during a build
+
+The brief is what a person approved, so the build may not quietly leave it.
+A change to an expectation, a promise or a look — or to the statement of a
+promise the plan owns — is an **amendment**: the agent writes it into the
+brief, and the build stops. No build item is checked off until a person
+approves it, with Approve on the plan's page or `indusk plans reapprove`.
+The plan's history keeps what each amendment was and what it became, and the
+review shows both. Rewording an impl item, adding a note or a Shape finding
+is not an amendment and waits for nobody. A new component ends its plan with a
+story: `indusk plans accept` holds the plan until the component's story is
+approved and every mockup the brief names places it by name.
+
+```mermaid
+flowchart LR
+  P[Plan approved] --> B[Build]
+  B -->|"brief changed: an expectation, a promise or a look"| W[Amendment waits]
+  W -->|"build items refused"| W
+  W -->|"person approves (cockpit Approve or plans reapprove)"| B
+  B --> S[New components' stories approved]
+  S --> A[Plan accepted]
+```
+
+## Starting a plan: a conversation
+
+You start a plan by talking, and nothing is asked first. In the cockpit, **New plan** opens an empty *draft* and its conversation; the box says "What do you want to build?" and takes your words, not a name or a type. The agent works in the draft's own folder, `drafts/<id>/` in the project's home (`indusk eval home` prints it), so it reads and writes nothing in a checkout, and it plans under the [planner's](/reference/skills/plan) rules. As it writes, the draft's page shows the promises, expectations and looks so far.
+
+```mermaid
+flowchart TD
+  N[New plan] --> D[(Draft in the project's home)]
+  D -->|you talk, the agent writes the brief| P[The agent proposes a name and type]
+  P -->|Accept or Edit| S[indusk plans start --from-draft]
+  S --> W[Plan on its own branch and worktree, the draft as its brief]
+  W --> L[Looks approved, plan approved, build]
+  L -->|a change to what was agreed| A[Amendment waits for you]
+  A -->|Approve| L
+  D -->|not kept| G[Aged out or discarded: nothing was in the repository]
+```
+
+When what the plan promises and how it looks are clear, the agent writes a proposal, a name and a type, and the page shows it with **Accept** and **Edit**. Accepting makes the plan: the branch, the worktree, and the draft as its `brief.md`, or as `research.md` when the conversation made neither promises nor looks (a research-only plan has no brief). A name that is already taken is refused, and the draft is kept so you can give another. In a workbench that wraps several repos, accepting also asks which repo the plan's code goes in.
+
+A conversation you do not keep leaves nothing in the repository. The project page lists it under **Drafts** with **Reopen** and **Discard**; one untouched for `drafts.max_age_days` (30 by default) is archived by `indusk plans archive-dead`, moved to `drafts/archive/` in the home with what it held. A draft that holds both a brief and research gives the plan both. From a terminal, `indusk plans start <type> <name> --from-draft <id>` is the same step.
 
 ## The contract
 

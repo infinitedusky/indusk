@@ -5,6 +5,7 @@ import { readWorkflowSteps } from "../checks/steps.js";
 import { readConfig } from "../config.js";
 import { firstParentLogSync, type TrunkCommit } from "../git.js";
 import { DOCUMENT_LABELS } from "../workflow-types.js";
+import { type PlanCopy, resolvePlanCopies } from "../worktree/plan-worktrees.js";
 import { planFolders } from "./plan-folder.js";
 
 /**
@@ -49,13 +50,18 @@ export function promiseWords(name: string, words: Record<string, string> = {}): 
 }
 
 /**
- * A plan's title: the brief's, up to " — "; its folder name when there is none.
+ * A plan's title: the written one up to " — "; when none is written, or it is
+ * only the handle (as `indusk plans start` writes it), the handle in words.
  *
  * promise: a-plan-reads-by-its-title
  */
-export function planTitle(title: string | undefined, folder: string): string {
+export function planTitle(
+	title: string | undefined,
+	handle: string,
+	words: Record<string, string> = {},
+): string {
 	const short = title?.split(" — ")[0]?.trim();
-	return short ? short : folder;
+	return short && short !== handle ? short : promiseWords(handle, words);
 }
 
 /** When a plan started, landed and shipped; `null` for what has not happened. */
@@ -89,6 +95,33 @@ function frontmatter(text: string | null, key: string): string | undefined {
 		return Number.isNaN(value.getTime()) ? undefined : value.toISOString().slice(0, 10);
 	}
 	return typeof value === "string" ? value.trim() || undefined : undefined;
+}
+
+/**
+ * A plan's name and description as written: the title and the `description:`
+ * of its `brief.md`, else of its `master.md` (a master plan has no brief). The
+ * title goes through `planTitle`, so a plan with none written reads as its
+ * handle in words; `description` is null when neither file writes one.
+ *
+ * promise: a-plan-reads-by-its-title
+ */
+export function readPlanName(
+	planDir: string,
+	handle: string,
+	words: Record<string, string> = {},
+): { title: string; description: string | null } {
+	const docs = [read(join(planDir, "brief.md")), read(join(planDir, "master.md"))];
+	const written = (key: string) => {
+		for (const doc of docs) {
+			const value = frontmatter(doc, key);
+			if (value !== undefined) return value;
+		}
+		return undefined;
+	};
+	return {
+		title: planTitle(written("title"), handle, words),
+		description: written("description") ?? null,
+	};
 }
 
 /** The earliest changelog release that names `plan` in parentheses — the fallback for a project with no release commits. */
@@ -275,8 +308,18 @@ export interface HealthNames {
 	words: Record<string, string>;
 }
 
-/** The names for a project, from its plan folders (active, then archived) and its declared changelog. */
-export function readHealthNames(projectRoot: string): HealthNames {
+/**
+ * The names for a project. A plan's title is read from the copy the nav reads
+ * (`resolvePlanCopies`: its worktree while it is worked there, else the
+ * trunk), so one plan has one name on every surface; its dates come from the
+ * trunk's folders (active, then archived) and the declared changelog.
+ *
+ * Async because the copy resolver is: a sync read of the assignment record
+ * would be a second rule for which copy is live.
+ *
+ * promise: a-plan-reads-by-its-title
+ */
+export async function readHealthNames(projectRoot: string): Promise<HealthNames> {
 	let changelogPath: string | undefined;
 	try {
 		changelogPath = readWorkflowSteps(projectRoot).release?.changelog;
@@ -288,16 +331,21 @@ export function readHealthNames(projectRoot: string): HealthNames {
 		: undefined;
 	const trunk = firstParentLogSync(projectRoot);
 	const names: HealthNames = { planTitles: {}, planDates: {}, words: displayWords(projectRoot) };
+	const resolved = await resolvePlanCopies(projectRoot);
+	const live: Map<string, PlanCopy> = resolved.ok ? resolved.copies : new Map();
 	for (const folder of planFolders(projectRoot)) {
 		if (folder.plan in names.planTitles) continue;
-		names.planTitles[folder.plan] = planTitle(
-			frontmatter(read(join(folder.dir, "brief.md")), "title"),
-			folder.plan,
-		);
+		const dir = live.get(folder.plan)?.dir ?? folder.dir;
+		names.planTitles[folder.plan] = readPlanName(dir, folder.plan, names.words).title;
 		names.planDates[folder.plan] = planDates(folder.dir, changelog, {
 			archived: folder.archived,
 			trunk,
 		});
+	}
+	// A plan written on its own branch has no trunk folder yet; the nav names it from its worktree.
+	for (const [plan, copy] of live) {
+		if (plan in names.planTitles) continue;
+		names.planTitles[plan] = readPlanName(copy.dir, plan, names.words).title;
 	}
 	return names;
 }

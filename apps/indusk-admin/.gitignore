@@ -15,10 +15,14 @@
 
 # next.js
 /.next/
+/.next-tests/
 /out/
 
 # production
 /build
+
+# storybook (storybook build --output-dir; served by the admin at /storybook)
+/public/storybook/
 
 # misc
 .DS_Store

@@ -5,6 +5,13 @@ import type { HTMLAttributes } from "react";
  * The Badge variant set mirrors them so trajectory rows map 1:1.
  */
 export type BadgeVariant =
+  // The mockups' chip states (a promise's standing, a look's approval).
+  | "declared"
+  | "proving"
+  | "enforced"
+  | "broken"
+  | "active"
+  // The trajectory's states, which draw the chip's colours.
   | "passing"
   | "blocked"
   | "skipped"
@@ -29,15 +36,26 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
  * - unknown: gray (parser fallback)
  * - neutral: utility variant for non-trajectory uses (status labels, etc.)
  */
+const DECLARED = "bg-idle-wash text-idle";
+const PROVING = "bg-warn-wash text-warn";
+const ENFORCED = "bg-ok-wash text-ok";
+const BROKEN = "bg-bad-wash text-bad";
+const ACTIVE = "bg-dusk-wash text-dusk";
+
 const variantClasses: Record<BadgeVariant, string> = {
-  passing: "bg-green-100 text-green-800 ring-green-600/20",
-  blocked: "bg-red-100 text-red-800 ring-red-600/20",
-  skipped: "bg-yellow-100 text-yellow-800 ring-yellow-600/20",
-  planned: "bg-gray-100 text-gray-700 ring-gray-500/20",
-  writable: "bg-gray-200 text-gray-800 ring-gray-500/20",
-  written: "bg-blue-50 text-blue-700 ring-blue-600/20",
-  unknown: "bg-gray-50 text-gray-500 ring-gray-400/20",
-  neutral: "bg-gray-100 text-gray-700 ring-gray-500/20",
+  declared: DECLARED,
+  proving: PROVING,
+  enforced: ENFORCED,
+  broken: BROKEN,
+  active: ACTIVE,
+  passing: ENFORCED,
+  blocked: BROKEN,
+  skipped: PROVING,
+  planned: DECLARED,
+  writable: DECLARED,
+  written: ACTIVE,
+  unknown: "bg-ground text-ink-faint",
+  neutral: DECLARED,
 };
 
 export function Badge({
@@ -47,7 +65,8 @@ export function Badge({
   ...rest
 }: BadgeProps) {
   const classes = [
-    "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+    // The mockups' chip: a pill, a dot in the text's colour, small caps.
+    "inline-flex items-center gap-tight rounded-pill px-2 py-1 text-2xs leading-1 font-semibold uppercase tracking-chip",
     variantClasses[variant],
     className,
   ]
@@ -55,7 +74,8 @@ export function Badge({
     .join(" ");
 
   return (
-    <span className={classes} {...rest}>
+    <span data-component="chip" className={classes} {...rest}>
+      <span aria-hidden="true" className="size-dot rounded-pill bg-current" />
       {children}
     </span>
   );

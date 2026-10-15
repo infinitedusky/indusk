@@ -9,10 +9,17 @@ import {
 } from "../trajectory/validator.js";
 import {
 	type BriefContract,
+	type BriefLooks,
 	collapseSpace,
 	parseBriefContract,
 	sameSentence,
 } from "./brief-contract.js";
+import {
+	describeInterfaceFiles,
+	filesAffectedOf,
+	interfaceFilesAmong,
+	listsALook,
+} from "./interface-files.js";
 import {
 	type PlanFolder,
 	planFileRel,
@@ -91,6 +98,13 @@ export interface ContractOptions {
 	 * every `pnpm test` red; asking about one plan by name does not, because
 	 * that question is "what does acceptance still need?".
 	 */
+	/**
+	 * Leave the Looks rule unasked of a plan already approved. The rule is
+	 * held at approval (`a-brief-lists-its-looks`): a plan approved before it
+	 * existed, or before a Files Affected cell was read path by path, is not
+	 * refused again by the sweep over every plan, which `pnpm test` runs.
+	 */
+	looksAtApprovalOnly?: boolean;
 	skipDraft?: boolean;
 }
 
@@ -217,6 +231,37 @@ function existingRefusals(brief: BriefContract, byName: Map<string, PromiseEntry
 		}
 	}
 	return out;
+}
+
+/** What a brief's Looks section lacks when it lists no look and gives no reason. */
+function lookGap(looks: BriefLooks | null): string {
+	if (looks === null) return 'the brief has no "## Looks" section';
+	if (looks.none === "") return 'the brief says "None" for its looks without the reason';
+	return "the brief lists no look";
+}
+
+// promise: a-brief-lists-its-looks
+/**
+ * A plan whose impl names files under an app's interface changes how
+ * something looks, so its brief lists the look or says why there is none.
+ * A brief with no Looks section is read as having done neither.
+ */
+function lookRefusals(planRoot: string, brief: BriefContract, implText: string | null): string[] {
+	if (implText === null || listsALook(brief.looks)) return [];
+	if (brief.looks !== null && brief.looks.none !== null && brief.looks.none !== "") return [];
+	const files = interfaceFilesAmong(planRoot, filesAffectedOf(implText));
+	if (files.length === 0) return [];
+	const missing = lookGap(brief.looks);
+	return [
+		`the impl's Files Affected names ${describeInterfaceFiles(files)}, which changes how something looks, and ${missing} — list each look under "## Looks" (### This plan makes, or ### Existing looks), or write "None — {reason}" there`,
+	];
+}
+
+/** Whether an impl has been approved: its status is `approved` or a later one. */
+function pastApproval(implText: string | null): boolean {
+	if (implText === null) return false;
+	const status = /^---\n[\s\S]*?^status:\s*"?([a-z-]+)"?\s*$/m.exec(implText)?.[1];
+	return status !== undefined && status !== "draft";
 }
 
 // promise: every-test-says-what-it-is-for
@@ -375,6 +420,11 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 				refusals.push({ file: briefFile, message });
 			}
 		}
+		if (brief !== null && !(opts.looksAtApprovalOnly && pastApproval(implText))) {
+			for (const message of lookRefusals(planRoot, brief, implText)) {
+				refusals.push({ file: briefFile, message });
+			}
+		}
 		if (impl && !impl.ok) {
 			refusals.push({
 				file: implFile,
@@ -437,7 +487,11 @@ export function checkAllContracts(
 	const refusals: ContractRefusal[] = [];
 	for (const folder of planFolders(planRoot)) {
 		if (opts.activeOnly && folder.archived) continue;
-		const result = checkFolder(planRoot, folder, { registry: opts.registry, skipDraft: true });
+		const result = checkFolder(planRoot, folder, {
+			registry: opts.registry,
+			skipDraft: true,
+			looksAtApprovalOnly: true,
+		});
 		if (result.ok) summaries.push(result.summary);
 		else refusals.push(...result.refusals);
 	}

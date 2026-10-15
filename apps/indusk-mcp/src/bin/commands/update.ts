@@ -13,6 +13,7 @@ import {
 	HOOK_REGISTRATIONS,
 } from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
+import { ensureMcpJson } from "../../lib/mcp-config.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
 import { readWorkbenchRepos, repoDir, resolveReposRoot } from "../../lib/worktree/repos.js";
 import { missingIgnoreRules } from "../../lib/worktree/shareable.js";
@@ -88,6 +89,13 @@ function run(cmd: string, opts?: { timeout?: number }): string {
 	} catch (err: unknown) {
 		const execErr = err as { stderr?: string; message?: string };
 		throw new Error(execErr.stderr?.trim() || execErr.message || "Command failed");
+	}
+}
+
+/** Write the project's `.mcp.json` when it has none, and say so. */
+function ensureProjectMcpJson(projectRoot: string): void {
+	if (ensureMcpJson(projectRoot) === "created") {
+		console.info("  created: .mcp.json (indusk server)");
 	}
 }
 
@@ -423,6 +431,10 @@ export async function update(projectRoot: string): Promise<void> {
 			);
 		}
 	}
+
+	// 5a. A checkout with no `.mcp.json` (a fresh clone — the file is per machine and
+	// untracked) gets one naming the indusk server. An existing file is never touched.
+	ensureProjectMcpJson(projectRoot);
 
 	// 5b. Migrate stale MCP configs
 	const mcpJsonPath = join(projectRoot, ".mcp.json");

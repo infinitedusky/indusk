@@ -1,0 +1,44 @@
+{
+	"name": "homework-gate",
+	"location": "/projects/homework-gate-workbench",
+	"repos": [{ "name": "homework-gate" }],
+	"milestones": [
+		"lockdown-baseline",
+		"school-hours-schedule",
+		"parent-dashboard",
+		"learning-checks",
+		"mobile-agent",
+		"desktop-agent",
+		"reporting",
+		"launch"
+	],
+	"recommendations": [
+		{
+			"name": "docs-site",
+			"title": "A docs site with a changelog",
+			"why": "So others can join in: what was built, why, and what changed, in one place.",
+			"kept": true
+		},
+		{
+			"name": "telemetry",
+			"title": "Telemetry from the first line",
+			"why": "So you can see what the app does while you build it. It carries no personal content.",
+			"kept": true
+		},
+		{
+			"name": "deploy",
+			"title": "Deploy to Fly",
+			"why": "The phone and laptop must reach the server away from home.",
+			"kept": true
+		},
+		{
+			"name": "adr",
+			"title": "Decision records (ADRs)",
+			"why": "A record of why each choice was made, so a later contributor doesn't undo it.",
+			"kept": false,
+			"reason": "Solo project for now; I'll turn them on when someone joins."
+		}
+	],
+	"documentsOff": ["adr"],
+	"remote": { "github": false }
+}

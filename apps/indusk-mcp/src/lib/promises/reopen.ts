@@ -50,12 +50,101 @@ export function ownerDir(planRoot: string, owner: string): string | null {
 	return null;
 }
 
+/** A task in the shape `phase_summary: required` asks for: one sentence, its technical detail folded beneath. */
+function foldedTask(sentence: string, detail: string): string[] {
+	return [
+		`- [ ] ${sentence}`,
+		"  <details><summary>Technical</summary>",
+		"",
+		`  ${detail}`,
+		"",
+		"  </details>",
+	];
+}
+
+/**
+ * The Maintenance phase for an impl that has opted in to phase summaries
+ * (`phase_summary: required`): a Tier line, a plain paragraph, a plain sentence
+ * per task, and the commands, paths and the row's label in each task's Technical
+ * fold, so the next full save of the file is not refused by the rule the impl
+ * was written under.
+ *
+ * promise: an-impl-phase-explains-itself
+ */
+function maintenancePhaseInSummaryShape(
+	n: number,
+	incidentId: string,
+	promise: string,
+	otelGate: boolean,
+	rowId: string | null,
+): string {
+	const otel = otelGate
+		? [
+				`#### Build Phase ${n} OTel`,
+				"",
+				...foldedTask(
+					"The fixed code still marks the promise on its span",
+					"`indusk.promise`, `indusk.promise.outcome`.",
+				),
+				"",
+			]
+		: [];
+	return [
+		`### Build Phase ${n}: ${maintenanceHeadingName(incidentId)}`,
+		"",
+		"**Tier**: med — the work step's default",
+		"",
+		`The promise ${promise} broke and ${incidentId} recorded it. This phase finds the root cause, fixes it, and confirms the promise is seen upheld again.`,
+		"",
+		...foldedTask(
+			"The root cause is written in the incident",
+			`\`.indusk/promises/incidents/${incidentId}.md\`.`,
+		),
+		...foldedTask(
+			"The fix is made: a code site, a widened test, or a revised promise",
+			"Pick the smallest that holds the promise.",
+		),
+		"",
+		`#### Build Phase ${n} Verification`,
+		"",
+		...(rowId
+			? foldedTask(
+					"The test that reproduces the incident passes, and the promise is seen upheld after the fix",
+					`${rowId}; \`indusk promises status\`.`,
+				)
+			: foldedTask(
+					"The promise is seen upheld after the fix (no tests flip at this phase — reason: the fix has no new test)",
+					"`indusk promises status`.",
+				)),
+		"",
+		...otel,
+		`#### Build Phase ${n} Context`,
+		"",
+		...foldedTask(
+			"CLAUDE.md is updated if the fix changes a convention",
+			"The nearest `CLAUDE.md` to the fixed code.",
+		),
+		"",
+		`#### Build Phase ${n} Document`,
+		"",
+		...foldedTask(
+			"The incident's Fix section is filled in",
+			`\`.indusk/promises/incidents/${incidentId}.md\`, under Fix.`,
+		),
+		"",
+	].join("\n");
+}
+
 function maintenancePhase(
 	n: number,
 	incidentId: string,
 	otelGate: boolean,
 	rowId: string | null,
+	summaryShape?: { promise: string },
 ): string {
+	if (summaryShape) {
+		return maintenancePhaseInSummaryShape(n, incidentId, summaryShape.promise, otelGate, rowId);
+	}
 	const otel = otelGate
 		? [
 				`#### Build Phase ${n} OTel`,
@@ -147,9 +236,14 @@ export function reopenOwner(
 	});
 	writeFileSync(
 		implPath,
-		`${withRow.text.replace(/\n*$/, "\n")}\n${maintenancePhase(next, incidentId, otelGate, withRow.id)}`,
+		`${withRow.text.replace(/\n*$/, "\n")}\n${maintenancePhase(next, incidentId, otelGate, withRow.id, /^phase_summary:\s*required/m.test(frontmatterOf(text)) ? { promise } : undefined)}`,
 	);
 	return { reopened: true, impl: implPath, phase: next };
+}
+
+/** An impl's frontmatter block, or "" when it has none. */
+function frontmatterOf(text: string): string {
+	return text.match(/^---\n([\s\S]*?)\n---\n/)?.[1] ?? "";
 }
 
 /** An impl with an unchecked item under a Maintenance phase — the plan is reopened. */

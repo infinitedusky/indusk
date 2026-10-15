@@ -17,9 +17,18 @@ export type NoteCommit = { committed: true } | { committed: false; reason: strin
  * in progress. Otherwise the note stays written and uncommitted, and the
  * reason says why. Callers hold the `current.md` lock; this takes none.
  *
+ * `anyBranch` commits on whatever branch `checkout` is on, for a record that
+ * belongs to the work in that checkout (a look's approval, ui-promises): the
+ * merge and in-progress refusals stand, and so does a detached HEAD's.
+ *
  * promise: indusk-leaves-main-clean
  */
-export function commitNote(trunk: string, paths: string[], message: string): NoteCommit {
+export function commitNote(
+	trunk: string,
+	paths: string[],
+	message: string,
+	opts: { anyBranch?: boolean } = {},
+): NoteCommit {
 	const gitDir = git(trunk, "rev-parse", "--absolute-git-dir");
 	if (gitDir.code !== 0) return { committed: false, reason: `${trunk} is not a git checkout` };
 	const dir = gitDir.out;
@@ -29,7 +38,9 @@ export function commitNote(trunk: string, paths: string[], message: string): Not
 		}
 	}
 	const branch = git(trunk, "symbolic-ref", "--short", "-q", "HEAD").out;
-	if (!getTrunkBranches(trunk).includes(branch)) {
+	if (opts.anyBranch) {
+		if (!branch) return { committed: false, reason: `${trunk} is on a detached HEAD` };
+	} else if (!getTrunkBranches(trunk).includes(branch)) {
 		return {
 			committed: false,
 			reason: `the main checkout is on ${branch || "a detached HEAD"}, not its trunk branch`,

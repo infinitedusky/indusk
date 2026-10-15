@@ -1,5 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import * as path from "node:path";
+import { scanComponents } from "@infinitedusky/indusk-mcp/looks/components";
+import { readApp } from "@infinitedusky/indusk-mcp/looks/mockups";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -23,6 +25,11 @@ import { describe, expect, it } from "vitest";
  *
  * Test files (`*.test.tsx?`) and the audit itself are also exempt — tests
  * intentionally use raw HTML for assertion targets, mocks, and stubs.
+ *
+ * The second describe is the component scan (storybook-components A1, A3):
+ * `looks/components` reads every `data-component` marker in the app's declared
+ * sources and refuses one name in two files and a marker written out outside
+ * its component's file. It is the same scan `indusk looks lint admin` runs.
  */
 
 const ADMIN_ROOT = path.resolve(__dirname, "../..");
@@ -92,5 +99,16 @@ describe("T16 — component-reuse audit", () => {
   it("audit ran against a non-empty file set (sanity)", () => {
     const files = walk(SRC_DIR).filter((f) => !isExempt(f));
     expect(files.length).toBeGreaterThan(0);
+  });
+});
+
+describe("component scan — one implementation per component", () => {
+  it("no component is marked in two files, and no screen writes a component's marker out", async () => {
+    const repoRoot = path.resolve(ADMIN_ROOT, "../..");
+    const app = await readApp(repoRoot, "admin");
+    const { components, findings } = await scanComponents(repoRoot, app);
+    // A scan that read nothing would pass for the wrong reason.
+    expect(components.size).toBeGreaterThan(0);
+    expect(findings.map((f) => `${f.file}:${f.line} ${f.message}`)).toEqual([]);
   });
 });

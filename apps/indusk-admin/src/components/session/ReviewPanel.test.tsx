@@ -41,6 +41,7 @@ const review: Review = {
     },
   ],
   files: [{ path: "src/seat.ts", status: "A" }],
+  evidence: [],
   uncommittedOnMain: [],
   skippedRituals: [
     { ritual: "cleanup", reason: "one small file; nothing to decompose" },

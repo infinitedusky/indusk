@@ -10,7 +10,6 @@ sites:
   - 'apps/indusk-admin/src/app/p/[project]/plan/[name]/decision.test.tsx'
   - apps/indusk-admin/src/components/cockpit/DecisionCard.tsx
   - apps/indusk-admin/src/components/cockpit/NeedsYou.tsx
-  - apps/indusk-admin/src/components/cockpit/PlanHistory.tsx
   - apps/indusk-admin/src/lib/decisions-reader.ts
   - apps/indusk-admin/src/lib/decisions.ts
   - apps/indusk-mcp/src/lib/plans/history.ts

@@ -12,7 +12,7 @@ export function GET(request: NextRequest): Response {
   if (refused) return refused;
   const project = request.nextUrl.searchParams.get("project") ?? "";
   const plan = request.nextUrl.searchParams.get("plan") ?? "";
-  const session = sessionManager().current();
+  const session = sessionManager().forPlan(project, plan, "build");
   return Response.json({
     build: buildState(project, plan),
     sessionId: ownsSession(session, project, plan, "build") ? session.id : null,

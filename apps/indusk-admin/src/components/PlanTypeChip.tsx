@@ -51,10 +51,10 @@ export function PlanTypeChip({
         aria-haspopup="dialog"
         title="What this type of plan requires"
         onClick={() => dialog.current?.showModal()}
-        className={`rounded-full border px-2 py-0.5 text-xs ${
+        className={`rounded-pill border px-2 py-hair text-xs ${
           workflow === null
-            ? "border-dotted border-gray-400 italic text-gray-500"
-            : "border-gray-300 text-gray-700"
+            ? "border-dotted border-ink-faint italic text-ink-faint"
+            : "border-line text-ink-soft"
         }`}
       >
         {label}
@@ -63,7 +63,7 @@ export function PlanTypeChip({
         ref={dialog}
         data-testid="plan-type-dialog"
         aria-label="Plan type"
-        className="m-auto max-w-md rounded-lg border border-gray-200 p-5 text-sm text-gray-800 shadow-xl backdrop:bg-gray-900/40"
+        className="m-auto max-w-md rounded-lg border border-line p-5 text-sm text-ink elevated backdrop:bg-ink/40"
       >
         {workflow === null ? (
           <Undeclared declared={unrecognised ? declared : null} />
@@ -89,7 +89,7 @@ function Declared({ workflow }: { workflow: WorkflowType }) {
   const definition = WORKFLOW_DEFINITIONS[workflow];
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-base font-semibold text-gray-900">{workflow}</h2>
+      <h2 className="text-base font-semibold text-ink">{workflow}</h2>
       <p>{definition.purpose}</p>
       <DocumentList
         testId="plan-type-requires"
@@ -103,7 +103,7 @@ function Declared({ workflow }: { workflow: WorkflowType }) {
         documents={definition.skips}
         empty="Nothing — every document is written."
       />
-      <p data-testid="plan-type-why" className="text-gray-600">
+      <p data-testid="plan-type-why" className="text-ink-soft">
         {definition.why}
       </p>
     </div>
@@ -123,7 +123,7 @@ function DocumentList({
 }) {
   return (
     <div data-testid={testId}>
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+      <h3 className="text-xs font-semibold uppercase tracking-caps text-ink-faint">
         {heading}
       </h3>
       <p>
@@ -138,7 +138,7 @@ function DocumentList({
 function Undeclared({ declared }: { declared: string | null }) {
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-base font-semibold text-gray-900">
+      <h2 className="text-base font-semibold text-ink">
         {declared === null ? "Type not declared" : "Not a recognised type"}
       </h2>
       {declared === null ? (
@@ -154,7 +154,7 @@ function Undeclared({ declared }: { declared: string | null }) {
           it has moved past read <em>unknown</em>.
         </p>
       )}
-      <p className="text-gray-600">
+      <p className="text-ink-soft">
         Declare one in the brief&apos;s frontmatter:{" "}
         <code>workflow: {WORKFLOW_TYPES.join(" | ")}</code>.
       </p>

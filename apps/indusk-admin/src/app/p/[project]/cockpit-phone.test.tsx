@@ -49,6 +49,23 @@ vi.mock("@/lib/planning-reader", async () =>
 vi.mock("@/lib/promises-reader", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).promisesReaderMock(),
 );
+// The plan page's brief parts are read by the package from disk (node:fs), which
+// the browser project cannot import; these pages have no brief to show.
+vi.mock("@infinitedusky/indusk-mcp/plans/parts", () => ({
+  readPlanParts: async (_root: string, plan: string) => ({
+    plan,
+    hasBrief: false,
+    hasBriefFile: true,
+    promises: [],
+    expectations: [],
+    looks: [],
+    noLooks: null,
+    amendments: [],
+    amendmentsUnreadable: null,
+    description: null,
+    briefStatus: null,
+  }),
+}));
 vi.mock("@infinitedusky/indusk-mcp/promises/standing", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).standingMock(),
 );
@@ -186,6 +203,26 @@ describe("A7 — at 400 px, with forty plans, no page scrolls sideways", () => {
       ).toBeGreaterThanOrEqual(root.clientWidth - 1);
     });
   }
+});
+
+// promise: the-nav-fits-a-phone
+describe("A19 (plan-stories) — a plan with the longest written title leaves the open drawer within the page", () => {
+  it("A19 the drawer, open at 400 px with `mid-build` carrying the longest title written, makes no page scroll sideways", async () => {
+    await page.viewport(400, 800);
+    await shell("plan");
+    const menu = document.querySelector<HTMLElement>(
+      '[data-testid="nav-menu-button"]',
+    );
+    await userEvent.click(menu as HTMLElement);
+    await vi.waitFor(() =>
+      expect(nav()?.getAttribute("data-open")).toBe("true"),
+    );
+    const root = document.documentElement;
+    expect(
+      root.scrollWidth,
+      `the page is ${root.scrollWidth}px wide in a ${root.clientWidth}px window with the drawer open`,
+    ).toBeLessThanOrEqual(root.clientWidth);
+  });
 });
 
 describe("A8 — on a desktop, a collapsed nav is still collapsed after a reload", () => {

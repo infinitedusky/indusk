@@ -46,6 +46,12 @@ export function sameOrigin(
  * makes `Origin` and `Host` agree, so `sameOrigin` alone lets it through),
  * and a request that changes something also came from the admin's page. A
  * refusal to return, or null to go on.
+ *
+ * It is a cross-site guard, against another site's page in the person's
+ * browser — not a guard against a process on this machine, which sets `Host`
+ * and `Origin` to whatever it likes. A route that must answer only the
+ * person's own browser asks for more on top (the looks approve route's
+ * `Sec-Fetch-Site`).
  */
 export function adminOnly(
   request: Request,
@@ -65,6 +71,23 @@ export function adminOnly(
     return refuse(403, refusal);
   }
   return null;
+}
+
+/**
+ * What a route adds to `adminOnly` when only the person's own browser may call
+ * it, which a local process passes by setting `Host` and `Origin` itself: the
+ * browser's own fetch metadata. A browser sets `Sec-Fetch-Site` on every
+ * request and page script cannot set or change it, so `same-origin` says the
+ * person's browser sent this from the admin's page. `curl`, an agent's script
+ * or a test harness sends none. Raises the bar to a deliberate forgery; it is
+ * not a signature (ui-promises Build Phase 6, A29).
+ */
+export function fromTheBrowser(
+  request: Request,
+  refusal: string,
+): Response | null {
+  if (request.headers.get("sec-fetch-site") === "same-origin") return null;
+  return refuse(403, refusal);
 }
 
 /**
@@ -96,4 +119,18 @@ export async function planLocation(
 /** A JSON error response with `status`. */
 export function refuse(status: number, message: string): Response {
   return Response.json({ error: message }, { status });
+}
+
+/**
+ * A 409 for a plan that already has this session: the refusal, and the running
+ * session's id, which the page reads to offer Continue it here (PlanSession).
+ */
+export function refuseRunning(
+  message: string,
+  running: { id: string },
+): Response {
+  return Response.json(
+    { error: message, running: { id: running.id } },
+    { status: 409 },
+  );
 }

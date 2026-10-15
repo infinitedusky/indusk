@@ -4,6 +4,9 @@ Loaded by Claude Code when a file under `apps/indusk-mcp/hooks/` is read. The
 hooks are plain JS ports that cannot import the TS library, so these rules
 are about keeping the two lanes in step.
 
+- **Dawn's thin lane keeps the invariants and the eval rail**; a headless
+  `ask` is a pause, and `ask` is the default in both lanes — see
+  `/decisions/dawn-hook-parity`.
 - **Hooks discovery is globSync on BOTH sides** (init + update) — a hardcoded
   list ships a registration without its file. A new hook also needs a row
   in `HOOK_REGISTRATIONS` (`lib/hook-command.ts`), the one table `init`
@@ -44,6 +47,11 @@ are about keeping the two lanes in step.
   the TS and the port together. `STEPS` must name every step `TIER_STEPS`
   names; the parity test builds a case from `TIER_STEPS`, so a step added to
   one and not the other fails.
+- **`_phase-summary.js` holds the `phase_summary: required` rule** (`phaseSummaryProblems`)
+  and the row-label pattern (`ROW_LABEL`), one module per rule like `_phase-tier.js`;
+  `validate-impl-structure.js` reads labels through `ROW_LABEL` in its cross-reference
+  rule too. `TEST_ID_PATTERN` in `lib/trajectory/validator.ts` stays its TypeScript
+  mirror. — guarded by `phase-summary-module.test.ts` (`promise: an-impl-phase-explains-itself`)
 - **The validator's "no phase structure touched" fast path is a list of the
   edit shapes that carry structure** — a phase heading, an unchecked item, a
   `**Tier**:` line. A rule over a new line shape adds its marker there, or an
@@ -58,12 +66,38 @@ are about keeping the two lanes in step.
   The row rules (shape, level, purpose) are the contract's too, so they hold
   for a file any tool wrote; the hook's own run of them, on an edit that adds
   a phase or an item, is the early word on a draft.
+- **An amendment, not an impl edit, is what stops a build**: `check-gates.js`
+  refuses a build-phase checkoff while `indusk plans amendments` lists a
+  change to the brief's expectations, promises or looks, or to an owned
+  promise's statement, since approval (`lesson: a-plan-builds-only-after-approval`);
+  an item, a note or a Shape finding changed waits for nobody. It runs only
+  for an impl that records `approved_brief` — one approved before the field
+  has none, and no command runs. The refusal runs before any skip marker, and
+  `approved_brief` changes only through `plans reapprove` (a CLI write; an
+  edit that removes or changes it is refused, or deleting it would end the
+  gate). Guarded by `amendments.test.ts` (A11, A12, A14) and
+  `check-gates-amendments.test.ts` (A35). — see `/reference/cli/plans`
 - The budget hook judges growth, not size; a root is the state root, a
   declared repo's dir (`declaredRepoDirsAt`), or any checkout's top (`.git`
   present — plan worktrees), never a depth. Every hook that refuses names its
   lesson on its own line (`lesson: <name>`): its own string, or directly after
   a `\n` — the scan reads nothing else, and `context-tiers-register.test.ts`
   fails any register enforcer row whose file it cannot read.
+- **`looks-approval-guard.js` refuses an agent's write to any
+  `.indusk/mockups/<app>/approved.json`** — Write/Edit by path, and on Bash
+  (its second registration, as trunk-guard's) a redirect onto it, a writer
+  (`tee`, `cp`, `mv`, `sed -i`, an interpreter, `git checkout|restore …`) or a
+  call to `/api/looks/…/approve`. It holds every person-only act — a look's
+  approval and a brief's re-approval (a Bash `plans reapprove`, a call to
+  `/api/plans/…/reapprove`, an interpreter segment naming `reapprovePlan`). A
+  person-only act is refused by its function's name as well as its command and
+  route, and the reader exemption (`echo`, `cat`, `git` …) never covers a
+  segment holding a substitution (`$(…)`, a backtick, `<(…)`, `>(…)`). A mockup is approved only by a person,
+  through the cockpit's Approve. It reads command text, never the file, and
+  has no off switch: a **tripwire for an agent's ordinary attempt, not a
+  boundary** against a process running as the person — a script that builds
+  the path passes it; the hashes bound to what was shown hold there. Guarded
+  by `looks-approval-guard.test.ts`.
 - **`break-inbox.js` runs on every prompt** (`UserPromptSubmit`, no matcher):
   it reads two small files in the project's home (`projectHome` from
   `_hook-paths.js`) and exits; it never blocks and never grows a second read.

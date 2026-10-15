@@ -1,5 +1,6 @@
 ---
-title: "Premises — why we are building this, scored over time, and never a gate"
+title: "Project premises"
+description: "Why we are building this, scored over time, and never a gate."
 date: 2026-10-01
 status: draft
 rewritten: 2026-10-01

@@ -16,11 +16,50 @@ The InDusk admin UI (`apps/indusk-admin/`) follows a load-bearing component-reus
 | `Badge` | `src/components/ui/Badge.tsx` | `passing`, `blocked`, `skipped`, `planned`, `writable`, `written`, `unknown`, `neutral` |
 | `Table` | `src/components/ui/Table.tsx` | `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell` |
 | `CollapsibleSection` | `src/components/ui/CollapsibleSection.tsx` | accepts `headerRight` slot for badges/counts |
-| `Sidebar` | `src/components/ui/Sidebar.tsx` | accepts `header` slot |
+| `CockpitFrame` | `src/components/cockpit/CockpitFrame.tsx` | the frame: `Shell`, `Nav`, the phone drawer and the desktop collapse; takes `project`, `summary`, `nav` |
 
 The `Badge` variant set deliberately mirrors the trajectory state lifecycle from `apps/indusk-mcp/src/lib/trajectory/parser.ts` (`planned → writable → written → passing → skipped/blocked`). Mapping a trajectory row's `State` cell to a Badge is one prop pass.
 
 The string→variant maps themselves are shared, not per-component: `src/components/ui/badge-variant.ts` exports `statusToBadge` (free-form frontmatter status → variant) and `stateToBadge` (trajectory state → variant). A new status convention is mapped in exactly one place — don't re-derive a variant inline.
+
+## The components the mockups name
+
+Every component an approved mockup of a **landed** plan names is implemented **once** (approval merges a plan's mockups before its code, so a plan still active under `.indusk/planning/` is not held to it until it is archived); the exemption is per component, so a re-approval in flight by an unlanded plan keeps holding the components the landed approval bound and exempts only what it adds — when the landed approval recorded its components; when it recorded none, there is no record of what landed and the mockup is held in full — in one file whose root element carries its `data-component="<name>"` marker, with **a story per state** the mockups show (`*.stories.tsx` beside it). Nineteen exist, each presentational — data arrives as props, nothing is read inside — so a screen composes them and a story renders them the same way.
+
+| Component | File | Stories (states) |
+|-----------|------|------------------|
+| `badge` | `src/components/ui/PlanBadge.tsx` | needs, working, released |
+| `box` | `src/components/ui/Box.tsx` | default |
+| `button` | `src/components/ui/Button.tsx` | default, yes |
+| `chip` | `src/components/ui/Badge.tsx` | passing, blocked, skipped, planned, writable, written, unknown, neutral, declared, proving, enforced, broken, active |
+| `decision-card` | `src/components/ui/DecisionCard.tsx` | ask, working, released, alert |
+| `device-choice` | `src/components/ui/DeviceChoice.tsx` | default |
+| `device-frame` | `src/components/ui/DeviceFrame.tsx` | default |
+| `look-row` | `src/components/ui/LookRow.tsx` | approved, proposed, uncovered |
+| `nav` | `src/components/ui/Nav.tsx` | expanded, collapsed |
+| `plan-row` | `src/components/ui/PlanRow.tsx` | needs, working, released |
+| `promise-row` | `src/components/ui/PromiseRow.tsx` | broken, proving, enforced, declared, empty |
+| `rail-group` | `src/components/ui/RailGroup.tsx` | default, current |
+| `shell` | `src/components/ui/Shell.tsx` | default, collapsed |
+| `stat` | `src/components/ui/Stat.tsx` | default, ok, bad |
+| `step` | `src/components/ui/Step.tsx` | done, working, needs, waiting |
+| `summary-bar` | `src/components/ui/SummaryBar.tsx` | default |
+| `tag` | `src/components/ui/Tag.tsx` | default |
+| `timeline` | `src/components/ui/Timeline.tsx` | default |
+| `view-link` | `src/components/ui/ViewLink.tsx` | default, current |
+
+Two names differ from their files because the file's name was taken first: the mockups' `chip` is `Badge.tsx` (the pill the trajectory states use), and the mockups' `badge` — the plan's lettered badge — is `PlanBadge.tsx`.
+
+A story's name is `<component>.<state>`. The render step (`indusk looks stories admin`) writes each story's snapshot and `.indusk/mockups/admin/components.json`, the catalog an agent reads to find what exists. A story is approved by a person on the Looks page, bound to its snapshot hash; changing a component changes its snapshot, so the story reads **changed** and every mockup that composes it reopens.
+
+A story passes the real child component rather than copying its markup: the `PhaseRow` stories hand it `PhaseItems` for its tasks, so the approved snapshot is the component's own drawing and a change to the child reopens the story.
+
+### Add a component
+
+1. Create `src/components/ui/<Name>.tsx` with the marker on its root and its data as props; no other file renders that marker (a second marker is a `duplicate component` finding).
+2. Create `<Name>.stories.tsx` with one story per state; use the foundation's tokens, never a raw value (`indusk looks lint admin`).
+3. Run `indusk looks stories admin`, then approve the new stories on the Looks page (**Show: Components**, select all, **Approve**).
+4. Place it in a mockup with `<indusk-component name="<name>" state="<state>">`; the mockup reads proposed until approved again.
 
 ## The discipline
 
@@ -86,6 +125,8 @@ The audit lives at `apps/indusk-admin/src/__tests__/component-reuse-audit.test.t
 
 Run via `pnpm test` from `apps/indusk-admin/`. A failing audit means a primitive should be introduced (or an existing one used) at the flagged location.
 
+**Import a route at the top of its test file.** A node test that calls an `app/api` route imports it (and the package module it draws on) with a static `import` at the top of the file, after the `vi.mock` calls, which vitest hoists above it. An `await import(...)` inside an `it` makes the first test pay for the cold load of the package's whole module graph inside its 5 s budget; alone that is about 0.2 s, but in a root `pnpm test`, where every package's tests contend for the machine, it timed out (`new-project-accept`, `new-project-routes`, `new-project-parent`). A static import is charged to the file's import, which has no per-test timeout.
+
 The audit is intentionally simple at v1 — grep-based, not AST-based. v2 may add AST-aware detection if the simple version produces false positives or misses subtle drift. Keep the simple version until it bites.
 
 ## Why this discipline matters
@@ -101,8 +142,7 @@ The plan page grew fast during admin-ui-phase-progress and its cleanup phase set
 | Piece | Home | Rule |
 |---|---|---|
 | The rows table (ID / Asserts / State, plus Writable at / Passes at for the Implementation Plan) | `components/phases/TrajectoryRowsTable.tsx` | one table, an optional pair of phase columns; it was written three times before it had a name |
-| A ritual phase's section (Falsification, Cleanup) | `components/phases/RitualPhaseSection.tsx` | one component, two configurations; `CleanupSection` and the phase branch of `FalsificationSection` are one-liners over it; its headings come from `RITUAL_COPY` and so does the copied markdown (`ritualPhaseMarkdown`), so the page and the copy button agree |
-| The progress lines and the active-phase derivation | `components/bars/ProgressLines.tsx` | `PlanDetail` composes sections and holds no derivation; `activePhaseOf` / `activePhaseLabel` live with the lines they feed |
+| The progress lines and the active-phase derivation | `components/bars/ProgressLines.tsx` | the plan page composes parts and holds no derivation; `activePhaseOf` / `activePhaseLabel` live with the lines they feed |
 | Display vocabulary — position, activity and stage labels, `phaseTitle`, `RITUAL_COPY` | `components/bars/labels.ts` | `satisfies Record<…>` over the lifecycle's unions |
 | Project-level reads — `.indusk/config.json`, `<home>/eval/`, the phase-boundary record | `lib/project-reader.ts` | project facts, not plan-folder facts; config is read through the package's `./config` subpath, never parsed by hand |
 | Plan-folder reads | `lib/planning-reader.ts` | documents, trajectory, papers, position |
@@ -214,7 +254,7 @@ beforeEach(() => {
 });
 ```
 
-See `apps/indusk-admin/src/components/PlanDetail.test.tsx` for a reference implementation.
+See `apps/indusk-admin/src/components/PlanList.test.tsx` for a reference implementation.
 
 ### Trajectory-row fixtures carry both kind fields
 

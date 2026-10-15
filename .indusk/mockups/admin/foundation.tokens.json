@@ -1,0 +1,794 @@
+{
+	"$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+	"$description": "The cockpit's foundation — redrawn from plan-cockpit.html's :root. Dark values sit beside the light ones under $extensions[dev.indusk].dark.",
+	"color": {
+		"$type": "color",
+		"ink": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.094,
+					0.125,
+					0.169
+				],
+				"hex": "#18202b"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#e8ecf2"
+				}
+			}
+		},
+		"ink-soft": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.29,
+					0.333,
+					0.4
+				],
+				"hex": "#4a5566"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#b4bdca"
+				}
+			}
+		},
+		"ink-faint": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.482,
+					0.525,
+					0.592
+				],
+				"hex": "#7b8697"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#8792a3"
+				}
+			}
+		},
+		"ground": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.953,
+					0.961,
+					0.973
+				],
+				"hex": "#f3f5f8"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#12161d"
+				}
+			}
+		},
+		"surface": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					1,
+					1,
+					1
+				],
+				"hex": "#ffffff"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#1a2029"
+				}
+			}
+		},
+		"line": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.867,
+					0.886,
+					0.918
+				],
+				"hex": "#dde2ea"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#2b3340"
+				}
+			}
+		},
+		"dusk": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.761,
+					0.384,
+					0.043
+				],
+				"hex": "#c2620b"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#f0913a"
+				}
+			}
+		},
+		"dusk-wash": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.984,
+					0.933,
+					0.878
+				],
+				"hex": "#fbeee0"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#3a2614"
+				}
+			}
+		},
+		"ok": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.122,
+					0.478,
+					0.302
+				],
+				"hex": "#1f7a4d"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#5cc98f"
+				}
+			}
+		},
+		"ok-wash": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.89,
+					0.953,
+					0.918
+				],
+				"hex": "#e3f3ea"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#143225"
+				}
+			}
+		},
+		"warn": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.604,
+					0.416,
+					0
+				],
+				"hex": "#9a6a00"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#e7b84a"
+				}
+			}
+		},
+		"warn-wash": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.984,
+					0.945,
+					0.839
+				],
+				"hex": "#fbf1d6"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#352a10"
+				}
+			}
+		},
+		"bad": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.702,
+					0.149,
+					0.118
+				],
+				"hex": "#b3261e"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#f07a71"
+				}
+			}
+		},
+		"bad-wash": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.984,
+					0.898,
+					0.89
+				],
+				"hex": "#fbe5e3"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#3a1917"
+				}
+			}
+		},
+		"idle": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.541,
+					0.58,
+					0.639
+				],
+				"hex": "#8a94a3"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#8792a3"
+				}
+			}
+		},
+		"idle-wash": {
+			"$value": {
+				"colorSpace": "srgb",
+				"components": [
+					0.925,
+					0.937,
+					0.953
+				],
+				"hex": "#eceff3"
+			},
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "#232a35"
+				}
+			}
+		}
+	},
+	"space": {
+		"1": {
+			"$value": {
+				"value": 4,
+				"unit": "px"
+			}
+		},
+		"2": {
+			"$value": {
+				"value": 8,
+				"unit": "px"
+			}
+		},
+		"3": {
+			"$value": {
+				"value": 12,
+				"unit": "px"
+			}
+		},
+		"4": {
+			"$value": {
+				"value": 16,
+				"unit": "px"
+			}
+		},
+		"5": {
+			"$value": {
+				"value": 20,
+				"unit": "px"
+			}
+		},
+		"6": {
+			"$value": {
+				"value": 24,
+				"unit": "px"
+			}
+		},
+		"8": {
+			"$value": {
+				"value": 32,
+				"unit": "px"
+			}
+		},
+		"10": {
+			"$value": {
+				"value": 40,
+				"unit": "px"
+			}
+		},
+		"16": {
+			"$value": {
+				"value": 64,
+				"unit": "px"
+			}
+		},
+		"$type": "dimension",
+		"hair": {
+			"$value": {
+				"value": 2,
+				"unit": "px"
+			}
+		},
+		"tight": {
+			"$value": {
+				"value": 6,
+				"unit": "px"
+			}
+		},
+		"snug": {
+			"$value": {
+				"value": 10,
+				"unit": "px"
+			}
+		}
+	},
+	"size": {
+		"$type": "dimension",
+		"dot": {
+			"$value": {
+				"value": 8,
+				"unit": "px"
+			}
+		},
+		"dot-lg": {
+			"$value": {
+				"value": 10,
+				"unit": "px"
+			}
+		},
+		"node": {
+			"$value": {
+				"value": 12,
+				"unit": "px"
+			}
+		},
+		"badge": {
+			"$value": {
+				"value": 30,
+				"unit": "px"
+			}
+		},
+		"icon": {
+			"$value": {
+				"value": 32,
+				"unit": "px"
+			}
+		},
+		"pip": {
+			"$value": {
+				"value": 10,
+				"unit": "px"
+			}
+		},
+		"pip-h": {
+			"$value": {
+				"value": 6,
+				"unit": "px"
+			}
+		},
+		"input": {
+			"$value": {
+				"value": 200,
+				"unit": "px"
+			}
+		},
+		"nav": {
+			"$value": {
+				"value": 280,
+				"unit": "px"
+			}
+		},
+		"nav-max": {
+			"$value": {
+				"value": 440,
+				"unit": "px"
+			}
+		},
+		"nav-rail": {
+			"$value": {
+				"value": 64,
+				"unit": "px"
+			}
+		},
+		"rail": {
+			"$value": {
+				"value": 264,
+				"unit": "px"
+			}
+		},
+		"side": {
+			"$value": {
+				"value": 300,
+				"unit": "px"
+			}
+		},
+		"content": {
+			"$value": {
+				"value": 1080,
+				"unit": "px"
+			}
+		}
+	},
+	"radius": {
+		"$type": "dimension",
+		"xs": {
+			"$value": {
+				"value": 2,
+				"unit": "px"
+			}
+		},
+		"sm": {
+			"$value": {
+				"value": 4,
+				"unit": "px"
+			}
+		},
+		"md": {
+			"$value": {
+				"value": 6,
+				"unit": "px"
+			}
+		},
+		"lg": {
+			"$value": {
+				"value": 8,
+				"unit": "px"
+			}
+		},
+		"xl": {
+			"$value": {
+				"value": 12,
+				"unit": "px"
+			}
+		},
+		"pill": {
+			"$value": {
+				"value": 999,
+				"unit": "px"
+			}
+		}
+	},
+	"border": {
+		"1": {
+			"$value": {
+				"value": 1,
+				"unit": "px"
+			}
+		},
+		"2": {
+			"$value": {
+				"value": 2,
+				"unit": "px"
+			}
+		},
+		"$type": "dimension"
+	},
+	"text": {
+		"$type": "dimension",
+		"2xs": {
+			"$value": {
+				"value": 11,
+				"unit": "px"
+			}
+		},
+		"xs": {
+			"$value": {
+				"value": 12,
+				"unit": "px"
+			}
+		},
+		"sm": {
+			"$value": {
+				"value": 13,
+				"unit": "px"
+			}
+		},
+		"md": {
+			"$value": {
+				"value": 14,
+				"unit": "px"
+			}
+		},
+		"base": {
+			"$value": {
+				"value": 15,
+				"unit": "px"
+			}
+		},
+		"lg": {
+			"$value": {
+				"value": 17,
+				"unit": "px"
+			}
+		},
+		"xl": {
+			"$value": {
+				"value": 20,
+				"unit": "px"
+			}
+		},
+		"2xl": {
+			"$value": {
+				"value": 22,
+				"unit": "px"
+			}
+		},
+		"3xl": {
+			"$value": {
+				"value": 26,
+				"unit": "px"
+			}
+		},
+		"4xl": {
+			"$value": {
+				"value": 30,
+				"unit": "px"
+			}
+		}
+	},
+	"leading": {
+		"1": {
+			"$value": {
+				"value": 12,
+				"unit": "px"
+			}
+		},
+		"2": {
+			"$value": {
+				"value": 16,
+				"unit": "px"
+			}
+		},
+		"3": {
+			"$value": {
+				"value": 18,
+				"unit": "px"
+			}
+		},
+		"4": {
+			"$value": {
+				"value": 20,
+				"unit": "px"
+			}
+		},
+		"5": {
+			"$value": {
+				"value": 24,
+				"unit": "px"
+			}
+		},
+		"6": {
+			"$value": {
+				"value": 28,
+				"unit": "px"
+			}
+		},
+		"7": {
+			"$value": {
+				"value": 32,
+				"unit": "px"
+			}
+		},
+		"$type": "dimension"
+	},
+	"tracking": {
+		"$type": "dimension",
+		"caps": {
+			"$value": {
+				"value": 1,
+				"unit": "px"
+			}
+		},
+		"chip": {
+			"$value": {
+				"value": 0.5,
+				"unit": "px"
+			}
+		}
+	},
+	"font": {
+		"$type": "fontFamily",
+		"display": {
+			"$value": [
+				"Bricolage Grotesque",
+				"Avenir Next",
+				"system-ui",
+				"sans-serif"
+			]
+		},
+		"sans": {
+			"$value": [
+				"IBM Plex Sans",
+				"Helvetica Neue",
+				"system-ui",
+				"sans-serif"
+			]
+		},
+		"mono": {
+			"$value": [
+				"IBM Plex Mono",
+				"ui-monospace",
+				"SF Mono",
+				"Menlo",
+				"monospace"
+			]
+		}
+	},
+	"font-weight": {
+		"$type": "fontWeight",
+		"regular": {
+			"$value": 400
+		},
+		"medium": {
+			"$value": 500
+		},
+		"semibold": {
+			"$value": 600
+		},
+		"bold": {
+			"$value": 700
+		}
+	},
+	"shadow": {
+		"$type": "shadow",
+		"card": {
+			"$value": [
+				{
+					"color": {
+						"colorSpace": "srgb",
+						"components": [
+							0.094,
+							0.125,
+							0.169
+						],
+						"alpha": 0.06
+					},
+					"offsetX": {
+						"value": 0,
+						"unit": "px"
+					},
+					"offsetY": {
+						"value": 1,
+						"unit": "px"
+					},
+					"blur": {
+						"value": 2,
+						"unit": "px"
+					},
+					"spread": {
+						"value": 0,
+						"unit": "px"
+					}
+				},
+				{
+					"color": {
+						"colorSpace": "srgb",
+						"components": [
+							0.094,
+							0.125,
+							0.169
+						],
+						"alpha": 0.06
+					},
+					"offsetX": {
+						"value": 0,
+						"unit": "px"
+					},
+					"offsetY": {
+						"value": 6,
+						"unit": "px"
+					},
+					"blur": {
+						"value": 20,
+						"unit": "px"
+					},
+					"spread": {
+						"value": 0,
+						"unit": "px"
+					}
+				}
+			],
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25)"
+				}
+			}
+		},
+		"ring": {
+			"$value": [
+				{
+					"color": {
+						"colorSpace": "srgb",
+						"components": [
+							0.984,
+							0.933,
+							0.878
+						],
+						"hex": "#fbeee0"
+					},
+					"offsetX": {
+						"value": 0,
+						"unit": "px"
+					},
+					"offsetY": {
+						"value": 0,
+						"unit": "px"
+					},
+					"blur": {
+						"value": 0,
+						"unit": "px"
+					},
+					"spread": {
+						"value": 4,
+						"unit": "px"
+					}
+				}
+			],
+			"$description": "The ring around a step that needs a person: dusk-wash, space-1 wide.",
+			"$extensions": {
+				"dev.indusk": {
+					"dark": "0 0 0 4px #3a2614"
+				}
+			}
+		}
+	},
+	"duration": {
+		"$type": "duration",
+		"fast": {
+			"$value": {
+				"value": 150,
+				"unit": "ms"
+			}
+		},
+		"base": {
+			"$value": {
+				"value": 200,
+				"unit": "ms"
+			}
+		},
+		"pulse": {
+			"$value": {
+				"value": 1200,
+				"unit": "ms"
+			}
+		},
+		"pulse-slow": {
+			"$value": {
+				"value": 1600,
+				"unit": "ms"
+			}
+		}
+	},
+	"easing": {
+		"$type": "cubicBezier",
+		"ease": {
+			"$value": [
+				0.25,
+				0.1,
+				0.25,
+				1
+			]
+		},
+		"in-out": {
+			"$value": [
+				0.42,
+				0,
+				0.58,
+				1
+			]
+		}
+	}
+}

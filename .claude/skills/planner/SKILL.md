@@ -43,7 +43,11 @@ The first argument to `/planner` can optionally be a workflow type that controls
 
 Parse the input: if the first word is `bugfix`, `refactor`, `spike`, or `feature`, use that workflow. Otherwise, default to `feature`. The remaining words become the plan name (kebab-cased).
 
+**Every brief carries a `description:`** in its frontmatter: the plan distilled in one to three tight sentences, plain words, what it does and for whom — not its background. The plan's page shows it at the top. Write it as soon as the plan is clear and keep it true as the brief changes.
+
 **Every plan declares its type.** Write `workflow: <type>` in the brief's frontmatter when you create it — `workflow: feature` when no type was given — and, for a spike, in the research document's, since a spike has no brief. The admin reads it to tell a document the plan was never going to have from one it should have had: with no declared type, an absent document reads *unknown*, never *skipped*. What each type requires is defined once, in the package's `workflow-types` module; the table above and the workflow templates are pinned equal to it by test, so change all three together.
+
+**A turned-off document is not written.** A project can turn planning documents off with `planning.documents_off` in `.indusk/config.json` (a project made through the admin records the ones its person declined). Read it before you write the first document: a plan in that project does not get a document named there — no ADR when `adr` is off — and the plan's page reads it *skipped*, not *missing*, so do not create it to quiet anything. The brief and the test plan are the core and are never off: a config that names either is refused when it is read.
 
 Workflow templates are in `templates/workflows/` in the package. They describe which documents to create and provide streamlined templates for each workflow type.
 
@@ -81,10 +85,11 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    For feature/spike workflows that need new research: Explore the problem space — read code, search the web for library docs. **Grep for the affected symbols' consumers before scoping** — include structural findings in research.md with concrete numbers.
    Document what you find. Research holds the background, the findings and the decisions made on the way. It does not hold promises, and the brief does not repeat it.
 
-4. **If research is done** (or the workflow starts at the brief), write the brief. A brief is what the conversation produced and holds two things: the **expectations** (why we are doing this, each with a measure and a time to look) and the **promises** (what will be true: the ones this plan makes, and the existing ones it must not break, changes or replaces). It holds nothing else. The problem, the context and the findings are research; the approach is the ADR's; what "done" means is said once, as promises, and not again as success criteria. The template is below; the shape is read by a program, so keep it exactly. — see `/guide/briefs`
+4. **If research is done** (or the workflow starts at the brief), write the brief. A brief is what the conversation produced and holds three things: the **expectations** (why we are doing this, each with a measure and a time to look), the **promises** (what will be true: the ones this plan makes, and the existing ones it must not break, changes or replaces) and the **looks** (what a person will see: the ones this plan makes, and the existing ones it must not break, changes or replaces, or why it has none). It holds nothing else. The problem, the context and the findings are research; the approach is the ADR's; what "done" means is said once, as promises, and not again as success criteria. The template is below; the shape is read by a program, so keep it exactly. — see `/guide/briefs`
 
    - **Expectations decide what gets measured.** An expectation says what we expect to follow and how we would know, so writing one is also deciding what telemetry the work needs. Most can only be measured in production; say so in the measure. An expectation that does not happen is information, not a defect, and blocks nothing. A plan with none writes `None — {reason}`.
    - **Each promise is one sentence, observable, with a name and a kind.** A kebab-case name; the kind is `behaviour` (breaks on inputs nobody chose; watched in the running system), `state` (breaks on a later change; a test) or `structure` (breaks when something is removed or duplicated; a build-time check). Assign the kind from the sentence; the person can correct it. If a test with inputs you choose can prove it, it is `state`, even when it describes something a user does: `behaviour` is for what only the running system shows, and it asks for marks in that system.
+   - **Ask once the draft brief exists: "Does this change how anything looks?"** A plan that changes a file under an app's interface (the `sources` in each `.indusk/mockups/<app>/screens.json`) changes a look, and `plans approve` refuses it while its brief lists none and gives no reason. If it does, list each look under `## Looks`, as promises are listed: **This plan makes** for a screen or component that is new, and under **Existing looks** the ones it must not break, **Changes** (the approved look is still the one the app is held to until a person approves the new one) or **Replaces**. Every look the brief names is a mockup, drawn under the app's `screens/` so the person sees it in the cockpit, where it reads as proposed: a screen (`home.full`, screen then state), or a new component drawn on its own (`chip.waiting`, one mockup per state, declaring itself with `<meta name="indusk-new-components">`). **A story is never named without a mockup.** A story is rendered from the real component, so it cannot exist before the build; the component's own mockup is what the person approves now, and its story, the same name built, is approved against it during the build. Screens that use a new component draw it inline under the same declaration until its story exists. If it changes nothing, write `None — {the reason}`; never leave the section out of a plan that touches the interface. **Approval waits on every look the brief names:** each must be drawn and approved in the cockpit before the plan is approved, and `plans accept` holds the plan until each new component has an approved story and every mockup the brief names composes only approved stories. The agent draws and proposes a look; it never approves one.
    - **Write it as `status: draft` and present it.** The draft is the conversation read back on paper. Walk the person through it: "Here is what I understood we are promising, and what we expect to follow. Is anything missing? Is there anything here you do not want to promise?" Iterate until they agree. A draft is not yet held to the registry, so edit it freely.
 
    **When the person accepts the brief, save its promises with the tools. Never type a file under `.indusk/promises/`:**
@@ -171,6 +176,8 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 7. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
    **Name every phase's tier.** Every phase carries `**Tier**: <tier>` under its heading, written when you write the phase: the step's default spelled out (`indusk plans model` answers from it), or a different tier with its reason (`**Tier**: strong — edits the readiness gate every plan's close goes through`). A tier other than the default needs its reason, or the impl is refused. The config names the model, not the plan.
+
+   **Open each phase with a summary, written for someone without the shorthand.** Set `phase_summary: required` in the impl frontmatter. Each phase opens, after its `**Tier**:` line, with a paragraph saying what the phase does for the whole plan and how it hands to the next. Each task is one plain sentence saying what will be true when it is done, and its instruction goes in an indented `<details><summary>Technical</summary>` fold beneath it: names, paths, commands, code and row labels live there, never in the paragraph or on the task line. Write for a reader who has worked on this project and knows none of its shorthand: no row labels, no abbreviations, no nicknames, no pronoun whose referent is unclear. The test before writing a sentence: would someone who has worked here, but never read this plan, know what every noun in it refers to? Before: "Build Phase 1: the checkers only read top-level lines." After: "The two scripts that check an impl file, one when it is saved and one when a box is ticked, stop reading text folded under a task as a ticked box or a skipped gate." The folded detail is only read: it never ticks a box, skips a gate or adds a task.
 
    **Open Phase 1 with a worktree kickoff item.** Worktree-per-plan is the default (see the `worktree-visibility` ADR): every impl's first phase begins with a checklist item that creates or confirms the plan's own worktree — e.g. `Create/confirm this plan's worktree (indusk worktree create <plan>, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs indusk worktree assign <plan> <path>) — worktree-per-plan default; skip only if worktree: none in frontmatter`. A plan opts out by setting `worktree: none` in the impl frontmatter (no workflow sets it by default — even hotfix gets a worktree). `/work`'s Worktree Kickoff step reads the frontmatter and nudges before code is written; the kickoff item makes the intent explicit in the checklist.
 
@@ -300,7 +307,7 @@ status: in-progress | complete
 
 ### brief.md
 
-A brief holds what the conversation produced: expectations and promises. `indusk promises contract` reads this shape, so keep the headings, keep each label on its own line, and start each entry with the promise's name as written here. Prose between the parts is fine.
+A brief holds what the conversation produced: expectations, promises and looks. `indusk promises contract` reads this shape, so keep the headings, keep each label on its own line, and start each entry with the promise's or the look's name as written here. Prose between the parts is fine.
 
 ```markdown
 ---
@@ -345,6 +352,28 @@ workflow: feature | bugfix | refactor | spike
 ### Not promised
 
 - {What was considered and deliberately not promised, and where it goes instead.}
+
+## Looks
+
+### This plan makes
+
+1. **`{look-name}`**. {What a person will see: the screen and its state, or the component.}
+
+### Existing looks
+
+**Must not break**
+
+- **`{look-name}`**. {Why this plan comes near it.}
+
+**Changes**
+
+- **`{look-name}`**. {The look as it will read; the approved one stays held until a person approves this.}
+
+**Replaces**
+
+- **`{old-look}`**, by **`{new-look}`**.
+
+{Write `None.` under any of the three that has no entry. A plan that changes nothing under an app's interface writes instead, under `## Looks`: None — {the reason}}
 
 ## Depends On
 - {Plans that must be completed before this one — e.g., `.indusk/planning/per-game-escrow/`}
@@ -505,6 +534,7 @@ test_phases: required
 test_levels: required
 test_purpose: required
 rationale: required
+phase_summary: required
 gate_policy: ask
 ---
 
@@ -552,10 +582,20 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 
 **Tier**: {tier — the step's default, or another with its reason}
 
-**Goal**: author every test that can honestly be authored now, and record every test that cannot.
+{Summary: a paragraph saying what this phase does for the whole plan and what it hands to the next, in words someone who has worked on the project but never read this plan would follow. No row labels.}
 
-- [ ] Author {T1, T2, …} against {the subject}, RED
-- [ ] Confirm each fails on its own assertion rather than on a missing import
+- [ ] {One plain sentence: every test that can honestly be written now is written and fails on its own assertion; the rest are recorded with the reason they wait.}
+  <details><summary>Technical</summary>
+
+  {Author T1, T2, … against the subject, RED. Names, paths, commands, code and row labels go here.}
+
+  </details>
+- [ ] {One plain sentence: no test fails only because a file it loads is missing.}
+  <details><summary>Technical</summary>
+
+  {Confirm each fails on its own assertion rather than on a missing import.}
+
+  </details>
 
 {Include a `#### Deferred to Test Phase N` block for EACH later test phase — required, and the impl is refused without it.}
 
@@ -575,36 +615,79 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 
 #### Test Phase 1 Verification
 
-- [ ] {T1, T2, …} are authored, and each red one fails on its own assertion
-- [ ] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
+- [ ] {One plain sentence: the tests this phase writes exist and fail for the right reason.}
+  <details><summary>Technical</summary>
+
+  {T1, T2, … are authored, and each red one fails on its own assertion.}
+
+  </details>
+- [ ] {One plain sentence: every deferred test body above has been read and judged.}
+  <details><summary>Technical</summary>
+
+  {Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?}
+
+  </details>
 
 ### Build Phase 1: {Name}
 
 **Tier**: {tier — the step's default, or another with its reason}
 
-- [ ] {Task — include code snippets when syntax matters}
+{Summary: a paragraph saying what this phase does for the whole plan and how it hands to the next, written for someone who has worked on the project but knows none of this plan's shorthand.}
+
+- [ ] {Task: one plain sentence saying what will be true when it is done. Code, paths, commands and row labels go in the fold below, with snippets when syntax matters.}
+  <details><summary>Technical</summary>
+
+  {The instruction itself, e.g. a signature that must match this shape:}
+
   ```typescript
   // Example: function signature that must match this shape
   function withdrawFor(wallet: address, player: address, amount: uint256, historyHash: bytes32)
   ```
 
+  </details>
+
 {OPTIONAL: #### Build Phase 1 OTel — include ONLY if the project's `otel.role` in `.indusk/config.json` is unset or `"service"`. Skip the entire OTel block for projects with `otel.role: "library" | "tool" | "none"`. Use `shouldEmitOtelGate(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to decide.}
 
 #### Build Phase 1 OTel
-- [ ] {Instrumentation check — are new code paths observable? See the OTel skill for patterns. Example items: "New endpoints have manual spans with `otel.category` and domain attributes", "Errors recorded with `recordException` + `setStatus(ERROR)` + trace-correlated log". Ask: "did this phase add endpoints, business logic, state transitions, or error paths?" If not, this section can be opted out per gate policy.}
+- [ ] {One plain sentence saying what is now observable.}
+  <details><summary>Technical</summary>
+
+  {Instrumentation check — are new code paths observable? See the OTel skill for patterns. Example items: "New endpoints have manual spans with `otel.category` and domain attributes", "Errors recorded with `recordException` + `setStatus(ERROR)` + trace-correlated log". Ask: "did this phase add endpoints, business logic, state transitions, or error paths?" If not, this section can be opted out per gate policy.}
+
+  </details>
 
 #### Build Phase 1 Verification
-- [ ] T1 passes (`{this phase's rows and related tests, e.g. pnpm exec vitest run <the row's test files> && pnpm exec vitest related <files this phase changed>}`) — the whole suite runs at landing, not here
-- [ ] T2 flips to `written` state (skipped until Phase 2)
+- [ ] {One plain sentence saying what the tests now prove.}
+  <details><summary>Technical</summary>
+
+  T1 passes (`{this phase's rows and related tests, e.g. pnpm exec vitest run <the row's test files> && pnpm exec vitest related <files this phase changed>}`) — the whole suite runs at landing, not here
+
+  </details>
+- [ ] {One plain sentence saying which test is written now and waits for a later phase.}
+  <details><summary>Technical</summary>
+
+  T2 flips to `written` state (skipped until Phase 2)
+
+  </details>
 
 {If a phase has no tests flipping at it, declare it explicitly — NOT silently:}
 {- [ ] (no tests flip at this phase — reason: {schema-only | delete | refactor | infra})}
 
 #### Build Phase 1 Context
-- [ ] {A rule this phase produces, naming its tier and destination — e.g., "guard: `<test>` carries `lesson: <name>`", "planning: …", "mcp: …", "current.md: …", "root (Conventions): … — always-on because …". An item aimed at the root must say why it must be always-on; one that cannot belongs at a lower tier (see the `/claude-md` tier table). Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
+- [ ] {One plain sentence saying what changes about how the project works.}
+  <details><summary>Technical</summary>
+
+  {A rule this phase produces, naming its tier and destination — e.g., "guard: `<test>` carries `lesson: <name>`", "planning: …", "mcp: …", "current.md: …", "root (Conventions): … — always-on because …". An item aimed at the root must say why it must be always-on; one that cannot belongs at a lower tier (see the `/claude-md` tier table). Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
+
+  </details>
 
 #### Build Phase 1 Document
-- [ ] {Docs page to write or update — e.g., "Write reference page at apps/indusk-docs/src/reference/tools/tool-name.md", "Update architecture diagram in docs". Ask: "what does a user or developer need to know about what this phase built?" If nothing user-facing, omit this section. See the document skill for guidance on what to document and how.}
+- [ ] {One plain sentence saying what a reader can now find in the docs.}
+  <details><summary>Technical</summary>
+
+  {Docs page to write or update — e.g., "Write reference page at apps/indusk-docs/src/reference/tools/tool-name.md", "Update architecture diagram in docs". Ask: "what does a user or developer need to know about what this phase built?" If nothing user-facing, omit this section. See the document skill for guidance on what to document and how.}
+
+  </details>
 
 ## Files Affected
 | File | Change |

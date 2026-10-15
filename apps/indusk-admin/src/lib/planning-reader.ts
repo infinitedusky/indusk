@@ -1,17 +1,16 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   checkRetrospectiveReadiness,
-  isCleanupSkipped,
+  skippedRitualsOf,
 } from "@infinitedusky/indusk-mcp/cleanup/gate";
 import {
   isFalsificationComplete,
   type LogEntry,
   readFalsificationLog,
 } from "@infinitedusky/indusk-mcp/falsification/log";
-import { isFalsificationSkipped } from "@infinitedusky/indusk-mcp/falsification/skip";
 import { parseImplString } from "@infinitedusky/indusk-mcp/impl-parser";
 import {
   derivePlanPosition,
@@ -24,6 +23,11 @@ import {
   readPlanDeclarations,
 } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import { afterClose } from "@infinitedusky/indusk-mcp/promises/after-close";
+import {
+  displayWords,
+  planTitle,
+  readPlanName,
+} from "@infinitedusky/indusk-mcp/promises/display";
 import type { PhaseBoundaryRecord } from "@infinitedusky/indusk-mcp/shape/boundary";
 import {
   parseTrajectory,
@@ -108,8 +112,16 @@ export interface PaperEntry extends PaperSummary {
 }
 
 export interface Plan {
-  /** Folder name (kebab-case) under `.indusk/planning/` or `.indusk/planning/archive/`. */
+  /** Folder name (kebab-case) under `.indusk/planning/` or `.indusk/planning/archive/`. The handle: links and addresses. */
   name: string;
+  /**
+   * What the plan is called (plan-stories): the title written in the brief or
+   * master of the copy it is read from, else its handle in words. Every page
+   * that names a plan shows this; the handle stays in links.
+   */
+  title: string;
+  /** The brief's (or master's) `description:`, a separate field from the title; null when none is written. */
+  description: string | null;
   /** Effective status — pulled from impl.md, falling back to brief.md, or "unknown". */
   status: string;
   /** Whether the plan lives under archive/ vs the active planning dir. */
@@ -121,14 +133,16 @@ export interface Plan {
   impl?: ImplData;
   falsification?: FalsificationData;
   /**
-   * Falsification or cleanup the impl skipped with its reason
+   * Falsification, cleanup or audit the impl skipped with its reason
    * (admin-plan-authoring) — read through the package's own skip readers.
    */
   skippedRituals?: Array<{
-    ritual: "falsification" | "cleanup";
+    ritual: "falsification" | "cleanup" | "audit";
     reason: string;
   }>;
   retrospective?: RetroData;
+  /** `audit.md`, when the audit step wrote one. */
+  audit?: RetroData;
   /** Every `kind: paper` document, in filename order, with its body. Absent when there are none. */
   papers?: PaperEntry[];
   /**
@@ -139,6 +153,8 @@ export interface Plan {
   workflow?: WorkflowType | null;
   /** The word that was declared, when it is not one of the types. */
   workflowDeclared?: string;
+  /** Documents the plan's project turned off (`planning.documents_off`); they read skipped. */
+  documentsOff?: string[];
   /**
    * Where the plan stands in the lifecycle, derived from its documents, its
    * impl and the retrospective readiness gate (admin-ui-phase-progress).
@@ -214,6 +230,7 @@ const DOC_FILES = [
   "impl.md",
   "falsification.md",
   "retrospective.md",
+  "audit.md",
 ] as const;
 
 /**
@@ -280,17 +297,32 @@ function isMalformed(
   return doc !== null && "malformed" in doc;
 }
 
+/** What a plan folder is read against: facts about the project, not the plan. */
+interface PlanReadContext {
+  boundaries?: BoundaryRead;
+  /** The project root, for an archived plan's after-close facts (day-monitor). */
+  projectRoot?: string;
+  /** The project's product words, for a plan with no title written. */
+  words?: Record<string, string>;
+}
+
 async function readPlanFolder(
   planDir: string,
   name: string,
   archived: boolean,
-  boundaries: BoundaryRead = { records: [] },
-  /** The project root, for an archived plan's after-close facts (day-monitor). */
-  projectRoot?: string,
+  { boundaries = { records: [] }, projectRoot, words }: PlanReadContext = {},
 ): Promise<Plan> {
   const docs = await Promise.all(DOC_FILES.map((f) => readDoc(planDir, f)));
-  const [research, brief, testPlan, adr, impl, _falsification, retrospective] =
-    docs;
+  const [
+    research,
+    brief,
+    testPlan,
+    adr,
+    impl,
+    _falsification,
+    retrospective,
+    audit,
+  ] = docs;
   const malformed = docs.some((d) => isMalformed(d));
   const rawDocuments: Record<string, string> = {};
   for (let i = 0; i < docs.length; i++) {
@@ -338,18 +370,7 @@ async function readPlanFolder(
       : null;
   const readiness =
     implRaw !== null ? checkRetrospectiveReadiness(planDir, implRaw) : null;
-  const skippedRituals =
-    implRaw === null
-      ? []
-      : [
-          {
-            ritual: "falsification" as const,
-            check: isFalsificationSkipped(implRaw),
-          },
-          { ritual: "cleanup" as const, check: isCleanupSkipped(implRaw) },
-        ]
-          .filter((r) => r.check.skipped)
-          .map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" }));
+  const skippedRituals = implRaw === null ? [] : skippedRitualsOf(implRaw);
   // A closed plan may be back in motion — reopened by an incident, or in
   // `monitor` — derived from files by the same function `list_plans` reads.
   const after =
@@ -379,12 +400,14 @@ async function readPlanFolder(
 
   return {
     name,
+    ...readPlanName(planDir, name, words),
     status,
     position,
     workflow: parsed.workflow ?? null,
     ...(parsed.workflowDeclared
       ? { workflowDeclared: parsed.workflowDeclared }
       : {}),
+    ...(parsed.documentsOff ? { documentsOff: parsed.documentsOff } : {}),
     ...boundaryFields,
     ...(papers ? { papers } : {}),
     archived,
@@ -401,6 +424,7 @@ async function readPlanFolder(
       retrospective !== null && !isMalformed(retrospective)
         ? retrospective
         : undefined,
+    ...(audit !== null && !isMalformed(audit) ? { audit } : {}),
     ...(malformed ? { malformed: true, rawDocuments } : {}),
   };
 }
@@ -439,8 +463,11 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
   const folders = await listPlanFolders(join(root, PLANNING_DIR));
   if (!resolved.ok) {
     const copyError = { file: resolved.file, problem: resolved.problem };
+    const words = displayWords(root);
     return folders.map((name) => ({
       name,
+      title: planTitle(undefined, name, words),
+      description: null,
       status: "unknown",
       archived: false,
       copyError,
@@ -448,6 +475,7 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
   }
   // Boundary records are per checkout: a plan in a worktree opened its
   // phases there. Read each live root's file once.
+  const words = displayWords(root);
   const boundariesByRoot = new Map<string, Promise<BoundaryRead>>();
   const boundariesOf = (at: string) => {
     let read = boundariesByRoot.get(at);
@@ -468,12 +496,10 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
         dir: join(root, PLANNING_DIR, name),
         source: "trunk",
       };
-      const plan = await readPlanFolder(
-        copy.dir,
-        name,
-        false,
-        await boundariesOf(copy.root),
-      );
+      const plan = await readPlanFolder(copy.dir, name, false, {
+        boundaries: await boundariesOf(copy.root),
+        words,
+      });
       const code = readPlanCode(root, name);
       return {
         ...plan,
@@ -506,6 +532,40 @@ export async function readProjectWorktrees(projectRoot: string): Promise<
  * Read every plan in `.indusk/planning/archive/`. Returns the same `Plan` shape
  * as `readActivePlans` but with `archived: true`.
  */
+/**
+ * Archived plans, read once per change to the archive: the read is the
+ * slowest on every page (over two seconds on dusk's), and an archived plan's
+ * folder changes only when a plan is archived or a file in it is written. The
+ * key is the archive's mtime and, for each plan, the newest mtime of its
+ * folder and the files in it: a file edited in place leaves its folder's
+ * mtime alone, and served the old text (brief-as-the-contract A29).
+ */
+/** The newest mtime of `dir` and of what it holds, two levels down (an archived plan is flat, with a few folders). */
+function newestMtime(dir: string, depth = 2): number {
+  let newest = 0;
+  try {
+    newest = statSync(dir).mtimeMs;
+    if (depth === 0) return newest;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      newest = Math.max(
+        newest,
+        entry.isDirectory()
+          ? newestMtime(path, depth - 1)
+          : statSync(path).mtimeMs,
+      );
+    }
+  } catch {
+    // a file gone between the listing and the stat: the key reads it as it is
+  }
+  return newest;
+}
+
+const archivedCache = new Map<
+  string,
+  { key: string; plans: Promise<Plan[]> }
+>();
+
 export async function readArchivedPlans(projectRoot: string): Promise<Plan[]> {
   const archiveDir = join(projectRoot, PLANNING_DIR, ARCHIVE_DIR);
   if (!existsSync(archiveDir)) return [];
@@ -514,16 +574,31 @@ export async function readArchivedPlans(projectRoot: string): Promise<Plan[]> {
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
     .sort();
+  const key = [archiveDir, ...folders.map((f) => join(archiveDir, f))]
+    .map((dir) => (dir === archiveDir ? newestMtime(dir, 0) : newestMtime(dir)))
+    .join(",");
+  const cached = archivedCache.get(projectRoot);
+  if (cached?.key === key) return cached.plans;
+  const plans = readArchivedFolders(projectRoot, archiveDir, folders);
+  archivedCache.set(projectRoot, { key, plans });
+  plans.catch(() => archivedCache.delete(projectRoot));
+  return plans;
+}
+
+async function readArchivedFolders(
+  projectRoot: string,
+  archiveDir: string,
+  folders: string[],
+): Promise<Plan[]> {
   const boundaries = await readProjectBoundaries(projectRoot);
+  const words = displayWords(projectRoot);
   return Promise.all(
     folders.map((name) =>
-      readPlanFolder(
-        join(archiveDir, name),
-        name,
-        true,
+      readPlanFolder(join(archiveDir, name), name, true, {
         boundaries,
         projectRoot,
-      ),
+        words,
+      }),
     ),
   );
 }

@@ -124,6 +124,10 @@ extraction (or a reasoned leave-as-is); each new unit gets a trajectory row.
 
 The phase title **must start with "Cleanup"** (`### Phase N: Cleanup — {summary}`) — the retrospective gate's `isCleanupComplete` detects the ritual phase by a title *beginning* with "cleanup" (case-insensitive), not a substring anywhere. A substring match would misdetect a topic-named phase like "The /cleanup skill" as the ritual phase — found and fixed by this plan's own falsification. The phase must also contain at least one checklist item; a bare heading is not terminal.
 
+### For an impl that has opted in to phase summaries
+
+An impl with `phase_summary: required` gets the phase in the new shape: a `**Tier**:` line, a summary paragraph for a reader who knows the project but none of the plan's shorthand, each task one plain sentence, and the code, paths and row labels in an indented Technical fold. The skill carries that template beside the original, marked `<!-- template: phase_summary required -->`, and the save check accepts it as written. A box line quoted inside a task's fold or a code block never holds the phase open. See [the planner](/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand).
+
 ## When to skip
 
 If after investigation there is genuinely nothing worth decomposing — every changed file under threshold or cohesive — do not author an empty phase. Add both fields to the impl frontmatter:

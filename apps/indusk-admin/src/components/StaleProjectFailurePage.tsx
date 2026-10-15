@@ -36,54 +36,52 @@ export function StaleProjectFailurePage({
       className="flex h-full items-center justify-center p-6"
       data-testid="stale-project-failure"
     >
-      <div className="flex max-w-2xl flex-col gap-4 rounded-lg border border-yellow-200 bg-yellow-50 p-6 text-sm text-gray-800">
-        <h1 className="text-lg font-semibold text-yellow-900">{heading}</h1>
-        <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1 text-xs">
-          <dt className="font-semibold uppercase tracking-wide text-gray-500">
+      <div className="flex max-w-2xl flex-col gap-4 rounded-lg border border-warn bg-warn-wash p-6 text-sm text-ink">
+        <h1 className="text-lg font-semibold text-warn">{heading}</h1>
+        <dl className="grid stale-facts gap-x-4 gap-y-1 text-xs">
+          <dt className="font-semibold uppercase tracking-caps text-ink-faint">
             Name
           </dt>
-          <dd className="font-mono text-gray-800">{projectName}</dd>
+          <dd className="font-mono text-ink">{projectName}</dd>
           {isStale ? (
             <>
-              <dt className="font-semibold uppercase tracking-wide text-gray-500">
+              <dt className="font-semibold uppercase tracking-caps text-ink-faint">
                 Registered path
               </dt>
-              <dd className="break-all font-mono text-gray-800">
-                {projectPath}
-              </dd>
+              <dd className="break-all font-mono text-ink">{projectPath}</dd>
             </>
           ) : null}
         </dl>
 
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-ink-soft">
           {isStale
             ? "The registered path no longer exists on disk. The admin UI doesn't auto-prune the registry — recovery happens via CLI."
             : "No registered project with this name. Either the URL has a typo, or the registry entry was removed."}
         </p>
 
-        <section className="flex flex-col gap-2 rounded border border-gray-200 bg-white p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+        <section className="flex flex-col gap-2 rounded-md border border-line bg-surface p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-caps text-ink-faint">
             To fix
           </h2>
-          <ol className="ml-4 list-decimal text-sm text-gray-700">
+          <ol className="ml-4 list-decimal text-sm text-ink-soft">
             <li>
-              <code className="rounded bg-gray-100 px-1 font-mono text-xs">
+              <code className="rounded-md bg-idle-wash px-1 font-mono text-xs">
                 cd
               </code>{" "}
               into the project's current location on disk.
             </li>
             <li>
               Run{" "}
-              <code className="rounded bg-gray-100 px-1 font-mono text-xs">
+              <code className="rounded-md bg-idle-wash px-1 font-mono text-xs">
                 indusk update
               </code>{" "}
               to re-register the project at its new path.
             </li>
             <li>Refresh this page.</li>
           </ol>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-ink-faint">
             Or edit{" "}
-            <code className="rounded bg-gray-100 px-1 font-mono text-xs">
+            <code className="rounded-md bg-idle-wash px-1 font-mono text-xs">
               ~/.indusk/projects.json
             </code>{" "}
             directly and remove or repoint the entry.

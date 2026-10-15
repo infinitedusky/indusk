@@ -4,7 +4,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { DecisionEntry } from "@infinitedusky/indusk-mcp/plans/history";
-import type { Waiting } from "@infinitedusky/indusk-mcp/plans/waiting";
+import {
+  AMENDMENT_DECISION,
+  type Waiting,
+} from "@infinitedusky/indusk-mcp/plans/waiting";
 import {
   type QuestionEvent,
   type Session,
@@ -257,9 +260,12 @@ describe("A16 — a reply in words reaches the plan's agent, running or not", ()
     expect(launched[0]?.cwd).toBe(WORKTREE);
     expect(launched[0]?.prompt).toContain(approvalWaiting.decision);
     expect(launched[0]?.prompt).toContain("Split Build Phase 2 in two first.");
-    expect(manager.current()).toMatchObject({ project: PROJECT, plan: PLAN });
+    expect(manager.forPlan(PROJECT, PLAN)).toMatchObject({
+      project: PROJECT,
+      plan: PLAN,
+    });
     expect(r.via).toBe("session");
-    expect(r.sessionId).toBe(manager.current()?.id);
+    expect(r.sessionId).toBe(manager.forPlan(PROJECT, PLAN)?.id);
   });
 
   it("A16 the alternative on review goes to the agent as words", async () => {
@@ -326,12 +332,17 @@ describe("cockpit-audit-fixes A7 — an ask of two questions is answered in full
       ],
       input: {},
     };
-    (launched[0]?.onEvent as SessionOptions["onEvent"])(ev);
+    const emit = launched[0]?.onEvent as SessionOptions["onEvent"];
+    emit(ev);
     const waiting = {
       ...questionWaiting,
       requestId: "req-2",
       questions: [
-        { question: QUESTION, accept: "The venue's map", alternative: "Our own grid" },
+        {
+          question: QUESTION,
+          accept: "The venue's map",
+          alternative: "Our own grid",
+        },
         {
           question: "How long should a hold last?",
           accept: "Ten minutes",
@@ -348,5 +359,27 @@ describe("cockpit-audit-fixes A7 — an ask of two questions is answered in full
       answers,
     } as never);
     expect(fake.answer).toHaveBeenCalledWith(ev, answers);
+  });
+});
+
+describe("A16 (plan-stories) — an amendment is answered on its own card", () => {
+  it("A16 an answer to an amendment's wait is refused and neither approves nor releases", async () => {
+    const approve = vi.fn(async () => ({}));
+    const release = vi.fn(async () => ({}));
+    const waiting: Waiting = {
+      plan: PLAN,
+      on: "amendment",
+      step: "Brief",
+      decision: AMENDMENT_DECISION,
+      accept: "Approve",
+      alternative: "Not yet",
+    };
+    await expect(
+      answerDecision(deps({ approve, release }), PROJECT, waiting, {
+        choice: "accept",
+      }),
+    ).rejects.toThrow(/amendment card/);
+    expect(approve).not.toHaveBeenCalled();
+    expect(release).not.toHaveBeenCalled();
   });
 });

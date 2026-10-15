@@ -1,8 +1,13 @@
 // promise: a-plan-shows-two-workflows
 // promise: every-plan-is-one-click-away
+// promise: a-plan-reads-by-its-title
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import { PROJECT, resetFixture } from "@/__tests__/helpers/cockpit-fixture";
+import {
+  PROJECT,
+  resetFixture,
+  titleOf,
+} from "@/__tests__/helpers/cockpit-fixture";
 
 /**
  * plan-cockpit, Build Phase 5: the plan page's header carries what the package
@@ -39,6 +44,23 @@ vi.mock("@/lib/planning-reader", async () =>
 vi.mock("@/lib/promises-reader", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).promisesReaderMock(),
 );
+// The plan page's brief parts are read by the package from disk (node:fs), which
+// the browser project cannot import; these pages have no brief to show.
+vi.mock("@infinitedusky/indusk-mcp/plans/parts", () => ({
+  readPlanParts: async (_root: string, plan: string) => ({
+    plan,
+    hasBrief: false,
+    hasBriefFile: true,
+    promises: [],
+    expectations: [],
+    looks: [],
+    noLooks: null,
+    amendments: [],
+    amendmentsUnreadable: null,
+    description: null,
+    briefStatus: null,
+  }),
+}));
 vi.mock("@infinitedusky/indusk-mcp/promises/standing", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).standingMock(),
 );
@@ -71,37 +93,48 @@ async function pageFor(name: string) {
 
 beforeEach(() => resetFixture());
 
-describe("the plan page's header", () => {
-  it("names the plan by its title, with its dates, its Path and the promises it owns", async () => {
+describe("the plan page's frame", () => {
+  it("draws the crumb and the plan's title, as the plan mockups do (plan-stories A12)", async () => {
     const { root } = await pageFor("alpha-one");
     const header = root.querySelector('[data-testid="plan-header"]');
-    expect(header?.querySelector("h1")?.textContent).toBe("Seat holds rework");
-    expect(header?.textContent).toContain("alpha-one");
-    expect(root.querySelector('[data-testid="plan-dates"]')?.textContent).toBe(
-      "started 2026-09-01 · landed 2026-09-10 · released 1.60.0 (2026-09-12)",
-    );
-    expect(root.querySelector('[data-testid="plan-path"]')?.textContent).toBe(
-      "Path: path-alpha",
-    );
-    const chips = [...root.querySelectorAll('[data-testid="plan-promises"] a')];
-    expect(chips).toHaveLength(1);
-    expect(chips[0]?.getAttribute("href")).toMatch(
-      /\/promises\/seat-holds-never-double-book$/,
-    );
-    expect(chips[0]?.textContent).toContain("1/1 tests");
-  });
-
-  it("shows a plan inside Paths inside Paths with its outermost Path first, and stops at a repeat", async () => {
-    const { root } = await pageFor("deep-one");
-    expect(root.querySelector('[data-testid="plan-path"]')?.textContent).toBe(
-      "Path: path-alpha › path-alpha-inner › path-deep",
+    expect(header?.querySelector("h1")?.textContent).toBe(titleOf("alpha-one"));
+    expect(header?.textContent).toContain(
+      `${PROJECT} / Plans / ${titleOf("alpha-one")}`,
     );
   });
 
-  it("keeps Details closed, with every document still on the page beneath it", async () => {
+  it("keeps the handle in the page's address data (plan-stories A12)", async () => {
     const { root } = await pageFor("alpha-one");
-    const details = root.querySelector('[data-testid="plan-details"]');
-    expect(details).not.toBeNull();
-    expect((details as HTMLDetailsElement).open).toBe(false);
+    expect(
+      root
+        .querySelector('[data-testid="plan-detail"]')
+        ?.getAttribute("data-plan-name"),
+    ).toBe("alpha-one");
+  });
+
+  it("draws no dates, Path or promise chips in the header, and no Details of documents", async () => {
+    // The approved mockups draw none of them: the promises are a part of the
+    // brief beneath the header, and the documents are read on the brief page.
+    for (const plan of ["alpha-one", "deep-one"]) {
+      const { root } = await pageFor(plan);
+      for (const testid of [
+        "plan-header-facts",
+        "plan-dates",
+        "plan-path",
+        "plan-promises",
+        "plan-details",
+        "plan-history",
+      ])
+        expect(
+          root.querySelector(`[data-testid="${testid}"]`),
+          `${testid} on ${plan}`,
+        ).toBeNull();
+    }
+  });
+
+  it("keeps the workflows rail beside what the plan waits on", async () => {
+    const { root } = await pageFor("alpha-one");
+    expect(root.querySelector('[data-testid="plan-stage"]')).not.toBeNull();
+    expect(root.querySelector('[data-testid="plan-workflows"]')).not.toBeNull();
   });
 });

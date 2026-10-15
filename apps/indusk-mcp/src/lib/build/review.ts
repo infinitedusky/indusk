@@ -1,11 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import matter from "gray-matter";
-import { isAuditSkipped, isCleanupSkipped } from "../cleanup/gate.js";
-import { isFalsificationSkipped } from "../falsification/skip.js";
+import { skippedRitualsOf } from "../cleanup/gate.js";
 import { type ImplPhase, parseImplString } from "../impl-parser-core.js";
 import { RITUAL_ORDER } from "../lifecycle.js";
+import { type Amendment, amendmentOfDecision, amendmentsOf } from "../plans/amendments.js";
 import { uncommittedWork } from "../plans/bookkeeping.js";
+import { readHistory } from "../plans/history.js";
 import { branchFileChanges } from "../plans/plan-branch.js";
 import { workbenchPlan } from "../plans/workbench-plan.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
@@ -50,8 +51,21 @@ export interface ReviewSkip {
 	item: string;
 }
 
+/**
+ * A document of the plan shown beside the approval as evidence
+ * (brief-as-the-contract ADR decision 3): the person approved the brief, so
+ * these carry no sign-off of their own and no field to record one.
+ */
+export interface ReviewEvidence {
+	document: "test-plan" | "adr" | "impl";
+	/** The file, relative to the plan's checkout. */
+	path: string;
+}
+
 export interface Review {
 	plan: string;
+	/** The test plan, the ADR and the impl the plan has, in that order — read, not signed off. */
+	evidence: ReviewEvidence[];
 	promises: ReviewPromise[];
 	falsification: ReviewFalsification[];
 	/** Changed against the trunk branch since the plan's branch left it; empty when the plan has no worktree. */
@@ -65,6 +79,18 @@ export interface Review {
 	 * since landing refuses it (Build Phase 10).
 	 */
 	uncommittedOnMain: string[];
+	/**
+	 * What was agreed and changed (brief-as-the-contract ADR decision 6):
+	 * each amendment a person approved, from the plan's history, with what it
+	 * was and what it became; those still waiting; and why the waiting ones
+	 * cannot be told, when they cannot. Absent from a review an older
+	 * `indusk` printed, so a reader takes absence as none.
+	 */
+	amendments?: {
+		approved: Array<Amendment & { by: string; at: string }>;
+		waiting: Amendment[];
+		unreadable: string | null;
+	};
 }
 
 export async function buildReview(anyCheckout: string, plan: string): Promise<Review> {
@@ -96,6 +122,7 @@ export async function buildReview(anyCheckout: string, plan: string): Promise<Re
 
 	return {
 		plan,
+		evidence: evidenceOf(copy.root, copy.dir),
 		promises: reviewPromises(copy.root, copy.dir, plan, implText),
 		falsification: impl.phases.filter(isFalsification).map((phase) => ({
 			phase: phaseTitle(phase),
@@ -111,13 +138,8 @@ export async function buildReview(anyCheckout: string, plan: string): Promise<Re
 			wp ? wp.repoTrunk : copies.projectRoot,
 			files.map((f) => f.path),
 		),
-		skippedRituals: [
-			{ ritual: "falsification" as const, check: isFalsificationSkipped(implText) },
-			{ ritual: "cleanup" as const, check: isCleanupSkipped(implText) },
-			{ ritual: "audit" as const, check: isAuditSkipped(implText) },
-		]
-			.filter((r) => r.check.skipped)
-			.map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" })),
+		skippedRituals: skippedRitualsOf(implText),
+		amendments: await reviewAmendments(anyCheckout, plan, copy.dir),
 		skips: impl.phases.flatMap((phase) =>
 			phase.gates.flatMap((g) =>
 				g.items
@@ -152,6 +174,32 @@ function reviewPromises(
 		rows: p.rows,
 		why: p.refusal,
 	}));
+}
+
+const EVIDENCE: ReviewEvidence["document"][] = ["test-plan", "adr", "impl"];
+
+/** The documents of the plan that are evidence at review, those that exist. */
+function evidenceOf(root: string, dir: string): ReviewEvidence[] {
+	return EVIDENCE.filter((document) => existsSync(join(dir, `${document}.md`))).map((document) => ({
+		document,
+		path: relative(root, join(dir, `${document}.md`)),
+	}));
+}
+
+async function reviewAmendments(
+	anyCheckout: string,
+	plan: string,
+	dir: string,
+): Promise<NonNullable<Review["amendments"]>> {
+	const approved = readHistory(anyCheckout, plan).flatMap((e) => {
+		const a = amendmentOfDecision(e.decision);
+		return a ? [{ ...a, by: e.by, at: e.at }] : [];
+	});
+	try {
+		return { approved, waiting: await amendmentsOf(dir), unreadable: null };
+	} catch (err) {
+		return { approved, waiting: [], unreadable: (err as Error).message };
+	}
 }
 
 async function changedFiles(trunk: string, branch: string): Promise<Review["files"]> {

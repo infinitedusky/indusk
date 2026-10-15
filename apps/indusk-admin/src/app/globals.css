@@ -1,34 +1,389 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
+@import "./foundation.generated.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * The admin's look is held by `.indusk/mockups/admin/` (ui-promises): every
+ * value below is a token of its foundation, generated into
+ * `foundation.generated.css` by `indusk looks tokens admin --tailwind`. A raw
+ * colour, size or font here is refused by `indusk looks lint admin`.
+ */
 
+/* What Tailwind's transition utilities animate with: the foundation's. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --default-transition-duration: var(--duration-fast);
+  --default-transition-timing-function: var(--easing-ease);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-5);
+}
+
+/*
+ * Markdown from plan documents. Typography's `prose` sizes in em, which no
+ * foundation holds; these are the same rules on the foundation's steps.
+ */
+.prose {
+  color: var(--color-ink-soft);
+  font-size: var(--text-md);
+  line-height: var(--leading-5);
+  max-width: 70ch;
+}
+.prose :where(h1, h2, h3, h4) {
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-2);
+}
+.prose h1 {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-6);
+}
+.prose h2 {
+  font-size: var(--text-xl);
+  line-height: var(--leading-5);
+}
+.prose :where(h3, h4) {
+  font-size: var(--text-lg);
+  line-height: var(--leading-4);
+}
+.prose :where(p, ul, ol, pre, blockquote, table) {
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.prose :where(ul, ol) {
+  padding-left: var(--space-5);
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose a {
+  color: var(--color-dusk);
+  text-decoration: underline;
+}
+.prose :where(code) {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--color-idle-wash);
+  border-radius: var(--radius-sm);
+  padding: var(--space-hair) var(--space-1);
+}
+.prose pre {
+  background: var(--color-idle-wash);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  overflow-x: auto;
+}
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+.prose blockquote {
+  border-left: var(--border-2) solid var(--color-line);
+  padding-left: var(--space-3);
+  color: var(--color-ink-faint);
+}
+.prose table {
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.prose :where(th, td) {
+  border-width: var(--border-1);
+  border-style: solid;
+  border-color: var(--color-line);
+  padding: var(--space-1) var(--space-2);
+  text-align: left;
 }
 
 /* <details> blocks in plan documents: a plain-language narrative with the
-   technical detail folded under a "Technical" summary. Typography has no
-   opinion on these, so give the summary an affordance and the block room. */
+   technical detail folded under a "Technical" summary. */
 .prose details {
-  margin: 1em 0;
-  border-left: 2px solid #e5e7eb;
-  padding-left: 0.75em;
+  margin: var(--space-3) 0;
+  border-left: var(--border-2) solid var(--color-line);
+  padding-left: var(--space-3);
 }
 .prose summary {
   cursor: pointer;
-  font-weight: 600;
-  color: #6b7280;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-ink-faint);
+}
+
+/* The page under the header: the viewport less the header's own height. */
+.app-body {
+  height: calc(100vh - var(--space-10));
+}
+
+/* The cockpit's frame is the page under the header and not a screen taller
+   than it: the nav and the page scroll inside it, each on its own. */
+.app-body [data-component="shell"] {
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* Layout the foundation does not tokenise: viewport-relative sizes and a grid. */
+.fullscreen-diagram {
+  width: 95vw;
+  height: 95vh;
+}
+.diagram-svg svg {
+  display: block;
+  height: auto;
+  max-height: 90%;
+  min-width: 600px;
+  max-width: 90%;
+}
+.doc-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.stale-facts {
+  grid-template-columns: auto 1fr;
+}
+
+.nav-drawer {
+  max-width: 85vw;
+}
+
+/* A raised surface: the foundation's shadow, alone — Tailwind's shadow utility
+   composes ring and inset layers around it, which are not a token. */
+.elevated {
+  box-shadow: var(--shadow-card);
+}
+
+/* Motion the mockups name: a live dot or node dims and returns. The foundation
+   holds the durations and the easing; the keyframe is only the dimming. */
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+.pulse {
+  animation: pulse var(--duration-pulse) var(--easing-in-out) infinite;
+}
+.pulse-slow {
+  animation: pulse var(--duration-pulse-slow) var(--easing-in-out) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse,
+  .pulse-slow {
+    animation: none;
+  }
+}
+
+/* A step that needs a person: a ring of the dusk wash round its node, which
+   Tailwind's shadow utility would compose with ring layers it does not hold. */
+.halo {
+  box-shadow: var(--shadow-ring);
+}
+
+/* Column lists over the foundation's sizes: Tailwind has no class that names
+   one. Each is the template a component's mockup draws. */
+.cols-shell {
+  grid-template-columns: var(--size-nav) minmax(0, 1fr);
+}
+.cols-shell-rail {
+  grid-template-columns: var(--size-nav-rail) minmax(0, 1fr);
+}
+.cols-plan-row {
+  grid-template-columns: var(--size-badge) minmax(0, 1fr);
+}
+.cols-plan-row-numbered {
+  grid-template-columns: var(--space-3) var(--size-badge) minmax(0, 1fr);
+}
+.cols-nav-path {
+  grid-template-columns: var(--space-3) var(--space-3) minmax(0, 1fr) auto auto;
+}
+.cols-view-link {
+  grid-template-columns: var(--size-badge) minmax(0, 1fr) auto;
+}
+.cols-step {
+  grid-template-columns: var(--space-5) minmax(0, 1fr) auto;
+}
+.cols-step-reason {
+  grid-template-columns: var(--space-5) minmax(0, 1fr) auto auto;
+}
+.underline-hair {
+  text-underline-offset: var(--space-hair);
+}
+.cols-look-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+.cols-expectation-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.cols-draft-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.story-link {
+  margin-left: auto;
+}
+.cols-subplan-row {
+  grid-template-columns: var(--space-5) var(--size-badge) minmax(0, 1fr) auto;
+}
+.cols-recommendation {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.cols-promise-row {
+  grid-template-columns:
+    var(--size-dot-lg) minmax(0, 1fr) var(--size-icon) var(--size-input)
+    var(--size-nav-rail);
+}
+.cols-timeline {
+  grid-template-columns: var(--size-nav-rail) var(--size-node) minmax(0, 1fr);
+}
+.cols-promise-page {
+  grid-template-columns: minmax(0, 1fr) var(--size-side);
+}
+.cols-plan-stage {
+  grid-template-columns: var(--size-rail) minmax(0, 1fr);
+}
+/* A line of reading: a message holds to 60 characters, a prompt's question to 30. */
+.measure-message {
+  max-width: 60ch;
+}
+.measure-question {
+  max-width: 30ch;
+}
+/* A phase's paragraph is read at a measure of 70 characters. */
+.measure-story {
+  max-width: 70ch;
+}
+.cols-conversation {
+  grid-template-columns: minmax(0, 1fr) var(--size-side);
+}
+.cols-project-grid {
+  grid-template-columns: repeat(auto-fill, minmax(var(--size-side), 1fr));
+}
+@media (max-width: 759px) {
+  .cols-shell,
+  .cols-shell-rail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cols-promise-row {
+    grid-template-columns: var(--size-dot-lg) minmax(0, 1fr) auto;
+  }
+  .cols-promise-page,
+  .cols-plan-stage,
+  .cols-conversation,
+  .cols-draft-row,
+  .cols-expectation-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cols-subplan-row {
+    grid-template-columns: var(--size-badge) minmax(0, 1fr);
+  }
+  .story-link {
+    margin-left: 0;
+  }
+  .subplan-row-number {
+    display: none;
+  }
+  .subplan-row-stage {
+    grid-column: 2;
+  }
+}
+
+/* The Looks page: the list scrolls on its own beside a stage that stays put.
+   On a phone the list is a sheet from the bottom edge, opened by its handle
+   (a checkbox, so a server-drawn page needs no script) and closed again when a
+   look is chosen, because choosing one loads the page. */
+.looks-page {
+  height: calc(100vh - var(--space-10) - 2 * var(--space-6));
+}
+.looks-split {
+  /* the list holds a look's name whole beside its chip and Open: the side
+     column and a badge and a step, no narrower than the longest look name */
+  grid-template-columns:
+    calc(var(--size-side) + var(--size-badge) + var(--space-4))
+    minmax(0, 1fr);
+}
+.looks-sheet-toggle,
+.looks-sheet-handle {
+  display: none;
+}
+@media (max-width: 759px) {
+  .looks-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .looks-list {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 20;
+    max-height: 70vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+    transform: translateY(calc(100% - var(--space-10)));
+  }
+  .looks-sheet-handle {
+    position: sticky;
+    top: 0;
+    display: flex;
+    height: var(--space-10);
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface);
+    color: var(--color-dusk);
+    cursor: pointer;
+  }
+  .looks-sheet-toggle:checked ~ .looks-list {
+    transform: translateY(0);
+  }
+  .looks-stage {
+    padding-bottom: var(--space-10);
+  }
+}
+
+/* A collapsed nav keeps only the marks: what the nav's rows and links say in
+   words carries `nav-hide`, and a row or link that is only a mark `nav-mark`. */
+[data-component="nav"][data-collapsed="true"] .nav-hide {
+  display: none;
+}
+[data-component="nav"][data-collapsed="true"] .nav-mark {
+  grid-template-columns: var(--size-badge);
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* What a decision card says in words: a paragraph is read at a measure, and an
+   alert's is the ink, not the soft ink of a card that only reports. */
+[data-component="decision-card"] p {
+  max-width: 64ch;
+  color: var(--color-ink-soft);
+}
+[data-component="decision-card"][data-tone="alert"] p {
+  color: var(--color-ink);
+}
+[data-component="nav"][data-collapsed="true"] .nav-head {
+  justify-content: center;
+  padding: 0;
+}
+
+/* The brief page: the brief's parts and the brief scrolling on the left, the
+   agent in a narrower column on the right that stays put; one column on a
+   phone. */
+.cols-brief-page {
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+}
+@media (max-width: 759px) {
+  .cols-brief-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The part the agent just wrote, marked for a moment as the brief page brings
+   it into view (FollowAgent). */
+[data-followed="true"] {
+  outline: var(--border-2) solid var(--color-dusk);
+  outline-offset: var(--border-2);
+  border-radius: var(--radius-lg);
 }

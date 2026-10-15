@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ReviewPanel } from "@/components/session/ReviewPanel";
 import { Button } from "@/components/ui/Button";
+import { DecisionCard as UiDecisionCard } from "@/components/ui/DecisionCard";
 import { postJson } from "@/lib/post-json";
 
 /**
@@ -26,6 +27,8 @@ const HEADING: Record<Waiting["on"], string> = {
   question: "Claude needs you",
   approval: "Waiting for your approval",
   review: "Waiting for your review",
+  // Never drawn here: an amendment is answered on its own card.
+  amendment: "The brief changed",
 };
 
 export function DecisionCard({
@@ -97,132 +100,129 @@ export function DecisionCard({
   };
 
   return (
-    <section
-      className="mb-4 flex flex-col gap-3 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm"
-      data-testid="decision-card"
-      data-on={waiting.on}
-    >
-      <header className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-semibold text-amber-900">{HEADING[waiting.on]}</h2>
-        <span className="text-xs text-amber-800">at {waiting.step}</span>
-      </header>
-      {several ? null : <p className="text-gray-900">{waiting.decision}</p>}
-      {waiting.on === "review" && review ? (
-        <ReviewPanel review={review} />
-      ) : null}
-      {several ? (
-        <div className="flex flex-col gap-3">
-          {asked.map((q) => (
-            <fieldset
-              key={q.question}
-              className="flex flex-col gap-1"
-              data-testid="decision-question"
-            >
-              <legend className="text-gray-900">{q.question}</legend>
-              <div className="flex flex-wrap gap-2">
-                {[q.accept, q.alternative].map((label) => (
-                  <Button
-                    key={label}
-                    size="sm"
-                    variant={
-                      chosen[q.question] === label && !said[q.question]?.trim()
-                        ? "primary"
-                        : "secondary"
-                    }
-                    aria-pressed={
-                      chosen[q.question] === label && !said[q.question]?.trim()
-                    }
-                    disabled={busy}
-                    onClick={() => {
-                      setChosen((c) => ({ ...c, [q.question]: label }));
-                      setSaid((w) => ({ ...w, [q.question]: "" }));
-                    }}
-                  >
-                    {label}
-                  </Button>
-                ))}
-              </div>
-              <textarea
-                aria-label={`Your own words for: ${q.question}`}
-                data-testid="decision-question-words"
-                placeholder="Or say it in your own words"
-                className="min-h-12 w-full rounded border border-gray-300 bg-white p-2"
-                value={said[q.question] ?? ""}
-                disabled={busy}
-                onChange={(e) =>
-                  setSaid((w) => ({ ...w, [q.question]: e.target.value }))
-                }
-              />
-            </fieldset>
-          ))}
-          <div>
-            <Button
-              size="sm"
-              data-testid="decision-send-answers"
-              disabled={busy || asked.some((q) => !answerTo(q.question))}
-              onClick={() => void answer("answers")}
-            >
-              Send answers
-            </Button>
-          </div>
-        </div>
-      ) : null}
-      {several ? null : (
-        <>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              data-testid="decision-accept"
-              disabled={busy}
-              onClick={() => void answer("accept")}
-            >
-              {waiting.accept}
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              data-testid="decision-alternative"
-              disabled={busy}
-              onClick={() => void answer("alternative")}
-            >
-              {waiting.alternative}
-            </Button>
-          </div>
-          <form
-            className="flex flex-col gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void answer("reply", words);
-            }}
-          >
-            <label className="text-xs text-gray-600" htmlFor="decision-reply">
-              Or say it in your own words
-            </label>
-            <textarea
-              id="decision-reply"
-              data-testid="decision-reply"
-              className="min-h-16 w-full rounded border border-gray-300 bg-white p-2"
-              value={words}
-              onChange={(e) => setWords(e.target.value)}
-            />
+    <div data-testid="decision-card" data-on={waiting.on}>
+      <UiDecisionCard
+        tone="ask"
+        who={{
+          label: `${HEADING[waiting.on]} at ${waiting.step}`,
+          state: "ask",
+        }}
+        title={several ? undefined : waiting.decision}
+      >
+        {waiting.on === "review" && review ? (
+          <ReviewPanel review={review} />
+        ) : null}
+        {several ? (
+          <div className="flex flex-col gap-4">
+            {asked.map((q) => (
+              <fieldset
+                key={q.question}
+                className="flex flex-col gap-2"
+                data-testid="decision-question"
+              >
+                <legend className="mb-2">{q.question}</legend>
+                <div className="flex flex-wrap gap-snug">
+                  {[q.accept, q.alternative].map((label) => (
+                    <Button
+                      key={label}
+                      variant={
+                        chosen[q.question] === label &&
+                        !said[q.question]?.trim()
+                          ? "primary"
+                          : "secondary"
+                      }
+                      aria-pressed={
+                        chosen[q.question] === label &&
+                        !said[q.question]?.trim()
+                      }
+                      disabled={busy}
+                      onClick={() => {
+                        setChosen((c) => ({ ...c, [q.question]: label }));
+                        setSaid((w) => ({ ...w, [q.question]: "" }));
+                      }}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+                <textarea
+                  aria-label={`Your own words for: ${q.question}`}
+                  data-testid="decision-question-words"
+                  placeholder="Or say it in your own words"
+                  className="min-h-12 w-full rounded-md border border-line bg-surface p-2"
+                  value={said[q.question] ?? ""}
+                  disabled={busy}
+                  onChange={(e) =>
+                    setSaid((w) => ({ ...w, [q.question]: e.target.value }))
+                  }
+                />
+              </fieldset>
+            ))}
             <div>
               <Button
-                size="sm"
-                variant="secondary"
-                type="submit"
-                data-testid="decision-send"
-                disabled={busy || !words.trim()}
+                data-testid="decision-send-answers"
+                disabled={busy || asked.some((q) => !answerTo(q.question))}
+                onClick={() => void answer("answers")}
               >
-                Send
+                Send answers
               </Button>
             </div>
-          </form>
-        </>
-      )}
-      {sent ? <p className="text-green-800">Sent: {sent}</p> : null}
-      {problem ? (
-        <pre className="whitespace-pre-wrap text-red-700">{problem}</pre>
-      ) : null}
-    </section>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-snug">
+              <Button
+                data-testid="decision-accept"
+                disabled={busy}
+                onClick={() => void answer("accept")}
+              >
+                {waiting.accept}
+              </Button>
+              <Button
+                variant="secondary"
+                data-testid="decision-alternative"
+                disabled={busy}
+                onClick={() => void answer("alternative")}
+              >
+                {waiting.alternative}
+              </Button>
+            </div>
+            <form
+              className="flex flex-col gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void answer("reply", words);
+              }}
+            >
+              <label className="text-xs text-ink-soft" htmlFor="decision-reply">
+                Or say it in your own words
+              </label>
+              <textarea
+                id="decision-reply"
+                data-testid="decision-reply"
+                className="min-h-16 w-full rounded-md border border-line bg-surface p-2"
+                value={words}
+                onChange={(e) => setWords(e.target.value)}
+              />
+              <div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  type="submit"
+                  data-testid="decision-send"
+                  disabled={busy || !words.trim()}
+                >
+                  Send
+                </Button>
+              </div>
+            </form>
+          </>
+        )}
+        {sent ? <p className="text-ok">Sent: {sent}</p> : null}
+        {problem ? (
+          <pre className="whitespace-pre-wrap text-bad">{problem}</pre>
+        ) : null}
+      </UiDecisionCard>
+    </div>
   );
 }

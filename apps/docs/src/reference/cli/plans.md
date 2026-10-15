@@ -9,6 +9,7 @@ A plan is written on its own branch, in its own worktree. Its documents and decl
 ```bash
 indusk plans start <type> <name>    # its branch, its worktree, its first document
 indusk plans approve <name>         # the brief check, then its documents merge to the trunk
+indusk plans reapprove <name>       # a person approves an amendment; an agent's call is refused
 indusk plans accept <name> [--auto] # the build may ship
 indusk plans land <name>            # the build reaches the trunk; worktree and branch removed
 ```
@@ -19,12 +20,24 @@ Every command acts on the plan's worktree, from any checkout of the project. Eac
 
 Creates `plan/<name>` from the trunk branch, its worktree at `<project>-worktrees/<name>`, and the assignment that tells every reader where the plan lives — the admin and the plan tools read it from there even though the trunk has no folder for it. Writes and commits the first document in the worktree: `brief.md`, or `research.md` for a spike, as a draft declaring `workflow: <type>`. Nothing is written on the trunk.
 
+A new plan's `title:` is its handle, which the admin and the editor read as words ("cockpit-redraw" reads "Cockpit redraw") until a person writes a short title and a `description:` in the brief's front matter.
+
 Refuses:
 
 - a `<type>` that is not `feature`, `bugfix`, `refactor` or `spike`;
 - a name already started, naming its worktree;
 - a name with a folder on the trunk, naming the folder;
 - a name whose branch `plan/<name>` already exists.
+
+#### `plans start <type> <name> --from-draft <id>`
+
+Makes the plan from a draft conversation (`drafts/<id>/` in the project's home, see [Briefs](/guide/briefs#starting-a-plan-a-conversation)) instead of an empty first document: the draft's `brief.md` becomes the plan's, under the front matter that declares `workflow: <type>`, and the draft is removed once the plan exists. A draft that made research alone becomes a `spike` with `research.md` and no brief, whatever type is given. `<type>` and `<name>` are the person's, over the agent's proposal in `proposal.json`. Refuses, with the draft kept:
+
+- a draft that does not exist in this project;
+- a name already taken (the same refusals as `plans start`), adding "choose another name for this draft";
+- a draft that has said nothing yet.
+
+`plans start` without the flag is unchanged. The admin's Accept button calls the same step.
 
 #### In a workbench: `plans start <type> <name> [--repo <repo>]`
 
@@ -39,7 +52,7 @@ A code worktree inside the root that the root's ignore rules don't already cover
 
 ### `plans approve <name>`
 
-Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the worktree's copy; sets the impl's `status: approved` and commits it on the branch; merges the branch into the trunk with a merge commit. The build then continues in the same worktree on the same branch.
+Runs the brief check [`promises contract`](/reference/cli/promises) runs, on the worktree's copy, then refuses, naming each, any look the brief's `## Looks` makes, changes or replaces that is not drawn as a mockup, or not approved, in that worktree's record. No name is exempt: a new component is named by its own mockup, approved now, and its story is approved against it during the build. It sets the impl's `status: approved` and records what was approved, `approved_brief` (the sha256 of `brief.md`), `approved_by` and `approved_at`, and commits it on the branch; merges the branch into the trunk with a merge commit. The build then continues in the same worktree on the same branch.
 
 Refuses:
 
@@ -52,9 +65,29 @@ Refuses:
 
 InDusk commits its own notes on `main` as it writes them (`.indusk/current.md` and `.claude/lessons/`), and keeps its machine state outside every checkout, in the project's home. A note it could not commit (the trunk was off its branch or mid-merge), or a project not yet moved by `indusk update`, still leaves these in the trunk's working tree: `.indusk/current.md`, `.indusk/highlights.jsonl`, `.indusk/highlights-processed.jsonl`, `.indusk/eval/` and `.claude/lessons/`. `approve` and `land` commit whatever of these is uncommitted, in a commit of its own (`chore(indusk): bookkeeping, committed before …`), then check the trunk. Anything else uncommitted there may be someone's real work: it is refused, named, and listed by `plans review` as *uncommitted on main* so the person sorts it out before accepting.
 
+### What counts as an amendment
+
+What a person approved is the brief. An **amendment** is the brief's difference from it: an expectation, a promise or a look the brief says now that it did not say at approval, or says differently, and a promise the plan owns whose statement in the registry has moved to a sentence the approved brief did not state. A statement brought to what the brief's **Changes** already said (`indusk promises change` doing what was agreed) is the build keeping the contract, not an amendment. Edits to the test plan, the ADR, the impl, its notes and Shape findings are never amendments: they are the agent's to change.
+
+What was approved is read from git, at the approval commit — `plan(<name>): impl approved` from `approve` (in a workbench, `plan(<name>): approved`) or `plan(<name>): amendment approved` from `reapprove`, whichever is newest — and held to the impl's `approved_brief`. An impl that records no `approved_brief` was approved before the record existed and has no amendments.
+
+While an amendment waits, `check-gates` refuses to check off any build item, naming each amendment with what it was and what it is now (`lesson: a-plan-builds-only-after-approval`). The way on is the person's: Approve on the plan's page in the cockpit, or `plans reapprove` run by the person — or put the brief back as it was approved.
+
+### `plans amendments <name> [--dir <folder>] [--json]`
+
+Lists the amendments waiting, each as `part name: was "…" — now "…"`, or says nothing waits. `--json` prints the list (`[{part, name, was, now}]`) — what `check-gates` reads; `--dir` names the plan folder the caller means, otherwise the plan's live copy is read. Refused, exit 1, when what was approved cannot be told: no approval commit on the branch, or one whose brief is not the `approved_brief` recorded — never read as "nothing changed".
+
+### `plans reapprove <name>`
+
+The person approves the amendments an approved plan waits on. Refused before approval — that is `approve`'s, which also merges, and refuses a branch past approval. Runs the brief check and the looks check `approve` runs (an amendment that names a look waits for that look's approval), records the brief as the one approved (`approved_brief`, `approved_by`, `approved_at`), commits the impl, the brief and the promises the amendments changed on the plan's branch as `plan(<name>): amendment approved`, and appends each amendment to the plan's history (`.indusk/plan-history/<name>.md`, on `main`) as `amendment to the <part> <name>: was …, now …`, answered *Approve*, with who and when. Nothing waiting and the brief unchanged: nothing is written. `plans review` then shows each approved amendment, both versions, beside any still waiting.
+
+The cockpit's Approve calls `POST /api/plans/<name>/reapprove`, which answers only the person's browser on the admin's own page (`Sec-Fetch-Site: same-origin`, as the look approval does); a script or an agent's request is refused. Run from a terminal it is the person's: an agent's command that runs `plans reapprove` (including inside a `$(…)`, backtick or `<(…)` substitution, even under `echo` or `cat`), calls the package's `reapprovePlan` through an interpreter (`node -e`, `tsx -e`), or names that route, is refused by the looks guard (`looks-approval-guard.js`, `promise: only-a-person-reapproves`), saying only a person re-approves — a tripwire on the command's text, as the look approval's is.
+
 ### `plans accept <name> [--auto]`
 
 Writes `accepted: <time>` and `accepted_by: person` (or `auto`, with `--auto`: a workflow that accepts on its own) to the impl's frontmatter and commits it on the branch.
+
+Refused, naming each, while the branch changed files under an app's interface and the brief lists no look, and while a new component the brief names has not ended in a story: its own mockup (`screens/<component>.<state>.html`, declaring itself in `indusk-new-components`) has no approved story of the same name, or a mockup the brief names still draws a component inline under that declaration, or composes one whose story is not approved. The way forward: approve each story on the cockpit's Looks page, place the component with `<indusk-component>` in each mockup that draws it, and have those mockups approved again.
 
 Refused inside a build step. An unattended build runs each step (work, falsify, cleanup, audit) with `INDUSK_BUILD_STEP` set to the step, and `accept` and `land` refuse under it, naming the step: a build stops at review, and acceptance is the person's. The release session that acceptance starts is not marked, so it lands. This stops a confused session, not a determined one: a session that unsets the variable is not stopped.
 
@@ -100,6 +133,7 @@ What an unattended build does next, read from the plan as it stands — its work
 | `falsify` | every phase is closed and no falsification phase or skip exists |
 | `cleanup` | falsification is closed and no cleanup phase or skip exists |
 | `audit` | the cleanup is closed and the plan folder has no `audit.md`, nor does the impl carry `audit: skipped` with an `audit_reason`. The runner runs `/audit <name>` as a step; what `audit.md` says is never read |
+| `shorten-reason` | every phase is closed and a ritual (falsification, cleanup or audit) is skipped with a reason over one sentence or 120 characters. Answered before that ritual's own step, so a skip is never turned into a full run; the runner starts a session that rewrites that one `<ritual>_reason` line, changes nothing else and commits. Names the ritual, the reason's length and sentence count |
 | `judgement` | the open phase's next item is one the plan declared for a person — a Deferred Verification row, a manual or visual check; names the item |
 | `review` | every phase, the falsification and the cleanup are closed, and the audit written or skipped. Never `retrospective`: that waits for acceptance |
 | `cannot continue` | the open phase has a `blocker:` line; or every phase is closed while a row is not terminal. The runner adds two of its own: the step's session ended in an error after its retries, or two steps in a row made no progress |
@@ -137,8 +171,8 @@ Refuses:
 ### In a workbench: approve, accept, review and land
 
 A workbench plan's documents are already at the workbench root, and its code is on a branch in the repo its `code.json` names. So:
-- **`approve`** runs the same brief check, then marks the impl `status: approved` and commits the plan's documents (and the workbench's shadow contract) at the root. Nothing is merged.
-- **`accept`** records `accepted` in the impl at the root, and commits it there.
+- **`approve`** runs the same brief check and looks check (a look the brief names that is still proposed refuses it, read from the mockups at the root), then marks the impl `status: approved`, records the brief's hash as above, and commits the plan's documents (and the workbench's shadow contract) at the root. Nothing is merged.
+- **`accept`** runs the same interface and story checks, the diff read from the code repo's branch and the looks from the root's mockups, then records `accepted` in the impl at the root and commits it there. **`reapprove`** runs the looks check too.
 - **`review`** lists the files the code branch changed in its repo, against the repo's trunk branch, and any uncommitted work on that trunk on those paths.
 - **`land`** refuses an unaccepted plan. Otherwise it brings the repo's trunk into the code branch, runs the land checks in the code worktree, and merges the branch into the repo's trunk with a merge commit. Then it removes the code worktree and branch. The documents stay at the root, where the retrospective archives them.
 
@@ -160,6 +194,8 @@ A plan is a dead draft only when **all three** hold:
 2. **The newest file in the plan directory is older than `planning.dead_draft_days`** (default 30; configured in `.indusk/config.json`).
 3. **master.md does not protect it.** A markdown link to the plan on a master.md line that does *not* contain the word "draft" protects it — so a `parked — revisit with v2` row protects its plan, while a `brief draft` row leaves it archivable.
 
+Draft conversations age out in the same pass: a draft in the project's home untouched for `drafts.max_age_days` (default 30) is discarded, and `--dry-run` says which would be.
+
 `--dry-run` prints the candidate list and skip reasons without moving anything. Always review the dry-run before the first real run on a project with a large backlog.
 
 ## Configuration
@@ -173,6 +209,16 @@ A plan is a dead draft only when **all three** hold:
 ```
 
 Absent field → 30-day default. `indusk update` scaffolds the key idempotently.
+
+```json
+{
+  "drafts": {
+    "max_age_days": 30
+  }
+}
+```
+
+`drafts.max_age_days` is the age at which `plans archive-dead` archives an untouched draft conversation, moving it to `drafts/archive/<id>/` in the project's home with what it held; absent, 30. A discard from the page still deletes.
 
 ## Tiers and models
 
@@ -237,6 +283,18 @@ subplans:
 ---
 ```
 
+A `subplans:` entry may be a name, or a mapping carrying the words for a plan that has no folder yet:
+
+```yaml
+subplans:
+  - dawn-verify
+  - name: dawn-ship
+    title: "Dawn ship"
+    description: "Publishes a plan's result where its people can see it."
+```
+
+Declared order holds either way. The parser reports the written title and description beside the names (`declaredTitles`), and a plan's own brief wins once it exists. A queued plan declared by name alone reads as its handle in words, with no description.
+
 A child declares **nothing** about its lineage. Only one place declares each parent→child link, so the two sides can never disagree and there is no drift to reconcile.
 
 ### Two rules that keep it safe
@@ -262,7 +320,7 @@ A subplan whose folder has moved to `archive/` is the opposite of uncreated — 
 
 ### API
 
-`readPlanDeclarations(planningDir)` in `apps/indusk-mcp/src/lib/plan-parser.ts` returns `{ parents, roadmap, subplans }`. It is exported for consumers at `@infinitedusky/indusk-mcp/planning/plan-parser` — the admin UI consumes it rather than re-reading frontmatter, per the never-duplicate-parsing rule.
+`readPlanDeclarations(planningDir)` in `apps/indusk-mcp/src/lib/plan-parser.ts` returns `{ parents, roadmap, subplans, declaredTitles }`. It is exported for consumers at `@infinitedusky/indusk-mcp/planning/plan-parser` — the admin UI consumes it rather than re-reading frontmatter, per the never-duplicate-parsing rule.
 
 ## Papers (`kind: paper`)
 

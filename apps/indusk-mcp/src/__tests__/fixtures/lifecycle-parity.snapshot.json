@@ -70,6 +70,7 @@
     "readiness": {
       "passes": false,
       "missing": [
+        "cleanup",
         "audit"
       ]
     }

@@ -57,23 +57,28 @@ const until = async (check: () => boolean, ms = 10_000) => {
 };
 
 describe("A22 — no session outlives the admin", () => {
-	it("stopAll, as `indusk ui stop` runs it, ends a session that will not stop on its own", async () => {
-		const { dir, bin, record } = setup();
-		const m = new SessionManager({ recordPath: record });
-		const { session } = m.start({
-			cwd: dir,
-			kind: "planning",
-			prompt: "hi",
-			claudeBin: bin,
-			onEvent: () => {},
-			project: "p",
-			plan: "x",
-		});
-		pids.push(session.pid);
-		expect(alive(session.pid)).toBe(true);
-		await m.stopAll(500);
-		expect(await until(() => !alive(session.pid))).toBe(true);
-	}, 30_000);
+	// new-project-flow A20: a project conversation's session (plan `new-project:<id>`) is held the same way.
+	it.each(["x", "new-project:abc"])(
+		"stopAll, as `indusk ui stop` runs it, ends a session that will not stop on its own (plan %s)",
+		async (plan) => {
+			const { dir, bin, record } = setup();
+			const m = new SessionManager({ recordPath: record });
+			const { session } = m.start({
+				cwd: dir,
+				kind: "planning",
+				prompt: "hi",
+				claudeBin: bin,
+				onEvent: () => {},
+				project: "p",
+				plan,
+			});
+			pids.push(session.pid);
+			expect(alive(session.pid)).toBe(true);
+			await m.stopAll(500);
+			expect(await until(() => !alive(session.pid))).toBe(true);
+		},
+		30_000,
+	);
 
 	it("a daemon starting after a crash ends the session its predecessor recorded", async () => {
 		const { dir, bin, record } = setup();

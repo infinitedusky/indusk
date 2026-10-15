@@ -107,14 +107,14 @@ function RowPurpose({
   // A cell the validator refuses still shows what was written.
   if (purpose.malformed) return <>{text}</>;
   return (
-    <ul className="flex flex-col gap-0.5">
+    <ul className="flex flex-col gap-hair">
       {purpose.promises.map((name) => (
         <li key={`promise-${name}`} data-purpose="promise">
-          <span className="text-gray-500">promise </span>
+          <span className="text-ink-faint">promise </span>
           {promisesHref ? (
             <a
               href={`${promisesHref}#promise-${name}`}
-              className="font-mono text-xs text-blue-700 hover:underline"
+              className="font-mono text-xs text-dusk hover:underline"
             >
               {name}
             </a>
@@ -125,7 +125,7 @@ function RowPurpose({
       ))}
       {purpose.lessons.map((name) => (
         <li key={`lesson-${name}`} data-purpose="lesson">
-          <span className="text-gray-500">lesson </span>
+          <span className="text-ink-faint">lesson </span>
           <span className="font-mono text-xs">{name}</span>
         </li>
       ))}

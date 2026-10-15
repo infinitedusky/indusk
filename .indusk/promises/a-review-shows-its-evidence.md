@@ -6,7 +6,7 @@ state: enforced
 domain: admin
 owner: admin-plan-authoring
 sites:
-  - apps/indusk-admin/src/components/PlanDetail.skipped-rituals.test.tsx
+  - apps/indusk-admin/src/components/cockpit/DecisionCard.tsx
   - apps/indusk-mcp/src/lib/build/review.ts
 tests:
   - apps/indusk-mcp/src/__tests__/plans-review.test.ts

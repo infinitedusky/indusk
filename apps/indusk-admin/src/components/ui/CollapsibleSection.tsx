@@ -75,15 +75,15 @@ export function CollapsibleSection({
   };
 
   return (
-    <div className={`rounded-md border border-gray-200 ${className}`}>
-      <div className="flex w-full items-center justify-between gap-2 px-3 py-2 text-sm font-medium text-gray-900">
+    <div className={`rounded-md border border-line ${className}`}>
+      <div className="flex w-full items-center justify-between gap-2 px-3 py-2 text-sm font-medium text-ink">
         <button
           type="button"
           onClick={toggle}
           aria-expanded={open}
-          className="flex flex-1 items-center gap-2 rounded text-left transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+          className="flex flex-1 items-center gap-2 rounded-md text-left transition-colors hover:bg-ground focus:outline-2 focus:outline-dusk"
         >
-          <Chevron className="h-4 w-4 text-gray-500" aria-hidden />
+          <Chevron className="h-4 w-4 text-ink-faint" aria-hidden />
           <span>{title}</span>
         </button>
         {(headerRight || copyMarkdown) && (
@@ -98,9 +98,7 @@ export function CollapsibleSection({
           </span>
         )}
       </div>
-      {open ? (
-        <div className="border-t border-gray-200 p-3">{children}</div>
-      ) : null}
+      {open ? <div className="border-t border-line p-3">{children}</div> : null}
     </div>
   );
 }

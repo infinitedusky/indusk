@@ -48,7 +48,6 @@ dusk/
 - `pnpm test`: parallel, never starts a server or daemon (`INDUSK_SKIP_TELEMETRY_AUTOSTART`); it and `test:system` end failing on one left in a temp home, pass or fail. `test:system`: each package's `vitest.tiers.ts` files, at landing and by `pnpm release`. **E2e**: `pnpm e2e` (needs `claude` + a daemon) — promise loop, always-on server, nested-context probe; run at the close of a plan touching a `CLAUDE.md`.
 - **`.indusk/current.md` is the operational layer**: a `## Project (shared)` region any agent may edit (what is in flight, blockers, what is next) plus per-agent `## Session <short> — <task>` sections, each written only by its own session via `mcp__indusk__update_current_section` (typically at `/handoff`); commit like any file. `merge=union` merges concurrent appends; every mutation goes through the `current.md.lock` file lock. — see `/decisions/multi-agent-coordination`
 - Plans live in `.indusk/planning/{kebab-case}/`; use `/planner` before implementing — don't jump to code. The planning rules load with the plan documents.
-- **Landing installs, publishing is deliberate**: landing runs `pnpm install:local` (`workflow.steps.land.install`), so this machine's `indusk` is the landed build with nothing published; a publish (`indusk release`: slow tests after, failures recorded) is for a deployed server or another machine, bumped on main after the merge — the retrospective's Steps 10–11. — see `/reference/skills/retrospective`
 - Before touching shared code, grep for importers and callers to understand blast radius.
 
 ## Key Decisions
@@ -73,16 +72,13 @@ dusk/
 - Git-only substrate (1.31.0): jj ripped out, parity via deletion; `scm-rip-out-grep.test.ts` exempts the record — an audit that fires on its own archive gets switched off — see `/decisions/git-only-substrate`
 - Worktree visibility: worktree-per-plan default + live worktree/branch columns + collision flag; kickoff is a nudge, not a gate — see `/decisions/worktree-visibility`
 - Workbench setup one-shot (`indusk setup`) — see `.indusk/planning/archive/workbench-setup-command/`
-- Dawn hook parity: invariants + eval rail in the thin lane — loop-owned per-item commits, pending-eval queue with external drain, headless `ask`=pause (ask default both lanes), gate-reminder shed — see `/decisions/dawn-hook-parity`
 - Test phases as structure: `### Test Phase N` + `### Build Phase N` as two sequences; Test Phase 1 mandatory, first, and the register where every deferral is justified. Zero migration via an optional `Build ` prefix — see `/decisions/test-phase-structure`
-- Shape check: per-phase craft review in `/work` (intra-unit) vs `/cleanup` at close (inter-file) — a step, not a gate type; findings become items in the phase — see `/decisions/lifecycle-rebalance`
-- Dawn verify (component 6, the keystone): read-only phase-boundary verification for work Dawn didn't execute — chained ledger baseline, runner-agnostic red-test detection (files + exit codes, never runner-output parsing), scoped to referenced files; reverting deferred to component 7 — see `/decisions/dawn-verify`
+- Dawn verify (component 6, the keystone): read-only phase-boundary verification for work Dawn didn't execute; detects, never repairs, reads files and exit codes never runner output — see `/decisions/dawn-verify`
 - InDusk Makeover (2026-07-23): budgets + decay + removal — the 60 KB budget hook + compaction, Graphiti/CGC removed with the lessons rail kept, current.md sweep + dead-draft archive, catchup diet, MCP keep-lists, hub push/pull. Supersedes context-budget. — see `.indusk/planning/archive/indusk-makeover/adr.md`
 - Versioned workbench (1.37.0–1.38.3): the workbench root is a git repo with its own remote and a sync loop; repos declared in `worktree.repos[]` — see `/decisions/versioned-workbench`
 - Dawn workbench execution (6.5): one `resolveExecutionRoots` behind run/verify/cleanup; two roots and a commit cadence per repo in the loop; `codeSha` on the ledger and `repo` on queued evals, absence a rule not a migration; multi-repo still refuses — see `/decisions/dawn-workbench-execution`
 - Promises (Day 4a): one markdown file per promise at the plan root, links as declared paths verified by a `promise: <name>` token, per-kind link rule, four states, domains in config, one `lib/promises/` behind CLI/MCP/admin — see `/decisions/day-promises`
 - Monitor (Day 4b): plain-OTel promise mark, no InDusk runtime code; `promises status`/`watch` over local Jaeger; reopen by Maintenance phase; `monitor` from files — see `/decisions/day-monitor`
-- Watcher heartbeat: every promise read first probes its Jaeger (a span sent and read back) and says *watcher blind*, never zero; the server beats each pass and tells Slack once each way — see `/decisions/watcher-heartbeat`
 - Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `/decisions/promise-sources`
 - Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
 - Release as a declared step: `indusk release` runs `workflow.steps.release` — slow tests before or after, `done_when` — and routes failures from JUnit to incidents or bugfix plans — see `/decisions/release-records-its-failures`
@@ -92,9 +88,14 @@ dusk/
 - Workflow steps: `workflow.steps` names what each step runs, facts never logic; dusk's slow tier never blocks landing or release — see `/decisions/release-checks-run-once`
 - Server provisioning: every recording server is the person's own — `indusk server connect` for one run anywhere, `server deploy` the one-command Fly path, the image published with each release; no hosted service — see `/decisions/server-provisioning`
 - Audit step: a fresh subagent on `workflow.steps.audit.tier` reads the approved impl, the final trajectory and the diff, writes `audit.md`; advisory — see `/decisions/plan-review-subagent`
-- Display names: one `promises/display` module names promises in words, plans by title and dates them; they travel on the health line — see `/decisions/display-names`
-- Plan cockpit: the admin is the cockpit; every fact it shows comes from one package module (`promises/standing`, `proof`, `fix`; `plans/steps`, `waiting`, `history`) — see `/decisions/plan-cockpit`
+- UI promises: an app's look is held by mockups a person approves in the cockpit, on one DTCG foundation, no raw values, held by value in Chromium — see `/decisions/ui-promises`
+- Storybook components: each component one file with a story per state rendered to a snapshot; mockups compose components by name; a changed component reopens its mockups; Storybook served by the cockpit — see `/decisions/storybook-components`
+- Brief as the contract: looks in the brief, approval of the brief, an amendment stops the build until a person re-approves, a plan starts as a conversation — see `/decisions/brief-as-the-contract`
+- Phase summaries: opt-in `phase_summary: required`, plain-sentence tasks — see `/decisions/phase-summaries`
+- Plan titles and stories: a plan is named by its title (brief or master, else its handle in words) through one rule in the package; a master's page tells its story from `subplan-row`; Needs you counts amendments — see `/decisions/plan-stories`
+- Sessions per plan: one per plan and kind, at most `sessions.max` a machine — see `/decisions/sessions-per-plan`
+- New project flow: a project starts as a conversation in the admin; drafts at `~/.indusk/new-projects/`, creation by the package — see `/decisions/new-project-flow`
 
 ## Known Gotchas
 
-- **A safety argument written in a comment is not enforced by the code around it** — grep for comments asserting an invariant and check the control flow delivers it; two workbench-sync paths each reported the worst case as the most reassuring one. — see `/reference/cli/workbench`
+- Area gotchas live in the area's `CLAUDE.md`, loaded when a file there is read — workbench sync's is in `apps/indusk-mcp/CLAUDE.md` (Workbenches and worktrees).

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Promise — broken</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<style>
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--color-ground); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-regular); }
+			h1, h2, h3, p, dl, dd, ol, ul { margin: 0; padding: 0; }
+			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+			.shell { display: grid; grid-template-columns: var(--size-nav) minmax(0, 1fr); min-height: 100vh; }
+			.shell.collapsed { grid-template-columns: var(--size-nav-rail) minmax(0, 1fr); }
+			.content { min-width: 0; padding: 0 var(--space-6) var(--space-16); }
+			.wrap { max-width: var(--size-content); margin: 0 auto; display: grid; gap: var(--space-5); }
+			.menubtn { display: none; align-items: center; gap: var(--space-2); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface); padding: var(--space-tight) var(--space-snug); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); }
+			.vcount { font-family: var(--font-mono); font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); color: var(--color-bad); background: var(--color-bad-wash); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-tight); }
+			.top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); padding: var(--space-5) 0 var(--space-1); }
+			.crumb { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.crumb b { color: var(--color-ink-soft); font-weight: var(--font-weight-medium); }
+			.title { font-family: var(--font-display); font-size: var(--text-4xl); line-height: var(--leading-7); font-weight: var(--font-weight-bold); }
+			.meta { margin-left: auto; display: flex; gap: var(--space-2); flex-wrap: wrap; }
+			.label { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-ink-faint); margin-bottom: var(--space-snug); }
+			.pgroup { display: grid; gap: var(--space-tight); }
+			.pghead { display: flex; align-items: center; gap: var(--space-snug); margin: var(--space-tight) 0 var(--space-hair); }
+			.pghead h3 { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--leading-4); font-weight: var(--font-weight-bold); }
+			.ptable { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); overflow: hidden; }
+			.phead { display: grid; gap: var(--space-4); align-items: center; padding: var(--space-2) var(--space-4); font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-ink-faint); background: var(--color-ground); border-bottom-width: var(--border-1); border-bottom-style: solid; border-bottom-color: var(--color-line); }
+			.back { justify-self: start; color: var(--color-ink-soft); font-size: var(--text-md); line-height: var(--leading-4); }
+			.phero { display: grid; gap: var(--space-snug); }
+			.says { font-family: var(--font-display); font-size: var(--text-3xl); line-height: var(--leading-7); font-weight: var(--font-weight-bold); max-width: 30ch; }
+			.row { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.mono { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+			.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--border-1); background: var(--color-line); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); overflow: hidden; }
+			.pcols { display: grid; grid-template-columns: minmax(0, 1fr) var(--size-side); gap: var(--space-5); align-items: start; }
+			.main { display: grid; gap: var(--space-3); min-width: 0; }
+			.facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-tight) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); }
+			.facts dt { color: var(--color-ink-faint); }
+			.facts dd { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); overflow-wrap: anywhere; }
+			.pills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+			.pill { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-snug) var(--space-3); border-radius: var(--radius-pill); background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); }
+			.d { width: var(--size-dot); height: var(--size-dot); border-radius: var(--radius-pill); }
+			.d.declared { background: var(--color-idle); } .d.proving { background: var(--color-warn); } .d.enforced { background: var(--color-ok); } .d.broken { background: var(--color-bad); }
+			.stagebody { display: grid; grid-template-columns: var(--size-rail) minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+			.rail { display: grid; gap: var(--space-4); align-content: start; }
+			.choices { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.choices span { display: inline-flex; gap: var(--space-2); align-items: center; }
+			.choices b { font-weight: var(--font-weight-regular); color: var(--color-dusk); border-radius: var(--radius-md); padding: 0 var(--space-tight); }
+			.choices b.on { background: var(--color-dusk-wash); }
+			.looks-app { display: grid; gap: var(--space-3); }
+			.looks-app h2 { font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-semibold); }
+			.looks-split { display: grid; gap: var(--space-4); align-items: start; }
+			.looks-list { display: flex; flex-direction: column; gap: var(--space-3); }
+			.looks-rows { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-md); overflow: hidden; }
+			.looks-stage { display: flex; flex-direction: column; gap: var(--space-3); }
+			.stage-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); font-weight: var(--font-weight-medium); }
+			@media (max-width: 759px) {
+			  .shell, .shell.collapsed { grid-template-columns: minmax(0, 1fr); }
+			  [data-component="nav"] { display: none; }
+			  .menubtn { display: inline-flex; }
+			  .stagebody, .pcols { grid-template-columns: minmax(0, 1fr); }
+			  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			  .phead { display: none; }
+			  .title { font-size: var(--text-3xl); line-height: var(--leading-7); }
+			}
+		</style>
+	</head>
+	<body>
+<div class="shell">
+<indusk-component name="nav" state="expanded"></indusk-component>
+<main class="content"><div class="wrap">
+<header class="top"><div><div class="crumb"><b>dusk</b> / Promises / tokens-are-held-exactly</div><h1 class="title">Promise</h1></div><button class="menubtn" type="button">Menu <span class="vcount">3</span></button><div class="meta"></div></header>
+<button class="back" type="button">← All promises</button>
+<section class="phero"><h2 class="says">A token changed in the app alone shows broken on the dashboard</h2>
+<div class="row"><indusk-component name="chip" state="broken"></indusk-component><span>Plan ui-promises</span><span>state</span><span class="mono">tokens-are-held-exactly</span></div></section>
+<indusk-component name="decision-card" state="alert"></indusk-component>
+<section class="stats"><indusk-component name="stat" state="default"></indusk-component><indusk-component name="stat" state="ok"></indusk-component><indusk-component name="stat" state="bad"></indusk-component></section>
+<div class="pcols"><div class="main"><div><div class="label">History</div><indusk-component name="timeline" state="default"></indusk-component></div></div>
+<indusk-component name="box" state="default"></indusk-component></div>
+</div></main>
+</div>
+	</body>
+</html>

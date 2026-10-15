@@ -55,7 +55,7 @@ export async function POST(
   if (!root) return refuse(404, `no project named ${project}`);
   const plan = (await readActivePlans(root)).find((p) => p.name === name);
   if (!plan) return refuse(404, `${project} has no active plan named ${name}`);
-  const waiting = readWaiting(project, [plan])[0];
+  const waiting = (await readWaiting(project, root, [plan]))[0];
   if (!waiting) return refuse(409, `${name} is not waiting on a decision`);
   try {
     const answered = await answerDecision(

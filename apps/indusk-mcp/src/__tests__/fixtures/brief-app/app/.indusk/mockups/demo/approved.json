@@ -1,0 +1,20 @@
+{
+	"approvals": [
+		{
+			"mockup": "home.empty",
+			"mockupHash": "3293523189dd73cad8a4b90c738a39436435e0b644ed658823a1b855bb4563a9",
+			"foundationHash": "ab91330460fb4d1ba4d42e9a13e8079214c01f283fa286059ee4ddaeb4f4dba4",
+			"declarationsHash": "65358e9c223f9a6239405ebf3f441e9df72c6203da6377788aa616eda46c3db6",
+			"by": "sandy",
+			"at": "2026-10-10T09:00:00.000Z"
+		},
+		{
+			"mockup": "home.full",
+			"mockupHash": "0000000000000000000000000000000000000000000000000000000000000000",
+			"foundationHash": "ab91330460fb4d1ba4d42e9a13e8079214c01f283fa286059ee4ddaeb4f4dba4",
+			"declarationsHash": "65358e9c223f9a6239405ebf3f441e9df72c6203da6377788aa616eda46c3db6",
+			"by": "sandy",
+			"at": "2026-10-10T09:05:00.000Z"
+		}
+	]
+}

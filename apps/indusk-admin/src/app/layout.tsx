@@ -1,17 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+/**
+ * The foundation's families (`--font-display`, `--font-sans`, `--font-mono`).
+ * Loaded as the mockups name them; a machine offline falls back to the system
+ * faces the same tokens list after them.
+ */
+const FONTS =
+  "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap";
 
 export const metadata: Metadata = {
   title: "InDusk Admin",
@@ -48,23 +45,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full bg-gray-50">
-        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2">
+    <html lang="en" className="h-full antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link rel="stylesheet" href={FONTS} />
+      </head>
+      <body className="min-h-full bg-ground">
+        <header className="flex items-center justify-between border-b border-line bg-surface px-4 py-2">
           <Link
             href="/"
-            className="flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-blue-600"
+            className="flex items-center gap-2 text-sm font-semibold text-ink hover:text-dusk"
           >
             <span>InDusk Admin</span>
-            <span className="text-xs font-normal text-gray-500">
+            <span className="text-xs font-regular text-ink-faint">
               plan, build, review, release
             </span>
           </Link>
         </header>
-        <div className="h-[calc(100vh-2.5rem)] w-full">{children}</div>
+        <div className="app-body w-full">{children}</div>
       </body>
     </html>
   );

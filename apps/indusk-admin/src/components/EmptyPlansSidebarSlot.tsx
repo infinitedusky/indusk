@@ -6,11 +6,14 @@
 export function EmptyPlansSidebarSlot() {
   return (
     <div
-      className="px-2 py-4 text-sm text-gray-500"
+      className="px-2 py-4 text-sm text-ink-faint"
       data-testid="sidebar-empty-state"
     >
       No plans yet — create one with{" "}
-      <code className="rounded bg-gray-100 px-1 py-0.5 text-xs">/planner</code>.
+      <code className="rounded-md bg-idle-wash px-1 py-hair text-xs">
+        /planner
+      </code>
+      .
     </div>
   );
 }

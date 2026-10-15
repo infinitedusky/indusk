@@ -16,6 +16,10 @@ import type { ManagedStart } from "@infinitedusky/indusk-mcp/session";
  *     under each question's text, or it is refused.
  *   - **approval**: accept is `plans approve`; **review**: accept is
  *     `acceptPlan` and the release, as BuildControls' Accept does.
+ *   - an **amendment** is never answered here: it is approved or sent back on
+ *     the plan's amendment card, and an accept here would run a release
+ *     (plan-stories, ADR decision 5), so it is refused before anything is
+ *     delivered or recorded.
  *   - otherwise the words (or the alternative, which is words) go to the
  *     plan's agent: `say` to the session running for the plan, or a new
  *     session for the plan, in its worktree, with the decision and the words
@@ -36,7 +40,13 @@ export type DecisionChoice =
   | { choice: "answers"; answers: Record<string, string> };
 
 export interface DecisionSessions {
-  current(): { id: string; project: string; plan: string } | undefined;
+  forPlan(
+    project: string,
+    plan: string,
+    kind?: "planning" | "build",
+  ): { id: string } | undefined;
+  running(): Array<{ id: string; project: string; plan: string }>;
+  pendingQuestion(id: string): { requestId: string } | undefined;
   reply(
     id: string,
     reply: { requestId: string; answers: Record<string, string> },
@@ -73,6 +83,11 @@ export async function answerDecision(
   waiting: Waiting,
   choice: DecisionChoice,
 ): Promise<Answered> {
+  if (waiting.on === "amendment") {
+    throw new Error(
+      `${waiting.plan} waits on an amendment, which is answered on the amendment card`,
+    );
+  }
   const answer = answerOf(waiting, choice);
   const reached = await deliver(deps, project, waiting, choice, answer);
   // The answer has reached its target: a history that cannot be written is
@@ -115,23 +130,18 @@ async function deliver(
   choice: DecisionChoice,
   answer: string,
 ): Promise<Pick<Answered, "via" | "sessionId">> {
-  const running = deps.sessions.current();
-  const ours =
-    running && running.project === project && running.plan === waiting.plan
-      ? running
-      : undefined;
-
   if (waiting.on === "question") {
-    if (!ours || !waiting.requestId) {
+    const target = sessionThatAsked(deps, project, waiting);
+    if (!target || !waiting.requestId) {
       throw new Error(
         `no session is running for ${waiting.plan} to answer its question`,
       );
     }
-    deps.sessions.reply(ours.id, {
+    deps.sessions.reply(target.id, {
       requestId: waiting.requestId,
       answers: questionAnswers(waiting, choice, answer),
     });
-    return { via: "question", sessionId: ours.id };
+    return { via: "question", sessionId: target.id };
   }
   if (choice.choice === "accept") {
     if (waiting.on === "approval") {
@@ -141,6 +151,11 @@ async function deliver(
     await deps.release();
     return { via: "release" };
   }
+  // Words go to the plan's agent in conversation: its planning session, else
+  // whichever session the plan has.
+  const ours =
+    deps.sessions.forPlan(project, waiting.plan, "planning") ??
+    deps.sessions.forPlan(project, waiting.plan);
   if (ours) {
     deps.sessions.say(ours.id, answer);
     return { via: "say", sessionId: ours.id };
@@ -179,6 +194,31 @@ function questionAnswers(
     throw new Error(`no answer to: ${missing.join("; ")}`);
   }
   return Object.fromEntries(asked.map((q) => [q, choice.answers[q] as string]));
+}
+
+/**
+ * The session that asked a waiting question, found by its request: a plan can
+ * have a build and a planning session, and only one of them made this one. A
+ * request no longer pending (already answered) falls back to the plan's
+ * session, so the manager's own "already answered" refusal still speaks.
+ */
+function sessionThatAsked(
+  deps: DecisionDeps,
+  project: string,
+  waiting: Waiting,
+): { id: string } | undefined {
+  const asking = waiting.requestId
+    ? deps.sessions
+        .running()
+        .find(
+          (r) =>
+            r.project === project &&
+            r.plan === waiting.plan &&
+            deps.sessions.pendingQuestion(r.id)?.requestId ===
+              waiting.requestId,
+        )
+    : undefined;
+  return asking ?? deps.sessions.forPlan(project, waiting.plan);
 }
 
 /** The first message of a session started to carry a reply to the plan's agent. */

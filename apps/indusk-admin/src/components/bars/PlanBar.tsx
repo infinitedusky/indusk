@@ -73,7 +73,7 @@ export function PlanBar({
       />
       {notes.length > 0 ? (
         <ul
-          className="flex flex-col gap-0.5 text-xs"
+          className="flex flex-col gap-hair text-xs"
           data-testid="plan-bar-document-notes"
         >
           {notes.map((note) => (
@@ -82,7 +82,7 @@ export function PlanBar({
               data-document={note.document}
               data-state={note.state}
               className={
-                note.state === "missing" ? "text-red-700" : "text-gray-600"
+                note.state === "missing" ? "text-bad" : "text-ink-soft"
               }
             >
               {note.text}

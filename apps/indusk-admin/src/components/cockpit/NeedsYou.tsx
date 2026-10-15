@@ -1,5 +1,7 @@
 import type { Waiting } from "@infinitedusky/indusk-mcp/plans/waiting";
-import { NavLink } from "@/components/NavLink";
+import { NavPlanRow } from "@/components/cockpit/NavItems";
+import { NavGroup } from "@/components/ui/Nav";
+import { initialsOf } from "@/lib/initials";
 
 /**
  * The nav's *Needs you* (plan-cockpit, ADR decision 2): each plan waiting on
@@ -19,29 +21,22 @@ export function NeedsYou({
 }) {
   if (waiting.length === 0) return null;
   return (
-    <nav
-      className="flex flex-col gap-1 border-t border-gray-200 py-3"
-      data-testid="needs-you"
-    >
-      <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
-        Needs you
-      </h3>
-      {waiting.map((w) => (
-        <NavLink
-          key={w.plan}
-          href={`/p/${project}/plan/${w.plan}`}
-          data-needs-you={w.plan}
-          className="flex items-baseline justify-between gap-2 rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
-        >
-          <span className="truncate">{titles[w.plan] ?? w.plan}</span>
-          <span
-            data-testid="needs-you-step"
-            className="shrink-0 text-xs text-amber-700"
-          >
-            {w.step}
-          </span>
-        </NavLink>
-      ))}
-    </nav>
+    <div className="contents" data-testid="needs-you">
+      <NavGroup label="Needs you" count={waiting.length} />
+      {waiting.map((w) => {
+        const name = titles[w.plan] ?? w.plan;
+        return (
+          <NavPlanRow
+            key={w.plan}
+            href={`/p/${project}/plan/${w.plan}`}
+            data-needs-you={w.plan}
+            initials={initialsOf(name)}
+            state="needs"
+            name={name}
+            stage={<span data-testid="needs-you-step">{w.step}</span>}
+          />
+        );
+      })}
+    </div>
   );
 }

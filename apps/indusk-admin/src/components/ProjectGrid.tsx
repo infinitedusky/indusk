@@ -1,9 +1,24 @@
+import Link from "next/link";
+import { buttonClasses } from "@/components/ui/Button";
 import { ProjectCard, type ProjectCardData } from "./ProjectCard";
 
 export interface ProjectGridProps {
   projects: ProjectCardData[];
   /** Registered names whose path no longer exists — listed in a note, never as cards. */
   notFound?: string[];
+}
+
+/** New project: opens the conversation that makes one (new-project-flow). */
+function NewProjectLink() {
+  return (
+    <Link
+      href="/new"
+      data-testid="new-project-link"
+      className={buttonClasses("primary")}
+    >
+      New project
+    </Link>
+  );
 }
 
 /**
@@ -15,20 +30,23 @@ export function ProjectGrid({ projects, notFound = [] }: ProjectGridProps) {
   if (projects.length === 0 && notFound.length === 0) {
     return (
       <div
-        className="flex h-full flex-col items-center justify-center text-center text-gray-500"
+        className="flex h-full flex-col items-center justify-center text-center text-ink-faint"
         data-testid="project-grid-empty"
       >
-        <h1 className="text-lg font-semibold text-gray-700">
+        <h1 className="text-lg font-semibold text-ink-soft">
           No projects registered yet
         </h1>
+        <div className="mt-4">
+          <NewProjectLink />
+        </div>
         <p className="mt-2 max-w-md text-sm">
-          Run{" "}
-          <code className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs">
+          Or run{" "}
+          <code className="rounded-md bg-idle-wash px-tight py-hair font-mono text-xs">
             indusk init
           </code>{" "}
           inside a project to register it. Already-registered projects move to
           the front via{" "}
-          <code className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs">
+          <code className="rounded-md bg-idle-wash px-tight py-hair font-mono text-xs">
             indusk update
           </code>
           .
@@ -38,27 +56,29 @@ export function ProjectGrid({ projects, notFound = [] }: ProjectGridProps) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-2">
-      <div className="mb-4 flex items-end justify-between">
+    <div
+      className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"
+      data-look-state="home.default project-card.default"
+    >
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Projects</h1>
-          <p className="text-sm text-gray-500">
-            Every project registered in{" "}
-            <code className="font-mono text-xs">~/.indusk/projects.json</code>.
+          <h1 className="font-display text-4xl leading-7 font-bold">
+            Projects
+          </h1>
+          <p className="text-sm leading-3 text-ink-faint">
+            Every project registered on this machine.
           </p>
         </div>
-      </div>
-      <div
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-        data-testid="project-grid"
-      >
+        <NewProjectLink />
+      </header>
+      <div className="cols-project-grid grid gap-4" data-testid="project-grid">
         {projects.map((p) => (
           <ProjectCard key={p.name} project={p} />
         ))}
       </div>
       {notFound.length > 0 ? (
         <details
-          className="mt-4 text-xs text-gray-500"
+          className="text-xs text-ink-faint"
           data-testid="project-not-found"
         >
           <summary className="cursor-pointer">
@@ -66,7 +86,7 @@ export function ProjectGrid({ projects, notFound = [] }: ProjectGridProps) {
             exist; <code className="font-mono">indusk ui prune</code> removes
             them
           </summary>
-          <ul className="mt-1 flex flex-col gap-0.5 pl-4">
+          <ul className="mt-1 flex flex-col gap-hair pl-4">
             {notFound.map((name) => (
               <li key={name} className="font-mono">
                 {name}

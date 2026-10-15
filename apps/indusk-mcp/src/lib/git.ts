@@ -1,4 +1,4 @@
-import { execFile, execFileSync } from "node:child_process";
+import { execFile, execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
@@ -20,6 +20,20 @@ const execFileAsync = promisify(execFile);
 export async function git(root: string, ...args: string[]): Promise<string> {
 	const { stdout } = await execFileAsync("git", args, { cwd: root, maxBuffer: 32 * 1024 * 1024 });
 	return stdout.trim();
+}
+
+/**
+ * A file's bytes at `rev` (`git show <rev>:<path>`), exactly as committed —
+ * untrimmed, unlike `git()`, so a hash of what comes back is the hash of the
+ * file. `path` is relative to the repository's top. Throws when either is
+ * not there.
+ */
+export async function fileAtRevision(root: string, rev: string, path: string): Promise<string> {
+	const { stdout } = await execFileAsync("git", ["show", `${rev}:${path}`], {
+		cwd: root,
+		maxBuffer: 32 * 1024 * 1024,
+	});
+	return stdout;
 }
 
 /**
@@ -229,4 +243,21 @@ export function parseWorktreeList(porcelain: string): GitWorktree[] {
 		});
 	}
 	return entries;
+}
+
+/**
+ * The unified diff between two files that need not be in any repository
+ * (`git diff --no-index`), synchronously; the empty string when they are the
+ * same. git exits 1 when they differ, which is the answer here, not a failure.
+ * Headers are git's own, naming the paths as given.
+ */
+export function diffFiles(before: string, after: string): string {
+	const r = spawnSync("git", ["diff", "--no-index", "--no-color", "--", before, after], {
+		encoding: "utf-8",
+		maxBuffer: 32 * 1024 * 1024,
+	});
+	if (r.status !== 0 && r.status !== 1) {
+		throw new Error(`git diff --no-index failed: ${r.stderr.trim() || `exit ${r.status}`}`);
+	}
+	return r.stdout;
 }

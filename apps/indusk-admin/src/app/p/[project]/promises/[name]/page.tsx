@@ -1,4 +1,5 @@
 import {
+  planTitle,
   promiseWords,
   readHealthNames,
 } from "@infinitedusky/indusk-mcp/promises/display";
@@ -15,6 +16,7 @@ import {
   WhereItIsWatched,
   WhereItLives,
 } from "@/components/promise/PromiseProof";
+import { Box } from "@/components/ui/Box";
 import { readAdminRefreshMs } from "@/lib/project-reader";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
@@ -51,7 +53,7 @@ export default async function PromisePage({ params }: PromisePageProps) {
     : null;
   if (!registry || !entry || !proof) notFound();
 
-  const names = readHealthNames(projectPath);
+  const names = await readHealthNames(projectPath);
   const sentenceOf = (n: string) => promiseWords(n, names.words);
   const planHrefPrefix = `/p/${project}/plan/`;
   const beside = registry.promises.filter(
@@ -64,51 +66,54 @@ export default async function PromisePage({ params }: PromisePageProps) {
       <header className="flex min-w-0 flex-col gap-1">
         <Link
           href={`/p/${project}/promises`}
-          className="text-xs text-gray-500 hover:underline"
+          className="text-xs text-ink-faint hover:underline"
         >
           Promises
         </Link>
-        <h1 className="break-words text-xl font-semibold text-gray-900">
+        <h1 className="break-words text-xl font-semibold text-ink">
           {sentenceOf(entry.name)}
         </h1>
-        <p className="break-words text-sm text-gray-700">{entry.statement}</p>
-        <p className="flex flex-wrap gap-x-3 text-xs text-gray-500">
+        <p className="break-words text-sm text-ink-soft">{entry.statement}</p>
+        <p className="flex flex-wrap gap-x-3 text-xs text-ink-faint">
           <code>{entry.name}</code>
           <Link
             href={`${planHrefPrefix}${entry.owner}`}
             className="hover:underline"
           >
-            {names.planTitles[entry.owner] ?? entry.owner}
+            {names.planTitles[entry.owner] ??
+              planTitle(undefined, entry.owner, names.words)}
           </Link>
         </p>
       </header>
       <PromiseBanner proof={proof} entry={entry} project={project} />
       <PromiseTiles proof={proof} />
-      <TestsThatBackIt proof={proof} planHrefPrefix={planHrefPrefix} />
-      <WhereItIsWatched proof={proof} />
-      <LastThirtyDays proof={proof} />
-      {beside.length > 0 && (
-        <section
-          data-testid="proof-same-plan"
-          className="flex min-w-0 flex-col gap-2"
-        >
-          <h2 className="text-sm font-semibold text-gray-700">Same plan</h2>
-          <ul className="flex flex-col gap-1 text-sm">
-            {beside.map((p) => (
-              <li key={p.name} className="min-w-0 break-words">
-                <Link
-                  href={`/p/${project}/promises/${p.name}`}
-                  className="hover:underline"
-                >
-                  {sentenceOf(p.name)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <WhereItLives entry={entry} />
-      <PromiseHistory proof={proof} />
+      <div className="cols-promise-page grid items-start gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
+          <TestsThatBackIt proof={proof} planHrefPrefix={planHrefPrefix} />
+          <WhereItIsWatched proof={proof} />
+          <LastThirtyDays proof={proof} />
+          <PromiseHistory proof={proof} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-5">
+          {beside.length > 0 && (
+            <Box title="Same plan" data-testid="proof-same-plan">
+              <ul className="flex flex-col gap-1 text-sm">
+                {beside.map((p) => (
+                  <li key={p.name} className="min-w-0 break-words">
+                    <Link
+                      href={`/p/${project}/promises/${p.name}`}
+                      className="hover:underline"
+                    >
+                      {sentenceOf(p.name)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Box>
+          )}
+          <WhereItLives entry={entry} />
+        </div>
+      </div>
     </div>
   );
 }

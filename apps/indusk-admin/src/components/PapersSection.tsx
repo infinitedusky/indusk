@@ -23,7 +23,7 @@ export function PapersSection({
 }) {
   return (
     <section className="flex flex-col gap-2" data-testid="papers-section">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+      <h2 className="text-sm font-semibold uppercase tracking-caps text-ink-faint">
         Papers
       </h2>
       {papers.map((paper) => {
@@ -38,9 +38,7 @@ export function PapersSection({
               <Badge variant={paperStatusToBadge(paper.status, paper.stale)}>
                 {label}
               </Badge>
-              <span className="text-xs text-muted-foreground">
-                {paper.file}
-              </span>
+              <span className="text-xs text-ink-faint">{paper.file}</span>
             </div>
             <CollapsibleSection
               title={paper.title}

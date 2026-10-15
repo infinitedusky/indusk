@@ -1,16 +1,12 @@
 // promise: decisions-wait-in-one-place
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import {
-  HISTORY,
-  PROJECT,
-  resetFixture,
-} from "@/__tests__/helpers/cockpit-fixture";
+import { PROJECT, resetFixture } from "@/__tests__/helpers/cockpit-fixture";
 
 /**
  * plan-cockpit A14, the page's half: a waiting plan's page shows exactly one
- * decision card — the one `planWaiting` names for it — above its workflows,
- * and its *What happened* lists the decisions `plans/history` recorded; a
+ * decision card — the one `planWaiting` names for it — beside its workflows,
+ * and no *What happened* list (the plan mockups draw none); a
  * plan waiting on nothing shows no card. The card's own controls are
  * `components/cockpit/DecisionCard.test.tsx`'s.
  */
@@ -44,6 +40,23 @@ vi.mock("@/lib/planning-reader", async () =>
 vi.mock("@/lib/promises-reader", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).promisesReaderMock(),
 );
+// The plan page's brief parts are read by the package from disk (node:fs), which
+// the browser project cannot import; these pages have no brief to show.
+vi.mock("@infinitedusky/indusk-mcp/plans/parts", () => ({
+  readPlanParts: async (_root: string, plan: string) => ({
+    plan,
+    hasBrief: false,
+    hasBriefFile: true,
+    promises: [],
+    expectations: [],
+    looks: [],
+    noLooks: null,
+    amendments: [],
+    amendmentsUnreadable: null,
+    description: null,
+    briefStatus: null,
+  }),
+}));
 vi.mock("@infinitedusky/indusk-mcp/promises/standing", async () =>
   (await import("@/__tests__/helpers/cockpit-fixture")).standingMock(),
 );
@@ -95,14 +108,10 @@ describe("A14 — a waiting plan's page shows exactly one decision", () => {
     expect(cards(await pageFor("mid-build"))).toHaveLength(0);
   });
 
-  it("A17 the page's What happened lists each recorded decision, the answer and when", async () => {
+  it("the page draws no What happened list: the plan mockups do not draw one", async () => {
+    // The history is still recorded on main by `plans/history`; the plan page
+    // draws what its approved mockups draw, and they hold the decision card only.
     const root = await pageFor("at-review");
-    const history = root.querySelector('[data-testid="plan-history"]');
-    const recorded = HISTORY["at-review"]?.[0];
-    expect(history?.textContent).toContain(recorded?.decision);
-    expect(history?.textContent).toContain(recorded?.answer);
-    expect(history?.querySelector("time")?.getAttribute("dateTime")).toBe(
-      recorded?.at,
-    );
+    expect(root.querySelector('[data-testid="plan-history"]')).toBeNull();
   });
 });

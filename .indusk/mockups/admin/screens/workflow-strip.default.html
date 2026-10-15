@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="indusk-new-components" content="workflow-strip" />
+		<title>workflow-strip — default</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<style>
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--color-ground); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-regular); }
+			h1, h2, h3, p, dl, dd, ol, ul { margin: 0; padding: 0; }
+			ul, ol { list-style: none; }
+			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+			.page { max-width: var(--size-content); margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-16); display: grid; gap: var(--space-5); }
+			.crumb { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.crumb b { color: var(--color-ink-soft); font-weight: var(--font-weight-medium); }
+			.title { font-family: var(--font-display); font-size: var(--text-4xl); line-height: var(--leading-7); font-weight: var(--font-weight-bold); }
+			.says { font-family: var(--font-display); font-size: var(--text-3xl); line-height: var(--leading-7); font-weight: var(--font-weight-bold); max-width: 30ch; }
+			.hint { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.label { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-ink-faint); }
+			.mono { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); overflow-wrap: anywhere; }
+			.card { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); padding: var(--space-4); display: grid; gap: var(--space-3); }
+			.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); border-radius: var(--radius-lg); font-weight: var(--font-weight-semibold); padding: var(--space-snug) var(--space-5); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); background: var(--color-surface); }
+			.btn.primary { background: var(--color-dusk); border-color: var(--color-dusk); color: var(--color-surface); }
+			.btn.quiet { padding: var(--space-tight) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); }
+			.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+			.box { display: grid; gap: var(--space-3); }
+			.box textarea { font: inherit; color: var(--color-ink); background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); padding: var(--space-4); min-height: var(--size-input); width: 100%; resize: vertical; }
+			.attach { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.file { display: inline-flex; align-items: center; gap: var(--space-2); background: var(--color-idle-wash); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.dot { width: var(--size-dot); height: var(--size-dot); border-radius: var(--radius-pill); background: var(--color-dusk); flex: none; }
+			.dot.ok { background: var(--color-ok); }
+			.dot.idle { background: var(--color-idle); }
+			.recs { display: grid; gap: var(--space-2); }
+			.rec { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-3); align-items: start; background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); }
+			.rec .dot { margin-top: var(--space-2); }
+			.rec h3 { font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-semibold); }
+			.rec p { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.rec .why { color: var(--color-ink-faint); }
+			.rec.declined { background: var(--color-ground); border-style: dashed; }
+			.rec.declined h3 { color: var(--color-ink-soft); }
+			.rec .reason { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-warn); }
+			.facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-4); font-size: var(--text-sm); line-height: var(--leading-3); }
+			.facts dt { color: var(--color-ink-faint); }
+			.tree { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-soft); white-space: pre; overflow-x: auto; background: var(--color-ground); border-radius: var(--radius-lg); padding: var(--space-3); margin: 0; }
+			.flow { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; font-size: var(--text-sm); line-height: var(--leading-3); }
+			.flow span.doc { background: var(--color-dusk-wash); color: var(--color-ink); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-3); }
+			.flow span.core { font-weight: var(--font-weight-semibold); }
+			.flow span.off { background: var(--color-idle-wash); color: var(--color-ink-faint); text-decoration: line-through; }
+			.confirm { display: flex; align-items: start; gap: var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+		</style>
+	</head>
+	<body>
+<main class="page"><div class="flow" data-component="workflow-strip" data-state="default"><span class="doc core">Brief</span><span>→</span><span class="doc core">Test plan</span><span>→</span><span class="doc off">ADR</span><span>→</span><span class="doc">Impl</span><span>→</span><span class="doc">Retrospective</span></div></main>
+	</body>
+</html>

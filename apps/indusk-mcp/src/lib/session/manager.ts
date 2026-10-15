@@ -3,12 +3,16 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { isAlive, realProcessReads } from "../process-identity.js";
-import type { QuestionEvent, SessionKind } from "./protocol.js";
+import { readSessionsMax } from "./limits.js";
+import { decideBuildPermission, decideConfinedPermission } from "./permissions.js";
+import type { PermissionEvent, QuestionEvent, SessionKind } from "./protocol.js";
 import { type Session, type SessionOptions, type StartedEvent, startSession } from "./start.js";
 
 /**
  * Who owns the sessions the admin starts (admin-plan-authoring, ADR D2): the
- * admin daemon, through one manager. One session at a time; each written to a
+ * admin daemon, through one manager. A session is owned by its project, plan
+ * and kind (sessions-per-plan), and the machine runs at most `sessions.max`;
+ * each is written to a
  * record (`~/.indusk/admin-sessions.json`) so `indusk ui stop` can end them
  * and a daemon starting after a crash can end what its predecessor left.
  *
@@ -18,7 +22,20 @@ import { type Session, type SessionOptions, type StartedEvent, startSession } fr
  * promise: a-session-can-be-stopped
  */
 
-export class SessionBusy extends Error {}
+/** The refusal of a second session of a kind on a plan that has one: said plainly, offering to continue it. */
+export function alreadyRunningOnThisPlan(running: Pick<SessionRecord, "kind" | "plan">): string {
+	return `A ${running.kind} session is already running on this plan (${running.plan}). Do you want to continue that session here?`;
+}
+
+export class SessionBusy extends Error {
+	/** The session already running on this plan, when that is why: the person may continue it instead. */
+	readonly running?: SessionRecord;
+
+	constructor(message: string, running?: SessionRecord) {
+		super(message);
+		if (running) this.running = running;
+	}
+}
 
 export interface SessionRecord {
 	id: string;
@@ -35,6 +52,14 @@ export interface SessionRecord {
 export interface ManagedStart extends SessionOptions {
 	project: string;
 	plan: string;
+	/**
+	 * Confine the session to its `cwd` (a project conversation's draft): file
+	 * tools inside it are allowed, every other request is refused with the
+	 * reason and none reaches the person (`decideConfinedPermission`).
+	 */
+	confined?: boolean;
+	/** Told of each request a confined session was refused, with the reason it was given. */
+	onRefused?: (ev: PermissionEvent, message: string) => void;
 }
 
 interface Held {
@@ -51,24 +76,31 @@ export function defaultRecordPath(): string {
 	return join(process.env.INDUSK_HOME ?? join(homedir(), ".indusk"), "admin-sessions.json");
 }
 
+const buildKey = (project: string, plan: string): string => `${project}\0${plan}`;
+
 export class SessionManager {
 	private readonly recordPath: string;
 	private readonly launch: (opts: SessionOptions) => Session;
 	private readonly held = new Map<string, Held>();
+	private readonly max: number | undefined;
+	/** Builds admitted under the cap, by `project\0plan`: each holds one place from its start to its end. */
+	private readonly builds = new Set<string>();
 
-	constructor(opts: { recordPath?: string; start?: (opts: SessionOptions) => Session } = {}) {
+	constructor(
+		opts: { recordPath?: string; start?: (opts: SessionOptions) => Session; max?: number } = {},
+	) {
 		this.recordPath = opts.recordPath ?? defaultRecordPath();
 		this.launch = opts.start ?? startSession;
+		this.max = opts.max;
 	}
 
-	/** Start a session, refusing while another runs. */
+	/**
+	 * Start a session. Refused when the same plan already has one of this kind,
+	 * or when the machine already runs its cap.
+	 */
 	start(opts: ManagedStart): { id: string; session: Session } {
-		const running = [...this.held.values()][0];
-		if (running) {
-			throw new SessionBusy(
-				`a session is already running: ${running.record.id}, ${running.record.kind} for ${running.record.plan} — stop it first`,
-			);
-		}
+		const refusal = this.refusalFor(opts);
+		if (refusal) throw refusal;
 		const id = randomUUID();
 		const holder: Held = {
 			record: undefined as unknown as SessionRecord,
@@ -81,6 +113,21 @@ export class SessionManager {
 		const session = this.launch({
 			...opts,
 			onEvent: (ev) => {
+				// A planning session is asked only about a path outside its own
+				// folder (A26): the rest is decided here, as a build's is.
+				if (opts.confined && ev.type === "permission") {
+					const decision = decideConfinedPermission(ev, opts.cwd);
+					holder.session.decide(ev, decision);
+					if (!decision.allow) opts.onRefused?.(ev, decision.message);
+					return;
+				}
+				if (opts.kind === "planning" && ev.type === "permission") {
+					const decision = decideBuildPermission(ev, [opts.cwd, ...(opts.addDirs ?? [])]);
+					if (decision.allow) {
+						holder.session.decide(ev, decision);
+						return;
+					}
+				}
 				holder.events.push(ev);
 				if (ev.type === "result") holder.turnOpen = false;
 				opts.onEvent(ev);
@@ -112,9 +159,63 @@ export class SessionManager {
 		return this.held.get(id)?.session;
 	}
 
-	/** The running session's record, if any. */
-	current(): SessionRecord | undefined {
-		return [...this.held.values()][0]?.record;
+	/**
+	 * Why `opts` may not start now: the plan already has this kind, or the machine is at its cap.
+	 * promise: a-session-belongs-to-its-plan
+	 */
+	private refusalFor(opts: ManagedStart): SessionBusy | undefined {
+		const same = this.forPlan(opts.project, opts.plan, opts.kind);
+		if (same) {
+			return new SessionBusy(alreadyRunningOnThisPlan(same), same);
+		}
+		// An admitted build's step takes the place its build already holds.
+		if (opts.kind === "build" && this.builds.has(buildKey(opts.project, opts.plan)))
+			return undefined;
+		return this.capRefusal();
+	}
+
+	/**
+	 * Admit a build under the cap: it holds one place from now until the
+	 * returned function is called, whether or not one of its steps is running —
+	 * so another plan's start between two steps cannot take it. Refused at the cap.
+	 */
+	admitBuild(project: string, plan: string): () => void {
+		const refusal = this.capRefusal();
+		if (refusal) throw refusal;
+		const key = buildKey(project, plan);
+		this.builds.add(key);
+		return () => {
+			this.builds.delete(key);
+		};
+	}
+
+	/** The refusal a new session meets when the machine already runs its cap, if it does. */
+	capRefusal(): SessionBusy | undefined {
+		const max = this.max ?? readSessionsMax();
+		// Each admitted build is one place; its running step is inside that place.
+		const unadmitted = this.running().filter(
+			(r) => !(r.kind === "build" && this.builds.has(buildKey(r.project, r.plan))),
+		);
+		if (this.builds.size + unadmitted.length < max) return undefined;
+		const names = [
+			...[...this.builds].map((k) => `build for ${k.split("\0")[1]}`),
+			...unadmitted.map((r) => `${r.kind} for ${r.plan}`),
+		];
+		return new SessionBusy(
+			`${max} sessions are running (sessions.max): ${names.join(", ")} — stop one from its plan's page in the admin`,
+		);
+	}
+
+	/** The plan's running session of `kind` (either kind when omitted), if any. */
+	forPlan(project: string, plan: string, kind?: SessionKind): SessionRecord | undefined {
+		return this.running().find(
+			(r) => r.project === project && r.plan === plan && (kind === undefined || r.kind === kind),
+		);
+	}
+
+	/** Every running session's record. */
+	running(): SessionRecord[] {
+		return [...this.held.values()].map((h) => h.record);
 	}
 
 	/**
@@ -139,6 +240,11 @@ export class SessionManager {
 	 */
 	isWriting(id: string): boolean {
 		return this.held.get(id)?.turnOpen ?? false;
+	}
+
+	/** Whether some page is showing session `id` now: it has a subscriber to its events. */
+	isWatched(id: string): boolean {
+		return (this.held.get(id)?.listeners.size ?? 0) > 0;
 	}
 
 	/** Every event so far, then each new one, until the returned function is called. */

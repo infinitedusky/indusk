@@ -11,7 +11,10 @@ import type {
   PromiseKind,
   PromiseState,
 } from "@infinitedusky/indusk-mcp/promises/registry";
-import type { Standing } from "@infinitedusky/indusk-mcp/promises/standing";
+import type {
+  LookStanding,
+  Standing,
+} from "@infinitedusky/indusk-mcp/promises/standing";
 
 /**
  * A promise's chip: its declared state, and nothing else (day-promises, ADR
@@ -25,22 +28,22 @@ export const PROMISE_STATE_CHIP = {
   declared: {
     label: "declared",
     aria: "declared — stated in planning, not yet established",
-    className: "border border-dashed border-gray-400 bg-white text-gray-600",
+    className: "border border-dashed border-ink-faint bg-surface text-ink-soft",
   },
   enforced: {
     label: "enforced",
     aria: "declared, not yet observed",
-    className: "border border-green-600 bg-white text-green-700",
+    className: "border border-ok bg-surface text-ok",
   },
   "known-violated": {
     label: "known-violated",
     aria: "known-violated — an incident says why",
-    className: "border border-amber-300 bg-amber-50 text-amber-800",
+    className: "border border-warn bg-warn-wash text-warn",
   },
   retired: {
     label: "retired",
     aria: "retired — kept for history",
-    className: "border border-gray-200 bg-gray-50 text-gray-400",
+    className: "border border-line bg-ground text-ink-faint",
   },
 } satisfies Record<
   PromiseState,
@@ -57,32 +60,32 @@ export const PROMISE_HEALTH_CHIP = {
   red: {
     label: "violated",
     aria: "violated in the window",
-    className: "border border-red-700 bg-red-600 text-white",
+    className: "border border-bad bg-bad text-surface",
   },
   fixed: {
     label: "fixed",
     aria: "violated in the window, every incident fixed",
-    className: "border border-purple-700 bg-purple-600 text-white",
+    className: "border border-ink-soft bg-ink-soft text-surface",
   },
   green: {
     label: "upheld",
     aria: "seen upheld in the window",
-    className: "border border-green-700 bg-green-600 text-white",
+    className: "border border-ok bg-ok text-surface",
   },
   unverified: {
     label: "unverified",
     aria: "not seen in the window",
-    className: "border border-gray-400 bg-white text-gray-600",
+    className: "border border-ink-faint bg-surface text-ink-soft",
   },
   amber: {
     label: "known-violated",
     aria: "declared known-violated",
-    className: "border border-amber-400 bg-amber-100 text-amber-900",
+    className: "border border-warn bg-warn-wash text-warn",
   },
   grey: {
     label: "retired",
     aria: "retired — not watched",
-    className: "border border-gray-200 bg-gray-100 text-gray-400",
+    className: "border border-line bg-idle-wash text-ink-faint",
   },
 } satisfies Record<
   PromiseHealth,
@@ -152,35 +155,35 @@ export type BarState = SegmentState | "opted-out";
  * by design, a gap, and cannot be judged.
  */
 export const SEGMENT_CLASS = {
-  done: "bg-green-500",
-  active: "bg-blue-500",
-  pending: "bg-gray-200",
-  skipped: "bg-gray-100",
-  missing: "bg-red-100",
-  unknown: "bg-white",
-  "opted-out": "bg-amber-400",
+  done: "bg-ok",
+  active: "bg-dusk",
+  pending: "bg-idle-wash",
+  skipped: "bg-idle-wash",
+  missing: "bg-bad-wash",
+  unknown: "bg-surface",
+  "opted-out": "bg-warn",
 } satisfies Record<BarState, string>;
 
 /** The segment's own box: what makes an empty segment read as one state and not another. */
 export const SEGMENT_FRAME_CLASS = {
-  done: "bg-gray-200",
-  active: "bg-gray-200",
-  pending: "bg-gray-200",
-  skipped: "border border-dashed border-gray-300 bg-white",
-  missing: "border border-red-500 bg-red-50",
-  unknown: "border border-dotted border-gray-500 bg-white",
-  "opted-out": "bg-gray-200",
+  done: "bg-idle-wash",
+  active: "bg-idle-wash",
+  pending: "bg-idle-wash",
+  skipped: "border border-dashed border-line bg-surface",
+  missing: "border border-bad bg-bad-wash",
+  unknown: "border border-dotted border-ink-faint bg-surface",
+  "opted-out": "bg-idle-wash",
 } satisfies Record<BarState, string>;
 
 /** The word under a segment, styled by state, when a bar shows its labels. */
 export const SEGMENT_LABEL_CLASS = {
-  done: "text-gray-600",
-  active: "font-semibold text-blue-700",
-  pending: "text-gray-400",
-  skipped: "text-gray-300 line-through",
-  missing: "font-semibold text-red-700",
-  unknown: "italic text-gray-500",
-  "opted-out": "text-gray-600",
+  done: "text-ink-soft",
+  active: "font-semibold text-dusk",
+  pending: "text-ink-faint",
+  skipped: "text-ink-faint line-through",
+  missing: "font-semibold text-bad",
+  unknown: "italic text-ink-faint",
+  "opted-out": "text-ink-soft",
 } satisfies Record<BarState, string>;
 
 /** What a state is called when it is said in words — a segment's title, a legend. */
@@ -195,13 +198,13 @@ export const SEGMENT_STATE_LABELS = {
 } satisfies Record<BarState, string>;
 
 export const CHIP_CLASS = {
-  done: "border-green-200 bg-green-50 text-green-800",
-  active: "border-blue-200 bg-blue-50 text-blue-800",
-  pending: "border-gray-200 bg-white text-gray-500",
-  skipped: "border-gray-200 bg-gray-50 text-gray-400 line-through",
-  missing: "border-red-300 bg-red-50 text-red-800",
-  unknown: "border-dotted border-gray-400 bg-white text-gray-500 italic",
-  "opted-out": "border-amber-200 bg-amber-50 text-amber-800",
+  done: "border-ok bg-ok-wash text-ok",
+  active: "border-dusk bg-dusk-wash text-dusk",
+  pending: "border-line bg-surface text-ink-faint",
+  skipped: "border-line bg-ground text-ink-faint line-through",
+  missing: "border-bad bg-bad-wash text-bad",
+  unknown: "border-dotted border-ink-faint bg-surface text-ink-faint italic",
+  "opted-out": "border-warn bg-warn-wash text-warn",
 } satisfies Record<BarState, string>;
 
 /**
@@ -233,23 +236,32 @@ export const RITUAL_COPY = {
   { title: string; rowsHeading: string; itemsHeading: string }
 >;
 
-/** A promise's standing as the dashboard's bar and chip, and the promise page's banner, draw it. */
-export const STANDING_STYLE = {
-  broken: { bar: "bg-red-600", chip: "border-red-300 bg-red-50 text-red-800" },
-  "being-proven": {
-    bar: "bg-amber-500",
-    chip: "border-amber-300 bg-amber-50 text-amber-800",
-  },
-  declared: {
-    bar: "bg-gray-400",
-    chip: "border-dashed border-gray-400 bg-white text-gray-600",
-  },
-  enforced: {
-    bar: "bg-green-600",
-    chip: "border-green-600 bg-white text-green-700",
-  },
-  retired: {
-    bar: "bg-gray-200",
-    chip: "border-gray-200 bg-gray-50 text-gray-400",
-  },
-} as const satisfies Record<Standing, { bar: string; chip: string }>;
+/**
+ * A promise's standing as the chip and the dashboard's row draw it: they have
+ * four states, so a retired promise reads as declared (the mockups'
+ * `chip` and `promise-row`).
+ */
+export const STANDING_BADGE = {
+  broken: "broken",
+  "being-proven": "proving",
+  declared: "declared",
+  enforced: "enforced",
+  retired: "declared",
+} as const satisfies Record<
+  Standing,
+  "declared" | "proving" | "enforced" | "broken"
+>;
+
+/** A mockup's approval as the Looks page's chip draws it (ui-promises ADR decision 3). */
+export const APPROVAL_STYLE = {
+  approved: "border-ok bg-surface text-ok",
+  proposed: "border-dashed border-ink-faint bg-surface text-ink-soft",
+} as const satisfies Record<"approved" | "proposed", string>;
+
+/** A look's standing as the dashboard's row draws it (ui-promises ADR decision 7); the word is the package's. */
+export const LOOK_STYLE = {
+  broken: "border-bad bg-bad-wash text-bad",
+  held: "border-ok bg-surface text-ok",
+  unchecked: "border-line bg-surface text-ink-soft",
+  uncovered: "border-dashed border-warn bg-warn-wash text-warn",
+} as const satisfies Record<LookStanding, string>;

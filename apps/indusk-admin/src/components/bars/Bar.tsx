@@ -77,7 +77,7 @@ export function Bar({
 }: BarProps) {
   return (
     <div className="flex flex-col gap-1" data-testid={testId}>
-      <ol className="flex w-full gap-0.5" aria-label={testId}>
+      <ol className="flex w-full gap-hair" aria-label={testId}>
         {segments.map((segment) => (
           <li
             key={segment.key}
@@ -94,11 +94,11 @@ export function Bar({
         ))}
       </ol>
       {labels ? (
-        <ol className="flex w-full gap-0.5" aria-hidden="true">
+        <ol className="flex w-full gap-hair" aria-hidden="true">
           {segments.map((segment) => (
             <li
               key={segment.key}
-              className={`min-w-0 flex-1 truncate text-center text-[9px] leading-3 ${SEGMENT_LABEL_CLASS[segment.state]}`}
+              className={`min-w-0 flex-1 truncate text-center text-2xs leading-3 ${SEGMENT_LABEL_CLASS[segment.state]}`}
             >
               {segment.short ?? segment.label}
             </li>
@@ -107,7 +107,7 @@ export function Bar({
       ) : null}
       {activeLabel ? (
         <p
-          className="text-xs text-gray-700"
+          className="text-xs text-ink-soft"
           data-testid={`${testId}-active-label`}
         >
           {activeLabel}
@@ -115,7 +115,7 @@ export function Bar({
       ) : null}
       {caption ? (
         <p
-          className="text-[10px] text-gray-400"
+          className="text-2xs text-ink-faint"
           data-testid={`${testId}-caption`}
         >
           {caption}

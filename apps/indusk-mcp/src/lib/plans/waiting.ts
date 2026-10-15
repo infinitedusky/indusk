@@ -1,6 +1,6 @@
 import type { DocumentPosition } from "../lifecycle.js";
 import type { Question } from "../session/protocol.js";
-import { WORKFLOW_DEFINITIONS } from "../workflow-types.js";
+import { requiredDocuments } from "../workflow-types.js";
 import { documentFinished, type PlanSnapshot, planSteps } from "./steps.js";
 
 /**
@@ -17,6 +17,10 @@ import { documentFinished, type PlanSnapshot, planSteps } from "./steps.js";
  *     requires is accepted, and no session's turn is still open on it (an idle
  *     session waiting for the person is not writing): approving a
  *     plan its author has not finished would approve half of it.
+ *   - **amendment** — its brief changed after the person approved it
+ *     (plan-stories, ADR decision 5). It waits at the Brief step, after a
+ *     question and before review and approval, and is answered on the plan's
+ *     amendment card, never as a decision.
  *
  * Each names the decision in words, what accepting it is called and the
  * alternative. For a question they are the question and its first two options,
@@ -29,7 +33,7 @@ import { documentFinished, type PlanSnapshot, planSteps } from "./steps.js";
  * promise: display-names-are-defined-once
  */
 
-export type WaitingOn = "question" | "approval" | "review";
+export type WaitingOn = "question" | "approval" | "review" | "amendment";
 
 export interface WaitingSession {
 	plan: string;
@@ -53,6 +57,8 @@ export interface WaitingInput {
 	sessions: ReadonlyArray<WaitingSession>;
 	plans: ReadonlyArray<PlanSnapshot & { name: string }>;
 	builds?: ReadonlyArray<WaitingBuild>;
+	/** The amendments waiting per plan; a plan with a count above 0 waits on them. */
+	amendments?: ReadonlyArray<{ plan: string; count: number }>;
 }
 
 /** One question of an ask: its words and the two answers the card offers. */
@@ -84,11 +90,20 @@ export const APPROVAL_DECISION =
 export const REVIEW_DECISION =
 	"The build is done and waits for your review. Accept it, so the release runs?";
 
-export function planWaiting({ sessions, plans, builds = [] }: WaitingInput): Waiting[] {
+export const AMENDMENT_DECISION =
+	"The brief changed after it was approved. Review the change on the plan's page.";
+
+export function planWaiting({
+	sessions,
+	plans,
+	builds = [],
+	amendments = [],
+}: WaitingInput): Waiting[] {
 	const waiting: Waiting[] = [];
 	for (const plan of plans) {
 		const one =
 			askedOf(plan, sessions) ??
+			(amended(plan.name, amendments) ? amendment(plan.name) : null) ??
 			(atReview(plan, builds) ? review(plan.name) : null) ??
 			(awaitingApproval(plan) && !beingWritten(plan, sessions) ? approval(plan.name) : null);
 		if (one) waiting.push(one);
@@ -146,7 +161,9 @@ function atReview(plan: PlanSnapshot & { name: string }, builds: ReadonlyArray<W
 function awaitingApproval(plan: PlanSnapshot): boolean {
 	if (plan.documents.impl?.status !== "draft") return false;
 	const required: readonly DocumentPosition[] =
-		plan.workflow === null ? ["brief", "test-plan"] : WORKFLOW_DEFINITIONS[plan.workflow].requires;
+		plan.workflow === null
+			? ["brief", "test-plan"]
+			: requiredDocuments(plan.workflow, plan.documentsOff);
 	return required
 		.filter((d) => BEFORE_IMPL.includes(d))
 		.every((d) => documentFinished(d, plan.documents[d]?.status));
@@ -154,6 +171,21 @@ function awaitingApproval(plan: PlanSnapshot): boolean {
 
 /** The documents a plan writes before its impl; the retrospective comes after. */
 const BEFORE_IMPL: readonly DocumentPosition[] = ["research", "brief", "test-plan", "adr"];
+
+function amended(plan: string, amendments: NonNullable<WaitingInput["amendments"]>): boolean {
+	return amendments.some((a) => a.plan === plan && a.count > 0);
+}
+
+function amendment(plan: string): Waiting {
+	return {
+		plan,
+		on: "amendment",
+		step: "Brief",
+		decision: AMENDMENT_DECISION,
+		accept: "Approve",
+		alternative: "Not yet",
+	};
+}
 
 function review(plan: string): Waiting {
 	return {

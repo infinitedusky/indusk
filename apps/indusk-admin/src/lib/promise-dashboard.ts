@@ -57,6 +57,8 @@ export interface DashboardRow {
   planTitle: string;
   /** The innermost Path declaring the plan; null when none does. */
   path: string | null;
+  /** That Path's master by title; null when no Path declares the plan. */
+  pathTitle: string | null;
   standing: Standing;
   tests: { passing: number; total: number };
   /** Days of the last thirty not broken; null while the promise has never been seen. */
@@ -75,6 +77,16 @@ export interface RowContext {
   declarations: Pick<PlanDeclarations, "subplans">;
 }
 
+/**
+ * A plan by its title: the one written when it is not just the handle, else
+ * the handle in words (`sentenceOf`, the package's `promiseWords`) — never the
+ * bare folder name (plan-stories A26).
+ */
+function titled(ctx: RowContext, handle: string): string {
+  const written = ctx.planTitles[handle];
+  return written && written !== handle ? written : ctx.sentenceOf(handle);
+}
+
 /** One row per promise, from the package's standing and thirty days, in words, with its plan's title and Path. */
 export function buildRows(
   standing: StandingRow[],
@@ -82,12 +94,14 @@ export function buildRows(
 ): DashboardRow[] {
   return standing.map((s) => {
     const name = s.entry.name;
+    const path = innermostPath(ctx.declarations.subplans, s.entry.owner);
     return {
       name,
       sentence: ctx.sentenceOf(name),
       plan: s.entry.owner,
-      planTitle: ctx.planTitles[s.entry.owner] ?? s.entry.owner,
-      path: innermostPath(ctx.declarations.subplans, s.entry.owner),
+      planTitle: titled(ctx, s.entry.owner),
+      path,
+      pathTitle: path === null ? null : titled(ctx, path),
       standing: s.standing,
       tests: s.tests,
       held: s.thirtyDays.held,
@@ -172,7 +186,7 @@ export function groupRows(
       : query.group === "plan"
         ? r.planTitle
         : r.path
-          ? r.path
+          ? (r.pathTitle ?? r.path)
           : "No Path";
   const groups = new Map<string, DashboardGroup>();
   for (const r of [...rows].sort(compare(query.sort))) {

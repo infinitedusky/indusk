@@ -11,7 +11,7 @@ What is wrong with the current structure and why now are not the brief's. Write 
 
 ## Brief Template
 
-A brief holds what the conversation produced: expectations and promises, in the shape `indusk promises contract` reads (the planner skill has the full template and the rules). A refactor changes no behavior, so its brief is mostly the existing promises it works near: each goes under **Must not break**. A refactor that leaves a rule the structure must keep (one definition of something, no import across a boundary) makes that a `structure` promise.
+A brief holds what the conversation produced: expectations, promises and looks, in the shape `indusk promises contract` reads (the planner skill has the full template and the rules). A refactor changes no behavior, so its brief is mostly the existing promises it works near: each goes under **Must not break**, and it says `None — {reason}` for looks unless it moves files under an app's interface, where the looks it must not break are listed. A refactor that leaves a rule the structure must keep (one definition of something, no import across a boundary) makes that a `structure` promise.
 
 ```markdown
 ---
@@ -63,6 +63,7 @@ None.
 title: "{Title}"
 date: {YYYY-MM-DD}
 status: draft
+phase_summary: required
 ---
 
 # {Title}
@@ -78,11 +79,29 @@ status: draft
 
 ## Checklist
 ### Phase 1: {Name}
-- [ ] {Refactoring step}
+
+{A paragraph saying what this phase does for the whole plan and how it hands to the next, written for someone who has worked on the project but knows none of this plan's shorthand.}
+
+- [ ] {One plain sentence saying what will be true once this step is done.}
+  <details><summary>Technical</summary>
+
+  {The refactoring step: names, paths and code go here.}
+
+  </details>
 
 #### Phase 1 Verification
-- [ ] {All existing tests pass}
-- [ ] {No behavior changes — same inputs produce same outputs}
+- [ ] {One plain sentence saying what proves nothing broke.}
+  <details><summary>Technical</summary>
+
+  {All existing tests pass}
+
+  </details>
+- [ ] {One plain sentence saying behavior is unchanged.}
+  <details><summary>Technical</summary>
+
+  {No behavior changes — same inputs produce same outputs}
+
+  </details>
 
 ## Files Affected
 | File | Change |

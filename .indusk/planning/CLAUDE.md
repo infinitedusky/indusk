@@ -13,12 +13,27 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   (`feature`, `bugfix`, `refactor`, `spike`), declared in the brief's
   frontmatter — never inferred from which files exist. — see
   `/reference/skills/planner`
-- **A brief holds expectations and promises, and everything else is
+- **A brief holds expectations, promises and looks, and everything else is
   research.** Its shape is read by `indusk promises contract`, so keep the
   headings and each label on its own line; a draft is not held to the
   registry, an accepted brief is, by every `pnpm test`. The problem, the
   context and the decisions made on the way go in `research.md`. — see
   `/guide/briefs`
+- **A plan that changes an app's interface lists its looks, or says why it
+  has none.** Once the draft brief exists, ask "does this change how anything
+  looks?"; a yes lists each look under `## Looks` as a drawn mockup — a
+  screen, or a new component drawn on its own; a story is never named without
+  a mockup. A plan whose `Files Affected` names a path under an app's
+  `sources` with none listed and no `None — {reason}` is refused at approval,
+  as one whose branch changed them is at `plans accept`. Approval waits on
+  every look the brief names being drawn and approved; acceptance, on each new
+  component's story. — guarded by `brief-looks.test.ts` and
+  `plans-approve-looks.test.ts` — see `/guide/briefs`
+- **`planning.documents_off` turns a planning document off for a project**: a
+  plan in it reads that document *skipped*, never *missing*, and the planner
+  does not write it. The brief and the test plan cannot be turned off; a config
+  naming either is refused when read. — guarded by `documents-off.test.ts` (A12)
+  — see `/guide/new-project`
 - **Cross-reference related plans by path, and update both** when work in one
   changes something the other names — a plan never cites stale information.
 - **Plan hierarchy is declared top-down, in frontmatter**: the root `master.md`
@@ -86,6 +101,24 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   character at ≥ the same length with nothing after it; nest by lengthening. An
   unterminated fence is refused by the validator, naming the line. — see
   `/guide/test-trajectory`
+- **A checkbox or an opt-out is read only from a column-zero line**: anything
+  indented under a task is its detail, read for row labels by the
+  cross-reference rule and for nothing else — it never ticks a box, skips a
+  gate or adds a task. — guarded by `detail-is-only-read.test.ts`
+  (`promise: hidden-detail-is-only-read`); see `/decisions/phase-summaries`
+- **A new impl opts in with `phase_summary: required` and is written for a
+  reader without the plan's shorthand**: each phase opens with a paragraph
+  saying what it does for the whole plan, each task is one plain sentence for
+  someone who has worked on the project but knows none of the plan's
+  abbreviations or labels, and names, code and row labels go in the task's
+  folded `<details><summary>Technical</summary>`. The save check refuses a
+  missing paragraph, a row label in the paragraph, and code or a row label on a
+  task line; whether a sentence is plain is a person's, at approval. The rule is
+  held on every edit to an opted-in impl, refusing only what the edit adds, and
+  a task's `<details>` must close before the next task. — guarded by
+  `phase-summary-rule.test.ts` (`promise: an-impl-phase-explains-itself`) and
+  `detail-is-only-read.test.ts` (`promise: hidden-detail-is-only-read`); the
+  full shape and a before-and-after example are in `/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand`
 - `validate-impl-structure.js` re-validates the whole file when an edit's
   `new_string` contains a phase header — scope edits to checklist items.
 - Verification items are runnable commands with expected output, never "verify
@@ -132,7 +165,8 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   **Shape** → context → document. Shape is a step, not a gate type: the
   executing agent reviews the code the phase wrote against the enabled
   extensions' prose rules, and findings land as unchecked items in the current
-  phase. — see `/guide/shape`
+  phase. Shape is intra-unit; decomposition across files is `/cleanup`'s, at
+  close. — see `/guide/shape`, `/decisions/lifecycle-rebalance`
 - **Commit cadence**: one commit per checklist item on the plan's
   `plan/{name}` branch, intent-named; in a monorepo, one commit per app or
   context; merge and delete fast. — see `/reference/skills/work`

@@ -11,7 +11,7 @@ What is broken, how it shows and how to reproduce it are not the brief's. When t
 
 ## Brief Template
 
-A brief holds what the conversation produced: expectations and promises, in the shape `indusk promises contract` reads (the planner skill has the full template and the rules). A bug is a promise that broke, or one that was never made. If a promise in the registry covers what broke, list it under **Must not break** and let the failing test's row name it. If nothing covers it and it should stay fixed, make the promise here.
+A brief holds what the conversation produced: expectations, promises and looks, in the shape `indusk promises contract` reads (the planner skill has the full template and the rules). A bug is a promise that broke, or one that was never made. A fix that changes a file under an app's interface lists the look it touches under `## Looks`, or says why it has none. If a promise in the registry covers what broke, list it under **Must not break** and let the failing test's row name it. If nothing covers it and it should stay fixed, make the promise here.
 
 ```markdown
 ---
@@ -63,6 +63,7 @@ None.
 title: "{Title}"
 date: {YYYY-MM-DD}
 status: draft
+phase_summary: required
 ---
 
 # {Title}
@@ -72,11 +73,29 @@ status: draft
 
 ## Checklist
 ### Phase 1: Fix
-- [ ] {The fix — be specific}
+
+{A paragraph saying what this phase does for the whole plan, written for someone who has worked on the project but knows none of this plan's shorthand.}
+
+- [ ] {One plain sentence saying what will be true once the fix is in.}
+  <details><summary>Technical</summary>
+
+  {The fix, be specific: names, paths and code go here.}
+
+  </details>
 
 #### Phase 1 Verification
-- [ ] {Command that proves the bug is fixed}
-- [ ] {Regression test if applicable}
+- [ ] {One plain sentence saying what proves the bug is fixed.}
+  <details><summary>Technical</summary>
+
+  {Command that proves the bug is fixed}
+
+  </details>
+- [ ] {One plain sentence saying what keeps it fixed.}
+  <details><summary>Technical</summary>
+
+  {Regression test if applicable}
+
+  </details>
 
 ## Files Affected
 | File | Change |

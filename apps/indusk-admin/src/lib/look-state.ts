@@ -1,0 +1,80 @@
+import { documentFinished } from "@infinitedusky/indusk-mcp/plans/steps";
+
+/**
+ * The state a plan's pages say they draw, for the look check
+ * (`data-look-state`, ui-promises Build Phase 6): each is what the page really
+ * is, read from the plan's own facts, never from a `?state=` a checker sends
+ * (cockpit-redraw, per-state paths). The names are the mockups' —
+ * `plan.<state>` and `brief.<state>` — and what a state means is the one rule
+ * here, so the page and the check cannot disagree about it.
+ */
+
+export type PlanLookState =
+  | "plan.master"
+  | "plan.released"
+  | "plan.needs-you"
+  | "plan.parts"
+  | "plan.working";
+
+export type BriefLookState = "brief.approved" | "brief.writing" | "brief.empty";
+
+/**
+ * The plan page's state: `master` for a plan that declares subplans, whatever
+ * its own documents say (it draws its story, not their stage); released once
+ * archived or in monitor; else
+ * `needs-you` while it waits on a person (a session question, a stopped build
+ * or an amendment — the package's `planWaiting` counts all three, and this
+ * page asks nothing else); else `parts` while its brief is not finished (the
+ * page opens on it as the current step); else being built.
+ */
+export function planLookState(input: {
+  archived: boolean;
+  position?: string;
+  waiting: boolean;
+  briefStatus: string | null;
+  master?: boolean;
+}): PlanLookState {
+  if (input.master) return "plan.master";
+  if (input.archived || input.position === "monitor") return "plan.released";
+  if (input.waiting) return "plan.needs-you";
+  if (!documentFinished("brief", input.briefStatus ?? undefined))
+    return "plan.parts";
+  return "plan.working";
+}
+
+/**
+ * The brief page's state: empty while the plan has no brief file; else
+ * approved once the plan's impl carries the approval of its brief, writing
+ * before.
+ */
+export function briefLookState(
+  implFrontmatter: object | undefined,
+  hasBriefFile: boolean,
+): BriefLookState {
+  if (!hasBriefFile) return "brief.empty";
+  const approved = (implFrontmatter as Record<string, unknown> | undefined)
+    ?.approved_brief;
+  return approved ? "brief.approved" : "brief.writing";
+}
+
+export type NavLookState = "nav.collapsed" | "nav.wide" | "nav.expanded";
+
+/**
+ * The nav's state: folded to its strip, dragged (or asked) wider than the
+ * foundation's width, or as it opens. `width` is null until the nav has been
+ * measured, which is the opening width.
+ */
+export function navLookState(input: {
+  folded: boolean;
+  width: number | null;
+  opening: number | null;
+}): NavLookState {
+  if (input.folded) return "nav.collapsed";
+  if (
+    input.width !== null &&
+    input.opening !== null &&
+    input.width > input.opening
+  )
+    return "nav.wide";
+  return "nav.expanded";
+}

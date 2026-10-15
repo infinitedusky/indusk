@@ -1,7 +1,7 @@
 import { sanitizeGroupId } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
-import { PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
+import { LOOK_MARK, PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
 
 /**
  * The one query for promise marks (day-monitor, ADR D4).
@@ -46,6 +46,32 @@ export interface MarkedSpan {
 	 * knows which one it came from.
 	 */
 	environment: string | null;
+	/** Which look a look check's mark is for (`indusk.look.*`); absent on any other mark. */
+	look?: LookKey;
+}
+
+/** The app, screen, state and device a look check's span names. */
+export interface LookKey {
+	app: string;
+	screen: string;
+	state: string;
+	device: string;
+	/** `story` for a component story's run; absent for a screen's. */
+	kind?: "story";
+}
+
+/** The look a span names, when it names all four parts; null otherwise. */
+function lookOf(tags: JaegerTag[] | undefined): LookKey | null {
+	const parts = {
+		app: tag(tags, LOOK_MARK.app),
+		screen: tag(tags, LOOK_MARK.screen),
+		state: tag(tags, LOOK_MARK.state),
+		device: tag(tags, LOOK_MARK.device),
+	};
+	if (!Object.values(parts).every((v) => typeof v === "string")) return null;
+	return tag(tags, LOOK_MARK.kind) === "story"
+		? { ...(parts as LookKey), kind: "story" }
+		: (parts as LookKey);
 }
 
 /**
@@ -215,6 +241,7 @@ export function parseMarkedSpan(
 		const s = tag(log.fields, PROMISE_MARK.symptom);
 		if (typeof s === "string") symptom = s;
 	}
+	const look = lookOf(span.tags);
 	return {
 		promise,
 		outcome,
@@ -225,6 +252,7 @@ export function parseMarkedSpan(
 		at: new Date(Math.floor((span.startTime + span.duration) / 1000)),
 		symptom,
 		environment: typeof environment === "string" ? environment : null,
+		...(look ? { look } : {}),
 	};
 }
 

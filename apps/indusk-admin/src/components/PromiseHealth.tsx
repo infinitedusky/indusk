@@ -38,10 +38,10 @@ export function HealthChip({
       {...(source ? { "data-source": source } : {})}
       aria-label={aria}
       title={aria}
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${chip.className}`}
+      className={`inline-flex items-center rounded-pill px-2 py-hair text-xs font-medium ${chip.className}`}
     >
       {labelled && source && (
-        <span className="mr-1 font-normal opacity-70">{source}</span>
+        <span className="mr-1 font-regular opacity-70">{source}</span>
       )}
       {chip.label}
     </span>
@@ -77,7 +77,10 @@ export function HealthDetail({
     parts.push("not seen");
   if (parts.length === (source ? 1 : 0)) return null;
   return (
-    <span className="text-xs text-gray-500" data-testid="promise-health-detail">
+    <span
+      className="text-xs text-ink-faint"
+      data-testid="promise-health-detail"
+    >
       {parts.join(" · ")}
     </span>
   );
@@ -116,7 +119,7 @@ export function SourceBanner({ observed }: { observed: SourceObserved }) {
   if (observed.blind) {
     return (
       <p
-        className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+        className="rounded-md border border-line bg-ground px-3 py-2 text-sm text-ink-soft"
         data-testid="watcher-blind"
         data-source={observed.name}
       >
@@ -129,7 +132,7 @@ export function SourceBanner({ observed }: { observed: SourceObserved }) {
   if (observed.unknownSince === undefined) return null;
   return (
     <p
-      className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+      className="rounded-md border border-line bg-ground px-3 py-2 text-sm text-ink-soft"
       data-testid="health-unknown"
       data-source={observed.name}
     >

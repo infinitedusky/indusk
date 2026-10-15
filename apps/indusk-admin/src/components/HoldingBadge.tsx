@@ -15,7 +15,7 @@ export function HoldingBadge({ count, plan }: { count: number; plan: string }) {
     <span
       data-testid={`holding-${plan}`}
       title={`${plan} holds ${count} promise${count === 1 ? "" : "s"}`}
-      className="inline-flex items-center rounded-full border border-gray-300 bg-white px-2 py-0.5 text-xs text-gray-600"
+      className="inline-flex items-center rounded-pill border border-line bg-surface px-2 py-hair text-xs text-ink-soft"
     >
       holding {count}
     </span>

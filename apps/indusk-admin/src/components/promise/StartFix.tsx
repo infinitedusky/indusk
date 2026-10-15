@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { SessionConnector } from "@/components/session/SessionConnector";
 import { Button } from "@/components/ui/Button";
 import { postJson } from "@/lib/post-json";
-import { ownsSession, type RunningSession } from "@/lib/session-owner";
+import {
+  ownsSession,
+  type RunningSession,
+  sessionUrl,
+} from "@/lib/session-owner";
 
 /**
  * *Start a fix plan* on a broken promise's page (plan-cockpit, ADR decision
@@ -32,7 +36,7 @@ export function StartFix({
 
   useEffect(() => {
     let live = true;
-    void fetch("/api/sessions")
+    void fetch(sessionUrl(project, plan, "planning"))
       .then((r) => r.json())
       .then((body: { session?: RunningSession | null }) => {
         if (live && ownsSession(body.session, project, plan, "planning"))
@@ -71,13 +75,13 @@ export function StartFix({
           >
             {busy ? "Starting…" : "Start a fix plan"}
           </Button>
-          <span className="text-xs text-gray-600">
+          <span className="text-xs text-ink-soft">
             Starts Claude here with the break, its trace and its tests.
           </span>
         </div>
       )}
       {problem ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-bad">
           {problem}
         </p>
       ) : null}

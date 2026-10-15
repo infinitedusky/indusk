@@ -59,12 +59,12 @@ export function CopyButton({
       title={copied ? "Copied" : label}
       data-testid={testId}
       data-copied={copied}
-      className={`inline-flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
+      className={`inline-flex items-center justify-center rounded-md p-1 text-ink-faint transition-colors hover:bg-idle-wash hover:text-ink-soft focus:outline-2 focus:outline-dusk ${className}`}
     >
       {copied ? (
-        <Check className="h-3.5 w-3.5 text-green-600" aria-hidden />
+        <Check className="h-4 w-4 text-ok" aria-hidden />
       ) : (
-        <Copy className="h-3.5 w-3.5" aria-hidden />
+        <Copy className="h-4 w-4" aria-hidden />
       )}
     </button>
   );

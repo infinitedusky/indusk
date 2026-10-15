@@ -29,7 +29,7 @@ pointer; the pointer holds the story.
   `parsePlan`, the retrospective gate and the admin) —
   `lifecycle-single-definition.test.ts`; promise health, `promises/health`
   — `promise-health-single-definition.test.ts`; display names and plan dates
-  (`promises/display`) — `display-names-single-definition.test.ts`. A git primitive belongs in
+  (`promises/display`: `readPlanName`, the nav's copy, worktree first) — `display-names-single-definition.test.ts`. A git primitive belongs in
   `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
   (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
@@ -49,6 +49,8 @@ pointer; the pointer holds the story.
   `/decisions/lifecycle-rebalance`
 
 ## Workbenches and worktrees
+
+- **A safety argument written in a comment is not enforced by the code around it** — grep for comments asserting an invariant and check the control flow delivers it; two workbench-sync paths each reported the worst case as the most reassuring one. — see `/reference/cli/workbench`
 
 - **Topology is DECLARED, never inferred** — `worktree.repos[]` with optional
   `path` / `worktrees`; the legacy `wrapped_repo` reduces to a one-element
@@ -130,7 +132,8 @@ pointer; the pointer holds the story.
   writer validates with the reader's predicate (`boundaryRecordProblem`). Every
   way a scope can be wrong is silent, so every fallback over-reports:
   `findPhaseStart` takes the earliest record, untracked files are dated by
-  mtime, `verificationIsGreen` counts nested unchecked items. — see
+  mtime, `verificationIsGreen` counts nested unchecked items — never a box inside a
+  task's `<details>` fold or a fence (`foldedLineMask`). — see
   `/guide/shape`
 - **Shape's craft rules come from enabled extensions and hardcode none**
   (`lib/shape/rules.ts`); the library supplies facts (`changedFilesForPhase`,
@@ -139,7 +142,8 @@ pointer; the pointer holds the story.
   boundary record without `kind` is build by rule.
 - **The cleanup lib throws on non-git roots and refuses workbench roots by
   declaration**; ritual-phase terminality needs ≥1 item and sees nested
-  unchecked items.
+  unchecked items — never a box inside a task's `<details>` fold or a fence
+  (`detail-is-only-read.test.ts`, `promise: hidden-detail-is-only-read`).
 - `phaseOrdinal` reduces to the phase number when a document has no test
   phase — that reduction is the backward-compatibility guarantee. Gate A
   compares `<=`. A validator parsing zero phases refuses. An unterminated
@@ -162,6 +166,16 @@ pointer; the pointer holds the story.
   and `symptom`; a credential with a line separator is refused by name. The
   image is built from `docker/`, installing the *published* package; the Fly
   reference never auto-stops. — see `/decisions/day-always-on`
+- **`.mcp.json` is per machine and untracked** (`.gitignore` carries it): `indusk update`
+  writes one naming the `indusk` server when a checkout has none and never touches one
+  that exists (`lib/mcp-config.ts`); the daemon's sync edits only the local copy's
+  `jaeger` port. Pulling the commit that untracked it deletes the file from a clone's
+  working tree once — run `indusk update`. A test of `update` pins
+  `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`: without it `update` on a project lacking
+  `local-telemetry` starts a real daemon. A new plan worktree gets a copy of the
+  trunk's file (`createPlanWorktree` → `provisionMcpJson`), since git no longer brings
+  it; anything that creates the file creates it through `ensureMcpJson`, so a file
+  the daemon's sync made still names `indusk`.
 - The local daemon is native Jaeger + otelcol (`indusk telemetry *`; jaeger_mcp
   in each project's `.mcp.json`) — see `.indusk/planning/archive/local-telemetry/adr.md`.
   Jaeger v2 is an OTel Collector distribution; self-metrics off via
@@ -174,6 +188,19 @@ pointer; the pointer holds the story.
   `repo` destination is refused outside a workbench. `indusk papers publish`
   commits in the destination, never pushes by default, pushes last, and never
   lets a git failure escape past a commit it made. — see `/reference/cli/papers`
+- **A look's verdict is decided in `looks/verdict` from values handed to it;
+  the browser only measures** (`looks/check` reads `:root` and computed styles
+  and passes them in). Held or broken, the finding's token or element, and its
+  nearest token are never computed in the browser, the CLI or the admin — a
+  verdict decided where the page runs cannot be read without Chromium. —
+  guarded by `verdict.test.ts`; see `/reference/cli/looks`
+- **The no-raw-value lint is three modules, and a new rule goes in its own**:
+  `lint-values` (the strict list, the stylelint rules, `cssFindings`),
+  `lint-classes` (the Tailwind vocabulary a theme reset changes) and the token
+  checks in `lint`, which also orchestrates; `lint-types` holds the shared
+  shapes so neither imports `lint` back. A rule added to `lint.ts` is the
+  500-line file this split undid — guarded by the file-size attention-focus and
+  `looks-lint-rules.test.ts`; see `/reference/cli/looks`
 
 ## Eval, agents, skills, extensions
 
@@ -211,7 +238,9 @@ pointer; the pointer holds the story.
   the text, never with a hook. Skills and hooks are package-owned: edit
   `skills/` and `hooks/` here, resync `.claude/skills/` and `.claude/hooks/`;
   `skill-sync-parity` pins byte-equality and the planning context template
-  likewise. **A library the skills call is not shipped until it is in
+  likewise. A phase that edits `skills/` resyncs `.claude/skills/` in the same
+  phase and runs `skill-sync-parity.test.ts` — `vitest related` does not reach it.
+  **A library the skills call is not shipped until it is in
   `package.json` `exports` AND its documented invocation has run verbatim.**
 - **Extensions own tool knowledge**; required-by-default ones flow through
   `autoEnableExtensions` Pass 1 (`disabled_extensions` opts out); they ship
@@ -228,11 +257,14 @@ pointer; the pointer holds the story.
   `prepublishOnly` packs the `.vsix`.
   `lib/release/` has its own `CLAUDE.md`. — see `/reference/cli/release`
 
+- **A session is owned by its project, plan and kind** — `SessionManager.start` refuses only a second session of the same owner, and a start at the machine's cap (`sessions.max` in the InDusk home's `config.json`, default 4, a malformed file reads as 4); readers ask `forPlan(project, plan, kind?)` or `running()`, never "the" session. Guarded by `session/manager.test.ts` (A2, A9). — see `/decisions/sessions-per-plan`
+
 ## Tests
 
 - commander@13 drops duplicate parent+subcommand options — declare on the
   parent, read via `optsWithGlobals()`. gray-matter on malformed YAML throws in
   Node but returns `data: {}` under vitest — detect malformed structurally.
+- The root run builds this package before its tests (`turbo.json` `@infinitedusky/indusk-mcp#test`): a test behind `SHOULD_SKIP` skips silently without `dist/`, so a row on the built CLI must not rest on a build someone remembered.
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
   where code lives runs over all four); a promise-bearing project —

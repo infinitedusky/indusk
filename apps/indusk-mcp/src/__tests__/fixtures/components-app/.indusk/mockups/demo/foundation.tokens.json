@@ -1,0 +1,24 @@
+{
+	"$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+	"color": {
+		"$type": "color",
+		"paper": {
+			"$value": { "colorSpace": "srgb", "components": [0.98, 0.97, 0.95], "hex": "#faf7f2" }
+		},
+		"ink": {
+			"$value": { "colorSpace": "srgb", "components": [0.12, 0.1, 0.09], "hex": "#1f1a17" }
+		}
+	},
+	"space": {
+		"$type": "dimension",
+		"2": { "$value": { "value": 8, "unit": "px" } },
+		"3": { "$value": { "value": 12, "unit": "px" } }
+	},
+	"radius": {
+		"$type": "dimension",
+		"md": { "$value": { "value": 6, "unit": "px" } }
+	},
+	"font": {
+		"sans": { "$type": "fontFamily", "$value": ["Inter", "system-ui", "sans-serif"] }
+	}
+}

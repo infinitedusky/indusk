@@ -51,8 +51,13 @@ function hasLineSeparator(value: string): boolean {
  * inside a gate block and gets classified as a verification/context/document
  * item instead of implementation work.
  */
-export function appendItemToPhase(implBody: string, phase: PhaseAddress, item: string): string {
-	if (hasLineSeparator(item)) {
+export function appendItemToPhase(
+	implBody: string,
+	phase: PhaseAddress,
+	item: string,
+	detail?: string,
+): string {
+	if (hasLineSeparator(item) || (detail !== undefined && hasLineSeparator(detail))) {
 		throw new Error(
 			`Cannot append a multi-line checklist item to ${phaseLabel(phase)} — a checklist item is one line, so this would split the plan's structure.`,
 		);
@@ -72,7 +77,25 @@ export function appendItemToPhase(implBody: string, phase: PhaseAddress, item: s
 	let insertAt = blockEnd(lines, headingAt);
 	while (insertAt > headingAt + 1 && lines[insertAt - 1].trim() === "") insertAt--;
 
-	return [...lines.slice(0, insertAt), item, ...lines.slice(insertAt)].join("\n");
+	const added = detail === undefined ? [item] : [item, ...foldedDetail(detail)];
+	return [...lines.slice(0, insertAt), ...added, ...lines.slice(insertAt)].join("\n");
+}
+
+/**
+ * Does this impl opt into `phase_summary: required` (story-first-phases)?
+ *
+ * Read from the frontmatter only, line-anchored like every value-bearing key.
+ * An opted-in impl refuses code and row labels on a task line, so Shape writes
+ * its file names and rules into the task's folded detail instead.
+ */
+export function wantsFoldedDetail(implBody: string): boolean {
+	const frontmatter = /^---\n([\s\S]*?)\n---/.exec(implBody)?.[1] ?? "";
+	return /^phase_summary:\s*required/m.test(frontmatter);
+}
+
+/** A task's Technical fold: indented under the item, so no line of it is a task. */
+function foldedDetail(detail: string): string[] {
+	return ["  <details><summary>Technical</summary>", "", `  ${detail}`, "", "  </details>"];
 }
 
 /**
@@ -96,6 +119,14 @@ export function appendFindingToPhase(
 		}
 	}
 
+	if (wantsFoldedDetail(implBody)) {
+		return appendItemToPhase(
+			implBody,
+			phase,
+			`- [ ] Shape: ${finding.change}`,
+			`\`${finding.file}\`. Rule: ${finding.rule}`,
+		);
+	}
 	return appendItemToPhase(
 		implBody,
 		phase,

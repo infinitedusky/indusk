@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { validateWrite } from "../../__tests__/helpers/hook-runner.js";
+import { summaryImpl } from "../../__tests__/helpers/phase-summary-fixture.js";
 import {
 	prepareShapeReview,
 	recordLeftAsIs,
@@ -167,5 +169,46 @@ describe("A7 — a deliberate leave-as-is is recorded with its reason", () => {
 		// The record must say a review happened — absence of a finding is not
 		// evidence of a review.
 		expect(reviewed).toMatch(/reviewed/i);
+	});
+});
+
+/**
+ * promise: an-impl-phase-explains-itself — the notes Shape records on an impl
+ * that opts in with `phase_summary: required` pass the save check: a plain
+ * sentence on the line, the file and the reason in its fold.
+ */
+describe("Shape's notes on an opted-in impl pass the save check", () => {
+	const BUILD_1 = { kind: "build", number: 1 } as const;
+
+	it("a left-as-is note folds the file and the reason", async () => {
+		const out = recordLeftAsIs(
+			summaryImpl("demo"),
+			BUILD_1,
+			"src/thing.ts",
+			"one `run()` loop, cohesive",
+		);
+		const r = await validateWrite(out);
+
+		expect(r.exitCode, r.stderr).toBe(0);
+		const line = out.split("\n").find((l) => l.startsWith("- [x] Shape"));
+		expect(line).not.toContain("`");
+		expect(line).toMatch(/left/i);
+		expect(out).toContain("`src/thing.ts`");
+		expect(out).toContain("one `run()` loop, cohesive");
+	});
+
+	it("a nothing-found note passes as it is", async () => {
+		const r = await validateWrite(recordReviewedNothingFound(summaryImpl("demo"), BUILD_1));
+		expect(r.exitCode, r.stderr).toBe(0);
+	});
+
+	it("leaves an impl that has not opted in with the one-line note", () => {
+		const out = recordLeftAsIs(
+			summaryImpl("demo", { optIn: false }),
+			BUILD_1,
+			"src/thing.ts",
+			"cohesive",
+		);
+		expect(out).toContain("- [x] Shape (`src/thing.ts`) — reviewed, left as-is: cohesive");
 	});
 });

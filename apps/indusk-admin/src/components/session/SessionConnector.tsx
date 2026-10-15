@@ -1,10 +1,9 @@
 "use client";
 
-import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { postJson } from "@/lib/post-json";
 import { SessionPanel } from "./SessionPanel";
+import { useSessionEvents } from "./use-session-events";
 
 /**
  * Connects the panel to a running session (admin-plan-authoring, ADR D2): its
@@ -12,32 +11,27 @@ import { SessionPanel } from "./SessionPanel";
  * the session's routes. When the session writes a file, the page refreshes,
  * so a plan appears and grows in the sidebar as it is written.
  */
-export function SessionConnector({ sessionId }: { sessionId: string }) {
-  const router = useRouter();
-  const [events, setEvents] = useState<StartedEvent[]>([]);
-  const [running, setRunning] = useState(true);
+export function SessionConnector({
+  sessionId,
+  fill = false,
+}: {
+  sessionId: string;
+  /** Fill the column it sits in (the brief page's agent). */
+  fill?: boolean;
+}) {
   const [problem, setProblem] = useState<string | null>(null);
-
-  useEffect(() => {
-    setEvents([]);
-    setRunning(true);
-    const source = new EventSource(`/api/sessions/${sessionId}/events`);
-    source.onmessage = (message) => {
-      const ev = JSON.parse(message.data) as StartedEvent;
-      setEvents((prev) => [...prev, ev]);
-      if (ev.type === "tool" && WRITES.includes(ev.name)) router.refresh();
-      if (ev.type === "exit") {
-        setRunning(false);
-        source.close();
-        router.refresh();
-      }
-    };
-    source.onerror = () => {
-      setRunning(false);
-      source.close();
-    };
-    return () => source.close();
-  }, [sessionId, router]);
+  const { events, running } = useSessionEvents(sessionId, {
+    onWrite: (ev) => {
+      // Tell the page what the agent wrote, so it can bring that part into
+      // view (`FollowAgent`).
+      if (ev.type !== "tool") return;
+      const file = ev.input.file_path ?? ev.input.notebook_path;
+      if (typeof file === "string")
+        window.dispatchEvent(
+          new CustomEvent(AGENT_WROTE, { detail: { file, input: ev.input } }),
+        );
+    },
+  });
 
   const post = async (path: string, body: unknown) => {
     const r = await postJson(`/api/sessions/${sessionId}/${path}`, body);
@@ -45,8 +39,8 @@ export function SessionConnector({ sessionId }: { sessionId: string }) {
   };
 
   return (
-    <div className="flex flex-col gap-1">
-      {problem ? <p className="text-sm text-red-700">{problem}</p> : null}
+    <div className={`flex flex-col gap-1 ${fill ? "min-h-0 flex-1" : ""}`}>
+      {problem ? <p className="text-sm text-bad">{problem}</p> : null}
       <SessionPanel
         events={events}
         running={running}
@@ -58,9 +52,11 @@ export function SessionConnector({ sessionId }: { sessionId: string }) {
         }
         onStop={() => void post("stop", {})}
         onSay={(text) => void post("say", { text })}
+        fill={fill}
       />
     </div>
   );
 }
 
-const WRITES = ["Write", "Edit", "MultiEdit", "NotebookEdit"];
+/** The window event a session fires for each file its agent writes. */
+export const AGENT_WROTE = "indusk:agent-wrote";

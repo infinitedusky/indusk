@@ -1,5 +1,6 @@
 ---
-title: "Day — Master Plan"
+title: "InDusk v4: Day"
+description: "Watches your software running and checks it against the promises you made; when one breaks, it reopens the plan that owns it. At the end, a reviewer approves a change from its promises and proof, without reading the code."
 date: 2026-09-04
 status: living
 # Ordered children — the whole V4 sequence, in build order, so the admin
@@ -27,13 +28,27 @@ subplans:
   - planner-promises
   - incident-recording
   - workbench-watch-provisioning
-  - day-contract
-  - day-claim-evidence
-  - day-claim-binding
-  - day-uncovered-surface
-  - dawn-agents
-  - day-probe
-  - day-pr-review
+  - name: day-contract
+    title: "Check at change time"
+    description: "Code that touches a promise, in a plan that does not name it, is recorded."
+  - name: day-claim-evidence
+    title: "Claims proved honestly"
+    description: "A test never seen failing, and a claim changed without a record, are both reported."
+  - name: day-claim-binding
+    title: "Test binding"
+    description: "A test that would still pass with its behaviour broken is reported as unbound."
+  - name: day-uncovered-surface
+    title: "Uncovered changes"
+    description: "Changed code that no test exercises is listed until someone acknowledges it."
+  - name: dawn-agents
+    title: "Any executor"
+    description: "Work done by an agent other than Claude is verified the same way."
+  - name: day-probe
+    title: "Probe"
+    description: "A reviewer's question becomes a scenario that runs and gives a verdict."
+  - name: day-pr-review
+    title: "The review"
+    description: "A reviewer approves from the evidence without reading the diff."
   - indusk-release
 ---
 

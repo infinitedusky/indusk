@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { text } from "node:stream/consumers";
 import { formatAge } from "../../lib/promises/age.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
@@ -214,11 +214,11 @@ export async function promisesWatch(
  * the impl hook asks before a write lands. `--all` checks every plan folder,
  * active and archived.
  */
-export function promisesContract(
+export async function promisesContract(
 	projectRoot: string,
 	plan: string | undefined,
 	opts: { all?: boolean; implStdin?: boolean } = {},
-): void {
+): Promise<void> {
 	const refuse = (refusals: ContractRefusal[]) => {
 		for (const r of refusals) console.error(`${r.file}: ${r.message}`);
 		console.error(
@@ -251,11 +251,12 @@ export function promisesContract(
 		process.exitCode = 2;
 		return;
 	}
-	const result = checkPlanContract(
-		projectRoot,
-		plan,
-		opts.implStdin ? { implText: readFileSync(0, "utf-8") } : {},
-	);
+	// promise: a-large-impl-gets-the-same-contract-answer — stdin is read
+	// asynchronously: a sync read of fd 0 throws EAGAIN on a pipe whose writer
+	// has not finished (an impl over the ~64 KB pipe buffer arrives in parts),
+	// so a large impl was refused at random.
+	const implText = opts.implStdin ? await text(process.stdin) : undefined;
+	const result = checkPlanContract(projectRoot, plan, implText === undefined ? {} : { implText });
 	if (!result.ok) {
 		refuse(result.refusals);
 		return;
@@ -410,6 +411,8 @@ export interface PromisesHealthDeps {
 	now?: () => Date;
 	/** Runs `tick` every `everyMs` until the reader is stopped. */
 	repeat?: (everyMs: number, tick: () => Promise<void>) => Promise<void>;
+	/** Each look's standing; `readLookStanding` by default. */
+	readLooks?: (root: string) => Promise<import("../../lib/promises/standing.js").LookStandingRead>;
 }
 
 function repeatUntilSignal(everyMs: number, tick: () => Promise<void>): Promise<void> {
@@ -451,6 +454,7 @@ export async function promisesHealth(
 	}
 	const { healthLine, readHealth } = await import("../../lib/promises/health.js");
 	const { readHealthNames } = await import("../../lib/promises/display.js");
+	const { readLookStanding } = await import("../../lib/promises/standing.js");
 	const readReads =
 		deps.readHealth ?? ((root: string, reg: Registry) => readHealth(root, reg, { cacheMs: 0 }));
 	const write = deps.write ?? ((text: string) => process.stdout.write(text));
@@ -470,8 +474,11 @@ export async function promisesHealth(
 	const once = async () => {
 		const current = reread();
 		const reads = await readReads(projectRoot, current);
-		const names = readHealthNames(projectRoot);
-		write(`${JSON.stringify(healthLine(current, reads, now(), names))}\n`);
+		const names = await readHealthNames(projectRoot);
+		// Looks ride the same line (ui-promises A24): the editor shows the
+		// standing the admin's dashboard reads, from the same reader.
+		const looks = await (deps.readLooks ?? readLookStanding)(projectRoot);
+		write(`${JSON.stringify(healthLine(current, reads, now(), names, looks))}\n`);
 	};
 	await once();
 	if (everyMs === null) return;

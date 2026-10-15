@@ -52,6 +52,8 @@ export function nextSession(
 			return `In a new session, run: /cleanup ${plan}`;
 		case "audit":
 			return `In a new session, run: /audit ${plan}`;
+		case "shorten-reason":
+			return `In a new session, shorten the ${step.ritual}_reason in ${plan}'s impl.md to one sentence of at most 120 characters, then run: /retrospective ${plan}`;
 		case "review":
 			return `In a new session, run: /retrospective ${plan}`;
 		case "judgement":

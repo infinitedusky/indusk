@@ -1,0 +1,7 @@
+{
+	"devices": [
+		{ "name": "phone", "width": 390, "height": 844, "pixelRatio": 3 },
+		{ "name": "narrow-laptop", "width": 1024, "height": 768, "pixelRatio": 2 },
+		{ "name": "desktop", "width": 1440, "height": 900, "pixelRatio": 2 }
+	]
+}

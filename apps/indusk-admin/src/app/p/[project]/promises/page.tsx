@@ -12,7 +12,10 @@ import {
   alarmSource,
   type SourceName,
 } from "@infinitedusky/indusk-mcp/promises/sources";
-import { readStanding } from "@infinitedusky/indusk-mcp/promises/standing";
+import {
+  readLookStanding,
+  readStanding,
+} from "@infinitedusky/indusk-mcp/promises/standing";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import {
   PromisesDashboard,
@@ -65,6 +68,20 @@ interface PromisesRouteProps {
  * Stale-path handling parallels the scorecards page: an unregistered or
  * deleted project renders `<StaleProjectFailurePage>` (HTTP 200).
  */
+/**
+ * Which dashboard state this page drew, for the look check (ui-promises Build
+ * Phase 6): a registry with promises is the default, one without any the
+ * empty state; no registry reports neither. The nav and a promise's states
+ * are not reported here, so the check reads them unchecked.
+ */
+function dashboardLookState(
+  hasRegistry: boolean,
+  promises: number,
+): string | undefined {
+  if (!hasRegistry) return undefined;
+  return promises > 0 ? "dashboard.default" : "dashboard.empty";
+}
+
 export default async function PerProjectPromisesPage({
   params,
   searchParams,
@@ -134,7 +151,12 @@ export default async function PerProjectPromisesPage({
   const standing = reads
     ? await readStanding(projectPath, { health: reads })
     : [];
-  const planNames = readHealthNames(projectPath);
+  // Looks beside the promises (ui-promises ADR decision 7): each look's
+  // standing from the same package reader the nav counts.
+  const looks = await readLookStanding(projectPath, {
+    cacheMs: readAdminRefreshMs(projectPath),
+  });
+  const planNames = await readHealthNames(projectPath);
   const declarations = readPlanHierarchy(projectPath);
   const rows = buildRows(standing, {
     planTitles: planNames.planTitles,
@@ -142,7 +164,10 @@ export default async function PerProjectPromisesPage({
     declarations,
   });
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      className="flex flex-col gap-4"
+      data-look-state={dashboardLookState(registry !== null, rows.length)}
+    >
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       {!read.ok && "problems" in read && (
         <PromisesProblems problems={read.problems} />
@@ -159,6 +184,8 @@ export default async function PerProjectPromisesPage({
           promiseHrefPrefix={`/p/${project}/promises/`}
           observed={observed}
           timelines={timelines}
+          looks={looks.rows}
+          looksHref={`/p/${project}/looks`}
         />
       )}
     </div>

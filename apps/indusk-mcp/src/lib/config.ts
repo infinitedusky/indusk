@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
+import { coreDocumentIn } from "./workflow-types.js";
 
 /**
  * Resolve the InDusk project root by walking up from the given directory
@@ -272,6 +273,24 @@ export interface InduskConfig {
 	 */
 	planning?: {
 		dead_draft_days?: number;
+		/**
+		 * Planning documents this project does not write (new-project-flow): a
+		 * plan in it reads each as skipped, never missing. The brief and the
+		 * test plan are the core and cannot be named - reading a config that
+		 * does refuses, naming it.
+		 */
+		documents_off?: string[];
+	};
+	/**
+	 * Practices the project's creation recommended and the person kept or
+	 * declined (new-project-flow). A declined one carries the person's reason,
+	 * in their words.
+	 */
+	recommendations?: { name: string; kept: boolean; reason?: string }[];
+	/** Conversations not yet kept as plans, held in the project's home. */
+	drafts?: {
+		/** A draft untouched this many days is discarded by `indusk plans archive-dead` (default 30). */
+		max_age_days?: number;
 	};
 	/**
 	 * Workbench topology (versioned-workbench). A workbench wraps N >= 1 repos.
@@ -362,6 +381,8 @@ export const DEFAULT_SWEEP_TTL_MINUTES = 7 * 24 * 60;
 
 /** Default dead-draft age threshold for `indusk plans archive-dead`. */
 export const DEFAULT_DEAD_DRAFT_DAYS = 30;
+/** Default age after which `indusk plans archive-dead` archives an untouched draft conversation. */
+export const DEFAULT_DRAFT_MAX_AGE_DAYS = 30;
 
 /** Read `agents.sweep_ttl_minutes` with the 7-day default. Defaults live here, in the reader. */
 export function getSweepTtlMinutes(projectRoot: string): number {
@@ -389,6 +410,12 @@ export function getTrunkBranches(projectRoot: string): string[] {
 		branches.every((b) => typeof b === "string")
 		? branches
 		: DEFAULT_TRUNK_BRANCHES;
+}
+
+/** Read `drafts.max_age_days` with the 30-day default, in the reader. */
+export function getDraftMaxAgeDays(projectRoot: string): number {
+	const v = readConfig(projectRoot)?.drafts?.max_age_days;
+	return typeof v === "number" && v > 0 ? v : DEFAULT_DRAFT_MAX_AGE_DAYS;
 }
 
 export function getDeadDraftDays(projectRoot: string): number {
@@ -442,7 +469,15 @@ export function getConfigPath(projectRoot: string): string {
 export function readConfig(projectRoot: string): InduskConfig | null {
 	const configPath = getConfigPath(projectRoot);
 	if (!existsSync(configPath)) return null;
-	return JSON.parse(readFileSync(configPath, "utf-8"));
+	const config: InduskConfig = JSON.parse(readFileSync(configPath, "utf-8"));
+	const off = config.planning?.documents_off;
+	const core = Array.isArray(off) ? coreDocumentIn(off) : null;
+	if (core !== null) {
+		throw new Error(
+			`${configPath}: planning.documents_off names "${core}", which cannot be turned off - a plan always keeps its brief and its test plan`,
+		);
+	}
+	return config;
 }
 
 export function writeConfig(projectRoot: string, config: InduskConfig): void {
