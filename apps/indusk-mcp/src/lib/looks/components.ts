@@ -42,11 +42,17 @@ export const MARKUP_EXTENSIONS = new Set([
 	".mdx",
 ]);
 
-const NOT_AN_IMPLEMENTATION = /\.(?:test|spec|stories)\.[cm]?[jt]sx?$|(?:^|\/)__tests__\//;
+const TEST_FILE = /\.(?:test|spec)\.[cm]?[jt]sx?$|(?:^|\/)__tests__\//;
+const STORY_FILE = /\.stories\.[cm]?[jt]sx?$/;
+
+/** Whether a path is a test file: `*.test.*`, `*.spec.*`, or under `__tests__/`. */
+export const isTestFile = (file: string): boolean => TEST_FILE.test(file.replaceAll("\\", "/"));
 
 /** Whether a source file may implement a component: neither a test nor a story. */
 export const isImplementationFile = (file: string): boolean =>
-	MARKUP_EXTENSIONS.has(extname(file)) && !NOT_AN_IMPLEMENTATION.test(file.replaceAll("\\", "/"));
+	MARKUP_EXTENSIONS.has(extname(file)) &&
+	!isTestFile(file) &&
+	!STORY_FILE.test(file.replaceAll("\\", "/"));
 
 /** A line a comment owns outright, whose `data-component` is prose and not markup. */
 const isCommentLine = (line: string): boolean => /^\s*(?:\/\/|\/\*|\*|\{\/\*)/.test(line);
