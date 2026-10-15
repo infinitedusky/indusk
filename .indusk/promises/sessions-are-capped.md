@@ -2,11 +2,13 @@
 name: sessions-are-capped
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: admin
 owner: sessions-per-plan
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/session/limits.ts
+tests:
+  - apps/indusk-mcp/src/lib/session/manager.test.ts
 incidents: []
 ---
 
@@ -14,3 +16,4 @@ The number of sessions running together on a machine is capped by sessions.max i
 
 ## History
 - 2026-10-14 — declared (sessions-per-plan), from its planning conversation.
+- 2026-10-14 — enforced, confirmed for sessions-per-plan: proven by row A8, row A9, row A14, row A15.

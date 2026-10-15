@@ -1,0 +1,503 @@
+---
+title: "Plan titles and stories"
+date: 2026-10-14
+status: completed
+trajectory: required
+test_phases: required
+test_levels: required
+test_purpose: required
+rationale: required
+gate_policy: ask
+approved_brief: "6969084f4c82f8d416fb0f82af9106c575e0516bbbde08591ca6492816721ef8"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-15T00:14:23.699Z"
+accepted: 2026-10-15T03:31:54.882Z
+accepted_by: person
+---
+
+# Plan titles and stories
+
+## Goal
+
+Every plan is named by its title in the admin and the editor, the handle kept for links; a master plan's page tells its story from a new `subplan-row` component; Needs you lists a plan waiting on an amendment by the same rule as its page; and every live plan gets its title written where the admin reads it (ADR decisions 1–7).
+
+## Scope
+
+### In Scope
+- One title rule in the package (`planTitle`, `readPlanName`), read from the brief or the master, carried on the admin's `Plan`, and used by the health line.
+- `subplans:` entries that carry a title and description for a plan not yet started.
+- The master plan page (`plan.master`) and `SubplanRow` (`subplan-row.released|draft|queued`).
+- `planWaiting` knowing amendments; the decision route refusing one.
+- Titles in the nav, Needs you, Paths, the plan and brief pages' heading and crumb; the nav story retitled and its mockups re-approved.
+- Titles and descriptions written into every plan that is not archived, where the admin reads it.
+- `indusk promises change a-plan-reads-by-its-title`.
+
+### Out of Scope
+- Retitling archived plans (brief: Not promised).
+- Closing, archiving or merging the plans research flagged (Sandy's call).
+- The root master's own heading in the nav (`root.title`), which names the project's master, not a plan.
+
+## Boundary Map
+
+| Phase | Produces | Consumes |
+|-------|----------|----------|
+| Build Phase 1 | `planTitle` (words fallback), `readPlanName`, `readHealthNames` over `master.md`, the health line's fallback, `PlanDeclarations.declaredTitles`, `Plan.title` / `Plan.description` | `display.ts`, `plan-parser.ts`, `planning-reader.ts` |
+| Build Phase 2 | `planWaiting`'s `amendments` input and `on: "amendment"`, `amendmentsWaiting`, an async `readWaiting`, the decision route's refusal | `waiting.ts`, `amendments.ts`, `approved-brief.ts`, `decisions-reader.ts` |
+| Build Phase 3 | the nav, Needs you, Paths and `PlanFrame` named by `plan.title`; the retitled `Nav` story and re-approved nav mockups | `Plan.title` (Build Phase 1) |
+| Build Phase 4 | `SubplanRow` and its stories, `lib/master-story.ts`, `MasterStory`, `plan.master` look state, `/doc/master`, recomposed `plan.master`, the changed promise | `declaredTitles`, `Plan.title` (Build Phase 1), `buildGroups` |
+| Build Phase 5 | titles and descriptions in every live plan's brief or master | the rule (Build Phase 1), the pages (Build Phases 3–4) |
+
+## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State | Level | For | Test |
+|----|---------|-------------|-----------|-------|-------|-----|------|
+| A1 | A master plan's page opens with the master's title as its heading and what the master is for beneath it, then how many of its plans are released, in draft and queued; the released count is the one its Path shows in the nav | Build Phase 1 | Build Phase 4 | passing | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/app/p/[project]/plan/[name]/master.test.tsx |
+| A2 | The page lists every plan the master declares, in the declared order, numbered from 1, each by its title with its description | Build Phase 1 | Build Phase 4 | passing | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/app/p/[project]/plan/[name]/master.test.tsx |
+| A3 | A released plan's row says "Released" and opens that plan; a plan in draft or being built says its stage as the nav says it and opens that plan; a declared plan with no folder says "Queued", is dimmed, opens nothing, and shows the title and description its master wrote | Build Phase 1 | Build Phase 4 | passing | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/app/p/[project]/plan/[name]/master.test.tsx |
+| A4 | A master keeps its plans in declared order whether each is written as a name alone or as a name with a title and description; a plan declared by name alone with no folder reads as its handle in words with no description | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-master-plan-tells-its-story | apps/indusk-mcp/src/lib/__tests__/plan-declarations.test.ts |
+| A5 | A master plan's page tells the look check it draws `plan.master`, whatever state the master's own documents are in | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/look-state.test.ts |
+| A6 | `plan.master`, the retitled plan and nav screens and the three `subplan-row` stories read approved, and the running admin holds each by value at every reference device in a real browser, against a fixture master with a plan in each stage | Test Phase 1 | Build Phase 4 | passing | contract | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/__tests__/plan-stories.contract.test.ts |
+| A7 | Live: on the running admin, Day's and Dawn's master pages each say what the master is for and list every plan in order with its title, description and stage | Build Phase 5 | Build Phase 5 | passing | live check | a live check of a-master-plan-tells-its-story and the brief's first expectation, recorded in Build Phase 5; the promise is proven by A1, A2, A3 and A6 | manual: recorded in Build Phase 5's Verification |
+| A8 | A plan whose brief has a short title is named by it; one with no title, or a title that is only its handle, reads as its handle in words ("cockpit-redraw" reads "Cockpit redraw", product words spelled their way) | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A9 | A master plan is named by the title written in its `master.md`, and its description is the one written there | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A10 | In the editor, a promise whose plan the checkout cannot read is grouped under that plan's handle in words, never the bare handle | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/__tests__/promise-health-names.test.ts |
+| A11 | Every plan row and Path in the nav, and every plan under Needs you, reads by its title with initials from that title; each still links to `/p/<project>/plan/<handle>` | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
+| A12 | The plan page's and the brief page's heading and crumb read the plan's title; the address keeps the handle | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/app/p/[project]/plan/[name]/header.test.tsx |
+| A13 | A plan worked in its own worktree is named by the title written in that worktree's brief, not the trunk's | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/planning-reader.title.test.ts |
+| A14 | A plan waiting only on an amendment is reported as waiting on the person, at its Brief step; an approved plan with no amendment and nothing else waiting is not | Test Phase 1 | Build Phase 2 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A15 | That plan is listed under Needs you on every page, as its own page already says it waits | Test Phase 1 | Build Phase 2 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
+| A16 | An answer sent to an amendment's wait through the plan's decision is refused, pointing at the amendment card, and the plan is neither approved nor released | Build Phase 2 | Build Phase 2 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-admin/src/lib/decisions.test.ts |
+| A17 | Every active plan is still one click away from the plan page, the dashboard and a promise page, now under its title | Test Phase 1 | Test Phase 1 | passing | unit | promise: every-plan-is-one-click-away | apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
+| A18 | Paths and their plans keep the declared order, nesting and released counts under their titles | Test Phase 1 | Test Phase 1 | passing | unit | promise: paths-keep-their-order | apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx, apps/indusk-admin/src/lib/plan-groups.test.ts |
+| A19 | With a plan whose title is as long as the longest written, the drawer at 400 px still leaves no page scrolling sideways | Test Phase 1 | Test Phase 1 | passing | unit | promise: the-nav-fits-a-phone | apps/indusk-admin/src/app/p/[project]/cockpit-phone.test.tsx |
+| A20 | The plan page still opens with the description, now under the title, and whether the brief is finished, one click from the brief | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/components/plan/PlanSummary.test.tsx, apps/indusk-admin/src/__tests__/plan-page-layout.test.tsx |
+| A21 | The admin and the editor name a plan by the package's one title rule; neither holds a second | Test Phase 1 | Test Phase 1 | passing | unit | regression: display-names' single definition, which the title changes in the package, the admin and the editor touch | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
+| A22 | A plan whose title in its own worktree differs from its copy on the trunk is named by the worktree's title on the Promises page and in the editor, as the nav names it — one plan, one name everywhere | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
+| A23 | A plan's stage reads the same in the nav and on its master's page — waiting on the person, released, and each status — because both ask one rule | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/plan-stage.test.ts |
+| A24 | A plan declared in a master with no folder yet reads by its declared title, else its handle in words through the project's product words, the same in the nav and on the master's page | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/plan-groups.test.ts |
+| A25 | A master plan's page still shows what any plan page shows around its story — the trust notice, a waiting amendment or decision with its answer, the history and the way to ask about the plan — so a master that waits on the person can be answered from its page | Build Phase 8 | Build Phase 8 | passing | unit | promise: decisions-wait-in-one-place, promise: a-master-plan-tells-its-story | apps/indusk-admin/src/app/p/[project]/plan/[name]/master.test.tsx |
+| A26 | The Promises page, a promise's page, the incidents table and the Looks page's plan picker name each plan by its title, a Path group by its master's title, and a plan with no title, or a declared title that is just its handle, as its handle in words — never a bare folder name | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/promise-dashboard.test.ts |
+| A27 | A plan whose brief changed after approval is found waiting on its amendment by the admin's own lookup, read in its worktree — not only by a stand-in; a plan whose brief is unchanged, or whose approval cannot be read, waits on nothing | Build Phase 8 | Build Phase 8 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/amendments.test.ts |
+
+### Deferred Verification
+
+- **The retitled names say what each plan is (test plan U1)**
+  - reason: a judgement of wording, not an observable rule
+  - would require: a person reading them
+  - mitigation: Sandy reads the retitle commits at review; the second expectation's count (Build Phase 5 Verification) lists every live plan still read by its handle
+
+## Checklist
+
+### Test Phase 1: Author the assertions, RED
+
+**Tier**: med — the work step's default
+
+**Goal**: author every row that can honestly be authored now, and record the ones that cannot.
+
+- [x] Author A8, A9 in `display.test.ts`: `planTitle(undefined, "cockpit-redraw")` and `planTitle("cockpit-redraw", "cockpit-redraw")` read "Cockpit redraw", `planTitle(undefined, "vscode-extension")` reads "VS Code extension"; `readHealthNames` over a temp project with `.indusk/planning/day/master.md` (`title: "InDusk v4: Day"`, `description: "…"`) names `day` "InDusk v4: Day". RED: today the folder name comes back and `master.md` is not read. Replace the two existing `toBe("my-plan")` expectations with the words, since they assert the old rule
+- [x] Author A10 in `promise-health-names.test.ts`: a promise owned by `gone-plan`, with no `planTitles` entry, carries `planTitle` "Gone plan". RED: `?? p.owner` gives the handle
+- [x] Author A4 in `plan-declarations.test.ts`: a temp `parent/master.md` with `subplans: [one, { name: two, title: "Second", description: "The second." }, three]` declares `["one", "two", "three"]`, and `declaredTitles.parent.two` is `{ title: "Second", description: "The second." }`; a names-only master declares as before with no titles. RED: the mapping entry is dropped today (`stringArray`)
+- [x] Author A14 in `waiting.test.ts`: an approved plan snapshot with `amendments: [{ plan: "p", count: 1 }]` and no session or build is reported `on: "amendment"`, step "Brief"; the same plan with no amendment is not reported; a question still outranks the amendment. RED: `planWaiting` ignores `amendments`. (indusk-mcp's tsconfig excludes tests, so the new input compiles in vitest and fails on its assertion)
+- [x] Author A11 in `cockpit-nav.test.tsx`: each fixture plan in `TITLES` (alpha-one, beta-one, beta-two, gamma-one, undeclared-plan) has a nav row whose visible name is its title and whose link is `/p/cockpit-proj/plan/<handle>`; a Path row reads its parent's title; the row's initials are `initialsOf(title)`. RED: rows show the handle
+- [x] Author A15 in `cockpit-nav.test.tsx`: add an `AMENDED` set to `cockpit-fixture.ts` naming one approved fixture plan that waits on nothing else (the mock ignores it until Build Phase 2); the test expects `a[data-needs-you="<that plan>"]` on the plan page, the dashboard and a promise page. RED: the nav does not list it
+- [x] Author A12 in `header.test.tsx`: the plan page's `h1` and crumb read `titleOf(plan)` for a fixture plan with a title, and the brief page's the same; the page's `data-plan-name` keeps the handle. RED: both show the handle
+- [x] Author A6 in `plan-stories.contract.test.ts`, listed in `vitest.tiers.ts` `SYSTEM`. Move `cockpit-redraw.contract.test.ts`'s throwaway-project builder (`plan`, `doc`, `brief`, `impl`, the `looks-fixture-*` plans, the `dusk` registration) into `src/__tests__/helpers/looks-fixtures.ts`, with A10's assertions unchanged, and add a fixture master named `indusk-v4-day` (the path `screens.json` already declares for `plan.master` and `subplan-row`) with a `description:` and `subplans:` naming `looks-fixture-sub-released` (archived, its retrospective saying `Landed on main at abc1234, 2026-10-01.` and the fixture config's `workflow.steps.release.changelog` naming it in a dated release), `looks-fixture-sub-draft` (a draft brief) and `{ name: looks-fixture-sub-queued, title, description }`. Screens: `plan.master`, `plan.parts`, `plan.working`, `plan.needs-you`, `plan.released`, `nav.expanded`, `nav.wide`; stories: `subplan-row.released`, `subplan-row.draft`, `subplan-row.queued`; the same three checks as A10 (approved, held, never-checked fails), with A10's `nav.wide` carve-out below 760 px. RED: `plan.master` is not reported and the `subplan-row` stories do not exist
+- [x] A19: give one fixture plan in `cockpit-fixture.ts` a title as long as the longest written (`Contract UI — the admin organised around premises, promises and phases`, 72 characters), and add `promise: the-nav-fits-a-phone` beside `cockpit-phone.test.tsx`'s A7, which passes today and must keep passing once the nav draws titles
+- [x] Add the row tokens to the regression guards: `promise: every-plan-is-one-click-away` (already in `cockpit-nav.test.tsx`, A17), `promise: paths-keep-their-order` to `plan-groups.test.ts` (A18), `promise: a-plan-page-shows-the-parts-of-its-brief` (already in `PlanSummary.test.tsx` and `plan-page-layout.test.tsx`, A20); A21 is `display-names-single-definition.test.ts` as it stands
+- [x] Confirm each red row fails on its own assertion rather than on a missing import
+- [x] Shape (`apps/indusk-admin/src/__tests__/helpers/looks-fixtures.ts`) — the exported builder `plan` is renamed `writePlan` so it reads beside `writeConfig` and `writeLooksPlans` as what it does. Rule: Does the name say what the code is for, rather than how it works?
+
+#### Deferred to Build Phase 1
+
+- **A1, A2, A3**: the fixture they render needs `Plan.title`, `Plan.description` and `PlanDeclarations.declaredTitles`, which Build Phase 1 introduces, and the admin's tests are type-checked (`typecheck.test.ts`), so the file would fail `tsc` today. Written red at the end of Build Phase 1, passing at Build Phase 4. Body reviewed:
+
+  ```tsx
+  // master.test.tsx — the cockpit fixture's path-beta as the master: beta-one
+  // released, beta-two being built, and beta-three declared with a title and
+  // description but no folder (added to DECLARATIONS.subplans and declaredTitles).
+  // Build Phase 1 also adds to cockpit-fixture.ts an exported `DESCRIPTIONS`
+  // (plan -> description, set on each fixture Plan beside its title from TITLES)
+  // covering path-beta, beta-one and beta-two. Adding beta-three to path-beta
+  // moves its nav count from 1/2 to 1/3 in cockpit-nav.test.tsx's A4; Build
+  // Phase 1 updates that expectation in the same edit. The row's number slot is
+  // a node the page passes in carrying data-testid="subplan-number", as the nav
+  // passes PlanNumber, so the component's own markup holds no test hook.
+  const open = async (name: string) =>
+    render((await PlanPage({ params: Promise.resolve({ project: PROJECT, name }) })) as React.ReactElement);
+
+  it("A1 opens with the master's title, what it is for, and its counts", async () => {
+    const screen = await open("path-beta");
+    await expect.element(screen.getByRole("heading", { level: 1 })).toHaveTextContent(titleOf("path-beta"));
+    await expect.element(screen.getByTestId("master-purpose")).toHaveTextContent(DESCRIPTIONS["path-beta"]);
+    await expect.element(screen.getByTestId("master-counts")).toHaveTextContent("1 of 3 released");
+    await expect.element(screen.getByTestId("master-counts")).toHaveTextContent("1 in draft");
+    await expect.element(screen.getByTestId("master-counts")).toHaveTextContent("1 queued");
+  });
+
+  it("A2 lists every declared plan in order, numbered, by title with its description", async () => {
+    const screen = await open("path-beta");
+    const rows = [...screen.container.querySelectorAll('[data-component="subplan-row"]')];
+    expect(rows.map((r) => r.querySelector("[data-testid=subplan-number]")?.textContent)).toEqual(["1", "2", "3"]);
+    expect(rows.map((r) => r.querySelector("b")?.textContent)).toEqual([
+      titleOf("beta-one"), titleOf("beta-two"), "Beta three, queued",
+    ]);
+    expect(rows[0]?.textContent).toContain(DESCRIPTIONS["beta-one"]);
+  });
+
+  it("A3 a released row opens its plan, a draft says its stage, a queued one opens nothing", async () => {
+    const screen = await open("path-beta");
+    const row = (s: string) => screen.container.querySelector(`[data-component="subplan-row"][data-state="${s}"]`);
+    expect(row("released")?.getAttribute("href")).toBe(`/p/${PROJECT}/plan/beta-one`);
+    expect(row("released")?.textContent).toContain("Released");
+    expect(row("draft")?.getAttribute("href")).toBe(`/p/${PROJECT}/plan/beta-two`);
+    expect(row("draft")?.textContent).toContain("Building");
+    expect(row("queued")?.tagName).not.toBe("A");
+    expect(row("queued")?.textContent).toContain("Queued");
+    expect(row("queued")?.textContent).toContain("The third, not started.");
+  });
+  ```
+- **A13**: its subject is `Plan.title`, a field Build Phase 1 adds; `tsc` refuses it today. Written and passing in Build Phase 1. Body reviewed:
+
+  ```ts
+  // planning-reader.title.test.ts — a real repository, as http-plan-worktrees.test.ts
+  // builds one: `git init -b main` in a temp project, plan `p` committed with
+  // a brief saying `title: "Trunk name"`, `git worktree add <dir> -b plan/p main`,
+  // the worktree's brief rewritten to `title: "Worktree name"` and
+  // `description: "From the worktree."`, and the assignment record written by
+  // hand to `<git-common-dir>/indusk-plan-worktrees.json` as
+  // `{ version: 1, assignments: [{ plan: "p", path, branch: "plan/p", at }] }`.
+  it("A13 names a worktree plan by its worktree's brief", async () => {
+    const [p] = await readActivePlans(root);
+    expect(p?.title).toBe("Worktree name");
+    expect(p?.description).toBe("From the worktree.");
+  });
+  ```
+
+#### Deferred to Build Phase 2
+
+- **A16**: it builds a `Waiting` with `on: "amendment"`, a member `WaitingOn` gains in Build Phase 2; the admin's `tsc` refuses it today. Body reviewed:
+
+  ```ts
+  // decisions.test.ts adds `import { AMENDMENT_DECISION } from "@infinitedusky/indusk-mcp/plans/waiting";`
+  // (Build Phase 2 exports it from waiting.ts beside APPROVAL_DECISION).
+  it("A16 an answer to an amendment's wait is refused and neither approves nor releases", async () => {
+    const approve = vi.fn(async () => ({}));
+    const release = vi.fn(async () => ({}));
+    const waiting: Waiting = {
+      plan: PLAN, on: "amendment", step: "Brief", decision: AMENDMENT_DECISION,
+      accept: "Approve", alternative: "Not yet",
+    };
+    // `deps` is the file's own DecisionDeps builder; its overrides replace approve and release.
+    await expect(
+      answerDecision(deps({ approve, release }), PROJECT, waiting, { choice: "accept" }),
+    ).rejects.toThrow(/amendment card/);
+    expect(approve).not.toHaveBeenCalled();
+    expect(release).not.toHaveBeenCalled();
+  });
+  ```
+
+#### Deferred to Build Phase 4
+
+- **A5**: `planLookState` gains its `master` input in Build Phase 4, and `"plan.master"` joins `PlanLookState` there; `tsc` refuses both today. Body reviewed:
+
+  ```ts
+  it("A5 a master plan's page draws plan.master whatever its own documents say", () => {
+    for (const briefStatus of [null, "draft", "accepted"])
+      for (const waiting of [false, true])
+        for (const archived of [false, true])
+          for (const position of [undefined, "executing", "monitor"])
+            expect(
+              planLookState({ archived, position, waiting, briefStatus, master: true }),
+            ).toBe("plan.master");
+  });
+  ```
+
+#### Deferred to Build Phase 5
+
+- **A7**: a live check, no body.
+
+#### Regression Guards
+
+- **A17**: `cockpit-nav.test.tsx`'s "lists all forty plans … each linking to its page" already proves it; the row holds it while rows change from handles to titles.
+- **A18**: `cockpit-nav.test.tsx`'s A2–A4 and `plan-groups.test.ts` already prove order, nesting and counts; the row holds them through the retitle.
+- **A19**: `cockpit-phone.test.tsx`'s A7 already proves the 400 px fit; the long fixture title makes it measure a long name once the nav draws titles in Build Phase 3.
+- **A20**: `PlanSummary.test.tsx` and `plan-page-layout.test.tsx` already prove the description and the brief link; the row holds them while the heading above changes.
+- **A21**: `display-names-single-definition.test.ts` already refuses a second `planTitle`; the row holds it while three apps start naming plans by title.
+
+#### Test Phase 1 Verification
+
+- [x] A4, A8, A9, A10, A14 red on their own assertions (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts src/__tests__/promise-health-names.test.ts src/lib/__tests__/plan-declarations.test.ts src/lib/plans/waiting.test.ts`); A11, A12, A15 red on theirs and A17–A20 passing (`cd apps/indusk-admin && pnpm exec vitest run 'src/app/p/[project]/cockpit-nav.test.tsx' 'src/app/p/[project]/plan/[name]/header.test.tsx' 'src/app/p/[project]/cockpit-phone.test.tsx' src/lib/plan-groups.test.ts src/components/plan/PlanSummary.test.tsx src/__tests__/plan-page-layout.test.tsx`); A21 passing (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/display-names-single-definition.test.ts`)
+- [x] A6 red on its own assertion in the system tier (`cd apps/indusk-admin && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/plan-stories.contract.test.ts`: `plan.master was never checked`), and cockpit-redraw's A10 still passes from the moved fixture builder (`… src/__tests__/cockpit-redraw.contract.test.ts`); the admin type-checks (`pnpm exec tsc --noEmit -p .`)
+- [x] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
+
+#### Test Phase 1 Context
+
+- [x] `current.md` (Project, shared): plan-stories in flight; plans are being retitled, and worktree plans get their titles on their own branches in Build Phase 5
+
+#### Test Phase 1 Document
+
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (The nav): a note that plan rows are moving from handles to titles in plan-stories, so the page and the docs agree until it lands
+
+### Build Phase 1: A plan's title, defined once
+
+**Tier**: med — the work step's default
+
+- [x] Confirm this plan's worktree: `/Users/the_dusky/code/sandbox/dusk-worktrees/plan-stories` on `plan/plan-stories`, assigned (`indusk worktree list` names it; if not, `indusk worktree assign plan-stories <path>`) — worktree-per-plan default
+- [x] `display.ts`: `planTitle(title, handle, words = {})` answers the title up to " — "; when that is empty or equal to `handle`, `promiseWords(handle, words)`. New `readPlanName(planDir, handle, words)` returns `{ title, description }` from `brief.md`, else `master.md` (`description` null when neither writes one). `readHealthNames` uses it, so a master's title is read. Grep `planTitle(` for callers first (display, `readHealthNames`, the admin's `displayMock`)
+  ```typescript
+  export function planTitle(title: string | undefined, handle: string, words: Record<string, string> = {}): string;
+  export function readPlanName(planDir: string, handle: string, words?: Record<string, string>): { title: string; description: string | null };
+  ```
+- [x] `health-line.ts`: a promise whose owner has no `planTitles` entry carries `planTitle(undefined, owner, names.words)` instead of the bare owner (A10)
+- [x] `plan-parser.ts`: a `subplans:` entry is a name or a mapping `{ name, title?, description? }`; both keep declared order through the same segment guard; `PlanDeclarations` gains `declaredTitles: Record<string, Record<string, { title?: string; description?: string }>>`. Grep `PlanDeclarations` importers (`plan-groups.ts`, `PlanList.tsx`, `cockpit-fixture.ts`, `new-project-cli.test.ts`) and give each the field
+- [x] `planning-reader.ts`: `Plan` gains `title: string` and `description: string | null`, set from the copy the plan is read from (its worktree first) by `readPlanName`; every test fixture that builds a `Plan` (grep `: Plan = {` and `Plan[]` fixtures, `cockpit-fixture.ts` first) sets them, `cockpit-fixture.ts` from `TITLES` through `titleOf`
+- [x] Rebuild indusk-mcp's dist (`pnpm --filter @infinitedusky/indusk-mcp build`) so the admin reads the new exports
+- [x] Author A13 (`planning-reader.title.test.ts`) and A1–A3 (`master.test.tsx`, with `path-beta`'s `beta-three` declared with a title and description in the fixture's `DECLARATIONS`) from their reviewed bodies; A1–A3 red on their own assertions
+- [x] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-admin/src/lib/planning-reader.ts`) — readPlanFolder takes six positional parameters and readActivePlans passes `undefined` to reach the last; its fifth and sixth (projectRoot, words) become one named `context` object beside boundaries. Rule: Does the name say what the code is for, rather than how it works? / Does this unit have one reason to change?
+
+#### Build Phase 1 Verification
+
+- [x] A4, A8, A9, A10 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts src/__tests__/promise-health-names.test.ts src/lib/__tests__/plan-declarations.test.ts`), A21 still passes, and the related tests pass (`pnpm exec vitest related src/lib/promises/display.ts src/lib/promises/health-line.ts src/lib/plan-parser.ts`)
+- [x] A13 passes and A1–A3 are written red (`cd apps/indusk-admin && pnpm exec vitest run src/lib/planning-reader.title.test.ts 'src/app/p/[project]/plan/[name]/master.test.tsx'`); `pnpm exec tsc --noEmit -p .` clean in both packages; biome clean on changed files
+
+#### Build Phase 1 Context
+
+- [x] root (Key Decisions): "Plan titles and stories: a plan is named by its title (brief or master, else its handle in words) through one rule in the package; a master's page tells its story from `subplan-row`; Needs you counts amendments — see `/decisions/plan-stories`" — always-on because it is design intent every page and the editor name plans under
+- [x] `apps/indusk-mcp/CLAUDE.md`: a plan's name comes from `readPlanName` / `planTitle` in `promises/display`; nothing else turns a handle into words (guarded by `display-names-single-definition.test.ts`)
+
+#### Build Phase 1 Document
+
+- [x] `apps/docs/src/guide/briefs.md`: `title:` is a short name a person would say, `description:` a separate field; a plan with no title written reads as its handle in words
+- [x] `apps/docs/src/reference/cli/plans.md`: a `subplans:` entry may be `{ name, title, description }` for a plan not started yet; its own brief wins once it exists
+
+### Build Phase 2: Needs you counts an amendment
+
+**Tier**: med — the work step's default
+
+- [x] Author A16 in `decisions.test.ts` from its reviewed body, RED
+- [x] `waiting.ts`: `WaitingInput` gains `amendments?: ReadonlyArray<{ plan: string; count: number }>`; `WaitingOn` gains `"amendment"`; a plan with a count above 0 waits `on: "amendment"`, step "Brief", `decision: AMENDMENT_DECISION` ("The brief changed after it was approved. Review the change on the plan's page."), after a question and before review and approval
+- [x] `amendments.ts`: `amendmentsWaiting(planDir)` answers `[]` unless `briefStandingOf(planDir)` is `changed`, else `amendmentsOf(planDir)`; `AmendmentsUnreadable` reads as none, as `readPlanParts` reads it for the plan page. Rebuild the dist
+- [x] `decisions-reader.ts`: `readWaiting(project, projectPath, plans)` is async and passes each active plan's waiting amendments (its folder in its worktree, else the project) to `planWaiting`; its three callers (`layout.tsx`, the plan page, `api/plans/[name]/decision/route.ts`) await it; `decisionsReaderMock` in `cockpit-fixture.ts` passes `AMENDED`
+- [x] The plan page: its look state's `waiting` is `waiting !== undefined`, and `planPageWaiting` is deleted from `look-state.ts` (grep importers); a wait `on: "amendment"` draws the amendment card alone, no `DecisionCard`
+- [x] `decisions.ts`: `answerDecision` refuses a wait `on: "amendment"` before anything is delivered ("answered on the amendment card"), so its accept can never reach `release`; the route answers 409 with that message
+- [x] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-admin/src/lib/decisions-reader.ts`) — `readWaiting` reads the session, the builds and now the amendments inline; the amendment read becomes a named `amendmentCounts(projectPath, plans)` beside it. Rule: Should this inline block have been a named function or module? / Does this unit have one reason to change?
+
+#### Build Phase 2 Verification
+
+- [x] A14 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/plans/waiting.test.ts`); A15, A16 pass and cockpit-redraw's A16 (an amendment-only plan reports `plan.needs-you`) still passes (`cd apps/indusk-admin && pnpm exec vitest run 'src/app/p/[project]/cockpit-nav.test.tsx' src/lib/decisions.test.ts src/lib/look-state.test.ts src/components/cockpit/DecisionCard.test.tsx`); `vitest related` over the changed files passes; tsc and biome clean
+
+#### Build Phase 2 Context
+
+- [x] `apps/indusk-admin/CLAUDE.md`: what a plan waits on is `planWaiting`'s answer alone, amendments included; the nav and the plan page never add a wait of their own
+
+#### Build Phase 2 Document
+
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (Needs you): a plan waiting on an amendment is listed, and is answered on its amendment card
+
+### Build Phase 3: Titles in the admin
+
+**Tier**: med — the work step's default
+
+- [x] `PlanList.tsx`: `PlanItem` names a plan `plan.title` with `initialsOf(plan.title)`; `PlanGroupSection` passes the parent's title to `NavPath` (`name`), keeping the handle in `data-parent`, `data-plan-name` and `href`; `PlaceholderRow` names a declared plan by its `declaredTitles` title, else `planTitle(undefined, name)`
+- [x] `layout.tsx`: Needs you's `titles` come from the plans as read (`plan.title` over active and archived), not `readHealthNames`, so a worktree plan reads its own title
+- [x] `PlanFrame.tsx`: the `h1` and the crumb's last part read `plan.title`; `data-plan-name` keeps the handle. The brief page shares it
+- [x] `Nav.stories.tsx`: every plan and Path named by title (the research table's: "InDusk v2: Dawn", "InDusk v4: Day", "Workbench trust fixes", "Hooks from any folder", "Workbench execution", "Live phase progress", "Clean release build", "Context in every session", "Faster look checks", the Needs-you row "Cockpit redraw"), initials from the titles; `indusk looks stories admin` re-renders; `indusk looks status admin` lists `nav.*` and every mockup placing the nav as proposed; ask Sandy to approve them on the Looks page
+  - reopened (proposed, component changed: nav), 26: story `nav.collapsed`, `nav.expanded`, `nav.looks-current`, `nav.plan-current`; mockups `nav.collapsed`, `nav.expanded`, `nav.wide`, `brief.approved`, `brief.empty`, `brief.writing`, `dashboard.default`, `dashboard.empty`, `looks.default`, `looks.uncovered`, `plan.documents`, `plan.drafts`, `plan.history`, `plan.master`, `plan.needs-you`, `plan.new`, `plan.parts`, `plan.phases`, `plan.released`, `plan.working`, `promise.broken`, `promise.enforced`
+  - Sandy approved: all 26 on the Looks page, 2026-10-14
+- [x] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
+  - done: recorded in the two notes below (19a1fd17e)
+- [x] Shape (`apps/indusk-admin/src/components/PlanList.tsx`) — reviewed, left as-is: the placeholder title lookup (declared title, else planTitle of the handle) is a two-line expression used once; naming it would add a function for one call site, and the rule for a declared plan lives in planTitle
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+
+#### Build Phase 3 Verification
+
+- [x] A11, A12 pass and A17–A20 still pass (`cd apps/indusk-admin && pnpm exec vitest run 'src/app/p/[project]/cockpit-nav.test.tsx' 'src/app/p/[project]/plan/[name]/header.test.tsx' 'src/app/p/[project]/cockpit-phone.test.tsx' src/lib/plan-groups.test.ts src/components/plan/PlanSummary.test.tsx src/__tests__/plan-page-layout.test.tsx`); `indusk looks lint admin` clean apart from the proposed mockups awaiting Sandy; tsc and biome clean
+  - 45 tests in the six files pass; tsc clean; biome clean on every file this phase changed (two format errors remain in `http-promise-health.test.ts` and `new-project-routes.test.ts`, untouched here). `looks lint admin` leaves 22 findings: those naming a nav story are the reopened looks awaiting Sandy, 3 are `plan-looks` needing a story (another plan's), 4 are `subplan-row` needing a story (Build Phase 4)
+- [x] Once Sandy has approved the reopened mockups, cockpit-redraw's A10 passes again in the system tier (`pnpm exec vitest run --config vitest.system.config.ts src/__tests__/cockpit-redraw.contract.test.ts`)
+  - A10 passed (72.7 s). The first run failed only in teardown (`ENOTEMPTY` removing `.next-tests`) with the test itself green; rerun once, clean pass
+
+#### Build Phase 3 Context
+
+- [x] `apps/indusk-admin/CLAUDE.md`: a plan is named by `plan.title` and its initials come from it; the handle is for links, addresses and data attributes only
+
+#### Build Phase 3 Document
+
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (The nav, The plan page): plans and Paths read by their titles; the note from Test Phase 1 removed
+
+### Build Phase 4: The master plan tells its story
+
+**Tier**: med — the work step's default
+
+- [x] Author A5 in `look-state.test.ts` from its reviewed body, RED
+- [x] `SubplanRow` (`components/ui/SubplanRow.tsx`, `data-component="subplan-row"`, `data-state`): number, badge with initials, title, description, stage; a link when it has an `href`, a `div` when queued. Stories `Released`, `Draft`, `Queued` (`SubplanRow.stories.tsx`, `title: "ui/SubplanRow"`); `indusk looks stories admin`; ask Sandy to approve `subplan-row.released`, `subplan-row.draft`, `subplan-row.queued` against their mockups
+  - Sandy approved on the Looks page, 2026-10-14
+- [x] `lib/master-story.ts`: `masterStory(group, declaredTitles, isReleased)` turns the parent's `PlanGroup` from `buildGroups` into rows `{ number, handle, title, description, state: "released" | "draft" | "queued", stage, href? }` and counts `{ released, drafts, queued, total }`: released when a release shipped the plan (the Path count's rule), queued when it has no folder, else draft with the nav row's stage words; a Path inside reads as a draft or released row linking to its own master page. Unit-tested beside it
+- [x] `components/plan/MasterStory.tsx`: the purpose (`data-testid="master-purpose"`), the count line (`data-testid="master-counts"`) with "Read the master plan" to `/doc/master`, "The plans, in order" and its count, then a `SubplanRow` per row, drawn as `plan.master` draws them
+- [x] The plan page: a plan with declared subplans draws `PlanFrame` with the `master plan` tag and `MasterStory`, in place of `ParentPlanView`, the workflows rail, the status card and the parts; `ParentPlanView` and `MasterBar` deleted once grep shows no other importer (their tests with them)
+- [x] `planDocuments` serves a master's `master.md` as the document `master` ("Master plan"), so `/doc/master` opens it
+- [x] `look-state.ts`: `planLookState` takes `master` and answers `plan.master` first; the plan page passes it
+- [x] `plan.master` recomposed to place `subplan-row` by name (`<indusk-component name="subplan-row" state="…">`), its inline row CSS and its `indusk-new-components` meta removed; `indusk looks lint admin` reports no component drawn in it; ask Sandy to approve `plan.master` again
+  - Sandy approved on the Looks page, 2026-10-14
+- [x] `indusk promises change a-plan-reads-by-its-title --plan plan-stories --statement "Wherever InDusk names a plan, in the admin and in the editor, it shows the plan's title, a short name written in its brief or master, and its description is a separate field; a plan with no title written reads as its handle turned into words." --reason "titles are short names now, with the description its own field, and an unwritten title reads as words, not the handle"`, in double quotes because the sentence holds apostrophes; then `indusk promises check` clean
+- [x] Discovered by `vitest related`: six tests left red by Build Phase 3 (the nav's `planTitle` import reaches `node:fs` in the browser project; fixture plans had no `title`) — `planTitle` stubbed in `PlanList*.test.tsx`, `Promises.test.tsx` and `[project]/page.test.tsx`, and `title` added to their fixture plans
+- [x] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — reviewed the 26 files this phase changed (`rules.unreadable` empty, so every enabled extension's craft prose was read); nothing to change. `SubplanRow`, `MasterStory`, `masterStory` and the page's `masterPage` each have one job and a name for it, and the master branch of `PlanPage` is a short early return over named parts.
+
+#### Build Phase 4 Verification
+
+- [x] A1, A2, A3, A5 pass (`cd apps/indusk-admin && pnpm exec vitest run 'src/app/p/[project]/plan/[name]/master.test.tsx' src/lib/look-state.test.ts`) with `master-story`'s own tests; `vitest related` over the changed files passes; tsc and biome clean
+  - A1–A3 and A5 pass (18 tests with `master-story`'s 4 and `look-state`'s 11); `vitest related` over the changed files: 38 files, 183 tests pass; tsc clean; biome clean on every file this phase changed (the five errors it still reports are in `project-reader.ts`, `LiveRefresh.tsx`, `http-promise-remote.test.ts` and `new-project-routes.test.ts`, untouched here); `indusk promises contract plan-stories` passes; `looks lint admin` leaves only `no-approved-story` for the three `subplan-row` stories (awaiting Sandy) and `plan-looks`' `needs-a-story` (another plan's)
+- [x] A6 passes in the system tier (`cd apps/indusk-admin && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/plan-stories.contract.test.ts`) once Sandy has approved the stories and the recomposed `plan.master`; `indusk promises contract plan-stories` passes
+  - A6 passed in the system tier on the first run (3 tests, 56 s; no teardown failure); `indusk promises contract plan-stories` passes
+
+#### Build Phase 4 Context
+
+- [x] `apps/indusk-admin/CLAUDE.md`: a master plan's page is `plan.master`, its rows `SubplanRow`, its counts the Path group's (`lib/master-story.ts`), so the page and the nav agree
+
+#### Build Phase 4 Document
+
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (The master plan page) as drawn; `apps/docs/src/decisions/plan-stories.md` published from the ADR with its sidebar entry; changelog: Changed: "Plans read by their titles in the admin and the editor; a master plan's page tells its story, plan by plan; Needs you lists a plan waiting on an amendment."
+
+### Build Phase 5: Every live plan gets its title
+
+**Tier**: med — the work step's default
+
+Titles and descriptions come from research.md's tables. A description already written is kept; where research gives none and the old title has a description after its dash, that text becomes the description. Each plan is retitled where the admin reads it.
+
+- [x] On this branch, the plans with no worktree: `indusk-v2-dawn` ("InDusk v2: Dawn"), `indusk-v4-day` ("InDusk v4: Day", its description the approved `plan.master` mockup's two sentences), `indusk-demo` ("InDusk demo"), `promise-core` ("Promise core") in their `master.md`; `context-reaches-every-session` ("Context in every session"), `contract-ui` ("Contract UI"), `indusk-release` ("Release names its plans"), `looks-check-speed` ("Faster look checks"), `plan-premises` ("Project premises"), `workbench-watch-provisioning` ("Watched from day one") in their `brief.md`; and `subplans:` titles and descriptions in Day's and Dawn's `master.md` for each declared plan with no folder (research and the approved `plan.master` mockup: "Check at change time", "Claims proved honestly", "Test binding", "Uncovered changes", "Any executor", "Probe", "The review"). One commit, `plan(plan-stories): titles for the plans read from the trunk`
+- [x] In each plan's own worktree, on its own branch, frontmatter only, one commit per plan (`plan(<plan>): title and description (plan-stories)`): `clean-release-build` ("Clean release build"), `cockpit-audit-fixes` ("Cockpit audit fixes"), `story-first-phases` ("Story-first phases"), `mockup-matching` ("Mockup matching"), `instance-ports` ("Instance ports"), `owned-changes` ("Owned changes"), `stories-replace-mockups` ("Stories replace mockups"), `telemetry-destinations` ("Telemetry destinations"), `demo-scenarios` ("Demo scenarios"). First check each: `git -C <worktree> status --porcelain -- .indusk/planning/<plan>` empty, and no `indusk agent` session listed on it; skip any that is not, and list it in this item with why
+  - committed, each on its own branch `plan/<plan>`, frontmatter only: `clean-release-build` c2118a7df, `cockpit-audit-fixes` bc94a4d59, `mockup-matching` 46e80b0af, `instance-ports` 66c030b21, `owned-changes` 67d0ad26e, `stories-replace-mockups` eb6235093, `telemetry-destinations` 537d67f51. Where the old title was a sentence and no description existed, the sentence after its dash became the description
+  - skipped: `demo-scenarios` — its worktree has an uncommitted change to `.indusk/planning/demo-scenarios/brief.md` (someone's live work); it gets its title from its next session
+  - left as is: `story-first-phases` — its brief already carries the short title "Phase summaries" and a written description (kept; the research title "Story-first phases" was not applied over a title someone already wrote)
+  - no `indusk agent` session was registered on any worktree (`indusk agent list`: none)
+- [x] Each approved plan retitled above (`clean-release-build`, `cockpit-audit-fixes`, `story-first-phases`) reports no amendment (`indusk plans amendments <plan> --dir <its plan folder>` prints none)
+- [x] `.indusk/current.md` (Project, shared): the plans skipped above and `approve-then-improve` (untracked on `main`, the person's), each to get its title from its next session; `release-preconditions` (nothing written, title unknown), `user-zero` and `jev-decision-model` (research only, read as their handles in words) left as research flagged them
+
+#### Build Phase 5 Verification
+
+> Count method (2026-10-14): `readActivePlans` resolves every root to the trunk checkout, so it cannot see these unmerged commits. The count read each live plan's own copy instead (its worktree's brief or master where one exists, else this branch's, else the trunk's): the plans still titled by their handle are `main-suite-green`, `release-preconditions` and `skip-reason-why` (the last two with no or only a description), plus `approve-then-improve`, `user-zero`, `jev-decision-model` (no brief) and `demo-scenarios` (skipped, its old long title kept), all named in `current.md`. A7's State is `written` (the Verification item below is its procedure) so the test-first gate lets Phase 5 items be checked; it passes only when the person records the live check. Shape refused: "Build Phase 5's verification is not green" while A7 is open.
+
+- [x] The second expectation's count: no plan that is not archived reads by its bare handle (`node -e` over `readActivePlans` from each project copy, printing every plan whose `title` equals its handle; expected none) and the plans whose title is their handle in words are exactly those listed in `current.md` above
+- [x] A7, live check: on the running admin, open Day's and Dawn's master pages and read each top to bottom: what the master is for, every plan in order with its title, description and stage, the counts matching the nav. Recorded here with the date and what was seen
+  - 2026-10-14, Sandy, on an admin (:3941) reading a clone of this branch (the worktree admin reads a plan's own fields from the trunk's copy until the branch lands, so Day's heading there read "Day" with no purpose): Day's page reads "InDusk v4: Day · master plan", its purpose, "17 of 26 released · 2 in draft · 7 queued", then the plans in order, each with its title, its description where one is written, and its stage; clicking a plan opens its page. Dawn's the same. Sandy: "this looks good"
+- [x] Shape (Build Phase 5) — `prepareShapeReview` answered `review` with one file, `apps/docs/src/reference/cli/plans.md`, and `rules.unreadable` empty: the phase changed frontmatter and one docs page, no code; nothing to judge
+
+#### Build Phase 5 Context
+
+- [x] `current.md` (Project, shared): plan-stories in flight entry replaced by what is left: the skipped plans and Sandy's calls from research's flags
+
+#### Build Phase 5 Document
+
+- [x] `apps/docs/src/reference/cli/plans.md` (`plans start`): a new plan's title is its handle, which reads as words until a person writes a short title
+
+### Build Phase 6: Falsification — the nav and the Promises page name a worktree plan differently
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether `a-plan-reads-by-its-title` holds for a plan whose worktree copy and trunk copy disagree. Found by reading the code (2026-10-14): the admin's nav reads each plan from its worktree copy first (`readActivePlans` via the package's `resolvePlanCopies`, A13), but `readHealthNames` — behind the admin's Promises page and promise page (`app/p/[project]/promises/page.tsx`, `promises/[name]/page.tsx`) and the editor's health line — reads only the trunk's folders (`planFolders(projectRoot)`). Concretely today: `story-first-phases` reads "Phase summaries" in its worktree and "Story-first impl phases" on `main`, so the nav and the Promises page give one plan two names.
+
+- [x] `readHealthNames` names each plan from the same copy the nav reads: the plan's worktree copy when it is assigned one, else the trunk's — through the package's copy resolver, never a second walk of the assignments. `resolvePlanCopies` is async and `readHealthNames` is sync with callers in the CLI (`promises health --json`), the admin's two Promises pages and the editor's names: either add a sync read of the assignment record beside the resolver (one rule, tested to agree with it) or make `readHealthNames` async and update its callers — grep them first and record which
+  - Chose async: `readHealthNames` now awaits `resolvePlanCopies`, so the nav and the Promises page share one rule for which copy is live (assignment record, git's worktree list, doubled/gone/missing). A sync read of the record beside the resolver would have been a second walk of the assignments, with a test needed to keep the two agreeing. Callers updated: the CLI (`promises health --json`), the admin's nav layout, plan page and two Promises pages, and the package's tests; admin test mocks return plain values and `await` accepts them. Titles come from the live copy, including plans with no trunk folder; dates stay on the trunk's folders.
+- [x] The editor gets its names from `promises health --json`, so it follows; confirm with `apps/vscode-extension/src/core/names.test.ts` unchanged and passing
+
+#### Build Phase 6 Verification
+- [x] A22: a fixture project with a plan assigned to a worktree whose brief's title differs from the trunk copy's; `readHealthNames` returns the worktree's title, and the admin's `readActivePlans` returns the same (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/promises/display.test.ts`, plus `pnpm exec vitest related` over the changed files in both packages); A8–A13 and A21 still pass; tsc and biome clean
+- [x] Shape — reviewed the 7 files this phase changed (`rules.unreadable` empty, so every enabled extension's craft prose was read); nothing to change. `readHealthNames` reads the changelog, then names each folder, then names branch-only plans, each step a few lines over named helpers (`readPlanName`, `planDates`); the callers changed by one `await`.
+
+#### Build Phase 6 Context
+- [x] `apps/indusk-mcp/CLAUDE.md` (over budget, shrinking edits only): fold into the display-names entry that a plan's names are read from the copy the nav reads, worktree first
+
+#### Build Phase 6 Document
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (the Promises page): a plan reads by the title in its own worktree while it is worked there, as in the nav
+
+#### Build Phase 6 Falsification Summary
+- Searched without a hypothesis: `subplans:` entries as mappings (every reader goes through `plan-parser`'s `subplanEntries`); a non-string or date `title:` (the frontmatter reader returns a string or nothing); an empty part before the dash (falls back to the handle in words); the master story's counts against the nav's Path count (one group, one rule); nested Paths in a master's story; `answerDecision` on an amendment wait (refused); initials from titles (Paths draw none; plan marks could collide before this plan too).
+- Not investigated: older installed versions reading the new `subplans:` mappings (they drop the queued placeholders only, never a plan with a folder; the always-on server reads no declarations); the CLI's own plan listings, which the promise does not cover.
+
+### Build Phase 7: Cleanup — one rule for a plan's stage, one for a queued plan's title
+
+**Tier**: med — the work step's default
+
+**Goal**: decompose what this plan grew across files, per the rule that one fact has one home (a second copy drifts). The master page was built to say each plan's stage "as the nav row says it", and both files now hold that rule; and a queued plan's title is worked out in both the nav and the master story, one of them without the project's product words.
+
+- [x] Extract the stage rule — `step ?? (released ? "Released" : statusToNavMark(...).stage)`, in `components/PlanList.tsx`'s `PlanItem` and again as `stageOf` in `lib/master-story.ts` — into `planStage(plan, released, waiting)` in a new `lib/plan-stage.ts`, used by both; `PlanItem`'s row state (`needs` when waiting) stays where it is. Basis: one fact, two homes, and the master page's contract is to agree with the nav
+  - A23 could not be red before the move (its subject `planStage` did not exist, so a red would be a load error); written in the same commit as the extraction, with the unchanged `master-story.test.ts` and `cockpit-nav.test.tsx` passing as parity evidence
+- [x] Carry a queued plan's title and description on `buildGroups`' placeholder entry (`lib/plan-groups.ts`: `{ kind: "placeholder"; name; number; title; description }`, from `declaredTitles` else `planTitle(undefined, name, words)`), so `PlanList`'s `PlaceholderRow` and `master-story.ts` both read `entry.title` instead of each looking it up; `master-story.ts` today calls `planTitle` without the project's words. Basis: one fact, two homes, already drifting
+- [x] (reviewed `apps/docs/src/changelog.md` — left as-is: an append-only log, one entry added)
+- [x] (reviewed `__tests__/helpers/cockpit-fixture.ts` (906 lines) and `cockpit-nav.test.tsx` (416) — left as-is: the one fixture module the cockpit's tests share and the nav's one test file; this plan added titles and one Path entry, and splitting either is a reorganisation of the cockpit's tests, not this plan's)
+- [x] (reviewed `lib/planning-reader.ts` (700), `bin/commands/promises.ts` (504), `lib/plan-parser.ts` (527) — left as-is: each is the established home of what this plan added — a plan's name read with its copy, an `await`, the `subplans:` mapping entries — and this plan's additions are small; decomposing them is not this plan's)
+- [x] (reviewed the rest — `SubplanRow.tsx`, `MasterStory.tsx`, `master-story.ts`, `display.ts`, `waiting.ts`, `decisions-reader.ts`, `look-state.ts`, `looks-fixtures.ts` — left as-is: under their caps and one job each once the two extractions above land; the deleted `ParentPlanView` and `MasterBar` leave no stranded caller)
+
+#### Build Phase 7 Verification
+- [x] A23 and A24 pass, A1–A5, A11 and A13 still pass (`cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-stage.test.ts src/lib/plan-groups.test.ts src/lib/master-story.test.ts 'src/app/p/[project]/cockpit-nav.test.tsx' 'src/app/p/[project]/plan/[name]/master.test.tsx' src/lib/planning-reader.title.test.ts`); `pnpm exec vitest related` over the changed files; `indusk looks stories admin` changes no snapshot; tsc and biome clean on changed files
+
+#### Build Phase 7 Context
+- [x] `apps/indusk-admin/CLAUDE.md` (over budget, shrinking edits only): fold into the one-home entry that a plan's stage is `planStage` and a queued plan's title rides on its placeholder entry
+
+#### Build Phase 7 Document
+- [x] (none needed — asked: "Build Phase 7 (cleanup) moves the stage rule into one planStage and puts a queued plan's title on its entry. No page, route or CLI changes. Can I skip its document gate?" — user: "Yes, skip it")
+
+### Build Phase 8: The audit's findings — a master's page keeps its controls, every page names a plan by its title
+
+**Tier**: med — the work step's default
+
+**Goal**: fix what the cold audit (`audit.md`, 2026-10-15) found and Sandy chose to fix before close: the master page returns before the trust notice, the amendment and decision cards, the history and "Ask about this plan" (`plan/[name]/page.tsx:59`, passing `waiting: false`), which it had on `main`; several admin pages still show a bare handle (`promise-dashboard.ts:99` and `:184`, `promises/[name]/page.tsx:82`, `IncidentsTable.tsx:102`, `LooksToolbar.tsx:68`), and a declared `subplans:` title skips the package's title rule (`plan-groups.ts:113`); and the admin's real amendment lookup (`amendmentsWaiting`, `decisions-reader.ts` `amendmentCounts`) runs in no test.
+
+- [x] The master page draws the plan page's own frame around the story: `TrustNotice`, `WaitingAmendments`, `DecisionCard` (with the real `waiting`, not `false`), `PlanSession` ("Ask about this plan"), the build controls where a master has them, and `HistoryPanel`; the story stands where a plan's rail, status card and parts stand. If the look check then reads `plan.master` as changed, draw the added parts into `plan.master` from their components and ask Sandy to approve it, recording when
+- [x] A Path group's heading on the Promises page reads its master's title; the dashboard's and the promise page's fallback for an owner with no name is `planTitle(undefined, owner, words)`, never the bare owner
+- [x] `IncidentsTable` names an incident's owner plan by its title, and the Looks page's checkout picker names a plan worktree by its plan's title, both through the names the page already reads
+- [x] A declared `subplans:` title goes through `planTitle` (`plan-groups.ts`), so a title equal to its handle reads as words and a title with " — " is cut at the dash, as every other title is
+- [x] `amendmentsWaiting` gets its own test (changed brief → its amendments; unchanged brief → none; unreadable approval → none), and `decisions-reader`'s amendment read is tested against a real plan folder in a worktree, not the cockpit fixture's stand-in
+- [x] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — reviewed the 20 files this phase changed (`rules.unreadable` empty, so every enabled extension's craft prose was read); nothing to change. The master branch of `PlanPage` is a short early return over the page's own named parts (`sessionControl`, `buildControls`, `masterPage`), `titled` in `promise-dashboard.ts` is the one place the dashboard turns a handle into a name, and `IncidentOwner`, `checkoutName` and `planTitles` each take the title as an input rather than reading it.
+
+#### Build Phase 8 Verification
+- [x] A25, A26, A27 pass (`cd apps/indusk-admin && pnpm exec vitest run 'src/app/p/[project]/plan/[name]/master.test.tsx' src/lib/promise-dashboard.test.ts`; `cd apps/indusk-mcp && pnpm exec vitest run src/lib/plans/amendments.test.ts`); A1–A5, A11–A16, A23, A24 still pass; `pnpm exec vitest related` over the changed files in both packages; A6 passes in the system tier; tsc and biome clean on changed files
+
+#### Build Phase 8 Context
+- [x] `apps/indusk-admin/CLAUDE.md` (over budget, shrinking edits only): fold into the plan-page entry that a master's page is a plan page with its story in place of the rail — every control a plan page has, it has
+
+#### Build Phase 8 Document
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the master page keeps a plan page's decision, history and ask; the Promises page and the incidents table name plans by title
+
+## Files Affected
+
+| File | Change |
+|------|--------|
+| `apps/indusk-mcp/src/lib/promises/display.ts` | `planTitle` words fallback, `readPlanName`, `readHealthNames` reads `master.md` |
+| `apps/indusk-mcp/src/lib/promises/health-line.ts` | owner with no title reads as words |
+| `apps/indusk-mcp/src/lib/plan-parser.ts` | `subplans:` mapping entries, `declaredTitles` |
+| `apps/indusk-mcp/src/lib/plans/waiting.ts` | `amendments` input, `on: "amendment"` |
+| `apps/indusk-mcp/src/lib/plans/amendments.ts` | `amendmentsWaiting` |
+| `apps/indusk-admin/src/lib/planning-reader.ts` | `Plan.title`, `Plan.description` |
+| `apps/indusk-admin/src/lib/decisions-reader.ts` | async `readWaiting` with amendments |
+| `apps/indusk-admin/src/lib/decisions.ts`, `src/app/api/plans/[name]/decision/route.ts` | refuse an amendment's answer |
+| `apps/indusk-admin/src/lib/look-state.ts` | `plan.master`; `planPageWaiting` removed |
+| `apps/indusk-admin/src/lib/master-story.ts` | new: rows and counts from the Path group |
+| `apps/indusk-admin/src/lib/plan-parts-view.ts` | `master` document |
+| `apps/indusk-admin/src/components/PlanList.tsx`, `src/app/p/[project]/layout.tsx` | names and initials by title |
+| `apps/indusk-admin/src/components/plan/PlanFrame.tsx` | heading and crumb by title |
+| `apps/indusk-admin/src/components/plan/MasterStory.tsx` | new: the master page body |
+| `apps/indusk-admin/src/components/ui/SubplanRow.tsx`, `SubplanRow.stories.tsx` | new component and stories |
+| `apps/indusk-admin/src/components/ui/Nav.stories.tsx` | plan names as titles |
+| `apps/indusk-admin/src/components/ParentPlanView.tsx`, `src/components/bars/MasterBar.tsx` | removed if nothing else imports them |
+| `apps/indusk-admin/src/app/p/[project]/plan/[name]/page.tsx` | master branch, one waiting rule |
+| `apps/indusk-admin/src/__tests__/helpers/looks-fixtures.ts`, `cockpit-fixture.ts` | shared look fixtures; titles, `AMENDED` |
+| `apps/indusk-admin/vitest.tiers.ts` | `plan-stories.contract.test.ts` in `SYSTEM` |
+| `.indusk/mockups/admin/screens/plan.master.html` | recomposed from `subplan-row` |
+| `.indusk/planning/*/brief.md`, `*/master.md` (live plans) | titles and descriptions |
+| `CLAUDE.md`, `apps/indusk-admin/CLAUDE.md`, `apps/indusk-mcp/CLAUDE.md` | Context items |
+| `apps/docs/src/…` | the pages in each Document gate |
+
+## Dependencies
+
+- `cockpit-redraw` (archived, landed 2026-10-14): the nav, plan pages and the contract test fixture this builds on.
+- Sandy's approval of the reopened nav mockups (Build Phase 3) and of `subplan-row` and `plan.master` (Build Phase 4).
+
+## Notes
+
+- `screens.json` already declares `plan.master` and `subplan-row` at `/p/dusk/plan/indusk-v4-day`; the contract test's fixture master takes that name so the approved declaration stays unchanged and `indusk looks check admin` checks the real Day page too.
+- The approved `plan.master` mockup names Day's archived plans by new titles ("Hooks from any folder"). Archived plans are not retitled, so the real Day page reads those rows by the part of their title before the dash, or their handle in words. The look check compares values, not words, so this does not break the look.
+- `user-zero` and `jev-decision-model` have no brief or master, so they read as their handles in words ("User zero", "Jev decision model").

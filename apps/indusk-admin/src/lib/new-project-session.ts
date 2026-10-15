@@ -6,6 +6,7 @@ import {
   type ProjectDraftView,
   touchProjectDraft,
 } from "@infinitedusky/indusk-mcp/new-project";
+import { alreadyRunningOnThisPlan } from "@infinitedusky/indusk-mcp/session";
 import { sessionManager } from "@/lib/session-host";
 
 /**
@@ -45,18 +46,26 @@ export function startProjectConversation(
   return { id: started.id };
 }
 
-/** The message a refused start is told: what is running instead. */
-export function busyMessage(): string | null {
-  const running = sessionManager().current();
-  return running
-    ? `a session is already running: ${running.kind} for ${running.plan} — stop it first`
-    : null;
+/**
+ * Why a project conversation may not start now, if it may not: this draft's
+ * conversation already runs (`id` given), or the machine is at its cap.
+ * Other plans' sessions are not in its way (sessions-per-plan).
+ */
+export function busyMessage(id?: string): string | null {
+  const own = id ? draftSession(id) : null;
+  if (own) return alreadyRunningOnThisPlan(own);
+  return sessionManager().capRefusal()?.message ?? null;
 }
 
 /** The session now running that is this draft's conversation, if it is. */
 export function draftSession(id: string) {
-  const running = sessionManager().current();
-  return running?.plan === newProjectSessionPlan(id) ? running : null;
+  return (
+    sessionManager().forPlan(
+      NEW_PROJECT_SESSION_PROJECT,
+      newProjectSessionPlan(id),
+      "planning",
+    ) ?? null
+  );
 }
 
 /** Stop the draft's agent if it runs; the one check accept and discard share. */

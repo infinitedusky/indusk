@@ -9,7 +9,13 @@ export {
 	stepPrompt,
 } from "./build-session.js";
 export { detectHumanGate } from "./judgement.js";
-export { type BuildPlan, type BuildStep, nextBuildStep, type StepOutcome } from "./next-step.js";
+export {
+	type BuildPlan,
+	type BuildStep,
+	nextBuildStep,
+	type ShortenReason,
+	type StepOutcome,
+} from "./next-step.js";
 export { BuildPlanUnreadable, readBuildPlan } from "./read-plan.js";
 /** Whether the project accepts a built plan on its own (`release.auto_accept` in `.indusk/config.json`). */
 export { autoAccepts } from "./release-config.js";

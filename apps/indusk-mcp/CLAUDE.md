@@ -29,7 +29,7 @@ pointer; the pointer holds the story.
   `parsePlan`, the retrospective gate and the admin) —
   `lifecycle-single-definition.test.ts`; promise health, `promises/health`
   — `promise-health-single-definition.test.ts`; display names and plan dates
-  (`promises/display`, travelling on the health line; see `/decisions/display-names`) — `display-names-single-definition.test.ts`. A git primitive belongs in
+  (`promises/display`: `readPlanName`, the nav's copy, worktree first) — `display-names-single-definition.test.ts`. A git primitive belongs in
   `lib/git.ts`; one kept inside a domain folder gets copied by the next domain
   (`cleanup/oversized.ts`'s synchronous `git()` is the one exclusion).
 - `machineSecrets()` is the one home of `~/.indusk/config.env`, and the Fly
@@ -238,7 +238,9 @@ pointer; the pointer holds the story.
   the text, never with a hook. Skills and hooks are package-owned: edit
   `skills/` and `hooks/` here, resync `.claude/skills/` and `.claude/hooks/`;
   `skill-sync-parity` pins byte-equality and the planning context template
-  likewise. **A library the skills call is not shipped until it is in
+  likewise. A phase that edits `skills/` resyncs `.claude/skills/` in the same
+  phase and runs `skill-sync-parity.test.ts` — `vitest related` does not reach it.
+  **A library the skills call is not shipped until it is in
   `package.json` `exports` AND its documented invocation has run verbatim.**
 - **Extensions own tool knowledge**; required-by-default ones flow through
   `autoEnableExtensions` Pass 1 (`disabled_extensions` opts out); they ship
@@ -254,6 +256,8 @@ pointer; the pointer holds the story.
   `npm view`'s word; `release-image.sh` pushes the image before `pnpm publish`;
   `prepublishOnly` packs the `.vsix`.
   `lib/release/` has its own `CLAUDE.md`. — see `/reference/cli/release`
+
+- **A session is owned by its project, plan and kind** — `SessionManager.start` refuses only a second session of the same owner, and a start at the machine's cap (`sessions.max` in the InDusk home's `config.json`, default 4, a malformed file reads as 4); readers ask `forPlan(project, plan, kind?)` or `running()`, never "the" session. Guarded by `session/manager.test.ts` (A2, A9). — see `/decisions/sessions-per-plan`
 
 ## Tests
 

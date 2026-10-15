@@ -32,27 +32,41 @@ vi.mock("next/navigation", () => ({
 
 // The same plan name exists in BOTH active and archive (a re-opened plan).
 // The page's own lookup precedence is active-first (`active.find ??
-// archived.find`); the subplan-card resolution must agree.
+// archived.find`); the subplan row's resolution must agree.
 vi.mock("@/lib/planning-reader", () => ({
   __esModule: true,
   readActivePlans: async () => [
-    { name: "parent", status: "unknown", archived: false },
+    {
+      name: "parent",
+      title: "Parent",
+      description: null,
+      status: "unknown",
+      archived: false,
+    },
     {
       name: "twin",
+      title: "Twin",
+      description: null,
       status: "in-progress",
       archived: false,
       impl: { frontmatter: { status: "in-progress" }, content: "" },
     },
   ],
   readArchivedPlans: async () => [
-    { name: "twin", status: "completed", archived: true },
+    {
+      name: "twin",
+      title: "Twin",
+      description: null,
+      status: "completed",
+      archived: true,
+    },
   ],
   readPlanHierarchy: () => ({
     parents: ["parent"],
     roadmap: [],
     subplans: { parent: ["twin"] },
+    declaredTitles: {},
   }),
-  readPlanMasterContent: async () => null,
 }));
 
 // The plan page reads "holding N" through the promises reader (day-promises);
@@ -76,7 +90,7 @@ vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
 // the reader reaches the session manager and the history file; nothing waits here.
 vi.mock("@/lib/decisions-reader", () => ({
   __esModule: true,
-  readWaiting: () => [],
+  readWaiting: async () => [],
   readPlanHistory: () => [],
 }));
 
@@ -104,6 +118,7 @@ vi.mock("@infinitedusky/indusk-mcp/promises/standing", () => ({
 vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
   __esModule: true,
   promiseWords: (name: string) => name,
+  planTitle: (_title: unknown, handle: string) => handle,
   readHealthNames: () => ({ planTitles: {}, planDates: {}, words: {} }),
 }));
 vi.mock("@/lib/registry-client", () => ({
@@ -122,19 +137,21 @@ import PlanPage from "./page";
  * at authoring: the resolution map spreads `[...active, ...archived]`, so
  * the archived copy overwrites the active one.
  */
-describe("T11 — subplan cards resolve active over archived on a name collision", () => {
-  it("shows the active copy's status on the card", async () => {
+describe("T11 — subplan rows resolve active over archived on a name collision", () => {
+  it("shows the active copy's stage on the row", async () => {
     const element = await PlanPage({
       params: Promise.resolve({ project: "fixture-proj", name: "parent" }),
     });
     const { container } = await render(element as React.ReactElement);
 
-    const card = container.querySelector('[data-testid="subplan-card-twin"]');
-    expect(card, "expected a card for the twin subplan").not.toBeNull();
-    expect(card?.textContent).toContain("in-progress");
+    const card = container.querySelector(
+      '[data-component="subplan-row"][href$="/plan/twin"]',
+    );
+    expect(card, "expected a row for the twin subplan").not.toBeNull();
+    expect(card?.textContent).toContain("Building");
     expect(
       card?.textContent,
-      "card must not show the archived copy's status",
+      "row must not show the archived copy's status",
     ).not.toContain("completed");
   });
 });

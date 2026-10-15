@@ -1,5 +1,6 @@
 ---
-title: "Promise core — the promise is the first primitive"
+title: "Promise core"
+description: "Makes the promise the first thing a person meets in InDusk; plans and gates are extras for larger work."
 date: 2026-10-05
 status: living
 # Ordered children. None is created yet; a name with no folder renders as a

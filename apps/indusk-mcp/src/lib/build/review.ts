@@ -1,8 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import matter from "gray-matter";
-import { isAuditSkipped, isCleanupSkipped } from "../cleanup/gate.js";
-import { isFalsificationSkipped } from "../falsification/skip.js";
+import { skippedRitualsOf } from "../cleanup/gate.js";
 import { type ImplPhase, parseImplString } from "../impl-parser-core.js";
 import { RITUAL_ORDER } from "../lifecycle.js";
 import { type Amendment, amendmentOfDecision, amendmentsOf } from "../plans/amendments.js";
@@ -139,13 +138,7 @@ export async function buildReview(anyCheckout: string, plan: string): Promise<Re
 			wp ? wp.repoTrunk : copies.projectRoot,
 			files.map((f) => f.path),
 		),
-		skippedRituals: [
-			{ ritual: "falsification" as const, check: isFalsificationSkipped(implText) },
-			{ ritual: "cleanup" as const, check: isCleanupSkipped(implText) },
-			{ ritual: "audit" as const, check: isAuditSkipped(implText) },
-		]
-			.filter((r) => r.check.skipped)
-			.map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" })),
+		skippedRituals: skippedRitualsOf(implText),
 		amendments: await reviewAmendments(anyCheckout, plan, copy.dir),
 		skips: impl.phases.flatMap((phase) =>
 			phase.gates.flatMap((g) =>

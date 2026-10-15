@@ -1,4 +1,10 @@
-import { type BuildPlan, type BuildStep, nextBuildStep, type StepOutcome } from "./next-step.js";
+import {
+	type BuildPlan,
+	type BuildStep,
+	nextBuildStep,
+	type ShortenReason,
+	type StepOutcome,
+} from "./next-step.js";
 
 /**
  * An unattended build (admin-plan-authoring, ADR D4, D7). After every step
@@ -14,10 +20,16 @@ import { type BuildPlan, type BuildStep, nextBuildStep, type StepOutcome } from 
  * promise: a-build-runs-to-review-unasked
  */
 
-export type BuildStepName = "work" | "falsify" | "cleanup" | "audit" | "retrospective";
+export type BuildStepName =
+	| "work"
+	| "falsify"
+	| "cleanup"
+	| "audit"
+	| "shorten-reason"
+	| "retrospective";
 
 /** The steps the runner runs as a session; every other answer stops it. */
-const SESSION_STEPS = ["work", "falsify", "cleanup", "audit"] as const;
+const SESSION_STEPS = ["work", "falsify", "cleanup", "audit", "shorten-reason"] as const;
 type SessionStep = (typeof SESSION_STEPS)[number];
 
 function isSessionStep(s: BuildStep): s is Extract<BuildStep, { step: SessionStep }> {
@@ -29,9 +41,14 @@ export interface RunnerDeps {
 	/**
 	 * Run one step's session to its end; `error` when it failed after its retries.
 	 * A `work` step also gets the phase it works (as `nextBuildStep` words it), so the
-	 * session can run on that phase's model.
+	 * session can run on that phase's model. A `shorten-reason` step gets the ritual, length and
+	 * sentence count of the reason to rewrite as a third argument.
 	 */
-	run: (step: BuildStepName, phase?: string) => Promise<{ error: string | null }>;
+	run: (
+		step: BuildStepName,
+		phase?: string,
+		reason?: ShortenReason,
+	) => Promise<{ error: string | null }>;
 	accept: (by: "person" | "auto") => Promise<void>;
 	onStep?: (update: RunnerUpdate) => void;
 }
@@ -67,8 +84,16 @@ export async function runBuild(deps: RunnerDeps & { autoAccept: boolean }): Prom
 			kind: "step",
 			step: next.step,
 			...("phase" in next ? { detail: next.phase } : {}),
+			...(next.step === "shorten-reason" ? { detail: next.ritual } : {}),
 		});
-		const { error } = await deps.run(next.step, "phase" in next ? next.phase : undefined);
+		const { error } =
+			next.step === "shorten-reason"
+				? await deps.run(next.step, undefined, {
+						ritual: next.ritual,
+						length: next.length,
+						sentences: next.sentences,
+					})
+				: await deps.run(next.step, "phase" in next ? next.phase : undefined);
 		const after = await deps.read();
 		previous = last;
 		last = { progressed: fingerprint(after) !== fingerprint(before), error };

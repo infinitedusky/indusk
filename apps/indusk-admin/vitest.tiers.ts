@@ -48,6 +48,9 @@ export const SYSTEM = [
   // The screens cockpit-redraw names read approved and are held by value at
   // each reference device (cockpit-redraw A10).
   "src/__tests__/cockpit-redraw.contract.test.ts",
+  // The master plan page, the retitled plan and nav screens and the
+  // subplan-row stories read approved and are held by value (plan-stories A6).
+  "src/__tests__/plan-stories.contract.test.ts",
 ];
 
 /**

@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
+// PlanList names a queued plan by the package's title rule, whose module reads
+// the filesystem; the browser project cannot import it, so the rule is stubbed.
+vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
+  __esModule: true,
+  planTitle: (_title: unknown, handle: string) => handle,
+}));
+
 // Promises.tsx and PlanList.tsx link to plans — stub next/link as everywhere.
 vi.mock("next/link", () => {
   function MockLink({
@@ -41,8 +48,13 @@ describe("A22 — an archived plan shows holding N; one owning none shows no cou
 
   it("the sidebar's archived items carry the badge from the holding map", async () => {
     const archived = [
-      { name: "lab-v0", status: "completed", archived: true },
-      { name: "empty-plan", status: "completed", archived: true },
+      { name: "lab-v0", title: "Lab v0", status: "completed", archived: true },
+      {
+        name: "empty-plan",
+        title: "Empty plan",
+        status: "completed",
+        archived: true,
+      },
     ] as Plan[];
     const screen = await render(
       <PlanList

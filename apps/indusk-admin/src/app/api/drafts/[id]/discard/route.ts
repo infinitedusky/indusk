@@ -30,10 +30,8 @@ export async function POST(
   if (!body?.project) return refuse(400, "discarding a draft needs a project");
   const root = getProjectPath(body.project);
   if (!root) return refuse(404, `no project named ${body.project}`);
-  const running = sessionManager().current();
-  if (running?.plan === draftSessionPlan(id)) {
-    await sessionManager().get(running.id)?.stop();
-  }
+  const running = sessionManager().forPlan(body.project, draftSessionPlan(id));
+  if (running) await sessionManager().get(running.id)?.stop();
   discardDraft(draftHomeOf(root), id);
   return Response.json({ discarded: id });
 }

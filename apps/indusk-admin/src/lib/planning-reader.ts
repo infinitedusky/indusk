@@ -4,14 +4,13 @@ import { join } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   checkRetrospectiveReadiness,
-  isCleanupSkipped,
+  skippedRitualsOf,
 } from "@infinitedusky/indusk-mcp/cleanup/gate";
 import {
   isFalsificationComplete,
   type LogEntry,
   readFalsificationLog,
 } from "@infinitedusky/indusk-mcp/falsification/log";
-import { isFalsificationSkipped } from "@infinitedusky/indusk-mcp/falsification/skip";
 import { parseImplString } from "@infinitedusky/indusk-mcp/impl-parser";
 import {
   derivePlanPosition,
@@ -24,6 +23,11 @@ import {
   readPlanDeclarations,
 } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import { afterClose } from "@infinitedusky/indusk-mcp/promises/after-close";
+import {
+  displayWords,
+  planTitle,
+  readPlanName,
+} from "@infinitedusky/indusk-mcp/promises/display";
 import type { PhaseBoundaryRecord } from "@infinitedusky/indusk-mcp/shape/boundary";
 import {
   parseTrajectory,
@@ -108,8 +112,16 @@ export interface PaperEntry extends PaperSummary {
 }
 
 export interface Plan {
-  /** Folder name (kebab-case) under `.indusk/planning/` or `.indusk/planning/archive/`. */
+  /** Folder name (kebab-case) under `.indusk/planning/` or `.indusk/planning/archive/`. The handle: links and addresses. */
   name: string;
+  /**
+   * What the plan is called (plan-stories): the title written in the brief or
+   * master of the copy it is read from, else its handle in words. Every page
+   * that names a plan shows this; the handle stays in links.
+   */
+  title: string;
+  /** The brief's (or master's) `description:`, a separate field from the title; null when none is written. */
+  description: string | null;
   /** Effective status — pulled from impl.md, falling back to brief.md, or "unknown". */
   status: string;
   /** Whether the plan lives under archive/ vs the active planning dir. */
@@ -121,11 +133,11 @@ export interface Plan {
   impl?: ImplData;
   falsification?: FalsificationData;
   /**
-   * Falsification or cleanup the impl skipped with its reason
+   * Falsification, cleanup or audit the impl skipped with its reason
    * (admin-plan-authoring) — read through the package's own skip readers.
    */
   skippedRituals?: Array<{
-    ritual: "falsification" | "cleanup";
+    ritual: "falsification" | "cleanup" | "audit";
     reason: string;
   }>;
   retrospective?: RetroData;
@@ -285,13 +297,20 @@ function isMalformed(
   return doc !== null && "malformed" in doc;
 }
 
+/** What a plan folder is read against: facts about the project, not the plan. */
+interface PlanReadContext {
+  boundaries?: BoundaryRead;
+  /** The project root, for an archived plan's after-close facts (day-monitor). */
+  projectRoot?: string;
+  /** The project's product words, for a plan with no title written. */
+  words?: Record<string, string>;
+}
+
 async function readPlanFolder(
   planDir: string,
   name: string,
   archived: boolean,
-  boundaries: BoundaryRead = { records: [] },
-  /** The project root, for an archived plan's after-close facts (day-monitor). */
-  projectRoot?: string,
+  { boundaries = { records: [] }, projectRoot, words }: PlanReadContext = {},
 ): Promise<Plan> {
   const docs = await Promise.all(DOC_FILES.map((f) => readDoc(planDir, f)));
   const [
@@ -351,18 +370,7 @@ async function readPlanFolder(
       : null;
   const readiness =
     implRaw !== null ? checkRetrospectiveReadiness(planDir, implRaw) : null;
-  const skippedRituals =
-    implRaw === null
-      ? []
-      : [
-          {
-            ritual: "falsification" as const,
-            check: isFalsificationSkipped(implRaw),
-          },
-          { ritual: "cleanup" as const, check: isCleanupSkipped(implRaw) },
-        ]
-          .filter((r) => r.check.skipped)
-          .map((r) => ({ ritual: r.ritual, reason: r.check.reason ?? "" }));
+  const skippedRituals = implRaw === null ? [] : skippedRitualsOf(implRaw);
   // A closed plan may be back in motion — reopened by an incident, or in
   // `monitor` — derived from files by the same function `list_plans` reads.
   const after =
@@ -392,6 +400,7 @@ async function readPlanFolder(
 
   return {
     name,
+    ...readPlanName(planDir, name, words),
     status,
     position,
     workflow: parsed.workflow ?? null,
@@ -454,8 +463,11 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
   const folders = await listPlanFolders(join(root, PLANNING_DIR));
   if (!resolved.ok) {
     const copyError = { file: resolved.file, problem: resolved.problem };
+    const words = displayWords(root);
     return folders.map((name) => ({
       name,
+      title: planTitle(undefined, name, words),
+      description: null,
       status: "unknown",
       archived: false,
       copyError,
@@ -463,6 +475,7 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
   }
   // Boundary records are per checkout: a plan in a worktree opened its
   // phases there. Read each live root's file once.
+  const words = displayWords(root);
   const boundariesByRoot = new Map<string, Promise<BoundaryRead>>();
   const boundariesOf = (at: string) => {
     let read = boundariesByRoot.get(at);
@@ -483,12 +496,10 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
         dir: join(root, PLANNING_DIR, name),
         source: "trunk",
       };
-      const plan = await readPlanFolder(
-        copy.dir,
-        name,
-        false,
-        await boundariesOf(copy.root),
-      );
+      const plan = await readPlanFolder(copy.dir, name, false, {
+        boundaries: await boundariesOf(copy.root),
+        words,
+      });
       const code = readPlanCode(root, name);
       return {
         ...plan,
@@ -580,15 +591,14 @@ async function readArchivedFolders(
   folders: string[],
 ): Promise<Plan[]> {
   const boundaries = await readProjectBoundaries(projectRoot);
+  const words = displayWords(projectRoot);
   return Promise.all(
     folders.map((name) =>
-      readPlanFolder(
-        join(archiveDir, name),
-        name,
-        true,
+      readPlanFolder(join(archiveDir, name), name, true, {
         boundaries,
         projectRoot,
-      ),
+        words,
+      }),
     ),
   );
 }

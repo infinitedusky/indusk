@@ -1,16 +1,13 @@
 // promise: a-plan-page-shows-the-parts-of-its-brief
 import { spawnSync } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  realpathSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import {
+  writeConfig,
+  writeLooksPlans,
+} from "@/__tests__/helpers/looks-fixtures";
 import {
   type DevServer,
   makeHome,
@@ -27,10 +24,8 @@ import {
  * against serves a throwaway project registered as `dusk`, because the
  * screens declare their pages under `/p/dusk/...` and one page cannot be a
  * plan in four conditions: `screens.json` lists a path per state, and the
- * project holds a fixture plan for each — `looks-fixture-parts` (brief being
- * written, so also `brief.writing`), `-working` (approved, so also
- * `brief.approved`), `-no-brief` (research only, so `brief.empty`), `-needs-you` (its impl waits on approval) and `-released`
- * (archived). A named screen that the check never opened fails (`was never
+ * project holds a fixture plan for each (`helpers/looks-fixtures`, shared with
+ * plan-stories A6). A named screen that the check never opened fails (`was never
  * checked`) rather than passing by omission.
  */
 
@@ -52,39 +47,6 @@ const STORIES = ["nav-handle.default", "nav-handle.dragging"];
 let base: string;
 let server: DevServer;
 
-const doc = (status: string, extra = "") =>
-  `---\ntitle: "fixture"\nstatus: ${status}\nworkflow: feature\n${extra}---\n\n# fixture\n`;
-const brief = (status: string) =>
-  doc(status, 'description: "A plan the look check opens in one condition."\n');
-const impl = (status: string, extra = "") =>
-  `${doc(status, extra)}\n## Checklist\n\n### Build Phase 1: One\n\n- [ ] an item\n`;
-
-/** One fixture plan: its documents, each by its status; `archived` puts it under `archive/`. */
-function plan(
-  project: string,
-  name: string,
-  docs: { brief: string; impl?: string; approved?: boolean },
-  archived = false,
-) {
-  const dir = join(
-    project,
-    ".indusk",
-    "planning",
-    ...(archived ? ["archive"] : []),
-    name,
-  );
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "brief.md"), brief(docs.brief));
-  if (docs.brief !== "accepted") return;
-  for (const d of ["research", "test-plan", "adr"])
-    writeFileSync(join(dir, `${d}.md`), doc("accepted"));
-  if (docs.impl)
-    writeFileSync(
-      join(dir, "impl.md"),
-      impl(docs.impl, docs.approved ? 'approved_brief: "abc"\n' : ""),
-    );
-}
-
 beforeAll(async () => {
   if (!existsSync(join(ADMIN, "public/storybook/iframe.html"))) {
     const built = spawnSync("pnpm", ["run", "build:storybook"], {
@@ -96,41 +58,8 @@ beforeAll(async () => {
   }
   base = realpathSync(mkdtempSync(join(tmpdir(), "admin-cockpit-redraw-")));
   const project = join(base, "proj");
-  mkdirSync(join(project, ".indusk"), { recursive: true });
-  writeFileSync(
-    join(project, ".indusk", "config.json"),
-    JSON.stringify({ mode: "full" }),
-  );
-  plan(project, "looks-fixture-parts", { brief: "draft" });
-  plan(project, "looks-fixture-working", {
-    brief: "accepted",
-    impl: "in-progress",
-    approved: true,
-  });
-  // research only, no brief: `brief.empty`
-  mkdirSync(join(project, ".indusk", "planning", "looks-fixture-no-brief"), {
-    recursive: true,
-  });
-  writeFileSync(
-    join(
-      project,
-      ".indusk",
-      "planning",
-      "looks-fixture-no-brief",
-      "research.md",
-    ),
-    doc("accepted"),
-  );
-  plan(project, "looks-fixture-needs-you", {
-    brief: "accepted",
-    impl: "draft",
-  });
-  plan(
-    project,
-    "looks-fixture-released",
-    { brief: "accepted", impl: "completed", approved: true },
-    true,
-  );
+  writeConfig(project);
+  writeLooksPlans(project);
   server = await startNextDev({
     home: makeHome([{ name: "dusk", path: project }]),
   });

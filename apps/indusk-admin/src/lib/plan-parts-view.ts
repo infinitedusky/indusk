@@ -119,12 +119,22 @@ function statusTone(status: string): PhaseRowTone {
 }
 
 /**
- * The documents a plan has, in the order the mockups list them: research,
- * brief, test plan, ADR, impl, then falsification and cleanup (the impl's
- * phases of those names) and the audit, each only when present.
+ * The documents a plan has, in the order the mockups list them: a master's
+ * own `master.md` (the body the caller read, when it did), research, brief,
+ * test plan, ADR, impl, then falsification and cleanup (the impl's phases of
+ * those names) and the audit, each only when present.
  */
-export function planDocuments(plan: Plan): PlanDocument[] {
+export function planDocuments(plan: Plan, master?: string): PlanDocument[] {
   const docs: PlanDocument[] = [];
+  if (master !== undefined) {
+    docs.push({
+      slug: "master",
+      label: "Master plan",
+      status: "written",
+      tone: "done",
+      content: master,
+    });
+  }
   const add = (
     slug: string,
     label: string,

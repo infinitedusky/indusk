@@ -274,6 +274,9 @@ export function PromisesDashboard({
           incidents={incidents}
           promises={promises}
           planHrefPrefix={planHrefPrefix}
+          planTitles={Object.fromEntries(
+            rows.map((r) => [r.plan, r.planTitle]),
+          )}
         />
       )}
     </section>

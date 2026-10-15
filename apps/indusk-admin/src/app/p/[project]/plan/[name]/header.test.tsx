@@ -1,8 +1,13 @@
 // promise: a-plan-shows-two-workflows
 // promise: every-plan-is-one-click-away
+// promise: a-plan-reads-by-its-title
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import { PROJECT, resetFixture } from "@/__tests__/helpers/cockpit-fixture";
+import {
+  PROJECT,
+  resetFixture,
+  titleOf,
+} from "@/__tests__/helpers/cockpit-fixture";
 
 /**
  * plan-cockpit, Build Phase 5: the plan page's header carries what the package
@@ -89,11 +94,22 @@ async function pageFor(name: string) {
 beforeEach(() => resetFixture());
 
 describe("the plan page's frame", () => {
-  it("draws the crumb and the plan's name, as the plan mockups do", async () => {
+  it("draws the crumb and the plan's title, as the plan mockups do (plan-stories A12)", async () => {
     const { root } = await pageFor("alpha-one");
     const header = root.querySelector('[data-testid="plan-header"]');
-    expect(header?.querySelector("h1")?.textContent).toBe("alpha-one");
-    expect(header?.textContent).toContain(`${PROJECT} / Plans / alpha-one`);
+    expect(header?.querySelector("h1")?.textContent).toBe(titleOf("alpha-one"));
+    expect(header?.textContent).toContain(
+      `${PROJECT} / Plans / ${titleOf("alpha-one")}`,
+    );
+  });
+
+  it("keeps the handle in the page's address data (plan-stories A12)", async () => {
+    const { root } = await pageFor("alpha-one");
+    expect(
+      root
+        .querySelector('[data-testid="plan-detail"]')
+        ?.getAttribute("data-plan-name"),
+    ).toBe("alpha-one");
   });
 
   it("draws no dates, Path or promise chips in the header, and no Details of documents", async () => {

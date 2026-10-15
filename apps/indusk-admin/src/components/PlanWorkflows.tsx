@@ -121,7 +121,8 @@ function WorkflowList({
             <Step
               name={step.name}
               state={RAIL_STATE[step.state]}
-              status={`${LABEL[step.state]}${step.reason ? ` — ${step.reason}` : ""}`}
+              status={LABEL[step.state]}
+              reason={step.reason}
               current={step.state === "current" || step.state === "needs-you"}
               href={hrefOf(step)}
             />
