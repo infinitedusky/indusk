@@ -371,6 +371,7 @@ The save check and the plan page are ready. This phase makes the planner use the
   Wherever it lives when this phase runs (its plan folder, or `archive/component-content/` once it has closed): add `phase_summary: required`, write a summary per phase, turn each item into a sentence with its current text in the fold, row labels included. Every `[x]` stays as it is; the edit ticks nothing (A9 holds that). Validate it, then open its plan page.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 3 Verification
 
