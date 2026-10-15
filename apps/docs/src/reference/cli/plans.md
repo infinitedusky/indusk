@@ -280,6 +280,18 @@ subplans:
 ---
 ```
 
+A `subplans:` entry may be a name, or a mapping carrying the words for a plan that has no folder yet:
+
+```yaml
+subplans:
+  - dawn-verify
+  - name: dawn-ship
+    title: "Dawn ship"
+    description: "Publishes a plan's result where its people can see it."
+```
+
+Declared order holds either way. The parser reports the written title and description beside the names (`declaredTitles`), and a plan's own brief wins once it exists. A queued plan declared by name alone reads as its handle in words, with no description.
+
 A child declares **nothing** about its lineage. Only one place declares each parent→child link, so the two sides can never disagree and there is no drift to reconcile.
 
 ### Two rules that keep it safe
@@ -305,7 +317,7 @@ A subplan whose folder has moved to `archive/` is the opposite of uncreated — 
 
 ### API
 
-`readPlanDeclarations(planningDir)` in `apps/indusk-mcp/src/lib/plan-parser.ts` returns `{ parents, roadmap, subplans }`. It is exported for consumers at `@infinitedusky/indusk-mcp/planning/plan-parser` — the admin UI consumes it rather than re-reading frontmatter, per the never-duplicate-parsing rule.
+`readPlanDeclarations(planningDir)` in `apps/indusk-mcp/src/lib/plan-parser.ts` returns `{ parents, roadmap, subplans, declaredTitles }`. It is exported for consumers at `@infinitedusky/indusk-mcp/planning/plan-parser` — the admin UI consumes it rather than re-reading frontmatter, per the never-duplicate-parsing rule.
 
 ## Papers (`kind: paper`)
 
