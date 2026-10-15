@@ -375,12 +375,13 @@ function MockupRow({
     >
       {first ? (
         <OpenLookRow
+          kind="mockup"
           name={mockup.name}
           approval={mockup.approval}
           href={hrefAt(first.name)}
         />
       ) : (
-        <LookRow name={mockup.name} approval={mockup.approval} />
+        <LookRow kind="mockup" name={mockup.name} approval={mockup.approval} />
       )}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-3 text-xs text-ink-soft">
         {mockup.approval === "proposed" ? <SelectBox mockup={mockup} /> : null}

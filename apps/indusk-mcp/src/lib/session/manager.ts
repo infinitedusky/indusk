@@ -4,8 +4,8 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { isAlive, realProcessReads } from "../process-identity.js";
 import { readSessionsMax } from "./limits.js";
-import { decideBuildPermission } from "./permissions.js";
-import type { QuestionEvent, SessionKind } from "./protocol.js";
+import { decideBuildPermission, decideConfinedPermission } from "./permissions.js";
+import type { PermissionEvent, QuestionEvent, SessionKind } from "./protocol.js";
 import { type Session, type SessionOptions, type StartedEvent, startSession } from "./start.js";
 
 /**
@@ -52,6 +52,14 @@ export interface SessionRecord {
 export interface ManagedStart extends SessionOptions {
 	project: string;
 	plan: string;
+	/**
+	 * Confine the session to its `cwd` (a project conversation's draft): file
+	 * tools inside it are allowed, every other request is refused with the
+	 * reason and none reaches the person (`decideConfinedPermission`).
+	 */
+	confined?: boolean;
+	/** Told of each request a confined session was refused, with the reason it was given. */
+	onRefused?: (ev: PermissionEvent, message: string) => void;
 }
 
 interface Held {
@@ -104,6 +112,12 @@ export class SessionManager {
 			onEvent: (ev) => {
 				// A planning session is asked only about a path outside its own
 				// folder (A26): the rest is decided here, as a build's is.
+				if (opts.confined && ev.type === "permission") {
+					const decision = decideConfinedPermission(ev, opts.cwd);
+					holder.session.decide(ev, decision);
+					if (!decision.allow) opts.onRefused?.(ev, decision.message);
+					return;
+				}
 				if (opts.kind === "planning" && ev.type === "permission") {
 					const decision = decideBuildPermission(ev, [opts.cwd, ...(opts.addDirs ?? [])]);
 					if (decision.allow) {
@@ -213,6 +227,11 @@ export class SessionManager {
 			if (ev?.type === "question" && !h.answered.has(ev.requestId)) return ev;
 		}
 		return undefined;
+	}
+
+	/** Whether some page is showing session `id` now: it has a subscriber to its events. */
+	isWatched(id: string): boolean {
+		return (this.held.get(id)?.listeners.size ?? 0) > 0;
 	}
 
 	/** Every event so far, then each new one, until the returned function is called. */

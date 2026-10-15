@@ -45,6 +45,9 @@ export const SYSTEM = [
   // A look the agent draws appears on the open plan page, at each device
   // (brief-as-the-contract A16).
   "src/__tests__/plan-parts.contract.test.ts",
+  // The screens cockpit-redraw names read approved and are held by value at
+  // each reference device (cockpit-redraw A10).
+  "src/__tests__/cockpit-redraw.contract.test.ts",
 ];
 
 /**

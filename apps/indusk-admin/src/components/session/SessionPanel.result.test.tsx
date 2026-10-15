@@ -115,3 +115,29 @@ describe("A8 — a finished turn and an ended session are told apart", () => {
     expect(text).toMatch(/code 1/);
   });
 });
+
+describe("a finished turn does not say its reply twice", () => {
+  const reply: StartedEvent = { type: "text", text: "Where the brief stands." };
+  const result = (text: string): StartedEvent => ({
+    type: "result",
+    ok: true,
+    subtype: "success",
+    text,
+    sessionId: "s",
+  });
+
+  it("says Turn done alone when its text is the reply just above it", async () => {
+    const text = await textOf([init, reply, result("Where the brief stands.")]);
+    expect(text.match(/Where the brief stands\./g)).toHaveLength(1);
+    expect(text).toMatch(/Turn done/);
+  });
+
+  it("keeps the turn's text when it is not the reply above it", async () => {
+    const text = await textOf([
+      init,
+      reply,
+      result("Something else entirely."),
+    ]);
+    expect(text).toContain("Turn done — Something else entirely.");
+  });
+});

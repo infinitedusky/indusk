@@ -49,6 +49,12 @@ export interface PlanParts {
 	plan: string;
 	/** False when the plan has no brief in the contract shape; the three parts are then empty. */
 	hasBrief: boolean;
+	/**
+	 * Whether the plan has a `brief.md` at all. False only when there is none:
+	 * a brief outside the contract shape is a file (`hasBriefFile` true,
+	 * `hasBrief` false), which must not read as a brief with nothing in it.
+	 */
+	hasBriefFile: boolean;
 	promises: PartPromise[];
 	expectations: PartExpectation[];
 	looks: PartLook[];
@@ -69,14 +75,15 @@ type Drawn = Pick<PartLook, "plan" | "app" | "document" | "devices"> & {
 
 const EMPTY = (
 	plan: string,
-	hasBrief: boolean,
+	hasBriefFile: boolean,
 	opening: Pick<PlanParts, "description" | "briefStatus"> = {
 		description: null,
 		briefStatus: null,
 	},
 ): PlanParts => ({
 	plan,
-	hasBrief,
+	hasBrief: false,
+	hasBriefFile,
 	...opening,
 	promises: [],
 	expectations: [],
@@ -130,7 +137,7 @@ export async function readPlanParts(
 	const source = readFileSync(briefFile, "utf-8");
 	const opening = briefOpening(source);
 	const brief = parseBriefContract(source);
-	if (brief.shape === "legacy") return EMPTY(plan, false, opening);
+	if (brief.shape === "legacy") return EMPTY(plan, true, opening);
 
 	const read = readPromises(root);
 	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
@@ -199,6 +206,7 @@ export async function readPlanParts(
 	return {
 		plan,
 		hasBrief: true,
+		hasBriefFile: true,
 		promises,
 		expectations: brief.expectations.map((e) => ({
 			text: e.text,

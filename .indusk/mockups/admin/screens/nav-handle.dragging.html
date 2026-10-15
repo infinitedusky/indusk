@@ -3,7 +3,6 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="indusk-new-components" content="nav-handle" />
 		<title>nav-handle — dragging</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -43,7 +42,6 @@
 			.pill { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-snug) var(--space-3); border-radius: var(--radius-pill); background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); }
 			.d { width: var(--size-dot); height: var(--size-dot); border-radius: var(--radius-pill); }
 			.d.declared { background: var(--color-idle); } .d.proving { background: var(--color-warn); } .d.enforced { background: var(--color-ok); } .d.broken { background: var(--color-bad); }
-			.stagebody { display: grid; grid-template-columns: var(--size-rail) minmax(0, 1fr); gap: var(--space-5); align-items: start; }
 			.rail { display: grid; gap: var(--space-4); align-content: start; }
 			.choices { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
 			.choices span { display: inline-flex; gap: var(--space-2); align-items: center; }
@@ -55,7 +53,6 @@
 			.looks-list { display: flex; flex-direction: column; gap: var(--space-3); }
 			.looks-rows { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-md); overflow: hidden; }
 			.looks-stage { display: flex; flex-direction: column; gap: var(--space-3); }
-			.stage-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); font-weight: var(--font-weight-medium); }
 			@media (max-width: 759px) {
 			  .shell, .shell.collapsed { grid-template-columns: minmax(0, 1fr); }
 			  [data-component="nav"] { display: none; }
@@ -83,19 +80,9 @@
 			.build .stopped { flex-basis: 100%; font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
 			.collapsed { display: grid; gap: var(--space-2); }
 			.status { display: grid; gap: var(--space-3); }
-			.nh { position: absolute; top: 0; bottom: 0; right: calc(var(--space-1) * -1); width: var(--space-2); display: grid; place-items: center; cursor: col-resize; z-index: 1; }
-			.nh-line { position: absolute; top: 0; bottom: 0; left: 50%; width: var(--border-1); background: transparent; }
-			.nh-grip { position: relative; width: var(--space-1); height: var(--space-8); border-radius: var(--radius-pill); background: var(--color-line); }
-			.nh:hover .nh-grip, .nh:focus-visible .nh-grip { background: var(--color-idle); }
-			.nh[data-state="dragging"] .nh-line { width: var(--border-2); background: var(--color-dusk); }
-			.nh[data-state="dragging"] .nh-grip { background: var(--color-dusk); box-shadow: var(--shadow-ring); }
-			.stage { display: grid; grid-template-columns: var(--size-nav) minmax(0, 1fr); height: var(--size-input); margin: var(--space-6); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); overflow: hidden; }
-			.stage .edge { position: relative; background: var(--color-surface); border-right-width: var(--border-1); border-right-style: solid; border-right-color: var(--color-line); }
-			.stage .edge.dragging { border-right-color: transparent; }
-			.stage .page { background: var(--color-ground); }
 		</style>
 	</head>
 	<body>
-<div class="stage"><div class="edge dragging"><div data-component="nav-handle" data-state="dragging" class="nh" role="separator" aria-orientation="vertical" aria-label="Drag to widen the nav" aria-valuemin="280" aria-valuemax="440" aria-valuenow="440" tabindex="0"><span class="nh-line"></span><span class="nh-grip"></span></div></div><div class="page"></div></div>
+<indusk-component name="nav-handle" state="dragging"></indusk-component>
 	</body>
 </html>

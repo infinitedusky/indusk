@@ -195,6 +195,12 @@ body {
 .cols-plan-row {
   grid-template-columns: var(--size-badge) minmax(0, 1fr);
 }
+.cols-plan-row-numbered {
+  grid-template-columns: var(--space-3) var(--size-badge) minmax(0, 1fr);
+}
+.cols-nav-path {
+  grid-template-columns: var(--space-3) var(--space-3) minmax(0, 1fr) auto auto;
+}
 .cols-view-link {
   grid-template-columns: var(--size-badge) minmax(0, 1fr) auto;
 }
@@ -210,6 +216,9 @@ body {
 .cols-draft-row {
   grid-template-columns: minmax(0, 1fr) auto;
 }
+.cols-recommendation {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
 .cols-promise-row {
   grid-template-columns:
     var(--size-dot-lg) minmax(0, 1fr) var(--size-icon) var(--size-input)
@@ -224,6 +233,19 @@ body {
 .cols-plan-stage {
   grid-template-columns: var(--size-rail) minmax(0, 1fr);
 }
+/* A line of reading: a message holds to 60 characters, a prompt's question to 30. */
+.measure-message {
+  max-width: 60ch;
+}
+.measure-question {
+  max-width: 30ch;
+}
+.cols-conversation {
+  grid-template-columns: minmax(0, 1fr) var(--size-side);
+}
+.cols-project-grid {
+  grid-template-columns: repeat(auto-fill, minmax(var(--size-side), 1fr));
+}
 @media (max-width: 759px) {
   .cols-shell,
   .cols-shell-rail {
@@ -234,6 +256,7 @@ body {
   }
   .cols-promise-page,
   .cols-plan-stage,
+  .cols-conversation,
   .cols-draft-row,
   .cols-expectation-row {
     grid-template-columns: minmax(0, 1fr);

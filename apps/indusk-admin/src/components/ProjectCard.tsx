@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
+import { ProjectCard as ProjectCardView } from "@/components/ui/ProjectCard";
 
 export interface ProjectCardData {
   name: string;
@@ -12,30 +12,19 @@ export interface ProjectCardData {
 }
 
 /**
- * One card on the homepage's `<ProjectGrid>`. Links to `/p/{name}/` and
- * surfaces the project's active-plan count + last-seen-at + an in-progress
- * badge when any of its plans are mid-flight.
- *
- * Layout is deliberately modest — the card's job is "let the user pick a
- * project at a glance," not "summarize every plan." Deeper per-project
- * signal lives inside `/p/{name}/`.
+ * The home grid's card for a registered project. Links to `/p/{name}/`, and
+ * beneath the approved look adds the project's shape, an in-progress badge when
+ * any plan is mid-flight, and when it was last seen.
  */
 export function ProjectCard({ project }: { project: ProjectCardData }) {
-  const label = project.activePlanCount === 1 ? "active plan" : "active plans";
   return (
-    <Link
+    <ProjectCardView
+      name={project.name}
+      path={project.path}
+      activePlanCount={project.activePlanCount}
       href={`/p/${project.name}/`}
-      data-project-name={project.name}
-      className="block rounded-lg border border-line bg-surface p-5 transition-shadow hover:elevated focus:outline-2 focus:outline-dusk"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-base font-semibold text-ink">
-            {project.name}
-          </h2>
-          <p className="mt-1 truncate text-xs text-ink-faint">{project.path}</p>
-        </div>
-        <span className="flex items-center gap-1">
+      extra={
+        <span className="mt-2 flex flex-wrap items-center gap-1 text-xs text-ink-faint">
           {project.shape ? (
             <Badge variant="neutral" data-testid="project-shape">
               {project.shape}
@@ -46,17 +35,10 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
               in progress
             </Badge>
           ) : null}
+          <span>last seen {formatRelative(project.lastSeenAt)}</span>
         </span>
-      </div>
-      <div className="mt-4 flex items-center justify-between text-sm text-ink-soft">
-        <span>
-          {project.activePlanCount} {label}
-        </span>
-        <span className="text-xs text-ink-faint">
-          last seen {formatRelative(project.lastSeenAt)}
-        </span>
-      </div>
-    </Link>
+      }
+    />
   );
 }
 

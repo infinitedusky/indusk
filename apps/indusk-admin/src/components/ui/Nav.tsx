@@ -38,7 +38,9 @@ export function Nav({
         <div className="nav-hide grid">
           <b className="font-display text-lg font-bold leading-5">{project}</b>
           {summary ? (
-            <small className="text-xs text-ink-faint">{summary}</small>
+            <small className="text-xs leading-2 text-ink-faint">
+              {summary}
+            </small>
           ) : null}
         </div>
         <button
@@ -46,7 +48,7 @@ export function Nav({
           aria-label={collapsed ? "Expand" : "Collapse"}
           {...toggleProps}
           className={[
-            "grid size-icon place-items-center rounded-lg border border-line bg-surface text-ink-soft",
+            "grid size-icon shrink-0 place-items-center rounded-lg border border-line bg-surface text-ink-soft",
             toggleProps?.className,
           ]
             .filter(Boolean)

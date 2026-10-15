@@ -81,6 +81,67 @@ A story is one fixed rendering, so a mockup shows each component's story
 content and cannot pass it data. A state a mockup needs to show that has no
 story is a missing story, not a missing mockup rule.
 
+## Placing a component with its own words
+
+A mockup places a component and gives it words. Bare content inside the
+reference is the component's `children`:
+
+```html
+<indusk-component name="button" state="default">Create project</indusk-component>
+```
+
+A named property is filled with `<indusk-content for="<property>">`:
+
+```html
+<indusk-component name="step" state="working">
+  <indusk-content for="name">Name your project</indusk-content>
+</indusk-component>
+```
+
+The component's look is the approved snapshot's, unchanged; only the words
+land where the story's own words were. A component placed inside a component
+is composed in turn, so a screen is made of components and words alone.
+Placed words are part of the mockup, so changing them returns an approved
+mockup to proposed, as changing the component does.
+
+### Which properties a state can take
+
+The render step renders each story a second time with its words replaced by
+markers and records, per state, where each property's words land. That record
+is `content` on the state in `components.json`: a state's keys are the
+properties a mockup may fill (`children` for bare content, or the named
+property for `<indusk-content for>`). A state that lists none takes no
+content — its words are the story's.
+
+Each entry is a place: a child-index path from the snapshot's root, or an
+object `{ "at": [0, 0, 2, 0], "before": "· " }` when the story's words share
+a text node with static words (`before` / `after` are kept; only the property's
+words are replaced) or `{ "at": [0, 2], "nodes": 2 }` when the story's
+children are several nodes (all of them are replaced). A bare path, as older
+catalogs wrote, reads as `{ "at": path }`.
+
+### The lint rules
+
+`indusk looks lint` holds what sits inside a placed component to words and
+placed components. `<indusk-content>` always names the property with `for`,
+and is never written inside another `<indusk-content>`; a self-closing
+`<indusk-component … />` ends at its start tag.
+
+- **`content-not-words-or-components`** — an element other than
+  `<indusk-component>` or `<indusk-content>` was written inside a reference
+  (`content not words or components: <file>:<line> <div> inside button`), or
+  an `<indusk-content>` has no `for` or sits inside another. A placed
+  component takes text and other placed components; to show something else,
+  make it a component.
+- **`component-takes-no-content`** — content was given for a property the
+  state's `content` in `components.json` does not list
+  (`component takes no content: <file>:<line> button has no "label" to fill`).
+  Name a property the state lists, or give the component a story that takes it.
+- **`content-given-twice`** — one property was given two times: two
+  `<indusk-content for="name">`, or `for="children"` beside bare words
+  (`content given twice: <file>:<line> button "children" is also given at line
+  <n>`). Keep one.
+
 ## Approval, and taking it back
 
 A person approves, never an agent. In the cockpit's Looks page, **Show:

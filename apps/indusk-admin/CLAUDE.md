@@ -6,11 +6,12 @@ Loaded by Claude Code when a file under `apps/indusk-admin/` is read. Rules that
 apply only here; cross-cutting design intent stays in the root `CLAUDE.md`.
 Each entry is a rule and a pointer; the pointer holds the story.
 
-- **The admin writes only through the package**: its routes (`app/api/sessions/`)
-  start, answer and stop sessions through `@infinitedusky/indusk-mcp/session`,
-  and plans change through `/plans`; no file in this app writes a plan file,
-  spawns a process (beyond the two read-only git readers) or parses Claude's
-  protocol. Guarded by `admin-uses-package-commands.test.ts`.
+- **The admin writes only through the package**: its routes start, answer and
+  stop sessions through `@infinitedusky/indusk-mcp/session`, change plans
+  through `/plans`, and keep a project conversation through `./new-project`;
+  no file in this app writes a plan or project file, spawns a process (beyond
+  the two read-only git readers) or parses Claude's protocol. Guarded by
+  `admin-uses-package-commands.test.ts`.
 - **Every handler under `app/api` calls `adminOnly(request)` first**: the
   `Host` must be the admin's own (`isAdminHost`), and a `POST`'s `Origin`
   must match it. Listening on 127.0.0.1 is not enough: DNS rebinding points
@@ -21,6 +22,18 @@ Each entry is a rule and a pointer; the pointer holds the story.
   and sends a person's choices back through the routes; a client component
   imports only *types* from `/session`, whose code is Node's. — see
   `/reference/admin-ui/sessions`
+- **The project conversation renders a thread, not the session panel**:
+  `lib/conversation-turns`'s `turnsOf(events)` reads a session's events as
+  alternating you/agent turns (the reply is the last text, the tools and
+  earlier text are its working, an open question or permission is *waiting* and
+  never folded; each agent turn has a `status` - working, done or stopped - drawn
+  as `Message`'s dot, and Start launches the agent so the thread opens with it
+  working); `ConversationThread` draws them as `Message` bubbles, the
+  reply through `Markdown`; the draft's `transcript.jsonl` (appended by
+  `startProjectConversation`) is what a reopened page shows. The plan
+  conversation, builds and Fix with Claude still use the session panel until
+  they move. Guarded by `conversation-turns.test.ts` and
+  `ConversationThread.test.tsx`. — `promise: a-project-conversation-is-a-back-and-forth`
 - **What a plan's page offers is one rule, `planActions`**: a plan is started
   by its worktree in normal mode or its `code.json` in a workbench, and gets
   the same buttons either way; a workbench session runs at the root with the
@@ -37,15 +50,14 @@ Each entry is a rule and a pointer; the pointer holds the story.
   the tarball by `prepublishOnly`. Why a standalone read-only viewer — see
   `/decisions/indusk-admin-ui`; why one daemon and a registry — see
   `/decisions/admin-ui-hosting`
-- Tailwind 4 needs Node 22 ("Cannot find native binding" on 18).
 - **The plan page is live**: `LiveRefresh` probes the page and
   `router.refresh()`es every `admin.refresh_ms` (default 5000), pauses when
   hidden, stops visibly on failure; the Promises page is live the same way (also
   its health cache); no other page polls. — see `/reference/admin-ui/overview`
 - **The sidebar tree is derived entirely from declarations** — one root node
   (`readPlanDeclarations().root`) with parents and unclaimed plans beneath it;
-  directly under the root means unclaimed. Grouping lives in
-  `PlanList.buildGroups`; subplan children resolve against active + archived
+  directly under the root means unclaimed. Grouping is
+  `lib/plan-groups.ts`; subplan children resolve against active + archived
   with active winning, identically in sidebar and detail; parents render
   additively via `ParentPlanView`, doc-less plans header-only.
 - **Phases render through `parseImplString`** (the `impl-parser` subpath) —
@@ -239,3 +251,19 @@ Each entry is a rule and a pointer; the pointer holds the story.
   request id (a build and a planning session share a plan); words go to the
   planning session. Guarded by `sessions-per-plan.test.ts` (A6, A13). — see
   `/decisions/sessions-per-plan`
+- **The nav's width is the person's, per browser; its tree is drawn by
+  `nav.expanded`**: `CockpitFrame` keeps the width in `localStorage`
+  (`indusk-admin.nav.width`), no `NavHandle` below 760 px; every width goes
+  through `NavHandle`'s `clampNavWidth` (drag, key step, kept width, `?nav=`).
+  `PlanList` only draws the tree (`NavPath`, `PlanRow`, `NavGroup`), never its
+  own markup. Guarded by `CockpitFrame.test.tsx` (A1–A4) and
+  `PlanList.test.tsx`. — see `/decisions/cockpit-redraw`
+- **The brief page and plan page are held to `brief.*` and `plan.*`**: each
+  reports its state with `data-look-state` (`lib/look-state.ts`), never a
+  `?state=`; `screens.json` lists one path per state at A10's fixture plans,
+  which the real project lacks, so there the check names them `unchecked …
+  answered 404`, never a failure. A change to either page is drawn and approved
+  first; `?nav=<px>` sets the nav's width for one page. Guarded by
+  `look-state.test.ts`, `cockpit-redraw.contract.test.ts` (A10). — see
+  `/decisions/cockpit-redraw`
+- **A running agent's events are heard through `useSessionEvents`** — `components/session/use-session-events.ts`, the one subscription every conversation uses (the `EventSource` on `/api/sessions/:id/events`, `running`, a refresh on a write and on exit, an `onWrite` callback). A new view of a session uses it rather than opening its own `EventSource`; a draft's agent is found with `draftSession`/`stopDraftSession` in `lib/new-project-session.ts`, never by comparing `sessionManager().current()?.plan`. Guarded by `use-session-events.test.tsx` (A34).

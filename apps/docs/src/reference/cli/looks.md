@@ -52,6 +52,8 @@ src/Badge.jsx:3  p-[13px]  arbitrary-class — arbitrary value in p-[13px] — u
 | `not-in-catalog` | a marked component the app's `components.json` omits (only when the app has a catalog) |
 | `no-story` | a `<indusk-component name state>` in a mockup naming a state the catalog lists no story for — `no story: badge.warn` |
 | `no-approved-story` | a `<indusk-component>` whose story has no snapshot, or one no person has approved as it is now — `no approved story: badge.warn`, at the reference's line |
+| `content-not-words-or-components` | an element inside a `<indusk-component>` other than `<indusk-component>` or `<indusk-content>` — `content not words or components: <file>:<line> <div> inside button` |
+| `component-takes-no-content` | content for a property the state's `content` in `components.json` does not list — `component takes no content: <file>:<line> button has no "label" to fill in state default` |
 | `component-drawn-in-mockup` | a `data-component` element written in a mockup's source instead of placed by name — `component drawn in mockup: <file>:<line> badge` (only when the app has a catalog; a mockup `screens.json` lists as `uncomposed` is exempt) |
 | `needs-a-story` | a notice, never a failure: a component the mockup declares new (`indusk-new-components`) that has no story yet — `needs a story: pill` |
 
@@ -402,8 +404,12 @@ names, such as `nextjs-portal` in development); a margin of `auto` is read as
 the keyword, not the pixels it resolved to; a shadow is read layer by layer, in
 whatever colour spelling, and a framework's empty layer is not a break.
 
-A proposed mockup is not checked against (`unchecked`, with the reason), and
-the closing line counts unchecked looks beside held and broken. Each look is
+A proposed mockup is not checked against (`unchecked`, with the reason). A look
+whose page answers 404 is `unchecked` too, naming the 404 (`… answered 404 — not
+in this project`) and the run goes on: the plan and brief screens open at
+fixture plans only the contract test's project holds, so a check against your
+own project names them unchecked. A page that fails any other way (a 500, a
+refused connection) still ends the run. The closing line counts unchecked looks beside held and broken. Each look is
 also recorded as a span, one per screen × state × device and scheme, carrying a
 promise's mark under `tokens-are-held-exactly` — `upheld` when held,
 `violated` with the first finding as the symptom when broken — so a look reads

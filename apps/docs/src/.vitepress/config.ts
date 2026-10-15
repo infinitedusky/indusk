@@ -80,6 +80,7 @@ const config = defineConfig({
 				{
 					text: "Working across repos",
 					items: [
+						{ text: "Starting a project", link: "/guide/new-project" },
 						{ text: "Workbenches & Worktrees", link: "/guide/worktree-setup" },
 						{ text: "Sharing a Workbench", link: "/guide/workbench-sharing" },
 						{ text: "Multi-Agent Coordination", link: "/guide/multi-agent" },
@@ -126,6 +127,7 @@ const config = defineConfig({
 					items: [
 						{ text: "setup", link: "/reference/cli/setup" },
 						{ text: "workbench", link: "/reference/cli/workbench" },
+						{ text: "new-project", link: "/reference/cli/new-project" },
 						{ text: "worktree", link: "/reference/cli/worktree" },
 						{ text: "run", link: "/reference/cli/run" },
 						{ text: "verify", link: "/reference/cli/verify" },
@@ -219,7 +221,9 @@ const config = defineConfig({
 						{ text: "Plan Cockpit — the admin as the promise dashboard, the promise page and the plan page", link: "/decisions/plan-cockpit" },
 						{ text: "UI Promises — mockups a person approves, held by value", link: "/decisions/ui-promises" },
 						{ text: "Brief as the Contract — looks in the brief, a plan that starts as a conversation", link: "/decisions/brief-as-the-contract" },
+						{ text: "Cockpit Redraw — the nav from the original cockpit, a width you can drag, re-approval a person's", link: "/decisions/cockpit-redraw" },
 						{ text: "Storybook Components — each component once, a story per state", link: "/decisions/storybook-components" },
+						{ text: "Component Content — a placed component takes its own words", link: "/decisions/component-content" },
 						{ text: "Release Records Its Failures — the release as a declared step", link: "/decisions/release-records-its-failures" },
 						{ text: "Audit Step — a fresh reader before a plan closes", link: "/decisions/plan-review-subagent" },
 						{ text: "Admin Plan Authoring — plan to release from the admin", link: "/decisions/admin-plan-authoring" },
@@ -248,6 +252,7 @@ const config = defineConfig({
 						{ text: "The Shape check — craft feedback at the phase boundary", link: "/decisions/lifecycle-rebalance" },
 						{ text: "Local Init Mode", link: "/decisions/local-init-mode" },
 						{ text: "Multi-Agent Coordination", link: "/decisions/multi-agent-coordination" },
+						{ text: "New Project Flow", link: "/decisions/new-project-flow" },
 						{ text: "OpenTelemetry Extension", link: "/decisions/otel-extension" },
 						{ text: "Semantic Graph Bridge", link: "/decisions/semantic-graph-bridge" },
 						{ text: "Test phases as structure", link: "/decisions/test-phase-structure" },

@@ -34,8 +34,11 @@ export function GET(request: NextRequest): Response {
 
 /**
  * Start a session for a plan: `{ project, plan, kind, prompt }`. It runs in the
- * plan's worktree while it has one. A second session of the same kind on the
- * plan, or one beyond `sessions.max`, is refused, naming what runs.
+ * plan's worktree while it has one. When this plan already has a session of
+ * this kind and no page is showing it, the person is coming back to it: the
+ * answer is its id, and the page attaches. When a page is showing it already,
+ * the start is refused with the question whether to continue it here
+ * (`refuseRunning`). One beyond `sessions.max` is refused, naming what runs.
  */
 export async function POST(request: NextRequest): Promise<Response> {
   const refused = adminOnly(
@@ -59,6 +62,11 @@ export async function POST(request: NextRequest): Promise<Response> {
       400,
       "a session needs project, plan, prompt, and kind planning or build",
     );
+  }
+  const manager = sessionManager();
+  const running = manager.forPlan(body.project, body.plan, body.kind);
+  if (running && !manager.isWatched(running.id)) {
+    return Response.json({ id: running.id, attached: true });
   }
   const where = await planLocation(body.project, body.plan);
   if ("error" in where) return refuse(404, where.error);

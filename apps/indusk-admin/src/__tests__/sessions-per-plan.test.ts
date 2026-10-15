@@ -172,6 +172,9 @@ describe("A12 — a second session on the same plan offers to continue the runni
   it("A12 the refusal says this plan has one, asks to continue it here, and hands back its id", async () => {
     const manager = install();
     const { id } = manager.start(planning("one"));
+    // A page is already showing it (Sandy, 2026-10-14: an unwatched session is
+    // simply attached; the question is for one open elsewhere).
+    manager.subscribe(id, () => {});
     const res = await startSession(
       new NextRequest("http://127.0.0.1:3996/api/sessions", {
         method: "POST",

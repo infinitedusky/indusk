@@ -5,7 +5,7 @@ import type {
 	RitualWord,
 	SegmentState,
 } from "../lifecycle.js";
-import { DOCUMENT_LABELS, WORKFLOW_DEFINITIONS, type WorkflowType } from "../workflow-types.js";
+import { DOCUMENT_LABELS, requiredDocuments, type WorkflowType } from "../workflow-types.js";
 
 /**
  * A plan's two workflows as lists of steps (plan-cockpit, ADR decision 3):
@@ -50,6 +50,8 @@ export interface PlanStep<Name extends string> {
 export interface PlanSnapshot {
 	/** The declared type; null when none is declared or the word is not a type. */
 	workflow: WorkflowType | null;
+	/** Documents the plan's project turned off; they are not part of its planning. */
+	documentsOff?: readonly string[];
 	/** Where the plan stands; absent when it could not be read (a malformed plan). */
 	position?: PlanPositionState;
 	/** Each document the plan has, with its status. */
@@ -173,7 +175,8 @@ const RELEASE_STEPS: readonly ReleaseStepName[] = [
  * with an impl goes through; for a type with none they all read `skipped`.
  */
 export function planSteps(plan: PlanSnapshot): PlanWorkflows {
-	const required = plan.workflow === null ? null : WORKFLOW_DEFINITIONS[plan.workflow].requires;
+	const required =
+		plan.workflow === null ? null : requiredDocuments(plan.workflow, plan.documentsOff);
 	return {
 		planning: PLANNING.filter((s) => required === null || required.includes(s.document)).map((s) =>
 			planningStep(s, plan),

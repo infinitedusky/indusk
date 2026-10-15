@@ -18,6 +18,12 @@
 .justify-center {
     justify-content: center;
 }
+.justify-items-start {
+    justify-items: start;
+}
+.gap-1 {
+    gap: var(--space-1);
+}
 .gap-4 {
     gap: var(--space-4);
 }
@@ -43,6 +49,9 @@
 }
 .bg-current {
     background-color: currentColor;
+}
+.bg-dusk-wash {
+    background-color: var(--color-dusk-wash);
 }
 .bg-idle-wash {
     background-color: var(--color-idle-wash);
@@ -80,17 +89,26 @@
 .font-semibold {
     font-weight: var(--font-weight-semibold);
 }
+.tracking-caps {
+    letter-spacing: var(--tracking-caps);
+}
 .tracking-chip {
     letter-spacing: var(--tracking-chip);
 }
-.break-words {
-    overflow-wrap: break-word;
+.wrap-anywhere {
+    overflow-wrap: anywhere;
+}
+.text-dusk {
+    color: var(--color-dusk);
 }
 .text-idle {
     color: var(--color-idle);
 }
 .text-ink {
     color: var(--color-ink);
+}
+.text-ink-soft {
+    color: var(--color-ink-soft);
 }
 .text-ok {
     color: var(--color-ok);

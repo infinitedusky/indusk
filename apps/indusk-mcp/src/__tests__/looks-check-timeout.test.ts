@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { openWithinTime } from "../lib/looks/check.js";
+import { LookNotHere, LooksCheckError, openWithinTime } from "../lib/looks/check.js";
 
 const timeout = () =>
 	Object.assign(new Error("page.goto: Timeout 30000ms exceeded.\nCall log: …"), {
@@ -32,11 +32,30 @@ describe("a look that runs out of time is unchecked, not the end of the run", ()
 		expect(seen).toEqual({ timedOut: "timed out 2 times: page.goto: Timeout 30000ms exceeded." });
 	});
 
-	it("still ends the run on a failure that is not time", async () => {
+	it("still ends the run on a failure that is neither time nor a 404", async () => {
 		await expect(
 			openWithinTime(async () => {
-				throw new Error("http://localhost/p/x answered 404");
+				throw new LooksCheckError("http://localhost/p/x answered 500");
 			}),
-		).rejects.toThrow("answered 404");
+		).rejects.toThrow("answered 500");
+		await expect(
+			openWithinTime(async () => {
+				throw new Error("page.goto: net::ERR_CONNECTION_REFUSED");
+			}),
+		).rejects.toThrow("ERR_CONNECTION_REFUSED");
+	});
+
+	// regression: the audit's finding that `indusk looks check admin` against the person's own project stops at the first `looks-fixture-*` path
+	it("names a look whose page answers 404 as unchecked, on the first try, instead of ending the run", async () => {
+		let calls = 0;
+		const seen = await openWithinTime(async () => {
+			calls++;
+			throw new LookNotHere("http://localhost:3939/p/dusk/plan/looks-fixture-a answered 404");
+		});
+		expect(calls).toBe(1);
+		expect(seen).toEqual({
+			unchecked:
+				"http://localhost:3939/p/dusk/plan/looks-fixture-a answered 404 — not in this project",
+		});
 	});
 });
