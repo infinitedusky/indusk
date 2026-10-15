@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest";
 const REPO_ROOT = resolve(new URL("../../../../", import.meta.url).pathname);
 const HOOKS_DIR = join(REPO_ROOT, "apps/indusk-mcp/hooks");
 const GUIDE = join(REPO_ROOT, "apps/docs/src/guide/index.md");
-const DAWN_MASTER = join(REPO_ROOT, ".indusk/planning/indusk-v2-dawn/master.md");
+const DAWN_MASTER = join(REPO_ROOT, ".indusk/planning/archive/indusk-v2-dawn/master.md");
 
 const WORDS: Record<string, number> = {
 	one: 1,
