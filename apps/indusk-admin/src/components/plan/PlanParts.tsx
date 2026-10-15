@@ -15,6 +15,7 @@ import {
   promisesSummary,
 } from "@/lib/plan-parts-view";
 import { ApproveAmendments } from "./ApproveAmendments";
+import { PhaseItems } from "./PhaseItems";
 import { PlanLook } from "./PlanLook";
 
 /**
@@ -154,24 +155,9 @@ export function PhasesPart({
               count={view.count}
               state={view.state}
               tone={view.tone}
+              summary={view.summary}
             >
-              <ul className="grid list-none gap-2">
-                {view.items.map((item) => (
-                  <li key={item.text} className="flex items-baseline gap-2">
-                    <span className="font-mono text-sm leading-3 text-ink-soft">
-                      {item.checked ? "☑" : "☐"}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-sm leading-3">{item.text}</div>
-                      {item.note ? (
-                        <div className="mt-hair whitespace-pre-line text-xs leading-2 text-ink-faint">
-                          {item.note}
-                        </div>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <PhaseItems items={view.items} />
             </PhaseRow>
           );
         })}
