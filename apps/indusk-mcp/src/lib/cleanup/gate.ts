@@ -121,6 +121,22 @@ export const SKIP_REASON_MAX = 120;
 
 type SkippableRitual = "falsification" | "cleanup" | "audit";
 
+/** A skip satisfies its ritual only when it is a skip and its reason fits SKIP_REASON_MAX. */
+function skipIsOneSentence(skip: SkipCheck): boolean {
+	return skip.skipped && (skip.reason?.length ?? 0) <= SKIP_REASON_MAX;
+}
+
+/** Records a skip as too long when it is the only thing that would have satisfied the ritual. */
+function noteLongSkip(
+	into: RetrospectiveReadiness["longSkipReasons"],
+	ritual: SkippableRitual,
+	skip: SkipCheck,
+	satisfied: boolean,
+): void {
+	const length = skip.reason?.length ?? 0;
+	if (!satisfied && skip.skipped && length > SKIP_REASON_MAX) into.push({ ritual, length });
+}
+
 export interface RetrospectiveReadiness {
 	falsificationOk: boolean;
 	cleanupOk: boolean;
@@ -199,29 +215,18 @@ export function checkRetrospectiveReadiness(
 	implContent: string,
 ): RetrospectiveReadiness {
 	const longSkipReasons: RetrospectiveReadiness["longSkipReasons"] = [];
-	// A skip satisfies a ritual only when its reason is one sentence; a long
-	// one is recorded, and counts only if nothing else satisfies the ritual.
-	const skipSatisfies = (skip: SkipCheck): boolean => {
-		if (!skip.skipped) return false;
-		const length = skip.reason?.length ?? 0;
-		return length <= SKIP_REASON_MAX;
-	};
-	const noteLong = (ritual: SkippableRitual, skip: SkipCheck, ok: boolean): void => {
-		const length = skip.reason?.length ?? 0;
-		if (!ok && skip.skipped && length > SKIP_REASON_MAX) longSkipReasons.push({ ritual, length });
-	};
 	const falsificationSkip = isFalsificationSkipped(implContent);
 	const falsificationOk =
 		isFalsificationComplete(planRoot) ||
-		skipSatisfies(falsificationSkip) ||
+		skipIsOneSentence(falsificationSkip) ||
 		isFalsificationPhaseTerminal(implContent);
-	noteLong("falsification", falsificationSkip, falsificationOk);
+	noteLongSkip(longSkipReasons, "falsification", falsificationSkip, falsificationOk);
 	const cleanupSkip = isCleanupSkipped(implContent);
-	const cleanupOk = isCleanupComplete(planRoot) || skipSatisfies(cleanupSkip);
-	noteLong("cleanup", cleanupSkip, cleanupOk);
+	const cleanupOk = isCleanupComplete(planRoot) || skipIsOneSentence(cleanupSkip);
+	noteLongSkip(longSkipReasons, "cleanup", cleanupSkip, cleanupOk);
 	const auditSkip = isAuditSkipped(implContent);
-	const auditOk = isAuditComplete(planRoot) || skipSatisfies(auditSkip);
-	noteLong("audit", auditSkip, auditOk);
+	const auditOk = isAuditComplete(planRoot) || skipIsOneSentence(auditSkip);
+	noteLongSkip(longSkipReasons, "audit", auditSkip, auditOk);
 	// The check the skill's text always promised and the code never performed:
 	// a row left `written` after its phase closed is invisible to the two
 	// ritual walks above, which see checkboxes and not rows.

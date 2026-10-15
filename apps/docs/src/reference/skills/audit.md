@@ -39,10 +39,10 @@ A short frontmatter (`plan`, `audited`, `model`), then one `##` per question in 
 
 ```yaml
 audit: skipped
-audit_reason: "why skipping is acceptable for this specific plan"
+audit_reason: "a one-line copy change; a fresh reader would find nothing to question"
 ```
 
-Both fields; a bare `audit: skipped` does not pass. [`/retrospective`](/reference/skills/retrospective) Step 0 refuses to start without `audit.md` or the pair.
+Both fields; a bare `audit: skipped` does not pass, and neither does a reason over 120 characters: the Step 0 readiness check refuses it and names the length. The reason is one sentence; the detail goes in the impl body. [`/retrospective`](/reference/skills/retrospective) Step 0 refuses to start without `audit.md` or the pair.
 
 ## Advisory
 

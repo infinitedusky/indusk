@@ -99,13 +99,16 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 - [x] `pnpm check` passes
   - note: Biome is clean on every file this phase touched; repo-wide `pnpm check` reports errors in files this phase did not touch (`biome.json`, `apps/indusk-admin/biome.json`, `.indusk/mockups/admin/components/*.css`, `examples/seat-holds`). Also: `lifecycle-parity.snapshot.json` re-baselined by hand for `archive/cleanup-ritual` (its cleanup skip reason is over 120 characters, so it now lists `cleanup` as missing — the intended change; archived reasons are not rewritten). `plan-worktrees-cli.test.ts` A13 fails on an untracked `.mcp.json` in this worktree, unrelated.
 
+- [x] Shape (craft review of `gate.ts`, `lifecycle.ts`, the skills): hoisted the skip-length closures out of `checkRetrospectiveReadiness` into module-level `skipIsOneSentence` and `noteLongSkip`; the lifecycle wording and skills left as is
+
 #### Build Phase 1 Context
 
-- [ ] guard: the readiness refusal and the lifecycle wording name `promise: a-skip-reason-is-one-sentence`, so the rule reaches an agent from its enforcer, not from a `CLAUDE.md`
+- [x] guard: the readiness refusal and the lifecycle wording name `promise: a-skip-reason-is-one-sentence`, so the rule reaches an agent from its enforcer, not from a `CLAUDE.md`
+  - note: the token is in the code comments on `SKIP_REASON_MAX`, `longSkipReasons` and the lifecycle `longReason` helper, and in the retrospective skill's Step 0 text
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/skills/retrospective.md` and `audit.md`: the Step 0 readiness check now refuses a skip reason over 120 characters
+- [x] `apps/docs/src/reference/skills/retrospective.md` and `audit.md`: the Step 0 readiness check now refuses a skip reason over 120 characters
 
 ### Build Phase 2: Skipped, and why on request
 

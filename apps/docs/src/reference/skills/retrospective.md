@@ -70,6 +70,8 @@ flowchart TD
 - `isFalsificationComplete(planRoot)` is `true` — the plan has a `falsification.md` log with a terminator entry, OR
 - `isFalsificationSkipped(implContent).skipped` is `true` — the impl frontmatter has BOTH `falsification: skipped` AND `falsification_reason: "{non-empty text}"`
 
+The readiness check also refuses a skip reason over 120 characters — one sentence is the limit. The ritual stays in `missing`, and `longSkipReasons` names it and the reason's length; the fix is a one-line edit of the reason.
+
 If neither holds, the skill surfaces a gate-refusal message directing the user to run `/falsify {plan}` first, or to add the skip frontmatter with a recorded reason.
 
 This is the structural enforcement layer for the [Falsification Ritual](/guide/falsification-ritual). The two helper functions live in [`apps/indusk-mcp/src/lib/falsification/`](/reference/falsification/log); the retrospective skill invokes them via `tsx` or MCP wrappers the same way other skill-level checks do.
