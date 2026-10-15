@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Plan } from "./planning-reader";
 
 vi.mock("./session-host", () => ({
-  sessionManager: () => ({ current: () => null, pendingQuestion: () => null }),
+  sessionManager: () => ({ running: () => [], pendingQuestion: () => null }),
 }));
 vi.mock("./build-host", () => ({ buildState: () => null }));
 

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REPO_ROOT } from "../../__tests__/helpers/cli.js";
 import { git, initRepoWithCommit } from "../../__tests__/helpers/test-git.js";
+import { gitCommonDirOf } from "../worktree/layout.js";
 import { planDates, planTitle, promiseWords, readHealthNames } from "./display.js";
 
 /**
@@ -310,7 +311,7 @@ describe("A22 — a plan worked in its own worktree is named by that worktree's 
 			join(wt, ".indusk", "planning", "p", "brief.md"),
 			'---\ntitle: "Worktree name"\nstatus: draft\n---\n\n# p\n',
 		);
-		const common = git(root, ["rev-parse", "--path-format=absolute", "--git-common-dir"]);
+		const common = gitCommonDirOf(root) ?? "";
 		writeFileSync(
 			join(common, "indusk-plan-worktrees.json"),
 			JSON.stringify({
