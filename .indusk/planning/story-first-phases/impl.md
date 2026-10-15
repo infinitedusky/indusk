@@ -365,7 +365,7 @@ The save check and the plan page are ready. This phase makes the planner use the
   `templates/planning/CLAUDE.md`, "The impl": a rule entry for the shape, the opt-in and the reader without shorthand — guarded by `phase-summary-rule.test.ts` (`promise: an-impl-phase-explains-itself`); sync `.indusk/planning/CLAUDE.md`. `templates/workflows/{bugfix,refactor,feature}.md`: their impl skeletons in the shape. `skill-sync-parity.test.ts` and `workflow-types-parity` stay green.
 
   </details>
-- [ ] component-content's impl is rewritten in the shape
+- [x] component-content's impl is rewritten in the shape
   <details><summary>Technical</summary>
 
   Wherever it lives when this phase runs (its plan folder, or `archive/component-content/` once it has closed): add `phase_summary: required`, write a summary per phase, turn each item into a sentence with its current text in the fold, row labels included. Every `[x]` stays as it is; the edit ticks nothing (A9 holds that). Validate it, then open its plan page.
