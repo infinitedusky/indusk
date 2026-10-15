@@ -131,6 +131,7 @@ What an unattended build does next, read from the plan as it stands — its work
 | `falsify` | every phase is closed and no falsification phase or skip exists |
 | `cleanup` | falsification is closed and no cleanup phase or skip exists |
 | `audit` | the cleanup is closed and the plan folder has no `audit.md`, nor does the impl carry `audit: skipped` with an `audit_reason`. The runner runs `/audit <name>` as a step; what `audit.md` says is never read |
+| `shorten-reason` | every phase is closed and a ritual (falsification, cleanup or audit) is skipped with a reason over one sentence or 120 characters. Answered before that ritual's own step, so a skip is never turned into a full run; the runner starts a session that rewrites that one `<ritual>_reason` line, changes nothing else and commits. Names the ritual, the reason's length and sentence count |
 | `judgement` | the open phase's next item is one the plan declared for a person — a Deferred Verification row, a manual or visual check; names the item |
 | `review` | every phase, the falsification and the cleanup are closed, and the audit written or skipped. Never `retrospective`: that waits for acceptance |
 | `cannot continue` | the open phase has a `blocker:` line; or every phase is closed while a row is not terminal. The runner adds two of its own: the step's session ended in an error after its retries, or two steps in a row made no progress |

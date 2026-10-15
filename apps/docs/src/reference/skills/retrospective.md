@@ -559,3 +559,5 @@ The retrospective draws on tools from across the InDusk MCP server:
 - **Not every plan produces a lessons page.** The knowledge handoff creates a decisions page for every plan (every plan has an ADR), but lessons pages are only for plans with genuinely reusable insights. Do not force it.
 
 - **Run the retrospective in order.** The nine steps build on each other. The structural audit (Step 2) feeds into the retrospective document (Step 1 gets updated). The quality audit (Step 5) may surface issues that affect the context audit (Step 7). Sequential execution is intentional.
+
+An unattended build that meets an over-long skip reason (Step 0 refuses it) runs a `shorten-reason` session instead of the skipped ritual: it rewrites that one `<ritual>_reason` line to one sentence of at most 120 characters, changes nothing else, and commits. See [`plans next`](/reference/cli/plans).
