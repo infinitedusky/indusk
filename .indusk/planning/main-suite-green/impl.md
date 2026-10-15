@@ -90,7 +90,8 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 - [x] `src/bin/commands/promises.ts:257`: read `--impl-stdin` with `await text(process.stdin)` (`node:stream/consumers`), not `readFileSync(0)`; the command's handler is async if it is not already
 - [x] `impl-corpus.test.ts`: add `archive/browser-template-claims` and `archive/untrack-mcp-json` to `PRE_EXISTING_FAILURES`, each with its reason in the block comment above (cites rows another plan's file holds; cites T4, which has no row) — archived history, recorded not repaired
-- [ ] `.indusk/planning/cockpit-audit-fixes/brief.md`: add `## Looks` — read its impl's Files Affected against `.indusk/mockups/admin/screens.json` `sources` to decide between `None — <reason>` and the looks it changes; the amendment waits for the person's re-approval in the cockpit
+- [x] `.indusk/planning/cockpit-audit-fixes/brief.md`: add `## Looks` — read its impl's Files Affected against `.indusk/mockups/admin/screens.json` `sources` to decide between `None — <reason>` and the looks it changes; the amendment waits for the person's re-approval in the cockpit
+  - Note, 2026-10-14: the section lists `decision-card.ask`, `dashboard.default` and `nav.expanded` as Changes (impl Files Affected: DecisionCard.tsx, promise-dashboard.ts, PlanList.tsx) and four others as Must-not-break. Inserted before `## Depends On`; the branch `plan/cockpit-audit-fixes` (bc94a4d59) edits only the title and description lines of the brief, and `git merge-file` of this copy against that branch's has no conflict. The amendment waits for the person's re-approval in the cockpit.
 
 #### Build Phase 1 Verification
 

@@ -60,6 +60,30 @@ approved and left until the cockpit's own use shows what is wrong. Until then:
 - **Held** is read strictly — seen upheld that day and not broken; a promise with no recorded runs shows no held days. Revisit when a dashboard row misleads in practice.
 - **A finished impl** is one no running session is writing; the impl's own status is the alternative. Revisit when a plan is offered for approval too early.
 
+## Looks
+
+Added by main-suite-green (2026-10-14): this brief predates the rule that a brief carries a `## Looks`. Read from the impl's Files Affected against `.indusk/mockups/admin/screens.json`. **This amendment waits for the person's re-approval in the cockpit**; nothing here is approved until then.
+
+### This plan makes
+
+None.
+
+### Existing looks
+
+**Must not break**
+
+- **`dashboard.empty`**, **`nav.collapsed`**, **`promise.broken`**, **`promise.enforced`**. The promise dashboard and page change in what they count and where a promise sits, not in how they look.
+
+**Changes**
+
+- **`decision-card.ask`**. When an agent asks several questions at once, the card shows each of them with its own answer; the approved look stays held until a person approves this one.
+- **`dashboard.default`**. A promise is grouped under the innermost Path that declares its plan, and its thirty days show only what was seen; the approved look stays held until a person approves this one.
+- **`nav.expanded`**. The nav lists a plan under its innermost Path; the approved look stays held until a person approves this one.
+
+**Replaces**
+
+None.
+
 ## Depends On
 
 - [plan-cockpit](../archive/plan-cockpit/retrospective.md) — closed 2026-10-10
