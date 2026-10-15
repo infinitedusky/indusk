@@ -1,9 +1,18 @@
-import { type RetrospectiveReadiness, SKIP_REASON_MAX } from "./cleanup/gate.js";
+import type { RetrospectiveReadiness } from "./cleanup/gate.js";
 import type { GateKind } from "./impl-headings.js";
 import type { ImplPhase, ParsedImpl } from "./impl-parser.js";
 import type { PlanSummary } from "./plan-parser.js";
 import type { PhaseBoundaryRecord } from "./shape/boundary.js";
 import { DOCUMENT_LABELS, requiredDocuments, type WorkflowType } from "./workflow-types.js";
+
+/**
+ * The longest a skip reason may be: one sentence. Lives here, not in
+ * cleanup/gate.ts, because the admin's browser bundle reaches this module and
+ * gate.ts imports node:fs; gate.ts re-exports it.
+ *
+ * promise: a-skip-reason-is-one-sentence
+ */
+export const SKIP_REASON_MAX = 120;
 
 /**
  * The one definition of a plan's lifecycle (admin-ui-phase-progress, ADR D1).

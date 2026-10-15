@@ -4,7 +4,7 @@ import matter from "gray-matter";
 import { isFalsificationComplete } from "../falsification/log.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
 import { parsePhaseHeading } from "../impl-headings.js";
-import { RITUAL_ORDER } from "../lifecycle.js";
+import { RITUAL_ORDER, SKIP_REASON_MAX } from "../lifecycle.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { readPromises } from "../promises/registry.js";
 import { rowProofs } from "../promises/rows.js";
@@ -111,13 +111,8 @@ export function isAuditComplete(planRoot: string): boolean {
 	return existsSync(join(planRoot, "audit.md"));
 }
 
-/**
- * The longest a skip reason may be: one sentence. The detail belongs in the
- * impl body or the retrospective, not in frontmatter a status row must carry.
- *
- * promise: a-skip-reason-is-one-sentence
- */
-export const SKIP_REASON_MAX = 120;
+// SKIP_REASON_MAX lives in lifecycle.ts (browser-reachable); re-exported here.
+export { SKIP_REASON_MAX };
 
 type SkippableRitual = "falsification" | "cleanup" | "audit";
 
