@@ -1,7 +1,7 @@
 ---
 title: "main-suite-green"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -53,6 +53,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 | A7 | Accepting a new project ends its agent and streams each step in a run where every package's tests run at once | Test Phase 1 | Build Phase 3 | passing | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-admin/src/__tests__/new-project-accept.test.ts, apps/indusk-admin/src/__tests__/new-project-accept-route.test.ts |
 | A8 | A component named only by an unlanded plan's approved mockups is not reported unimplemented; one named by a landed plan's and missing is | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-component-has-one-implementation, promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts |
 | A9 | `pnpm test` from the root of the branch, merged with main, passes | Build Phase 3 | Build Phase 3 | passing | live check | the live proof of the suite promise; rows A2–A8 name its files | (recorded in the impl with its result) |
+| A10 | A mockup held under a landed plan and then re-approved under an unlanded one still has the components its landed approval bound held: delete one of those components' implementations and the check reports it unimplemented, while a component only the unlanded re-approval adds is not reported | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
 
 ## Checklist
 
@@ -163,6 +164,33 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 - [x] `apps/docs/src/reference/admin-ui/component-conventions.md` or the testing guide page that covers the admin's tests: the rule from A7, if it is one a test author must follow; otherwise the retrospective records why none
 
+
+### Build Phase 4: Falsification — a re-approval in flight blinds the check to components that already landed
+
+**Tier**: med — the work step's default
+
+**Goal**: verify that the landed-plans rule exempts only what an unlanded plan adds. Today `mockupsOfLandedPlans` (`lib/looks/landed.ts`) reads only a mockup's *latest* approval: when an in-flight plan re-approves a mockup that a landed plan's approval already held, the whole mockup drops out of the unimplemented-component check. On main now, `plan.needs-you`, `plan.released`, `plan.working`, `plan.parts` (latest approval: plan-stories) and `phase-row.open` (latest: story-first-phases) were held under cockpit-redraw and brief-as-the-contract and are exempt, so a component they name could be deleted from the admin and the check, the promise `a-component-has-one-implementation`, would stay green. Hypothesis: with a fixture mockup approved under an archived plan binding `plan-row`, then re-approved under an active plan that adds `ghost-row`, removing `plan-row`'s implementation is not reported.
+
+- [ ] Author A10 in `apps/indusk-mcp/src/lib/looks/landed.test.ts` (red today: the re-approved mockup is exempt whole, so the removed `plan-row` is not held)
+- [ ] `lib/looks/landed.ts`: replace `mockupsOfLandedPlans` with a reader of the component names held — every component a held mockup's markup names (latest approval naming no plan or a landed one), plus, for a mockup whose latest approval is an unlanded plan's, the components its most recent held approval bound (`ApprovalEntry.components` keys, `badge.ok` → `badge`; an entry without `components` binds none); `coverage.ts` `unimplementedComponents` and `looks-admin-components.test.ts` read it
+
+#### Build Phase 4 Verification
+
+- [ ] A10 green and A8 still green (`pnpm exec vitest run src/lib/looks/landed.test.ts src/__tests__/looks-admin-components.test.ts`, from `apps/indusk-mcp`); `pnpm exec vitest related src/lib/looks/landed.ts src/lib/looks/coverage.ts --run`; `tsc --noEmit` and `biome check` on the changed files
+
+#### Build Phase 4 Context
+
+- [ ] guard: `landed.ts`'s doc comment says the exemption is per component, not per mockup — only what an unlanded plan's re-approval adds — and names `promise: a-component-has-one-implementation`
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md`: the component check's landed-plans sentence says a re-approval in flight keeps holding the components the landed approval bound
+
+#### Falsification summary
+
+- Searched without a hypothesis: the async stdin read (`promises.ts`, its awaited caller in `cli.ts`, the hook's `spawnSync` with `input`, which closes stdin, so `text()` cannot hang); `planHasLanded`'s archive-before-land order (the retrospective archives at Step 9 before `plans land` runs its checks at Step 10, so a plan's own unimplemented component is caught at landing); the registry scan (no test overrides `INDUSK_HOME` to undefined through `runCli`); the URL-trim scan (the only `.trim().replace(/\/+$/, "")` is `telemetry.ts:101`; other trims are paths or `/v1/*` endpoint joins); the 15 s timeout and the pre-bundle entry (configuration, each with its measured reason).
+- Not authored: the admin browser tests that still `await import` a page inside an `it` — the same cold-import class as A7, but no timeout from them in root runs 3–5, so a row would be a guess rather than an observed failure.
+
 ## Files Affected
 
 | File | Change |
@@ -178,6 +206,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 | `apps/indusk-admin/src/__tests__/new-project-accept*.test.ts` | A7's fix |
 | `.indusk/planning/cockpit-audit-fixes/brief.md` | `## Looks` |
 | `.indusk/promises/a-component-has-one-implementation.md` | changed sentence (via the CLI) |
+| `apps/indusk-mcp/src/lib/looks/landed.ts` (+ `coverage.ts`, `landed.test.ts`) | Build Phase 4: held components per approval, not per mockup |
 
 ## Dependencies
 - None.
