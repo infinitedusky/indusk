@@ -53,7 +53,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 | A7 | Accepting a new project ends its agent and streams each step in a run where every package's tests run at once | Test Phase 1 | Build Phase 3 | passing | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-admin/src/__tests__/new-project-accept.test.ts, apps/indusk-admin/src/__tests__/new-project-accept-route.test.ts |
 | A8 | A component named only by an unlanded plan's approved mockups is not reported unimplemented; one named by a landed plan's and missing is | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-component-has-one-implementation, promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts |
 | A9 | `pnpm test` from the root of the branch, merged with main, passes | Build Phase 3 | Build Phase 3 | passing | live check | the live proof of the suite promise; rows A2–A8 name its files | (recorded in the impl with its result) |
-| A10 | A mockup held under a landed plan and then re-approved under an unlanded one still has the components its landed approval bound held: delete one of those components' implementations and the check reports it unimplemented, while a component only the unlanded re-approval adds is not reported | Build Phase 4 | Build Phase 4 | written | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
+| A10 | A mockup held under a landed plan and then re-approved under an unlanded one still has the components its landed approval bound held: delete one of those components' implementations and the check reports it unimplemented, while a component only the unlanded re-approval adds is not reported | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
 
 ## Checklist
 
@@ -176,15 +176,17 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 #### Build Phase 4 Verification
 
-- [ ] A10 green and A8 still green (`pnpm exec vitest run src/lib/looks/landed.test.ts src/__tests__/looks-admin-components.test.ts`, from `apps/indusk-mcp`); `pnpm exec vitest related src/lib/looks/landed.ts src/lib/looks/coverage.ts --run`; `tsc --noEmit` and `biome check` on the changed files
+- [x] A10 green and A8 still green (`pnpm exec vitest run src/lib/looks/landed.test.ts src/__tests__/looks-admin-components.test.ts`, from `apps/indusk-mcp`); `pnpm exec vitest related src/lib/looks/landed.ts src/lib/looks/coverage.ts --run`; `tsc --noEmit` and `biome check` on the changed files
+  - Note, 2026-10-15: landed.test.ts + looks-admin-components.test.ts 7/7 (A10 and both A8 cases green); `vitest related` 26 files / 152 tests passed; `tsc --noEmit` and `biome check` clean. Real repo: `indusk looks coverage admin` reports no unimplemented component; `plan.needs-you/released/working/parts` (latest approval plan-stories, unlanded) now hold the 15–19 components their cockpit-redraw approval bound, `phase-row.open` binds none; 33 component names held in all.
 
 #### Build Phase 4 Context
 
-- [ ] guard: `landed.ts`'s doc comment says the exemption is per component, not per mockup — only what an unlanded plan's re-approval adds — and names `promise: a-component-has-one-implementation`
+- [x] Shape — reviewed the four files this phase changed (`landed.ts`, `coverage.ts`, `landed.test.ts`, `looks-admin-components.test.ts`) against the enabled extensions' craft rules, `rules.unreadable` empty; nothing to change: `heldComponentNames` has one reason to change and a seam A10 reaches through `coverageOf`.
+- [x] guard: `landed.ts`'s doc comment says the exemption is per component, not per mockup — only what an unlanded plan's re-approval adds — and names `promise: a-component-has-one-implementation`
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md`: the component check's landed-plans sentence says a re-approval in flight keeps holding the components the landed approval bound
+- [x] `apps/docs/src/reference/admin-ui/component-conventions.md`: the component check's landed-plans sentence says a re-approval in flight keeps holding the components the landed approval bound
 
 #### Falsification summary
 
