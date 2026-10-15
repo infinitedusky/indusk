@@ -37,7 +37,7 @@ export async function POST(
   } | null;
   const draft = readProjectDraft(induskHome(), id);
   if (!draft) return refuse(404, `no project conversation ${id}`);
-  const busy = busyMessage();
+  const busy = busyMessage(id);
   if (busy) return refuse(409, busy);
   try {
     const started = startProjectConversation(draft, {

@@ -20,7 +20,6 @@ import { NewProjectCreatingPanel } from "@/components/new-project/NewProjectCrea
 import { NewProjectProposalPanel } from "@/components/new-project/NewProjectProposalPanel";
 import { agentState, historyBefore, turnsOf } from "@/lib/conversation-turns";
 import { sessionManager } from "@/lib/session-host";
-import { ownsSession } from "@/lib/session-owner";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -149,15 +148,12 @@ export default async function NewProjectConversationPage({
     );
   }
   const transcript = readTranscript(draft);
-  const running = sessionManager().current();
-  const session = ownsSession(
-    running,
-    NEW_PROJECT_SESSION_PROJECT,
-    newProjectSessionPlan(id),
-    "planning",
-  )
-    ? running.id
-    : null;
+  const session =
+    sessionManager().forPlan(
+      NEW_PROJECT_SESSION_PROJECT,
+      newProjectSessionPlan(id),
+      "planning",
+    )?.id ?? null;
   return (
     <main
       className="mx-auto grid max-w-content gap-5 px-4 pt-6 pb-16"

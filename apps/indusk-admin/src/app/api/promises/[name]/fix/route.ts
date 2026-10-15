@@ -18,8 +18,8 @@ export const dynamic = "force-dynamic";
  * developer's own `claude` for a broken promise, its first message the
  * package's `fixPrompt` for the break — worded once, in the package, for this
  * route and the editor alike. The session runs where the promise's owning plan
- * lives now (its worktree, else the project). One session at a time; a second
- * is refused, naming the first.
+ * lives now (its worktree, else the project). The owning plan's planning session is
+ * the one it can collide with; a second is refused, naming the first.
  *
  * promise: a-break-opens-a-fix-in-one-click
  */

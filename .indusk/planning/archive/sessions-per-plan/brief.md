@@ -53,7 +53,23 @@ None.
 
 ## Looks
 
-None — no screen changes: a plan's page shows its own plan's session as it does today, and a refusal is shown where it is shown today.
+### This plan makes
+
+1. **`agent-panel.already-running`**. The plan's agent panel when a session of the same kind is already running on the plan: the refusal, "A planning session is already running on this plan. Do you want to continue that session here?", and **Continue it here**, which attaches the panel to the running session (added 2026-10-14 at Sandy's request during the build; the rest of the plan changes no screen).
+
+### Existing looks
+
+**Must not break**
+
+None.
+
+**Changes**
+
+None.
+
+**Replaces**
+
+None.
 
 ## Depends On
 

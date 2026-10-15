@@ -14,7 +14,7 @@ import { sessionManager } from "./session-host";
 /**
  * The cockpit's reads of decisions (plan-cockpit, ADR decision 4): fs- and
  * daemon-to-props glue. What a plan waits on is the package's `planWaiting`,
- * over the session the admin runs for the project (with its unanswered
+ * over every session the admin runs for the project (with its unanswered
  * question), the plans as read from disk and the builds the daemon holds; a
  * plan's recorded answers are `plans/history`'s.
  *
@@ -22,17 +22,14 @@ import { sessionManager } from "./session-host";
  */
 export function readWaiting(project: string, plans: Plan[]): Waiting[] {
   const manager = sessionManager();
-  const running = manager.current();
-  const sessions =
-    running && running.project === project
-      ? [
-          {
-            plan: running.plan,
-            kind: running.kind,
-            question: manager.pendingQuestion(running.id) ?? null,
-          },
-        ]
-      : [];
+  const sessions = manager
+    .running()
+    .filter((r) => r.project === project)
+    .map((r) => ({
+      plan: r.plan,
+      kind: r.kind,
+      question: manager.pendingQuestion(r.id) ?? null,
+    }));
   const builds = plans.map((p) => ({
     plan: p.name,
     stoppedAt: buildState(project, p.name)?.stop?.step ?? null,
