@@ -8,14 +8,14 @@ status: proposed
 
 ## Goal
 
-**Every word InDusk shows about a promise is upheld or broken — holding or broken when live, no signal when unknown — and the old words already written keep working.**
+**Every word InDusk shows about a promise is upheld or broken — holding or broken when live, no signal when unknown — and every reader is ready for a signal that says `broken`, while the old words already written keep working.**
 
 Today the admin's red chip says *violated*, an incident's promise reads
 *known-violated* in its file and in every `pnpm test` summary, a promise nothing
 has reported on reads *unverified* or *not seen*, and the docs call the
 telemetry a *mark*. Worse, a signal that says `broken` is silently dropped by
 the one parse every read goes through, so the settled word cannot be written
-today without the promise going dark.
+anywhere without the promise going dark.
 
 ## Y-Statement
 
@@ -23,22 +23,22 @@ today without the promise going dark.
 InDusk's promises, whose words were settled with Sandy on 2026-10-15 (`promise-core`'s master, "The words" and "Signal, not mark"), shown in the admin, the command line, the editor, the docs and the skills, and carried in two stored values — the registry state `known-violated` and the signal outcome `violated` — that existing promise files and running applications already hold.
 
 **Facing:**
-a vocabulary spread over about 60 source files and 28 docs pages, two stored values that cannot simply be renamed because the registry refuses an unknown state and the signal parse drops an unknown outcome, and the brief's clause that an application already instrumented must keep working.
+a vocabulary spread over about 60 source files and 28 docs pages, two stored values that cannot simply be renamed because the registry refuses an unknown state and the signal parse drops an unknown outcome, the brief's clause that an application already instrumented must keep working, and recording servers in the field that run an InDusk older than this plan.
 
 **We decided for:**
-changing the words at every surface a person reads, and the two stored values with the old ones still read: the registry state becomes `known-broken`, with `known-violated` read as it on load; InDusk's own signals write `broken`, and one function in the promise vocabulary decides what an outcome value means — `upheld` is upheld, `broken` and `violated` are broken — used by the Jaeger parse, the always-on server's query (which asks for both values) and the test helper applications use; "no signal" replaces unverified / not seen / no runs; "signal" replaces "mark" in what people read. Internal names (`violations`, `violationState`, `PROMISE_MARK`, `markPromise`, attribute and event names, JSON keys) stay.
+changing the words at every surface a person reads; renaming the registry state to `known-broken`, with `known-violated` read as it on load; one reading rule for a signal's outcome — `upheld` is upheld, `broken` and `violated` are broken — used by every reader, with the always-on server asking Jaeger for both values; and, for this release, InDusk's own signals, the demo app and the docs snippets still *writing* `violated`. The switch of writers to `broken` is the next release, carried by `.indusk/planning/mark-first/` (Sandy, 2026-10-15). "No signal" replaces unverified / not seen / no runs; "signal" replaces "mark" in what people read. Internal names (`violations`, `violationState`, `PROMISE_MARK`, `markPromise`, attribute and event names, JSON keys) stay.
 
 **And against:**
-relabelling only, keeping both stored values (a promise file and the test summary would still say violated, and the brief's promise names records and signals); renaming the internal identifiers too (about 60 files of churn that no reader sees, raising merge conflicts with the two plans that follow); rewriting old promise files to the new state (a write nobody asked for, in projects this plan does not own); and rewriting history pages — changelog, decisions, lessons, strategy — which record what was said when.
+relabelling only, keeping the stored state (a promise file and the test summary would still say violated); writing `broken` in this same release (a recording server older than this plan would read every such signal as no signal — version skew, rejected by Sandy); renaming the internal identifiers too (about 60 files of churn no reader sees, colliding with `plans-are-promises` and `mark-first`); rewriting old promise files to the new state; and rewriting history pages — changelog, decisions, lessons, strategy — which record what was said when.
 
 **To achieve:**
-one vocabulary in everything a person reads, a signal written either way read as the same verdict, the two must-not-break promises — a production break recorded unasked, and the thirty days counted only from what was seen — unchanged in behaviour, and a word list the next two plans (`plans-are-promises`, `mark-first`) can build on.
+one vocabulary in everything a person reads, every reader ready for either outcome word before any writer changes, the two must-not-break promises — a production break recorded unasked, and the thirty days counted only from what was seen — unchanged in behaviour, and a word list the next two plans can build on.
 
 **Accepting:**
-version skew: an application that writes `broken` while its recording server still runs an InDusk older than this plan is read as no signal there. InDusk's own writers change in the same release as its readers and the server image ships with each release, so only an application that adopts the new docs snippet before upgrading its server is exposed; the snippet says so.
+that for one release the attribute value InDusk writes is still `violated`, while everything people read says broken. Nobody reads the attribute value — it is read by programs, through the one rule — so the brief's promise, which is about what people read, holds. There is no version skew this release: no reader older than this plan ever meets `broken`.
 
 **Because:**
-the brief's promise is about what people read, and the smallest change that makes it true is the surfaces plus the two values people actually see in files and summaries; reading both words at one decision point keeps every existing signal and file working without a migration, and leaving internal names alone keeps the plan a rename and not a refactor.
+the brief's promise is about what people read, and the smallest change that makes it true is the surfaces plus the state people see in files and summaries; teaching every reader both words first, and switching writers a release later in the plan that rewrites them anyway, makes the change safe for servers already deployed without a migration.
 
 ## Context
 
@@ -47,39 +47,48 @@ stored, and the finding that `parseMarkedSpan` (`lib/promises/telemetry.ts:235`)
 drops a signal whose outcome is not exactly `upheld` or `violated`, and that the
 always-on server queries Jaeger by the tag value `violated`
 (`lib/always-on/pass.ts:138`). The brief (`brief.md`) holds the one promise,
-`a-promise-is-upheld-or-broken`, and its three clauses.
+`a-promise-is-upheld-or-broken`, and its three clauses. Sandy's answers on the
+three open decisions are recorded in research, dated 2026-10-15.
 
 ## Decision
 
-1. **Outcome values.** `PROMISE_OUTCOMES` becomes `["upheld", "broken"]`. A new
+1. **Outcome values, read.** `PROMISE_OUTCOMES` becomes `["upheld", "broken"]`
+   — the in-memory verdict. A new
    `readOutcome(value: unknown): PromiseOutcome | null` in
    `lib/promises/vocabulary.ts` maps `upheld` → `upheld`, `broken` and
    `violated` → `broken`, anything else → null. `parseMarkedSpan`,
    `testing/trace-shape.ts` and the always-on server's `violationsSince` use it;
    the server asks Jaeger once per value (`broken`, `violated`) and merges by
-   span id. `markPromise` writes `broken`; its callers pass `broken`. The demo
-   app and the docs snippets write `broken`.
-2. **Registry state.** `PROMISE_STATES` becomes `declared | enforced |
+   span id.
+2. **Outcome values, written.** Unchanged this release: `markPromise` and its
+   four callers, the demo app and the docs snippets write `violated`.
+   `markPromise` maps the in-memory `broken` to the attribute value `violated`
+   at the one point it writes. `mark-first` switches that value to `broken`
+   next release.
+3. **Registry state.** `PROMISE_STATES` becomes `declared | enforced |
    known-broken | retired`. The registry parse maps a file's `known-violated` to
    `known-broken` before validating, silently. Opening an incident writes
    `known-broken`; closing the last one returns `known-violated` or
    `known-broken` to `enforced`.
-3. **Words people read.** The admin's chip and timeline labels, health lines
+4. **Words people read.** The admin's chip and timeline labels, health lines
    and plan-list warning; the CLI's status, watch, check and server messages and
    command help; the MCP tool descriptions; the editor's labels; the docs'
    guide and reference; the shipped skills; the planning rules template; the
    server's deploy files. Live chips say *holding* / *broken*; past cells *held*
    / *broke*; a state *upheld* / *broken*; the unknown *no signal*; the
-   telemetry a *signal*.
-4. **A word scan** guards the result: a unit test reads those files and refuses
+   telemetry a *signal*. A docs snippet that sets the attribute keeps
+   `"violated"`, with a line saying it is read as broken.
+5. **A word scan** guards the result: a unit test reads those files and refuses
    *violated*, *violation*, *known-violated*, and *mark* in the promise sense,
-   outside a short named list (attribute names; the history pages).
+   outside a short named list (attribute names, the attribute value `violated`
+   in a snippet that sets it, and the sentence explaining it).
 
 ## Alternatives Considered
 
-### Keep writing `violated`; only accept `broken` on read
-The smallest code change and no version skew. Rejected: the brief's promise says
-every signal says broken, and InDusk's own signals would not.
+### Write `broken` in this release
+Rejected by Sandy (2026-10-15): a recording server running an InDusk older
+than this plan drops `broken`, so a promise would go dark there. Readers first,
+writers next release in `mark-first`.
 
 ### Relabel the state only, keep `known-violated` stored
 Rejected: the promise file and the `pnpm test` summary line would still print
@@ -98,28 +107,33 @@ its own when the incident is fixed.
 ### Positive
 - One vocabulary everywhere a person reads; the next plans inherit it.
 - A signal written `broken` is no longer silently dropped.
-- No migration: every existing file and signal keeps working.
+- No migration and no version skew: every existing file, signal and server
+  keeps working.
 
 ### Negative
-- Code holds two words for one outcome at the boundary, permanently.
-- Internal names (`violations`, `violationState`) now disagree with the words
+- For one release the attribute value written is `violated` while the code's
+  verdict is `broken`; `markPromise` holds the one mapping until `mark-first`.
+- Internal names (`violations`, `violationState`) disagree with the words
   shown; a reader of the code meets both.
 
 ### Risks
-- **Version skew** (see Accepting) — mitigated by shipping readers and writers
-  in one release and a note beside the docs snippet.
+- **The writer switch is forgotten** — mitigated by its line in
+  `.indusk/planning/mark-first/research.md` (carried from this plan, Sandy,
+  2026-10-15).
 - **A missed surface** — mitigated by the word scan, which fails on any new
   occurrence in the files people read.
 - **The thirty days double-count** a run read under both words — ruled out:
   the window store is in memory, keyed after normalisation, and starts empty
-  on restart; A13 holds it.
+  on restart; A13, a test-plan assertion that the thirty days count the same
+  for either word, holds it.
 
 ## Documentation Plan
 
 ### Pages
 - Update: `guide/promises.md` — the words table (upheld/broken, holding/broken,
-  held/broke, no signal), "signal" for the telemetry, the snippet writing
-  `broken` with the skew note.
+  held/broke, no signal), "signal" for the telemetry; the snippet keeps writing
+  `violated`, with a line that it is read as broken and that `broken` is read
+  too.
 - Update: `reference/cli/promises.md`, `guide/always-on.md`,
   `reference/cli/telemetry-server.md`, `reference/admin-ui/overview.md`,
   `reference/admin-ui/promise-page.md`, `guide/promises-in-your-editor.md`,
@@ -131,9 +145,9 @@ its own when the incident is fixed.
 
 ### Changelog
 - "Promises speak one language: upheld or broken, holding or broken when live,
-  no signal when unknown. Signals write `broken` and `violated` is still read;
-  the registry state `known-violated` is now `known-broken`, and old files are
-  still read."
+  no signal when unknown. Every reader accepts a signal saying `broken` as well
+  as `violated`; writers keep `violated` this release. The registry state
+  `known-violated` is now `known-broken`, and old files are still read."
 
 ### ADR in Docs
 - Yes: `decisions/one-promise-language.md`.
@@ -141,6 +155,7 @@ its own when the incident is fixed.
 ## References
 - `.indusk/planning/one-promise-language/research.md`, `brief.md`, `test-plan.md`
 - `.indusk/planning/promise-core/master.md` — "The words", "Signal, not mark"
+- `.indusk/planning/mark-first/research.md` — carries the writer switch
 - `/decisions/day-promises` (the registry), `/decisions/day-monitor` (the
   signal attributes), `/decisions/promise-sources`
 - Blocks: `.indusk/planning/plans-are-promises/`, `.indusk/planning/mark-first/`
