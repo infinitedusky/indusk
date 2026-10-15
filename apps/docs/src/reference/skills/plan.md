@@ -155,12 +155,14 @@ flowchart TD
 
 ## Phase summaries for a reader without the shorthand
 
-A new impl sets `phase_summary: required` in its frontmatter and is written in one shape. Each phase opens, after its `**Tier**:` line, with a paragraph saying what the phase does for the whole plan and how it hands to the next. Each task is one plain sentence saying what will be true when it is done, and its instruction sits in an indented `<details><summary>Technical</summary>` fold beneath: names, paths, commands, code and row labels live there, never in the paragraph or on the task line. The save check refuses a missing paragraph, a code span or a row label on those lines. The planner's impl template and the bugfix and refactor templates are written this way.
+A new impl sets `phase_summary: required` in its frontmatter and is written in one shape. Each phase opens, after its `**Tier**:` line, with a paragraph saying what the phase does for the whole plan and how it hands to the next. Each task is one plain sentence saying what will be true when it is done, and its instruction sits in an indented `<details><summary>Technical</summary>` fold beneath: names, paths, commands, code and row labels live there, never in the paragraph or on the task line. The save check refuses a missing paragraph, a row label in the paragraph, and code or a row label on a task line. The planner's impl template and the bugfix and refactor templates are written this way.
 
 The reader is someone who has worked on the project and knows none of the plan's shorthand: no row labels, no abbreviations, no nicknames, no pronoun whose referent is unclear. The test before writing a sentence is whether someone who has worked here, but never read the plan, would know what every noun in it refers to.
 
 - Before: "Build Phase 1: the checkers only read top-level lines."
 - After: "The two scripts that check an impl file, one when it is saved and one when a box is ticked, stop reading text folded under a task as a ticked box or a skipped gate."
+
+The rule is checked on every edit to an impl that has opted in, not only when the whole file is written: an edit that deletes a phase's paragraph, puts code or a row label on a task line, leaves a task with nothing after its box, or leaves a task's fold open is refused, and only the problems that edit adds are refused, so an old problem elsewhere in the file never blocks an unrelated edit. A task's `<details>` fold must close before the next task or heading; a fold left open would hide every line after it from the checks that skip folded text, so the save check refuses it, naming the task.
 
 Folded detail is only read: it never ticks a box, skips a gate or adds a task. Whether a sentence is plain stays a person's judgement at approval. See [Phase summaries](/decisions/phase-summaries) and [Test Trajectory](/guide/test-trajectory#phase-summaries-a-phase-that-explains-itself).
 
