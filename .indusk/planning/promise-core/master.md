@@ -53,6 +53,10 @@ holds; the older text is kept as the record of 2026-10-05.
   broke a clause — "the regression is fucked if you remove the tests" (Sandy).
 - **A plan is done when every clause's mark has reported**, its tests passing
   on the way.
+- **Two stages, one clause** (Sandy, 2026-10-15): before release and on every
+  change, a clause is **verified** by its tests — a change that makes one fail
+  is stopped before it ships; in use, it is **upheld** by its signal —
+  holding, broken, or no signal.
 - **Every break a mark finds becomes a test on that clause** as part of fixing
   it: telemetry discovers, tests pin (the principle below, *search discovers,
   tests pin*, applied to production). Tests grow from what really broke, not
