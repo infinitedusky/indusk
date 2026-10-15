@@ -203,7 +203,7 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
 
 #### Build Phase 1 Document
 
-- [ ] The changelog records that every reader takes both words and that the registry state is renamed.
+- [x] The changelog records that every reader takes both words and that the registry state is renamed.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md` (Unreleased): "Every reader accepts a signal saying `broken` as well as `violated`; signals keep writing `violated` this release. The registry state `known-violated` is now `known-broken`; old files are still read."
