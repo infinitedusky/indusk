@@ -20,7 +20,9 @@ export interface TaskSpec {
 export interface SummaryImplSpec {
 	/** Extra frontmatter lines, after `phase_summary: required`. */
 	keys?: string[];
-	/** Frontmatter `phase_summary:` line; `null` leaves the impl opted out. */
+	/** The impl's status; `draft` unless a gate test needs a plan that is building. */
+	status?: string;
+	/** `false` leaves the impl without `phase_summary: required`. */
 	optIn?: boolean;
 	/** The paragraph after each phase's Tier line; `null` goes straight to the tasks. */
 	buildParagraph?: string | null;
@@ -67,7 +69,7 @@ export function summaryImpl(plan: string, spec: SummaryImplSpec = {}): string {
 	return [
 		"---",
 		`title: "${plan}"`,
-		"status: draft",
+		`status: ${spec.status ?? "draft"}`,
 		"trajectory: required",
 		"test_phases: required",
 		...(spec.optIn === false ? [] : ["phase_summary: required"]),
