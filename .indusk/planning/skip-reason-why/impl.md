@@ -214,7 +214,7 @@ Searched without finding an attack vector: the readiness gate's other satisfiers
 
 - [x] Resync the four installed copies from `apps/indusk-mcp/skills/` (`cp apps/indusk-mcp/skills/<name>.md .claude/skills/<name>/SKILL.md`, as the parity test's message says); add `// promise: a-skip-reason-is-one-sentence` to `skill-sync-parity.test.ts` beside its lesson; strike Build Phase 1's "the sync happens at landing" note with a correction
 - [x] `next-step.ts`: a new step `{ step: "shorten-reason"; ritual: "falsification" | "cleanup" | "audit"; length: number; sentences: number }`, returned before the per-ritual steps when `readiness.longSkipReasons` names that ritual (the first in falsify → cleanup → audit order); `describeStep` in `bin/commands/plans.ts` words it
-- [ ] `runner.ts` / `build-session.ts`: `"shorten-reason"` is a session step; its prompt names the ritual's `<ritual>_reason` field in the impl's frontmatter, the reason's length and sentence count, the rule (one sentence, at most 120 characters, `rituals/reason.ts`), and says to rewrite that one line, change nothing else, commit, and end. Grep `BuildStepName` consumers (admin `lib/build-host.ts`) for fallout
+- [x] `runner.ts` / `build-session.ts`: `"shorten-reason"` is a session step; its prompt names the ritual's `<ritual>_reason` field in the impl's frontmatter, the reason's length and sentence count, the rule (one sentence, at most 120 characters, `rituals/reason.ts`), and says to rewrite that one line, change nothing else, commit, and end. Grep `BuildStepName` consumers (admin `lib/build-host.ts`) for fallout
 
 #### Build Phase 5 Verification
 
