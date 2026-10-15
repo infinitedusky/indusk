@@ -36,7 +36,7 @@ primary_region = "{{region}}"
   source = "indusk_telemetry"
   destination = "/data"
 
-# The OTLP receiver: where deployed systems send marks.
+# The OTLP receiver: where deployed systems send signals.
 [[services]]
   internal_port = 4318
   protocol = "tcp"
