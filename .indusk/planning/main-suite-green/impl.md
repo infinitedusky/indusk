@@ -137,7 +137,8 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 **Tier**: med — the work step's default
 
-- [ ] Diagnose A7: run `pnpm test` from the root and the two files alone; read what each waits on (a fixed 5 s timeout, a port, a lock, a spawned `claude` stub) and write the cause in this item's note before changing anything
+- [x] Diagnose A7: run `pnpm test` from the root and the two files alone; read what each waits on (a fixed 5 s timeout, a port, a lock, a spawned `claude` stub) and write the cause in this item's note before changing anything
+  - Note, 2026-10-14. Neither file waits on a port, lock, spawned process or real clock: `session-host` is mocked and `createProject` is a stub. The only slow thing inside the 5 s test is its first `await import(...)` of the route and `@infinitedusky/indusk-mcp/new-project` (the package's built `dist`, a large module graph). Alone, that first test takes 137-211 ms (vitest import 126-198 ms); with 30 busy loops on the machine it takes 380-520 ms (2-3x), so CPU load alone does not reach 5 s. In a root run (`pnpm test`, 2 min 6 s) the admin's 109 files report import 504 s and transform 313 s in total, with the mcp package's suite running beside it, and three first-import tests timed out at 5000 ms: A30 and A38 in `new-project-accept.test.ts` (A38 is its second test, so the import was still in flight or re-evaluated) and `new-project-routes.test.ts` A2, which does the same `await import` of a route. A5 passed that run, so which tests fail varies. Cause: the module graph is loaded lazily inside each test, so the test's 5 s budget pays for the cold import, which under a root run is contended disk and transform work, not the behaviour under test.
 - [ ] Fix A7 at its cause (a seam for its clock or process, a shared resource made per-test, or a timeout raised only with the measured reason); never a retry
 - [ ] A9: `git merge main` into the branch, then `pnpm test` from the root; record the result in this item's note
 
