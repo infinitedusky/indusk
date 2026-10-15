@@ -204,6 +204,12 @@ This phase makes the three tests pass. The browser template's test project is to
   The two node test files: 2 files, 3 tests passed. The day-monitor e2e run: 1 passed. The three template runs are recorded above, all green. `biome check` on the three changed files is clean. A1, A2, A3 and A4 are `passing`.
 
   </details>
+- [x] Shape — the three changed files were reviewed against the enabled extensions' craft rules and need no change
+  <details><summary>Note</summary>
+
+  `prepareShapeReview` for Build Phase 1 returned a review of the e2e test, the templates config and the root `package.json`. The changes are an `extends: true` line with its comment, a script prefix and three assertions that use an existing named constant; no findings, so no items were added.
+
+  </details>
 
 #### Build Phase 1 Context
 
