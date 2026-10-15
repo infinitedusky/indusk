@@ -106,10 +106,16 @@ This phase writes the tests that fail today for the reasons the research found. 
 
 #### Test Phase 1 Verification
 
-- [ ] The two new tests fail on their own assertions and the monitor test's failure is the one the research names
+- [x] The two new tests fail on their own assertions and the monitor test's failure is the one the research names
   <details><summary>Technical</summary>
 
   A1 and A3 red (`pnpm exec vitest run src/__tests__/templates-prebundle.test.ts src/__tests__/install-local.test.ts`, from `apps/indusk-mcp`), each on its assertion, not on a load error; A4 red at line 162 in the e2e run; output noted under this item.
+
+  </details>
+  All three are red for the reasons the research found.
+  <details><summary>Note</summary>
+
+  The node run: 2 failed, 1 passed (the "landing still runs install:local" case). A1 reports 11 packages missing from the list the project sees; A3 expects `pnpm install --frozen-lockfile` first and receives the `prepublishOnly` build step. The e2e run fails at line 162 on `issue with the selected model`.
 
   </details>
 
