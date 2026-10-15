@@ -1,7 +1,7 @@
 ---
 title: "Phase summaries"
 date: 2026-10-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -538,7 +538,7 @@ The plan is correct and its tests are hardened; this phase tidies what it spread
 
 #### Build Phase 5 Document
 
-- [ ] The admin's component conventions page says a story uses the real child component rather than copying its markup
+- [x] The admin's component conventions page says a story uses the real child component rather than copying its markup
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/component-conventions.md`: one line under stories — a story passes the real child component (here `PhaseItems` inside `PhaseRow`) so the approved snapshot is the component's own drawing.
