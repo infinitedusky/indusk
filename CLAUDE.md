@@ -48,7 +48,6 @@ dusk/
 - `pnpm test`: parallel, never starts a server or daemon (`INDUSK_SKIP_TELEMETRY_AUTOSTART`); it and `test:system` end failing on one left in a temp home, pass or fail. `test:system`: each package's `vitest.tiers.ts` files, at landing and by `pnpm release`. **E2e**: `pnpm e2e` (needs `claude` + a daemon) — promise loop, always-on server, nested-context probe; when it runs is the retrospective's (`/reference/skills/retrospective`).
 - **`.indusk/current.md` is the operational layer**: a `## Project (shared)` region any agent may edit (what is in flight, blockers, what is next) plus per-agent `## Session <short> — <task>` sections, each written only by its own session via `mcp__indusk__update_current_section` (typically at `/handoff`); commit like any file. `merge=union` merges concurrent appends; every mutation goes through the `current.md.lock` file lock. — see `/decisions/multi-agent-coordination`
 - Plans live in `.indusk/planning/{kebab-case}/`; use `/planner` before implementing — don't jump to code. The planning rules load with the plan documents.
-- Before touching shared code, grep for importers and callers to understand blast radius.
 
 ## Key Decisions
 
