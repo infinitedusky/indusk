@@ -307,7 +307,7 @@ export interface HealthRow {
 /** One recorded run, as the store holds it: no symptom is kept per run. */
 export interface HealthRun {
 	promise: string;
-	outcome: "upheld" | "violated";
+	outcome: "upheld" | "broken";
 	at: string;
 	traceId: string;
 }

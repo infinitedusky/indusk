@@ -6,7 +6,7 @@ import {
 	type ReadableSpan,
 	SimpleSpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
-import { PROMISE_MARK, parsePromiseToken } from "../promises/vocabulary.js";
+import { PROMISE_MARK, parsePromiseToken, readOutcome } from "../promises/vocabulary.js";
 
 /**
  * Asserting a behaviour promise in a test (day-monitor, ADR D3).
@@ -149,7 +149,7 @@ export function expectPromiseViolated(
 ): { span: CapturedSpan; symptom: string | null } {
 	const name = nameFromToken(token, "expectPromiseViolated");
 	for (const span of markedFor(spans, name)) {
-		if (span.attributes[PROMISE_MARK.outcome] !== "violated") continue;
+		if (readOutcome(span.attributes[PROMISE_MARK.outcome]) !== "broken") continue;
 		const event = span.events.find((e) => e.name === PROMISE_MARK.violatedEvent);
 		if (!event) {
 			throw new Error(

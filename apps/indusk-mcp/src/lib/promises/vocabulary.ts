@@ -20,11 +20,11 @@ export type PromiseKind = (typeof PROMISE_KINDS)[number];
 
 /**
  * `declared` — stated in planning, not yet established; the owner is an open
- * plan. `enforced` — upheld; a violation is a bug. `known-violated` — the
+ * plan. `enforced` — upheld; a break is a bug. `known-broken` — the
  * implementation provably cannot uphold it; carries the incident that proves
  * it. `retired` — no longer a promise, kept for history.
  */
-export const PROMISE_STATES = ["declared", "enforced", "known-violated", "retired"] as const;
+export const PROMISE_STATES = ["declared", "enforced", "known-broken", "retired"] as const;
 export type PromiseState = (typeof PROMISE_STATES)[number];
 
 /**
@@ -133,8 +133,22 @@ export const LOOK_MARK = {
 	kind: "indusk.look.kind",
 } as const;
 
-export const PROMISE_OUTCOMES = ["upheld", "violated"] as const;
+/** A signal's verdict as the code holds it. The wire still carries `violated` this release (see `readOutcome`). */
+export const PROMISE_OUTCOMES = ["upheld", "broken"] as const;
 export type PromiseOutcome = (typeof PROMISE_OUTCOMES)[number];
+
+/**
+ * The one place a signal's outcome attribute becomes a verdict: `upheld` is
+ * upheld; `broken` and `violated` are both broken, so an application
+ * instrumented before 2026-10-15 keeps working and one written afterwards is
+ * read the same. Anything else is not a verdict and reads as null.
+ * promise: a-promise-is-upheld-or-broken
+ */
+export function readOutcome(value: unknown): PromiseOutcome | null {
+	if (value === "upheld") return "upheld";
+	if (value === "broken" || value === "violated") return "broken";
+	return null;
+}
 
 /**
  * The name inside a token argument (`"promise: <name>"`), or null when the

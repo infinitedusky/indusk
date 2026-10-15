@@ -373,7 +373,7 @@ describe("A13 — the thirty days count a signal the same way whichever word it 
 		const spans = [
 			span("u7", "upheld", "2026-10-07T09:00:00.000Z"),
 			span("u8", "upheld", "2026-10-08T09:00:00.000Z"),
-			...breakWords.map((w, i) => span(`b${i}`, w, `2026-10-08T1${i}:00:00.000Z`)),
+			...breakWords.map((w, i) => span(`b${i}`, w, "2026-10-08T10:00:00.000Z")),
 		];
 		vi.stubGlobal("fetch", fakeJaegerFetch(spans));
 		const p = promiseProject({

@@ -18,7 +18,7 @@ export const OWN_BRANCH_PROMISE = "a-plan-is-written-on-its-own-branch";
 
 export interface TrunkCommitMark {
 	plan: string;
-	outcome: "upheld" | "violated";
+	outcome: "upheld" | "broken";
 	symptom?: string;
 }
 
@@ -47,7 +47,7 @@ export async function trunkCommitMarks(
 	const subject = await git(repo, "log", "-1", "--format=%s", sha).catch(() => "");
 	return plans.map((plan) => ({
 		plan,
-		outcome: "violated" as const,
+		outcome: "broken" as const,
 		symptom: `${plan} was written on ${branch} in ${sha.slice(0, 8)} ("${subject}"), not on its own branch — indusk plans start <type> ${plan} writes a plan where it belongs`,
 	}));
 }
