@@ -1,7 +1,7 @@
 ---
 title: "Decided prompts stay closed"
 date: 2026-10-14
-status: in-progress
+status: completed
 workflow: bugfix
 trajectory: required
 test_phases: required
@@ -197,7 +197,7 @@ Every request a session makes is recorded in its log together with how it was de
 - [x] `apps/indusk-admin/CLAUDE.md`: the decided-event entry names its two units — `lib/request-decisions.ts` (`decisionsOf`) is the one reader of a request's decision, `useAnsweredRequests` the one early close of a click
 
 #### Build Phase 4 Document
-- [ ] (none — internal decomposition; asked/user proof to be recorded at `/work` per `gate_policy: ask`)
+- [x] (none needed — asked: "The only open item is the documentation step of the cleanup phase (Build Phase 4), which only moved code between files and changed nothing a user sees. Can I skip it?" — user: "Yes, skip it")
 
 ## Files Affected
 
