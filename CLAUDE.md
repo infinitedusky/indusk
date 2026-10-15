@@ -73,7 +73,6 @@ dusk/
 - Git-only substrate (1.31.0): jj ripped out, parity via deletion; `scm-rip-out-grep.test.ts` exempts the record — an audit that fires on its own archive gets switched off — see `/decisions/git-only-substrate`
 - Worktree visibility: worktree-per-plan default + live worktree/branch columns + collision flag; kickoff is a nudge, not a gate — see `/decisions/worktree-visibility`
 - Workbench setup one-shot (`indusk setup`) — see `.indusk/planning/archive/workbench-setup-command/`
-- Dawn hook parity: invariants + eval rail in the thin lane; headless `ask` = pause, `ask` the default in both lanes — see `/decisions/dawn-hook-parity`
 - Test phases as structure: `### Test Phase N` + `### Build Phase N` as two sequences; Test Phase 1 mandatory, first, and the register where every deferral is justified. Zero migration via an optional `Build ` prefix — see `/decisions/test-phase-structure`
 - Dawn verify (component 6, the keystone): read-only phase-boundary verification for work Dawn didn't execute; detects, never repairs, reads files and exit codes never runner output — see `/decisions/dawn-verify`
 - InDusk Makeover (2026-07-23): budgets + decay + removal — the 60 KB budget hook + compaction, Graphiti/CGC removed with the lessons rail kept, current.md sweep + dead-draft archive, catchup diet, MCP keep-lists, hub push/pull. Supersedes context-budget. — see `.indusk/planning/archive/indusk-makeover/adr.md`

@@ -4,6 +4,9 @@ Loaded by Claude Code when a file under `apps/indusk-mcp/hooks/` is read. The
 hooks are plain JS ports that cannot import the TS library, so these rules
 are about keeping the two lanes in step.
 
+- **Dawn's thin lane keeps the invariants and the eval rail**; a headless
+  `ask` is a pause, and `ask` is the default in both lanes — see
+  `/decisions/dawn-hook-parity`.
 - **Hooks discovery is globSync on BOTH sides** (init + update) — a hardcoded
   list ships a registration without its file. A new hook also needs a row
   in `HOOK_REGISTRATIONS` (`lib/hook-command.ts`), the one table `init`
