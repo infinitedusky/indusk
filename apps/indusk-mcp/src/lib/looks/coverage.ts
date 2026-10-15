@@ -105,7 +105,7 @@ function componentsOfApprovedStories(app: LooksApp): Set<string> {
 	const approvals = readStoryApprovals(app);
 	const standing = new Map<string, boolean>();
 	for (const story of app.stories) {
-		const name = story.name.split(".")[0] as string;
+		const name = story.component;
 		const ok = storyApprovalOf(app, story, approvals).state === "approved";
 		standing.set(name, (standing.get(name) ?? true) && ok);
 	}

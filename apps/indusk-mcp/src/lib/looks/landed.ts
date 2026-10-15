@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { ApprovalEntry } from "./approvals.js";
 import { markedComponentsOf } from "./markup.js";
-import type { Mockup } from "./mockups.js";
+import { componentOfStory, type Mockup } from "./mockups.js";
 
 /**
  * A plan has landed when its folder is under `.indusk/planning/archive/`
@@ -22,9 +22,6 @@ export function planHasLanded(root: string, plan: string): boolean {
 	if (existsSync(join(planning, "archive", plan))) return true;
 	return !existsSync(join(planning, plan));
 }
-
-/** The component a story name belongs to: `badge.ok` is `badge`. */
-const componentOf = (story: string): string => story.split(".")[0] as string;
 
 /**
  * The component names the check holds to an implementation. The exemption is
@@ -54,7 +51,7 @@ export function heldComponentNames(
 			continue;
 		}
 		const bound = [...mine].reverse().find(isHeld);
-		for (const story of Object.keys(bound?.components ?? {})) held.add(componentOf(story));
+		for (const story of Object.keys(bound?.components ?? {})) held.add(componentOfStory(story));
 	}
 	return held;
 }
