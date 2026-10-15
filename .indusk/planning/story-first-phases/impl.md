@@ -1,7 +1,7 @@
 ---
 title: "Phase summaries"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -67,6 +67,8 @@ This impl is written in the shape it introduces.
 | A11 | A box-shaped line inside a task's detail adds no task to the parser's count or to the tick check's count | Test Phase 1 | Test Phase 1 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
 | A12 | Every impl in the repository that has not opted in validates exactly as it did before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over the existing plans: the shape is opt-in and must break none of them | apps/indusk-mcp/src/__tests__/phase-summary-existing-impls.test.ts |
 | A13 | component-content's impl, rewritten in this shape, passes the save check and reads on its plan page as the mockup shows | Build Phase 3 | Build Phase 3 | passing | live check | the first plan converted, the example Sandy asked for | |
+| A17 | A ritual phase whose only task is ticked reads as finished, and a Verification section whose only task is ticked reads as green, even when that task's folded detail quotes an unticked box line | Build Phase 4 | Build Phase 4 | planned | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
+| A18 | The falsification and cleanup skills' phase templates, filled in as written, pass the save check on an impl that has opted in to phase summaries | Build Phase 4 | Build Phase 4 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
 
 ## Checklist
 
@@ -152,6 +154,10 @@ Before any code changes, this phase writes down what "done" means as tests that 
 #### Deferred to Build Phase 3
 
 - **A13** — a person reads component-content's converted impl on its plan page; the conversion is Build Phase 3's last task.
+
+#### Deferred to Build Phase 4
+
+- **A17** and **A18** — found by the falsification ritual after Build Phase 3 closed, so no earlier phase could author them; their subjects exist today, so Build Phase 4 writes them red on their own assertions at its start.
 
 #### Regression Guards
 
@@ -397,6 +403,58 @@ The save check and the plan page are ready. This phase makes the planner use the
   <details><summary>Technical</summary>
 
   Update `apps/docs/src/reference/skills/planner.md` with `phase_summary: required`, the shape and the reader without shorthand; changelog: "Impl phases open with what they do for the plan; tasks are plain sentences, written for a reader without the plan's shorthand, with their technical detail folded beneath."
+
+  </details>
+
+### Build Phase 4: Falsification — box lines inside a fold, and ritual phases written in the old shape
+
+**Tier**: med — the work step's default
+
+This phase tests two ways the finished plan may still break its promises, and fixes whichever the tests confirm. First, two readers that never learned the new rule still count a box line wherever it sits: the check that decides whether a falsification or cleanup phase is finished, and the check that decides whether a phase's verification is done before its code review. A task whose folded detail quotes an unticked box, which this plan's own tasks do, would keep its phase open forever. Second, the falsification and cleanup skills hand out phase templates in the old shape, so following either skill on a plan that has opted in gets the new phase refused when it is saved. After this phase, folded detail is only read everywhere, and the two rituals that run next on this plan write phases the save check accepts.
+
+- [ ] The check for a finished falsification or cleanup phase ignores box lines inside a task's folded detail or a code block
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/cleanup/gate.ts` `isRitualPhaseTerminal`: skip lines inside a task's `<details>`…`</details>` fold and lines `fencedLineMask` marks; keep counting other indented sub-items (round-2 F3's nested-unchecked strictness). Today `/^\s*-\s+\[ \]/` matches `  - [ ] example` in a fold and returns not-terminal, which blocks the retrospective's Step 0 and `plans next`.
+
+  </details>
+- [ ] The check that a phase's verification is done before its code review ignores box lines inside a task's folded detail or a code block
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/shape/shape.ts` `verificationIsGreen`: `UNCHECKED_AT_ANY_DEPTH` and `CHECKBOX_AT_ANY_DEPTH` get the same fold-and-fence exclusion; share one helper with `gate.ts` only if it already has a home (cross-file extraction is `/cleanup`'s). Today Shape reports "verification is not green" for a ticked Verification task whose detail quotes `- [ ]`.
+
+  </details>
+- [ ] The falsification and cleanup skills hand out phase templates in the new shape when the impl has opted in
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/skills/falsify.md` and `skills/cleanup.md`: beside the existing template, a variant for `phase_summary: required` — a `**Tier**:` line, a summary paragraph instead of the `**Goal**:` label alone, each task a plain sentence with its code and row labels in an indented `<details><summary>Technical</summary>` fold (the Verification template's `T{M}:` moves into the fold). Sync `.claude/skills/falsify/SKILL.md` and `.claude/skills/cleanup/SKILL.md` byte-equal.
+
+  </details>
+
+#### Build Phase 4 Verification
+
+- [ ] A quoted unticked box in a task's fold no longer holds a phase open, and both ritual templates pass the save check on an opted-in impl
+  <details><summary>Technical</summary>
+
+  Green: A17, A18; still green: A9–A11. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/detail-is-only-read.test.ts src/__tests__/ritual-templates-phase-summary.test.ts src/__tests__/skill-sync-parity.test.ts && pnpm exec vitest related src/lib/cleanup/gate.ts src/lib/shape/shape.ts`.
+
+  </details>
+
+#### Build Phase 4 Context
+
+- [ ] The package rules say ritual-phase and verification checks skip folded detail and code blocks, while still seeing other indented unchecked items
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, "Run, verify, Shape, cleanup": amend "ritual-phase terminality needs ≥1 item and sees nested unchecked items" and the `verificationIsGreen` clause to add "— never a box inside a task's `<details>` fold or a fence" — guarded by `detail-is-only-read.test.ts` (`promise: hidden-detail-is-only-read`).
+
+  </details>
+
+#### Build Phase 4 Document
+
+- [ ] The falsification and cleanup skill reference pages show the template for an impl that has opted in
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/skills/` falsify and cleanup pages (find the actual file names first): the opted-in template and a one-line pointer to `/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand`.
 
   </details>
 
