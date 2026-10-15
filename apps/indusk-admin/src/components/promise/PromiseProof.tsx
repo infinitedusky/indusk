@@ -263,7 +263,7 @@ export function LastThirtyDays({ proof }: { proof: Proof }) {
         </div>
       ))}
       <p className="text-xs text-ink-faint">
-        Red: a break was heard that day. Green: held. Grey: nothing seen.
+        Red: a break was heard that day. Green: held. Grey: no signal.
       </p>
     </Section>
   );

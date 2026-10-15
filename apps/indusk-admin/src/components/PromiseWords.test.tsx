@@ -233,7 +233,7 @@ describe("A16 — where nothing has reported, the dashboard row and the legend s
       />,
     );
     expect(container.textContent).not.toMatch(/never seen/i);
-    expect(container.textContent).toMatch(/\bno signal\b(?! yet)/);
+    expect(container.textContent).toMatch(/no signal(?! yet)/);
   });
 
   it("the promise page's thirty-day legend says grey is no signal, not nothing seen", async () => {

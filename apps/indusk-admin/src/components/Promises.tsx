@@ -373,7 +373,7 @@ function DashboardRowItem({
           </span>
         }
         last={
-          row.lastActivity ? `seen ${stamp(row.lastActivity)}` : "never seen"
+          row.lastActivity ? `seen ${stamp(row.lastActivity)}` : "no signal"
         }
       />
     </div>

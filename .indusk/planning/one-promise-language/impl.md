@@ -371,7 +371,7 @@ A fresh reader went looking for places where the plan's promise does not yet hol
   A15. `apps/vscode-extension/src/core/view.ts:33,37`: `fixed: "broke — fixed"`, `grey: "retired"` (add both to `Shown`); `markers.ts:84` gives the ok tone only to `holding` and `broke — fixed`. `activity.ts:50`: `"No runs yet."` → `"No signal yet."`. Tests in `view-words.test.ts` (grey, fixed) and `activity.test.ts` (empty).
 
   </details>
-- [ ] Make the admin's dashboard row and the promise page's legend say no signal.
+- [x] Make the admin's dashboard row and the promise page's legend say no signal.
   <details><summary>Technical</summary>
 
   A16. `apps/indusk-admin/src/components/Promises.tsx:376` `"never seen"` → `"no signal"`; `promise/PromiseProof.tsx:266` `"Grey: nothing seen."` → `"Grey: no signal."`. Assertions in `PromiseWords.test.tsx`.
