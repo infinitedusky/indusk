@@ -342,7 +342,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 #### Build Phase 4 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a master plan's page is `plan.master`, its rows `SubplanRow`, its counts the Path group's (`lib/master-story.ts`), so the page and the nav agree
+- [x] `apps/indusk-admin/CLAUDE.md`: a master plan's page is `plan.master`, its rows `SubplanRow`, its counts the Path group's (`lib/master-story.ts`), so the page and the nav agree
 
 #### Build Phase 4 Document
 
