@@ -256,11 +256,7 @@ export async function promisesContract(
 	// has not finished (an impl over the ~64 KB pipe buffer arrives in parts),
 	// so a large impl was refused at random.
 	const implText = opts.implStdin ? await text(process.stdin) : undefined;
-	const result = checkPlanContract(
-		projectRoot,
-		plan,
-		implText === undefined ? {} : { implText },
-	);
+	const result = checkPlanContract(projectRoot, plan, implText === undefined ? {} : { implText });
 	if (!result.ok) {
 		refuse(result.refusals);
 		return;

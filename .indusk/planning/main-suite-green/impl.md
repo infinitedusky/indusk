@@ -44,8 +44,8 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A 200 KB impl given to the contract check on stdin in two parts with a pause gets the same answer on five runs, the answer it gives reading the file | Test Phase 1 | Build Phase 1 | written | unit | promise: a-large-impl-gets-the-same-contract-answer | apps/indusk-mcp/src/__tests__/contract-stdin.test.ts |
-| A2 | Every impl that validated still validates; the two archived impls citing rows they lack are the only new known failures | Test Phase 1 | Build Phase 1 | written | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/impl-corpus.test.ts |
+| A1 | A 200 KB impl given to the contract check on stdin in two parts with a pause gets the same answer on five runs, the answer it gives reading the file | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-large-impl-gets-the-same-contract-answer | apps/indusk-mcp/src/__tests__/contract-stdin.test.ts |
+| A2 | Every impl that validated still validates; the two archived impls citing rows they lack are the only new known failures | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/impl-corpus.test.ts |
 | A3 | The Jaeger URL is normalized in one place; a file path's trailing-slash trim is not counted | Test Phase 1 | Build Phase 2 | written | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/always-on-cleanup.test.ts |
 | A4 | Create, assign, read and release of a plan worktree leave git status clean, with its `.mcp.json` written | Test Phase 1 | Build Phase 2 | written | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/plan-worktrees-cli.test.ts |
 | A5 | The registry scan names a direct CLI spawn without `INDUSK_HOME` and not a spawn through the helper that sets it | Test Phase 1 | Build Phase 2 | written | unit | promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/registry-leak-scan.test.ts |
@@ -95,7 +95,8 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 #### Build Phase 1 Verification
 
-- [ ] A1 and A2 go green (`pnpm exec vitest run src/__tests__/contract-stdin.test.ts src/__tests__/impl-corpus.test.ts`, from `apps/indusk-mcp`, after `pnpm build`), A2 on two runs in a row; `pnpm exec vitest related src/bin/commands/promises.ts --run`
+- [x] A1 and A2 go green (`pnpm exec vitest run src/__tests__/contract-stdin.test.ts src/__tests__/impl-corpus.test.ts`, from `apps/indusk-mcp`, after `pnpm build`), A2 on two runs in a row; `pnpm exec vitest related src/bin/commands/promises.ts --run`
+  - Note, 2026-10-14: after `pnpm build`, contract-stdin + impl-corpus 3/3 passed; impl-corpus alone again 2/2 (two runs); `vitest related src/bin/commands/promises.ts` 5/5; `tsc --noEmit` and `biome check` on the changed files clean.
 
 #### Build Phase 1 Context
 
