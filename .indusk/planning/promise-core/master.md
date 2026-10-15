@@ -164,6 +164,14 @@ switching.
   that conflicts becomes a question (its cost set by its size); the agent
   proposes the resolution. On the workbench server there is one copy, so the
   cascade is the box's; locally, each machine's open worktrees.
+- **The graph is seen** (a look in `run-the-master`'s brief): plans and promises
+  as nodes, starting tiny — a plan is one node with its state, opened on
+  demand. A broken promise turns red with its broken clause and symptom; every
+  promise resting on it dims to *at risk*; the line down the shared trace leads
+  to the cause; the fix appears as a new node, and the red turns green only when
+  the mark reports holding again in real use. Built on React Flow (xyflow) with
+  an ELK or dagre layout. A replay of a real run — Homework Gate's milestones —
+  is for the product page, a follow-up once that run exists.
 
 **Two loops read the telemetry back**
 
