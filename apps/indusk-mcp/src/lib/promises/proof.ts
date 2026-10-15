@@ -4,7 +4,7 @@ import matter from "gray-matter";
 import { bookkeepingRoots } from "../bookkeeping/roots.js";
 import type { BrokenPromise } from "./fix.js";
 import { type HealthDeps, healthLine, readHealth, type SourceHealthRead } from "./health.js";
-import { countHeard, type HeardRow, readHeard } from "./heard.js";
+import { type HeardRow, readHeard } from "./heard.js";
 import {
 	type IncidentEntry,
 	type PromiseEntry,
@@ -20,7 +20,13 @@ import {
 	type SourceRead,
 	sourceNames,
 } from "./sources.js";
-import { readStanding, type StandingRow } from "./standing.js";
+import {
+	type DayCount,
+	dayCounts,
+	readStanding,
+	type StandingRow,
+	windowStart,
+} from "./standing.js";
 import { readWindow } from "./store.js";
 
 /**
@@ -57,12 +63,7 @@ export interface ProofMark {
 	lastBroken: string | null;
 }
 
-export interface ProofDay {
-	/** UTC day, `YYYY-MM-DD`. */
-	day: string;
-	held: number;
-	broken: number;
-}
+export type ProofDay = DayCount;
 
 export interface ProofEvent {
 	/** The date, or the time, it happened — `YYYY-MM-DD` or ISO. */
@@ -102,8 +103,6 @@ export interface ProofDeps extends HealthDeps {
 	marks?: (projectRoot: string, registry: Registry) => Promise<SourceRead[]>;
 }
 
-const DAY_MS = 86_400_000;
-const DAYS = 30;
 const TIMEOUT_MS = 2_000;
 
 /** The proof of `name` (or an earlier name), or null when the registry holds no such promise. */
@@ -254,45 +253,35 @@ async function daysOf(
 	deps: ProofDeps,
 	nowMs: number,
 ): Promise<Pick<Proof, "days" | "unread">> {
-	const today = Math.floor(nowMs / DAY_MS) * DAY_MS;
-	const start = today - (DAYS - 1) * DAY_MS;
 	const names = sourceNames(projectRoot);
+	// A break heard under an earlier name is this promise's, on its day.
 	const heard = readHeard(deps.home ?? bookkeepingRoots(projectRoot).home).filter(
 		(r) => r.promise === entry.name || entry.aliases.includes(r.promise),
 	);
 	const days: Partial<Record<SourceName, ProofDay[]>> = {};
 	const unread: Partial<Record<SourceName, string>> = {};
 	for (const source of names) {
-		const counted = countHeard(
-			heard.filter((r) => heardSource(r, names) === source),
-			{ since: new Date(start), bucketMs: DAY_MS },
+		const upheld: string[] = [];
+		const window = await readWindow(
+			projectRoot,
+			registry,
+			source,
+			windowStart(nowMs),
+			TIMEOUT_MS,
+			deps,
 		);
-		// A break heard under an earlier name is this promise's, on its day.
-		const broken = new Map<number, number>();
-		for (const name of [entry.name, ...entry.aliases]) {
-			for (const [bucket, n] of counted.get(name) ?? []) {
-				broken.set(bucket, (broken.get(bucket) ?? 0) + n);
-			}
-		}
-		const held = new Map<number, number>();
-		const window = await readWindow(projectRoot, registry, source, start, TIMEOUT_MS, deps);
 		if (window.ok) {
-			for (const m of window.marks.get(entry.name) ?? []) {
-				if (m.outcome !== "upheld") continue;
-				const bucket = Math.floor(Date.parse(m.at) / DAY_MS) * DAY_MS;
-				held.set(bucket, (held.get(bucket) ?? 0) + 1);
+			for (const name of [entry.name, ...entry.aliases]) {
+				for (const m of window.marks.get(name) ?? []) if (m.outcome === "upheld") upheld.push(m.at);
 			}
 		} else {
 			unread[source] = window.reason;
 		}
-		days[source] = Array.from({ length: DAYS }, (_, i) => {
-			const t = start + i * DAY_MS;
-			return {
-				day: new Date(t).toISOString().slice(0, 10),
-				held: held.get(t) ?? 0,
-				broken: broken.get(t) ?? 0,
-			};
-		});
+		days[source] = dayCounts(
+			nowMs,
+			heard.filter((r) => heardSource(r, names) === source).map((r) => r.at),
+			upheld,
+		);
 	}
 	return { days, unread };
 }

@@ -149,6 +149,33 @@ describe("A13 — what a plan waits on, and the step it waits at", () => {
 	});
 });
 
+describe("cockpit-audit-fixes A8 — approval waits for a finished plan", () => {
+	// promise: approval-waits-for-a-finished-plan
+	it("A8 a draft impl a session is still writing is not under approval; once the session ends, it is", () => {
+		const writing: WaitingSession = { plan: "awaiting-approval", kind: "planning", question: null };
+		expect(planWaiting({ sessions: [writing], plans: [approval], builds: [] })).toEqual([]);
+		const after = planWaiting({ sessions: [], plans: [approval], builds: [] });
+		expect(after).toEqual([expect.objectContaining({ plan: "awaiting-approval", on: "approval" })]);
+	});
+});
+
+describe("cockpit-audit-fixes A12 — an idle author does not hide approval", () => {
+	// promise: approval-waits-for-a-finished-plan
+	it("A12 a live session that finished its turn and asked nothing leaves the draft impl under approval; while its turn is open it does not", () => {
+		const idle: WaitingSession = {
+			plan: "awaiting-approval",
+			kind: "planning",
+			question: null,
+			writing: false,
+		};
+		const open: WaitingSession = { ...idle, writing: true };
+		expect(planWaiting({ sessions: [open], plans: [approval], builds: [] })).toEqual([]);
+		expect(planWaiting({ sessions: [idle], plans: [approval], builds: [] })).toEqual([
+			expect.objectContaining({ plan: "awaiting-approval", on: "approval" }),
+		]);
+	});
+});
+
 /**
  * plan-stories A14: a plan waiting only on an amendment waits on the person, at its
  * Brief step; one with no amendment and nothing else waiting does not. The new

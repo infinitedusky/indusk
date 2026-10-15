@@ -305,6 +305,63 @@ describe("A38 — an answer delivered and not recorded is not a failed answer", 
   });
 });
 
+// promise: a-question-is-answered-in-full
+describe("cockpit-audit-fixes A7 — an ask of two questions is answered in full", () => {
+  it("A7 the agent gets an answer to each question, under each question's text", async () => {
+    const { id } = manager.start({
+      project: PROJECT,
+      plan: PLAN,
+      cwd: WORKTREE,
+      kind: "planning",
+      prompt: `/planner ${PLAN}`,
+      onEvent: () => {},
+    });
+    void id;
+    const ev: QuestionEvent = {
+      type: "question",
+      requestId: "req-2",
+      questions: [
+        {
+          question: QUESTION,
+          options: [{ label: "The venue's map" }, { label: "Our own grid" }],
+        },
+        {
+          question: "How long should a hold last?",
+          options: [{ label: "Ten minutes" }, { label: "One hour" }],
+        },
+      ],
+      input: {},
+    };
+    const emit = launched[0]?.onEvent as SessionOptions["onEvent"];
+    emit(ev);
+    const waiting = {
+      ...questionWaiting,
+      requestId: "req-2",
+      questions: [
+        {
+          question: QUESTION,
+          accept: "The venue's map",
+          alternative: "Our own grid",
+        },
+        {
+          question: "How long should a hold last?",
+          accept: "Ten minutes",
+          alternative: "One hour",
+        },
+      ],
+    } as Waiting;
+    const answers = {
+      [QUESTION]: "Our own grid",
+      "How long should a hold last?": "Ten minutes",
+    };
+    await answerDecision(deps(), PROJECT, waiting, {
+      choice: "answers",
+      answers,
+    } as never);
+    expect(fake.answer).toHaveBeenCalledWith(ev, answers);
+  });
+});
+
 describe("A16 (plan-stories) — an amendment is answered on its own card", () => {
   it("A16 an answer to an amendment's wait is refused and neither approves nor releases", async () => {
     const approve = vi.fn(async () => ({}));

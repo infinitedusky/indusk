@@ -11,7 +11,7 @@ Every promise on the [dashboard](/reference/admin-ui/overview) opens its own pag
 | Section | What it shows | Where it comes from |
 |---|---|---|
 | Banner | The standing as a chip (broken, being proven, declared, enforced), when it last broke, the symptom and trace link, and — when every test that names it passes — that the tests miss the case that breaks it. *Start a fix plan* appears here while it is broken, including a promise held open by an incident that no source reads red: its symptom and trace are the incident's. | `proofOf`'s `standing`, `broken` and `banner` |
-| Tiles | Three `Stat`s: tests passing of total, and held and broke counted in days over thirty (five violations on one day are one broken day) | `proofOf`'s `standing` |
+| Tiles | Three `Stat`s: tests passing of total, and held and broke counted in days over the thirty UTC days ending today — a *held* day has an upheld run and no break, a *broken* day has a violation heard (five on one day are one), and a day nobody watched is neither, so the two need not add to thirty; a promise never seen shows none | `proofOf`'s `standing` |
 | Tests that back it | Every test row, in any plan active or archived, that names the promise: its state and its test files | `promises/rows`, through `proofOf`'s `rows` |
 | Where it is watched | Each service and operation the promise was marked at, and when it was last held and last broken; "not seen yet" when none | `promises/sources`' marks, through `proofOf`'s `marks` |
 | Last thirty days | One bar per day for each source, red where a break was heard, green where it held | the recorder's `heard.jsonl` and the store, through `proofOf`'s `days` |

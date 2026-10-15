@@ -1,0 +1,3 @@
+# Merge main into a built plan as soon as main redraws files the plan touches — otherwise landing means porting each fix into the new structure, not resolving conflicts
+
+Source: cockpit-audit-fixes retrospective (highlight h-20261015-040). Main moved the nav's grouping into lib/plan-groups.ts and redrew DecisionCard on UiDecisionCard while the plan sat built; at landing each fix had to be re-made in the new structure. Conflict markers do not capture that. How to apply: when main lands a redraw or extraction in files a built-but-unlanded plan touches, merge main into the plan branch then, not at landing.

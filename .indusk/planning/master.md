@@ -385,7 +385,7 @@ lesson title, or a chat log.
   "Plans this changes" names thirteen existing plans it touches; **none has
   been edited, and the demo's script stands.** Measurements in
   [research](promise-core/research.md).
-- **Closed, standalone bugfix** (2026-10-15): [decided-prompts-stay-closed](archive/decided-prompts-stay-closed/retrospective.md)
+- **Closed** (2026-10-15, under [cockpit-around-promises](cockpit-around-promises/master.md)): [decided-prompts-stay-closed](archive/decided-prompts-stay-closed/retrospective.md)
   — every request a session makes is recorded with a `decided` event, and the
   panel draws a decided request with its outcome, after a reload too.
   **Follow-on, not yet a plan:** a build step's requests leave the log once

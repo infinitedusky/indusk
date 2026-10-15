@@ -16,6 +16,7 @@ import { describe, expect, it } from "vitest";
 const REPO_ROOT = resolve(new URL("../../../../", import.meta.url).pathname);
 const HOOKS_DIR = join(REPO_ROOT, "apps/indusk-mcp/hooks");
 const GUIDE = join(REPO_ROOT, "apps/docs/src/guide/index.md");
+// Archived 2026-10-15 (folded into promise-core); its keep/shed record still stands.
 const DAWN_MASTER = join(REPO_ROOT, ".indusk/planning/archive/indusk-v2-dawn/master.md");
 
 const WORDS: Record<string, number> = {

@@ -1,5 +1,6 @@
 ---
-title: "Cockpit audit fixes — what plan-cockpit's cold audit found"
+title: "Cockpit audit fixes"
+description: "What plan-cockpit's cold audit found."
 date: 2026-10-11
 status: accepted
 workflow: bugfix

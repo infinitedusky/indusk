@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Answer the decision a plan waits on (plan-cockpit, ADR decision 4):
- * `{ project, choice: "accept" | "alternative" | "reply", text? }`. What the
+ * `{ project, choice: "accept" | "alternative" | "reply" | "answers", text?, answers? }`. What the
  * plan waits on is read again here, never taken from the page, so an answer
  * meant for a question already answered, or a review already accepted, is
  * refused rather than sent somewhere else. The answer goes where
@@ -41,6 +41,7 @@ export async function POST(
     project?: string;
     choice?: string;
     text?: string;
+    answers?: unknown;
   } | null;
   const choice = choiceOf(body);
   if (!body?.project || !choice) {
@@ -76,8 +77,18 @@ export async function POST(
 }
 
 function choiceOf(
-  body: { choice?: string; text?: string } | null,
+  body: { choice?: string; text?: string; answers?: unknown } | null,
 ): DecisionChoice | null {
+  if (body?.choice === "answers") {
+    const given = body.answers;
+    if (!given || typeof given !== "object") return null;
+    const entries = Object.entries(given);
+    if (entries.some(([, v]) => typeof v !== "string")) return null;
+    return {
+      choice: "answers",
+      answers: Object.fromEntries(entries) as Record<string, string>,
+    };
+  }
   if (body?.choice === "accept" || body?.choice === "alternative")
     return { choice: body.choice };
   if (body?.choice === "reply" && typeof body.text === "string")

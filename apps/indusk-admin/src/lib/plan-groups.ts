@@ -1,5 +1,6 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import { planTitle } from "@infinitedusky/indusk-mcp/promises/display";
+import { declaredWithin } from "@/lib/path-nesting";
 import type { Plan } from "@/lib/planning-reader";
 
 /** One declared entry of a Path, in the order its master declares it. */
@@ -40,7 +41,9 @@ export interface PlanGroup {
  *
  * A subplan that is itself a parent opens as a Path inside its parent, to any
  * depth. A master naming its own ancestor stops at the repeat; a plan declared
- * under two parents appears under both. Children resolve against active
+ * by a Path and by a Path inside it is listed once, under the innermost
+ * (`declaredWithin`); a plan declared under two Paths that do not contain one
+ * another appears under both. Children resolve against active
  * AND archived plans (active wins a name collision) — an archived subplan is
  * finished work and renders with its real status, never as a "not created
  * yet" placeholder (T11). `rest` is the unclaimed ACTIVE plans; archived plans
@@ -87,9 +90,12 @@ export function buildGroups(
       released: 0,
     };
     let number = 0;
+    // A plan a Path inside this one also declares is listed there, innermost.
+    const listedInside = declaredWithin(grouping.subplans, parentName);
     for (const childName of declared) {
       // A master naming its own ancestor stops at the repeat.
       if (lineage.includes(childName)) continue;
+      if (listedInside.has(childName)) continue;
       const nested = open(childName, depth + 1, lineage);
       number += 1;
       if (nested) {

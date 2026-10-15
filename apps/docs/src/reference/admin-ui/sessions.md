@@ -67,8 +67,8 @@ A plan that waits on you waits in one place. Introduced by plan-cockpit; the dec
 
 | Waiting on | When | Accept does | The alternative |
 |---|---|---|---|
-| a **question** | a session the admin runs for the plan asked (`AskUserQuestion`) and nobody answered (`SessionManager.pendingQuestion`) | answers with the first option, as the panel does | answers with the second option |
-| **approval** | the impl is a `draft` and every document before it that the plan's type requires is accepted | `indusk plans approve` | *Not yet — keep planning*, sent to the agent as words |
+| a **question** | a session the admin runs for the plan asked (`AskUserQuestion`) and nobody answered (`SessionManager.pendingQuestion`) | answers with the first option, as the panel does; an ask of several questions shows each with its two answers and a box for your own words (words replace the chosen option for that question) and sends them together, an answer under each question's text — never the first alone | answers with the second option |
+| **approval** | the impl is a `draft`, every document before it that the plan's type requires is accepted, and no session the admin runs for the plan is still writing it (its turn open, nothing asked) — once its turn ends, the plan appears here, even while the session stays alive waiting for you | `indusk plans approve` | *Not yet — keep planning*, sent to the agent as words |
 | **review** | the build stopped at review, or the plan stands at review (so it is still listed after the admin restarts) | accepts the plan and starts the release, as the build's Accept does | *Not yet — send it back*, sent to the agent as words |
 
 A question outranks the rest: an agent blocked on an answer is the most urgent thing a plan can wait on. A question asked in a terminal session is not seen here; the cockpit shows what the admin runs.

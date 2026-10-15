@@ -38,6 +38,7 @@ export async function readWaiting(
       plan: r.plan,
       kind: r.kind,
       question: manager.pendingQuestion(r.id) ?? null,
+      writing: manager.isWriting(r.id),
     }));
   const builds = plans.map((p) => ({
     plan: p.name,

@@ -414,3 +414,83 @@ describe("A36 — a new plan can still be started from the admin (regression gua
     expect(root.querySelector('a[data-plan-name="mid-build"]')).not.toBeNull();
   });
 });
+
+// promise: a-promise-sits-in-its-innermost-path
+describe("cockpit-audit-fixes A9 — the nav lists a plan under its innermost Path", () => {
+  it("A9 a plan declared by an outer Path and by a Path inside it is listed in the inner Path only", async () => {
+    const { PlanList } = await import("@/components/PlanList");
+    const plan = (name: string) => ({
+      name,
+      title: name,
+      status: "draft",
+      archived: false,
+    });
+    const { container } = await render(
+      <PlanList
+        active={["outer-path", "inner-path", "shared-plan"].map(plan) as never}
+        archived={[]}
+        masterOrder={[]}
+        grouping={{
+          parents: ["outer-path", "inner-path"],
+          roadmap: ["outer-path"],
+          subplans: {
+            "outer-path": ["inner-path", "shared-plan"],
+            "inner-path": ["shared-plan"],
+          },
+          declaredTitles: {},
+        }}
+      />,
+    );
+    const links = (group: string) =>
+      Array.from(
+        container.querySelectorAll(
+          `[data-testid="plan-group-${group}"] a[data-plan-name="shared-plan"]`,
+        ),
+      );
+    const inner = container.querySelector(
+      '[data-testid="plan-group-inner-path"]',
+    );
+    expect(
+      inner?.querySelectorAll('a[data-plan-name="shared-plan"]'),
+    ).toHaveLength(1);
+    expect(links("outer-path")).toHaveLength(1);
+  });
+});
+
+// promise: a-promise-sits-in-its-innermost-path
+describe("cockpit-audit-fixes A13 — two Paths that declare each other both list a shared plan", () => {
+  it("A13 a plan declared by both Paths of a cycle is listed under each, not dropped into the rest", async () => {
+    const { PlanList } = await import("@/components/PlanList");
+    const plan = (name: string) => ({
+      name,
+      title: name,
+      status: "draft",
+      archived: false,
+    });
+    const { container } = await render(
+      <PlanList
+        active={["path-a", "path-b", "shared-plan"].map(plan) as never}
+        archived={[]}
+        masterOrder={[]}
+        grouping={{
+          parents: ["path-a", "path-b"],
+          roadmap: ["path-a"],
+          subplans: {
+            "path-a": ["path-b", "shared-plan"],
+            "path-b": ["path-a", "shared-plan"],
+          },
+          declaredTitles: {},
+        }}
+      />,
+    );
+    // path-b opens inside path-a (the roadmap's Path), so path-a's group holds
+    // the plan twice over: once of its own, once through path-b.
+    const shared = 'a[data-plan-name="shared-plan"]';
+    expect(container.querySelectorAll(shared)).toHaveLength(2);
+    expect(
+      container
+        .querySelector('[data-testid="plan-group-path-b"]')
+        ?.querySelectorAll(shared),
+    ).toHaveLength(1);
+  });
+});

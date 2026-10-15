@@ -34,10 +34,12 @@ describe("parseAllPlans", () => {
 		expect(plans.length).toBeGreaterThanOrEqual(2);
 
 		const names = plans.map((p) => p.name);
-		// Pin on promise-core, the one master every open plan is grouped under.
-		// (This pinned on the Dawn and Day masters until they were archived
-		// 2026-10-15, and on react-native-support before that.)
+		// Pin on the root's parent master and one of its children, living
+		// documents. (This pinned on react-native-support until it was archived
+		// 2026-09-14, then on the Dawn and Day masters until both were folded
+		// into promise-core 2026-10-15 — any named plan can be archived.)
 		expect(names).toContain("promise-core");
+		expect(names).toContain("cockpit-around-promises");
 
 		// Verify sorted
 		const sorted = [...names].sort();
