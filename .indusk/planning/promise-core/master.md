@@ -56,10 +56,18 @@ holds; the older text is kept as the record of 2026-10-05.
   where incidents land.
 
 **The words** (Sandy, 2026-10-15): a promise, and each clause, is **upheld**
-or **broken** — the words people use of promises. Never *failed*, *passed*,
-*held*, *kept* or *violated*. Today InDusk mixes three vocabularies: the admin
-says *held/broken*, a mark reports `upheld`/`violated`, the registry's state is
-`known-violated`. `mark-first` settles all three on upheld/broken — a mark's
+or **broken** — the words people use of promises.
+
+| Use | Good | Bad |
+|---|---|---|
+| A state — a dot, a record, a mark | **upheld** | **broken** |
+| Right now — a live page | **holding** | **broken** |
+| What happened | **held** | **broke** |
+
+The system *upholds* a promise; a promise *holds* or *breaks*. Never *failed*,
+*passed* or *violated* — the words of tests and tickets. Today InDusk mixes
+them: a mark reports `upheld`/`violated` and the registry's state is
+`known-violated`. `mark-first` moves both to upheld/broken; a mark's
 `violated` is still read, so applications already marked keep working.
 
 **What people think about** (Sandy, 2026-10-15): promises and clauses, and
