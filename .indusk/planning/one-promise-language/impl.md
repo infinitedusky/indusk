@@ -1,7 +1,7 @@
 ---
 title: "One promise language"
 date: 2026-10-15
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -50,6 +50,7 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 | Build Phase 1 | `readOutcome`; `PROMISE_OUTCOMES = upheld \| broken`; `PROMISE_STATES` with `known-broken` and the load alias; writers still sending `violated` through one mapping in `markPromise`; the server asking for both values | `lib/promises/vocabulary.ts`, `telemetry.ts`, `registry.ts`, `incidents.ts`, `mark.ts`, `always-on/pass.ts`, `testing/trace-shape.ts` |
 | Build Phase 2 | the admin's, CLI's, MCP tools' and editor's words | Build Phase 1's two values |
 | Build Phase 3 | the docs, skills, template and deploy files in the new words; the word scan green | Build Phases 1–2 |
+| Build Phase 4 | the editor's input on the old word this release; retired, broke — fixed and no signal in the editor and admin; the suite's line and the helper's messages in the new words; a wider scan | Build Phases 1–3 |
 
 ## Test Trajectory
 
@@ -68,6 +69,13 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 | A11 | A production signal saying `broken` becomes an incident with its owning plan reopened, exactly as a `violated` one does | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/record-broken.test.ts |
 | A12 | The always-on server announces a production signal saying `broken` exactly as one saying `violated` | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/always-on/announce-broken.test.ts |
 | A13 | The thirty days count held, broken and neither the same way for signals saying `broken`, `violated` or a mix | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A14 | An editor installed before this plan still reads a broken run in `indusk promises health --json` as broke: the line's runs carry `violated` this release, for a signal written either way | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
+| A15 | The editor shows a retired promise as retired, never holding or in the ok tone; a promise that broke and was fixed as broke — fixed; and an empty activity section as no signal | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/vscode-extension/src/core/view-words.test.ts, apps/vscode-extension/src/core/activity.test.ts |
+| A16 | The admin's dashboard row and the promise page's thirty-day legend say no signal where nothing has reported, never never seen or nothing seen | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx |
+| A17 | The everyday-suite signal still writes `violated` this release, and the line it prints says broken and signal, never violated or marked | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/suite-speed.test.ts |
+| A18 | The trace-shape helper's failure messages say broken, never violated | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
+| A19 | The word scan also reads the extension skills and the `docker/` image and Fly files, and refuses mark in any promise sense (production marks, a promise's mark, sends marks, what has been marked) | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
+| A20 | No page people read says InDusk's own signals or the demo's are written `broken` this release | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
 
 ## Checklist
 
@@ -342,6 +350,90 @@ The last phase brings everything people read outside the apps into the same voca
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md` (Unreleased): "The admin, the command line, the editor, the docs and the skills say a promise is upheld or broken — holding or broken when live, no signal when unknown — and call its telemetry a signal."
+
+  </details>
+
+### Build Phase 4: Falsification — the words the editor, the extension skills and the docs still get wrong
+
+**Tier**: med — the work step's default (`workflow.steps.work.tier`)
+
+A fresh reader went looking for places where the plan's promise does not yet hold, and found eight. Four surfaces still show the old words or a wrong one. The editor calls a retired promise holding and draws it in the healthy colour, says fixed where the admin says broke — fixed, and says No runs yet where nothing has reported. The admin's dashboard and promise page say never seen and nothing seen. The line the everyday test suite prints says marked … violated. The test helper's failure messages say violated. The word scan reads too little: it misses the extension skills InDusk installs, the server image's own deploy files, and most of the ways a page calls a signal a mark. Several pages also claim the demo, the evaluator and the looks check send `broken`, when this release they send `violated`. Most serious, the editor's input, `indusk promises health --json`, now says `broken` for a break, and an editor installed before this release reads every such run as held. That is the version skew the decision rejected, so this phase keeps that JSON on the old word until the writers switch. Three findings belong to `mark-first`, the next plan, which switches every writer to `broken`: the two writers outside the one writing function, the same skew in the registry state, and the dashboard's green dot for a promise with no signal. Each is carried in that plan's research.
+
+- [ ] Make the editor's input keep saying violated for a break this release, so an editor installed earlier still reads it as broke.
+  <details><summary>Technical</summary>
+
+  A14. `apps/indusk-mcp/src/lib/promises/health-line.ts` `newestRuns` / `healthLine` `runs`: map the in-memory `broken` to `"violated"` at the one point the line is written, as `markPromise` does (a docblock naming `.indusk/planning/mark-first/`). The extension already reads both (`activity.ts:7`). Test: build a line from a store read holding one `broken` and one `violated` signal and apply the pre-plan editor rule (`r.outcome === "violated" ? "broke" : "held"`) to its runs. Both read broke.
+
+  </details>
+- [ ] Make the editor say retired for a retired promise, broke — fixed for a fixed one, and no signal for an empty activity section.
+  <details><summary>Technical</summary>
+
+  A15. `apps/vscode-extension/src/core/view.ts:33,37`: `fixed: "broke — fixed"`, `grey: "retired"` (add both to `Shown`); `markers.ts:84` gives the ok tone only to `holding` and `broke — fixed`. `activity.ts:50`: `"No runs yet."` → `"No signal yet."`. Tests in `view-words.test.ts` (grey, fixed) and `activity.test.ts` (empty).
+
+  </details>
+- [ ] Make the admin's dashboard row and the promise page's legend say no signal.
+  <details><summary>Technical</summary>
+
+  A16. `apps/indusk-admin/src/components/Promises.tsx:376` `"never seen"` → `"no signal"`; `promise/PromiseProof.tsx:266` `"Grey: nothing seen."` → `"Grey: no signal."`. Assertions in `PromiseWords.test.tsx`.
+
+  </details>
+- [ ] Make the everyday suite's printed line say broken and signal, while it still writes violated.
+  <details><summary>Technical</summary>
+
+  A17. `apps/indusk-mcp/scripts/suite-speed.js`: the outcome object stays `violated` on the wire (`:37`, `:50`). The line at `:117` prints `signal sent: <promise> broken|upheld (N s)`, and the `not marked:` lines become `no signal sent:`. Test in `suite-speed.test.ts`: the attribute is `violated` and the printed line has no `violated` or `marked`.
+
+  </details>
+- [ ] Make the trace-shape helper's failure messages say broken.
+  <details><summary>Technical</summary>
+
+  A18. `apps/indusk-mcp/src/lib/testing/trace-shape.ts:156,163`: "marks promise … broken but carries no `indusk.promise.violated` event" and "no span signalled promise … broken". The function name `expectPromiseViolated` stays, as an internal name. The test calls it on spans with no break and asserts that the thrown message does not match `/\bviolated\b(?!\s*event|`)/`, ignoring the event name.
+
+  </details>
+- [ ] Widen the word scan to the extension skills, the server image's deploy files and every promise sense of mark, and reword what it then finds.
+  <details><summary>Technical</summary>
+
+  A19. `apps/indusk-mcp/src/__tests__/promise-words.test.ts`: add `apps/indusk-mcp/extensions/*/skill.md`, `docker/Dockerfile.always-on` and `docker/fly.always-on.toml` to `scanned()`. Widen `MARK_SENSE` to the promise senses (`(promise|production|one|that|a promise's) marks?`, `sends? marks?`, `marks? (a|the) promise`, `has been marked`, `run, mark,`) and keep `MARK_ALLOWED` for the nav glyph. Then reword what turns red: `extensions/testing/skill.md:39,43,54` (the read-as-broken line beside `// or "violated"`, "Test the signal", "asserts a break"); `docker/*` comments ("break"); `guide/run-your-own-server.md:3,117`, `guide/promises.md:218,263`, `guide/index.md:178,183`, `guide/contract.md:28`, `guide/always-on.md:3`, `guide/try-it.md:24,46`, `reference/cli/telemetry-server.md:47`, `reference/cli/looks.md:414`. Run `indusk update` so `.claude/skills/testing/SKILL.md` follows.
+
+  </details>
+- [ ] Make the pages that say InDusk's or the demo's signals are written broken say they are written violated this release and read as broken.
+  <details><summary>Technical</summary>
+
+  A20. `guide/try-it.md:35`, `guide/promises.md:217`, `reference/cli/demo.md:40` and `reference/cli/looks.md:415` give the attribute value as `violated` this release, read as broken (the sentence form `ALLOWED` already permits). The scan refuses a line that says InDusk's own signals or the demo's are marked or set to `` `broken` ``.
+
+  </details>
+- [x] Carried to `.indusk/planning/mark-first/research.md`, the plan that switches every writer to `broken` next release (commit `24205d54e` on `plan/mark-first`): the two writers outside `markPromise` (`scripts/suite-speed.js` and the health line's runs), the `known-broken` state an older InDusk refuses, and the dashboard dot drawn green for an enforced promise with no signal (an approved look).
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+
+#### Build Phase 4 Verification
+
+- [ ] An editor from before this release reads a break as broke; the editor, the admin, the suite's line and the helper's messages say retired, broke — fixed and no signal, never holding for a retired promise; the widened scan is green over the extension skills, the docker files and every promise sense of mark; no page says the writers send broken this release.
+  <details><summary>Technical</summary>
+
+  Red first on today's code, then green: A14–A20. `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises/outcome-words.test.ts src/__tests__/suite-speed.test.ts src/__tests__/promise-words.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/PromiseWords.test.tsx`; `cd apps/vscode-extension && pnpm exec vitest run src/core/view-words.test.ts src/core/activity.test.ts`. A1–A13 still pass (same commands with Build Phase 3's files). `pnpm --filter docs build` succeeds.
+
+  </details>
+- [ ] The approved looks of the promise pages still match.
+  <details><summary>Technical</summary>
+
+  `indusk looks check admin` exits 0 — only text changed on the dashboard row and the legend.
+
+  </details>
+
+#### Build Phase 4 Context
+
+- [ ] The editor's context says a retired promise is never shown as holding, and the promise code's context says the health line keeps the old outcome word until the writers switch.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/promises/CLAUDE.md`: "`promises health --json` is a wire: its `runs[].outcome` stays `violated` until `mark-first` switches every writer, because an installed editor is not updated with the package." The extension's rule lives in `apps/vscode-extension/` (its CLAUDE.md, beside the app rules): "grey is retired, never holding — `promise: a-promise-is-upheld-or-broken`".
+
+  </details>
+
+#### Build Phase 4 Document
+
+- [ ] The editor's guide shows retired and broke — fixed, and the testing extension's page says a signal written violated is read as broken.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/guide/promises-in-your-editor.md` (the state words list); the docs page that renders the testing extension's skill, if one exists under `apps/docs/src/reference/`, follows `extensions/testing/skill.md`.
 
   </details>
 
