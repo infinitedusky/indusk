@@ -29,6 +29,17 @@ describe("activity", () => {
 		expect(activityLines(a)[1]).toMatch(/seats-held held \(local\)/);
 	});
 
+	it("A9 — a run whose outcome is broken reads broke; held and a run written violated read as before", () => {
+		const a = addRuns(startActivity(), [
+			run(3, "broken" as Run["outcome"]),
+			run(2, "violated"),
+			run(1),
+		]);
+		expect(activityLines(a)[0]).toMatch(/seats-held broke \(local\)/);
+		expect(activityLines(a)[1]).toMatch(/seats-held broke \(local\)/);
+		expect(activityLines(a)[2]).toMatch(/seats-held held \(local\)/);
+	});
+
 	it("A27 — keeps a bounded number, dropping the oldest", () => {
 		let a = startActivity();
 		for (let i = 0; i < ACTIVITY_MAX + 20; i++) a = addRuns(a, [run(i)]);
