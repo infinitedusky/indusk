@@ -30,9 +30,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   as `Message`'s dot, and Start launches the agent so the thread opens with it
   working); `ConversationThread` draws them as `Message` bubbles, the
   reply through `Markdown`; the draft's `transcript.jsonl` (appended by
-  `startProjectConversation`) is what a reopened page shows. The plan
-  conversation, builds and Fix with Claude still use the session panel until
-  they move. Guarded by `conversation-turns.test.ts` and
+  `startProjectConversation`) is what a reopened page shows. Other conversations still use the session panel. Guarded by `conversation-turns.test.ts` and
   `ConversationThread.test.tsx`. — `promise: a-project-conversation-is-a-back-and-forth`
 - **What a plan's page offers is one rule, `planActions`**: a plan is started
   by its worktree in normal mode or its `code.json` in a workbench, and gets
@@ -70,7 +68,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **One home per piece**: rows table `components/phases/`,
   progress lines `bars/ProgressLines`, display vocabulary (`phaseTitle`:
   `Phase 4`, not `phaseLabel`; a plan is `plan.title`, initials from it, the
-  handle only for links, data attributes) and chip/label maps in
+  handle only for links, data attributes; its stage is `planStage`, a queued
+  plan's title rides its `buildGroups` placeholder) and chip/label maps in
   `bars/labels.ts`, badge maps `ui/badge-variant.ts`, research reads
   `lib/research-reader.ts`, project reads `lib/project-reader.ts` (config
   via `./config`, never hand-parsed). Pinned by `cleanup-pins.test.ts`.
@@ -129,8 +128,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   (`indusk ui prune [--dry-run]` backs up first); `runCli` pins `INDUSK_HOME`
   to a temp dir; malformed files quarantine to `.corrupt.{ISO}.bak`; daemon
   identity = PID liveness AND its command line, never its port
-  (`lib/process-identity.ts`); the scorecard-to-plan join is date-range
-  approximate.
+  (`lib/process-identity.ts`); the scorecard join is date-range approximate.
 - **Promise timeline**: compact sliced reads;
   an admin store that reads only what is new plus a late tail; one
   `violationState` (unrecorded / open / fixed) for chip and timeline;
@@ -165,8 +163,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   class has no value to compile. A new screen, state or `data-component` needs
   its mockup approved first. Guarded by `looks-admin-foundation.test.ts`,
   `indusk looks coverage admin` and `indusk looks check admin`. Two traps: layout
-  is not a token and the value check does not see it (`translate-x-0` once
-  compiled to nothing and left the nav off-screen), so a restyle is also looked
+  is not a token and the value check does not see it, so a restyle is also looked
   at; and the Typography plugin is gone — `.prose` is written on the foundation
   in `globals.css`. — see `/decisions/ui-promises`
 - **A plan's page shows its brief's three parts from `plans/parts` and computes

@@ -71,8 +71,8 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 | A20 | The plan page still opens with the description, now under the title, and whether the brief is finished, one click from the brief | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-page-shows-the-parts-of-its-brief | apps/indusk-admin/src/components/plan/PlanSummary.test.tsx, apps/indusk-admin/src/__tests__/plan-page-layout.test.tsx |
 | A21 | The admin and the editor name a plan by the package's one title rule; neither holds a second | Test Phase 1 | Test Phase 1 | passing | unit | regression: display-names' single definition, which the title changes in the package, the admin and the editor touch | apps/indusk-mcp/src/__tests__/display-names-single-definition.test.ts |
 | A22 | A plan whose title in its own worktree differs from its copy on the trunk is named by the worktree's title on the Promises page and in the editor, as the nav names it — one plan, one name everywhere | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
-| A23 | A plan's stage reads the same in the nav and on its master's page — waiting on the person, released, and each status — because both ask one rule | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/plan-stage.test.ts |
-| A24 | A plan declared in a master with no folder yet reads by its declared title, else its handle in words through the project's product words, the same in the nav and on the master's page | Build Phase 7 | Build Phase 7 | planned | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/plan-groups.test.ts |
+| A23 | A plan's stage reads the same in the nav and on its master's page — waiting on the person, released, and each status — because both ask one rule | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/plan-stage.test.ts |
+| A24 | A plan declared in a master with no folder yet reads by its declared title, else its handle in words through the project's product words, the same in the nav and on the master's page | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/plan-groups.test.ts |
 
 ### Deferred Verification
 
@@ -426,13 +426,13 @@ Titles and descriptions come from research.md's tables. A description already wr
 - [x] (reviewed the rest — `SubplanRow.tsx`, `MasterStory.tsx`, `master-story.ts`, `display.ts`, `waiting.ts`, `decisions-reader.ts`, `look-state.ts`, `looks-fixtures.ts` — left as-is: under their caps and one job each once the two extractions above land; the deleted `ParentPlanView` and `MasterBar` leave no stranded caller)
 
 #### Build Phase 7 Verification
-- [ ] A23 and A24 pass, A1–A5, A11 and A13 still pass (`cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-stage.test.ts src/lib/plan-groups.test.ts src/lib/master-story.test.ts 'src/app/p/[project]/cockpit-nav.test.tsx' 'src/app/p/[project]/plan/[name]/master.test.tsx' src/lib/planning-reader.title.test.ts`); `pnpm exec vitest related` over the changed files; `indusk looks stories admin` changes no snapshot; tsc and biome clean on changed files
+- [x] A23 and A24 pass, A1–A5, A11 and A13 still pass (`cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-stage.test.ts src/lib/plan-groups.test.ts src/lib/master-story.test.ts 'src/app/p/[project]/cockpit-nav.test.tsx' 'src/app/p/[project]/plan/[name]/master.test.tsx' src/lib/planning-reader.title.test.ts`); `pnpm exec vitest related` over the changed files; `indusk looks stories admin` changes no snapshot; tsc and biome clean on changed files
 
 #### Build Phase 7 Context
-- [ ] `apps/indusk-admin/CLAUDE.md` (over budget, shrinking edits only): fold into the one-home entry that a plan's stage is `planStage` and a queued plan's title rides on its placeholder entry
+- [x] `apps/indusk-admin/CLAUDE.md` (over budget, shrinking edits only): fold into the one-home entry that a plan's stage is `planStage` and a queued plan's title rides on its placeholder entry
 
 #### Build Phase 7 Document
-- [ ] (none — internal decomposition; no page, route or CLI changes; ask before checking)
+- [x] (none needed — asked: "Build Phase 7 (cleanup) moves the stage rule into one planStage and puts a queued plan's title on its entry. No page, route or CLI changes. Can I skip its document gate?" — user: "Yes, skip it")
 
 ## Files Affected
 
