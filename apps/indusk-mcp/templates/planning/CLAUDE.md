@@ -106,6 +106,16 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   cross-reference rule and for nothing else — it never ticks a box, skips a
   gate or adds a task. — guarded by `detail-is-only-read.test.ts`
   (`promise: hidden-detail-is-only-read`); see `/decisions/phase-summaries`
+- **A new impl opts in with `phase_summary: required` and is written for a
+  reader without the plan's shorthand**: each phase opens with a paragraph
+  saying what it does for the whole plan, each task is one plain sentence for
+  someone who has worked on the project but knows none of the plan's
+  abbreviations or labels, and names, code and row labels go in the task's
+  folded `<details><summary>Technical</summary>`. The save check refuses a
+  missing paragraph, a code span or a row label on those lines; whether a
+  sentence is plain is a person's, at approval. — guarded by
+  `phase-summary-rule.test.ts` (`promise: an-impl-phase-explains-itself`); the
+  full shape and a before-and-after example are in `/reference/skills/planner`
 - `validate-impl-structure.js` re-validates the whole file when an edit's
   `new_string` contains a phase header — scope edits to checklist items.
 - Verification items are runnable commands with expected output, never "verify
