@@ -152,3 +152,42 @@ describe("a checklist item's note", () => {
 		expect(items[1]).toEqual({ checked: false, text: "Second" });
 	});
 });
+
+// promise: technical-detail-opens-on-request
+describe("phase-summaries A7 — a task's folded detail reaches the page whole", () => {
+	const impl = [
+		"### Build Phase 1: Placing a component",
+		"",
+		"**Tier**: med — the work step's default",
+		"",
+		"This phase makes a placed component put its words in place.",
+		"",
+		"- [ ] Placing a component puts your words in place",
+		"  <details><summary>Technical</summary>",
+		"",
+		"  `compose` walks each path.",
+		"",
+		"  ```ts",
+		'  compose(snapshot, { title: "Create project" })',
+		"  ```",
+		"",
+		"  </details>",
+		"- [ ] A second task with no detail",
+	].join("\n");
+
+	it("keeps the detail, fence included, with the wrappers removed", () => {
+		const items = parseImplString(impl).phases[0].gates[0].items;
+		const detail = (items[0] as { detail?: string }).detail;
+		expect(detail, "the first item's detail").toBeDefined();
+		expect(detail).toContain("`compose` walks each path.");
+		expect(detail).toContain("```ts");
+		expect(detail).toContain('compose(snapshot, { title: "Create project" })');
+		expect(detail).not.toMatch(/<\/?(details|summary)/);
+		expect((items[1] as { detail?: string }).detail).toBeUndefined();
+	});
+
+	it("keeps the phase's paragraph", () => {
+		const phase = parseImplString(impl).phases[0] as { summary?: string };
+		expect(phase.summary).toBe("This phase makes a placed component put its words in place.");
+	});
+});

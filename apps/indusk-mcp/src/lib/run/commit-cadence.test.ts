@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createCommitCadence } from "./commit-cadence.js";
 import { fixtureDir, guineaPigHappyPathSteps, realGateScripts } from "./harness.test-support.js";
 import { runLoop } from "./loop.js";
 
@@ -18,6 +19,10 @@ import { runLoop } from "./loop.js";
  * regardless of machine git config) is surfaced loudly and adds nothing
  * downstream. Red at authoring: no commit machinery exists, so no failure is
  * ever surfaced.
+ *
+ * A25 (story-first-phases) — promise: hidden-detail-is-only-read. A box ticked
+ * inside a task's folded detail is only read, so the loop makes no checkoff
+ * commit for it.
  */
 
 const execFileAsync = promisify(execFile);
@@ -132,4 +137,82 @@ describe("A5 — a failed commit is loud and enqueues nothing", () => {
 		const pending = await readFile(pendingPath, "utf8").catch(() => "");
 		expect(pending.trim()).toBe("");
 	}, 30_000);
+});
+
+describe("A25 — a box ticked inside a task's fold makes no checkoff commit", () => {
+	let worktree: string;
+
+	beforeEach(async () => {
+		worktree = await mkdtemp(join(tmpdir(), "dawn-cadence-a25-"));
+		await git(worktree, "init");
+		await git(worktree, "config", "user.email", "dawn@test.local");
+		await git(worktree, "config", "user.name", "Dawn Test");
+	});
+
+	afterEach(async () => {
+		await rm(worktree, { recursive: true, force: true });
+	});
+
+	const impl = (box: string, top: string) =>
+		[
+			"### Build Phase 1: Placing a component",
+			"",
+			`- [${top}] First task`,
+			"  <details><summary>Technical</summary>",
+			"",
+			"  Steps to try by hand:",
+			`  - [${box}] example`,
+			"",
+			"  </details>",
+			"",
+		].join("\n");
+
+	async function applyEdit(oldString: string, newString: string, before: string, after: string) {
+		const implPath = join(worktree, "impl.md");
+		await writeFile(implPath, before);
+		await git(worktree, "add", "-A");
+		await git(worktree, "commit", "-m", "baseline");
+		await writeFile(implPath, after);
+		const cadence = await createCommitCadence({
+			worktreeRoot: worktree,
+			implPath,
+			getPhase: () => 1,
+		});
+		await cadence.onGatedApply("edit", {
+			path: "impl.md",
+			old_string: oldString,
+			new_string: newString,
+		});
+		return cadence;
+	}
+
+	it("the control: a task ticked at the top level makes its commit", async () => {
+		const cadence = await applyEdit(
+			"- [ ] First task",
+			"- [x] First task",
+			impl(" ", " "),
+			impl(" ", "x"),
+		);
+		expect(cadence.commits, JSON.stringify(cadence.failures)).toHaveLength(1);
+	});
+
+	it("an edit keeping the box's indent makes no commit", async () => {
+		const cadence = await applyEdit(
+			"  - [ ] example",
+			"  - [x] example",
+			impl(" ", " "),
+			impl("x", " "),
+		);
+		expect(cadence.commits, "a box ticked in a fold, edit text indented").toHaveLength(0);
+	});
+
+	it("an edit starting at the box's dash makes no commit", async () => {
+		const cadence = await applyEdit(
+			"- [ ] example",
+			"- [x] example",
+			impl(" ", " "),
+			impl("x", " "),
+		);
+		expect(cadence.commits, "a box ticked in a fold, edit starting at the dash").toHaveLength(0);
+	});
 });

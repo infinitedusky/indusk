@@ -70,6 +70,13 @@ export interface ValidateTrajectoryOptions {
 	 * edited.
 	 */
 	testPhasesRequired?: boolean;
+	/**
+	 * `phase_summary: required` (story-first-phases): a Verification task may
+	 * name the rows it proves in its folded detail — the indented lines under
+	 * it — instead of its plain sentence, so the cross-reference rule reads
+	 * row labels there too. Mirrors the hook's `validateCrossReferenceIntegrity`.
+	 */
+	phaseSummaryRequired?: boolean;
 }
 
 const TRAJECTORY_HEADING = /^##\s+Test Trajectory\b/;
@@ -110,6 +117,8 @@ export function validateTrajectoryPresence(body: string): ValidationError[] {
 interface PhaseVerification {
 	phase: number;
 	items: { text: string; line: number }[];
+	/** The indented lines under the section's items: their folded detail. */
+	detail: { text: string; line: number }[];
 	headingLine: number;
 }
 
@@ -122,9 +131,11 @@ function extractPhaseVerifications(body: string): PhaseVerification[] {
 	let currentPhase: number | null = null;
 	let currentVerification: PhaseVerification | null = null;
 	let inVerification = false;
+	let underItem = false;
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
+		if (/^\S/.test(line)) underItem = false;
 
 		// Any kind: a test phase ends the previous phase's Verification block
 		// just as surely as another build phase does.
@@ -143,6 +154,7 @@ function extractPhaseVerifications(body: string): PhaseVerification[] {
 			currentVerification = {
 				phase: currentPhase,
 				items: [],
+				detail: [],
 				headingLine: i + 1,
 			};
 			inVerification = true;
@@ -160,6 +172,9 @@ function extractPhaseVerifications(body: string): PhaseVerification[] {
 			const itemMatch = line.match(CHECKLIST_ITEM);
 			if (itemMatch) {
 				currentVerification.items.push({ text: itemMatch[1].trim(), line: i + 1 });
+				underItem = true;
+			} else if (underItem && /^\s+\S/.test(line)) {
+				currentVerification.detail.push({ text: line.trim(), line: i + 1 });
 			}
 		}
 	}
@@ -176,6 +191,7 @@ function extractPhaseVerifications(body: string): PhaseVerification[] {
 export function validateCrossReferenceIntegrity(
 	body: string,
 	trajectory: Trajectory,
+	options: { readDetail?: boolean } = {},
 ): ValidationError[] {
 	const errors: ValidationError[] = [];
 	const knownIds = new Set(trajectory.rows.map((row) => row.id));
@@ -184,6 +200,28 @@ export function validateCrossReferenceIntegrity(
 	for (const ver of verifications) {
 		let foundTestReference = false;
 		let foundNoTestsDeclaration = false;
+		const checkIds = (idMatches: string[], line: number) => {
+			foundTestReference = true;
+			for (const id of idMatches) {
+				if (!knownIds.has(id)) {
+					errors.push({
+						rule: "cross-reference-integrity",
+						line,
+						message: `Phase ${ver.phase} Verification references test ID \`${id}\` but no such row exists in the Test Trajectory table.`,
+					});
+				}
+			}
+		};
+
+		// With `phase_summary: required`, a task's row labels may sit in its
+		// folded detail. Reading them ticks nothing and skips nothing
+		// (promise: hidden-detail-is-only-read).
+		if (options.readDetail) {
+			for (const d of ver.detail) {
+				const idMatches = d.text.match(TEST_ID_PATTERN);
+				if (idMatches) checkIds(idMatches, d.line);
+			}
+		}
 
 		for (const item of ver.items) {
 			const noTestsMatch = item.text.match(NO_TESTS_DECLARATION);
@@ -201,18 +239,7 @@ export function validateCrossReferenceIntegrity(
 			}
 
 			const idMatches = item.text.match(TEST_ID_PATTERN);
-			if (idMatches) {
-				foundTestReference = true;
-				for (const id of idMatches) {
-					if (!knownIds.has(id)) {
-						errors.push({
-							rule: "cross-reference-integrity",
-							line: item.line,
-							message: `Phase ${ver.phase} Verification references test ID \`${id}\` but no such row exists in the Test Trajectory table.`,
-						});
-					}
-				}
-			}
+			if (idMatches) checkIds(idMatches, item.line);
 		}
 
 		if (!foundTestReference && !foundNoTestsDeclaration && ver.items.length > 0) {
@@ -538,7 +565,9 @@ export function validateTrajectory(
 	const sequence = phaseSequence(body);
 	const hasTestPhase = sequence.some((p) => p.kind === "test");
 	const errors: ValidationError[] = [
-		...validateCrossReferenceIntegrity(body, trajectory),
+		...validateCrossReferenceIntegrity(body, trajectory, {
+			readDetail: options.phaseSummaryRequired ?? false,
+		}),
 		...validateTemporalCoherence(trajectory, sequence),
 		...validateDeferredCompleteness(trajectory),
 		...validateTestPhasePresence(body, sequence, options.testPhasesRequired ?? false),

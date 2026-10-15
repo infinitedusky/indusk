@@ -32,6 +32,7 @@ import {
 	phaseSequence,
 	unterminatedFenceLine,
 } from "./_impl-headings.js";
+import { phaseSummaryProblems, phaseSummaryProblemsAdded, ROW_LABEL } from "./_phase-summary.js";
 import { tierConfigProblems, tierRuleProblems, workDefaultTier } from "./_phase-tier.js";
 import { parseRegister } from "./_register.js";
 import { isTestLevel, TEST_LEVELS } from "./_test-levels.js";
@@ -216,6 +217,34 @@ if (contractRefusal) {
 	process.exit(2);
 }
 
+/**
+ * The refusal text of the `phase_summary: required` rule, one home for the
+ * edit-time check below and the whole-file check further down.
+ */
+function phaseSummaryRefusal(problems) {
+	return `Phase summary check failed (\`phase_summary: required\`):\n${problems.map((p) => `  - ${p}`).join("\n")}\n\nEach phase opens with a paragraph saying what it does for the whole plan, and each task is one plain sentence for someone who knows the project but none of its shorthand; code and row labels belong in its folded Technical detail.\npromise: an-impl-phase-explains-itself\n`;
+}
+
+// promise: an-impl-phase-explains-itself
+// The summary rule holds on every edit to an impl that has opted in, not only
+// on a whole-file write: an edit with no heading, no unticked box and no Tier
+// line could otherwise delete a paragraph or put code on a task line. Only the
+// problems this edit ADDS are refused, so a file with an old problem can still
+// be edited elsewhere (story-first-phases A21).
+{
+	let onDisk = "";
+	try {
+		onDisk = readFileSync(filePath, "utf-8");
+	} catch {
+		// a file that does not exist yet has no earlier problems
+	}
+	const added = phaseSummaryProblemsAdded(onDisk, newFullContent);
+	if (added.length > 0) {
+		process.stderr.write(phaseSummaryRefusal(added));
+		process.exit(2);
+	}
+}
+
 // Only validate if this edit is adding/modifying phase structure
 // Check if the edit contains phase headers
 const editContent = toolInput.new_string ?? toolInput.content ?? "";
@@ -313,11 +342,14 @@ for (const line of lines) {
 		currentPhase.hasImplementation = true;
 	}
 
-	// Track opt-out content in gate sections
+	// Track opt-out content in gate sections. Only a column-zero line opts a
+	// gate out: an indented line is a task's folded detail, which is only read
+	// (story-first-phases A10; promise: hidden-detail-is-only-read).
 	const isOptOutLine =
-		line.includes("(none needed)") ||
-		line.includes("(not applicable)") ||
-		line.includes("skip-reason:");
+		!/^\s/.test(line) &&
+		(line.includes("(none needed)") ||
+			line.includes("(not applicable)") ||
+			line.includes("skip-reason:"));
 	if (currentPhase && isOptOutLine) {
 		if (currentSection === "verification") currentPhase.verificationIsOptOut = true;
 		if (currentSection === "otel") currentPhase.otelIsOptOut = true;
@@ -450,6 +482,18 @@ const rationaleBaselineMatch = frontmatter.match(/^rationale_baseline:\s*(\d+)/m
 const rationaleBaseline = rationaleBaselineMatch
 	? Number.parseInt(rationaleBaselineMatch[1], 10)
 	: 0;
+// Each phase opens with a summary and each task is one plain sentence, its
+// technical detail folded beneath (story-first-phases). Line-anchored like the
+// keys above.
+const phaseSummaryRequiredFrontmatter = /^phase_summary:\s*required/m.test(frontmatter);
+
+{
+	const problems = phaseSummaryProblems(body, phaseSummaryRequiredFrontmatter);
+	if (problems.length > 0) {
+		process.stderr.write(phaseSummaryRefusal(problems));
+		process.exit(2);
+	}
+}
 
 if (trajectoryValidationEnabled) {
 	const trajectoryErrors = validateTrajectory(
@@ -457,6 +501,7 @@ if (trajectoryValidationEnabled) {
 		rationaleRequiredFrontmatter,
 		rationaleBaseline,
 		testPhasesRequiredFrontmatter,
+		phaseSummaryRequiredFrontmatter,
 	);
 	trajectoryErrors.push(...validateTestLevels(body, testLevelsRequiredFrontmatter));
 	trajectoryErrors.push(...validateRowShape(body, testPurposeRequiredFrontmatter));
@@ -576,6 +621,7 @@ function validateTrajectory(
 	rationaleRequired,
 	rationaleBaseline = 0,
 	testPhasesRequired = false,
+	phaseSummaryRequired = false,
 ) {
 	const errors = [];
 
@@ -605,7 +651,7 @@ function validateTrajectory(
 	const trajectory = parseTrajectoryFromBody(implBody);
 	const sequence = phaseSequence(implBody);
 	const hasTestPhase = sequence.some((p) => p.kind === "test");
-	errors.push(...validateCrossReferenceIntegrity(implBody, trajectory));
+	errors.push(...validateCrossReferenceIntegrity(implBody, trajectory, phaseSummaryRequired));
 	errors.push(...validateTemporalCoherence(trajectory, sequence));
 	errors.push(...validateDeferredCompleteness(trajectory));
 	errors.push(...validateTestPhasePresence(sequence, testPhasesRequired));
@@ -724,14 +770,21 @@ function validateRegressionGuards(implBody, trajectory, sequence) {
 		}));
 }
 
-function validateCrossReferenceIntegrity(implBody, trajectory) {
+/**
+ * Mirrors `validateCrossReferenceIntegrity` in `src/lib/trajectory/validator.ts`.
+ * With `phase_summary: required` (`readDetail`), a Verification task's row
+ * labels are read from its folded detail — the indented lines under it, up to
+ * the next column-zero line — as well as from its line. Reading a label there
+ * ticks nothing and skips nothing (promise: hidden-detail-is-only-read).
+ */
+function validateCrossReferenceIntegrity(implBody, trajectory, readDetail = false) {
 	const errors = [];
 	const knownIds = new Set(trajectory.rows.map((r) => r.id));
 	const allowed = new Set(["schema-only", "delete", "refactor", "infra"]);
 	const noTestsRegex = /\(no tests flip at this phase\s*[—–-]+\s*reason:\s*([a-z-]+)\s*\)/i;
 	// Accept T-prefixed (test) and A-prefixed (acceptance) IDs — mirrors
 	// TEST_ID_PATTERN in lib/trajectory/validator.ts. Bounded to [TA] on purpose.
-	const testIdPattern = /\b[TA]\d+\b/g;
+	const testIdPattern = new RegExp(ROW_LABEL.source, "g");
 
 	const lines = implBody.split("\n");
 	let currentPhase = null;
@@ -739,6 +792,20 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 	let foundRef = false;
 	let foundDecl = false;
 	let itemCount = 0;
+	let underItem = false;
+
+	const checkIds = (ids, i) => {
+		foundRef = true;
+		for (const id of ids) {
+			if (!knownIds.has(id)) {
+				errors.push({
+					rule: "cross-reference-integrity",
+					line: i + 1,
+					message: `Phase ${currentPhase} Verification references test ID \`${id}\` but no such row exists in the Test Trajectory table.`,
+				});
+			}
+		}
+	};
 
 	const flushPhase = () => {
 		if (currentPhase !== null && inVerification && itemCount > 0 && !foundRef && !foundDecl) {
@@ -775,9 +842,16 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 			inVerification = false;
 			continue;
 		}
+		if (/^\S/.test(line)) underItem = false;
+		if (inVerification && readDetail && underItem && /^\s+\S/.test(line)) {
+			const ids = line.match(testIdPattern);
+			if (ids) checkIds(ids, i);
+			continue;
+		}
 		if (inVerification) {
 			const item = line.match(/^-\s+\[[ xX]\]\s+(.*)/);
 			if (item) {
+				underItem = true;
 				itemCount++;
 				const text = item[1];
 				const noTests = text.match(noTestsRegex);
@@ -794,18 +868,7 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 					continue;
 				}
 				const ids = text.match(testIdPattern);
-				if (ids) {
-					foundRef = true;
-					for (const id of ids) {
-						if (!knownIds.has(id)) {
-							errors.push({
-								rule: "cross-reference-integrity",
-								line: i + 1,
-								message: `Phase ${currentPhase} Verification references test ID \`${id}\` but no such row exists in the Test Trajectory table.`,
-							});
-						}
-					}
-				}
+				if (ids) checkIds(ids, i);
 			}
 		}
 	}

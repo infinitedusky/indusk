@@ -1,7 +1,9 @@
 import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { promisify } from "node:util";
 import { headSha } from "../git.js";
+import { foldedLineMask } from "../impl-parser-core.js";
 import type { EditToolInput, GatedToolName, WriteToolInput } from "./gate.js";
 import { resolveInWorktree } from "./worktree-paths.js";
 
@@ -97,15 +99,40 @@ export interface CommitCadenceOptions {
  * history stopped accounting for the rest (A10).
  */
 export function newlyCheckedItems(oldText: string, newText: string): string[] {
-	const checkedLines = (s: string) =>
-		s
-			.split("\n")
-			.map((l) => l.trim())
-			.filter((l) => l.startsWith("- [x]"));
-	const before = new Set(checkedLines(oldText));
-	return checkedLines(newText)
-		.filter((l) => !before.has(l))
-		.map((l) => l.replace(/^- \[x\]\s*/, "").trim());
+	const before = new Map<string, number>();
+	for (const l of checkedLines(oldText)) before.set(l, (before.get(l) ?? 0) + 1);
+	const fresh: string[] = [];
+	for (const l of checkedLines(newText)) {
+		const seen = before.get(l) ?? 0;
+		if (seen > 0) before.set(l, seen - 1);
+		else fresh.push(l);
+	}
+	return fresh.map((l) => l.replace(/^- \[x\]\s*/, "").trim());
+}
+
+/**
+ * The ticked tasks of `text`: column-zero lines only, and none inside a task's
+ * folded detail or a fence. Anything indented under a task is its detail, read
+ * for nothing, so a box ticked there is not a checkoff
+ * (`hidden-detail-is-only-read`).
+ */
+function checkedLines(text: string): string[] {
+	const lines = text.split("\n");
+	const folded = foldedLineMask(lines);
+	return lines.filter((l, i) => !folded[i] && l.startsWith("- [x]")).map((l) => l.trim());
+}
+
+/**
+ * The impl as it was before an applied edit, recovered from the file as it is
+ * now: the edit's new text taken back out for its old text. Null when the new
+ * text is not found exactly once (a `replace_all`, or a file changed since), so
+ * the caller falls back to the edit's own strings.
+ */
+function fileBeforeEdit(after: string, oldString: string, newString: string): string | null {
+	if (newString === "") return null;
+	const at = after.indexOf(newString);
+	if (at === -1 || after.indexOf(newString, at + 1) !== -1) return null;
+	return after.slice(0, at) + oldString + after.slice(at + newString.length);
 }
 
 /** Truncate an item summary for a one-line commit message. */
@@ -161,7 +188,14 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 			return; // not a path this cadence can see — not the impl
 		}
 		if (edited !== implAbsolute) return;
-		const items = newlyCheckedItems(edit.old_string, edit.new_string);
+		// Judged over the whole file before and after the edit, so an edit whose text
+		// begins at a folded box's dash is still known to be detail.
+		const after = await readFile(edited, "utf8").catch(() => null);
+		const before = after === null ? null : fileBeforeEdit(after, edit.old_string, edit.new_string);
+		const items =
+			after !== null && before !== null
+				? newlyCheckedItems(before, after)
+				: newlyCheckedItems(edit.old_string, edit.new_string);
 		if (items.length === 0) return;
 
 		const phase = options.getPhase();

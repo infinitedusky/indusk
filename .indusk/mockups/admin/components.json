@@ -2044,6 +2044,12 @@
 					"description": "Opens the row's own page instead of unfolding."
 				},
 				{
+					"name": "summary",
+					"type": "ReactNode",
+					"required": false,
+					"description": "The phase's paragraph: what it does for the whole plan, drawn above its\nitems when unfolded. Plain text, or a node the caller formats (the plan\npage passes the paragraph through markdown; this component imports none)."
+				},
+				{
 					"name": "children",
 					"type": "ReactNode",
 					"required": false,
@@ -2067,7 +2073,7 @@
 				{
 					"name": "closed",
 					"id": "ui-phaserow--closed",
-					"snapshotHash": "04f6cd0c7dc1627b42b386fc40ab7f316437bcc23c15db7951b4a0cffbcb0868",
+					"snapshotHash": "12d1c785806c29afd9b92ef5323ee7515e2aa71e0a1fbdf366c242f130a4bf7f",
 					"content": {
 						"name": [
 							[
@@ -2108,7 +2114,7 @@
 				{
 					"name": "open",
 					"id": "ui-phaserow--open",
-					"snapshotHash": "187726b52f97f40858ee3f2bf82cea0e5d558d678cc969c10f4a3a55b754b001",
+					"snapshotHash": "8ca18aabf41948a3755da4521b8de97374864c205250459d9f2c8b0ec090aeb3",
 					"content": {
 						"name": [
 							[
@@ -2137,18 +2143,26 @@
 								0
 							]
 						],
+						"summary": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
 						"children": [
 							[
 								0,
 								1,
-								0
+								1
 							]
 						]
 					}
 				}
 			],
 			"stylesheet": "components/phase-row.css",
-			"stylesheetHash": "a78715d6a6d6466f96f814234ebb7d785f70d26e7f973e26950f8f9ed606328b"
+			"stylesheetHash": "e996949336c8a9c781faec77fcd2c50bbff776c4700884eb54aca0a9c93b8c26"
 		},
 		{
 			"name": "plan-row",

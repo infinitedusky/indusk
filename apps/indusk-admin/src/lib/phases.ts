@@ -37,6 +37,8 @@ export interface ChecklistItem {
   checked: boolean;
   /** What the impl records under the item, as the package parser read it. */
   note?: string;
+  /** The task's folded Technical detail, wrappers removed, fences whole. */
+  detail?: string;
 }
 
 /** One stage of a phase: its implementation items, then each gate it carries. */
@@ -57,6 +59,8 @@ export interface Phase {
   /** Document position — what orders two sequences. */
   ordinal: number;
   title: string;
+  /** The phase's opening paragraph, when the impl has one. */
+  summary?: string;
   stages: Stage[];
   /** What is happening in this phase now — the lifecycle's verb (`closed` when every stage is done). */
   activity: PhaseActivity;
@@ -140,6 +144,7 @@ export function extractPhases(
           text: i.text,
           checked: i.checked,
           ...(i.note ? { note: i.note } : {}),
+          ...(i.detail ? { detail: i.detail } : {}),
         })),
       ]);
     }
@@ -158,6 +163,7 @@ export function extractPhases(
       number: block.number,
       ordinal: implPhase?.ordinal ?? 0,
       title: block.title,
+      ...(implPhase?.summary ? { summary: implPhase.summary } : {}),
       stages,
       activity: derived?.activity ?? "closed",
       itemCount: stages.reduce((n, s) => n + s.items.length, 0),

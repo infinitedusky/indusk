@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { validateWrite } from "../../__tests__/helpers/hook-runner.js";
+import { summaryImpl } from "../../__tests__/helpers/phase-summary-fixture.js";
 import { appendFindingToPhase } from "./findings.js";
 import { implWithPhase } from "./shape.test-support.js";
 
@@ -106,5 +108,36 @@ describe("A2 — the item lands in the phase that produced the code", () => {
 		});
 
 		expect(() => appendFindingToPhase(body, 9, FINDING)).toThrow(/phase 9/i);
+	});
+});
+
+/**
+ * promise: an-impl-phase-explains-itself — a Shape finding on an impl that
+ * opts in with `phase_summary: required` is written in the shape the save
+ * check holds: a plain sentence on the line, file and rule in its fold.
+ */
+describe("a finding on an opted-in impl passes the save check", () => {
+	it("folds the file and the rule beneath a plain sentence", async () => {
+		const out = appendFindingToPhase(summaryImpl("demo"), { kind: "build", number: 1 }, FINDING);
+		const r = await validateWrite(out);
+
+		expect(r.exitCode, r.stderr).toBe(0);
+		const line = out.split("\n").find((l) => l.startsWith("- [ ] Shape"));
+		expect(line).toBe("- [ ] Shape: Extract the finding renderer into a named pure function");
+		expect(out).toContain("`src/lib/verify/report.ts`");
+		expect(out).toContain("one-component-per-file");
+	});
+
+	it("leaves an impl that has not opted in with the one-line item", () => {
+		const out = appendFindingToPhase(
+			summaryImpl("demo", { optIn: false }),
+			{ kind: "build", number: 1 },
+			FINDING,
+		);
+
+		expect(out).toContain(
+			"- [ ] Shape (`src/lib/verify/report.ts`) — Extract the finding renderer",
+		);
+		expect(out).not.toMatch(/^- \[ \] Shape:/m);
 	});
 });

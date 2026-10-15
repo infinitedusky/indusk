@@ -174,6 +174,12 @@ Each entry is a rule and a pointer; the pointer holds the story.
   on an amendment posts to `plans/[name]/reapprove`. The review's `evidence`
   group is read, not signed off. Guarded by `cockpit-single-definition.test.ts`
   and `plan-parts.test.tsx` (A15). — see `/reference/admin-ui/overview`
+- **A task's Technical detail renders through `components/Markdown.tsx` in
+  `PhaseItems`, never as raw text**: the phase's paragraph and each task's
+  folded detail come from the package parser (`summary`, `detail`); the fold
+  is closed until opened and the detail shows as formatted markdown, code as
+  code. Guarded by `PhaseItems.test.tsx` (A6) and `PhaseRow.test.tsx` (A5). —
+  `promise: technical-detail-opens-on-request`
 - **A decision's card is read again from what the daemon holds after every
   answer**: a started release clears the build's stop and a second accept is
   refused while it runs, and an answer delivered but not recorded is reported

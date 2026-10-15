@@ -132,7 +132,8 @@ pointer; the pointer holds the story.
   writer validates with the reader's predicate (`boundaryRecordProblem`). Every
   way a scope can be wrong is silent, so every fallback over-reports:
   `findPhaseStart` takes the earliest record, untracked files are dated by
-  mtime, `verificationIsGreen` counts nested unchecked items. — see
+  mtime, `verificationIsGreen` counts nested unchecked items — never a box inside a
+  task's `<details>` fold or a fence (`foldedLineMask`). — see
   `/guide/shape`
 - **Shape's craft rules come from enabled extensions and hardcode none**
   (`lib/shape/rules.ts`); the library supplies facts (`changedFilesForPhase`,
@@ -141,7 +142,8 @@ pointer; the pointer holds the story.
   boundary record without `kind` is build by rule.
 - **The cleanup lib throws on non-git roots and refuses workbench roots by
   declaration**; ritual-phase terminality needs ≥1 item and sees nested
-  unchecked items.
+  unchecked items — never a box inside a task's `<details>` fold or a fence
+  (`detail-is-only-read.test.ts`, `promise: hidden-detail-is-only-read`).
 - `phaseOrdinal` reduces to the phase number when a document has no test
   phase — that reduction is the backward-compatibility guarantee. Gate A
   compares `<=`. A validator parsing zero phases refuses. An unterminated

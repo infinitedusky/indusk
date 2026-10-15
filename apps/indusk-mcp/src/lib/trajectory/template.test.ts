@@ -111,7 +111,12 @@ describe("T14: planner skill scaffolds an impl that passes all four validator ru
 	it("filled template passes all four trajectory validation rules", () => {
 		const bodyStart = filled.indexOf("\n---\n", 10);
 		const body = bodyStart === -1 ? filled : filled.slice(bodyStart + 5);
-		const errors = validateTrajectory(body);
+		// The template opts in to phase summaries, which moves each Verification
+		// task's row labels into its fold; the save check reads that opt-in from
+		// the frontmatter, so the validator is called the same way.
+		const frontmatter = bodyStart === -1 ? "" : filled.slice(0, bodyStart);
+		const phaseSummaryRequired = /^phase_summary:\s*required/m.test(frontmatter);
+		const errors = validateTrajectory(body, { phaseSummaryRequired });
 		expect(errors).toEqual([]);
 	});
 });
