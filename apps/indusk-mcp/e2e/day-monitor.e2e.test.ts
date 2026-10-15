@@ -179,7 +179,7 @@ describe("A24 — a broken evaluator is found from telemetry and reopens its own
 		const incident = matter(readFileSync(join(dir, incidents[0]), "utf-8"));
 		expect(incident.data.source).toBe("local");
 		expect(incident.data.status).toBe("open");
-		expect(incident.content).toContain("issue with the selected model");
+		expect(incident.content).toContain(BAD_MODEL);
 
 		const impl = readFileSync(
 			join(scratch.root, ".indusk", "planning", "archive", OWNER, "impl.md"),

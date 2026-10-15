@@ -352,3 +352,4 @@
 {"plan":"main-suite-green","phase":6,"kind":"build","sha":"e680b70432ae80ba238bd469f3e38e9c09d43d41","timestamp":"2026-10-15T11:17:54.991Z"}
 {"plan":"main-suite-green","phase":7,"kind":"build","sha":"10ae39ca597ea2ac036ec273408fbac8fdb4897c","timestamp":"2026-10-15T12:50:07.543Z"}
 {"plan":"template-reload-on-cold-cache","phase":1,"kind":"test","sha":"575bee34ac6639bbb89a234316cebebe025c9b0e","timestamp":"2026-10-15T16:09:40.294Z"}
+{"plan":"template-reload-on-cold-cache","phase":1,"kind":"build","sha":"6138c099040823598677cd2706d4275b77a8d44c","timestamp":"2026-10-15T16:11:46.092Z"}

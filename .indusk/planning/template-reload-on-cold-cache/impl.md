@@ -45,7 +45,7 @@ approved_at: "2026-10-15T16:09:05.019Z"
 | A1 | Every package the browser template imports is bundled for its test page before the page loads, so none is discovered while a test runs | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
 | A2 | The template tests, run three times, each from a deleted Vite cache, pass every time, and Vite never reports that it reloaded a test | Build Phase 1 | Build Phase 1 | passing | live check | promise: a-browser-test-passes-on-a-cold-cache | (recorded in the impl with its result) |
 | A3 | Landing's install step syncs the checkout's dependencies to the lockfile, refusing a lockfile that does not match, before it builds anything | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-installs-after-a-dependency-change | apps/indusk-mcp/src/__tests__/install-local.test.ts |
-| A4 | An evaluator run with a model that does not exist is recorded as a failure naming that model, and the promise status shows the violation, with the Claude Code installed today | Test Phase 1 | Build Phase 1 | written | contract | keeps the day-monitor end-to-end test about the monitor, not about Claude Code's wording | apps/indusk-mcp/e2e/day-monitor.e2e.test.ts |
+| A4 | An evaluator run with a model that does not exist is recorded as a failure naming that model, and the promise status shows the violation, with the Claude Code installed today | Test Phase 1 | Build Phase 1 | passing | contract | keeps the day-monitor end-to-end test about the monitor, not about Claude Code's wording | apps/indusk-mcp/e2e/day-monitor.e2e.test.ts |
 
 ## Checklist
 
@@ -165,10 +165,10 @@ This phase makes the three tests pass. The browser template's test project is to
   </details>
   <details><summary>Note</summary>
 
-  Script edited. The first two parts were run from the worktree root: `pnpm install --frozen-lockfile` exit 0, `pnpm --filter @infinitedusky/indusk-mcp prepublishOnly` exit 0. The last part, `npm install -g ./apps/indusk-mcp`, was not run: it would point this machine's global `indusk` at this worktree, which landing later deletes.
+  Script edited. The first two parts were run from the worktree root: `pnpm install --frozen-lockfile` exit 0, `pnpm --filter @infinitedusky/indusk-mcp prepublishOnly` exit 0. The last part, `npm install -g ./apps/indusk-mcp`, was not run: it would point this machine's global `indusk` at this worktree, which landing later deletes. Observation: `prepublishOnly` also rewrote the tracked `apps/indusk-mcp/admin/next.config.ts` (the admin bundle's generated config); it was reverted with `git checkout`, as it is not this plan's change.
 
   </details>
-- [ ] The end-to-end monitor test checks for the fake model's name rather than Claude Code's wording
+- [x] The end-to-end monitor test checks for the fake model's name rather than Claude Code's wording
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/e2e/day-monitor.e2e.test.ts:162`, `:169` and `:182` (the incident file's content, found in Build Phase 1; the research listed only the first two): replace `toContain("issue with the selected model")` with `toContain("claude-does-not-exist-9")` (the model the test sets), keeping `'"error":true'` at :161; a short comment says the CLI's wording is not this test's subject.
@@ -176,7 +176,7 @@ This phase makes the three tests pass. The browser template's test project is to
   </details>
   <details><summary>Note</summary>
 
-  Left unchecked. Lines 162 and 170 now match the model name (as `BAD_MODEL`, which holds `claude-does-not-exist-9`), but the test still fails at line 182, a third `toContain("issue with the selected model")` on the incident file's content that the item does not name. With line 182 also changed, the e2e run passes (tried and reverted); that edit is beyond this item, so it waits for a decision.
+  Lines 163, 170 and 182 now match the model name (as `BAD_MODEL`, which holds `claude-does-not-exist-9`). Line 182 was a third assertion the research had not listed; the amended item covers it. The day-monitor e2e run passes.
 
   </details>
 - [x] The template tests pass three times from a deleted Vite cache, with no reload
