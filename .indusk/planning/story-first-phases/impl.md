@@ -384,7 +384,7 @@ The save check and the plan page are ready. This phase makes the planner use the
 
 #### Build Phase 3 Context
 
-- [ ] The planner skill is the one place that holds the full shape and its example
+- [x] The planner skill is the one place that holds the full shape and its example
   <details><summary>Technical</summary>
 
   planning: the rule entry above points to `/reference/skills/planner` for the full shape, so the template, not the rules file, holds the example.
