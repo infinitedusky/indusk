@@ -13,7 +13,7 @@ export type Shown =
 	| "broken"
 	| "fixed"
 	| "not seen"
-	| "known violated"
+	| "known broken"
 	| "watched by the tests"
 	| "unreadable"
 	| "watcher blind"
@@ -33,7 +33,7 @@ const WORD: Record<string, Shown> = {
 	fixed: "fixed",
 	green: "holding",
 	unverified: "not seen",
-	amber: "known violated",
+	amber: "known broken",
 	grey: "holding",
 };
 
