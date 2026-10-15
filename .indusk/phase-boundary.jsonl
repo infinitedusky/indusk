@@ -354,3 +354,4 @@
 {"plan":"main-suite-green","phase":5,"kind":"build","sha":"291de85959db10054917f5f102b8e7a87d8dd956","timestamp":"2026-10-15T05:20:25.916Z"}
 {"plan":"main-suite-green","phase":6,"kind":"build","sha":"e680b70432ae80ba238bd469f3e38e9c09d43d41","timestamp":"2026-10-15T11:17:54.991Z"}
 {"plan":"main-suite-green","phase":7,"kind":"build","sha":"10ae39ca597ea2ac036ec273408fbac8fdb4897c","timestamp":"2026-10-15T12:50:07.543Z"}
+{"plan":"decided-prompts-stay-closed","phase":3,"kind":"build","sha":"0709b0bf34e44d533ba98814f3af5aa06f1935e2","timestamp":"2026-10-15T16:03:23.605Z"}

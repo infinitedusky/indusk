@@ -373,11 +373,10 @@ describe("decided-prompts-stay-closed — a decided request is drawn decided, fr
 
 describe("decided-prompts-stay-closed A10 — a refused click leaves the request waiting", () => {
   it("A10 Allow and Deny come back when the reply is refused", async () => {
-    const { rendered, handlers } = panel([init, permission], {
+    const { rendered } = panel([init, permission], {
       onDecide: vi.fn().mockResolvedValue(false),
     });
     await userEvent.click((await button(rendered, "Allow")) as HTMLButtonElement);
-    expect(handlers.onDecide).not.toBe(undefined);
     await expect.poll(async () => await button(rendered, "Allow")).toBeDefined();
     expect(await button(rendered, "Deny")).toBeDefined();
   });
