@@ -580,13 +580,13 @@ A reader who had not seen the build audited the plan and found places where its 
   Save check: on an opted-in impl, a `<details>` opened under a task with no `</details>` before the next column-zero task, gate heading or phase heading is refused, naming the task — like the unterminated fence (`fencedLineMask`). Reader: `foldedLineMask` in `apps/indusk-mcp/src/lib/impl-parser-core.ts` fails open on an unclosed fold, as an unterminated fence masks nothing, so `isRitualPhaseTerminal` (`lib/cleanup/gate.ts`) and `verificationIsGreen` (`lib/shape/shape.ts`) see the tasks after it. Decide whether the parser's `inFold` in `parseChecklistItems` should end at the next column-zero task (it already does) and leave it.
 
   </details>
-- [ ] The tick check counts boxes over the whole file before and after an edit, not over the edit's own text
+- [x] The tick check counts boxes over the whole file before and after an edit, not over the edit's own text
   <details><summary>Technical</summary>
 
   `hooks/check-gates.js`: for an Edit, build the full old content from disk and the full new content (the same way `validate-impl-structure.js` builds `newFullContent`), and count `CHECKED_BOX` / `UNCHECKED_BOX` over those, so a fragment beginning at a folded box's dash is not mistaken for a column-zero line. Today it counts `old_string` / `new_string` (lines 72, 111). Sync `.claude/hooks/`.
 
   </details>
-- [ ] The gated loop reads ticked boxes only from top-level lines, so a box ticked inside a fold makes no checkoff commit
+- [x] The gated loop reads ticked boxes only from top-level lines, so a box ticked inside a fold makes no checkoff commit
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/run/commit-cadence.ts` lines 103–104: `.map((l) => l.trim()).filter((l) => l.startsWith("- [x]"))` reads indented lines; keep only column-zero lines (and skip `foldedLineMask` lines), matching the tick check.
