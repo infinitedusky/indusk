@@ -63,3 +63,5 @@ Periodic pass (move one root `CLAUDE.md` entry down a tier): not done at this cl
 - Files touched: 50; lines +1052 / −97.
 - Trajectory: 16 rows, all `passing`; 2 promises.
 - Release: dusk installs its own build at landing (`pnpm install:local`); nothing is published at this close.
+
+Landed on main at fd08052e, 2026-10-14. Installed with `pnpm install:local` (the landed build, still 1.70.0 — the version moves only at a release); nothing published.
