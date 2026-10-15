@@ -1,7 +1,7 @@
 ---
 title: "Plan titles and stories"
 date: 2026-10-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -374,6 +374,7 @@ Titles and descriptions come from research.md's tables. A description already wr
 - [x] The second expectation's count: no plan that is not archived reads by its bare handle (`node -e` over `readActivePlans` from each project copy, printing every plan whose `title` equals its handle; expected none) and the plans whose title is their handle in words are exactly those listed in `current.md` above
 - [x] A7, live check: on the running admin, open Day's and Dawn's master pages and read each top to bottom: what the master is for, every plan in order with its title, description and stage, the counts matching the nav. Recorded here with the date and what was seen
   - 2026-10-14, Sandy, on an admin (:3941) reading a clone of this branch (the worktree admin reads a plan's own fields from the trunk's copy until the branch lands, so Day's heading there read "Day" with no purpose): Day's page reads "InDusk v4: Day · master plan", its purpose, "17 of 26 released · 2 in draft · 7 queued", then the plans in order, each with its title, its description where one is written, and its stage; clicking a plan opens its page. Dawn's the same. Sandy: "this looks good"
+- [x] Shape (Build Phase 5) — `prepareShapeReview` answered `review` with one file, `apps/docs/src/reference/cli/plans.md`, and `rules.unreadable` empty: the phase changed frontmatter and one docs page, no code; nothing to judge
 
 #### Build Phase 5 Context
 
