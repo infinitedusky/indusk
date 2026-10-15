@@ -312,6 +312,26 @@ describe("decided-prompts-stay-closed A5, A6 — the log records every decision"
 			expect.objectContaining({ requestId: "p2", allow: false, message: "not that", by: "person" }),
 		]);
 	});
+
+	it("A9 a person's answers to a question are recorded on the decision, for a panel connecting later", () => {
+		const r = recording();
+		r.emit({
+			type: "question",
+			requestId: "q1",
+			input: {},
+			questions: [{ question: "Which workflow?", header: "W", options: [{ label: "feature" }] }],
+		} as Parameters<typeof r.emit>[0]);
+		r.m.reply(r.id, { requestId: "q1", answers: { "Which workflow?": "feature" } });
+		const late = r.heard().filter((e) => e.type === "decided");
+		expect(late).toEqual([
+			expect.objectContaining({
+				requestId: "q1",
+				allow: true,
+				by: "person",
+				answers: { "Which workflow?": "feature" },
+			}),
+		]);
+	});
 });
 
 /**
