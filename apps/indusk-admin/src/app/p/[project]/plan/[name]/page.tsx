@@ -88,7 +88,9 @@ export default async function PlanPage({ params }: PlanPageProps) {
   // The one decision the plan waits on, and what it was answered before
   // (plan-cockpit, ADR decision 4). Approve and the review's Accept live on
   // the card while it waits on them, so neither is offered twice.
-  const waiting = plan.archived ? undefined : readWaiting(project, [plan])[0];
+  const waiting = plan.archived
+    ? undefined
+    : (await readWaiting(project, projectPath, [plan]))[0];
 
   // The brief's three parts, read by the package from the checkout the plan is
   // worked in (its worktree, else the project's own), on every request, so a

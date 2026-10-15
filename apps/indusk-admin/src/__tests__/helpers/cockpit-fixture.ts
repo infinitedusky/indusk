@@ -318,15 +318,15 @@ export const SESSIONS: WaitingSession[] = [
 
 /**
  * Plans whose approved brief changed since approval, each waiting on nothing
- * else (plan-stories A15). The decisions mock ignores it until Build Phase 2
- * teaches `planWaiting` amendments; Build Phase 2 passes it and adds the plan
- * to `WAITING`.
+ * else (plan-stories A15). The decisions mock passes it to `planWaiting`,
+ * so the plan waits on the amendment at its Brief step.
  */
 export const AMENDED = ["skipped-ritual"] as const;
 
 /** Plans that wait on the person, in nav order, with the step each waits at. */
 export const WAITING = [
   ["at-review", "Review"],
+  ["skipped-ritual", "Brief"],
   ["asking-plan", "Brief"],
   ["awaiting-approval", "Impl"],
 ] as const;
@@ -887,8 +887,12 @@ export const PROOFS: Record<string, Proof> = {
 export function decisionsReaderMock() {
   return {
     __esModule: true,
-    readWaiting: (_project: string, plans: Plan[]) =>
-      planWaiting({ sessions: SESSIONS, plans: plans.map(snapshotOf) }),
+    readWaiting: async (_project: string, _path: string, plans: Plan[]) =>
+      planWaiting({
+        sessions: SESSIONS,
+        plans: plans.map(snapshotOf),
+        amendments: AMENDED.map((plan) => ({ plan, count: 1 })),
+      }),
     readPlanHistory: (_path: string, plan: string) => HISTORY[plan] ?? [],
   };
 }

@@ -77,7 +77,7 @@ vi.mock("@/lib/trust-reader", () => ({ projectTrusted: () => true }));
 // the reader reaches the session manager and the history file; nothing waits here.
 vi.mock("@/lib/decisions-reader", () => ({
   __esModule: true,
-  readWaiting: () => [],
+  readWaiting: async () => [],
   readPlanHistory: () => [],
 }));
 

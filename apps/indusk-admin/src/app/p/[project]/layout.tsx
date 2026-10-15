@@ -113,7 +113,7 @@ export default async function PerProjectLayout({
 
   // Needs you: each plan waiting on the person, with the step it waits at —
   // the package's `planWaiting`, over what the admin holds (ADR decision 2).
-  const waiting = readWaiting(project, active);
+  const waiting = await readWaiting(project, projectPath, active);
 
   const summary = `${active.length} ${active.length === 1 ? "plan" : "plans"}`;
 
