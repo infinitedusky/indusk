@@ -1,7 +1,7 @@
 ---
 title: "Decided prompts stay closed"
 date: 2026-10-14
-status: in-progress
+status: completed
 workflow: bugfix
 trajectory: required
 test_phases: required
