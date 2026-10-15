@@ -9,9 +9,9 @@ test_levels: required
 test_purpose: required
 rationale: required
 gate_policy: ask
-approved_brief: "458b34365821f6437a177f2be6a459bb881dfac26d9b76baeead937d83cade51"
+approved_brief: "06d03911dc67303e421b57bc7e8447d6b304b0ced43e88bebfaec527ec55de00"
 approved_by: "Sandy Corsillo"
-approved_at: "2026-10-14T23:04:11.069Z"
+approved_at: "2026-10-15T18:07:23.919Z"
 ---
 
 # Decided prompts stay closed
