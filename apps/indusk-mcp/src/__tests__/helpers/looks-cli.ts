@@ -1,6 +1,8 @@
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { ApprovalEntry } from "../../lib/looks/approvals.js";
+import { readApp } from "../../lib/looks/mockups.js";
 import { runCli } from "./cli.js";
 
 /**
@@ -27,6 +29,52 @@ export function app(fixture = "looks-app"): string {
 	mkdirSync(join(root, ".indusk"), { recursive: true });
 	writeFileSync(join(root, ".indusk/config.json"), JSON.stringify({ mode: "local" }));
 	return root;
+}
+
+/**
+ * Add a screen `<screen>.default` to the fixture app's `demo` mockups and
+ * approve it: the screen is pushed into `screens.json`, its markup is
+ * `home.empty.html` with the card's `<main>` replaced by `markup`, and each of
+ * `approvals` is pushed to `approved.json` bound to the mockup's hashes. A
+ * caller gives only what differs between approvals (`plan`, `at`, optional
+ * `components`); the hashes are the helper's.
+ */
+export async function addApprovedMockup(
+	root: string,
+	opts: {
+		screen: string;
+		markup: string;
+		approvals: Array<
+			Pick<ApprovalEntry, "at"> & Partial<Pick<ApprovalEntry, "plan" | "components">>
+		>;
+	},
+): Promise<void> {
+	const mockups = join(root, MOCKUPS);
+	const screens = JSON.parse(readFileSync(join(mockups, "screens.json"), "utf-8"));
+	screens.screens.push({ name: opts.screen, states: ["default"] });
+	writeFileSync(join(mockups, "screens.json"), JSON.stringify(screens));
+	const html = readFileSync(join(mockups, "screens/home.empty.html"), "utf-8").replace(
+		'<main class="card" data-component="card">Nothing here yet.</main>',
+		opts.markup,
+	);
+	writeFileSync(join(mockups, `screens/${opts.screen}.default.html`), html);
+
+	const name = `${opts.screen}.default`;
+	const looks = await readApp(root, "demo");
+	const mockup = looks.mockups.find((m) => m.name === name);
+	if (!mockup) throw new Error(`the fixture's ${name} mockup was not read`);
+	const record = JSON.parse(readFileSync(join(mockups, "approved.json"), "utf-8"));
+	for (const a of opts.approvals) {
+		record.approvals.push({
+			mockup: name,
+			mockupHash: mockup.hash,
+			foundationHash: looks.foundation.hash,
+			declarationsHash: looks.declarationsHash,
+			by: "sandy",
+			...a,
+		});
+	}
+	writeFileSync(join(mockups, "approved.json"), JSON.stringify(record));
 }
 
 export function run(root: string, args: string[]): { code: number; out: string } {

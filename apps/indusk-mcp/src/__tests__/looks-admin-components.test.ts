@@ -1,11 +1,15 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { readApprovals } from "../lib/looks/approvals.js";
+import { heldComponentNames } from "../lib/looks/landed.js";
 import { readApp } from "../lib/looks/mockups.js";
 import { REPO_ROOT, runCli } from "./helpers/cli.js";
+import { addApprovedMockup, app, removeApps, run } from "./helpers/looks-cli.js";
 
 /**
  * promise: a-component-has-one-implementation — storybook-components A2.
+ * promise: the-everyday-suite-passes-on-main — main-suite-green A8 (second describe).
  *
  * Every component the admin's approved mockups name has an implementation in
  * the admin; one with none is reported by name. The names are read from the
@@ -30,15 +34,10 @@ function walk(dir: string): string[] {
 	});
 }
 
-/** The component names the admin's mockups name, composed, sorted. */
+/** The component names the admin's mockups of landed plans name, composed, sorted. */
 async function mockupComponents(): Promise<string[]> {
-	const names = new Set<string>();
-	for (const mockup of (await readApp(REPO_ROOT, "admin")).mockups) {
-		for (const m of mockup.html.matchAll(/\bdata-component\s*=\s*["']([^"']+)["']/g)) {
-			names.add(m[1]);
-		}
-	}
-	return [...names].sort();
+	const admin = await readApp(REPO_ROOT, "admin");
+	return [...heldComponentNames(REPO_ROOT, admin.mockups, readApprovals(admin))].sort();
 }
 
 /** The components the admin's source implements: a marker in a file that is neither a test nor a story. */
@@ -77,5 +76,47 @@ describe("the admin implements every component its mockups name", () => {
 			`coverage must report each component with no implementation by name; ${missing.length} have none: ${missing.join(", ")}`,
 		).toEqual(missing);
 		expect(missing, "components the mockups name with no implementation in the admin").toEqual([]);
+	});
+});
+
+/**
+ * main-suite-green A8 — the check holds only looks whose plan has landed.
+ *
+ * Approval merges a plan's mockups to main before any code, so a component
+ * only an unlanded plan's mockup names cannot exist yet. Through the CLI
+ * (`indusk looks coverage`), the way the check reads it: a fixture app whose
+ * one approved mockup names `ghost-row`, the approval recorded under a plan
+ * that is either active or archived under `.indusk/planning/`.
+ */
+describe("A8 — a component an unlanded plan's mockup names is not unimplemented", () => {
+	afterEach(removeApps);
+
+	const GHOST = "unimplemented component: ghost-row";
+
+	/** The fixture app plus an approved mockup naming `ghost-row`, approved in `plan`, whose folder is at `planFolder`. */
+	async function appWithGhost(planFolder: string): Promise<string> {
+		const root = app();
+		await addApprovedMockup(root, {
+			screen: "ghost",
+			markup: '<main class="card" data-component="ghost-row">A ghost.</main>',
+			approvals: [{ at: "2026-10-14T09:00:00.000Z", plan: "ghost-plan" }],
+		});
+
+		const brief = join(root, planFolder, "brief.md");
+		mkdirSync(dirname(brief), { recursive: true });
+		writeFileSync(brief, "---\ntitle: ghost-plan\n---\n");
+		return root;
+	}
+
+	it("is not reported while the plan that approved it is active", async () => {
+		const root = await appWithGhost(".indusk/planning/ghost-plan");
+		const { out } = run(root, ["coverage", "demo"]);
+		expect(out).not.toContain(GHOST);
+	});
+
+	it("is reported once the plan is archived and the component is still missing", async () => {
+		const root = await appWithGhost(".indusk/planning/archive/ghost-plan");
+		const { out } = run(root, ["coverage", "demo"]);
+		expect(out).toContain(GHOST);
 	});
 });

@@ -347,6 +347,17 @@ async function readContentMaps(file: string): Promise<Map<string, ContentMap>> {
 	return maps;
 }
 
+/**
+ * The one reader of a story name's component. A story is named
+ * `<component>.<state>`; the component is the name before the first dot, so
+ * `plan-row.open.wide` belongs to `plan-row`. A new reader of a story name
+ * takes this rather than splitting the name again
+ * (promise: a-component-has-one-implementation).
+ */
+export function componentOfStory(name: string): string {
+	return name.split(".")[0] as string;
+}
+
 /** The snapshots in `<app>/components/`, sorted by name, each with its component's stylesheet hash; none when the app has no stories. */
 async function readStories(
 	dir: string,
@@ -366,12 +377,12 @@ async function readStories(
 		const bytes = await readFile(join(componentsDir, fileName));
 		stories.push({
 			name,
-			component: name.slice(0, dot),
+			component: componentOfStory(name),
 			state: name.slice(dot + 1),
 			file: join(rel, "components", fileName),
 			html: bytes.toString("utf-8"),
 			hash: snapshotHash(bytes),
-			stylesheetHash: sheetOf.get(name.slice(0, dot)) ?? null,
+			stylesheetHash: sheetOf.get(componentOfStory(name)) ?? null,
 			...(contentOf.has(name) ? { content: contentOf.get(name) } : {}),
 		});
 	}

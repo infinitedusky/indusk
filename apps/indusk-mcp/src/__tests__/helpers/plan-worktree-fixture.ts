@@ -86,6 +86,9 @@ export function planWorktreeProject(prefix = "plan-wt"): PlanWorktreeProject {
 		"---\ntitle: demo\nstatus: accepted\n---\n\n# demo\n",
 	);
 	writeFileSync(join(trunk, ".indusk", "planning", PLAN, "impl.md"), IMPL);
+	// A real project ignores `.mcp.json` (init adds it to .gitignore); a worktree
+	// writes one, so without this the fixture's status is never clean.
+	writeFileSync(join(trunk, ".gitignore"), ".mcp.json\n");
 	git(trunk, ["add", "-A"]);
 	git(trunk, ["commit", "-q", "-m", "plan demo"]);
 

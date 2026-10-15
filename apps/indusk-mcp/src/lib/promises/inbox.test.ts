@@ -13,6 +13,8 @@ import {
 import { appendInbox, undelivered } from "./inbox.js";
 import { recordBreaks } from "./record.js";
 
+// promise: the-everyday-suite-passes-on-main
+
 /**
  * incident-recording A17 — promise: a-break-reaches-the-working-agent.
  *
@@ -36,11 +38,20 @@ afterEach(() => {
 
 const deps = (traces: string[]) => ({ reads: answering(traces), mark: () => {}, home });
 
+// The fixture's violation is pinned at 2026-10-08T20:00Z; recordBreaks reminds an
+// incident over a day old at once, so the first two cases pass `now` an hour after it.
+// lesson: code-that-decides-takes-its-clock-and-its-reads
+const NOW = new Date("2026-10-08T21:00:00Z");
+
 describe("A17 — a recorded break lands in the project's inbox", () => {
 	it("an opened incident adds one entry naming the promise, the incident, the owner and its phase", async () => {
 		const fx = recordingProject();
 		cleanups.push(fx.cleanup);
-		const r = await recordBreaks(fx.root, { by: "admin", source: "deployed" }, deps([TRACE]));
+		const r = await recordBreaks(
+			fx.root,
+			{ by: "admin", source: "deployed", now: NOW },
+			deps([TRACE]),
+		);
 		const id = r.opened[0]?.id;
 		expect(jsonLines(home, "inbox.jsonl")).toEqual([
 			expect.objectContaining({
@@ -58,13 +69,36 @@ describe("A17 — a recorded break lands in the project's inbox", () => {
 	it("an extended incident adds another; a pass that changes nothing adds none", async () => {
 		const fx = recordingProject();
 		cleanups.push(fx.cleanup);
-		await recordBreaks(fx.root, { by: "admin", source: "deployed" }, deps([TRACE]));
-		await recordBreaks(fx.root, { by: "admin", source: "deployed" }, deps([TRACE, SECOND]));
-		await recordBreaks(fx.root, { by: "admin", source: "deployed" }, deps([TRACE, SECOND]));
+		await recordBreaks(fx.root, { by: "admin", source: "deployed", now: NOW }, deps([TRACE]));
+		await recordBreaks(
+			fx.root,
+			{ by: "admin", source: "deployed", now: NOW },
+			deps([TRACE, SECOND]),
+		);
+		await recordBreaks(
+			fx.root,
+			{ by: "admin", source: "deployed", now: NOW },
+			deps([TRACE, SECOND]),
+		);
 		const entries = jsonLines<{ id: string; incident: string }>(home, "inbox.jsonl");
 		expect(entries).toHaveLength(2);
 		expect(entries[0].incident).toBe(entries[1].incident);
 		expect(new Set(entries.map((e) => e.id)).size).toBe(2);
+	});
+
+	// Regression guard for main-suite-green A6 (promise: the-everyday-suite-passes-on-main):
+	// the two cases above run on the real clock and their fixture's violation is pinned
+	// to 2026-10-08, so they are red from a day after it. This one pins `now` and passes
+	// today: an incident over a day old is reminded (incident-recording ADR D7).
+	// lesson: code-that-decides-takes-its-clock-and-its-reads
+	it("an incident over a day old gets a reminder after its break", async () => {
+		const fx = recordingProject();
+		cleanups.push(fx.cleanup);
+		const now = new Date("2026-10-10T20:00:00Z");
+		await recordBreaks(fx.root, { by: "admin", source: "deployed", now }, deps([TRACE]));
+		const entries = jsonLines<{ kind: string; incident: string }>(home, "inbox.jsonl");
+		expect(entries.map((e) => e.kind)).toEqual(["break", "reminder"]);
+		expect(entries[1].incident).toBe(entries[0].incident);
 	});
 });
 

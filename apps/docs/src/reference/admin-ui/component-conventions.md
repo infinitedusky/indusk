@@ -24,7 +24,7 @@ The string→variant maps themselves are shared, not per-component: `src/compone
 
 ## The components the mockups name
 
-Every component an approved mockup names is implemented **once**, in one file whose root element carries its `data-component="<name>"` marker, with **a story per state** the mockups show (`*.stories.tsx` beside it). Nineteen exist, each presentational — data arrives as props, nothing is read inside — so a screen composes them and a story renders them the same way.
+Every component an approved mockup of a **landed** plan names is implemented **once** (approval merges a plan's mockups before its code, so a plan still active under `.indusk/planning/` is not held to it until it is archived); the exemption is per component, so a re-approval in flight by an unlanded plan keeps holding the components the landed approval bound and exempts only what it adds — when the landed approval recorded its components; when it recorded none, there is no record of what landed and the mockup is held in full — in one file whose root element carries its `data-component="<name>"` marker, with **a story per state** the mockups show (`*.stories.tsx` beside it). Nineteen exist, each presentational — data arrives as props, nothing is read inside — so a screen composes them and a story renders them the same way.
 
 | Component | File | Stories (states) |
 |-----------|------|------------------|
@@ -124,6 +124,8 @@ When you find yourself writing the same JSX/className combination twice anywhere
 The audit lives at `apps/indusk-admin/src/__tests__/component-reuse-audit.test.ts` (Phase 6 of the indusk-admin-ui plan). It walks `src/` for `.tsx` files and flags inline JSX patterns matching `<button className=`, `<table className=`, etc., where a corresponding primitive exists.
 
 Run via `pnpm test` from `apps/indusk-admin/`. A failing audit means a primitive should be introduced (or an existing one used) at the flagged location.
+
+**Import a route at the top of its test file.** A node test that calls an `app/api` route imports it (and the package module it draws on) with a static `import` at the top of the file, after the `vi.mock` calls, which vitest hoists above it. An `await import(...)` inside an `it` makes the first test pay for the cold load of the package's whole module graph inside its 5 s budget; alone that is about 0.2 s, but in a root `pnpm test`, where every package's tests contend for the machine, it timed out (`new-project-accept`, `new-project-routes`, `new-project-parent`). A static import is charged to the file's import, which has no per-test timeout.
 
 The audit is intentionally simple at v1 — grep-based, not AST-based. v2 may add AST-aware detection if the simple version produces false positives or misses subtle drift. Keep the simple version until it bites.
 

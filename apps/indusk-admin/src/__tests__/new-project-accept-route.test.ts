@@ -3,8 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { POST } from "@/app/api/new-projects/[id]/accept/route";
 
 // promise: a-new-project-is-made-by-the-agent
+// promise: the-everyday-suite-passes-on-main
 
 /**
  * new-project-flow A5, the route half: accepting a proposal answers as the
@@ -64,7 +66,6 @@ afterEach(() => {
 });
 
 const accept = async (id: string) => {
-  const { POST } = await import("@/app/api/new-projects/[id]/accept/route");
   return POST(
     new NextRequest(`http://127.0.0.1:3996/api/new-projects/${id}/accept`, {
       method: "POST",

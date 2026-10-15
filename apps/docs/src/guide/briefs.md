@@ -172,7 +172,9 @@ The agent draws and proposes a look; only a person approves one.
 ### The check
 
 An app's interface is the `sources` its `.indusk/mockups/<app>/screens.json`
-declares. Two moments hold a plan to its brief:
+declares. A test file under the `sources` (`*.test.*`, `*.spec.*`, or under
+`__tests__/`) is not interface, since a test changes no look; a story file is,
+since it renders an approved snapshot. Two moments hold a plan to its brief:
 
 - **At approval**, `indusk plans approve` reads the impl's *Files Affected*. A
   path under an app's `sources`, with no look listed and no reason given, is

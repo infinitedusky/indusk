@@ -1,11 +1,17 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import {
+  createProjectDraft,
+  findProjectDraft,
+} from "@infinitedusky/indusk-mcp/new-project";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { POST } from "@/app/api/new-projects/[id]/accept/route";
 
 // promise: a-session-can-be-stopped
 // promise: a-new-project-publishes-nothing-unasked
+// promise: the-everyday-suite-passes-on-main
 
 /**
  * new-project-flow A30: creating a project ends its conversation's agent. The
@@ -74,15 +80,11 @@ const request = () =>
 
 describe("A30 — creating a project ends its conversation's agent", () => {
   it("A30 stops the draft's running session before creation, leaving the slot free", async () => {
-    const { createProjectDraft } = await import(
-      "@infinitedusky/indusk-mcp/new-project"
-    );
     const draft = createProjectDraft(home, {
       message: "A parental control system",
     });
     running = { id: "s-9", plan: `new-project:${draft.id}` };
 
-    const { POST } = await import("@/app/api/new-projects/[id]/accept/route");
     const res = await POST(request(), {
       params: Promise.resolve({ id: draft.id }),
     });
@@ -102,10 +104,6 @@ describe("A30 — creating a project ends its conversation's agent", () => {
  */
 describe("A38 — creating uses the proposal the person saved, not what the agent writes after", () => {
   it("A38 overwrites the agent's late rewrite with the proposal the page sent", async () => {
-    const { createProjectDraft, findProjectDraft } = await import(
-      "@infinitedusky/indusk-mcp/new-project"
-    );
-    const { writeFileSync, readFileSync } = await import("node:fs");
     const draft = createProjectDraft(home, { message: "A parental control" });
     const file = join(
       findProjectDraft(home, draft.id)?.dir as string,
@@ -129,7 +127,6 @@ describe("A38 — creating uses the proposal the person saved, not what the agen
       return stopping(...ids);
     };
 
-    const { POST } = await import("@/app/api/new-projects/[id]/accept/route");
     const res = await POST(
       new NextRequest("http://127.0.0.1:3996/api/new-projects/x/accept", {
         method: "POST",

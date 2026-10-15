@@ -1412,7 +1412,7 @@ promisesCmd
 	.option("--impl-stdin", "judge the impl given on stdin in place of the one on disk")
 	.action(async function (this: Command, plan: string | undefined) {
 		const { promisesContract } = await import("./commands/promises.js");
-		promisesContract(rootOrExit(), plan, this.opts());
+		await promisesContract(rootOrExit(), plan, this.opts());
 	});
 
 program.parse();

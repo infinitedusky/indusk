@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { POST } from "@/app/api/new-projects/parent/route";
 
 // promise: a-new-project-is-written-only-under-its-parent
 
@@ -31,7 +32,6 @@ afterEach(() => {
 });
 
 const post = async (body: unknown) => {
-  const { POST } = await import("@/app/api/new-projects/parent/route");
   return POST(
     new NextRequest("http://127.0.0.1:3996/api/new-projects/parent", {
       method: "POST",
