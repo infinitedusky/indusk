@@ -293,7 +293,7 @@ The test that keeps the browser template's packages bundled before its page load
 
 A fresh reader found three gaps after the build. The retrospective skill, which is what an agent follows when it lands a plan, still describes the old install step, so it neither says that dependencies are synced first nor what to do when that sync refuses a lockfile that does not match. And the test that keeps the browser template's packages bundled before its page loads treats an import of part of a package as an import of the whole package, which Vite does not. Once this phase closes, the landing agent reads the sync and its recovery in the skill it follows, and the guard turns red on an unlisted subpath import.
 
-- [ ] The landing instructions in the retrospective skill say that the install step first brings dependencies to the lockfile
+- [x] The landing instructions in the retrospective skill say that the install step first brings dependencies to the lockfile
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/retrospective.md` Step 10 item 7 (around :347): `pnpm install:local` now runs `pnpm install --frozen-lockfile` before it builds, so a merge that changed the lockfile installs without a hand-run `pnpm install`. Mirror the docs page's wording (`apps/docs/src/reference/skills/retrospective.md:247`). Resync `.claude/skills/retrospective/SKILL.md` in this phase and run `skill-sync-parity.test.ts` (apps/indusk-mcp/CLAUDE.md, skills rule). Audit finding: `audit.md`, "What else would have to change".
