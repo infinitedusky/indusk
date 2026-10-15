@@ -123,6 +123,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 - [x] A3–A6 and A8 go green (`pnpm exec vitest run src/__tests__/always-on-cleanup.test.ts src/__tests__/plan-worktrees-cli.test.ts src/__tests__/registry-leak-scan.test.ts src/lib/promises/inbox.test.ts src/__tests__/looks-admin-components.test.ts`, from `apps/indusk-mcp`); `indusk promises contract main-suite-green` passes
   - Note, 2026-10-14: the five files 22/22 green; `vitest related` (landed.ts, coverage.ts, plan-worktree-fixture.ts) 30 files / 179 tests; `tsc --noEmit` and `biome check` clean; `indusk promises change` output: "a-component-has-one-implementation changed by main-suite-green; its History keeps the sentence it replaced"; `promises check` 146 promises, 0 known-violated; `promises contract main-suite-green` exit 0.
+- [x] Shape — reviewed the files this phase changed (`lib/looks/landed.ts` and its test, `coverage.ts`, the four stale tests, the fixture) against the enabled extensions' craft rules, `rules.unreadable` empty; nothing to change: `landed.ts` is two named functions with one reason to change and a seam the test reaches.
 
 #### Build Phase 2 Context
 
