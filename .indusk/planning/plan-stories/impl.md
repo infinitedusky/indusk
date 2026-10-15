@@ -1,7 +1,7 @@
 ---
 title: "Plan titles and stories"
 date: 2026-10-14
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
