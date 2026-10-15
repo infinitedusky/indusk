@@ -145,8 +145,8 @@ Every request a session makes is recorded in its log together with how it was de
 
 **Goal**: verify whether the attested state holds against two failure modes found by reading the code. (1) The `decided` event a person's answer records carries only `allow: true` (`manager.ts` `reply` → `decidedBy(…, { allow: true })`), and `QuestionView` keeps the picks in component state (`chosen`), so after a reload an answered question renders every option disabled, none selected, and no outcome line: it looks like an unanswered question, not "done with its outcome" as `a-decided-request-stays-decided` promises. (2) `SessionPanel` and `ConversationThread` still add the request to their local `answered` set on click, and `SessionConnector.post` only sets `problem` when the reply route refuses (409) or the request fails; the set is never undone, so the request is still waiting in the manager while the panel shows neither buttons nor an outcome until a reload.
 
-- [ ] `session/start.ts`: the `decided` event carries `answers?: Record<string, string>` for a question a person answered
-- [ ] `session/manager.ts` `reply`: a reply with `answers` records `decided` with those answers
+- [x] `session/start.ts`: the `decided` event carries `answers?: Record<string, string>` for a question a person answered
+- [x] `session/manager.ts` `reply`: a reply with `answers` records `decided` with those answers
 - [ ] `SessionPanel.tsx` `QuestionView`: a question with an allowing decision shows "Answered — {each question: answer}" from the decision, in place of the Answer button (options stay disabled)
 - [ ] `SessionPanel.tsx` + `SessionConnector.tsx`: `onAnswer`/`onDecide` resolve to whether the reply was accepted; on a refusal the panel removes the request from its local `answered` set, so its buttons come back beside the shown problem
 - [ ] `ConversationThread.tsx` + `NewProjectConversation.tsx` (`session.answer`/`session.decide`): the same — a refused reply reopens the request in the thread

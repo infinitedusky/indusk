@@ -31,7 +31,15 @@ export type StartedEvent =
 	/** What the person said, in their own words, through the manager's `say`. */
 	| { type: "you"; text: string }
 	/** How a request was decided, recorded after its decision: by the session's own rule or by a person. */
-	| { type: "decided"; requestId: string; allow: boolean; message?: string; by: "rule" | "person" }
+	| {
+			type: "decided";
+			requestId: string;
+			allow: boolean;
+			message?: string;
+			/** What the person answered a question, question text → label: the record a reload shows. */
+			answers?: Record<string, string>;
+			by: "rule" | "person";
+	  }
 	| { type: "exit"; code: number | null; stderr: string };
 
 export interface SessionOptions {

@@ -74,11 +74,17 @@ interface Held {
 /** The `decided` event for a request, from the decision made on it. */
 function decidedBy(
 	requestId: string,
-	decision: { allow: true } | { allow: false; message: string },
+	decision: { allow: true; answers?: Record<string, string> } | { allow: false; message: string },
 	by: "rule" | "person",
 ): StartedEvent {
 	return decision.allow
-		? { type: "decided", requestId, allow: true, by }
+		? {
+				type: "decided",
+				requestId,
+				allow: true,
+				...(decision.answers ? { answers: decision.answers } : {}),
+				by,
+			}
 		: { type: "decided", requestId, allow: false, message: decision.message, by };
 }
 
@@ -329,7 +335,11 @@ export class SessionManager {
 		this.record(
 			h,
 			h.opts,
-			decidedBy(reply.requestId, "answers" in reply ? { allow: true } : reply, by),
+			decidedBy(
+				reply.requestId,
+				"answers" in reply ? { allow: true, answers: reply.answers } : reply,
+				by,
+			),
 		);
 	}
 
