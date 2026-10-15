@@ -2,11 +2,22 @@
 name: an-impl-phase-explains-itself
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: planning
 owner: story-first-phases
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/hooks/_phase-summary.js
+  - apps/indusk-mcp/hooks/validate-impl-structure.js
+  - apps/indusk-mcp/src/lib/promises/reopen.ts
+  - apps/indusk-mcp/src/lib/shape/findings.test.ts
+  - apps/indusk-mcp/src/lib/shape/shape.test.ts
+  - apps/indusk-mcp/src/lib/trajectory/validator.test.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/phase-summary-rule.test.ts
+  - apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts
+  - apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts
+  - apps/indusk-mcp/src/__tests__/phase-summary-module.test.ts
+  - apps/indusk-mcp/src/lib/promises/reopen-phase-summary.test.ts
 incidents: []
 ---
 
@@ -14,3 +25,4 @@ Every phase of a new impl opens with a plain summary saying what it does for the
 
 ## History
 - 2026-10-15 — declared (story-first-phases), from its planning conversation.
+- 2026-10-15 — enforced, confirmed for story-first-phases: proven by row A1, row A2, row A3, row A4, row A14, row A15, row A16, row A18, row A19, row A21, row A22, row A26.
