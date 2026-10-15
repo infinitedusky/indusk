@@ -67,6 +67,8 @@ approved_at: "2026-10-15T02:24:53.058Z"
 - [x] Add a second case to A8's file: a fixture app whose approved mockup names `ghost-row`, approved under a plan folder that is active (not archived) — not reported; the same approval under an archived plan — reported. RED today on the first half
 - [x] Add A6's second case in `inbox.test.ts`: `now` two days after the violation — a `reminder` entry follows the `break`. Passes today (regression guard)
 - [x] Add the token `// promise: the-everyday-suite-passes-on-main` to each file A2–A8 name; run A2–A8 and confirm each fails on its own assertion (the messages in `research.md`), or for A7 note that it passes alone and fails only in the root run
+- [x] Shape (`apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts`) — reviewed, left as-is: appWithGhost builds one fixture (a mockup, its approval, its plan folder) for two cases that differ only in the folder; splitting it would name steps used once
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Regression Guards
 
@@ -80,7 +82,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 #### Test Phase 1 Context
 
-- [ ] guard: every file A2–A8 name carries `promise: the-everyday-suite-passes-on-main`
+- [x] guard: every file A2–A8 name carries `promise: the-everyday-suite-passes-on-main`
 
 ### Build Phase 1: One contract answer, and the corpus
 
