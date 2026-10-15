@@ -347,6 +347,11 @@ async function readContentMaps(file: string): Promise<Map<string, ContentMap>> {
 	return maps;
 }
 
+/** Stub: the one reader of a story name's component (Build Phase 5, A11). */
+export function componentOfStory(_name: string): string {
+	return "";
+}
+
 /** The snapshots in `<app>/components/`, sorted by name, each with its component's stylesheet hash; none when the app has no stories. */
 async function readStories(
 	dir: string,

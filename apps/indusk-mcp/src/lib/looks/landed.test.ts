@@ -6,7 +6,7 @@ import { app, MOCKUPS, removeApps } from "../../__tests__/helpers/looks-cli.js";
 import { readApprovals } from "./approvals.js";
 import { coverageOf } from "./coverage.js";
 import { planHasLanded } from "./landed.js";
-import { readApp } from "./mockups.js";
+import { componentOfStory, readApp } from "./mockups.js";
 
 // promise: a-component-has-one-implementation
 // promise: the-everyday-suite-passes-on-main
@@ -76,5 +76,23 @@ describe("A10 — a re-approval in flight keeps holding the components a landed 
 		const coverage = await coverageOf(root, looks, readApprovals(looks));
 		expect(coverage.unimplemented).toContain("plan-row");
 		expect(coverage.unimplemented).not.toContain("ghost-row");
+	});
+});
+
+describe("A11 — a story name's component is read by one rule", () => {
+	it("is the name before the first dot, however many dots follow", () => {
+		expect(componentOfStory("plan-row.open")).toBe("plan-row");
+		expect(componentOfStory("plan-row.open.wide")).toBe("plan-row");
+	});
+
+	it("is the component the story reader reports", async () => {
+		const root = app();
+		const components = join(root, MOCKUPS, "components");
+		mkdirSync(components, { recursive: true });
+		writeFileSync(join(components, "plan-row.open.html"), "<div></div>");
+		writeFileSync(join(components, "plan-row.open.wide.html"), "<div></div>");
+		const looks = await readApp(root, "demo");
+		expect(looks.stories.map((s) => s.name)).toEqual(["plan-row.open", "plan-row.open.wide"]);
+		for (const story of looks.stories) expect(story.component).toBe(componentOfStory(story.name));
 	});
 });
