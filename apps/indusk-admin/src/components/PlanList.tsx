@@ -1,5 +1,8 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
-import type { PlanDates } from "@infinitedusky/indusk-mcp/promises/display";
+import {
+  type PlanDates,
+  planTitle,
+} from "@infinitedusky/indusk-mcp/promises/display";
 import { NavPlanRow } from "@/components/cockpit/NavItems";
 import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
 import { HoldingBadge } from "@/components/HoldingBadge";
@@ -108,6 +111,7 @@ export function PlanList({
           red={red}
           waiting={waiting}
           isReleased={isReleased}
+          declaredTitles={grouping?.declaredTitles}
         />
       ))}
 
@@ -207,6 +211,7 @@ function PlanGroupSection({
   red,
   waiting,
   isReleased,
+  declaredTitles,
   number,
 }: {
   group: PlanGroup;
@@ -214,6 +219,7 @@ function PlanGroupSection({
   red?: Set<string>;
   waiting?: Record<string, string>;
   isReleased: (plan: string) => boolean;
+  declaredTitles?: PlanDeclarations["declaredTitles"];
   number?: number;
 }) {
   const name = group.parent.name;
@@ -222,7 +228,7 @@ function PlanGroupSection({
       data-testid={`plan-group-${name}`}
       data-parent={name}
       data-depth={group.depth}
-      name={name}
+      name={group.parent.title}
       number={number}
       href={`${prefix}${name}`}
       linkProps={{ "data-plan-name": name }}
@@ -256,11 +262,18 @@ function PlanGroupSection({
             red={red}
             waiting={waiting}
             isReleased={isReleased}
+            declaredTitles={declaredTitles}
             number={entry.number}
           />
         ) : (
           <div key={entry.name} data-testid={`plan-placeholder-${entry.name}`}>
-            <PlaceholderRow name={entry.name} number={entry.number} />
+            <PlaceholderRow
+              title={
+                declaredTitles?.[name]?.[entry.name]?.title ??
+                planTitle(undefined, entry.name)
+              }
+              number={entry.number}
+            />
           </div>
         ),
       )}
@@ -269,14 +282,14 @@ function PlanGroupSection({
 }
 
 /** A declared plan with no folder yet: a row with no page behind it, its stage "Queued". */
-function PlaceholderRow({ name, number }: { name: string; number: number }) {
+function PlaceholderRow({ title, number }: { title: string; number: number }) {
   return (
     <PlanRow
       disabled
       queued
-      initials={initialsOf(name)}
+      initials={initialsOf(title)}
       state="idle"
-      name={name}
+      name={title}
       number={<PlanNumber number={number} />}
       stage="Queued"
       title="Declared in the parent's master.md — not created yet"
@@ -329,9 +342,9 @@ function PlanItem({
       <NavPlanRow
         href={`${prefix}${plan.name}`}
         data-plan-name={plan.name}
-        initials={initialsOf(plan.name)}
+        initials={initialsOf(plan.title)}
         state={step === undefined ? mark.state : "needs"}
-        name={plan.name}
+        name={plan.title}
         number={number === undefined ? "" : <PlanNumber number={number} />}
         stage={
           <>
