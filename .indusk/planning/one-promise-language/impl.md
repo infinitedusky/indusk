@@ -293,7 +293,7 @@ With the stored words settled, this phase changes what people see on screen and 
 
 The last phase brings everything people read outside the apps into the same vocabulary — the docs' guide and reference pages, the skills InDusk installs into every project, the planning rules template, and the files a person deploys the recording server from — and calls the telemetry behind a promise its signal rather than its mark. Pages that record history, such as the changelog's earlier entries and the decision records, keep the words they were written in. The word scan written in the first phase goes green here and stays in the everyday test run, so a new page or message that says violated is refused with its file and line.
 
-- [ ] Make the docs' guide and reference pages say upheld, broken, holding, no signal and signal.
+- [x] Make the docs' guide and reference pages say upheld, broken, holding, no signal and signal.
   <details><summary>Technical</summary>
 
   Every file the scan names under `apps/docs/src/guide/` and `apps/docs/src/reference/` — at least `reference/cli/promises.md`, `guide/always-on.md`, `guide/promises.md` (add the words table: state upheld/broken, live holding/broken, past held/broke, no signal), `guide/plan-lifecycle.md` (Mermaid labels), `reference/cli/telemetry-server.md`, `reference/skills/catchup.md`, `guide/run-your-own-server.md`, `reference/tools/indusk-mcp.md`, `reference/cli/looks.md`. Attribute names stay.

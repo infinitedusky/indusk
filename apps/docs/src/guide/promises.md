@@ -36,6 +36,18 @@ For `state` and `structure` promises the regression suite *is* the monitor, on t
 - `holds` — in force for as long as the system runs; any later change can break it. The default.
 - `established` — a transition that, once done, cannot be undone (*the backfill ran*). Its check retires the moment it goes green and the promise moves to history, hidden by default, so the registry does not fill with things that can never break again.
 
+## The words
+
+Every screen, command and page says the same few words about a promise. The telemetry behind them is its *signal*.
+
+| When | Upheld | Broken | Unknown |
+|---|---|---|---|
+| A signal's outcome | `upheld` | `broken` (`violated`, the older word, is read as broken) | — |
+| Now, live | holding | broken | no signal |
+| In the past | held | broke | no signal |
+
+*No signal* means nothing has reported on the promise — never green, never holding.
+
 ## Four states
 
 | State | Meaning |
