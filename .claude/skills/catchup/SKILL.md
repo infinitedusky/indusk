@@ -132,41 +132,41 @@ Call `list_plans` with `{ active: true }` — this returns only genuinely in-mot
 
 ### 8a. Check Promise Health
 
-Call `promise_health`. It reports, per behaviour promise, the violations in the
-window, the open incidents, and — the number that matters — **violations no
+Call `promise_health`. It reports, per behaviour promise, the breaks in the
+window, the open incidents, and — the number that matters — **breaks no
 incident records yet**. It reads every source: `local`, the laptop's daemon,
 and `production`, the always-on server, when the project names one. The
 top-level fields are the **alarm source's** — production when there is one —
 and `sources` holds each source's own rows.
 
-**Name the source of each raised violation**: "seat-released — 1 unrecorded
-violation in production". A violation that appears only under `local` while
+**Name the source of each raised break**: "seat-released — 1 unrecorded
+break in production". A break that appears only under `local` while
 production exists is work in progress: mention it after the raised ones, as
 local, and do not put it ahead of the roadmap. A source whose entry says
 `ok: false` is said on its own line — "production could not be reached
 (https://…)" — never left out and never shown as zero.
 
 **Record what nobody recorded.** When a production source reports
-unrecorded violations, call `record_breaks` yourself: it records each as an
+unrecorded breaks, call `record_breaks` yourself: it records each as an
 incident, commits it on the trunk, and reopens the owning plan with a
 Maintenance phase — the same writer the admin's recorder uses, so it records
 only what the admin did not. Then say what it opened: each incident's id, its
-promise and the plan it reopened. A violation only under `local` is work in
+promise and the plan it reopened. A break only under `local` is work in
 progress and is not recorded.
 
-**Open incidents and open violations outrank the roadmap.** `promise_health`
+**Open incidents and open breaks outrank the roadmap.** `promise_health`
 also lists `openIncidents`, each with how long it has been open (`ageMs`) and
 whether its owner carries its Maintenance phase. When the user asks what is
 next, say the open incidents first, each with its age and its owner's phase —
 oldest first, and any whose owner carries no phase named as such — then any
-violations still unrecorded, before any plan or roadmap item. A promise is a
+breaks still unrecorded, before any plan or roadmap item. A promise is a
 commitment the system made and is breaking; the next feature can wait a
 sentence. The incidents are files, so they are listed even when no Jaeger can
 be read.
 
 If the tool reports an error, or the top level has `promises: null` with an
 `error` (production could not be read beside a local that answered), say so — "health unknown, Jaeger at X could not
-be reached" — and never report zero violations instead. "Nothing is broken"
+be reached" — and never report zero breaks instead. "Nothing is broken"
 and "nobody could look" are different answers, and only one of them is
 reassuring.
 
@@ -174,7 +174,7 @@ If the error says **watcher blind** (`blind: true`), a Jaeger answered and did
 not return the probe sent to it — something is on the port and is not
 receiving this project's telemetry. Say "watcher blind" on its own line,
 ahead of the roadmap, naming where it looked, and report no counts for any
-promise: no violations, no zero, nothing upheld. A blind watcher's silence is not a
+promise: no breaks, no zero, nothing upheld. A blind watcher's silence is not a
 quiet week.
 
 Skip silently if `promise_health` is unavailable (an older InDusk, or a
@@ -211,7 +211,7 @@ After completing all steps, present a brief summary to the user:
 - Skills: N installed [list names]
 - Extensions: N enabled [list names]
 - Active plans: [list with current phase] (M inactive omitted)
-- Promises: [open incidents with their ages and owners' phases; what `record_breaks` opened this catchup; any violations still unrecorded — or "all quiet" / "health unknown since …"]
+- Promises: [open incidents with their ages and owners' phases; what `record_breaks` opened this catchup; any breaks still unrecorded — or "all quiet" / "health unknown since …"]
 
 Ready to pick up. What would you like to do?
 ```
