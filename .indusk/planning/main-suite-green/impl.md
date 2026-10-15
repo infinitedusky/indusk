@@ -74,7 +74,9 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A6 and A8 are authored and red on their own assertions (`pnpm exec vitest run` on each file from `apps/indusk-mcp`); A7's root-run failure is reproduced once (`pnpm test` from the root) and its output kept in the item's note
+- [x] A1–A6 and A8 are authored and red on their own assertions (`pnpm exec vitest run` on each file from `apps/indusk-mcp`); A7's root-run failure is reproduced once (`pnpm test` from the root) and its output kept in the item's note
+  - Note, run 2026-10-14 in this worktree. Red on own assertion: A1 `run 1: ... EAGAIN ... expected 1 to be +0` (file read gave 0); A2 corpus `expected [ …(20) ] to deeply equal [ Array(13) ]`; A3 `normalized in: lib/promises/interface-files.ts×2, lib/promises/telemetry.ts×1: expected 3 to be 1`; A4 `git status in …/proj-worktrees/demo: expected '?? .mcp.json' to be ''`; A5 `these tests spawn a registry-writing command without INDUSK_HOME: expected [ …(2) ] to deeply equal []`; A6 `expected [ {…7}, {…7} ] to deeply equal [ ObjectContaining{…} ]` (a reminder follows the break on the real clock) and `to have a length of 2 but got 3`, its added reminder case passes (regression guard); A8 `expected 'uncovered screen: detail…unimplemented component: ghost-row…' not to contain 'unimplemented component: ghost-row'` (active-plan half; the archived half passes) and the existing A2 `expected [ 'plan-looks', 'subplan-row' ] to deeply equal []`.
+  - A7 passes alone (new-project-accept 2/2, new-project-accept-route 3/3). Root `pnpm test` reproduced one: `indusk-admin: FAIL node src/__tests__/new-project-accept.test.ts > A30 — creating a project ends its conversation's agent > A30 stops the draft's running session before creation, leaving the slot free — Error: Test timed out in 5000ms.` (admin 1 failed / 684 passed). The route file's A5 did not fail in this run; turbo then stopped, so the mcp package's root-run result was not collected.
 
 #### Test Phase 1 Context
 
