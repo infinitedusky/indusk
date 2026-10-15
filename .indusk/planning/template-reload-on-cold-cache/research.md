@@ -39,10 +39,21 @@ Build Phase 3's three green runs were a warm cache, not the fix. After one reloa
 
 `apps/indusk-mcp/e2e/day-monitor.e2e.test.ts:162` and `:169` expect the evaluator's failure, and `promises status` after it, to contain `issue with the selected model`. That is the text `claude` printed for an unknown model when the test was written. `claude` 2.1.296 prints `[claude-code:unrecognized_model] {"model":"claude-does-not-exist-9",…}`. The behaviour the test guards still works: the failure is recorded with `"error":true`, and `promises status` reports the violation. Only the wording it matches belongs to another program. The model name the test chose, `claude-does-not-exist-9`, appears in both versions' output.
 
+### Landing's install does not sync dependencies first
+
+`workflow.steps.land.install` is `pnpm install:local`, which runs `pnpm --filter @infinitedusky/indusk-mcp prepublishOnly && npm install -g ./apps/indusk-mcp` (root `package.json`). It builds from whatever `node_modules` the checkout has.
+
+- **Failed:** component-content landed on 10-14 (`4088c4a0`). Type checking passed, then the admin's Next build failed prerendering `/_global-error` with `TypeError: Cannot read properties of null (reading 'useContext')`. Clearing `apps/indusk-admin/.next` did not help, and the landed build was not installed (that retrospective's last section).
+- **Recovered:** the next landing, skip-reason-why, found that a `pnpm install` before `pnpm install:local` was enough (its retrospective).
+- **Worked today:** main-suite-green's landing install (2026-10-15) exited 0.
+
+So the install works when `node_modules` matches the lockfile and fails when a merge has changed the lockfile and nobody has synced. A null React context in a Next build is the usual sign of two React copies resolving, which a stale `node_modules` after a lockfile change produces (moderate confidence: component-content's retrospective did not confirm the cause). The fix that answers both readings is the one that worked by hand: sync to the lockfile before building.
+
 ## Decisions
 
 - Fix the template config, not the test, and keep the include list: with `extends: true` the list does what it was written to do (Sandy, 2026-10-15, "let's do this", on the recommendation to fix the reload as a bugfix plan).
 - Fold the day-monitor wording into this plan (Sandy, same exchange). Match the model name the test chose, not Claude Code's wording.
+- Fold the landing install fix into this plan: `install:local` runs `pnpm install --frozen-lockfile` first (Sandy, 2026-10-15, "yes", on adding it here rather than opening a third plan).
 
 ## Open Questions
 
