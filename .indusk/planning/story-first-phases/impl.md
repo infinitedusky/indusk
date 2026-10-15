@@ -1,7 +1,7 @@
 ---
 title: "Phase summaries"
 date: 2026-10-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -69,6 +69,8 @@ This impl is written in the shape it introduces.
 | A13 | component-content's impl, rewritten in this shape, passes the save check and reads on its plan page as the mockup shows | Build Phase 3 | Build Phase 3 | passing | live check | the first plan converted, the example Sandy asked for | |
 | A17 | A ritual phase whose only task is ticked reads as finished, and a Verification section whose only task is ticked reads as green, even when that task's folded detail quotes an unticked box line | Build Phase 4 | Build Phase 4 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
 | A18 | The falsification and cleanup skills' phase templates, filled in as written, pass the save check on an impl that has opted in to phase summaries | Build Phase 4 | Build Phase 4 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
+| A19 | The phase-summary rule, read from its own hook module, names the same problems for a missing paragraph, code on a task line and a row label in a paragraph or a task as the save check does | Build Phase 5 | Build Phase 5 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/phase-summary-module.test.ts |
+| A20 | Both phase-row stories, drawn by the plan page's real task list instead of copied markup, are approved again in the cockpit | Build Phase 5 | Build Phase 5 | planned | live check | the look phase-row.open and phase-row.closed, held by their approval in the cockpit | |
 
 ## Checklist
 
@@ -158,6 +160,11 @@ Before any code changes, this phase writes down what "done" means as tests that 
 #### Deferred to Build Phase 4
 
 - **A17** and **A18** — found by the falsification ritual after Build Phase 3 closed, so no earlier phase could author them; their subjects exist today, so Build Phase 4 writes them red on their own assertions at its start.
+
+#### Deferred to Build Phase 5
+
+- **A19** — its subject is the hook module Build Phase 5 extracts; importing it today would fail to load, which is an absent test, not a red one.
+- **A20** — a person's look in the cockpit once the stories draw the real task list, at the same phase.
 
 #### Regression Guards
 
@@ -456,6 +463,76 @@ This phase tests two ways the finished plan may still break its promises, and fi
   <details><summary>Technical</summary>
 
   Found: `apps/docs/src/reference/skills/` has no falsify or cleanup page; the ritual guides `apps/docs/src/guide/falsification-ritual.md` and `cleanup-ritual.md` are the pages that describe the phase, so they carry the opted-in note. The opted-in template and a one-line pointer to `/reference/skills/plan#phase-summaries-for-a-reader-without-the-shorthand`.
+
+  </details>
+
+### Build Phase 5: Cleanup — the phase-summary rule gets its own hook module, and the phase-row stories draw the real task list
+
+**Tier**: med — the work step's default
+
+The plan is correct and its tests are hardened; this phase tidies what it spread across files. The new rule that every phase opens with a summary and every task is a plain sentence was written inline in the save check, which already keeps each of its other rules in a module of its own, so it moves into one. And the plan page's task list, with its Technical fold, was copied by hand into the phase-row stories instead of being used there, so the look Sandy approved is a drawing of the component rather than the component itself. After this phase, the stories draw the real task list and are approved again. The other files this plan grew were reviewed and stay as they are, each with its reason below.
+
+- [ ] The save check's rule for phase summaries and plain task sentences moves into a hook module of its own, beside the save check's other rule modules
+  <details><summary>Technical</summary>
+
+  Extract `phaseSummaryProblems` from `apps/indusk-mcp/hooks/validate-impl-structure.js` into `hooks/_phase-summary.js`, exported, following `_phase-tier.js` (`tierRuleProblems`), `_test-levels.js` and `_register.js` — one module per rule. Export the row-label pattern from it once and use it in the hook's `validateCrossReferenceIntegrity` too, replacing the second `\b[TA]\d+\b` in the same file (the TypeScript `TEST_ID_PATTERN` in `lib/trajectory/validator.ts` stays: hooks cannot import TypeScript, and that file is the deliberate mirror). Sync `.claude/hooks/` byte-equal. `hooks/` ships whole in `package.json` `files`, so the new module installs with the rest.
+
+  </details>
+- [ ] The phase-row stories draw the plan page's real task list instead of a hand-copied version of it
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/src/components/ui/PhaseRow.stories.tsx`: the Closed and Open stories' `children` become `<PhaseItems items={…} />` (from `components/plan/PhaseItems.tsx`) with items carrying `text`, `checked`, `note` or `detail`; delete the `FOLD` / `FOLD_BODY` copies, whose classes already differ from `PhaseItems`'. Basis: admin rules — "a composed component must draw as its story does" and "a page composes components … renders no component's markup itself". Re-render with `indusk looks stories admin`; both stories turn proposed.
+
+  </details>
+- [ ] Pause for a person: Sandy approves both phase-row stories again in the cockpit
+  <details><summary>Technical</summary>
+
+  `story phase-row.open` and `story phase-row.closed` on the Looks page, read from this plan's branch; only a person approves. A20 records the result.
+
+  </details>
+- [ ] The two checking scripts' column-zero box patterns were reviewed and stay where they are
+  <details><summary>Technical</summary>
+
+  Reviewed `hooks/check-gates.js` (`CHECKED_BOX` / `UNCHECKED_BOX`, global, counting), `hooks/validate-impl-structure.js` (the opt-out's `!/^\s/`) and `hooks/_impl-phases.js` (the item match) — left as-is: three small patterns with different jobs and flags; one shared module would couple the tick check's counting to the parsers' item reading for no reader's benefit.
+
+  </details>
+- [ ] The fold-reading code in the impl parser was reviewed and stays where it is
+  <details><summary>Technical</summary>
+
+  Reviewed `src/lib/impl-parser-core.ts` (`opensFold`, `closesFold`, `foldedLineMask`) — left as-is: already the one home, used by `lib/cleanup/gate.ts` and `lib/shape/shape.ts`; the hook mirror of the cross-reference reading in `lib/trajectory/validator.ts` is the established TypeScript–hook pair, not duplication to remove.
+
+  </details>
+- [ ] The long prose files and the large tests this plan grew were reviewed and stay as they are
+  <details><summary>Technical</summary>
+
+  Reviewed `skills/planner.md`, `apps/docs/src/reference/skills/plan.md`, `apps/docs/src/changelog.md`, `apps/docs/src/guide/test-trajectory.md` (prose, over the cap before this plan), `src/__tests__/detail-is-only-read.test.ts` (one file per promise, already on the shared `helpers/phase-summary-fixture.ts`), `src/lib/trajectory/validator.test.ts` and `phase-summary-existing-impls.verdicts.json` (a generated snapshot) — left as-is: cohesive, or not code.
+
+  </details>
+
+#### Build Phase 5 Verification
+
+- [ ] The moved rule reads the same, the save check still refuses and accepts what it did, and Sandy has approved the redrawn stories
+  <details><summary>Technical</summary>
+
+  Green: A19; still green: A1–A3, A14, A15, A5, A6; A20 recorded with Sandy's approval. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/phase-summary-module.test.ts src/__tests__/phase-summary-rule.test.ts src/__tests__/phase-summary-existing-impls.test.ts && pnpm exec vitest related hooks/validate-impl-structure.js hooks/_phase-summary.js`; `cd apps/indusk-admin && pnpm exec vitest run src/components/ui/PhaseRow.test.tsx src/components/plan/PhaseItems.test.tsx`; `indusk looks lint admin` and `indusk looks status admin` show both stories approved.
+
+  </details>
+
+#### Build Phase 5 Context
+
+- [ ] The hook rules list the new phase-summary module among the save check's rule modules
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/hooks/CLAUDE.md`: name `_phase-summary.js` (`phaseSummaryProblems`, the row-label pattern) beside the other `_`-modules — guarded by `phase-summary-module.test.ts` (`promise: an-impl-phase-explains-itself`).
+
+  </details>
+
+#### Build Phase 5 Document
+
+- [ ] The admin's component conventions page says a story uses the real child component rather than copying its markup
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/admin-ui/component-conventions.md`: one line under stories — a story passes the real child component (here `PhaseItems` inside `PhaseRow`) so the approved snapshot is the component's own drawing.
 
   </details>
 
