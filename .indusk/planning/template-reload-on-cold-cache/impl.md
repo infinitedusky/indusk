@@ -157,10 +157,15 @@ This phase makes the three tests pass. The browser template's test project is to
   `extends: true` added to the `templates` project with the comment and the promise token; A1 now passes.
 
   </details>
-- [ ] Landing's install brings the checkout's dependencies to the lockfile before it builds
+- [x] Landing's install brings the checkout's dependencies to the lockfile before it builds
   <details><summary>Technical</summary>
 
   Root `package.json`: `"install:local": "pnpm install --frozen-lockfile && pnpm --filter @infinitedusky/indusk-mcp prepublishOnly && npm install -g ./apps/indusk-mcp"`. Then run `pnpm install:local` once in this worktree and note the exit code.
+
+  </details>
+  <details><summary>Note</summary>
+
+  Script edited. The first two parts were run from the worktree root: `pnpm install --frozen-lockfile` exit 0, `pnpm --filter @infinitedusky/indusk-mcp prepublishOnly` exit 0. The last part, `npm install -g ./apps/indusk-mcp`, was not run: it would point this machine's global `indusk` at this worktree, which landing later deletes.
 
   </details>
 - [ ] The end-to-end monitor test checks for the fake model's name rather than Claude Code's wording
