@@ -15,6 +15,18 @@ import { DOCUMENT_LABELS, requiredDocuments, type WorkflowType } from "./workflo
 export const SKIP_REASON_MAX = 120;
 
 /**
+ * How many sentences a skip reason holds: its sentence ends plus one, where an
+ * end is `.`, `!` or `?` followed by whitespace and an uppercase letter. A dot
+ * inside a sentence ("e.g. x", "gate.ts") is not an end. A reason fits when it
+ * is at most SKIP_REASON_MAX characters and `sentenceCount` is at most 1.
+ *
+ * promise: a-skip-reason-is-one-sentence
+ */
+export function sentenceCount(reason: string): number {
+	return (reason.trim().match(/[.!?]\s+(?=\p{Lu})/gu) ?? []).length + 1;
+}
+
+/**
  * The one definition of a plan's lifecycle (admin-ui-phase-progress, ADR D1).
  *
  * Before this module the lifecycle lived in three places, none of them
@@ -306,9 +318,10 @@ function resolvePosition(input: DerivePlanPositionInput): {
 			// promise: a-skip-reason-is-one-sentence
 			const longReason = (ritual: "falsification" | "cleanup" | "audit") => {
 				const found = readiness.longSkipReasons.find((l) => l.ritual === ritual);
-				return found
-					? `${ritual} skip reason is too long, ${found.length} characters — one sentence, at most ${SKIP_REASON_MAX}`
-					: null;
+				if (!found) return null;
+				return found.length > SKIP_REASON_MAX
+					? `${ritual} skip reason is too long, ${found.length} characters — one sentence, at most ${SKIP_REASON_MAX} characters`
+					: `${ritual} skip reason is ${found.sentences} sentences — one sentence, at most ${SKIP_REASON_MAX} characters`;
 			};
 			if (missing.includes("falsification")) {
 				return {

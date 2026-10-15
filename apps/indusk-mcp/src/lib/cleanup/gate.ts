@@ -4,7 +4,7 @@ import matter from "gray-matter";
 import { isFalsificationComplete } from "../falsification/log.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
 import { parsePhaseHeading } from "../impl-headings.js";
-import { RITUAL_ORDER, SKIP_REASON_MAX } from "../lifecycle.js";
+import { RITUAL_ORDER, SKIP_REASON_MAX, sentenceCount } from "../lifecycle.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { readPromises } from "../promises/registry.js";
 import { rowProofs } from "../promises/rows.js";
@@ -116,9 +116,15 @@ export { SKIP_REASON_MAX };
 
 type SkippableRitual = "falsification" | "cleanup" | "audit";
 
-/** A skip satisfies its ritual only when it is a skip and its reason fits SKIP_REASON_MAX. */
+/**
+ * A skip satisfies its ritual only when it is a skip and its reason is one
+ * sentence of at most SKIP_REASON_MAX characters (`sentenceCount`, lifecycle.ts).
+ *
+ * promise: a-skip-reason-is-one-sentence
+ */
 function skipIsOneSentence(skip: SkipCheck): boolean {
-	return skip.skipped && (skip.reason?.length ?? 0) <= SKIP_REASON_MAX;
+	const reason = skip.reason ?? "";
+	return skip.skipped && reason.length <= SKIP_REASON_MAX && sentenceCount(reason) <= 1;
 }
 
 /** Records a skip as too long when it is the only thing that would have satisfied the ritual. */
@@ -128,8 +134,10 @@ function noteLongSkip(
 	skip: SkipCheck,
 	satisfied: boolean,
 ): void {
-	const length = skip.reason?.length ?? 0;
-	if (!satisfied && skip.skipped && length > SKIP_REASON_MAX) into.push({ ritual, length });
+	const reason = skip.reason ?? "";
+	if (!satisfied && skip.skipped && !skipIsOneSentence(skip)) {
+		into.push({ ritual, length: reason.length, sentences: sentenceCount(reason) });
+	}
 }
 
 export interface RetrospectiveReadiness {
@@ -146,7 +154,7 @@ export interface RetrospectiveReadiness {
 	/** The promises that are not, by name — what the skill's refusal names. */
 	unprovenPromises: string[];
 	/**
-	 * Rituals whose skip would satisfy them but whose reason is over
+	 * Rituals whose skip would satisfy them but whose reason is more than one sentence or over
 	 * SKIP_REASON_MAX characters (skip-reason-why). Each also lands in
 	 * `missing` under its own word, so a caller that refuses on `missing`
 	 * refuses on this too; this names the length. A ritual satisfied some
@@ -154,11 +162,11 @@ export interface RetrospectiveReadiness {
 	 *
 	 * promise: a-skip-reason-is-one-sentence
 	 */
-	longSkipReasons: Array<{ ritual: SkippableRitual; length: number }>;
+	longSkipReasons: Array<{ ritual: SkippableRitual; length: number; sentences: number }>;
 	passes: boolean;
 	/**
 	 * What is not yet satisfied (subset of ["falsification", "cleanup", "audit", "rows", "promises"]).
-	 * A ritual skipped with a reason over SKIP_REASON_MAX is named here too.
+	 * A ritual skipped with a reason over SKIP_REASON_MAX, or of more than one sentence, is named here too.
 	 */
 	missing: string[];
 }

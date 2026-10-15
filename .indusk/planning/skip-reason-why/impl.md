@@ -151,8 +151,9 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 
 - [x] `steps.ts`: the Audit step reads `skipped` with its reason when the plan's skipped rituals include the audit; `PlanSnapshot.skippedRituals` takes `"audit"` beside the two `RitualWord`s (a local union — `RITUAL_ORDER` stays the two rituals that have phases)
 - [x] `planning-reader.ts`: add `{ ritual: "audit", check: isAuditSkipped(implRaw) }` to `skippedRituals` (import from `@infinitedusky/indusk-mcp/cleanup/gate`, as `isCleanupSkipped` is); give the cockpit fixture a plan with `audit: skipped` + a one-sentence `audit_reason`
-- [ ] `cleanup/gate.ts` `skipIsOneSentence`: also refuse a reason with more than one sentence end, where a sentence end is `.`, `!` or `?` followed by whitespace and an uppercase letter; the one rule lives in `lifecycle.ts` beside `SKIP_REASON_MAX` (browser-reachable, as Build Phase 2 found) and `longSkipReasons` keeps its name, its entries gaining `sentences: number`; the lifecycle wording says "one sentence" when that is the cause
-- [ ] The three skills' limit sentence already says one sentence; confirm it reads as the rule the code applies (no edit if it does)
+- [x] `cleanup/gate.ts` `skipIsOneSentence`: also refuse a reason with more than one sentence end, where a sentence end is `.`, `!` or `?` followed by whitespace and an uppercase letter; the one rule lives in `lifecycle.ts` beside `SKIP_REASON_MAX` (browser-reachable, as Build Phase 2 found) and `longSkipReasons` keeps its name, its entries gaining `sentences: number`; the lifecycle wording says "one sentence" when that is the cause
+- [x] The three skills' limit sentence already says one sentence; confirm it reads as the rule the code applies (no edit if it does)
+  - note: confirmed, no edit — each skill already reads "one sentence of at most 120 characters" beside `promise: a-skip-reason-is-one-sentence`
 
 #### Build Phase 3 Verification
 
