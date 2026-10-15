@@ -152,7 +152,8 @@ describe("A13 — one list of a plan's skipped rituals, with their reasons", () 
 	});
 
 	it("A13 lists none for a plan that skips none", () => {
-		const content = "---\ntitle: x\n---\n\n## Checklist\n\n### Phase 1: Config\n\n- [x] do the thing\n";
+		const content =
+			"---\ntitle: x\n---\n\n## Checklist\n\n### Phase 1: Config\n\n- [x] do the thing\n";
 		expect(skippedRitualsOf(content)).toEqual([]);
 	});
 });

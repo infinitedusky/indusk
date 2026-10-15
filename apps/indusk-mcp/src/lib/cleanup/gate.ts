@@ -4,10 +4,11 @@ import matter from "gray-matter";
 import { isFalsificationComplete } from "../falsification/log.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
 import { parsePhaseHeading } from "../impl-headings.js";
-import { RITUAL_ORDER, SKIP_REASON_MAX, sentenceCount } from "../lifecycle.js";
+import { RITUAL_ORDER } from "../lifecycle.js";
 import { parseBriefContract } from "../promises/brief-contract.js";
 import { readPromises } from "../promises/registry.js";
 import { rowProofs } from "../promises/rows.js";
+import { reasonFits, sentenceCount } from "../rituals/reason.js";
 import { isRitualSkipped, type SkipCheck } from "../rituals/skip.js";
 import { findNonTerminalRows } from "../trajectory/audit.js";
 import { parseTrajectory } from "../trajectory/parser.js";
@@ -130,20 +131,17 @@ export function isAuditComplete(planRoot: string): boolean {
 	return existsSync(join(planRoot, "audit.md"));
 }
 
-// SKIP_REASON_MAX lives in lifecycle.ts (browser-reachable); re-exported here.
-export { SKIP_REASON_MAX };
-
 type SkippableRitual = "falsification" | "cleanup" | "audit";
 
 /**
  * A skip satisfies its ritual only when it is a skip and its reason is one
- * sentence of at most SKIP_REASON_MAX characters (`sentenceCount`, lifecycle.ts).
+ * sentence of at most SKIP_REASON_MAX characters (`reasonFits`, rituals/reason.ts).
  *
  * promise: a-skip-reason-is-one-sentence
  */
 function skipIsOneSentence(skip: SkipCheck): boolean {
 	const reason = skip.reason ?? "";
-	return skip.skipped && reason.length <= SKIP_REASON_MAX && sentenceCount(reason) <= 1;
+	return skip.skipped && reasonFits(reason);
 }
 
 /** Records a skip as too long when it is the only thing that would have satisfied the ritual. */
