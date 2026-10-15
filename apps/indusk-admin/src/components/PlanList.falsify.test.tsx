@@ -42,6 +42,8 @@ import { PlanList } from "./PlanList";
 function mockPlan(name: string, overrides: Partial<Plan> = {}): Plan {
   return {
     name,
+    title: name,
+    description: null,
     status: "draft",
     archived: false,
     ...overrides,

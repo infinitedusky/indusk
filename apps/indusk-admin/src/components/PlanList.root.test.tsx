@@ -37,7 +37,14 @@ import { PlanList } from "./PlanList";
  */
 
 function mockPlan(name: string, overrides: Partial<Plan> = {}): Plan {
-  return { name, status: "draft", archived: false, ...overrides };
+  return {
+    name,
+    title: name,
+    description: null,
+    status: "draft",
+    archived: false,
+    ...overrides,
+  };
 }
 
 // `root` lands with Build Phase 6 (the reader returns the root master's

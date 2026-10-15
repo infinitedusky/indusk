@@ -13,6 +13,8 @@ import type { Plan } from "@/lib/planning-reader";
 
 const plan = (name: string, archived = false): Plan => ({
   name,
+  title: name,
+  description: null,
   status: "in-progress",
   archived,
 });

@@ -242,8 +242,8 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
   ```
 - [x] `health-line.ts`: a promise whose owner has no `planTitles` entry carries `planTitle(undefined, owner, names.words)` instead of the bare owner (A10)
 - [x] `plan-parser.ts`: a `subplans:` entry is a name or a mapping `{ name, title?, description? }`; both keep declared order through the same segment guard; `PlanDeclarations` gains `declaredTitles: Record<string, Record<string, { title?: string; description?: string }>>`. Grep `PlanDeclarations` importers (`plan-groups.ts`, `PlanList.tsx`, `cockpit-fixture.ts`, `new-project-cli.test.ts`) and give each the field
-- [ ] `planning-reader.ts`: `Plan` gains `title: string` and `description: string | null`, set from the copy the plan is read from (its worktree first) by `readPlanName`; every test fixture that builds a `Plan` (grep `: Plan = {` and `Plan[]` fixtures, `cockpit-fixture.ts` first) sets them, `cockpit-fixture.ts` from `TITLES` through `titleOf`
-- [ ] Rebuild indusk-mcp's dist (`pnpm --filter @infinitedusky/indusk-mcp build`) so the admin reads the new exports
+- [x] `planning-reader.ts`: `Plan` gains `title: string` and `description: string | null`, set from the copy the plan is read from (its worktree first) by `readPlanName`; every test fixture that builds a `Plan` (grep `: Plan = {` and `Plan[]` fixtures, `cockpit-fixture.ts` first) sets them, `cockpit-fixture.ts` from `TITLES` through `titleOf`
+- [x] Rebuild indusk-mcp's dist (`pnpm --filter @infinitedusky/indusk-mcp build`) so the admin reads the new exports
 - [x] Author A13 (`planning-reader.title.test.ts`) and A1–A3 (`master.test.tsx`, with `path-beta`'s `beta-three` declared with a title and description in the fixture's `DECLARATIONS`) from their reviewed bodies; A1–A3 red on their own assertions
 - [ ] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
 

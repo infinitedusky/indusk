@@ -171,6 +171,8 @@ function build(spec: PlanSpec): Plan {
   const title = TITLES[name] ?? name;
   const plan: Plan = {
     name,
+    title,
+    description: DESCRIPTIONS[name] ?? null,
     status: spec.status ?? "in-progress",
     archived: false,
     workflow: spec.workflow ?? "feature",
@@ -581,8 +583,12 @@ export function displayMock() {
       const words = name.split("-").join(" ");
       return words.charAt(0).toUpperCase() + words.slice(1);
     },
-    planTitle: (title: string | undefined, folder: string) =>
-      title?.split(" — ")[0]?.trim() || folder,
+    planTitle: (title: string | undefined, handle: string) => {
+      const short = title?.split(" — ")[0]?.trim();
+      if (short && short !== handle) return short;
+      const words = handle.split("-").join(" ");
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    },
     displayWords: () => ({}),
     planDates: (planDir: string) => datesOf(planDir.split("/").pop() ?? ""),
     readHealthNames: () => ({
