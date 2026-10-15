@@ -3,8 +3,8 @@ import { readHealthNames } from "@infinitedusky/indusk-mcp/promises/display";
 import { activePhaseOf } from "@/components/bars/ProgressLines";
 import { DecisionCard } from "@/components/cockpit/DecisionCard";
 import { LiveRefresh } from "@/components/LiveRefresh";
-import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
 import { PlanWorkflows } from "@/components/PlanWorkflows";
+import { MasterStory } from "@/components/plan/MasterStory";
 import { PlanFrame } from "@/components/plan/PlanFrame";
 import {
   DocumentsPart,
@@ -21,15 +21,16 @@ import { HistoryPanel } from "@/components/ui/HistoryPanel";
 import { PlanCopyNotice } from "@/components/Worktrees";
 import { readPlanHistory, readWaiting } from "@/lib/decisions-reader";
 import { planLookState } from "@/lib/look-state";
+import { masterStory } from "@/lib/master-story";
 import { extractPhases } from "@/lib/phases";
 import { planActions } from "@/lib/plan-actions";
+import { buildGroups, groupOf } from "@/lib/plan-groups";
 import { readPlanPage } from "@/lib/plan-page";
 import { planDocuments } from "@/lib/plan-parts-view";
 import {
   readActivePlans,
   readArchivedPlans,
   readPlanHierarchy,
-  readPlanMasterContent,
 } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
 import { projectTrusted } from "@/lib/trust-reader";
@@ -50,27 +51,39 @@ export default async function PlanPage({ params }: PlanPageProps) {
   if (!found) return null;
   const { projectPath, plan } = found;
 
-  // Parent plan? Resolve its declared children against what exists on disk
-  // (dawn-ui-plan-grouping Phase 3). Missing/corrupt declarations yield an
-  // empty list here, and the page shows the standard stage —
-  // grouping never hides a plan.
-  const planHierarchy = readPlanHierarchy(projectPath);
-  const declared = planHierarchy.subplans[name] ?? [];
-  let subplans: SubplanEntry[] | undefined;
-  let masterContent: string | undefined;
-  if (declared.length > 0) {
-    // Archived first so an active plan overwrites it on a name collision —
-    // matching `readPlanPage`'s precedence (T11).
-    const [active, archived] = await Promise.all([
-      readActivePlans(projectPath),
-      readArchivedPlans(projectPath),
-    ]);
-    const byName = new Map(
-      [...archived, ...active].map((p) => [p.name, p] as const),
-    );
-    subplans = declared.map((n) => ({ name: n, plan: byName.get(n) }));
-    masterContent =
-      (await readPlanMasterContent(projectPath, name)) ?? undefined;
+  // A master (a plan that declares subplans) tells its story instead of
+  // showing a plan's stage: `plan.master`, its rows the Path group the nav
+  // counts. Missing or corrupt declarations leave the standard page — grouping
+  // never hides a plan.
+  const grouping = readPlanHierarchy(projectPath);
+  if ((grouping.subplans[name] ?? []).length > 0) {
+    const master = await masterPage(project, projectPath, name, grouping);
+    if (master) {
+      return (
+        <>
+          <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
+          <PlanFrame
+            project={project}
+            plan={plan}
+            lookState={planLookState({
+              archived: false,
+              waiting: false,
+              briefStatus: null,
+              master: true,
+            })}
+            master
+          >
+            <PlanCopyNotice plan={plan} />
+            {plan.malformed ? <MalformedNotice /> : null}
+            <MasterStory
+              purpose={plan.description}
+              story={master}
+              masterHref={`/p/${project}/plan/${name}/doc/master`}
+            />
+          </PlanFrame>
+        </>
+      );
+    }
   }
 
   // The dates the released card reads come from the package.
@@ -167,19 +180,12 @@ export default async function PlanPage({ params }: PlanPageProps) {
         <PlanCopyNotice plan={plan} />
         <TrustNotice project={project} trusted={projectTrusted(projectPath)} />
         {plan.malformed ? <MalformedNotice /> : null}
-        {subplans ? (
-          <ParentPlanView
-            subplans={subplans}
-            masterContent={masterContent}
-            prefix={`/p/${project}/plan/`}
-          />
-        ) : null}
         <section className="grid gap-3" data-testid="plan-status">
           <div
             className="cols-plan-stage grid items-start gap-5"
             data-testid="plan-stage"
           >
-            {subplans ? null : <PlanWorkflows plan={plan} project={project} />}
+            <PlanWorkflows plan={plan} project={project} />
             <div className="flex min-w-0 flex-col gap-3">{main}</div>
           </div>
         </section>
@@ -198,6 +204,36 @@ export default async function PlanPage({ params }: PlanPageProps) {
       </PlanFrame>
     </>
   );
+}
+
+/**
+ * A master's rows and counts, from the Path group built over the plans as the
+ * nav reads them; undefined when the declarations leave this plan no Path.
+ * Archived plans go first so an active plan wins a name collision, as in
+ * `readPlanPage`.
+ */
+async function masterPage(
+  project: string,
+  projectPath: string,
+  name: string,
+  grouping: ReturnType<typeof readPlanHierarchy>,
+) {
+  const [active, archived] = await Promise.all([
+    readActivePlans(projectPath),
+    readArchivedPlans(projectPath),
+  ]);
+  const { planDates } = readHealthNames(projectPath);
+  const isReleased = (n: string) => (planDates[n]?.released ?? null) !== null;
+  const group = groupOf(
+    buildGroups(active, archived, grouping, isReleased).groups,
+    name,
+  );
+  if (!group) return undefined;
+  const waiting = await readWaiting(project, projectPath, active);
+  return masterStory(group, grouping.declaredTitles, isReleased, {
+    prefix: `/p/${project}/plan/`,
+    waiting: Object.fromEntries(waiting.map((w) => [w.plan, w.step])),
+  });
 }
 
 function MalformedNotice() {

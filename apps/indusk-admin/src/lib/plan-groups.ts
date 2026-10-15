@@ -141,3 +141,19 @@ export function orderByMaster(plans: Plan[], masterOrder: string[]): Plan[] {
   }
   return out;
 }
+
+/** The Path a plan opens, wherever it sits: at the top or declared inside another. */
+export function groupOf(
+  groups: PlanGroup[],
+  name: string,
+): PlanGroup | undefined {
+  for (const group of groups) {
+    if (group.parent.name === name) return group;
+    const inside = groupOf(
+      group.entries.flatMap((e) => (e.kind === "path" ? [e.group] : [])),
+      name,
+    );
+    if (inside) return inside;
+  }
+  return undefined;
+}
