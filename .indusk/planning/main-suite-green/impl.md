@@ -150,7 +150,8 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 #### Build Phase 3 Verification
 
-- [ ] A7 goes green in a root run, twice; A9 recorded passing
+- [x] A7 goes green in a root run, twice; A9 recorded passing
+  - Note, 2026-10-15: A7's files green in root runs 3, 4 and 5 (admin 109 files / 685 each); A9 passing in run 5 (exit 0).
 
 #### Build Phase 3 Context
 
