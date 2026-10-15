@@ -213,10 +213,10 @@ This phase makes the three tests pass. The browser template's test project is to
 
 #### Build Phase 1 Context
 
-- [ ] The rules for the package's templates say a browser test project must inherit the root configuration to see its pre-bundle list
+- [x] The test that guards the pre-bundle list says, when it fails, that a browser test project must inherit the root configuration to see the list
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/templates/CLAUDE.md`: one line — a Vitest project inherits nothing from the root config without `extends: true`, so a browser project's `optimizeDeps` is set on the project or inherited, never left on the root alone (`promise: a-browser-test-passes-on-a-cold-cache`).
+  guard: A1's failure message in `templates-prebundle.test.ts` names the fix and the rule (a Vitest project inherits nothing from the root config without `extends: true`). Changed from the planned line in `apps/indusk-mcp/templates/CLAUDE.md`, which is the blank skeleton `init` installs into every project, so the line would have shipped to users (found in Build Phase 1); the package's own `CLAUDE.md` is over its budget, and an enforcer is the first tier for a rule a test holds.
 
   </details>
 
