@@ -6,9 +6,9 @@ import { type MarkedSpansResult, silencePastExpectation } from "./telemetry.js";
  *
  * One block per promise, opening on a line that starts with its name, blocks
  * separated by a blank line. A behaviour promise gets what telemetry saw in
- * the window: its violations with their traces, and when it was last seen
- * upheld — or "not seen", which is never the same as upheld or as zero
- * violations. State and structure promises are listed as watched by the
+ * the window: its breaks with their traces, and when it was last seen
+ * holding — or "no signal", which is never the same as holding or as zero
+ * breaks. State and structure promises are listed as watched by the
  * suite and given no count: telemetry has nothing to say about them.
  */
 
@@ -44,8 +44,8 @@ export function formatStatus(
 		const silence = silencePastExpectation(p, marks);
 		const attentionLine = silence ? `  needs attention — ${silence}` : null;
 		if (!m || (m.violations.length === 0 && m.lastUpheld === null)) {
-			const notSeen = `  not seen in ${phrase} — no run exercised it`;
-			blocks.push([head, notSeen, ...(attentionLine ? [attentionLine] : [])].join("\n"));
+			const noSignal = `  no signal in ${phrase}`;
+			blocks.push([head, noSignal, ...(attentionLine ? [attentionLine] : [])].join("\n"));
 			continue;
 		}
 		const lines = [head];
@@ -53,8 +53,8 @@ export function formatStatus(
 		const n = m.violations.length;
 		lines.push(
 			n === 0
-				? `  no violations in ${phrase}`
-				: `  ${m.truncated ? "at least " : ""}${n} violation${n === 1 ? "" : "s"} in ${phrase}`,
+				? `  no breaks in ${phrase}`
+				: `  ${m.truncated ? "at least " : ""}${n} break${n === 1 ? "" : "s"} in ${phrase}`,
 		);
 		for (const v of m.violations) {
 			lines.push(
@@ -63,8 +63,8 @@ export function formatStatus(
 		}
 		lines.push(
 			m.lastUpheld
-				? `  last seen upheld ${iso(m.lastUpheld.at)} (${m.lastUpheld.traceId})`
-				: `  not seen upheld in ${phrase}`,
+				? `  last seen holding ${iso(m.lastUpheld.at)} (${m.lastUpheld.traceId})`
+				: `  not seen holding in ${phrase}`,
 		);
 		blocks.push(lines.join("\n"));
 	}

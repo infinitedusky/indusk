@@ -228,7 +228,7 @@ With the stored words settled, this phase changes what people see on screen and 
   `components/bars/labels.ts` (`PROMISE_STATE_CHIP` `known-broken` label `known broken`, aria "known broken — an incident says why"; `PROMISE_HEALTH_CHIP` red `broken`/"broken in the window", fixed `broke — fixed`/"broke in the window, every incident fixed", green `holding`/"seen holding in the window", unverified `no signal`/"no signal in the window", amber `known broken`); `PromiseTimeline.tsx` `SAID` (`broke — open`, `broke — fixed`, `held`, `no signal`); `lib/timeline-strip.ts:166` ("broke … ago — open"); `PromiseHealth.tsx` ("N break(s)", "no signal"); `PlanList.tsx:304-305`; `Promises.tsx:371` and `promise/PromiseProof.tsx:51,100,106,196` ("no signal yet"; "no signal has reported a run of it in any source"). Comments that say violated in these files change with them.
 
   </details>
-- [ ] Make the command line and the always-on server say broken, held and no signal.
+- [x] Make the command line and the always-on server say broken, held and no signal.
   <details><summary>Technical</summary>
 
   `lib/promises/status.ts` ("no breaks in …", "N break(s) in …", "no signal in …", "last seen holding …"); `watch.ts:177` ("No new breaks — nothing recorded."); `check.ts` refusals naming `known-broken`; `incidents.ts:212` default symptom ("The signal reported the promise broken and carried no symptom."); `always-on/heartbeat.ts:178,184` and `schedule.ts:33` ("breaks", "signals"); `bin/cli.ts:504,663,1283,1293,1327,1329` help.

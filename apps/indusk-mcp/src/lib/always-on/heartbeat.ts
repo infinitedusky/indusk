@@ -175,13 +175,13 @@ export function watcherTransition(
 	if (judged.state === "blind" && previous?.state !== "blind") {
 		const since = judged.heardAt.toISOString();
 		return {
-			message: `Watcher blind since ${since} — ${judged.reason}. Promise violations on ${queryUrl} are not being heard.`,
+			message: `Watcher blind since ${since} — ${judged.reason}. Promise breaks on ${queryUrl} are not being heard.`,
 			next: { state: "blind", since },
 		};
 	}
 	if (judged.state === "listening" && previous?.state === "blind") {
 		return {
-			message: `Watcher recovered — blind from ${previous.since} to ${now.toISOString()}. Violations marked in that time may not have been announced.`,
+			message: `Watcher recovered — blind from ${previous.since} to ${now.toISOString()}. Breaks signalled in that time may not have been announced.`,
 			next: { state: "listening", since: now.toISOString() },
 		};
 	}

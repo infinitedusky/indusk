@@ -30,7 +30,7 @@ export function startPass(settings: ServerSettings): NodeJS.Timeout {
 	const staleMs = staleAfterMs(settings.passIntervalMs, settings.watcherStaleMs);
 	if (!settings.slackWebhook) {
 		console.info(
-			"announcements are off: INDUSK_SERVER_SLACK_WEBHOOK is not set. Violations are recorded and read as usual; none is posted.",
+			"announcements are off: INDUSK_SERVER_SLACK_WEBHOOK is not set. Breaks are recorded and read as usual; none is posted.",
 		);
 	}
 	const tick = async (): Promise<void> => {

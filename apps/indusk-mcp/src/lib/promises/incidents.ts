@@ -209,7 +209,7 @@ export function recordViolations(
 			opened: iso(oldest.at),
 			lastSeen: iso(newest.at),
 			evidence: ["traces:", ...freshIds.map((t) => `  - '${t}'`)],
-			symptom: newest.symptom ?? "The span marked the promise violated and carried no symptom.",
+			symptom: newest.symptom ?? "The signal reported the promise broken and carried no symptom.",
 			// The newest violation's environment, and no guess when it has
 			// none: one server holds staging and production, and an incident
 			// that names the wrong one sends a person to the wrong logs.

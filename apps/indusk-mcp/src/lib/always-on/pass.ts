@@ -169,7 +169,7 @@ export async function violationsSince(
  */
 export function slackText(span: MarkedSpan, publicQueryUrl: string | null): string {
 	return [
-		`Promise violated: ${span.promise}`,
+		`Promise broken: ${span.promise}`,
 		span.symptom ?? "_no symptom recorded_",
 		`${span.environment ?? "environment unknown"} · ${span.service} · ${span.operation}`,
 		// The link must open from wherever the reader is. The server's own
