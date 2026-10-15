@@ -67,8 +67,8 @@ This impl is written in the shape it introduces.
 | A11 | A box-shaped line inside a task's detail adds no task to the parser's count or to the tick check's count | Test Phase 1 | Test Phase 1 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
 | A12 | Every impl in the repository that has not opted in validates exactly as it did before | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over the existing plans: the shape is opt-in and must break none of them | apps/indusk-mcp/src/__tests__/phase-summary-existing-impls.test.ts |
 | A13 | component-content's impl, rewritten in this shape, passes the save check and reads on its plan page as the mockup shows | Build Phase 3 | Build Phase 3 | passing | live check | the first plan converted, the example Sandy asked for | |
-| A17 | A ritual phase whose only task is ticked reads as finished, and a Verification section whose only task is ticked reads as green, even when that task's folded detail quotes an unticked box line | Build Phase 4 | Build Phase 4 | written | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
-| A18 | The falsification and cleanup skills' phase templates, filled in as written, pass the save check on an impl that has opted in to phase summaries | Build Phase 4 | Build Phase 4 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
+| A17 | A ritual phase whose only task is ticked reads as finished, and a Verification section whose only task is ticked reads as green, even when that task's folded detail quotes an unticked box line | Build Phase 4 | Build Phase 4 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/detail-is-only-read.test.ts |
+| A18 | The falsification and cleanup skills' phase templates, filled in as written, pass the save check on an impl that has opted in to phase summaries | Build Phase 4 | Build Phase 4 | passing | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
 
 ## Checklist
 
@@ -433,7 +433,7 @@ This phase tests two ways the finished plan may still break its promises, and fi
 
 #### Build Phase 4 Verification
 
-- [ ] A quoted unticked box in a task's fold no longer holds a phase open, and both ritual templates pass the save check on an opted-in impl
+- [x] A quoted unticked box in a task's fold no longer holds a phase open, and both ritual templates pass the save check on an opted-in impl
   <details><summary>Technical</summary>
 
   Green: A17, A18; still green: A9–A11. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/detail-is-only-read.test.ts src/__tests__/ritual-templates-phase-summary.test.ts src/__tests__/skill-sync-parity.test.ts && pnpm exec vitest related src/lib/cleanup/gate.ts src/lib/shape/shape.ts`.
