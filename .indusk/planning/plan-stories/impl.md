@@ -299,6 +299,8 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
   - reopened (proposed, component changed: nav), 26: story `nav.collapsed`, `nav.expanded`, `nav.looks-current`, `nav.plan-current`; mockups `nav.collapsed`, `nav.expanded`, `nav.wide`, `brief.approved`, `brief.empty`, `brief.writing`, `dashboard.default`, `dashboard.empty`, `looks.default`, `looks.uncovered`, `plan.documents`, `plan.drafts`, `plan.history`, `plan.master`, `plan.needs-you`, `plan.new`, `plan.parts`, `plan.phases`, `plan.released`, `plan.working`, `promise.broken`, `promise.enforced`
   - Sandy approved: all 26 on the Looks page, 2026-10-14
 - [ ] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-admin/src/components/PlanList.tsx`) — reviewed, left as-is: the placeholder title lookup (declared title, else planTitle of the handle) is a two-line expression used once; naming it would add a function for one call site, and the rule for a declared plan lives in planTitle
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 3 Verification
 
