@@ -174,10 +174,20 @@ This phase makes the three tests pass. The browser template's test project is to
   `apps/indusk-mcp/e2e/day-monitor.e2e.test.ts:162` and `:169`: replace `toContain("issue with the selected model")` with `toContain("claude-does-not-exist-9")` (the model the test sets), keeping `'"error":true'` at :161; a short comment says the CLI's wording is not this test's subject.
 
   </details>
-- [ ] The template tests pass three times from a deleted Vite cache, with no reload
+  <details><summary>Note</summary>
+
+  Left unchecked. Lines 162 and 170 now match the model name (as `BAD_MODEL`, which holds `claude-does-not-exist-9`), but the test still fails at line 182, a third `toContain("issue with the selected model")` on the incident file's content that the item does not name. With line 182 also changed, the e2e run passes (tried and reverted); that edit is beyond this item, so it waits for a decision.
+
+  </details>
+- [x] The template tests pass three times from a deleted Vite cache, with no reload
   <details><summary>Technical</summary>
 
   A2: from `apps/indusk-mcp`, three times: `rm -rf node_modules/.vite && pnpm exec vitest run --config vitest.templates.config.ts`; record each result and whether `unexpectedly reloaded` or `optimized dependencies changed` appeared, under this item.
+
+  </details>
+  <details><summary>Note</summary>
+
+  Run 1: exit 0, 12 passed and 1 skipped, no reload warning. Run 2: exit 0, 12 passed and 1 skipped, no reload warning. Run 3: exit 0, 12 passed and 1 skipped, no reload warning. Neither `unexpectedly reloaded` nor `optimized dependencies changed` appeared in any run.
 
   </details>
 
