@@ -299,7 +299,7 @@ A fresh reader found three gaps after the build. The retrospective skill, which 
   `apps/indusk-mcp/skills/retrospective.md` Step 10 item 7 (around :347): `pnpm install:local` now runs `pnpm install --frozen-lockfile` before it builds, so a merge that changed the lockfile installs without a hand-run `pnpm install`. Mirror the docs page's wording (`apps/docs/src/reference/skills/retrospective.md:247`). Resync `.claude/skills/retrospective/SKILL.md` in this phase and run `skill-sync-parity.test.ts` (apps/indusk-mcp/CLAUDE.md, skills rule). Audit finding: `audit.md`, "What else would have to change".
 
   </details>
-- [ ] The same instructions say what a refused install means and how to recover from it
+- [x] The same instructions say what a refused install means and how to recover from it
   <details><summary>Technical</summary>
 
   `--frozen-lockfile` refuses when `pnpm-lock.yaml` does not match the workspace's `package.json` files — trunk was committed with a lockfile out of step, which is not the merged-lockfile case the brief's second expectation measures. Item 7 says so: run `pnpm install` on trunk, commit the updated lockfile as its own commit, then rerun the install step; record the refusal on the retrospective's install line so the expectation's measure reads it. Add the recovery sentence to the docs page too. Audit finding: `audit.md`, "What does the code do that the brief never promised?"
