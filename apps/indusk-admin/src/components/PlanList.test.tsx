@@ -2,6 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import type { Plan } from "@/lib/planning-reader";
 
+// PlanList names a queued plan by the package's title rule, whose module reads
+// the filesystem; the browser project cannot import it, so the rule is stubbed.
+vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
+  __esModule: true,
+  planTitle: (_title: unknown, handle: string) => handle,
+}));
+
 // `next/link` pulls in Node-only globals (`process`) that aren't present in
 // the browser test runtime. Stub it with a plain anchor — semantically
 // identical for the props PlanList passes (href + className + children).

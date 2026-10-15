@@ -2,6 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import type { Plan } from "@/lib/planning-reader";
 
+// PlanList names a queued plan by the package's title rule, whose module reads
+// the filesystem; the browser project cannot import it, so the rule is stubbed.
+vi.mock("@infinitedusky/indusk-mcp/promises/display", () => ({
+  __esModule: true,
+  planTitle: (_title: unknown, handle: string) => handle,
+}));
+
 // Mock next/link — see PlanList.test.tsx for the canonical reason.
 vi.mock("next/link", () => {
   function MockLink({
