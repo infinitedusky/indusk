@@ -3147,6 +3147,19 @@
 					"description": "Where the step's document is read; the step is then a link."
 				},
 				{
+					"name": "reason",
+					"type": "string",
+					"required": false,
+					"description": "Why the step was skipped; shown on request by the status's \"why?\"."
+				},
+				{
+					"name": "open",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Whether the reason starts open (a story's; the person opens it otherwise)."
+				},
+				{
 					"name": "className",
 					"type": "unknown",
 					"required": false,
@@ -3237,10 +3250,59 @@
 							]
 						]
 					}
+				},
+				{
+					"name": "skipped",
+					"id": "ui-step--skipped",
+					"snapshotHash": "f03843144e701e5809a76032848986f7acbc3c2d68bd440cd089583333806b8f",
+					"content": {
+						"name": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"status": [
+							[
+								0,
+								2,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "skipped-open",
+					"id": "ui-step--skipped-open",
+					"snapshotHash": "b229e802a5987a4fda1c0fc1429725fbd85ffc3542895dba2e9a8e8b66b9c39d",
+					"content": {
+						"name": [
+							[
+								0,
+								1,
+								0
+							]
+						],
+						"status": [
+							[
+								0,
+								2,
+								0
+							]
+						],
+						"reason": [
+							[
+								0,
+								4,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/step.css",
-			"stylesheetHash": "347e90168a0eb8c6156fb94246690a466d81ed73cf0fb3674c31d1a5cad1c7de"
+			"stylesheetHash": "436b1ee037f932c0bd020b2c791b2fc7045f76bea51407348e04d250efbf84d9"
 		},
 		{
 			"name": "summary-bar",
