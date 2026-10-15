@@ -23,11 +23,12 @@ That line ends with the promise's name and its state:
 
 | Marker | Meaning |
 |---|---|
-| `seat-never-double-booked · holding` | Seen upheld. |
+| `seat-never-double-booked · holding` | Seen holding. |
 | `seat-never-double-booked · broken (production)` | A live break in that source. |
 | `… · holding, broken (local)` | Production holds; a change on your machine breaks it. |
 | `… · fixed` | Every break in the window has a fixed incident. |
-| `… · not seen` | No run marked it in the window. |
+| `… · known broken` | Declared known broken; an incident says why. |
+| `… · no signal` | No signal reported on it in the window. |
 | `… · watched by the tests` | A state or structure promise: the tests watch it, not telemetry. |
 | `… · proved here` | This file is one of the promise's tests. |
 | `… · not in this project` | The token names a promise the project does not have. |
@@ -36,12 +37,12 @@ That line ends with the promise's name and its state:
 
 **Hover a marked line** for the promise's sentence, its state in each source,
 and when it last broke or was last seen. "Last broke" is the time of the
-promise's newest violation, shown in your own time zone, not the time of its
-newest run; "last seen" is the newest run of any outcome.
+promise's newest break, shown in your own time zone, not the time of its
+newest run; "last seen" is the newest signal of any outcome.
 
 **A break** also appears in the Problems list, and as one notification the
 first time it is read. It is not told again while it lasts, however many more
-violations arrive or reads fail in between. Once the break's incident is marked
+breaks arrive or reads fail in between. Once the break's incident is marked
 fixed, the next read shows `fixed` and clears the Problem, with no reload. A
 later break is told again.
 
@@ -126,7 +127,7 @@ sequenceDiagram
   participant CLI as indusk promises health --json --every 5
   participant Ed as VS Code
   participant C as claude
-  App->>J: span marks the promise violated
+  App->>J: span signals the promise broken
   CLI->>J: read (every 5 s)
   CLI-->>Ed: one JSON line: the promise is red
   Ed->>Ed: marker turns broken, a Problem, one notification

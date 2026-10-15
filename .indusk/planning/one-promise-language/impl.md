@@ -279,7 +279,7 @@ With the stored words settled, this phase changes what people see on screen and 
 
 #### Build Phase 2 Document
 
-- [ ] The admin and editor reference pages show the new labels.
+- [x] The admin and editor reference pages show the new labels.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/overview.md` (the chip legend), `reference/admin-ui/promise-page.md`, `guide/promises-in-your-editor.md`.
