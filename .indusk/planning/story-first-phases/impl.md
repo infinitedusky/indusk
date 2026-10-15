@@ -359,7 +359,7 @@ The save check and the plan page are ready. This phase makes the planner use the
   Step 7 in `skills/planner.md`, a "**Open each phase with a summary, written for someone without the shorthand.**" paragraph beside "**Name every phase's tier.**": the paragraph says what the phase does for the plan and how it hands to the next; the sentence says what will be true. The reader has worked on the project but knows none of this plan's shorthand: no row labels, no abbreviations, no nicknames, no pronoun whose referent is unclear; names, paths, commands, code and row labels go in the fold. The test before writing: "would someone who has worked here, but never read this plan, know what every noun in this sentence refers to?" Before/after example: "Build Phase 1: the checkers only read top-level lines" → "The two scripts that check an impl file, one when it is saved and one when a box is ticked, stop reading text folded under a task as a ticked box or a skipped gate."
 
   </details>
-- [ ] The planning rules and the plan templates carry the shape
+- [x] The planning rules and the plan templates carry the shape
   <details><summary>Technical</summary>
 
   `templates/planning/CLAUDE.md`, "The impl": a rule entry for the shape, the opt-in and the reader without shorthand — guarded by `phase-summary-rule.test.ts` (`promise: an-impl-phase-explains-itself`); sync `.indusk/planning/CLAUDE.md`. `templates/workflows/{bugfix,refactor,feature}.md`: their impl skeletons in the shape. `skill-sync-parity.test.ts` and `workflow-types-parity` stay green.
