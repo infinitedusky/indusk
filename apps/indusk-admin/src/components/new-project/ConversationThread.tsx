@@ -4,7 +4,7 @@ import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Markdown } from "@/components/Markdown";
-import { EventView } from "@/components/session/SessionPanel";
+import { EventView, type Replied } from "@/components/session/SessionPanel";
 import { Button } from "@/components/ui/Button";
 import { Message } from "@/components/ui/Message";
 import { agentState, type Turn, turnsOf } from "@/lib/conversation-turns";
@@ -34,8 +34,8 @@ export function ConversationThread({
   events: readonly StartedEvent[];
   /** An agent is running: what it waits on can be answered, and it can be stopped. */
   running: boolean;
-  onAnswer: (requestId: string, answers: Record<string, string>) => void;
-  onDecide: (requestId: string, allow: boolean) => void;
+  onAnswer: (requestId: string, answers: Record<string, string>) => Replied;
+  onDecide: (requestId: string, allow: boolean) => Replied;
   /** Reply in the person's own words; absent, the thread offers no reply box. */
   onSay?: (text: string) => void;
   onStop?: () => void;
@@ -55,8 +55,18 @@ export function ConversationThread({
     setDraft("");
   };
   const turns = turnsOf(events, { answered, running });
-  const done = (requestId: string) =>
+  // A click closes its prompt at once; a reply the server refuses opens it again.
+  const settle = (requestId: string, reply: Replied) => {
     setAnswered((prev) => new Set(prev).add(requestId));
+    void Promise.resolve(reply).then((accepted) => {
+      if (accepted === false)
+        setAnswered((prev) => {
+          const next = new Set(prev);
+          next.delete(requestId);
+          return next;
+        });
+    });
+  };
   const toggle = (at: number, open: boolean) => {
     setToggled((prev) => {
       const next = new Set(prev);
@@ -77,14 +87,12 @@ export function ConversationThread({
             turn={turn}
             open={initiallyOpen !== toggled.has(at)}
             onToggle={(open) => toggle(at, open)}
-            onAnswer={(requestId, answers) => {
-              onAnswer(requestId, answers);
-              done(requestId);
-            }}
-            onDecide={(requestId, allow) => {
-              onDecide(requestId, allow);
-              done(requestId);
-            }}
+            onAnswer={(requestId, answers) =>
+              settle(requestId, onAnswer(requestId, answers))
+            }
+            onDecide={(requestId, allow) =>
+              settle(requestId, onDecide(requestId, allow))
+            }
           />
         </div>
       ))}
@@ -137,8 +145,8 @@ function TurnView({
   turn: Turn;
   open: boolean;
   onToggle: (open: boolean) => void;
-  onAnswer: (requestId: string, answers: Record<string, string>) => void;
-  onDecide: (requestId: string, allow: boolean) => void;
+  onAnswer: (requestId: string, answers: Record<string, string>) => Replied;
+  onDecide: (requestId: string, allow: boolean) => Replied;
 }) {
   if (turn.who === "you") {
     return (
