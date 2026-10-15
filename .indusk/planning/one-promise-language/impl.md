@@ -55,8 +55,8 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A signal saying `broken` is read as broken by status, health, timeline, looks standing and the trace-shape helper | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
-| A2 | A signal saying `violated` is still read as broken everywhere A1 names | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
+| A1 | A signal saying `broken` is read as broken by status, health, timeline, looks standing and the trace-shape helper | Test Phase 1 | Build Phase 1 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
+| A2 | A signal saying `violated` is still read as broken everywhere A1 names | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
 | A3 | InDusk's own signals (evaluator, recorder, trunk commit, looks check) and the demo app write `upheld` or `violated` this release, and every reader reads `broken` as broken | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/signal-writers.test.ts, examples/seat-holds/src/seats.test.ts |
 | A4 | A promise file saying `known-violated` is read as known-broken by the registry check, the admin and the editor | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/known-broken.test.ts |
 | A5 | Opening an incident on an enforced promise writes `known-broken`; fixing the last open one returns `known-broken` or `known-violated` to enforced | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/known-broken.test.ts |
@@ -67,7 +67,7 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 | A10 | The docs' guide and reference, the skills, the planning template, the deploy files, the CLI help and the MCP tool descriptions carry no violated, violation or known-violated, and say signal, not mark, outside named attribute names | Test Phase 1 | Build Phase 3 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
 | A11 | A production signal saying `broken` becomes an incident with its owning plan reopened, exactly as a `violated` one does | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/record-broken.test.ts |
 | A12 | The always-on server announces a production signal saying `broken` exactly as one saying `violated` | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-production-break-is-recorded-unasked, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/always-on/announce-broken.test.ts |
-| A13 | The thirty days count held, broken and neither the same way for signals saying `broken`, `violated` or a mix | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-thirty-days-say-only-what-was-seen, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/standing.test.ts |
+| A13 | The thirty days count held, broken and neither the same way for signals saying `broken`, `violated` or a mix | Test Phase 1 | Build Phase 1 | written | unit | promise: the-thirty-days-say-only-what-was-seen, promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/standing.test.ts |
 
 ## Checklist
 
@@ -77,13 +77,13 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 
 Before any code changes, this phase writes the tests that say what people will read about a promise once the plan is done. They check that a signal reporting a promise broken with the new word is read as broken everywhere InDusk reads signals, that InDusk's own signals and the demo app still send the old word this release so that recording servers already deployed keep reading them, that a promise file in the old known-violated state is read as known broken, that the admin, the command line and the editor say holding, broken, held, broke and no signal, and that the docs and skills no longer say violated or call the telemetry a mark. Most fail today: a signal saying broken is silently dropped, and the old words are everywhere. One passes from the start and guards the promise that already-instrumented applications keep working: a signal saying violated is read as broken. The next phase changes the two stored words.
 
-- [ ] Confirm this plan has its own worktree.
+- [x] Confirm this plan has its own worktree.
   <details><summary>Technical</summary>
 
   `indusk worktree create one-promise-language`, or `indusk worktree assign one-promise-language /Users/the_dusky/code/sandbox/dusk-worktrees/one-promise-language` for the one `plans start` made — worktree-per-plan default.
 
   </details>
-- [ ] Write the tests that a signal is read the same whether it says broken or violated, and that the thirty days count both alike.
+- [x] Write the tests that a signal is read the same whether it says broken or violated, and that the thirty days count both alike.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/outcome-words.test.ts`: build Jaeger-shaped spans with `indusk.promise.outcome` set to `broken` and to `violated` (as `__tests__/helpers/local-jaeger.ts` builds tags) and feed them to `parseMarkedSpan`, `asMarkedSpans`, the look standing's newest-outcome rule and `lib/testing/trace-shape.ts`'s checks. A1: a `broken` span is parsed, counted among the promise's breaks and makes the look standing `broken` (red today: `parseMarkedSpan` returns null). A2: the same with `violated` (green today). A13 in `standing.test.ts`: `dayCounts`/`thirtyDaysOf` over the window built from a `broken`, a `violated` and a mixed set give the same held/broke days (red today on `broken`).
