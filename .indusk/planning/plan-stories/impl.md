@@ -293,7 +293,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 **Tier**: med — the work step's default
 
 - [x] `PlanList.tsx`: `PlanItem` names a plan `plan.title` with `initialsOf(plan.title)`; `PlanGroupSection` passes the parent's title to `NavPath` (`name`), keeping the handle in `data-parent`, `data-plan-name` and `href`; `PlaceholderRow` names a declared plan by its `declaredTitles` title, else `planTitle(undefined, name)`
-- [ ] `layout.tsx`: Needs you's `titles` come from the plans as read (`plan.title` over active and archived), not `readHealthNames`, so a worktree plan reads its own title
+- [x] `layout.tsx`: Needs you's `titles` come from the plans as read (`plan.title` over active and archived), not `readHealthNames`, so a worktree plan reads its own title
 - [ ] `PlanFrame.tsx`: the `h1` and the crumb's last part read `plan.title`; `data-plan-name` keeps the handle. The brief page shares it
 - [ ] `Nav.stories.tsx`: every plan and Path named by title (the research table's: "InDusk v2: Dawn", "InDusk v4: Day", "Workbench trust fixes", "Hooks from any folder", "Workbench execution", "Live phase progress", "Clean release build", "Context in every session", "Faster look checks", the Needs-you row "Cockpit redraw"), initials from the titles; `indusk looks stories admin` re-renders; `indusk looks status admin` lists `nav.*` and every mockup placing the nav as proposed; ask Sandy to approve them on the Looks page
   - list here what reopened and what Sandy approved
