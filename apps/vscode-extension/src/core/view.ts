@@ -12,7 +12,7 @@ export type Shown =
 	| "holding"
 	| "broken"
 	| "fixed"
-	| "not seen"
+	| "no signal"
 	| "known broken"
 	| "watched by the tests"
 	| "unreadable"
@@ -32,7 +32,7 @@ const WORD: Record<string, Shown> = {
 	red: "broken",
 	fixed: "fixed",
 	green: "holding",
-	unverified: "not seen",
+	unverified: "no signal",
 	amber: "known broken",
 	grey: "holding",
 };
@@ -49,7 +49,7 @@ export function stateIn(source: Source, promise: string): { shown: Shown; row?: 
 	if (!source.ok)
 		return { shown: "blind" in source && source.blind ? "watcher blind" : "unreadable" };
 	const row = source.rows.find((r) => r.promise === promise);
-	return row ? { shown: WORD[row.state] ?? "not seen", row } : { shown: "not seen" };
+	return row ? { shown: WORD[row.state] ?? "no signal", row } : { shown: "no signal" };
 }
 
 export function promiseOf(view: View | null, name: string) {

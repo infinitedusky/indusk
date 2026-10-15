@@ -15,7 +15,7 @@ export function hover(promise: string, view: View | null, timeZone?: string): st
 	}
 	for (const source of sourcesInOrder(view)) {
 		const { shown, row } = stateIn(source, promise);
-		// "last broke" is the newest violation, never the newest run of any outcome.
+		// "last broke" is the newest break, never the newest run of any outcome.
 		const when =
 			shown === "broken"
 				? row?.lastBroke

@@ -240,7 +240,7 @@ With the stored words settled, this phase changes what people see on screen and 
   `apps/indusk-mcp/src/tools/promise-tools.ts:173,224` (`promise_health`, `record_breaks`): "breaks", "unrecorded breaks", "signal".
 
   </details>
-- [ ] Make the editor say known broken and no signal.
+- [x] Make the editor say known broken and no signal.
   <details><summary>Technical</summary>
 
   `apps/vscode-extension/src/core/view.ts:16,35-36` (`"known broken"`, unverified → `"no signal"`); comments in `hover.ts`, `session.ts` follow.
