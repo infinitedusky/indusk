@@ -7277,6 +7277,27 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-15T01:42:46.144Z",
 			"plan": "plan-stories"
+		},
+		{
+			"mockup": "looks.default",
+			"mockupHash": "fdd1a4008adf304cb6b453110e09eba0ce06340c1a566635307097901b199aa5",
+			"componentsHash": "fc2722e7069b344bc99f0ab7070119238050e0398a97e05192981c21e69f3577",
+			"components": {
+				"nav.looks-current": "e6d991c9ecc875826e2ada68f593715080b7b0552cfe9f8f72baf4e4d27e107a",
+				"look-row.approved": "4c6bbf7e82e5044666ef0360f9425160788507618ecc20d1440df32c9bda6043",
+				"look-row.proposed": "9e6bc0f28704d2a2f0480b7ac17f762a46515102d32c76c3e22499b31324d1b0",
+				"device-choice.default": "c4d8698990a2d4beb5400aa09bc19d0e3717ec0cf826462ac854c86fa8ab2bbc",
+				"device-frame.default": "6552fc782d0151defa1028cf3b6cd8b2301108692faa44f573e51d979dbbd687",
+				"device-choice.css": "0969ea60ff4cefdc195ce9d4af1ecf1a5a7bde0746e6387989fa2a41b55bdd44",
+				"device-frame.css": "136f2539234e65e710926a2a0b54c1190a03dbc925440c2f48d96cf4bf23de18",
+				"look-row.css": "08bbb96f2c70367810148018b10172ec9b12d29f1c98cd4c0dfa9fb0cae23cee",
+				"nav.css": "c57723f174d0839b7aa9be7522e43f62e3db3f1120c45bf3015f2821488e7a41"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-15T01:42:46.650Z",
+			"plan": "plan-stories"
 		}
 	]
 }
