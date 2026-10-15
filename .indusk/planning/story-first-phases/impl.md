@@ -223,7 +223,7 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
 
 #### Build Phase 1 Context
 
-- [ ] The planning rules say that only top-level lines are read as ticked boxes or skipped gates
+- [x] The planning rules say that only top-level lines are read as ticked boxes or skipped gates
   <details><summary>Technical</summary>
 
   planning: `apps/indusk-mcp/templates/planning/CLAUDE.md`, "The impl", beside the fences entry — "a checkbox or an opt-out is read only from a column-zero line; anything indented under a task is its detail, read for row labels by the cross-reference rule and for nothing else" — guarded by `detail-is-only-read.test.ts` (`promise: hidden-detail-is-only-read`). Sync `.indusk/planning/CLAUDE.md`.

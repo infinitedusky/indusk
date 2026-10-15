@@ -101,6 +101,11 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   character at ≥ the same length with nothing after it; nest by lengthening. An
   unterminated fence is refused by the validator, naming the line. — see
   `/guide/test-trajectory`
+- **A checkbox or an opt-out is read only from a column-zero line**: anything
+  indented under a task is its detail, read for row labels by the
+  cross-reference rule and for nothing else — it never ticks a box, skips a
+  gate or adds a task. — guarded by `detail-is-only-read.test.ts`
+  (`promise: hidden-detail-is-only-read`); see `/decisions/phase-summaries`
 - `validate-impl-structure.js` re-validates the whole file when an edit's
   `new_string` contains a phase header — scope edits to checklist items.
 - Verification items are runnable commands with expected output, never "verify
