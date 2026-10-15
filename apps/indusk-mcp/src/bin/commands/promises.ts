@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { text } from "node:stream/consumers";
 import { formatAge } from "../../lib/promises/age.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
@@ -214,11 +214,11 @@ export async function promisesWatch(
  * the impl hook asks before a write lands. `--all` checks every plan folder,
  * active and archived.
  */
-export function promisesContract(
+export async function promisesContract(
 	projectRoot: string,
 	plan: string | undefined,
 	opts: { all?: boolean; implStdin?: boolean } = {},
-): void {
+): Promise<void> {
 	const refuse = (refusals: ContractRefusal[]) => {
 		for (const r of refusals) console.error(`${r.file}: ${r.message}`);
 		console.error(
@@ -251,10 +251,15 @@ export function promisesContract(
 		process.exitCode = 2;
 		return;
 	}
+	// promise: a-large-impl-gets-the-same-contract-answer — stdin is read
+	// asynchronously: a sync read of fd 0 throws EAGAIN on a pipe whose writer
+	// has not finished (an impl over the ~64 KB pipe buffer arrives in parts),
+	// so a large impl was refused at random.
+	const implText = opts.implStdin ? await text(process.stdin) : undefined;
 	const result = checkPlanContract(
 		projectRoot,
 		plan,
-		opts.implStdin ? { implText: readFileSync(0, "utf-8") } : {},
+		implText === undefined ? {} : { implText },
 	);
 	if (!result.ok) {
 		refuse(result.refusals);
