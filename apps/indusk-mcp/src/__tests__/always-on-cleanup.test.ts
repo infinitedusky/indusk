@@ -95,7 +95,9 @@ describe("A29 — one way to build a Jaeger endpoint", () => {
 		// The rule — strip trailing slashes from a Jaeger URL — is the thing
 		// that must not be restated. Two copies agree today; that is what makes
 		// a third easy to write differently.
-		const found = occurrences(/replace\(\/\\\/\+\$\/, ""\)/g);
+		// The URL form only (`.trim().replace(...)`): a file path's trailing-slash
+		// trim, as in lib/promises/interface-files.ts, is another rule.
+		const found = occurrences(/\.trim\(\)\.replace\(\/\\\/\+\$\/, ""\)/g);
 		const total = found.reduce((n, f) => n + f.count, 0);
 		expect(total, `normalized in: ${found.map((f) => `${f.file}×${f.count}`).join(", ")}`).toBe(1);
 	});

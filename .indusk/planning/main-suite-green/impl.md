@@ -111,7 +111,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 **Tier**: med — the work step's default
 
-- [ ] `always-on-cleanup.test.ts:96`: count the URL form `.trim().replace(/\/+$/, "")` only
+- [x] `always-on-cleanup.test.ts:96`: count the URL form `.trim().replace(/\/+$/, "")` only
 - [ ] `helpers/plan-worktree-fixture.ts`: write `.gitignore` with `.mcp.json` before the `git add -A` (line 89), as `init` does for a real project
 - [ ] `registry-leak-scan.test.ts:25`: stop counting `runCli(` / `runCliAsync(` as a spawn without `INDUSK_HOME` (the helper sets it, since `f67cf9bc0`); keep scanning direct `CLI_BIN` / `cli.js` spawns
 - [ ] `inbox.test.ts:43,61-63`: pass `now: new Date("2026-10-08T21:00:00Z")` to each `recordBreaks` call
