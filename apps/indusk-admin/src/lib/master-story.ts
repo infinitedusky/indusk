@@ -36,7 +36,11 @@ const queuedIn = (group: PlanGroup): number =>
   group.entries.reduce(
     (n, e) =>
       n +
-      (e.kind === "placeholder" ? 1 : e.kind === "path" ? queuedIn(e.group) : 0),
+      (e.kind === "placeholder"
+        ? 1
+        : e.kind === "path"
+          ? queuedIn(e.group)
+          : 0),
     0,
   );
 

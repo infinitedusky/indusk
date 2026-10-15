@@ -6,7 +6,7 @@ export type SubplanRowState = "released" | "draft" | "queued";
 
 export interface SubplanRowProps {
   /** Its place in the master's order, 1-up. */
-  number: number;
+  number: ReactNode;
   /** The plan's initials, two letters. */
   initials: string;
   state: SubplanRowState;
