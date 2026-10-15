@@ -246,6 +246,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 - [x] Rebuild indusk-mcp's dist (`pnpm --filter @infinitedusky/indusk-mcp build`) so the admin reads the new exports
 - [x] Author A13 (`planning-reader.title.test.ts`) and A1–A3 (`master.test.tsx`, with `path-beta`'s `beta-three` declared with a title and description in the fixture's `DECLARATIONS`) from their reviewed bodies; A1–A3 red on their own assertions
 - [ ] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [ ] Shape (`apps/indusk-admin/src/lib/planning-reader.ts`) — readPlanFolder takes six positional parameters and readActivePlans passes `undefined` to reach the last; its fifth and sixth (projectRoot, words) become one named `context` object beside boundaries. Rule: Does the name say what the code is for, rather than how it works? / Does this unit have one reason to change?
 
 #### Build Phase 1 Verification
 

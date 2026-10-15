@@ -298,15 +298,20 @@ function isMalformed(
   return doc !== null && "malformed" in doc;
 }
 
+/** What a plan folder is read against: facts about the project, not the plan. */
+interface PlanReadContext {
+  boundaries?: BoundaryRead;
+  /** The project root, for an archived plan's after-close facts (day-monitor). */
+  projectRoot?: string;
+  /** The project's product words, for a plan with no title written. */
+  words?: Record<string, string>;
+}
+
 async function readPlanFolder(
   planDir: string,
   name: string,
   archived: boolean,
-  boundaries: BoundaryRead = { records: [] },
-  /** The project root, for an archived plan's after-close facts (day-monitor). */
-  projectRoot?: string,
-  /** The project's product words, for a plan with no title written. */
-  words: Record<string, string> = {},
+  { boundaries = { records: [] }, projectRoot, words }: PlanReadContext = {},
 ): Promise<Plan> {
   const docs = await Promise.all(DOC_FILES.map((f) => readDoc(planDir, f)));
   const [
@@ -503,14 +508,10 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
         dir: join(root, PLANNING_DIR, name),
         source: "trunk",
       };
-      const plan = await readPlanFolder(
-        copy.dir,
-        name,
-        false,
-        await boundariesOf(copy.root),
-        undefined,
+      const plan = await readPlanFolder(copy.dir, name, false, {
+        boundaries: await boundariesOf(copy.root),
         words,
-      );
+      });
       const code = readPlanCode(root, name);
       return {
         ...plan,
@@ -605,14 +606,11 @@ async function readArchivedFolders(
   const words = displayWords(projectRoot);
   return Promise.all(
     folders.map((name) =>
-      readPlanFolder(
-        join(archiveDir, name),
-        name,
-        true,
+      readPlanFolder(join(archiveDir, name), name, true, {
         boundaries,
         projectRoot,
         words,
-      ),
+      }),
     ),
   );
 }
