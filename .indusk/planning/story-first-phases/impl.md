@@ -430,6 +430,7 @@ This phase tests two ways the finished plan may still break its promises, and fi
   `apps/indusk-mcp/skills/falsify.md` and `skills/cleanup.md`: beside the existing template, a variant for `phase_summary: required` — a `**Tier**:` line, a summary paragraph instead of the `**Goal**:` label alone, each task a plain sentence with its code and row labels in an indented `<details><summary>Technical</summary>` fold (the Verification template's `T{M}:` moves into the fold). Sync `.claude/skills/falsify/SKILL.md` and `.claude/skills/cleanup/SKILL.md` byte-equal.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 4 Verification
 
