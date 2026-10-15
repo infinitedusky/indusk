@@ -265,7 +265,7 @@ This phase is the part Sandy sees in the admin. The code that reads an impl for 
   `src/lib/impl-parser-core.ts`: `ImplPhase.summary?: string` — the paragraph lines after the heading's `**Tier**:`/`**Goal**:` labels and before the first item or `####`. `ChecklistItem.detail?: string` — the indented block under an item, de-indented by its first line's indent, `<details>`/`<summary>…</summary>`/`</details>` lines removed, fences kept (the fence mask must not drop indented fences that belong to an item's detail). `note` is unchanged for items with no `<details>`. Mirror in `_impl-phases.js` only if a hook reads it (none does today).
 
   </details>
-- [ ] The admin's phase list carries the paragraph and the detail through to the page
+- [x] The admin's phase list carries the paragraph and the detail through to the page
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/lib/phases.ts` and `lib/plan-parts-view.ts`: carry `summary` and `detail`; `lib/markdown-export.ts` writes the detail back as it was.
