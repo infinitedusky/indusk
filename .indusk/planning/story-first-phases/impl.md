@@ -204,12 +204,13 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
   Until the two tasks above land, the save check requires labels on the Verification line, so this impl carries them in a trailing bracket. Remove each bracket (the Test Phase 1 and Build Phase 1–3 Verification lines), keeping the labels in the details; the save of that edit runs the new rule over this file.
 
   </details>
-- [ ] Shape review of the two changed scripts
+- [x] Shape review of the two changed scripts
   <details><summary>Technical</summary>
 
   Per `/work`: review the changes to `check-gates.js`, `validate-impl-structure.js` and `lib/trajectory/validator.ts` against the enabled extensions' prose rules; findings land as unchecked items in this phase.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
