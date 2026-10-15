@@ -3,6 +3,7 @@ title: "User Zero — continuous build steered by use"
 date: 2026-09-16
 status: in-progress
 workflow: spike
+closed_reason: "Closed 2026-10-15 by Sandy: served its purpose; the direction lives in promise-core."
 ---
 
 # User Zero — Research

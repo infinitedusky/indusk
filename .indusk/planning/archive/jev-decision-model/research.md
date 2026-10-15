@@ -3,6 +3,7 @@ title: "Jev (TypeSafe AI) — a typed-decision model, and whether InDusk has a s
 date: 2026-09-18
 status: complete
 workflow: spike
+closed_reason: "Closed 2026-10-15 by Sandy: served its purpose; the direction lives in promise-core."
 ---
 
 # Jev — Research

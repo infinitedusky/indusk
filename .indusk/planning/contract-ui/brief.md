@@ -28,7 +28,7 @@ workflows with the decision it is waiting on. Those are the pages; this plan
 is the home view and the premise level above them, and it changes nothing
 inside them. The two do not overlap: a page belongs to stage 1, the hierarchy
 that arranges the pages belongs here. Stage 1 is on the demo's path to the
-recording; this plan is a child of the [demo](../indusk-demo/master.md) after
+recording; this plan is a child of the [demo](../archive/indusk-demo/master.md) after
 the launch, once plan-premises exists to give it a top level. The mockups both
 stages were drawn from are in
 [`.indusk/research/promise-ui/`](../../research/promise-ui/README.md).
@@ -60,7 +60,7 @@ stages were drawn from are in
 - Premises are defined by [plan-premises](../plan-premises/brief.md): never a
   gate, read by an advocate and a critic, scored by the person with a date and a
   reason. This plan draws them; plan-premises produces them.
-- The demo ([indusk-demo](../indusk-demo/master.md)) runs through the admin; its
+- The demo ([indusk-demo](../archive/indusk-demo/master.md)) runs through the admin; its
   story is this manifesto's.
 
 ## Scope

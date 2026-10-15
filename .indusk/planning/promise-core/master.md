@@ -3,14 +3,46 @@ title: "Promise core"
 description: "Makes the promise the first thing a person meets in InDusk; plans and gates are extras for larger work."
 date: 2026-10-05
 status: living
-# Ordered children. None is created yet; a name with no folder renders as a
-# placeholder. The names are provisional until each is opened with /planner.
+# Ordered children, grouped under the eight headline children (comments). Since
+# 2026-10-15 every open plan sits here: Dawn, Day and the demo masters are closed.
+# A name with no folder renders as a placeholder.
 subplans:
+  # 1. mark-first — a plan is one promise; clauses proved by marks
   - mark-first
+  - telemetry-destinations
+  - workbench-watch-provisioning
+  - demo-scenarios
+  - embedded-browser
+  # 2. expectations-loop — expectations read back into what is built next
   - expectations-loop
+  - plan-premises
+  # 3. looks-as-promises — visual promises; the design system
   - looks-as-promises
+  - stories-replace-mockups
+  - mockup-matching
+  - looks-check-speed
+  - approvals-merge-cleanly
+  - owned-changes
+  - plan-page-shows-its-looks
+  # 4. open-core-boundary — the core ships on its own
   - open-core-boundary
+  - house-rules-out
+  - context-reaches-every-session
+  - instance-ports
+  - indusk-release
+  - release-preconditions
+  - clean-release-build
+  # 5. workbench-server
   - workbench-server
+  # 6. adopt-existing-project
+  - adopt-existing-project
+  # 7. the cockpit, organised around promises
+  - one-conversation-view
+  - contract-ui
+  - cockpit-audit-fixes
+  - decided-prompts-stay-closed
+  - template-reload-on-cold-cache
+  # 8. workflow-builder
   - workflow-builder
 ---
 
@@ -22,7 +54,7 @@ measurements behind it are in [research.md](research.md). The aim it serves is
 the seven sentences in [plan-premises/aim.md](../plan-premises/aim.md).
 
 Nothing here is built and no plan below is created. On 2026-10-05 this
-master was reconciled with the [Day master](../indusk-v4-day/master.md): three
+master was reconciled with the [Day master](../archive/indusk-v4-day/master.md): three
 decisions are recorded under Decided, and `planner-promises`' brief and the Day
 master were edited to match. No other plan has been edited. This is the record
 to work from.
@@ -114,7 +146,8 @@ switching.
 - **The sorting rule:** server only if it must run continuously or know more
   than one person; the server holds nothing the files do not.
 
-**The plans, in order**
+**The plans, in order** — each headline child below gathers the open plans
+listed under it in `subplans:`.
 
 1. **`mark-first`** — merged with `promise-first-build`: clauses, marks
    (server and browser), the close rule, layering, the diagnosis; and a plan
@@ -133,7 +166,15 @@ switching.
    leaves the package). Ships with visual promises in the core.
 5. **`workbench-server`** — one box per team, per-person Claude accounts,
    sync; Anthropic's own cloud sessions checked first.
-6. **`workflow-builder`** — kept, not yet reconsidered against the above.
+6. **`adopt-existing-project`** — bringing an existing codebase (Numero) in:
+   name its parts, its founding brief, first promises with marks.
+7. **The cockpit, organised around promises** — `one-conversation-view` (on a
+   plan, one agent present on every page, rendered the same everywhere, and
+   matching the new-project conversation's thread), `contract-ui` (the admin
+   organised around premises, promises and phases), and the in-flight
+   `cockpit-audit-fixes`, `decided-prompts-stay-closed`,
+   `template-reload-on-cold-cache`.
+8. **`workflow-builder`** — kept, not yet reconsidered against the above.
 
 **What changes in what exists:** the test plan becomes the clause plan (each
 clause and its mark, its tests beside); `a-closed-plan-kept-its-promises` closes
@@ -340,7 +381,7 @@ rows for `day-contract` and `day-claim-evidence`. The rest have not been.
 | [test-kinds](../archive/test-kinds/brief.md): five kinds of test, each run at its own moment | closed 2026-10-05 | Agrees on substance: watching is what promises are for. Two vocabularies used the word "kind", one for promises and one for tests. Decided 2026-10-05: tests have a level, promises keep kind; `planner-promises` does the rename. |
 | [admin-plan-authoring](../admin-plan-authoring/brief.md), demo step 3: New plan and Build from the admin | brief draft, spike done | Unchanged for the demo. Afterwards, starting a plan asks which workflow, and the builder reuses its request handling. |
 | [contract-ui](../contract-ui/brief.md): the admin organised around premises, promises and phases | brief and manifesto draft | The lowest level is "phases". A promise built on the short path has none. That level becomes the work toward a promise, which may be a phase or only a test run. |
-| [indusk-demo](../indusk-demo/master.md): a new project, start to finish, recorded | living | The script stands as written. The short path is added at the end. |
+| [indusk-demo](../archive/indusk-demo/master.md): a new project, start to finish, recorded | living | The script stands as written. The short path is added at the end. |
 | `day-contract`, component 4c′ in the Day master plan: the check at change time | not created; after the demo | Everything else first proposed for it is `planner-promises`, including changing or replacing a promise. What remains is the check: code that touches a promise's site, in a plan that does not name it, is recorded. |
 | `day-claim-evidence`, component 5 in the Day master plan: red observed, amendments recorded | not created | Decided 2026-10-05: it keeps "red observed" and builds it once, recorded by the system; `promise-first-build` reuses it. The amendment log and the gate ledger stay. |
 | `day-claim-binding` and `day-uncovered-surface`, components 6 and 7 in the Day master plan | not created | Both are specified per change and per test row. The audit this conversation described is the same two checks run per promise across the registry, when a promise's test or marked code changes. |
