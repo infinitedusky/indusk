@@ -54,10 +54,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
   its health cache); no other page polls. — see `/reference/admin-ui/overview`
 - **The sidebar tree is derived entirely from declarations** — one root node
   (`readPlanDeclarations().root`) with parents and unclaimed plans beneath it;
-  directly under the root means unclaimed. Grouping is
+  directly under it means unclaimed. Grouping is
   `lib/plan-groups.ts`; subplan children resolve against active + archived
-  with active winning. A master's page is `plan.master`: `SubplanRow`s and
-  counts from `lib/master-story.ts`, the nav's group.
+  with active winning. A master's page is a plan page with its story
+  (`plan.master`) for the rail: it keeps every control.
 - **Phases render through `parseImplString`** (the `impl-parser` subpath) —
   never a local heading regex; rows attach by `(passesAtKind, passesAt)`. The
   active phase is the most recent boundary record among open phases;

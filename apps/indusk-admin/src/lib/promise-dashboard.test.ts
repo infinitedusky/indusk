@@ -1,11 +1,7 @@
 // promise: a-plan-reads-by-its-title
 import type { StandingRow } from "@infinitedusky/indusk-mcp/promises/standing";
 import { describe, expect, it } from "vitest";
-import {
-  buildRows,
-  groupRows,
-  type RowContext,
-} from "@/lib/promise-dashboard";
+import { buildRows, groupRows, type RowContext } from "@/lib/promise-dashboard";
 
 /**
  * plan-stories A26: the Promises page names each plan by its title, a Path
@@ -72,6 +68,8 @@ describe("the Promises page names a plan by its title", () => {
     const headings = groupRows(rows, { group: "path", sort: "name" }).map(
       (g) => g.heading,
     );
-    expect(headings.sort()).toEqual(["Indusk v5 dawn", "InDusk v4: Day"].sort());
+    expect(headings.sort()).toEqual(
+      ["Indusk v5 dawn", "InDusk v4: Day"].sort(),
+    );
   });
 });

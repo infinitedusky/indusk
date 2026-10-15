@@ -11,7 +11,12 @@ import { LooksToolbar } from "./LooksToolbar";
 
 const checkouts = [
   { plan: null, branch: "main", root: "/p", proposed: 0 },
-  { plan: "cockpit-redraw", branch: "plan/cockpit-redraw", root: "/w", proposed: 2 },
+  {
+    plan: "cockpit-redraw",
+    branch: "plan/cockpit-redraw",
+    root: "/w",
+    proposed: 2,
+  },
 ] as unknown as CountedCheckout[];
 
 describe("the Looks checkout picker names a plan by its title", () => {

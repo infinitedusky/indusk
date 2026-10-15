@@ -33,7 +33,9 @@ const writePlan = (checkout: string, brief: string, impl?: string) => {
 };
 
 const approvedImpl = (brief: string) =>
-	`---\nstatus: approved\n${Object.entries(approvalFrontmatter(brief, "t", new Date("2026-10-12T00:00:00Z")))
+	`---\nstatus: approved\n${Object.entries(
+		approvalFrontmatter(brief, "t", new Date("2026-10-12T00:00:00Z")),
+	)
 		.map(([k, v]) => `${k}: ${v}`)
 		.join("\n")}\n---\n\n# impl\n`;
 

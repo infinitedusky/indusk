@@ -6,8 +6,8 @@ import {
   DESCRIPTIONS,
   HISTORY,
   PROJECT,
-  SESSIONS,
   resetFixture,
+  SESSIONS,
   titleOf,
 } from "@/__tests__/helpers/cockpit-fixture";
 
@@ -64,7 +64,10 @@ vi.mock("@/lib/planning-reader", async () => {
         state.worktree && p.name === "path-beta"
           ? {
               ...p,
-              worktree: { path: "/mock/wt/path-beta", branch: "plan/path-beta" },
+              worktree: {
+                path: "/mock/wt/path-beta",
+                branch: "plan/path-beta",
+              },
             }
           : p,
       ),
@@ -209,14 +212,21 @@ describe("a master plan's page keeps what any plan page shows around its story",
   it("A25 a master that waits on a question shows the decision card with its question", async () => {
     SESSIONS.push(asking);
     const screen = await open("path-beta");
-    const card = screen.container.querySelector('[data-testid="decision-card"]');
+    const card = screen.container.querySelector(
+      '[data-testid="decision-card"]',
+    );
     expect(card?.getAttribute("data-on")).toBe("question");
     expect(card?.textContent).toContain("Which beta plan goes first?");
   });
 
   it("A25 a master with a waiting amendment shows it, with the way to approve it", async () => {
     state.amendments = [
-      { part: "promise", name: "a-master-plan-tells-its-story", was: "old", now: "new" },
+      {
+        part: "promise",
+        name: "a-master-plan-tells-its-story",
+        was: "old",
+        now: "new",
+      },
     ];
     const screen = await open("path-beta");
     expect(
@@ -236,7 +246,9 @@ describe("a master plan's page keeps what any plan page shows around its story",
       },
     ];
     const screen = await open("path-beta");
-    expect(screen.container.textContent).toContain("doesn't trust this project");
+    expect(screen.container.textContent).toContain(
+      "doesn't trust this project",
+    );
     expect(
       screen.container.querySelectorAll('[data-testid="history-entry"]'),
     ).toHaveLength(1);

@@ -73,9 +73,9 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 | A22 | A plan whose title in its own worktree differs from its copy on the trunk is named by the worktree's title on the Promises page and in the editor, as the nav names it — one plan, one name everywhere | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-mcp/src/lib/promises/display.test.ts |
 | A23 | A plan's stage reads the same in the nav and on its master's page — waiting on the person, released, and each status — because both ask one rule | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/plan-stage.test.ts |
 | A24 | A plan declared in a master with no folder yet reads by its declared title, else its handle in words through the project's product words, the same in the nav and on the master's page | Build Phase 7 | Build Phase 7 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/plan-groups.test.ts |
-| A25 | A master plan's page still shows what any plan page shows around its story — the trust notice, a waiting amendment or decision with its answer, the history and the way to ask about the plan — so a master that waits on the person can be answered from its page | Build Phase 8 | Build Phase 8 | written | unit | promise: decisions-wait-in-one-place, promise: a-master-plan-tells-its-story | apps/indusk-admin/src/app/p/[project]/plan/[name]/master.test.tsx |
-| A26 | The Promises page, a promise's page, the incidents table and the Looks page's plan picker name each plan by its title, a Path group by its master's title, and a plan with no title, or a declared title that is just its handle, as its handle in words — never a bare folder name | Build Phase 8 | Build Phase 8 | written | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/promise-dashboard.test.ts |
-| A27 | A plan whose brief changed after approval is found waiting on its amendment by the admin's own lookup, read in its worktree — not only by a stand-in; a plan whose brief is unchanged, or whose approval cannot be read, waits on nothing | Build Phase 8 | Build Phase 8 | written | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/amendments.test.ts |
+| A25 | A master plan's page still shows what any plan page shows around its story — the trust notice, a waiting amendment or decision with its answer, the history and the way to ask about the plan — so a master that waits on the person can be answered from its page | Build Phase 8 | Build Phase 8 | passing | unit | promise: decisions-wait-in-one-place, promise: a-master-plan-tells-its-story | apps/indusk-admin/src/app/p/[project]/plan/[name]/master.test.tsx |
+| A26 | The Promises page, a promise's page, the incidents table and the Looks page's plan picker name each plan by its title, a Path group by its master's title, and a plan with no title, or a declared title that is just its handle, as its handle in words — never a bare folder name | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/promise-dashboard.test.ts |
+| A27 | A plan whose brief changed after approval is found waiting on its amendment by the admin's own lookup, read in its worktree — not only by a stand-in; a plan whose brief is unchanged, or whose approval cannot be read, waits on nothing | Build Phase 8 | Build Phase 8 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/amendments.test.ts |
 
 ### Deferred Verification
 
@@ -450,13 +450,13 @@ Titles and descriptions come from research.md's tables. A description already wr
 - [x] `amendmentsWaiting` gets its own test (changed brief → its amendments; unchanged brief → none; unreadable approval → none), and `decisions-reader`'s amendment read is tested against a real plan folder in a worktree, not the cockpit fixture's stand-in
 
 #### Build Phase 8 Verification
-- [ ] A25, A26, A27 pass (`cd apps/indusk-admin && pnpm exec vitest run 'src/app/p/[project]/plan/[name]/master.test.tsx' src/lib/promise-dashboard.test.ts`; `cd apps/indusk-mcp && pnpm exec vitest run src/lib/plans/amendments.test.ts`); A1–A5, A11–A16, A23, A24 still pass; `pnpm exec vitest related` over the changed files in both packages; A6 passes in the system tier; tsc and biome clean on changed files
+- [x] A25, A26, A27 pass (`cd apps/indusk-admin && pnpm exec vitest run 'src/app/p/[project]/plan/[name]/master.test.tsx' src/lib/promise-dashboard.test.ts`; `cd apps/indusk-mcp && pnpm exec vitest run src/lib/plans/amendments.test.ts`); A1–A5, A11–A16, A23, A24 still pass; `pnpm exec vitest related` over the changed files in both packages; A6 passes in the system tier; tsc and biome clean on changed files
 
 #### Build Phase 8 Context
-- [ ] `apps/indusk-admin/CLAUDE.md` (over budget, shrinking edits only): fold into the plan-page entry that a master's page is a plan page with its story in place of the rail — every control a plan page has, it has
+- [x] `apps/indusk-admin/CLAUDE.md` (over budget, shrinking edits only): fold into the plan-page entry that a master's page is a plan page with its story in place of the rail — every control a plan page has, it has
 
 #### Build Phase 8 Document
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the master page keeps a plan page's decision, history and ask; the Promises page and the incidents table name plans by title
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the master page keeps a plan page's decision, history and ask; the Promises page and the incidents table name plans by title
 
 ## Files Affected
 

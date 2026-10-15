@@ -191,7 +191,7 @@ sequenceDiagram
 
 | Query | Values | Does |
 |-------|--------|------|
-| `?group=` | `state` (default), `plan`, `path` | One group per standing, per plan (headed by its title) or per Path (the innermost one declaring the plan; plans no Path declares fall under *No Path*). Every promise is in exactly one group |
+| `?group=` | `state` (default), `plan`, `path` | One group per standing, per plan (headed by its title) or per Path (headed by its master's title; the innermost one declaring the plan; plans no Path declares fall under *No Path*). A plan whose title cannot be read reads as its folder name in words, never as the bare folder name Every promise is in exactly one group |
 | `?sort=` | `activity` (default), `name`, `plan` | Latest activity puts the most recently seen first; name and plan are alphabetical |
 | `?q=` | text | Keeps promises whose sentence, name or plan contains the text, whatever the case |
 
@@ -227,7 +227,7 @@ The colour of a violation is its incident's state, through the same rule the chi
 
 The health map sits in `bars/labels.ts` (`PROMISE_HEALTH_CHIP`, `satisfies Record<PromiseHealth, …>`) beside the state map.
 
-**Incidents stay loud** (incident-recording). The incidents table gives each open incident's status as how long it has been open (`open 2 days`, in the same words `indusk promises status` uses: one function, the package's `promises/age`) and links its owner, naming the Maintenance phase where the fix happens; a fixed incident says when it was fixed. **What the admin heard** is counted in a "heard (30 days)" column, one per promise, from this machine's record of every production break its recorder heard (`heard.jsonl` in the project's home, read through the package's `promises/heard` subpath by `readProjectHeard`). The record outlives what the production Jaeger keeps and counts breaks that happened while no page was open. While production cannot be read, the count is still shown, "as of" the last break it holds, and never as a fresh zero. The bar chart of checks per time bucket is plan-cockpit's; this record is what it will draw.
+**Incidents stay loud** (incident-recording). The incidents table gives each open incident's status as how long it has been open (`open 2 days`, in the same words `indusk promises status` uses: one function, the package's `promises/age`) and links its owner, naming the plan by its title and the Maintenance phase where the fix happens; a fixed incident says when it was fixed. **What the admin heard** is counted in a "heard (30 days)" column, one per promise, from this machine's record of every production break its recorder heard (`heard.jsonl` in the project's home, read through the package's `promises/heard` subpath by `readProjectHeard`). The record outlives what the production Jaeger keeps and counts breaks that happened while no page was open. While production cannot be read, the count is still shown, "as of" the last break it holds, and never as a fresh zero. The bar chart of checks per time bucket is plan-cockpit's; this record is what it will draw.
 
 A plan holding a red promise shows a **red dot in the sidebar** (`data-health="red"`), without being opened. The chip and kind maps live in `bars/labels.ts` as `satisfies Record<PromiseState, …>` / `Record<PromiseKind, …>` under the same render-parity test as the lifecycle's, so a state added without a chip fails the build naming the state.
 
@@ -371,10 +371,12 @@ Grouping is display-only — it does not change which plans the CLI or MCP repor
 
 ## The master plan page
 
-Opening a master plan (one whose `master.md` declares `subplans:`) draws `plan.master`, the approved mockup, in place of a plan's stage and parts:
+Opening a master plan (one whose `master.md` declares `subplans:`) draws `plan.master`, the approved mockup, in place of a plan's rail, status and parts, and keeps everything else a plan page offers around it:
 
 - **The master's title** as the heading, with the `master plan` tag, and **what the master is for** (its `description:`) beneath it.
 - **A count line**: how many of its plans are released, in draft and queued, and *Read the master plan*, which opens the master's own `master.md` at `/p/{project}/plan/{name}/doc/master`. The counts are the Path group's the nav counts, so the page and the nav's `released/total` cannot disagree.
 - **The plans, in order**: a `SubplanRow` for each declared plan, numbered from 1 in the order the master declares them, by its title and description. A released plan says *Released*; a plan in draft or being built says its stage as the nav says it; both open the plan. A declared plan with no folder yet says *Queued*, is dimmed and opens nothing, and shows the title and description its master wrote in the `subplans:` entry. A Path declared inside reads as one row, *N of M released*, opening its own master page.
+
+- **What any plan page shows around its story**: the trust notice; the waiting amendment, or the decision the master waits on (a question, approval or review), answered from this page; *Ask about this plan* and the build controls where the master has a worktree; and its **History**. A master that waits on you is listed under *Needs you* and can be answered from its own page.
 
 The same degrade rules apply: if the master's declarations are missing or corrupt, the page falls back to the standard plan page. A plan with no documents at all renders its header only.

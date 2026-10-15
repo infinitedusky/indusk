@@ -146,7 +146,8 @@ export function LooksToolbar({
               current={c.plan === checkout}
               title={c.branch ?? undefined}
             >
-              {checkoutName(c.plan, c.branch, planTitles)} · {c.proposed} proposed
+              {checkoutName(c.plan, c.branch, planTitles)} · {c.proposed}{" "}
+              proposed
             </ChoiceLink>
           ))}
         </Choice>

@@ -1,12 +1,12 @@
 import {
-  planTitle,
-  readHealthNames,
-} from "@infinitedusky/indusk-mcp/promises/display";
-import {
   countedCheckouts,
   readLooks,
   resolveLooksCheckout,
 } from "@infinitedusky/indusk-mcp/looks/overview";
+import {
+  planTitle,
+  readHealthNames,
+} from "@infinitedusky/indusk-mcp/promises/display";
 import { showOf } from "@/components/looks/address";
 import { LooksBody, type OpenMockup } from "@/components/looks/Looks";
 import type { OpenStory } from "@/components/looks/Stories";
