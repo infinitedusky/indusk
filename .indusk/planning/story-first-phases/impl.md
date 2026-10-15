@@ -186,7 +186,7 @@ Two scripts check an impl file: one when the file is saved (`validate-impl-struc
   `hooks/validate-impl-structure.js`, `isOptOutLine`: require the line to start at column zero (`!/^\s/.test(line)`) before matching `(none needed)`, `(not applicable)` or `skip-reason:`. Check `check-gates.js` and `_impl-phases.js` for the same unanchored read and anchor it alike.
 
   </details>
-- [ ] For an impl that opts in, the save check refuses a phase with no summary, a task with code on its line, and a row label in either
+- [x] For an impl that opts in, the save check refuses a phase with no summary, a task with code on its line, and a row label in either
   <details><summary>Technical</summary>
 
   New rule in `validate-impl-structure.js`, gated on `/^phase_summary:\s*required/m` like `test_phases`. For each `###` phase: the lines between its heading (or `**Tier**:` / `**Goal**:` line) and its first item or `####` must hold at least one non-blank, non-label paragraph line — refused naming the phase; that paragraph must hold no `\b[TA]\d+\b` — refused naming the phase and the label. For each column-zero item: its text after the box must hold no backtick and no `\b[TA]\d+\b` — refused naming the item: "a task is one plain sentence for someone who knows the project but none of its shorthand; code and row labels belong in its Technical detail". The Verification exemption below applies only to the cross-reference rule, not to this one. Register sections (`#### Deferred to …`, `#### Regression Guards`) hold entries, not items, and are not read. Message ends `promise: an-impl-phase-explains-itself`.
