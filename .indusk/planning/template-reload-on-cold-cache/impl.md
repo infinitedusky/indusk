@@ -46,7 +46,7 @@ approved_at: "2026-10-15T16:09:05.019Z"
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | Every package the browser template imports is bundled for its test page before the page loads, so none is discovered while a test runs | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
-| A2 | The template tests, run three times, each from a deleted Vite cache, pass every time, and Vite never reports that it reloaded a test | Build Phase 1 | Build Phase 1 | passing | live check | promise: a-browser-test-passes-on-a-cold-cache | (recorded in the impl with its result) |
+| A2 | The template tests, run three times, each from a deleted Vite cache, pass every time, and Vite never reports that it reloaded a test | Build Phase 1 | Build Phase 1 | passing | live check | a live check of a-browser-test-passes-on-a-cold-cache, recorded in Build Phase 1; the promise is proven by A1, A5, A6 and A7 | manual: three cold runs, recorded under Build Phase 1 |
 | A3 | Landing's install step syncs the checkout's dependencies to the lockfile, refusing a lockfile that does not match, before it builds anything | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-installs-after-a-dependency-change | apps/indusk-mcp/src/__tests__/install-local.test.ts |
 | A4 | An evaluator run with a model that does not exist is recorded as a failure naming that model, and the promise status shows the violation, with the Claude Code installed today | Test Phase 1 | Build Phase 1 | passing | contract | keeps the day-monitor end-to-end test about the monitor, not about Claude Code's wording | apps/indusk-mcp/e2e/day-monitor.e2e.test.ts |
 | A5 | A package the browser template imports only for its side effect, or one outside OpenTelemetry, and missing from the pre-bundle list, turns the pre-bundle guard red; today the guard sees only named imports of OpenTelemetry packages | Phase 0 | Build Phase 2 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
@@ -354,7 +354,6 @@ A fresh reader found three gaps after the build. The retrospective skill, which 
 | `apps/indusk-mcp/e2e/day-monitor.e2e.test.ts` | match the model name |
 | `apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts` | new (A1) |
 | `apps/indusk-mcp/src/__tests__/install-local.test.ts` | new (A3) |
-| `apps/indusk-mcp/templates/CLAUDE.md` | one rule line |
 | `apps/docs/src/reference/skills/retrospective.md` | the install step; recovery from a refused install |
 | `apps/indusk-mcp/skills/retrospective.md` + `.claude/skills/retrospective/SKILL.md` | the install step syncs first; recovery from a refused install |
 
