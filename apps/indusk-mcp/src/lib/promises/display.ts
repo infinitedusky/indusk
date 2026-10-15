@@ -49,13 +49,18 @@ export function promiseWords(name: string, words: Record<string, string> = {}): 
 }
 
 /**
- * A plan's title: the brief's, up to " — "; its folder name when there is none.
+ * A plan's title: the written one up to " — "; when none is written, or it is
+ * only the handle (as `indusk plans start` writes it), the handle in words.
  *
  * promise: a-plan-reads-by-its-title
  */
-export function planTitle(title: string | undefined, folder: string): string {
+export function planTitle(
+	title: string | undefined,
+	handle: string,
+	words: Record<string, string> = {},
+): string {
 	const short = title?.split(" — ")[0]?.trim();
-	return short ? short : folder;
+	return short && short !== handle ? short : promiseWords(handle, words);
 }
 
 /** When a plan started, landed and shipped; `null` for what has not happened. */
@@ -89,6 +94,33 @@ function frontmatter(text: string | null, key: string): string | undefined {
 		return Number.isNaN(value.getTime()) ? undefined : value.toISOString().slice(0, 10);
 	}
 	return typeof value === "string" ? value.trim() || undefined : undefined;
+}
+
+/**
+ * A plan's name and description as written: the title and the `description:`
+ * of its `brief.md`, else of its `master.md` (a master plan has no brief). The
+ * title goes through `planTitle`, so a plan with none written reads as its
+ * handle in words; `description` is null when neither file writes one.
+ *
+ * promise: a-plan-reads-by-its-title
+ */
+export function readPlanName(
+	planDir: string,
+	handle: string,
+	words: Record<string, string> = {},
+): { title: string; description: string | null } {
+	const docs = [read(join(planDir, "brief.md")), read(join(planDir, "master.md"))];
+	const written = (key: string) => {
+		for (const doc of docs) {
+			const value = frontmatter(doc, key);
+			if (value !== undefined) return value;
+		}
+		return undefined;
+	};
+	return {
+		title: planTitle(written("title"), handle, words),
+		description: written("description") ?? null,
+	};
 }
 
 /** The earliest changelog release that names `plan` in parentheses — the fallback for a project with no release commits. */
@@ -290,10 +322,7 @@ export function readHealthNames(projectRoot: string): HealthNames {
 	const names: HealthNames = { planTitles: {}, planDates: {}, words: displayWords(projectRoot) };
 	for (const folder of planFolders(projectRoot)) {
 		if (folder.plan in names.planTitles) continue;
-		names.planTitles[folder.plan] = planTitle(
-			frontmatter(read(join(folder.dir, "brief.md")), "title"),
-			folder.plan,
-		);
+		names.planTitles[folder.plan] = readPlanName(folder.dir, folder.plan, names.words).title;
 		names.planDates[folder.plan] = planDates(folder.dir, changelog, {
 			archived: folder.archived,
 			trunk,

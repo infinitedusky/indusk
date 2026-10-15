@@ -234,8 +234,8 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 **Tier**: med — the work step's default
 
-- [ ] Confirm this plan's worktree: `/Users/the_dusky/code/sandbox/dusk-worktrees/plan-stories` on `plan/plan-stories`, assigned (`indusk worktree list` names it; if not, `indusk worktree assign plan-stories <path>`) — worktree-per-plan default
-- [ ] `display.ts`: `planTitle(title, handle, words = {})` answers the title up to " — "; when that is empty or equal to `handle`, `promiseWords(handle, words)`. New `readPlanName(planDir, handle, words)` returns `{ title, description }` from `brief.md`, else `master.md` (`description` null when neither writes one). `readHealthNames` uses it, so a master's title is read. Grep `planTitle(` for callers first (display, `readHealthNames`, the admin's `displayMock`)
+- [x] Confirm this plan's worktree: `/Users/the_dusky/code/sandbox/dusk-worktrees/plan-stories` on `plan/plan-stories`, assigned (`indusk worktree list` names it; if not, `indusk worktree assign plan-stories <path>`) — worktree-per-plan default
+- [x] `display.ts`: `planTitle(title, handle, words = {})` answers the title up to " — "; when that is empty or equal to `handle`, `promiseWords(handle, words)`. New `readPlanName(planDir, handle, words)` returns `{ title, description }` from `brief.md`, else `master.md` (`description` null when neither writes one). `readHealthNames` uses it, so a master's title is read. Grep `planTitle(` for callers first (display, `readHealthNames`, the admin's `displayMock`)
   ```typescript
   export function planTitle(title: string | undefined, handle: string, words: Record<string, string> = {}): string;
   export function readPlanName(planDir: string, handle: string, words?: Record<string, string>): { title: string; description: string | null };
@@ -244,7 +244,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 - [ ] `plan-parser.ts`: a `subplans:` entry is a name or a mapping `{ name, title?, description? }`; both keep declared order through the same segment guard; `PlanDeclarations` gains `declaredTitles: Record<string, Record<string, { title?: string; description?: string }>>`. Grep `PlanDeclarations` importers (`plan-groups.ts`, `PlanList.tsx`, `cockpit-fixture.ts`, `new-project-cli.test.ts`) and give each the field
 - [ ] `planning-reader.ts`: `Plan` gains `title: string` and `description: string | null`, set from the copy the plan is read from (its worktree first) by `readPlanName`; every test fixture that builds a `Plan` (grep `: Plan = {` and `Plan[]` fixtures, `cockpit-fixture.ts` first) sets them, `cockpit-fixture.ts` from `TITLES` through `titleOf`
 - [ ] Rebuild indusk-mcp's dist (`pnpm --filter @infinitedusky/indusk-mcp build`) so the admin reads the new exports
-- [ ] Author A13 (`planning-reader.title.test.ts`) and A1–A3 (`master.test.tsx`, with `path-beta`'s `beta-three` declared with a title and description in the fixture's `DECLARATIONS`) from their reviewed bodies; A1–A3 red on their own assertions
+- [x] Author A13 (`planning-reader.title.test.ts`) and A1–A3 (`master.test.tsx`, with `path-beta`'s `beta-three` declared with a title and description in the fixture's `DECLARATIONS`) from their reviewed bodies; A1–A3 red on their own assertions
 - [ ] Shape: review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 1 Verification
