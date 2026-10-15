@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -288,5 +288,38 @@ describe("A16 — a plan shows the release that shipped it, whatever the changel
 		const dates = readHealthNames(REPO_ROOT).planDates;
 		expect(dates["day-promises"]?.released).not.toBeNull();
 		expect(dates["dawn-verify"]?.released).not.toBeNull();
+	});
+});
+
+describe("A22 — a plan worked in its own worktree is named by that worktree's title", () => {
+	it("A22 readHealthNames names a worktree plan by its worktree's brief, as the nav does", async () => {
+		const base = realpathSync(mkdtempSync(join(tmpdir(), "display-worktree-")));
+		const root = join(base, "proj");
+		mkdirSync(join(root, ".indusk", "planning", "p"), { recursive: true });
+		writeFileSync(join(root, ".indusk", "config.json"), '{ "mode": "full" }\n');
+		writeFileSync(
+			join(root, ".indusk", "planning", "p", "brief.md"),
+			'---\ntitle: "Trunk name"\nstatus: draft\n---\n\n# p\n',
+		);
+		git(root, ["init", "-q", "-b", "main"]);
+		git(root, ["add", "-A"]);
+		git(root, ["commit", "-qm", "init"]);
+		const wt = join(base, "proj-worktrees", "p");
+		git(root, ["worktree", "add", "-q", wt, "-b", "plan/p", "main"]);
+		writeFileSync(
+			join(wt, ".indusk", "planning", "p", "brief.md"),
+			'---\ntitle: "Worktree name"\nstatus: draft\n---\n\n# p\n',
+		);
+		const common = git(root, ["rev-parse", "--path-format=absolute", "--git-common-dir"]);
+		writeFileSync(
+			join(common, "indusk-plan-worktrees.json"),
+			JSON.stringify({
+				version: 1,
+				assignments: [
+					{ plan: "p", path: realpathSync(wt), branch: "plan/p", at: "2026-10-06T00:00:00Z" },
+				],
+			}),
+		);
+		expect((await readHealthNames(root)).planTitles.p).toBe("Worktree name");
 	});
 });
