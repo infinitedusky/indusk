@@ -44,4 +44,26 @@ describe("PhaseRow", () => {
     expect(link.getAttribute("href")).toBe("/p/x/doc/brief");
     expect(link.textContent).toContain("accepted");
   });
+
+  // promise: technical-detail-opens-on-request
+  it("an open row shows the phase's paragraph above its items", async () => {
+    const { container } = await render(
+      <PhaseRow
+        name="Phase 4"
+        count="8 of 12"
+        state="in progress"
+        tone="doing"
+        open
+        summary="This phase makes the plan page show each phase's paragraph."
+      >
+        <p>the items</p>
+      </PhaseRow>,
+    );
+    const row = container.querySelector("details") as HTMLDetailsElement;
+    const text = row.textContent ?? "";
+    expect(text).toContain("This phase makes the plan page show");
+    expect(text.indexOf("This phase makes")).toBeLessThan(
+      text.indexOf("the items"),
+    );
+  });
 });
