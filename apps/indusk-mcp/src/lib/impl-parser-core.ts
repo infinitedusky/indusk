@@ -26,6 +26,12 @@ export interface ChecklistItem {
 	text: string;
 	/** The indented lines recorded under the item (its Note or Result), joined; absent when it has none. */
 	note?: string;
+	/**
+	 * The item's folded detail: the indented block inside its `<details>` fold,
+	 * de-indented, the fold's own tags removed and any fenced code kept whole.
+	 * Read-only text for a page to draw; absent when the item has no fold.
+	 */
+	detail?: string;
 }
 
 export interface PhaseGate {
@@ -48,6 +54,11 @@ export interface ImplPhase {
 	/** Position in the document: the only thing that orders two sequences. */
 	ordinal: number;
 	name: string;
+	/**
+	 * The phase's opening paragraph: the prose between the heading (past its
+	 * `**Tier**:`/`**Goal**:` labels) and the first task. Absent when there is none.
+	 */
+	summary?: string;
 	gates: PhaseGate[];
 	blocker: string | null;
 	forwardIntelligence: string | null;
@@ -74,24 +85,65 @@ const GATE_SUFFIXES: Record<string, GateType> = {
 	Document: "document",
 };
 
+/** A line that is only the fold's own tags: `<details>`, `<summary>…</summary>`, `</details>`. */
+const FOLD_TAGS_ONLY = /^(<details[^>]*>)?\s*(<summary>.*?<\/summary>)?\s*(<\/details>)?$/;
+
+/** A phase's label lines (`**Tier**: …`, `**Goal**: …`) are not its paragraph. */
+const PHASE_LABEL = /^\*\*(Tier|Goal)\*\*:/;
+
+/** De-indent a fold's lines by the first non-blank line's indent and trim blank edges. */
+function foldDetail(raw: string[]): string | undefined {
+	const kept = raw.filter((l) => !(l.trim() !== "" && FOLD_TAGS_ONLY.test(l.trim())));
+	const first = kept.find((l) => l.trim() !== "");
+	if (first === undefined) return undefined;
+	const indent = first.length - first.trimStart().length;
+	const text = kept
+		.map((l) => (l.length - l.trimStart().length >= indent ? l.slice(indent) : l.trimStart()))
+		.join("\n")
+		.trim();
+	return text === "" ? undefined : text;
+}
+
 function parseChecklistItems(lines: string[]): ChecklistItem[] {
 	const items: ChecklistItem[] = [];
 	const notes: string[][] = [];
-	for (const line of lines) {
-		const match = line.match(/^-\s+\[([ x])\]\s+(.*)/);
+	const details: string[][] = [];
+	// Fenced lines belong to a fold's detail, so a `</details>` inside a fence
+	// is code, not the fold's end.
+	const fenced = fencedLineMask(lines);
+	let inFold = false;
+	for (const [i, line] of lines.entries()) {
+		const match = fenced[i] ? null : line.match(/^-\s+\[([ x])\]\s+(.*)/);
 		if (match) {
 			items.push({
 				checked: match[1] === "x",
 				text: match[2].trim(),
 			});
 			notes.push([]);
-		} else if (items.length > 0 && /^\s+\S/.test(line)) {
-			notes[notes.length - 1].push(line.trim().replace(/^-\s+/, ""));
+			details.push([]);
+			inFold = false;
+		} else if (items.length > 0) {
+			const last = items.length - 1;
+			const trimmed = line.trim();
+			if (inFold) {
+				details[last].push(line);
+				if (!fenced[i] && trimmed.endsWith("</details>")) inFold = false;
+			} else if (!fenced[i] && /^\s+<details[\s>]/.test(line)) {
+				inFold = !trimmed.endsWith("</details>");
+				details[last].push(line);
+			} else if (/^\s+\S/.test(line)) {
+				notes[last].push(trimmed.replace(/^-\s+/, ""));
+			}
 		}
 	}
-	return items.map((item, i) =>
-		notes[i].length > 0 ? { ...item, note: notes[i].join("\n") } : item,
-	);
+	return items.map((item, i) => {
+		const detail = foldDetail(details[i]);
+		return {
+			...item,
+			...(notes[i].length > 0 ? { note: notes[i].join("\n") } : {}),
+			...(detail ? { detail } : {}),
+		};
+	});
 }
 
 export function parseImplString(raw: string): ParsedImpl {
@@ -114,6 +166,18 @@ export function parseImplString(raw: string): ParsedImpl {
 	let currentGateLines: string[] = [];
 	let inForwardIntelligence = false;
 	let forwardIntelligenceLines: string[] = [];
+	// The phase's opening paragraph is collected until its first task or gate.
+	let preamble: string[] | null = null;
+	// Inside an item's `<details>` fold, fenced lines are its detail, not structure.
+	let inFold = false;
+
+	function closePreamble() {
+		if (preamble && currentPhase) {
+			const text = preamble.join("\n").trim();
+			if (text) currentPhase.summary = text;
+		}
+		preamble = null;
+	}
 
 	function flushGate() {
 		if (!currentPhase) return;
@@ -131,12 +195,21 @@ export function parseImplString(raw: string): ParsedImpl {
 
 	for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
 		const line = lines[lineIndex];
-		if (fenced[lineIndex]) continue;
+		if (fenced[lineIndex]) {
+			if (inFold && !inForwardIntelligence) currentGateLines.push(line);
+			continue;
+		}
+		if (preamble === null) {
+			if (/^\s+<details[\s>]/.test(line) && !line.trim().endsWith("</details>")) inFold = true;
+			else if (inFold && line.trim().endsWith("</details>")) inFold = false;
+		}
 
 		// Phase header: ### Phase N / ### Build Phase N / ### Test Phase N
 		const phaseMatch = parsePhaseHeading(line);
 		if (phaseMatch) {
+			closePreamble();
 			flushGate();
+			inFold = false;
 			if (currentPhase) phases.push(currentPhase);
 			currentPhase = {
 				number: phaseMatch.number,
@@ -149,12 +222,14 @@ export function parseImplString(raw: string): ParsedImpl {
 			};
 			currentGateType = "implementation";
 			currentGateLines = [];
+			preamble = [];
 			continue;
 		}
 
 		// Forward Intelligence header: #### Phase N Forward Intelligence
 		const fiMatch = line.match(FORWARD_INTELLIGENCE_HEADING);
 		if (fiMatch) {
+			closePreamble();
 			flushGate();
 			inForwardIntelligence = true;
 			forwardIntelligenceLines = [];
@@ -164,6 +239,7 @@ export function parseImplString(raw: string): ParsedImpl {
 		// Gate header: #### Phase N Verification|OTel|Context|Document
 		const gateMatch = line.match(gateHeading("(Verification|OTel|Context|Document)"));
 		if (gateMatch) {
+			closePreamble();
 			if (inForwardIntelligence && currentPhase) {
 				currentPhase.forwardIntelligence = forwardIntelligenceLines.join("\n").trim() || null;
 				inForwardIntelligence = false;
@@ -183,6 +259,11 @@ export function parseImplString(raw: string): ParsedImpl {
 			}
 		}
 
+		if (preamble) {
+			if (/^-\s+\[[ x]\]/.test(line)) closePreamble();
+			else if (!PHASE_LABEL.test(line)) preamble.push(line);
+		}
+
 		if (inForwardIntelligence) {
 			forwardIntelligenceLines.push(line);
 		} else {
@@ -191,6 +272,7 @@ export function parseImplString(raw: string): ParsedImpl {
 	}
 
 	// Flush last forward intelligence, gate, and phase
+	closePreamble();
 	if (inForwardIntelligence && currentPhase) {
 		currentPhase.forwardIntelligence = forwardIntelligenceLines.join("\n").trim() || null;
 	}
