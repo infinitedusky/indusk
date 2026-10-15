@@ -4,6 +4,8 @@ import { globSync } from "glob";
 import { describe, expect, it } from "vitest";
 import { REPO_ROOT } from "./helpers/cli.js";
 
+// promise: the-everyday-suite-passes-on-main
+
 /**
  * admin-ui-phase-progress — A22.
  *

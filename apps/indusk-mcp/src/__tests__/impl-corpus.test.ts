@@ -5,6 +5,8 @@ import { glob } from "glob";
 import { describe, expect, it } from "vitest";
 import { runHook } from "./helpers/hook-runner.js";
 
+// promise: the-everyday-suite-passes-on-main
+
 /**
  * A4 — every impl already in this repository still writes and validates, with
  * no edits.

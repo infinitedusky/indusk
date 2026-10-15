@@ -5,6 +5,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // promise: a-new-project-is-made-by-the-agent
+// promise: the-everyday-suite-passes-on-main
 
 /**
  * new-project-flow A5, the route half: accepting a proposal answers as the

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // promise: a-session-can-be-stopped
 // promise: a-new-project-publishes-nothing-unasked
+// promise: the-everyday-suite-passes-on-main
 
 /**
  * new-project-flow A30: creating a project ends its conversation's agent. The

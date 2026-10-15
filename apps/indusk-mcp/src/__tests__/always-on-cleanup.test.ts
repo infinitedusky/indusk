@@ -5,6 +5,8 @@ import { resolveMarkSources } from "../lib/promises/sources.js";
 import { readPassSettings } from "../lib/telemetry/server.js";
 import { promiseProject, siteFile, testFile } from "./helpers/promises-fixture.js";
 
+// promise: the-everyday-suite-passes-on-main
+
 /**
  * day-always-on — A29, A30 (Build Phase 8, cleanup).
  *
