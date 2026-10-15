@@ -4,6 +4,7 @@ import type { Question, StartedEvent } from "@infinitedusky/indusk-mcp/session";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { describeToolInput as describeInput } from "@/lib/conversation-turns";
+import { type Decision, decisionsOf } from "@/lib/request-decisions";
 import { useAnsweredRequests } from "./use-answered-requests";
 
 /**
@@ -150,19 +151,6 @@ export function replyRepeated(events: StartedEvent[], i: number): boolean {
     if (before?.type === "result") return false;
   }
   return false;
-}
-
-/** A request's decision, as its `decided` event recorded it. */
-export type Decision = Extract<StartedEvent, { type: "decided" }>;
-
-/** Each decided request's `decided` event, by request id. */
-export function decisionsOf(
-  events: readonly StartedEvent[],
-): Map<string, Decision> {
-  const decisions = new Map<string, Decision>();
-  for (const ev of events)
-    if (ev.type === "decided") decisions.set(ev.requestId, ev);
-  return decisions;
 }
 
 export function EventView({

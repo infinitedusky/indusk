@@ -1,5 +1,6 @@
 import type { TranscriptLine } from "@infinitedusky/indusk-mcp/new-project";
 import type { StartedEvent } from "@infinitedusky/indusk-mcp/session";
+import { decisionsOf } from "@/lib/request-decisions";
 
 /**
  * A session's events as a conversation (new-project-flow, ADR decision 9): the
@@ -75,8 +76,7 @@ export function turnsOf(
 ): Turn[] {
   const turns: Turn[] = [];
   // A request the log records as decided is no longer waiting, whatever `answered` holds.
-  const decided = new Set<string>();
-  for (const ev of events) if (ev.type === "decided") decided.add(ev.requestId);
+  const decided = decisionsOf(events);
   let items: { text: boolean; line: string }[] = [];
   let waiting: WaitingEvent[] = [];
   let result: string | null = null;
