@@ -194,6 +194,13 @@ const PAGE_PLANS: PlanSpec[] = [
     skipped: [{ ritual: "falsification", reason: LONG_SKIP_REASON }],
   },
   {
+    // skip-reason-why A10: an audit skipped with a one-sentence reason.
+    name: "skipped-audit",
+    at: "review",
+    docs: ALL_DOCS,
+    skipped: [{ ritual: "audit", reason: "a docs-only plan, nothing to audit" }],
+  },
+  {
     name: "asking-plan",
     at: "brief",
     docs: { research: { status: "complete" }, brief: { status: "draft" } },

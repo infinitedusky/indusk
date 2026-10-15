@@ -113,3 +113,25 @@ describe("A9 — a short skip is still ready for the retrospective (regression g
 		expect(r.missing).toEqual([]);
 	});
 });
+
+describe("A11 — a reason of several short sentences is not one sentence", () => {
+	it("A11 names cleanup as not satisfied for three short sentences under 120 characters", () => {
+		const three = "Done. Nothing here. Fine.";
+		expect(three.length).toBeLessThan(LIMIT);
+		const { planRoot, content } = planWith({ ...allShort(), cleanup: three });
+		const r = checkRetrospectiveReadiness(planRoot, content);
+		expect(r.passes).toBe(false);
+		expect(r.missing).toContain("cleanup");
+	});
+});
+
+describe("A12 — a dot inside one sentence is not a sentence end (regression guard)", () => {
+	it('A12 passes readiness for one sentence containing "e.g." and a file name', () => {
+		const one = "Nothing to clean, e.g. no duplicated code in gate.ts or steps.ts.";
+		expect(one.length).toBeLessThanOrEqual(LIMIT);
+		const { planRoot, content } = planWith({ ...allShort(), cleanup: one });
+		const r = checkRetrospectiveReadiness(planRoot, content);
+		expect(r.passes).toBe(true);
+		expect(r.missing).toEqual([]);
+	});
+});

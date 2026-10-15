@@ -261,6 +261,16 @@ describe('skip-reason-why — a skipped step reads "skipped" with a "why?" that 
     click(why as HTMLElement);
     expect(root.textContent).toContain(LONG_SKIP_REASON.slice(0, 80));
   });
+
+  it('A10 reads "skipped" with a "why?" that opens the reason for a skipped audit', async () => {
+    const { root } = await pageFor("skipped-audit");
+    expect(statusOf(root, "Audit")).toBe("skipped");
+    const why = whyOf(root, "Audit");
+    expect(why, 'no "why?" button in the Audit step').toBeDefined();
+    expect(root.textContent).not.toContain("a docs-only plan, nothing to audit");
+    click(why as HTMLElement);
+    expect(root.textContent).toContain("a docs-only plan, nothing to audit");
+  });
 });
 
 describe('skip-reason-why A8 — a step with no reason draws with no "why?" (regression guard)', () => {
