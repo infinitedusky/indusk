@@ -26,7 +26,7 @@ const run = (
 ): LookRun => ({ app: "demo", screen: "home", state: "empty", device, outcome, at, symptom });
 
 const RUNS: LookRun[] = [
-	run("phone", "violated", "2026-10-11T10:00:00.000Z", "home.empty @ phone: token --color-paper"),
+	run("phone", "broken", "2026-10-11T10:00:00.000Z", "home.empty @ phone: token --color-paper"),
 	run("desktop", "upheld", "2026-10-11T10:00:00.000Z"),
 ];
 
