@@ -13,12 +13,15 @@ import { documentFinished, type PlanSnapshot, planSteps } from "./steps.js";
  *   - **review** — its build stopped at review, or the plan stands at review
  *     (the build's stop is held in memory; the position is on disk, so it
  *     survives a restart of the admin).
- *   - **approval** — its impl is a draft and every other document its type
- *     requires is accepted.
+ *   - **approval** — its impl is a draft, every other document its type
+ *     requires is accepted, and no session is still writing it: approving a
+ *     plan its author has not finished would approve half of it.
  *
  * Each names the decision in words, what accepting it is called and the
  * alternative. For a question they are the question and its first two options,
- * so the question's own text is the key its answer is given under. Pure: the
+ * so the question's own text is the key its answer is given under; an ask of
+ * several questions carries each (`questions`), `decision` naming the first.
+ * Pure: the
  * admin passes the sessions, plans and builds it holds.
  *
  * promise: decisions-wait-in-one-place
@@ -46,6 +49,13 @@ export interface WaitingInput {
 	builds?: ReadonlyArray<WaitingBuild>;
 }
 
+/** One question of an ask: its words and the two answers the card offers. */
+export interface WaitingQuestion {
+	question: string;
+	accept: string;
+	alternative: string;
+}
+
 export interface Waiting {
 	plan: string;
 	on: WaitingOn;
@@ -59,6 +69,8 @@ export interface Waiting {
 	alternative: string;
 	/** The session's request a question's answer goes to. */
 	requestId?: string;
+	/** Every question the agent asked, in its order; present for a question. */
+	questions?: WaitingQuestion[];
 }
 
 export const APPROVAL_DECISION =
@@ -72,7 +84,7 @@ export function planWaiting({ sessions, plans, builds = [] }: WaitingInput): Wai
 		const one =
 			askedOf(plan, sessions) ??
 			(atReview(plan, builds) ? review(plan.name) : null) ??
-			(awaitingApproval(plan) ? approval(plan.name) : null);
+			(awaitingApproval(plan) && !beingWritten(plan, sessions) ? approval(plan.name) : null);
 		if (one) waiting.push(one);
 	}
 	return waiting;
@@ -93,7 +105,20 @@ function askedOf(
 		accept: first.options[0]?.label ?? "Yes",
 		alternative: first.options[1]?.label ?? "No",
 		requestId: asked.requestId,
+		questions: asked.questions.map((q) => ({
+			question: q.question,
+			accept: q.options[0]?.label ?? "Yes",
+			alternative: q.options[1]?.label ?? "No",
+		})),
 	};
+}
+
+/** A session is running for the plan and has asked nothing: it is still writing. */
+function beingWritten(
+	plan: PlanSnapshot & { name: string },
+	sessions: ReadonlyArray<WaitingSession>,
+): boolean {
+	return sessions.some((s) => s.plan === plan.name && !s.question);
 }
 
 /** The first step in either list that is being worked or waits on the person. */

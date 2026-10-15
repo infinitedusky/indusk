@@ -47,8 +47,8 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 | A4 | A violation heard under a promise's earlier name is counted on its day, on the dashboard and on the promise page alike | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/standing.test.ts |
 | A5 | For one promise, the dashboard row and the promise page give the same number of held days and broken days | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
 | A6 | The dashboard and the promise page count the same thirty days: a violation on the first of the page's thirty days appears on both, and one on the day before appears on neither | Test Phase 1 | Build Phase 1 | passing | unit | promise: the-thirty-days-say-only-what-was-seen | apps/indusk-mcp/src/lib/promises/proof.test.ts |
-| A7 | An agent that asks two questions at once has both shown on the plan's card, and answering them gives the agent an answer to each | Test Phase 1 | Build Phase 2 | written | unit | promise: a-question-is-answered-in-full | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx, apps/indusk-admin/src/lib/decisions.test.ts |
-| A8 | A plan whose impl is a draft while a session is still writing it is not under Needs you for approval; once the session ends, it is | Test Phase 1 | Build Phase 2 | written | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
+| A7 | An agent that asks two questions at once has both shown on the plan's card, and answering them gives the agent an answer to each | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-question-is-answered-in-full | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx, apps/indusk-admin/src/lib/decisions.test.ts |
+| A8 | A plan whose impl is a draft while a session is still writing it is not under Needs you for approval; once the session ends, it is | Test Phase 1 | Build Phase 2 | passing | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts |
 | A9 | A plan declared by an outer Path and by a Path inside it is grouped under the inner Path on the dashboard, and the nav lists it there | Test Phase 1 | Build Phase 3 | written | unit | promise: a-promise-sits-in-its-innermost-path | apps/indusk-admin/src/app/p/[project]/promises/dashboard.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
 | A10 | For one project, `indusk promises status`, the dashboard and a promise's page report the same state for each promise and source | Test Phase 1 | Build Phase 3 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/same-health-three-surfaces.test.ts |
 | A11 | When `main` cannot take the history commit, an answered decision says it was sent and that the history was left uncommitted, with the reason, and nothing else on `main` is touched | Test Phase 1 | Test Phase 1 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/plans/history.test.ts |
@@ -106,21 +106,21 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 
 **Goal**: the card carries all of an ask, and approval waits for the writing to stop.
 
-- [ ] `plans/waiting`: a waiting question carries every question the agent asked; a plan with a session still writing its impl is not waiting on approval (A7, A8)
-- [ ] `lib/decisions` and `DecisionCard`: each question is shown and answered, and the answers go to the agent under each question's text (A7)
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] `plans/waiting`: a waiting question carries every question the agent asked; a plan with a session still writing its impl is not waiting on approval (A7, A8)
+- [x] `lib/decisions` and `DecisionCard`: each question is shown and answered, and the answers go to the agent under each question's text (A7)
+- [x] Shape — reviewed `waiting.ts`, `decisions.ts`, `DecisionCard.tsx`: nothing found. Left as is: the card's multi-question branch lives in `DecisionCard` beside the single-question one (one component, one card; extracting it would split state the two share)
 
 #### Build Phase 2 Verification
 
-- [ ] A7, A8 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/plans/waiting.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/cockpit/DecisionCard.test.tsx src/lib/decisions.test.ts && pnpm exec vitest related src/lib/decisions.ts --run`); tsc and biome clean on changed files
+- [x] A7, A8 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/plans/waiting.test.ts; cd ../indusk-admin && pnpm exec vitest run src/components/cockpit/DecisionCard.test.tsx src/lib/decisions.test.ts && pnpm exec vitest related src/lib/decisions.ts --run`); tsc and biome clean on changed files
 
 #### Build Phase 2 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: a decision's card shows everything the agent asked, never the first of it — guarded by A7
+- [x] `apps/indusk-admin/CLAUDE.md`: a decision's card shows everything the agent asked, never the first of it — guarded by A7
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: several questions on one card; when approval is offered
+- [x] `apps/docs/src/reference/admin-ui/sessions.md`: several questions on one card; when approval is offered
 
 ### Build Phase 3: The innermost Path, and the three surfaces
 
@@ -159,6 +159,8 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 - plan-cockpit (closed 2026-10-10): the modules and pages this plan corrects
 
 ## Notes
+
+- Decision (unattended build): a session "still writing" is any session the admin runs for the plan that has no question pending — `readWaiting` hands in only the one current session, so this is the running session, never a stale record. A multi-question ask refuses `accept`/`alternative`/`reply` (they would answer the first only) and takes `choice: "answers"`, an answer under each question's text.
 
 - Decision (unattended build): a promise seen only by a sighting with no upheld day on record shows `held 0`, never thirty — the days say only what was seen. `readStanding` now reads the store's window itself (and honours `home`), the same read the page's days use.
 
