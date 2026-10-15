@@ -28,7 +28,7 @@ Dawn doesn't comment on PRs. Doesn't suggest changes. Doesn't enforce style. Use
 
 ### Not a project management tool
 
-Linear, Jira, GitHub Projects, Notion all do project management. Dawn's "plans" are different — they're engineering work plans, not business backlogs. Dawn integrates *with* PM tools (via adapter; see [decision A7](https://github.com/infinite-dusky/dusk/blob/main/.indusk/planning/indusk-v2-dawn/decisions.md)) rather than replacing them.
+Linear, Jira, GitHub Projects, Notion all do project management. Dawn's "plans" are different — they're engineering work plans, not business backlogs. Dawn integrates *with* PM tools (via adapter; see [decision A7](https://github.com/infinite-dusky/dusk/blob/main/.indusk/planning/archive/indusk-v2-dawn/archive/decisions.md)) rather than replacing them.
 
 ### Not a knowledge base
 

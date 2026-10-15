@@ -7,9 +7,6 @@ updated: 2026-09-25
 # parent (e.g. dawn-*) are declared in the PARENT's master.md, never here —
 # one source of truth per link.
 parents:
-  - indusk-v2-dawn
-  - indusk-v4-day
-  - indusk-demo
   - promise-core
 roadmap:
   - workbench-trust-fixes

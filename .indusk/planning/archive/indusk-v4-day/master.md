@@ -50,6 +50,7 @@ subplans:
     title: "The review"
     description: "A reviewer approves from the evidence without reading the diff."
   - indusk-release
+closed_reason: "Closed 2026-10-15 by Sandy: served its purpose; promise-core is the master plan now leaned on, and holds the plans still open."
 ---
 
 # Day — Master Plan
