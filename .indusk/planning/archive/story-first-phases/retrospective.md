@@ -58,3 +58,5 @@ Shape findings: 3 raised (two in Build Phase 2 — naming the fold-edge tests an
 - Lines added/removed: +4486 / −351 (code and tests +2791 / −108)
 - Trajectory: 27 rows, all passing; 3 promises
 - Commits on the branch: 115
+
+Landed on main at 61c6f5403, 2026-10-15.
