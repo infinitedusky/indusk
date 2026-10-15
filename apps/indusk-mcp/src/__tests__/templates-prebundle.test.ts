@@ -184,4 +184,14 @@ describe("the browser template's pre-bundle list (a-browser-test-passes-on-a-col
 			rmSync(dir, { recursive: true, force: true });
 		}
 	});
+
+	it("A7: reports a subpath import missing when the list names only its package", () => {
+		const source = 'import { x } from "pkg/sub";\nimport { y } from "@scope/name/deep";\n';
+		const listed = new Set(["pkg", "@scope/name"]);
+		const missing = packagesIn(source).filter((entry) => !listed.has(entry));
+		expect(
+			missing,
+			"Vite pre-bundles a subpath as its own entry: list `pkg/sub` itself in optimizeDeps.include, naming only `pkg` leaves the subpath to be found mid-run, reloading the page",
+		).toEqual(["@scope/name/deep", "pkg/sub"]);
+	});
 });
