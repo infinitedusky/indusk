@@ -217,6 +217,44 @@ if (contractRefusal) {
 	process.exit(2);
 }
 
+/**
+ * The refusal text of the `phase_summary: required` rule, one home for the
+ * edit-time check below and the whole-file check further down.
+ */
+function phaseSummaryRefusal(problems) {
+	return `Phase summary check failed (\`phase_summary: required\`):\n${problems.map((p) => `  - ${p}`).join("\n")}\n\nEach phase opens with a paragraph saying what it does for the whole plan, and each task is one plain sentence for someone who knows the project but none of its shorthand; code and row labels belong in its folded Technical detail.\npromise: an-impl-phase-explains-itself\n`;
+}
+
+// promise: an-impl-phase-explains-itself
+// The summary rule holds on every edit to an impl that has opted in, not only
+// on a whole-file write: an edit with no heading, no unticked box and no Tier
+// line could otherwise delete a paragraph or put code on a task line. Only the
+// problems this edit ADDS are refused, so a file with an old problem can still
+// be edited elsewhere (story-first-phases A21).
+{
+	const optedIn = /^phase_summary:\s*required/m.test(
+		newFullContent.match(/^---\n([\s\S]*?)\n---\n/)?.[1] ?? "",
+	);
+	if (optedIn) {
+		const bodyOf = (text) => {
+			const m = text.match(/^---\n([\s\S]*?)\n---\n/);
+			return m ? text.slice(m[0].length) : text;
+		};
+		let oldBody = "";
+		try {
+			oldBody = bodyOf(readFileSync(filePath, "utf-8"));
+		} catch {
+			// a file that does not exist yet has no earlier problems
+		}
+		const had = new Set(phaseSummaryProblems(oldBody, true));
+		const added = phaseSummaryProblems(bodyOf(newFullContent), true).filter((p) => !had.has(p));
+		if (added.length > 0) {
+			process.stderr.write(phaseSummaryRefusal(added));
+			process.exit(2);
+		}
+	}
+}
+
 // Only validate if this edit is adding/modifying phase structure
 // Check if the edit contains phase headers
 const editContent = toolInput.new_string ?? toolInput.content ?? "";
@@ -462,9 +500,7 @@ const phaseSummaryRequiredFrontmatter = /^phase_summary:\s*required/m.test(front
 {
 	const problems = phaseSummaryProblems(body, phaseSummaryRequiredFrontmatter);
 	if (problems.length > 0) {
-		process.stderr.write(
-			`Phase summary check failed (\`phase_summary: required\`):\n${problems.map((p) => `  - ${p}`).join("\n")}\n\nEach phase opens with a paragraph saying what it does for the whole plan, and each task is one plain sentence for someone who knows the project but none of its shorthand; code and row labels belong in its folded Technical detail.\npromise: an-impl-phase-explains-itself\n`,
-		);
+		process.stderr.write(phaseSummaryRefusal(problems));
 		process.exit(2);
 	}
 }
