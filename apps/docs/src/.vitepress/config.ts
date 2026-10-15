@@ -328,6 +328,7 @@ const config = defineConfig({
 						{ text: "Incident Recording — Lessons", link: "/lessons/incident-recording" },
 						{ text: "Worktree Visibility — Lessons", link: "/lessons/worktree-visibility" },
 						{ text: "Writing Skill — Lessons", link: "/lessons/writing-skill" },
+						{ text: "Phase Summaries — Lessons", link: "/lessons/phase-summaries" },
 					],
 				},
 			],

@@ -1,6 +1,6 @@
 # Phase summaries — a phase that explains itself
 
-**Decided 2026-10-14.** Full ADR: `.indusk/planning/story-first-phases/adr.md`.
+**Decided 2026-10-14.** Full ADR: `.indusk/planning/archive/story-first-phases/adr.md`.
 
 ## Goal
 
@@ -42,7 +42,15 @@ that the save check can see a paragraph and a sentence are present but not that 
 3. **Written for someone without the shorthand.** A paragraph or sentence is written for someone who has worked on the project but knows none of its shorthand — no row labels, no abbreviations, no nicknames, no pronoun whose referent is unclear. Row labels are refused mechanically; the rest is a writing prompt in the planner and a person's judgement at approval.
 4. **Verification names its rows in the detail.** The rule that every Verification section names the trajectory rows it proves reads, in an opted-in impl, row labels from each Verification task's folded detail as well as its line — in the hook and in its TypeScript twin, `lib/trajectory/validator.ts`.
 5. **Detail is only read.** For every impl, `check-gates.js` counts only checkbox lines at column zero, and `validate-impl-structure.js` reads an opt-out only on a column-zero line of a gate section; both impl readers already took items only from column zero.
-6. **The parser and the page.** `parseImplString` keeps each phase's paragraph and each task's detail, fences included; the plan page draws the paragraph above an open phase's tasks and each detail in a closed "Technical" fold rendered as markdown.
+6. **The parser and the page.** `parseImplString` keeps each phase's paragraph and each task's detail, fences included; the plan page draws the paragraph, as markdown, above an open phase's tasks and each detail in a closed "Technical" fold rendered as markdown.
+
+### Added at close
+
+The plan's falsification phase and its audit found where the decision did not yet hold; each was fixed before it closed:
+
+- **Every edit is held to the rule**, not only a whole-file write: an edit to an opted-in impl is refused for any problem it adds (a deleted paragraph, code or a row label on a task line, a task with no sentence), and never for a problem already elsewhere in the file.
+- **A task's fold must close.** An unclosed `<details>` is refused when saved, and the checks that skip folded text — whether a falsification or cleanup phase is finished, whether a phase's verification is done before its code review — fail open on one, as on an unterminated fence.
+- **Every reader of a box reads it the same way**: the tick check counts over the whole file before and after an edit, the gated loop's checkoff commits read only top-level lines, and the repair phase a broken promise adds is written in the new shape on an opted-in impl.
 
 ## Consequences
 
