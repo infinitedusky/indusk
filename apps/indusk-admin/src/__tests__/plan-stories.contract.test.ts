@@ -12,9 +12,9 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
-  plan,
   writeConfig,
   writeLooksPlans,
+  writePlan,
 } from "@/__tests__/helpers/looks-fixtures";
 import {
   type DevServer,
@@ -84,7 +84,7 @@ function writeMaster(project: string) {
       "",
     ].join("\n"),
   );
-  plan(
+  writePlan(
     project,
     "looks-fixture-sub-released",
     { brief: "accepted", impl: "completed", approved: true },
@@ -94,7 +94,7 @@ function writeMaster(project: string) {
     join(planning, "archive", "looks-fixture-sub-released", "retrospective.md"),
     "# Retrospective\n\nLanded on main at abc1234, 2026-10-01.\n",
   );
-  plan(project, "looks-fixture-sub-draft", { brief: "draft" });
+  writePlan(project, "looks-fixture-sub-draft", { brief: "draft" });
   writeFileSync(
     join(project, "CHANGELOG.md"),
     "# Changelog\n\n## [1.0.0] — 2026-10-02\n- **Sub** (looks-fixture-sub-released): shipped\n",

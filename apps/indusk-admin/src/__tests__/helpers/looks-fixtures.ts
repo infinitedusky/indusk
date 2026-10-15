@@ -21,7 +21,7 @@ export const impl = (status: string, extra = "") =>
   `${doc(status, extra)}\n## Checklist\n\n### Build Phase 1: One\n\n- [ ] an item\n`;
 
 /** One fixture plan: its documents, each by its status; `archived` puts it under `archive/`. */
-export function plan(
+export function writePlan(
   project: string,
   name: string,
   docs: { brief: string; impl?: string; approved?: boolean },
@@ -60,8 +60,8 @@ export function writeConfig(
 
 /** The five fixture plans every look contract's screens are declared against. */
 export function writeLooksPlans(project: string) {
-  plan(project, "looks-fixture-parts", { brief: "draft" });
-  plan(project, "looks-fixture-working", {
+  writePlan(project, "looks-fixture-parts", { brief: "draft" });
+  writePlan(project, "looks-fixture-working", {
     brief: "accepted",
     impl: "in-progress",
     approved: true,
@@ -80,11 +80,11 @@ export function writeLooksPlans(project: string) {
     ),
     doc("accepted"),
   );
-  plan(project, "looks-fixture-needs-you", {
+  writePlan(project, "looks-fixture-needs-you", {
     brief: "accepted",
     impl: "draft",
   });
-  plan(
+  writePlan(
     project,
     "looks-fixture-released",
     { brief: "accepted", impl: "completed", approved: true },

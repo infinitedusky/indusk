@@ -97,6 +97,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 - [x] A19: give one fixture plan in `cockpit-fixture.ts` a title as long as the longest written (`Contract UI — the admin organised around premises, promises and phases`, 72 characters), and add `promise: the-nav-fits-a-phone` beside `cockpit-phone.test.tsx`'s A7, which passes today and must keep passing once the nav draws titles
 - [x] Add the row tokens to the regression guards: `promise: every-plan-is-one-click-away` (already in `cockpit-nav.test.tsx`, A17), `promise: paths-keep-their-order` to `plan-groups.test.ts` (A18), `promise: a-plan-page-shows-the-parts-of-its-brief` (already in `PlanSummary.test.tsx` and `plan-page-layout.test.tsx`, A20); A21 is `display-names-single-definition.test.ts` as it stands
 - [x] Confirm each red row fails on its own assertion rather than on a missing import
+- [x] Shape (`apps/indusk-admin/src/__tests__/helpers/looks-fixtures.ts`) — the exported builder `plan` is renamed `writePlan` so it reads beside `writeConfig` and `writeLooksPlans` as what it does. Rule: Does the name say what the code is for, rather than how it works?
 
 #### Deferred to Build Phase 1
 
