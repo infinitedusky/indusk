@@ -1,7 +1,7 @@
 ---
 title: "Tests and landing work from a cold machine"
 date: 2026-10-15
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -46,6 +46,8 @@ approved_at: "2026-10-15T16:09:05.019Z"
 | A2 | The template tests, run three times, each from a deleted Vite cache, pass every time, and Vite never reports that it reloaded a test | Build Phase 1 | Build Phase 1 | passing | live check | promise: a-browser-test-passes-on-a-cold-cache | (recorded in the impl with its result) |
 | A3 | Landing's install step syncs the checkout's dependencies to the lockfile, refusing a lockfile that does not match, before it builds anything | Test Phase 1 | Build Phase 1 | passing | unit | promise: landing-installs-after-a-dependency-change | apps/indusk-mcp/src/__tests__/install-local.test.ts |
 | A4 | An evaluator run with a model that does not exist is recorded as a failure naming that model, and the promise status shows the violation, with the Claude Code installed today | Test Phase 1 | Build Phase 1 | passing | contract | keeps the day-monitor end-to-end test about the monitor, not about Claude Code's wording | apps/indusk-mcp/e2e/day-monitor.e2e.test.ts |
+| A5 | A package the browser template imports only for its side effect, or one outside OpenTelemetry, and missing from the pre-bundle list, turns the pre-bundle guard red; today the guard sees only named imports of OpenTelemetry packages | Phase 0 | Build Phase 2 | planned | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
+| A6 | Every test file the browser project runs, and every local module those files and the template import, is read by the pre-bundle guard; today it reads two named files, so a second browser test under the templates folder goes unchecked | Phase 0 | Build Phase 2 | planned | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
 
 ## Checklist
 
@@ -233,6 +235,42 @@ This phase makes the three tests pass. The browser template's test project is to
   The landing paragraph of Step 10 now says the install syncs to the lockfile first, and refuses a lockfile that does not match.
 
   </details>
+
+### Build Phase 2: Falsification — what the pre-bundle guard cannot see
+
+**Tier**: med — the work step's default
+
+The test that keeps the browser template's packages bundled before its page loads reads only some of what the page imports. It looks for named imports of OpenTelemetry packages in two files, so a package imported only for its side effect, a package from anywhere else, or a second browser test added next to the first can be missing from the list and the guard stays green while the mid-run reload comes back. This phase makes the guard read what the browser project actually loads, and closes once it turns red for each of those cases.
+
+- [ ] The pre-bundle guard counts every package a file imports, whatever form the import takes and whoever publishes the package
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts` `importedPackages`: match every bare specifier, not only `@opentelemetry/*` — `import … from "x"`, `export … from "x"`, side-effect `import "x"`, and `import("x")` — reducing a deep import to its package name (`@scope/name` or `name`), and skipping relative paths, `node:` built-ins and `vitest` (the runner, served by Vitest itself). Answers A5: today `import "@opentelemetry/context-zone"` or `import { onLCP } from "web-vitals"` added to `instrumentation.web.ts` leaves A1 green while a cold run re-optimizes and reloads.
+
+  </details>
+- [ ] The pre-bundle guard reads every test the browser project runs, and the local files they import
+  <details><summary>Technical</summary>
+
+  Same file: take the `templates` project's `test.include` globs from `vitest.templates.config.ts`, expand them under the package root, and follow relative imports (static and `?query`-suffixed dynamic, as `instrumentation.web.test.ts` does with `./instrumentation.web.ts?fresh=`) to collect the files whose bare imports are checked, instead of the two hard-coded names. Answers A6: a second `templates/*.test.ts` with an unlisted import is unchecked today.
+
+  </details>
+
+#### Build Phase 2 Verification
+
+- [ ] The guard turns red for a side-effect import, a package from outside OpenTelemetry and a second browser test, and is green on the template as it is
+  <details><summary>Technical</summary>
+
+  A5 and A6: the extraction is exercised on fixture source strings (a side-effect import, a non-OpenTelemetry package, a deep import, a `node:` import, a relative `?fresh=` import) and on a temporary extra test file the include globs pick up; A1 still green on today's template. Run `pnpm exec vitest run src/__tests__/templates-prebundle.test.ts` from `apps/indusk-mcp`; `biome check` on the file; output noted under this item.
+
+  </details>
+
+#### Build Phase 2 Context
+
+- [ ] (none — the rule this phase guards was already written into the guard's failure message by the first build phase, and no convention changed)
+
+#### Build Phase 2 Document
+
+- [ ] (none — internal-only fix to a test; no docs page describes the guard)
 
 ## Files Affected
 
