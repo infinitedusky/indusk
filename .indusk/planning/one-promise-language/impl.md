@@ -17,14 +17,17 @@ gate_policy: ask
 
 Every word InDusk shows about a promise says upheld or broken — holding or
 broken when live, no signal when unknown — and the telemetry behind it is its
-signal. The two old words already written keep working: a signal saying
-`violated` is read as broken, and a promise file saying `known-violated` is read
-as `known-broken`. See `adr.md`.
+signal. Every reader is ready for a signal saying `broken`, and the two old
+words already written keep working: a signal saying `violated` is read as
+broken, and a promise file saying `known-violated` is read as `known-broken`.
+InDusk's own signals and the demo app keep writing `violated` this release;
+`.indusk/planning/mark-first/` switches them to `broken` next release (Sandy,
+2026-10-15). See `adr.md`.
 
 ## Scope
 
 ### In Scope
-- One decision point for what a signal's outcome means (`upheld`; `broken` or `violated` = broken), used by every reader, and InDusk's own signals and the demo app writing `broken`.
+- One decision point for what a signal's outcome means (`upheld`; `broken` or `violated` = broken), used by every reader; the always-on server asking Jaeger for both values.
 - The registry state `known-violated` renamed `known-broken`, the old one read on load.
 - The words in the admin, the CLI and its help, the MCP tool descriptions, the editor, the docs' guide and reference, the shipped skills, the planning rules template and the server's deploy files.
 - A word scan that keeps them right.
@@ -34,13 +37,14 @@ as `known-broken`. See `adr.md`.
 - Internal identifiers (`violations`, `violationState`, `PROMISE_MARK`, `markPromise`, JSON keys, the `PromiseHealth` keys).
 - History pages: `apps/docs/src/changelog.md` entries already written, `decisions/*`, `lessons/*`, `strategy/*`.
 - Rewriting existing `known-violated` files.
+- Switching InDusk's signal writers and the demo app to write `broken` — carried by `.indusk/planning/mark-first/`, next release (Sandy, 2026-10-15).
 
 ## Boundary Map
 
 | Phase | Produces | Consumes |
 |-------|----------|----------|
 | Test Phase 1 | the thirteen tests, red where the fault is | the test plan |
-| Build Phase 1 | `readOutcome`; `PROMISE_OUTCOMES = upheld \| broken`; `PROMISE_STATES` with `known-broken` and the load alias; writers sending `broken`; the server asking for both values | `lib/promises/vocabulary.ts`, `telemetry.ts`, `registry.ts`, `incidents.ts`, `mark.ts`, `always-on/pass.ts`, `testing/trace-shape.ts` |
+| Build Phase 1 | `readOutcome`; `PROMISE_OUTCOMES = upheld \| broken`; `PROMISE_STATES` with `known-broken` and the load alias; writers still sending `violated` through one mapping in `markPromise`; the server asking for both values | `lib/promises/vocabulary.ts`, `telemetry.ts`, `registry.ts`, `incidents.ts`, `mark.ts`, `always-on/pass.ts`, `testing/trace-shape.ts` |
 | Build Phase 2 | the admin's, CLI's, MCP tools' and editor's words | Build Phase 1's two values |
 | Build Phase 3 | the docs, skills, template and deploy files in the new words; the word scan green | Build Phases 1–2 |
 
@@ -50,7 +54,7 @@ as `known-broken`. See `adr.md`.
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | A signal saying `broken` is read as broken by status, health, timeline, looks standing and the trace-shape helper | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
 | A2 | A signal saying `violated` is still read as broken everywhere A1 names | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
-| A3 | InDusk's own signals (evaluator, recorder, trunk commit, looks check) and the demo app write `upheld` or `broken`, never `violated` | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/signal-writers.test.ts, examples/seat-holds/src/seats.test.ts |
+| A3 | InDusk's own signals (evaluator, recorder, trunk commit, looks check) and the demo app write `upheld` or `violated` this release, and every reader reads `broken` as broken | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/signal-writers.test.ts, examples/seat-holds/src/seats.test.ts |
 | A4 | A promise file saying `known-violated` is read as known-broken by the registry check, the admin and the editor | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/known-broken.test.ts |
 | A5 | Opening an incident on an enforced promise writes `known-broken`; fixing the last open one returns `known-broken` or `known-violated` to enforced | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/known-broken.test.ts |
 | A6 | The admin's chips, timeline cells, health lines and plan-list warning say upheld, holding, broken, held, broke or no signal — never violated, violation, unverified, not seen or no runs | Test Phase 1 | Build Phase 2 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/PromiseWords.test.tsx |
@@ -68,7 +72,7 @@ as `known-broken`. See `adr.md`.
 
 **Tier**: med — the work step's default (`workflow.steps.work.tier`)
 
-Before any code changes, this phase writes the tests that say what people will read about a promise once the plan is done. They check that a signal reporting a promise broken with the new word is read as broken everywhere InDusk reads signals, that InDusk's own signals and the demo app send the new word, that a promise file in the old known-violated state is read as known broken, that the admin, the command line and the editor say holding, broken, held, broke and no signal, and that the docs and skills no longer say violated or call the telemetry a mark. Most fail today: a signal saying broken is silently dropped, and the old words are everywhere. One passes from the start and guards the promise that already-instrumented applications keep working: a signal saying violated is read as broken. The next phase changes the two stored words.
+Before any code changes, this phase writes the tests that say what people will read about a promise once the plan is done. They check that a signal reporting a promise broken with the new word is read as broken everywhere InDusk reads signals, that InDusk's own signals and the demo app still send the old word this release so that recording servers already deployed keep reading them, that a promise file in the old known-violated state is read as known broken, that the admin, the command line and the editor say holding, broken, held, broke and no signal, and that the docs and skills no longer say violated or call the telemetry a mark. Most fail today: a signal saying broken is silently dropped, and the old words are everywhere. One passes from the start and guards the promise that already-instrumented applications keep working: a signal saying violated is read as broken. The next phase changes the two stored words.
 
 - [ ] Confirm this plan has its own worktree.
   <details><summary>Technical</summary>
@@ -82,10 +86,10 @@ Before any code changes, this phase writes the tests that say what people will r
   `apps/indusk-mcp/src/lib/promises/outcome-words.test.ts`: build Jaeger-shaped spans with `indusk.promise.outcome` set to `broken` and to `violated` (as `__tests__/helpers/local-jaeger.ts` builds tags) and feed them to `parseMarkedSpan`, `asMarkedSpans`, the look standing's newest-outcome rule and `lib/testing/trace-shape.ts`'s checks. A1: a `broken` span is parsed, counted among the promise's breaks and makes the look standing `broken` (red today: `parseMarkedSpan` returns null). A2: the same with `violated` (green today). A13 in `standing.test.ts`: `dayCounts`/`thirtyDaysOf` over the window built from a `broken`, a `violated` and a mixed set give the same held/broke days (red today on `broken`).
 
   </details>
-- [ ] Write the tests that InDusk's own signals and the demo app send upheld or broken.
+- [ ] Write the tests that InDusk's own signals and the demo app still send upheld or violated this release, and that what they send is read back as broken.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/src/lib/promises/signal-writers.test.ts`: call `markPromise` on a fake span (`setAttribute`/`addEvent` recorders) through each caller's path — the evaluator's outcome (`eval/otel.ts`), the recorder (`record.ts`), the trunk-commit signal (`trunk-commit.ts` on a non-merge commit), the looks report (`looks/report.ts`) — and assert the outcome attribute is `broken` on a break and never `violated`. `examples/seat-holds/src/seats.test.ts`: a late release's outcome is `broken`. Red today.
+  `apps/indusk-mcp/src/lib/promises/signal-writers.test.ts`: call `markPromise` on a fake span (`setAttribute`/`addEvent` recorders) through each caller's path — the evaluator's outcome (`eval/otel.ts`), the recorder (`record.ts`), the trunk-commit signal (`trunk-commit.ts` on a non-merge commit), the looks report (`looks/report.ts`) — passing the in-memory verdict `broken` on a break, and assert the outcome attribute written is `violated` (never `broken` this release) and that `readOutcome` of what was written is `broken`. `examples/seat-holds/src/seats.test.ts`: a late release's attribute value is `violated`, and a span carrying `broken` instead is read as broken by `parseMarkedSpan`. Red today: callers cannot pass `broken`, and `readOutcome` does not exist (write the calls against `parseMarkedSpan` where `readOutcome` is not yet exported, so the file loads). Switching the asserted value to `broken` is `mark-first`'s.
 
   </details>
 - [ ] Write the tests that a promise in the old known-violated state is read as known broken, and that incidents move promises in and out of it.
@@ -109,7 +113,7 @@ Before any code changes, this phase writes the tests that say what people will r
 - [ ] Write the word scan over the pages, skills, templates and descriptions people read.
   <details><summary>Technical</summary>
 
-  A10, `apps/indusk-mcp/src/__tests__/promise-words.test.ts`: read `apps/docs/src/guide/**/*.md`, `apps/docs/src/reference/**/*.md`, `apps/indusk-mcp/skills/*.md`, `apps/indusk-mcp/templates/planning/CLAUDE.md`, `apps/indusk-mcp/templates/server/{Dockerfile,fly.toml}`, `examples/seat-holds/README.md`, and the string literals of `apps/indusk-mcp/src/bin/cli.ts` and `apps/indusk-mcp/src/tools/promise-tools.ts`; refuse `/\bviolat\w*|known-violated/i` and the promise sense of mark (`/\b(a|its|the|every) marks?\b|\bmarked the promise\b/i`), each match reported as `file:line`, after removing the allowed list — the attribute and event names (`indusk.promise.violated`, `indusk.promise.outcome`) and the sentence that says `violated` is still read — named in the test with a reason each. Red today on about thirty files. promise: a-promise-is-upheld-or-broken
+  A10, `apps/indusk-mcp/src/__tests__/promise-words.test.ts`: read `apps/docs/src/guide/**/*.md`, `apps/docs/src/reference/**/*.md`, `apps/indusk-mcp/skills/*.md`, `apps/indusk-mcp/templates/planning/CLAUDE.md`, `apps/indusk-mcp/templates/server/{Dockerfile,fly.toml}`, `examples/seat-holds/README.md`, and the string literals of `apps/indusk-mcp/src/bin/cli.ts` and `apps/indusk-mcp/src/tools/promise-tools.ts`; refuse `/\bviolat\w*|known-violated/i` and the promise sense of mark (`/\b(a|its|the|every) marks?\b|\bmarked the promise\b/i`), each match reported as `file:line`, after removing the allowed list — the attribute and event names (`indusk.promise.violated`, `indusk.promise.outcome`), the attribute value `"violated"` in a snippet that sets it, and the sentence beside it saying it is read as broken — named in the test with a reason each. Red today on about thirty files. promise: a-promise-is-upheld-or-broken
 
   </details>
 
@@ -130,7 +134,7 @@ Before any code changes, this phase writes the tests that say what people will r
 
 **Tier**: med — the work step's default (`workflow.steps.work.tier`)
 
-This phase changes the two words InDusk stores. A signal's verdict is decided in one place: upheld is upheld, and both the new word broken and the old word violated are broken, so every reader — the status, the health chips, the timeline, the thirty days, the looks standing, the recorder that opens incidents and the always-on server that announces them — reads either the same way. InDusk's own signals and the demo app start sending broken. A promise's registry state known-violated becomes known-broken; a file still saying the old word is read as the new one, and nothing rewrites it. The admin's and editor's labels for that state change here too, because they are typed against the state list. After this phase the stored values are right and the old ones still work; the words on screens change in the next.
+This phase changes the two words InDusk stores. A signal's verdict is decided in one place: upheld is upheld, and both the new word broken and the old word violated are broken, so every reader — the status, the health chips, the timeline, the thirty days, the looks standing, the recorder that opens incidents and the always-on server that announces them — reads either the same way. InDusk's own signals and the demo app keep sending violated for this release, so recording servers already deployed keep reading them; switching them to broken is the next release's, in the plan that reworks signals. A promise's registry state known-violated becomes known-broken; a file still saying the old word is read as the new one, and nothing rewrites it. The admin's and editor's labels for that state change here too, because they are typed against the state list. After this phase the stored values are right and the old ones still work; the words on screens change in the next.
 
 - [ ] Make every reader of a signal decide its verdict in one place, where broken and violated both mean broken.
   <details><summary>Technical</summary>
@@ -144,10 +148,10 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
   `apps/indusk-mcp/src/lib/always-on/pass.ts` `violationsSince`: one `/api/traces` query per service per value (`broken`, `violated`), merged by span id as today; keep the outcome check through `readOutcome`.
 
   </details>
-- [ ] Make InDusk's own signals and the demo app send broken.
+- [ ] Make InDusk's own signals take the new verdict in code while still writing violated on the wire this release.
   <details><summary>Technical</summary>
 
-  `lib/promises/mark.ts` (`outcome: "upheld" | "broken"`, the event and symptom attribute names unchanged, default symptom "broken"); callers in `eval/otel.ts`, `promises/record.ts`, `promises/trunk-commit.ts`, `looks/report.ts`. `examples/seat-holds/src/seats.ts` and `telemetry.ts`: `outcome: "upheld" | "broken"`.
+  `lib/promises/mark.ts`: `outcome: "upheld" | "broken"` in its argument; it writes the attribute value `violated` for `broken` at this one point (a docblock naming `.indusk/planning/mark-first/` as the plan that switches it), the event and symptom attribute names unchanged. Callers in `eval/otel.ts`, `promises/record.ts`, `promises/trunk-commit.ts`, `looks/report.ts` pass `broken`. `examples/seat-holds/src/seats.ts` and `telemetry.ts` keep writing `violated`, unchanged.
 
   </details>
 - [ ] Rename the registry state known-violated to known-broken, reading the old word on load.
@@ -165,7 +169,7 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
 
 #### Build Phase 1 Verification
 
-- [ ] A signal saying broken or violated is read, recorded, announced and counted as broken; InDusk and the demo app send broken; a known-violated file reads known broken, and incidents move promises in and out of it.
+- [ ] A signal saying broken or violated is read, recorded, announced and counted as broken; InDusk and the demo app still send violated; a known-violated file reads known broken, and incidents move promises in and out of it.
   <details><summary>Technical</summary>
 
   Green: A1, A3, A4, A5, A11, A12, A13; still green: A2. `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises/outcome-words.test.ts src/lib/promises/standing.test.ts src/lib/promises/signal-writers.test.ts src/lib/promises/known-broken.test.ts src/lib/promises/record-broken.test.ts src/lib/always-on/announce-broken.test.ts && pnpm exec vitest related src/lib/promises/vocabulary.ts src/lib/promises/telemetry.ts src/lib/promises/registry.ts src/lib/promises/incidents.ts src/lib/always-on/pass.ts src/lib/promises/mark.ts`; `cd examples/seat-holds && pnpm exec vitest run src/seats.test.ts`; `pnpm -w exec tsc -b` clean across the admin and the extension.
@@ -189,22 +193,22 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
 - [ ] The root context lists this decision among the key decisions.
   <details><summary>Technical</summary>
 
-  root (Key Decisions): "One promise language: upheld/broken, holding/broken live, no signal unknown; signals write `broken`, `violated` still read; `known-broken` with `known-violated` still read — see `/decisions/one-promise-language`" — always-on because Key Decisions is the one index of every ADR.
+  root (Key Decisions): "One promise language: upheld/broken, holding/broken live, no signal unknown; every reader takes `broken` and `violated` as broken, writers keep `violated` until `mark-first`; `known-broken` with `known-violated` still read — see `/decisions/one-promise-language`" — always-on because Key Decisions is the one index of every ADR.
 
   </details>
 
 #### Build Phase 1 Document
 
-- [ ] The changelog records the new stored words and that the old ones still work.
+- [ ] The changelog records that every reader takes both words and that the registry state is renamed.
   <details><summary>Technical</summary>
 
-  `apps/docs/src/changelog.md` (Unreleased): "Signals write `broken`; `violated` is still read as broken, so instrumented applications keep working. The registry state `known-violated` is now `known-broken`; old files are still read."
+  `apps/docs/src/changelog.md` (Unreleased): "Every reader accepts a signal saying `broken` as well as `violated`; signals keep writing `violated` this release. The registry state `known-violated` is now `known-broken`; old files are still read."
 
   </details>
-- [ ] The promises guide shows applications sending broken, with a note to upgrade the recording server first.
+- [ ] The promises guide says a signal written either way is read as broken.
   <details><summary>Technical</summary>
 
-  `apps/docs/src/guide/promises.md` snippet (lines 160-170) and `guide/always-on.md:131`: write `"broken"`; a note that a recording server older than this release reads `broken` as no signal, so upgrade it first; `examples/seat-holds/README.md` likewise.
+  `apps/docs/src/guide/promises.md` snippet (lines 160-170) and `guide/always-on.md:131` keep writing `"violated"`, with one line beside each: "read as broken; `broken` is read the same". `examples/seat-holds/README.md` likewise.
 
   </details>
 
@@ -343,12 +347,12 @@ The last phase brings everything people read outside the apps into the same voca
 | `apps/indusk-mcp/src/lib/promises/vocabulary.ts` | `PROMISE_OUTCOMES` upheld/broken, `readOutcome`, `PROMISE_STATES` known-broken |
 | `apps/indusk-mcp/src/lib/promises/{telemetry,store,health,look-standing,proof,standing,timeline,record,trunk-commit,mark,registry,incidents,check,status,watch}.ts` | read through `readOutcome`; `broken`; `known-broken` with the alias; words |
 | `apps/indusk-mcp/src/lib/always-on/{pass,heartbeat,schedule}.ts` | query both values; words |
-| `apps/indusk-mcp/src/lib/{eval/otel,looks/report,testing/trace-shape}.ts` | write `broken`; read both |
+| `apps/indusk-mcp/src/lib/{eval/otel,looks/report,testing/trace-shape}.ts` | pass the verdict `broken` (still written `violated`); read both |
 | `apps/indusk-mcp/src/bin/cli.ts`, `src/tools/promise-tools.ts` | help and tool descriptions |
 | `apps/indusk-mcp/skills/*.md`, `templates/planning/CLAUDE.md`, `templates/server/*`, `hooks/check-gates.js` | words |
 | `apps/indusk-admin/src/components/{bars/labels.ts,PromiseTimeline.tsx,PromiseHealth.tsx,PlanList.tsx,Promises.tsx,promise/PromiseProof.tsx,plan/PlanParts.tsx}`, `src/lib/timeline-strip.ts` | labels and state key |
 | `apps/vscode-extension/src/core/{view,activity}.ts` | labels; read both outcome words |
-| `examples/seat-holds/src/{seats,telemetry}.ts`, `README.md` | write `broken` |
+| `examples/seat-holds/src/seats.test.ts`, `README.md` | a test that it writes `violated` and `broken` is read; the README's reading line (the demo's writer is unchanged) |
 | `apps/docs/src/guide/**`, `apps/docs/src/reference/**`, `decisions/one-promise-language.md`, `changelog.md` | words; new ADR page |
 | new tests: `outcome-words`, `signal-writers`, `known-broken`, `record-broken`, `announce-broken`, `promises-cli-words`, `promise-words`, `PromiseWords`, `view-words` | the trajectory |
 
@@ -358,9 +362,10 @@ The last phase brings everything people read outside the apps into the same voca
 
 ## Notes
 
-- Version skew is accepted (ADR, Accepting): an application writing `broken`
-  read by a recording server older than this release reads no signal there;
-  the docs snippet says to upgrade the server first.
+- No version skew this release (Sandy, 2026-10-15): writers keep `violated`,
+  so no recording server older than this plan meets `broken`. The switch of
+  InDusk's writers and the demo app to `broken` is carried by
+  `.indusk/planning/mark-first/` (its research, "First cut"), next release.
 - Internal names that still say violation (`violations`, `violationState`,
   `recordViolations`, `PROMISE_MARK.violatedEvent`) are kept on purpose; a
   later plan may rename them if `mark-first` rewrites those modules anyway.
