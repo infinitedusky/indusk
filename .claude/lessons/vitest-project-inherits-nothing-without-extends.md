@@ -1,0 +1,3 @@
+# A Vitest project inherits nothing from the root config without extends: true
+
+An inline entry in `test.projects` does not see the root config's `optimizeDeps`, `resolve`, `define` or plugins unless it sets `extends: true`. main-suite-green added a package to the root `optimizeDeps.include` to stop a browser test's mid-run Vite reload; the templates project never read it, and the fix only looked like it worked because the failure was intermittent (template-reload-on-cold-cache, 2026-10-15). When a setting at the root is meant for a project, check the project extends it — and prove a fix for an intermittent failure by recreating the cold condition (delete `node_modules/.vite` and rerun), not by one green run.
