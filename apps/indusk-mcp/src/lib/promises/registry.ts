@@ -19,6 +19,7 @@ import {
 	type PromiseKind,
 	type PromiseLifetime,
 	type PromiseState,
+	readPromiseState,
 } from "./vocabulary.js";
 
 export * from "./vocabulary.js";
@@ -238,7 +239,7 @@ export function promiseProblem(value: unknown, stem: string, statement: string):
 	if (v.lifetime !== undefined && !isOneOf(PROMISE_LIFETIMES, v.lifetime)) {
 		return `invalid \`lifetime\` (expected ${PROMISE_LIFETIMES.join(" | ")})`;
 	}
-	if (!isOneOf(PROMISE_STATES, v.state))
+	if (!isOneOf(PROMISE_STATES, readPromiseState(v.state)))
 		return `missing or invalid \`state\` (expected ${PROMISE_STATES.join(" | ")})`;
 	if (typeof v.domain !== "string" || v.domain === "") return "missing `domain`";
 	if (typeof v.owner !== "string" || v.owner === "") return "missing `owner`";
@@ -374,7 +375,7 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 			name: d.name,
 			kind: d.kind,
 			lifetime: (d.lifetime as PromiseLifetime | undefined) ?? "holds",
-			state: d.state,
+			state: readPromiseState(d.state) as PromiseState,
 			domain: d.domain,
 			owner: d.owner,
 			statement,

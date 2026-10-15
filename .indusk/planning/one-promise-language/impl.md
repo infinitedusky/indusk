@@ -157,7 +157,7 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
   `lib/promises/mark.ts`: `outcome: "upheld" | "broken"` in its argument; it writes the attribute value `violated` for `broken` at this one point (a docblock naming `.indusk/planning/mark-first/` as the plan that switches it), the event and symptom attribute names unchanged. Callers in `eval/otel.ts`, `promises/record.ts`, `promises/trunk-commit.ts`, `looks/report.ts` pass `broken`. `examples/seat-holds/src/seats.ts` and `telemetry.ts` keep writing `violated`, unchanged.
 
   </details>
-- [ ] Rename the registry state known-violated to known-broken, reading the old word on load.
+- [x] Rename the registry state known-violated to known-broken, reading the old word on load.
   <details><summary>Technical</summary>
 
   `vocabulary.ts`: `PROMISE_STATES = ["declared", "enforced", "known-broken", "retired"]`, docblock updated. `registry.ts`: map `known-violated` → `known-broken` before `promiseProblem` validates. `incidents.ts` writes `known-broken` on open; on the last fix returns either word to `enforced` (reading the raw file). `check.ts`, `health.ts`, `standing.ts`, `proof.ts` compare to `known-broken`. Admin `components/bars/labels.ts` and `components/plan/PlanParts.tsx` keys, and `__tests__/helpers/promises-fixture.ts`'s `PromiseState`, follow. Existing tests that write `known-violated` fixtures keep doing so (they now prove the alias); assertions that read the state back expect `known-broken`.

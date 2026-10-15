@@ -28,6 +28,16 @@ export const PROMISE_STATES = ["declared", "enforced", "known-broken", "retired"
 export type PromiseState = (typeof PROMISE_STATES)[number];
 
 /**
+ * A state as a file says it: `known-violated`, the word before 2026-10-15, is
+ * read as `known-broken` and the file is never rewritten for it. Anything else
+ * is returned as it is, for the caller's own validation.
+ * promise: a-promise-is-upheld-or-broken
+ */
+export function readPromiseState(value: unknown): unknown {
+	return value === "known-violated" ? "known-broken" : value;
+}
+
+/**
  * `holds` — in force for as long as the system runs (the default).
  * `established` — a transition that cannot be undone once done; retires the
  * moment it is proved, so the registry does not fill with things that can
