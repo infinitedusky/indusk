@@ -1,7 +1,7 @@
 ---
 title: "main-suite-green"
 date: 2026-10-14
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -62,7 +62,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 **Goal**: author every test that can honestly be authored now, and record every test that cannot.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create main-suite-green`, which records the assignment; a worktree made another way needs `indusk worktree assign main-suite-green <path>`) — worktree-per-plan default
+- [x] Create/confirm this plan's worktree (`indusk worktree create main-suite-green`, which records the assignment; a worktree made another way needs `indusk worktree assign main-suite-green <path>`) — worktree-per-plan default
 - [ ] Author A1 in `apps/indusk-mcp/src/__tests__/contract-stdin.test.ts` (`// promise: a-large-impl-gets-the-same-contract-answer`): build a plan folder in a temp project (as `promises-contract.test.ts` does) whose impl is padded past 200 KB; spawn the repo's built CLI (`dist/bin/cli.js`, through `helpers/cli.ts` if it can feed stdin, else `spawn` with `INDUSK_HOME` set to a temp dir) with `promises contract <plan> --impl-stdin`, write the impl in two halves with a 100 ms pause, five times; assert each exit code and output equal the run that reads the impl from its file. RED today: `readFileSync(0)` throws `EAGAIN` on the empty pipe
 - [ ] Add a second case to A8's file: a fixture app whose approved mockup names `ghost-row`, approved under a plan folder that is active (not archived) — not reported; the same approval under an archived plan — reported. RED today on the first half
 - [ ] Add A6's second case in `inbox.test.ts`: `now` two days after the violation — a `reminder` entry follows the `break`. Passes today (regression guard)
