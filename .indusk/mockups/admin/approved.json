@@ -7261,6 +7261,22 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-15T01:42:45.631Z",
 			"plan": "plan-stories"
+		},
+		{
+			"mockup": "dashboard.empty",
+			"mockupHash": "25f496667236ceff4d68a73586c43621e19412d1d797ec07d9ad1b01df4eeebf",
+			"componentsHash": "2c32fbd6f250ac22705697426b358bd0569565faa47a9b30c08bf35f7bbdf3ad",
+			"components": {
+				"nav.expanded": "8ea839eabe75b2aa760946febc2d757ab7da5e3898bc7a519f7f8573e542b628",
+				"promise-row.empty": "0fba184d8a78eba12720c6fd61cb418951102a333bf1f51fcb95facbb99d1d81",
+				"nav.css": "c57723f174d0839b7aa9be7522e43f62e3db3f1120c45bf3015f2821488e7a41",
+				"promise-row.css": "afec956a5ca1216fadafb3134529e9f058ca6c994ca0fa9e74f90c8784ff2cdf"
+			},
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-15T01:42:46.144Z",
+			"plan": "plan-stories"
 		}
 	]
 }
