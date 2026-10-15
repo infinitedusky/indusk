@@ -123,7 +123,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `__tests__/helpers/next-dev.ts`, one at a time — Next locks `.next/`, so
   `fileParallelism: false` is load-bearing and a stray dev server on the app
   dir fails every smoke; the live rows drive it with Playwright from the node
-  project. `typecheck.test.ts` makes `tsc` a test. — see
+  project. `typecheck.test.ts` makes `tsc` a test. A node test imports the route
+  it calls at the top of the file, never `await import(...)` inside an `it`: the
+  cold import of the package's graph timed out at 5 s in a root run
+  (`the-everyday-suite-passes-on-main`). — see
   `/reference/admin-ui/component-conventions`
 - `dynamic = "force-dynamic"` in the root layout is load-bearing; markdown
   renders only through `<Markdown>`; the registry is never auto-pruned

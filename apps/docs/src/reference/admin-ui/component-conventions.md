@@ -123,6 +123,8 @@ The audit lives at `apps/indusk-admin/src/__tests__/component-reuse-audit.test.t
 
 Run via `pnpm test` from `apps/indusk-admin/`. A failing audit means a primitive should be introduced (or an existing one used) at the flagged location.
 
+**Import a route at the top of its test file.** A node test that calls an `app/api` route imports it (and the package module it draws on) with a static `import` at the top of the file, after the `vi.mock` calls, which vitest hoists above it. An `await import(...)` inside an `it` makes the first test pay for the cold load of the package's whole module graph inside its 5 s budget; alone that is about 0.2 s, but in a root `pnpm test`, where every package's tests contend for the machine, it timed out (`new-project-accept`, `new-project-routes`, `new-project-parent`). A static import is charged to the file's import, which has no per-test timeout.
+
 The audit is intentionally simple at v1 — grep-based, not AST-based. v2 may add AST-aware detection if the simple version produces false positives or misses subtle drift. Keep the simple version until it bites.
 
 ## Why this discipline matters
