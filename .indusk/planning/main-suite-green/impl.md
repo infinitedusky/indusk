@@ -54,7 +54,7 @@ approved_at: "2026-10-15T02:24:53.058Z"
 | A8 | A component named only by an unlanded plan's approved mockups is not reported unimplemented; one named by a landed plan's and missing is | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-component-has-one-implementation, promise: the-everyday-suite-passes-on-main | apps/indusk-mcp/src/__tests__/looks-admin-components.test.ts |
 | A9 | `pnpm test` from the root of the branch, merged with main, passes | Build Phase 3 | Build Phase 3 | passing | live check | the live proof of the suite promise; rows A2–A8 name its files | (recorded in the impl with its result) |
 | A10 | A mockup held under a landed plan and then re-approved under an unlanded one still has the components its landed approval bound held: delete one of those components' implementations and the check reports it unimplemented, while a component only the unlanded re-approval adds is not reported | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
-| A11 | A story name's component is read by one rule: `componentOfStory` gives `plan-row` for `plan-row.open` and for `plan-row.open.wide`, the story reader's `component` agrees with it, and A8 and A10 still hold | Build Phase 5 | Build Phase 5 | written | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
+| A11 | A story name's component is read by one rule: `componentOfStory` gives `plan-row` for `plan-row.open` and for `plan-row.open.wide`, the story reader's `component` agrees with it, and A8 and A10 still hold | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/lib/looks/landed.test.ts |
 
 ## Checklist
 
@@ -208,15 +208,18 @@ approved_at: "2026-10-15T02:24:53.058Z"
 
 #### Build Phase 5 Verification
 
-- [ ] A11 authored and green, A8 and A10 still green (`pnpm exec vitest run src/lib/looks/landed.test.ts src/__tests__/looks-admin-components.test.ts`, from `apps/indusk-mcp`); `pnpm exec vitest related src/lib/looks/mockups.ts src/lib/looks/landed.ts src/lib/looks/coverage.ts src/__tests__/helpers/looks-cli.ts --run`; `tsc --noEmit` and `biome check` on the changed files
+- [x] A11 authored and green, A8 and A10 still green (`pnpm exec vitest run src/lib/looks/landed.test.ts src/__tests__/looks-admin-components.test.ts`, from `apps/indusk-mcp`); `pnpm exec vitest related src/lib/looks/mockups.ts src/lib/looks/landed.ts src/lib/looks/coverage.ts src/__tests__/helpers/looks-cli.ts --run`; `tsc --noEmit` and `biome check` on the changed files
+  - Note, 2026-10-15: landed.test.ts + looks-admin-components.test.ts 9/9 green (A11 red on its assertion before the implementation, A8 and A10 green after the helper extraction); `vitest related` 41 files / 249 tests; `tsc --noEmit` exit 0; `biome check` on the six changed files clean.
+- [x] Shape — reviewed the files this phase changed (`looks-cli.ts`, `mockups.ts`, `landed.ts`, `coverage.ts` and the two tests) against the enabled extensions' craft rules, `rules.unreadable` empty; nothing to change: `componentOfStory` is one named function with a seam the test reaches, `addApprovedMockup` is one job (add and approve a screen) taking only what differs between callers.
 
 #### Build Phase 5 Context
 
-- [ ] guard: `componentOfStory`'s doc comment says it is the one reader of a story name's component (`<component>.<state>`, split at the first dot), so a new reader takes it rather than splitting again
+- [x] guard: `componentOfStory`'s doc comment says it is the one reader of a story name's component (`<component>.<state>`, split at the first dot), so a new reader takes it rather than splitting again
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md`: its story-naming sentence says the component is the name before the first dot, as `componentOfStory` reads it; edit only where it says otherwise, and note the result under this item
+- [x] `apps/docs/src/reference/admin-ui/component-conventions.md`: its story-naming sentence says the component is the name before the first dot, as `componentOfStory` reads it; edit only where it says otherwise, and note the result under this item
+  - Note, 2026-10-15: line 53 says "A story's name is `<component>.<state>`" — it does not contradict the first-dot rule (a state may itself hold dots, as `plan-row.open.wide`), so no edit.
 
 ## Files Affected
 
