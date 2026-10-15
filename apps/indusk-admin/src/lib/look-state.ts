@@ -10,6 +10,7 @@ import { documentFinished } from "@infinitedusky/indusk-mcp/plans/steps";
  */
 
 export type PlanLookState =
+  | "plan.master"
   | "plan.released"
   | "plan.needs-you"
   | "plan.parts"
@@ -18,7 +19,9 @@ export type PlanLookState =
 export type BriefLookState = "brief.approved" | "brief.writing" | "brief.empty";
 
 /**
- * The plan page's state: released once archived or in monitor; else
+ * The plan page's state: `master` for a plan that declares subplans, whatever
+ * its own documents say (it draws its story, not their stage); released once
+ * archived or in monitor; else
  * `needs-you` while it waits on a person (a session question, a stopped build
  * or an amendment — the package's `planWaiting` counts all three, and this
  * page asks nothing else); else `parts` while its brief is not finished (the
@@ -29,7 +32,9 @@ export function planLookState(input: {
   position?: string;
   waiting: boolean;
   briefStatus: string | null;
+  master?: boolean;
 }): PlanLookState {
+  if (input.master) return "plan.master";
   if (input.archived || input.position === "monitor") return "plan.released";
   if (input.waiting) return "plan.needs-you";
   if (!documentFinished("brief", input.briefStatus ?? undefined))
