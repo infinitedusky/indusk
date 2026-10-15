@@ -20,7 +20,7 @@ import { TrustNotice } from "@/components/session/TrustNotice";
 import { HistoryPanel } from "@/components/ui/HistoryPanel";
 import { PlanCopyNotice } from "@/components/Worktrees";
 import { readPlanHistory, readWaiting } from "@/lib/decisions-reader";
-import { planLookState, planPageWaiting } from "@/lib/look-state";
+import { planLookState } from "@/lib/look-state";
 import { extractPhases } from "@/lib/phases";
 import { planActions } from "@/lib/plan-actions";
 import { readPlanPage } from "@/lib/plan-page";
@@ -125,7 +125,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
         archived={plan.archived || Boolean(plan.archivedInWorktree)}
       />
       <WaitingAmendments project={project} plan={name} parts={parts} />
-      {waiting ? (
+      {waiting && waiting.on !== "amendment" ? (
         <DecisionCard project={project} waiting={waiting} />
       ) : (
         <PlanStatusCard plan={plan} dates={dates} />
@@ -160,7 +160,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
         lookState={planLookState({
           archived: plan.archived || Boolean(plan.archivedInWorktree),
           position: plan.position?.position,
-          waiting: planPageWaiting(waiting, parts.amendments),
+          waiting: waiting !== undefined,
           briefStatus: parts.briefStatus,
         })}
       >
