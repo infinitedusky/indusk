@@ -7,6 +7,7 @@ import type { Session, SessionOptions } from "./start.js";
 
 /**
  * promise: a-session-can-be-stopped — admin-plan-authoring A21, the manager's half.
+ * promise: a-decided-request-stays-decided — decided-prompts-stay-closed A5, A6, the manager's half.
  *
  * The admin daemon owns its sessions (ADR D2): one at a time, each written to
  * a record so a daemon that stops, or starts again after a crash, can end
@@ -243,6 +244,93 @@ describe("plan-cockpit — the question a session waits on", () => {
 		m.reply(id, { requestId: "req-1", answers: { "Which map?": "A" } });
 		expect(m.pendingQuestion(id)).toBeUndefined();
 		expect(m.pendingQuestion("no-such-session")).toBeUndefined();
+	});
+});
+
+describe("decided-prompts-stay-closed A5, A6 — the log records every decision", () => {
+	function recording() {
+		const dir = mkdtempSync(join(tmpdir(), "session-manager-"));
+		dirs.push(dir);
+		let emit: SessionOptions["onEvent"] = () => {};
+		const m = new SessionManager({
+			recordPath: join(dir, "r.json"),
+			start: (opts) => {
+				emit = opts.onEvent;
+				return {
+					pid: 1,
+					kind: opts.kind,
+					cwd: opts.cwd,
+					say: () => {},
+					answer: () => {},
+					decide: () => {},
+					stop: async () => {},
+					done: new Promise(() => {}),
+				};
+			},
+		});
+		const { id } = m.start({ ...planning, ...meta });
+		const heard = () => {
+			const seen: Array<Record<string, unknown>> = [];
+			m.subscribe(id, (ev) => seen.push(ev as unknown as Record<string, unknown>));
+			return seen;
+		};
+		return { m, id, emit: (ev: Parameters<typeof emit>[0]) => emit(ev), heard };
+	}
+
+	it("A5 a planning session's auto-allowed write is in the log, followed by an allowed decision by rule", () => {
+		const r = recording();
+		r.emit({
+			type: "permission",
+			requestId: "p1",
+			tool: "Write",
+			input: { file_path: `${planning.cwd}/.indusk/planning/seats/brief.md` },
+		});
+		const seen = r.heard();
+		expect(seen.map((e) => e.type)).toEqual(["permission", "decided"]);
+		expect(seen[1]).toMatchObject({ requestId: "p1", allow: true, by: "rule" });
+	});
+
+	it("A6 a person's allow and deny are each followed by their outcome by person, and a later subscriber hears both", () => {
+		const r = recording();
+		r.emit({
+			type: "permission",
+			requestId: "p1",
+			tool: "Write",
+			input: { file_path: "/elsewhere/a.ts" },
+		});
+		r.emit({
+			type: "permission",
+			requestId: "p2",
+			tool: "Write",
+			input: { file_path: "/elsewhere/b.ts" },
+		});
+		r.m.reply(r.id, { requestId: "p1", allow: true });
+		r.m.reply(r.id, { requestId: "p2", allow: false, message: "not that" });
+		const late = r.heard().filter((e) => e.type === "decided");
+		expect(late).toEqual([
+			expect.objectContaining({ requestId: "p1", allow: true, by: "person" }),
+			expect.objectContaining({ requestId: "p2", allow: false, message: "not that", by: "person" }),
+		]);
+	});
+
+	it("A9 a person's answers to a question are recorded on the decision, for a panel connecting later", () => {
+		const r = recording();
+		r.emit({
+			type: "question",
+			requestId: "q1",
+			input: {},
+			questions: [{ question: "Which workflow?", header: "W", options: [{ label: "feature" }] }],
+		} as Parameters<typeof r.emit>[0]);
+		r.m.reply(r.id, { requestId: "q1", answers: { "Which workflow?": "feature" } });
+		const late = r.heard().filter((e) => e.type === "decided");
+		expect(late).toEqual([
+			expect.objectContaining({
+				requestId: "q1",
+				allow: true,
+				by: "person",
+				answers: { "Which workflow?": "feature" },
+			}),
+		]);
 	});
 });
 

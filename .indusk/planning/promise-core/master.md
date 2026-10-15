@@ -3,12 +3,20 @@ title: "Promise core"
 description: "Makes the promise the first thing a person meets in InDusk; plans and gates are extras for larger work."
 date: 2026-10-05
 status: living
-# Ordered children. None is created yet; a name with no folder renders as a
-# placeholder. The names are provisional until each is opened with /planner.
+# The headline children, in order. Each that gathers open plans is a parent with
+# its own master.md naming them. Since 2026-10-15 every open plan sits under
+# here: Dawn, Day and the demo masters are closed. A name with no folder renders
+# as a placeholder.
 subplans:
-  - house-rules-out
+  - mark-first
+  - run-the-master
+  - expectations-loop
+  - looks-as-promises
+  - open-core-boundary
+  - workbench-server
+  - adopt-existing-project
+  - cockpit-around-promises
   - workflow-builder
-  - promise-first-build
 ---
 
 # Promise core — Master
@@ -19,10 +27,192 @@ measurements behind it are in [research.md](research.md). The aim it serves is
 the seven sentences in [plan-premises/aim.md](../plan-premises/aim.md).
 
 Nothing here is built and no plan below is created. On 2026-10-05 this
-master was reconciled with the [Day master](../indusk-v4-day/master.md): three
+master was reconciled with the [Day master](../archive/indusk-v4-day/master.md): three
 decisions are recorded under Decided, and `planner-promises`' brief and the Day
 master were edited to match. No other plan has been edited. This is the record
 to work from.
+
+## Settled 2026-10-14/15 — the promise is proved by watching it
+
+A conversation during `new-project-flow`'s close (Sandy) sharpened the
+primitive. Where this section and the older text below disagree, this section
+holds; the older text is kept as the record of 2026-10-05.
+
+**The primitive**
+
+- **A plan is one promise.** Its goal is to build whatever fulfils it.
+- **A promise is made of clauses**: *splits* — progress against a budget on the
+  way to the promise's goal, worked backward from it (the 100 m dash's split
+  times) — and *limits* — bounds that always hold (an engine's heat).
+- **Every clause has a mark**: telemetry in the running system that reports it
+  upheld or broken. A clause is upheld only when its mark says so in real use. The
+  mark is the proof.
+- **A clause may also have tests**: the rehearsal before release and the guard
+  while code changes. Needed to build it; never enough to call it upheld.
+  Removing them would leave nothing to say, before a deploy, that a change
+  broke a clause — "the regression is fucked if you remove the tests" (Sandy).
+- **A plan is done when every clause's mark has reported**, its tests passing
+  on the way.
+- **Every break a mark finds becomes a test on that clause** as part of fixing
+  it: telemetry discovers, tests pin (the principle below, *search discovers,
+  tests pin*, applied to production). Tests grow from what really broke, not
+  only from guesses made in advance.
+- **Promises build up.** A clause can be the promise of the part beneath it;
+  the marks share a trace, so a break leads down to its cause. Depth grows
+  where incidents land.
+
+**The words** (Sandy, 2026-10-15): a promise, and each clause, is **upheld**
+or **broken** — the words people use of promises.
+
+| Use | Good | Bad |
+|---|---|---|
+| A state — a dot, a record, a mark | **upheld** | **broken** |
+| Right now — a live page | **holding** | **broken** |
+| What happened | **held** | **broke** |
+
+The system *upholds* a promise; a promise *holds* or *breaks*. Never *failed*,
+*passed* or *violated* — the words of tests and tickets. Today InDusk mixes
+them: a mark reports `upheld`/`violated` and the registry's state is
+`known-violated`. `mark-first` moves both to upheld/broken; a mark's
+`violated` is still read, so applications already marked keep working.
+
+**What people think about** (Sandy, 2026-10-15): promises and clauses, and
+whether they hold — that is what wakes anyone at night. Tests, regressions and
+their upkeep are fully automated and the agents' alone: written, run, grown
+from breaks and kept passing without a person deciding, approving or reading
+them. A person approves promises and clauses; the cockpit shows clause health,
+never a test list. Tests exist to help the system keep its promises, not to be
+looked at.
+
+**Everything is a promise** (an advisor's point, adopted by Sandy, 2026-10-15).
+Promises are polymorphic: one concept, with types that prove themselves their
+own way. A **visual promise** is what a "look" is today — one per screen or
+component, its approved mockup as its statement, each state on each device and
+scheme a clause, upheld when the rendered page matches by value; its mark is the
+looks check (later, real browsers); its stories are its tests, the agents'
+alone. One list, one health view, one approval flow; the brief has one Promises
+section. Expectations stay separate — they decide what to build, not what is
+true. Built as its own child, third (`looks-as-promises`).
+
+**Approvals happen on the plan page** (Sandy, 2026-10-15). Every promise a plan
+makes or changes — visual ones included — is approved on that plan's page, one
+line each, opened on demand. A shared component that reopens screens other plans
+own shows them on the page of the plan that changed it. The **looks page becomes
+the design system**: the foundation, components and their states, screens as
+they are — browsed and linked, with no approvals, no proposed queue, no checkout
+switching.
+
+**How the work runs** (Sandy, 2026-10-15)
+
+- **The person's job is briefs.** A plan starts as a conversation and ends with
+  a brief the person approves: the promises and their clauses. That is where
+  the person's time goes. From an approved brief, execution runs on its own.
+- **Every decision carries a cost, and the cost sets how long it waits:**
+  *cheap* — proceeds on the agent's recommendation after five minutes
+  unanswered; *moderate* — after an hour; *expensive* — waits for the person,
+  shown bright red and flashing. Expensive is: what to promise, anything
+  outward-facing or permanent (publishing, a public repository, deleting,
+  spending), and a look the person would reject. The agent classifies each
+  decision; the person can reclassify. Most of today's approvals — test plans,
+  ADRs, impls, stories, re-approving a brief already agreed — are cheap.
+- **Questions, not approval screens.** Every decision arrives as a question in
+  one place — a thread beside everything — carrying the agent's
+  recommendation. The person answers when it comes, or adds context.
+- **A daily list replaces sitting in a plan:** what is building, what is
+  breaking, what needs the person today, across every plan.
+- **The work is a graph, run in parallel.** Nodes are plans and, within a plan,
+  phases; each declares what it depends on and what it touches. Every node
+  whose dependencies are met and whose files no running node touches runs at
+  once (up to the machine's session limit). An unanswered question blocks only
+  the nodes downstream of it, never the rest. The graph is re-evaluated
+  continuously as answers, landings and touched files change. Dependencies come
+  from promises — a clause resting on another promise — with `Depends On` for
+  what promises do not express.
+- **Main cascades.** Whenever something lands on `main`, every open worktree
+  merges it (merge, never rebase), so every branch stays in step. A worktree
+  with no running session merges at once; one with a running phase merges when
+  that phase ends, and its next phase does not start until it has. A merge
+  that conflicts becomes a question (its cost set by its size); the agent
+  proposes the resolution. On the workbench server there is one copy, so the
+  cascade is the box's; locally, each machine's open worktrees.
+- **Reviews fix, they do not file** (Sandy, 2026-10-15). Falsify and the audit
+  both run in **fresh context** — a reader that never saw the building session
+  (today only the audit does; on `new-project-flow` the fresh audit found more,
+  and bigger, than the builder's own falsify). They are two lenses on one
+  review step: the hunt for a specific break, and the audit's six questions.
+  Both write their findings into a **phase of fixes** that `/work` runs — the
+  audit stops being advisory. Each finding is either **fixed here** (the
+  default) or **moved to a plan that already exists and is coming soon**, where
+  it clearly belongs — never "noted for later", never a new plan. The agent
+  sorts each as a *cheap* decision. A finding that would change what the plan
+  promises is not a fix but a brief amendment — *expensive*, it waits. The same
+  rule covers cleanup's findings and anything a retrospective turns up.
+- **The graph is seen** (a look in `run-the-master`'s brief): plans and promises
+  as nodes, starting tiny — a plan is one node with its state, opened on
+  demand. A broken promise turns red with its broken clause and symptom; every
+  promise resting on it dims to *at risk*; the line down the shared trace leads
+  to the cause; the fix appears as a new node, and the red turns green only when
+  the mark reports holding again in real use. Built on React Flow (xyflow) with
+  an ELK or dagre layout. A replay of a real run — Homework Gate's milestones —
+  is for the product page, a follow-up once that run exists.
+
+**Two loops read the telemetry back**
+
+- **Promises → fixing.** A broken clause becomes an incident carrying its trace
+  and an agent's diagnosis and proposed fix.
+- **Expectations → deciding.** At its look time an expectation's measure is
+  read back and proposes what to build next. An expectation is not a promise;
+  a miss is information, not a defect. Expectations exist in every brief
+  today; nothing reads them back yet.
+
+**How it ships** — see `.indusk/research/open-core-and-workbench-server.md`
+
+- **Open core** — local, no server, free: it detects, when you run it.
+- **Workbench server** — a team's own box, a subscription, each person on their
+  own Claude account: it closes both loops continuously.
+- **The sorting rule:** server only if it must run continuously or know more
+  than one person; the server holds nothing the files do not.
+
+**The plans, in order** — each headline child that gathers open plans is a
+parent with its own `master.md` naming them.
+
+1. **`mark-first`** — merged with `promise-first-build`: clauses, marks
+   (server and browser), the close rule, layering, the diagnosis; and a plan
+   being one promise. Proved on Homework Gate, not on dusk. Its accepted brief
+   is reworked around "a plan is one promise" and approved again.
+1b. **`run-the-master`** — second, after `mark-first` (Sandy, 2026-10-15: build it
+   on what a plan *is* once that has settled, not before): decisions as questions with a cost (cheap
+   five minutes, moderate an hour, expensive waits, red); one question thread;
+   the daily list; main cascading into every worktree; the graph of plans and phases run in parallel, blocked only
+   downstream of an unanswered question, re-evaluated continuously. Its first
+   master to run is Homework Gate's milestones, not this one. Its dependencies come from promises from the start.
+2. **`expectations-loop`** — expectations read back at their look time into
+   what is built next.
+3. **`looks-as-promises`** — visual promises; approvals on the plan page; the
+   looks page becomes the project's **design system** — the foundation,
+   components and their states, screens, browsed and linked. Folds in
+   `stories-replace-mockups` (its research holds today's story-viewing
+   findings: stories framed like pages, drawn without the app's base reset,
+   a placed story differing from its screen's drawing).
+4. **`open-core-boundary`** — the core works without the admin daemon or a
+   machine-global home; `house-rules-out` is folded in (dusk's own practice
+   leaves the package). Ships with visual promises in the core.
+5. **`workbench-server`** — one box per team, per-person Claude accounts,
+   sync; Anthropic's own cloud sessions checked first.
+6. **`adopt-existing-project`** — bringing an existing codebase (Numero) in:
+   name its parts, its founding brief, first promises with marks.
+7. **`cockpit-around-promises`** — the cockpit organised around promises: `one-conversation-view` (on a
+   plan, one agent present on every page, rendered the same everywhere, and
+   matching the new-project conversation's thread), `contract-ui` (the admin
+   organised around premises, promises and phases), and the in-flight
+   `cockpit-audit-fixes`, `decided-prompts-stay-closed`,
+   `template-reload-on-cold-cache`.
+8. **`workflow-builder`** — kept, not yet reconsidered against the above.
+
+**What changes in what exists:** the test plan becomes the clause plan (each
+clause and its mark, its tests beside); `a-closed-plan-kept-its-promises` closes
+on marks; the planner's "assertions must be behavioural" rule moves to clauses.
+Open: whether a *structure* promise's mark is a check run at build time.
 
 ## The primitive
 
@@ -55,7 +245,8 @@ large to build in one go. This is called the short path below.
    today are selections already.
 3. **House.** How this repository itself is run. It never ships.
 
-**What the core requires, whatever the workflow.** Every promise is named by a
+**What the core requires, whatever the workflow.** *(Superseded 2026-10-15:
+every clause has a mark; tests are its rehearsal and guard — see above.)* Every promise is named by a
 test. That test is seen failing before the code is written. Work is not done
 while it is missing or failing. A person can select a workflow with no test
 step, so this cannot live in a step.
@@ -223,7 +414,7 @@ rows for `day-contract` and `day-claim-evidence`. The rest have not been.
 | [test-kinds](../archive/test-kinds/brief.md): five kinds of test, each run at its own moment | closed 2026-10-05 | Agrees on substance: watching is what promises are for. Two vocabularies used the word "kind", one for promises and one for tests. Decided 2026-10-05: tests have a level, promises keep kind; `planner-promises` does the rename. |
 | [admin-plan-authoring](../admin-plan-authoring/brief.md), demo step 3: New plan and Build from the admin | brief draft, spike done | Unchanged for the demo. Afterwards, starting a plan asks which workflow, and the builder reuses its request handling. |
 | [contract-ui](../contract-ui/brief.md): the admin organised around premises, promises and phases | brief and manifesto draft | The lowest level is "phases". A promise built on the short path has none. That level becomes the work toward a promise, which may be a phase or only a test run. |
-| [indusk-demo](../indusk-demo/master.md): a new project, start to finish, recorded | living | The script stands as written. The short path is added at the end. |
+| [indusk-demo](../archive/indusk-demo/master.md): a new project, start to finish, recorded | living | The script stands as written. The short path is added at the end. |
 | `day-contract`, component 4c′ in the Day master plan: the check at change time | not created; after the demo | Everything else first proposed for it is `planner-promises`, including changing or replacing a promise. What remains is the check: code that touches a promise's site, in a plan that does not name it, is recorded. |
 | `day-claim-evidence`, component 5 in the Day master plan: red observed, amendments recorded | not created | Decided 2026-10-05: it keeps "red observed" and builds it once, recorded by the system; `promise-first-build` reuses it. The amendment log and the gate ledger stay. |
 | `day-claim-binding` and `day-uncovered-surface`, components 6 and 7 in the Day master plan | not created | Both are specified per change and per test row. The audit this conversation described is the same two checks run per promise across the registry, when a promise's test or marked code changes. |

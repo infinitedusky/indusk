@@ -26,6 +26,7 @@ subplans:
   - server-provisioning
   - contract-ui
   - cockpit-audit-fixes
+closed_reason: "Closed 2026-10-15 by Sandy: served its purpose; promise-core is the master plan now leaned on, and holds the plans still open."
 ---
 
 # Demo — a new project, start to finish

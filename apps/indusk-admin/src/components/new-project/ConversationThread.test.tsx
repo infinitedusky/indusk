@@ -6,6 +6,7 @@ import { render } from "vitest-browser-react";
 import { ConversationThread } from "./ConversationThread";
 
 // promise: a-project-conversation-is-a-back-and-forth
+// promise: a-prompt-shows-only-when-a-person-must-choose — decided-prompts-stay-closed A10, the thread's half.
 
 /**
  * new-project-flow A24, A25: an agent reply in Markdown shows formatted with
@@ -164,5 +165,47 @@ describe("the reply box sends what was typed, once", () => {
     await screen.getByRole("button", { name: "Stop" }).click();
     expect(onStop).toHaveBeenCalledOnce();
     expect(onSay).not.toHaveBeenCalled();
+  });
+});
+
+describe("decided-prompts-stay-closed A10 — a refused click leaves the request waiting", () => {
+  it("A10 Allow and Answer come back when the reply is refused", async () => {
+    const refused = vi.fn().mockResolvedValue(false);
+    const screen = await render(
+      <ConversationThread
+        events={[
+          {
+            type: "question",
+            requestId: "q1",
+            questions: [{ question: "Where?", options: [{ label: "Fly" }] }],
+            input: {},
+          },
+          {
+            type: "permission",
+            requestId: "p1",
+            tool: "Write",
+            input: { file_path: "/x/y.md" },
+          },
+        ]}
+        running
+        onAnswer={refused}
+        onDecide={refused}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Allow" }).element(),
+    );
+    await expect
+      .element(screen.getByRole("button", { name: "Allow" }))
+      .toBeVisible();
+    await userEvent.click(
+      screen.getByRole("button", { name: /Fly/ }).element(),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Answer", exact: true }).element(),
+    );
+    await expect
+      .element(screen.getByRole("button", { name: "Answer", exact: true }))
+      .toBeVisible();
   });
 });

@@ -16,7 +16,7 @@ primitive".
 
 **Reader.** Not yet named by the author. Assumed here: a developer or an
 engineering lead who has lived in a ticket tracker and is about to see the
-demo ([indusk-demo](../indusk-demo/master.md)). To confirm.
+demo ([indusk-demo](../archive/indusk-demo/master.md)). To confirm.
 
 **Arc.** The reader starts believing a good tracker is the answer. They end
 holding that a status nobody can check is the problem, that a contract with

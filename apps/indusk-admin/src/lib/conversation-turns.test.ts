@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { historyBefore, marks, turnsOf } from "./conversation-turns";
 
 // promise: a-project-conversation-is-a-back-and-forth
+// promise: a-prompt-shows-only-when-a-person-must-choose
 
 /**
  * new-project-flow A23: a session's events read as alternating you/agent
@@ -164,5 +165,27 @@ describe("historyBefore — what the transcript holds that the page is not heari
     expect(marks([...kept], "b")).toBe(true);
     expect(marks([...kept], "c")).toBe(false);
     expect(marks([...kept], null)).toBe(false);
+  });
+});
+
+describe("decided-prompts-stay-closed A4 — a request its rule decided is not waiting", () => {
+  it("A4 a permission with a decided event lists nothing waiting, with no answered set handed in", () => {
+    const turns = turnsOf([
+      {
+        type: "permission",
+        requestId: "p1",
+        tool: "Write",
+        input: { file_path: "/w/a.ts" },
+      },
+      // Built loosely so this file loads before the `decided` type exists.
+      {
+        type: "decided",
+        requestId: "p1",
+        allow: true,
+        by: "rule",
+      } as unknown as StartedEvent,
+    ]);
+    const agent = turns.find((t) => t.who === "agent");
+    expect(agent).toMatchObject({ waiting: [] });
   });
 });

@@ -44,7 +44,9 @@ None.
 
 ## Looks
 
-None — no approved look holds the session panel (it is no component with a story, and no screen state draws it); a decided request gains a one-line outcome inside it. one-conversation-view (`.indusk/planning/one-conversation-view/`) draws every session's look for approval.
+### This plan makes
+
+1. **`agent-panel.decided`**. The session panel with decided requests: a tool request the session allowed reads *Allowed*, one it refused reads *Denied* with the reason, a question the person answered reads *Answered* with their answer, and a question the build declined reads *Declined* with the reason; none offers a button. Drawn after the build, at acceptance (Sandy, 2026-10-15), since the acceptance check found the panel's change had no look; one-conversation-view (`.indusk/planning/one-conversation-view/`) still draws every session's look.
 
 ## Depends On
 

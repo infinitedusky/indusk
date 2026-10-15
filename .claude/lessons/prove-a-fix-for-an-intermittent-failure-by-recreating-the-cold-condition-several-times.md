@@ -1,0 +1,3 @@
+# Prove a fix for an intermittent failure by recreating the failing condition (e.g. delete the cache) and rerunning several times, not by one green run
+
+main-suite-green's root optimizeDeps fix for the browser template reload was a silent no-op that passed by chance because the failure was intermittent. A single green run proves nothing when the failure is intermittent. Recreate the cold condition (delete the Vite cache), rerun several times, and confirm the mechanism actually reaches the code path. Source: template-reload-on-cold-cache retrospective (h-20261015-035, h-20261015-038); see vitest-project-inherits-nothing-without-extends.
