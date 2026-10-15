@@ -1,6 +1,6 @@
 # Always on
 
-The [promise loop](/guide/promises) works on a laptop: a run marks a promise,
+The [promise loop](/guide/promises) works on a laptop: a run sends a promise's signal,
 `indusk promises status` reads it back from the local telemetry daemon, and
 `indusk promises watch` reopens the owning plan when something breaks.
 
@@ -123,7 +123,7 @@ fly ips allocate-v4 --yes -c docker/fly.always-on.toml   # dedicated, $2/month
 
 ## Adopting it in an application
 
-**1. Mark the promise.** Wherever the behaviour happens, on the span that does
+**1. Signal the promise.** Wherever the behaviour happens, on the span that does
 the work:
 
 ```ts

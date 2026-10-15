@@ -214,9 +214,9 @@ never fail it; the marked span going missing does. `expectPromiseViolated`
 asserts a break and returns its symptom.
 
 This repository's own example is `every-commit-evaluated`: every evaluator run
-marks its root span, `upheld` when a scorecard is written and `broken` with
-the reason when it is not. While the local telemetry daemon runs, that mark
-lands in its Jaeger with nothing configured.
+signals on its root span, `upheld` when a scorecard is written and
+`violated` (read as broken) with the reason when it is not. While the local
+telemetry daemon runs, that signal lands in its Jaeger with nothing configured.
 
 ## The loop
 
@@ -260,7 +260,7 @@ not exist) to prove the whole path. The commands are in the
 
 ## Local and production
 
-A project reads promise marks from one or two **sources**. `local` is the
+A project reads promise signals from one or two **sources**. `local` is the
 telemetry daemon on the developer's machine, and every project has it.
 `production` is the always-on server a project names in `promises.jaeger`.
 Reading both side by side is the point: while building, the same promise can

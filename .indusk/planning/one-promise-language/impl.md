@@ -389,13 +389,13 @@ A fresh reader went looking for places where the plan's promise does not yet hol
   A18. `apps/indusk-mcp/src/lib/testing/trace-shape.ts:156,163`: "marks promise … broken but carries no `indusk.promise.violated` event" and "no span signalled promise … broken". The function name `expectPromiseViolated` stays, as an internal name. The test calls it on spans with no break and asserts that the thrown message does not match `/\bviolated\b(?!\s*event|`)/`, ignoring the event name.
 
   </details>
-- [ ] Widen the word scan to the extension skills, the server image's deploy files and every promise sense of mark, and reword what it then finds.
+- [x] Widen the word scan to the extension skills, the server image's deploy files and every promise sense of mark, and reword what it then finds.
   <details><summary>Technical</summary>
 
   A19. `apps/indusk-mcp/src/__tests__/promise-words.test.ts`: add `apps/indusk-mcp/extensions/*/skill.md`, `docker/Dockerfile.always-on` and `docker/fly.always-on.toml` to `scanned()`. Widen `MARK_SENSE` to the promise senses (`(promise|production|one|that|a promise's) marks?`, `sends? marks?`, `marks? (a|the) promise`, `has been marked`, `run, mark,`) and keep `MARK_ALLOWED` for the nav glyph. Then reword what turns red: `extensions/testing/skill.md:39,43,54` (the read-as-broken line beside `// or "violated"`, "Test the signal", "asserts a break"); `docker/*` comments ("break"); `guide/run-your-own-server.md:3,117`, `guide/promises.md:218,263`, `guide/index.md:178,183`, `guide/contract.md:28`, `guide/always-on.md:3`, `guide/try-it.md:24,46`, `reference/cli/telemetry-server.md:47`, `reference/cli/looks.md:414`. Run `indusk update` so `.claude/skills/testing/SKILL.md` follows.
 
   </details>
-- [ ] Make the pages that say InDusk's or the demo's signals are written broken say they are written violated this release and read as broken.
+- [x] Make the pages that say InDusk's or the demo's signals are written broken say they are written violated this release and read as broken.
   <details><summary>Technical</summary>
 
   A20. `guide/try-it.md:35`, `guide/promises.md:217`, `reference/cli/demo.md:40` and `reference/cli/looks.md:415` give the attribute value as `violated` this release, read as broken (the sentence form `ALLOWED` already permits). The scan refuses a line that says InDusk's own signals or the demo's are marked or set to `` `broken` ``.

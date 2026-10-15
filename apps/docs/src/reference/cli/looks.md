@@ -411,8 +411,8 @@ fixture plans only the contract test's project holds, so a check against your
 own project names them unchecked. A page that fails any other way (a 500, a
 refused connection) still ends the run. The closing line counts unchecked looks beside held and broken. Each look is
 also recorded as a span, one per screen × state × device and scheme, carrying a
-promise's mark under `tokens-are-held-exactly` — `upheld` when held,
-`broken` with the first finding as the symptom when broken — so a look reads
+signal for `tokens-are-held-exactly` — `upheld` when held,
+`violated` (read as broken) with the first finding as the symptom when broken — so a look reads
 beside promises in the health reader. A story's span carries
 `indusk.look.kind = story` beside `indusk.look.app`, `screen`, `state` and
 `device` (the screen is the component's name); a screen's span carries no

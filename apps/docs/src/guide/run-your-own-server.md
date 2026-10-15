@@ -1,6 +1,6 @@
 # Run your own server
 
-A recording server holds your project's production marks: every promise held
+A recording server holds your project's production signals: every promise held
 or broken by the running system. Your local admin reads it as the
 **production** source beside the local one. It is the
 [always-on server](/guide/always-on) InDusk ships, and it is yours: InDusk runs
@@ -114,7 +114,7 @@ only then names it as the project's production source.
 ## What `connect` records
 
 Both ways end with [`indusk server connect`](/reference/cli/server#server-connect).
-It sends one mark through the server and reads it back, and only then:
+It sends one signal through the server and reads it back, and only then:
 
 - names the server in `.indusk/config.json` as `promises.jaeger`, with the
   *name* of the variable that holds the credential;

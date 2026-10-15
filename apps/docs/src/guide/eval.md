@@ -29,7 +29,7 @@ An evaluation can end three ways, and only one of them is a failure.
 
 - **Scored** — the evaluator answered with a scorecard.
 - **Waiting** — the model refused the call for a limit (`api_error_status: 429`: rate limiting, or a usage limit such as the weekly one). Nothing is wrong with the commit, so nothing is marked as a broken `every-commit-evaluated`. The commit is logged as `waiting` in the eval log and queued in the project home's `eval/pending.jsonl`. The next commit's trigger tries every waiting commit again before it evaluates its own; one that scores leaves the queue, one the model refuses again stays. No reset time is guessed, since a refusal costs well under a second. `indusk eval` counts waiting commits apart from errors.
-- **Failed** — anything else: a `claude` that is not installed, a model that does not exist, a second answer with no scorecard. These still mark the promise broken, with the reason.
+- **Failed** — anything else: a `claude` that is not installed, a model that does not exist, a second answer with no scorecard. These still signal the promise broken, with the reason.
 
 If the evaluator answers in prose with no scorecard in it (a resumed session can reply "Noted — …"), it is asked once more, in the same session, for the scorecard JSON only. The run fails only if that second answer has none either.
 

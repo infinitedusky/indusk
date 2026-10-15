@@ -529,7 +529,7 @@ returning an empty result. Before it reads, it calls `probeWatcher`, which throw
 (exported from `promises/sources`, beside `JaegerUnreachable`) when the probe does not come back. When the
 intake refuses the probe and the query API does not answer either, nobody is
 there, and it throws `JaegerUnreachable` instead. A probe
-that came back is trusted for 30 seconds per query URL, within one process. The same subpath exports `newestMark(marks)` (when a promise was last seen: its newest signal, upheld or broken) and `silencePastExpectation(promise, marks)` (the `expect_every` judgment). `promise_health`, `promises status` and the admin read both, so no surface restates either rule. How an application marks a promise is in the
+that came back is trusted for 30 seconds per query URL, within one process. The same subpath exports `newestMark(marks)` (when a promise was last seen: its newest signal, upheld or broken) and `silencePastExpectation(promise, marks)` (the `expect_every` judgment). `promise_health`, `promises status` and the admin read both, so no surface restates either rule. How an application signals a promise is in the
 [promises guide](/guide/promises#marking-a-behaviour-promise).
 
 ## `promises health`

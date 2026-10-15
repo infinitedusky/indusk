@@ -25,7 +25,7 @@ A promise is never read from both.
 ## Why it lives with the code
 
 The code already names its promises. Tests and code carry `promise: <name>`
-tokens, and the running application sends marks under those names. If the
+tokens, and the running application sends signals under those names. If the
 contract lived only in a workbench, two workbenches on one repo could define
 the same name two ways, and one application's telemetry would be read against
 two contracts. Kept with the code, the contract, the tests that prove it and

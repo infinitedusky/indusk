@@ -1,7 +1,7 @@
 # indusk server
 
 Gives a project its recording server: the Jaeger with the always-on pass that
-holds the project's production marks, and that the admin reads as the
+holds the project's production signals, and that the admin reads as the
 **production** source beside the local one. Every server is the person's own.
 InDusk runs none for anyone.
 
@@ -29,7 +29,7 @@ arguments.
 
 ### What it does, in order
 
-1. **Reads the server back.** It sends one mark through the intake and looks
+1. **Reads the server back.** It sends one signal through the intake and looks
    for it through the query API, at the addresses you gave, which are the
    addresses the project will read. This is the same probe every promise read
    runs.

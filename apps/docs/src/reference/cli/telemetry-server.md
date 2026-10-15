@@ -44,7 +44,7 @@ instead.
 ## The pass
 
 The server does not only receive spans; it watches them. On an interval, in
-its own process, it asks its own Jaeger one question — what has been marked
+its own process, it asks its own Jaeger one question — what has signalled
 broken since the window began — and says each answer once, to Slack.
 
 It does not know what promises exist. The registry lives in a plan
