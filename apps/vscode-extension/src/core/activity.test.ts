@@ -21,6 +21,12 @@ describe("activity", () => {
 		expect(activityLines(startActivity())).toEqual(["No runs yet."]);
 	});
 
+	it("A15 — an empty activity section says no signal, never no runs", () => {
+		const said = activityLines(startActivity()).join(" ");
+		expect(said).toMatch(/no signal/i);
+		expect(said).not.toMatch(/no runs/i);
+	});
+
 	it("A27 — adds only runs it has not shown, newest first", () => {
 		let a = addRuns(startActivity(), [run(2), run(1)]);
 		a = addRuns(a, [run(3, "violated"), run(2), run(1)]);
