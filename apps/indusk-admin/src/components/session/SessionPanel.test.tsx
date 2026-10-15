@@ -376,8 +376,12 @@ describe("decided-prompts-stay-closed A10 — a refused click leaves the request
     const { rendered } = panel([init, permission], {
       onDecide: vi.fn().mockResolvedValue(false),
     });
-    await userEvent.click((await button(rendered, "Allow")) as HTMLButtonElement);
-    await expect.poll(async () => await button(rendered, "Allow")).toBeDefined();
+    await userEvent.click(
+      (await button(rendered, "Allow")) as HTMLButtonElement,
+    );
+    await expect
+      .poll(async () => await button(rendered, "Allow"))
+      .toBeDefined();
     expect(await button(rendered, "Deny")).toBeDefined();
   });
 
@@ -385,8 +389,14 @@ describe("decided-prompts-stay-closed A10 — a refused click leaves the request
     const { rendered } = panel([init, question], {
       onAnswer: vi.fn().mockResolvedValue(false),
     });
-    await userEvent.click((await button(rendered, "feature")) as HTMLButtonElement);
-    await userEvent.click((await button(rendered, "Answer")) as HTMLButtonElement);
-    await expect.poll(async () => await button(rendered, "Answer")).toBeDefined();
+    await userEvent.click(
+      (await button(rendered, "feature")) as HTMLButtonElement,
+    );
+    await userEvent.click(
+      (await button(rendered, "Answer")) as HTMLButtonElement,
+    );
+    await expect
+      .poll(async () => await button(rendered, "Answer"))
+      .toBeDefined();
   });
 });

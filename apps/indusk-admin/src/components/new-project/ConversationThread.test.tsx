@@ -192,11 +192,15 @@ describe("decided-prompts-stay-closed A10 — a refused click leaves the request
         onDecide={refused}
       />,
     );
-    await userEvent.click(screen.getByRole("button", { name: "Allow" }).element());
+    await userEvent.click(
+      screen.getByRole("button", { name: "Allow" }).element(),
+    );
     await expect
       .element(screen.getByRole("button", { name: "Allow" }))
       .toBeVisible();
-    await userEvent.click(screen.getByRole("button", { name: /Fly/ }).element());
+    await userEvent.click(
+      screen.getByRole("button", { name: /Fly/ }).element(),
+    );
     await userEvent.click(
       screen.getByRole("button", { name: "Answer", exact: true }).element(),
     );
