@@ -1,7 +1,7 @@
 ---
 title: "Tests and landing work from a cold machine"
 date: 2026-10-15
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -39,6 +39,7 @@ approved_at: "2026-10-15T16:09:05.019Z"
 |-------|----------|----------|
 | Test Phase 1 | A1, A3 and A4 authored red | today's main |
 | Build Phase 1 | the three fixes; A2 recorded | A1, A3, A4 |
+| Build Phase 3 | the landing skill names the sync and its refusal; A7 | the audit's findings |
 
 ## Test Trajectory
 
@@ -50,6 +51,7 @@ approved_at: "2026-10-15T16:09:05.019Z"
 | A4 | An evaluator run with a model that does not exist is recorded as a failure naming that model, and the promise status shows the violation, with the Claude Code installed today | Test Phase 1 | Build Phase 1 | passing | contract | keeps the day-monitor end-to-end test about the monitor, not about Claude Code's wording | apps/indusk-mcp/e2e/day-monitor.e2e.test.ts |
 | A5 | A package the browser template imports only for its side effect, or one outside OpenTelemetry, and missing from the pre-bundle list, turns the pre-bundle guard red; today the guard sees only named imports of OpenTelemetry packages | Phase 0 | Build Phase 2 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
 | A6 | Every test file the browser project runs, and every local module those files and the template import, is read by the pre-bundle guard; today it reads two named files, so a second browser test under the templates folder goes unchecked | Phase 0 | Build Phase 2 | passing | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
+| A7 | A browser template import of a package subpath (`pkg/sub`) that is not itself in the pre-bundle list turns the pre-bundle guard red; today the guard cuts it to `pkg`, which is listed, and stays green while Vite still discovers the subpath mid-run | Build Phase 3 | Build Phase 3 | pending | unit | promise: a-browser-test-passes-on-a-cold-cache | apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts |
 
 ## Checklist
 
@@ -285,6 +287,58 @@ The test that keeps the browser template's packages bundled before its page load
 
 - [x] (none needed — asked: "Can I skip its Document gate (no docs page describes the guard)?" — user: "Skip both (Recommended)")
 
+### Build Phase 3: The audit's findings — the landing skill and subpath imports
+
+**Tier**: med — the work step's default
+
+A fresh reader found three gaps after the build. The retrospective skill, which is what an agent follows when it lands a plan, still describes the old install step, so it neither says that dependencies are synced first nor what to do when that sync refuses a lockfile that does not match. And the test that keeps the browser template's packages bundled before its page loads treats an import of part of a package as an import of the whole package, which Vite does not. Once this phase closes, the landing agent reads the sync and its recovery in the skill it follows, and the guard turns red on an unlisted subpath import.
+
+- [ ] The landing instructions in the retrospective skill say that the install step first brings dependencies to the lockfile
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/skills/retrospective.md` Step 10 item 7 (around :347): `pnpm install:local` now runs `pnpm install --frozen-lockfile` before it builds, so a merge that changed the lockfile installs without a hand-run `pnpm install`. Mirror the docs page's wording (`apps/docs/src/reference/skills/retrospective.md:247`). Resync `.claude/skills/retrospective/SKILL.md` in this phase and run `skill-sync-parity.test.ts` (apps/indusk-mcp/CLAUDE.md, skills rule). Audit finding: `audit.md`, "What else would have to change".
+
+  </details>
+- [ ] The same instructions say what a refused install means and how to recover from it
+  <details><summary>Technical</summary>
+
+  `--frozen-lockfile` refuses when `pnpm-lock.yaml` does not match the workspace's `package.json` files — trunk was committed with a lockfile out of step, which is not the merged-lockfile case the brief's second expectation measures. Item 7 says so: run `pnpm install` on trunk, commit the updated lockfile as its own commit, then rerun the install step; record the refusal on the retrospective's install line so the expectation's measure reads it. Add the recovery sentence to the docs page too. Audit finding: `audit.md`, "What does the code do that the brief never promised?"
+
+  </details>
+- [ ] The pre-bundle guard requires a subpath import to be listed as the subpath, not as its package
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts` `packageName`/`packagesIn` (:35, :68): keep a deep bare specifier whole (`@scope/name/sub`, `name/sub`) as Vite's `optimizeDeps.include` treats it as its own entry; a specifier equal to its package name is unchanged. A7 authored red first with a fixture subpath import against a list naming only the package. No template imports a subpath today, so A1 stays green. Audit finding: `audit.md`, "Does each row prove its promise's sentence".
+
+  </details>
+
+#### Build Phase 3 Verification
+
+- [ ] The guard turns red on an unlisted subpath import and stays green on today's template, and the installed skill matches its source
+  <details><summary>Technical</summary>
+
+  A7 red then green: `pnpm exec vitest run src/__tests__/templates-prebundle.test.ts` from `apps/indusk-mcp` (A1, A5, A6, A7). `pnpm exec vitest run src/__tests__/skill-sync-parity.test.ts`. `biome check` on the changed files.
+
+  </details>
+
+#### Build Phase 3 Context
+
+- [ ] The retrospective skill is the context for the landing change, so no line is added to the project instructions
+  <details><summary>Technical</summary>
+
+  (none needed — the landing rule is delivered by the skill the landing agent loads, edited above; the subpath rule lands in A7's failure message, as Build Phase 1 put A1's there.)
+
+  </details>
+
+#### Build Phase 3 Document
+
+- [ ] The retrospective skill's docs page gains the recovery sentence for a refused install
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/skills/retrospective.md` around :247, the sentence from the second item.
+
+  </details>
+
 ## Files Affected
 
 | File | Change |
@@ -295,7 +349,8 @@ The test that keeps the browser template's packages bundled before its page load
 | `apps/indusk-mcp/src/__tests__/templates-prebundle.test.ts` | new (A1) |
 | `apps/indusk-mcp/src/__tests__/install-local.test.ts` | new (A3) |
 | `apps/indusk-mcp/templates/CLAUDE.md` | one rule line |
-| `apps/docs/src/reference/skills/retrospective.md` | the install step |
+| `apps/docs/src/reference/skills/retrospective.md` | the install step; recovery from a refused install |
+| `apps/indusk-mcp/skills/retrospective.md` + `.claude/skills/retrospective/SKILL.md` | the install step syncs first; recovery from a refused install |
 
 ## Dependencies
 - None.
