@@ -299,7 +299,7 @@ The last phase brings everything people read outside the apps into the same voca
   Every file the scan names under `apps/docs/src/guide/` and `apps/docs/src/reference/` — at least `reference/cli/promises.md`, `guide/always-on.md`, `guide/promises.md` (add the words table: state upheld/broken, live holding/broken, past held/broke, no signal), `guide/plan-lifecycle.md` (Mermaid labels), `reference/cli/telemetry-server.md`, `reference/skills/catchup.md`, `guide/run-your-own-server.md`, `reference/tools/indusk-mcp.md`, `reference/cli/looks.md`. Attribute names stay.
 
   </details>
-- [ ] Make the shipped skills, the planning rules template and the server's deploy files use the same words.
+- [x] Make the shipped skills, the planning rules template and the server's deploy files use the same words.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/{catchup,falsify,planner,verify}.md` (then `indusk update` syncs `.claude/skills/`); `templates/planning/CLAUDE.md:140` ("each such commit is recorded as a break of `a-plan-is-written-on-its-own-branch`"); `hooks/check-gates.js` messages; `templates/server/{fly.toml,Dockerfile}` comments.
