@@ -9,7 +9,7 @@ test_purpose: required
 rationale: required
 gate_policy: ask
 cleanup: skipped
-cleanup_reason: "reviewed all 27 changed files: every source file is under 340 lines. The plan's own purpose was to consolidate duplication — standing.ts dayCounts/windowStart/thirtyDaysOf is now the one counting place proof.ts and the dashboard both call; the tally helper there is a single-use closure, not a rule-of-three repeat. path-nesting.ts (78 lines) is one module used by nav and dashboard; DecisionCard.tsx (228 lines) keeps single- and several-question branches in one cohesive component sharing option/words state, and splitting would scatter tightly-coupled form logic. No cross-file duplication or misplaced unit found; nothing warrants extraction."
+cleanup_reason: "reviewed all 27 changed files: each under 340 lines, the duplication already consolidated, nothing to extract"
 ---
 
 # Cockpit audit fixes — what plan-cockpit's cold audit found
@@ -216,3 +216,7 @@ Not investigated, with reasons:
 - Decision (unattended build): a promise seen only by a sighting with no upheld day on record shows `held 0`, never thirty — the days say only what was seen. `readStanding` now reads the store's window itself (and honours `home`), the same read the page's days use.
 
 - Parked on purpose (Sandy, 2026-10-11): approved so it is ready, and built when the cockpit's own use shows which of these matter. The brief's *Settled by default* names the two readings to revisit first.
+
+## Cleanup review
+
+Cleanup was skipped after review: reviewed all 27 changed files: every source file is under 340 lines. The plan's own purpose was to consolidate duplication — standing.ts dayCounts/windowStart/thirtyDaysOf is now the one counting place proof.ts and the dashboard both call; the tally helper there is a single-use closure, not a rule-of-three repeat. path-nesting.ts (78 lines) is one module used by nav and dashboard; DecisionCard.tsx (228 lines) keeps single- and several-question branches in one cohesive component sharing option/words state, and splitting would scatter tightly-coupled form logic. No cross-file duplication or misplaced unit found; nothing warrants extraction.
