@@ -1,22 +1,22 @@
 ---
-title: "Story-first impl phases — Test Plan"
+title: "Phase summaries — Test Plan"
 date: 2026-10-14
 status: accepted
 ---
 
-# Story-first impl phases — Test Plan
+# Phase summaries — Test Plan
 
 ## Purpose
 
-The behavioural assertions that, taken together, mean a plan's phases read as a
-story with their technical detail folded away, and that the folded detail
+The behavioural assertions that, taken together, mean a plan's phases open with a
+summary and carry their technical detail folded away, and that the folded detail
 changes nothing decided by the two scripts that check an impl file (one when
 it is saved, one when a box is ticked). Grouped by the promise in the brief each
 proves; each becomes a row of the impl's Test Trajectory.
 
 ## Behavioral Assertions
 
-### `an-impl-phase-tells-its-story` — Every phase of a new impl opens with a plain paragraph saying what it does for the whole plan, and every task is one plain sentence with its technical detail beneath it, written for someone who has worked on the project but knows none of its shorthand: no row labels, no abbreviations, nothing named by a nickname or an unclear pronoun; an impl that leaves out the paragraph or the sentence, or puts a row label in either, is refused.
+### `an-impl-phase-explains-itself` — Every phase of a new impl opens with a plain summary saying what it does for the whole plan, and every task is one plain sentence with its technical detail beneath it, written for someone who has worked on the project but knows none of its shorthand: no row labels, no abbreviations, nothing named by a nickname or an unclear pronoun; an impl that leaves out the paragraph or the sentence, or puts a row label in either, is refused.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
