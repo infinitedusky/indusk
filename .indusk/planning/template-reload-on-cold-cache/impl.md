@@ -9,6 +9,8 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+cleanup: skipped
+cleanup_reason: "one new test file is cohesive with no copy elsewhere; the only oversized file, a docs page, got a 7-line touch"
 approved_brief: "a5fe861cd6d3a0777b7086fd7e528932774fa2b9ffadb0f4e2a31abb87e1457c"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-15T16:09:05.019Z"
