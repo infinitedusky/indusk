@@ -228,7 +228,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 
 #### Test Phase 1 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md` (The nav): a note that plan rows are moving from handles to titles in plan-stories, so the page and the docs agree until it lands
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (The nav): a note that plan rows are moving from handles to titles in plan-stories, so the page and the docs agree until it lands
 
 ### Build Phase 1: A plan's title, defined once
 
