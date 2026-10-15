@@ -32,7 +32,7 @@ indusk promises status
 ## 3. Break it
 
 Press **Break it** on the seat page and hold another seat. This time its
-release comes late on purpose. The span is marked `violated`, with a symptom
+release comes late on purpose. The span is marked `broken`, with a symptom
 like `seat 3 released 4.1 s late`, and InDusk shows the promise broken, naming
 the trace that broke it.
 

@@ -1,7 +1,7 @@
 # The plan lifecycle
 
 ::: tip Argued 2026-08-11, built in Day step 4b
-This page began as the case for a lifecycle change, and most of it now describes working software: a closed plan holding a behaviour promise waits in `monitor`, and a violation seen in telemetry reopens it with a Maintenance phase. [`monitor`, as built](#monitor-as-built) says exactly what exists; the argument above it is kept as the reasoning.
+This page began as the case for a lifecycle change, and most of it now describes working software: a closed plan holding a behaviour promise waits in `monitor`, and a break seen in telemetry reopens it with a Maintenance phase. [`monitor`, as built](#monitor-as-built) says exactly what exists; the argument above it is kept as the reasoning.
 :::
 
 ## Plans close. Systems don't.
@@ -26,9 +26,9 @@ flowchart LR
     Release --> Monitor["monitor"]
     Monitor -->|quiet| Close["close"]
     Close --> Archive["archive"]
-    Monitor -->|expectation violated| Reopen["reopen<br/>maintenance phase"]
+    Monitor -->|expectation broken| Reopen["reopen<br/>maintenance phase"]
     Reopen --> Monitor
-    Archive -.->|violation names<br/>this plan| Reopen
+    Archive -.->|break names<br/>this plan| Reopen
 ```
 
 </FullscreenDiagram>
@@ -104,7 +104,7 @@ stateDiagram-v2
     audit --> retrospective
     retrospective --> archived
     archived --> monitor: holds a behaviour promise, inside the quiet window
-    monitor --> executing: a violation reopens it (Maintenance phase)
+    monitor --> executing: a break reopens it (Maintenance phase)
     state executing {
         direction LR
         implementing --> verifying
@@ -225,18 +225,18 @@ It is the state that says *the work is done and we don't know yet whether it wor
 
 **And it cannot be real without telemetry.** "Fix it, watch for a while, close it" is a feeling unless something can answer:
 
-> *Has expectation E-9 been violated in the last 14 days?*
+> *Has expectation E-9 been broken in the last 14 days?*
 
 with a number. That is what turns `monitor` from a waiting room into a state with a door. A plan sits in monitor until its expectations have been quiet for a defined window — and if they haven't, it doesn't close, which is the correct outcome and one nothing currently expresses.
 
 ## What reopens a plan
 
-A production failure that violates a named expectation — and the expectation knows which plan owns it.
+A production failure that breaks a named expectation — and the expectation knows which plan owns it.
 
 That is the operational payoff, and it is more concrete than "history is preserved": **a failure arrives and you already know where the fix goes.** No judgment call, no archaeology through four archived plans, no fifth plan.
 
 ```
-telemetry violation → names E-9 → E-9 belongs to plan P
+telemetry break → names E-9 → E-9 belongs to plan P
                                 → P reopens with a maintenance phase
 ```
 
@@ -261,7 +261,7 @@ The most valuable object this produces is not a new test. It is **a test that pa
 
 Every other signal tells you the code failed. This one tells you **your assertion was wrong** — and names it. That is a more expensive class of error, because it is the one that makes you confident while you are exposed. Nothing in InDusk currently surfaces it.
 
-| Production violates E-9, and… | What it means |
+| Production breaks E-9, and… | What it means |
 |---|---|
 | a test claimed E-9 and passed | the test was **insufficient** — widen it |
 | no test claims E-9 | the expectation is unguarded — write one |
@@ -283,15 +283,15 @@ The alternative was a new durable unit — a subsystem that accumulates phases f
 
 It was rejected because **closed remains the resting state.** A plan reopens on a specific trigger, sits in monitor, and closes again. The active set stays small without inventing a noun.
 
-**What would change this:** an expectation that genuinely belongs to no plan — or one created by plan A and violated by code from plan B, where "which plan reopens?" has no clean answer. If that appears twice, build subsystems then, with evidence rather than a prediction.
+**What would change this:** an expectation that genuinely belongs to no plan — or one created by plan A and broken by code from plan B, where "which plan reopens?" has no clean answer. If that appears twice, build subsystems then, with evidence rather than a prediction.
 
 ## What this needs that does not exist yet
 
 Honest inventory, so nobody reads this page as a description of working software:
 
-- **Promises** — what this page calls expectations: named commitments with owning plans, code sites and tests. **Built** as Day step 4a — the registry, `indusk promises check` and the admin's Promises page; see [Promises](./promises). The span link and the violation query below are Day step 4b.
+- **Promises** — what this page calls expectations: named commitments with owning plans, code sites and tests. **Built** as Day step 4a — the registry, `indusk promises check` and the admin's Promises page; see [Promises](./promises). The span link and the break query below are Day step 4b.
 - **Span ↔ promise linkage** — **built** (Day step 4b) as two attributes and an event, `indusk.promise`, `indusk.promise.outcome` and `indusk.promise.violated`; see [Marking a behaviour promise](./promises#marking-a-behaviour-promise).
-- **A violation query** — **built**: `indusk promises status` asks the local telemetry daemon's Jaeger. No hosted backend is involved; Dash0 is an optional place to look, never a source for the loop.
+- **A break query** — **built**: `indusk promises status` asks the local telemetry daemon's Jaeger. No hosted backend is involved; Dash0 is an optional place to look, never a source for the loop.
 - **Reopen as a lifecycle operation** — **built**: `indusk promises watch` opens an incident and appends a Maintenance phase to the owner, in place.
 - **A monitor window policy** — **built**: `promises.quiet_window_days`, default 7.
 - **Watching without a person** — `watch` is one pass someone runs. Running it on a schedule, and reading deployed systems, is `day-always-on`.
@@ -313,7 +313,7 @@ now − max(closed, lastViolation) < window
   else the retrospective's `date`. A plan with no retrospective never enters
   `monitor`.
 - **lastViolation** is the latest `last_seen` among its promises' incidents,
-  open or fixed. A violation inside the window **restarts** it, and the plan
+  open or fixed. A break inside the window **restarts** it, and the plan
   bar says so: "window restarted 2026-09-18 — 0 of 7 days quiet".
 - **window** is `promises.quiet_window_days` in `.indusk/config.json`,
   default 7.
@@ -321,7 +321,7 @@ now − max(closed, lastViolation) < window
 It is derived from files on every read — `lib/promises/after-close.ts` for
 the plan tools, the same function for the admin — and never opens a socket.
 `monitor` therefore lags telemetry until `indusk promises watch` records a
-violation as an incident; the Promises page's health chips carry the live
+break as an incident; the Promises page's health chips carry the live
 view. A plan holding no behaviour promise closes exactly as before.
 
 `list_plans` lists a `monitor` plan as active, with
@@ -369,7 +369,7 @@ sequenceDiagram
     C->>M: plans land — merge, worktree and branch removed
 ```
 
-A plan written on `main` instead of its own branch is not refused: that path is a convention, and the commit is recorded as a violation of `a-plan-is-written-on-its-own-branch` so whether it holds can be seen. See [`indusk plans`](/reference/cli/plans) and [sessions](/reference/admin-ui/sessions).
+A plan written on `main` instead of its own branch is not refused: that path is a convention, and the commit is recorded as a break of `a-plan-is-written-on-its-own-branch` so whether it holds can be seen. See [`indusk plans`](/reference/cli/plans) and [sessions](/reference/admin-ui/sessions).
 
 ## See also
 

@@ -110,7 +110,7 @@ Commits since the last green slow run (8025898) touching `src`:
 - `seat-holds` row R1 — passing (src/seat-released.test.ts)
 ```
 
-The evidence is `tests:` and `release:` where a watcher's incident carries `traces:`. The suspects are `git log <sha>..HEAD` over `release.covers` (the whole repository when it declares none), from the commit the last green slow run was made on; a green run recorded without a commit, or none at all, names none and says why. Opening the incident goes the way a watcher's does: the promise lists it and an `enforced` one turns `known-violated`, and the owning plan gains `### Build Phase N: Maintenance — <id>`. It then shows in `indusk promises status`, `promise_health`, catchup and the admin like any open incident.
+The evidence is `tests:` and `release:` where a watcher's incident carries `traces:`. The suspects are `git log <sha>..HEAD` over `release.covers` (the whole repository when it declares none), from the commit the last green slow run was made on; a green run recorded without a commit, or none at all, names none and says why. Opening the incident goes the way a watcher's does: the promise lists it and an `enforced` one turns `known-broken`, and the owning plan gains `### Build Phase N: Maintenance — <id>`. It then shows in `indusk promises status`, `promise_health`, catchup and the admin like any open incident.
 
 When the promise already has an open incident, a later release adds to it: its tests and release are appended, its block goes under `## Suspects`, and `last_seen` moves forward.
 

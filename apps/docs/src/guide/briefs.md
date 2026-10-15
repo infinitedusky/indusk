@@ -116,7 +116,7 @@ goes through the related ones with you. Each lands in one of three lists:
 | List | Means | What happens to it |
 |---|---|---|
 | **Must not break** | Still true as written. This plan works near it. | Nothing. Its own tests keep vouching for it. |
-| **Changes** | The same commitment, its sentence improved. | It keeps its name, its incidents and the marks in code that name it. This plan takes it over, and its History keeps the old sentence, the reason and the plan that owned it before (`indusk promises change`). |
+| **Changes** | The same commitment, its sentence improved. | It keeps its name, its incidents and the signals in code that name it. This plan takes it over, and its History keeps the old sentence, the reason and the plan that owned it before (`indusk promises change`). |
 | **Replaces** | Its name no longer describes it. | A new promise is declared recording which it replaces; the old one is retired when this plan closes (`indusk promises replace`). |
 
 A promise this plan partly invalidates is usually a **change**, not a

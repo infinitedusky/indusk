@@ -58,17 +58,17 @@ Match the version to the `indusk` you run.
 
 | Setting | What it is |
 |---|---|
-| `INDUSK_SERVER_VOLUME` | Where the server keeps its data, on a mounted volume. Without a volume it forgets every violation when the container is replaced. |
-| `INDUSK_SERVER_OTLP_PORT` | The port the OTLP/HTTP intake listens on, where your application sends its marks. |
+| `INDUSK_SERVER_VOLUME` | Where the server keeps its data, on a mounted volume. Without a volume it forgets every break when the container is replaced. |
+| `INDUSK_SERVER_OTLP_PORT` | The port the OTLP/HTTP intake listens on, where your application sends its signals. |
 | `INDUSK_SERVER_QUERY_PORT` | The port the query API and the Jaeger UI listen on, where your admin reads. |
 | `INDUSK_SERVER_USER` | The basic-auth user for both ports. |
 | `INDUSK_SERVER_PASSWORD` | The basic-auth password. A secret: set it the way your platform sets secrets. |
-| `INDUSK_SERVER_SLACK_WEBHOOK` | Optional. Where violations are announced. Without it, the server records and nothing is posted. |
+| `INDUSK_SERVER_SLACK_WEBHOOK` | Optional. Where breaks are announced. Without it, the server records and nothing is posted. |
 | `INDUSK_SERVER_PUBLIC_QUERY_URL` | Optional. The query address as people reach it, so Slack messages can link to a trace. |
 
 Run exactly one instance: its store is single-writer, and two instances would
-each hold half the violations. Keep it from sleeping: a server that is
-stopped when a violation arrives cannot announce it. Put TLS in front of both
+each hold half the breaks. Keep it from sleeping: a server that is
+stopped when a break arrives cannot announce it. Put TLS in front of both
 ports, since basic auth sends the password on every request.
 
 ```bash

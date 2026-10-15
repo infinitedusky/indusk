@@ -41,22 +41,22 @@ For `state` and `structure` promises the regression suite *is* the monitor, on t
 | State | Meaning |
 |---|---|
 | `declared` | Stated in planning, not yet established. The owner is an open plan. |
-| `enforced` | The system upholds it; a violation is a bug. |
-| `known-violated` | Declared, and the current implementation provably cannot uphold it. Carries the incident that proves it, so it is evidence rather than an excuse. |
+| `enforced` | The system upholds it; a break is a bug. |
+| `known-broken` | Declared, and the current implementation provably cannot uphold it. Carries the incident that proves it, so it is evidence rather than an excuse. |
 | `retired` | No longer a promise. Kept for history. |
 
-`known-violated` is what makes declaring honest. Without it, a promise you cannot yet keep is either hidden or a permanently red check — and a permanently red check stops being read.
+`known-broken` is what makes declaring honest. Without it, a promise you cannot yet keep is either hidden or a permanently red check — and a permanently red check stops being read.
 
 ```mermaid
 stateDiagram-v2
     [*] --> declared: stated in planning
     [*] --> enforced: stated after a failure, guarded
     declared --> enforced: confirmed when its plan closes
-    declared --> known-violated: could not be established (incident)
-    enforced --> known-violated: broken, incident opened
-    known-violated --> enforced: fixed
+    declared --> known-broken: could not be established (incident)
+    enforced --> known-broken: broken, incident opened
+    known-broken --> enforced: fixed
     enforced --> retired: superseded or withdrawn, by a change that names it
-    known-violated --> retired
+    known-broken --> retired
 ```
 
 ## The registration rule
@@ -99,7 +99,7 @@ running system reports. See [The loop](#the-loop).
 
 ## Who owns a promise
 
-The plan that established it, until a later plan changes it: a plan that improves a promise's sentence takes the promise over. A plan closes *holding* its promises — closed is the resting state, and the archived plan is the owner of record that a violation wakes. Only a plan holding none is truly finished.
+The plan that established it, until a later plan changes it: a plan that improves a promise's sentence takes the promise over. A plan closes *holding* its promises — closed is the resting state, and the archived plan is the owner of record that a break wakes. Only a plan holding none is truly finished.
 
 ## A promise's life in plans
 
@@ -110,7 +110,7 @@ A promise comes from a planning conversation, and five commands carry it. Nobody
 | The plan's [brief](/guide/briefs) is agreed | `indusk promises declare` | Writes the promise as `declared`, owned by the plan. |
 | The conversation drops it, or renames it, before it is in force | `indusk promises withdraw` | Removes it. Only a promise that is still `declared`, and only by the plan that declared it; a rename is a withdrawal and a declaration. |
 | The plan closes | `indusk promises confirm <plan>` | Each promise the plan declared becomes `enforced`: its `tests:` are the files the plan's test rows name, its `sites:` the other files that carry its token. Refuses, and writes nothing, while a promise has no passing row that names it. A promise already in force that its rows name has its links brought up to date. |
-| A later plan partly changes what it commits to | `indusk promises change` | The sentence is replaced and the later plan takes the promise over. Its name, its incidents and the marks in code stay; its History keeps the old sentence, the reason and the plan that owned it before. |
+| A later plan partly changes what it commits to | `indusk promises change` | The sentence is replaced and the later plan takes the promise over. Its name, its incidents and the signals in code stay; its History keeps the old sentence, the reason and the plan that owned it before. |
 | Its name no longer describes it | `indusk promises replace` | A new promise is declared recording which it replaces. The old one stays in force while the plan builds and is retired when that plan is confirmed. |
 
 A plan confirms its promises before it is archived, whether or not it has a
@@ -127,7 +127,7 @@ flowchart LR
   D -->|rows pass; confirm at close| E[(enforced)]
   E -->|a later plan: change| E
   E -->|a later plan: replace, then its confirm| R[(retired)]
-  E -->|it breaks| K[(known-violated)]
+  E -->|it breaks| K[(known-broken)]
   K -->|fixed| E
 ```
 
@@ -171,17 +171,17 @@ span.addEvent("indusk.promise.violated", {
 });
 ```
 
-InDusk reads `violated` as broken, and reads `broken` the same.
+`violated` is read as broken; `broken` is read the same.
 
 That is the whole convention: two attributes, and an event carrying what was
 observed. The application imports nothing from InDusk and runs the same with
 InDusk deleted. Anyone holding the raw trace — in Jaeger, in any
 OpenTelemetry tool, or as exported JSON — can read which promise broke and
-why. A violation is its own attribute, never the span's error status: an error
+why. A break is its own attribute, never the span's error status: an error
 can happen while every promise holds, and a promise can break with no error at
 all.
 
-A test asserts the mark with the helper InDusk ships for tests only:
+A test asserts the signal with the helper InDusk ships for tests only:
 
 ```ts
 import {
@@ -199,10 +199,10 @@ The helper takes the promise as its token, so the assertion is also the
 promise's test link — `indusk promises check` counts it with no other comment.
 It checks containment, not a snapshot: added attributes and extra child spans
 never fail it; the marked span going missing does. `expectPromiseViolated`
-asserts a violation and returns its symptom.
+asserts a break and returns its symptom.
 
 This repository's own example is `every-commit-evaluated`: every evaluator run
-marks its root span, `upheld` when a scorecard is written and `violated` with
+marks its root span, `upheld` when a scorecard is written and `broken` with
 the reason when it is not. While the local telemetry daemon runs, that mark
 lands in its Jaeger with nothing configured.
 
@@ -213,18 +213,18 @@ it without a person reading anything (Day step 4b):
 
 ```mermaid
 flowchart LR
-    Run["a run breaks the promise"] --> Span["span: indusk.promise<br/>outcome = violated"]
+    Run["a run breaks the promise"] --> Span["span: indusk.promise<br/>outcome = broken"]
     Span --> Jaeger["local Jaeger<br/>(the telemetry daemon)"]
     Jaeger --> Watch["indusk promises watch"]
     Watch --> Incident["incident<br/>source: local<br/>root cause: unwritten"]
     Incident --> Phase["owner reopened:<br/>Build Phase N: Maintenance"]
     Phase --> Window["monitor:<br/>quiet window"]
     Window -->|quiet for the window| Closed["archived"]
-    Window -->|violated again| Incident
+    Window -->|broken again| Incident
 ```
 
-- **status** reads the marks: `indusk promises status` shows each behaviour
-  promise's violations and when it was last seen upheld, or *not seen*.
+- **status** reads the signals: `indusk promises status` shows each behaviour
+  promise's breaks and when it was last seen upheld, or *not seen*.
 - **watch** records them: one incident per promise, extended rather than
   duplicated, and a Maintenance phase on the owner that cannot close until a
   test reproducing the incident passes.
@@ -286,7 +286,7 @@ Jaeger's intake and reads it back from the query API:
 flowchart LR
     Reader["a reader asks for promise health"] --> Probe["send watcher.probe<br/>to the intake"]
     Probe --> Back{"comes back from<br/>the query API<br/>in time?"}
-    Back -->|yes| Marks["read the marks<br/>as usual"]
+    Back -->|yes| Marks["read the signals<br/>as usual"]
     Back -->|no| Blind["watcher blind:<br/>no counts at all"]
     Probe -.->|nothing answers| Unreachable["cannot be reached:<br/>no counts at all"]
 ```
