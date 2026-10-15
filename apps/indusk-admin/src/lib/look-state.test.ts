@@ -1,3 +1,4 @@
+// promise: a-master-plan-tells-its-story
 // promise: a-plan-page-shows-the-parts-of-its-brief
 import { planWaiting } from "@infinitedusky/indusk-mcp/plans/waiting";
 import { describe, expect, it } from "vitest";
@@ -30,6 +31,24 @@ describe("planLookState — what the plan page says it draws", () => {
 
   it("is working when the brief is finished and nothing waits", () => {
     expect(planLookState(base)).toBe("plan.working");
+  });
+});
+
+describe("planLookState — a master plan", () => {
+  it("A5 a master plan's page draws plan.master whatever its own documents say", () => {
+    for (const briefStatus of [null, "draft", "accepted"])
+      for (const waiting of [false, true])
+        for (const archived of [false, true])
+          for (const position of [undefined, "executing", "monitor"])
+            expect(
+              planLookState({
+                archived,
+                position,
+                waiting,
+                briefStatus,
+                master: true,
+              }),
+            ).toBe("plan.master");
   });
 });
 
