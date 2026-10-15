@@ -492,19 +492,19 @@ The plan is correct and its tests are hardened; this phase tidies what it spread
   `story phase-row.open` and `story phase-row.closed` on the Looks page, read from this plan's branch; only a person approves. A20 records the result.
 
   </details>
-- [ ] The two checking scripts' column-zero box patterns were reviewed and stay where they are
+- [x] The two checking scripts' column-zero box patterns were reviewed and stay where they are
   <details><summary>Technical</summary>
 
   Reviewed `hooks/check-gates.js` (`CHECKED_BOX` / `UNCHECKED_BOX`, global, counting), `hooks/validate-impl-structure.js` (the opt-out's `!/^\s/`) and `hooks/_impl-phases.js` (the item match) — left as-is: three small patterns with different jobs and flags; one shared module would couple the tick check's counting to the parsers' item reading for no reader's benefit.
 
   </details>
-- [ ] The fold-reading code in the impl parser was reviewed and stays where it is
+- [x] The fold-reading code in the impl parser was reviewed and stays where it is
   <details><summary>Technical</summary>
 
   Reviewed `src/lib/impl-parser-core.ts` (`opensFold`, `closesFold`, `foldedLineMask`) — left as-is: already the one home, used by `lib/cleanup/gate.ts` and `lib/shape/shape.ts`; the hook mirror of the cross-reference reading in `lib/trajectory/validator.ts` is the established TypeScript–hook pair, not duplication to remove.
 
   </details>
-- [ ] The long prose files and the large tests this plan grew were reviewed and stay as they are
+- [x] The long prose files and the large tests this plan grew were reviewed and stay as they are
   <details><summary>Technical</summary>
 
   Reviewed `skills/planner.md`, `apps/docs/src/reference/skills/plan.md`, `apps/docs/src/changelog.md`, `apps/docs/src/guide/test-trajectory.md` (prose, over the cap before this plan), `src/__tests__/detail-is-only-read.test.ts` (one file per promise, already on the shared `helpers/phase-summary-fixture.ts`), `src/lib/trajectory/validator.test.ts` and `phase-summary-existing-impls.verdicts.json` (a generated snapshot) — left as-is: cohesive, or not code.
