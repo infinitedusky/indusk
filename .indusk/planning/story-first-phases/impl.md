@@ -634,7 +634,7 @@ A reader who had not seen the build audited the plan and found places where its 
 
 #### Build Phase 6 Context
 
-- [ ] The planning rules say the summary rule holds on every edit and an unclosed task fold is refused
+- [x] The planning rules say the summary rule holds on every edit and an unclosed task fold is refused
   <details><summary>Technical</summary>
 
   planning: `apps/indusk-mcp/templates/planning/CLAUDE.md`, the phase-summary entry — add "held on every edit to an opted-in impl, refusing only what the edit adds; a task's `<details>` must close before the next task" — guarded by `phase-summary-rule.test.ts` and `detail-is-only-read.test.ts`. Sync `.indusk/planning/CLAUDE.md`.
