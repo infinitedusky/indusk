@@ -153,6 +153,17 @@ flowchart TD
 
 </FullscreenDiagram>
 
+## Phase summaries for a reader without the shorthand
+
+A new impl sets `phase_summary: required` in its frontmatter and is written in one shape. Each phase opens, after its `**Tier**:` line, with a paragraph saying what the phase does for the whole plan and how it hands to the next. Each task is one plain sentence saying what will be true when it is done, and its instruction sits in an indented `<details><summary>Technical</summary>` fold beneath: names, paths, commands, code and row labels live there, never in the paragraph or on the task line. The save check refuses a missing paragraph, a code span or a row label on those lines. The planner's impl template and the bugfix and refactor templates are written this way.
+
+The reader is someone who has worked on the project and knows none of the plan's shorthand: no row labels, no abbreviations, no nicknames, no pronoun whose referent is unclear. The test before writing a sentence is whether someone who has worked here, but never read the plan, would know what every noun in it refers to.
+
+- Before: "Build Phase 1: the checkers only read top-level lines."
+- After: "The two scripts that check an impl file, one when it is saved and one when a box is ticked, stop reading text folded under a task as a ticked box or a skipped gate."
+
+Folded detail is only read: it never ticks a box, skips a gate or adds a task. Whether a sentence is plain stays a person's judgement at approval. See [Phase summaries](/decisions/phase-summaries) and [Test Trajectory](/guide/test-trajectory#phase-summaries-a-phase-that-explains-itself).
+
 ## Invocation
 
 ```
