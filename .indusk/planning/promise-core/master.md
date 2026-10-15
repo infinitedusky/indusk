@@ -164,6 +164,18 @@ switching.
   that conflicts becomes a question (its cost set by its size); the agent
   proposes the resolution. On the workbench server there is one copy, so the
   cascade is the box's; locally, each machine's open worktrees.
+- **Reviews fix, they do not file** (Sandy, 2026-10-15). Falsify and the audit
+  both run in **fresh context** — a reader that never saw the building session
+  (today only the audit does; on `new-project-flow` the fresh audit found more,
+  and bigger, than the builder's own falsify). They are two lenses on one
+  review step: the hunt for a specific break, and the audit's six questions.
+  Both write their findings into a **phase of fixes** that `/work` runs — the
+  audit stops being advisory. Each finding is either **fixed here** (the
+  default) or **moved to a plan that already exists and is coming soon**, where
+  it clearly belongs — never "noted for later", never a new plan. The agent
+  sorts each as a *cheap* decision. A finding that would change what the plan
+  promises is not a fix but a brief amendment — *expensive*, it waits. The same
+  rule covers cleanup's findings and anything a retrospective turns up.
 - **The graph is seen** (a look in `run-the-master`'s brief): plans and promises
   as nodes, starting tiny — a plan is one node with its state, opened on
   demand. A broken promise turns red with its broken clause and symptom; every
