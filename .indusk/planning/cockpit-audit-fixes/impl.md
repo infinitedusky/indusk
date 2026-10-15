@@ -1,7 +1,7 @@
 ---
 title: "Cockpit audit fixes — what plan-cockpit's cold audit found"
 date: 2026-10-11
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -52,6 +52,9 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 | A9 | A plan declared by an outer Path and by a Path inside it is grouped under the inner Path on the dashboard, and the nav lists it there | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-promise-sits-in-its-innermost-path | apps/indusk-admin/src/app/p/[project]/promises/dashboard.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
 | A10 | For one project, `indusk promises status`, the dashboard and a promise's page report the same state for each promise and source | Test Phase 1 | Build Phase 3 | passing | unit | promise: the-editor-shows-the-same-health-as-the-admin | apps/indusk-mcp/src/__tests__/same-health-three-surfaces.test.ts |
 | A11 | When `main` cannot take the history commit, an answered decision says it was sent and that the history was left uncommitted, with the reason, and nothing else on `main` is touched | Test Phase 1 | Test Phase 1 | passing | unit | promise: indusk-leaves-main-clean | apps/indusk-mcp/src/lib/plans/history.test.ts |
+| A12 | A planning session that has finished its turn (its last event a `result`), asked nothing, and is still alive waiting for the person's next message does not hold its plan's draft impl out of Needs you: the plan is listed for approval; while the session's turn is open it is not. Today any live session for the plan hides approval, and the admin's planning sessions stay alive after each turn, so a plan whose author ended by asking "approve?" in words is never offered until the session is stopped | Build Phase 4 | Build Phase 4 | planned | unit | promise: approval-waits-for-a-finished-plan | apps/indusk-mcp/src/lib/plans/waiting.test.ts, apps/indusk-mcp/src/lib/session/manager.test.ts |
+| A13 | When two Paths declare each other and both declare plan X, the dashboard and the nav put X under the same Path. Today `pathsInside` makes each Path "inside" the other, so the nav skips X under both and drops it into the unordered rest, while the dashboard's `innermostPath` falls back to the first declaring Path | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-promise-sits-in-its-innermost-path | apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx, apps/indusk-admin/src/app/p/[project]/promises/dashboard.test.tsx |
+| A14 | An ask of two questions where neither offered option fits can be answered from the card in the person's own words, per question, and each answer reaches the agent under its question's text. Today the several-questions card offers only each question's first two options and no words, and the route refuses `reply` for it | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-question-is-answered-in-full | apps/indusk-admin/src/components/cockpit/DecisionCard.test.tsx |
 
 ## Checklist
 
@@ -143,6 +146,52 @@ Make the four claims plan-cockpit's audit found too narrow true as worded: thirt
 #### Build Phase 3 Document
 
 - [x] `apps/docs/src/reference/admin-ui/overview.md`: a promise and a plan sit under the innermost Path that declares them
+
+### Build Phase 4: Falsification — an idle author that hides approval, a Path cycle that splits nav from dashboard, and a card with no words for several questions
+
+**Tier**: med — the work step's default
+
+**Goal**: verify whether the attested state holds against three failure modes found by reading the built code. Each row in Build Phase 4's Verification captures one hypothesis (red first, against today's code); each item is the fix if it confirms.
+
+How each was found (unattended build — recorded for the reviewer):
+- **A12** — `beingWritten` in `plans/waiting.ts` treats any session for the plan with no pending question as writing. `SessionManager` removes a session only on process `close`, and `startSession` keeps stdin open after a turn's `result` (`session/start.ts`; the `question.jsonl` fixture shows a planning turn ending with a question asked in prose, not through AskUserQuestion). So A8, the row asserting a plan is offered once the session ends, passes while the common case — the author idle at the end of its turn — never reaches approval. The brief's *Settled by default* reads "a finished impl is one no running session is *writing*"; an idle session is not writing.
+- **A13** — traced by hand: `A: [B, X]`, `B: [A, X]`. `declaredWithin(A)` = B's names = {A, X}; `declaredWithin(B)` = A's names = {B, X}; `buildGroups` skips X under both, so X lands in `rest`; `innermostPath` rejects both candidates and returns `declaring[0]` = A. The code says cycles are handled ("stops at the repeat"), so the case is in scope.
+- **A14** — the several-questions branch of `DecisionCard` drops the "own words" form the single-question card has, and `questionAnswers` refuses `reply`; the API accepts free text per question, the card offers no way to type it.
+
+Decision (unattended): A12's fix reads "writing" from the session's own turn, not from the impl's status — the brief settled on the session reading and named the status reading only as the alternative to revisit.
+
+- [ ] `SessionManager` exposes whether session `id`'s turn is open — true from start, and from each `say`/`reply`, until the next `result` event — and `readWaiting` (`decisions-reader.ts`) hands it to `planWaiting` as the session's `writing` flag (A12)
+- [ ] `plans/waiting`: `WaitingSession` carries `writing`; `beingWritten` is a session for the plan that is writing and has no question pending (A12)
+- [ ] `path-nesting.ts`: `pathsInside` counts a Path as inside only when it does not also contain the outer one (strict nesting), so a cycle nests neither way; the nav then lists X under both Paths (a plan under two parents appears under both) and the dashboard's first declaring Path is one of them (A13)
+- [ ] `DecisionCard`: each question of a several-question ask also takes the person's own words, which replace the chosen option for that question; Send answers is enabled once every question has an option or words (A14)
+- [ ] Shape — review `waiting.ts`, `manager.ts`, `decisions-reader.ts`, `path-nesting.ts`, `DecisionCard.tsx` for one reason to change and names that say what they are for; findings become items here
+
+#### Build Phase 4 Verification
+
+- [ ] A12, A13, A14 pass, each red first on its own assertion (`cd apps/indusk-mcp && pnpm exec vitest run src/lib/plans/waiting.test.ts src/lib/session/manager.test.ts; cd ../indusk-admin && pnpm exec vitest run "src/app/p/[project]/cockpit-nav.test.tsx" "src/app/p/[project]/promises/dashboard.test.tsx" src/components/cockpit/DecisionCard.test.tsx && pnpm exec vitest run src/components/PlanList`); A7–A9 still pass; tsc and biome clean on changed files
+
+#### Build Phase 4 Context
+
+- [ ] `apps/indusk-admin/CLAUDE.md`: a session is "writing" only while its turn is open — an idle session waiting for the person is not — guarded by A12
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/sessions.md`: approval is offered once the author's turn ends, not only once its session stops; several questions take words per question. `overview.md`: two Paths that declare each other both list a plan they share
+
+#### Build Phase 4 — What the hunt covered
+
+Investigated with no hypothesis formed:
+- `dayCounts` / `thirtyDaysOf` / `windowStart` (`standing.ts`): the window's edges (the first day's 00:00 is in, the day before is out, a future or unparsable `at` falls outside the index and is not counted); five breaks on one day count once; held excludes a broken day; a promise never seen keeps `held: null`.
+- Dashboard vs page agreement: the page's summary reads `standing.thirtyDays` from the same `readStanding`, and its per-source bars come from the same `dayCounts`; every heard row maps to one source through `heardSource`, so none is counted on one surface and dropped on the other; an unreadable store adds no held day on either (the page says so as `unread`).
+- Alias handling: breaks under an earlier name are counted on both surfaces; upheld marks under an earlier name are looked up on both (`readWindow` only fetches current behaviour names, so that lookup finds nothing on either — the same on both, and the promise asks only breaks to follow aliases).
+- `questionAnswers` / the decision route: a missing or blank answer is refused naming the question; an answer meant for an ask that has since changed is refused because the route re-reads what the plan waits on; `accept`/`alternative`/`reply` are refused for a several-question ask; the history line is one line (`oneLine`, JSON-quoted answer) whatever the joined answers contain.
+- `innermostPath` and the nav for acyclic nesting at depth (`A ⊃ C ⊃ B`, X declared by C and B): both put X under B; a plan declared by two unrelated Paths is under both in the nav and the first in the dashboard — the nav's documented "appears under both", and the dashboard's Path is one of them.
+- `beingWritten` for build sessions: a build runs only on an approved impl, so it cannot hide a draft's approval.
+
+Not investigated, with reasons:
+- `readWindow`'s and `readHealth`'s Jaeger reads: unchanged by this plan; their failures surface as `unread` on the page and as no held day on the dashboard.
+- Latency of `readStanding`'s new store read on the editor's health poll: a cost, not a broken claim; no promise of this plan or its must-not-break list names a time.
+- A `multiSelect` question on the card: plan-cockpit's single-question card already offered two options, so it is not a change this plan made.
 
 ## Files Affected
 
