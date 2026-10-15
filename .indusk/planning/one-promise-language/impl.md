@@ -151,7 +151,7 @@ This phase changes the two words InDusk stores. A signal's verdict is decided in
   `apps/indusk-mcp/src/lib/always-on/pass.ts` `violationsSince`: one `/api/traces` query per service per value (`broken`, `violated`), merged by span id as today; keep the outcome check through `readOutcome`.
 
   </details>
-- [ ] Make InDusk's own signals take the new verdict in code while still writing violated on the wire this release.
+- [x] Make InDusk's own signals take the new verdict in code while still writing violated on the wire this release.
   <details><summary>Technical</summary>
 
   `lib/promises/mark.ts`: `outcome: "upheld" | "broken"` in its argument; it writes the attribute value `violated` for `broken` at this one point (a docblock naming `.indusk/planning/mark-first/` as the plan that switches it), the event and symptom attribute names unchanged. Callers in `eval/otel.ts`, `promises/record.ts`, `promises/trunk-commit.ts`, `looks/report.ts` pass `broken`. `examples/seat-holds/src/seats.ts` and `telemetry.ts` keep writing `violated`, unchanged.

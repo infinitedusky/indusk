@@ -62,7 +62,7 @@ export function reportLooks(
 			if (result.kind === "story") span.setAttribute(LOOK_MARK.kind, "story");
 			markPromise(span, {
 				promise: LOOK_PROMISE,
-				outcome: result.verdict.state === "held" ? "upheld" : "violated",
+				outcome: result.verdict.state === "held" ? "upheld" : "broken",
 				...(opts.project ? { project: opts.project } : {}),
 				...(result.verdict.state === "broken" ? { symptom: symptomOf(result) } : {}),
 			});
