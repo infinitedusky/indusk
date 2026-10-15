@@ -59,8 +59,15 @@ import { runHook } from "./helpers/hook-runner.js";
  * never merged, and salvaged onto main on 2026-09-14 by copy; it is a hotfix-
  * workflow impl written before the gate sections it lacks became mandatory —
  * the same class as the first nine. Archived history, so recorded not repaired.
+ *
+ * `archive/browser-template-claims` cites rows of another plan's file (its
+ * Build Phase 1 names A1, A3, A9 and A13, which are cases of a test file, not
+ * rows of its own trajectory), refused since `018ad0408`. `archive/untrack-mcp-json`
+ * cites T4, a row its trajectory never had, refused since `45fd80d26`. Both are
+ * archived history, recorded not repaired (main-suite-green research, finding 2).
  */
 const PRE_EXISTING_FAILURES = [
+	"archive/browser-template-claims",
 	"archive/code-quality-system",
 	"archive/codegraph-context",
 	"archive/context-skill",
@@ -78,6 +85,7 @@ const PRE_EXISTING_FAILURES = [
 	"archive/mcp-dev-system",
 	"archive/react-native-support",
 	"archive/stale-indusk-docs-path",
+	"archive/untrack-mcp-json",
 	"archive/verify-skill",
 ];
 
