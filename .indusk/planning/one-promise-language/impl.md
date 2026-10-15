@@ -338,7 +338,7 @@ The last phase brings everything people read outside the apps into the same voca
 
 #### Build Phase 3 Document
 
-- [ ] The changelog says the docs and skills now speak the same words.
+- [x] The changelog says the docs and skills now speak the same words.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md` (Unreleased): "The admin, the command line, the editor, the docs and the skills say a promise is upheld or broken — holding or broken when live, no signal when unknown — and call its telemetry a signal."
