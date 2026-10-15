@@ -1,7 +1,7 @@
 import { type PhaseAddress, phaseLabel, toPhaseRef } from "../impl-headings.js";
 import { parseImplString } from "../impl-parser.js";
 import { changedFilesForPhase } from "./changed.js";
-import { appendItemToPhase } from "./findings.js";
+import { appendItemToPhase, wantsFoldedDetail } from "./findings.js";
 import { blockLines, findHeadingIndex, gateHeading } from "./impl-blocks.js";
 import { type CraftRuleSet, collectCraftRules } from "./rules.js";
 
@@ -153,6 +153,14 @@ export function recordLeftAsIs(
 	file: string,
 	reason: string,
 ): string {
+	if (wantsFoldedDetail(implBody)) {
+		return appendItemToPhase(
+			implBody,
+			phase,
+			"- [x] Shape — reviewed a file this phase changed and left it as it is",
+			`\`${file}\`: ${reason}`,
+		);
+	}
 	return appendItemToPhase(
 		implBody,
 		phase,
