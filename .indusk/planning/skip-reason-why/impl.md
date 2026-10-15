@@ -1,7 +1,7 @@
 ---
 title: "skip-reason-why"
 date: 2026-10-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -117,7 +117,7 @@ A skipped close-out step reads "skipped" with a "why?" that opens its reason, an
 - [x] `Step.tsx`: optional `reason?: string` and `open?: boolean` (initial state, for a story). With a reason, the root is a `div` (never a link — a skipped step has no document), its status the given words followed by a `why?` button (`aria-expanded`, `aria-controls`), and when open the reason in a `p` spanning the name and status columns beneath the row. No reason: exactly today's markup
 - [x] `Step.stories.tsx`: `Skipped` (`state: "waiting"`, `status: "skipped"`, a one-sentence reason) and `SkippedOpen` (the same, `open: true`)
 - [x] `PlanWorkflows.tsx:124`: pass `status={LABEL[step.state]}` and `reason={step.reason}`; the reason is never joined into the status again
-- [ ] `indusk looks stories admin` to regenerate `components.json` and `components/step.css`; `indusk looks lint admin` clean; the person approves the `step.skipped` and `step.skipped-open` stories against their mockups in the cockpit
+- [x] `indusk looks stories admin` to regenerate `components.json` and `components/step.css`; `indusk looks lint admin` clean; the person approves the `step.skipped` and `step.skipped-open` stories against their mockups in the cockpit
 
   - note: regenerated and lint clean; the story approvals in the cockpit await the person. Discovered while verifying: Build Phase 1's value import of `SKIP_REASON_MAX` from `cleanup/gate.ts` into `lifecycle.ts` pulled `node:fs` into the admin's browser bundle, so the constant now lives in `lifecycle.ts` and `gate.ts` re-exports it. The test's `span:last-of-type` read needs the "why?" outside the status span, so a reasoned step uses a four-column `cols-step-reason` grid, and the toggle uses `flushSync` because the test reads the DOM right after `click()`.
 
