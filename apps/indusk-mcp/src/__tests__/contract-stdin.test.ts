@@ -109,12 +109,16 @@ describe.skipIf(SHOULD_SKIP)("A1 — a large impl on stdin gets one answer", () 
  */
 describe("A13 — indusk-mcp's tests wait for indusk-mcp's own build", () => {
 	it("the root test run orders @infinitedusky/indusk-mcp#build before @infinitedusky/indusk-mcp#test", () => {
-		const out = execFileSync(join(REPO_ROOT, "node_modules/.bin/turbo"), ["run", "test", "--dry=json"], {
-			cwd: REPO_ROOT,
-			encoding: "utf-8",
-			maxBuffer: 64 * 1024 * 1024,
-			env: { ...process.env, TURBO_TELEMETRY_DISABLED: "1" },
-		});
+		const out = execFileSync(
+			join(REPO_ROOT, "node_modules/.bin/turbo"),
+			["run", "test", "--dry=json"],
+			{
+				cwd: REPO_ROOT,
+				encoding: "utf-8",
+				maxBuffer: 64 * 1024 * 1024,
+				env: { ...process.env, TURBO_TELEMETRY_DISABLED: "1" },
+			},
+		);
 		const graph = JSON.parse(out.slice(out.indexOf("{\n"))) as {
 			tasks: Array<{ taskId: string; dependencies: string[] }>;
 		};
