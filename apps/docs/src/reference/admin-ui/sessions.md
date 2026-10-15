@@ -13,7 +13,7 @@ Both kinds run `acceptEdits` whatever the developer's own Claude Code is set to,
 
 **Every request is recorded with how it was decided.** A request a session makes goes in its log, followed by a `decided` event: allowed, or denied with the reason, and whether the session's own rule decided it (a build, a planning session's writes in its folder, a project conversation's draft) or you did. A planning session's writes inside its folder, decided by rule, are in the log too.
 
-**A decided request shows its outcome.** In the panel and in the project conversation's thread, a request with a `decided` event has no Allow, Deny or Answer buttons: a tool shows *Allowed* or *Denied — the reason*, and a question the session declined on its own shows *Declined — the reason*. The state is read from the log, so a reload shows the same; a click may close a prompt a moment early, but the event is the record.
+**A decided request shows its outcome.** In the panel and in the project conversation's thread, a request with a `decided` event has no Allow, Deny or Answer buttons: a tool shows *Allowed* or *Denied — the reason*, a question the session declined on its own shows *Declined — the reason*, and a question you answered shows *Answered* with the answer you gave. The state is read from the log, so a reload shows the same; a click may close a prompt a moment early, but the event is the record. When the server refuses a click's reply, the request stays open with its buttons back beside the problem shown, never with neither buttons nor an outcome.
 
 ## The protocol
 
