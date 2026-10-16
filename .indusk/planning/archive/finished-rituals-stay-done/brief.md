@@ -16,7 +16,7 @@ None — a defect in what a step list says about work already done; whether it r
 
 ### This plan makes
 
-1. **`a-finished-ritual-stays-done`** (state). A plan's Falsify, Cleanup and Audit steps read done once their ritual is finished (its phase closed, its audit written, or a skip with a reason), and keep reading done when a later build phase reopens the plan to building.
+1. **`a-finished-ritual-stays-done`** (state). A plan's Falsify, Cleanup and Audit steps read done once their ritual is finished (its phase closed or its audit written; a ritual skipped with a reason reads skipped, with that reason, not done), and keep reading done when a later build phase reopens the plan to building.
 
 ### Existing promises
 
@@ -40,7 +40,15 @@ None.
 
 ## Looks
 
-None — the plan page and the nav already draw a done step; this changes which steps read done, not how anything is drawn.
+The plan page and the nav already draw a done step; this changes which steps read done, not how anything is drawn.
+
+### Existing looks
+
+**Must not break**
+
+- **`workflow-strip.default`**. The plan page's two step rows draw as before; a reopened plan's finished rituals now read done in them.
+- **`plan.working`**. The plan page of a plan being built; its steps read from the same list.
+- **`nav.expanded`**. The nav row's stage still names the step the plan is at — Build for a reopened plan.
 
 ## Depends On
 

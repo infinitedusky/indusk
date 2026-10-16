@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   checkRetrospectiveReadiness,
+  finishedRitualsOf,
   skippedRitualsOf,
 } from "@infinitedusky/indusk-mcp/cleanup/gate";
 import {
@@ -140,6 +141,8 @@ export interface Plan {
     ritual: "falsification" | "cleanup" | "audit";
     reason: string;
   }>;
+  /** Rituals finished from their own files: a closed phase, or `audit.md` written. */
+  finishedRituals?: Array<"falsification" | "cleanup" | "audit">;
   retrospective?: RetroData;
   /** `audit.md`, when the audit step wrote one. */
   audit?: RetroData;
@@ -371,6 +374,7 @@ async function readPlanFolder(
   const readiness =
     implRaw !== null ? checkRetrospectiveReadiness(planDir, implRaw) : null;
   const skippedRituals = implRaw === null ? [] : skippedRitualsOf(implRaw);
+  const finishedRituals = finishedRitualsOf(planDir, implRaw ?? "");
   // A closed plan may be back in motion — reopened by an incident, or in
   // `monitor` — derived from files by the same function `list_plans` reads.
   const after =
@@ -420,6 +424,7 @@ async function readPlanFolder(
     impl: implData,
     falsification: falsificationData,
     ...(skippedRituals.length > 0 ? { skippedRituals } : {}),
+    ...(finishedRituals.length > 0 ? { finishedRituals } : {}),
     retrospective:
       retrospective !== null && !isMalformed(retrospective)
         ? retrospective
