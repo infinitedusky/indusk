@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { PlanRow } from "./PlanRow";
+import { WorktreeMark } from "./WorktreeMark";
 
 const meta = {
   title: "ui/PlanRow",
@@ -71,5 +72,15 @@ export const Queued: Story = {
     name: "admin-ui-phase-progress",
     stage: "Queued",
     queued: true,
+  },
+};
+// A plan with a worktree: a mark beside the stage, outside the row's link.
+export const Worktree: Story = {
+  args: {
+    initials: "NS",
+    state: "needs",
+    name: "The nav says where a plan is",
+    stage: "Approve the brief",
+    worktree: <WorktreeMark name="nav-stage-matches-plan-page" />,
   },
 };

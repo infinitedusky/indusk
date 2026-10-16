@@ -266,6 +266,8 @@ describe("admin-plan-worktrees over HTTP", () => {
     expect(html.slice(at, at + 600)).toContain("wt-alpha");
   });
 
+  // nav-row-legible A8 guards this row: the nav shows the worktree as a closed,
+  // textless mark, so the name must stay in the mark's label (aria-label / title).
   it("A3 — the sidebar row for an assigned plan names its worktree", async () => {
     const html = await page("/p/assigned");
     const at = html.indexOf('data-testid="plan-worktree"');

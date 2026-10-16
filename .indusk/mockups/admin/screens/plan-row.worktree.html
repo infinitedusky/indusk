@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="indusk-new-components" content="plan-row, worktree-mark" />
+		<meta name="indusk-new-components" content="plan-row" />
 		<title>plan-row — worktree</title>
 		<link rel="stylesheet" href="../tokens.css" />
 		<style>
@@ -21,16 +21,13 @@
 			.stage { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
 			.pr.needs .stage { color: var(--color-dusk); }
 			.pr.queued .stage { font-style: italic; }
-			.wm { flex-shrink: 1; min-width: 0; display: inline-flex; align-items: center; gap: var(--space-1); height: var(--leading-2); padding: 0 var(--space-1); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-ink-soft); font-size: var(--text-2xs); line-height: var(--leading-1); }
-			.wm[aria-expanded="true"] { border-color: var(--color-dusk); color: var(--color-dusk); }
-			.wm-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-mono); font-size: var(--text-2xs); line-height: var(--leading-1); }
 		</style>
 	</head>
 	<body>
 <nav class="navcol" aria-label="Plans">
 	<div class="group">Plans</div>
-	<div data-component="plan-row" data-state="worktree" class="pr current"><indusk-component name="badge" state="working">FL</indusk-component><span class="lines"><a class="name" href="#">Faster look checks</a><span class="stageline"><span class="stage">Falsify</span><button data-component="worktree-mark" data-state="closed" class="wm" type="button" aria-expanded="false" aria-label="Worktree" title="Worktree">⎇</button></span></span></div>
-	<div data-component="plan-row" data-state="worktree" class="pr needs"><indusk-component name="badge" state="needs">NS</indusk-component><span class="lines"><a class="name" href="#">The nav says where a plan is</a><span class="stageline"><span class="stage">Approve the brief</span><button data-component="worktree-mark" data-state="open" class="wm" type="button" aria-expanded="true" aria-label="Worktree nav-stage-matches-plan-page">⎇<span class="wm-name">nav-stage-matches-plan-page</span></button></span></span></div>
+	<div data-component="plan-row" data-state="worktree" class="pr current"><indusk-component name="badge" state="working">FL</indusk-component><span class="lines"><a class="name" href="#">Faster look checks</a><span class="stageline"><span class="stage">Falsify</span><indusk-component name="worktree-mark" state="closed"></indusk-component></span></span></div>
+	<div data-component="plan-row" data-state="worktree" class="pr needs"><indusk-component name="badge" state="needs">NS</indusk-component><span class="lines"><a class="name" href="#">The nav says where a plan is</a><span class="stageline"><span class="stage">Approve the brief</span><indusk-component name="worktree-mark" state="open"></indusk-component></span></span></div>
 	<a data-component="plan-row" data-state="released" class="pr" href="#"><indusk-component name="badge" state="released">PS</indusk-component><span class="lines"><span class="name">Plan stories</span><span class="stageline"><span class="stage">Released</span></span></span></a>
 	<a data-component="plan-row" data-state="idle" class="pr" href="#"><indusk-component name="badge" state="idle">LP</indusk-component><span class="lines"><span class="name">Looks as promises</span><span class="stageline"><span class="stage">Draft</span></span></span></a>
 	<a data-component="plan-row" data-state="queued" class="pr queued" href="#"><indusk-component name="badge" state="idle">WF</indusk-component><span class="lines"><span class="name">Watched from day one</span><span class="stageline"><span class="stage">Queued</span></span></span></a>
