@@ -69,9 +69,9 @@ no file read.
 | A1 | At every position before release, the nav stage is the step the page shows as worked or waiting, or the next one between steps; a built, unfalsified plan reads Falsify | Test Phase 1 | Build Phase 1 | written | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/plan-stage.test.ts |
 | A2 | A plan no release shipped never reads Released: a built plan carries the in-progress mark and names its step, an archived plan with no release found reads Closed with the finished mark | Test Phase 1 | Build Phase 1 | written | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/components/PlanList.test.tsx, apps/indusk-admin/src/components/PlanList.falsify.test.tsx |
 | A3 | The step a plan is at is defined once, in the package's steps module; the admin defines no rule of its own | Test Phase 1 | Build Phase 1 | written | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts |
-| A4 | A plan waiting on the person reads the step it waits at with the needs-you mark, ahead of its step and of Released | Test Phase 1 | Test Phase 1 | planned | unit | promise: decisions-wait-in-one-place, promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/plan-stage.test.ts, apps/indusk-admin/src/components/PlanList.test.tsx |
+| A4 | A plan waiting on the person reads the step it waits at with the needs-you mark, ahead of its step and of Released | Test Phase 1 | Test Phase 1 | passing | unit | promise: decisions-wait-in-one-place, promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/plan-stage.test.ts, apps/indusk-admin/src/components/PlanList.test.tsx |
 | A5 | A master plan's page reads each plan at the nav row's stage: Falsify for a built, unfalsified plan, Released for a released one | Test Phase 1 | Build Phase 1 | written | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/master-story.test.ts |
-| A6 | A released plan reads Released with the finished mark, archived or not, and each Path's released count is unchanged | Test Phase 1 | Test Phase 1 | planned | unit | promise: the-nav-says-where-a-plan-is, promise: paths-keep-their-order | apps/indusk-admin/src/lib/plan-stage.test.ts, apps/indusk-admin/src/components/PlanList.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
+| A6 | A released plan reads Released with the finished mark, archived or not, and each Path's released count is unchanged | Test Phase 1 | Test Phase 1 | passing | unit | promise: the-nav-says-where-a-plan-is, promise: paths-keep-their-order | apps/indusk-admin/src/lib/plan-stage.test.ts, apps/indusk-admin/src/components/PlanList.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
 
 ## Checklist
 
@@ -111,13 +111,13 @@ Before anything changes, this phase writes down what the nav row must read and p
   A5, `apps/indusk-admin/src/lib/master-story.test.ts`: give subplan `two` a completed impl at the falsify position; its row reads `stage: "Falsify"` and equals `planStage` for the same plan; the released row still reads `"Released"`. Red today: `"completed"`.
 
   </details>
-- [ ] Write the two guards that already pass: a released plan reads Released, and a plan waiting on the person reads what it waits at first.
+- [x] Write the two guards that already pass: a released plan reads Released, and a plan waiting on the person reads what it waits at first.
   <details><summary>Technical</summary>
 
   A4, A6 in `plan-stage.test.ts` and `PlanList.test.tsx`: a plan waiting `{ p: "Review" }` reads `"Review"` with `data-state="needs"`, also when released; a released plan reads `"Released"` with `data-state="released"`, archived or not. A6's Path count is the existing `cockpit-nav.test.tsx` A4 case (`released/total`), run unchanged; add `promise: the-nav-says-where-a-plan-is` to that file's tokens only if the row's promise check asks for it.
 
   </details>
-- [ ] Confirm no new test fails only because a file it loads is missing.
+- [x] Confirm no new test fails only because a file it loads is missing.
   <details><summary>Technical</summary>
 
   Every case imports existing symbols (`planStage`, `planSteps`, `snapshotOf`, `derivePlanPosition`, `PlanList`, `masterStory`); A3 reads `steps.ts` as text. Each red row fails on its own assertion.
@@ -131,7 +131,7 @@ Before anything changes, this phase writes down what the nav row must read and p
 
 #### Test Phase 1 Verification
 
-- [ ] The new tests exist; the ones for the step, the finished mark, the master page and the single definition fail on their own assertions, and the two guards pass.
+- [x] The new tests exist; the ones for the step, the finished mark, the master page and the single definition fail on their own assertions, and the two guards pass.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/nav-stage-matches-plan-page/apps/indusk-admin && pnpm exec vitest run src/lib/plan-stage.test.ts src/lib/master-story.test.ts src/components/PlanList.test.tsx src/components/PlanList.falsify.test.tsx 'src/app/p/[project]/cockpit-nav.test.tsx'` — A1, A2, A5 red on their assertions; A4, A6 green. `cd /Users/the_dusky/code/sandbox/dusk-worktrees/nav-stage-matches-plan-page/apps/indusk-mcp && pnpm exec vitest run src/__tests__/cockpit-single-definition.test.ts` — A3 red naming `stepAt`.
