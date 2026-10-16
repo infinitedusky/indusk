@@ -73,7 +73,7 @@ proves. Plans that do not opt in validate and close exactly as before. See
 | A17 | A plan that makes two promises, the second with a clause resting on the first, both otherwise proved, closes in one confirm and passes the cleanup gate; a resting cycle inside one plan is refused, naming both promises | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts, apps/indusk-mcp/src/__tests__/cleanup-gate.test.ts |
 | A18 | A brief with no `clauses: required`, whose promises are bullets indented two or three spaces beneath a first entry, still reads every one of them as a promise it makes | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
 | A19 | A promise file whose clause rests on the promise itself is refused by the registry check, and a resting clause naming a promise the registry no longer holds is refused by it, naming the clause | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
-| A20 | Finding a promise by its name or by an old alias returns the same entry, and a name that is neither returns nothing | Build Phase 5 | Build Phase 5 | written | unit | a unit test for the one promise lookup that five readers each wrote inline | apps/indusk-mcp/src/__tests__/promise-lookup.test.ts |
+| A20 | Finding a promise by its name or by an old alias returns the same entry, and a name that is neither returns nothing | Build Phase 5 | Build Phase 5 | passing | unit | a unit test for the one promise lookup that five readers each wrote inline | apps/indusk-mcp/src/__tests__/promise-lookup.test.ts |
 
 ## Checklist
 
@@ -455,7 +455,7 @@ This plan grew two things worth lifting out of the files it touched. Looking up 
 
 #### Build Phase 5 Verification
 
-- [ ] The lookup has its own test and behaviour is unchanged everywhere it was moved.
+- [x] The lookup has its own test and behaviour is unchanged everywhere it was moved.
   <details><summary>Technical</summary>
 
   A20: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promise-lookup.test.ts src/__tests__/promise-clauses.test.ts src/__tests__/promises-confirm.test.ts src/__tests__/cleanup-gate.test.ts src/__tests__/promises-contract.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/promises/registry.ts src/lib/promises/contract.ts src/lib/promises/clause-rules.ts src/lib/promises/proof.ts src/lib/release/route.ts --run`; `pnpm promises:check` passes; every clause row still passing.
