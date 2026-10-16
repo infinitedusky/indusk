@@ -5,7 +5,7 @@
  * When a look's last held result is reused, and where it is kept
  * (looks-check-speed A2-A8, A19). The rule is pure: every input is handed in.
  */
-import { appendFileSync, readdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
@@ -34,6 +34,7 @@ const story = {
 	stylesheetHash: "c",
 	current: true,
 	served: "b",
+	configHash: "k0",
 } as const;
 const held = { key: story, at: "2026-10-16T03:00:00.000Z", state: "held" as const };
 
@@ -67,6 +68,7 @@ describe("whether a look's last held result is reused", () => {
 			seed: "",
 			current: true,
 			served: "b",
+			configHash: "k0",
 			uncomposed: false,
 		} as const;
 		const h = { key: screen, at: held.at, state: "held" as const };
@@ -120,7 +122,13 @@ describe("whether a look's last held result is reused", () => {
 
 	it("A6: a page-code edit reopens every screen and no story; an uncomposed screen is never reused; a changed seed reopens its screen", async () => {
 		const { app } = await fixtureApp(["home.full"], ["home.full"]);
-		const facts = { current: true, pageSourcesHash: "p", schemes: ["light", "dark"], served: "b" };
+		const facts = {
+			current: true,
+			pageSourcesHash: "p",
+			schemes: ["light", "dark"],
+			served: "b",
+			configHash: "k0",
+		};
 		const edited = { ...facts, pageSourcesHash: "p2" };
 		const screenLook = { screen: "home", state: "full" };
 		const storyLook = { name: "home.full", component: "home", state: "full", id: "home--full" };
@@ -176,7 +184,13 @@ describe("whether a look's last held result is reused", () => {
 
 	it("A19: a changed foundation reopens every look, story and screen alike", async () => {
 		const { app } = await fixtureApp(["home.full"], ["home.full"]);
-		const facts = { current: true, pageSourcesHash: "p", schemes: ["light", "dark"], served: "b" };
+		const facts = {
+			current: true,
+			pageSourcesHash: "p",
+			schemes: ["light", "dark"],
+			served: "b",
+			configHash: "k0",
+		};
 		const looks = [
 			{ screen: "home", state: "full" },
 			{ name: "home.full", component: "home", state: "full", id: "home--full" },
@@ -250,6 +264,41 @@ describe("what is actually served joins the key", () => {
 			reuse: false,
 			changed: "served build unreadable",
 		});
+	});
+
+	it("reopens a look whose styling configuration or lockfile changed", () => {
+		expect(reuseOf(held, { ...story, configHash: "k1" })).toEqual({
+			reuse: false,
+			changed: "configuration",
+		});
+	});
+
+	it.each([
+		["a Tailwind config", "tailwind.config.js"],
+		["a PostCSS config", "postcss.config.mjs"],
+		["the Storybook config", ".storybook/main.ts"],
+		["the lockfile", "pnpm-lock.yaml"],
+	])("a check after %s changed opens every look it held", async (_name, file) => {
+		const { app, approvals, root, home } = await fixtureApp(["home.empty"]);
+		const run = async (answers: Record<string, "held">) => {
+			const opener = fakeOpener(answers);
+			await checkApp(app, approvals, "http://app", [], {
+				opener,
+				projectRoot: root,
+				home,
+				fetchPage: servedPage,
+			});
+			return opener.opened;
+		};
+		expect(await run({ "home.empty": "held" })).toEqual(["home.empty"]);
+		expect(await run({})).toEqual([]);
+		const target = join(root, file);
+		mkdirSync(join(target, ".."), { recursive: true });
+		writeFileSync(target, "one\n");
+		expect(await run({ "home.empty": "held" })).toEqual(["home.empty"]);
+		expect(await run({})).toEqual([]);
+		writeFileSync(target, "two\n");
+		expect(await run({ "home.empty": "held" })).toEqual(["home.empty"]);
 	});
 
 	it("a check against another build opens the look and keeps its result under that build", async () => {

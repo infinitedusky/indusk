@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { type Dirent, existsSync, readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { type ComponentUse, type ContentMap, compose, type SnapshotBytes } from "./compose.js";
 import { type Foundation, readFoundation } from "./foundation.js";
 
@@ -421,7 +421,7 @@ async function readStyles(dir: string, rel: string): Promise<ComponentStyle[]> {
 	return styles;
 }
 
-async function filesUnder(dir: string): Promise<string[]> {
+async function filesUnder(dir: string, withDotFolders = false): Promise<string[]> {
 	const out: string[] = [];
 	let entries: Dirent[];
 	try {
@@ -430,9 +430,9 @@ async function filesUnder(dir: string): Promise<string[]> {
 		return out;
 	}
 	for (const entry of entries) {
-		if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
+		if (entry.name === "node_modules" || (!withDotFolders && entry.name.startsWith("."))) continue;
 		const path = join(dir, entry.name);
-		if (entry.isDirectory()) out.push(...(await filesUnder(path)));
+		if (entry.isDirectory()) out.push(...(await filesUnder(path, withDotFolders)));
 		else out.push(path);
 	}
 	return out;
@@ -505,4 +505,37 @@ export function servedBuildOf(html: string): string | null {
 	);
 	if (assets.length === 0 && styles.length === 0) return null;
 	return sha256(JSON.stringify([[...new Set(assets)].sort(), styles]));
+}
+
+/** The styling configuration files of an app's own folder: Tailwind and PostCSS. */
+const STYLING_CONFIG = /^(tailwind|postcss)\.config\./;
+
+/**
+ * The nearest folder at or above `source` that holds a `package.json` — the
+ * app a source directory belongs to — else the source's parent.
+ */
+function appFolderOf(root: string, source: string): string {
+	for (let dir = join(root, source); dir.startsWith(root) && dir !== root; dir = dirname(dir)) {
+		if (existsSync(join(dir, "package.json"))) return dir;
+	}
+	return dirname(join(root, source));
+}
+
+/**
+ * The hash of the configuration a look is drawn with that is in no source
+ * file: each app folder's Tailwind and PostCSS config, its `.storybook`
+ * folder, and the project's `pnpm-lock.yaml` (a dependency bump restyles a
+ * page with no file of ours changed). In every look's reuse key, so a change
+ * to any of them reopens everything (looks-check-speed ADR decision 2).
+ */
+export async function configHashOf(root: string, app: Pick<LooksApp, "sources">): Promise<string> {
+	const files: string[] = [];
+	for (const folder of new Set(app.sources.map((s) => appFolderOf(root, s)))) {
+		const here = existsSync(folder) ? await readdir(folder) : [];
+		files.push(...here.filter((f) => STYLING_CONFIG.test(f)).map((f) => join(folder, f)));
+		files.push(...(await filesUnder(join(folder, ".storybook"), true)));
+	}
+	const lock = join(root, "pnpm-lock.yaml");
+	if (existsSync(lock)) files.push(lock);
+	return filesHashOf(root, files);
 }

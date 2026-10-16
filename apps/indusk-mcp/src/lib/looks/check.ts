@@ -11,6 +11,7 @@ import {
 import { pageSourceFilter, readCatalog, storybookIds } from "./components.js";
 import { devServerMarker } from "./dev-server.js";
 import {
+	configHashOf,
 	type Device,
 	type LooksApp,
 	pageSourcesHashOf,
@@ -904,6 +905,7 @@ async function planReuse(
 		current,
 		pageSourcesHash: await pageSourcesHashOf(root, app, pageSourceFilter(catalog)),
 		schemes,
+		configHash: await configHashOf(root, app),
 	};
 	const screenFacts = { ...facts, served: served.screens };
 	const storyFacts = { ...facts, served: served.stories };

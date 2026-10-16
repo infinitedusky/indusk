@@ -596,10 +596,12 @@ This phase stops the check from spending half an hour in a development server. B
 
   Done as: `servedBuildOf(html)` (`mockups.ts`) hashes the page's script and stylesheet URLs (a production build names them by content hash) and inline styles — never its text, which carries data; null when it has neither. `checkApp` reads the app's root once (and the first story's frame when stories open) before planning reuse, refuses a development server on the same HTML, and puts the result in every key as `served`; null reuses nothing and prints a notice. Tests (no trajectory row; recorded under the item): `reuse.test.ts` "what is actually served joins the key" — a changed build id reopens, an unreadable one reuses nothing, the identity ignores page text. Consequence found: a fully reused run now makes one plain request (the root), so A10's body (`looks-check-speed.contract.test.ts`) expects `["/"]` instead of none — its Asserts text is unchanged and still reads "requests no page"; the request is not a look's page, and A11's one-request-per-look page count is untouched because the root is not a look's page.
   </details>
-- [ ] Make the configuration a look is drawn with part of its key: the styling and Storybook configuration and the lockfile.
+- [x] Make the configuration a look is drawn with part of its key: the styling and Storybook configuration and the lockfile.
   <details><summary>Technical</summary>
 
   Found at Build Phase 2's close. Hash the app's Tailwind/PostCSS config, the Storybook config folder and `pnpm-lock.yaml` into a `configHash` fact on every look's key in `reuse.ts`.
+
+  Done as: `configHashOf(root, app)` (`mockups.ts`) hashes each source folder's app's `tailwind.config.*`, `postcss.config.*`, its `.storybook` folder and the root `pnpm-lock.yaml`; `configHash` joins `lookKey`'s facts and `COMPARED` (named "configuration"). Tests (no trajectory row): `reuse.test.ts` — a changed `configHash` reopens, and a check after each of a Tailwind config, a PostCSS config, the Storybook config and the lockfile changes opens the held look.
   </details>
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
 #### Build Phase 3 Verification

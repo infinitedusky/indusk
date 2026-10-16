@@ -12,7 +12,7 @@ import type { LooksApp } from "./mockups.js";
  * every device and scheme: the foundation (so a token change is never hidden
  * behind a reused look — `tokens-are-held-exactly`), the declarations, the
  * devices and schemes, its snapshot hashes, and for a screen its page code,
- * path and seed, and the build served (a check against an old build never
+ * path and seed, the styling configuration and lockfile, and the build served (a check against an old build never
  * records "held" for sources it did not serve). Nothing is reused unless the stories were rendered from the
  * sources as they are now, and an uncomposed screen never is. Pure: the
  * caller hands every fact in, and the browser never decides.
@@ -30,6 +30,8 @@ interface KeyBase {
 	current: boolean;
 	/** The build the page was served from (`servedBuildOf`); null when it could not be read. */
 	served: string | null;
+	/** The styling and Storybook configuration and the lockfile, hashed (`configHashOf`). */
+	configHash: string;
 }
 
 export interface StoryKey extends KeyBase {
@@ -77,6 +79,7 @@ export function lookKey(
 		pageSourcesHash: string;
 		schemes: readonly string[];
 		served: string | null;
+		configHash: string;
 	},
 ): LookKey {
 	const base = {
@@ -86,6 +89,7 @@ export function lookKey(
 		schemes: facts.schemes.join(","),
 		current: facts.current,
 		served: facts.served,
+		configHash: facts.configHash,
 	};
 	if (isStoryTarget(look)) {
 		const story = app.stories.find((s) => s.name === look.name);
@@ -121,6 +125,7 @@ const COMPARED: readonly [string, string][] = [
 	["devices", "devices"],
 	["schemes", "schemes"],
 	["served", "served build"],
+	["configHash", "configuration"],
 	["snapshotHash", "snapshot"],
 	["stylesheetHash", "stylesheet"],
 	["mockupHash", "mockup"],
