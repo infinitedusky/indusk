@@ -223,6 +223,8 @@ describe("plans-are-promises A17 — the gate counts a sibling promise as in for
 		}),
 	});
 
+	const FIRST = "first-promise";
+
 	it("is ready when the first is proved by rows and the second rests on it", () => {
 		fixture = promiseProject({
 			domains: ["seating"],
@@ -240,7 +242,7 @@ describe("plans-are-promises A17 — the gate counts a sibling promise as in for
 			keys: ["test_purpose: required"],
 			columns: ["For", "Test"],
 			rows: [
-				{ state: "passing", cells: { For: "promise: first-promise", Test: "a.test.ts" } },
+				{ state: "passing", cells: { For: `promise: ${FIRST}`, Test: "a.test.ts" } },
 				{ state: "passing", cells: { For: "clause: second-promise/fast", Test: "b.test.ts" } },
 			],
 		});

@@ -70,9 +70,9 @@ proves. Plans that do not opt in validate and close exactly as before. See
 | A14 | The save hook and the library read every row's purpose the same way, the clause form included | Test Phase 1 | Build Phase 2 | passing | unit | a regression guard over the two copies of the row-purpose reader, the library's and the hook's, which must not drift | apps/indusk-mcp/src/__tests__/hook-shared-modules.test.ts |
 | A15 | A row naming a clause counts as naming its promise in the promise's proof, incidents and standing | Test Phase 1 | Build Phase 2 | passing | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/row-purpose.test.ts |
 | A16 | In a project made for the check, a plan written with the commands — two promises with clauses, a clause plan, rows naming clauses — passes the contract check, is refused at close while a clause has no passing row, and closes once it does | Build Phase 3 | Build Phase 3 | passing | live check | promise: a-plan-holds-the-promises-it-lands | manual: indusk promises contract demo && indusk promises confirm demo, in a temporary project |
-| A17 | A plan that makes two promises, the second with a clause resting on the first, both otherwise proved, closes in one confirm and passes the cleanup gate; a resting cycle inside one plan is refused, naming both promises | Build Phase 4 | Build Phase 4 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts, apps/indusk-mcp/src/__tests__/cleanup-gate.test.ts |
-| A18 | A brief with no `clauses: required`, whose promises are bullets indented two or three spaces beneath a first entry, still reads every one of them as a promise it makes | Build Phase 4 | Build Phase 4 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
-| A19 | A promise file whose clause rests on the promise itself is refused by the registry check, and a resting clause naming a promise the registry no longer holds is refused by it, naming the clause | Build Phase 4 | Build Phase 4 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A17 | A plan that makes two promises, the second with a clause resting on the first, both otherwise proved, closes in one confirm and passes the cleanup gate; a resting cycle inside one plan is refused, naming both promises | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts, apps/indusk-mcp/src/__tests__/cleanup-gate.test.ts |
+| A18 | A brief with no `clauses: required`, whose promises are bullets indented two or three spaces beneath a first entry, still reads every one of them as a promise it makes | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
+| A19 | A promise file whose clause rests on the promise itself is refused by the registry check, and a resting clause naming a promise the registry no longer holds is refused by it, naming the clause | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
 
 ## Checklist
 
@@ -389,7 +389,7 @@ This phase tests three places where the finished plan may fail its own promise. 
 
 #### Build Phase 4 Verification
 
-- [ ] The three hypotheses hold: each test fails today on its own assertion and passes after the fixes.
+- [x] The three hypotheses hold: each test fails today on its own assertion and passes after the fixes.
   <details><summary>Technical</summary>
 
   A17, A18, A19: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-confirm.test.ts src/__tests__/cleanup-gate.test.ts src/__tests__/promise-clauses.test.ts src/__tests__/promises-check.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/promises/rows.ts src/lib/promises/brief-contract.ts src/lib/promises/registry.ts src/lib/promises/check.ts --run`; `pnpm promises:check` passes. A13 and every other clause row still passing.
