@@ -1141,27 +1141,44 @@ async function planReuse(
 			state: story.state,
 		}),
 	);
-	const unread =
-		(screens.length > 0 && served.screens === null) ||
-		(stories.length > 0 && served.stories === null);
-	const stale =
-		(screens.length > 0 && plan.stale.screen) || (stories.length > 0 && plan.stale.story);
+	const notice = reuseNotice(app, base, {
+		unread:
+			(screens.length > 0 && served.screens === null) ||
+			(stories.length > 0 && served.stories === null),
+		current,
+		stale: (screens.length > 0 && plan.stale.screen) || (stories.length > 0 && plan.stale.story),
+		chosen: Boolean(opts.all || opts.only),
+	});
+	if (notice) plan.notice = notice;
+	return plan;
+}
+
+/**
+ * What the person is told about reuse, one line each, when they can act on it:
+ * the served build could not be read, or the stories were not rendered from
+ * the sources (neither is said when `--all` or `--only` chose what opens); and,
+ * whatever was asked for, that the server serves a build from before the
+ * sources changed, so nothing measured there was kept.
+ */
+function reuseNotice(
+	app: LooksApp,
+	base: string,
+	facts: { unread: boolean; current: boolean; stale: boolean; chosen: boolean },
+): string | undefined {
 	const notices: string[] = [];
-	if (unread && !opts.all && !opts.only) {
+	if (facts.unread && !facts.chosen) {
 		notices.push(`the build served at the check's URL could not be read, so no look was reused`);
-	} else if (!current && !opts.all && !opts.only) {
+	} else if (!facts.current && !facts.chosen) {
 		notices.push(
 			`the stories were not rendered from ${app.app}'s sources as they are now, so no look was reused — run \`indusk looks stories ${app.app}\`, then check again`,
 		);
 	}
-	// Said whatever was asked for: what was measured on an old build is not kept.
-	if (stale) {
+	if (facts.stale) {
 		notices.push(
 			`${base} serves a build from before the sources changed — results were not kept; rebuild and serve it: ${serveCommand(app)}`,
 		);
 	}
-	if (notices.length > 0) plan.notice = notices.join("\n");
-	return plan;
+	return notices.length > 0 ? notices.join("\n") : undefined;
 }
 
 /**

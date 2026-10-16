@@ -771,6 +771,14 @@ A fresh reader went looking for ways a changed look could be reported held from 
   A10's Asserts in the trajectory: "a second run requests only the app's root, no look's page, prints one reused line per look, counts reused in the summary, exits 0"; the same in `test-plan.md`'s A10.
 
   </details>
+- [x] Shape: move what planReuse tells the person (unread build, stories not rendered, a stale server) into a named reuseNotice, so planReuse only partitions the looks
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/looks/check.ts`. Rule: one reason to change: planReuse grew a second job in this phase
+
+  Done: `reuseNotice(app, base, { unread, current, stale, chosen })`; reuse, check-run and dev-server tests 50 passed after it. Also reviewed and left as they are: `measureInPlace` / `measureFresh` / `loadPage` / `contextAt` (each one job, the shared load named once), `keepHeld` (one job: what a run proves), `elementRulesOf`, `checkerHashOf`, `assetUrlsOf`, `devServerMarker` (pure, each named for its purpose), and the `fakeOpener` per-device answer (test support, one job).
+
+  </details>
 
 #### Build Phase 4 Verification
 
