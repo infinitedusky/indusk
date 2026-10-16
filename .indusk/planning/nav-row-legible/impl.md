@@ -1,7 +1,7 @@
 ---
 title: "A nav row reads at a glance"
 date: 2026-10-16
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "9f72b46fd2e1a0cc95e09275ad587bd4e5bc495d6ac89b815b8aeac5e95593ed"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-16T15:18:16.077Z"
 ---
 
 # A nav row reads at a glance
