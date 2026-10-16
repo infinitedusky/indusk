@@ -55,7 +55,25 @@ None.
 
 ## Looks
 
-None — the words on the promise pages change, not their layout or tokens; the approved looks are held by value, not by text.
+### This plan makes
+
+1. **`promise-row.no-signal`**. A promise in the list that is enforced but whose signal has never reported: a grey dot, not green, and "no signal yet" where the last report would be — holding only once a signal says so (added 2026-10-15 from the review: the green dot contradicted this plan's own clause).
+
+### Existing looks
+
+**Must not break**
+
+- **`promise-row.enforced`**. An enforced promise whose signal has reported keeps its green dot.
+
+**Changes**
+
+None.
+
+**Replaces**
+
+None.
+
+Otherwise only words change on the promise pages, not their layout or tokens.
 
 ## Depends On
 
