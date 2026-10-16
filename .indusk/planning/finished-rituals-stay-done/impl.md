@@ -1,7 +1,7 @@
 ---
 title: "A finished ritual stays done"
 date: 2026-10-16
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "f06ef0692572c8e57b9e477c6f4201d6ed46e539cd9d0cae7c07c98aac7d2197"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-16T18:58:02.293Z"
 ---
 
 # A finished ritual stays done
