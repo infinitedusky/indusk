@@ -1,7 +1,7 @@
 ---
 title: "Looks check speed"
 date: 2026-10-16
-status: approved
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -603,7 +603,8 @@ This phase stops the check from spending half an hour in a development server. B
 
   Done as: `configHashOf(root, app)` (`mockups.ts`) hashes each source folder's app's `tailwind.config.*`, `postcss.config.*`, its `.storybook` folder and the root `pnpm-lock.yaml`; `configHash` joins `lookKey`'s facts and `COMPARED` (named "configuration"). Tests (no trajectory row): `reuse.test.ts` — a changed `configHash` reopens, and a check after each of a Tailwind config, a PostCSS config, the Storybook config and the lockfile changes opens the held look.
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — reviewed `lib/looks/dev-server.ts` (one pure rule, its markers named), `reuse.ts`'s `configHashOf` and served-build judgement, and the refusal in `check.ts`; nothing to change. `check.ts` has grown past its cap — splitting it is inter-file, `/cleanup`'s at close.
 #### Build Phase 3 Verification
 
 - [x] A development server's page is refused before anything opens, a production page is not, and the browser test for the refusal passes.
