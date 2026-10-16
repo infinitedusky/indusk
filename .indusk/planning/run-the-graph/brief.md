@@ -1,8 +1,72 @@
 ---
-title: "run-the-graph"
+title: "Run the graph"
 date: 2026-10-16
 status: draft
 workflow: feature
+description: "An approved plan's phases run in parallel as a graph: each phase on its own branch off its plan's branch, started as soon as what it depends on is done and no running phase touches its files, earlier plans first, so a master finishes in the time of its longest chain rather than the sum of its phases."
 ---
 
-# run-the-graph — Brief
+# Run the graph — Brief
+
+The first child of [run-the-master](../run-the-master/master.md), settled with
+Sandy on 2026-10-16 (`promise-core`'s master, "Phases are units of work",
+"Earlier plans go first", "Phases branch off the plan"). Today a plan's phases
+run one after another in one worktree, one session at a time, and the person
+starts each with the command the last one named.
+
+## Expectations
+
+1. **A master finishes in about the time of its longest chain of dependent phases, not the sum of its phases.**
+   - Measure: for Homework Gate's first milestone, the time from its first plan's approval to its last plan's landing, against the sum of its phases' own durations and against its longest dependent chain, read from phase start and end times.
+   - Look: when that milestone's last plan lands.
+2. **Merging at phase boundaries rarely needs a person.**
+   - Measure: of the merges the runner makes (phase start, phase into plan, main cascade, before landing), the share that conflicts, and of those the share an agent resolved with the plan's tests passing, read from the runner's record.
+   - Look: after the first twenty phases run in parallel.
+
+## Promises
+
+### This plan makes
+
+1. **`the-work-runs-as-a-graph`** (behaviour). Every phase whose dependencies are done and whose files no running phase touches is running, up to the session cap, and no phase waits on one it does not depend on.
+2. **`a-phase-builds-on-its-own-branch`** (state). Each phase works in its own worktree off its plan's branch, merges in what came before it when it starts, and merges into the plan's branch only when its check is green; only the plan's branch reaches main, once its promises are verified.
+3. **`earlier-plans-go-first`** (state). When phases of different plans are ready and want the same file, the earliest plan's phase runs next.
+4. **`main-cascades`** (behaviour). When anything lands on main, every open plan's branch merges it, and a running phase's worktree merges it when that phase ends; a conflict is resolved by an agent with the plan's tests as the check, or becomes a question when it cannot be.
+5. **`landing-follows-what-it-pulled`** (state). A plan whose phase pulled another plan's unlanded work cannot land before that plan, and merges that work again before it lands.
+
+### Existing promises
+
+**Must not break**
+
+- **`sessions-are-capped`**. The graph runs as many phases at once as the cap allows, never more.
+- **`a-plan-builds-only-after-approval`**. Only an approved plan's phases enter the graph.
+- **`a-plan-is-written-on-its-own-branch`**. The plan's branch stays where its build lands from; phases branch off it.
+- **`a-plan-boundary-names-the-next-session`**. A phase boundary still names the command for what runs next; the runner runs it.
+
+**Changes**
+
+- **`a-session-belongs-to-its-plan`**. A plan's session starts whatever other plans' sessions are running; only a second session of the same kind on the same phase is refused, naming the session already running, so a plan can have a planning session and several phases building at the same time.
+
+**Replaces**
+
+None.
+
+### Not promised
+
+- **Decisions as questions with a cost, and blocking only what is downstream of one** — `decisions-as-questions`.
+- **Seeing the graph, and the daily list** — `daily-list-and-graph-view`.
+- **Re-cutting a plan's phases for speed** — phases are cut by judgment when the impl is written; the runner runs the graph it is given and re-reads it as phases finish.
+- **Running on the workbench server** — `workbench-server`; this runs on one machine.
+
+## Looks
+
+None — the runner changes no screen; seeing the graph is `daily-list-and-graph-view`'s, briefed next.
+
+## Depends On
+
+- `.indusk/planning/plans-are-promises/` — test rows that name the clause they prove.
+- `.indusk/planning/mark-first/` — built after it (Sandy, 2026-10-15).
+
+## Blocks
+
+- `.indusk/planning/decisions-as-questions/` — a question blocks phases of this graph.
+- `.indusk/planning/daily-list-and-graph-view/` — it draws this graph.
