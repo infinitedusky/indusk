@@ -100,7 +100,7 @@ Before any code changes, this phase writes the tests for what a plan's step list
 
 This phase teaches the step list that a ritual can be finished independently of where the plan stands. The admin's plan reader decides, from the plan's own files, which of the three close-out rituals are finished: falsification and cleanup by a closed ritual phase in the impl, the audit by its written report. It hands that list to the package's step list, which now reads a finished ritual as done unless the plan skipped it with a reason. A ritual that is open, or not started, reads as before. Nothing about how a step is drawn changes.
 
-- [ ] The step list accepts the list of finished rituals and reads each as done unless it was skipped.
+- [x] The step list accepts the list of finished rituals and reads each as done unless it was skipped.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/plans/steps.ts`: `PlanSnapshot.finishedRituals?: ReadonlyArray<SkippedRitual>` ("Falsification, cleanup or audit finished: its phase closed or its report written"); in `releaseStep`, after the skip check, `if (ritual && plan.finishedRituals?.includes(ritual)) return named("done")`. A step whose segment is active still reads current only when its ritual is not finished.
