@@ -46,8 +46,8 @@ before each measurement, the result returned as one JSON string); refusing a
 development server from one HTTP fetch of a page, naming the app's declared
 `serve` command; `--all` to reopen everything and `--only <name>` to check
 named looks; a reused look sending an upheld signal marked reused, with when it
-was really measured; and landing and release always running the full `--all`
-check of the admin, as a system-tier test both declare.
+was really measured; and the full `--all` check of the admin as a system-tier test,
+so it runs in the background after every landing and at every release.
 
 **And against:**
 keying reuse on the snapshot hashes alone (blind to a component edited without
@@ -70,8 +70,9 @@ spends half an hour in a development server.
 **Accepting:**
 that a screen's data (plans, promises the admin renders) is in no key, so a new
 element with a raw value appearing only because the data changed is reused
-past in a plan's phases until the next landing's full check; that landing now
-runs dusk's whole system tier; that any edit to page code reopens every screen; that the
+past in a plan's phases until the full check after the next landing; that a
+broken look found there is an incident after the fact, never a blocked landing;
+that any edit to page code reopens every screen; that the
 stories must be rendered before anything is reused after a source change; and
 that dev-server detection reads known markers (Next, webpack, Vite) and would
 miss an unknown framework's.
@@ -92,10 +93,11 @@ server's 41 s floor for 48 screen renders, the transfer cost, the in-place
 comparison and its transition finding, the dev and production probes. The
 [brief](brief.md) promises `a-look-check-costs-what-changed` with five clauses
 and must not break `tokens-are-held-exactly` or `everyday-tests-never-wait`;
-the [test plan](test-plan.md) holds 27 assertions under them.
+the [test plan](test-plan.md) holds 26 assertions under them.
 Sandy's decisions of 2026-10-16 (research, Decisions): a reused look sends an
-upheld signal marked reused; landing and release always run the full check;
-the 60-second full run stays an expectation.
+upheld signal marked reused; landing and release always run the full check,
+in the slow tier, which never blocks either (the 2026-10-08 rule, kept); the
+60-second full run stays an expectation.
 
 Rules this lands under: "A look's verdict is decided in `looks/verdict` from
 values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
@@ -176,15 +178,12 @@ values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
    `looks-admin-all.contract.test.ts`: it starts the bundled admin (built by
    `test:system`'s `prepublishOnly`) on a free port with a temporary
    `INDUSK_HOME` and runs `indusk looks check admin --all --url <it>`, failing
-   on any broken look. Release already runs the system tier
-   (`workflow.steps.release.slow_tests.command`, `pnpm -w test:system`).
-   Landing runs `indusk checks slow`, which runs `workflow.steps.land.slow_tests`;
-   this plan declares it as the same command. It must be the same command: a
-   green landing run is recorded by the code it covered, and release skips its
-   slow run on that code whatever command produced it (`findCoveringRun`), so
-   a narrower landing command would let release skip the system tier.
-   A broken look at release fails a JUnit file whose trajectory row names
-   `tokens-are-held-exactly`, and is routed to that promise as an incident.
+   on any broken look. The system tier runs in the background after landing
+   and at release (`workflow.steps.release.slow_tests`, `pnpm -w test:system`,
+   `when: after`) and never blocks either — the 2026-10-08 rule, kept (Sandy,
+   2026-10-16). No step declaration changes. A broken look there fails a JUnit
+   file whose trajectory row names `tokens-are-held-exactly`, and is routed to
+   that promise as an incident.
 
 ## Alternatives Considered
 
@@ -217,6 +216,13 @@ true of one machine's build, and a committed one is trusted by someone who
 never ran it; it would also put a writer on `.indusk/mockups/` that is not a
 person's approval.
 
+### Declaring the slow tier as a landing step
+
+Setting `workflow.steps.land.slow_tests` would make every landing run and wait
+on the system tier. Rejected (Sandy, 2026-10-16): the slow tier never blocks
+landing or release; it runs in the background after, failures as broken
+promises.
+
 ### Building and serving the app when given a dev server
 
 Rejected: the check would own a build for every app it can check. Naming the
@@ -241,19 +247,19 @@ override changes it in place, so one load does.
   screen run of about a minute.
 - After any source change, nothing is reused until the stories are rendered.
 - One more file in machine state, and one more optional declaration (`serve`).
-- Landing in dusk now runs the whole system tier (minutes), where it ran no
-  slow tests before; the alternative, a landing command of the looks check
-  alone, would make release skip its slow tests on the same code.
+- A broken look the full check finds is reported after landing or release, as
+  an incident, not before.
 
 ### Risks
 - **A reuse that hides a break.** Mitigation: the key includes the foundation
   (so `tokens-are-held-exactly` cannot be hidden), the render's currency and the
   page code; only fully held looks are kept; `--all` reopens everything and is
-  what the brief's full-check expectation times, and what landing and release
-  always run.
+  what the brief's full-check expectation times, and what the slow tier runs
+  after every landing and at every release.
 - **Data-driven drift** (Untestable U1 in the test plan: a new element with a
   raw value that appears only because the admin's data changed). Mitigation:
-  landing and release run the full check with every look opened.
+  the slow tier runs the full check with every look opened after every landing
+  and at every release; a break becomes an incident on `tokens-are-held-exactly`.
 - **In-place measuring differs from a fresh load** for a page that measures
   itself once on mount or animates forever. Mitigation: the contract test
   compares in place with fresh for a transitioning page and a pixel-ratio media
