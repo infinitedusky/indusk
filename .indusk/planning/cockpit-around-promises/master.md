@@ -24,11 +24,15 @@ section). The plans below are the open plans gathered under it on 2026-10-15.
 A project's cockpit is four sections:
 
 - **Map** — the nouns, the state: promises grouped by their type, the design
-  system (looks) beside the behaviour system, with an agent to ask about it and
+  system (looks) beside the behaviour system, and the expectations — what we
+  expect to follow, each with its measure — with an agent to ask about it and
   brainstorm with. Today's promises dashboard is its start. Not yet a plan;
   `looks-as-promises` builds the design-system half.
 - **Territory** — the running application itself, beside the map
-  ("the map is not the territory"). `embedded-browser` is its start.
+  ("the map is not the territory"), and what really happened: each
+  expectation's measured result. `embedded-browser` is its start;
+  `expectations-loop` reads the results back, and a proposal it makes from one
+  arrives in Activity as a decision.
 - **Paths** — two paths to what we are trying to accomplish: the planned path
   (plans in master order, where briefs are written and decisions made — the
   nav's Paths today) and the execution path (the graph of phases the agents
