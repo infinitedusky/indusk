@@ -1,7 +1,7 @@
 ---
 title: "The nav says where a plan is"
 date: 2026-10-16
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -76,8 +76,8 @@ no file read.
 | A4 | A plan waiting on the person reads the step it waits at with the needs-you mark, ahead of its step and of Released | Test Phase 1 | Test Phase 1 | passing | unit | promise: decisions-wait-in-one-place, promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/plan-stage.test.ts, apps/indusk-admin/src/components/PlanList.test.tsx |
 | A5 | A master plan's page reads each plan at the nav row's stage: Falsify for a built, unfalsified plan, Released for a released one | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/master-story.test.ts |
 | A6 | A released plan reads Released with the finished mark, archived or not, and each Path's released count is unchanged | Test Phase 1 | Test Phase 1 | passing | unit | promise: the-nav-says-where-a-plan-is, promise: paths-keep-their-order | apps/indusk-admin/src/lib/plan-stage.test.ts, apps/indusk-admin/src/components/PlanList.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
-| A7 | The project card marks a project as having work in progress when a plan is at a Release-workflow step (Build to Release), not when an impl's status word says in-progress | Build Phase 2 | Build Phase 2 | planned | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/app/page.test.tsx |
-| A8 | The copied whole-plan markdown names the plan's stage as the nav shows it, and a built, unfalsified plan reads Falsify, not completed | Build Phase 2 | Build Phase 2 | planned | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/markdown-export.test.ts |
+| A7 | The project card marks a project as having work in progress when a plan is at a Release-workflow step (Build to Release), not when an impl's status word says in-progress (an approved plan the nav marks working counts) | Build Phase 2 | Build Phase 2 | passing | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/plan-stage.test.ts |
+| A8 | The copied whole-plan markdown names the plan's stage as the nav shows it, and a built, unfalsified plan reads Falsify, not completed | Build Phase 2 | Build Phase 2 | passing | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/markdown-export.test.ts |
 
 ## Checklist
 
@@ -215,19 +215,19 @@ This phase moves the rule for which step a plan is at into the package's module 
 
 Two places in the admin still read the impl's hand-written status word as if it were progress: the project card that says whether a project has work in progress, and the markdown a person copies from a plan's page. Both now ask the same answer the nav row asks, so a plan built but not yet falsified is no longer called completed anywhere. The status word stays what the author writes; nothing reads progress from it.
 
-- [ ] The project card says a project has work in progress when a plan is at a build-or-later step.
+- [x] The project card says a project has work in progress when a plan is at a build-or-later step.
   <details><summary>Technical</summary>
 
   A7. `apps/indusk-admin/src/app/page.tsx`: `hasInProgress: active.some((p) => navMarkOf(p, false, undefined).state === "working")` replaces `p.status === "in-progress"`. Test first in `src/app/page.test.tsx` (token `promise: the-nav-says-where-a-plan-is`): a plan at the falsify position with impl status `completed` counts; an approved plan not yet built does not. Red today.
 
   </details>
-- [ ] The copied plan markdown names the plan's stage, the one the nav shows.
+- [x] The copied plan markdown names the plan's stage, the one the nav shows.
   <details><summary>Technical</summary>
 
   A8. `apps/indusk-admin/src/lib/markdown-export.ts` `planMarkdown`: `Stage: ${planStage(plan, false, undefined)}` replaces `Status: ${plan.status}`. Test first in `src/lib/markdown-export.test.ts`: a completed impl at the falsify position reads `Stage: Falsify`. Update any existing case that pins `Status:`.
 
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
   <details><summary>Technical</summary>
 
   `app/page.tsx`, `lib/markdown-export.ts`.
@@ -236,7 +236,7 @@ Two places in the admin still read the impl's hand-written status word as if it 
 
 #### Build Phase 2 Verification
 
-- [ ] The project card and the copied markdown agree with the nav at every point of a plan's life.
+- [x] The project card and the copied markdown agree with the nav at every point of a plan's life.
   <details><summary>Technical</summary>
 
   `cd apps/indusk-admin && pnpm exec vitest run src/app/page.test.tsx src/lib/markdown-export.test.ts && pnpm exec vitest related src/app/page.tsx src/lib/markdown-export.ts --run`; `pnpm exec tsc --noEmit -p apps/indusk-admin`; `pnpm exec biome check` on the changed files.
@@ -245,7 +245,7 @@ Two places in the admin still read the impl's hand-written status word as if it 
 
 #### Build Phase 2 Context
 
-- [ ] The admin's context file says progress is read from the plan's step, never from the impl's status word, in the card and the export too.
+- [x] The admin's context file says progress is read from the plan's step, never from the impl's status word, in the card and the export too.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`, the entry edited in Build Phase 1: add `page.tsx`'s `hasInProgress` and `planMarkdown`'s stage line to the readers of `navMarkOf`/`planStage`.
@@ -254,7 +254,7 @@ Two places in the admin still read the impl's hand-written status word as if it 
 
 #### Build Phase 2 Document
 
-- [ ] The changelog line for this plan also names the project card and the copied markdown.
+- [x] The changelog line for this plan also names the project card and the copied markdown.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md`, the nav-stage-matches-plan-page entry under Unreleased.
