@@ -1,12 +1,12 @@
 ---
 title: "Telemetry from day one"
-description: "A project built with InDusk reports from its first run, is heard by its server, proves each clause by its signal, and reads its expectations when they come due; InDusk's own closing rule (Signal first) is the second of seven steps."
+description: "A project built with InDusk reports from its first run, is heard by its server, proves each clause by its signal, and reads its expectations when they come due; InDusk's own closing rule (Signal first) is the third of seven steps."
 date: 2026-10-16
 status: living
 subplans:
   - daemon-found-not-guessed
-  - mark-first
   - a-new-project-starts-instrumented
+  - mark-first
   - production-is-heard
   - production-keeps-only-what-it-should
   - a-look-comes-due
@@ -53,38 +53,51 @@ each child is one plan with one landing.
    record, the port bump, the recovery commands, the unreadable log (80,230
    self-tracing warnings) and the logs port nothing binds.
 
-2. **`mark-first`** ("Signal first") — as briefed, with about nine rows added
-   to its clause plan and proposed ADR; still blocks `run-the-master`. A
-   clause is verified by its tests before release and upheld by its signal in
-   use; a break names its clause; the audit answers each concern with a
-   signal, a fix or a reason. The additions the audit forces: readers read a
-   clause's signal regardless of its promise's kind (today every reader of
-   signals filters to `behaviour`, and both of this plan's own promises are
-   `state`); the rule that a signal is derived from the clause, not a test,
-   becomes a contract check; a phase whose rows name a clause carries a
-   runnable per-phase check; and the plan's own four non-telemetry signal
-   lines are made honest by InDusk's own commands emitting the spans their
-   clauses claim. Without the last, the plan cannot close under its own
-   closing rule.
-
-3. **`a-new-project-starts-instrumented`** — blocked by `daemon-found-not-
-   guessed` for the endpoint it writes and by `mark-first`'s ADR for the
-   signal helper's keys; blocks Homework Gate's `indusk init`. A project
-   scaffolded today gets instrumentation that exports to the console (Node and
-   browser templates) or to whatever holds port 4318 (the Next.js template, by
-   its SDK's default), at the workbench root rather than in the code repo,
-   under the service name `unknown-service`, with a signal helper that is
-   internal to the package, a guide that still writes the old word, and an
-   otel skill that says to look in Dash0. After this plan: the scaffold sits
-   where the app runs, the service is named, the exporter points at the daemon
-   that is running, every span carries its environment and project, the app
+2. **`a-new-project-starts-instrumented`** — blocked by `daemon-found-not-
+   guessed` (its spans go to the daemon's fixed ports); blocks Signal first,
+   which reads what this plan's helper writes, and Homework Gate's `indusk
+   init`. A project scaffolded today gets instrumentation that exports to the
+   console (Node and browser templates) or to whatever holds port 4318 (the
+   Next.js template, by its SDK's default), at the workbench root rather than
+   in the code repo, under the service name `unknown-service`, with no way to
+   write a signal a reader recognises and an otel skill that says to look in
+   Dash0. After this plan: the scaffold sits where the app runs, the service is
+   named, its spans reach the daemon, every span says where it ran, the app
    writes its signal from a small helper it owns (plain OpenTelemetry, no
-   InDusk dependency, generated from the package's one vocabulary), the test
-   runner marks its spans as test-made, and the skills tell the truth. Takes
-   the two telemetry gaps `new-project-flow`'s audit parked in
-   `known-issues.md`, and the demo's stale test words (its loop works; the
-   tests expect the words `one-promise-language` replaced). The largest
-   child; if it stalls, placement, naming, endpoint and environment land first.
+   InDusk dependency, pinned to the package's one vocabulary), a test run
+   marks its spans as test-made, and the skills tell the truth. **This plan
+   defines what a signal carries** — the vocabulary keys below — because it is
+   the first to write one from an application. Takes the demo's stale test
+   words (its loop works; the tests expect the words `one-promise-language`
+   replaced). The largest child; if it stalls, placement, naming, the daemon
+   and environment land first.
+
+3. **`mark-first`** ("Signal first") — blocked by the scaffold plan for the
+   keys it reads, and by `daemon-found-not-guessed` because closing asks the
+   daemon; still blocks `run-the-master`. Moved behind the scaffold on
+   2026-10-16 (Sandy): write before read — a closing rule that asks for a
+   signal belongs after something outside InDusk can write one. A clause is
+   verified by its tests before release and upheld by its signal in use; a
+   break names its clause; the audit answers each concern with a signal, a fix
+   or a reason. The additions the audit forces: readers read a clause's signal
+   whatever its promise's kind (today every reader filters to `behaviour`);
+   the rule that a signal comes from the clause, not a test, becomes a
+   contract check; a phase whose rows name a clause carries a runnable
+   per-phase check; and InDusk's own commands get one tracer, so this plan's
+   own clauses — and `new_project.create` — emit real spans. A promise's
+   standing is read from its clauses; showing clauses on their own page stays
+   the later cut's clause views.
+
+   **The seam between the two** (settled 2026-10-16): a signal is a span
+   carrying `indusk.promise`, `indusk.clause` (optional), `indusk.promise.outcome`
+   (`upheld` or `broken`), on broken an event with `indusk.promise.symptom`,
+   optionally `indusk.signal.value` and `indusk.signal.bound`, optionally
+   `indusk.signal.plan` and `indusk.signal.phase` (who added it), and
+   `indusk.run=test` when a test run made it; every span carries
+   `deployment.environment` and `indusk.project` as resource attributes. The
+   keys are defined once, in the package's `promises/vocabulary.ts`; the
+   scaffold plan adds them and its helper is pinned to them; Signal first's
+   readers read them and nothing else.
 
 4. **`production-is-heard`** — blocked by `a-new-project-starts-instrumented`;
    before Homework Gate's first deploy; in parallel with the next. Production

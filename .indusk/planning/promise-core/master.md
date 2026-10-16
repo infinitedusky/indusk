@@ -247,7 +247,7 @@ parent with its own `master.md` naming them.
      before the ADR; a clause can rest on another promise.
    - **`mark-first`** ("Signal first") — `a-clause-is-proved-twice`: verified by
      its tests before release, upheld by its signal in use; plans in the new
-     shape close on both. Since 2026-10-16 the second child of
+     shape close on both. Since 2026-10-16 the third child of
      [telemetry-from-day-one](../telemetry-from-day-one/master.md), a parent
      made after a cold audit of `mark-first` against the goal (its research,
      "Audit against the goal") found it reshapes how InDusk reads a signal and
