@@ -335,6 +335,18 @@ The contract check refuses a missing promise or clause section and a clause with
 no `- Signal:` line, and, once the impl exists, a split or limit clause no test
 row names (`clause: <promise>/<clause>` in the row's `For` cell).
 
+**Closing per clause.** A promise stated as clauses is confirmed
+(`indusk promises confirm <plan>`, and the retrospective's readiness check)
+only when every `split` and `limit` clause has a passing row with a test file,
+and every promise a clause rests on is in force. A resting clause needs no row
+of its own. The refusal names the clause, for example
+`seat-map-accurate: clause never-stale: row A4 is planned`, and the promise
+stays `declared`.
+
+The planner groups promises whose work shares code into one plan; promises that
+share none are separate plans under a master. The planner suggests, the person
+decides.
+
 ### 4. ADR (`adr.md`)
 
 The ADR formalizes the decision using the Y-statement format. Each of the seven canonical clauses is its own section: the clause label is bold and ends with a colon, the paragraph body begins on the next line (no blank line between them), and a blank line separates each clause from the next. Every clause must be filled in:

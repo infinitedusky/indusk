@@ -352,7 +352,7 @@ This phase finishes the promise. Closing a plan — both the check that a plan i
 
 #### Build Phase 3 Document
 
-- [ ] A reader can find how a plan with clauses closes, and the changelog says what shipped.
+- [x] A reader can find how a plan with clauses closes, and the changelog says what shipped.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/skills/plan.md` — closing per clause; `apps/docs/src/changelog.md` Unreleased — "Added: promises stated as clauses — `clauses: required` in a brief, `declare --clause`, the clause plan, `clause:` rows, closing per clause."
