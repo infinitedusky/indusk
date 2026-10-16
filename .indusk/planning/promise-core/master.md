@@ -261,7 +261,7 @@ parent with its own `master.md` naming them.
    phases contend for a file. Its first
    master to run is Homework Gate's milestones, not this one. Its dependencies come from promises from the start.
    A parent since 2026-10-16 (Sandy) — [run-the-master/master.md](../run-the-master/master.md):
-   `run-the-graph`, `decisions-as-questions`, `daily-list-and-graph-view`;
+   `run-the-graph`, `decisions-as-questions`, `activity-and-graph`;
    briefed now, built after `mark-first`.
 2. **`expectations-loop`** — expectations read back at their look time into
    what is built next.

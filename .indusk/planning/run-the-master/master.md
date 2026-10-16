@@ -1,12 +1,12 @@
 ---
 title: "Run the master"
-description: "A master plan runs itself: its phases run in parallel as a graph, decisions arrive as questions with a cost, and a person sees the work as a daily list and a graph."
+description: "A master plan runs itself: its phases run in parallel as a graph, decisions arrive as questions with a cost, and a person sees the work as an activity feed and a graph."
 date: 2026-10-16
 status: living
 subplans:
   - run-the-graph
   - decisions-as-questions
-  - daily-list-and-graph-view
+  - activity-and-graph
 ---
 
 # Run the master
@@ -29,9 +29,10 @@ run is Homework Gate's milestones.
    carrying the agent's recommendation and a cost: cheap proceeds after five
    minutes, moderate after an hour, expensive waits, red. An unanswered
    question blocks only the phases downstream of it.
-3. **`daily-list-and-graph-view`** — the daily list (what is building, what is
-   breaking, what needs the person today) and the graph seen (plans and
-   promises as nodes, a broken clause red, what rests on it dimmed). Looks:
+3. **`activity-and-graph`** — two top-level pages for now: Activity (a
+   scrolling feed beside broken promises, open decisions and phases in run
+   order) and Graph (plans and phases as nodes, a broken clause red, what rests
+   on it dimmed); where they sit is a later conversation. Looks:
    its mockups are drawn at its brief, briefed right after `run-the-graph`'s so
    they are drawn while the runner builds (Sandy, 2026-10-16).
 
