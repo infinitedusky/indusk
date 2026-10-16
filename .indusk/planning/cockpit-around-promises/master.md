@@ -21,7 +21,7 @@ section). The plans below are the open plans gathered under it on 2026-10-15.
 
 ## Four sections (Sandy, 2026-10-16)
 
-A project's cockpit is four sections — Planning, Activity, Map, Territory:
+A project's cockpit is four sections:
 
 - **Map** — the nouns, the state: promises grouped by their type, the design
   system (looks) beside the behaviour system, and the expectations — what we
@@ -33,10 +33,10 @@ A project's cockpit is four sections — Planning, Activity, Map, Territory:
   expectation's measured result. `embedded-browser` is its start;
   `expectations-loop` reads the results back, and a proposal it makes from one
   arrives in Activity as a decision.
-- **Planning** — two plans for what we are trying to accomplish: ours, the
-  master plan (plans in master order, where briefs are written and decisions
-  made — the nav's Paths today), and the agents', the graph of phases they run.
-  The graph is `daily-list-and-graph-view`'s, under
+- **Paths** — two paths to what we are trying to accomplish: the planned path
+  (plans in master order, where briefs are written and decisions made — the
+  nav's Paths today) and the execution path (the graph of phases the agents
+  run). The execution path is `daily-list-and-graph-view`'s, under
   [run-the-master](../run-the-master/master.md).
 - **Activity** — the verbs, triage: a scrolling feed (a decision asked or
   made, a promise broken or holding again) beside broken promises, decisions
