@@ -840,7 +840,7 @@ A fresh reader went looking for ways a changed look could be reported held from 
 
 This plan doubled the look check's main file, from 633 lines to 1,232, and it now does four jobs in one place: deciding which looks a run opens and which it reuses, reading what the server serves before anything opens, driving the browser to load and measure a page at every device and scheme, and judging the measured values. Each job changes for its own reasons, so each gets its own file, with the run itself staying where it is. Nothing changes in what the check does; every row that passes today still passes.
 
-- [ ] Move the reading of the served page — the root request, the development-server refusal, the served build — into its own file.
+- [x] Move the reading of the served page — the root request, the development-server refusal, the served build — into its own file.
   <details><summary>Technical</summary>
 
   `readServed`, `within` and the served-build reading from `check.ts` into `lib/looks/served.ts`, beside `dev-server.ts`.
