@@ -855,7 +855,13 @@ This plan doubled the look check's main file, from 633 lines to 1,232, and it no
 
   `planReuse`, `reuseNotice`, `keepHeld` from `check.ts` into `reuse.ts` (or `lib/looks/reuse-run.ts` if `reuse.ts` passes its cap); `checkApp` calls them.
   </details>
-- [ ] (reviewed `lib/looks/reuse.ts` and `dev-server.ts` — left as they are: each already holds one rule)
+- [x] (reviewed `lib/looks/reuse.ts` and `dev-server.ts` — left as they are: each already holds one rule)
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — reviewed `served.ts`, `browser.ts`, `reuse-run.ts`, `errors.ts` and the slimmed `check.ts`; nothing to change.
+  <details><summary>Technical</summary>
+
+  Each new file holds one job and imports the others one way (`errors.ts` is a leaf; `reuse-run.ts` and `served.ts` take `check.ts`'s types only). `schemesOf`, `lookDevice` and `Scheme` moved to `browser.ts` with the device and scheme work so `reuse-run.ts` needs no import of `check.ts` at run time. `check.ts` re-exports the names its importers use. `check.ts` is 565 lines, still over the 400 cap: the judging, target and seed functions that remain are the run's own, and splitting them is not in this phase's items.
+  </details>
 
 #### Build Phase 5 Verification
 
