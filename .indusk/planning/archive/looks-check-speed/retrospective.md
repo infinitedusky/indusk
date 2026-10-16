@@ -160,3 +160,5 @@ code alone is 34 files under `apps/`, +3,432 / −342. New files: `reuse.ts`,
 
 To `looks-as-promises`: the 57-second floor of an unchanged look check — about
 40 looks that can never be checked and are reopened on every run.
+
+Landed on main at 5683084b, 2026-10-16. Installed with `pnpm install:local`; nothing published (dusk installs its own build; a publish is `indusk release`, the operator's call).
