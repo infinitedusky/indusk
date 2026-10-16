@@ -99,7 +99,7 @@ Before anything about clauses is built, this phase writes the tests that say wha
   A13: the same project without `clauses: required`, no sub-entries, rows naming `promise: first-promise` → no refusal. Passes today (regression guard).
 
   </details>
-- [ ] Write the tests that declaring a promise records its clauses and refuses a bad clause, failing today.
+- [x] Write the tests that declaring a promise records its clauses and refuses a bad clause, failing today.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/__tests__/promises-declare.test.ts` (add `promise: a-plan-holds-the-promises-it-lands` to its docblock): run `indusk promises declare demo-promise --plan demo --kind state --domain planning --statement "…" --clause "fast (split). Answers in under a second." --clause "never-lost (limit). No write is lost."` through the file's existing CLI helper.
