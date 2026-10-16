@@ -213,42 +213,42 @@ This phase builds the small worktree mark as a component of its own: a bordered 
 
 A new component, and a new state of an existing one, are approved by a person from their stories, rendered from the real components. This phase writes a story for the closed mark, the open mark and a plan row with a worktree, renders every story into the snapshots and the component catalog the looks tools read, and runs the checks that no raw value crept in and that each new state has its story. The existing plan-row stories must render unchanged; the plan-row's stylesheet does change, so the nav looks that compose plan rows read proposed again until a person re-approves them. The approvals are the person's, in the cockpit, and the plan is not accepted until they are given.
 
-- [ ] Write a story for the closed mark, the open mark, and a plan row with a worktree.
+- [x] Write a story for the closed mark, the open mark, and a plan row with a worktree.
   <details><summary>Technical</summary>
 
   New `apps/indusk-admin/src/components/ui/WorktreeMark.stories.tsx` (`title: "ui/WorktreeMark"`): `Closed` (`name: "looks-check-speed"`) and `Open` (`name: "looks-check-speed"`, `open: true`) — the names the mockups show, so the story ids give states `closed` and `open`. `PlanRow.stories.tsx`: `Worktree` — `initials: "NS"`, `state: "needs"`, `name: "The nav says where a plan is"`, `stage: "Approve the brief"`, `worktree: <WorktreeMark name="nav-stage-matches-plan-page" />` (the mockup's second row); a comment line above it as the others have.
 
   </details>
-- [ ] Render the stories into the snapshots and catalog, and confirm the existing plan-row stories render unchanged.
+- [x] Render the stories into the snapshots and catalog, and confirm the existing plan-row stories render unchanged.
   <details><summary>Technical</summary>
 
   From the worktree root: `indusk looks stories admin`. `git diff .indusk/mockups/admin/components.json` shows `worktree-mark` added (file, properties, states closed/open) and `plan-row` gaining state `worktree` and the `worktree` property; the `snapshotHash` of `plan-row`'s needs, working, released, current, numbered, idle and queued states unchanged. If one moved, the no-worktree form's markup changed — fix `PlanRow` until it does not.
 
   </details>
-- [ ] Confirm the looks checks find no raw value and list the new states as stories awaiting approval, and that the mockups still pass the lint now the mark has a story.
+- [x] Confirm the looks checks find no raw value and list the new states as stories awaiting approval, and that the mockups still pass the lint now the mark has a story.
   <details><summary>Technical</summary>
 
   `indusk looks lint admin` — no finding (no `duplicate component`, no `component markup outside its file`). If the lint now asks the `plan-row.worktree` mockup to compose `worktree-mark` by `<indusk-component name="worktree-mark" state="…">` instead of drawing it under its `indusk-new-components` declaration, rewrite that mockup to compose it; it then reads proposed for the person. `indusk looks coverage admin` — `worktree-mark.closed`, `worktree-mark.open`, `plan-row.worktree` listed as stories awaiting approval, nothing else new; `screens.json` `uncatalogued` does not grow.
 
   </details>
-- [ ] Ask the person to approve the three new stories, and re-approve any nav look the changed row reopened, in the cockpit.
+- [x] Ask the person to approve the three new stories, and re-approve any nav look the changed row reopened, in the cockpit.
   <details><summary>Technical</summary>
 
   The person approves `worktree-mark.closed`, `worktree-mark.open` and `plan-row.worktree` on the Looks page against their approved mockups; `nav.expanded`, `nav.collapsed` and `nav.wide` read proposed if `components/plan-row.css` changed, and are the person's to re-approve. The agent approves nothing. `plans accept` waits on these.
 
   </details>
-- [ ] Shape — review the stories against the enabled extensions' craft rules.
+- [x] Shape — review the stories against the enabled extensions' craft rules.
 
 #### Build Phase 2 Verification
 
-- [ ] (no tests flip at this phase — reason: stories and generated looks files; the rows passed in the phase before)
-- [ ] The story tests render every story, the new ones included, without an error, and the nav row's tests still pass.
+- [x] (no tests flip at this phase — reason: stories and generated looks files; the rows passed in the phase before)
+- [x] The story tests render every story, the new ones included, without an error, and the nav row's tests still pass.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/nav-row-legible/apps/indusk-admin && pnpm exec vitest run --config vitest.system.config.ts --project storybook` green; `pnpm exec vitest run src/components/PlanList.worktree.test.tsx` — A1–A7 still green.
 
   </details>
-- [ ] The brief and the promise registry still agree.
+- [x] The brief and the promise registry still agree.
   <details><summary>Technical</summary>
 
   `indusk promises contract nav-row-legible` exits 0; `indusk promises check` exits 0.
@@ -257,7 +257,7 @@ A new component, and a new state of an existing one, are approved by a person fr
 
 #### Build Phase 2 Context
 
-- [ ] The admin's context file counts the new component among those in the components folder.
+- [x] The admin's context file counts the new component among those in the components folder.
   <details><summary>Technical</summary>
 
   admin (`apps/indusk-admin/CLAUDE.md`): the entry "A component a mockup names is one file, with a story per state…" says "Nineteen in `components/ui/`" — bring the count up to date with `worktree-mark` (count the `data-component` roots under `components/ui/` rather than adding one to a number that may already be stale).
@@ -266,7 +266,7 @@ A new component, and a new state of an existing one, are approved by a person fr
 
 #### Build Phase 2 Document
 
-- [ ] The component list in the admin's reference names the worktree mark and the plan row's new state, and the changelog records the change.
+- [x] The component list in the admin's reference names the worktree mark and the plan row's new state, and the changelog records the change.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/component-conventions.md`: a `worktree-mark` row (`src/components/ui/WorktreeMark.tsx`, closed, open) and `worktree` added to `plan-row`'s states; the count in the prose brought up to date. `apps/docs/src/changelog.md` (Unreleased): "The admin nav keeps each plan's row to two lines: a plan's worktree is a small ⎇ mark beside its stage that shows the worktree's name on hover or click, without opening the plan."

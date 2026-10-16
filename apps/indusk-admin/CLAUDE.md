@@ -217,7 +217,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   — see `/decisions/storybook-components`
 - **A component a mockup names is one file, with a story per state, and
   presentational**: its root carries `data-component="<name>"`, a second
-  marker anywhere is a finding, data arrives as props. Nineteen in
+  marker anywhere is a finding, data arrives as props. Twenty in
   `components/ui/`, listed in `/reference/admin-ui/component-conventions`.
   Guarded by `looks-components-cli.test.ts` (A1, A3) and
   `looks-admin-components.test.ts` (A2).
