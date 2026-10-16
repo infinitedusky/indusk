@@ -521,7 +521,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
 
   </details>
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
-  - Reviewed `check.ts`, `looks.ts`, `cli.ts`, the fixtures and tests. One finding, fixed in place: `check-run.fixtures.ts` re-exported `schemesOf` for no importer (rule: no unused surface). Left as is: `openAndJudge` takes six arguments (it is the one place a look's single load becomes per-device judgements; splitting it would scatter the order contract), and `CheckOptions` has no `all` until Build Phase 2 adds the option with its rule.
+  - Reviewed (2026-10-16, `prepareShapeReview` over 13 files, no extension unreadable): `reuse.ts`, `check.ts`, `mockups.ts`, `components.ts`, `stories.ts`, `report.ts`, `vocabulary.ts`, `looks.ts`, `cli.ts`, the fixtures and tests. Nothing found. The reuse decision is its own pure module with a test seam (`reuseOf`, `lookKey`); `checkApp`'s new work is two named steps (`planReuse` before a run, `keepHeld` after); `reportLooks`' measured and reused spans share one named `startLookSpan`. Left as is: `planReuse` and `keepHeld` live in `check.ts` rather than `reuse.ts`, because they read the run's targets and results and `reuse.ts` stays free of the check's runtime (a type-only import) — where they belong long-term is a module-boundary question for `/cleanup`. `renderedFrom` has no unit test of its own: the render needs Storybook and Chromium; the check's use of it is A5's, and the next live render (Build Phase 3's A22) writes it into the admin's catalog.
 
 #### Build Phase 2 Verification
 
