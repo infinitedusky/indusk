@@ -16,6 +16,8 @@ falsification_reason: "All 140 archived plans read Closed; waiting, released and
 approved_brief: "7102d47e8bc3e64f2f3787574ccef3ad220e406f219515c1b4e506415968ea49"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-16T15:18:14.904Z"
+accepted: 2026-10-16T17:19:12.493Z
+accepted_by: person
 ---
 
 # The nav says where a plan is
