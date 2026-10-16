@@ -477,7 +477,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
   `apps/indusk-mcp/src/lib/looks/stories.ts` / `stories-catalog.ts` `buildCatalog`: write `renderedFrom: sourcesHashOf(root, app)` at the top of `components.json`; `readCatalog` accepts it as optional. A catalog without it is not current — absence is a rule, not a migration.
 
   </details>
-- [ ] Write the rule that decides whether a look's last held result can be reused.
+- [x] Write the rule that decides whether a look's last held result can be reused.
   <details><summary>Technical</summary>
 
   New `apps/indusk-mcp/src/lib/looks/reuse.ts` (`promise: a-look-check-costs-what-changed`):
