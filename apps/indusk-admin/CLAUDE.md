@@ -279,8 +279,11 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `PlanList.test.tsx`. — see `/decisions/cockpit-redraw`
 - **A control in a nav row is a sibling of the row's link, never inside it**:
   `PlanRow`'s `worktree` slot draws the row as a container with its title's
-  link stretched over it. Guarded by `PlanList.worktree.test.tsx` —
-  `promise: a-nav-row-keeps-its-parts-apart`.
+  link stretched over it. The stretched link carries the title (the full name
+  on hover) and the focus ring (`.nav-row-link:focus-visible::after`), since the
+  overlay is what the pointer and focus meet; an empty slot (`null`, `false`)
+  is no slot. Guarded by `PlanList.worktree.test.tsx` and
+  `PlanRow.worktree.test.tsx` — `promise: a-nav-row-keeps-its-parts-apart`.
 - **The brief page and plan page are held to `brief.*` and `plan.*`**: each
   reports its state with `data-look-state` (`lib/look-state.ts`), never a
   `?state=`; `screens.json` lists one path per state at A10's fixture plans,

@@ -26,18 +26,21 @@ describe("PlanRow — an empty worktree slot (A11)", () => {
   it.each([
     ["null", null],
     ["false", false],
-  ])("worktree={%s} is drawn as a row without one: one link", async (_label, worktree) => {
-    const { container } = await render(
-      <PlanRow
-        initials="NS"
-        state="needs"
-        name="A plan"
-        stage="Approve the brief"
-        href="/plan/a"
-        worktree={worktree}
-      />,
-    );
-    const row = container.querySelector('[data-component="plan-row"]');
-    expect(row?.matches("a[href='/plan/a']")).toBe(true);
-  });
+  ])(
+    "worktree={%s} is drawn as a row without one: one link",
+    async (_label, worktree) => {
+      const { container } = await render(
+        <PlanRow
+          initials="NS"
+          state="needs"
+          name="A plan"
+          stage="Approve the brief"
+          href="/plan/a"
+          worktree={worktree}
+        />,
+      );
+      const row = container.querySelector('[data-component="plan-row"]');
+      expect(row?.matches("a[href='/plan/a']")).toBe(true);
+    },
+  );
 });

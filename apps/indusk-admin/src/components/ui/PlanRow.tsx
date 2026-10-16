@@ -54,7 +54,7 @@ export function PlanRow({
         {number}
       </span>
     );
-  if (worktree !== undefined) {
+  if (worktree != null && worktree !== false) {
     return (
       <div data-component="plan-row" className={`${classes} relative`}>
         {numberCell}
@@ -63,6 +63,7 @@ export function PlanRow({
           <ButtonOrLink
             href={href}
             aria-current={current ? "page" : undefined}
+            title={name}
             className="nav-row-link min-w-0 after:absolute after:inset-0 after:rounded-lg"
             {...rest}
           >

@@ -227,7 +227,8 @@ describe("nav-row-legible — what the stretched link takes from the row (A9–A
     }
     expect(document.activeElement).toBe(link);
     const overlay = getComputedStyle(link, "::after");
-    const ring = overlay.outlineStyle !== "none" && overlay.outlineWidth !== "0px";
+    const ring =
+      overlay.outlineStyle !== "none" && overlay.outlineWidth !== "0px";
     const around = ring ? box(row) : box(link);
     expect(around.height).toBeGreaterThanOrEqual(box(row).height - 0.5);
     expect(ring, "an outline on the overlay that spans the row").toBe(true);

@@ -218,6 +218,12 @@
     inset: 0;
     border-radius: var(--radius-lg);
 }
+.nav-row-link:focus-visible {
+    outline: none;
+}
+.nav-row-link:focus-visible::after {
+    outline: var(--border-2) solid var(--color-dusk);
+}
 @keyframes pulse {
     50% {
         opacity: 0.3;

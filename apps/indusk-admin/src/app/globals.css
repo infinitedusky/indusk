@@ -369,6 +369,15 @@ body {
   border-radius: var(--radius-lg);
 }
 
+/* The stretched link is what the pointer and the keyboard meet: its focus ring
+   follows the overlay, so it surrounds the whole row, not only the title. */
+.nav-row-link:focus-visible {
+  outline: none;
+}
+.nav-row-link:focus-visible::after {
+  outline: var(--border-2) solid var(--color-dusk);
+}
+
 /* What a decision card says in words: a paragraph is read at a measure, and an
    alert's is the ink, not the soft ink of a card that only reports. */
 [data-component="decision-card"] p {

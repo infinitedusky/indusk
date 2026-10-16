@@ -1,6 +1,6 @@
 {
-	"renderedFrom": "3334c1528ecaab98f806511d78febed5ffbb0df75466a850a2e9429f4b32f237",
-	"baseRulesHash": "a63b38705c6e059447323036a91ec945414be08994447e15e36ca4d953797a12",
+	"renderedFrom": "d3e75155017b836236c0afbf917c948c326595e0c516d0420c9be220093be8af",
+	"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 	"components": [
 		{
 			"name": "amendment-card",
@@ -2444,7 +2444,7 @@
 				{
 					"name": "worktree",
 					"id": "ui-planrow--worktree",
-					"snapshotHash": "4c3df1a49ff59cabfc6b47d53dea21cf438ed86b031116531140f051c66a37ff",
+					"snapshotHash": "cfc6ecaed21058b482d7285b55c8222656398bb2aa646a18bea1ccf390a6a4ae",
 					"content": {
 						"initials": [
 							[
@@ -2475,7 +2475,7 @@
 				}
 			],
 			"stylesheet": "components/plan-row.css",
-			"stylesheetHash": "b3a64bc0cd1152a725314623e3c50fa03cfc42d158d7a705b1122f970021c006"
+			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598"
 		},
 		{
 			"name": "project-card",
