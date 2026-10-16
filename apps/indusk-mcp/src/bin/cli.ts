@@ -1219,14 +1219,15 @@ looksCmd
 looksCmd
 	.command("check <app>")
 	.description(
-		"Open each approved screen state at each reference device in Chromium and report every token and element held or broken by value, as spans. --url is the running app; else the app's screens.json url. Exit 1 on any broken look or when nothing was checked.",
+		"Open each approved screen state at each reference device in Chromium and report every token and element held or broken by value, as spans. A look unchanged since it last held is reported reused, not opened; --all opens every look. --url is the running app; else the app's screens.json url. Exit 1 on any broken look or when nothing was checked.",
 	)
 	.option("--url <url>", "the running app's base URL")
 	.option(
 		"--only <look...>",
 		"check just these looks, a screen state (home.empty) or a story (badge.ok); repeatable or comma-separated",
 	)
-	.action(async (app: string, opts: { url?: string; only?: string[] }) => {
+	.option("--all", "open every look, even one unchanged since it last held")
+	.action(async (app: string, opts: { url?: string; only?: string[]; all?: boolean }) => {
 		const { looksCheck } = await import("./commands/looks.js");
 		await looksCheck(rootOrExit(), app, opts);
 	});

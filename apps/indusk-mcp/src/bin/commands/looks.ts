@@ -167,12 +167,12 @@ function lookLines(r: LookResult): string[] {
  * marked reused. Exit 1 on any broken look, and when nothing was checked or
  * reused: a run that checked nothing must not read as held. `--only` checks
  * just the looks named (a screen state or a story); a name no look has is
- * refused.
+ * refused; `--all` opens every look, whatever held.
  */
 export async function looksCheck(
 	projectRoot: string,
 	appName: string,
-	opts: { url?: string; only?: string[] },
+	opts: { url?: string; only?: string[]; all?: boolean },
 ): Promise<void> {
 	try {
 		const app = await readApp(projectRoot, appName);
@@ -182,7 +182,11 @@ export async function looksCheck(
 			readApprovals(app),
 			opts.url,
 			readStoryApprovals(app),
-			{ projectRoot, ...(only && only.length > 0 ? { only } : {}) },
+			{
+				projectRoot,
+				...(only && only.length > 0 ? { only } : {}),
+				...(opts.all ? { all: true } : {}),
+			},
 		);
 		for (const r of results) for (const line of lookLines(r)) console.info(line);
 		for (const r of reused) {

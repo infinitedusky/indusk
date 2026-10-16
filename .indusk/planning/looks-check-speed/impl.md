@@ -508,7 +508,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
   `apps/indusk-mcp/src/lib/promises/vocabulary.ts` `LOOK_MARK`: add `reused: "indusk.look.reused"` and `measuredAt: "indusk.look.measured_at"`. `apps/indusk-mcp/src/lib/looks/report.ts` `reportLooks(results, tracer, opts: { project?; reused?: Reused[] })`: for each reused look, one `indusk.looks.check` span per device × scheme (`lookDevice`), the look's app, screen, state, device and kind, `markPromise` outcome `upheld`, plus `reused = true` and `measuredAt = at`. A measured result's span carries neither. `src/bin/commands/looks.ts` passes `report.reused`. Docblock: a reused span is the held result restated, never a measurement (Sandy, 2026-10-16). A9.
 
   </details>
-- [ ] Add an option that reopens every look.
+- [x] Add an option that reopens every look.
   <details><summary>Technical</summary>
 
   `cli.ts` `looks check --all`, passed as `all` to `reuseOf`. A7.
