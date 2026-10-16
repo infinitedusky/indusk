@@ -572,6 +572,14 @@ function chromiumOpener(app: LooksApp): LookOpener {
 const STORIES_AT_ONCE = 8;
 
 /**
+ * Screens that need no seed open this many at a time: the app's server
+ * renders one page at a time, and three overlap the browser's work on one
+ * page with the server's render of the next. A seeded screen's seed is
+ * process-wide state, so those stay one at a time.
+ */
+const SCREENS_AT_ONCE = 3;
+
+/**
  * Open one look once and judge it at every device and scheme. A look that
  * does not load or draw in time is unchecked at each of them, with the
  * reason, and the run goes on; a 404 likewise at once. `judge` turns what the
@@ -704,11 +712,24 @@ export async function checkApp(
 		unchecked.push(...found.unchecked);
 	};
 	try {
-		for (const group of byScreen(checked)) {
+		// Unseeded screens three at a time, then seeded ones one at a time, each
+		// inside its seed; the report keeps the order the screens are declared in.
+		const groups = byScreen(checked);
+		const reports = new Map<LookTarget[], CheckReport[]>();
+		const checkGroup = async (group: LookTarget[]) => {
 			await withScreenSeed(group, async (seeded) => {
-				for (const look of seeded) take(await checkScreenState(opener, app, base, look));
+				const found: CheckReport[] = [];
+				for (const look of seeded) found.push(await checkScreenState(opener, app, base, look));
+				reports.set(group, found);
 			});
-		}
+		};
+		await pMap(
+			groups.filter((g) => !g[0]?.seed),
+			checkGroup,
+			{ concurrency: SCREENS_AT_ONCE },
+		);
+		for (const group of groups.filter((g) => g[0]?.seed)) await checkGroup(group);
+		for (const group of groups) for (const found of reports.get(group) ?? []) take(found);
 		const found = await pMap(stories.checked, (story) => checkStory(opener, app, base, story), {
 			concurrency: STORIES_AT_ONCE,
 		});

@@ -398,7 +398,7 @@ This phase makes every look that is opened cost one page load instead of six. Th
   The default opener is Chromium (`loadChromium`, `launch`, `measureInPlace`), launched lazily so a run that opens nothing starts no browser. Test helpers `fixtureApp` and `fakeOpener` (records `opened`, `launched`) in `src/lib/looks/check-run.fixtures.ts`.
 
   </details>
-- [ ] Make screens that need no seed open three at a time, and seeded screens one at a time after them.
+- [x] Make screens that need no seed open three at a time, and seeded screens one at a time after them.
   <details><summary>Technical</summary>
 
   `pMap` over unseeded `byScreen` groups with `concurrency: SCREENS_AT_ONCE = 3` (the admin's server renders one page at a time; three overlap the browser's work with the next render); seeded groups after, serially, inside `withScreenSeed`. Results keep declaration order.
