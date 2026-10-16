@@ -440,13 +440,13 @@ This plan grew two things worth lifting out of the files it touched. Looking up 
   Move `clauseRefusals`, `clausePlanRefusals` and `clauseRowRefusals` from `lib/promises/contract.ts` (633 lines) to a new `lib/promises/clause-rules.ts`, exported and imported back; one reason to change (the clause rules), a seam already tested through `checkPlanContract` (A1–A8, A13, A17–A19). `rowRefusals`' clause loop stays: it reads the same table as the other row checks.
 
   </details>
-- [ ] The clause grammar stays beside the brief reader, with the reason recorded.
+- [x] The clause grammar stays beside the brief reader, with the reason recorded.
   <details><summary>Technical</summary>
 
   Reviewed `lib/promises/brief-contract.ts` (`parseClauseSpec`, `BriefClause`) — left as-is: the grammar is the brief's own sub-entry syntax, `declare --clause` is its second reader, and moving 65 lines to a file only these two import would scatter the one grammar from the reader it belongs to.
 
   </details>
-- [ ] The test fixtures for clauses stay in their files, with the reason recorded.
+- [x] The test fixtures for clauses stay in their files, with the reason recorded.
   <details><summary>Technical</summary>
 
   Reviewed `__tests__/promise-clauses.test.ts`, `promises-confirm.test.ts`, `cleanup-gate.test.ts`, `promises-check.test.ts` — left as-is: each builds on the shared `PromiseProject` helper already; what each adds (a brief, a clause plan, an impl) is shaped for its own assertions, and a fourth fixture module would be the wrong abstraction over three different shapes.
