@@ -1,7 +1,7 @@
 import { sanitizeGroupId } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
-import { LOOK_MARK, PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
+import { LOOK_MARK, PROMISE_MARK, type PromiseOutcome, readOutcome } from "./vocabulary.js";
 
 /**
  * The one query for promise marks (day-monitor, ADR D4).
@@ -230,9 +230,9 @@ export function parseMarkedSpan(
 	processTags?: JaegerTag[],
 ): MarkedSpan | null {
 	const promise = tag(span.tags, PROMISE_MARK.promise);
-	const outcome = tag(span.tags, PROMISE_MARK.outcome);
+	const outcome = readOutcome(tag(span.tags, PROMISE_MARK.outcome));
 	if (typeof promise !== "string") return null;
-	if (outcome !== "upheld" && outcome !== "violated") return null;
+	if (outcome === null) return null;
 	const environment =
 		tag(span.tags, ENVIRONMENT_ATTRIBUTE) ?? tag(processTags, ENVIRONMENT_ATTRIBUTE);
 	let symptom: string | null = null;
@@ -369,7 +369,7 @@ export async function markedSpans(opts: {
 		const all = [...seen.values()].sort((a, b) => b.at.getTime() - a.at.getTime());
 		byPromise.set(promise, {
 			truncated,
-			violations: all.filter((s) => s.outcome === "violated"),
+			violations: all.filter((s) => s.outcome === "broken"),
 			lastUpheld: all.find((s) => s.outcome === "upheld") ?? null,
 		});
 	}

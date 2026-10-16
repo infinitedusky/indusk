@@ -246,7 +246,7 @@ describe.skipIf(SHOULD_SKIP)("indusk promises check — refusals by name", () =>
 		expect(r.code, r.stderr).toBe(0);
 		expect(r.stdout).toMatch(/4 promises/);
 		expect(r.stdout).toMatch(/enforced 3/);
-		expect(r.stdout).toMatch(/known-violated 1/);
+		expect(r.stdout).toMatch(/known-broken 1/);
 		expect(r.stdout).toMatch(/behaviour 2/);
 		expect(r.stdout).toMatch(/state 1/);
 		expect(r.stdout).toMatch(/structure 1/);

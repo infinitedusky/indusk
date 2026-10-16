@@ -55,7 +55,7 @@ describe("A29 — a plan written on main is marked, never refused", () => {
 		expect(await trunkCommitMarks(r.dir, sha, TRUNKS)).toEqual([
 			{
 				plan: "seats",
-				outcome: "violated",
+				outcome: "broken",
 				symptom: expect.stringMatching(new RegExp(`seats.*${sha.slice(0, 8)}`)),
 			},
 		]);
@@ -101,7 +101,7 @@ describe("A29 — a plan written on main is marked, never refused", () => {
 		);
 		const marks = await trunkCommitMarks(r.dir, sha, TRUNKS);
 		expect(marks.map((m) => m.plan).sort()).toEqual(["holds", "seats"]);
-		expect(marks.every((m) => m.outcome === "violated")).toBe(true);
+		expect(marks.every((m) => m.outcome === "broken")).toBe(true);
 	});
 });
 
@@ -117,7 +117,7 @@ describe("A29 — the mark has one definition", () => {
 		};
 		markPromise(span as never, {
 			promise: "a-plan-is-written-on-its-own-branch",
-			outcome: "violated",
+			outcome: "broken",
 			project: "proj",
 			symptom: "seats was written on main",
 		});

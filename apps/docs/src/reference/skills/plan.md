@@ -588,7 +588,7 @@ A new impl adds three more, and its frontmatter makes the first two required (`t
 
 Closing the plan reads `For` and `Test` to confirm each promise, and an incident lists the rows that named the promise that broke. An impl written with `Kind` and `test_kinds: required` (1.61) still validates.
 
-**Rule:** `Writable at ≤ Passes at` (by phase number). Violating this fails the validator — it catches reorder bugs at write time instead of letting them pass silently.
+**Rule:** `Writable at ≤ Passes at` (by phase number). Breaking this fails the validator — it catches reorder bugs at write time instead of letting them pass silently.
 
 **Phase Verification references test IDs.** Rather than repeating test descriptions, each phase's Verification section lists the IDs whose `Passes at` equals that phase, e.g., `- [ ] T3 passes (\`pnpm test:billing\`)`. A phase with no tests flipping declares so explicitly: `- [ ] (no tests flip at this phase — reason: {schema-only | delete | refactor | infra})`.
 

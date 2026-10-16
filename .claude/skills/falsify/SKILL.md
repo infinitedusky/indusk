@@ -18,7 +18,7 @@ This is bounty hunting, not candidate generation. **Do not write hopeful tests a
 
 1. **Read the attested state.** Open the plan's `impl.md`. Read the Goal. Read every Trajectory row — what does each claim? Read the ADR if one exists — what invariants does the plan promise?
 2. **Investigate the code.** Read the actual implementation. Compare what the code does against what the attestation claims. Look for gaps.
-3. **Form a specific hypothesis.** Not "what could go wrong?" — "*this specific condition, with these specific inputs, will violate this specific invariant.*" Name the failure before writing any trajectory row.
+3. **Form a specific hypothesis.** Not "what could go wrong?" — "*this specific condition, with these specific inputs, will break this specific invariant.*" Name the failure before writing any trajectory row.
 4. **Capture the hypothesis as a trajectory row** — a T-ID, a one-line `Asserts` describing what the test will claim, `Writable at: Phase 0` (typically, since hypothesis tests can usually be authored against current behavior — they'll be red until the fix lands), `Passes at: Phase N+1` (the new falsification phase).
 5. **Capture the fix work as impl items** — one item per concrete change the code needs. If the fix is trivial, it's one item. If the fix ripples, it's several.
 

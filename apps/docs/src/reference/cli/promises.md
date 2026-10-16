@@ -28,14 +28,14 @@ beside `.indusk/planning/`; the files it names live in the code repo.
 name: seat-never-double-booked   # kebab-case; equals the file name
 kind: behaviour                  # behaviour | state | structure
 lifetime: holds                  # holds | established   (default: holds)
-state: enforced                  # declared | enforced | known-violated | retired
+state: enforced                  # declared | enforced | known-broken | retired
 domain: seating                  # one of promises.domains in .indusk/config.json
 owner: seats-v2                  # a plan folder, active or archived
 sites:                           # code-root-relative; each carries the token
   - src/seats.ts
 tests:                           # code-root-relative; each carries the token
   - src/seats.test.ts
-incidents: []                    # incident ids; required non-empty when known-violated
+incidents: []                    # incident ids; required non-empty when known-broken
 aliases: []                      # optional: earlier names that still resolve
 superseded_by:                   # optional, older files: the successor, when retired
 supersedes:                      # optional: the promise this one replaced (written by `promises replace`)
@@ -146,7 +146,7 @@ indusk promises change <name> --plan <plan> --statement "<sentence>" --reason "<
 Improves a promise in place, when a later plan partly changes what it commits
 to. The sentence is replaced, the plan takes the promise over, and its History
 gains a line with the old sentence, the reason and the plan that owned it
-before. Its name, state, incidents and aliases are untouched, so the marks
+before. Its name, state, incidents and aliases are untouched, so the signals
 that name it and its incidents stay attached. If it breaks later, the plan
 that changed it is the one reopened.
 
@@ -202,7 +202,7 @@ seats-v2: its brief, its rows and the registry agree — 1 made, 1 kept, 0 chang
 | A **Replaces** entry whose replacement is not among the promises the plan makes | both promises |
 | An expectation with no `Measure` or no `Look`, or one still the template's `{placeholder}`; a brief with no expectations that does not say `None — {reason}` | the expectation |
 | A test row whose `For` names a promise the registry does not hold, a retired promise, or a lesson with no file under `.claude/lessons/` | the row and the name |
-| A test row with no `For`, a `For` that tries to name a promise or lesson and does not (the name in backticks, words after it), one that is only a mark (`-`, `n/a`, `TBD`), a `Level` that is not one of the five, or a cell missing or too many — in an impl past `draft` that sets `test_purpose` or `test_levels` | the row |
+| A test row with no `For`, a `For` that tries to name a promise or lesson and does not (the name in backticks, words after it), one that is only a placeholder (`-`, `n/a`, `TBD`), a `Level` that is not one of the five, or a cell missing or too many — in an impl past `draft` that sets `test_purpose` or `test_levels` | the row |
 | An impl whose frontmatter cannot be read | the file |
 | A test row naming a promise another plan owns that the brief lists under none of the three | the row, the promise and its owner |
 | A line in the brief that looks like part of the contract and cannot be read: a label with words after it or outside `### Existing promises`, a promise's name no list read, an entry that names no promise, no `### This plan makes`, the new parts with no `## Promises` heading | the line |
@@ -291,7 +291,7 @@ each. A missing or malformed registry is a refusal too — "could not check"
 is never reported as clean.
 
 ```
-4 promises — declared 0, enforced 3, known-violated 1, retired 0 — behaviour 2, state 1, structure 1 — 1 incident
+4 promises — declared 0, enforced 3, known-broken 1, retired 0 — behaviour 2, state 1, structure 1 — 1 incident
 ```
 
 ### What it refuses, by name
@@ -302,7 +302,7 @@ is never reported as clean.
 | An entry missing `name`, `kind`, `state`, `domain`, `owner`, or its statement; a name that does not match the file; malformed frontmatter | the file and the field — never skipped |
 | A domain not in `promises.domains`; an empty or missing list | the domain, the declared list, and the config key |
 | An owner that is not a *directory* under `.indusk/planning/` or `.indusk/planning/archive/` — a missing name, a file such as `master.md`, or the `archive` folder itself | the owner, and which of the three it is |
-| An `enforced` promise listing an incident whose `status` is `open` | the promise and the incident — an open incident says it is broken now: mark the incident fixed or the promise `known-violated` |
+| An `enforced` promise listing an incident whose `status` is `open` | the promise and the incident — an open incident says it is broken now: mark the incident fixed or the promise `known-broken` |
 | A `sites:` or `tests:` entry that is absolute or contains `..` | the entry and the path — the check never reads outside the code root |
 | An alias that is a live promise's name, or shared by two promises | both files |
 | An `enforced` `behaviour` or `state` promise with no test naming it, or no code site naming it | the promise and the missing link |
@@ -311,7 +311,7 @@ is never reported as clean.
 | A `declared` promise whose owner is archived | the promise — the plan closed without establishing it |
 | An open plan whose brief, test rows and the registry disagree | the plan's brief or impl, and the promise, expectation or row — everything [`promises contract`](#promises-contract) refuses |
 | An `established`-lifetime promise still `enforced` after its owner archived | the promise — it should be retired |
-| A `known-violated` promise with no open incident | the promise — the state is evidence, not an excuse |
+| A `known-broken` promise with no open incident | the promise — the state is evidence, not an excuse |
 | An incident missing `promise`, `source`, `status`, `date` or a `## Symptom` / `## Root cause` / `## Fix` section; an unknown source | the incident and the field |
 | An incident marked `fixed` whose `## Root cause` is still `_Unwritten — a person writes this._` (day-monitor) | the incident file — a root cause is a person's finding, written before the incident closes |
 | An incident marked `fixed` that does not say when (`fixed:`) | the incident file — a timeline band from opened to fixed has no end without it; `indusk promises fix` writes both |
@@ -378,7 +378,7 @@ prints where; machine state, never in the repository):
 |------|---------------|
 | `inbox.jsonl` | one line per incident opened or extended, and per reminder: the promise, the incident, the owner and its Maintenance phase. The prompt hook delivers each to the next turn of a session in the project |
 | `inbox-delivered.jsonl` | the ids already delivered, appended, so delivering never rewrites the inbox the recorder is appending to |
-| `heard.jsonl` | one line per violation the pass recorded — when it happened, the promise, the trace, the incident, the source — never a trace twice. The promise page counts from it, past the source's retention and whether or not a page was open |
+| `heard.jsonl` | one line per break the pass recorded — when it happened, the promise, the trace, the incident, the source — never a trace twice. The promise page counts from it, past the source's retention and whether or not a page was open |
 | `announced.json` | when each open incident was last reminded, written after Slack accepts, so a restart never repeats a reminder and a refused post is tried again |
 | `recorder.lock` | one recording pass at a time, across the admin, catchup and `watch` |
 
@@ -391,7 +391,7 @@ Both `status` and `watch` print the Jaeger they read, so nobody has to guess
 whether they are looking at production or at the laptop in front of them. A
 server that cannot be reached — down, wrong URL, refused credentials, or a
 `credential_env` variable that is not set — **exits 2 naming the URL**, and
-never reports zero violations. A missing credential is refused against the URL
+never reports zero breaks. A missing credential is refused against the URL
 rather than quietly falling back to the local daemon: answering a question
 about production with a laptop's traces is the worst available outcome.
 
@@ -416,7 +416,7 @@ line that starts with its name:
 Promises observed in the last 7 days, from Jaeger at http://localhost:16686
 
 every-commit-evaluated (behaviour, gates, enforced)
-  1 violation in the last 7 days
+  1 break in the last 7 days
     4bf92f3577b34da6a3ce929d0e0e4736  2026-09-19T10:14:40Z  indusk-eval-agent  claude exited with code 1: There's an issue with the selected model …
   last seen upheld 2026-09-19T02:30:20Z (3147fdaa7db94980735c887ff6ce47f0)
 
@@ -427,16 +427,16 @@ phase-boundary-record-never-malformed (state, planning, enforced)
   watched by the suite at head, not by telemetry
 ```
 
-- A **behaviour** promise lists its violations in the window with each
-  trace id, when, the service and the symptom from the violation event, then
+- A **behaviour** promise lists its breaks in the window with each
+  trace id, when, the service and the symptom from the break event, then
   when it was last seen upheld.
 - **Not seen** means no run marked it in the window. It is never reported as
-  upheld or as zero violations.
+  upheld or as zero breaks.
 - **State** and **structure** promises are listed as watched by the suite:
   their health is the last run of their test or check at head, not telemetry.
 - A **retired** promise is listed and not watched.
 - A behaviour promise that declares **`expect_every`** (`30m`, `6h`, `1d`)
-  **needs attention** when its newest mark, upheld or violated, is older than
+  **needs attention** when its newest signal, upheld or broken, is older than
   that: `needs attention — silent for 3h, expected every 1h`. The same line is
   in `promise_health` (`silence`, and the promise joins `needsAttention`) and
   under the admin's chip. Without it, silence from a listening watcher is the
@@ -450,8 +450,8 @@ phase-boundary-record-never-malformed (state, planning, enforced)
 - Marks under any of a promise's **`aliases`** count as the promise's — an
   application may still set the old name after a rename.
 - Each query asks Jaeger for at most 1,500 traces. When a query fills that,
-  the count is a lower bound and says so: **at least 1500 violations**.
-- A mark that carries **`indusk.project`** naming another project is not
+  the count is a lower bound and says so: **at least 1500 breaks**.
+- A signal that carries **`indusk.project`** naming another project is not
   counted. InDusk's own evaluator sets it — one service marks
   `every-commit-evaluated` for every project on a machine — to the project's
   configured `graphiti.groupId`, else the name of the **main checkout** (the
@@ -494,7 +494,7 @@ not be read, exit **0** when only `local` failed (a laptop with no daemon
 running, beside a production server that answered). A project that names no
 server prints exactly as above, with no section headers.
 
-The marks are read by one library in two subpaths. `@infinitedusky/indusk-mcp/promises/sources`
+The signals are read by one library in two subpaths. `@infinitedusky/indusk-mcp/promises/sources`
 is which Jaeger to ask and reading each; `@infinitedusky/indusk-mcp/promises/telemetry`
 is how to ask one — endpoints, the query, `markedSpans`, `newestMark` and
 `silencePastExpectation`.
@@ -505,7 +505,7 @@ daemon running, a missing credential). The **alarm source** —
 `alarmSource(names)` — is production when there is one, otherwise local: a
 local break during development is work in progress, not an alarm.
 `readSources(root, registry, opts)` reads every source and returns one entry
-each: its marks, or its failure (`unreachable` or `blind`, where it looked,
+each: its signals, or its failure (`unreachable` or `blind`, where it looked,
 and why). It never throws for one source's failure, so one dead source never
 hides another. A malformed `promises.jaeger` — a string where the object belongs, or a
 missing `url` or `credential_env` — is production's failure, refused by
@@ -529,7 +529,7 @@ returning an empty result. Before it reads, it calls `probeWatcher`, which throw
 (exported from `promises/sources`, beside `JaegerUnreachable`) when the probe does not come back. When the
 intake refuses the probe and the query API does not answer either, nobody is
 there, and it throws `JaegerUnreachable` instead. A probe
-that came back is trusted for 30 seconds per query URL, within one process. The same subpath exports `newestMark(marks)` (when a promise was last seen: its newest mark, upheld or violated) and `silencePastExpectation(promise, marks)` (the `expect_every` judgment). `promise_health`, `promises status` and the admin read both, so no surface restates either rule. How an application marks a promise is in the
+that came back is trusted for 30 seconds per query URL, within one process. The same subpath exports `newestMark(marks)` (when a promise was last seen: its newest signal, upheld or broken) and `silencePastExpectation(promise, marks)` (the `expect_every` judgment). `promise_health`, `promises status` and the admin read both, so no surface restates either rule. How an application signals a promise is in the
 [promises guide](/guide/promises#marking-a-behaviour-promise).
 
 ## `promises health`
@@ -556,7 +556,7 @@ with `--every 5` and reads each line.
           "promise": "seat-never-double-booked",
           "state": "red",
           "lastSeen": "2026-10-08T12:20:00.000Z",
-          "violations": 1,
+          "breaks": 1,
           "symptom": "seat 4 held twice",
           "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
           "environment": "production",
@@ -570,7 +570,7 @@ with `--every 5` and reads each line.
     {
       "promise": "seat-never-double-booked",
       "source": "production",
-      "outcome": "violated",
+      "outcome": "broken",
       "at": "2026-10-08T12:20:00.000Z",
       "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"
     }
@@ -616,7 +616,7 @@ lowercase word maps to its spelling and is merged over the built-in list:
 The rule is the package's `promises/display`, which the admin can read too.
 
 `state` is one of `red`, `fixed`, `green`, `unverified`, `amber` (known
-violated) and `grey` (retired); state and structure promises, which telemetry
+broken) and `grey` (retired); state and structure promises, which telemetry
 does not watch, have no row. A source that cannot be read, or reads watcher
 blind, is `ok: false` with its reason, never dropped and never green. The rule
 is the package's `promises/health` — one definition the admin, this command,
@@ -638,7 +638,7 @@ indusk promises watch [--source local|smoke|deployed]
 ```
 
 One monitor pass over the quiet window: for each behaviour promise with a
-violation not yet recorded in any of its incidents, open or extend an
+break not yet recorded in any of its incidents, open or extend an
 incident and send the promise's owner back to work. It **commits what it
 wrote** (since incident-recording), in a commit of its own on the checkout
 that holds each file — `chore(indusk): incident <id> — <promise>, recorded by
@@ -673,9 +673,9 @@ like any other promise.
 | 1 | an incident is left **without** its owner's phase — a new one, one this run extended, or one an earlier run could not reopen — because of a collision, an owner that is not a plan folder, or a worktree record that could not be read. Incidents are still written; the error line says which owner and why |
 | 2 | Jaeger or the registry could not be read, or the watcher is **blind** (a probe sent to the intake never came back); nothing was written |
 
-A violation that no plan owns is the outcome the monitor exists to prevent,
+A break that no plan owns is the outcome the monitor exists to prevent,
 so a run that leaves one behind never exits 0 — including a quiet run with no
-new violation, when an earlier run's reopen failed:
+new break, when an earlier run's reopen failed:
 
 ```
 unowned i-2026-10-02-pot-splits-evenly (pot-splits-evenly: open, and no-such-plan has no Maintenance phase for it)
@@ -728,7 +728,7 @@ _Unwritten — a person writes this._
 _Not yet fixed._
 ```
 
-The symptom comes from the newest violation's `indusk.promise.violated`
+The symptom comes from the newest break's `indusk.promise.violated`
 event. **Proven by** lists every test row, in any plan's impl, active or
 archived, whose `For` cell names the promise: the plan, the row, its state and
 its test files:
@@ -750,11 +750,11 @@ both are listed.
 The root cause is never written by the monitor: it is a person's
 finding, and `promises check` **refuses an incident marked `fixed` whose root
 cause is still the unwritten line**, naming the file. Opening an incident
-also moves an `enforced` promise to `known-violated` and lists the incident
+also moves an `enforced` promise to `known-broken` and lists the incident
 on it, so the registry still passes the check. A trace already recorded in
 any incident of the promise, open or fixed, is never counted again — a
 second pass over the same window writes nothing, and a fixed incident is not
-reopened by the violations that caused it. Files are edited as text, key by
+reopened by the breaks that caused it. Files are edited as text, key by
 key, so nothing else in a hand-written file changes.
 
 ### Closing an incident
@@ -764,7 +764,7 @@ indusk promises fix <incident-id>
 ```
 
 Marks the incident `status: fixed` and records `fixed: <now>`, and returns its
-promise from `known-violated` to `enforced` when no other incident of it is
+promise from `known-broken` to `enforced` when no other incident of it is
 still open; the promise keeps the incident in its `incidents` list, as its
 history. It writes plan documents and commits nothing. Exit **2** naming the
 id when it is unknown or already fixed, and when its root cause is still the
@@ -808,7 +808,7 @@ archive paths):
   writes nothing.
 - An **open incident whose owner carries no phase for it** — an earlier run
   recorded it and could not reopen — is retried on **every** run, with or
-  without a new violation, and printed as `unowned`. Once the owner can be
+  without a new break, and printed as `unowned`. Once the owner can be
   reopened (its folder exists, its worktree record reads), the next run
   appends the phase and the incident stops being reported. An **opened** incident whose heading already exists — a
   phase written by hand, or one that arrived any other way — is a
@@ -846,10 +846,10 @@ fails if either defines one.
 | Subpath | Exports | What it answers |
 |---------|---------|-----------------|
 | `promises/rows` | `rowsNaming(planRoot, promise)`, `rowsNamingEach(planRoot, promises)` | The test rows, in any plan active or archived, whose `For` cell names the promise or an earlier name of it: id, state, test files, plan. `rowsNamingEach` reads each impl once for a whole registry. A plan whose impl cannot be read is named in `unreadable`, never skipped |
-| `promises/standing` | `standingOf(entry, health, rows, sources?)`, `readStanding(projectRoot, deps?)` | One word per promise: `broken`, `being-proven`, `declared`, `enforced` or `retired`; each source's chip; the tests passing and in all; the last time any source saw it. *Broken* is red from the alarm source (production when the project names one, otherwise local) or a `known-violated` state; *being proven* is a declared promise whose rows are written and not all passing. Health is never recomputed: each chip is `promises/health`'s `healthRows` by the source's own rule |
+| `promises/standing` | `standingOf(entry, health, rows, sources?)`, `readStanding(projectRoot, deps?)` | One word per promise: `broken`, `being-proven`, `declared`, `enforced` or `retired`; each source's chip; the tests passing and in all; the last time any source saw it. *Broken* is red from the alarm source (production when the project names one, otherwise local) or a `known-broken` state; *being proven* is a declared promise whose rows are written and not all passing. Health is never recomputed: each chip is `promises/health`'s `healthRows` by the source's own rule |
 | `promises/proof` | `proofOf(projectRoot, name, deps?)` | What a promise's page shows: the naming rows; each place it was marked (service and operation, last held, last broken, or "never seen"); thirty UTC days per source, held from the store and broken from what this machine's recorder heard (counted whether or not a page was open); the dated history (declared, confirmed, changed, each incident and its fix); and the banner *the tests miss the case* when a promise is broken while every row naming it passes. Null for a name the registry does not hold |
 | `promises/fix` | `fixPrompt(broken)`, `cleanFacts(broken)`, `BrokenPromise` | The first message *Start a fix plan* (admin) and *Fix with Claude* (editor) hand the developer's own `claude`: the promise, where it is broken, its symptom, a link to the trace and its tests. Every fact is cleaned to one line with control characters removed before it reaches a terminal. Moved from the editor |
 
 Every read the last three make is a dependency — the health reads, the store's
-clock and window reader, the marks, the recorder's home — so a test hands them
+clock and window reader, the signals, the recorder's home — so a test hands them
 in and nothing waits on a Jaeger.

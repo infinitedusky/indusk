@@ -1,0 +1,7 @@
+# A reused check result must key on what the check measured against, not only on the sources
+
+When a check's result is cached and reused while "its inputs are unchanged", the key must cover everything the result depended on: the artifact actually measured (the served build, not the source tree), the checker itself (its rules, measured properties, version), and the implicit inputs the check reads without naming them (base stylesheet rules, config files, lockfile). A key over the sources alone reports an old result as current whenever one of those moves.
+
+**Why:** looks-check-speed (dusk, 2026-10-16, archived at `.indusk/planning/archive/looks-check-speed/`) keyed reused look results on snapshots, foundation and sources. Its falsification phase (Build Phase 4) found three ways a change was reused past: a look measured against a server still serving the pre-edit build was kept as held and reused on every later run; the stylesheet's element and body rules were in no story's key; and a checker release that measured or judged differently was reused past until `--all`. Fixes: a result measured against a build behind its sources is never kept; base rules and a checker hash (`checkerHashOf`) joined the key.
+
+**How to apply:** before trusting a reuse key, list what the check reads at run time — the thing served, the tool doing the checking, and every file it reads implicitly — and either put each in the key or refuse to keep the result when it cannot be read. Keep a full, un-cached run somewhere (a slow tier) as the backstop for what no key can see.

@@ -81,6 +81,6 @@ export function stateOf(
 	if (later) return { text: `${lead.shown}, broken (${later.name})`, tone: "broken" };
 	return {
 		text: lead.shown,
-		tone: lead.shown === "holding" || lead.shown === "fixed" ? "ok" : "unknown",
+		tone: lead.shown === "holding" || lead.shown === "broke — fixed" ? "ok" : "unknown",
 	};
 }

@@ -25,6 +25,7 @@ import {
   filterRows,
   GROUPINGS,
   groupRows,
+  readsNoSignal,
   SORTINGS,
 } from "@/lib/promise-dashboard";
 import { stamp } from "@/lib/stamp";
@@ -355,7 +356,9 @@ function DashboardRowItem({
     >
       <PromiseRow
         href={`${promiseHrefPrefix}${row.name}`}
-        standing={STANDING_BADGE[row.standing]}
+        standing={
+          readsNoSignal(row) ? "no-signal" : STANDING_BADGE[row.standing]
+        }
         says={row.sentence}
         slug={
           <>
@@ -368,12 +371,12 @@ function DashboardRowItem({
         evals={
           <span data-testid="promise-thirty">
             {row.held === null
-              ? "not seen yet"
+              ? "no signal yet"
               : `held ${row.held} · broke ${row.broke} of 30 days`}
           </span>
         }
         last={
-          row.lastActivity ? `seen ${stamp(row.lastActivity)}` : "never seen"
+          row.lastActivity ? `seen ${stamp(row.lastActivity)}` : "no signal"
         }
       />
     </div>

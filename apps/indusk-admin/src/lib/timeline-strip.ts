@@ -12,7 +12,7 @@ import type {
  *
  * Each window is a fixed number of cells; each cell takes the worst state
  * among its runs — red (unrecorded or open) over purple (fixed) over green
- * (upheld) — and is empty when nothing ran. A violation's colour is its
+ * (upheld) — and is empty when nothing ran. A break's colour is its
  * incident's state, through `violationState`, the rule the chip shares.
  */
 
@@ -150,7 +150,7 @@ export function buildStrip(input: {
     const t = Date.parse(m.at);
     if (
       t < start &&
-      m.outcome === "violated" &&
+      m.outcome === "broken" &&
       stateOf(m, input.incidents) === "red"
     )
       older.push(t);
@@ -163,7 +163,7 @@ export function buildStrip(input: {
     openBreak:
       newestOlder === null
         ? null
-        : `violated ${roughly(input.now - newestOlder)} ago — open`,
+        : `broke ${roughly(input.now - newestOlder)} ago — open`,
   };
 }
 

@@ -75,7 +75,7 @@ Three questions, asked in order. The root is the last answer, not the first.
 
 ```mermaid
 flowchart TD
-    R["A rule worth keeping"] --> Q1{"Can a test or hook<br/>catch its violation?"}
+    R["A rule worth keeping"] --> Q1{"Can a test or hook<br/>catch its break?"}
     Q1 -- yes --> E["Write the enforcer.<br/>Its failure message opens with<br/><code>lesson: name</code>; the lesson<br/>holds the why. The root holds nothing."]
     Q1 -- no --> Q2{"Does it apply only when<br/>working in one directory?"}
     Q2 -- yes --> D["That directory's <code>CLAUDE.md</code><br/>(planning: the shipped template;<br/>admin; mcp; mcp/hooks)"]

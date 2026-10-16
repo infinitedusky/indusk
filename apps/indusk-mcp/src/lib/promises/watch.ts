@@ -9,7 +9,7 @@ import type { IncidentSource } from "./vocabulary.js";
 
 /**
  * One monitor pass (day-monitor, ADR D5): read what Jaeger saw over the quiet
- * window, record each behaviour promise's new violations as an incident, and
+ * window, record each behaviour promise's new breaks as an incident, and
  * send each promise's owner back to work with a Maintenance phase. Writes plan
  * documents and commits nothing — the person commits them. Throws
  * `JaegerUnreachable` rather than reporting a quiet window it never read.
@@ -166,7 +166,7 @@ export interface WatchReport {
  * reopen that did not happen (watch-reopen-collision): an incident — opened
  * or extended — that did not reach its owner (a collision, an owner that is
  * not a plan folder, a worktree record that could not be read) prints an
- * error and fails the run, because a violation no plan owns, reported as
+ * error and fails the run, because a break no plan owns, reported as
  * success, is the one outcome the monitor exists to prevent. `already` — the
  * owner carries the phase — is the normal second pass, and stays quiet.
  */
@@ -174,7 +174,7 @@ export function watchReport(result: WatchResult): WatchReport {
 	const out = [`Read from Jaeger at ${result.source}.`];
 	const err: string[] = [];
 	if (result.changes.length === 0) {
-		out.push("No new violations — nothing recorded.");
+		out.push("No new breaks — nothing recorded.");
 		return { out, err, exitCode: 0 };
 	}
 	let missed = false;

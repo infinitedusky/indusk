@@ -32,7 +32,7 @@ import { PlanLook } from "./PlanLook";
 /** A promise's state as the dot beside its name. */
 const DOT: Record<string, string> = {
   enforced: "bg-ok",
-  "known-violated": "bg-bad",
+  "known-broken": "bg-bad",
   declared: "bg-idle",
   retired: "bg-idle",
   unregistered: "bg-idle",

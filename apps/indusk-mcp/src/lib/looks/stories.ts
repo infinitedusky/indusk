@@ -4,7 +4,12 @@ import { readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
-import { baseStylesheet, classesOf, componentStylesheet } from "./component-styles.js";
+import {
+	baseStylesheet,
+	classesOf,
+	componentStylesheet,
+	elementRulesOf,
+} from "./component-styles.js";
 import {
 	CATALOG_FILE,
 	type Catalog,
@@ -20,6 +25,7 @@ import {
 	type LooksApp,
 	LooksAppError,
 	readApp,
+	sourcesHashOf,
 	stylesheetHash,
 } from "./mockups.js";
 import { buildCatalog, manifestIndex, snapshotBytes } from "./stories-catalog.js";
@@ -511,6 +517,9 @@ function writeStylesheets(args: {
 export async function renderStories(root: string, appName: string): Promise<StoriesResult> {
 	const app = await readApp(root, appName);
 	const appDir = storybookDir(root, app);
+	// What the stories are rendered from, read before they render: a source
+	// changed during the render leaves the catalog not current, never current.
+	const renderedFrom = await sourcesHashOf(root, app);
 
 	const scan = await scanComponents(root, app);
 	if (scan.findings.length > 0) {
@@ -558,7 +567,11 @@ export async function renderStories(root: string, appName: string): Promise<Stor
 		}
 	}
 
-	const catalog: Catalog = { components };
+	const catalog: Catalog = {
+		renderedFrom,
+		baseRulesHash: stylesheetHash(elementRulesOf(css)),
+		components,
+	};
 	writeFileSync(join(app.dir, CATALOG_FILE), `${JSON.stringify(catalog, null, "\t")}\n`);
 	return { components, snapshots, removed };
 }

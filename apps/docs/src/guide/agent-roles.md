@@ -88,7 +88,7 @@ The **infrastructure** tier is the substrate — the Claude Code hooks, validato
 **Does:**
 - Indexes the semantic graph on `indusk graph sync` (file-linkage between code and lessons)
 - Blocks phase transitions with incomplete gates (`check-gates.js`)
-- Refuses impl.md writes that violate trajectory structure (`validate-impl-structure.js`)
+- Refuses impl.md writes that break trajectory structure (`validate-impl-structure.js`)
 - Reminds the working agent when gates exist but haven't been touched (`gate-reminder.js`)
 - Spawns the eval agent on `git commit` (`eval-trigger.js`)
 

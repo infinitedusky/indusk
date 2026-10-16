@@ -15,7 +15,7 @@ Checks run in this order, from fastest to slowest:
 | Order | Check | Command | What It Catches | When to Run |
 |-------|-------|---------|-----------------|-------------|
 | 1 | Type check | `tsc --noEmit` | Structural errors, type mismatches, missing imports | Any TypeScript change |
-| 2 | Lint | `pnpm check` ([Biome](/reference/tools/biome)) | Style violations, common bug patterns, unused imports | Any source file change |
+| 2 | Lint | `pnpm check` ([Biome](/reference/tools/biome)) | Style errors, common bug patterns, unused imports | Any source file change |
 | 3 | Affected tests | `pnpm turbo test --filter={app}` | Behavioral regressions, broken logic | Any logic change |
 | 4 | Build | `pnpm turbo build --filter={app}` | Production build issues, missing exports | Shared package or build config changes |
 

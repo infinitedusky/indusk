@@ -37,8 +37,17 @@ export interface HealthLineRow {
 	tests: string[];
 }
 
-/** One run on the line, with the source that recorded it. */
-export interface HealthLineRun extends HealthRun {
+/**
+ * One run on the line, with the source that recorded it. `outcome` is the
+ * wire word: a break is `violated` this release, because an editor installed
+ * before it reads `r.outcome === "violated" ? "broke" : "held"` and is not
+ * updated with the package. It moves to `broken` when every writer does
+ * (`.indusk/planning/mark-first/`).
+ *
+ * promise: a-promise-is-upheld-or-broken
+ */
+export interface HealthLineRun extends Omit<HealthRun, "outcome"> {
+	outcome: "upheld" | "violated";
 	source: SourceName;
 }
 
@@ -60,8 +69,8 @@ export function newestRuns(
 }
 
 function newestFirst(
-	a: HealthRun & { source?: string },
-	b: HealthRun & { source?: string },
+	a: { at: string; traceId: string; source?: string },
+	b: { at: string; traceId: string; source?: string },
 ): number {
 	return (
 		b.at.localeCompare(a.at) ||
@@ -172,7 +181,13 @@ export function healthLine(
 		}),
 		runs: reads
 			.flatMap((read) =>
-				read.ok ? (read.runs ?? []).map((r) => ({ ...r, source: read.name })) : [],
+				read.ok
+					? (read.runs ?? []).map((r) => ({
+							...r,
+							outcome: r.outcome === "upheld" ? ("upheld" as const) : ("violated" as const),
+							source: read.name,
+						}))
+					: [],
 			)
 			.sort(newestFirst)
 			.slice(0, RUNS_PER_LINE),

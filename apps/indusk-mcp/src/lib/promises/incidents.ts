@@ -23,7 +23,7 @@ import {
  * again, so a fixed incident is not reopened by the violations that caused it
  * and a second pass over the same window writes nothing.
  *
- * Opening an incident also moves an `enforced` promise to `known-violated`
+ * Opening an incident also moves an `enforced` promise to `known-broken`
  * and lists the incident on it — `promises check` refuses an enforced promise
  * with an open incident, and the registry must still pass after a watch.
  */
@@ -209,7 +209,7 @@ export function recordViolations(
 			opened: iso(oldest.at),
 			lastSeen: iso(newest.at),
 			evidence: ["traces:", ...freshIds.map((t) => `  - '${t}'`)],
-			symptom: newest.symptom ?? "The span marked the promise violated and carried no symptom.",
+			symptom: newest.symptom ?? "The signal reported the promise broken and carried no symptom.",
 			// The newest violation's environment, and no guess when it has
 			// none: one server holds staging and production, and an incident
 			// that names the wrong one sends a person to the wrong logs.
@@ -222,14 +222,14 @@ export function recordViolations(
 	return { id, kind: "opened", traces: freshIds };
 }
 
-/** An enforced promise with an open incident moves to known-violated, and lists it. */
+/** An enforced promise with an open incident moves to known-broken, and lists it. */
 export function ensurePromiseCarries(registry: Registry, promise: PromiseEntry, id: string): void {
 	const path = join(registry.dir, promise.file);
 	const before = readFileSync(path, "utf-8");
 	let text = before;
 	if (!promise.incidents.includes(id))
 		text = setList(text, "incidents", [...promise.incidents, id]);
-	if (promise.state === "enforced") text = setScalar(text, "state", "known-violated");
+	if (promise.state === "enforced") text = setScalar(text, "state", "known-broken");
 	if (text !== before) writeFileSync(path, text);
 }
 
@@ -280,7 +280,7 @@ export function fixIncident(registry: Registry, id: string, now: Date = new Date
 	const stillOpen = registry.incidents.some(
 		(i) => i.id !== id && i.promise === incident.promise && i.status === "open",
 	);
-	if (promise && promise.state === "known-violated" && !stillOpen) {
+	if (promise && promise.state === "known-broken" && !stillOpen) {
 		const promisePath = join(registry.dir, promise.file);
 		writeFileSync(promisePath, setScalar(readFileSync(promisePath, "utf-8"), "state", "enforced"));
 	}

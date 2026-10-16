@@ -27,7 +27,7 @@ export const OWNER_IMPL = `---\ntitle: "${OWNER}"\nstatus: completed\n---\n\n# $
 export function violation(trace: string, at = "2026-10-08T20:00:00Z"): MarkedSpan {
 	return {
 		promise: PROMISE,
-		outcome: "violated",
+		outcome: "broken",
 		traceId: trace,
 		spanId: "00f067aa0ba902b7",
 		service: "seat-holds",

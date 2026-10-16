@@ -1,6 +1,7 @@
 import type { Tracer } from "@opentelemetry/api";
 import { markPromise } from "../promises/mark.js";
 import { LOOK_MARK } from "../promises/vocabulary.js";
+import type { Reused } from "./check.js";
 import type { Finding, Verdict } from "./verdict.js";
 
 /**
@@ -42,33 +43,67 @@ export function describe(f: Finding): string {
 	return `element ${f.element} ${f.property} actual ${f.actual}${near}`;
 }
 
+/** One look span: its app, screen, state, device and kind, marked under `LOOK_PROMISE`. */
+function startLookSpan(
+	tracer: Tracer,
+	look: { app: string; screen: string; state: string; device: string; kind?: "story" },
+) {
+	const span = tracer.startSpan("indusk.looks.check");
+	span.setAttribute(LOOK_MARK.app, look.app);
+	span.setAttribute(LOOK_MARK.screen, look.screen);
+	span.setAttribute(LOOK_MARK.state, look.state);
+	span.setAttribute(LOOK_MARK.device, look.device);
+	if (look.kind === "story") span.setAttribute(LOOK_MARK.kind, "story");
+	return span;
+}
+
 /**
- * Emit the span for each result on `tracer`. Never throws: a check whose
+ * Emit the span for each result on `tracer`, and for each reused look one
+ * span per device and scheme it is reported under: upheld, marked
+ * `indusk.look.reused` with `indusk.look.measured_at` the time it was really
+ * measured. A reused span is the held result restated, never a measurement —
+ * it keeps an unchanged look's standing holding, and a reader can always tell
+ * it from a fresh one (Sandy, 2026-10-16). Never throws: a check whose
  * telemetry is down still reports in its own output, as the recorder's mark
  * does.
  */
 export function reportLooks(
 	results: readonly LookResult[],
 	tracer: Tracer,
-	opts: { project?: string } = {},
+	opts: { project?: string; reused?: readonly Reused[] } = {},
 ): void {
+	const project = opts.project ? { project: opts.project } : {};
 	for (const result of results) {
 		try {
-			const span = tracer.startSpan("indusk.looks.check");
-			span.setAttribute(LOOK_MARK.app, result.app);
-			span.setAttribute(LOOK_MARK.screen, result.screen);
-			span.setAttribute(LOOK_MARK.state, result.state);
-			span.setAttribute(LOOK_MARK.device, result.device);
-			if (result.kind === "story") span.setAttribute(LOOK_MARK.kind, "story");
+			const span = startLookSpan(tracer, result);
 			markPromise(span, {
 				promise: LOOK_PROMISE,
-				outcome: result.verdict.state === "held" ? "upheld" : "violated",
-				...(opts.project ? { project: opts.project } : {}),
+				outcome: result.verdict.state === "held" ? "upheld" : "broken",
+				...project,
 				...(result.verdict.state === "broken" ? { symptom: symptomOf(result) } : {}),
 			});
 			span.end();
 		} catch {
 			// best-effort
+		}
+	}
+	for (const look of opts.reused ?? []) {
+		for (const device of look.devices) {
+			try {
+				const span = startLookSpan(tracer, {
+					app: look.app,
+					screen: look.screen,
+					state: look.state,
+					device,
+					...(look.kind === "story" ? { kind: "story" as const } : {}),
+				});
+				markPromise(span, { promise: LOOK_PROMISE, outcome: "upheld", ...project });
+				span.setAttribute(LOOK_MARK.reused, true);
+				span.setAttribute(LOOK_MARK.measuredAt, look.at);
+				span.end();
+			} catch {
+				// best-effort
+			}
 		}
 	}
 }

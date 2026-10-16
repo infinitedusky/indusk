@@ -107,7 +107,7 @@ function lastBrokeDeps(): HealthDeps {
 						"seats-held",
 						{
 							marks: [
-								{ at: at(9, 17), outcome: "violated", traceId: "v-old", environment: null },
+								{ at: at(9, 17), outcome: "broken", traceId: "v-old", environment: null },
 								{ at: at(10, 21), outcome: "upheld", traceId: "u-new", environment: null },
 							],
 							atLeast: [],

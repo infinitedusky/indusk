@@ -8,6 +8,9 @@ status: living
 # here: Dawn, Day and the demo masters are closed. A name with no folder renders
 # as a placeholder.
 subplans:
+  - one-promise-language
+  - looks-check-speed
+  - plans-are-promises
   - mark-first
   - run-the-master
   - expectations-loop
@@ -40,7 +43,18 @@ holds; the older text is kept as the record of 2026-10-05.
 
 **The primitive**
 
-- **A plan is one promise.** Its goal is to build whatever fulfils it.
+- **A plan holds the promises it lands** (Sandy, 2026-10-16; replaces "a plan
+  is one promise"). A plan is a named intention a person sees and one landing —
+  one branch, one falsify, cleanup and audit — holding one or more promises
+  that share code. Promises that share no code are separate plans under a
+  master, which is only for display. A promise is permanent; a plan ends. What
+  outlives a plan's archive is its promises, and an incident reopens a promise,
+  not the plan that made it.
+- **One approval, one clause plan per promise.** The brief is the person's one
+  approval and may state several promises. Each promise then gets its clause
+  plan — each clause, its signal and its tests — before the ADR, so done is
+  fixed before how to build is decided. The ADR and the impl cover the whole
+  plan.
 - **A promise is made of clauses**: *splits* — progress against a budget on the
   way to the promise's goal, worked backward from it (the 100 m dash's split
   times) — and *limits* — bounds that always hold (an engine's heat).
@@ -51,8 +65,8 @@ holds; the older text is kept as the record of 2026-10-05.
   while code changes. Needed to build it; never enough to call it upheld.
   Removing them would leave nothing to say, before a deploy, that a change
   broke a clause — "the regression is fucked if you remove the tests" (Sandy).
-- **A plan is done when every clause's mark has reported**, its tests passing
-  on the way.
+- **A plan is done when every clause of every promise it holds has reported**,
+  its tests passing on the way.
 - **Two stages, one clause** (Sandy, 2026-10-15): before release and on every
   change, a clause is **verified** by its tests — a change that makes one fail
   is stopped before it ships; in use, it is **upheld** by its signal —
@@ -108,6 +122,14 @@ alone. One list, one health view, one approval flow; the brief has one Promises
 section. Expectations stay separate — they decide what to build, not what is
 true. Built as its own child, third (`looks-as-promises`).
 
+**A promise carries artifacts** (Sandy, 2026-10-15). Any promise can carry one
+or many artifacts that show what it means — a mockup, a diagram, a sample of
+its output, a clip of the flow; a visual promise's mockup is one kind. Wherever
+a promise appears — the daily list, the graph, the plan page — its artifacts
+are a hover or a click away, so the work is seen, not only read. Built in
+`looks-as-promises` (artifacts on promises); the hover in the daily list and the
+graph in `run-the-master`.
+
 **Approvals happen on the plan page** (Sandy, 2026-10-15). Every promise a plan
 makes or changes — visual ones included — is approved on that plan's page, one
 line each, opened on demand. A shared component that reopens screens other plans
@@ -142,6 +164,19 @@ switching.
   continuously as answers, landings and touched files change. Dependencies come
   from promises — a clause resting on another promise — with `Depends On` for
   what promises do not express.
+- **Phases are units of work** (Sandy, 2026-10-16). A phase is cut by judgment
+  as the best piece of work, not by file or by promise; phases and clauses are
+  many-to-many — one phase can prove clauses of several promises, one clause
+  can take several phases. Every phase ends with a check turning green, so the
+  graph knows it finished. The files a phase touches are an output of the cut,
+  used only to keep colliding phases apart. A node's edges come from three
+  places: a phase building on another's output, a clause resting on another
+  clause, and shared files. Falsify, cleanup and the audit's phase of fixes are
+  nodes like any other; they come late and touch what earlier phases built.
+- **Earlier plans go first** (Sandy, 2026-10-16). The aim is to close plans as
+  fast as possible: when phases contend for a file, an earlier plan's phase —
+  its falsify or cleanup included — goes next after the one running, not behind
+  every later plan queued on that file.
 - **Main cascades.** Whenever something lands on `main`, every open worktree
   merges it (merge, never rebase), so every branch stays in step. A worktree
   with no running session merges at once; one with a running phase merges when
@@ -149,6 +184,14 @@ switching.
   that conflicts becomes a question (its cost set by its size); the agent
   proposes the resolution. On the workbench server there is one copy, so the
   cascade is the box's; locally, each machine's open worktrees.
+- **Phases branch off the plan** (Sandy, 2026-10-16): `main` ← `plan/<name>`
+  ← a branch and worktree per phase. A phase starts by merging what came before
+  it into its worktree and merges into the plan branch when its check is green;
+  phases that depend on it start from there. Only the plan branch touches
+  `main`, once, when its promises are verified — never a half-built phase.
+  Conflicts are handled at those merges, not by judging in advance whether
+  another change matters. A phase that pulls another plan's unlanded work makes
+  its plan land after that one, and merge it again before landing.
 - **Reviews fix, they do not file** (Sandy, 2026-10-15). Falsify and the audit
   both run in **fresh context** — a reader that never saw the building session
   (today only the audit does; on `new-project-flow` the fresh audit found more,
@@ -190,16 +233,32 @@ switching.
 **The plans, in order** — each headline child that gathers open plans is a
 parent with its own `master.md` naming them.
 
-1. **`mark-first`** — merged with `promise-first-build`: clauses, marks
-   (server and browser), the close rule, layering, the diagnosis; and a plan
-   being one promise. Proved on Homework Gate, not on dusk. Its accepted brief
-   is reworked around "a plan is one promise" and approved again. A plan, not a
-   parent: nothing is gathered under it.
+1. **The first cut, in three plans** (Sandy, 2026-10-15: "not all these clauses
+   fit within one promise … the goal isn't to force that"), each one promise:
+   - **`one-promise-language`** — `a-promise-is-upheld-or-broken`: the words,
+     everywhere. First: cheap, and every later plan uses them.
+   - **`looks-check-speed`** — `a-look-check-costs-what-changed` (Sandy,
+     2026-10-16: pulled forward — a full look check took ~35 minutes and was
+     waited on twice in one plan): an unchanged look is not reopened, one page
+     load per look, no dev server, `--only`.
+   - **`plans-are-promises`** — `a-plan-holds-the-promises-it-lands`: a plan
+     holds one or more promises of clauses (2026-10-16; was "a plan is one
+     promise"); each promise's clause plan replaces the test plan and is written
+     before the ADR; a clause can rest on another promise.
+   - **`mark-first`** ("Signal first") — `a-clause-is-proved-twice`: verified by
+     its tests before release, upheld by its signal in use; plans in the new
+     shape close on both.
+   Only what `run-the-master` needs; the later cut (a break leading to its
+   cause, diagnosis, broken traces kept, browser signals, every break becoming a
+   test, approvals as questions, clause views) follows `run-the-master` — see
+   `mark-first`'s research, "First cut". Proved on Homework Gate, not on dusk.
 1b. **`run-the-master`** — second, after `mark-first` (Sandy, 2026-10-15: build it
    on what a plan *is* once that has settled, not before): decisions as questions with a cost (cheap
    five minutes, moderate an hour, expensive waits, red); one question thread;
    the daily list; main cascading into every worktree; the graph of plans and phases run in parallel, blocked only
-   downstream of an unanswered question, re-evaluated continuously. Its first
+   downstream of an unanswered question, re-evaluated continuously; a branch
+   and worktree per phase off the plan branch, and earlier plans first when
+   phases contend for a file. Its first
    master to run is Homework Gate's milestones, not this one. Its dependencies come from promises from the start.
 2. **`expectations-loop`** — expectations read back at their look time into
    what is built next.
@@ -226,8 +285,8 @@ parent with its own `master.md` naming them.
    promise seen holding and breaking beside the running app).
 8. **`workflow-builder`** — kept, not yet reconsidered against the above.
 
-**What changes in what exists:** the test plan becomes the clause plan (each
-clause and its mark, its tests beside); `a-closed-plan-kept-its-promises` closes
+**What changes in what exists:** the test plan becomes the clause plan, one per
+promise (each clause and its mark, its tests beside); `a-closed-plan-kept-its-promises` closes
 on marks; the planner's "assertions must be behavioural" rule moves to clauses.
 Open: whether a *structure* promise's mark is a check run at build time.
 

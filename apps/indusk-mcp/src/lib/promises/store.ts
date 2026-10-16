@@ -289,7 +289,7 @@ export function asMarkedSpans(
 			}))
 			.sort((a, b) => b.at.getTime() - a.at.getTime());
 		byPromise.set(promise, {
-			violations: spans.filter((s) => s.outcome === "violated"),
+			violations: spans.filter((s) => s.outcome === "broken"),
 			lastUpheld: spans.find((s) => s.outcome === "upheld") ?? null,
 			truncated: (w.atLeast.get(promise) ?? []).length > 0,
 		});

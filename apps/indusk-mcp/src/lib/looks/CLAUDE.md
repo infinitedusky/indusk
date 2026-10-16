@@ -43,3 +43,45 @@ pointer; the pointer holds the story.
 - **A mockup places a component with its own words** — text and placed
   components only; paths are recorded from a second render and held to one
   node structure. See `/decisions/component-content`.
+- **A look loads once; every device and scheme is measured on that page**:
+  device metrics through Chromium's `Emulation.setDeviceMetricsOverride`, the
+  scheme by `emulateMedia`, running `CSSTransition`s finished before each read
+  (a switch in place starts them; a fresh load never did), the result returned
+  as one JSON string. A page that read its viewport or scheme once on mount
+  with no listener (`MOUNT_READS`) is loaded fresh per device and scheme
+  instead. The browser still only measures; `checkApp` takes a
+  `LookOpener`, so every decision is tested without one. Guarded by
+  `looks-check-speed.contract.test.ts` (A11, A12, A36) — see `/decisions/looks-check-speed`.
+- **A look is reused only by `reuseOf`, from the record in machine state**
+  (`<project home>/looks/<app>.json`, never the checkout): its key is the
+  foundation, the checker's own hash (`checkerHashOf`: measured properties
+  and their kinds, the measure scripts, `VERDICT_VERSION` — bump it with any
+  verdict rule), the declarations, devices and schemes, the configuration,
+  its snapshot hashes, for a story the app's element and root rules it draws
+  under (the catalog's `baseRulesHash`, from `elementRulesOf`), and for a
+  screen the page-code hash and seed; nothing is reused unless
+  `components.json`'s `renderedFrom` matches the sources now; only a look held
+  everywhere is kept, written over the record as it is at write time; a look
+  opened while the server serves a build from before the sources changed is
+  reported, never kept; a reused look sends an upheld span marked
+  `indusk.look.reused` with `indusk.look.measured_at`, never a bare one. A
+  served page that changed outside the sources is in no key — check it with
+  `--all`. Guarded by `reuse.test.ts` and `check-run.test.ts` (A1–A9, A19,
+  A28–A32, A37) — see `/decisions/looks-check-speed`.
+- **A check never crawls a development server**: before any look opens, the
+  page at the base URL's own path (and the first story's frame) is read, within
+  30 s, and its asset URLs — never its text, which carries data — go to
+  `devServerMarker` (Next's HMR client, webpack's refresh runtime, Vite's
+  client); a marker refuses, naming `screens.json`'s `serve` (outside the declarations hash). A
+  new framework's marker is added there, not worked around with `--url`. The
+  same read gives the served build (`servedBuildOf`), judged against the
+  sources outside the key (`Build`): a build identity in the key would reopen
+  every look on every rebuild. The styling and Storybook configuration and the
+  lockfile are in the key (`configHashOf`). Guarded by `dev-server.test.ts`,
+  `reuse.test.ts` and `looks-check-speed.contract.test.ts` (A13, A14, A33–A35,
+  A38, A39) — see `/decisions/looks-check-speed`.
+- **The look check is one job per file**: `served.ts` reads what the server
+  serves, `browser.ts` launches, loads and measures (the `LookOpener` seam),
+  `reuse-run.ts` plans a run's reuse and keeps what held (around `reuse.ts`'s
+  rule), `verdict.ts` judges, and `check.ts` is the run (`checkApp`, the
+  targets, `judgeLook`); `check.ts` re-exports the names tests import.

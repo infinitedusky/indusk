@@ -1,7 +1,7 @@
 ---
 title: "Cockpit audit fixes — what plan-cockpit's cold audit found"
 date: 2026-10-11
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required

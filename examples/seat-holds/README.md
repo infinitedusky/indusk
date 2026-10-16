@@ -11,7 +11,7 @@ it, it is released, and the app promises that release is never late:
 Every release is marked with plain OpenTelemetry on the span that does the
 work: `indusk.promise = a-held-seat-is-released-in-time` and
 `indusk.promise.outcome = upheld` or `violated`, with a symptom like
-`seat 2 released 3.2 s late`. Nothing else in the app knows InDusk exists.
+`seat 2 released 3.2 s late`. `violated` is read as broken, and `broken` the same. Nothing else in the app knows InDusk exists.
 InDusk reads those marks from your local telemetry daemon (or your project's
 server) and shows the promise holding, or broken.
 
@@ -39,8 +39,7 @@ pnpm start
 ## Break it
 
 With `SEAT_HOLDS_FAULT_TOGGLE=1`, the page shows a **Break it** switch. Turn it
-on and releases come late on purpose: the next lapsed hold is marked
-`violated`, and InDusk shows the promise broken with the span that broke it.
+on and releases come late on purpose: the next lapsed hold's outcome is set to `violated`, which is read as broken, and InDusk shows the promise broken with the span that broke it.
 Press **Stop the fault** and releases come on time again, but the promise
 stays broken: it said *never*. It holds again once the break is recorded as an
 incident and fixed.
@@ -78,7 +77,7 @@ again to fix it.
 ## What's in it
 
 - `src/seats.ts` — the rules: hold, book, release, and whether a release was on time. The clock is an argument, so the tests never wait.
-- `src/telemetry.ts` — OpenTelemetry, and one mark per release.
+- `src/telemetry.ts` — OpenTelemetry, and one signal per release.
 - `src/server.ts` — the page, the API, the fault switch, and the sweeper that releases lapsed holds once a second.
 - `public/index.html` — the page.
 - `.indusk/` — the example's promise and the plan it came from.

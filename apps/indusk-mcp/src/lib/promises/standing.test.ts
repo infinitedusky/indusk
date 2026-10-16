@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fakeJaegerFetch, type HeldSpan } from "../../__tests__/helpers/fake-jaeger.js";
 import {
 	behaviourPromise,
 	codeFilesFor,
@@ -9,7 +10,14 @@ import type { HeardRow } from "./heard.js";
 import { type PromiseEntry, readPromises } from "./registry.js";
 import type { PlanRow } from "./rows.js";
 import { readStanding, type SourcedHealth, standingOf } from "./standing.js";
-import type { MarkedSpan, MarkedSpansResult } from "./telemetry.js";
+import {
+	jaegerEndpoint,
+	type MarkedSpan,
+	type MarkedSpansResult,
+	markedSpans,
+	marksBetween,
+} from "./telemetry.js";
+import type { TimelineRead } from "./timeline.js";
 
 // promise: every-promise-is-listed
 // promise: the-editor-shows-the-same-health-as-the-admin
@@ -337,5 +345,107 @@ describe("cockpit-audit-fixes A1–A4 — thirty days that say only what was see
 			upheld: upheld("2026-10-08", "2026-10-07"),
 		} as never);
 		expect(r.thirtyDays).toEqual({ broke: 1, held: 1 });
+	});
+});
+
+describe("A13 — the thirty days count a signal the same way whichever word it says", () => {
+	// promise: the-thirty-days-say-only-what-was-seen
+	// promise: a-promise-is-upheld-or-broken
+	const now = Date.UTC(2026, 9, 10, 12, 0);
+	const NAME = "seats-held";
+	const endpoint = jaegerEndpoint("http://jaeger.test");
+	afterEach(() => vi.unstubAllGlobals());
+
+	const span = (spanId: string, outcome: string, iso: string): HeldSpan => ({
+		service: "seat-holds",
+		name: "hold",
+		spanId,
+		at: new Date(iso),
+		tags: { "indusk.promise": NAME, "indusk.promise.outcome": outcome },
+	});
+
+	/**
+	 * The same two days in each world: the 7th held (one upheld run), the 8th
+	 * with an upheld run and a break the recorder heard — only the word on the
+	 * break signal differs.
+	 */
+	async function thirtyDaysWith(breakWords: string[]) {
+		const spans = [
+			span("u7", "upheld", "2026-10-07T09:00:00.000Z"),
+			span("u8", "upheld", "2026-10-08T09:00:00.000Z"),
+			...breakWords.map((w, i) => span(`b${i}`, w, "2026-10-08T10:00:00.000Z")),
+		];
+		vi.stubGlobal("fetch", fakeJaegerFetch(spans));
+		const p = promiseProject({
+			promises: [behaviourPromise(NAME, { owner: "demo", domain: "demo" })],
+			domains: ["demo"],
+			files: codeFilesFor(NAME),
+		});
+		const marks = await markedSpans({
+			promises: [NAME],
+			since: new Date(Date.UTC(2026, 8, 11)),
+			endpoint,
+		});
+		const health: SourceHealthRead[] = [
+			{ name: "local", label: "local", ok: true, at: new Date(now).toISOString(), marks },
+		];
+		const from = new Date(Date.UTC(2026, 8, 11));
+		const window = await marksBetween(endpoint, {
+			service: "seat-holds",
+			name: NAME,
+			promise: NAME,
+			from,
+			to: new Date(now),
+			timeoutMs: 1_000,
+		});
+		const read = async (): Promise<TimelineRead[]> => [
+			{
+				name: "local",
+				label: "local",
+				ok: true,
+				from: from.toISOString(),
+				to: new Date(now).toISOString(),
+				byPromise: new Map([
+					[
+						NAME,
+						{
+							atLeast: [],
+							marks: window.marks.map((m) => ({
+								at: m.at.toISOString(),
+								outcome: m.outcome,
+								traceId: m.traceId,
+								environment: m.environment,
+							})),
+						},
+					],
+				]),
+			},
+		];
+		const [row] = await readStanding(p.planRoot, {
+			health,
+			now: () => now,
+			resolve: async () => [{ name: "local", ok: true, source: { label: "local" } as never }],
+			read,
+			heard: [heardRow(NAME, "2026-10-08T10:00:00.000Z", "local")],
+		});
+		return { standing: row.standing, thirtyDays: row.thirtyDays, lastBreak: row.lastBreak };
+	}
+
+	const EXPECTED = {
+		standing: "broken",
+		thirtyDays: { broke: 1, held: 1 },
+		lastBreak: "2026-10-08T10:00:00.000Z",
+	};
+
+	it("signals saying broken: the promise is broken, one day broke, one held", async () => {
+		expect(await thirtyDaysWith(["broken"])).toEqual(EXPECTED);
+	});
+
+	it("signals saying violated: the same counts", async () => {
+		expect(await thirtyDaysWith(["violated"])).toEqual(EXPECTED);
+	});
+
+	it("a mix of both words: the same counts", async () => {
+		expect(await thirtyDaysWith(["violated", "broken"])).toEqual(EXPECTED);
 	});
 });

@@ -11,9 +11,10 @@ export type { HealthLine };
 export type Shown =
 	| "holding"
 	| "broken"
-	| "fixed"
-	| "not seen"
-	| "known violated"
+	| "broke — fixed"
+	| "retired"
+	| "no signal"
+	| "known broken"
 	| "watched by the tests"
 	| "unreadable"
 	| "watcher blind"
@@ -30,11 +31,12 @@ export type Row = Extract<Source, { ok: true }>["rows"][number];
 
 const WORD: Record<string, Shown> = {
 	red: "broken",
-	fixed: "fixed",
+	fixed: "broke — fixed",
 	green: "holding",
-	unverified: "not seen",
-	amber: "known violated",
-	grey: "holding",
+	unverified: "no signal",
+	amber: "known broken",
+	// Retired is never holding — promise: a-promise-is-upheld-or-broken
+	grey: "retired",
 };
 
 /** Production first, then local: the alarm source leads, as the admin's does. */
@@ -49,7 +51,7 @@ export function stateIn(source: Source, promise: string): { shown: Shown; row?: 
 	if (!source.ok)
 		return { shown: "blind" in source && source.blind ? "watcher blind" : "unreadable" };
 	const row = source.rows.find((r) => r.promise === promise);
-	return row ? { shown: WORD[row.state] ?? "not seen", row } : { shown: "not seen" };
+	return row ? { shown: WORD[row.state] ?? "no signal", row } : { shown: "no signal" };
 }
 
 export function promiseOf(view: View | null, name: string) {

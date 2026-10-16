@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { type Dirent, existsSync, readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { type ComponentUse, type ContentMap, compose, type SnapshotBytes } from "./compose.js";
 import { type Foundation, readFoundation } from "./foundation.js";
 
@@ -134,6 +134,11 @@ export interface LooksApp {
 	/** The running app's base URL, when `screens.json` declares one; `indusk looks check --url` overrides it. */
 	url?: string;
 	/**
+	 * The command that builds and serves the app, named when the check meets a
+	 * development server. Not in `declarationsHash`: declaring it reopens nothing.
+	 */
+	serve?: string;
+	/**
 	 * Element tag names the check does not measure: tooling the framework puts
 	 * on the page in development (`nextjs-portal`), which the app does not draw.
 	 */
@@ -258,6 +263,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		screens?: DeclaredScreen[];
 		sources?: string[];
 		url?: string;
+		serve?: string;
 		ignore?: string[];
 		uncatalogued?: string[];
 		uncomposed?: string[];
@@ -318,6 +324,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		uncatalogued: declared.uncatalogued ?? [],
 		uncomposed: declared.uncomposed ?? [],
 		...(declared.url ? { url: declared.url } : {}),
+		...(typeof declared.serve === "string" && declared.serve ? { serve: declared.serve } : {}),
 		stories,
 		styles,
 		base,
@@ -414,7 +421,7 @@ async function readStyles(dir: string, rel: string): Promise<ComponentStyle[]> {
 	return styles;
 }
 
-async function filesUnder(dir: string): Promise<string[]> {
+async function filesUnder(dir: string, withDotFolders = false): Promise<string[]> {
 	const out: string[] = [];
 	let entries: Dirent[];
 	try {
@@ -423,9 +430,9 @@ async function filesUnder(dir: string): Promise<string[]> {
 		return out;
 	}
 	for (const entry of entries) {
-		if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
+		if (entry.name === "node_modules" || (!withDotFolders && entry.name.startsWith("."))) continue;
 		const path = join(dir, entry.name);
-		if (entry.isDirectory()) out.push(...(await filesUnder(path)));
+		if (entry.isDirectory()) out.push(...(await filesUnder(path, withDotFolders)));
 		else out.push(path);
 	}
 	return out;
@@ -438,4 +445,122 @@ async function filesUnder(dir: string): Promise<string[]> {
  */
 export async function appSourceFiles(root: string, sources: string[]): Promise<string[]> {
 	return (await Promise.all(sources.map((s) => filesUnder(join(root, s))))).flat().sort();
+}
+
+/**
+ * sha256 over each file's path (relative to `root`) and the hash of its
+ * bytes, one line per file in path order: what a change to any of them, or a
+ * file added, removed or renamed, changes.
+ */
+async function filesHashOf(root: string, files: readonly string[]): Promise<string> {
+	const lines: string[] = [];
+	for (const file of [...files].sort()) {
+		lines.push(`${relative(root, file)}\0${sha256(await readFile(file))}`);
+	}
+	return sha256(lines.join("\n"));
+}
+
+/**
+ * The hash of every file under the app's declared `sources`: what the render
+ * step records as `renderedFrom`, and what the check compares it with, so a
+ * look is reused only while its stories were rendered from the sources as
+ * they are (looks-check-speed ADR decision 2).
+ */
+export async function sourcesHashOf(root: string, app: Pick<LooksApp, "sources">): Promise<string> {
+	return filesHashOf(root, await appSourceFiles(root, app.sources));
+}
+
+/**
+ * The hash of the app's page code: every file under `sources` that
+ * `isPageSource` keeps, given its path relative to `root` — the files that
+ * draw a screen and no story covers. In a screen's reuse key and not a
+ * story's, so an edit to it reopens every screen and no story.
+ */
+export async function pageSourcesHashOf(
+	root: string,
+	app: Pick<LooksApp, "sources">,
+	isPageSource: (file: string) => boolean,
+): Promise<string> {
+	const files = await appSourceFiles(root, app.sources);
+	return filesHashOf(
+		root,
+		files.filter((f) => isPageSource(relative(root, f))),
+	);
+}
+
+/**
+ * The scripts and stylesheets a page loads: the `src` or `href` of each
+ * `<script>` and `<link>`, in order. What tells one build from another
+ * (`servedBuildOf`) and a development server from a production one
+ * (`devServerMarker`) — never the page's text, which carries its data.
+ */
+export function assetUrlsOf(html: string): string[] {
+	return [...html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)=["']([^"']+)["']/g)].map(
+		(m) => m[1] as string,
+	);
+}
+
+/**
+ * The identity of the build a page is served from, read from its HTML: the
+ * scripts and stylesheets it loads (a production build names each by the hash
+ * of its content) and its inline styles, hashed. Null when the page loads
+ * nothing and styles nothing inline, so there is nothing to tell one build
+ * from another — the caller then reuses no look. Page text is left out: a
+ * screen's data changes between runs and is no part of the build.
+ */
+export function servedBuildOf(html: string): string | null {
+	const assets = assetUrlsOf(html);
+	const styles = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)].map(
+		(m) => m[1] as string,
+	);
+	if (assets.length === 0 && styles.length === 0) return null;
+	return sha256(JSON.stringify([[...new Set(assets)].sort(), styles]));
+}
+
+/**
+ * The hash of the checker itself: what it measures (each property with the
+ * kind it is judged as), the script that measures in the page, and the
+ * verdict's version. In every look's reuse key, so a release that measures a
+ * new property or judges by new rules reopens every look rather than reusing a
+ * result the old checker gave (looks-check-speed A31).
+ */
+export function checkerHashOf(checker: {
+	properties: readonly string[];
+	script: string;
+	verdictVersion: number;
+}): string {
+	return sha256(JSON.stringify([checker.properties, checker.script, checker.verdictVersion]));
+}
+
+/** The styling configuration files of an app's own folder: Tailwind and PostCSS. */
+const STYLING_CONFIG = /^(tailwind|postcss)\.config\./;
+
+/**
+ * The nearest folder at or above `source` that holds a `package.json` — the
+ * app a source directory belongs to — else the source's parent.
+ */
+function appFolderOf(root: string, source: string): string {
+	for (let dir = join(root, source); dir.startsWith(root) && dir !== root; dir = dirname(dir)) {
+		if (existsSync(join(dir, "package.json"))) return dir;
+	}
+	return dirname(join(root, source));
+}
+
+/**
+ * The hash of the configuration a look is drawn with that is in no source
+ * file: each app folder's Tailwind and PostCSS config, its `.storybook`
+ * folder, and the project's `pnpm-lock.yaml` (a dependency bump restyles a
+ * page with no file of ours changed). In every look's reuse key, so a change
+ * to any of them reopens everything (looks-check-speed ADR decision 2).
+ */
+export async function configHashOf(root: string, app: Pick<LooksApp, "sources">): Promise<string> {
+	const files: string[] = [];
+	for (const folder of new Set(app.sources.map((s) => appFolderOf(root, s)))) {
+		const here = existsSync(folder) ? await readdir(folder) : [];
+		files.push(...here.filter((f) => STYLING_CONFIG.test(f)).map((f) => join(folder, f)));
+		files.push(...(await filesUnder(join(folder, ".storybook"), true)));
+	}
+	const lock = join(root, "pnpm-lock.yaml");
+	if (existsSync(lock)) files.push(lock);
+	return filesHashOf(root, files);
 }

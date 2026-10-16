@@ -63,10 +63,10 @@ export interface DashboardRow {
   tests: { passing: number; total: number };
   /** Days of the last thirty not broken; null while the promise has never been seen. */
   held: number | null;
-  /** Days of the last thirty with a violation heard. */
+  /** Days of the last thirty with a break heard. */
   broke: number;
   lastActivity: string | null;
-  /** The newest break: a heard violation, or the alarm source's last sighting while broken. */
+  /** The newest break: a heard break, or the alarm source's last sighting while broken. */
   lastBreak: string | null;
 }
 
@@ -85,6 +85,19 @@ export interface RowContext {
 function titled(ctx: RowContext, handle: string): string {
   const written = ctx.planTitles[handle];
   return written && written !== handle ? written : ctx.sentenceOf(handle);
+}
+
+/**
+ * An enforced promise nothing has reported on: no signal, drawn grey and never
+ * as holding (one-promise-language). The one reading of it — the row's dot and
+ * the page's look state both ask here.
+ *
+ * promise: a-promise-is-upheld-or-broken
+ */
+export function readsNoSignal(
+  row: Pick<DashboardRow, "standing" | "held">,
+): boolean {
+  return row.standing === "enforced" && row.held === null;
 }
 
 /** One row per promise, from the package's standing and thirty days, in words, with its plan's title and Path. */

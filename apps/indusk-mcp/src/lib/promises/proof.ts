@@ -190,7 +190,7 @@ function brokenOf(
 
 /**
  * A promise broken with no source reading red is held open by its incident (an
- * open incident moves an enforced promise to known-violated, which reads
+ * open incident moves an enforced promise to known-broken, which reads
  * amber): the break is the newest incident still open, with its symptom and
  * first trace, in the project's alarm source. Always a break, so a promise the
  * dashboard counts broken always has its fix.
