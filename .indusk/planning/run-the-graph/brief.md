@@ -77,13 +77,13 @@ None.
 ### Not promised
 
 - **Decisions as questions with a cost, and blocking only what is downstream of one** — `decisions-as-questions`.
-- **Seeing the graph, and the daily list** — `daily-list-and-graph-view`.
+- **Seeing the graph, and the activity feed** — `activity-and-graph`.
 - **Re-cutting a plan's phases for speed** — phases are cut by judgment when the impl is written; the runner runs the graph it is given and re-reads it as phases finish.
 - **Running on the workbench server** — `workbench-server`; this runs on one machine.
 
 ## Looks
 
-None — the runner changes no screen; seeing the graph is `daily-list-and-graph-view`'s, briefed next.
+None — the runner changes no screen; seeing the graph is `activity-and-graph`'s, briefed next.
 
 ## Depends On
 
@@ -93,4 +93,4 @@ None — the runner changes no screen; seeing the graph is `daily-list-and-graph
 ## Blocks
 
 - `.indusk/planning/decisions-as-questions/` — a question blocks phases of this graph.
-- `.indusk/planning/daily-list-and-graph-view/` — it draws this graph.
+- `.indusk/planning/activity-and-graph/` — it draws this graph.
