@@ -72,11 +72,23 @@ None.
 - **The later cut**, after `run-the-master`: a break leading to its cause, a diagnosis with every break, every broken trace kept, signals from the browser, every break becoming a test, approvals giving way to questions, and the promise page's clause views (research.md, "First cut").
 - **Removing tests.** Tests verify before release and guard against regression (Sandy: "the regression is fucked if you remove the tests").
 - **Signals on every line**, and **gradual rollout** — later, if incidents ask for them.
+- **Task tags** (the files a task touches and what kind of change it is): with `run-the-master`, which needs them to schedule phases.
 - **Homework Gate's own promises.** It is its own project, with its own registry; proving this plan there is expectation 3, and the run Sandy makes there.
 
 ## Looks
 
 None — the first cut changes what plans and promises say and how a plan closes, not how any screen is laid out; the clause views come with the later cut and `run-the-master`'s graph.
+
+## Carried
+
+Work this plan takes on that is not a promise of its own. Each is built here and tested under "Not for a promise" in the clause plan; where it came from is in research.md.
+
+- **One word, signal.** The telemetry a clause carries is called a signal everywhere: skills, docs, tool descriptions and code comments say signal where they said mark. Exempt: the Day 4b entry in the root `CLAUDE.md` and the archived plans and decisions (history), and this plan's own name until it closes. (`one-promise-language` settled the word; this plan does the cleanup.)
+- **The writers switch from `violated` to `broken`.** `markPromise`, `scripts/suite-speed.js` and the demo app write `broken`; every reader still reads both. The editor's health line (`indusk promises health --json`, `runs[].outcome`) keeps `violated` until the editor extension shipped with the language release has been out a release, and is switched then, not here.
+- **The registry state `known-broken` and older InDusks.** A checkout on an InDusk older than the language release refuses it. Whether that matters is decided in the ADR.
+- **Tasks are written in the imperative.** The planner's phase-summary rule says a task reads as work to do ("Make the browser template's test project read the pre-bundle list from the root configuration"); verification items stay as end states that must hold. For new impls only.
+
+Waiting for a plan to take them, in `known-issues.md`: the two telemetry gaps `new-project-flow`'s audit left (the `new_project.create` span goes nowhere, and three promises hold only because the prompt says so), `change` and `replace` not carrying clauses (with the MCP `clauses` argument having no row), and `indusk plans start` failing under `indusk init --local`.
 
 ## Depends On
 

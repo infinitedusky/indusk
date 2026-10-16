@@ -122,10 +122,13 @@ Assertions that prove none of this plan's clauses, each worth a test for the rea
 | ID | Assertion (user-visible behavior) | Level | Why |
 |----|-----------------------------------|-------|-----|
 | A25 | A plan written before clause plans still closes on passing tests that name its promises, with no signal asked of it. | unit | a regression guard over `a-closed-plan-kept-its-promises` for every plan closed before clauses |
-| A26 | InDusk's own signal writers write `broken` where they wrote `violated`, and every reader still reads both. | unit | the switch carried from `one-promise-language`; a rename that no promise of this plan states |
+| A26 | `markPromise`, InDusk's own signal writer, writes `broken` where it wrote `violated`, and every reader still reads both. | unit | the switch carried from `one-promise-language`; a rename that no promise of this plan states |
 | A27 | A promise with no clauses still opens an incident that names the tests that proved it, as before. | unit | a regression guard over `an-incident-names-its-tests` for every promise written before clauses |
 | A28 | An `audit.md` written before this plan, with six answers and no seventh, still lets the retrospective start. | unit | a regression guard over `an-audit-blocks-nothing` |
 | A29 | A test file carrying a clause token is refused at close when it asserts nothing about the clause. | unit | carried from `plans-are-promises`' audit: the proof by file named the clause but not its content; this tightens `verified-before-release` and may be dropped if the check cannot be made without false refusals |
+| A30 | No skill, tool description or doc page calls a promise's telemetry a mark; each says signal. The Day 4b entry in the root `CLAUDE.md`, archived plans and decisions, and this plan's own name are exempt. | unit | the word cleanup carried from `one-promise-language`, which no promise of this plan states |
+| A31 | The suite-speed script and the demo app write `broken` where they wrote `violated`, and every reader still reads both. | unit | the writers outside `markPromise`, carried from `one-promise-language`'s falsification; the editor's health line is switched later, as the brief says |
+| A32 | The planner's instructions say a task is written in the imperative and a verification item as an end state that must hold, and an impl written before this still validates. | unit | the task wording Sandy settled on 2026-10-15; a change to the planner for new impls only |
 
 ## Untestable Assertions
 
@@ -140,4 +143,5 @@ Assertions that prove none of this plan's clauses, each worth a test for the rea
 - Levels: nothing here is a `contract` yet. If the signal reads Jaeger through a query we do not own beyond what `promises status` already does, one `contract` row is added at the ADR.
 - A29 is the weakest row and is marked so; the plan reviewer decides whether it ships in this cut.
 - Rows A19–A24 are tests of the audit skill's instructions, in the style of `planner-brief-template.test.ts`: the instructions are the product, so the test reads what they say.
+- The ADR decides one thing the brief leaves open: whether a checkout on an InDusk older than the language release, which refuses the registry state `known-broken`, matters.
 - Out of scope, per the brief's "Not promised": the later cut (a break leading to its cause beyond the plan and phase pointer, diagnoses, browser signals, every break becoming a test, approvals as questions, clause views).
