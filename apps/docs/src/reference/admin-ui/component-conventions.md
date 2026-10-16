@@ -24,7 +24,7 @@ The string→variant maps themselves are shared, not per-component: `src/compone
 
 ## The components the mockups name
 
-Every component an approved mockup of a **landed** plan names is implemented **once** (approval merges a plan's mockups before its code, so a plan still active under `.indusk/planning/` is not held to it until it is archived); the exemption is per component, so a re-approval in flight by an unlanded plan keeps holding the components the landed approval bound and exempts only what it adds — when the landed approval recorded its components; when it recorded none, there is no record of what landed and the mockup is held in full — in one file whose root element carries its `data-component="<name>"` marker, with **a story per state** the mockups show (`*.stories.tsx` beside it). Nineteen exist, each presentational — data arrives as props, nothing is read inside — so a screen composes them and a story renders them the same way.
+Every component an approved mockup of a **landed** plan names is implemented **once** (approval merges a plan's mockups before its code, so a plan still active under `.indusk/planning/` is not held to it until it is archived); the exemption is per component, so a re-approval in flight by an unlanded plan keeps holding the components the landed approval bound and exempts only what it adds — when the landed approval recorded its components; when it recorded none, there is no record of what landed and the mockup is held in full — in one file whose root element carries its `data-component="<name>"` marker, with **a story per state** the mockups show (`*.stories.tsx` beside it). Twenty exist, each presentational — data arrives as props, nothing is read inside — so a screen composes them and a story renders them the same way.
 
 | Component | File | Stories (states) |
 |-----------|------|------------------|
@@ -37,7 +37,7 @@ Every component an approved mockup of a **landed** plan names is implemented **o
 | `device-frame` | `src/components/ui/DeviceFrame.tsx` | default |
 | `look-row` | `src/components/ui/LookRow.tsx` | approved, proposed, uncovered |
 | `nav` | `src/components/ui/Nav.tsx` | expanded, collapsed |
-| `plan-row` | `src/components/ui/PlanRow.tsx` | needs, working, released |
+| `plan-row` | `src/components/ui/PlanRow.tsx` | needs, working, released, worktree |
 | `promise-row` | `src/components/ui/PromiseRow.tsx` | broken, proving, enforced, declared, empty |
 | `rail-group` | `src/components/ui/RailGroup.tsx` | default, current |
 | `shell` | `src/components/ui/Shell.tsx` | default, collapsed |
@@ -47,6 +47,7 @@ Every component an approved mockup of a **landed** plan names is implemented **o
 | `tag` | `src/components/ui/Tag.tsx` | default |
 | `timeline` | `src/components/ui/Timeline.tsx` | default |
 | `view-link` | `src/components/ui/ViewLink.tsx` | default, current |
+| `worktree-mark` | `src/components/ui/WorktreeMark.tsx` | closed, open |
 
 Two names differ from their files because the file's name was taken first: the mockups' `chip` is `Badge.tsx` (the pill the trajectory states use), and the mockups' `badge` — the plan's lettered badge — is `PlanBadge.tsx`.
 

@@ -1,3 +1,5 @@
+// promise: the-nav-says-where-a-plan-is
+import { derivePlanPosition } from "@infinitedusky/indusk-mcp/lifecycle";
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import type { Plan } from "@/lib/planning-reader";
@@ -187,6 +189,125 @@ describe("PlanList — malformed plan indicator (T13 prep)", () => {
     expect(
       container.querySelector('[data-testid="malformed-delta-malformed"]'),
     ).not.toBeNull();
+  });
+});
+
+/** A plan's position from the real reader, as the plan page gets it. */
+function positionOf(over: {
+  stageStatus: string;
+  missing?: string[];
+  archived?: boolean;
+}) {
+  return derivePlanPosition({
+    summary: {
+      name: "p",
+      stage: "impl",
+      stageStatus: over.stageStatus,
+      nextStep: "",
+      dependencies: [],
+      documents: ["brief.md", "test-plan.md", "impl.md"],
+      workflow: "bugfix",
+    },
+    impl: null,
+    readiness: {
+      missing: over.missing ?? [],
+      nonTerminalRows: [],
+      unprovenPromises: [],
+      longSkipReasons: [],
+    } as never,
+    archived: over.archived ?? false,
+  });
+}
+
+describe("PlanList — the finished mark is a release's (A2, A4, A6)", () => {
+  const grouping = {
+    parents: ["parent"],
+    roadmap: ["parent"],
+    subplans: {
+      parent: ["built-child", "closed-child", "shipped-child", "waiting-child"],
+    },
+    declaredTitles: {},
+  };
+  const built = (name: string, over: Partial<Plan> = {}) =>
+    mockPlan(name, {
+      status: "completed",
+      position: positionOf({
+        stageStatus: "completed",
+        missing: ["falsification", "cleanup", "audit"],
+      }),
+      ...over,
+    });
+
+  const renderRows = (
+    dates: Record<string, { released: string | null }>,
+    waiting = {},
+  ) =>
+    render(
+      <PlanList
+        active={[
+          mockPlan("parent"),
+          built("built-child"),
+          built("shipped-child"),
+          built("waiting-child"),
+        ]}
+        archived={[
+          mockPlan("closed-child", {
+            archived: true,
+            status: "completed",
+            position: positionOf({ stageStatus: "completed", archived: true }),
+          }),
+        ]}
+        masterOrder={[]}
+        grouping={grouping}
+        dates={dates as never}
+        waiting={waiting}
+      />,
+    );
+
+  const row = (container: Element, name: string) => {
+    const link = container.querySelector(`a[data-plan-name="${name}"]`);
+    expect(link, `expected a row for ${name}`).not.toBeNull();
+    return {
+      state: link
+        ?.querySelector('[data-component="badge"]')
+        ?.getAttribute("data-state"),
+      text: link?.textContent ?? "",
+    };
+  };
+
+  it("A2 — a built plan no release shipped carries the in-progress mark and names its step", async () => {
+    const { container } = await renderRows({});
+    const built = row(container, "built-child");
+    expect(built.state).toBe("working");
+    expect(built.text).toContain("Falsify");
+  });
+
+  it("A2 — an archived plan with no release found reads Closed with the finished mark", async () => {
+    const { container } = await renderRows({});
+    const closed = row(container, "closed-child");
+    expect(closed.state).toBe("released");
+    expect(closed.text).toContain("Closed");
+    expect(closed.text).not.toContain("completed");
+  });
+
+  it("A6 — a plan a release shipped reads Released with the finished mark", async () => {
+    const { container } = await renderRows({
+      "shipped-child": { released: "2026-10-01" },
+    });
+    const shipped = row(container, "shipped-child");
+    expect(shipped.state).toBe("released");
+    expect(shipped.text).toContain("Released");
+  });
+
+  it("A4 — a plan waiting on the person reads what it waits at, ahead of Released", async () => {
+    const { container } = await renderRows(
+      { "waiting-child": { released: "2026-10-01" } },
+      { "waiting-child": "Review" },
+    );
+    const waiting = row(container, "waiting-child");
+    expect(waiting.state).toBe("needs");
+    expect(waiting.text).toContain("Review");
+    expect(waiting.text).not.toContain("Released");
   });
 });
 

@@ -69,7 +69,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **One home per piece**: rows table `components/phases/`,
   progress lines `bars/ProgressLines`, display vocabulary (`phaseTitle`:
   `Phase 4`, not `phaseLabel`; a plan is `plan.title`, initials from it, the
-  handle only for links, data attributes; its stage is `planStage`, a queued
+  handle only for links, data attributes; its stage and mark are `planStage`/`navMarkOf` in `lib/plan-stage.ts`: waiting, else Released from a release's date, else the package's `stepAt` (`plans/steps`), else Closed — never the impl's `status:` (the project card's `hasWorkInProgress` and the copied markdown's `Stage:` line ask the same answer), which `/work` sets `completed` before the rituals; guarded by `plan-stage.test.ts` and `cockpit-single-definition.test.ts`; a queued
   plan's title rides its `buildGroups` placeholder) and chip/label maps in
   `bars/labels.ts`, badge maps `ui/badge-variant.ts`, research reads
   `lib/research-reader.ts`, project reads `lib/project-reader.ts` (config
@@ -113,7 +113,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
   hand-written one beside them. — see `/decisions/incident-recording`
 - **Active plans and their boundary records are read from each plan's live
   root** (`worktree/plan-worktrees`); `components/Worktrees.tsx` renders the
-  worktree chip, a broken assignment, unassigned worktrees and the record error.
+  nav's worktree mark (`PlanWorktreeMark` → `WorktreeMark`; the plan header
+  keeps its tag), a broken assignment, unassigned worktrees and the record error.
 - Tests: `next/link` needs a `vi.mock` stub in vitest browser tests
   (synchronous factory); a page that gains a `lib/*` import needs that module
   mocked in every browser test that renders it (`node:fs` is externalized);
@@ -216,7 +217,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   — see `/decisions/storybook-components`
 - **A component a mockup names is one file, with a story per state, and
   presentational**: its root carries `data-component="<name>"`, a second
-  marker anywhere is a finding, data arrives as props. Nineteen in
+  marker anywhere is a finding, data arrives as props. Twenty in
   `components/ui/`, listed in `/reference/admin-ui/component-conventions`.
   Guarded by `looks-components-cli.test.ts` (A1, A3) and
   `looks-admin-components.test.ts` (A2).
@@ -276,6 +277,13 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `PlanList` only draws the tree (`NavPath`, `PlanRow`, `NavGroup`), never its
   own markup. Guarded by `CockpitFrame.test.tsx` (A1–A4) and
   `PlanList.test.tsx`. — see `/decisions/cockpit-redraw`
+- **A control in a nav row is a sibling of the row's link, never inside it**:
+  `PlanRow`'s `worktree` slot draws the row as a container with its title's
+  link stretched over it. The stretched link carries the title (the full name
+  on hover) and the focus ring (`.nav-row-link:focus-visible::after`), since the
+  overlay is what the pointer and focus meet; an empty slot (`null`, `false`)
+  is no slot. Guarded by `PlanList.worktree.test.tsx` and
+  `PlanRow.worktree.test.tsx` — `promise: a-nav-row-keeps-its-parts-apart`.
 - **The brief page and plan page are held to `brief.*` and `plan.*`**: each
   reports its state with `data-look-state` (`lib/look-state.ts`), never a
   `?state=`; `screens.json` lists one path per state at A10's fixture plans,

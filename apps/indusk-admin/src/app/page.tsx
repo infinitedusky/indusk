@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { isWorkbench } from "@infinitedusky/indusk-mcp/worktree/repos";
 import type { ProjectCardData } from "@/components/ProjectCard";
 import { ProjectGrid } from "@/components/ProjectGrid";
+import { hasWorkInProgress } from "@/lib/plan-stage";
 import { readActivePlans } from "@/lib/planning-reader";
 import { readRegistryProjects } from "@/lib/registry-client";
 
@@ -33,7 +34,7 @@ export default async function Home() {
         path: entry.path,
         lastSeenAt: entry.lastSeenAt,
         activePlanCount: active.length,
-        hasInProgress: active.some((p) => p.status === "in-progress"),
+        hasInProgress: hasWorkInProgress(active),
         shape: isWorkbench(entry.path) ? "workbench" : "normal-mode",
       };
     }),

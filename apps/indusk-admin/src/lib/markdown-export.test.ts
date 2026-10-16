@@ -1,3 +1,5 @@
+// promise: the-nav-says-where-a-plan-is
+import { derivePlanPosition } from "@infinitedusky/indusk-mcp/lifecycle";
 import type { Trajectory } from "@infinitedusky/indusk-mcp/trajectory/parser";
 import { describe, expect, it } from "vitest";
 import {
@@ -196,9 +198,47 @@ describe("planMarkdown", () => {
     };
   }
 
-  it("always includes a title and status line", () => {
+  it("always includes a title and a stage line", () => {
     const md = planMarkdown(makePlan());
-    expect(md.startsWith("# demo-plan\n\nStatus: in-progress")).toBe(true);
+    expect(md.startsWith("# demo-plan\n\nStage: ")).toBe(true);
+    expect(md).not.toContain("Status:");
+  });
+
+  // A8 - the stage the nav shows, never the impl's status word.
+  it("A8 — a built plan whose impl says completed reads Stage: Falsify", () => {
+    const position = derivePlanPosition({
+      summary: {
+        name: "demo-plan",
+        stage: "impl",
+        stageStatus: "completed",
+        nextStep: "",
+        dependencies: [],
+        documents: ["brief.md", "test-plan.md", "impl.md"],
+        workflow: "bugfix",
+      },
+      impl: null,
+      readiness: {
+        missing: ["falsification", "cleanup", "audit"],
+        nonTerminalRows: [],
+        unprovenPromises: [],
+        longSkipReasons: [],
+      } as never,
+      archived: false,
+    });
+    const fm = (status: string) =>
+      ({ frontmatter: { status }, content: "" }) as never;
+    const md = planMarkdown(
+      makePlan({
+        status: "completed",
+        workflow: "bugfix",
+        position,
+        brief: fm("accepted"),
+        testPlan: fm("accepted"),
+        impl: fm("completed"),
+      }),
+    );
+    expect(md).toContain("Stage: Falsify");
+    expect(md).not.toContain("completed");
   });
 
   it("concatenates present sections in render order, separated by rules", () => {

@@ -1,0 +1,7 @@
+# A test that compares a reader's output to the function it calls proves only that the reader called the function correctly — not that the function's answer is right
+
+A test shaped like "assert the nav's displayed value equals `stepAt(plan)`'s return value" will pass as long as the nav correctly calls `stepAt` and nothing else — it says nothing about whether `stepAt` itself computes the right answer for any given plan. This kind of test is a wiring check, not a correctness check, and it's easy to write by accident when "does the UI show what the function says" feels like it's testing the real behavior.
+
+**Why:** nav-stage-matches-plan-page (dusk, 2026-10-16, archived at `.indusk/planning/archive/nav-stage-matches-plan-page/`), audit finding on row A1. The cold audit found that A1 compared the nav's reading against the very function (`stepAt`) that produces it, which can only prove the two agree with each other, never that either is correct against real plan data.
+
+**How to apply:** when a row or test asserts "reader X shows what function Y returns," ask separately: does something independently verify Y's answer against ground truth (real file state, an expected value computed by hand or from a fixture with a known-correct answer), or does every row in the chain ultimately just compare two things that call the same underlying logic? A reader-matches-its-source test is useful for catching wiring regressions but must be paired with at least one row that checks the source's answer against something external to it.
