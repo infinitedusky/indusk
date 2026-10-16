@@ -1,7 +1,7 @@
 ---
 title: "A finished ritual stays done"
 date: 2026-10-16
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
