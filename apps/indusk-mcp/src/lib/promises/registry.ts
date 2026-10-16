@@ -11,11 +11,13 @@ import {
 	INCIDENTS_SUBDIR,
 	type IncidentSource,
 	type IncidentStatus,
+	PROMISE_CLAUSE_KINDS,
 	PROMISE_KINDS,
 	PROMISE_LIFETIMES,
 	PROMISE_NAME,
 	PROMISE_STATES,
 	PROMISES_REL_DIR,
+	type PromiseClauseKind,
 	type PromiseKind,
 	type PromiseLifetime,
 	type PromiseState,
@@ -38,6 +40,16 @@ export * from "./vocabulary.js";
  * directory itself.
  */
 
+/** One clause of a promise, as its registry file carries it (plans-are-promises ADR D3). */
+export interface PromiseClause {
+	name: string;
+	kind: PromiseClauseKind;
+	/** The clause's sentence; absent for a resting clause. */
+	statement?: string;
+	/** The promise a `rests-on` clause rests on (`rests_on` in the file). */
+	restsOn?: string;
+}
+
 export interface PromiseEntry {
 	name: string;
 	kind: PromiseKind;
@@ -56,6 +68,8 @@ export interface PromiseEntry {
 	/** Earlier names that still resolve. */
 	aliases: string[];
 	supersededBy?: string;
+	/** The clauses the promise is made of; absent for a promise stated before clauses. */
+	clauses?: PromiseClause[];
 	/**
 	 * The promise this one replaced (planner-promises ADR D4). Written once, on
 	 * the new side, by the plan doing the replacing; "superseded by" is derived
@@ -263,6 +277,11 @@ export function promiseProblem(value: unknown, stem: string, statement: string):
 			return `\`aliases\` entry "${alias}" is not kebab-case (${PROMISE_NAME})`;
 		}
 	}
+	const clauseProblem = clausesProblem(v.clauses, [
+		stem,
+		...((v.aliases as string[] | undefined) ?? []),
+	]);
+	if (clauseProblem !== null) return clauseProblem;
 	if (v.superseded_by !== undefined && typeof v.superseded_by !== "string") {
 		return "`superseded_by` must be a promise name";
 	}
@@ -284,6 +303,53 @@ export function promiseProblem(value: unknown, stem: string, statement: string):
 		return `\`expect_every\` is only for behaviour promises (this one is ${v.kind}): its health is the suite's, not telemetry's`;
 	}
 	if (statement === "") return "no statement (the body's first paragraph is empty)";
+	return null;
+}
+
+/** A validated `clauses` list, as entries. */
+function readClauses(list: Array<Record<string, unknown>>): PromiseClause[] {
+	return list.map((c) => ({
+		name: c.name as string,
+		kind: c.kind as PromiseClauseKind,
+		...(typeof c.statement === "string" ? { statement: c.statement } : {}),
+		...(typeof c.rests_on === "string" ? { restsOn: c.rests_on } : {}),
+	}));
+}
+
+/**
+ * Why a promise file's `clauses` is not a list of clauses, or null when it is
+ * one (or absent). `own` is the promise's names, which no clause may rest on.
+ */
+function clausesProblem(value: unknown, own: readonly string[]): string | null {
+	if (value === undefined) return null;
+	if (!Array.isArray(value)) return "`clauses` must be a list";
+	const seen = new Set<string>();
+	for (const [i, c] of value.entries()) {
+		if (c === null || typeof c !== "object") return `\`clauses\` entry ${i + 1} is not an object`;
+		const clause = c as Record<string, unknown>;
+		const name = clause.name;
+		if (typeof name !== "string" || !PROMISE_NAME.test(name)) {
+			return `\`clauses\` entry ${i + 1} needs a kebab-case \`name\``;
+		}
+		if (seen.has(name)) return `\`clauses\` names "${name}" twice`;
+		seen.add(name);
+		if (!isOneOf(PROMISE_CLAUSE_KINDS, clause.kind)) {
+			return `clause "${name}" has a missing or invalid \`kind\` (expected ${PROMISE_CLAUSE_KINDS.join(" | ")})`;
+		}
+		if (clause.statement !== undefined && typeof clause.statement !== "string") {
+			return `clause "${name}": \`statement\` must be text`;
+		}
+		if (clause.kind === "rests-on") {
+			if (typeof clause.rests_on !== "string" || !PROMISE_NAME.test(clause.rests_on)) {
+				return `clause "${name}" rests on another promise, so it needs \`rests_on\`: a promise name`;
+			}
+			if (own.includes(clause.rests_on)) {
+				return `clause "${name}" rests on ${clause.rests_on}, which is this promise itself — a promise cannot rest on itself`;
+			}
+		} else if (clause.rests_on !== undefined) {
+			return `clause "${name}" is a ${clause.kind}, which rests on nothing — \`rests_on\` is only for a rests-on clause`;
+		}
+	}
 	return null;
 }
 
@@ -385,6 +451,7 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 			aliases: (d.aliases as string[] | undefined) ?? [],
 			supersededBy: d.superseded_by as string | undefined,
 			...(typeof d.supersedes === "string" ? { supersedes: d.supersedes } : {}),
+			...(Array.isArray(d.clauses) ? { clauses: readClauses(d.clauses) } : {}),
 			...(typeof d.expect_every === "string"
 				? { expectEvery: { text: d.expect_every, ms: parseDuration(d.expect_every) as number } }
 				: {}),
@@ -441,6 +508,14 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 	const registry: Registry = { dir, promises, incidents };
 	if (problems.length > 0) return { ok: false, problems, partial: registry };
 	return { ok: true, registry };
+}
+
+/** The promise called `name`, or one that carries it as an earlier name; undefined when neither. */
+export function findPromise<T extends Pick<PromiseEntry, "name" | "aliases">>(
+	promises: readonly T[],
+	name: string,
+): T | undefined {
+	return promises.find((p) => p.name === name || p.aliases.includes(name));
 }
 
 /**

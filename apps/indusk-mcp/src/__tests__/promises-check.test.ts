@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import matter from "gray-matter";
 import { describe, expect, it } from "vitest";
 import { REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import {
@@ -13,6 +14,10 @@ import {
 
 /**
  * day-promises — Test Phase 1: the check refuses a registry that lies.
+ *
+ * promise: a-plan-holds-the-promises-it-lands — plans-are-promises A19: a
+ * clause that rests on its own promise, or on one the registry does not hold,
+ * is refused where it is written.
  *
  * Every row here reaches `indusk promises check` over the CLI boundary, so
  * before the command exists the red is commander's unknown-command exit (1,
@@ -422,3 +427,56 @@ describe.skipIf(SHOULD_SKIP)("indusk promises check — refusals by name", () =>
 		expect(r.stderr).toContain("nope");
 	});
 });
+
+describe.skipIf(SHOULD_SKIP)(
+	"plans-are-promises A19 — a resting clause names a promise that exists",
+	() => {
+		const resting = (restsOn: string) => ({
+			name: "held-seats-release",
+			kind: "structure" as const,
+			state: "declared" as const,
+			domain: "seating",
+			owner: "seats-v2",
+			raw: matter.stringify("A held seat is released.\n\n## History\n- 2026-10-16 — declared.\n", {
+				name: "held-seats-release",
+				kind: "structure",
+				lifetime: "holds",
+				state: "declared",
+				domain: "seating",
+				owner: "seats-v2",
+				sites: [],
+				tests: [],
+				incidents: [],
+				clauses: [
+					{ name: "base", kind: "rests-on", rests_on: restsOn },
+					{ name: "fast", kind: "split", statement: "Released fast." },
+				],
+			}),
+		});
+		const withResting = (restsOn: string) =>
+			promiseProject(
+				withClean((o) => {
+					o.promises = [...(o.promises ?? []), resting(restsOn)];
+				}),
+			);
+
+		it("accepts a clause resting on a promise the registry holds", () => {
+			const r = check(withResting("seat-never-double-booked").root);
+			expect(r.code, r.stderr).toBe(0);
+		});
+
+		it("refuses a clause that rests on its own promise, naming the clause", () => {
+			const r = check(withResting("held-seats-release").root);
+			expect(r.code, r.stderr).toBe(2);
+			expect(r.stderr).toContain("base");
+			expect(r.stderr).toMatch(/itself|its own/i);
+		});
+
+		it("refuses a clause resting on a promise the registry does not hold, naming the clause", () => {
+			const r = check(withResting("no-such-promise").root);
+			expect(r.code, r.stderr).toBe(2);
+			expect(r.stderr).toContain("base");
+			expect(r.stderr).toContain("no-such-promise");
+		});
+	},
+);

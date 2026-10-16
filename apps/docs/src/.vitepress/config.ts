@@ -274,6 +274,7 @@ const config = defineConfig({
 						{ text: "VS Code Extension", link: "/decisions/vscode-extension" },
 						{ text: "Test Kinds", link: "/decisions/test-kinds" },
 						{ text: "Planner Promises", link: "/decisions/planner-promises" },
+						{ text: "Plans Are Promises", link: "/decisions/plans-are-promises" },
 						{ text: "Sessions per Plan", link: "/decisions/sessions-per-plan" },
 						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },

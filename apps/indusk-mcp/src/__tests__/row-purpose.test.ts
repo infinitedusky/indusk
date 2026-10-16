@@ -2,7 +2,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
+import { rowsNamingIn } from "../lib/promises/rows.js";
 import { token } from "../lib/tokens.js";
+import { parsePurpose } from "../lib/trajectory/parser.js";
 import { runHook } from "./helpers/hook-runner.js";
 import { implText } from "./helpers/plan-fixture.js";
 
@@ -138,5 +140,35 @@ describe("planner-promises A31 — a row with a cell missing or too many", () =>
 		const r = await validate(broken((l) => `${l} extra |`));
 		expect(r.exitCode, r.stderr).toBe(2);
 		expect(r.stderr).toMatch(/T2[^\n]*cells?|cells?[^\n]*T2/i);
+	});
+});
+
+/**
+ * plans-are-promises A15 — promise: every-test-says-what-it-is-for.
+ *
+ * A row may say it proves one clause of a promise: `clause: <promise>/<clause>`.
+ * It then counts as naming the promise wherever rows are read, so a promise's
+ * proof, its incidents and its standing list the row.
+ */
+describe("plans-are-promises A15 — a row naming a clause names its promise", () => {
+	const CLAUSE = "clause: first-promise/fast";
+
+	it("reads the cell as a clause, and as the promise it belongs to", () => {
+		const purpose = parsePurpose(CLAUSE) as
+			| (ReturnType<typeof parsePurpose> & { clauses?: Array<{ promise: string; clause: string }> })
+			| null;
+		expect(purpose?.clauses).toEqual([{ promise: "first-promise", clause: "fast" }]);
+		expect(purpose?.promises).toEqual(["first-promise"]);
+		expect(purpose?.malformed).toBeUndefined();
+	});
+
+	it("lists the row among those naming the promise", () => {
+		const text = implText("seats", {
+			keys: ["test_purpose: required"],
+			columns: ["For", "Test"],
+			rows: [{ cells: { For: CLAUSE, Test: "src/seat.test.ts" } }],
+		});
+		const found = rowsNamingIn(text, { name: "first-promise", aliases: [] });
+		expect(found.map((r) => r.id)).toEqual(["T1"]);
 	});
 });

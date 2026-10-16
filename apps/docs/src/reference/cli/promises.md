@@ -139,6 +139,22 @@ does, a domain it does not declare is refused, naming the ones it does. It
 refuses a name the registry already holds, a kind that is not a kind, and a
 plan that is not a folder under `.indusk/planning/`.
 
+A promise stated as clauses takes `--clause`, once per clause:
+
+```
+indusk promises declare <name> ... --clause "released-in-time (split). A seat is released within a second." \
+  --clause "never-lost (limit). No hold is ever lost." \
+  --clause "clock-is-trusted (rests on server-clock-is-one)"
+```
+
+A clause is `name (split). sentence`, `name (limit). sentence` or
+`name (rests on promise-name)`, the same grammar a brief's sub-entries use. The
+clauses are written into the promise's file as a `clauses:` list. A kind that is
+none of split, limit or rests on, a clause given twice, or a clause resting on a
+promise the registry does not hold is refused with exit **2**, naming the
+clause, and nothing is written. The MCP `declare_promise` tool takes the same
+specs as `clauses`.
+
 ```
 indusk promises change <name> --plan <plan> --statement "<sentence>" --reason "<why>"
 ```

@@ -3,6 +3,9 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { glob } from "glob";
 import { describe, expect, it } from "vitest";
+import { parsePurpose as hookParsePurpose } from "../../hooks/_trajectory-parser.js";
+import { token } from "../lib/tokens.js";
+import { parsePurpose as libParsePurpose } from "../lib/trajectory/parser.js";
 
 /**
  * A23 — trajectory-row parsing has one definition under `hooks/`.
@@ -117,4 +120,34 @@ describe("A33 — one port of the inbox's reading under hooks/", () => {
 		}
 		expect(hits.sort()).toEqual(["_inbox.js"]);
 	}, 30_000);
+});
+
+/**
+ * plans-are-promises A14 — the library's row-purpose reader and the hook's
+ * port of it read every `For` cell the same way, the clause form included.
+ * A regression guard over two copies that must not drift; they have before
+ * (A23 above is the same story for the trajectory parser).
+ */
+describe("plans-are-promises A14 — one reading of a row's purpose, in both copies", () => {
+	const cells = [
+		token("promise", "a"),
+		"lesson: b",
+		"clause: a/c",
+		`${token("promise", "a")}, clause: a/c`,
+		"clause: a",
+		"clause: a/",
+		"a regression guard over the old seat map",
+		"",
+	];
+
+	it.each(cells)("reads %j the same in the library and the hook", (cell) => {
+		expect(hookParsePurpose(cell)).toEqual(libParsePurpose(cell));
+	});
+
+	it("reads a clause cell as a clause in both", () => {
+		for (const read of [libParsePurpose, hookParsePurpose]) {
+			const purpose = read("clause: a/c") as { clauses?: unknown } | null;
+			expect(purpose?.clauses).toEqual([{ promise: "a", clause: "c" }]);
+		}
+	});
 });

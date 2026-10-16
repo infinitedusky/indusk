@@ -6,6 +6,7 @@ import type { BrokenPromise } from "./fix.js";
 import { type HealthDeps, healthLine, readHealth, type SourceHealthRead } from "./health.js";
 import { type HeardRow, readHeard } from "./heard.js";
 import {
+	findPromise,
 	type IncidentEntry,
 	type PromiseEntry,
 	type Registry,
@@ -113,7 +114,7 @@ export async function proofOf(
 ): Promise<Proof | null> {
 	const read = readPromises(projectRoot);
 	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
-	const entry = registry?.promises.find((p) => p.name === name || p.aliases.includes(name));
+	const entry = registry ? findPromise(registry.promises, name) : undefined;
 	if (!registry || !entry) return null;
 
 	const now = deps.now ?? Date.now;

@@ -1350,6 +1350,11 @@ promisesCmd
 	.requiredOption("--kind <kind>", "behaviour | state | structure")
 	.requiredOption("--domain <domain>", "one of the project's declared domains")
 	.requiredOption("--statement <sentence>", "the promise, in one plain sentence")
+	.option(
+		"--clause <spec>",
+		"a clause of the promise, repeatable: `name (split). sentence`, `name (limit). sentence` or `name (rests on promise)`",
+		(spec: string, all: string[] = []) => [...all, spec],
+	)
 	.action(async function (this: Command, name: string) {
 		const { promisesDeclare } = await import("./commands/promises.js");
 		promisesDeclare(rootOrExit(), name, this.opts());
