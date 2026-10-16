@@ -7973,6 +7973,17 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:23.571Z",
 			"plan": "nav-row-legible"
+		},
+		{
+			"kind": "story",
+			"story": "plan-row.working",
+			"snapshotHash": "ef93ea035957d8aae7ab0720fe3f52cad1303d881240f4aa609f9e294d413cf9",
+			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-16T18:33:23.774Z",
+			"plan": "nav-row-legible"
 		}
 	]
 }
