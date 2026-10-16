@@ -75,8 +75,8 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 | A10 | Against real Chromium and a served app, a second run requests no page, prints one reused line per look, counts reused in the summary, exits 0 | Test Phase 1 | Build Phase 2 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A11 | Each look's page is requested once, and the look is still reported at every device and scheme under today's names | Test Phase 1 | Build Phase 1 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A12 | A page measured in place reads as a fresh load does at every device and scheme, for a colour transition and a pixel-ratio media query | Test Phase 1 | Test Phase 1 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
-| A13 | A development server's page (Next HMR client, webpack refresh runtime, Vite client) is refused before any look opens, naming the declared serve command or how to declare one; a production page is not | Build Phase 3 | Build Phase 3 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/dev-server.test.ts |
-| A14 | Against a served page carrying a development marker, the check exits 1 with the refusal and reports no look held | Test Phase 1 | Build Phase 3 | written | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
+| A13 | A development server's page (Next HMR client, webpack refresh runtime, Vite client) is refused before any look opens, naming the declared serve command or how to declare one; a production page is not | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/dev-server.test.ts |
+| A14 | Against a served page carrying a development marker, the check exits 1 with the refusal and reports no look held | Test Phase 1 | Build Phase 3 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A15 | A look that times out twice is unchecked with the reason, a 404 is unchecked at once, any other failure ends the run | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-timeout.test.ts |
 | A16 | With one load per look, a look that does not load or draw in time is unchecked at every device and scheme with the reason, and every other look is judged | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
 | A17 | The only option checks just the looks of that name, screen or story or both, at every device and scheme, measured even when reusable; nothing else is opened or reported | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
@@ -85,10 +85,10 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 | A20 | A page with a raw value is still reported broken, naming the element and the approved and actual values, with in-place measuring | Test Phase 1 | Test Phase 1 | passing | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
 | A21 | The new browser tests are in the system tier; the everyday suite starts no browser and no server | Test Phase 1 | Test Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | A25 | A look reported only as reused, run after run, keeps reading holding in its standing, never no signal | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/promises/look-standing.test.ts |
-| A27 | The full check of the admin with every look opened, against its production build, holds every look, and a broken look fails the slow tests | Test Phase 1 | Build Phase 3 | written | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-admin-all.contract.test.ts |
-| A22 | After a one-component change with the stories rendered, the admin's check against a production build finishes under 15 s and names every reused look | Build Phase 3 | Build Phase 3 | planned | live check | the brief's first expectation, timed once when the build closes | manual: time indusk looks check admin --url http://localhost:3940 |
-| A23 | The admin's full check with the all option against a production build finishes under 60 s | Build Phase 3 | Build Phase 3 | planned | live check | the brief's second expectation, timed once when the build closes | manual: time indusk looks check admin --url http://localhost:3940 --all |
-| A24 | Against a running next dev of the admin, the check refuses naming the admin's build-and-serve command, without opening a look | Build Phase 3 | Build Phase 3 | planned | live check | the dev-server clause against the framework itself, whose markers this plan reads but does not own | manual: indusk looks check admin --url http://localhost:3961 |
+| A27 | The full check of the admin with every look opened, against its production build, holds every look, and a broken look fails the slow tests | Test Phase 1 | Build Phase 3 | passing | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-admin-all.contract.test.ts |
+| A22 | After a one-component change with the stories rendered, the admin's check against a production build finishes under 15 s and names every reused look | Build Phase 3 | Build Phase 3 | blocked | live check | the brief's first expectation, timed once when the build closes | manual: time indusk looks check admin --url http://localhost:3940 |
+| A23 | The admin's full check with the all option against a production build finishes under 60 s | Build Phase 3 | Build Phase 3 | blocked | live check | the brief's second expectation, timed once when the build closes | manual: time indusk looks check admin --url http://localhost:3940 --all |
+| A24 | Against a running next dev of the admin, the check refuses naming the admin's build-and-serve command, without opening a look | Build Phase 3 | Build Phase 3 | passing | live check | the dev-server clause against the framework itself, whose markers this plan reads but does not own | manual: indusk looks check admin --url http://localhost:3961 |
 
 ### Deferred Verification
 
@@ -606,37 +606,43 @@ This phase stops the check from spending half an hour in a development server. B
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
 #### Build Phase 3 Verification
 
-- [ ] A development server's page is refused before anything opens, a production page is not, and the browser test for the refusal passes.
+- [x] A development server's page is refused before anything opens, a production page is not, and the browser test for the refusal passes.
+  - Result (2026-10-16): `dev-server.test.ts` 7 passed (A13); `vitest related` over dev-server, check and mockups 334 passed in 51 files; the system run of `looks-check-speed.contract.test.ts`, `looks-browser.contract.test.ts` and `looks-component-content.contract.test.ts` 12 passed — A14 green, A10, A11, A12, A20 still green.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/looks-check-speed/apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/looks/dev-server.test.ts && pnpm exec vitest related src/lib/looks/dev-server.ts src/lib/looks/check.ts src/lib/looks/mockups.ts` — A13 green; `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-check-speed.contract.test.ts src/__tests__/looks-browser.contract.test.ts src/__tests__/looks-component-content.contract.test.ts` — A14 green, A10, A11, A12, A20 still green.
 
   </details>
-- [ ] The full check of the bundled admin, every look opened, holds every look.
+- [x] The full check of the bundled admin, every look opened, holds every look.
+  - Result (2026-10-16): A27 green; the full check of the bundled admin took 98.9 s (printed by the test), exit 0, no broken look.
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-admin-all.contract.test.ts` (after `pnpm run prepublishOnly`, as `test:system` does) — A27 green, its printed time recorded in Notes.
 
   </details>
-- [ ] A full check of the admin against a production build finishes in under a minute.
+- [x] A full check of the admin against a production build finishes in under a minute.
+  - Result (2026-10-16): **98.2 s real time, over the 60 s expectation** (exit 0, no look broken: 820 look lines held, 0 reused, 236 unchecked). Render of the stories first: 7.1 s (`indusk looks stories admin`, 146 snapshots for 35 components); the admin's own production build (stories and Next) 15 s. Where the time went: every look is opened and measured in Chromium; the 236 unchecked lines (about 40 looks) are looks the check cannot read in this checkout (see Notes) and, as the unchanged run below shows, account for most of the 57 s that no change removes.
   <details><summary>Technical</summary>
 
   A23. From the worktree root: `pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940` (its own production build — the daemon on :3939 serves the main checkout's bundle, and is the person's: do not restart it); `indusk looks stories admin`; then `time indusk looks check admin --url http://localhost:3940 --all` — real time under 60 s, exit 0 or the broken looks named. Record the time, the count of held / broken / unchecked looks, and the render's own time in Notes. Over 60 s is information (the brief's expectation), recorded with where the time went.
 
   </details>
 - [ ] A check after a change to one component finishes in under fifteen seconds and names every look it reused.
+  - Result (2026-10-16), **not met, left unchecked**: with the stories rendered and the held results from the full run, changing one class of `PlanBadge.tsx` (the `badge` component, rebuilt and restarted on :3940) took **94.6 s** (280 look lines held = 47 looks reopened, 90 reused = 15 looks, 236 unchecked) — the badge is drawn inside the nav, so every screen that composes the nav reopens legitimately. Changing one class of `Tag.tsx` instead (a leaf used by few screens) took **89.4 s** (27 looks reopened, 109 reused lines). A run with nothing changed took **56.8 s** (4 held, 136 reused, 236 unchecked): the floor is the 236 unchecked lines (about 40 looks that a check cannot read here), which are reopened on every run because a look last unchecked is never reused (A4). What the change itself added over that floor: 38 s (badge) and 33 s (tag), which alone is over 15 s. The reused lines are named, one per look. The component change and the re-rendered snapshots were reverted (`git checkout -- apps/indusk-admin .indusk/mockups/admin/components .indusk/mockups/admin/components.json`).
   <details><summary>Technical</summary>
 
   A22. With the held results from the full run: change one class in `apps/indusk-admin/src/components/ui/PlanBadge.tsx` (the `badge` component) to another token's class, rebuild and restart the server on :3940, `indusk looks stories admin`, then `time indusk looks check admin --url http://localhost:3940` — real time under 15 s; output reopens the badge stories and the screens whose mockups compose `badge`, and prints a `reused` line for every other look. Revert the change and the re-rendered snapshots (`git checkout -- apps/indusk-admin .indusk/mockups/admin/components .indusk/mockups/admin/components.json`); the plan changes no admin source. Record both times in Notes.
 
   </details>
-- [ ] Against a running development server of the admin the check refuses, naming the admin's command, without opening a look.
+- [x] Against a running development server of the admin the check refuses, naming the admin's command, without opening a look.
+  - Result (2026-10-16): A24 green: against `next dev -p 3961` the check exited 1 in 1.4 s, stderr `http://localhost:3961 is a development server (hmr-client) — build and serve the app, then check again: pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940`, no `held` line, nothing opened.
   <details><summary>Technical</summary>
 
   A24. `cd apps/indusk-admin && npx next dev -p 3961` (stop it after); `indusk looks check admin --url http://localhost:3961` exits 1, stderr names `hmr-client` and `pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940`, and no `held` line. Record the output in Notes.
 
   </details>
-- [ ] The brief and the promise registry still agree.
+- [x] The brief and the promise registry still agree.
+  - Result (2026-10-16): `indusk promises contract looks-check-speed` exits 0 (1 made, 2 kept; 2 expectations); `indusk promises check` exits 0 (150 promises, 0 known-broken).
   <details><summary>Technical</summary>
 
   `indusk promises contract looks-check-speed` exits 0; `indusk promises check` exits 0.
@@ -692,3 +698,6 @@ This phase stops the check from spending half an hour in a development server. B
 - The full check runs in the slow tier, in the background after landing and at release, never blocking either (Sandy, 2026-10-16, keeping the 2026-10-08 rule); a broken look there becomes an incident on `tokens-are-held-exactly`.
 - The 60-second full run stays an expectation (Sandy, 2026-10-16); a miss is information.
 - The daemon on :3939 is the person's and serves the main checkout's build; every live check here uses the worktree's own build on :3940.
+- Measured 2026-10-16, Build Phase 3 (the worktree's own production build of the admin on :3940, a temporary INDUSK_HOME registering this checkout as `dusk`; previously about 35 minutes): render of the stories 7.1 s; full check with `--all` 98.2 s (A23, over the 60 s expectation); the slow-tier test of the same full check 98.9 s (A27); a check after one class of `PlanBadge.tsx` changed 94.6 s, after one class of `Tag.tsx` 89.4 s (A22, over the 15 s expectation); a check with nothing changed 56.8 s; the refusal of `next dev` 1.4 s (A24).
+- What keeps A22 and A23 over their expectations: 236 look lines (about 40 looks) come back unchecked in this checkout — `the page did not report state <state>` (the admin draws those states from data this checkout does not hold) and `404 — not in this project` (the `looks-fixture-*` plans) — and a look last unchecked is reopened on every run by design (A4), so they cost 57 s whatever changed. This is a fact about the admin's fixtures, not about the check; making those looks checkable (or declaring their data in their seeds) would bring an unchanged run to seconds, and is not in this plan. Sandy rules whether A22 and A23 are met as information (the brief's expectations are not gates) or the unchecked looks are fixed first.
+- A reused result's served build (Build Phase 3): the identity is compared with the sources outside the key, because a build identity inside the key reopens every look on every rebuild; the check makes one plain request to the app's root (and the first story's frame) before planning reuse.
