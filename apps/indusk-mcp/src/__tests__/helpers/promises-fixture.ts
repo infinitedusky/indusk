@@ -20,7 +20,12 @@ import { git } from "./cli.js";
  */
 
 export type PromiseKind = "behaviour" | "state" | "structure";
-export type PromiseState = "declared" | "enforced" | "known-violated" | "retired";
+export type PromiseState =
+	| "declared"
+	| "enforced"
+	| "known-broken"
+	| "known-violated" // the word before 2026-10-15; fixtures keep writing it to prove the load alias
+	| "retired";
 export type PromiseLifetime = "holds" | "established";
 export type IncidentSource = "local" | "smoke" | "deployed" | "desk" | "release";
 

@@ -25,6 +25,10 @@ export const THRESHOLD_MS = 120_000;
  * fast suite that never ran (test-kinds A23). A failed run over the threshold
  * is still broken: it was slow, whatever else it was.
  *
+ * The outcome stays `violated` on the wire this release (a recording server
+ * already deployed reads that word); the line it prints says broken. Both
+ * move together in `.indusk/planning/mark-first/`.
+ *
  * @param {{ durationMs: number, overlapped: boolean, exitCode?: number }} run
  * @returns {{ outcome: "upheld" | "violated", durationMs: number } | { skip: string }}
  */
@@ -102,20 +106,20 @@ export async function otherTestRunAlive(settleMs = 0) {
  * @param {{ status?: () => Promise<{ running: boolean, otlpPort?: number }>, send?: (intake: string, body: unknown) => Promise<void>, project?: (root: string) => string, body?: (name: string, attrs: object) => { body: unknown } }} [deps]
  */
 export async function sendSuiteMark(root, mark, deps = {}) {
-	if ("skip" in mark) return `not marked: ${mark.skip}`;
+	if ("skip" in mark) return `no signal sent: ${mark.skip}`;
 	try {
 		const status = deps.status ?? (await import("../dist/lib/telemetry/status.js")).daemonStatus;
 		const probe = deps.send && deps.body ? null : await import("../dist/lib/promises/probe.js");
 		const project = deps.project ?? (await import("../dist/lib/promises/config.js")).markProjectId;
 		const daemon = await status();
-		if (!daemon.running) return "not marked: no telemetry daemon is running";
+		if (!daemon.running) return "no signal sent: no telemetry daemon is running";
 		const { body } = (deps.body ?? probe.watcherSpanBody)(
 			"everyday-suite",
 			suiteSpanAttributes(mark, project(root)),
 		);
 		await (deps.send ?? probe.sendWatcherSpan)(`http://localhost:${daemon.otlpPort}`, body);
-		return `marked ${SUITE_PROMISE} ${mark.outcome} (${Math.round(mark.durationMs / 1000)} s)`;
+		return `signal sent: ${SUITE_PROMISE} ${mark.outcome === "violated" ? "broken" : mark.outcome} (${Math.round(mark.durationMs / 1000)} s)`;
 	} catch (err) {
-		return `not marked: ${err instanceof Error ? err.message : String(err)}`;
+		return `no signal sent: ${err instanceof Error ? err.message : String(err)}`;
 	}
 }

@@ -67,11 +67,17 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 			inputSchema: {
 				name: z.string().describe("kebab-case, starting with a letter; it becomes the file name."),
 				...promiseFields,
+				clauses: z
+					.array(z.string())
+					.optional()
+					.describe(
+						"The promise's clauses, one string each: `name (split). sentence`, `name (limit). sentence` or `name (rests on promise)`. Give them when the brief states the promise as clauses; a bad kind or a resting clause on an unknown promise is refused with nothing written.",
+					),
 			},
 		},
-		async ({ name, plan, kind, domain, statement }) =>
+		async ({ name, plan, kind, domain, statement, clauses }) =>
 			written(() => {
-				declarePromise(projectRoot, { name, plan, kind, domain, statement });
+				declarePromise(projectRoot, { name, plan, kind, domain, statement, clauses });
 				return { declared: name, owner: plan, state: "declared" };
 			}),
 	);
@@ -80,7 +86,7 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 		"change_promise",
 		{
 			description:
-				"Improve an existing promise in place when a plan partly changes what it commits to: its sentence is replaced, the plan takes it over, and its History keeps the old sentence, the reason and the plan that owned it before. Its name, state, incidents and the marks that name it are untouched. Use replace_promise instead when the name no longer describes it.",
+				"Improve an existing promise in place when a plan partly changes what it commits to: its sentence is replaced, the plan takes it over, and its History keeps the old sentence, the reason and the plan that owned it before. Its name, state, incidents and the signals that name it are untouched. Use replace_promise instead when the name no longer describes it.",
 			inputSchema: {
 				name: z.string().describe("The promise to change."),
 				plan: z.string().describe("The plan changing it."),
@@ -170,7 +176,7 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 		"promise_health",
 		{
 			description:
-				"What the promises are doing right now: per behaviour promise, violations in the window, open incidents, and — the number that matters — violations no incident records yet. Ask this when answering what to work on next; unrecorded violations outrank the roadmap. Reads every source — `local` (the daemon) and, when the project names one, `production` (its always-on server) — through the same reads the CLI uses, so the two cannot disagree. `sources` holds each source's rows or its failure; the top-level fields are the alarm source's (production when there is one), so a local break during development is shown under `sources` without being raised. Errors only when no source can be read.",
+				"What the promises are doing right now: per behaviour promise, breaks in the window, open incidents, and — the number that matters — breaks no incident records yet. Ask this when answering what to work on next; unrecorded breaks outrank the roadmap. Reads every source — `local` (the daemon) and, when the project names one, `production` (its always-on server) — through the same reads the CLI uses, so the two cannot disagree. `sources` holds each source's rows or its failure; the top-level fields are the alarm source's (production when there is one), so a local break during development is shown under `sources` without being raised. Errors only when no source can be read.",
 			inputSchema: {
 				since_ms: z
 					.number()
@@ -221,7 +227,7 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 		"record_breaks",
 		{
 			description:
-				"Record what nobody has recorded: every production violation no incident holds becomes an incident, committed on the trunk, and its owning plan is reopened with a Maintenance phase. The same writer the admin's recorder and `indusk promises watch` use. Call it from catchup when `promise_health` reports unrecorded production violations, and report what it opened. A project that names no production source (`promises.jaeger`) is refused: a local break is work in progress.",
+				"Record what nobody has recorded: every production break no incident holds becomes an incident, committed on the trunk, and its owning plan is reopened with a Maintenance phase. The same writer the admin's recorder and `indusk promises watch` use. Call it from catchup when `promise_health` reports unrecorded production breaks, and report what it opened. A project that names no production source (`promises.jaeger`) is refused: a local break is work in progress.",
 			inputSchema: {},
 		},
 		async () => {

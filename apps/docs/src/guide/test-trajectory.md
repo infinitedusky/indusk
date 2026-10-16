@@ -134,7 +134,7 @@ Add when the plan benefits from the extra dimension; the template does not inclu
 | Column | Values | When to add |
 |--------|--------|-------------|
 | `Level` | `unit`, `contract`, `live check`, `smoke`, `promise` | Every new impl: set `test_levels: required` and the hook refuses a row with no level or another word — see [Test levels](/guide/test-levels). First spelled `Kind` and `test_kinds: required`, which still validate |
-| `For` | `promise: <name>`, `lesson: <name>` (one or more, comma-separated), or the reason the test needs neither | Every new impl: set `test_purpose: required` and the hook refuses a row that does not say what it is for |
+| `For` | `promise: <name>`, `lesson: <name>`, `clause: <promise>/<clause>` (one or more, comma-separated), or the reason the test needs neither. A `clause:` token names one clause of a promise and counts as naming the promise, and the test file in the row's `Test` cell carries the same `clause: <promise>/<clause>` (a comment, as it carries `promise: <name>`) or closing refuses the clause; a plan whose brief says `clauses: required` names every split and limit clause in some row | Every new impl: set `test_purpose: required` and the hook refuses a row that does not say what it is for |
 | `Scope` | `unit`, `integration`, `e2e` | Older impls only; the kind replaces it |
 
 Impls written before test levels may carry the older style words in `Kind` (`example`, `property`, `contract`, `approval`, `formal`); without `test_levels: required` (or its first spelling, `test_kinds: required`) they validate as they always did.

@@ -39,7 +39,7 @@ export const RECORDER_PROMISE = "a-production-break-is-recorded-unasked";
 export type RecordedBy = "admin" | "catchup" | "watch" | "release";
 
 export interface PassMark {
-	outcome: "upheld" | "violated";
+	outcome: "upheld" | "broken";
 	symptom?: string;
 }
 
@@ -243,7 +243,7 @@ function pick(changes: WatchChange[], kind: WatchChange["kind"]): RecordedChange
 
 function failed(result: RecordResult, mark: (m: PassMark) => void, err: unknown): RecordResult {
 	const error = err instanceof Error ? err : new Error(String(err));
-	result.mark = { outcome: "violated", symptom: error.message };
+	result.mark = { outcome: "broken", symptom: error.message };
 	result.error = error;
 	mark(result.mark);
 	return result;

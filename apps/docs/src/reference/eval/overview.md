@@ -58,7 +58,7 @@ indusk eval baseline --task tasks/add-auth.md --keep
 
 | ID | Question | What it catches |
 |----|----------|----------------|
-| `conventions` | Did the agent follow the project's conventions? | Naming violations, wrong tools, skipped patterns |
+| `conventions` | Did the agent follow the project's conventions? | Naming errors, wrong tools, skipped patterns |
 | `skipped-steps` | Did it skip instructed steps? | Missing gates, skipped verification, ignored skills |
 | `better-approaches` | Were better approaches available? | Reinvented utilities, missed patterns |
 | `missing-context` | Is context missing from the graph? | Gaps in the lessons registry, lessons, CLAUDE.md |

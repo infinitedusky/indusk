@@ -87,7 +87,7 @@ export default async function PerProjectLayout({
   // registry on every request, no lifecycle position, absent when none.
   const promisesRead = readProjectPromises(projectPath);
   const holding = holdingCounts(promisesRead);
-  // A plan holding a violated promise shows red without being opened
+  // A plan holding a broken promise shows red without being opened
   // (day-monitor, A23) — the same cached read the Promises page makes, red
   // from the alarm source alone (promise-sources, ADR D5).
   const registry = registryOf(promisesRead);

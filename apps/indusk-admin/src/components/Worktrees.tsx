@@ -1,11 +1,13 @@
-import { Tag } from "@/components/ui/Tag";
+import { WorktreeMark } from "@/components/ui/WorktreeMark";
 import type { Plan } from "@/lib/planning-reader";
 
 /**
  * Which copy of a plan the page is showing (admin-plan-worktrees).
  *
- * A plan worked in its worktree is read from there; the chip names that
- * worktree so it is always clear the live copy is on screen. The notice says
+ * A plan worked in its worktree is read from there; the mark names that
+ * worktree so it is always clear the live copy is on screen: in the nav a
+ * small ⎇ mark beside the stage (the name rides in its label), and the plan
+ * header keeps its tag. The notice says
  * why the trunk copy stands in when the assignment is broken, and that no
  * copy is shown when the assignment record cannot be read. None of these is
  * guessed: each renders only what the resolver reported.
@@ -17,16 +19,16 @@ import type { Plan } from "@/lib/planning-reader";
  * rows, the plan header and the layout are server components.
  */
 
-export function WorktreeChip({ plan }: { plan: Plan }) {
+export function PlanWorktreeMark({ plan }: { plan: Plan }) {
   if (!plan.worktree) return null;
   const { name, path, branch } = plan.worktree;
   return (
-    <Tag
-      data-testid="plan-worktree"
-      title={`Read from the worktree at ${path} (${branch})`}
-    >
-      <span aria-hidden="true">⎇</span> {name}
-    </Tag>
+    <span data-testid="plan-worktree" className="contents">
+      <WorktreeMark
+        name={name}
+        title={`Read from the worktree at ${path} (${branch})`}
+      />
+    </span>
   );
 }
 

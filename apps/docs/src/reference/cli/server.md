@@ -1,7 +1,7 @@
 # indusk server
 
 Gives a project its recording server: the Jaeger with the always-on pass that
-holds the project's production marks, and that the admin reads as the
+holds the project's production signals, and that the admin reads as the
 **production** source beside the local one. Every server is the person's own.
 InDusk runs none for anyone.
 
@@ -21,7 +21,7 @@ indusk server connect <query-url> --intake <otlp-url> [--credential-env <NAME>]
 | Argument | What it is |
 |---|---|
 | `<query-url>` | The server's query API as you reach it, e.g. `https://my-server.fly.dev:16687`. |
-| `--intake <otlp-url>` | The server's OTLP/HTTP intake, e.g. `https://my-server.fly.dev`. A mark is sent here to read the server back. |
+| `--intake <otlp-url>` | The server's OTLP/HTTP intake, e.g. `https://my-server.fly.dev`. A signal is sent here to read the server back. |
 | `--credential-env <NAME>` | Read `user:password` from this environment variable. Without it you are asked, and what you type is not shown. |
 
 The credential is never an argument: shell history and the process list keep
@@ -29,7 +29,7 @@ arguments.
 
 ### What it does, in order
 
-1. **Reads the server back.** It sends one mark through the intake and looks
+1. **Reads the server back.** It sends one signal through the intake and looks
    for it through the query API, at the addresses you gave, which are the
    addresses the project will read. This is the same probe every promise read
    runs.
@@ -67,7 +67,7 @@ Nothing is written unless the server was read back.
 
 | Output | Exit | Why |
 |---|---|---|
-| `watcher blind — a probe sent to <intake> did not come back from <query-url>: <reason>` | 2 | The server answered and did not hear the mark: a wrong intake, a broken pipeline, a wrong credential. |
+| `watcher blind — a probe sent to <intake> did not come back from <query-url>: <reason>` | 2 | The server answered and did not hear the signal: a wrong intake, a broken pipeline, a wrong credential. |
 | `Jaeger could not be reached (<query-url>): <reason>` | 2 | Nothing answered at the query address. |
 | `<NAME> is not set — export it, or leave out --credential-env to be asked.` | 2 | `--credential-env` named a variable that is empty. |
 | `No InDusk project here: run indusk init first, or run this inside one.` | 2 | No `.indusk/config.json` here or above. |
@@ -93,7 +93,7 @@ token.
 | `--app <name>` | `indusk-<project>`, or the app this project recorded | The Fly app name. Fly app names are global. |
 | `--org <slug>` | your only organisation | Needed when your account has several; the refusal lists them. |
 | `--region <code>` | `iad` | Where the machine and its volume live. |
-| `--slack-webhook-env <NAME>` | none | Read the Slack webhook from this variable. Without it, announcements are off: the server records every violation and the admin shows it, and nothing is posted. |
+| `--slack-webhook-env <NAME>` | none | Read the Slack webhook from this variable. Without it, announcements are off: the server records every break and the admin shows it, and nothing is posted. |
 | `--server-version <version>` | this `indusk`'s version | The server image to run. (`--version` is the CLI's own.) |
 | `--rotate` | off | Set a new server password. |
 | `--build-from <tarball>` | none | Build the image here from a packed tarball (`pnpm pack`), for a version no release has published. It is built for `linux/amd64`, pushed to the app's own Fly registry (`registry.fly.io/<app>:<version>-local-<stamp>`) and deployed from there. Needs Docker. |

@@ -60,12 +60,15 @@ export interface TrajectoryRow {
 /**
  * What a test row is for: the promises it proves and the lessons it guards,
  * or the reason it needs neither. A cell of tokens only (`promise: <name>`,
- * `lesson: <name>`, comma-separated) names things; any other text is the
- * reason.
+ * `lesson: <name>`, `clause: <promise>/<clause>`, comma-separated) names
+ * things; any other text is the reason.
  */
 export interface RowPurpose {
+	/** Every promise the row names, a clause's promise included. */
 	promises: string[];
 	lessons: string[];
+	/** The clauses the row proves (plans-are-promises D6). */
+	clauses: RowClause[];
 	reason: string | null;
 	/**
 	 * Why the cell is neither tokens nor a reason (planner-promises A30), when
@@ -75,39 +78,56 @@ export interface RowPurpose {
 	malformed?: string;
 }
 
+/** One clause of one promise, as a row names it. */
+export interface RowClause {
+	promise: string;
+	clause: string;
+}
+
 /** Read a `For` cell. Null when it is empty. The hooks carry a copy. */
 export function parsePurpose(cell: string): RowPurpose | null {
 	const text = cell.trim();
 	if (!text) return null;
 	const promises: string[] = [];
 	const lessons: string[] = [];
+	const clauses: RowClause[] = [];
 	for (const part of text.split(",")) {
-		const m = /^(promise|lesson):\s*([a-z][a-z0-9-]*)$/.exec(part.trim());
+		const token = part.trim();
+		const clause = /^clause:\s*([a-z][a-z0-9-]*)\/([a-z][a-z0-9-]*)$/.exec(token);
+		if (clause) {
+			clauses.push({ promise: clause[1], clause: clause[2] });
+			if (!promises.includes(clause[1])) promises.push(clause[1]);
+			continue;
+		}
+		const m = /^(promise|lesson):\s*([a-z][a-z0-9-]*)$/.exec(token);
 		if (!m) return reasonOrMalformed(text);
-		(m[1] === "promise" ? promises : lessons).push(m[2]);
+		if (m[1] === "lesson") lessons.push(m[2]);
+		else if (!promises.includes(m[2])) promises.push(m[2]);
 	}
-	return { promises, lessons, reason: null };
+	return { promises, lessons, clauses, reason: null };
 }
 
 function reasonOrMalformed(text: string): RowPurpose {
-	if (/\b(?:promise|lesson):/i.test(text)) {
+	if (/\b(?:promise|lesson|clause):/i.test(text)) {
 		return {
 			promises: [],
 			lessons: [],
+			clauses: [],
 			reason: null,
 			malformed:
-				"names a promise or a lesson, but not as `promise: <name>` or `lesson: <name>` (the bare name, no backticks, nothing after it; several separated by commas)",
+				"names a promise, a lesson or a clause, but not as `promise: <name>`, `lesson: <name>` or `clause: <promise>/<clause>` (the bare name, no backticks, nothing after it; several separated by commas)",
 		};
 	}
 	if (text.split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).length < 2) {
 		return {
 			promises: [],
 			lessons: [],
+			clauses: [],
 			reason: null,
 			malformed: "is a mark, not a reason: say why the row needs no promise or lesson",
 		};
 	}
-	return { promises: [], lessons: [], reason: text };
+	return { promises: [], lessons: [], clauses: [], reason: text };
 }
 
 export interface DeferredRow {

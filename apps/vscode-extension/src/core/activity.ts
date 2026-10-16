@@ -3,7 +3,8 @@
 export interface Run {
 	promise: string;
 	source: string;
-	outcome: "upheld" | "violated";
+	/** The CLI says `broken`; `violated` is the word signals carried before 2026-10-15, read the same (copied from the package's `readOutcome`, which the extension does not import). */
+	outcome: "upheld" | "broken" | "violated";
 	at: string;
 	traceId: string;
 }
@@ -46,9 +47,9 @@ export function activityLines(
 	/** A promise's words from the health line; the handle when not given. */
 	titleOf: (promise: string) => string = (promise) => promise,
 ): string[] {
-	if (a.runs.length === 0) return ["No runs yet."];
+	if (a.runs.length === 0) return ["No signal yet."];
 	return a.runs.map(
 		(r) =>
-			`${titleOf(r.promise)} ${r.outcome === "violated" ? "broke" : "held"} (${r.source}) · ${time(r.at)}`,
+			`${titleOf(r.promise)} ${r.outcome === "upheld" ? "held" : "broke"} (${r.source}) · ${time(r.at)}`,
 	);
 }

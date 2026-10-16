@@ -48,7 +48,7 @@ export function PromiseBanner({
         <span>
           {standing.lastActivity
             ? `seen ${stamp(standing.lastActivity)}`
-            : "not seen yet"}
+            : "no signal yet"}
         </span>
       </div>
       {broken ? (
@@ -97,13 +97,13 @@ export function PromiseTiles({ proof }: { proof: Proof }) {
       <Stat
         label="Held"
         value={held === null ? "–" : String(held)}
-        note={held === null ? "not seen yet" : "last 30 days"}
+        note={held === null ? "no signal yet" : "last 30 days"}
         tone={held ? "ok" : undefined}
       />
       <Stat
         label="Broken"
         value={held === null ? "–" : String(broke)}
-        note={held === null ? "not seen yet" : "last 30 days"}
+        note={held === null ? "no signal yet" : "last 30 days"}
         tone={broke ? "bad" : undefined}
       />
     </div>
@@ -193,7 +193,7 @@ export function WhereItIsWatched({ proof }: { proof: Proof }) {
     <Section id="marks" title="Where it is watched">
       {proof.marks.length === 0 ? (
         <p className="text-sm text-ink-soft">
-          It is not seen yet: no run of it has been marked in any source.
+          There is no signal yet: no signal has reported a run of it in any source.
         </p>
       ) : (
         <ul className="flex flex-col divide-y divide-line rounded-md border border-line">
@@ -263,7 +263,7 @@ export function LastThirtyDays({ proof }: { proof: Proof }) {
         </div>
       ))}
       <p className="text-xs text-ink-faint">
-        Red: a break was heard that day. Green: held. Grey: nothing seen.
+        Red: a break was heard that day. Green: held. Grey: no signal.
       </p>
     </Section>
   );

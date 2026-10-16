@@ -33,20 +33,20 @@ primary_region = "iad"
   # from anyone's Slack client. Change it with the app name.
   INDUSK_SERVER_PUBLIC_QUERY_URL = "https://indusk-always-on.fly.dev:16687"
 
-# Badger's files live here. Without it the server forgets every violation it
+# Badger's files live here. Without it the server forgets every break it
 # was told about the moment a machine is replaced — which Fly does routinely.
 [mounts]
   source = "indusk_telemetry"
   destination = "/data"
 
-# The OTLP receiver: where deployed systems send marks.
+# The OTLP receiver: where deployed systems send signals.
 [[services]]
   internal_port = 4318
   protocol = "tcp"
 
   # THE POINT OF THE WHOLE PLAN. Fly's default is to stop a machine when it
   # goes idle and start it again on the next request — sensible for a web app,
-  # fatal here. A stopped machine runs no pass, so a violation that arrives
+  # fatal here. A stopped machine runs no pass, so a break that arrives
   # during a quiet hour is stored and never announced; worse, the machine that
   # would have announced it is started *by the request that delivers it*,
   # after the pass would have run. `min_machines_running = 1` and no auto-stop
@@ -74,7 +74,7 @@ primary_region = "iad"
 
 # One machine, deliberately. Badger is a single-writer embedded store, so two
 # machines sharing one volume is not a configuration this supports — and two
-# machines with two volumes would each hold half the violations and each
+# machines with two volumes would each hold half the breaks and each
 # announce what the other could not see.
 [[vm]]
   size = "shared-cpu-1x"

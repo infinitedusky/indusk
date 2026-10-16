@@ -307,7 +307,7 @@ export interface HealthRow {
 /** One recorded run, as the store holds it: no symptom is kept per run. */
 export interface HealthRun {
 	promise: string;
-	outcome: "upheld" | "violated";
+	outcome: "upheld" | "broken";
 	at: string;
 	traceId: string;
 }
@@ -450,7 +450,7 @@ export function alarmRead(reads: SourceHealthRead[]): SourceHealthRead | undefin
 }
 
 /**
- * One promise's chip. Retired is grey and known-violated amber whatever
+ * One promise's chip. Retired is grey and known-broken amber whatever
  * telemetry says; a behaviour promise is red when violated in the window,
  * green when seen upheld, hollow "unverified" when not seen or when Jaeger
  * could not be read. A state or structure promise has no observed health —
@@ -470,7 +470,7 @@ export function alarmRead(reads: SourceHealthRead[]): SourceHealthRead | undefin
 export type HealthRule = "incidents" | "newest";
 
 /**
- * One promise's chip. Retired is grey and known-violated amber whatever
+ * One promise's chip. Retired is grey and known-broken amber whatever
  * telemetry says, unless a live break makes it red; a behaviour promise is
  * red, `fixed`, green or hollow "unverified" by its source's rule. A state or
  * structure promise has no observed health — its health is the suite's — so
@@ -501,7 +501,7 @@ export function healthOf(
 				: marks.violations.some((v) => violationState(v.traceId, incidents) !== "fixed");
 		if (live) return red();
 	}
-	if (p.state === "known-violated") return { health: "amber", violations, lastSeen };
+	if (p.state === "known-broken") return { health: "amber", violations, lastSeen };
 	if (p.kind !== "behaviour") return null;
 	const silence = read?.ok ? silencePastExpectation(p, read.marks) : null;
 	const quiet = silence ? { silence } : {};

@@ -22,10 +22,10 @@ const CELL: Record<CellState, string> = {
 };
 
 const SAID: Record<CellState, string> = {
-  red: "violated — unfixed",
-  purple: "violated — fixed",
-  green: "upheld",
-  empty: "no runs",
+  red: "broke — open",
+  purple: "broke — fixed",
+  green: "held",
+  empty: "no signal",
 };
 
 export function PromiseTimeline({
@@ -83,11 +83,11 @@ export function PromiseTimeline({
   );
 }
 
-/** A behaviour promise no run marks: said, never drawn as an empty strip that reads as healthy. */
+/** A behaviour promise no signal reports on: said, never drawn as an empty strip that reads as healthy. */
 export function TimelineEmpty() {
   return (
     <span className="text-xs text-ink-faint" data-testid="timeline-empty">
-      no runs mark this promise
+      no signal for this promise
     </span>
   );
 }

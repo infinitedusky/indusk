@@ -88,20 +88,25 @@ describe("A7 — the rows table shows what each row is for", () => {
       ...rows[0],
       levelText: "unit",
       purposeText: `promise: ${PROMISE}`,
-      purpose: { promises: [PROMISE], lessons: [], reason: null },
+      purpose: { promises: [PROMISE], clauses: [], lessons: [], reason: null },
     },
     {
       ...rows[1],
       levelText: "contract",
       purposeText: `lesson: ${LESSON}`,
-      purpose: { promises: [], lessons: [LESSON], reason: null },
+      purpose: { promises: [], clauses: [], lessons: [LESSON], reason: null },
     },
     {
       ...rows[1],
       id: "A3",
       levelText: "unit",
       purposeText: "a regression guard",
-      purpose: { promises: [], lessons: [], reason: "a regression guard" },
+      purpose: {
+        promises: [],
+        clauses: [],
+        lessons: [],
+        reason: "a regression guard",
+      },
     },
   ];
 

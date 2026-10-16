@@ -17,25 +17,25 @@ Given a fresh session, catchup:
 7. **Checks infrastructure** via `check_health`.
 8. **Does NOT re-read CLAUDE.md.** It's auto-injected into every session; re-fetching it was the single biggest line item of the pre-makeover catchup (~30k tokens of pure duplication).
 9. **Lists active plans** via `list_plans { active: true }` — in-motion plans only, plus a count of what was omitted.
-10. **Checks promise health** via `promise_health` — per behaviour promise, violations in the window, open incidents, and violations no incident records yet, from every source: `local` and, when the project names one, `production`. It raises from the alarm source (production when there is one) and names the source of each raised violation; a violation seen only locally is mentioned after, as work in progress, and a source that could not be read is said on its own line. When it reports **watcher blind** (a Jaeger answered and did not return the probe sent to it), catchup says so on its own line ahead of the roadmap and reports no counts.
+10. **Checks promise health** via `promise_health` — per behaviour promise, breaks in the window, open incidents, and breaks no incident records yet, from every source: `local` and, when the project names one, `production`. It raises from the alarm source (production when there is one) and names the source of each raised break; a break seen only locally is mentioned after, as work in progress, and a source that could not be read is said on its own line. When it reports **watcher blind** (a Jaeger answered and did not return the probe sent to it), catchup says so on its own line ahead of the roadmap and reports no counts.
 11. **Reviews installed skills and enabled extensions**.
 12. **Summarizes** to the user with the active plan list, other agents present, project (shared) state, the sweep count, and any promise needing attention.
 
 **Catchup records what nobody recorded** (incident-recording). When a
-production source reports violations no incident holds — the admin was not
+production source reports breaks no incident holds — the admin was not
 running to record them — catchup calls `record_breaks`, the same writer the
 admin's recorder uses: each becomes an incident, committed on the trunk, and
 its owning plan is reopened with a Maintenance phase. Catchup then says what
-it opened. A violation seen only locally is work in progress and is not
+it opened. A break seen only locally is work in progress and is not
 recorded.
 
-**Open incidents and violations outrank the roadmap.** When you ask what is
+**Open incidents and breaks outrank the roadmap.** When you ask what is
 next, catchup names the open incidents first, each with how long it has been
-open and whether its owner carries its Maintenance phase, then any violations
+open and whether its owner carries its Maintenance phase, then any breaks
 still unrecorded — a promise is a commitment the system made and is breaking,
 and the next feature can wait a sentence. The incidents are files, so they are
 named even when no Jaeger can be read. If telemetry cannot be reached, catchup says
-*health unknown* and names where it looked; it never reports zero violations
+*health unknown* and names where it looked; it never reports zero breaks
 instead, because "nothing is broken" and "nobody could look" are different
 answers and only one of them is reassuring.
 

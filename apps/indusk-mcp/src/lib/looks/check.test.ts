@@ -129,9 +129,9 @@ describe("checkableStories — the stories the app is held to", () => {
 });
 
 describe("storyUrl and judgeStory", () => {
-	it("serves a story from the app's /storybook with the scheme as the theme global", () => {
-		expect(check.storyUrl("http://localhost:3939/", "components-badge--ok", "dark")).toBe(
-			"http://localhost:3939/storybook/iframe.html?id=components-badge--ok&viewMode=story&globals=theme%3Adark",
+	it("serves a story from the app's /storybook, leaving the scheme to the page's own media query", () => {
+		expect(check.storyUrl("http://localhost:3939/", "components-badge--ok")).toBe(
+			"http://localhost:3939/storybook/iframe.html?id=components-badge--ok&viewMode=story",
 		);
 	});
 

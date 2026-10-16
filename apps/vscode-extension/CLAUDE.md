@@ -37,3 +37,4 @@ Loaded by Claude Code when a file under `apps/vscode-extension/` is read.
 - **Spell no promise token in prose or test text here**: `indusk promises check`
   reads `promise: <word>` after a comment opener as a claim. Build sample lines
   with the fixture's `site()`; word comments so no "promise:" is followed by a name.
+- **Grey is retired, never holding**, and a fixed break reads `broke — fixed`; an empty activity section says `No signal yet.` (`core/view.ts`, `core/markers.ts`). — the rule of the promise a-promise-is-upheld-or-broken.

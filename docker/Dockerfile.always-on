@@ -2,7 +2,7 @@
 #
 # The Jaeger InDusk already ships, run as a long-lived process: badger on a
 # mounted volume, basic auth on the OTLP receiver and the query API, and an
-# in-process pass that announces each violation to Slack once (or, with no
+# in-process pass that announces each break to Slack once (or, with no
 # webhook, records and announces nothing).
 #
 # Every release builds this image from its own packed tarball and publishes it

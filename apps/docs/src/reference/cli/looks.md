@@ -337,7 +337,7 @@ screen is the catalog's gap); a name in two is `duplicate component`, and when
 one is the component's own file by name every other is also
 `component markup outside its file: <file>:<line> <name>`.
 
-## `indusk looks check <app> [--url <url>]`
+## `indusk looks check <app> [--url <url>] [--only <look>...] [--all]`
 
 Holds the running app to what a person approved, by value, in a real Chromium.
 `--url` is the app's base URL; without it the check uses `url` in the app's
@@ -368,13 +368,120 @@ the page and first asks it two questions:
 **Stories.** Each approved story of `components.json` (or one held to its last
 approved version on an unchanged foundation) is opened too, in the Storybook
 the app's server serves at `/storybook`:
-`<url>/storybook/iframe.html?id=<id>&viewMode=story&globals=theme:<scheme>`,
-at each device and scheme. The story's id is the catalog's; a story with none is
+`<url>/storybook/iframe.html?id=<id>&viewMode=story`, at each device and
+scheme (the story follows the page's `prefers-color-scheme`, which the check
+switches). The story's id is the catalog's; a story with none is
 `unchecked story <name> — no Storybook id in the catalog`, and an unapproved one
 `unchecked story <name> — proposed, never approved`. A story's page reports no
 state — the URL names it — so only the scheme is asked; the values are read from
 the story's root (`#storybook-root`), not the frame around it. Reported
 `held|broken story <component>.<state> @ <device>`, as a screen is.
+
+**One load per look.** A look's page is loaded once, at the first reference
+device and scheme. For every further device the check sets the page's size and
+pixel ratio in place, and for every further scheme it switches the page's
+colour scheme in place, then reads the values — so a look costs one page load
+whatever the number of devices and schemes. A switch in place starts the
+page's colour transitions, which a fresh load never does, so the check
+finishes each running transition before it reads; a button is never read
+half-way between two colours. A page that reads its size, pixel ratio or
+colour scheme once when it starts, with nothing listening for a change, would
+be read in place as it drew at the first device; the check notices such reads
+and loads that page fresh at each device and scheme instead. Screens that need no seed open three at a time;
+a screen with a `seed` opens alone.
+
+**`--only <look>...`** checks just the named looks and reports nothing else.
+A name is a screen state (`home.empty`) or a story (`badge.ok`); a name matches
+the screen state and the story of that name alike. Repeat the option or
+separate names with commas. A name no look of the app has is refused, naming
+it, before any page opens. A named look is opened even when it could be
+reused.
+
+**An unchanged look is reused, not opened.** After a run, every look that held
+at every device and scheme is kept with what it was held to and drawn from, in
+the project's machine-state folder — `indusk eval home`'s folder,
+`looks/<app>.json`, outside every checkout and the same from every worktree,
+never committed. On the next run a look whose inputs are all unchanged is
+reported from that result, without a browser opening it:
+
+```
+reused  home.empty — held 2026-10-16T03:00:00.000Z, unchanged
+reused  story badge.ok — held 2026-10-16T03:00:00.000Z, unchanged
+```
+
+A look's inputs are the foundation (so a token change always reopens every
+look), the checker itself (the properties it measures, the kinds it judges them
+as, its measuring script and the verdict's version — so a release that measures
+or judges differently reopens every look), the declarations, the devices and
+schemes, and its snapshot hashes — a story's snapshot and stylesheet, a
+screen's composed mockup and the components it composes — for a story the
+app's element, universal and root rules it draws under (`a`, `h2`, `*`, `body`:
+every compiled rule no class names, recorded at render as `baseRulesHash` in
+`components.json`), and for a screen a hash of the app's page code (every file under
+`sources` that is not a catalogued component's implementation, a story or a
+test) and its seed, and the configuration a look is drawn with that no source
+file holds: the app's Tailwind and PostCSS config, its `.storybook` folder and
+the project's `pnpm-lock.yaml`. A look broken or unchecked at any device is not kept, so it
+is always opened next time. A story's snapshot is only as new as the last
+render, so `indusk looks stories <app>` records the sources it rendered from
+(`renderedFrom` in `components.json`); when the sources have changed since,
+nothing is reused and the check says to render the stories first. A screen
+still drawn without composition (`uncomposed`) is never reused. A run where
+every look was reused exits 0.
+
+```mermaid
+flowchart TD
+  L[A checkable look] --> C{Stories rendered from<br/>the current sources?}
+  C -->|no| O[Open it]
+  C -->|yes| K{Key unchanged since<br/>it last held everywhere?}
+  K -->|yes| R[Reported reused<br/>with when it held]
+  K -->|no| O
+  O --> M[One load, measured at<br/>every device and scheme]
+  M --> V[Verdict]
+  V -->|held everywhere| H[Kept in looks/app.json]
+  V -->|broken or unchecked| X[Removed: opened next time]
+```
+
+The build served at `--url` is checked against the sources, outside the key: the
+same sources served by another build reopen the look. A server still on the
+build from before the sources changed is told by a held look recorded on that
+build with other sources: what it measures is reported but never kept held, a
+look whose own inputs are unchanged is reused on the build it was measured on,
+and the run says so:
+
+```
+http://localhost:3940 serves a build from before the sources changed — results were not kept; rebuild and serve it: pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940
+```
+
+The build is read from the page's script and stylesheet
+names (a production build names them by content hash); a page that cannot be
+read within 30 seconds, or that loads nothing to tell by, reuses nothing, and
+the check says so. A run writes only the looks it opened over the record as it
+is when it writes, so two checks of one project never undo each other's
+removals.
+What a look reads that no input covers — the data a screen renders — is not in
+the key. **`--all`** opens
+every look whatever held: run it after a change the key cannot see, at a UI
+plan's live check, and as the slow tests do after every landing and at every
+release.
+
+**A development server is refused.** Before any look opens, the check reads the
+page at the base URL's own path (and the first story's frame) over plain HTTP
+and looks, in the scripts and stylesheets it loads — never in its text, which
+carries the page's data — for the code a development server adds: Next's
+live-reload client (`hmr-client`), webpack's refresh runtime (`react-refresh`)
+and Vite's client (`/@vite/client`). One found ends the run with exit 1 before a look
+opens, naming the command that builds and serves the app:
+
+```
+http://localhost:3961 is a development server (hmr-client) — build and serve the app, then check again: pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940
+```
+
+That command is the optional `serve` entry of the app's
+`.indusk/mockups/<app>/screens.json`; with none declared the message says how to
+declare one. It is not part of the declarations an approval binds, so declaring
+it reopens nothing. A development server compiles each route on first request,
+which once made a check of the admin take half an hour.
 
 Then it decides two things:
 
@@ -396,7 +503,7 @@ broken  home.empty @ desktop
   element button.primary background-color actual rgb(194, 98, 12) nearest --color-dusk (#c2620b)
 unchecked home.full @ phone — the page did not report state full
 unchecked detail.default — proposed, never approved
-admin: 12 looks held, 54 unchecked
+admin: 12 looks held, 0 reused, 54 unchecked
 ```
 
 Elements the check does not draw are named in `screens.json`'s `ignore` (tag
@@ -409,18 +516,24 @@ whose page answers 404 is `unchecked` too, naming the 404 (`… answered 404 —
 in this project`) and the run goes on: the plan and brief screens open at
 fixture plans only the contract test's project holds, so a check against your
 own project names them unchecked. A page that fails any other way (a 500, a
-refused connection) still ends the run. The closing line counts unchecked looks beside held and broken. Each look is
+refused connection) still ends the run. The closing line counts reused and
+unchecked looks beside held and broken (`admin: 12 looks held, 40 reused, 2
+unchecked`). Each look is
 also recorded as a span, one per screen × state × device and scheme, carrying a
-promise's mark under `tokens-are-held-exactly` — `upheld` when held,
-`violated` with the first finding as the symptom when broken — so a look reads
+signal for `tokens-are-held-exactly` — `upheld` when held,
+`violated` (read as broken) with the first finding as the symptom when broken — so a look reads
 beside promises in the health reader. A story's span carries
 `indusk.look.kind = story` beside `indusk.look.app`, `screen`, `state` and
 `device` (the screen is the component's name); a screen's span carries no
 `kind`. A look's standing counts only runs of its own kind, so a held story
 `nav.expanded` never stands for a broken screen `nav.expanded`; a run recorded
-without `kind` reads as a screen's.
+without `kind` reads as a screen's. A reused look sends one upheld span per
+device and scheme too, marked `indusk.look.reused = true` with
+`indusk.look.measured_at`, the time it was really measured: its standing keeps
+reading holding run after run, and a reader can always tell it from a fresh
+measurement, which carries neither.
 
-Exit 1 on any broken look, and when nothing could be checked: a run that
+Exit 1 on any broken look, and when nothing was checked or reused: a run that
 checked nothing is not a held look. `playwright-core` is an optional
 dependency; without it, or without Chromium, the command refuses by name and
 says what to install. Because it opens a browser it runs in the system tier,

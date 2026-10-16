@@ -19,6 +19,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 **In flight** (moved here from the root `CLAUDE.md`'s Current State on 2026-10-02 by context-tiers — operational state lives in this file):
 
+- **plans-are-promises (closed 2026-10-16)** — a promise can be stated as clauses (`clauses: required` in a brief, `declare --clause`, `clause:` rows) and a plan closes per clause; accepted and landed by a person next. Open: a promise of only resting clauses cannot close, `change`/`replace` carry no clauses, `indusk plans start` fails under `init --local`. See [archive](planning/archive/plans-are-promises/).
 - **brief-as-the-contract (closed 2026-10-13)** — the brief is the contract: looks in the brief, approval of the brief, amendments wait for the person, a brief page with the agent beside it, a plan starts as a draft outside the repo. See [archive](planning/archive/brief-as-the-contract/) for full detail.
 - **cockpit-redraw (closed 2026-10-14)** — the nav redrawn from the original cockpit and dragged wider, the brief page drawn, re-approval a person's; the admin's look check names a missing page unchecked and goes on. See [archive](planning/archive/cockpit-redraw/).
 - **plan-stories (closed 2026-10-15)** — plans read by their title in the admin and the editor; a master plan's page tells its story (`subplan-row`) and keeps a plan page's controls; Needs you counts amendments. Still to get a title from their next session: `demo-scenarios`, `approve-then-improve`, `main-suite-green`, `skip-reason-why`, `release-preconditions`; Sandy's calls from its research (close `release-preconditions`, `indusk-release`, `jev-decision-model`; the plan overlaps) are in the [archive](planning/archive/plan-stories/research.md). See [archive](planning/archive/plan-stories/). Parked, no plan: the re-approval guard misses `plans "reapprove"`, a line continuation and a shell `sed -i` on `approved_brief:`; 140 admin looks unchecked as "did not report state".
@@ -30,6 +31,9 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **main-suite-green (closed 2026-10-15)** — `pnpm test` passes from the root of main: the contract check reads an impl of any size, four stale tests fixed, the component check holds only landed plans' looks (per component), indusk-mcp's tests wait for its own build. Open: the root run's daemon guard fails on other sessions' leftover daemons. See [archive](planning/archive/main-suite-green/).
 - **template-reload-on-cold-cache (closed 2026-10-15)** — the browser template tests pass on a cold Vite cache (the templates project now `extends` the root, so its pre-bundle list applies), landing's install syncs to the lockfile first, day-monitor e2e matches the model name. See [archive](planning/archive/template-reload-on-cold-cache/).
 - **story-first-phases (closed 2026-10-15)** — an impl phase opens with a plain paragraph and each task is one sentence with its technical detail folded beneath, held on every edit (`phase_summary: required`); folded text never ticks, skips or adds; the plan page shows both. See [archive](planning/archive/story-first-phases/).
+- **one-promise-language (closed 2026-10-16)** — every page, record and signal says upheld or broken (holding/broken live, no signal unknown); readers take `broken` and `violated` as broken, writers and `promises health --json` keep `violated` until `mark-first`; `known-broken` with `known-violated` still read; no signal is drawn grey. See [archive](planning/archive/one-promise-language/).
+- **looks-check-speed (closed 2026-10-16)** — a look check costs what changed: an unchanged look is reused from machine state, each opened look loads once, dev servers refused, `--only`/`--all`; ~35 min → 98 s full, the 57 s floor of never-checkable looks carried to looks-as-promises. See [archive](planning/archive/looks-check-speed/).
+- **nav-row-legible (closed 2026-10-16)** — a plan's worktree is a small ⎇ mark beside its stage in the nav, outside the row's link; hover or click widens it to the name, truncated inside the row. See [archive](planning/archive/nav-row-legible/).
 - **skip-reason-why (closed 2026-10-14)** — a skipped step reads "skipped" with a "why?" that opens its reason; a skip reason is one sentence of at most 120 characters, and an unattended build shortens a long one rather than re-running the ritual. See [archive](planning/archive/skip-reason-why/) for full detail.
 - **component-content (closed 2026-10-14)** — a mockup places a component with its own words; text and placed components only, refused otherwise. Approve does not yet refuse content findings (follow-on). See [archive](planning/archive/component-content/) for full detail.
 - **new-project-flow (closed 2026-10-14)** — a project starts as a conversation in the admin and is created with no command typed; follow-ups in `mark-first` (the creation span, marks for prompt-held promises) and `adopt-existing-project` ([archive](planning/archive/new-project-flow/)).
@@ -3137,6 +3141,27 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 
 **Session ID**: 8abf2bb9-a0b3-4b82-8f4e-b5336a3fb06a
 **Last updated**: 2026-10-14T22:35:53.521Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 8ae65d08 — run-the-master briefs: run-the-graph + activity-and-graph drafts waiting on plans-are-promises to land
+
+**Session ID**: 8ae65d08-49fb-4c3f-810f-3b527885d1d6
+**Last updated**: 2026-10-16T18:57:34.385Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 

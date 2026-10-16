@@ -1,3 +1,4 @@
+// promise: the-nav-says-where-a-plan-is
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import type { Plan } from "@/lib/planning-reader";
@@ -29,6 +30,7 @@ vi.mock("next/link", () => {
   return { default: MockLink, __esModule: true };
 });
 
+import { derivePlanPosition } from "@infinitedusky/indusk-mcp/lifecycle";
 import { PlanList } from "./PlanList";
 
 /**
@@ -69,7 +71,29 @@ describe("T11 — an archived subplan is not a placeholder", () => {
       <PlanList
         active={[mockPlan("parent")]}
         archived={[
-          mockPlan("done-child", { status: "completed", archived: true }),
+          mockPlan("done-child", {
+            status: "completed",
+            archived: true,
+            position: derivePlanPosition({
+              summary: {
+                name: "done-child",
+                stage: "impl",
+                stageStatus: "completed",
+                nextStep: "",
+                dependencies: [],
+                documents: ["brief.md", "test-plan.md", "impl.md"],
+                workflow: "bugfix",
+              },
+              impl: null,
+              readiness: {
+                missing: [],
+                nonTerminalRows: [],
+                unprovenPromises: [],
+                longSkipReasons: [],
+              } as never,
+              archived: true,
+            }),
+          }),
         ]}
         masterOrder={[]}
         grouping={grouping}
@@ -84,7 +108,7 @@ describe("T11 — an archived subplan is not a placeholder", () => {
       link,
       "archived subplan must render as a link in the group",
     ).not.toBeNull();
-    expect(link?.textContent).toContain("completed");
+    expect(link?.textContent).toContain("Closed");
 
     expect(
       group?.querySelector('[data-testid="plan-placeholder-done-child"]'),

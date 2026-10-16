@@ -4,14 +4,13 @@ import { NavPlanRow } from "@/components/cockpit/NavItems";
 import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
 import { HoldingBadge } from "@/components/HoldingBadge";
 import { Badge } from "@/components/ui/Badge";
-import { statusToNavMark } from "@/components/ui/badge-variant";
 import { NavGroup } from "@/components/ui/Nav";
 import { NavPath } from "@/components/ui/NavPath";
 import { PlanRow } from "@/components/ui/PlanRow";
-import { WorktreeChip } from "@/components/Worktrees";
+import { PlanWorktreeMark } from "@/components/Worktrees";
 import { initialsOf } from "@/lib/initials";
 import { buildGroups, orderByMaster, type PlanGroup } from "@/lib/plan-groups";
-import { planStage } from "@/lib/plan-stage";
+import { navMarkOf } from "@/lib/plan-stage";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanListProps {
@@ -41,7 +40,7 @@ interface PlanListProps {
    * resting state, and the count is what keeps a closed plan on the hook.
    */
   holding?: Map<string, number>;
-  /** Plans holding a violated promise (day-monitor): drawn red without being opened. */
+  /** Plans holding a broken promise (day-monitor): drawn red without being opened. */
   red?: Set<string>;
   /**
    * When each plan shipped, by name — the package's `planDates` (via
@@ -301,8 +300,8 @@ function RedDot({ plan }: { plan: string }) {
       data-testid="plan-health"
       data-plan={plan}
       data-health="red"
-      aria-label="holds a promise violated in the window"
-      title="holds a promise violated in the window"
+      aria-label="holds a promise broken in the window"
+      title="holds a promise broken in the window"
       className="block size-dot shrink-0 rounded-pill bg-bad"
     />
   );
@@ -326,27 +325,25 @@ function PlanItem({
   waiting?: Record<string, string>;
   number?: number;
 }) {
-  const step = waiting?.[plan.name];
-  const mark = statusToNavMark(plan.status, plan.archived);
-  const stage = planStage(plan, released, waiting);
+  const mark = navMarkOf(plan, released, waiting);
   return (
     <li>
       <NavPlanRow
         href={`${prefix}${plan.name}`}
         data-plan-name={plan.name}
         initials={initialsOf(plan.title)}
-        state={step === undefined ? mark.state : "needs"}
+        state={mark.state}
         name={plan.title}
         number={number === undefined ? "" : <PlanNumber number={number} />}
+        worktree={plan.worktree ? <PlanWorktreeMark plan={plan} /> : undefined}
         stage={
           <>
-            {stage}
+            {mark.stage}
             {plan.malformed && (
               <Badge variant="blocked" data-testid={`malformed-${plan.name}`}>
                 malformed
               </Badge>
             )}
-            <WorktreeChip plan={plan} />
             <HoldingBadge count={holding} plan={plan.name} />
             {red && <RedDot plan={plan.name} />}
           </>

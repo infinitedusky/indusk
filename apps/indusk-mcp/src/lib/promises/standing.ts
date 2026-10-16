@@ -29,7 +29,7 @@ import { readWindow } from "./store.js";
  */
 
 /**
- * `broken` — red from the alarm source, or known to be violated.
+ * `broken` — red from the alarm source, or known to be broken.
  * `being-proven` — declared, with test rows written and not all passing.
  * `declared` — stated, nothing proving it yet. `enforced` — upheld.
  */
@@ -193,7 +193,7 @@ function standingFor(
 	sources: readonly SourceName[],
 ): Standing {
 	if (entry.state === "retired") return "retired";
-	if (health[alarmSource(sources)] === "red" || entry.state === "known-violated") return "broken";
+	if (health[alarmSource(sources)] === "red" || entry.state === "known-broken") return "broken";
 	if (entry.state === "declared") {
 		return tests.total > 0 && tests.passing < tests.total ? "being-proven" : "declared";
 	}

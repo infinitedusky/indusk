@@ -1,8 +1,11 @@
 // promise: a-held-seat-is-released-in-time
 // The rules behind this example's one promise. (In InDusk's repository these
 // are rows A1, A2 and A6 of the demo-app-template plan.)
-import { describe, expect, it } from "vitest";
+import { InMemorySpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createSeats } from "./seats.js";
+import { markRelease } from "./telemetry.js";
 
 // The clock is an argument: every rule here runs in microseconds, never waits.
 const opts = { seats: 4, windowMs: 3000, toleranceMs: 1000, faultDelayMs: 3000 };
@@ -41,5 +44,39 @@ describe("seat holds", () => {
 		expect(s.sweep(6100, { fault: true })[0]).toMatchObject({ seat: 1, outcome: "violated" });
 		s.hold(2, "bob", 7000);
 		expect(s.sweep(10_100, { fault: false })[0]).toMatchObject({ seat: 2, outcome: "upheld" });
+	});
+});
+
+// one-promise-language A3: a recording server already deployed reads the word
+// `violated` on this span, so the demo keeps sending it for this release; a
+// server that reads `broken` too takes either. Switching the word is the next
+// release's, in the plan that reworks signals.
+describe("the span a late release leaves", () => {
+	const exporter = new InMemorySpanExporter();
+	const provider = new NodeTracerProvider({
+		spanProcessors: [new SimpleSpanProcessor(exporter)],
+	});
+	beforeAll(() => provider.register());
+	afterAll(() => provider.shutdown());
+	afterEach(() => exporter.reset());
+
+	it("A3: a late release's outcome attribute is violated, with the symptom on the event", () => {
+		const s = createSeats(opts);
+		s.hold(1, "ann", 0);
+		const late = s.sweep(6200, { fault: false })[0];
+		if (!late) throw new Error("the late release was not swept");
+		markRelease(late);
+		const [span] = exporter.getFinishedSpans();
+		expect(span?.attributes["indusk.promise.outcome"]).toBe("violated");
+		expect(span?.events.map((e) => e.name)).toEqual(["indusk.promise.violated"]);
+	});
+
+	it("A3: an on-time release's outcome attribute is upheld", () => {
+		const s = createSeats(opts);
+		s.hold(1, "ann", 0);
+		const onTime = s.sweep(3500, { fault: false })[0];
+		if (!onTime) throw new Error("the release was not swept");
+		markRelease(onTime);
+		expect(exporter.getFinishedSpans()[0]?.attributes["indusk.promise.outcome"]).toBe("upheld");
 	});
 });

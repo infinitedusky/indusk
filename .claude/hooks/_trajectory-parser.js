@@ -102,7 +102,7 @@ export function normalizeHeader(header) {
 
 /**
  * Read a `For` cell: tokens only (`promise: <name>`, `lesson: <name>`,
- * comma-separated) name things; any other text is the reason. Null when
+ * `clause: <promise>/<clause>`, comma-separated) name things; any other text is the reason. Null when
  * empty. Port of `parsePurpose` in `src/lib/trajectory/parser.ts`.
  */
 export function parsePurpose(cell) {
@@ -110,34 +110,45 @@ export function parsePurpose(cell) {
 	if (!text) return null;
 	const promises = [];
 	const lessons = [];
+	const clauses = [];
 	for (const part of text.split(",")) {
-		const m = /^(promise|lesson):\s*([a-z][a-z0-9-]*)$/.exec(part.trim());
+		const token = part.trim();
+		const clause = /^clause:\s*([a-z][a-z0-9-]*)\/([a-z][a-z0-9-]*)$/.exec(token);
+		if (clause) {
+			clauses.push({ promise: clause[1], clause: clause[2] });
+			if (!promises.includes(clause[1])) promises.push(clause[1]);
+			continue;
+		}
+		const m = /^(promise|lesson):\s*([a-z][a-z0-9-]*)$/.exec(token);
 		if (!m) return reasonOrMalformed(text);
-		(m[1] === "promise" ? promises : lessons).push(m[2]);
+		if (m[1] === "lesson") lessons.push(m[2]);
+		else if (!promises.includes(m[2])) promises.push(m[2]);
 	}
-	return { promises, lessons, reason: null };
+	return { promises, lessons, clauses, reason: null };
 }
 
 /** Port of `reasonOrMalformed` in `src/lib/trajectory/parser.ts` (planner-promises A30). */
 function reasonOrMalformed(text) {
-	if (/\b(?:promise|lesson):/i.test(text)) {
+	if (/\b(?:promise|lesson|clause):/i.test(text)) {
 		return {
 			promises: [],
 			lessons: [],
+			clauses: [],
 			reason: null,
 			malformed:
-				"names a promise or a lesson, but not as `promise: <name>` or `lesson: <name>` (the bare name, no backticks, nothing after it; several separated by commas)",
+				"names a promise, a lesson or a clause, but not as `promise: <name>`, `lesson: <name>` or `clause: <promise>/<clause>` (the bare name, no backticks, nothing after it; several separated by commas)",
 		};
 	}
 	if (text.split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).length < 2) {
 		return {
 			promises: [],
 			lessons: [],
+			clauses: [],
 			reason: null,
 			malformed: "is a mark, not a reason: say why the row needs no promise or lesson",
 		};
 	}
-	return { promises: [], lessons: [], reason: text };
+	return { promises: [], lessons: [], clauses: [], reason: text };
 }
 
 export function parsePhaseRefNumber(cell) {

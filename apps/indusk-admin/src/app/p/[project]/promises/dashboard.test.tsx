@@ -292,7 +292,7 @@ describe("the dashboard's thirty days are the package's, not the admin's", () =>
     expect(thirty("seat-holds-never-double-book")).toContain(
       "held 28 · broke 3 of 30 days",
     );
-    expect(thirty("exports-keep-their-columns")).toContain("not seen yet");
+    expect(thirty("exports-keep-their-columns")).toContain("no signal yet");
   });
 });
 

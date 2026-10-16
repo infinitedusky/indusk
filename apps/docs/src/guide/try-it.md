@@ -21,7 +21,7 @@ The app makes one promise:
 > **`a-held-seat-is-released-in-time`** — A seat that is held and not booked is released when its hold window passes, never late.
 
 Hold a seat and don't book it. A few seconds later it comes free, and that
-release is marked on its span, with plain OpenTelemetry:
+release is signalled on its span, with plain OpenTelemetry:
 `indusk.promise.outcome = upheld`. Open the admin (`indusk ui`), pick the
 `seat-holds` project, and find the promise holding. Or, in the project:
 
@@ -32,7 +32,7 @@ indusk promises status
 ## 3. Break it
 
 Press **Break it** on the seat page and hold another seat. This time its
-release comes late on purpose. The span is marked `violated`, with a symptom
+release comes late on purpose. The span carries `violated` (this release's word for a break, read as broken), with a symptom
 like `seat 3 released 4.1 s late`, and InDusk shows the promise broken, naming
 the trace that broke it.
 
@@ -43,7 +43,7 @@ still broken: it said *never*, and one late release breaks it however many
 on-time ones follow. A promise holds again only once the break is recorded
 as an incident, its cause written down, and fixed (`indusk promises fix`).
 
-That is the loop: you promise, the system marks every time it keeps or
+That is the loop: you promise, the system signals every time it keeps or
 breaks the promise, and a break stays visible until someone fixes it on
 purpose.
 

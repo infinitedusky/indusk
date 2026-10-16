@@ -1,4 +1,6 @@
 {
+	"renderedFrom": "d3e75155017b836236c0afbf917c948c326595e0c516d0420c9be220093be8af",
+	"baseRulesHash": "333ab5994772c78494c2ee6025ce02ad0e042de7aa206943c1211f45233c8bd8",
 	"components": [
 		{
 			"name": "amendment-card",
@@ -2216,6 +2218,12 @@
 					"description": "Where the row goes. A link when given, a button when not."
 				},
 				{
+					"name": "worktree",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Beside the stage, outside the row's link: the worktree mark."
+				},
+				{
 					"name": "className",
 					"type": "unknown",
 					"required": false,
@@ -2432,10 +2440,42 @@
 							]
 						]
 					}
+				},
+				{
+					"name": "worktree",
+					"id": "ui-planrow--worktree",
+					"snapshotHash": "cfc6ecaed21058b482d7285b55c8222656398bb2aa646a18bea1ccf390a6a4ae",
+					"content": {
+						"initials": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								1,
+								0,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								1,
+								1,
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/plan-row.css",
-			"stylesheetHash": "07b69b630ba109e10d811414731a9046befe5368c851feb5217cbe0de5d22940"
+			"stylesheetHash": "f374c72aa927924b7bc7d2f3cdb35e8834ef3cbafa655a75bfbfa33daef35598"
 		},
 		{
 			"name": "project-card",
@@ -2502,7 +2542,7 @@
 			"properties": [
 				{
 					"name": "standing",
-					"type": "\"declared\" | \"proving\" | \"enforced\" | \"broken\"",
+					"type": "| \"declared\"\n| \"proving\"\n| \"enforced\"\n| \"no-signal\"\n| \"broken\"",
 					"required": true
 				},
 				{
@@ -2631,6 +2671,43 @@
 					"name": "enforced",
 					"id": "ui-promiserow--enforced",
 					"snapshotHash": "f6b2e5387ebc8c493f548ca38fe1ce4f27fea333af79d924a32877bf2ecd766b",
+					"content": {
+						"says": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"slug": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						],
+						"evals": [
+							[
+								0,
+								3,
+								0
+							]
+						],
+						"last": [
+							[
+								0,
+								4,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "no-signal",
+					"id": "ui-promiserow--no-signal",
+					"snapshotHash": "28e9c05220787d29a7f16173c612a1d02fcc8e6459b96069255fb64a3ad95a81",
 					"content": {
 						"says": [
 							[
@@ -3715,6 +3792,55 @@
 			],
 			"stylesheet": "components/workflow-strip.css",
 			"stylesheetHash": "3473cfd6dbbea9d45cf908bc3fd92c5bda568b80ed4ac5f888d97902a7fbefca"
+		},
+		{
+			"name": "worktree-mark",
+			"file": "apps/indusk-admin/src/components/ui/WorktreeMark.tsx",
+			"properties": [
+				{
+					"name": "name",
+					"type": "string",
+					"required": true,
+					"description": "The worktree's name, shown when open and always in the label."
+				},
+				{
+					"name": "title",
+					"type": "string",
+					"required": false,
+					"description": "Where it is, for the title: \"Read from the worktree at <path> (<branch>)\"."
+				},
+				{
+					"name": "open",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Opened by a click from the start: for a story."
+				}
+			],
+			"states": [
+				{
+					"name": "closed",
+					"id": "ui-worktreemark--closed",
+					"snapshotHash": "dfe28ecefe8d7bc8eb6edae57d39f58aab340b42de8034e333bcdf24c44dad1a",
+					"content": {}
+				},
+				{
+					"name": "open",
+					"id": "ui-worktreemark--open",
+					"snapshotHash": "ee0591d6f7d8b72ae16c59a9a25c85a51c0fdcc238f1e992a55560645001067f",
+					"content": {
+						"name": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
+				}
+			],
+			"stylesheet": "components/worktree-mark.css",
+			"stylesheetHash": "5b97646af3fff653735845f114f3f9e393a0384c9910d45295852170b59e0b83"
 		}
 	]
 }

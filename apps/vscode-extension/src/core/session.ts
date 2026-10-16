@@ -21,7 +21,7 @@ export interface Session {
 	lastLineAt: number | null;
 	/**
 	 * Breaks already told, keyed by source and promise, so each is told once
-	 * while it stays broken there, however many violations or failed reads come between.
+	 * while it stays broken there, however many breaks or failed reads come between.
 	 */
 	told: Set<string>;
 }

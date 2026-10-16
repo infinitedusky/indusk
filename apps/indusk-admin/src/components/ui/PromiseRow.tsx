@@ -1,7 +1,12 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { ButtonOrLink } from "./ButtonOrLink";
 
-export type PromiseStanding = "declared" | "proving" | "enforced" | "broken";
+export type PromiseStanding =
+  | "declared"
+  | "proving"
+  | "enforced"
+  | "no-signal"
+  | "broken";
 export type PipState = "planned" | "written" | "passing";
 
 export interface PromiseRowProps
@@ -25,6 +30,7 @@ const DOT: Record<PromiseStanding, string> = {
   declared: "bg-idle",
   proving: "bg-warn",
   enforced: "bg-ok",
+  "no-signal": "bg-idle",
   broken: "bg-bad",
 };
 

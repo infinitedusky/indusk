@@ -32,17 +32,27 @@ const EXPECTED = [
 	{
 		id: "T1",
 		level: "unit",
-		purpose: { promises: ["seat-never-double-booked"], lessons: [], reason: null },
+		purpose: { promises: ["seat-never-double-booked"], lessons: [], clauses: [], reason: null },
 	},
 	{
 		id: "T2",
 		level: "contract",
-		purpose: { promises: [], lessons: ["a-seat-is-held-in-one-statement"], reason: null },
+		purpose: {
+			promises: [],
+			lessons: ["a-seat-is-held-in-one-statement"],
+			clauses: [],
+			reason: null,
+		},
 	},
 	{
 		id: "T3",
 		level: "unit",
-		purpose: { promises: [], lessons: [], reason: "a regression guard over the old seat map" },
+		purpose: {
+			promises: [],
+			lessons: [],
+			clauses: [],
+			reason: "a regression guard over the old seat map",
+		},
 	},
 	{
 		id: "T4",
@@ -50,6 +60,7 @@ const EXPECTED = [
 		purpose: {
 			promises: ["seat-never-double-booked", "seat-released-on-timeout"],
 			lessons: ["a-seat-is-held-in-one-statement"],
+			clauses: [],
 			reason: null,
 		},
 	},

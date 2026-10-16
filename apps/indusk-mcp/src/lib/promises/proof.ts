@@ -6,6 +6,7 @@ import type { BrokenPromise } from "./fix.js";
 import { type HealthDeps, healthLine, readHealth, type SourceHealthRead } from "./health.js";
 import { type HeardRow, readHeard } from "./heard.js";
 import {
+	findPromise,
 	type IncidentEntry,
 	type PromiseEntry,
 	type Registry,
@@ -113,7 +114,7 @@ export async function proofOf(
 ): Promise<Proof | null> {
 	const read = readPromises(projectRoot);
 	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
-	const entry = registry?.promises.find((p) => p.name === name || p.aliases.includes(name));
+	const entry = registry ? findPromise(registry.promises, name) : undefined;
 	if (!registry || !entry) return null;
 
 	const now = deps.now ?? Date.now;
@@ -190,7 +191,7 @@ function brokenOf(
 
 /**
  * A promise broken with no source reading red is held open by its incident (an
- * open incident moves an enforced promise to known-violated, which reads
+ * open incident moves an enforced promise to known-broken, which reads
  * amber): the break is the newest incident still open, with its symptom and
  * first trace, in the project's alarm source. Always a break, so a promise the
  * dashboard counts broken always has its fix.

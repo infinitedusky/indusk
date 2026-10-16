@@ -63,7 +63,7 @@ Use the `resolveTestIdCommand(trajectory, id)` helper from [`apps/indusk-mcp/src
 
 2. **Lint** — `biome check` (when code-quality-system is set up) or detected linter
    - Skip for: test file changes, markdown changes, generated files
-   - Catches: style violations, common bug patterns, unused imports
+   - Catches: style errors, common bug patterns, unused imports
 
 3. **Affected tests** — `pnpm turbo test --filter={app}`
    - Skip for: markdown changes, config-only changes with no test files

@@ -1,6 +1,6 @@
 # Always on
 
-The [promise loop](/guide/promises) works on a laptop: a run marks a promise,
+The [promise loop](/guide/promises) works on a laptop: a run sends a promise's signal,
 `indusk promises status` reads it back from the local telemetry daemon, and
 `indusk promises watch` reopens the owning plan when something breaks.
 
@@ -30,7 +30,7 @@ flowchart LR
 
   app -->|OTLP, authenticated| jaeger
   jaeger --> pass
-  pass -->|one message per violation| slack
+  pass -->|one message per break| slack
   jaeger -.->|query API| cli
   jaeger -.->|query API| ui
   jaeger -.->|promise_health| session
@@ -38,7 +38,7 @@ flowchart LR
 
 Three things are true of this picture, and they are the design:
 
-**Nothing InDusk runs inside your application.** The mark is plain
+**Nothing InDusk runs inside your application.** The signal is plain
 OpenTelemetry — two span attributes and an event. Your application already
 has an OTel SDK, or it does not have promises. There is no InDusk import, no
 agent, no sidecar.
@@ -51,7 +51,7 @@ a developer machine, deliberately, when someone runs `promises watch`.
 
 **The solid arrows happen with nobody watching.** The dotted ones happen when
 a person shows up. That split is the whole point: by the time you open your
-laptop, the violation is already stored and already announced.
+laptop, the break is already stored and already announced.
 
 ## The server
 
@@ -83,7 +83,7 @@ It installs the published `@infinitedusky/indusk-mcp` — what runs in your
 deployment is what a consumer gets, not an unreleased working tree — and its
 entrypoint is `indusk telemetry serve` in the foreground, as process 1. Mount
 a volume at whatever `INDUSK_SERVER_VOLUME` names; without one the server
-forgets every violation it was told about the moment it restarts.
+forgets every break it was told about the moment it restarts.
 
 ### On Fly
 
@@ -123,7 +123,7 @@ fly ips allocate-v4 --yes -c docker/fly.always-on.toml   # dedicated, $2/month
 
 ## Adopting it in an application
 
-**1. Mark the promise.** Wherever the behaviour happens, on the span that does
+**1. Signal the promise.** Wherever the behaviour happens, on the span that does
 the work:
 
 ```ts
@@ -136,6 +136,8 @@ if (!ok) {
 }
 ```
 
+`violated` is read as broken; `broken` is read the same.
+
 **2. Point the exporter at the server**, the ordinary way:
 
 ```bash
@@ -145,7 +147,7 @@ OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic <base64 of user:password>
 
 **3. Set `deployment.environment`** on the resource — `staging`,
 `production`. One server holds both, and it is the only thing that can tell
-them apart. A violation whose span did not carry it reads *environment
+them apart. A break whose span did not carry it reads *environment
 unknown* everywhere it appears, which is honest but not useful at three in the
 morning.
 
@@ -170,10 +172,10 @@ reading its local daemon, exactly as before.
 
 ## What you see, and when
 
-**In Slack, immediately.** One message per violation, naming the promise, the
+**In Slack, immediately.** One message per break, naming the promise, the
 symptom, the environment, the service and a link to the trace. Once: the
 server records what it has announced on its volume, *after* Slack accepts it,
-so a failed post leaves the violation unannounced for the next pass rather
+so a failed post leaves the break unannounced for the next pass rather
 than swallowing it.
 
 **In Slack, when the server stops hearing.** Every pass also sends a
@@ -183,18 +185,18 @@ then nothing more while the state holds. When they land again, it gets one
 *Watcher recovered*. The record of what was said is `watcher-state.json` on
 the volume. See [the heartbeat](/reference/cli/telemetry-server#the-heartbeat).
 
-**In the admin, live.** The Promises page refreshes itself, so a violation
+**In the admin, live.** The Promises page refreshes itself, so a break
 arriving while the page is open turns its chip red without a reload. A red row
 names the environment it came from.
 
 **When you ask what is next.** `/catchup` calls `promise_health`, and an
-unrecorded violation outranks the roadmap — you are told about it by name,
+unrecorded break outranks the roadmap — you are told about it by name,
 first, before any plan. A promise is a commitment the system made and is now
 breaking; the next feature can wait a sentence.
 
 **When you record it.** `indusk promises watch --source deployed` opens an
 incident carrying the environment and the traces, and reopens the owning plan
-with a Maintenance phase. That is the moment the violation becomes work.
+with a Maintenance phase. That is the moment the break becomes work.
 
 ## What it refuses to guess
 
@@ -208,8 +210,8 @@ that config — it *extends* it. The server refuses such a value by name rather
 than escaping it: a credential with a newline in it is a mistake, not a use
 case, and escaping would make the mistake silently work.
 
-**A pass announces at most ten violations.** A bad deploy is not one
-violation, it is hundreds; one message each is a tight loop of posts that
+**A pass announces at most ten breaks.** A bad deploy is not one
+break, it is hundreds; one message each is a tight loop of posts that
 Slack answers with a rate limit, after which every one counts as unannounced
 and the next pass tries them all again. The rest are *held* — the pass says
 how many — and stay out of the record, so the next pass announces them. One
@@ -252,12 +254,12 @@ curl -s -o /dev/null -w '%{http_code}\n' https://your-server:16687/api/services
 
 **2. Break a promise from outside.** From a machine that is not the server,
 run your application (or a throwaway script) with the exporter pointed at it,
-marking a real promise violated with `deployment.environment=staging`.
+marking a real promise broken with `deployment.environment=staging`.
 
 **3. Watch Slack.** Within one pass interval — a minute by default — a message
 naming the promise, the symptom, `staging`, the service and a trace link. If
 it does not arrive, read the machine's logs: the pass says `could not
-announce …` with the reason, and leaves the violation for the next pass.
+announce …` with the reason, and leaves the break for the next pass.
 
 **4. Restart the machine and query the trace.** This is what the volume is
 for.
@@ -270,14 +272,14 @@ curl -u indusk:<password> https://your-server:16687/api/traces/<traceId>
 
 **5. Leave it alone for an hour, then send another.** This is the step people
 skip, and it is the one that catches a provider quietly stopping an idle
-machine. A machine that was asleep runs no pass, so the second violation would
+machine. A machine that was asleep runs no pass, so the second break would
 be stored and never announced — and the request that delivers it is what wakes
 the machine, *after* the pass would have run. If the second Slack message
 arrives, auto-stop is genuinely off.
 
 **6. Read it from a developer machine.** Name the server in a project's
 `promises.jaeger`, set the credential variable, and run
-`indusk promises status`. It should report the violations you just caused and
+`indusk promises status`. It should report the breaks you just caused and
 name the server it read.
 
 #### Observed, 2026-10-04
@@ -286,7 +288,7 @@ The first run, against `indusk-always-on` on Fly (one `shared-cpu-1x` machine
 in `iad`, a 3 GB volume):
 
 - **Both doors refused** without credentials (401) and accepted with them.
-- **A violation reached Slack** within a pass, naming the promise, the symptom,
+- **A break reached Slack** within a pass, naming the promise, the symptom,
   the environment and the service. Its trace link pointed at the server's own
   loopback address until `INDUSK_SERVER_PUBLIC_QUERY_URL` existed (1.58.3), and
   opened to "no basic auth provided" until the query door sent a login
@@ -297,7 +299,7 @@ in `iad`, a 3 GB volume):
   and both records survived a restart, and the next pass remembered what it had
   already announced.
 - **An idle hour:** nothing reached the server from 23:42 to 00:43 UTC, and it
-  wrote a heartbeat every 60 s throughout (63 beats, no gap). A violation sent
+  wrote a heartbeat every 60 s throughout (63 beats, no gap). A break sent
   at 00:43:54 was announced at 00:44:47. Auto-stop is genuinely off.
 - **A laptop read it** through `promises.jaeger` (`url`, `otlp_url`,
   `credential_env`) and was not watcher blind.
@@ -315,5 +317,5 @@ Everything else your existing monitoring already does better.
 
 It also does not decide anything is fine. A server that cannot be reached
 reports *health unknown*, naming where it looked, and never reports zero
-violations instead — "nothing is broken" and "nobody could look" are different
+breaks instead — "nothing is broken" and "nobody could look" are different
 answers, and only one of them is reassuring.

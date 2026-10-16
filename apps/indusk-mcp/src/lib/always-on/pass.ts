@@ -119,8 +119,11 @@ export function writeAnnounced(
 	writeFileDurably(announcedPath(volume), JSON.stringify({ spans }, null, 1));
 }
 
+/** The two attribute values a broken signal carries, asked for one by one. */
+const BROKEN_WORDS = ["broken", "violated"] as const;
+
 /**
- * Every span marked violated since `since`, newest first.
+ * Every span marked broken since `since`, newest first.
  *
  * Asked of every service the server knows, by the outcome tag rather than by
  * promise name — the server has no registry to enumerate.
@@ -133,21 +136,25 @@ export async function violationsSince(
 	const services = await jaegerGet<string>(endpoint, "/api/services", timeoutMs);
 	const seen = new Map<string, MarkedSpan>();
 	for (const service of services) {
-		const params = new URLSearchParams({
-			service,
-			tags: JSON.stringify({ [PROMISE_MARK.outcome]: "violated" }),
-			start: String(since.getTime() * 1000),
-			end: String(Date.now() * 1000),
-			limit: String(TRACE_LIMIT),
-		});
-		const traces = await jaegerGet<JaegerTrace>(endpoint, `/api/traces?${params}`, timeoutMs);
-		for (const trace of traces) {
-			for (const span of trace.spans) {
-				const process = trace.processes[span.processID];
-				const marked = parseMarkedSpan(span, process?.serviceName ?? service, process?.tags);
-				if (marked?.outcome !== "violated") continue;
-				if (marked.at < since) continue;
-				seen.set(marked.spanId, marked);
+		// A signal says `broken` or, from applications instrumented before
+		// 2026-10-15, `violated` (readOutcome): ask once per value, merge by span id.
+		for (const word of BROKEN_WORDS) {
+			const params = new URLSearchParams({
+				service,
+				tags: JSON.stringify({ [PROMISE_MARK.outcome]: word }),
+				start: String(since.getTime() * 1000),
+				end: String(Date.now() * 1000),
+				limit: String(TRACE_LIMIT),
+			});
+			const traces = await jaegerGet<JaegerTrace>(endpoint, `/api/traces?${params}`, timeoutMs);
+			for (const trace of traces) {
+				for (const span of trace.spans) {
+					const process = trace.processes[span.processID];
+					const marked = parseMarkedSpan(span, process?.serviceName ?? service, process?.tags);
+					if (marked?.outcome !== "broken") continue;
+					if (marked.at < since) continue;
+					seen.set(marked.spanId, marked);
+				}
 			}
 		}
 	}
@@ -162,7 +169,7 @@ export async function violationsSince(
  */
 export function slackText(span: MarkedSpan, publicQueryUrl: string | null): string {
 	return [
-		`Promise violated: ${span.promise}`,
+		`Promise broken: ${span.promise}`,
 		span.symptom ?? "_no symptom recorded_",
 		`${span.environment ?? "environment unknown"} · ${span.service} · ${span.operation}`,
 		// The link must open from wherever the reader is. The server's own

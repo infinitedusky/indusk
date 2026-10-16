@@ -10,6 +10,7 @@ import {
 
 /**
  * promise: everyday-suite-stays-fast — test-kinds A16, A17.
+ * promise: a-promise-is-upheld-or-broken — one-promise-language A17.
  *
  * Each everyday run is marked held or broken with how long it took; a slow run
  * fails nothing; a run that overlapped another is not judged; with no daemon,
@@ -58,7 +59,7 @@ describe("everyday-suite-stays-fast — test-kinds A16, A17", () => {
 			},
 		]);
 		expect(said, "lesson: a-suites-speed-is-a-promise-not-a-gate").toMatch(
-			/marked .* violated \(130 s\)/,
+			/signal sent: .* broken \(130 s\)/,
 		);
 	});
 
@@ -70,7 +71,7 @@ describe("everyday-suite-stays-fast — test-kinds A16, A17", () => {
 			body: () => ({ body: {} }),
 			send: async () => {},
 		});
-		expect(noDaemon).toBe("not marked: no telemetry daemon is running");
+		expect(noDaemon).toBe("no signal sent: no telemetry daemon is running");
 		const refused = await sendSuiteMark("/repo", mark, {
 			status: async () => ({ running: true, otlpPort: 4318 }),
 			project: () => "dusk",
@@ -79,7 +80,44 @@ describe("everyday-suite-stays-fast — test-kinds A16, A17", () => {
 				throw new Error("http://localhost:4318/v1/traces refused the span (500)");
 			},
 		});
-		expect(refused).toMatch(/^not marked: .*refused the span/);
+		expect(refused).toMatch(/^no signal sent: .*refused the span/);
+	});
+
+	it("one-promise-language A17: the signal still writes violated this release; the line it prints says broken and signal, never violated or marked", async () => {
+		const sent: Array<Record<string, unknown>> = [];
+		const deps = {
+			status: async () => ({ running: true, otlpPort: 4318 }),
+			project: () => "dusk",
+			body: (_name: string, attrs: object) => ({ body: attrs }),
+			send: async (_intake: string, body: unknown) => {
+				sent.push(body as Record<string, unknown>);
+			},
+		};
+		const slow = await sendSuiteMark(
+			"/repo",
+			suiteSpeedMark({ durationMs: 130_000, overlapped: false }),
+			deps,
+		);
+		const fast = await sendSuiteMark(
+			"/repo",
+			suiteSpeedMark({ durationMs: 50_000, overlapped: false }),
+			deps,
+		);
+		expect(sent[0]?.["indusk.promise.outcome"]).toBe("violated");
+		expect(slow).toBe(`signal sent: ${SUITE_PROMISE} broken (130 s)`);
+		expect(fast).toBe(`signal sent: ${SUITE_PROMISE} upheld (50 s)`);
+		const skipped = await sendSuiteMark("/repo", { skip: "overlapped" }, deps);
+		const noDaemon = await sendSuiteMark(
+			"/repo",
+			suiteSpeedMark({ durationMs: 1, overlapped: false }),
+			{
+				...deps,
+				status: async () => ({ running: false }),
+			},
+		);
+		for (const said of [slow, fast, skipped, noDaemon]) expect(said).not.toMatch(/violat|marked/i);
+		expect(skipped).toMatch(/^no signal sent:/);
+		expect(noDaemon).toBe("no signal sent: no telemetry daemon is running");
 	});
 
 	it("A23: a run that failed fast is not marked held — a crash measures nothing; a slow failing run is still broken", () => {

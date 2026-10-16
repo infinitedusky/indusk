@@ -338,10 +338,11 @@ const AFTER_WRITE = "Run `indusk promises check` before committing.";
 export function promisesDeclare(
 	projectRoot: string,
 	name: string,
-	opts: { plan: string; kind: string; domain: string; statement: string },
+	opts: { plan: string; kind: string; domain: string; statement: string; clause?: string[] },
 ): void {
 	writing(() => {
-		declarePromise(projectRoot, { name, ...opts });
+		const { clause, ...rest } = opts;
+		declarePromise(projectRoot, { name, ...rest, ...(clause ? { clauses: clause } : {}) });
 		return `${name} declared by ${opts.plan}. ${AFTER_WRITE}`;
 	});
 }

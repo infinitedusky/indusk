@@ -76,14 +76,13 @@ Refused before anything is made, with the message naming why:
 - a conversation with no founding brief yet.
 
 Then, in order: the workbench folder and its `worktrees/` folder; each
-repository (`git init -b main`, a README, one commit); `indusk init
---workbench` as a child process; `worktree` in the project's config rewritten to
+repository (`git init -b main`, a README, one commit); `indusk init --workbench`
+as a child process; `worktree` in the project's config rewritten to
 declare every repository with `worktrees: "worktrees"` and `repos_root: "."`;
 `project-brief.md`, `sources/<file>` for each document (byte for byte) and
 `master.md` with the milestones as `roadmap:`; `recommendations` and
 `planning.documents_off` in the config; the workbench's first commit; and, only
-when the proposal confirms it, `gh repo create <repository> --private --source
-<path> --push`. The conversation's folder is then removed.
+when the proposal confirms it, `gh repo create <repository> --private --source <path> --push`. The conversation's folder is then removed.
 
 A failure before the remote removes what the run made - the directories and the
 registry entry - and keeps the conversation, so it can be accepted again. A
