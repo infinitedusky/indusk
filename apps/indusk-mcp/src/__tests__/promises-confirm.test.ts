@@ -17,7 +17,7 @@ import { toolCaller } from "./helpers/tool-call.js";
 
 /**
  * promise: a-closed-plan-kept-its-promises — planner-promises A8–A11.
- * promise: a-plan-holds-the-promises-it-lands — plans-are-promises A9, A11 (closing per clause).
+ * promise: a-plan-holds-the-promises-it-lands — plans-are-promises A9, A11 (closing per clause), A17 (siblings).
  *
  * A plan closes with its promises proven or it does not close. `indusk
  * promises confirm <plan>` moves each promise the plan declared to `enforced`,
@@ -414,5 +414,96 @@ describe.skipIf(SHOULD_SKIP)("plans-are-promises A9 — closing wants every clau
 		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
 		expect(r.code, r.stdout + r.stderr).toBe(0);
 		expect(promise(p).data.state).toBe("enforced");
+	});
+});
+
+/**
+ * plans-are-promises A17 — a plan that makes two promises, the second with a
+ * clause resting on the first, closes in one confirm: the sibling counts as in
+ * force once it is itself proved in the same close. A resting cycle inside one
+ * plan is refused, naming both promises.
+ */
+describe.skipIf(SHOULD_SKIP)("plans-are-promises A17 — a clause may rest on a sibling", () => {
+	const FIRST = "seat-map-never-stale";
+	const spec = (name: string, restsOn?: string): PromiseSpec => ({
+		name,
+		kind: "state",
+		state: "declared",
+		domain: "seating",
+		owner: PLAN,
+		raw: matter.stringify(`The ${name} promise holds.\n\n## History\n- 2026-10-16 — declared.\n`, {
+			name,
+			kind: "state",
+			lifetime: "holds",
+			state: "declared",
+			domain: "seating",
+			owner: PLAN,
+			sites: [],
+			tests: [],
+			incidents: [],
+			...(restsOn
+				? {
+						clauses: [
+							{ name: "fast", kind: "split", statement: "Answers fast." },
+							{ name: "base", kind: "rests-on", rests_on: restsOn },
+						],
+					}
+				: {}),
+		}),
+	});
+	const row = (cell: string, test: string) => ({
+		state: "passing",
+		cells: { For: cell, Test: test },
+	});
+
+	function siblings(firstRestsOn?: string) {
+		fixture = promiseProject({
+			domains: ["seating"],
+			promises: [spec(FIRST, firstRestsOn), spec(NAME, FIRST)],
+			planFiles: {
+				[`${PLAN}/brief.md`]: briefText(PLAN, {
+					makes: [
+						{ name: FIRST, sentence: `The ${FIRST} promise holds.` },
+						{ name: NAME, sentence: `The ${NAME} promise holds.` },
+					],
+				}),
+				[`${PLAN}/impl.md`]: implText(
+					PLAN,
+					impl([
+						row(`promise: ${FIRST}`, "src/first.test.ts"),
+						row(`clause: ${NAME}/fast`, TEST),
+						...(firstRestsOn ? [row(`clause: ${FIRST}/fast`, "src/first.test.ts")] : []),
+					]),
+				),
+			},
+			files: {
+				"src/first.ts": siteFile(FIRST),
+				"src/first.test.ts": testFile(FIRST),
+				[SITE]: siteFile(NAME),
+				[TEST]: testFile(NAME),
+			},
+		});
+		return fixture;
+	}
+	const stateOf = (p: PromiseProject, name: string) =>
+		matter(readFileSync(join(p.planRoot, ".indusk", "promises", `${name}.md`), "utf-8")).data.state;
+
+	it("closes both in one confirm, the sibling counted as in force once proved", () => {
+		const p = siblings();
+		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(r.code, r.stdout + r.stderr).toBe(0);
+		expect(stateOf(p, FIRST)).toBe("enforced");
+		expect(stateOf(p, NAME)).toBe("enforced");
+	});
+
+	it("refuses a cycle between the two, naming both, and writes nothing", () => {
+		const p = siblings(NAME);
+		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toMatch(/cycle/i);
+		expect(r.stderr).toContain(FIRST);
+		expect(r.stderr).toContain(NAME);
+		expect(stateOf(p, FIRST)).toBe("declared");
+		expect(stateOf(p, NAME)).toBe("declared");
 	});
 });

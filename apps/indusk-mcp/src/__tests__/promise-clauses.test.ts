@@ -10,7 +10,7 @@ import { briefText, type ImplSpec, implText } from "./helpers/plan-fixture.js";
 import { type PromiseProject, promiseProject, token } from "./helpers/promises-fixture.js";
 
 /**
- * plans-are-promises A1, A2, A4, A5, A6, A7, A8, A13 — the contract check
+ * plans-are-promises A1, A2, A4, A5, A6, A7, A8, A13, A18 — the contract check
  * holds a brief's clauses to the registry, the clause plan and the test rows.
  *
  * promise: a-plan-holds-the-promises-it-lands
@@ -323,4 +323,25 @@ describe("A13 — a plan that has not opted in is held to no clause", () => {
 		});
 		expect(messages(p)).toEqual([]);
 	});
+});
+
+/**
+ * A18 — a brief that has not opted in reads an indented bullet as it did
+ * before clauses: another promise it makes, not a sub-entry of the entry above.
+ */
+describe("A18 — an indented bullet in a brief that has not opted in is still a promise", () => {
+	const base = briefText(PLAN, { makes: [{ name: FIRST, sentence: sentenceOf(FIRST) }] });
+	const withIndented = (indent: string) =>
+		base.replace(
+			`1. **\`${FIRST}\`** (state). ${sentenceOf(FIRST)}`,
+			`1. **\`${FIRST}\`** (state). ${sentenceOf(FIRST)}\n${indent}- **\`${SECOND}\`** (state). ${sentenceOf(SECOND)}`,
+		);
+
+	for (const indent of ["  ", "   "]) {
+		it(`reads a bullet indented ${indent.length} spaces as a promise it makes`, () => {
+			const parsed = parseBriefContract(withIndented(indent));
+			if (parsed.shape === "legacy") throw new Error("expected the contract shape");
+			expect(parsed.makes.map((m) => m.name)).toEqual([FIRST, SECOND]);
+		});
+	}
 });
