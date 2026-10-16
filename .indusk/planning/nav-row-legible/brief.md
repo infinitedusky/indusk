@@ -1,6 +1,6 @@
 ---
 title: "A nav row reads at a glance"
-description: "A plan's row in the admin nav stays two lines: the worktree becomes a small mark without text beside the stage, set apart from it, and clicking the mark shows the worktree's name and branch."
+description: "A plan's row in the admin nav stays two lines: the worktree becomes a small mark without text beside the stage, set apart from it, and hovering or clicking it widens it in place to show the worktree's name."
 date: 2026-10-16
 status: draft
 workflow: bugfix
@@ -16,7 +16,7 @@ None — a layout fix; whether it reads better is judged when the look is approv
 
 ### This plan makes
 
-1. **`a-nav-row-keeps-its-parts-apart`** (state). A plan's row in the nav shows its title on one line and its stage on the next, with its worktree as a mark beside the stage and apart from it; clicking the mark shows the worktree's name and branch without opening the plan.
+1. **`a-nav-row-keeps-its-parts-apart`** (state). A plan's row in the nav shows its title on one line and its stage on the next, with its worktree as a mark beside the stage and apart from it; hovering or clicking the mark widens it in place to show the worktree's name, without opening the plan.
 
 ### Existing promises
 
@@ -43,9 +43,9 @@ None.
 
 ### This plan makes
 
-1. **`plan-row.worktree`**. Plan rows in the nav: the title, then the stage with a worktree mark beside it on rows that have one, 8 px apart; otherwise identical to the nav today.
+1. **`plan-row.worktree`**. Plan rows in the nav: the title, then the stage with a worktree mark beside it on rows that have one, 8 px apart; otherwise identical to the nav today. The second row shows a mark widened to its name.
 2. **`worktree-mark.closed`**. The worktree mark on its own: a small bordered glyph, no text.
-3. **`worktree-mark.open`**. The worktree mark clicked: a small box under it with the worktree's name and branch.
+3. **`worktree-mark.open`**. The worktree mark hovered or clicked: widened in place to show the worktree's name, on the same line.
 
 ### Existing looks
 

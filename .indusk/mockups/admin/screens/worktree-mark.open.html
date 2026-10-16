@@ -21,14 +21,12 @@
 			.stage { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
 			.pr.needs .stage { color: var(--color-dusk); }
 			.pr.queued .stage { font-style: italic; }
-			.wm { position: relative; flex-shrink: 0; display: grid; place-items: center; width: var(--leading-2); height: var(--leading-2); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-ink-soft); font-size: var(--text-2xs); line-height: var(--leading-1); }
+			.wm { flex-shrink: 1; min-width: 0; display: inline-flex; align-items: center; gap: var(--space-1); height: var(--leading-2); padding: 0 var(--space-1); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-ink-soft); font-size: var(--text-2xs); line-height: var(--leading-1); }
 			.wm[aria-expanded="true"] { border-color: var(--color-dusk); color: var(--color-dusk); }
-			.pop { position: absolute; top: calc(100% + var(--space-1)); left: 0; z-index: 1; display: grid; gap: var(--space-hair); padding: var(--space-2) var(--space-3); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface); text-align: left; white-space: nowrap; }
-			.pop b { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); font-weight: var(--font-weight-medium); color: var(--color-ink); }
-			.pop span { font-family: var(--font-mono); font-size: var(--text-2xs); line-height: var(--leading-1); color: var(--color-ink-faint); }
+			.wm-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-mono); font-size: var(--text-2xs); line-height: var(--leading-1); }
 		</style>
 	</head>
 	<body>
-<div style="padding:var(--space-6);padding-bottom:var(--space-16)"><button data-component="worktree-mark" data-state="open" class="wm" type="button" aria-expanded="true" aria-label="Worktree">⎇<span class="pop" role="tooltip"><b>looks-check-speed</b><span>plan/looks-check-speed</span></span></button></div>
+<div style="padding:var(--space-6);padding-bottom:var(--space-16)"><button data-component="worktree-mark" data-state="open" class="wm" type="button" aria-expanded="true" aria-label="Worktree looks-check-speed">⎇<span class="wm-name">looks-check-speed</span></button></div>
 	</body>
 </html>
