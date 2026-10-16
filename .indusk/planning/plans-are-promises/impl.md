@@ -380,7 +380,7 @@ This phase tests three places where the finished plan may fail its own promise. 
   `lib/promises/brief-contract.ts` `items`: the nested-bullet rule applies only when the caller reads clauses (`readMakes` with `clausesRequired`); every other section and a brief without the opt-in keep the old top-level reading (`ENTRY` allows up to three leading spaces). Hypothesis: `   - **\`b\`** [state]. …` under `1. **\`a\`** …` was a promise and is now a sub-bullet `parseClauseSpec` rejects without a problem, so `b` drops out of `makes`.
 
   </details>
-- [ ] The registry check refuses a clause that rests on its own promise or on a promise it does not hold.
+- [x] The registry check refuses a clause that rests on its own promise or on a promise it does not hold.
   <details><summary>Technical</summary>
 
   `lib/promises/registry.ts` `clausesProblem` takes the promise's name and refuses `rests_on` equal to it; `lib/promises/check.ts` refuses a `rests_on` naming no promise in the registry, naming the clause. Hypothesis: both pass `promises:check` today and surface only as a close that can never succeed.

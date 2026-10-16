@@ -277,7 +277,10 @@ export function promiseProblem(value: unknown, stem: string, statement: string):
 			return `\`aliases\` entry "${alias}" is not kebab-case (${PROMISE_NAME})`;
 		}
 	}
-	const clauseProblem = clausesProblem(v.clauses);
+	const clauseProblem = clausesProblem(v.clauses, [
+		stem,
+		...((v.aliases as string[] | undefined) ?? []),
+	]);
 	if (clauseProblem !== null) return clauseProblem;
 	if (v.superseded_by !== undefined && typeof v.superseded_by !== "string") {
 		return "`superseded_by` must be a promise name";
@@ -313,8 +316,11 @@ function readClauses(list: Array<Record<string, unknown>>): PromiseClause[] {
 	}));
 }
 
-/** Why a promise file's `clauses` is not a list of clauses, or null when it is one (or absent). */
-function clausesProblem(value: unknown): string | null {
+/**
+ * Why a promise file's `clauses` is not a list of clauses, or null when it is
+ * one (or absent). `own` is the promise's names, which no clause may rest on.
+ */
+function clausesProblem(value: unknown, own: readonly string[]): string | null {
 	if (value === undefined) return null;
 	if (!Array.isArray(value)) return "`clauses` must be a list";
 	const seen = new Set<string>();
@@ -336,6 +342,9 @@ function clausesProblem(value: unknown): string | null {
 		if (clause.kind === "rests-on") {
 			if (typeof clause.rests_on !== "string" || !PROMISE_NAME.test(clause.rests_on)) {
 				return `clause "${name}" rests on another promise, so it needs \`rests_on\`: a promise name`;
+			}
+			if (own.includes(clause.rests_on)) {
+				return `clause "${name}" rests on ${clause.rests_on}, which is this promise itself — a promise cannot rest on itself`;
 			}
 		} else if (clause.rests_on !== undefined) {
 			return `clause "${name}" is a ${clause.kind}, which rests on nothing — \`rests_on\` is only for a rests-on clause`;
