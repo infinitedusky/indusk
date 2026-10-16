@@ -460,7 +460,7 @@ This phase makes the promise list stop showing a promise as healthy when nothing
 
 #### Build Phase 5 Verification
 
-- [ ] An enforced promise with no signal reads grey with "no signal yet", and every earlier row still passes.
+- [x] An enforced promise with no signal reads grey with "no signal yet", and every earlier row still passes.
   <details><summary>Technical</summary>
 
   A21 goes green; `cd apps/indusk-admin && pnpm exec vitest run src/components/ui/PromiseRow.test.tsx src/components/PromiseWords.test.tsx && pnpm exec tsc --noEmit -p .`; `pnpm exec vitest related` over the changed files.
@@ -473,7 +473,7 @@ This phase makes the promise list stop showing a promise as healthy when nothing
 
 #### Build Phase 5 Context
 
-- [ ] The admin's own context file says a promise with no signal is drawn grey, never green.
+- [x] The admin's own context file says a promise with no signal is drawn grey, never green.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`: one line beside the word rule — `promise: a-promise-is-upheld-or-broken`.
@@ -481,7 +481,7 @@ This phase makes the promise list stop showing a promise as healthy when nothing
 
 #### Build Phase 5 Document
 
-- [ ] The promise guide's words table shows the grey dot for no signal.
+- [x] The promise guide's words table shows the grey dot for no signal.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/promises.md`, "The words": the dashboard dot per reading.

@@ -45,6 +45,7 @@ Every screen, command and page says the same few words about a promise. The tele
 | A signal's outcome | `upheld` | `broken` (`violated`, the older word, is read as broken) | — |
 | Now, live | holding | broken | no signal |
 | In the past | held | broke | no signal |
+| Dot in the dashboard | green | red | grey, "no signal yet" |
 
 *No signal* means nothing has reported on the promise — never green, never holding.
 
