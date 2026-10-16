@@ -53,3 +53,5 @@ A1 to A10 all `passing`; no blocked rows, no deferred rows.
 - Everyday suite on the merged branch: the package 3121 passed, 2 failed (both failing on trunk too), the admin 800 passed.
 - `pnpm check` prints Biome config-version notices (CLI 2.5.14, configs 2.4.8) on trunk as well; Biome on the changed files is clean.
 - Nothing published: this repo installs its own build at landing and publishes deliberately.
+
+Landed on main at 8e95661f, 2026-10-16.
