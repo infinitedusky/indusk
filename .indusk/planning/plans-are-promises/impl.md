@@ -1,7 +1,7 @@
 ---
 title: "Plans are promises"
 date: 2026-10-16
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -70,6 +70,9 @@ proves. Plans that do not opt in validate and close exactly as before. See
 | A14 | The save hook and the library read every row's purpose the same way, the clause form included | Test Phase 1 | Build Phase 2 | passing | unit | a regression guard over the two copies of the row-purpose reader, the library's and the hook's, which must not drift | apps/indusk-mcp/src/__tests__/hook-shared-modules.test.ts |
 | A15 | A row naming a clause counts as naming its promise in the promise's proof, incidents and standing | Test Phase 1 | Build Phase 2 | passing | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/row-purpose.test.ts |
 | A16 | In a project made for the check, a plan written with the commands — two promises with clauses, a clause plan, rows naming clauses — passes the contract check, is refused at close while a clause has no passing row, and closes once it does | Build Phase 3 | Build Phase 3 | passing | live check | promise: a-plan-holds-the-promises-it-lands | manual: indusk promises contract demo && indusk promises confirm demo, in a temporary project |
+| A17 | A plan that makes two promises, the second with a clause resting on the first, both otherwise proved, closes in one confirm and passes the cleanup gate; a resting cycle inside one plan is refused, naming both promises | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts, apps/indusk-mcp/src/__tests__/cleanup-gate.test.ts |
+| A18 | A brief with no `clauses: required`, whose promises are bullets indented two or three spaces beneath a first entry, still reads every one of them as a promise it makes | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
+| A19 | A promise file whose clause rests on the promise itself is refused by the registry check, and a resting clause naming a promise the registry no longer holds is refused by it, naming the clause | Build Phase 4 | Build Phase 4 | planned | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
 
 ## Checklist
 
@@ -356,6 +359,58 @@ This phase finishes the promise. Closing a plan — both the check that a plan i
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/skills/plan.md` — closing per clause; `apps/docs/src/changelog.md` Unreleased — "Added: promises stated as clauses — `clauses: required` in a brief, `declare --clause`, the clause plan, `clause:` rows, closing per clause."
+
+  </details>
+
+### Build Phase 4: Falsification — a plan that cannot close, and a plan that silently loses a promise
+
+**Tier**: med — the work step's default (`workflow.steps.work.tier`)
+
+This phase tests three places where the finished plan may fail its own promise. A plan that makes two promises where one rests on the other may be unable to close, because closing looks only at what is already in force. A brief written before clauses may have lost a promise, because the reader now treats an indented bullet as part of the entry above it. And a promise can be written to rest on itself or on one that is gone, and the registry check says nothing. When it closes, a plan with promises resting on each other closes, an older brief reads as before, and a clause that cannot be satisfied is refused where it is written.
+
+- [ ] A promise resting on a sibling promise of the same plan counts as in force once that sibling is itself proved, and a cycle is refused.
+  <details><summary>Technical</summary>
+
+  `lib/promises/rows.ts` `clauseRefusal`/`rowProofs`: a `rests-on` target owned by `plan`, in `promises`, whose own clauses and rows raise no refusal, counts as in force; a cycle among such siblings is a refusal naming both. `confirm.ts` and `cleanup/gate.ts` already pass the registry; check `build/review.ts`. Hypothesis: today the sibling is `declared` in the registry read before anything is written, so the dependent is refused and, since one refusal blocks the whole confirm, neither is ever enforced.
+
+  </details>
+- [ ] A brief that has not opted in reads an indented bullet as it did before clauses.
+  <details><summary>Technical</summary>
+
+  `lib/promises/brief-contract.ts` `items`: the nested-bullet rule applies only when the caller reads clauses (`readMakes` with `clausesRequired`); every other section and a brief without the opt-in keep the old top-level reading (`ENTRY` allows up to three leading spaces). Hypothesis: `   - **\`b\`** [state]. …` under `1. **\`a\`** …` was a promise and is now a sub-bullet `parseClauseSpec` rejects without a problem, so `b` drops out of `makes`.
+
+  </details>
+- [ ] The registry check refuses a clause that rests on its own promise or on a promise it does not hold.
+  <details><summary>Technical</summary>
+
+  `lib/promises/registry.ts` `clausesProblem` takes the promise's name and refuses `rests_on` equal to it; `lib/promises/check.ts` refuses a `rests_on` naming no promise in the registry, naming the clause. Hypothesis: both pass `promises:check` today and surface only as a close that can never succeed.
+
+  </details>
+
+#### Build Phase 4 Verification
+
+- [ ] The three hypotheses hold: each test fails today on its own assertion and passes after the fixes.
+  <details><summary>Technical</summary>
+
+  A17, A18, A19: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-confirm.test.ts src/__tests__/cleanup-gate.test.ts src/__tests__/promise-clauses.test.ts src/__tests__/promises-check.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/promises/rows.ts src/lib/promises/brief-contract.ts src/lib/promises/registry.ts src/lib/promises/check.ts --run`; `pnpm promises:check` passes. A13 and every other clause row still passing.
+
+  </details>
+
+#### Build Phase 4 Context
+
+- [ ] The planning rules say a promise may rest on a sibling of the same plan.
+  <details><summary>Technical</summary>
+
+  planning: `templates/planning/CLAUDE.md`, the per-clause close-out rule — add "a clause may rest on a promise the same plan makes; it counts once that promise is proved in the same close." Synced by the package.
+
+  </details>
+
+#### Build Phase 4 Document
+
+- [ ] The planning guide says a resting clause may name a sibling promise.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/guide/briefs.md` "Promises as clauses": one sentence and the cycle refusal.
 
   </details>
 
