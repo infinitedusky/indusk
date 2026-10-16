@@ -3,7 +3,8 @@
  * promise: tokens-are-held-exactly
  *
  * When a look's last held result is reused, and where it is kept
- * (looks-check-speed A2-A8, A19). The rule is pure: every input is handed in.
+ * (looks-check-speed A2-A8, A19, A28-A32, A38, A39). The rule is pure: every
+ * input is handed in.
  */
 import { appendFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -12,7 +13,7 @@ import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.j
 import { checkApp } from "./check.js";
 import { fakeOpener, fixtureApp, servedPage } from "./check-run.fixtures.js";
 import { pageSourceFilter } from "./components.js";
-import { pageSourcesHashOf, servedBuildOf, sourcesHashOf } from "./mockups.js";
+import { type LooksApp, pageSourcesHashOf, servedBuildOf, sourcesHashOf } from "./mockups.js";
 import {
 	type Held,
 	heldPath,
@@ -243,7 +244,7 @@ describe("where held results are kept", () => {
 });
 
 describe("what is actually served is judged against the sources", () => {
-	it("tells a build by its assets and inline styles, not by the page's text", () => {
+	it("A38: tells a build by its assets and inline styles, not by the page's text", () => {
 		const page = (text: string, css: string) =>
 			`<link rel="stylesheet" href="/${css}.css"><script src="/a.js"></script><p>${text}</p>`;
 		expect(servedBuildOf(page("one", "x"))).toBe(servedBuildOf(page("two", "x")));
@@ -251,7 +252,7 @@ describe("what is actually served is judged against the sources", () => {
 		expect(servedBuildOf("<p>nothing to tell by</p>")).toBeNull();
 	});
 
-	it("judges the served build against the sources, not as part of the key", () => {
+	it("A38: judges the served build against the sources, not as part of the key", () => {
 		const built = (sources: string, served: string) => ({ build: { sources, served } });
 		const record = { ...held, ...built("s1", "b1") };
 		// same sources, same build: reused; edited sources, rebuilt: reused
@@ -277,7 +278,7 @@ describe("what is actually served is judged against the sources", () => {
 		});
 	});
 
-	it("reopens a look whose styling configuration or lockfile changed", () => {
+	it("A39: reopens a look whose styling configuration or lockfile changed", () => {
 		expect(reuseOf(held, { ...story, configHash: "k1" })).toEqual({
 			reuse: false,
 			changed: "configuration",
@@ -289,7 +290,7 @@ describe("what is actually served is judged against the sources", () => {
 		["a PostCSS config", "postcss.config.mjs"],
 		["the Storybook config", ".storybook/main.ts"],
 		["the lockfile", "pnpm-lock.yaml"],
-	])("a check after %s changed opens every look it held", async (_name, file) => {
+	])("A39: a check after %s changed opens every look it held", async (_name, file) => {
 		const { app, approvals, root, home } = await fixtureApp(["home.empty"]);
 		const run = async (answers: Record<string, "held">) => {
 			const opener = fakeOpener(answers);
@@ -312,7 +313,7 @@ describe("what is actually served is judged against the sources", () => {
 		expect(await run({ "home.empty": "held" })).toEqual(["home.empty"]);
 	});
 
-	it("a check reopens a look served by another build of the same sources, or by the old build after an edit, and reuses it after a rebuild", async () => {
+	it("A38: a check reopens a look served by another build of the same sources, and reuses it after a rebuild", async () => {
 		const { app, approvals, storyApprovals, root, home } = await fixtureApp([], ["home.full"]);
 		const build = (name: string) => async () => `<link rel="stylesheet" href="/${name}.css">`;
 		const run = async (fetchPage: () => Promise<string>, answers: Record<string, "held"> = {}) => {
@@ -352,5 +353,207 @@ describe("what is actually served is judged against the sources", () => {
 		}, held);
 		expect(unread.opened).toEqual(["story home.full"]);
 		expect(unread.report.notice).toMatch(/could not be read/);
+	});
+});
+
+/** The stories rendered again from the sources as they are now: the catalog's `renderedFrom` moved, with `extra` beside it. */
+async function renderedAgain(root: string, app: LooksApp, extra: object = {}): Promise<void> {
+	const catalog = join(app.dir, "components.json");
+	const rendered = JSON.parse(readFileSync(catalog, "utf-8"));
+	writeFileSync(
+		catalog,
+		JSON.stringify({ ...rendered, ...extra, renderedFrom: await sourcesHashOf(root, app) }),
+	);
+}
+
+/** A served page of one stylesheet named `name`: the build's identity. */
+const build = (name: string) => async () => `<link rel="stylesheet" href="/${name}.css">`;
+
+describe("a reuse proves only the build it measured", () => {
+	it("A28: a look opened while the server still serves the build from before the sources changed is reported, not kept, and opened again on the next run", async () => {
+		const { app, approvals, root, home } = await fixtureApp(["home.empty"], [], {
+			serve: "pnpm build && pnpm start",
+		});
+		const run = async () => {
+			const opener = fakeOpener({ "home.empty": "held" });
+			const report = await checkApp(app, approvals, "http://app", [], {
+				opener,
+				projectRoot: root,
+				home,
+				fetchPage: build("old"),
+			});
+			return { opened: opener.opened, report };
+		};
+		expect((await run()).opened).toEqual(["home.empty"]);
+		// A page-code edit, the stories rendered from it, and the server not rebuilt.
+		appendFileSync(join(root, "src", "styles.css"), "/* edited */\n");
+		await renderedAgain(root, app);
+		const stale = await run();
+		expect(stale.opened).toEqual(["home.empty"]);
+		expect(stale.report.results).toHaveLength(app.devices.length * 2);
+		expect(stale.report.notice ?? "(no notice)").toMatch(
+			/http:\/\/app serves a build from before the sources changed — results were not kept; rebuild and serve it: pnpm build && pnpm start/,
+		);
+		const again = await run();
+		expect(again.opened, "a result measured on the old build was kept as held").toEqual([
+			"home.empty",
+		]);
+	});
+
+	it("A29: against a server not rebuilt since a page-code edit, a story whose own inputs are unchanged is reused, and its record keeps the build it was measured on", async () => {
+		const { app, approvals, storyApprovals, root, home } = await fixtureApp([], ["home.full"]);
+		const run = async () => {
+			const opener = fakeOpener({ "story home.full": "held" });
+			const report = await checkApp(app, approvals, "http://app", storyApprovals, {
+				opener,
+				projectRoot: root,
+				home,
+				fetchPage: build("old"),
+			});
+			return { opened: opener.opened, report };
+		};
+		await run();
+		const measuredOn = readHeld(root, app.app, home)["story:home.full"]?.build;
+		expect(measuredOn).toBeDefined();
+		appendFileSync(join(root, "src", "styles.css"), "/* page code */\n");
+		await renderedAgain(root, app);
+		const after = await run();
+		expect(after.opened).toEqual([]);
+		expect(after.report.reused.map((r) => r.look)).toEqual(["home.full"]);
+		expect(readHeld(root, app.app, home)["story:home.full"]?.build).toEqual(measuredOn);
+	});
+
+	it("A30: the element, universal and root rules of the app's compiled CSS are hashed apart from any class's", async () => {
+		const styles = (await import("./component-styles.js")) as Record<string, unknown>;
+		const elementRulesOf = styles.elementRulesOf as ((css: string) => string) | undefined;
+		expect(elementRulesOf, "component-styles exports no elementRulesOf").toBeTypeOf("function");
+		if (!elementRulesOf) return;
+		const css = (a: string, h2: string, badge: string, marked: string) =>
+			`@layer base { *, ::before { box-sizing: border-box; } a { color: ${a}; } html, :root { line-height: 1.5; } body { margin: 0; } }
+@media (min-width: 40rem) { h2 { font-size: ${h2}; } }
+@layer utilities { .badge { color: ${badge}; } [data-component="card"] p { color: ${marked}; } }`;
+		const base = elementRulesOf(css("red", "2rem", "x", "y"));
+		expect(elementRulesOf(css("blue", "2rem", "x", "y"))).not.toBe(base);
+		expect(elementRulesOf(css("red", "3rem", "x", "y"))).not.toBe(base);
+		expect(elementRulesOf(css("red", "2rem", "x2", "y2"))).toBe(base);
+	});
+
+	it("A30: a re-render after an element, universal or body rule changed reopens every story", async () => {
+		const { app, approvals, storyApprovals, root, home } = await fixtureApp(
+			[],
+			["home.full", "home.empty"],
+		);
+		const run = async () => {
+			const opener = fakeOpener({ "story home.full": "held", "story home.empty": "held" });
+			await checkApp(app, approvals, "http://app", storyApprovals, {
+				opener,
+				projectRoot: root,
+				home,
+				fetchPage: build("b"),
+			});
+			return opener.opened.sort();
+		};
+		await renderedAgain(root, app, { baseRulesHash: "rules-1" });
+		expect(await run()).toEqual(["story home.empty", "story home.full"]);
+		expect(await run()).toEqual([]);
+		await renderedAgain(root, app, { baseRulesHash: "rules-2" });
+		expect(await run()).toEqual(["story home.empty", "story home.full"]);
+	});
+
+	it("A31: a changed checker reopens a look, named as the checker", () => {
+		const before = { ...held, key: { ...story, checkerHash: "c1" } };
+		expect(reuseOf(before, { ...story, checkerHash: "c2" } as LookKey)).toEqual({
+			reuse: false,
+			changed: "checker",
+		});
+	});
+
+	it("A31: every look is held to the checker that measured it, which moves with what is measured and how it is judged", async () => {
+		const { app, approvals, root, home } = await fixtureApp(["home.empty"]);
+		const run = async () => {
+			const opener = fakeOpener({ "home.empty": "held" });
+			await checkApp(app, approvals, "http://app", [], {
+				opener,
+				projectRoot: root,
+				home,
+				fetchPage: build("b"),
+			});
+			return opener.opened;
+		};
+		await run();
+		const record = readHeld(root, app.app, home);
+		const key = record["screen:home.empty"]?.key as unknown as Record<string, unknown>;
+		expect(String(key.checkerHash), "a held look's key names no checker").toMatch(/^[0-9a-f]{64}$/);
+		key.checkerHash = "a checker from an earlier release";
+		writeHeld(root, app.app, record, home);
+		expect(await run()).toEqual(["home.empty"]);
+
+		const mockups = (await import("./mockups.js")) as Record<string, unknown>;
+		const checkerHashOf = mockups.checkerHashOf as
+			| ((c: { properties: readonly string[]; script: string; verdictVersion: number }) => string)
+			| undefined;
+		expect(checkerHashOf, "mockups exports no checkerHashOf").toBeTypeOf("function");
+		if (!checkerHashOf) return;
+		const now = { properties: ["color"], script: "measure()", verdictVersion: 1 };
+		const h = checkerHashOf(now);
+		expect(checkerHashOf({ ...now, properties: ["color", "outline-color"] })).not.toBe(h);
+		expect(checkerHashOf({ ...now, script: "measure(2)" })).not.toBe(h);
+		expect(checkerHashOf({ ...now, verdictVersion: 2 })).not.toBe(h);
+	});
+
+	it("A32: a look another check removed while this one ran is not written back as held", async () => {
+		const { app, approvals, root, home } = await fixtureApp(["home.empty", "home.full"]);
+		const run = (answers: Parameters<typeof fakeOpener>[0], onOpen?: () => void) =>
+			checkApp(app, approvals, "http://app", [], {
+				opener: fakeOpener(answers, onOpen),
+				projectRoot: root,
+				home,
+				fetchPage: build("b"),
+			});
+		// home.empty held; home.full timed out, so the next run opens it.
+		await run({ "home.empty": "held", "home.full": "timeout" });
+		expect(Object.keys(readHeld(root, app.app, home))).toEqual(["screen:home.empty"]);
+		// While this run measures home.full, another check of the project removes home.empty.
+		await run({ "home.full": "held" }, () => {
+			const now = readHeld(root, app.app, home);
+			delete now["screen:home.empty"];
+			writeHeld(root, app.app, now, home);
+		});
+		expect(Object.keys(readHeld(root, app.app, home)).sort()).toEqual(["screen:home.full"]);
+	});
+
+	it("A32: a look another check kept while this one ran stays kept", async () => {
+		const { app, approvals, root, home } = await fixtureApp(["home.empty", "home.full"]);
+		await checkApp(app, approvals, "http://app", [], {
+			opener: fakeOpener({ "home.empty": "held", "home.full": "held" }),
+			projectRoot: root,
+			home,
+			fetchPage: build("b"),
+		});
+		const kept = readHeld(root, app.app, home)["screen:home.full"] as Held;
+		writeHeld(
+			root,
+			app.app,
+			{ "screen:home.empty": readHeld(root, app.app, home)["screen:home.empty"] as Held },
+			home,
+		);
+		await checkApp(app, approvals, "http://app", [], {
+			opener: fakeOpener({ "home.full": "held" }, () => {
+				writeHeld(
+					root,
+					app.app,
+					{ ...readHeld(root, app.app, home), "story:other.ok": kept },
+					home,
+				);
+			}),
+			projectRoot: root,
+			home,
+			fetchPage: build("b"),
+		});
+		expect(Object.keys(readHeld(root, app.app, home)).sort()).toEqual([
+			"screen:home.empty",
+			"screen:home.full",
+			"story:other.ok",
+		]);
 	});
 });

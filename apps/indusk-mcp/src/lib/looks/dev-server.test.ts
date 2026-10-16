@@ -1,4 +1,4 @@
-// promise: a-look-check-costs-what-changed
+// promise: a-look-check-costs-what-changed — looks-check-speed A13, A34
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -17,6 +17,21 @@ describe("devServerMarker", () => {
 		['<script type="module" src="/@vite/client"></script>', "/@vite/client"],
 	])("names the development marker in %s", (html, marker) => {
 		expect(devServerMarker(html)).toBe(marker);
+	});
+
+	it("A34: finds none in a production page whose content mentions a development marker", () => {
+		// A Next page carries its rendered data in inline scripts: this plan's own
+		// documents name the markers, and the admin renders them.
+		const page = `<link rel="stylesheet" href="/_next/static/chunks/0my-dgs-thrfj.css"><script src="/_next/static/chunks/main-0a1b.js" async=""></script><p>react-refresh and hmr-client are refused</p><script>self.__next_f.push([1,"the hmr-client and react-refresh markers, /@vite/client too"])</script>`;
+		expect(devServerMarker(page)).toBeNull();
+	});
+
+	it("A34: the root page a real next dev served the admin is still refused", () => {
+		const html = readFileSync(
+			join(__dirname, "..", "..", "__tests__", "fixtures", "next-dev-admin-root.html"),
+			"utf-8",
+		);
+		expect(devServerMarker(html)).toBe("hmr-client");
 	});
 
 	it("finds none in a production page", () => {

@@ -1,12 +1,14 @@
 /**
  * promise: a-look-check-costs-what-changed — which looks the check opens and
  * how it reports them, decided from an opener it is given (looks-check-speed
- * A1, A9, A16, A17, A18). No browser.
+ * A1, A9, A16, A17, A18, A33, A35, A37). No browser.
+ * promise: tokens-are-held-exactly — a look not held everywhere is never kept (A37).
  */
 import { describe, expect, it } from "vitest";
-import { checkApp } from "./check.js";
+import { type CheckOptions, checkApp } from "./check.js";
 import { fakeOpener, fixtureApp, recordingTracer, servedPage } from "./check-run.fixtures.js";
 import { reportLooks } from "./report.js";
+import { readHeld } from "./reuse.js";
 
 describe("what the check opens", () => {
 	it("a look that does not load in time is unchecked at every device and scheme; the rest are judged", async () => {
@@ -109,4 +111,77 @@ describe("what the check reuses", () => {
 		expect(again.all()).toHaveLength(app.devices.length * 2);
 		expect(again.all().every((s) => s.attributes["indusk.look.reused"] === undefined)).toBe(true);
 	});
+});
+
+describe("reading what is served", () => {
+	it("A33: a server that accepts the connection and never answers does not hang the check; nothing is reused and the looks are opened", async () => {
+		const { app, approvals, home, root } = await fixtureApp(["home.empty"]);
+		await checkApp(app, approvals, "http://app", [], {
+			opener: fakeOpener({ "home.empty": "held" }),
+			projectRoot: root,
+			home,
+			fetchPage: servedPage,
+		});
+		const opener = fakeOpener({ "home.empty": "held" });
+		const hung = checkApp(app, approvals, "http://app", [], {
+			opener,
+			projectRoot: root,
+			home,
+			fetchPage: () => new Promise<string>(() => {}),
+			readTimeoutMs: 1,
+		} as CheckOptions);
+		// A guard that only matters when the check hangs: a held check answers in milliseconds.
+		const guard = new Promise<"hung">((r) => setTimeout(() => r("hung"), 3_000));
+		const report = await Promise.race([hung, guard]);
+		expect(report, "the check waited on a server that never answered").not.toBe("hung");
+		expect(opener.opened).toEqual(["home.empty"]);
+		if (report !== "hung") {
+			expect(report.reused).toEqual([]);
+			expect(report.notice).toMatch(/could not be read/);
+		}
+	});
+
+	it("A35: with a base URL that has a path, the served page is read at that path, not the origin's root", async () => {
+		const { app, approvals } = await fixtureApp(["home.empty"]);
+		const asked: string[] = [];
+		await checkApp(app, approvals, "http://app/admin", [], {
+			opener: fakeOpener({ "home.empty": "held" }),
+			fetchPage: async (url) => {
+				asked.push(url);
+				return servedPage();
+			},
+		});
+		expect(asked).toEqual(["http://app/admin/"]);
+	});
+});
+
+describe("what a run keeps", () => {
+	it.each([
+		["broken", "phone/dark"],
+		["unchecked", "desktop/dark"],
+	] as const)(
+		"A37: a look held everywhere but %s at one device and scheme is not kept, and is opened on the next run",
+		async (answer, at) => {
+			const { app, approvals, home, root } = await fixtureApp(["home.empty"]);
+			const run = (opener: ReturnType<typeof fakeOpener>, all = false) =>
+				checkApp(app, approvals, "http://app", [], {
+					opener,
+					projectRoot: root,
+					home,
+					fetchPage: servedPage,
+					all,
+				});
+			await run(fakeOpener({ "home.empty": "held" }));
+			expect(readHeld(root, app.app, home)["screen:home.empty"]?.state).toBe("held");
+			const partly = await run(fakeOpener({ "home.empty": { [at]: answer } }), true);
+			const fine = partly.results.filter((r) => r.verdict.state === "held").length;
+			expect(fine + partly.unchecked.length + (answer === "broken" ? 1 : 0)).toBe(
+				app.devices.length * 2,
+			);
+			expect(readHeld(root, app.app, home)["screen:home.empty"]).toBeUndefined();
+			const next = fakeOpener({ "home.empty": "held" });
+			await run(next);
+			expect(next.opened).toEqual(["home.empty"]);
+		},
+	);
 });

@@ -11,7 +11,8 @@ import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 /**
  * promise: a-look-check-costs-what-changed — looks-check-speed A10, A11, A12, A14.
  * promise: tokens-are-held-exactly — looks-check-speed A12 (a page measured in
- * place still reads the approved values).
+ * place still reads the approved values), A36 (a page that reads its size once
+ * on mount is measured as a fresh load would).
  *
  * System tier: `indusk looks check demo --url <page>` drives real Chromium over
  * a page served from a process of its own, which appends every request's path
@@ -86,8 +87,10 @@ function clearRequests(): void {
 	writeFileSync(logFile, "");
 }
 
-/** The fixture as a project of its own with dark values beside its colours. */
-async function darkProject(): Promise<{ root: string; tokens: string; home: string }> {
+/** The fixture as a project of its own with dark values beside its colours; `devices` reorders its reference devices. */
+async function darkProject(
+	devices?: string[],
+): Promise<{ root: string; tokens: string; home: string }> {
 	const root = mkdtempSync(join(tmpdir(), "looks-check-speed-project-"));
 	const home = mkdtempSync(join(tmpdir(), "looks-check-speed-home-"));
 	temps.push(root, home);
@@ -103,6 +106,18 @@ async function darkProject(): Promise<{ root: string; tokens: string; home: stri
 		tree.color[name].$extensions = { "dev.indusk": { dark: value } };
 	}
 	writeFileSync(file, `${JSON.stringify(tree, null, "\t")}\n`);
+	if (devices) {
+		const devicesFile = join(root, ".indusk/mockups/demo/devices.json");
+		const declared = JSON.parse(readFileSync(devicesFile, "utf-8")) as {
+			devices: { name: string }[];
+		};
+		declared.devices = devices.map((name) => {
+			const d = declared.devices.find((x) => x.name === name);
+			if (!d) throw new Error(`the fixture has no device ${name}`);
+			return d;
+		});
+		writeFileSync(devicesFile, JSON.stringify(declared));
+	}
 	const r = await approve(root, "demo", "home.empty", "contract");
 	if (!r.approved) throw new Error(r.reason);
 	const app = await readApp(root, "demo");
@@ -166,6 +181,22 @@ describe.skipIf(SHOULD_SKIP)("indusk looks check — cost follows what changed",
 			expect(run.out).toMatch(new RegExp(`held\\s+home\\.empty @ ${name}\\s*$`, "m"));
 		}
 		expect(run.code).toBe(0);
+	}, 120_000);
+
+	it("A36: a page that reads its viewport once on mount, with no listener, is measured at every device as a fresh load would", async () => {
+		// Phone is not the first device, so a page measured in place mounts at desktop's width.
+		const { root, home, tokens } = await darkProject(["desktop", "phone"]);
+		writeFileSync(
+			pageFile,
+			page(tokens).replace(
+				"</body>",
+				'<script>if (innerWidth < 600) document.querySelector("button").style.color = "#ff0000";</script></body>',
+			),
+		);
+		const run = check(root, home);
+		expect(run.out, `${run.out}\n${run.err}`).toMatch(/broken\s+home\.empty @ phone\s*$/m);
+		expect(run.out).toMatch(/held\s+home\.empty @ desktop\s*$/m);
+		expect(run.code).toBe(1);
 	}, 120_000);
 
 	it("A14: a development server's page is refused before any look is held", async () => {

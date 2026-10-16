@@ -108,8 +108,11 @@ export async function fixtureApp(
 export const servedPage = async (): Promise<string> =>
 	'<link rel="stylesheet" href="/_next/static/chunks/0my-dgs-thrfj.css">';
 
-/** What a fake opener answers for a look. */
-export type Answer = "held" | "timeout";
+/**
+ * What a fake opener answers for a look: held everywhere, a timeout, or held
+ * everywhere but at the named devices (`phone/dark`), broken or unchecked there.
+ */
+export type Answer = "held" | "timeout" | Record<string, "broken" | "unchecked">;
 
 export interface FakeOpener extends LookOpener {
 	/** The looks it was asked to open, in order: `home.empty`, `story home.full`. */
@@ -118,14 +121,22 @@ export interface FakeOpener extends LookOpener {
 	launched: boolean;
 }
 
-/** An opener that answers `answers[look]` for each look and fails the test on one it was not given. */
-export function fakeOpener(answers: Record<string, Answer>): FakeOpener {
+/**
+ * An opener that answers `answers[look]` for each look and fails the test on
+ * one it was not given; `onOpen` runs as each look opens (another run's write,
+ * mid-check).
+ */
+export function fakeOpener(
+	answers: Record<string, Answer>,
+	onOpen?: (look: string) => void | Promise<void>,
+): FakeOpener {
 	const opener: FakeOpener = {
 		opened: [],
 		launched: false,
 		async open(target, devices, schemes) {
 			opener.launched = true;
 			opener.opened.push(target.look);
+			await onOpen?.(target.look);
 			const answer = answers[target.look];
 			if (answer === undefined)
 				throw new Error(`the fake opener was not told about ${target.look}`);
@@ -137,13 +148,26 @@ export function fakeOpener(answers: Record<string, Answer>): FakeOpener {
 			const app = current;
 			if (!app) throw new Error("fakeOpener needs a fixtureApp first");
 			const states = target.look.startsWith("story ") ? [] : [target.look];
-			return devices.flatMap(() =>
-				schemes.map<Measured>((scheme: Scheme) => ({
-					runtime: approvedValues(app, scheme),
-					elements: [],
-					states,
-					scheme,
-				})),
+			const at = (device: string): "held" | "broken" | "unchecked" =>
+				typeof answer === "object" ? (answer[device] ?? "held") : "held";
+			return devices.flatMap((d) =>
+				schemes.map<Measured>((scheme: Scheme) => {
+					const there = at(scheme === "light" ? d.name : `${d.name}/${scheme}`);
+					const runtime = approvedValues(app, scheme);
+					const first = app.foundation.tokens[0]?.name as string;
+					return {
+						runtime: there === "broken" ? { ...runtime, [first]: "#000001" } : runtime,
+						elements: [],
+						// A story reports no state; an unchecked one draws the other scheme.
+						states: there === "unchecked" ? [] : states,
+						scheme:
+							there === "unchecked" && target.look.startsWith("story ")
+								? scheme === "light"
+									? "dark"
+									: "light"
+								: scheme,
+					};
+				}),
 			);
 		},
 		async close() {},
