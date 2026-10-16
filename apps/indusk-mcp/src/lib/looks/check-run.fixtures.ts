@@ -1,6 +1,9 @@
 import { cpSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { Attributes, Tracer } from "@opentelemetry/api";
+import { InMemorySpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import type { ApprovalEntry, StoryApprovalEntry } from "./approvals.js";
 import { approvedValues, type LookOpener, type Measured, type Scheme } from "./check.js";
 import { type LooksApp, readApp } from "./mockups.js";
@@ -19,6 +22,10 @@ const FIXTURE = join(__dirname, "..", "..", "__tests__", "fixtures", "looks-app"
 let current: LooksApp | undefined;
 
 export interface FixtureApp {
+	/** The project: a copy of the fixture in a temp folder. */
+	root: string;
+	/** An InDusk home of its own, where the project's held results are kept. */
+	home: string;
 	app: LooksApp;
 	approvals: ApprovalEntry[];
 	storyApprovals: StoryApprovalEntry[];
@@ -83,7 +90,8 @@ export async function fixtureApp(mockups: string[], stories: string[] = []): Pro
 		...bound,
 	}));
 	current = app;
-	return { app, approvals, storyApprovals };
+	const home = mkdtempSync(join(tmpdir(), "check-run-home-"));
+	return { root, home, app, approvals, storyApprovals };
 }
 
 /** What a fake opener answers for a look. */
@@ -127,4 +135,11 @@ export function fakeOpener(answers: Record<string, Answer>): FakeOpener {
 		async close() {},
 	};
 	return opener;
+}
+
+/** A tracer that keeps every span it ends, read back with `all()`. */
+export function recordingTracer(): { tracer: Tracer; all(): { attributes: Attributes }[] } {
+	const exporter = new InMemorySpanExporter();
+	const provider = new NodeTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] });
+	return { tracer: provider.getTracer("check-run"), all: () => exporter.getFinishedSpans() };
 }

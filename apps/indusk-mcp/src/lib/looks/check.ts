@@ -46,9 +46,28 @@ export interface Unchecked {
 	reason: string;
 }
 
+/** A look reported from its last held result, without being opened (looks-check-speed ADR decision 5). */
+export interface Reused {
+	app: string;
+	/** `home.empty` for a screen state; `badge.ok` for a story. */
+	look: string;
+	kind: "screen" | "story";
+	/** The screen, or the story's component. */
+	screen: string;
+	state: string;
+	/** When it was really measured and held. */
+	at: string;
+	/** The names it is reported under, one per device and scheme (`phone`, `phone/dark`). */
+	devices: string[];
+}
+
 export interface CheckReport {
 	results: LookResult[];
 	unchecked: Unchecked[];
+	/** Looks unchanged since they last held, reported from that result; none were opened. */
+	reused: Reused[];
+	/** Why looks that might have been reused were opened, when the person can act on it (render the stories). */
+	notice?: string;
 }
 
 /**
@@ -602,12 +621,13 @@ async function openAndJudge(
 		const reason = "timedOut" in opened ? opened.timedOut : opened.unchecked;
 		return {
 			results: [],
+			reused: [],
 			unchecked: devices.flatMap((d) =>
 				schemes.map((scheme) => ({ mockup, device: lookDevice(d.name, scheme), reason })),
 			),
 		};
 	}
-	const report: CheckReport = { results: [], unchecked: [] };
+	const report: CheckReport = { results: [], unchecked: [], reused: [] };
 	let at = 0;
 	for (const device of devices) {
 		for (const scheme of schemes) {
@@ -681,6 +701,14 @@ export interface CheckOptions {
 	 * story (`badge.ok`) or both, and report nothing else.
 	 */
 	only?: string[];
+	/** Open every look, whatever was held (`--all`). */
+	all?: boolean;
+	/** The project the check runs in: held results are read and kept for it. Without it nothing is reused or kept. */
+	projectRoot?: string;
+	/** The InDusk home the project's held results live under; `induskHome()` when absent. */
+	home?: string;
+	/** When this run's held results are recorded as measured. */
+	now?: Date;
 }
 
 /** Every look the app declares, by the name `--only` takes: its screen states and its stories. */
@@ -734,7 +762,8 @@ export async function checkApp(
 		named(u.mockup.replace(/^story /, "")),
 	);
 	const results: LookResult[] = [];
-	if (checked.length === 0 && stories.checked.length === 0) return { results, unchecked };
+	if (checked.length === 0 && stories.checked.length === 0)
+		return { results, unchecked, reused: [] };
 
 	const opener = opts.opener ?? chromiumOpener(app);
 	const take = (found: CheckReport) => {
@@ -767,5 +796,5 @@ export async function checkApp(
 	} finally {
 		await opener.close();
 	}
-	return { results, unchecked };
+	return { results, unchecked, reused: [] };
 }

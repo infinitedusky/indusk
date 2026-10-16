@@ -1,6 +1,7 @@
 import type { Tracer } from "@opentelemetry/api";
 import { markPromise } from "../promises/mark.js";
 import { LOOK_MARK } from "../promises/vocabulary.js";
+import type { Reused } from "./check.js";
 import type { Finding, Verdict } from "./verdict.js";
 
 /**
@@ -50,7 +51,7 @@ export function describe(f: Finding): string {
 export function reportLooks(
 	results: readonly LookResult[],
 	tracer: Tracer,
-	opts: { project?: string } = {},
+	opts: { project?: string; reused?: readonly Reused[] } = {},
 ): void {
 	for (const result of results) {
 		try {
