@@ -59,3 +59,5 @@ No missing Biome rule: the recurring errors were structural (a shared type's fix
 - Plan tests: 7 files, 107 tests pass (the clause, confirm, cleanup-gate, check, declare, purpose and close tests). `pnpm promises:check`: 153 promises, 144 enforced, 8 declared, none known-broken.
 - Everyday suite (`pnpm test`), first run at close: 2 failures (admin type check, impl corpus), both caused by this plan and fixed; second run green: indusk-mcp 456 files / 3115 tests, admin 119 files / 763 tests, indusk 58, seat-holds 5.
 - `indusk checks show`: no slow tests at landing; landing installs with `pnpm install:local`; a release command is declared but nothing is published or bumped by this plan, and the version stays. Publishing is the operator's.
+
+Landed on main at 8235644f, 2026-10-16.
