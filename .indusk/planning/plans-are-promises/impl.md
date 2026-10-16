@@ -213,7 +213,7 @@ This phase gives a promise its parts. A brief that opts in states each promise's
   planning: `apps/indusk-mcp/templates/planning/CLAUDE.md` — under Documents, "**A brief may state its promises as clauses** (`clauses: required`): each made promise lists its splits, limits and the promises it rests on beneath it, declared with `--clause`; the contract check holds brief and registry equal. — see `/decisions/plans-are-promises`". Copy to `.indusk/planning/CLAUDE.md` via `indusk update`-equivalent sync, never by hand; the template-sync test pins it.
 
   </details>
-- [ ] The root's Key Decisions names this plan's decision.
+- [x] The root's Key Decisions names this plan's decision.
   <details><summary>Technical</summary>
 
   root (Key Decisions): "- Plans are promises: a plan holds the promises it lands, each stated as clauses with a clause plan before the ADR; opt-in `clauses: required` — see `/decisions/plans-are-promises`" — always-on because every planning session decides how many promises a plan holds before any planning file is read. Run `context-tiers-register` in this phase's verification.
