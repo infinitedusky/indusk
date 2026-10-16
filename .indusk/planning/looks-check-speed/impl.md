@@ -749,10 +749,12 @@ A fresh reader went looking for ways a changed look could be reported held from 
   `check.ts` `readServed`: `new URL(".", base.endsWith("/") ? base : `${base}/`)` instead of `new URL("/", base)`. A35.
 
   </details>
-- [ ] Measure a page that reads its size or colour scheme once when it starts as a fresh load would.
+- [x] Measure a page that reads its size or colour scheme once when it starts as a fresh load would.
   <details><summary>Technical</summary>
 
   `check.ts` `measureInPlace`: an init script (`context.addInitScript`) records whether the page called `matchMedia` without adding a `change` listener to the returned list, or read `innerWidth`/`innerHeight`/`devicePixelRatio` with no `resize` listener on `window`. When it did, measure that look with a fresh context per device × scheme, as before this plan. Contract fixture in `looks-check-speed.contract.test.ts`: a page whose script draws an off-token colour only when `innerWidth < 600` at mount, with phone not first in its devices, reported broken at phone. A36.
+
+  Done as: `MOUNT_READS` (init script) wraps `matchMedia`, `window.addEventListener` and the `innerWidth`/`innerHeight`/`devicePixelRatio` getters; it is read once the page settles, before the check's own script asks for the scheme's query. Only queries a switch in place changes count (size, aspect ratio, orientation, resolution, pixel ratio, scheme): Storybook's frame asks `(prefers-reduced-motion: reduce)` once with no listener, which tripped every story until narrowed. `loadPage` and `contextAt` are shared by the in-place path and `measureFresh`. Probed against the admin's production build on :3940 (stopped after): the root, every unseeded screen state and every story — 154 pages — none reads on mount, so the admin keeps one load per look. Not detected: a page that reads layout once (`clientWidth`, `getBoundingClientRect`) with no `ResizeObserver` — outside this row.
 
   </details>
 - [ ] Prove that a look held everywhere but at one device and scheme is not kept.

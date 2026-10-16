@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import pMap from "p-map";
-import type { Browser } from "playwright-core";
+import type { Browser, BrowserContext, Page } from "playwright-core";
 import {
 	type ApprovalEntry,
 	approvalOf,
@@ -20,14 +20,7 @@ import {
 	sourcesHashOf,
 } from "./mockups.js";
 import type { LookResult } from "./report.js";
-import {
-	type Build,
-	type LookKey,
-	lookKey,
-	readHeld,
-	reuseOf,
-	writeHeld,
-} from "./reuse.js";
+import { type Build, type LookKey, lookKey, readHeld, reuseOf, writeHeld } from "./reuse.js";
 import {
 	MEASURED_KINDS,
 	MEASURED_PROPERTIES,
@@ -502,12 +495,113 @@ const FINISH_TRANSITIONS = `new Promise((done) => requestAnimationFrame(() => re
 })))`;
 
 /**
+ * Run in every page before its own scripts: notes whether the page asked for
+ * a media query on what a switch in place changes (size, ratio, orientation,
+ * resolution, scheme — not reduced motion, which Storybook's frame asks once)
+ * without listening for its change, or read the viewport's size
+ * or pixel ratio with no `resize` listener on the window — a page that draws
+ * from what it read once on mount, which a switch in place never redraws.
+ * Read once the page has settled, before the check's own script (which asks
+ * for the scheme's media query) runs.
+ */
+const MOUNT_READS = `(() => {
+	const w = window;
+	const lists = [];
+	let sized = false;
+	let resized = false;
+	const matchMedia = w.matchMedia.bind(w);
+	// Only what a switch in place changes: the viewport's size and ratio, and the scheme.
+	const switched = /width|height|aspect-ratio|orientation|resolution|pixel-ratio|prefers-color-scheme/i;
+	w.matchMedia = (query) => {
+		const list = matchMedia(query);
+		const entry = { list, heard: false };
+		if (switched.test(String(query))) lists.push(entry);
+		const add = list.addEventListener.bind(list);
+		list.addEventListener = (type, fn, o) => {
+			if (type === "change") entry.heard = true;
+			return add(type, fn, o);
+		};
+		if (list.addListener) {
+			const addListener = list.addListener.bind(list);
+			list.addListener = (fn) => {
+				entry.heard = true;
+				return addListener(fn);
+			};
+		}
+		return list;
+	};
+	const addEventListener = w.addEventListener.bind(w);
+	w.addEventListener = (type, fn, o) => {
+		if (type === "resize") resized = true;
+		return addEventListener(type, fn, o);
+	};
+	for (const name of ["innerWidth", "innerHeight", "devicePixelRatio"]) {
+		const own = Object.getOwnPropertyDescriptor(w, name) || Object.getOwnPropertyDescriptor(Window.prototype, name);
+		if (!own || !own.get) continue;
+		try {
+			Object.defineProperty(w, name, {
+				configurable: true,
+				enumerable: true,
+				get() { sized = true; return own.get.call(w); },
+				set(v) { if (own.set) own.set.call(w, v); },
+			});
+		} catch {}
+	}
+	w.__induskReadOnMount = () =>
+		lists.some((e) => !e.heard && e.list.onchange === null) || (sized && !resized && w.onresize === null);
+})()`;
+
+/** Whether the page read its viewport or scheme once on mount (`MOUNT_READS`). */
+const READ_ON_MOUNT = "globalThis.__induskReadOnMount ? globalThis.__induskReadOnMount() : false";
+
+/**
+ * Load `url` in `context` and wait until it can be read: the page's `load`,
+ * then a quiet network for a page, or its first drawn element for a story.
+ */
+async function loadPage(
+	context: BrowserContext,
+	url: string,
+	rendered: string | undefined,
+): Promise<Page> {
+	const page = await context.newPage();
+	const response = await page.goto(url, { waitUntil: "load" });
+	if (!response?.ok()) {
+		const answer = `${url} answered ${response ? response.status() : "nothing"}`;
+		throw response?.status() === 404 ? new LookNotHere(answer) : new LooksCheckError(answer);
+	}
+	// A page that sets its look state, or anything it draws, after hydration
+	// (the nav's width, asked for in the address) has not said so at `load`:
+	// give it until the network is quiet, but never hold a look to a page
+	// that never settles (a poll, a stream).
+	if (!rendered) await page.waitForLoadState("networkidle", { timeout: SETTLE_MS }).catch(() => {});
+	if (rendered) {
+		try {
+			await page.waitForSelector(rendered, { timeout: 30_000 });
+		} catch {
+			throw new LookTimedOut(`${url} did not draw its story within 30s`);
+		}
+	}
+	return page;
+}
+
+/** A context drawn at `device` under `scheme`, as a fresh load sees it. */
+const contextAt = (browser: Browser, device: Device, scheme: Scheme): Promise<BrowserContext> =>
+	browser.newContext({
+		viewport: { width: device.width, height: device.height },
+		deviceScaleFactor: device.pixelRatio,
+		colorScheme: scheme,
+	});
+
+/**
  * Open `url` once and read it at every device and scheme, on that page: the
  * device's size and pixel ratio are set through Chromium's own device-metrics
  * override and the scheme by `emulateMedia`, so six reads cost one load. A
  * switch in place starts the page's colour transitions, which a fresh load
  * never does, so each is finished before the read — a button read half-way
- * through its transition is off its token. Answers in device x scheme order.
+ * through its transition is off its token. A page that read its viewport or
+ * scheme once on mount, with nothing listening for a change, would be read at
+ * the first device's drawing everywhere: it is loaded fresh at each device and
+ * scheme instead (A36). Answers in device x scheme order.
  */
 async function measureInPlace(
 	browser: Browser,
@@ -518,51 +612,56 @@ async function measureInPlace(
 	/** A selector that appears once a story has drawn; absent for a page, which is read at `load`. */
 	rendered?: string,
 ): Promise<Measured[]> {
-	const first = devices[0] as Device;
-	const context = await browser.newContext({
-		viewport: { width: first.width, height: first.height },
-		deviceScaleFactor: first.pixelRatio,
-		colorScheme: schemes[0],
-	});
+	const context = await contextAt(browser, devices[0] as Device, schemes[0] as Scheme);
 	try {
-		const page = await context.newPage();
-		const response = await page.goto(url, { waitUntil: "load" });
-		if (!response?.ok()) {
-			const answer = `${url} answered ${response ? response.status() : "nothing"}`;
-			throw response?.status() === 404 ? new LookNotHere(answer) : new LooksCheckError(answer);
-		}
-		// A page that sets its look state, or anything it draws, after hydration
-		// (the nav's width, asked for in the address) has not said so at `load`:
-		// give it until the network is quiet, but never hold a look to a page
-		// that never settles (a poll, a stream).
-		if (!rendered)
-			await page.waitForLoadState("networkidle", { timeout: SETTLE_MS }).catch(() => {});
-		if (rendered) {
-			try {
-				await page.waitForSelector(rendered, { timeout: 30_000 });
-			} catch {
-				throw new LookTimedOut(`${url} did not draw its story within 30s`);
+		await context.addInitScript({ content: MOUNT_READS });
+		const page = await loadPage(context, url, rendered);
+		if ((await page.evaluate(READ_ON_MOUNT)) !== true) {
+			const cdp = await context.newCDPSession(page);
+			const seen: Measured[] = [];
+			for (const device of devices) {
+				await cdp.send("Emulation.setDeviceMetricsOverride", {
+					width: device.width,
+					height: device.height,
+					deviceScaleFactor: device.pixelRatio,
+					mobile: false,
+				});
+				for (const scheme of schemes) {
+					await page.emulateMedia({ colorScheme: scheme });
+					await page.evaluate(FINISH_TRANSITIONS);
+					seen.push(JSON.parse((await page.evaluate(script)) as string) as Measured);
+				}
 			}
+			return seen;
 		}
-		const cdp = await context.newCDPSession(page);
-		const seen: Measured[] = [];
-		for (const device of devices) {
-			await cdp.send("Emulation.setDeviceMetricsOverride", {
-				width: device.width,
-				height: device.height,
-				deviceScaleFactor: device.pixelRatio,
-				mobile: false,
-			});
-			for (const scheme of schemes) {
-				await page.emulateMedia({ colorScheme: scheme });
-				await page.evaluate(FINISH_TRANSITIONS);
-				seen.push(JSON.parse((await page.evaluate(script)) as string) as Measured);
-			}
-		}
-		return seen;
 	} finally {
 		await context.close();
 	}
+	return measureFresh(browser, devices, schemes, url, script, rendered);
+}
+
+/** A fresh load at each device and scheme, read once: how a page that draws from what it read on mount is measured. */
+async function measureFresh(
+	browser: Browser,
+	devices: readonly Device[],
+	schemes: readonly Scheme[],
+	url: string,
+	script: string,
+	rendered: string | undefined,
+): Promise<Measured[]> {
+	const seen: Measured[] = [];
+	for (const device of devices) {
+		for (const scheme of schemes) {
+			const context = await contextAt(browser, device, scheme);
+			try {
+				const page = await loadPage(context, url, rendered);
+				seen.push(JSON.parse((await page.evaluate(script)) as string) as Measured);
+			} finally {
+				await context.close();
+			}
+		}
+	}
+	return seen;
 }
 
 /**
@@ -993,9 +1092,7 @@ async function planReuse(
 			now !== null &&
 			Object.values(held).some(
 				(h) =>
-					h.key.kind === kind &&
-					h.build?.served === now.served &&
-					h.build.sources !== now.sources,
+					h.key.kind === kind && h.build?.served === now.served && h.build.sources !== now.sources,
 			)
 		);
 	};
