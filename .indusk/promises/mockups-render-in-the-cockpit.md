@@ -2,7 +2,7 @@
 name: mockups-render-in-the-cockpit
 kind: state
 lifetime: holds
-state: enforced
+state: known-broken
 domain: admin
 owner: storybook-components
 sites:
@@ -20,7 +20,8 @@ tests:
   - apps/indusk-mcp/src/lib/looks/stories.test.ts
   - 'apps/indusk-admin/src/app/p/[project]/looks/looks.test.tsx'
   - 'apps/indusk-admin/src/app/p/[project]/looks/looks-browser.contract.test.ts'
-incidents: []
+incidents:
+  - i-2026-10-16-mockups-render-in-the-cockpit
 ---
 
 Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens and, where it names components, with those components' own styles, with nothing to run beside the cockpit.

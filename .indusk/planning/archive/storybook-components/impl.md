@@ -94,6 +94,8 @@ The admin is built from components defined once, each with an approved story per
 | A39 | The approve and unapprove routes read a request the same way: a checkout with no worktree holding mockups is answered 404 with the same text by both, and a story body without `snapshotHash` is answered 400 by both | Build Phase 10 | Build Phase 10 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-admin/src/app/p/[project]/looks/looks-approve-binding.test.tsx |
 | A40 | A component a mockup names with no implementation in the app is reported by `indusk looks coverage` as `unimplemented component: <name>` and the command exits 1: in the fixture, a mockup naming `ghost` (no file marks `ghost`) reads `unimplemented component: ghost` — so A2's comparison can fail | Build Phase 11 | Build Phase 11 | passing | unit | promise: a-component-has-one-implementation | apps/indusk-mcp/src/__tests__/looks-components-cli.test.ts |
 | A41 | A story's check run never stands for a screen's: a story's span carries `indusk.look.kind = story`, the run read back keeps it, and a screen `nav.expanded @ phone` whose newest screen run broke reads broken although a later held run of the story `nav.expanded @ phone` exists | Build Phase 11 | Build Phase 11 | passing | unit | promise: a-look-reports-like-any-promise | apps/indusk-mcp/src/lib/promises/look-standing.test.ts |
+| A42 | mockups-render-in-the-cockpit holds again after i-2026-10-16-mockups-render-in-the-cockpit: the test that reproduces it, named by its root cause, passes | Build Phase 12 | Build Phase 12 | planned | unit | promise: mockups-render-in-the-cockpit |  |
+| A43 | a-mockup-composes-approved-components holds again after i-2026-10-16-a-mockup-composes-approved-components: the test that reproduces it, named by its root cause, passes | Build Phase 13 | Build Phase 13 | planned | unit | promise: a-mockup-composes-approved-components |  |
 
 ### Deferred Verification
 
@@ -173,6 +175,14 @@ The admin is built from components defined once, each with an approved story per
 - **A22** — the nav-on-a-phone test passes today and must keep passing; re-run in Build Phase 7's Verification when the nav is rebuilt.
 - **A23** — the dashboard listing tests pass today; re-run in Build Phase 7's Verification when the dashboard is rebuilt.
 - **A24** — the admin lints clean today; re-run in Build Phase 6 and Build Phase 8 after the mockups and screens change.
+
+#### Deferred to Build Phase 12
+
+- **A42** — the test that reproduces i-2026-10-16-mockups-render-in-the-cockpit is decided by its root cause, which this Maintenance phase writes first.
+
+#### Deferred to Build Phase 13
+
+- **A43** — the test that reproduces i-2026-10-16-a-mockup-composes-approved-components is decided by its root cause, which this Maintenance phase writes first.
 
 #### Test Phase 1 Verification
 
@@ -662,3 +672,37 @@ Evidence found while hunting:
 ## Notes
 - A story that cannot render to static markup is refused by name in Build Phase 2; if more than a few components need the browser, revisit decision 3 before Build Phase 5.
 - The fixture's `approved.json` is written through a `tsx` script calling the package's hash functions; the guard hook refuses a tool write to any `.indusk/mockups/*/approved.json` (ui-promises Test Phase 1 Forward Intelligence).
+
+### Build Phase 12: Maintenance — i-2026-10-16-mockups-render-in-the-cockpit
+
+- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-mockups-render-in-the-cockpit.md`)
+- [ ] Fix: a code site, a widened test, or a revised promise
+
+#### Build Phase 12 Verification
+
+- [ ] A42: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+
+#### Build Phase 12 Context
+
+- [ ] CLAUDE.md, if the fix changes a convention
+
+#### Build Phase 12 Document
+
+- [ ] The incident's Fix section
+
+### Build Phase 13: Maintenance — i-2026-10-16-a-mockup-composes-approved-components
+
+- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-a-mockup-composes-approved-components.md`)
+- [ ] Fix: a code site, a widened test, or a revised promise
+
+#### Build Phase 13 Verification
+
+- [ ] A43: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+
+#### Build Phase 13 Context
+
+- [ ] CLAUDE.md, if the fix changes a convention
+
+#### Build Phase 13 Document
+
+- [ ] The incident's Fix section

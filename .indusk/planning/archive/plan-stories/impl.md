@@ -78,6 +78,7 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 | A25 | A master plan's page still shows what any plan page shows around its story — the trust notice, a waiting amendment or decision with its answer, the history and the way to ask about the plan — so a master that waits on the person can be answered from its page | Build Phase 8 | Build Phase 8 | passing | unit | promise: decisions-wait-in-one-place, promise: a-master-plan-tells-its-story | apps/indusk-admin/src/app/p/[project]/plan/[name]/master.test.tsx |
 | A26 | The Promises page, a promise's page, the incidents table and the Looks page's plan picker name each plan by its title, a Path group by its master's title, and a plan with no title, or a declared title that is just its handle, as its handle in words — never a bare folder name | Build Phase 8 | Build Phase 8 | passing | unit | promise: a-plan-reads-by-its-title | apps/indusk-admin/src/lib/promise-dashboard.test.ts |
 | A27 | A plan whose brief changed after approval is found waiting on its amendment by the admin's own lookup, read in its worktree — not only by a stand-in; a plan whose brief is unchanged, or whose approval cannot be read, waits on nothing | Build Phase 8 | Build Phase 8 | passing | unit | promise: decisions-wait-in-one-place | apps/indusk-mcp/src/lib/plans/amendments.test.ts |
+| A28 | a-master-plan-tells-its-story holds again after i-2026-10-16-a-master-plan-tells-its-story: the test that reproduces it, named by its root cause, passes | Build Phase 9 | Build Phase 9 | planned | unit | promise: a-master-plan-tells-its-story |  |
 
 ### Deferred Verification
 
@@ -223,6 +224,10 @@ Every plan is named by its title in the admin and the editor, the handle kept fo
 - **A19**: `cockpit-phone.test.tsx`'s A7 already proves the 400 px fit; the long fixture title makes it measure a long name once the nav draws titles in Build Phase 3.
 - **A20**: `PlanSummary.test.tsx` and `plan-page-layout.test.tsx` already prove the description and the brief link; the row holds them while the heading above changes.
 - **A21**: `display-names-single-definition.test.ts` already refuses a second `planTitle`; the row holds it while three apps start naming plans by title.
+
+#### Deferred to Build Phase 9
+
+- **A28** — the test that reproduces i-2026-10-16-a-master-plan-tells-its-story is decided by its root cause, which this Maintenance phase writes first.
 
 #### Test Phase 1 Verification
 
@@ -501,3 +506,20 @@ Titles and descriptions come from research.md's tables. A description already wr
 - `screens.json` already declares `plan.master` and `subplan-row` at `/p/dusk/plan/indusk-v4-day`; the contract test's fixture master takes that name so the approved declaration stays unchanged and `indusk looks check admin` checks the real Day page too.
 - The approved `plan.master` mockup names Day's archived plans by new titles ("Hooks from any folder"). Archived plans are not retitled, so the real Day page reads those rows by the part of their title before the dash, or their handle in words. The look check compares values, not words, so this does not break the look.
 - `user-zero` and `jev-decision-model` have no brief or master, so they read as their handles in words ("User zero", "Jev decision model").
+
+### Build Phase 9: Maintenance — i-2026-10-16-a-master-plan-tells-its-story
+
+- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-16-a-master-plan-tells-its-story.md`)
+- [ ] Fix: a code site, a widened test, or a revised promise
+
+#### Build Phase 9 Verification
+
+- [ ] A28: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+
+#### Build Phase 9 Context
+
+- [ ] CLAUDE.md, if the fix changes a convention
+
+#### Build Phase 9 Document
+
+- [ ] The incident's Fix section
