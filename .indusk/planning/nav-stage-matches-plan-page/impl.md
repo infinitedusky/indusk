@@ -144,7 +144,7 @@ Before anything changes, this phase writes down what the nav row must read and p
 
 This phase moves the rule for which step a plan is at into the package's module that lists a plan's steps, where the plan page already gets them, and makes the nav, the master plan's page and the Needs you list all ask it. Between two steps, such as an approved plan not yet built, the rule answers the next step; when every step is done it answers none. The nav row then reads what the plan waits on, else Released once a release shipped it, else the step the rule gives, else Closed for a closed plan. Its mark follows the same answer: needing you when it waits, finished when released or closed, in progress during the build and the steps after it, plain otherwise. The old mapping from the impl's status word is deleted. Nothing new is read from disk, since every plan in the nav already carries where it stands.
 
-- [ ] Make the package answer which step a plan is at, and make the Needs you list ask it.
+- [x] Make the package answer which step a plan is at, and make the Needs you list ask it.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/plans/steps.ts`:
@@ -157,13 +157,13 @@ This phase moves the rule for which step a plan is at into the package's module 
   `apps/indusk-mcp/src/lib/plans/waiting.ts`: delete the private `currentStep`; `askedOf` uses `stepAt(plan)?.name ?? "Planning"`. A3 green.
 
   </details>
-- [ ] Make the nav row's words and mark come from that answer, and delete the mapping from the impl's status word.
+- [x] Make the nav row's words and mark come from that answer, and delete the mapping from the impl's status word.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/lib/plan-stage.ts`: `navMarkOf(plan, released, waiting): NavMark` — waiting → `{ state: "needs", stage: waiting }`; released → `{ "released", "Released" }`; `stepAt(snapshotOf(plan))` → `{ state: step.workflow === "release" ? "working" : "idle", stage: step.name }`; archived → `{ "released", "Closed" }`; no position → `{ "idle", plan.status }`. `planStage` returns `navMarkOf(...).stage` (the master page keeps calling it). Move `NavMark` here. `PlanList.tsx` `PlanItem`: `const mark = navMarkOf(plan, released, waiting)`, `state={mark.state}`, `{mark.stage}`. Delete `statusToNavMark` and `NavMark` from `components/ui/badge-variant.ts`. Update `src/app/p/[project]/plan/[name]/page.test.tsx` (T11) and `master.test.tsx` (A3), which expect `"Building"`, to the page's word `"Build"`. A1, A2, A5 green; A4, A6 still green.
 
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
   <details><summary>Technical</summary>
 
   `steps.ts`, `waiting.ts`, `plan-stage.ts`, `PlanList.tsx`, `badge-variant.ts`.
@@ -172,13 +172,13 @@ This phase moves the rule for which step a plan is at into the package's module 
 
 #### Build Phase 1 Verification
 
-- [ ] The nav, the master page and the package's steps agree at every point of a plan's life, the finished mark appears only for released plans, and the two guards still pass.
+- [x] The nav, the master page and the package's steps agree at every point of a plan's life, the finished mark appears only for released plans, and the two guards still pass.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/nav-stage-matches-plan-page/apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/cockpit-single-definition.test.ts src/lib/plans/steps.test.ts src/lib/plans/waiting.test.ts` — A3 green, steps and waiting unchanged. `cd /Users/the_dusky/code/sandbox/dusk-worktrees/nav-stage-matches-plan-page/apps/indusk-admin && pnpm exec vitest run src/lib/plan-stage.test.ts src/lib/master-story.test.ts src/components/PlanList.test.tsx src/components/PlanList.falsify.test.tsx 'src/app/p/[project]/cockpit-nav.test.tsx' 'src/app/p/[project]/plan/[name]/page.test.tsx' 'src/app/p/[project]/plan/[name]/master.test.tsx' && pnpm exec vitest related src/lib/plan-stage.ts src/components/PlanList.tsx src/components/ui/badge-variant.ts` — A1, A2, A4, A5, A6 green.
 
   </details>
-- [ ] Types and lint are clean, and the brief and the promise registry still agree.
+- [x] Types and lint are clean, and the brief and the promise registry still agree.
   <details><summary>Technical</summary>
 
   From the worktree root: `pnpm exec tsc --noEmit -p apps/indusk-mcp`, `pnpm exec tsc --noEmit -p apps/indusk-admin`, `pnpm check` and `pnpm promises:check` exit 0.
@@ -187,7 +187,7 @@ This phase moves the rule for which step a plan is at into the package's module 
 
 #### Build Phase 1 Context
 
-- [ ] The admin's own context file says the nav's stage and mark come from the package's step rule, never from the impl's status word.
+- [x] The admin's own context file says the nav's stage and mark come from the package's step rule, never from the impl's status word.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md` (area), in the "One home per piece" entry, replace "its stage is `planStage`" with: "its stage and mark are `planStage`/`navMarkOf` in `lib/plan-stage.ts`: waiting, else Released from a release's date, else the package's `stepAt` (`plans/steps`), else Closed — never the impl's `status:`, which `/work` sets `completed` before the rituals. Guarded by `plan-stage.test.ts` and `cockpit-single-definition.test.ts` (`promise: the-nav-says-where-a-plan-is`)".
@@ -196,7 +196,7 @@ This phase moves the rule for which step a plan is at into the package's module 
 
 #### Build Phase 1 Document
 
-- [ ] The admin reference says what a plan's row in the nav reads.
+- [x] The admin reference says what a plan's row in the nav reads.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/overview.md`, the `PlanRow` sentence in the nav paragraph: the step it is at is the step its page shows (*Brief*, *Build*, *Falsify*, … *Release*), *Released* once a release shipped it, *Closed* for a closed plan no release has shipped yet, or the step a plan waiting on you waits at; the finished mark for a released or closed plan. One line in `apps/docs/src/changelog.md` under Unreleased.
