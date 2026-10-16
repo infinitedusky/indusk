@@ -14,6 +14,8 @@ approved_by: "Sandy Corsillo"
 approved_at: "2026-10-16T00:13:18.558Z"
 cleanup: skipped
 cleanup_reason: "reviewed 2026-10-16: word edits across many files, each shared reading defined once; nothing warrants extraction"
+accepted: 2026-10-16T02:55:01.054Z
+accepted_by: person
 ---
 
 # One promise language
