@@ -10,7 +10,7 @@ rationale: required
 phase_summary: required
 gate_policy: ask
 falsification: skipped
-falsification_reason: "Read the diff and every step-list caller; position and finished rituals share one source, so no hypothesis formed."
+falsification_reason: "Probed open phases, skips, legacy logs, out-of-order and all snapshot callers; A6–A9 pin them, none broke."
 cleanup: skipped
 cleanup_reason: "Reviewed the changes: about 30 lines across three files, reusing existing helpers, nothing to extract."
 approved_brief: "f06ef0692572c8e57b9e477c6f4201d6ed46e539cd9d0cae7c07c98aac7d2197"
