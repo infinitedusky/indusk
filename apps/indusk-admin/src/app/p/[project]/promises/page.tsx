@@ -71,15 +71,21 @@ interface PromisesRouteProps {
 /**
  * Which dashboard state this page drew, for the look check (ui-promises Build
  * Phase 6): a registry with promises is the default, one without any the
- * empty state; no registry reports neither. The nav and a promise's states
- * are not reported here, so the check reads them unchecked.
+ * empty state; no registry reports neither. A row drawn with no signal is
+ * reported as `promise-row.no-signal` beside it (one-promise-language). The nav
+ * and a promise's states are not reported here, so the check reads them
+ * unchecked.
  */
 function dashboardLookState(
   hasRegistry: boolean,
   promises: number,
+  hasNoSignalRow: boolean,
 ): string | undefined {
   if (!hasRegistry) return undefined;
-  return promises > 0 ? "dashboard.default" : "dashboard.empty";
+  if (promises === 0) return "dashboard.empty";
+  return hasNoSignalRow
+    ? "dashboard.default promise-row.no-signal"
+    : "dashboard.default";
 }
 
 export default async function PerProjectPromisesPage({
@@ -166,7 +172,11 @@ export default async function PerProjectPromisesPage({
   return (
     <div
       className="flex flex-col gap-4"
-      data-look-state={dashboardLookState(registry !== null, rows.length)}
+      data-look-state={dashboardLookState(
+        registry !== null,
+        rows.length,
+        rows.some((row) => row.standing === "enforced" && row.held === null),
+      )}
     >
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       {!read.ok && "problems" in read && (
