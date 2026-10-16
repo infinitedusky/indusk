@@ -19,7 +19,15 @@ import {
 	sourcesHashOf,
 } from "./mockups.js";
 import type { LookResult } from "./report.js";
-import { type Held, type LookKey, lookKey, readHeld, reuseOf, writeHeld } from "./reuse.js";
+import {
+	type Build,
+	type Held,
+	type LookKey,
+	lookKey,
+	readHeld,
+	reuseOf,
+	writeHeld,
+} from "./reuse.js";
 import { MEASURED_PROPERTIES, type MeasuredElement, verdict } from "./verdict.js";
 
 /**
@@ -831,6 +839,7 @@ export async function checkApp(
 	const reused = plan?.reused ?? [];
 	const notice = plan?.notice ? { notice: plan.notice } : {};
 	if (screensToOpen.length === 0 && storiesToOpen.length === 0) {
+		if (plan && plan.rebuilt.size > 0) keepHeld(plan, app, results, [], opts);
 		return { results, unchecked, reused, ...notice };
 	}
 
@@ -877,6 +886,10 @@ interface ReusePlan {
 	held: Record<string, Held>;
 	/** Each opened look's key, by record name (`screen:home.empty`, `story:badge.ok`). */
 	opened: Map<string, LookKey>;
+	/** The build each kind of look is served from now; null where it could not be read. */
+	builds: { screen: Build | null; story: Build | null };
+	/** Reused looks whose recorded build is not the one served now: rewritten, so the next run judges against this one. */
+	rebuilt: Map<string, Build>;
 	screens: LookTarget[];
 	stories: StoryTarget[];
 	reused: Reused[];
@@ -899,7 +912,8 @@ async function planReuse(
 	opts: CheckOptions,
 ): Promise<ReusePlan> {
 	const catalog = readCatalog(app);
-	const current = catalog === null || catalog.renderedFrom === (await sourcesHashOf(root, app));
+	const sources = await sourcesHashOf(root, app);
+	const current = catalog === null || catalog.renderedFrom === sources;
 	const schemes = schemesOf(app);
 	const facts = {
 		current,
@@ -907,15 +921,29 @@ async function planReuse(
 		schemes,
 		configHash: await configHashOf(root, app),
 	};
-	const screenFacts = { ...facts, served: served.screens };
-	const storyFacts = { ...facts, served: served.stories };
+	const buildOf = (served: string | null): Build | null => (served ? { sources, served } : null);
+	const builds = { screen: buildOf(served.screens), story: buildOf(served.stories) };
 	const held = readHeld(root, app.app, opts.home);
 	const devices = app.devices.flatMap((d) => schemes.map((s) => lookDevice(d.name, s)));
-	const plan: ReusePlan = { root, held, opened: new Map(), screens: [], stories: [], reused: [] };
+	const plan: ReusePlan = {
+		root,
+		held,
+		opened: new Map(),
+		builds,
+		rebuilt: new Map(),
+		screens: [],
+		stories: [],
+		reused: [],
+	};
 	const opens = (record: string, key: LookKey, look: Omit<Reused, "app" | "at" | "devices">) => {
-		const reuse = opts.only ? undefined : reuseOf(held[record], key, { all: opts.all });
+		const build = builds[key.kind];
+		const reuse = opts.only ? undefined : reuseOf(held[record], key, { all: opts.all, build });
 		if (reuse?.reuse) {
 			plan.reused.push({ app: app.app, ...look, at: reuse.at, devices });
+			const before = held[record]?.build;
+			if (build && (before?.sources !== build.sources || before.served !== build.served)) {
+				plan.rebuilt.set(record, build);
+			}
 			return false;
 		}
 		plan.opened.set(record, key);
@@ -923,7 +951,7 @@ async function planReuse(
 	};
 	plan.screens = screens.filter((look) => {
 		const name = `${look.screen}.${look.state}`;
-		return opens(`screen:${name}`, lookKey(app, look, screenFacts), {
+		return opens(`screen:${name}`, lookKey(app, look, facts), {
 			look: name,
 			kind: "screen",
 			screen: look.screen,
@@ -931,7 +959,7 @@ async function planReuse(
 		});
 	});
 	plan.stories = stories.filter((story) =>
-		opens(`story:${story.name}`, lookKey(app, story, storyFacts), {
+		opens(`story:${story.name}`, lookKey(app, story, facts), {
 			look: story.name,
 			kind: "story",
 			screen: story.component,
@@ -966,6 +994,10 @@ function keepHeld(
 	const at = (opts.now ?? new Date()).toISOString();
 	const everywhere = app.devices.length * schemesOf(app).length;
 	const next = { ...plan.held };
+	for (const [record, build] of plan.rebuilt) {
+		const before = next[record];
+		if (before) next[record] = { ...before, build };
+	}
 	for (const [record, key] of plan.opened) {
 		const isStory = key.kind === "story";
 		const mine = results.filter(
@@ -976,7 +1008,8 @@ function keepHeld(
 			mine.length === everywhere &&
 			mine.every((r) => r.verdict.state === "held") &&
 			!unchecked.some((u) => u.mockup === mockup);
-		if (heldEverywhere) next[record] = { key, at, state: "held" };
+		const build = plan.builds[key.kind];
+		if (heldEverywhere) next[record] = { key, at, state: "held", ...(build ? { build } : {}) };
 		else delete next[record];
 	}
 	try {

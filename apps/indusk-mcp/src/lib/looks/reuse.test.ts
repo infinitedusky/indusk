@@ -5,7 +5,7 @@
  * When a look's last held result is reused, and where it is kept
  * (looks-check-speed A2-A8, A19). The rule is pure: every input is handed in.
  */
-import { appendFileSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
@@ -33,7 +33,6 @@ const story = {
 	snapshotHash: "s",
 	stylesheetHash: "c",
 	current: true,
-	served: "b",
 	configHash: "k0",
 } as const;
 const held = { key: story, at: "2026-10-16T03:00:00.000Z", state: "held" as const };
@@ -67,7 +66,6 @@ describe("whether a look's last held result is reused", () => {
 			path: "/home",
 			seed: "",
 			current: true,
-			served: "b",
 			configHash: "k0",
 			uncomposed: false,
 		} as const;
@@ -126,7 +124,6 @@ describe("whether a look's last held result is reused", () => {
 			current: true,
 			pageSourcesHash: "p",
 			schemes: ["light", "dark"],
-			served: "b",
 			configHash: "k0",
 		};
 		const edited = { ...facts, pageSourcesHash: "p2" };
@@ -188,7 +185,6 @@ describe("whether a look's last held result is reused", () => {
 			current: true,
 			pageSourcesHash: "p",
 			schemes: ["light", "dark"],
-			served: "b",
 			configHash: "k0",
 		};
 		const looks = [
@@ -246,7 +242,7 @@ describe("where held results are kept", () => {
 	});
 });
 
-describe("what is actually served joins the key", () => {
+describe("what is actually served is judged against the sources", () => {
 	it("tells a build by its assets and inline styles, not by the page's text", () => {
 		const page = (text: string, css: string) =>
 			`<link rel="stylesheet" href="/${css}.css"><script src="/a.js"></script><p>${text}</p>`;
@@ -255,12 +251,27 @@ describe("what is actually served joins the key", () => {
 		expect(servedBuildOf("<p>nothing to tell by</p>")).toBeNull();
 	});
 
-	it("reopens a look whose served build changed, and reuses nothing when the build cannot be read", () => {
-		expect(reuseOf(held, { ...story, served: "b2" })).toEqual({
+	it("judges the served build against the sources, not as part of the key", () => {
+		const built = (sources: string, served: string) => ({ build: { sources, served } });
+		const record = { ...held, ...built("s1", "b1") };
+		// same sources, same build: reused; edited sources, rebuilt: reused
+		expect(reuseOf(record, story, built("s1", "b1"))).toEqual({ reuse: true, at: held.at });
+		expect(reuseOf(record, story, built("s2", "b2"))).toEqual({ reuse: true, at: held.at });
+		// same sources served by another build; edited sources still served by the old build
+		expect(reuseOf(record, story, built("s1", "b2"))).toEqual({
 			reuse: false,
 			changed: "served build",
 		});
-		expect(reuseOf(held, { ...story, served: null })).toEqual({
+		expect(reuseOf(record, story, built("s2", "b1"))).toEqual({
+			reuse: false,
+			changed: "served build not rebuilt",
+		});
+		// a record that kept no build, and a build that could not be read
+		expect(reuseOf(held, story, built("s1", "b1"))).toEqual({
+			reuse: false,
+			changed: "served build",
+		});
+		expect(reuseOf(record, story, { build: null })).toEqual({
 			reuse: false,
 			changed: "served build unreadable",
 		});
@@ -301,32 +312,45 @@ describe("what is actually served joins the key", () => {
 		expect(await run({ "home.empty": "held" })).toEqual(["home.empty"]);
 	});
 
-	it("a check against another build opens the look and keeps its result under that build", async () => {
-		const { app, approvals, root, home } = await fixtureApp(["home.empty"]);
+	it("a check reopens a look served by another build of the same sources, or by the old build after an edit, and reuses it after a rebuild", async () => {
+		const { app, approvals, storyApprovals, root, home } = await fixtureApp([], ["home.full"]);
 		const build = (name: string) => async () => `<link rel="stylesheet" href="/${name}.css">`;
 		const run = async (fetchPage: () => Promise<string>, answers: Record<string, "held"> = {}) => {
 			const opener = fakeOpener(answers);
-			const report = await checkApp(app, approvals, "http://app", [], {
+			const report = await checkApp(app, approvals, "http://app", storyApprovals, {
 				opener,
 				projectRoot: root,
 				home,
 				fetchPage,
 			});
-			return { opener, report };
+			return { opened: opener.opened, report };
 		};
-		await run(build("old"), { "home.empty": "held" });
-		const same = await run(build("old"));
-		expect(same.opener.opened).toEqual([]);
-		const other = await run(build("new"), { "home.empty": "held" });
-		expect(other.opener.opened).toEqual(["home.empty"]);
-		expect(other.report.reused).toEqual([]);
-		const unread = await run(
-			async () => {
-				throw new Error("connection refused");
-			},
-			{ "home.empty": "held" },
-		);
-		expect(unread.opener.opened).toEqual(["home.empty"]);
+		/** An edit to the sources, with the stories rendered from them again. */
+		const edit = async (text: string) => {
+			writeFileSync(join(root, "src", "Edited.jsx"), text);
+			const catalog = join(app.dir, "components.json");
+			const rendered = JSON.parse(readFileSync(catalog, "utf-8"));
+			rendered.renderedFrom = await sourcesHashOf(root, app);
+			writeFileSync(catalog, JSON.stringify(rendered));
+		};
+		const held = { "story home.full": "held" } as const;
+		expect((await run(build("old"), held)).opened).toEqual(["story home.full"]);
+		expect((await run(build("old"))).opened).toEqual([]);
+		expect((await run(build("new"), held)).opened).toEqual(["story home.full"]);
+		// an edit, then the server still serving the build from before it
+		await edit("export const one = 1;\n");
+		expect((await run(build("new"), held)).opened).toEqual(["story home.full"]);
+		// an edit, rebuilt: the story is unchanged, so it is reused and the record follows the build
+		await edit("export const two = 2;\n");
+		const rebuilt = await run(build("rebuilt"));
+		expect(rebuilt.opened).toEqual([]);
+		expect(rebuilt.report.reused.map((r) => r.look)).toEqual(["home.full"]);
+		await edit("export const three = 3;\n");
+		expect((await run(build("rebuilt"), held)).opened).toEqual(["story home.full"]);
+		const unread = await run(async () => {
+			throw new Error("connection refused");
+		}, held);
+		expect(unread.opened).toEqual(["story home.full"]);
 		expect(unread.report.notice).toMatch(/could not be read/);
 	});
 });

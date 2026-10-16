@@ -12,9 +12,11 @@ import type { LooksApp } from "./mockups.js";
  * every device and scheme: the foundation (so a token change is never hidden
  * behind a reused look — `tokens-are-held-exactly`), the declarations, the
  * devices and schemes, its snapshot hashes, and for a screen its page code,
- * path and seed, the styling configuration and lockfile, and the build served (a check against an old build never
- * records "held" for sources it did not serve). Nothing is reused unless the stories were rendered from the
- * sources as they are now, and an uncomposed screen never is. Pure: the
+ * path and seed, and the styling configuration and lockfile. The build served
+ * must also be the one the sources are (`Build`: a check against an old build
+ * never records "held" for sources it did not serve). Nothing is reused unless
+ * the stories were rendered from the sources as they are now, and an
+ * uncomposed screen never is. Pure: the
  * caller hands every fact in, and the browser never decides.
  *
  * promise: a-look-check-costs-what-changed
@@ -28,8 +30,6 @@ interface KeyBase {
 	devices: string;
 	schemes: string;
 	current: boolean;
-	/** The build the page was served from (`servedBuildOf`); null when it could not be read. */
-	served: string | null;
 	/** The styling and Storybook configuration and the lockfile, hashed (`configHashOf`). */
 	configHash: string;
 }
@@ -52,10 +52,23 @@ export interface ScreenKey extends KeyBase {
 
 export type LookKey = StoryKey | ScreenKey;
 
+/**
+ * What was served and what it was served for when a look last held or was
+ * last reported reused: the app's sources hash and the served build's
+ * identity (`servedBuildOf`). Outside the key on purpose — a rebuild after an
+ * edit changes the build's scripts and stylesheets for every look, so a build
+ * identity in the key would reopen all of them for one changed component.
+ */
+export interface Build {
+	sources: string;
+	served: string;
+}
+
 export interface Held {
 	key: LookKey;
 	at: string;
 	state: "held" | "broken" | "unchecked";
+	build?: Build;
 }
 
 export type Reuse = { reuse: true; at: string } | { reuse: false; changed: string };
@@ -78,7 +91,6 @@ export function lookKey(
 		current: boolean;
 		pageSourcesHash: string;
 		schemes: readonly string[];
-		served: string | null;
 		configHash: string;
 	},
 ): LookKey {
@@ -88,7 +100,6 @@ export function lookKey(
 		devices: devicesKey(app),
 		schemes: facts.schemes.join(","),
 		current: facts.current,
-		served: facts.served,
 		configHash: facts.configHash,
 	};
 	if (isStoryTarget(look)) {
@@ -124,7 +135,6 @@ const COMPARED: readonly [string, string][] = [
 	["declarationsHash", "declarations"],
 	["devices", "devices"],
 	["schemes", "schemes"],
-	["served", "served build"],
 	["configHash", "configuration"],
 	["snapshotHash", "snapshot"],
 	["stylesheetHash", "stylesheet"],
@@ -147,9 +157,13 @@ const canonicalKey = (key: object): string =>
  * read from disk is untrusted: anything but a held entry with a key and a
  * time reopens the look.
  */
-export function reuseOf(held: Held | undefined, now: LookKey, opts: { all?: boolean } = {}): Reuse {
+export function reuseOf(
+	held: Held | undefined,
+	now: LookKey,
+	opts: { all?: boolean; build?: Build | null } = {},
+): Reuse {
 	if (opts.all) return { reuse: false, changed: "--all" };
-	if (now.served === null) return { reuse: false, changed: "served build unreadable" };
+	if (opts.build === null) return { reuse: false, changed: "served build unreadable" };
 	if (!now.current)
 		return { reuse: false, changed: "stories not rendered from the current sources" };
 	if (now.kind === "screen" && now.uncomposed) return { reuse: false, changed: "uncomposed" };
@@ -166,7 +180,28 @@ export function reuseOf(held: Held | undefined, now: LookKey, opts: { all?: bool
 		if (before[field] !== after[field]) return { reuse: false, changed: label };
 	}
 	if (canonicalKey(before) !== canonicalKey(after)) return { reuse: false, changed: "key" };
+	const served = servedAgainst(held.build, opts.build);
+	if (served) return { reuse: false, changed: served };
 	return { reuse: true, at: held.at };
+}
+
+/**
+ * Whether the build now served is the one the sources now are, judged against
+ * the last run: the same sources must be served by the same build, and edited
+ * sources must be served by a rebuilt one — a server still serving the build
+ * from before the edit would be checked, and recorded held, for sources it
+ * never served. Returns the reason to reopen, else null. A record from before
+ * builds were kept (no `build`) and a run that passed none (`undefined`) are
+ * not judged here.
+ */
+function servedAgainst(before: Build | undefined, now: Build | null | undefined): string | null {
+	if (now === undefined) return null;
+	if (!before) return "served build";
+	const sameSources = before.sources === now?.sources;
+	const sameBuild = before.served === now?.served;
+	if (sameSources && !sameBuild) return "served build";
+	if (!sameSources && sameBuild) return "served build not rebuilt";
+	return null;
 }
 
 /**
