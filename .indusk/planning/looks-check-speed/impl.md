@@ -1,7 +1,7 @@
 ---
 title: "Looks check speed"
 date: 2026-10-16
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "17a0300631400adf54eed52b5f974005f4c1df91c6a2d45262d0e95eaca56222"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-16T11:11:39.862Z"
 ---
 
 # Looks check speed
