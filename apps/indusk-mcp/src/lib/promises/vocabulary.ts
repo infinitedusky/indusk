@@ -19,6 +19,14 @@ export const PROMISE_KINDS = ["behaviour", "state", "structure"] as const;
 export type PromiseKind = (typeof PROMISE_KINDS)[number];
 
 /**
+ * A clause of a promise (plans-are-promises ADR D3): a `split` is a point
+ * reached within its budget on the way to the goal, a `limit` is a bound that
+ * always holds, and `rests-on` is another promise, of the part beneath it.
+ */
+export const PROMISE_CLAUSE_KINDS = ["split", "limit", "rests-on"] as const;
+export type PromiseClauseKind = (typeof PROMISE_CLAUSE_KINDS)[number];
+
+/**
  * `declared` — stated in planning, not yet established; the owner is an open
  * plan. `enforced` — upheld; a break is a bug. `known-broken` — the
  * implementation provably cannot uphold it; carries the incident that proves

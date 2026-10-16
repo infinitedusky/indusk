@@ -164,7 +164,7 @@ Before anything about clauses is built, this phase writes the tests that say wha
 
 This phase gives a promise its parts. A brief that opts in states each promise's clauses beneath it; declaring a promise records its clauses in the registry, refusing a clause of an unknown kind or one resting on a promise that does not exist; and the contract check refuses a brief whose promises have no clauses or whose clauses differ from the registry's. Nothing yet reads the clause plan or test rows for clauses; the next phase does.
 
-- [ ] The brief reader returns each promise's clauses.
+- [x] The brief reader returns each promise's clauses.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/brief-contract.ts`: `BriefMade` gains `clauses: BriefClause[]` (`{ name, kind: "split" | "limit" | "rests-on", sentence, restsOn? }`); `readMakes` reads an entry's sub-bullets `- **\`name\`** (split|limit). sentence` and `- **\`name\`** (rests on \`promise\`).` instead of discarding them; a sub-bullet that names a clause and does not parse is a `problem`. `BriefContract` gains `clausesRequired: boolean` from frontmatter `clauses: required`.
