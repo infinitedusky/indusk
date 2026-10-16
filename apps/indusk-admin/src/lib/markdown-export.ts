@@ -12,6 +12,7 @@ import {
   phaseItems,
   splitPhasesAroundFalsification,
 } from "@/lib/phases";
+import { planStage } from "@/lib/plan-stage";
 import type { Plan } from "@/lib/planning-reader";
 
 /**
@@ -135,7 +136,9 @@ export function ritualPhaseMarkdown(ritual: RitualWord, phase: Phase): string {
  * visually distinct.
  */
 export function planMarkdown(plan: Plan): string {
-  const sections: string[] = [`# ${plan.name}\n\nStatus: ${plan.status}`];
+  const sections: string[] = [
+    `# ${plan.name}\n\nStage: ${planStage(plan, false, undefined)}`,
+  ];
 
   if (plan.research)
     sections.push(sectionMarkdown("Research", plan.research.content));

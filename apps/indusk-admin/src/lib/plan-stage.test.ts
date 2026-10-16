@@ -4,7 +4,7 @@ import { derivePlanPosition } from "@infinitedusky/indusk-mcp/lifecycle";
 import { planSteps } from "@infinitedusky/indusk-mcp/plans/steps";
 import { describe, expect, it } from "vitest";
 import { snapshotOf } from "@/lib/plan-snapshot";
-import { planStage } from "@/lib/plan-stage";
+import { hasWorkInProgress, planStage } from "@/lib/plan-stage";
 import type { Plan } from "@/lib/planning-reader";
 
 const plan = (over: Partial<Plan> = {}): Plan =>
@@ -155,5 +155,27 @@ describe("planStage", () => {
     expect(
       planStage(plan({ archived: false, status: "completed" }), true, {}),
     ).toBe("Released");
+  });
+});
+
+/** A7 - the project card's "work in progress" is a plan at a Release-workflow step. */
+describe("hasWorkInProgress", () => {
+  const falsify: Life = {
+    stage: "impl",
+    status: "completed",
+    missing: ["falsification", "cleanup", "audit"],
+  };
+
+  it("A7 — a built plan whose impl says completed counts, as does an approved one the nav marks working", () => {
+    expect(hasWorkInProgress([planAt(falsify)])).toBe(true);
+    expect(
+      hasWorkInProgress([planAt({ stage: "impl", status: "approved" })]),
+    ).toBe(true);
+  });
+
+  it("A7 — an impl saying in-progress while the plan is still in planning does not count", () => {
+    expect(
+      hasWorkInProgress([planAt({ stage: "test-plan", status: "proposed" })]),
+    ).toBe(false);
   });
 });

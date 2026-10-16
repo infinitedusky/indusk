@@ -47,3 +47,13 @@ export function planStage(
 ): string {
   return navMarkOf(plan, released, waiting).stage;
 }
+
+/**
+ * Whether any plan is at a build-or-later step (the project card's "work in
+ * progress"): the nav's own `working` mark, never the impl's `status:`.
+ *
+ * promise: the-nav-says-where-a-plan-is
+ */
+export function hasWorkInProgress(plans: ReadonlyArray<Plan>): boolean {
+  return plans.some((p) => navMarkOf(p, false, undefined).state === "working");
+}
