@@ -12,11 +12,28 @@ This is the clause plan: one section for each promise this plan makes, one for e
 
 Written after `plans-are-promises` landed, so the clause plan itself is in the shape that plan made: a promise, its clauses, each clause's signal and tests.
 
+## At a glance
+
+This plan makes two promises. Each is made of clauses; every assertion below sits under one clause.
+
+| Promise | Clause | Kind | What the clause says |
+|---|---|---|---|
+| `a-clause-is-proved-twice` | `verified-before-release` | split | a clause's tests pass before anything ships; a change that breaks one is stopped |
+| | `upheld-by-its-signal` | split | a clause is upheld only when its signal has reported it upheld in a real run |
+| | `no-signal-is-not-holding` | limit | a clause with no report, or a blind watcher, reads no signal, never holding |
+| | `a-break-names-its-clause` | split | a break's event and incident name the promise and the clause |
+| `an-audit-concern-gets-a-solution` | `every-concern-is-answered` | split | each audit concern gets a fix, a signal, or a reason nothing is needed |
+| | `a-signal-answer-names-its-clause` | split | a signal an audit proposes names the clause it would uphold |
+
 ## `a-clause-is-proved-twice`
 
-A clause is verified by its tests before release and upheld by its signal in use, and is upheld only when both say so.
+**The promise:** A clause is verified by its tests before release and upheld by its signal in use, and is upheld only when both say so.
 
-### `verified-before-release` — a clause's tests must pass before anything ships, and a change that makes one fail is stopped before release
+**Its four clauses:** `verified-before-release`, `upheld-by-its-signal`, `no-signal-is-not-holding`, `a-break-names-its-clause`.
+
+### `verified-before-release` — a split of `a-clause-is-proved-twice`
+
+**The clause:** A clause's tests must pass before anything ships, and a change that makes one fail is stopped before release
 
 - Signal: read from the suite run at landing and at release, which names each failing test by the clause its file carries. Upheld when every row naming the clause passes in that run; broken reports the clause and the failing test file, and the landing or the close is refused.
 
@@ -26,7 +43,9 @@ A clause is verified by its tests before release and upheld by its signal in use
 | A2 | Landing a plan is refused when a test that proves one of its clauses fails, naming the clause. | unit |
 | A3 | A failing test is reported against the clause its file names, so a person reading a red suite sees which clause of which promise broke. | unit |
 
-### `upheld-by-its-signal` — a clause is upheld only when its signal has reported it upheld in a run of the real system, and a passing test never stands in for its signal
+### `upheld-by-its-signal` — a split of `a-clause-is-proved-twice`
+
+**The clause:** A clause is upheld only when its signal has reported it upheld in a run of the real system, and a passing test never stands in for its signal
 
 - Signal: read from the local daemon's traces (and, for a deployed project, the production source). Upheld when the clause's signal has reported upheld and none since reports broken; a split is upheld by reaching its budget at its point, a limit by every report staying inside its bound. Broken reports the clause, its symptom and its trace.
 
@@ -41,7 +60,9 @@ A clause is verified by its tests before release and upheld by its signal in use
 | A10 | When such a plan closes, its promise is enforced. | unit |
 | A11 | A clause's signal, run against the real system through the local daemon, reports upheld and the clause then reads upheld end to end. | live check |
 
-### `no-signal-is-not-holding` — a clause whose signal has never reported, or whose watcher is blind, reads no signal and never reads as holding
+### `no-signal-is-not-holding` — a limit of `a-clause-is-proved-twice`
+
+**The clause:** A clause whose signal has never reported, or whose watcher is blind, reads no signal and never reads as holding
 
 - Signal: read from the same traces and the watcher's own heartbeat. Upheld while a clause with no report reads no signal everywhere it is shown and a blind watcher is never shown as holding; broken reports a clause shown as holding without a report.
 
@@ -52,7 +73,9 @@ A clause is verified by its tests before release and upheld by its signal in use
 | A14 | A promise with one clause upheld and another reading no signal is not holding: its standing is the worst of its clauses (broken, then no signal, then holding). | unit |
 | A15 | A promise made only of clauses that rest on other promises has the standing of those promises and closes when they are in force, with no test row of its own. | unit |
 
-### `a-break-names-its-clause` — a break's event and incident name the promise and the clause, and point to the plan and phase that added the signal; its tests are reachable from the clause
+### `a-break-names-its-clause` — a split of `a-clause-is-proved-twice`
+
+**The clause:** A break's event and incident name the promise and the clause, and point to the plan and phase that added the signal; its tests are reachable from the clause
 
 - Signal: read from the incident the break opens and the event it was opened from. Upheld when every incident opened by a clause's signal names `promise/clause`; broken reports an incident naming only a promise or only a file.
 
@@ -64,9 +87,13 @@ A clause is verified by its tests before release and upheld by its signal in use
 
 ## `an-audit-concern-gets-a-solution`
 
-Each concern an audit raises is answered with a fix, a signal that would show it breaking, or the reason nothing is needed.
+**The promise:** Each concern an audit raises is answered with a fix, a signal that would show it breaking, or the reason nothing is needed.
 
-### `every-concern-is-answered` — the audit asks, for each concern it raised, what signal would show it breaking, and the answer is a fix, a signal or nothing with the reason
+**Its two clauses:** `every-concern-is-answered`, `a-signal-answer-names-its-clause`.
+
+### `every-concern-is-answered` — a split of `an-audit-concern-gets-a-solution`
+
+**The clause:** The audit asks, for each concern it raised, what signal would show it breaking, and the answer is a fix, a signal or nothing with the reason
 
 - Signal: read from the audit skill's instructions and from each `audit.md` written after this plan. Upheld when the instructions carry the question and each concern in a new `audit.md` has one of the three answers; broken reports a concern with none.
 
@@ -77,7 +104,9 @@ Each concern an audit raises is answered with a fix, a signal that would show it
 | A21 | A signal answer also says how often the signal would fire and what happens if its first break reaches a user, and the instructions say a path that rarely runs leaves its promise unknown for a long time. | unit |
 | A22 | The instructions offer the kinds of signal as a menu: an outcome where it is felt, an invariant checked on each read, a postcondition after an operation, an expected event that did not happen, and a policy that must never be crossed. | unit |
 
-### `a-signal-answer-names-its-clause` — a signal an audit proposes names the clause it would uphold, and a concern no clause covers says so
+### `a-signal-answer-names-its-clause` — a split of `an-audit-concern-gets-a-solution`
+
+**The clause:** A signal an audit proposes names the clause it would uphold, and a concern no clause covers says so
 
 - Signal: read from the same instructions and audits. Upheld when the instructions require the clause and each signal answer carries one or says no clause covers the concern; broken reports a signal answer that names none.
 
