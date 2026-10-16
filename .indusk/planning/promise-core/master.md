@@ -11,7 +11,7 @@ subplans:
   - one-promise-language
   - looks-check-speed
   - plans-are-promises
-  - mark-first
+  - telemetry-from-day-one
   - run-the-master
   - expectations-loop
   - looks-as-promises
@@ -247,7 +247,13 @@ parent with its own `master.md` naming them.
      before the ADR; a clause can rest on another promise.
    - **`mark-first`** ("Signal first") — `a-clause-is-proved-twice`: verified by
      its tests before release, upheld by its signal in use; plans in the new
-     shape close on both.
+     shape close on both. Since 2026-10-16 the second child of
+     [telemetry-from-day-one](../telemetry-from-day-one/master.md), a parent
+     made after a cold audit of `mark-first` against the goal (its research,
+     "Audit against the goal") found it reshapes how InDusk reads a signal and
+     leaves what a new project is handed or emits unchanged: a daemon that is
+     found, a scaffold that reports from its first run, production that is
+     heard, and a look that comes due are its siblings there.
    Only what `run-the-master` needs; the later cut (a break leading to its
    cause, diagnosis, broken traces kept, browser signals, every break becoming a
    test, approvals as questions, clause views) follows `run-the-master` — see
