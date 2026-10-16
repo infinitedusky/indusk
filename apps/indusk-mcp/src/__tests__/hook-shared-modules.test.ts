@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { glob } from "glob";
 import { describe, expect, it } from "vitest";
 import { parsePurpose as hookParsePurpose } from "../../hooks/_trajectory-parser.js";
+import { token } from "../lib/tokens.js";
 import { parsePurpose as libParsePurpose } from "../lib/trajectory/parser.js";
 
 /**
@@ -129,10 +130,10 @@ describe("A33 — one port of the inbox's reading under hooks/", () => {
  */
 describe("plans-are-promises A14 — one reading of a row's purpose, in both copies", () => {
 	const cells = [
-		"promise: a",
+		token("promise", "a"),
 		"lesson: b",
 		"clause: a/c",
-		"promise: a, clause: a/c",
+		`${token("promise", "a")}, clause: a/c`,
 		"clause: a",
 		"clause: a/",
 		"a regression guard over the old seat map",
