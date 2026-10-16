@@ -929,6 +929,7 @@ async function planReuse(
 		pageSourcesHash: await pageSourcesHashOf(root, app, pageSourceFilter(catalog)),
 		schemes,
 		configHash: await configHashOf(root, app),
+		baseHash: catalog?.baseRulesHash ?? "",
 	};
 	const buildOf = (served: string | null): Build | null => (served ? { sources, served } : null);
 	const builds = { screen: buildOf(served.screens), story: buildOf(served.stories) };

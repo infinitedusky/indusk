@@ -223,6 +223,13 @@ export interface Catalog {
 	 * without it is not current — absence is a rule, not a migration.
 	 */
 	renderedFrom?: string;
+	/**
+	 * The hash of the app's element, universal and root rules when the stories
+	 * were rendered (`elementRulesOf`): in every story's reuse key, so a change
+	 * to them reopens every story. Absent in a catalog rendered before it was
+	 * kept, which reopens every story once.
+	 */
+	baseRulesHash?: string;
 	components: CatalogComponent[];
 }
 

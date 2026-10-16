@@ -703,10 +703,12 @@ A fresh reader went looking for ways a changed look could be reported held from 
   Done as: the branch is gone, so `servedAgainst` reopens only the same sources served by another build; the caller's `rebuilt` already skips a stale kind (the item above), so the record keeps the build it was measured on. The two A38 expectations that encoded the reopen now expect reuse.
 
   </details>
-- [ ] Make a story's reuse depend on the element, universal and body rules of the app's stylesheet it draws under.
+- [x] Make a story's reuse depend on the element, universal and body rules of the app's stylesheet it draws under.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/component-styles.ts` `componentStylesheet`: also keep rules whose selector targets a tag present in the component's snapshots, a universal selector, `html` or `:root` (resolved as today), so the slice's `stylesheetHash` moves with them. `reuse.ts` `StoryKey`: add `baseHash` (the hash of `_base.css`, read in `mockups.ts` beside the stylesheets, per the rule that every looks hash is computed there). A30.
+
+  Done as (a departure): the component slices are left as they are. Putting element and root rules into each `components/<name>.css` would change every approved story's `stylesheetHash` and every composed mockup's `componentsHash`, returning the whole admin to proposed for a change to reuse, not to how anything draws. Instead `elementRulesOf(appCss)` (`component-styles.ts`) keeps every rule whose selector names no class and no component marker (element, universal, `html`, `:root`, `body`, attribute-only), inside its wrappers and layers, unresolved; the render step records `baseRulesHash` (`stylesheetHash` of it, `mockups.ts`) in `components.json`; `StoryKey.baseHash` reads it (compared as "base rules"). Every story reopens on such a change rather than only those whose snapshots carry the tag — wider, never narrower. A catalog rendered before this has none, which reopens every story once.
 
   </details>
 - [ ] Make every look's reuse depend on what the check measures and how it judges.

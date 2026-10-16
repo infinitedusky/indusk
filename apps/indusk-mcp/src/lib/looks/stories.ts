@@ -4,7 +4,12 @@ import { readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
-import { baseStylesheet, classesOf, componentStylesheet } from "./component-styles.js";
+import {
+	baseStylesheet,
+	classesOf,
+	componentStylesheet,
+	elementRulesOf,
+} from "./component-styles.js";
 import {
 	CATALOG_FILE,
 	type Catalog,
@@ -562,7 +567,11 @@ export async function renderStories(root: string, appName: string): Promise<Stor
 		}
 	}
 
-	const catalog: Catalog = { renderedFrom, components };
+	const catalog: Catalog = {
+		renderedFrom,
+		baseRulesHash: stylesheetHash(elementRulesOf(css)),
+		components,
+	};
 	writeFileSync(join(app.dir, CATALOG_FILE), `${JSON.stringify(catalog, null, "\t")}\n`);
 	return { components, snapshots, removed };
 }

@@ -11,13 +11,12 @@ import type { LooksApp } from "./mockups.js";
  * input it is held to and drawn from is what it was when it last held at
  * every device and scheme: the foundation (so a token change is never hidden
  * behind a reused look — `tokens-are-held-exactly`), the declarations, the
- * devices and schemes, its snapshot hashes, and for a screen its page code,
- * path and seed, and the styling configuration and lockfile. The build served
- * must also be the one the sources are (`Build`: a check against an old build
- * never records "held" for sources it did not serve). Nothing is reused unless
- * the stories were rendered from the sources as they are now, and an
- * uncomposed screen never is. Pure: the
- * caller hands every fact in, and the browser never decides.
+ * devices and schemes, the styling configuration and lockfile, its snapshot
+ * hashes, for a story the app's element and root rules it draws under, and
+ * for a screen its page code, path and seed. The same sources must be served
+ * by the same build (`Build`). Nothing is reused unless the stories were
+ * rendered from the sources as they are now, and an uncomposed screen never
+ * is. Pure: the caller hands every fact in, and the browser never decides.
  *
  * promise: a-look-check-costs-what-changed
  * promise: tokens-are-held-exactly
@@ -38,6 +37,8 @@ export interface StoryKey extends KeyBase {
 	kind: "story";
 	snapshotHash: string;
 	stylesheetHash: string | null;
+	/** The app's element, universal and root rules every story draws under (the catalog's `baseRulesHash`); "" when unrecorded. */
+	baseHash: string;
 }
 
 export interface ScreenKey extends KeyBase {
@@ -92,6 +93,8 @@ export function lookKey(
 		pageSourcesHash: string;
 		schemes: readonly string[];
 		configHash: string;
+		/** The catalog's `baseRulesHash`; "" when it records none. */
+		baseHash?: string;
 	},
 ): LookKey {
 	const base = {
@@ -111,6 +114,7 @@ export function lookKey(
 			...base,
 			snapshotHash: story.hash,
 			stylesheetHash: story.stylesheetHash,
+			baseHash: facts.baseHash ?? "",
 		};
 	}
 	const name = `${look.screen}.${look.state}`;
@@ -138,6 +142,7 @@ const COMPARED: readonly [string, string][] = [
 	["configHash", "configuration"],
 	["snapshotHash", "snapshot"],
 	["stylesheetHash", "stylesheet"],
+	["baseHash", "base rules"],
 	["mockupHash", "mockup"],
 	["componentsHash", "components"],
 	["pageSourcesHash", "page code"],
