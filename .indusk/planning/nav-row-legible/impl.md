@@ -9,6 +9,8 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+cleanup: skipped
+cleanup_reason: "reviewed all changed files; each is small and cohesive, and no repeat this plan added warrants an extraction"
 approved_brief: "9f72b46fd2e1a0cc95e09275ad587bd4e5bc495d6ac89b815b8aeac5e95593ed"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-16T15:18:16.077Z"
@@ -359,3 +361,4 @@ The finished row hands its whole click area to a link stretched over the row by 
 - Why the mark is outside the link: a `<button>` inside an `<a>` is invalid HTML (interactive content inside interactive content), and a click on it would also follow the link unless every handler stops it. A container row whose title's link is stretched over it by an overlay keeps every part of the row but the mark one click to the plan, and is the shape the approved `plan-row.worktree` mockup draws (a `div` row, the link on the name).
 - A row with a worktree has the badge and number outside the link's element, though inside its click area; `cockpit-nav.test.tsx` reads the badge and number inside `a[data-plan-name]`, which holds only because its fixture plans have no worktree. A2 and A6 check the click area itself.
 - Open on hover sets `aria-expanded` as a click does, because the approved open mockup styles the open mark by that attribute; a pointer leaving closes a hover-opened mark but not a clicked one.
+- Cleanup, reviewed and left as-is: `PlanRow.tsx` (103 lines) draws two forms that share the number cell, stage classes and badge, and the two small remaining repeats (badge and title markup) are shorter than the indirection that would remove them; `WorktreeMark.tsx` (52) is one control; `Worktrees.tsx` and `PlanList.tsx` changed a few lines; `PlanList.worktree.test.tsx` (257) is one file of one subject. The `next/link` mock the two new test files carry is already in 27 test files, a project-wide convention that is its own plan's, not this one's.
