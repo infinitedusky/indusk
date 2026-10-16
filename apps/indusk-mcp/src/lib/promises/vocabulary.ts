@@ -141,6 +141,13 @@ export const LOOK_MARK = {
 	device: "indusk.look.device",
 	/** `story` on a component story's span; absent on a screen's, which is the rule for every span recorded before it existed. */
 	kind: "indusk.look.kind",
+	/**
+	 * `true` on a look's span restated from its last held result, not measured
+	 * this run (looks-check-speed); absent on a measured look's span.
+	 */
+	reused: "indusk.look.reused",
+	/** On a reused look's span: the ISO time the look was really measured and held. */
+	measuredAt: "indusk.look.measured_at",
 } as const;
 
 /** A signal's verdict as the code holds it. The wire still carries `violated` this release (see `readOutcome`). */

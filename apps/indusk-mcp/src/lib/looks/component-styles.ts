@@ -311,6 +311,32 @@ export function baseStylesheet(appCss: string, foundation: Foundation): string {
 	return sheetOf(out, contextOf(root, foundation));
 }
 
+/**
+ * The rules of the app's compiled CSS that no class and no component marker
+ * names — element, universal, `html`, `:root` and `body` rules, wherever they
+ * sit — printed as the build wrote them. Every story draws under them in the
+ * served Storybook, and no component's slice holds them, so the render step
+ * records their hash in the catalog (`baseRulesHash`) and a story's reuse
+ * depends on it: an `a` or `*` rule changed in the app's stylesheet reopens
+ * every story (looks-check-speed A30). Unresolved on purpose — any byte the
+ * build changes moves the hash.
+ *
+ * promise: tokens-are-held-exactly
+ */
+export function elementRulesOf(appCss: string): string {
+	const out = postcss.root();
+	out.append(
+		keepRules(
+			postcss.parse(appCss).nodes,
+			(selector) => selectorClasses(selector).length === 0 && selectorMarks(selector).length === 0,
+		),
+	);
+	out.walk((n) => {
+		n.cleanRaws();
+	});
+	return out.toString().trim();
+}
+
 /** The build's `@property` initial values, and the foundation's names for its variables. */
 function contextOf(root: postcss.Root, foundation: Foundation): Context {
 	const initial = new Map<string, string>();

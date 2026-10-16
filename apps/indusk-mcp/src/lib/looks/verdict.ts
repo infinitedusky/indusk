@@ -89,6 +89,20 @@ const PROPERTY_KIND: Readonly<Record<string, Kind>> = {
 /** The properties `check` measures, one definition for the browser half. */
 export const MEASURED_PROPERTIES: readonly string[] = Object.keys(PROPERTY_KIND);
 
+/** Each measured property with the kind it is judged as (`color:color`): part of the checker's hash. */
+export const MEASURED_KINDS: readonly string[] = Object.entries(PROPERTY_KIND).map(
+	([property, kind]) => `${property}:${kind}`,
+);
+
+/**
+ * The verdict's rules, versioned: bump it with any change to how a measured
+ * value is judged (canonical forms, what counts as initial, how a shadow or a
+ * list is split). It is in every look's reuse key through the checker's hash
+ * (`checkerHashOf`), so a result judged by earlier rules is never reused
+ * (looks-check-speed A31; promise: tokens-are-held-exactly).
+ */
+export const VERDICT_VERSION = 1;
+
 const COLOR_ONLY = /^(#[0-9a-f]{3,8}|rgba?\([^)]*\)|hsla?\([^)]*\)|color\([^)]*\)|transparent)$/i;
 
 function classify(value: string): Kind {

@@ -8,6 +8,7 @@ import { parseMarkedSpan } from "./telemetry.js";
 
 // promise: a-look-reports-like-any-promise
 // promise: every-part-of-the-ui-is-covered
+// promise: a-look-check-costs-what-changed
 
 /**
  * ui-promises Build Phase 4: the rule `readLookStanding` applies, over the
@@ -164,5 +165,49 @@ describe("a story's check run is told from a screen's", () => {
 			],
 		});
 		expect(find(rows, "home.empty", "phone")?.standing).toBe("broken");
+	});
+});
+
+// looks-check-speed A25: a regression guard. The reader counts any upheld look
+// span and ignores attributes it does not read, so a span marked reused reads
+// holding; no later change to it may discount reused runs, or an unchanged
+// look would decay to no signal.
+describe("a look reported only as reused keeps reading holding", () => {
+	const reusedSpan = (device: string, day: string) => ({
+		traceID: "t",
+		spanID: `s-${device}-${day}`,
+		operationName: "indusk.looks.check",
+		startTime: Date.parse(`2026-10-${day}T00:00:00.000Z`) * 1000,
+		duration: 0,
+		processID: "p1",
+		tags: [
+			{ key: "indusk.promise", value: "tokens-are-held-exactly" },
+			{ key: "indusk.promise.outcome", value: "upheld" },
+			{ key: "indusk.look.app", value: "demo" },
+			{ key: "indusk.look.screen", value: "home" },
+			{ key: "indusk.look.state", value: "empty" },
+			{ key: "indusk.look.device", value: device },
+			{ key: "indusk.look.reused", value: true },
+			{ key: "indusk.look.measured_at", value: "2026-10-10T10:00:00.000Z" },
+		],
+	});
+
+	it("run after run with no fresh measurement, each device reads held, never unchecked", async () => {
+		const runs: LookRun[] = [];
+		for (const day of ["11", "12", "13"]) {
+			for (const device of ["phone", "desktop"]) {
+				const mark = parseMarkedSpan(reusedSpan(device, day), "indusk-eval-agent");
+				if (!mark?.look) throw new Error("the reused span named no look");
+				runs.push({
+					...mark.look,
+					outcome: mark.outcome,
+					at: mark.at.toISOString(),
+					symptom: mark.symptom,
+				});
+			}
+		}
+		const { rows } = await readLookStanding(FIXTURE, { runs });
+		expect(find(rows, "home.empty", "phone")?.standing).toBe("held");
+		expect(find(rows, "home.empty", "desktop")?.standing).toBe("held");
 	});
 });

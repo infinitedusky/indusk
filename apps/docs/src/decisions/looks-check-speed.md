@@ -1,10 +1,8 @@
----
-title: "Looks check speed"
-date: 2026-10-16
-status: proposed
----
+# Looks check speed — a check costs what changed
 
-# Looks check speed
+**Decided 2026-10-16.** Full ADR: `.indusk/planning/archive/looks-check-speed/adr.md`.
+
+**Amended 2026-10-16.** Decision 2 gained the styling configuration and lockfile in the key, and the served build judged against the sources outside it, while the plan was built; it says why. Its falsification amended it again: a result measured on a server behind its sources is never kept, a story's key holds the app's element and root rules, every key the checker's own hash.
 
 ## Goal
 
@@ -75,7 +73,9 @@ broken look found there is an incident after the fact, never a blocked landing;
 that any edit to page code reopens every screen; that the
 stories must be rendered before anything is reused after a source change; and
 that dev-server detection reads known markers (Next, webpack, Vite) and would
-miss an unknown framework's.
+miss an unknown framework's; and that code outside `sources` that the app
+imports (the admin reads `@infinitedusky/indusk-mcp`'s parsers) is in no key,
+like the data it shapes.
 
 **Because:**
 the snapshots are rendered output, so a component used inside another changes
@@ -88,12 +88,12 @@ Machine state is where InDusk keeps what only one machine's build makes true.
 
 ## Context
 
-[research.md](research.md) has the measurements: per-look costs both ways, the
+`research.md` has the measurements: per-look costs both ways, the
 server's 41 s floor for 48 screen renders, the transfer cost, the in-place
 comparison and its transition finding, the dev and production probes. The
-[brief](brief.md) promises `a-look-check-costs-what-changed` with five clauses
+brief promises `a-look-check-costs-what-changed` with five clauses
 and must not break `tokens-are-held-exactly` or `everyday-tests-never-wait`;
-the [test plan](test-plan.md) holds 26 assertions under them.
+the test plan holds 26 assertions under them.
 Sandy's decisions of 2026-10-16 (research, Decisions): a reused look sends an
 upheld signal marked reused; landing and release always run the full check,
 in the slow tier, which never blocks either (the 2026-10-08 rule, kept); the
@@ -132,6 +132,41 @@ values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
    a migration). A screen named in `uncomposed` is never reused. Both new hashes
    are computed in `mockups.ts`.
 
+   *Amended 2026-10-16 (Build Phase 3).* Two more inputs close ways a token
+   change could be hidden. The configuration a look is drawn with that no source
+   file holds — the app's Tailwind and PostCSS config, its `.storybook` folder
+   and `pnpm-lock.yaml` — is hashed (`configHashOf`, in `mockups.ts`) into every
+   look's key. And the build served at `--url` is checked against the sources,
+   not put in the key: the check reads the app's root (and the first story's
+   frame) once, takes the identity of the build from the page's script and
+   stylesheet names and inline styles (`servedBuildOf`), and keeps it with the
+   sources hash on each held record; the same sources must be served by the same
+   build, and edited sources by a rebuilt one, so a server still on the build
+   from before an edit reopens the look instead of recording it held. A build
+   identity inside the key was the first reading and is the fingerprinting
+   rejected below: a rebuild after one component edit changes the page's chunks
+   and stylesheet for every look. A page that cannot be read, or that loads
+   nothing to tell by, reuses nothing.
+
+   *Amended 2026-10-16 (Build Phase 4, falsification).* A reuse proves only
+   the build it measured. A look opened while the server still serves the build
+   from before the sources changed (a held record names the build served now
+   with other sources) is reported but never kept held — its earlier record is
+   left as it was, the evidence that the server is behind — and the run says
+   `<url> serves a build from before the sources changed — results were not
+   kept; rebuild and serve it: <serve>`. A look whose own key is unchanged is
+   reused on such a server, on the build it was measured on, so an edit to page
+   code no longer reopens every story; only the same sources served by another
+   build reopen it. Two more inputs join the key: for a story, the app's
+   element, universal and root rules (every compiled rule no class or component
+   marker names, hashed at render as the catalog's `baseRulesHash`, not put in
+   the component slices, which approvals bind); for every look, the checker's
+   own hash (`checkerHashOf`: the measured properties with the kinds they are
+   judged as, the measure scripts, and `VERDICT_VERSION`, bumped with any
+   verdict rule). A run writes only its own looks over the record as it is when
+   it writes, so a concurrent check's removals stand. The read of the served
+   page has a 30-second limit, after which nothing is reused.
+
 3. **`--all` reopens every look; `--only <name>` (repeatable) checks the looks
    of that name** — a screen state, a story, or both — measured even when
    reusable, and nothing else opened or reported. An unknown name is refused,
@@ -147,6 +182,11 @@ values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
    page to the scheme it drew. The measure returns `JSON.stringify` of its
    result, parsed in Node. A look that does not load or draw in time is
    unchecked at every device and scheme (`openWithinTime` around the load).
+   *Amended (Build Phase 4):* an init script notes a page that asks a media
+   query on size, ratio, orientation, resolution or scheme with no change
+   listener, or reads `innerWidth`, `innerHeight` or `devicePixelRatio` with no
+   `resize` listener; such a page draws from what it read once on mount, so it
+   is loaded fresh at each device and scheme instead.
    Unseeded screens open three at a time, seeded screens one at a time after
    them, stories eight at a time.
 
@@ -162,11 +202,13 @@ values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
    reused exits 0.
 
 6. **A development server is refused before any look opens.** When at least
-   one look must be opened, the check fetches the first screen's page (or the
-   Storybook frame, when only stories are opened) over plain HTTP and hands its
-   HTML to `devServerMarker` in `looks/dev-server`, which returns the marker it
-   found — Next's Turbopack HMR client (`hmr-client`), webpack's
-   `react-refresh`, `/_next/webpack-hmr`, Vite's `/@vite/client` — or null. A
+   one look must be opened, the check fetches the page at the base URL's own
+   path (or the Storybook frame, when only stories are opened) over plain HTTP,
+   within 30 seconds, and hands its HTML to `devServerMarker` in
+   `looks/dev-server`, which looks only in the scripts and stylesheets the page
+   loads — never its text, which carries the page's data — and returns the
+   marker it found — Next's Turbopack HMR client (`hmr-client`), webpack's
+   `react-refresh`, Vite's `/@vite/client` — or null. A
    marker refuses the run: `<url> is a development server (<marker>) — build
    and serve the app, then check again: <serve>`, where `<serve>` is the
    app's new optional `serve` in `screens.json` (not part of the declarations
@@ -269,35 +311,18 @@ override changes it in place, so one load does.
 - **Under 60 s is projected, not measured** (50–70 s, moderate confidence; the
   Looks page renders in 3.3 s). Mitigation: the build closes with the timed
   run; an expectation missed is information, and the Looks page's render is a
-  separate plan.
+  separate plan. Measured at the build's close (2026-10-16, a production build of the
+  admin): the full check took 98 s, over the expectation, and a check after one
+  component changed took 89–95 s; 236 look lines (about 40 looks) come back
+  unchecked in that checkout and are reopened on every run by design, a 57 s floor
+  that no change removes.
 
-## Documentation Plan
+## As built
 
-### Pages
-- Update: `apps/docs/src/reference/cli/looks.md` — `indusk looks check` gains
-  `--all`, `--only`, the reused line and summary, the dev-server refusal and
-  `serve`; where held results are kept.
-- Update: `apps/docs/src/guide/ui-promises.md` — "checking looks": what a check
-  reopens, why the stories are rendered first, that landing and release run
-  `--all`, and how a reused look reads in telemetry.
-
-### Diagrams
-- A Mermaid flowchart in `reference/cli/looks.md`: for each look, render
-  current? → key unchanged? → reused, else one load → six measurements →
-  verdict → held result kept.
-
-### Changelog
-- `apps/docs/src/changelog.md` (Unreleased): "`indusk looks check` checks what
-  changed: an unchanged look is reported reused from its last held result, each
-  look loads once for every device and scheme, a development server is refused
-  with the command that serves the app, and `--all` / `--only <look>` choose
-  what is opened."
-
-### ADR in Docs
-- Yes: `apps/docs/src/decisions/looks-check-speed.md`.
+The check is one job per file in `apps/indusk-mcp/src/lib/looks/`: `served.ts` reads the served page (root request, development-server refusal, served build); `browser.ts` launches Chromium, loads a page and measures it in place or fresh, with the mount-time fallback and the `LookOpener` seam; `reuse-run.ts` plans which looks reopen and keeps what held, around the rule in `reuse.ts`; `verdict.ts` judges the measured values; `check.ts` is the run. `errors.ts` holds `LooksCheckError` so none of these import each other in a circle.
 
 ## References
-- [research.md](research.md), [brief.md](brief.md), [test-plan.md](test-plan.md)
-- `.indusk/planning/storybook-components/` — snapshots, stylesheet hashes, `openWithinTime`
+- `research.md`, `brief.md`, `test-plan.md` in `.indusk/planning/archive/looks-check-speed/`
+- `.indusk/planning/archive/storybook-components/` — snapshots, stylesheet hashes, `openWithinTime`
 - `/decisions/bookkeeping-lives-where-it-is-read`
 - `/decisions/ui-promises` — the check and the verdict split

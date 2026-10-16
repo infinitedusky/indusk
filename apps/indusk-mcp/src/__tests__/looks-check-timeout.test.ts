@@ -1,3 +1,8 @@
+/**
+ * promise: a-look-check-costs-what-changed — looks-check-speed A15: a slow look
+ * never ends the run (the clause shipped in storybook-components), held while
+ * the opening of looks is rewritten.
+ */
 import { describe, expect, it } from "vitest";
 import { LookNotHere, LooksCheckError, openWithinTime } from "../lib/looks/check.js";
 

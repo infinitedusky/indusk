@@ -48,11 +48,23 @@ const STORY_FILE = /\.stories\.[cm]?[jt]sx?$/;
 /** Whether a path is a test file: `*.test.*`, `*.spec.*`, or under `__tests__/`. */
 export const isTestFile = (file: string): boolean => TEST_FILE.test(file.replaceAll("\\", "/"));
 
+/** Whether a path is a story file: `*.stories.*`. */
+export const isStoryFile = (file: string): boolean => STORY_FILE.test(file.replaceAll("\\", "/"));
+
+/**
+ * Which source files (relative to the project root) are page code: neither a
+ * catalogued component's implementation, whose stories are its record, nor a
+ * story, nor a test. Every other file — a layout, a helper, a stylesheet —
+ * draws screens no snapshot covers (looks-check-speed ADR decision 2).
+ */
+export function pageSourceFilter(catalog: Catalog | null): (file: string) => boolean {
+	const own = new Set(catalog?.components.map((c) => c.file) ?? []);
+	return (file) => !own.has(file) && !isTestFile(file) && !isStoryFile(file);
+}
+
 /** Whether a source file may implement a component: neither a test nor a story. */
 export const isImplementationFile = (file: string): boolean =>
-	MARKUP_EXTENSIONS.has(extname(file)) &&
-	!isTestFile(file) &&
-	!STORY_FILE.test(file.replaceAll("\\", "/"));
+	MARKUP_EXTENSIONS.has(extname(file)) && !isTestFile(file) && !isStoryFile(file);
 
 /** A line a comment owns outright, whose `data-component` is prose and not markup. */
 const isCommentLine = (line: string): boolean => /^\s*(?:\/\/|\/\*|\*|\{\/\*)/.test(line);
@@ -205,6 +217,19 @@ export interface CatalogComponent {
 }
 
 export interface Catalog {
+	/**
+	 * `sourcesHashOf` the app's sources when the stories were rendered. The
+	 * check reuses no look unless it matches the sources now; a catalog
+	 * without it is not current — absence is a rule, not a migration.
+	 */
+	renderedFrom?: string;
+	/**
+	 * The hash of the app's element, universal and root rules when the stories
+	 * were rendered (`elementRulesOf`): in every story's reuse key, so a change
+	 * to them reopens every story. Absent in a catalog rendered before it was
+	 * kept, which reopens every story once.
+	 */
+	baseRulesHash?: string;
 	components: CatalogComponent[];
 }
 

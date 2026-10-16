@@ -42,7 +42,7 @@ are `live check`s, run once and recorded in the plan.
 | A8 | What the check held is kept in the project's home outside the checkout: a run writes nothing under the checkout, and a run from another worktree of the same project reuses the same results. | unit |
 | A9 | A reused look sends one signal per device and scheme saying upheld, marked as reused with the time it was really measured; a look measured this run sends its held or broken signal with no reused mark. | unit |
 | A25 | A look reported only as reused, run after run, keeps reading holding in its standing and never decays to no signal. | unit |
-| A10 | Against a real browser and a served app, the second of two runs requests no page from the server, prints one reused line per look, and counts reused looks beside held ones in its summary, exiting 0. | contract |
+| A10 | Against a real browser and a served app, the second of two runs requests only the app's root, no look's page, prints one reused line per look, and counts reused looks beside held ones in its summary, exiting 0. | contract |
 
 **A page loads once per look**
 

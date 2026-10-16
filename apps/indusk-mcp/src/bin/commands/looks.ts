@@ -161,42 +161,64 @@ function lookLines(r: LookResult): string[] {
  * judges the running app by value. One `held`/`broken` line per screen state and device,
  * each finding indented under a broken one (`token <name> approved <v> actual
  * <v>` or `element <selector> <property> actual <v> nearest <token (v)>`),
- * then the screen states not checked and why. Each look is also a span.
- * Exit 1 on any broken look, and when nothing could be checked: a run that
- * checked nothing must not read as held.
+ * then one `reused  <look> — held <when>, unchanged` line per look unchanged
+ * since it last held (reported from that result, not opened), then the screen
+ * states not checked and why. Each look is also a span; a reused one's is
+ * marked reused. Exit 1 on any broken look, and when nothing was checked or
+ * reused: a run that checked nothing must not read as held. `--only` checks
+ * just the looks named (a screen state or a story); a name no look has is
+ * refused; `--all` opens every look, whatever held.
  */
 export async function looksCheck(
 	projectRoot: string,
 	appName: string,
-	opts: { url?: string },
+	opts: { url?: string; only?: string[]; all?: boolean },
 ): Promise<void> {
 	try {
 		const app = await readApp(projectRoot, appName);
-		const { results, unchecked } = await checkApp(
+		const only = opts.only?.flatMap((n) => n.split(",")).filter((n) => n !== "");
+		const { results, unchecked, reused, notice } = await checkApp(
 			app,
 			readApprovals(app),
 			opts.url,
 			readStoryApprovals(app),
+			{
+				projectRoot,
+				...(only && only.length > 0 ? { only } : {}),
+				...(opts.all ? { all: true } : {}),
+			},
 		);
 		for (const r of results) for (const line of lookLines(r)) console.info(line);
+		for (const r of reused) {
+			const subject = `${r.kind === "story" ? "story " : ""}${r.look}`;
+			console.info(`reused  ${subject} — held ${r.at}, unchanged`);
+		}
 		for (const u of unchecked) {
 			console.info(`unchecked ${u.mockup}${u.device ? ` @ ${u.device}` : ""} — ${u.reason}`);
 		}
-		reportLooks(results, initEvalOtel(projectRoot), { project: markProjectId(projectRoot) });
+		if (notice) console.info(notice);
+		reportLooks(results, initEvalOtel(projectRoot), {
+			project: markProjectId(projectRoot),
+			reused,
+		});
 		await shutdownEvalOtel();
 		const broken = results.filter((r) => r.verdict.state === "broken").length;
-		// Unchecked is counted beside held and broken, never folded into either.
+		// Unchecked is counted beside held, reused and broken, never folded into any.
 		const notChecked = unchecked.length > 0 ? `, ${unchecked.length} unchecked` : "";
-		if (results.length === 0) {
+		if (results.length === 0 && reused.length === 0) {
 			console.error(
 				`${appName}: nothing checked${notChecked} — no approved mockup, or no page said it drew the state`,
 			);
 			process.exitCode = 1;
 		} else if (broken > 0) {
-			console.error(`${broken} of ${results.length} looks broken in ${appName}${notChecked}`);
+			console.error(
+				`${broken} of ${results.length} looks broken in ${appName}, ${reused.length} reused${notChecked}`,
+			);
 			process.exitCode = 1;
 		} else {
-			console.info(`${appName}: ${results.length} looks held${notChecked}`);
+			console.info(
+				`${appName}: ${results.length} looks held, ${reused.length} reused${notChecked}`,
+			);
 		}
 	} catch (err) {
 		// A missing driver, browser, URL or app is a refusal, never a held look.
