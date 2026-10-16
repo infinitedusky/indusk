@@ -97,6 +97,8 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   the assertion, and it says when the test runs (a phase runs only its rows
   and related tests; both tiers run at landing). `For` says what the test is
   for: `promise: <name>`, `lesson: <name>`, or the reason it needs neither.
+  `clause: <promise>/<clause>` names one clause and counts for its promise; an
+  opted-in plan names every split and limit clause in some row.
   `test_levels: required` and `test_purpose: required` make the hook refuse a
   row without them. — see `/guide/test-levels`
 - Vitest is the committed test runner (adaptive first-connect setup); moved

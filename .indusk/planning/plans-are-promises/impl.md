@@ -58,17 +58,17 @@ proves. Plans that do not opt in validate and close exactly as before. See
 | A2 | An opted-in brief stating a promise with no clause is refused, naming the promise | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
 | A3 | Declaring with clauses writes each clause's name, kind and sentence to the registry file; a kind other than split, limit or rests-on is refused, naming it, with nothing written | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-declare.test.ts |
 | A4 | An opted-in brief whose clauses differ from the registry's (missing, extra, reworded) is refused, naming the clause | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
-| A5 | An opted-in plan's clause plan missing a section for a promise or a clause is refused, naming which | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
-| A6 | A clause in the clause plan with no signal line is refused, naming the clause | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
-| A7 | A row naming a clause the promise does not have is refused, naming it, by the contract check and when the impl is saved | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
-| A8 | An opted-in plan with an impl where no row names one of its clauses is refused, naming the clause | Test Phase 1 | Build Phase 2 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
+| A5 | An opted-in plan's clause plan missing a section for a promise or a clause is refused, naming which | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
+| A6 | A clause in the clause plan with no signal line is refused, naming the clause | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
+| A7 | A row naming a clause the promise does not have is refused, naming it, by the contract check and when the impl is saved | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
+| A8 | An opted-in plan with an impl where no row names one of its clauses is refused, naming the clause | Test Phase 1 | Build Phase 2 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
 | A9 | Closing confirms a promise with clauses only when every clause has a passing row with a test file; with one unproved it stays declared and the refusal names the clause | Test Phase 1 | Build Phase 3 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 | A10 | The planner's instructions describe the clause plan per promise, with a signal and tests per clause, before the ADR; its brief template states clauses and passes the contract check | Test Phase 1 | Build Phase 3 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/planner-brief-template.test.ts |
 | A11 | A resting clause on a promise that does not exist is refused at declaration; at close a resting clause is proved by its promise being in force, with no row | Test Phase 1 | Build Phase 3 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-declare.test.ts, apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 | A12 | The planner's instructions say promises sharing code are one plan, promises sharing none are separate plans under a master, the planner suggests and the person decides | Test Phase 1 | Build Phase 3 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/planner-brief-template.test.ts |
 | A13 | A plan that has not opted in validates, passes the contract check and closes as before, rows naming its promises being enough | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
-| A14 | The save hook and the library read every row's purpose the same way, the clause form included | Test Phase 1 | Build Phase 2 | written | unit | a regression guard over the two copies of the row-purpose reader, the library's and the hook's, which must not drift | apps/indusk-mcp/src/__tests__/hook-shared-modules.test.ts |
-| A15 | A row naming a clause counts as naming its promise in the promise's proof, incidents and standing | Test Phase 1 | Build Phase 2 | written | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/row-purpose.test.ts |
+| A14 | The save hook and the library read every row's purpose the same way, the clause form included | Test Phase 1 | Build Phase 2 | passing | unit | a regression guard over the two copies of the row-purpose reader, the library's and the hook's, which must not drift | apps/indusk-mcp/src/__tests__/hook-shared-modules.test.ts |
+| A15 | A row naming a clause counts as naming its promise in the promise's proof, incidents and standing | Test Phase 1 | Build Phase 2 | passing | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/row-purpose.test.ts |
 | A16 | In a project made for the check, a plan written with the commands — two promises with clauses, a clause plan, rows naming clauses — passes the contract check, is refused at close while a clause has no passing row, and closes once it does | Build Phase 3 | Build Phase 3 | planned | live check | promise: a-plan-holds-the-promises-it-lands | manual: indusk promises contract demo && indusk promises confirm demo, in a temporary project |
 
 ## Checklist
@@ -254,9 +254,11 @@ This phase makes the clause plan and the test rows answer to the clauses. A test
 
   </details>
 
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+
 #### Build Phase 2 Verification
 
-- [ ] The tests for the clause plan and for rows naming clauses pass.
+- [x] The tests for the clause plan and for rows naming clauses pass.
   <details><summary>Technical</summary>
 
   A5, A6, A7, A8, A14, A15 (goes green): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promise-clauses.test.ts src/__tests__/row-purpose.test.ts src/__tests__/hook-shared-modules.test.ts src/__tests__/hook-sync-parity.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/trajectory/parser.ts src/lib/promises/clause-plan.ts src/lib/promises/contract.ts --run`; `pnpm promises:check` passes.
@@ -265,7 +267,7 @@ This phase makes the clause plan and the test rows answer to the clauses. A test
 
 #### Build Phase 2 Context
 
-- [ ] The rule for naming a clause in a test row is written where impls are written.
+- [x] The rule for naming a clause in a test row is written where impls are written.
   <details><summary>Technical</summary>
 
   planning: `templates/planning/CLAUDE.md`, the `Level` and `For` rule — add "`clause: <promise>/<clause>` names one clause and counts for its promise; an opted-in plan names every split and limit clause in some row." Synced as in Build Phase 1.
@@ -274,7 +276,7 @@ This phase makes the clause plan and the test rows answer to the clauses. A test
 
 #### Build Phase 2 Document
 
-- [ ] A reader can find the clause token and the clause plan's shape.
+- [x] A reader can find the clause token and the clause plan's shape.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/test-trajectory.md` — the `clause:` token; `apps/docs/src/reference/skills/plan.md` — the clause plan's shape (pinned by `workflow-types-parity.test.ts`, so its document list is unchanged).
