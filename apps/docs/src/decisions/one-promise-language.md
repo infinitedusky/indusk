@@ -1,6 +1,6 @@
 # One promise language — upheld or broken, everywhere a person reads
 
-**Decided 2026-10-15.** Full ADR: `.indusk/planning/one-promise-language/adr.md`.
+**Decided 2026-10-15.** Full ADR: `.indusk/planning/archive/one-promise-language/adr.md`.
 
 ## Goal
 

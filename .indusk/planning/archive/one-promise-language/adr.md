@@ -153,7 +153,7 @@ its own when the incident is fixed.
 - Yes: `decisions/one-promise-language.md`.
 
 ## References
-- `.indusk/planning/one-promise-language/research.md`, `brief.md`, `test-plan.md`
+- `.indusk/planning/archive/one-promise-language/research.md`, `brief.md`, `test-plan.md`
 - `.indusk/planning/promise-core/master.md` — "The words", "Signal, not mark"
 - `.indusk/planning/mark-first/research.md` — carries the writer switch
 - `/decisions/day-promises` (the registry), `/decisions/day-monitor` (the
