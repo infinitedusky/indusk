@@ -368,7 +368,7 @@ This phase finishes the promise. Closing a plan — both the check that a plan i
 
 This phase tests three places where the finished plan may fail its own promise. A plan that makes two promises where one rests on the other may be unable to close, because closing looks only at what is already in force. A brief written before clauses may have lost a promise, because the reader now treats an indented bullet as part of the entry above it. And a promise can be written to rest on itself or on one that is gone, and the registry check says nothing. When it closes, a plan with promises resting on each other closes, an older brief reads as before, and a clause that cannot be satisfied is refused where it is written.
 
-- [ ] A promise resting on a sibling promise of the same plan counts as in force once that sibling is itself proved, and a cycle is refused.
+- [x] A promise resting on a sibling promise of the same plan counts as in force once that sibling is itself proved, and a cycle is refused.
   <details><summary>Technical</summary>
 
   `lib/promises/rows.ts` `clauseRefusal`/`rowProofs`: a `rests-on` target owned by `plan`, in `promises`, whose own clauses and rows raise no refusal, counts as in force; a cycle among such siblings is a refusal naming both. `confirm.ts` and `cleanup/gate.ts` already pass the registry; check `build/review.ts`. Hypothesis: today the sibling is `declared` in the registry read before anything is written, so the dependent is refused and, since one refusal blocks the whole confirm, neither is ever enforced.

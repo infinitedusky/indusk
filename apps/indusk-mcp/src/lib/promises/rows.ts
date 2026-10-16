@@ -125,25 +125,52 @@ export interface RowProof {
 }
 
 /**
+ * How a clause that rests on another promise finds that promise in force: the
+ * registry's enforced entry, or a sibling the same close is proving
+ * (plans-are-promises ADR D6), which counts once it is itself proved.
+ */
+interface Resting {
+	registry: readonly PromiseEntry[];
+	/** The proof of a sibling promise of this close, judged under `chain`; `null` when it is not one. */
+	sibling(name: string, chain: readonly string[]): RowProof | null;
+}
+
+/**
  * Why a promise stated as clauses is not proved clause by clause, or null
  * (plans-are-promises ADR D6): each split and limit clause wants a passing
  * row with a test file, and each clause resting on another promise wants that
- * promise in force. Names the clause. A promise with no clauses has none to ask.
+ * promise in force or proved by this same close. Names the clause. `chain` is
+ * the promises being judged, outermost first, ending with this one: a promise
+ * that rests on itself through others is a cycle. A promise with no clauses
+ * has none to ask.
  */
 function clauseRefusal(
 	promise: PromiseEntry,
 	rows: readonly NamingRow[],
-	registry: readonly PromiseEntry[],
+	resting: Resting,
+	chain: readonly string[],
 ): string | null {
 	const found: string[] = [];
 	for (const clause of promise.clauses ?? []) {
 		if (clause.kind === "rests-on") {
-			const base = registry.find(
-				(p) => p.name === clause.restsOn || p.aliases.includes(clause.restsOn ?? ""),
-			);
-			if (base?.state !== "enforced") {
+			const target = clause.restsOn ?? "";
+			const base = resting.registry.find((p) => p.name === target || p.aliases.includes(target));
+			const baseName = base?.name ?? target;
+			if (base?.state === "enforced") continue;
+			if (chain.includes(baseName)) {
 				found.push(
-					`clause ${clause.name} rests on ${clause.restsOn}, which is ${base ? base.state : "not in the registry"} — it must be in force`,
+					`clause ${clause.name} rests on ${baseName}, which rests back on ${promise.name} — a cycle (${[...chain.slice(chain.indexOf(baseName)), baseName].join(" -> ")})`,
+				);
+				continue;
+			}
+			const sibling = resting.sibling(baseName, chain);
+			if (sibling === null) {
+				found.push(
+					`clause ${clause.name} rests on ${target}, which is ${base ? base.state : "not in the registry"} — it must be in force`,
+				);
+			} else if (sibling.refusal !== null) {
+				found.push(
+					`clause ${clause.name} rests on ${baseName}, which this plan makes and has not proved — ${sibling.refusal}`,
 				);
 			}
 			continue;
@@ -171,7 +198,9 @@ function clauseRefusal(
  * What a plan's rows say about each promise it declared: the half of
  * "is it proven" that needs only the impl. `confirmPlan` adds the half that
  * needs the code (the test files exist and carry the token). `registry` is
- * every promise, which a clause resting on another reads to see it in force.
+ * every promise, which a clause resting on another reads to see it in force;
+ * a clause may also rest on another of `promises`, which counts once that
+ * one is proved by the same rows.
  */
 export function rowProofs(
 	promises: readonly PromiseEntry[],
@@ -179,24 +208,38 @@ export function rowProofs(
 	implText: string | null,
 	registry: readonly PromiseEntry[] = promises,
 ): RowProof[] {
-	return promises.map((promise): RowProof => {
+	const proofs = new Map<string, RowProof>();
+	const byName = new Map(promises.map((p) => [p.name, p]));
+	const proofOf = (promise: PromiseEntry, outer: readonly string[]): RowProof => {
+		const held = proofs.get(promise.name);
+		if (held) return held;
+		const chain = [...outer, promise.name];
 		const rows = implText === null ? [] : rowsNamingIn(implText, promise);
 		const tests = [...new Set(rows.flatMap((r) => r.tests))];
 		const open = rows.filter((r) => r.state !== "passing");
+		const resting: Resting = {
+			registry,
+			sibling: (name, from) => {
+				const sibling = byName.get(name);
+				return sibling ? proofOf(sibling, from) : null;
+			},
+		};
 		// A promise stated as clauses is refused by clause first: it names the gap precisely.
-		let refusal: string | null = clauseRefusal(promise, rows, registry);
-		if (refusal !== null) {
-			return { promise, rows, tests, refusal };
+		let refusal = clauseRefusal(promise, rows, resting, chain);
+		if (refusal === null) {
+			if (rows.length === 0) {
+				refusal = `${promise.name}: no test row of ${plan} names it — a promise is proven by a row whose For cell names it`;
+			} else if (open.length > 0) {
+				refusal = `${promise.name}: ${open.map((r) => `row ${r.id} is ${r.state}`).join(", ")} — every row that names a promise passes before the plan closes`;
+			} else if (tests.length === 0) {
+				refusal = `${promise.name}: ${rows.map((r) => `row ${r.id}`).join(", ")} ${rows.length === 1 ? "names" : "name"} it but no test file — a row's Test cell says which files prove it`;
+			}
 		}
-		if (rows.length === 0) {
-			refusal = `${promise.name}: no test row of ${plan} names it — a promise is proven by a row whose For cell names it`;
-		} else if (open.length > 0) {
-			refusal = `${promise.name}: ${open.map((r) => `row ${r.id} is ${r.state}`).join(", ")} — every row that names a promise passes before the plan closes`;
-		} else if (tests.length === 0) {
-			refusal = `${promise.name}: ${rows.map((r) => `row ${r.id}`).join(", ")} ${rows.length === 1 ? "names" : "name"} it but no test file — a row's Test cell says which files prove it`;
-		}
-		return { promise, rows, tests, refusal };
-	});
+		const proof: RowProof = { promise, rows, tests, refusal };
+		proofs.set(promise.name, proof);
+		return proof;
+	};
+	return promises.map((promise) => proofOf(promise, []));
 }
 
 /** An impl as the promise modules read it: its frontmatter and its trajectory, or why it cannot be read. */
