@@ -521,7 +521,7 @@ A cold read of the finished plan found that it would not close by the rules it s
 
 #### Build Phase 6 Verification
 
-- [ ] The new tests pass, this plan's own promise confirms in a dry reading, and nothing else moved.
+- [x] The new tests pass, this plan's own promise confirms in a dry reading, and nothing else moved.
   <details><summary>Technical</summary>
 
   A21, A22 (written red first, then green), A16 now pointing at A21's file: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promise-clauses-close.test.ts src/__tests__/promises-confirm.test.ts src/__tests__/promise-clauses.test.ts src/__tests__/row-purpose.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/promises/confirm.ts src/lib/promises/rows.ts --run`; `indusk promises contract plans-are-promises` and `pnpm promises:check` pass. Do not run `indusk promises confirm` on this plan: closing is the retrospective's.
