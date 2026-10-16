@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="indusk-new-components" content="worktree-mark" />
+		<title>worktree-mark — closed</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<style>
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--color-ground); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-regular); }
+			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+			.navcol { width: var(--size-nav); max-width: 100%; padding: var(--space-4) var(--space-3); display: grid; gap: var(--space-hair); background: var(--color-surface); min-height: 100vh; border-right-width: var(--border-1); border-right-style: solid; border-right-color: var(--color-line); }
+			.group { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-ink-faint); margin: var(--space-3) var(--space-tight) var(--space-1); }
+			.pr { display: grid; grid-template-columns: var(--size-badge) minmax(0, 1fr); gap: var(--space-2); align-items: center; width: 100%; padding: var(--space-tight); border-width: var(--border-1); border-style: solid; border-color: transparent; border-radius: var(--radius-lg); text-align: left; color: var(--color-ink); text-decoration: none; }
+			.pr.current { border-color: var(--color-dusk); background: var(--color-dusk-wash); }
+			.lines { display: grid; min-width: 0; }
+			.name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-md); line-height: var(--leading-4); font-weight: var(--font-weight-medium); }
+			.stageline { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+			.stage { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
+			.pr.needs .stage { color: var(--color-dusk); }
+			.pr.queued .stage { font-style: italic; }
+			.wm { position: relative; flex-shrink: 0; display: grid; place-items: center; width: var(--size-badge); height: var(--leading-2); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-ink-soft); font-size: var(--text-2xs); line-height: var(--leading-1); }
+			.wm[aria-expanded="true"] { border-color: var(--color-dusk); color: var(--color-dusk); }
+			.pop { position: absolute; top: calc(100% + var(--space-1)); left: 0; z-index: 1; display: grid; gap: var(--space-hair); padding: var(--space-2) var(--space-3); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface); text-align: left; white-space: nowrap; }
+			.pop b { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); font-weight: var(--font-weight-medium); color: var(--color-ink); }
+			.pop span { font-family: var(--font-mono); font-size: var(--text-2xs); line-height: var(--leading-1); color: var(--color-ink-faint); }
+		</style>
+	</head>
+	<body>
+<div style="padding:var(--space-6);padding-bottom:var(--space-16)"><button data-component="worktree-mark" data-state="closed" class="wm" type="button" aria-expanded="false" aria-label="Worktree">⎇</button></div>
+	</body>
+</html>

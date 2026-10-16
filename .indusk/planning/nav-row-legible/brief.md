@@ -1,6 +1,6 @@
 ---
 title: "A nav row reads at a glance"
-description: "A plan's row in the admin nav puts its title, its stage and its worktree on lines of their own, so the stage and the worktree chip no longer run into each other."
+description: "A plan's row in the admin nav stays two lines: the worktree becomes a small mark without text beside the stage, set apart from it, and clicking the mark shows the worktree's name and branch."
 date: 2026-10-16
 status: draft
 workflow: bugfix
@@ -16,15 +16,15 @@ None — a layout fix; whether it reads better is judged when the look is approv
 
 ### This plan makes
 
-1. **`a-nav-row-keeps-its-parts-apart`** (state). A plan's row in the nav shows its title, its stage and its worktree each on a line of its own, and a plan with no worktree takes no line for one.
+1. **`a-nav-row-keeps-its-parts-apart`** (state). A plan's row in the nav shows its title on one line and its stage on the next, with its worktree as a mark beside the stage and apart from it; clicking the mark shows the worktree's name and branch without opening the plan.
 
 ### Existing promises
 
 **Must not break**
 
-- **`the-nav-fits-a-phone`**. The collapsed nav still shows only each plan's mark; the extra line hides with the rest.
+- **`the-nav-fits-a-phone`**. The collapsed nav still shows only each plan's mark; the worktree mark hides with the rest.
 - **`paths-keep-their-order`**. Rows keep their order and nesting; only their inside changes.
-- **`every-plan-is-one-click-away`**. Every row is still one link.
+- **`every-plan-is-one-click-away`**. The plan's title is still one click to its page; the worktree mark is a separate control beside the link, not inside it.
 
 **Changes**
 
@@ -36,14 +36,16 @@ None.
 
 ### Not promised
 
-- A reserved third line on every row for status that does not exist yet (drawn as `plan-row.three-lines` for comparison): a line is added when there is something to put on it.
+- The worktree on a line of its own, or a reserved third line on every row (both drawn and declined by Sandy, 2026-10-16): the row stays two lines.
 - What the stage says: that is the `nav-stage-matches-plan-page` plan's promise.
 
 ## Looks
 
 ### This plan makes
 
-1. **`plan-row.worktree`**. A plan row with a worktree: title, then stage, then the worktree chip on its own line; rows without one stay two lines.
+1. **`plan-row.worktree`**. Plan rows in the nav: the title, then the stage with a worktree mark beside it on rows that have one, one mark open to show its name and branch.
+2. **`worktree-mark.closed`**. The worktree mark on its own: a small bordered glyph, no text.
+3. **`worktree-mark.open`**. The worktree mark clicked: a small box under it with the worktree's name and branch.
 
 ### Existing looks
 
