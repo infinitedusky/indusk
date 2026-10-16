@@ -676,6 +676,30 @@ function checkStory(
 export interface CheckOptions {
 	/** What opens a look; Chromium when absent. */
 	opener?: LookOpener;
+	/**
+	 * Check just the looks of these names, a screen state (`home.empty`) or a
+	 * story (`badge.ok`) or both, and report nothing else.
+	 */
+	only?: string[];
+}
+
+/** Every look the app declares, by the name `--only` takes: its screen states and its stories. */
+function declaredLooks(app: LooksApp): Set<string> {
+	return new Set([
+		...app.screens.flatMap((s) => s.states.map((state) => `${s.name}.${state}`)),
+		...app.stories.map((s) => s.name),
+	]);
+}
+
+/** The names `--only` was given that no look of the app has: refused by name, before any page opens. */
+function refuseUnknown(app: LooksApp, only: readonly string[]): void {
+	const known = declaredLooks(app);
+	const unknown = only.filter((name) => !known.has(name));
+	if (unknown.length > 0) {
+		throw new LooksCheckError(
+			`${app.app} has no look named ${unknown.join(", ")} — name a screen state (home.empty) or a story (badge.ok)`,
+		);
+	}
 }
 
 /**
@@ -700,9 +724,15 @@ export async function checkApp(
 	if (app.devices.length === 0) {
 		throw new LooksCheckError(`${app.app} declares no reference devices (devices.json)`);
 	}
-	const { checked, unchecked } = checkable(app, approvals);
+	if (opts.only) refuseUnknown(app, opts.only);
+	const named = (name: string) => !opts.only || opts.only.includes(name);
+	const screens = checkable(app, approvals);
+	const checked = screens.checked.filter((l) => named(`${l.screen}.${l.state}`));
 	const stories = checkableStories(app, storyApprovals);
-	unchecked.push(...stories.unchecked);
+	stories.checked = stories.checked.filter((s) => named(s.name));
+	const unchecked = [...screens.unchecked, ...stories.unchecked].filter((u) =>
+		named(u.mockup.replace(/^story /, "")),
+	);
 	const results: LookResult[] = [];
 	if (checked.length === 0 && stories.checked.length === 0) return { results, unchecked };
 

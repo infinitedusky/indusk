@@ -1222,7 +1222,11 @@ looksCmd
 		"Open each approved screen state at each reference device in Chromium and report every token and element held or broken by value, as spans. --url is the running app; else the app's screens.json url. Exit 1 on any broken look or when nothing was checked.",
 	)
 	.option("--url <url>", "the running app's base URL")
-	.action(async (app: string, opts: { url?: string }) => {
+	.option(
+		"--only <look...>",
+		"check just these looks, a screen state (home.empty) or a story (badge.ok); repeatable or comma-separated",
+	)
+	.action(async (app: string, opts: { url?: string; only?: string[] }) => {
 		const { looksCheck } = await import("./commands/looks.js");
 		await looksCheck(rootOrExit(), app, opts);
 	});

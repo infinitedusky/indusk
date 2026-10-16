@@ -404,7 +404,7 @@ This phase makes every look that is opened cost one page load instead of six. Th
   `pMap` over unseeded `byScreen` groups with `concurrency: SCREENS_AT_ONCE = 3` (the admin's server renders one page at a time; three overlap the browser's work with the next render); seeded groups after, serially, inside `withScreenSeed`. Results keep declaration order.
 
   </details>
-- [ ] Add an option that checks only the looks a person names.
+- [x] Add an option that checks only the looks a person names.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/bin/cli.ts` `looks check`: `--only <names...>` (repeatable, comma-separated accepted), passed to `looksCheck` in `src/bin/commands/looks.ts` and on to `checkApp` as `only`. A name selects every screen state `<screen>.<state>` and every story `<component>.<state>` of that name; a name matching neither is a `LooksCheckError` naming it, before anything opens. A17, A18.

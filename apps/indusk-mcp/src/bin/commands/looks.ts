@@ -163,20 +163,23 @@ function lookLines(r: LookResult): string[] {
  * <v>` or `element <selector> <property> actual <v> nearest <token (v)>`),
  * then the screen states not checked and why. Each look is also a span.
  * Exit 1 on any broken look, and when nothing could be checked: a run that
- * checked nothing must not read as held.
+ * checked nothing must not read as held. `--only` checks just the looks named
+ * (a screen state or a story); a name no look has is refused.
  */
 export async function looksCheck(
 	projectRoot: string,
 	appName: string,
-	opts: { url?: string },
+	opts: { url?: string; only?: string[] },
 ): Promise<void> {
 	try {
 		const app = await readApp(projectRoot, appName);
+		const only = opts.only?.flatMap((n) => n.split(",")).filter((n) => n !== "");
 		const { results, unchecked } = await checkApp(
 			app,
 			readApprovals(app),
 			opts.url,
 			readStoryApprovals(app),
+			only && only.length > 0 ? { only } : {},
 		);
 		for (const r of results) for (const line of lookLines(r)) console.info(line);
 		for (const u of unchecked) {
