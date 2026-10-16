@@ -2,11 +2,16 @@
 name: a-plan-holds-the-promises-it-lands
 kind: state
 lifetime: holds
-state: declared
+state: enforced
 domain: planning
 owner: plans-are-promises
-sites: []
-tests: []
+sites:
+  - apps/indusk-mcp/src/lib/promises/clause-rules.ts
+tests:
+  - apps/indusk-mcp/src/__tests__/promises-confirm.test.ts
+  - apps/indusk-mcp/src/__tests__/cleanup-gate.test.ts
+  - apps/indusk-mcp/src/__tests__/promise-clauses.test.ts
+  - apps/indusk-mcp/src/__tests__/promises-check.test.ts
 incidents: []
 clauses:
   - name: brief-holds-clauses
@@ -30,3 +35,4 @@ A plan makes one or more promises, each stated as clauses, and is done when ever
 
 ## History
 - 2026-10-16 — declared (plans-are-promises), from its planning conversation.
+- 2026-10-16 — enforced, confirmed for plans-are-promises: proven by row A17, row A18, row A19.
