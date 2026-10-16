@@ -186,13 +186,14 @@ export function reuseOf(
 }
 
 /**
- * Whether the build now served is the one the sources now are, judged against
- * the last run: the same sources must be served by the same build, and edited
- * sources must be served by a rebuilt one — a server still serving the build
- * from before the edit would be checked, and recorded held, for sources it
- * never served. Returns the reason to reopen, else null. A record from before
- * builds were kept (no `build`) and a run that passed none (`undefined`) are
- * not judged here.
+ * Whether the build now served can stand for the one this look was held on,
+ * for a look whose key compared equal: the same sources must be served by the
+ * same build. Edited sources served by the old build (not rebuilt) leave this
+ * look's own inputs as they were, so it is reused on the build it was measured
+ * on — what such a server measures is never kept (`checkApp`'s `stale`).
+ * Returns the reason to reopen, else null. A record from before builds were
+ * kept (no `build`) and a run that passed none (`undefined`) are not judged
+ * here.
  */
 function servedAgainst(before: Build | undefined, now: Build | null | undefined): string | null {
 	if (now === undefined) return null;
@@ -200,7 +201,6 @@ function servedAgainst(before: Build | undefined, now: Build | null | undefined)
 	const sameSources = before.sources === now?.sources;
 	const sameBuild = before.served === now?.served;
 	if (sameSources && !sameBuild) return "served build";
-	if (!sameSources && sameBuild) return "served build not rebuilt";
 	return null;
 }
 

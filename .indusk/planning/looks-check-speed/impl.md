@@ -695,10 +695,12 @@ A fresh reader went looking for ways a changed look could be reported held from 
   Done as: `ReusePlan.stale` per kind; under it `keepHeld` never writes a held record for an opened look and **leaves its earlier record as it was** rather than deleting it (a departure: a deleted record is the only evidence the server is behind its sources, so with one look a third run would find nothing to compare and keep the stale result); a look not held everywhere is still removed. Notices now accumulate (one per line): the stale notice is said whatever was asked for, beside "render the stories" when both hold (A5's scenario is both). `serveCommand(app)` is shared with the development-server refusal.
 
   </details>
-- [ ] Reuse a look whose own inputs are unchanged when only the sources changed and the server was not rebuilt, so an edit to page code no longer reopens every story.
+- [x] Reuse a look whose own inputs are unchanged when only the sources changed and the server was not rebuilt, so an edit to page code no longer reopens every story.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/reuse.ts` `servedAgainst`: the `!sameSources && sameBuild` branch no longer returns "served build not rebuilt" for a look whose key compared equal; it returns null and the caller leaves that look's recorded build as it was (no `rebuilt` entry). `sameSources && !sameBuild` ("served build", the same sources served by another build) is kept. Update `reuse.test.ts:341-342`, which today encodes the reopen. A29.
+
+  Done as: the branch is gone, so `servedAgainst` reopens only the same sources served by another build; the caller's `rebuilt` already skips a stale kind (the item above), so the record keeps the build it was measured on. The two A38 expectations that encoded the reopen now expect reuse.
 
   </details>
 - [ ] Make a story's reuse depend on the element, universal and body rules of the app's stylesheet it draws under.

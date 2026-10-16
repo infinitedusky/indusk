@@ -258,15 +258,14 @@ describe("what is actually served is judged against the sources", () => {
 		// same sources, same build: reused; edited sources, rebuilt: reused
 		expect(reuseOf(record, story, built("s1", "b1"))).toEqual({ reuse: true, at: held.at });
 		expect(reuseOf(record, story, built("s2", "b2"))).toEqual({ reuse: true, at: held.at });
-		// same sources served by another build; edited sources still served by the old build
+		// same sources served by another build: reopened
 		expect(reuseOf(record, story, built("s1", "b2"))).toEqual({
 			reuse: false,
 			changed: "served build",
 		});
-		expect(reuseOf(record, story, built("s2", "b1"))).toEqual({
-			reuse: false,
-			changed: "served build not rebuilt",
-		});
+		// edited sources still served by the old build: this look's own inputs are
+		// unchanged, so it stands on the build it was measured on (A29)
+		expect(reuseOf(record, story, built("s2", "b1"))).toEqual({ reuse: true, at: held.at });
 		// a record that kept no build, and a build that could not be read
 		expect(reuseOf(held, story, built("s1", "b1"))).toEqual({
 			reuse: false,
@@ -338,16 +337,16 @@ describe("what is actually served is judged against the sources", () => {
 		expect((await run(build("old"), held)).opened).toEqual(["story home.full"]);
 		expect((await run(build("old"))).opened).toEqual([]);
 		expect((await run(build("new"), held)).opened).toEqual(["story home.full"]);
-		// an edit, then the server still serving the build from before it
+		// an edit, then the server still serving the build from before it: the story's own inputs are unchanged (A29)
 		await edit("export const one = 1;\n");
-		expect((await run(build("new"), held)).opened).toEqual(["story home.full"]);
+		expect((await run(build("new"))).opened).toEqual([]);
 		// an edit, rebuilt: the story is unchanged, so it is reused and the record follows the build
 		await edit("export const two = 2;\n");
 		const rebuilt = await run(build("rebuilt"));
 		expect(rebuilt.opened).toEqual([]);
 		expect(rebuilt.report.reused.map((r) => r.look)).toEqual(["home.full"]);
 		await edit("export const three = 3;\n");
-		expect((await run(build("rebuilt"), held)).opened).toEqual(["story home.full"]);
+		expect((await run(build("rebuilt"))).opened).toEqual([]);
 		const unread = await run(async () => {
 			throw new Error("connection refused");
 		}, held);
