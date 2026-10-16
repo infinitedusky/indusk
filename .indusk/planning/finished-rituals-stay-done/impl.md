@@ -260,10 +260,10 @@ The admin's plan reader and the package's retrospective gate each work out, in t
 
 #### Build Phase 3 Document
 
-- [ ] No docs page changes.
+- [ ] The changelog entry says the plan page and the retrospective gate now share one answer.
   <details><summary>Technical</summary>
 
-  (none needed — internal decomposition, no public surface or behaviour changed; the changelog entry from Build Phase 1 already describes the behaviour.)
+  `apps/docs/src/changelog.md`, the Build Phase 1 entry: append "the plan page and the retrospective gate read one definition of a finished ritual."
 
   </details>
 
