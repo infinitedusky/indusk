@@ -4,4 +4,6 @@ Why: in one-promise-language the ADR held the no-skew line for the span attribut
 
 Also from the same retrospective: a vocabulary scan proves only the patterns it lists (the first scan refused "the mark" and let "production marks" through), so review must try the senses the scan does not list; and a new look added to a brief needs its page to report the state to the looks check, or the check reads it unchecked (silence), not broken.
 
-Pointers: .indusk/planning/one-promise-language/retrospective.md, adr.md (Accepting), audit.md; /decisions/one-promise-language; apps/indusk-mcp/src/lib/promises/health-line.ts (HealthLineRun).
+How to apply: in research, list every machine reader of every value you change (telemetry attributes, CLI `--json` output, registry and file states) and ask of each "can this reader be older than the writer?" — if yes, teach readers both values first (one reading function, e.g. `readOutcome`), keep writers on the old value, and switch writers in the next release. Words people read can change in one step; values programs read cannot.
+
+Pointers: .indusk/planning/archive/one-promise-language/retrospective.md, adr.md (Accepting), audit.md; /decisions/one-promise-language; apps/indusk-mcp/src/lib/promises/health-line.ts (HealthLineRun).
