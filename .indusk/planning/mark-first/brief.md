@@ -14,7 +14,11 @@ signal in use. The last of three plans that split the first cut of the merged
 `mark-first` (Sandy, 2026-10-15): `one-promise-language` (the words) and
 `plans-are-promises` (a plan holds promises, each stated as clauses) have
 landed, and this one builds on both: a clause now exists, with its test rows,
-and what it lacks is a signal that proves it in use. The
+and what it lacks is a signal that proves it in use. Since 2026-10-16 it is the
+third child of [telemetry-from-day-one](../telemetry-from-day-one/master.md),
+after [a-new-project-starts-instrumented](../a-new-project-starts-instrumented/),
+which defines what a signal carries and writes it from an application; this
+plan reads it (Sandy: write before read). The
 background, the merge with `promise-first-build`, and the later cut are in
 [research.md](research.md); the principles are `promise-core`'s ("Settled
 2026-10-14/15").
@@ -84,13 +88,17 @@ None — the first cut changes what plans and promises say and how a plan closes
 Work this plan takes on that is not a promise of its own. Each is built here and tested under "Not for a promise" in the clause plan; where it came from is in research.md.
 
 - **One word, signal.** The telemetry a clause carries is called a signal everywhere: skills, docs, tool descriptions and code comments say signal where they said mark. Exempt: the Day 4b entry in the root `CLAUDE.md` and the archived plans and decisions (history), and this plan's own name until it closes. (`one-promise-language` settled the word; this plan does the cleanup.)
-- **The writers switch from `violated` to `broken`.** `markPromise`, `scripts/suite-speed.js` and the demo app write `broken`; every reader still reads both. The editor's health line (`indusk promises health --json`, `runs[].outcome`) keeps `violated` until the editor extension shipped with the language release has been out a release, and is switched then, not here.
+- **The writers switch from `violated` to `broken`.** InDusk's own writers — `markPromise` and `scripts/suite-speed.js` — write `broken` (the demo app's writer is the scaffold plan's, through its helper); every reader still reads both. The editor's health line (`indusk promises health --json`, `runs[].outcome`) keeps `violated` until the editor extension shipped with the language release has been out a release, and is switched then, not here.
 - **The registry state `known-broken` and older InDusks.** A checkout on an InDusk older than the language release refuses it. Whether that matters is decided in the ADR.
+- **InDusk's own commands get one tracer.** Closing, the audit step and the incident writer emit the spans this plan's own clauses are read by, through one tracer provider for the package's commands that exports to the local daemon and is silent when none runs; `new_project.create` reaches the daemon through it too.
 - **Tasks are written in the imperative.** The planner's phase-summary rule says a task reads as work to do ("Make the browser template's test project read the pre-bundle list from the root configuration"); verification items stay as end states that must hold. For new impls only.
 
-Waiting for a plan to take them, in `known-issues.md`: the two telemetry gaps `new-project-flow`'s audit left (the `new_project.create` span goes nowhere, and three promises hold only because the prompt says so), `change` and `replace` not carrying clauses (with the MCP `clauses` argument having no row), and `indusk plans start` failing under `indusk init --local`.
+Waiting for a plan to take them, in `known-issues.md`: three promises `new-project-flow`'s audit found held only because the prompt says so, `change` and `replace` not carrying clauses (with the MCP `clauses` argument having no row), and `indusk plans start` failing under `indusk init --local`.
 
 ## Depends On
+
+- `.indusk/planning/a-new-project-starts-instrumented/` — it defines the keys a signal carries, in the package's vocabulary, and writes them from an application; this plan's readers read those keys.
+- `.indusk/planning/daemon-found-not-guessed/` — closing asks the daemon whether each clause's signal reported.
 
 - `.indusk/planning/plans-are-promises/` — landed (`8235644ff`): a clause exists, with its rows, its clause plan and closing per clause.
 - `.indusk/planning/one-promise-language/` — landed: the words this plan's pages and records use.
