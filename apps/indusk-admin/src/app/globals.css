@@ -198,6 +198,9 @@ body {
 .cols-plan-row-numbered {
   grid-template-columns: var(--space-3) var(--size-badge) minmax(0, 1fr);
 }
+.cols-fill {
+  grid-template-columns: minmax(0, 1fr);
+}
 .cols-nav-path {
   grid-template-columns: var(--space-3) var(--space-3) minmax(0, 1fr) auto auto;
 }
@@ -352,6 +355,18 @@ body {
   grid-template-columns: var(--size-badge);
   justify-content: center;
   padding-inline: 0;
+}
+
+/* A plan row with a worktree is a container whose title link is stretched over
+   it; collapsed, the link becomes the overlay itself so the row keeps only the
+   badge and no empty track. */
+[data-component="nav"][data-collapsed="true"] .nav-row-text {
+  display: contents;
+}
+[data-component="nav"][data-collapsed="true"] .nav-row-link {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
 }
 
 /* What a decision card says in words: a paragraph is read at a measure, and an

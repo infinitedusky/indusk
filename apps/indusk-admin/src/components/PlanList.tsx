@@ -8,7 +8,7 @@ import { statusToNavMark } from "@/components/ui/badge-variant";
 import { NavGroup } from "@/components/ui/Nav";
 import { NavPath } from "@/components/ui/NavPath";
 import { PlanRow } from "@/components/ui/PlanRow";
-import { WorktreeChip } from "@/components/Worktrees";
+import { PlanWorktreeMark } from "@/components/Worktrees";
 import { initialsOf } from "@/lib/initials";
 import { buildGroups, orderByMaster, type PlanGroup } from "@/lib/plan-groups";
 import { planStage } from "@/lib/plan-stage";
@@ -338,6 +338,7 @@ function PlanItem({
         state={step === undefined ? mark.state : "needs"}
         name={plan.title}
         number={number === undefined ? "" : <PlanNumber number={number} />}
+        worktree={plan.worktree ? <PlanWorktreeMark plan={plan} /> : undefined}
         stage={
           <>
             {stage}
@@ -346,7 +347,6 @@ function PlanItem({
                 malformed
               </Badge>
             )}
-            <WorktreeChip plan={plan} />
             <HoldingBadge count={holding} plan={plan.name} />
             {red && <RedDot plan={plan.name} />}
           </>

@@ -1,7 +1,7 @@
 ---
 title: "A nav row reads at a glance"
 date: 2026-10-16
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -139,7 +139,7 @@ Before any component changes, this phase writes one browser test file that draws
 
 This phase builds the small worktree mark as a component of its own: a bordered ⎇ with no text that, while hovered or after a click, widens on the same line to show the worktree's name, cut short with an ellipsis when the row is narrow, and says to a screen reader whether it is open. The plan row learns to hold that mark beside its stage without putting it inside the link to the plan: a row with a worktree is drawn as a container whose title is the link, stretched over the whole row so the badge, the number and the stage still open the plan, with the mark lifted above it as its own button. A row with no worktree is drawn exactly as before. The nav's plan list then hands each plan's worktree to the row as a mark, keeping the worktree's name in the mark's label so the served page still names it. A collapsed nav still shows only the badge, and the badge still opens the plan. The next phase gives the mark and the new row their stories so a person can approve them against the mockups.
 
-- [ ] Add the worktree mark as a component of its own: a small bordered glyph that widens in place to the worktree's name while hovered or after a click, and back.
+- [x] Add the worktree mark as a component of its own: a small bordered glyph that widens in place to the worktree's name while hovered or after a click, and back.
   <details><summary>Technical</summary>
 
   New `apps/indusk-admin/src/components/ui/WorktreeMark.tsx`, `"use client"`, root `<button type="button" data-component="worktree-mark" data-state={open ? "open" : "closed"} aria-expanded={open} aria-label={`Worktree ${name}`} title={…}>`:
@@ -158,13 +158,13 @@ This phase builds the small worktree mark as a component of its own: a bordered 
   Open is `pinned || hovered`: a click toggles `pinned`; `onPointerEnter` / `onPointerLeave` set `hovered`. Enter and Space toggle through the native button. Classes from the mockups' `.wm` / `.wm-name` on the foundation: `inline-flex min-w-0 shrink items-center gap-1 h-…(leading-2) px-1 rounded-md border border-line bg-surface text-2xs leading-1 text-ink-soft`, and when open `border-dusk text-dusk`; the name `truncate font-mono text-2xs leading-1`, rendered only when open. No raw values (`indusk looks lint admin`).
 
   </details>
-- [ ] Let a plan row hold a worktree mark beside its stage, outside the link to the plan, with the row still opening the plan from its title, badge, number and stage, and a row with no worktree unchanged.
+- [x] Let a plan row hold a worktree mark beside its stage, outside the link to the plan, with the row still opening the plan from its title, badge, number and stage, and a row with no worktree unchanged.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/components/ui/PlanRow.tsx`: new optional `worktree?: ReactNode` — "Beside the stage, outside the row's link: the worktree mark." When it is `undefined`, render exactly today's `ButtonOrLink` root (same attributes, same order — the seven existing stories' snapshots must not move). When given, the root is a `div` carrying `data-component="plan-row"`, `data-state`-free, the same grid/border/current classes plus `relative`; the title is the `ButtonOrLink` (`href`, `aria-current`, `title`, and `...rest` so `data-plan-name` lands on the link) with an `after:absolute after:inset-0 after:rounded-lg` overlay covering the row; the stage line becomes `flex min-w-0 items-center gap-2` holding the stage's truncating span and then `<span className="nav-hide relative z-[1] flex min-w-0">{worktree}</span>` (a z-index token if the foundation names one; otherwise the lint decides). The link must not sit inside an element a collapsed nav hides, or the collapsed row's badge goes dead: keep `nav-hide` on the title's text and on the stage line, not on the link's box, and add a collapsed-nav rule in `globals.css` beside the existing `nav-hide` / `nav-mark` rules if the row grows a hidden grid track. Tests decide: A1, A2, A6, A7.
 
   </details>
-- [ ] Make the nav's plan list pass each plan's worktree to its row as a mark, keeping the worktree's name and location in the mark's label.
+- [x] Make the nav's plan list pass each plan's worktree to its row as a mark, keeping the worktree's name and location in the mark's label.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/components/Worktrees.tsx`: replace `WorktreeChip` with `PlanWorktreeMark({ plan })`, returning `null` without `plan.worktree`, else `<span data-testid="plan-worktree"><WorktreeMark name={name} title={`Read from the worktree at ${path} (${branch})`} /></span>` — the test id in the page's wrapper, never in the component's markup (admin rule: a piece a test must find goes in a wrapper or a slot). Update the file's docblock. `PlanList.tsx` `PlanItem`: drop `<WorktreeChip plan={plan} />` from `stage`; pass `worktree={plan.worktree ? <PlanWorktreeMark plan={plan} /> : undefined}` to `NavPlanRow` (whose props type is `PlanRowProps` minus `current`/`href`, so it passes through). `grep -rn WorktreeChip apps/indusk-admin/src` is empty after.
