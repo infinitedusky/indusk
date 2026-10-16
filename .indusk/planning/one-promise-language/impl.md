@@ -417,10 +417,12 @@ A fresh reader went looking for places where the plan's promise does not yet hol
   Red first on today's code, then green: A14–A20. `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/promises/outcome-words.test.ts src/__tests__/suite-speed.test.ts src/__tests__/promise-words.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/components/PromiseWords.test.tsx`; `cd apps/vscode-extension && pnpm exec vitest run src/core/view-words.test.ts src/core/activity.test.ts`. A1–A13 still pass (same commands with Build Phase 3's files). `pnpm --filter docs build` succeeds.
 
   </details>
-- [ ] The approved looks of the promise pages still match.
+- [x] The approved looks of the promise pages still match.
   <details><summary>Technical</summary>
 
   `indusk looks check admin` exits 0 — only text changed on the dashboard row and the legend.
+
+  Result (2026-10-15, against this branch's admin on :4955): exit 0, 154 looks held, none broken — `dashboard.default` held at all six devices and schemes. `promise.broken` and `promise.enforced` came back unchecked ("the page did not report state …"), on main as well: their path is the promise list, which reports only the dashboard's states, and no promise is broken to show. Making them checkable (a seed with a broken promise, the promise page reporting its state) is carried to `looks-as-promises` (Sandy, 2026-10-15: "I agree").
 
   </details>
 
