@@ -9,6 +9,8 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+falsification: skipped
+falsification_reason: "Read the diff and every step-list caller; position and finished rituals share one source, so no hypothesis formed."
 approved_brief: "f06ef0692572c8e57b9e477c6f4201d6ed46e539cd9d0cae7c07c98aac7d2197"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-16T18:58:02.293Z"
