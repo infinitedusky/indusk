@@ -70,7 +70,7 @@ no file read.
 | A2 | A plan no release shipped never reads Released: a built plan carries the in-progress mark and names its step, an archived plan with no release found reads Closed with the finished mark | Test Phase 1 | Build Phase 1 | written | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/components/PlanList.test.tsx, apps/indusk-admin/src/components/PlanList.falsify.test.tsx |
 | A3 | The step a plan is at is defined once, in the package's steps module; the admin defines no rule of its own | Test Phase 1 | Build Phase 1 | written | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts |
 | A4 | A plan waiting on the person reads the step it waits at with the needs-you mark, ahead of its step and of Released | Test Phase 1 | Test Phase 1 | planned | unit | promise: decisions-wait-in-one-place, promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/plan-stage.test.ts, apps/indusk-admin/src/components/PlanList.test.tsx |
-| A5 | A master plan's page reads each plan at the nav row's stage: Falsify for a built, unfalsified plan, Released for a released one | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/master-story.test.ts |
+| A5 | A master plan's page reads each plan at the nav row's stage: Falsify for a built, unfalsified plan, Released for a released one | Test Phase 1 | Build Phase 1 | written | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/master-story.test.ts |
 | A6 | A released plan reads Released with the finished mark, archived or not, and each Path's released count is unchanged | Test Phase 1 | Test Phase 1 | planned | unit | promise: the-nav-says-where-a-plan-is, promise: paths-keep-their-order | apps/indusk-admin/src/lib/plan-stage.test.ts, apps/indusk-admin/src/components/PlanList.test.tsx, apps/indusk-admin/src/app/p/[project]/cockpit-nav.test.tsx |
 
 ## Checklist
@@ -105,7 +105,7 @@ Before anything changes, this phase writes down what the nav row must read and p
   A3, `apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts`: add `["./plans/steps", "src/lib/plans/steps.ts", "stepAt"]` to `MODULES` and `"stepAt"` and `"currentStep"` to `PACKAGE_ONLY`; add `promise: the-nav-says-where-a-plan-is` to the docblock. Red today: `steps.ts` exports no `stepAt` (the rule is a private `currentStep` in `waiting.ts`).
 
   </details>
-- [ ] Write the test that a master plan's page reads a built plan's step the way the nav does, failing today.
+- [x] Write the test that a master plan's page reads a built plan's step the way the nav does, failing today.
   <details><summary>Technical</summary>
 
   A5, `apps/indusk-admin/src/lib/master-story.test.ts`: give subplan `two` a completed impl at the falsify position; its row reads `stage: "Falsify"` and equals `planStage` for the same plan; the released row still reads `"Released"`. Red today: `"completed"`.
