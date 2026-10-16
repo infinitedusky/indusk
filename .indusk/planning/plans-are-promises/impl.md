@@ -374,7 +374,7 @@ This phase tests three places where the finished plan may fail its own promise. 
   `lib/promises/rows.ts` `clauseRefusal`/`rowProofs`: a `rests-on` target owned by `plan`, in `promises`, whose own clauses and rows raise no refusal, counts as in force; a cycle among such siblings is a refusal naming both. `confirm.ts` and `cleanup/gate.ts` already pass the registry; check `build/review.ts`. Hypothesis: today the sibling is `declared` in the registry read before anything is written, so the dependent is refused and, since one refusal blocks the whole confirm, neither is ever enforced.
 
   </details>
-- [ ] A brief that has not opted in reads an indented bullet as it did before clauses.
+- [x] A brief that has not opted in reads an indented bullet as it did before clauses.
   <details><summary>Technical</summary>
 
   `lib/promises/brief-contract.ts` `items`: the nested-bullet rule applies only when the caller reads clauses (`readMakes` with `clausesRequired`); every other section and a brief without the opt-in keep the old top-level reading (`ENTRY` allows up to three leading spaces). Hypothesis: `   - **\`b\`** [state]. …` under `1. **\`a\`** …` was a promise and is now a sub-bullet `parseClauseSpec` rejects without a problem, so `b` drops out of `makes`.
