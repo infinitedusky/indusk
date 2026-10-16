@@ -384,7 +384,10 @@ colour scheme in place, then reads the values — so a look costs one page load
 whatever the number of devices and schemes. A switch in place starts the
 page's colour transitions, which a fresh load never does, so the check
 finishes each running transition before it reads; a button is never read
-half-way between two colours. Screens that need no seed open three at a time;
+half-way between two colours. A page that reads its size, pixel ratio or
+colour scheme once when it starts, with nothing listening for a change, would
+be read in place as it drew at the first device; the check notices such reads
+and loads that page fresh at each device and scheme instead. Screens that need no seed open three at a time;
 a screen with a `seed` opens alone.
 
 **`--only <look>...`** checks just the named looks and reports nothing else.
@@ -407,9 +410,14 @@ reused  story badge.ok — held 2026-10-16T03:00:00.000Z, unchanged
 ```
 
 A look's inputs are the foundation (so a token change always reopens every
-look), the declarations, the devices and schemes, and its snapshot hashes — a
-story's snapshot and stylesheet, a screen's composed mockup and the components
-it composes — and for a screen a hash of the app's page code (every file under
+look), the checker itself (the properties it measures, the kinds it judges them
+as, its measuring script and the verdict's version — so a release that measures
+or judges differently reopens every look), the declarations, the devices and
+schemes, and its snapshot hashes — a story's snapshot and stylesheet, a
+screen's composed mockup and the components it composes — for a story the
+app's element, universal and root rules it draws under (`a`, `h2`, `*`, `body`:
+every compiled rule no class names, recorded at render as `baseRulesHash` in
+`components.json`), and for a screen a hash of the app's page code (every file under
 `sources` that is not a catalogued component's implementation, a story or a
 test) and its seed, and the configuration a look is drawn with that no source
 file holds: the app's Tailwind and PostCSS config, its `.storybook` folder and
@@ -435,11 +443,22 @@ flowchart TD
 ```
 
 The build served at `--url` is checked against the sources, outside the key: the
-same sources must be served by the same build, and edited sources by a rebuilt
-one, so a server still on the build from before an edit reopens the look instead
-of recording it held. The build is read from the page's script and stylesheet
+same sources served by another build reopen the look. A server still on the
+build from before the sources changed is told by a held look recorded on that
+build with other sources: what it measures is reported but never kept held, a
+look whose own inputs are unchanged is reused on the build it was measured on,
+and the run says so:
+
+```
+http://localhost:3940 serves a build from before the sources changed — results were not kept; rebuild and serve it: pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940
+```
+
+The build is read from the page's script and stylesheet
 names (a production build names them by content hash); a page that cannot be
-read, or that loads nothing to tell by, reuses nothing, and the check says so.
+read within 30 seconds, or that loads nothing to tell by, reuses nothing, and
+the check says so. A run writes only the looks it opened over the record as it
+is when it writes, so two checks of one project never undo each other's
+removals.
 What a look reads that no input covers — the data a screen renders — is not in
 the key. **`--all`** opens
 every look whatever held: run it after a change the key cannot see, at a UI
@@ -447,10 +466,11 @@ plan's live check, and as the slow tests do after every landing and at every
 release.
 
 **A development server is refused.** Before any look opens, the check reads the
-app's root page (and the first story's frame) over plain HTTP and looks for the
-code a development server adds: Next's live-reload client (`hmr-client`),
-webpack's refresh runtime (`react-refresh`, `/_next/webpack-hmr`) and Vite's
-client (`/@vite/client`). One found ends the run with exit 1 before a look
+page at the base URL's own path (and the first story's frame) over plain HTTP
+and looks, in the scripts and stylesheets it loads — never in its text, which
+carries the page's data — for the code a development server adds: Next's
+live-reload client (`hmr-client`), webpack's refresh runtime (`react-refresh`)
+and Vite's client (`/@vite/client`). One found ends the run with exit 1 before a look
 opens, naming the command that builds and serves the app:
 
 ```
