@@ -1,0 +1,3 @@
+# Return a browser measurement from the page as one JSON string, not one object per value — transfer, not computation, dominated a large read
+
+On the admin's largest page, computing every element's style took 30 ms in the page but returning 75,815 values as objects over the browser protocol took 1,149 ms; the same result as one JSON string (8.7 MB) took 120 ms, a tenfold gain with identical values. It was found only by timing each stage (load, settle, measure, return) separately, so measure where the time goes before optimising the browser work itself. Parse the string in Node. See .indusk/planning/looks-check-speed/research.md and decision Decision 4 in apps/docs/src/decisions/looks-check-speed.md.
