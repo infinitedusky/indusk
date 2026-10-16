@@ -6,3 +6,4 @@ Each decision the plan waited on, the answer and who gave it, as the admin recor
 - 2026-10-16T21:20:58.764Z — amendment to the look (none): was "None — the plan page and the nav already draw a done step; this changes which steps read done, not how anything is drawn.", now null — answered "Approve" by Sandy-Corsillo
 - 2026-10-16T21:20:58.764Z — amendment to the look workflow-strip.default: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
 - 2026-10-16T21:20:58.764Z — amendment to the look plan.working: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
+- 2026-10-16T21:20:58.764Z — amendment to the look nav.expanded: was null, now "must not break" — answered "Approve" by Sandy-Corsillo
