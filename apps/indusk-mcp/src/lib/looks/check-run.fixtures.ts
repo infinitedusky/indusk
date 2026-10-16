@@ -2,7 +2,7 @@ import { cpSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { ApprovalEntry, StoryApprovalEntry } from "./approvals.js";
-import { approvedValues, type LookOpener, type Measured, type Scheme, schemesOf } from "./check.js";
+import { approvedValues, type LookOpener, type Measured, type Scheme } from "./check.js";
 import { type LooksApp, readApp } from "./mockups.js";
 
 /**
@@ -128,5 +128,3 @@ export function fakeOpener(answers: Record<string, Answer>): FakeOpener {
 	};
 	return opener;
 }
-
-export { schemesOf };

@@ -416,11 +416,12 @@ This phase makes every look that is opened cost one page load instead of six. Th
   Found work: A37's case ("a look under a scheme the foundation names is held only when that scheme was opened") makes two CLI runs (~5.7 s) and times out at vitest's 5 s default, so the file's verification below cannot be green. Add an explicit third argument (`30_000`) to that `it`. Reason: the case was already slow before this plan; the verification command runs this file.
 
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
+  - Reviewed `check.ts`, `looks.ts`, `cli.ts`, the fixtures and tests. One finding, fixed in place: `check-run.fixtures.ts` re-exported `schemesOf` for no importer (rule: no unused surface). Left as is: `openAndJudge` takes six arguments (it is the one place a look's single load becomes per-device judgements; splitting it would scatter the order contract), and `CheckOptions` has no `all` until Build Phase 2 adds the option with its rule.
 
 #### Build Phase 1 Verification
 
-- [ ] Each look's page is asked for once and reported at every device and scheme, the in-place tripwire and the raw-value case still hold, and the only option and the slow-look rule are proven without a browser.
+- [x] Each look's page is asked for once and reported at every device and scheme, the in-place tripwire and the raw-value case still hold, and the only option and the slow-look rule are proven without a browser.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/looks-check-speed/apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/looks/check-run.test.ts src/__tests__/looks-check-timeout.test.ts && pnpm exec vitest related src/lib/looks/check.ts src/bin/commands/looks.ts` — A16, A17, A18 green, A15 still green; `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-check-speed.contract.test.ts src/__tests__/looks-browser.contract.test.ts` — A11 green, A12 and A20 still green, A10 and A14 still red.
@@ -512,7 +513,8 @@ This phase lets the check skip looks that have not changed. After a run, every l
   `cli.ts` `looks check --all`, passed as `all` to `reuseOf`. A7.
 
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
+  - Reviewed `check.ts`, `looks.ts`, `cli.ts`, the fixtures and tests. One finding, fixed in place: `check-run.fixtures.ts` re-exported `schemesOf` for no importer (rule: no unused surface). Left as is: `openAndJudge` takes six arguments (it is the one place a look's single load becomes per-device judgements; splitting it would scatter the order contract), and `CheckOptions` has no `all` until Build Phase 2 adds the option with its rule.
 
 #### Build Phase 2 Verification
 
@@ -577,7 +579,8 @@ This phase stops the check from spending half an hour in a development server. B
   `apps/indusk-mcp/src/lib/looks/mockups.ts` `readApp`: optional string `serve` from `screens.json` onto `LooksApp.serve` — not in `declarationsHashOf`, so declaring it reopens nothing. `.indusk/mockups/admin/screens.json`: `"serve": "pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940"`.
 
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
+  - Reviewed `check.ts`, `looks.ts`, `cli.ts`, the fixtures and tests. One finding, fixed in place: `check-run.fixtures.ts` re-exported `schemesOf` for no importer (rule: no unused surface). Left as is: `openAndJudge` takes six arguments (it is the one place a look's single load becomes per-device judgements; splitting it would scatter the order contract), and `CheckOptions` has no `all` until Build Phase 2 adds the option with its rule.
 
 #### Build Phase 3 Verification
 
