@@ -1,7 +1,7 @@
 ---
 title: "Plans are promises"
 date: 2026-10-16
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -73,6 +73,7 @@ proves. Plans that do not opt in validate and close exactly as before. See
 | A17 | A plan that makes two promises, the second with a clause resting on the first, both otherwise proved, closes in one confirm and passes the cleanup gate; a resting cycle inside one plan is refused, naming both promises | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts, apps/indusk-mcp/src/__tests__/cleanup-gate.test.ts |
 | A18 | A brief with no `clauses: required`, whose promises are bullets indented two or three spaces beneath a first entry, still reads every one of them as a promise it makes | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
 | A19 | A promise file whose clause rests on the promise itself is refused by the registry check, and a resting clause naming a promise the registry no longer holds is refused by it, naming the clause | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A20 | Finding a promise by its name or by an old alias returns the same entry, and a name that is neither returns nothing | Build Phase 5 | Build Phase 5 | planned | unit | a unit test for the one promise lookup that five readers each wrote inline | apps/indusk-mcp/src/__tests__/promise-lookup.test.ts |
 
 ## Checklist
 
@@ -418,6 +419,64 @@ This phase tests three places where the finished plan may fail its own promise. 
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/briefs.md` "Promises as clauses": one sentence and the cycle refusal.
+
+  </details>
+
+### Build Phase 5: Cleanup — one promise lookup, and the clause rules in their own file
+
+**Tier**: med — the work step's default (`workflow.steps.work.tier`)
+
+This plan grew two things worth lifting out of the files it touched. Looking up a promise by its name or an old alias is now written inline in five places, one of them this plan's, so it becomes one function the readers share. And the three rules that hold a brief's clauses to the registry, the clause plan and the test rows sit inside an already long contract file, so they move to a file of their own. When the phase closes, behaviour is unchanged and each of those has a single home.
+
+- [ ] Promise lookup by name or alias is one shared function, used where the same lookup was written inline.
+  <details><summary>Technical</summary>
+
+  Add `findPromise(promises, name)` to `lib/promises/registry.ts` (name equals, or in `aliases`) and use it at `rows.ts` (`clauseRefusal`), `proof.ts:116`, `release/route.ts:228` (which also drops retired entries — keep that filter at the caller). Rule of three: five copies, one new in this plan. `standing.ts:168` and `write.ts:134` compare differently (history rows; alias-only) and stay as they are.
+
+  </details>
+- [ ] The rules that hold a brief's clauses to the registry, the clause plan and the test rows live in their own file.
+  <details><summary>Technical</summary>
+
+  Move `clauseRefusals`, `clausePlanRefusals` and `clauseRowRefusals` from `lib/promises/contract.ts` (633 lines) to a new `lib/promises/clause-rules.ts`, exported and imported back; one reason to change (the clause rules), a seam already tested through `checkPlanContract` (A1–A8, A13, A17–A19). `rowRefusals`' clause loop stays: it reads the same table as the other row checks.
+
+  </details>
+- [ ] The clause grammar stays beside the brief reader, with the reason recorded.
+  <details><summary>Technical</summary>
+
+  Reviewed `lib/promises/brief-contract.ts` (`parseClauseSpec`, `BriefClause`) — left as-is: the grammar is the brief's own sub-entry syntax, `declare --clause` is its second reader, and moving 65 lines to a file only these two import would scatter the one grammar from the reader it belongs to.
+
+  </details>
+- [ ] The test fixtures for clauses stay in their files, with the reason recorded.
+  <details><summary>Technical</summary>
+
+  Reviewed `__tests__/promise-clauses.test.ts`, `promises-confirm.test.ts`, `cleanup-gate.test.ts`, `promises-check.test.ts` — left as-is: each builds on the shared `PromiseProject` helper already; what each adds (a brief, a clause plan, an impl) is shaped for its own assertions, and a fourth fixture module would be the wrong abstraction over three different shapes.
+
+  </details>
+
+#### Build Phase 5 Verification
+
+- [ ] The lookup has its own test and behaviour is unchanged everywhere it was moved.
+  <details><summary>Technical</summary>
+
+  A20: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promise-lookup.test.ts src/__tests__/promise-clauses.test.ts src/__tests__/promises-confirm.test.ts src/__tests__/cleanup-gate.test.ts src/__tests__/promises-contract.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/promises/registry.ts src/lib/promises/contract.ts src/lib/promises/clause-rules.ts src/lib/promises/proof.ts src/lib/release/route.ts --run`; `pnpm promises:check` passes; every clause row still passing.
+
+  </details>
+
+#### Build Phase 5 Context
+
+- [ ] The package's instructions name where the promise lookup and the clause rules live.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, the promises area: one line — "find a promise with `findPromise` (name or alias); the brief-vs-registry-vs-clause-plan-vs-rows rules are `clause-rules.ts`." Area tier, not root.
+
+  </details>
+
+#### Build Phase 5 Document
+
+- [ ] No docs page names the moved functions, and any that does points at their new home.
+  <details><summary>Technical</summary>
+
+  `grep -rn "clauseRefusals\|clausePlanRefusals\|clauseRowRefusals" apps/docs/src` — update a hit to `clause-rules.ts`; with no hit the check is the record, and the item is checked with that output pasted here.
 
   </details>
 
