@@ -12,6 +12,8 @@ gate_policy: ask
 approved_brief: "77c8f2a3dec6a072131c328e05c796385fcea4a6500f4b63d121e1d2b233bf50"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-16T00:13:18.558Z"
+cleanup: skipped
+cleanup_reason: "reviewed 2026-10-16: no new file over its cap; the changes are word edits across many files; the shared readings are each defined once (readOutcome for a signal, readsNoSignal for the dot); the admin's and the editor's word labels stay separate because the editor cannot import the admin — nothing warrants extraction"
 ---
 
 # One promise language
