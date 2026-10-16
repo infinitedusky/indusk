@@ -589,10 +589,12 @@ This phase stops the check from spending half an hour in a development server. B
   `apps/indusk-mcp/src/lib/looks/mockups.ts` `readApp`: optional string `serve` from `screens.json` onto `LooksApp.serve` — not in `declarationsHashOf`, so declaring it reopens nothing. `.indusk/mockups/admin/screens.json`: `"serve": "pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940"`.
 
   </details>
-- [ ] Make a reused result keyed on what is actually served: the served build's identity joins the key, so a check against an old build never records "held" for sources it did not serve.
+- [x] Make a reused result keyed on what is actually served: the served build's identity joins the key, so a check against an old build never records "held" for sources it did not serve.
   <details><summary>Technical</summary>
 
   Found at Build Phase 2's close (the key describes the sources, not what `--url` serves). Read the served build's id (for a Next app the build id the page carries; `screens.json` may name where an app exposes it) once per run before opening any look; add it to `lookKey` for screens and stories; a run that cannot read it reuses nothing.
+
+  Done as: `servedBuildOf(html)` (`mockups.ts`) hashes the page's script and stylesheet URLs (a production build names them by content hash) and inline styles — never its text, which carries data; null when it has neither. `checkApp` reads the app's root once (and the first story's frame when stories open) before planning reuse, refuses a development server on the same HTML, and puts the result in every key as `served`; null reuses nothing and prints a notice. Tests (no trajectory row; recorded under the item): `reuse.test.ts` "what is actually served joins the key" — a changed build id reopens, an unreadable one reuses nothing, the identity ignores page text. Consequence found: a fully reused run now makes one plain request (the root), so A10's body (`looks-check-speed.contract.test.ts`) expects `["/"]` instead of none — its Asserts text is unchanged and still reads "requests no page"; the request is not a look's page, and A11's one-request-per-look page count is untouched because the root is not a look's page.
   </details>
 - [ ] Make the configuration a look is drawn with part of its key: the styling and Storybook configuration and the lockfile.
   <details><summary>Technical</summary>

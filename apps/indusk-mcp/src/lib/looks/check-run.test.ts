@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { checkApp } from "./check.js";
-import { fakeOpener, fixtureApp, recordingTracer } from "./check-run.fixtures.js";
+import { fakeOpener, fixtureApp, recordingTracer, servedPage } from "./check-run.fixtures.js";
 import { reportLooks } from "./report.js";
 
 describe("what the check opens", () => {
@@ -54,11 +54,17 @@ describe("what the check reuses", () => {
 	it("A1: a second check with nothing changed opens nothing and reports every look reused", async () => {
 		const { app, approvals, home, root } = await fixtureApp(["home.empty", "home.full"]);
 		const first = fakeOpener({ "home.empty": "held", "home.full": "held" });
-		await checkApp(app, approvals, "http://app", [], { opener: first, projectRoot: root, home });
+		await checkApp(app, approvals, "http://app", [], {
+			opener: first,
+			projectRoot: root,
+			home,
+			fetchPage: servedPage,
+		});
 		const second = fakeOpener({});
 		const report = await checkApp(app, approvals, "http://app", [], {
 			opener: second,
 			projectRoot: root,
+			fetchPage: servedPage,
 			home,
 		});
 		expect(second.opened).toEqual([]);
@@ -73,12 +79,14 @@ describe("what the check reuses", () => {
 		await checkApp(app, approvals, "http://app", [], {
 			opener: fakeOpener({ "home.empty": "held" }),
 			projectRoot: root,
+			fetchPage: servedPage,
 			home,
 			now: new Date("2026-10-16T03:00:00.000Z"),
 		});
 		const report = await checkApp(app, approvals, "http://app", [], {
 			opener: fakeOpener({}),
 			projectRoot: root,
+			fetchPage: servedPage,
 			home,
 		});
 		const spans = recordingTracer();
@@ -92,6 +100,7 @@ describe("what the check reuses", () => {
 		const fresh = await checkApp(app, approvals, "http://app", [], {
 			opener: fakeOpener({ "home.empty": "held" }),
 			projectRoot: root,
+			fetchPage: servedPage,
 			home,
 			all: true,
 		});

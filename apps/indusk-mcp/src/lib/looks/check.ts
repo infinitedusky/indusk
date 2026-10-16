@@ -10,7 +10,13 @@ import {
 } from "./approvals.js";
 import { pageSourceFilter, readCatalog, storybookIds } from "./components.js";
 import { devServerMarker } from "./dev-server.js";
-import { type Device, type LooksApp, pageSourcesHashOf, sourcesHashOf } from "./mockups.js";
+import {
+	type Device,
+	type LooksApp,
+	pageSourcesHashOf,
+	servedBuildOf,
+	sourcesHashOf,
+} from "./mockups.js";
 import type { LookResult } from "./report.js";
 import { type Held, type LookKey, lookKey, readHeld, reuseOf, writeHeld } from "./reuse.js";
 import { MEASURED_PROPERTIES, type MeasuredElement, verdict } from "./verdict.js";
@@ -734,35 +740,50 @@ function refuseUnknown(app: LooksApp, only: readonly string[]): void {
 	}
 }
 
+/** The builds being served, read from one page of each kind a run opens; null where a page could not be read. */
+interface Served {
+	screens: string | null;
+	stories: string | null;
+}
+
 /**
- * Refuse a development server before any look opens: one page's HTML, the
- * first screen to open or else the Storybook frame, goes to `devServerMarker`.
- * A page that cannot be fetched is not refused here — the look that opens it
- * says why it cannot be read.
+ * Read the served pages once before any look opens: the app's root when screens
+ * are to open, and the first story's frame when stories are. A development server is refused here, naming
+ * the app's `serve` command; a page that cannot be fetched leaves its build
+ * unknown, so nothing of its kind is reused, and the look that opens it says
+ * why it cannot be read.
  */
-async function refuseDevServer(
+async function readServed(
 	app: LooksApp,
 	base: string,
-	first: LookTarget | StoryTarget | undefined,
+	firstScreen: LookTarget | undefined,
+	firstStory: StoryTarget | undefined,
 	fetchPage: CheckOptions["fetchPage"] = (url) => fetch(url).then((r) => r.text()),
-): Promise<void> {
-	if (!first) return;
-	const url =
-		"id" in first ? storyUrl(base, first.id) : pageUrl(base, first.screen, first.path, first.state);
-	let html: string;
-	try {
-		html = await fetchPage(url);
-	} catch {
-		return;
-	}
-	const marker = devServerMarker(html);
-	if (marker === null) return;
-	const serve =
-		app.serve ??
-		`declare the command that builds and serves the app as "serve" in .indusk/mockups/${app.app}/screens.json`;
-	throw new LooksCheckError(
-		`${base} is a development server (${marker}) — build and serve the app, then check again: ${serve}`,
-	);
+): Promise<Served> {
+	const read = async (url: string | undefined): Promise<string | null> => {
+		if (!url) return null;
+		let html: string;
+		try {
+			html = await fetchPage(url);
+		} catch {
+			return null;
+		}
+		const marker = devServerMarker(html);
+		if (marker !== null) {
+			const serve =
+				app.serve ??
+				`declare the command that builds and serves the app as "serve" in .indusk/mockups/${app.app}/screens.json`;
+			throw new LooksCheckError(
+				`${base} is a development server (${marker}) — build and serve the app, then check again: ${serve}`,
+			);
+		}
+		return servedBuildOf(html);
+	};
+	return {
+		// The app's root, not a look's page: each look's page is then requested once, by its look.
+		screens: await read(firstScreen && new URL("/", base).toString()),
+		stories: await read(firstStory && storyUrl(base, firstStory.id)),
+	};
 }
 
 /**
@@ -797,8 +818,12 @@ export async function checkApp(
 		named(u.mockup.replace(/^story /, "")),
 	);
 	const results: LookResult[] = [];
+	const served: Served =
+		checked.length + stories.checked.length === 0
+			? { screens: null, stories: null }
+			: await readServed(app, base, checked[0], stories.checked[0], opts.fetchPage);
 	const plan = opts.projectRoot
-		? await planReuse(app, opts.projectRoot, checked, stories.checked, opts)
+		? await planReuse(app, opts.projectRoot, checked, stories.checked, served, opts)
 		: undefined;
 	const screensToOpen = plan?.screens ?? checked;
 	const storiesToOpen = plan?.stories ?? stories.checked;
@@ -808,7 +833,6 @@ export async function checkApp(
 		return { results, unchecked, reused, ...notice };
 	}
 
-	await refuseDevServer(app, base, screensToOpen[0] ?? storiesToOpen[0], opts.fetchPage);
 	const opener = opts.opener ?? chromiumOpener(app);
 	const measuredUnchecked: Unchecked[] = [];
 	const take = (found: CheckReport) => {
@@ -870,6 +894,7 @@ async function planReuse(
 	root: string,
 	screens: readonly LookTarget[],
 	stories: readonly StoryTarget[],
+	served: Served,
 	opts: CheckOptions,
 ): Promise<ReusePlan> {
 	const catalog = readCatalog(app);
@@ -880,6 +905,8 @@ async function planReuse(
 		pageSourcesHash: await pageSourcesHashOf(root, app, pageSourceFilter(catalog)),
 		schemes,
 	};
+	const screenFacts = { ...facts, served: served.screens };
+	const storyFacts = { ...facts, served: served.stories };
 	const held = readHeld(root, app.app, opts.home);
 	const devices = app.devices.flatMap((d) => schemes.map((s) => lookDevice(d.name, s)));
 	const plan: ReusePlan = { root, held, opened: new Map(), screens: [], stories: [], reused: [] };
@@ -894,7 +921,7 @@ async function planReuse(
 	};
 	plan.screens = screens.filter((look) => {
 		const name = `${look.screen}.${look.state}`;
-		return opens(`screen:${name}`, lookKey(app, look, facts), {
+		return opens(`screen:${name}`, lookKey(app, look, screenFacts), {
 			look: name,
 			kind: "screen",
 			screen: look.screen,
@@ -902,14 +929,19 @@ async function planReuse(
 		});
 	});
 	plan.stories = stories.filter((story) =>
-		opens(`story:${story.name}`, lookKey(app, story, facts), {
+		opens(`story:${story.name}`, lookKey(app, story, storyFacts), {
 			look: story.name,
 			kind: "story",
 			screen: story.component,
 			state: story.state,
 		}),
 	);
-	if (!current && !opts.all && !opts.only) {
+	const unread =
+		(screens.length > 0 && served.screens === null) ||
+		(stories.length > 0 && served.stories === null);
+	if (unread && !opts.all && !opts.only) {
+		plan.notice = `the build served at the check's URL could not be read, so no look was reused`;
+	} else if (!current && !opts.all && !opts.only) {
 		plan.notice = `the stories were not rendered from ${app.app}'s sources as they are now, so no look was reused — run \`indusk looks stories ${app.app}\`, then check again`;
 	}
 	return plan;

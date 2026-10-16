@@ -104,6 +104,10 @@ export async function fixtureApp(
 	return { root, home, app, approvals, storyApprovals };
 }
 
+/** The page a served app answers a plain fetch with: one stylesheet, so the build has an identity. */
+export const servedPage = async (): Promise<string> =>
+	'<link rel="stylesheet" href="/_next/static/chunks/0my-dgs-thrfj.css">';
+
 /** What a fake opener answers for a look. */
 export type Answer = "held" | "timeout";
 

@@ -487,3 +487,22 @@ export async function pageSourcesHashOf(
 		files.filter((f) => isPageSource(relative(root, f))),
 	);
 }
+
+/**
+ * The identity of the build a page is served from, read from its HTML: the
+ * scripts and stylesheets it loads (a production build names each by the hash
+ * of its content) and its inline styles, hashed. Null when the page loads
+ * nothing and styles nothing inline, so there is nothing to tell one build
+ * from another — the caller then reuses no look. Page text is left out: a
+ * screen's data changes between runs and is no part of the build.
+ */
+export function servedBuildOf(html: string): string | null {
+	const assets = [...html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)="([^"]+)"/g)].map(
+		(m) => m[1] as string,
+	);
+	const styles = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)].map(
+		(m) => m[1] as string,
+	);
+	if (assets.length === 0 && styles.length === 0) return null;
+	return sha256(JSON.stringify([[...new Set(assets)].sort(), styles]));
+}

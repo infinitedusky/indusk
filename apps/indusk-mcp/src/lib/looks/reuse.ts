@@ -12,7 +12,8 @@ import type { LooksApp } from "./mockups.js";
  * every device and scheme: the foundation (so a token change is never hidden
  * behind a reused look — `tokens-are-held-exactly`), the declarations, the
  * devices and schemes, its snapshot hashes, and for a screen its page code,
- * path and seed. Nothing is reused unless the stories were rendered from the
+ * path and seed, and the build served (a check against an old build never
+ * records "held" for sources it did not serve). Nothing is reused unless the stories were rendered from the
  * sources as they are now, and an uncomposed screen never is. Pure: the
  * caller hands every fact in, and the browser never decides.
  *
@@ -27,6 +28,8 @@ interface KeyBase {
 	devices: string;
 	schemes: string;
 	current: boolean;
+	/** The build the page was served from (`servedBuildOf`); null when it could not be read. */
+	served: string | null;
 }
 
 export interface StoryKey extends KeyBase {
@@ -69,7 +72,12 @@ const isStoryTarget = (look: StoryTarget | LookTarget): look is StoryTarget => "
 export function lookKey(
 	app: LooksApp,
 	look: StoryTarget | LookTarget,
-	facts: { current: boolean; pageSourcesHash: string; schemes: readonly string[] },
+	facts: {
+		current: boolean;
+		pageSourcesHash: string;
+		schemes: readonly string[];
+		served: string | null;
+	},
 ): LookKey {
 	const base = {
 		foundationHash: app.foundation.hash,
@@ -77,6 +85,7 @@ export function lookKey(
 		devices: devicesKey(app),
 		schemes: facts.schemes.join(","),
 		current: facts.current,
+		served: facts.served,
 	};
 	if (isStoryTarget(look)) {
 		const story = app.stories.find((s) => s.name === look.name);
@@ -111,6 +120,7 @@ const COMPARED: readonly [string, string][] = [
 	["declarationsHash", "declarations"],
 	["devices", "devices"],
 	["schemes", "schemes"],
+	["served", "served build"],
 	["snapshotHash", "snapshot"],
 	["stylesheetHash", "stylesheet"],
 	["mockupHash", "mockup"],
@@ -134,6 +144,7 @@ const canonicalKey = (key: object): string =>
  */
 export function reuseOf(held: Held | undefined, now: LookKey, opts: { all?: boolean } = {}): Reuse {
 	if (opts.all) return { reuse: false, changed: "--all" };
+	if (now.served === null) return { reuse: false, changed: "served build unreadable" };
 	if (!now.current)
 		return { reuse: false, changed: "stories not rendered from the current sources" };
 	if (now.kind === "screen" && now.uncomposed) return { reuse: false, changed: "uncomposed" };

@@ -125,7 +125,12 @@ describe.skipIf(SHOULD_SKIP)("indusk looks check — cost follows what changed",
 
 		clearRequests();
 		const second = check(root, home);
-		expect(requests(), "the second run asked the server for a page").toEqual([]);
+		// One plain read of the app's root tells which build is served (a reused result
+		// is keyed on it); no look is opened, so no browser asks for anything.
+		expect(
+			requests(),
+			"the second run asked the server for more than the build's identity",
+		).toEqual(["/"]);
 		expect(second.out).toMatch(/reused\s+home\.empty — held /);
 		expect(second.out).toMatch(/\b1 reused\b/);
 		expect(second.code).toBe(0);

@@ -10,9 +10,9 @@ import { join, relative } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
 import { checkApp } from "./check.js";
-import { fakeOpener, fixtureApp } from "./check-run.fixtures.js";
+import { fakeOpener, fixtureApp, servedPage } from "./check-run.fixtures.js";
 import { pageSourceFilter } from "./components.js";
-import { pageSourcesHashOf, sourcesHashOf } from "./mockups.js";
+import { pageSourcesHashOf, servedBuildOf, sourcesHashOf } from "./mockups.js";
 import {
 	type Held,
 	heldPath,
@@ -33,6 +33,7 @@ const story = {
 	snapshotHash: "s",
 	stylesheetHash: "c",
 	current: true,
+	served: "b",
 } as const;
 const held = { key: story, at: "2026-10-16T03:00:00.000Z", state: "held" as const };
 
@@ -65,6 +66,7 @@ describe("whether a look's last held result is reused", () => {
 			path: "/home",
 			seed: "",
 			current: true,
+			served: "b",
 			uncomposed: false,
 		} as const;
 		const h = { key: screen, at: held.at, state: "held" as const };
@@ -100,6 +102,7 @@ describe("whether a look's last held result is reused", () => {
 		await checkApp(app, approvals, "http://app", storyApprovals, {
 			opener: fakeOpener(answers),
 			projectRoot: root,
+			fetchPage: servedPage,
 			home,
 		});
 		writeFileSync(join(root, "src", "Edited.jsx"), "export const edited = 1;\n");
@@ -107,6 +110,7 @@ describe("whether a look's last held result is reused", () => {
 		const report = await checkApp(app, approvals, "http://app", storyApprovals, {
 			opener,
 			projectRoot: root,
+			fetchPage: servedPage,
 			home,
 		});
 		expect(opener.opened.sort()).toEqual(["home.empty", "story home.full"]);
@@ -116,7 +120,7 @@ describe("whether a look's last held result is reused", () => {
 
 	it("A6: a page-code edit reopens every screen and no story; an uncomposed screen is never reused; a changed seed reopens its screen", async () => {
 		const { app } = await fixtureApp(["home.full"], ["home.full"]);
-		const facts = { current: true, pageSourcesHash: "p", schemes: ["light", "dark"] };
+		const facts = { current: true, pageSourcesHash: "p", schemes: ["light", "dark"], served: "b" };
 		const edited = { ...facts, pageSourcesHash: "p2" };
 		const screenLook = { screen: "home", state: "full" };
 		const storyLook = { name: "home.full", component: "home", state: "full", id: "home--full" };
@@ -172,7 +176,7 @@ describe("whether a look's last held result is reused", () => {
 
 	it("A19: a changed foundation reopens every look, story and screen alike", async () => {
 		const { app } = await fixtureApp(["home.full"], ["home.full"]);
-		const facts = { current: true, pageSourcesHash: "p", schemes: ["light", "dark"] };
+		const facts = { current: true, pageSourcesHash: "p", schemes: ["light", "dark"], served: "b" };
 		const looks = [
 			{ screen: "home", state: "full" },
 			{ name: "home.full", component: "home", state: "full", id: "home--full" },
@@ -225,5 +229,55 @@ describe("where held results are kept", () => {
 		writeHeld(repo, "admin", { "story:badge.ok": held }, home);
 		writeFileSync(heldPath(repo, "admin", home), "{ not json");
 		expect(readHeld(repo, "admin", home)).toEqual({});
+	});
+});
+
+describe("what is actually served joins the key", () => {
+	it("tells a build by its assets and inline styles, not by the page's text", () => {
+		const page = (text: string, css: string) =>
+			`<link rel="stylesheet" href="/${css}.css"><script src="/a.js"></script><p>${text}</p>`;
+		expect(servedBuildOf(page("one", "x"))).toBe(servedBuildOf(page("two", "x")));
+		expect(servedBuildOf(page("one", "x"))).not.toBe(servedBuildOf(page("one", "y")));
+		expect(servedBuildOf("<p>nothing to tell by</p>")).toBeNull();
+	});
+
+	it("reopens a look whose served build changed, and reuses nothing when the build cannot be read", () => {
+		expect(reuseOf(held, { ...story, served: "b2" })).toEqual({
+			reuse: false,
+			changed: "served build",
+		});
+		expect(reuseOf(held, { ...story, served: null })).toEqual({
+			reuse: false,
+			changed: "served build unreadable",
+		});
+	});
+
+	it("a check against another build opens the look and keeps its result under that build", async () => {
+		const { app, approvals, root, home } = await fixtureApp(["home.empty"]);
+		const build = (name: string) => async () => `<link rel="stylesheet" href="/${name}.css">`;
+		const run = async (fetchPage: () => Promise<string>, answers: Record<string, "held"> = {}) => {
+			const opener = fakeOpener(answers);
+			const report = await checkApp(app, approvals, "http://app", [], {
+				opener,
+				projectRoot: root,
+				home,
+				fetchPage,
+			});
+			return { opener, report };
+		};
+		await run(build("old"), { "home.empty": "held" });
+		const same = await run(build("old"));
+		expect(same.opener.opened).toEqual([]);
+		const other = await run(build("new"), { "home.empty": "held" });
+		expect(other.opener.opened).toEqual(["home.empty"]);
+		expect(other.report.reused).toEqual([]);
+		const unread = await run(
+			async () => {
+				throw new Error("connection refused");
+			},
+			{ "home.empty": "held" },
+		);
+		expect(unread.opener.opened).toEqual(["home.empty"]);
+		expect(unread.report.notice).toMatch(/could not be read/);
 	});
 });
