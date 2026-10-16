@@ -366,6 +366,9 @@
 {"plan":"one-promise-language","phase":3,"kind":"build","sha":"b3dc03a5f73527a8d1ae31eda9cea94cb4f796c7","timestamp":"2026-10-15T22:57:04.606Z"}
 {"plan":"one-promise-language","phase":4,"kind":"build","sha":"cd6d84359449c150f45cc1064c83dbf8c2200736","timestamp":"2026-10-15T23:13:42.399Z"}
 {"plan":"one-promise-language","phase":5,"kind":"build","sha":"e97ca8b467433f277fbfc4387c95bf8b7413de42","timestamp":"2026-10-16T00:14:06.380Z"}
+{"plan":"nav-stage-matches-plan-page","phase":1,"kind":"test","sha":"03852fb3fcfcdffbebcc5e05f43561b15b1e40c2","timestamp":"2026-10-16T15:37:01.801Z"}
+{"plan":"nav-stage-matches-plan-page","phase":1,"kind":"build","sha":"b4911293cfd80638e7ef478f51285556d40dc881","timestamp":"2026-10-16T16:27:27.293Z"}
+{"plan":"nav-stage-matches-plan-page","phase":2,"kind":"build","sha":"a5397633d96644ab7ae8eb96d18357692c05288b","timestamp":"2026-10-16T16:44:59.404Z"}
 {"plan":"looks-check-speed","phase":1,"kind":"test","sha":"63556c93a4a782dd4dbeac2acce84f0249a51713","timestamp":"2026-10-16T11:15:12.139Z"}
 {"plan":"looks-check-speed","phase":1,"kind":"build","sha":"477bb811b614fd309039b6af878b0cae10658140","timestamp":"2026-10-16T11:20:02.744Z"}
 {"plan":"looks-check-speed","phase":2,"kind":"build","sha":"d3e18a43b1d6c75fd42c896653677aa90acc03e3","timestamp":"2026-10-16T11:25:48.131Z"}
