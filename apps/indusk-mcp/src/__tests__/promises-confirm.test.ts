@@ -17,6 +17,7 @@ import { toolCaller } from "./helpers/tool-call.js";
 
 /**
  * promise: a-closed-plan-kept-its-promises — planner-promises A8–A11.
+ * promise: a-plan-holds-the-promises-it-lands — plans-are-promises A9, A11 (closing per clause).
  *
  * A plan closes with its promises proven or it does not close. `indusk
  * promises confirm <plan>` moves each promise the plan declared to `enforced`,
@@ -311,5 +312,107 @@ describe.skipIf(SHOULD_SKIP)("A43 — a plan archived with a promise still decla
 
 		const after = runCli(p.planRoot, ["promises", "check"]);
 		expect(after.code, after.stderr).toBe(0);
+	});
+});
+
+/**
+ * plans-are-promises A9 and A11 (closing half) — a promise stated as clauses
+ * is confirmed only when every split and limit clause has a passing row with
+ * a test file, and every clause resting on another promise has that promise
+ * in force. The refusal names the clause; the promise stays declared.
+ */
+describe.skipIf(SHOULD_SKIP)("plans-are-promises A9 — closing wants every clause proved", () => {
+	const BASE = "seat-map-never-stale";
+	const clauses = [
+		{ name: "fast", kind: "split", statement: "Released in under a second." },
+		{ name: "never-lost", kind: "limit", statement: "No hold is lost." },
+		{ name: "base", kind: "rests-on", rests_on: BASE },
+	];
+	const clauseRow = (clause: string, state = "passing") => ({
+		state,
+		cells: { For: `clause: ${NAME}/${clause}`, Test: TEST },
+	});
+
+	function closing(opts: { rows: ImplSpec["rows"]; baseState?: "declared" | "enforced" }) {
+		fixture = promiseProject({
+			domains: ["seating"],
+			landed: { "seats-v1": "2026-09-01" },
+			promises: [
+				{
+					name: NAME,
+					kind: "state",
+					state: "declared",
+					domain: "seating",
+					owner: PLAN,
+					raw: matter.stringify(`${SENTENCE}\n\n## History\n- 2026-10-16 — declared.\n`, {
+						name: NAME,
+						kind: "state",
+						lifetime: "holds",
+						state: "declared",
+						domain: "seating",
+						owner: PLAN,
+						sites: [],
+						tests: [],
+						incidents: [],
+						clauses,
+					}),
+				},
+				{
+					name: BASE,
+					kind: "structure",
+					state: opts.baseState ?? "enforced",
+					domain: "seating",
+					owner: "seats-v1",
+					statement: "The seat map is never stale.",
+					tests: ["src/seat-map.test.ts"],
+				},
+			],
+			planFiles: {
+				[`${PLAN}/brief.md`]: briefText(PLAN, { makes: [{ name: NAME, sentence: SENTENCE }] }),
+				[`${PLAN}/impl.md`]: implText(PLAN, impl(opts.rows)),
+			},
+			files: {
+				[SITE]: siteFile(NAME),
+				[TEST]: testFile(NAME),
+				"src/seat-map.test.ts": testFile(BASE),
+			},
+		});
+		return fixture;
+	}
+
+	it("with one clause unproved, stays declared and the refusal names the clause", () => {
+		const p = closing({ rows: [clauseRow("fast")] });
+		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain("never-lost");
+		expect(promise(p).data.state).toBe("declared");
+	});
+
+	it("confirms once every clause has a passing row with a test file", () => {
+		const p = closing({ rows: [clauseRow("fast"), clauseRow("never-lost")] });
+		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(r.code, r.stdout + r.stderr).toBe(0);
+		expect(promise(p).data.state).toBe("enforced");
+	});
+
+	it("a clause resting on a promise not in force is unproved, and the refusal names it", () => {
+		const p = closing({
+			rows: [clauseRow("fast"), clauseRow("never-lost")],
+			baseState: "declared",
+		});
+		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain("base");
+		expect(promise(p).data.state).toBe("declared");
+	});
+
+	it("a clause resting on a promise in force is proved by it, with no row of its own", () => {
+		const p = closing({
+			rows: [clauseRow("fast"), clauseRow("never-lost")],
+			baseState: "enforced",
+		});
+		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(r.code, r.stdout + r.stderr).toBe(0);
+		expect(promise(p).data.state).toBe("enforced");
 	});
 });
