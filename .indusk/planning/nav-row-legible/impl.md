@@ -321,7 +321,7 @@ The finished row hands its whole click area to a link stretched over the row by 
 
 #### Build Phase 3 Document
 
-- [ ] (none needed — internal fixes with no change to what the docs say)
+- [x] (none needed — asked: "Build Phase 3 is internal fixes with no change to what the docs say. Can I skip the document gate?" — user: "yes skip it")
   <details><summary>Technical</summary>
 
   Gate policy is `ask`: ask the person before checking this off with proof.
