@@ -502,7 +502,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
   `checkApp`: `CheckOptions` gains `projectRoot`, `home`; `CheckReport` gains `reused: { look: string; kind: "screen" | "story"; at: string }[]`. Before opening, partition the checkable looks with `reuseOf`; looks named by `only` are always opened. After the run, write back: a look held at every device × scheme gets `{ key, at: now, state: "held" }`, a look broken or unchecked anywhere is deleted. `now` is an input (`opts.now ?? new Date()`). `src/bin/commands/looks.ts`: print `reused  <subject> — held <at>, unchanged` per reused look, before unchecked lines; summary `<app>: <h> held, <r> reused[, <u> unchecked]`; a run with no result and every look reused exits 0. A1.
 
   </details>
-- [ ] Make a reused look send a signal that it held, marked as reused, with the time it was really measured.
+- [x] Make a reused look send a signal that it held, marked as reused, with the time it was really measured.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/vocabulary.ts` `LOOK_MARK`: add `reused: "indusk.look.reused"` and `measuredAt: "indusk.look.measured_at"`. `apps/indusk-mcp/src/lib/looks/report.ts` `reportLooks(results, tracer, opts: { project?; reused?: Reused[] })`: for each reused look, one `indusk.looks.check` span per device × scheme (`lookDevice`), the look's app, screen, state, device and kind, `markPromise` outcome `upheld`, plus `reused = true` and `measuredAt = at`. A measured result's span carries neither. `src/bin/commands/looks.ts` passes `report.reused`. Docblock: a reused span is the held result restated, never a measurement (Sandy, 2026-10-16). A9.
