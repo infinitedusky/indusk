@@ -215,8 +215,9 @@ function items(lines: Line[], marker: RegExp): Item[] {
 	let contentIndent = 0;
 	for (const line of lines) {
 		const lead = /^ */.exec(line.text)?.[0].length ?? 0;
-		const nested = current !== null && lead >= contentIndent && /^\s+[-*]\s/.test(line.text);
-		const top = nested ? null : marker.exec(line.text);
+		const nested: boolean =
+			current !== null && lead >= contentIndent && /^\s+[-*]\s/.test(line.text);
+		const top: RegExpExecArray | null = nested ? null : marker.exec(line.text);
 		if (top) {
 			contentIndent = top[0].length;
 			current = { text: line.text.slice(top[0].length), subs: [], n: line.n };

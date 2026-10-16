@@ -170,7 +170,7 @@ This phase gives a promise its parts. A brief that opts in states each promise's
   `apps/indusk-mcp/src/lib/promises/brief-contract.ts`: `BriefMade` gains `clauses: BriefClause[]` (`{ name, kind: "split" | "limit" | "rests-on", sentence, restsOn? }`); `readMakes` reads an entry's sub-bullets `- **\`name\`** (split|limit). sentence` and `- **\`name\`** (rests on \`promise\`).` instead of discarding them; a sub-bullet that names a clause and does not parse is a `problem`. `BriefContract` gains `clausesRequired: boolean` from frontmatter `clauses: required`.
 
   </details>
-- [ ] A promise's registry file can carry its clauses, and a malformed list is reported.
+- [x] A promise's registry file can carry its clauses, and a malformed list is reported.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/promises/registry.ts`: `PromiseEntry.clauses?: PromiseClause[]`; `promiseProblem` reports a non-list, a duplicate name, a kind outside `PROMISE_CLAUSE_KINDS` (new in `vocabulary.ts`: `split | limit | rests-on`), a `rests-on` with no `rests_on`.
