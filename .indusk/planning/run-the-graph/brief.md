@@ -38,9 +38,11 @@ which does not exist before then.
    - **`no-needless-wait`** (limit). No phase is held back by a phase it neither depends on nor shares a file with.
    - **`graph-is-current`** (limit). When a phase ends, a plan is approved or a plan lands, the graph is read again before any next phase starts.
    - **`within-the-cap`** (rests on `sessions-are-capped`).
+   - **`reviews-are-phases`** (limit). Falsify, cleanup and the audit's fixes each run as phases of the graph, with the same dependencies, files and order as any other phase.
 2. **`a-phase-builds-on-its-own-branch`** (state). Each phase works in its own worktree off its plan's branch, merges in what came before it when it starts, and merges into the plan's branch only when its check is green; only the plan's branch reaches main, once its promises are verified.
    - **`own-worktree`** (limit). Every running phase has its own worktree and branch, cut from its plan's branch.
    - **`starts-from-its-dependencies`** (limit). A phase starts with every finished phase it depends on merged into its worktree.
+   - **`starts-from-the-work-it-waited-for`** (limit). A phase that waited on another plan's phase for a file starts with that phase's finished work merged into its worktree, landed or not.
    - **`green-before-merging`** (limit). A phase merges into its plan's branch only when the check it ends with is green.
    - **`only-the-plan-lands`** (limit). Nothing reaches main from a phase's branch; only a plan's branch, once its promises are verified.
 3. **`earlier-plans-go-first`** (state). When phases of different plans are ready and want the same file, the phase of the plan that comes first — earlier in its master's order, else approved earlier — runs next.
