@@ -1,7 +1,7 @@
 ---
 title: "Looks check speed"
 date: 2026-10-16
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -832,6 +832,53 @@ A fresh reader went looking for ways a changed look could be reported held from 
 
   `adr.md` Accepting: add "code outside `sources` that the app imports (the admin reads `@infinitedusky/indusk-mcp`'s parsers) is in no key, like the data it shapes"; Decision 2's amendment: a look measured against an old build is not kept. Mirror both in `apps/docs/src/decisions/looks-check-speed.md`; `apps/docs/src/reference/cli/looks.md`: the stale-server notice and the checker hash.
 
+  </details>
+
+### Build Phase 5: Cleanup — the look check, one job per file
+
+**Tier**: med — the work step's default
+
+This plan doubled the look check's main file, from 633 lines to 1,232, and it now does four jobs in one place: deciding which looks a run opens and which it reuses, reading what the server serves before anything opens, driving the browser to load and measure a page at every device and scheme, and judging the measured values. Each job changes for its own reasons, so each gets its own file, with the run itself staying where it is. Nothing changes in what the check does; every row that passes today still passes.
+
+- [ ] Move the reading of the served page — the root request, the development-server refusal, the served build — into its own file.
+  <details><summary>Technical</summary>
+
+  `readServed`, `within` and the served-build reading from `check.ts` into `lib/looks/served.ts`, beside `dev-server.ts`.
+  </details>
+- [ ] Move the browser work — launching it, loading a page, measuring in place or fresh, and the mount-time fallback — into its own file.
+  <details><summary>Technical</summary>
+
+  `loadChromium`, `launch`, `loadPage`, `measureInPlace`, `measureFresh`, `measureScript`, `chromiumOpener`, `openWithinTime` into `lib/looks/browser.ts`; the `LookOpener` seam stays the one way the run reaches it.
+  </details>
+- [ ] Move the planning of a run's reuse — which looks reopen, the notices, keeping what held — next to the reuse rule.
+  <details><summary>Technical</summary>
+
+  `planReuse`, `reuseNotice`, `keepHeld` from `check.ts` into `reuse.ts` (or `lib/looks/reuse-run.ts` if `reuse.ts` passes its cap); `checkApp` calls them.
+  </details>
+- [ ] (reviewed `lib/looks/reuse.ts` and `dev-server.ts` — left as they are: each already holds one rule)
+
+#### Build Phase 5 Verification
+
+- [ ] The look check behaves exactly as before, and every row still passes.
+  <details><summary>Technical</summary>
+
+  `cd apps/indusk-mcp && pnpm build && pnpm exec vitest related src/lib/looks/*.ts` and the plan's row test files; `pnpm exec tsc --noEmit -p .`; no file under `lib/looks/` over its cleanup cap.
+  </details>
+
+#### Build Phase 5 Context
+
+- [ ] The looks area's context file names which file holds each job.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/looks/CLAUDE.md`: one line — served page, browser, reuse planning, verdict, the run.
+  </details>
+
+#### Build Phase 5 Document
+
+- [ ] The decision page lists where each part of the check now lives.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/decisions/looks-check-speed.md`: an "As built" line naming the files.
   </details>
 
 ## Files Affected
