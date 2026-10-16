@@ -191,13 +191,13 @@ This phase gives a promise its parts. A brief that opts in states each promise's
 
 #### Build Phase 1 Verification
 
-- [ ] The tests for clauses in the brief and the registry pass.
+- [x] The tests for clauses in the brief and the registry pass.
   <details><summary>Technical</summary>
 
   A1, A2, A3, A4 (goes green), A13 still passing: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promise-clauses.test.ts src/__tests__/promises-declare.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/promises/brief-contract.ts src/lib/promises/registry.ts src/lib/promises/write.ts src/lib/promises/contract.ts --run`; `pnpm promises:check` passes over the whole registry.
 
   </details>
-- [ ] The first half of the resting-clause test passes.
+- [x] The first half of the resting-clause test passes.
   <details><summary>Technical</summary>
 
   A11's declaration half goes green; its closing half stays red until Build Phase 3.
