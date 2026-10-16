@@ -3,6 +3,7 @@ title: "Run the graph"
 date: 2026-10-16
 status: draft
 workflow: feature
+clauses: required
 description: "An approved plan's phases run in parallel as a graph: each phase on its own branch off its plan's branch, started as soon as what it depends on is done and no running phase touches its files, earlier plans first, so a master finishes in the time of its longest chain rather than the sum of its phases."
 ---
 
@@ -13,6 +14,11 @@ Sandy on 2026-10-16 (`promise-core`'s master, "Phases are units of work",
 "Earlier plans go first", "Phases branch off the plan"). Today a plan's phases
 run one after another in one worktree, one session at a time, and the person
 starts each with the command the last one named.
+
+Written in the shape `plans-are-promises` defines (Sandy, 2026-10-16): each
+promise stated as clauses. It stays a draft until that plan is built, since its
+promises are declared with their clauses (`indusk promises declare --clause`),
+which does not exist before then.
 
 ## Expectations
 
@@ -28,16 +34,31 @@ starts each with the command the last one named.
 ### This plan makes
 
 1. **`the-work-runs-as-a-graph`** (behaviour). Every phase whose dependencies are done and whose files no running phase touches is running, up to the session cap, and no phase waits on one it does not depend on.
+   - **`ready-phases-start`** (split). A phase becomes ready when the last phase it depends on finishes, and starts within one minute while the session cap has room.
+   - **`no-needless-wait`** (limit). No phase is held back by a phase it neither depends on nor shares a file with.
+   - **`graph-is-current`** (limit). When a phase ends, a plan is approved or a plan lands, the graph is read again before any next phase starts.
+   - **`within-the-cap`** (rests on `sessions-are-capped`).
 2. **`a-phase-builds-on-its-own-branch`** (state). Each phase works in its own worktree off its plan's branch, merges in what came before it when it starts, and merges into the plan's branch only when its check is green; only the plan's branch reaches main, once its promises are verified.
-3. **`earlier-plans-go-first`** (state). When phases of different plans are ready and want the same file, the earliest plan's phase runs next.
+   - **`own-worktree`** (limit). Every running phase has its own worktree and branch, cut from its plan's branch.
+   - **`starts-from-its-dependencies`** (limit). A phase starts with every finished phase it depends on merged into its worktree.
+   - **`green-before-merging`** (limit). A phase merges into its plan's branch only when the check it ends with is green.
+   - **`only-the-plan-lands`** (limit). Nothing reaches main from a phase's branch; only a plan's branch, once its promises are verified.
+3. **`earlier-plans-go-first`** (state). When phases of different plans are ready and want the same file, the phase of the plan that comes first — earlier in its master's order, else approved earlier — runs next.
+   - **`earliest-next`** (limit). Of ready phases that want a file a running phase holds, the earliest plan's runs next when that file is free.
+   - **`never-interrupted`** (limit). A running phase is never stopped to let an earlier plan's phase in; the earlier one goes next.
 4. **`main-cascades`** (behaviour). When anything lands on main, every open plan's branch merges it, and a running phase's worktree merges it when that phase ends; a conflict is resolved by an agent with the plan's tests as the check, or becomes a question when it cannot be.
+   - **`branches-follow-main`** (split). Within five minutes of a landing, every open plan's branch with no running phase has merged it.
+   - **`phase-merges-at-its-end`** (limit). A running phase merges main when it ends, before its plan's next phase starts.
+   - **`agent-resolves-first`** (limit). A conflicting merge is resolved by an agent and kept only with the plan's tests passing; otherwise it becomes a question naming the files.
 5. **`landing-follows-what-it-pulled`** (state). A plan whose phase pulled another plan's unlanded work cannot land before that plan, and merges that work again before it lands.
+   - **`lands-after`** (limit). A plan holding another plan's unlanded work is refused landing, naming that plan, until it has landed.
+   - **`merges-again-before-landing`** (limit). Before it lands, such a plan merges main with the other plan's landed work in it.
 
 ### Existing promises
 
 **Must not break**
 
-- **`sessions-are-capped`**. The graph runs as many phases at once as the cap allows, never more.
+- **`sessions-are-capped`**. The graph runs as many phases at once as the cap allows, never more; `the-work-runs-as-a-graph` rests on it.
 - **`a-plan-builds-only-after-approval`**. Only an approved plan's phases enter the graph.
 - **`a-plan-is-written-on-its-own-branch`**. The plan's branch stays where its build lands from; phases branch off it.
 - **`a-plan-boundary-names-the-next-session`**. A phase boundary still names the command for what runs next; the runner runs it.
@@ -63,7 +84,7 @@ None — the runner changes no screen; seeing the graph is `daily-list-and-graph
 
 ## Depends On
 
-- `.indusk/planning/plans-are-promises/` — test rows that name the clause they prove.
+- `.indusk/planning/plans-are-promises/` — promises stated as clauses, declared with them, and test rows that name the clause they prove.
 - `.indusk/planning/mark-first/` — built after it (Sandy, 2026-10-15).
 
 ## Blocks
