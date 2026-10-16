@@ -122,3 +122,5 @@ files; each shared reading already defined once).
 Shape ran at every build phase. It raised **1** finding across the plan (Build
 Phase 5: the no-signal reading written out twice, named once as
 `readsNoSignal`); Build Phases 1–4 raised nothing. A person judged **0** wrong.
+
+Landed on main at 67ddf962, 2026-10-16. Installed with `pnpm install:local`; nothing published (dusk installs its own build; a publish is `indusk release`, the operator's call).
