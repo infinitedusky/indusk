@@ -4,14 +4,13 @@ import { NavPlanRow } from "@/components/cockpit/NavItems";
 import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
 import { HoldingBadge } from "@/components/HoldingBadge";
 import { Badge } from "@/components/ui/Badge";
-import { statusToNavMark } from "@/components/ui/badge-variant";
 import { NavGroup } from "@/components/ui/Nav";
 import { NavPath } from "@/components/ui/NavPath";
 import { PlanRow } from "@/components/ui/PlanRow";
 import { PlanWorktreeMark } from "@/components/Worktrees";
 import { initialsOf } from "@/lib/initials";
 import { buildGroups, orderByMaster, type PlanGroup } from "@/lib/plan-groups";
-import { planStage } from "@/lib/plan-stage";
+import { navMarkOf } from "@/lib/plan-stage";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanListProps {
@@ -326,22 +325,20 @@ function PlanItem({
   waiting?: Record<string, string>;
   number?: number;
 }) {
-  const step = waiting?.[plan.name];
-  const mark = statusToNavMark(plan.status, plan.archived);
-  const stage = planStage(plan, released, waiting);
+  const mark = navMarkOf(plan, released, waiting);
   return (
     <li>
       <NavPlanRow
         href={`${prefix}${plan.name}`}
         data-plan-name={plan.name}
         initials={initialsOf(plan.title)}
-        state={step === undefined ? mark.state : "needs"}
+        state={mark.state}
         name={plan.title}
         number={number === undefined ? "" : <PlanNumber number={number} />}
         worktree={plan.worktree ? <PlanWorktreeMark plan={plan} /> : undefined}
         stage={
           <>
-            {stage}
+            {mark.stage}
             {plan.malformed && (
               <Badge variant="blocked" data-testid={`malformed-${plan.name}`}>
                 malformed

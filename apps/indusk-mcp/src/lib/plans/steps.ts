@@ -199,6 +199,26 @@ export function planSteps(plan: PlanSnapshot): PlanWorkflows {
 }
 
 /**
+ * The step a plan is at: the first step, Planning then Release, that is current
+ * or needs the person; else the first not yet begun (an approved impl not yet
+ * built is at Build); null when none is left.
+ */
+export function stepAt(
+	plan: PlanSnapshot,
+): (PlanStep<string> & { workflow: "planning" | "release" }) | null {
+	const { planning, release } = planSteps(plan);
+	const steps = [
+		...planning.map((s) => ({ ...s, workflow: "planning" as const })),
+		...release.map((s) => ({ ...s, workflow: "release" as const })),
+	];
+	return (
+		steps.find((s) => s.state === "current" || s.state === "needs-you") ??
+		steps.find((s) => s.state === "not-yet") ??
+		null
+	);
+}
+
+/**
  * "n of m" for one list. A skipped step is neither done nor owed, so it is in
  * neither number: a plan whose falsification was skipped with a reason is
  * complete at five of five.

@@ -69,7 +69,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **One home per piece**: rows table `components/phases/`,
   progress lines `bars/ProgressLines`, display vocabulary (`phaseTitle`:
   `Phase 4`, not `phaseLabel`; a plan is `plan.title`, initials from it, the
-  handle only for links, data attributes; its stage is `planStage`, a queued
+  handle only for links, data attributes; its stage and mark are `planStage`/`navMarkOf` in `lib/plan-stage.ts`: waiting, else Released from a release's date, else the package's `stepAt` (`plans/steps`), else Closed — never the impl's `status:` (the project card's `hasWorkInProgress` and the copied markdown's `Stage:` line ask the same answer), which `/work` sets `completed` before the rituals; guarded by `plan-stage.test.ts` and `cockpit-single-definition.test.ts`; a queued
   plan's title rides its `buildGroups` placeholder) and chip/label maps in
   `bars/labels.ts`, badge maps `ui/badge-variant.ts`, research reads
   `lib/research-reader.ts`, project reads `lib/project-reader.ts` (config

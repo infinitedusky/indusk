@@ -1,7 +1,10 @@
 // promise: a-master-plan-tells-its-story
+// promise: the-nav-says-where-a-plan-is
+import { derivePlanPosition } from "@infinitedusky/indusk-mcp/lifecycle";
 import { describe, expect, it } from "vitest";
 import { masterStory } from "@/lib/master-story";
 import { buildGroups } from "@/lib/plan-groups";
+import { planStage } from "@/lib/plan-stage";
 import type { Plan } from "@/lib/planning-reader";
 
 const plan = (name: string, over: Partial<Plan> = {}): Plan =>
@@ -88,5 +91,53 @@ describe("masterStory", () => {
       queued: 1,
       total: 4,
     });
+  });
+});
+
+/** A5 — the master page reads each plan at the stage the nav row reads it. */
+describe("masterStory — the same stage as the nav row (A5)", () => {
+  const builtPosition = derivePlanPosition({
+    summary: {
+      name: "two",
+      stage: "impl",
+      stageStatus: "completed",
+      nextStep: "",
+      dependencies: [],
+      documents: ["brief.md", "test-plan.md", "impl.md"],
+      workflow: "bugfix",
+    },
+    impl: null,
+    readiness: {
+      missing: ["falsification", "cleanup", "audit"],
+      nonTerminalRows: [],
+      unprovenPromises: [],
+      longSkipReasons: [],
+    } as never,
+    archived: false,
+  });
+
+  it("a built, unfalsified plan reads Falsify and a released one Released, as the nav reads them", () => {
+    const two = plan("two", {
+      status: "completed",
+      workflow: "bugfix",
+      position: builtPosition,
+    });
+    const active = [plan("m"), two, plan("inner")];
+    const archived = [
+      plan("one", { archived: true, status: "completed" }),
+      plan("deep", { archived: true, status: "completed" }),
+    ];
+    const isReleased = (n: string) => n === "one" || n === "deep";
+    const { groups } = buildGroups(active, archived, grouping, isReleased);
+    const group = groups[0];
+    if (!group) throw new Error("no group");
+    const { rows } = masterStory(group, isReleased, {
+      prefix: "/p/x/plan/",
+      waiting: {},
+    });
+    expect(rows[1]).toMatchObject({ stage: "Falsify" });
+    expect(rows[1]?.stage).toBe(planStage(two, false, {}));
+    expect(rows[0]).toMatchObject({ stage: "Released" });
+    expect(rows[0]?.stage).toBe(planStage(archived[0] as Plan, true, {}));
   });
 });
