@@ -182,7 +182,7 @@ describe("a master plan's page tells its story", () => {
     expect(row("draft")?.getAttribute("href")).toBe(
       `/p/${PROJECT}/plan/beta-two`,
     );
-    expect(row("draft")?.textContent).toContain("Building");
+    expect(row("draft")?.textContent).toContain("Research");
     expect(row("queued")?.tagName).not.toBe("A");
     expect(row("queued")?.textContent).toContain("Queued");
     expect(row("queued")?.textContent).toContain("The third, not started.");

@@ -30,6 +30,7 @@ vi.mock("next/link", () => {
   return { default: MockLink, __esModule: true };
 });
 
+import { derivePlanPosition } from "@infinitedusky/indusk-mcp/lifecycle";
 import { PlanList } from "./PlanList";
 
 /**
@@ -70,7 +71,29 @@ describe("T11 — an archived subplan is not a placeholder", () => {
       <PlanList
         active={[mockPlan("parent")]}
         archived={[
-          mockPlan("done-child", { status: "completed", archived: true }),
+          mockPlan("done-child", {
+            status: "completed",
+            archived: true,
+            position: derivePlanPosition({
+              summary: {
+                name: "done-child",
+                stage: "impl",
+                stageStatus: "completed",
+                nextStep: "",
+                dependencies: [],
+                documents: ["brief.md", "test-plan.md", "impl.md"],
+                workflow: "bugfix",
+              },
+              impl: null,
+              readiness: {
+                missing: [],
+                nonTerminalRows: [],
+                unprovenPromises: [],
+                longSkipReasons: [],
+              } as never,
+              archived: true,
+            }),
+          }),
         ]}
         masterOrder={[]}
         grouping={grouping}
