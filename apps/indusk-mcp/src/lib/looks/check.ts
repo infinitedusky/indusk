@@ -840,8 +840,11 @@ async function readServed(
 		return servedBuildOf(html);
 	};
 	return {
-		// The app's root, not a look's page: each look's page is then requested once, by its look.
-		screens: await read(firstScreen && new URL("/", base).toString()),
+		// The app's root at the base URL's own path, not a look's page: each look's
+		// page is then requested once, by its look.
+		screens: await read(
+			firstScreen && new URL(".", base.endsWith("/") ? base : `${base}/`).toString(),
+		),
 		stories: await read(firstStory && storyUrl(base, firstStory.id)),
 	};
 }

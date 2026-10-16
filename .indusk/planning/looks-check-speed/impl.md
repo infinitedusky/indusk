@@ -743,7 +743,7 @@ A fresh reader went looking for ways a changed look could be reported held from 
   Done as: `assetUrlsOf(html)` in `mockups.ts` (single or double quotes), read by `servedBuildOf` and `devServerMarker`. The fixture `src/__tests__/fixtures/next-dev-admin-root.html` is the root page `next dev -p 3961` served the admin on 2026-10-16, its body's rendered data and inline scripts removed (they carried local paths); `hmr-client` is in its asset URLs. `/_next/webpack-hmr` is dropped: it is a WebSocket path in that page, never an asset; webpack's dev page is still told by `react-refresh`.
 
   </details>
-- [ ] Read the served page at the base URL's own path.
+- [x] Read the served page at the base URL's own path.
   <details><summary>Technical</summary>
 
   `check.ts` `readServed`: `new URL(".", base.endsWith("/") ? base : `${base}/`)` instead of `new URL("/", base)`. A35.
