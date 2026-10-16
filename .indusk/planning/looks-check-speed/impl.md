@@ -813,7 +813,7 @@ A fresh reader went looking for ways a changed look could be reported held from 
 
 #### Build Phase 4 Context
 
-- [ ] The looks code's own context file says a result measured against an old build is never kept, and what a story's and every look's key now hold.
+- [x] The looks code's own context file says a result measured against an old build is never kept, and what a story's and every look's key now hold.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/CLAUDE.md`, the reuse entry: "a look opened while the server serves a build from before the sources changed is reported, never kept; a story's key holds its slice with the element and body rules it draws under, every key the checker's own hash (`VERDICT_VERSION` is bumped with any verdict rule); development markers are read from asset URLs only. Guarded by `reuse.test.ts` (A28–A32)".
