@@ -43,7 +43,7 @@ None.
 
 ### This plan makes
 
-1. **`plan-row.worktree`**. Plan rows in the nav: the title, then the stage with a worktree mark beside it on rows that have one, one mark open to show its name and branch.
+1. **`plan-row.worktree`**. Plan rows in the nav: the title, then the stage with a worktree mark beside it on rows that have one, 8 px apart; otherwise identical to the nav today.
 2. **`worktree-mark.closed`**. The worktree mark on its own: a small bordered glyph, no text.
 3. **`worktree-mark.open`**. The worktree mark clicked: a small box under it with the worktree's name and branch.
 

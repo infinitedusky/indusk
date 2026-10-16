@@ -9,8 +9,9 @@
 		<style>
 			* { box-sizing: border-box; }
 			body { margin: 0; background: var(--color-ground); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-regular); }
-			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
-			.navcol { width: var(--size-nav); max-width: 100%; padding: var(--space-4) var(--space-3); display: grid; gap: var(--space-hair); background: var(--color-surface); min-height: 100vh; border-right-width: var(--border-1); border-right-style: solid; border-right-color: var(--color-line); }
+			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+			a { color: inherit; text-decoration: none; }
+			.navcol { width: var(--size-nav); max-width: 100%; padding: var(--space-4) var(--space-3); display: grid; align-content: start; gap: var(--space-hair); background: var(--color-ground); min-height: 100vh; border-right-width: var(--border-1); border-right-style: solid; border-right-color: var(--color-line); }
 			.group { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-ink-faint); margin: var(--space-3) var(--space-tight) var(--space-1); }
 			.pr { display: grid; grid-template-columns: var(--size-badge) minmax(0, 1fr); gap: var(--space-2); align-items: center; width: 100%; padding: var(--space-tight); border-width: var(--border-1); border-style: solid; border-color: transparent; border-radius: var(--radius-lg); text-align: left; color: var(--color-ink); text-decoration: none; }
 			.pr.current { border-color: var(--color-dusk); background: var(--color-dusk-wash); }
@@ -20,7 +21,7 @@
 			.stage { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); }
 			.pr.needs .stage { color: var(--color-dusk); }
 			.pr.queued .stage { font-style: italic; }
-			.wm { position: relative; flex-shrink: 0; display: grid; place-items: center; width: var(--size-badge); height: var(--leading-2); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-ink-soft); font-size: var(--text-2xs); line-height: var(--leading-1); }
+			.wm { position: relative; flex-shrink: 0; display: grid; place-items: center; width: var(--leading-2); height: var(--leading-2); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-ink-soft); font-size: var(--text-2xs); line-height: var(--leading-1); }
 			.wm[aria-expanded="true"] { border-color: var(--color-dusk); color: var(--color-dusk); }
 			.pop { position: absolute; top: calc(100% + var(--space-1)); left: 0; z-index: 1; display: grid; gap: var(--space-hair); padding: var(--space-2) var(--space-3); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface); text-align: left; white-space: nowrap; }
 			.pop b { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); font-weight: var(--font-weight-medium); color: var(--color-ink); }
@@ -30,7 +31,7 @@
 	<body>
 <nav class="navcol" aria-label="Plans">
 	<div class="group">Plans</div>
-	<div data-component="plan-row" data-state="worktree" class="pr current"><indusk-component name="badge" state="working">FL</indusk-component><span class="lines"><a class="name" href="#">Faster look checks</a><span class="stageline"><span class="stage">Falsify</span><button data-component="worktree-mark" data-state="open" class="wm" type="button" aria-expanded="true" aria-label="Worktree">⎇<span class="pop" role="tooltip"><b>looks-check-speed</b><span>plan/looks-check-speed</span></span></button></span></span></div>
+	<div data-component="plan-row" data-state="worktree" class="pr current"><indusk-component name="badge" state="working">FL</indusk-component><span class="lines"><a class="name" href="#">Faster look checks</a><span class="stageline"><span class="stage">Falsify</span><button data-component="worktree-mark" data-state="closed" class="wm" type="button" aria-expanded="false" aria-label="Worktree">⎇</button></span></span></div>
 	<div data-component="plan-row" data-state="worktree" class="pr needs"><indusk-component name="badge" state="needs">NS</indusk-component><span class="lines"><a class="name" href="#">The nav says where a plan is</a><span class="stageline"><span class="stage">Approve the brief</span><button data-component="worktree-mark" data-state="closed" class="wm" type="button" aria-expanded="false" aria-label="Worktree">⎇</button></span></span></div>
 	<a data-component="plan-row" data-state="released" class="pr" href="#"><indusk-component name="badge" state="released">PS</indusk-component><span class="lines"><span class="name">Plan stories</span><span class="stageline"><span class="stage">Released</span></span></span></a>
 	<a data-component="plan-row" data-state="idle" class="pr" href="#"><indusk-component name="badge" state="idle">LP</indusk-component><span class="lines"><span class="name">Looks as promises</span><span class="stageline"><span class="stage">Draft</span></span></span></a>
