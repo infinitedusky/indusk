@@ -87,6 +87,19 @@ function titled(ctx: RowContext, handle: string): string {
   return written && written !== handle ? written : ctx.sentenceOf(handle);
 }
 
+/**
+ * An enforced promise nothing has reported on: no signal, drawn grey and never
+ * as holding (one-promise-language). The one reading of it — the row's dot and
+ * the page's look state both ask here.
+ *
+ * promise: a-promise-is-upheld-or-broken
+ */
+export function readsNoSignal(
+  row: Pick<DashboardRow, "standing" | "held">,
+): boolean {
+  return row.standing === "enforced" && row.held === null;
+}
+
 /** One row per promise, from the package's standing and thirty days, in words, with its plan's title and Path. */
 export function buildRows(
   standing: StandingRow[],

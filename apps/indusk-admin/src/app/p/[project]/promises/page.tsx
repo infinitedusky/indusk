@@ -25,7 +25,7 @@ import {
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { readPlanHierarchy } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
-import { buildRows, parseQuery } from "@/lib/promise-dashboard";
+import { buildRows, parseQuery, readsNoSignal } from "@/lib/promise-dashboard";
 import { readTimelineView } from "@/lib/promise-timeline";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
@@ -175,7 +175,7 @@ export default async function PerProjectPromisesPage({
       data-look-state={dashboardLookState(
         registry !== null,
         rows.length,
-        rows.some((row) => row.standing === "enforced" && row.held === null),
+        rows.some(readsNoSignal),
       )}
     >
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />

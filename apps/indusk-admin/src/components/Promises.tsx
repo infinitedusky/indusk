@@ -25,6 +25,7 @@ import {
   filterRows,
   GROUPINGS,
   groupRows,
+  readsNoSignal,
   SORTINGS,
 } from "@/lib/promise-dashboard";
 import { stamp } from "@/lib/stamp";
@@ -356,9 +357,7 @@ function DashboardRowItem({
       <PromiseRow
         href={`${promiseHrefPrefix}${row.name}`}
         standing={
-          row.standing === "enforced" && row.held === null
-            ? "no-signal"
-            : STANDING_BADGE[row.standing]
+          readsNoSignal(row) ? "no-signal" : STANDING_BADGE[row.standing]
         }
         says={row.sentence}
         slug={
