@@ -1,7 +1,7 @@
 ---
 title: "One promise language"
 date: 2026-10-15
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -461,7 +461,8 @@ This phase makes the promise list stop showing a promise as healthy when nothing
 
   Found at verification (2026-10-16): the check read `promise-row.no-signal` unchecked — "the page did not report state no-signal". `app/p/[project]/promises/page.tsx` `dashboardLookState` now adds `promise-row.no-signal` beside `dashboard.default` when any row is enforced with no signal; confirmed on this branch's admin (`data-look-state="dashboard.default promise-row.no-signal"`).
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
+- [x] Shape (`apps/indusk-admin/src/lib/promise-dashboard.ts`) — the no-signal reading (enforced, never heard) was written out in the row's dot and in the page's look state; named once as `readsNoSignal`, which both ask. Rule: Should this inline block have been a named function? (shape: intra-unit)
 
 #### Build Phase 5 Verification
 
@@ -470,10 +471,12 @@ This phase makes the promise list stop showing a promise as healthy when nothing
 
   A21 goes green; `cd apps/indusk-admin && pnpm exec vitest run src/components/ui/PromiseRow.test.tsx src/components/PromiseWords.test.tsx && pnpm exec tsc --noEmit -p .`; `pnpm exec vitest related` over the changed files.
   </details>
-- [ ] The new row look matches its approved mockup.
+- [x] The new row look matches its approved mockup.
   <details><summary>Technical</summary>
 
   `indusk looks check admin` against this branch's admin holds `promise-row.no-signal` by value; the `promise-row.no-signal` story is approved by a person on the looks page.
+  
+  Result (2026-10-16, against this branch on :4955): exit 0, 820 held, none broken — `promise-row.no-signal` and its story held at all six devices and schemes; the story approved by Sandy.
   </details>
 
 #### Build Phase 5 Context
