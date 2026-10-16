@@ -343,7 +343,7 @@ This phase finishes the promise. Closing a plan — both the check that a plan i
 
 #### Build Phase 3 Context
 
-- [ ] The planning rules say a plan closes per clause.
+- [x] The planning rules say a plan closes per clause.
   <details><summary>Technical</summary>
 
   planning: `templates/planning/CLAUDE.md`, the close-out rule — "a promise stated as clauses is confirmed only when each split and limit clause has a passing row and each promise it rests on is in force." Synced as before.
