@@ -757,10 +757,12 @@ A fresh reader went looking for ways a changed look could be reported held from 
   Done as: `MOUNT_READS` (init script) wraps `matchMedia`, `window.addEventListener` and the `innerWidth`/`innerHeight`/`devicePixelRatio` getters; it is read once the page settles, before the check's own script asks for the scheme's query. Only queries a switch in place changes count (size, aspect ratio, orientation, resolution, pixel ratio, scheme): Storybook's frame asks `(prefers-reduced-motion: reduce)` once with no listener, which tripped every story until narrowed. `loadPage` and `contextAt` are shared by the in-place path and `measureFresh`. Probed against the admin's production build on :3940 (stopped after): the root, every unseeded screen state and every story — 154 pages — none reads on mount, so the admin keeps one load per look. Not detected: a page that reads layout once (`clientWidth`, `getBoundingClientRect`) with no `ResizeObserver` — outside this row.
 
   </details>
-- [ ] Prove that a look held everywhere but at one device and scheme is not kept.
+- [x] Prove that a look held everywhere but at one device and scheme is not kept.
   <details><summary>Technical</summary>
 
   `check-run.test.ts`: `fakeOpener` answers held at five device × scheme pairs and broken (and, separately, unchecked) at the sixth; after the run the record has no entry for the look and the next run opens it. Extend `fakeOpener` to answer per device if it cannot today. A37.
+
+  Done as: `fakeOpener` answers `{ "<device>/<scheme>": "broken" | "unchecked" }` (broken: the first token off its value; unchecked: no state reported, or the other scheme for a story), and takes an `onOpen` hook (A32). Both cases — broken at `phone/dark`, unchecked at `desktop/dark` — passed when written: `keepHeld` already removed such a look; the row closes the audit's coverage gap rather than a defect.
 
   </details>
 - [ ] Correct the row that says a second unchanged run requests no page.
