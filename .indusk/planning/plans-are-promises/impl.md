@@ -1,7 +1,7 @@
 ---
 title: "Plans are promises"
 date: 2026-10-16
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "fe936485f782398ef751f5d38fb59ede90f0f38bf607e502aae9a8efaa8ecd88"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-16T16:27:41.051Z"
 ---
 
 # Plans are promises
