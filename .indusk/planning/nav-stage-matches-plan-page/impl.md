@@ -1,7 +1,7 @@
 ---
 title: "The nav says where a plan is"
 date: 2026-10-16
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "7102d47e8bc3e64f2f3787574ccef3ad220e406f219515c1b4e506415968ea49"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-16T15:18:14.904Z"
 ---
 
 # The nav says where a plan is
