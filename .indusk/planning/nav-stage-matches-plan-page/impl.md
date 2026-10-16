@@ -1,7 +1,7 @@
 ---
 title: "The nav says where a plan is"
 date: 2026-10-16
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -81,7 +81,7 @@ no file read.
 
 Before anything changes, this phase writes down what the nav row must read and proves today's row gets it wrong. A plan is built at each point of its life, using the same position reader the plan page uses, and the row's words are compared with the step the page shows; a plan whose build is done but which has not been falsified must read Falsify, and today reads completed. A built plan and a closed plan that no release has shipped must not carry the finished mark, and today both do. A master plan's page lists its plans through the same words, so it is tested the same way. The rule for which step a plan is at must live once, in the package, which the test that guards every fact the admin shows is extended to say. Two guards pass today and must keep passing: a released plan reads Released, and a plan waiting on the person reads what it waits at ahead of everything else. The next phase makes the red tests pass.
 
-- [ ] Confirm this plan has its own worktree.
+- [x] Confirm this plan has its own worktree.
   <details><summary>Technical</summary>
 
   `indusk worktree create nav-stage-matches-plan-page`, or `indusk worktree assign nav-stage-matches-plan-page /Users/the_dusky/code/sandbox/dusk-worktrees/nav-stage-matches-plan-page` for the one `plans start` made — worktree-per-plan default.
