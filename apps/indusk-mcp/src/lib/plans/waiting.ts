@@ -1,7 +1,7 @@
 import type { DocumentPosition } from "../lifecycle.js";
 import type { Question } from "../session/protocol.js";
 import { requiredDocuments } from "../workflow-types.js";
-import { documentFinished, type PlanSnapshot, planSteps } from "./steps.js";
+import { documentFinished, type PlanSnapshot, stepAt } from "./steps.js";
 
 /**
  * What a plan waits on a person for (plan-cockpit, ADR decision 4), at most
@@ -121,7 +121,7 @@ function askedOf(
 	return {
 		plan: plan.name,
 		on: "question",
-		step: currentStep(plan),
+		step: stepAt(plan)?.name ?? "Planning",
 		decision: first.question,
 		accept: first.options[0]?.label ?? "Yes",
 		alternative: first.options[1]?.label ?? "No",
@@ -143,15 +143,6 @@ function beingWritten(
 	sessions: ReadonlyArray<WaitingSession>,
 ): boolean {
 	return sessions.some((s) => s.plan === plan.name && !s.question && s.writing !== false);
-}
-
-/** The first step in either list that is being worked or waits on the person. */
-function currentStep(plan: PlanSnapshot): string {
-	const { planning, release } = planSteps(plan);
-	const step = [...planning, ...release].find(
-		(s) => s.state === "current" || s.state === "needs-you",
-	);
-	return step?.name ?? "Planning";
 }
 
 function atReview(plan: PlanSnapshot & { name: string }, builds: ReadonlyArray<WaitingBuild>) {
