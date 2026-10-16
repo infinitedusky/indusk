@@ -48,6 +48,34 @@ It also carries a `description:` — the plan in one to three tight sentences, w
 1. **`seat-released-on-timeout`** (state). A held seat is released when its
    hold runs out.
 
+### Promises as clauses
+
+A promise can be stated as **clauses**, its parts. A **split** is a point
+reached, within its budget, on the way to the promise's goal; a **limit** is a
+bound that always holds; and a clause can **rest on** another promise, of the
+part beneath it. A brief opts in with `clauses: required` in its frontmatter,
+and then every promise it makes lists its clauses beneath it:
+
+```markdown
+---
+clauses: required
+---
+
+### This plan makes
+
+1. **`seat-released-on-timeout`** (state). A held seat is released when its
+   hold runs out.
+   - **`released-in-time`** (split). A seat is released within a second of its hold running out.
+   - **`never-lost`** (limit). No hold is ever lost.
+   - **`clock-is-trusted`** (rests on `server-clock-is-one`).
+```
+
+The registry keeps the same clauses with the promise, written by
+`indusk promises declare --clause`, and the contract check refuses a brief whose
+clauses differ from the registry's, naming the clause. A promise with no clause
+in an opted-in brief is refused. A brief without `clauses: required` is read as
+it always was.
+
 ### Existing promises
 
 **Must not break**

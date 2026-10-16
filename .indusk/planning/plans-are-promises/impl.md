@@ -222,7 +222,7 @@ This phase gives a promise its parts. A brief that opts in states each promise's
 
 #### Build Phase 1 Document
 
-- [ ] A reader can find how to state a promise as clauses in the brief guide and the command reference.
+- [x] A reader can find how to state a promise as clauses in the brief guide and the command reference.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/briefs.md` — a "Promises as clauses" section with the brief shape and the opt-in; `apps/docs/src/reference/cli/promises.md` — `declare --clause` and its grammar.
