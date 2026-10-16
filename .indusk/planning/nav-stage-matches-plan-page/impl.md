@@ -9,6 +9,8 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+falsification: skipped
+falsification_reason: "All 140 archived plans read Closed; waiting, released and reopened paths traced; no failing input found."
 approved_brief: "7102d47e8bc3e64f2f3787574ccef3ad220e406f219515c1b4e506415968ea49"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-16T15:18:14.904Z"
