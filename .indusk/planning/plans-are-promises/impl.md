@@ -289,7 +289,7 @@ This phase makes the clause plan and the test rows answer to the clauses. A test
 
 This phase finishes the promise. Closing a plan — both the check that a plan is ready for its retrospective and the command that confirms its promises — now wants, for a promise with clauses, a passing test row with a test file for each split and limit clause, and for each clause resting on another promise, that promise in force; the refusal names the clause. The planner's instructions are rewritten so a planner groups promises that share code into one plan, writes the brief with clauses, and writes one clause plan section per promise, with each clause's signal and tests, before the ADR. Last, the whole story is run once with the real commands in a temporary project and its output recorded here.
 
-- [ ] Closing a plan wants every clause proved.
+- [x] Closing a plan wants every clause proved.
   <details><summary>Technical</summary>
 
   `lib/promises/rows.ts` `rowProofs`: for a promise with `clauses`, the rows naming each clause (via `purpose.clauses`); refusal per unproved `split`/`limit` clause (no row, a row not passing, or no test file), and per `rests-on` clause whose `rests_on` promise is not `enforced` (read from the registry passed in). `confirm.ts` and `cleanup/gate.ts` pass the registry through; their refusal text names the clause.

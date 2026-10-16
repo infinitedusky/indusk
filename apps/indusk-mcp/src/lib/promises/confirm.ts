@@ -281,7 +281,7 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 			(p.state === "declared" ||
 				(p.state === "enforced" && implText !== null && rowsNamingIn(implText, p).length > 0)),
 	);
-	const proofs = rowProofs(candidates, plan, implText);
+	const proofs = rowProofs(candidates, plan, implText, registry.promises);
 	const refusals: CheckRefusal[] = unmadeChanges(folder, registry);
 	if (proofs.length === 0) {
 		return refusals.length > 0 ? refuse(refusals) : { ok: true, confirmed: [] };

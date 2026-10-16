@@ -21,6 +21,8 @@ export interface NamingRow {
 	state: string;
 	/** The test files in the row's `Test` cell. */
 	tests: string[];
+	/** The clauses of this promise the row says it proves (`clause: <promise>/<clause>`). */
+	clauses?: string[];
 }
 
 /** The rows of `implText` whose `For` names the promise, by its name or an earlier one. */
@@ -31,7 +33,12 @@ export function rowsNamingIn(
 	const names = new Set([promise.name, ...promise.aliases]);
 	return parseTrajectory(matter(implText).content)
 		.rows.filter((r) => r.purpose?.promises.some((n) => names.has(n)))
-		.map((r) => ({ id: r.id, state: r.state, tests: r.test ?? [] }));
+		.map((r) => ({
+			id: r.id,
+			state: r.state,
+			tests: r.test ?? [],
+			clauses: (r.purpose?.clauses ?? []).filter((c) => names.has(c.promise)).map((c) => c.clause),
+		}));
 }
 
 /** A row naming the promise, and the plan whose impl holds it. */
@@ -118,20 +125,69 @@ export interface RowProof {
 }
 
 /**
+ * Why a promise stated as clauses is not proved clause by clause, or null
+ * (plans-are-promises ADR D6): each split and limit clause wants a passing
+ * row with a test file, and each clause resting on another promise wants that
+ * promise in force. Names the clause. A promise with no clauses has none to ask.
+ */
+function clauseRefusal(
+	promise: PromiseEntry,
+	rows: readonly NamingRow[],
+	registry: readonly PromiseEntry[],
+): string | null {
+	const found: string[] = [];
+	for (const clause of promise.clauses ?? []) {
+		if (clause.kind === "rests-on") {
+			const base = registry.find(
+				(p) => p.name === clause.restsOn || p.aliases.includes(clause.restsOn ?? ""),
+			);
+			if (base?.state !== "enforced") {
+				found.push(
+					`clause ${clause.name} rests on ${clause.restsOn}, which is ${base ? base.state : "not in the registry"} — it must be in force`,
+				);
+			}
+			continue;
+		}
+		const proving = rows.filter((r) => r.clauses?.includes(clause.name));
+		if (proving.length === 0) {
+			found.push(
+				`clause ${clause.name}: no test row names it — \`clause: ${promise.name}/${clause.name}\``,
+			);
+		} else if (proving.some((r) => r.state !== "passing")) {
+			found.push(
+				`clause ${clause.name}: ${proving
+					.filter((r) => r.state !== "passing")
+					.map((r) => `row ${r.id} is ${r.state}`)
+					.join(", ")}`,
+			);
+		} else if (!proving.some((r) => r.tests.length > 0)) {
+			found.push(`clause ${clause.name}: its rows name no test file`);
+		}
+	}
+	return found.length === 0 ? null : `${promise.name}: ${found.join("; ")}`;
+}
+
+/**
  * What a plan's rows say about each promise it declared: the half of
  * "is it proven" that needs only the impl. `confirmPlan` adds the half that
- * needs the code (the test files exist and carry the token).
+ * needs the code (the test files exist and carry the token). `registry` is
+ * every promise, which a clause resting on another reads to see it in force.
  */
 export function rowProofs(
 	promises: readonly PromiseEntry[],
 	plan: string,
 	implText: string | null,
+	registry: readonly PromiseEntry[] = promises,
 ): RowProof[] {
 	return promises.map((promise): RowProof => {
 		const rows = implText === null ? [] : rowsNamingIn(implText, promise);
 		const tests = [...new Set(rows.flatMap((r) => r.tests))];
 		const open = rows.filter((r) => r.state !== "passing");
-		let refusal: string | null = null;
+		// A promise stated as clauses is refused by clause first: it names the gap precisely.
+		let refusal: string | null = clauseRefusal(promise, rows, registry);
+		if (refusal !== null) {
+			return { promise, rows, tests, refusal };
+		}
 		if (rows.length === 0) {
 			refusal = `${promise.name}: no test row of ${plan} names it — a promise is proven by a row whose For cell names it`;
 		} else if (open.length > 0) {
