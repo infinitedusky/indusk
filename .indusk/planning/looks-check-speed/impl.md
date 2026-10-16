@@ -21,7 +21,10 @@ is reported reused from that result without a browser opening it; every look
 that is opened loads once and is measured at every device and scheme in place;
 a development server is refused with the command that builds and serves the
 app; `--all` reopens everything and `--only <name>` checks the named looks.
-Today's full admin run is 1,056 page loads and 25–35 minutes; the brief expects
+A reused look sends an upheld signal marked reused, with when it was really
+measured, so it keeps reading holding. Landing and release always run the full
+`--all` check of the admin; plan phases use the fast default (Sandy,
+2026-10-16). Today's full admin run is 1,056 page loads and 25–35 minutes; the brief expects
 a one-component change in under 15 s and `--all` in under 60 s against a
 production build. See [adr.md](adr.md) and [research.md](research.md).
 
@@ -33,6 +36,8 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 - One page load per look: device metrics and scheme changed in place, transitions finished, the measurement returned as one string; screens three at a time.
 - `--all`, `--only <name>`, the reused output line and summary.
 - The dev-server refusal and the optional `serve` declaration, with the admin's.
+- A reused look's signal: upheld, marked reused, with the time it was really measured.
+- The full check of the admin as a system-tier test, and `workflow.steps.land.slow_tests` declared as release's command, so landing and release both run it.
 
 ### Out of Scope
 - Production looks sampled in rotation — `workbench-server` (Sandy, 2026-10-16).
@@ -45,10 +50,10 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 
 | Phase | Produces | Consumes |
 |-------|----------|----------|
-| Test Phase 1 | `looks-check-speed.contract.test.ts` (in the system tier), the slow-look test carrying this plan's promise token, the register | the test plan; `looks-browser.contract.test.ts`'s fixture pattern |
+| Test Phase 1 | `looks-check-speed.contract.test.ts` and `looks-admin-all.contract.test.ts` (in the system tier), `looks-full-check-steps.test.ts`, a reused-span case in `look-standing.test.ts`, the slow-look test carrying this plan's promise token, the register | the test plan; `looks-browser.contract.test.ts`'s fixture pattern |
 | Build Phase 1 | `measureInPlace` (one load, every device × scheme); a `LookOpener` seam and `CheckOptions` on `checkApp`; `--only`; screens three at a time | `check.ts`'s `measure`, `measureScript`, `openWithinTime`, `judgeLook`, `judgeStory` |
-| Build Phase 2 | `sourcesHashOf` / `pageSourcesHashOf` in `mockups.ts`; `renderedFrom` in `components.json`; `looks/reuse.ts` (`lookKey`, `reuseOf`, `heldPath`, `readHeld`, `writeHeld`); `CheckReport.reused`; `--all` | Build Phase 1's seam; `bookkeepingRoots`; `appSourceFiles`, `isImplementationFile`, `isTestFile` |
-| Build Phase 3 | `looks/dev-server.ts` (`devServerMarker`); the refusal in `checkApp`; `serve` in `screens.json` and `LooksApp`; the admin's `serve`; the timed live checks | Build Phases 1–2 |
+| Build Phase 2 | `sourcesHashOf` / `pageSourcesHashOf` in `mockups.ts`; `renderedFrom` in `components.json`; `looks/reuse.ts` (`lookKey`, `reuseOf`, `heldPath`, `readHeld`, `writeHeld`); `CheckReport.reused`; `--all`; `LOOK_MARK.reused` / `measuredAt` and `reportLooks`'s reused spans | Build Phase 1's seam; `bookkeepingRoots`; `appSourceFiles`, `isImplementationFile`, `isTestFile` |
+| Build Phase 3 | `looks/dev-server.ts` (`devServerMarker`); the refusal in `checkApp`; `serve` in `screens.json` and `LooksApp`; the admin's `serve`; `workflow.steps.land.slow_tests`; the timed live checks | Build Phases 1–2 |
 
 ## Test Trajectory
 
@@ -62,7 +67,7 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 | A6 | A page-code edit reopens every screen and no story; an uncomposed screen is never reused; a changed seed reopens its screen | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 | A7 | The all option reopens every look whatever was held | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 | A8 | Held results live in the project's home outside the checkout; a run writes nothing under the checkout; another worktree of the project reads the same results | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A9 | A reused look sends no new signal; a measured look still sends its held or broken signal | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
+| A9 | A reused look sends one upheld signal per device and scheme marked reused with the time it was really measured; a measured look's signal carries no reused mark | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
 | A10 | Against real Chromium and a served app, a second run requests no page, prints one reused line per look, counts reused in the summary, exits 0 | Test Phase 1 | Build Phase 2 | planned | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A11 | Each look's page is requested once, and the look is still reported at every device and scheme under today's names | Test Phase 1 | Build Phase 1 | planned | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A12 | A page measured in place reads as a fresh load does at every device and scheme, for a colour transition and a pixel-ratio media query | Test Phase 1 | Test Phase 1 | planned | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
@@ -75,6 +80,9 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 | A19 | A changed foundation reopens every look; no result held on the old foundation is reported | Build Phase 2 | Build Phase 2 | planned | unit | promise: tokens-are-held-exactly, promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 | A20 | A page with a raw value is still reported broken, naming the element and the approved and actual values, with in-place measuring | Test Phase 1 | Test Phase 1 | planned | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
 | A21 | The new browser tests are in the system tier; the everyday suite starts no browser and no server | Test Phase 1 | Test Phase 1 | planned | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
+| A25 | A look reported only as reused, run after run, keeps reading holding in its standing, never no signal | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/promises/look-standing.test.ts |
+| A26 | Landing and release declare the same slow-test command, and it includes the full check of the admin with every look opened | Test Phase 1 | Build Phase 3 | planned | unit | promise: tokens-are-held-exactly, promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-full-check-steps.test.ts |
+| A27 | The full check of the admin with every look opened, against its production build, holds every look, and a broken look fails the slow tests | Test Phase 1 | Build Phase 3 | planned | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-admin-all.contract.test.ts |
 | A22 | After a one-component change with the stories rendered, the admin's check against a production build finishes under 15 s and names every reused look | Build Phase 3 | Build Phase 3 | planned | live check | the brief's first expectation, timed once when the build closes | manual: time indusk looks check admin --url http://localhost:3940 |
 | A23 | The admin's full check with the all option against a production build finishes under 60 s | Build Phase 3 | Build Phase 3 | planned | live check | the brief's second expectation, timed once when the build closes | manual: time indusk looks check admin --url http://localhost:3940 --all |
 | A24 | Against a running next dev of the admin, the check refuses naming the admin's build-and-serve command, without opening a look | Build Phase 3 | Build Phase 3 | planned | live check | the dev-server clause against the framework itself, whose markers this plan reads but does not own | manual: indusk looks check admin --url http://localhost:3961 |
@@ -84,7 +92,7 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 - **A held screen whose data changed**
   - reason: the admin's data (plans, promises it renders) is in no key, so a new element with a raw value that appears only because the data changed is reused past
   - would require: a key over the server-rendered page, which costs the server's render (41 s for the admin's screens) and defeats the reuse
-  - mitigation: `--all` at each UI plan's live check, and `--all` is what the brief's full-check expectation times; the ADR names the residual
+  - mitigation: landing and release always run the full check with every look opened (the full-check test in the system tier, declared for both), so the residual lasts at most until the next landing; the ADR names it
 
 ## Checklist
 
@@ -92,7 +100,7 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 
 **Tier**: med — the work step's default (`workflow.steps.work.tier`)
 
-Before the check changes, this phase writes the tests that run the real check in a real browser against a small served app and say what a fast check does: a second run with nothing changed asks the server for no page and says each look was reused; each look's page is asked for once yet reported at every device and colour scheme; a page that a development server would answer is refused. These fail today. Two more pass today and must keep passing once a page is measured in place: a page whose colours transition, or that changes with the screen's pixel ratio, still holds, and a page with a raw colour is still caught. The test that a slow look never ends the run already exists and is marked as proving this plan's promise. The tests that decide reuse, the only option and the dev-server markers need code the build phases add, so their bodies are written into the register below. The next phase makes each look load once.
+Before the check changes, this phase writes the tests that run the real check in a real browser against a small served app and say what a fast check does: a second run with nothing changed asks the server for no page and says each look was reused; each look's page is asked for once yet reported at every device and colour scheme; a page that a development server would answer is refused. These fail today. Two more pass today and must keep passing once a page is measured in place: a page whose colours transition, or that changes with the screen's pixel ratio, still holds, and a page with a raw colour is still caught. A further test runs the full check of the admin, every look opened, against its production build, and another says landing and release both run it; both fail today, the first because the check has no option to open every look and the second because landing declares no slow tests. A look that is only ever reused must keep reading holding, which the standing reader already does for a signal marked reused. The test that a slow look never ends the run already exists and is marked as proving this plan's promise. The tests that decide reuse, the only option and the dev-server markers need code the build phases add, so their bodies are written into the register below. The next phase makes each look load once.
 
 - [ ] Confirm this plan has its own worktree.
   <details><summary>Technical</summary>
@@ -109,6 +117,19 @@ Before the check changes, this phase writes the tests that run the real check in
   A12: a page whose button has `transition: color 300ms, background-color 300ms` and whose `:root` sets `--color-dusk` differently under `@media (min-resolution: 3dppx)` to the dark-only foundation value — each written so a mid-transition or wrong-ratio read is off-token — is held at every device and scheme. Passes today (fresh loads); the tripwire for in-place measuring.
   A14: a page whose HTML references `/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0b1mqtk._.js`; the run exits 1, its stderr names "development server", and no `held` line is printed. Red today: the page is judged.
   Add the file to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts`.
+
+  </details>
+- [ ] Write the tests that landing and release both run the full check of the admin, and that the full check holds every look, failing today.
+  <details><summary>Technical</summary>
+
+  A26, new `apps/indusk-mcp/src/__tests__/looks-full-check-steps.test.ts` (`promise: tokens-are-held-exactly`, `promise: a-look-check-costs-what-changed`): `readWorkflowSteps(<repo root>)` gives `land.slow_tests` equal to `release.slow_tests.command` (a narrower landing command would let release skip the system tier: `findCoveringRun` matches code, not command), and `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts` lists `src/__tests__/looks-admin-all.contract.test.ts`. Red today: `land.slow_tests` is undefined.
+  A27, new `apps/indusk-mcp/src/__tests__/looks-admin-all.contract.test.ts` (`promise: tokens-are-held-exactly`): start the bundled admin (`apps/indusk-mcp/admin`, built by `test:system`'s `prepublishOnly`) on a free port with a temporary `INDUSK_HOME` that registers this checkout, the way `admin-cli-lifecycle.test.ts` starts the daemon; run `indusk looks check admin --all --url http://localhost:<port>` through `runCli` from the repository root; expect exit 0 and no `broken` line, and print the run's time. Red today: `--all` is an unknown option. Add the file to `SYSTEM`.
+
+  </details>
+- [ ] Add a case that a look reported only as reused keeps reading holding.
+  <details><summary>Technical</summary>
+
+  A25, `apps/indusk-mcp/src/lib/promises/look-standing.test.ts`: Jaeger-shaped look spans (outcome `upheld`) carrying `indusk.look.reused = true` and `indusk.look.measured_at`, over runs with no fresh measurement, give the look's standing `holding`, never no signal. Passes today: the reader ignores attributes it does not read.
 
   </details>
 - [ ] Mark the existing slow-look test as proving this plan's promise.
@@ -247,19 +268,26 @@ Before the check changes, this phase writes the tests that run the real check in
   });
   ```
 
-- **A9** — its subject is the `reused` list Build Phase 2 adds; a reused look must not reach `reportLooks`. Body reviewed:
+- **A9** — its subject is the `reused` list Build Phase 2 adds and `reportLooks`'s handling of it. Body reviewed:
 
   ```typescript
-  it("a reused look sends no signal; a measured one does", async () => {
-    const { app, approvals, home, root } = await fixtureApp(["home.empty", "home.full"]);
-    await checkApp(app, approvals, "http://app", [], { opener: fakeOpener({ "home.empty": "held", "home.full": "held" }), projectRoot: root, home });
-    const report = await checkApp(app, approvals, "http://app", [], {
-      opener: fakeOpener({ "home.full": "held" }), projectRoot: root, home, only: ["home.full"] });
+  it("a reused look sends an upheld signal marked reused, with when it was really measured", async () => {
+    const { app, approvals, home, root } = await fixtureApp(["home.empty"]);
+    await checkApp(app, approvals, "http://app", [], { opener: fakeOpener({ "home.empty": "held" }), projectRoot: root, home,
+      now: new Date("2026-10-16T03:00:00.000Z") });
+    const report = await checkApp(app, approvals, "http://app", [], { opener: fakeOpener({}), projectRoot: root, home });
     const spans = recordingTracer();
-    reportLooks(report.results, spans.tracer);
-    expect(spans.names()).toEqual(app.devices.flatMap(() => ["indusk.looks.check", "indusk.looks.check"]));
-    expect(spans.screens()).toEqual(new Set(["home"]));
-    expect(spans.states()).toEqual(new Set(["full"]));
+    reportLooks(report.results, spans.tracer, { reused: report.reused });
+    expect(spans.all()).toHaveLength(app.devices.length * 2);
+    for (const span of spans.all()) {
+      expect(span.attributes["indusk.promise.outcome"]).toBe("upheld");
+      expect(span.attributes["indusk.look.reused"]).toBe(true);
+      expect(span.attributes["indusk.look.measured_at"]).toBe("2026-10-16T03:00:00.000Z");
+    }
+    const fresh = await checkApp(app, approvals, "http://app", [], { opener: fakeOpener({ "home.empty": "held" }), projectRoot: root, home, all: true });
+    const again = recordingTracer();
+    reportLooks(fresh.results, again.tracer, { reused: fresh.reused });
+    expect(again.all().every((s) => s.attributes["indusk.look.reused"] === undefined)).toBe(true);
   });
   ```
 
@@ -302,6 +330,7 @@ Before the check changes, this phase writes the tests that run the real check in
 
 #### Regression Guards
 
+- **A25** — the standing reader counts any upheld look span and ignores attributes it does not read, so a span marked reused already reads holding; the row holds that no later change to the reader discounts reused runs, which is what keeps an unchanged look from decaying to no signal.
 - **A12** — today's check loads every device and scheme fresh, so a transitioning page and a pixel-ratio page hold; the row exists to go red if the in-place measuring of Build Phase 1 reads a colour mid-transition or at the wrong ratio.
 - **A15** — the slow-look clause shipped in storybook-components; the row holds it while the opening of looks is rewritten.
 - **A20** — the raw-value case of `tokens-are-held-exactly` passes today; it must still pass once values are measured in place and returned as one string.
@@ -312,13 +341,13 @@ Before the check changes, this phase writes the tests that run the real check in
 - [ ] The new browser tests exist; the ones for reuse, one request per look and the dev-server refusal fail on their own assertions, and the in-place tripwire passes.
   <details><summary>Technical</summary>
 
-  `cd /Users/the_dusky/code/sandbox/dusk-worktrees/looks-check-speed/apps/indusk-mcp && pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-check-speed.contract.test.ts src/__tests__/looks-browser.contract.test.ts` — red: A10, A11, A14; green: A12, A20.
+  `cd /Users/the_dusky/code/sandbox/dusk-worktrees/looks-check-speed/apps/indusk-mcp && pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-check-speed.contract.test.ts src/__tests__/looks-browser.contract.test.ts src/__tests__/looks-admin-all.contract.test.ts` — red: A10, A11, A14, A27; green: A12, A20.
 
   </details>
-- [ ] The slow-look test and the everyday-suite guard pass.
+- [ ] The slow-look test, the everyday-suite guard and the reused-standing case pass, and the landing-and-release test fails.
   <details><summary>Technical</summary>
 
-  `pnpm exec vitest run src/__tests__/looks-check-timeout.test.ts src/__tests__/everyday-tests-never-wait.test.ts` — A15 and A21 green.
+  `pnpm exec vitest run src/__tests__/looks-check-timeout.test.ts src/__tests__/everyday-tests-never-wait.test.ts src/lib/promises/look-standing.test.ts src/__tests__/looks-full-check-steps.test.ts` — A15, A21 and A25 green; A26 red.
 
   </details>
 - [ ] Every deferred test body above has been read and judged.
@@ -424,7 +453,7 @@ This phase makes every look that is opened cost one page load instead of six. Th
 
 **Tier**: strong — decides when a look is reported held without being opened; a wrong key would hide a broken look behind a reused one
 
-This phase lets the check skip looks that have not changed. After a run, every look that held at every device and colour scheme is written to a record in the project's own folder outside every checkout, with what it was checked from: its approved snapshot, the foundation, the declared devices and folders, and for a screen the hash of the app's page code and its seed. On the next run, a look whose inputs are all unchanged is reported as reused, with when it last held, and no browser is started for it; a look that was broken or unchecked last time is always opened. Because a story's snapshot is only as new as the last time the stories were rendered, the render step now records which sources it rendered from, and the check reuses nothing when the sources have changed since. A changed foundation reopens every look, so a token change can never be hidden. A reused look sends no new signal to telemetry. An option opens every look regardless. The next phase refuses development servers and times the result.
+This phase lets the check skip looks that have not changed. After a run, every look that held at every device and colour scheme is written to a record in the project's own folder outside every checkout, with what it was checked from: its approved snapshot, the foundation, the declared devices and folders, and for a screen the hash of the app's page code and its seed. On the next run, a look whose inputs are all unchanged is reported as reused, with when it last held, and no browser is started for it; a look that was broken or unchecked last time is always opened. Because a story's snapshot is only as new as the last time the stories were rendered, the render step now records which sources it rendered from, and the check reuses nothing when the sources have changed since. A changed foundation reopens every look, so a token change can never be hidden. A reused look still sends a signal to telemetry saying it held, marked as reused and carrying the time it was really measured, so its standing keeps reading holding while no reader mistakes it for a fresh measurement. An option opens every look regardless. The next phase refuses development servers and times the result.
 
 - [ ] Compute a hash of the app's sources and a hash of its page code, beside every other looks hash.
   <details><summary>Technical</summary>
@@ -463,10 +492,10 @@ This phase lets the check skip looks that have not changed. After a run, every l
   `checkApp`: `CheckOptions` gains `projectRoot`, `home`; `CheckReport` gains `reused: { look: string; kind: "screen" | "story"; at: string }[]`. Before opening, partition the checkable looks with `reuseOf`; looks named by `only` are always opened. After the run, write back: a look held at every device × scheme gets `{ key, at: now, state: "held" }`, a look broken or unchecked anywhere is deleted. `now` is an input (`opts.now ?? new Date()`). `src/bin/commands/looks.ts`: print `reused  <subject> — held <at>, unchanged` per reused look, before unchecked lines; summary `<app>: <h> held, <r> reused[, <u> unchecked]`; a run with no result and every look reused exits 0. A1.
 
   </details>
-- [ ] Make a reused look send no new signal to telemetry.
+- [ ] Make a reused look send a signal that it held, marked as reused, with the time it was really measured.
   <details><summary>Technical</summary>
 
-  `reportLooks` keeps receiving `report.results` only; `reused` never reaches it. A docblock line in `report.ts`: a reused look's last span stands, so telemetry never carries a measurement that was not taken (`lesson: a-value-check-that-says-held-has-not-seen-the-layout`). A9.
+  `apps/indusk-mcp/src/lib/promises/vocabulary.ts` `LOOK_MARK`: add `reused: "indusk.look.reused"` and `measuredAt: "indusk.look.measured_at"`. `apps/indusk-mcp/src/lib/looks/report.ts` `reportLooks(results, tracer, opts: { project?; reused?: Reused[] })`: for each reused look, one `indusk.looks.check` span per device × scheme (`lookDevice`), the look's app, screen, state, device and kind, `markPromise` outcome `upheld`, plus `reused = true` and `measuredAt = at`. A measured result's span carries neither. `src/bin/commands/looks.ts` passes `report.reused`. Docblock: a reused span is the held result restated, never a measurement (Sandy, 2026-10-16). A9.
 
   </details>
 - [ ] Add an option that reopens every look.
@@ -503,7 +532,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
 - [ ] The looks code's own context file says when a look is reused and where its last result is kept.
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/src/lib/looks/CLAUDE.md` (area): "**A look is reused only by `reuseOf`, from the record in machine state** (`<project home>/looks/<app>.json`, never the checkout): its key is the foundation, the declarations, devices and schemes, its snapshot hashes, and for a screen the page-code hash and seed; nothing is reused unless `components.json`'s `renderedFrom` matches the sources now; only a look held everywhere is kept; a reused look sends no signal. Guarded by `reuse.test.ts` and `check-run.test.ts` (A1–A9, A19) — see `/decisions/looks-check-speed`".
+  `apps/indusk-mcp/src/lib/looks/CLAUDE.md` (area): "**A look is reused only by `reuseOf`, from the record in machine state** (`<project home>/looks/<app>.json`, never the checkout): its key is the foundation, the declarations, devices and schemes, its snapshot hashes, and for a screen the page-code hash and seed; nothing is reused unless `components.json`'s `renderedFrom` matches the sources now; only a look held everywhere is kept; a reused look sends an upheld span marked `indusk.look.reused` with `indusk.look.measured_at`, never a bare one. Guarded by `reuse.test.ts` and `check-run.test.ts` (A1–A9, A19) — see `/decisions/looks-check-speed`".
 
   </details>
 
@@ -520,7 +549,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
 
 **Tier**: med — the work step's default (`workflow.steps.work.tier`)
 
-This phase stops the check from spending half an hour in a development server. Before it opens any look, the check fetches one page over plain HTTP and looks for the code a development server adds to every page — Next's live-reload client, webpack's refresh runtime, Vite's client — and when it finds one it refuses, naming the command that builds and serves the app. That command is a new optional entry in the app's screen declarations; the admin declares its own. Then the plan's two expectations are timed against a production build of the admin: a check after a change to one component, and a full check of everything, and the refusal is tried against a real development server of the admin. The results are recorded here.
+This phase stops the check from spending half an hour in a development server. Before it opens any look, the check fetches one page over plain HTTP and looks for the code a development server adds to every page — Next's live-reload client, webpack's refresh runtime, Vite's client — and when it finds one it refuses, naming the command that builds and serves the app. That command is a new optional entry in the app's screen declarations; the admin declares its own. Landing is declared to run the same slow tests release runs, which now include a full check of the admin with every look opened, so every landing and every release checks everything while plan phases stay fast. Then the plan's two expectations are timed against a production build of the admin: a check after a change to one component, and a full check of everything, and the refusal is tried against a real development server of the admin. The results are recorded here.
 
 - [ ] Write the rule that tells a development server's page from a production one.
   <details><summary>Technical</summary>
@@ -540,6 +569,12 @@ This phase stops the check from spending half an hour in a development server. B
   `apps/indusk-mcp/src/lib/looks/mockups.ts` `readApp`: optional string `serve` from `screens.json` onto `LooksApp.serve` — not in `declarationsHashOf`, so declaring it reopens nothing. `.indusk/mockups/admin/screens.json`: `"serve": "pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940"`.
 
   </details>
+- [ ] Declare that landing runs the same slow tests as release, so both run the full check of the admin.
+  <details><summary>Technical</summary>
+
+  `.indusk/config.json`: `workflow.steps.land.slow_tests: "pnpm -w test:system"` — exactly `workflow.steps.release.slow_tests.command`, because a green landing run is recorded by code and release skips its own slow run on that code whatever command ran (`findCoveringRun`). `indusk checks show` then names it at landing. A26.
+
+  </details>
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
 
 #### Build Phase 3 Verification
@@ -548,6 +583,12 @@ This phase stops the check from spending half an hour in a development server. B
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/looks-check-speed/apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/looks/dev-server.test.ts && pnpm exec vitest related src/lib/looks/dev-server.ts src/lib/looks/check.ts src/lib/looks/mockups.ts` — A13 green; `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-check-speed.contract.test.ts src/__tests__/looks-browser.contract.test.ts src/__tests__/looks-component-content.contract.test.ts` — A14 green, A10, A11, A12, A20 still green.
+
+  </details>
+- [ ] Landing and release both declare the slow tests that hold the full check, and the full check of the bundled admin holds every look.
+  <details><summary>Technical</summary>
+
+  `pnpm exec vitest run src/__tests__/looks-full-check-steps.test.ts` — A26 green; `indusk checks show` names `pnpm -w test:system` for landing and release. `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-admin-all.contract.test.ts` (after `pnpm run prepublishOnly`, as `test:system` does) — A27 green, its printed time recorded in Notes.
 
   </details>
 - [ ] A full check of the admin against a production build finishes in under a minute.
@@ -602,11 +643,13 @@ This phase stops the check from spending half an hour in a development server. B
 | `apps/indusk-mcp/src/lib/looks/dev-server.ts` | new: `devServerMarker` |
 | `apps/indusk-mcp/src/lib/looks/mockups.ts` | `sourcesHashOf`, `pageSourcesHashOf`; `LooksApp.serve` |
 | `apps/indusk-mcp/src/lib/looks/stories.ts`, `stories-catalog.ts`, `components.ts` | `renderedFrom` in `components.json`, read as optional |
-| `apps/indusk-mcp/src/lib/looks/report.ts` | docblock: reused looks send no signal |
+| `apps/indusk-mcp/src/lib/looks/report.ts` | reused spans: upheld, `indusk.look.reused`, `indusk.look.measured_at` |
+| `apps/indusk-mcp/src/lib/promises/vocabulary.ts` | `LOOK_MARK.reused`, `LOOK_MARK.measuredAt` |
+| `.indusk/config.json` | `workflow.steps.land.slow_tests` = release's slow-test command |
 | `apps/indusk-mcp/src/lib/looks/CLAUDE.md` | three entries |
 | `apps/indusk-mcp/src/bin/cli.ts`, `src/bin/commands/looks.ts` | `--only`, `--all`; reused lines and summary |
 | `apps/indusk-mcp/vitest.tiers.ts` | the new contract file in `SYSTEM` |
-| tests: `src/__tests__/looks-check-speed.contract.test.ts` (new), `src/lib/looks/{check-run,reuse,dev-server}.test.ts` (new), `src/lib/looks/check-run.fixtures.ts` (new), `src/__tests__/looks-check-timeout.test.ts` (token), `src/lib/looks/check.test.ts` (`storyUrl`) | the trajectory |
+| tests: `src/__tests__/looks-check-speed.contract.test.ts` (new), `src/lib/looks/{check-run,reuse,dev-server}.test.ts` (new), `src/lib/looks/check-run.fixtures.ts` (new), `src/__tests__/looks-check-timeout.test.ts` (token), `src/lib/looks/check.test.ts` (`storyUrl`), `src/__tests__/looks-admin-all.contract.test.ts` (new), `src/__tests__/looks-full-check-steps.test.ts` (new), `src/lib/promises/look-standing.test.ts` (a case) | the trajectory |
 | `.indusk/mockups/admin/screens.json` | `serve` |
 | `CLAUDE.md` | Key Decisions line |
 | `apps/docs/src/reference/cli/looks.md`, `guide/ui-promises.md`, `changelog.md`, `decisions/looks-check-speed.md` | docs |
@@ -620,4 +663,6 @@ This phase stops the check from spending half an hour in a development server. B
 
 - Measured 2026-10-16 (research.md): a screen look costs 16–33 s today (six fresh loads), 9–12 s loaded once, and its measurement 1,149 ms as objects against 120 ms as one string; the server's renders of 48 screen states sum to 41 s. The full run is projected at 50–70 s once this lands (moderate confidence).
 - The admin's later re-render after a source change is not timed by the brief; the live checks record it beside the check's time.
+- Landing in dusk ran no slow tests before this plan; declaring `land.slow_tests` makes every landing run the whole system tier (minutes), the price of landing always running the full look check (Sandy, 2026-10-16) without letting release skip its own slow run.
+- The 60-second full run stays an expectation (Sandy, 2026-10-16); a miss is information.
 - The daemon on :3939 is the person's and serves the main checkout's build; every live check here uses the worktree's own build on :3940.
