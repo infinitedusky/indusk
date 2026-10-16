@@ -235,7 +235,7 @@ This phase gives a promise its parts. A brief that opts in states each promise's
 
 This phase makes the clause plan and the test rows answer to the clauses. A test row may say it proves one clause of a promise, and still counts as naming the promise everywhere rows are read; both the library and the save hook read that the same way, and refuse a clause the promise does not have. The contract check reads the clause plan — one section per promise, one per clause, each with its signal — and refuses a missing section or signal, and, once an impl exists, refuses a clause no row names. The next phase makes closing a plan ask for every clause.
 
-- [ ] A test row can name a clause, in both readers, and counts for its promise.
+- [x] A test row can name a clause, in both readers, and counts for its promise.
   <details><summary>Technical</summary>
 
   `lib/trajectory/parser.ts` `parsePurpose`: a third token `clause: <promise>/<clause>` (both kebab-case); `RowPurpose.clauses: { promise: string; clause: string }[]`; the promise is also pushed to `promises` (deduplicated). The same change in `hooks/_trajectory-parser.js`, then sync to `.claude/hooks/` and run `hook-sync-parity.test.ts`. The malformed message names the clause form.
