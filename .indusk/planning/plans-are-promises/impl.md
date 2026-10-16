@@ -241,13 +241,13 @@ This phase makes the clause plan and the test rows answer to the clauses. A test
   `lib/trajectory/parser.ts` `parsePurpose`: a third token `clause: <promise>/<clause>` (both kebab-case); `RowPurpose.clauses: { promise: string; clause: string }[]`; the promise is also pushed to `promises` (deduplicated). The same change in `hooks/_trajectory-parser.js`, then sync to `.claude/hooks/` and run `hook-sync-parity.test.ts`. The malformed message names the clause form.
 
   </details>
-- [ ] The clause plan is read.
+- [x] The clause plan is read.
   <details><summary>Technical</summary>
 
   New `apps/indusk-mcp/src/lib/promises/clause-plan.ts`: `parseClausePlan(text): { promises: { name, clauses: { name, signal: string | null }[] }[], problems: string[] }` over `## \`promise\`` / `### \`clause\`` headings and `- Signal:` lines, fences skipped (`fencedLineMask`).
 
   </details>
-- [ ] The contract check holds the clause plan and the rows to the clauses.
+- [x] The contract check holds the clause plan and the rows to the clauses.
   <details><summary>Technical</summary>
 
   `contract.ts`, when `clausesRequired`: if `test-plan.md` exists, a missing promise or clause section, or a clause with no signal, is refused naming it; every row clause must exist on its promise (all plans, opted in or not, since a clause token is new); if `impl.md` exists, every `split`/`limit` clause must be named by a row. The save hook's existing contract call (`validate-impl-structure.js` → `indusk promises contract --impl-stdin`) carries the row-clause refusal to save time.

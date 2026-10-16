@@ -14,6 +14,7 @@ import {
 	parseBriefContract,
 	sameSentence,
 } from "./brief-contract.js";
+import { parseClausePlan } from "./clause-plan.js";
 import {
 	describeInterfaceFiles,
 	filesAffectedOf,
@@ -250,6 +251,65 @@ function clauseRefusals(
 	return out;
 }
 
+/**
+ * The clause plan holds a section for every promise the brief makes and every
+ * clause it states, each clause with a signal (plans-are-promises ADR D5). Asked
+ * only once `test-plan.md` exists, so a plan whose brief was just accepted is
+ * not refused for a document it has not written yet.
+ */
+// promise: a-plan-holds-the-promises-it-lands
+function clausePlanRefusals(brief: BriefContract, clausePlanText: string): string[] {
+	if (!brief.clausesRequired) return [];
+	const plan = parseClausePlan(clausePlanText);
+	const out: string[] = [];
+	for (const made of brief.makes) {
+		const section = plan.promises.find((p) => p.name === made.name);
+		if (!section) {
+			out.push(
+				`${made.name}: the clause plan (test-plan.md) has no section for this promise — add "## \`${made.name}\`" with a "### \`clause\`" under it for each of its clauses`,
+			);
+			continue;
+		}
+		for (const clause of made.clauses) {
+			const sub = section.clauses.find((c) => c.name === clause.name);
+			if (!sub) {
+				out.push(
+					`${made.name}: the clause plan (test-plan.md) has no section for the clause "${clause.name}" — add "### \`${clause.name}\`" under "## \`${made.name}\`"`,
+				);
+			} else if (sub.signal === null) {
+				out.push(
+					`${made.name}: the clause "${clause.name}" has no signal in the clause plan — add "- Signal: {where it is read; upheld when …; broken reports …}" under its heading`,
+				);
+			}
+		}
+	}
+	return out;
+}
+
+/**
+ * An opted-in plan with an impl: every split and limit clause is named by some
+ * row (ADR D6). A resting clause is proved by its promise in force, no row.
+ */
+// promise: a-plan-holds-the-promises-it-lands
+function clauseRowRefusals(brief: BriefContract, trajectory: Trajectory): string[] {
+	if (!brief.clausesRequired) return [];
+	const named = new Set(
+		trajectory.rows.flatMap((r) =>
+			(r.purpose?.clauses ?? []).map((c) => `${c.promise}/${c.clause}`),
+		),
+	);
+	const out: string[] = [];
+	for (const made of brief.makes) {
+		for (const clause of made.clauses) {
+			if (clause.kind === "rests-on" || named.has(`${made.name}/${clause.name}`)) continue;
+			out.push(
+				`${made.name}: no row in the impl names the clause "${clause.name}" — a row's For cell says \`clause: ${made.name}/${clause.name}\` for the test that proves it`,
+			);
+		}
+	}
+	return out;
+}
+
 function existingRefusals(brief: BriefContract, byName: Map<string, PromiseEntry>): string[] {
 	const out: string[] = [];
 	const lists: Array<[string, string[]]> = [
@@ -357,6 +417,15 @@ function rowRefusals(
 			} else if (brief !== null && entry.owner !== plan && !addressed.has(name)) {
 				out.push(
 					`row ${row.id} names "promise: ${name}", which ${entry.owner} owns — a plan that tests another plan's promise says so in its brief: list it under **Must not break**, **Changes** or **Replaces**`,
+				);
+			}
+		}
+		for (const { promise, clause } of row.purpose?.clauses ?? []) {
+			const entry = byName().get(promise);
+			// A promise the registry lacks or retired is reported above.
+			if (entry && entry.state !== "retired" && !entry.clauses?.some((c) => c.name === clause)) {
+				out.push(
+					`row ${row.id} names "clause: ${promise}/${clause}", but ${promise} does not have a clause "${clause}" — its clauses are ${(entry.clauses ?? []).map((c) => c.name).join(", ") || "none"}`,
 				);
 			}
 		}
@@ -478,6 +547,12 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 				refusals.push({ file: briefFile, message });
 			}
 		}
+		const clausePlanPath = join(folder.dir, "test-plan.md");
+		if (brief !== null && existsSync(clausePlanPath)) {
+			for (const message of clausePlanRefusals(brief, readFileSync(clausePlanPath, "utf-8"))) {
+				refusals.push({ file: planFileRel(folder, "test-plan.md"), message });
+			}
+		}
 		if (brief !== null && !(opts.looksAtApprovalOnly && pastApproval(implText))) {
 			for (const message of lookRefusals(planRoot, brief, implText)) {
 				refusals.push({ file: briefFile, message });
@@ -492,6 +567,7 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 			for (const message of [
 				...rowRuleRefusals(impl),
 				...rowRefusals(planRoot, plan, brief, impl.trajectory, byName),
+				...(brief === null ? [] : clauseRowRefusals(brief, impl.trajectory)),
 			]) {
 				refusals.push({ file: implFile, message });
 			}
