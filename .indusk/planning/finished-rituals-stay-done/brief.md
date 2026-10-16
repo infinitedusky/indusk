@@ -16,7 +16,7 @@ None — a defect in what a step list says about work already done; whether it r
 
 ### This plan makes
 
-1. **`a-finished-ritual-stays-done`** (state). A plan's Falsify, Cleanup and Audit steps read done once their ritual is finished (its phase closed, its audit written, or a skip with a reason), and keep reading done when a later build phase reopens the plan to building.
+1. **`a-finished-ritual-stays-done`** (state). A plan's Falsify, Cleanup and Audit steps read done once their ritual is finished (its phase closed or its audit written; a ritual skipped with a reason reads skipped, with that reason, not done), and keep reading done when a later build phase reopens the plan to building.
 
 ### Existing promises
 
