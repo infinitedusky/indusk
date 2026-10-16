@@ -411,7 +411,9 @@ look), the declarations, the devices and schemes, and its snapshot hashes — a
 story's snapshot and stylesheet, a screen's composed mockup and the components
 it composes — and for a screen a hash of the app's page code (every file under
 `sources` that is not a catalogued component's implementation, a story or a
-test) and its seed. A look broken or unchecked at any device is not kept, so it
+test) and its seed, and the configuration a look is drawn with that no source
+file holds: the app's Tailwind and PostCSS config, its `.storybook` folder and
+the project's `pnpm-lock.yaml`. A look broken or unchecked at any device is not kept, so it
 is always opened next time. A story's snapshot is only as new as the last
 render, so `indusk looks stories <app>` records the sources it rendered from
 (`renderedFrom` in `components.json`); when the sources have changed since,
@@ -432,11 +434,34 @@ flowchart TD
   V -->|broken or unchecked| X[Removed: opened next time]
 ```
 
-What a look reads that no input covers — the data a screen renders, a page
-served from outside the app's sources — is not in the key. **`--all`** opens
+The build served at `--url` is checked against the sources, outside the key: the
+same sources must be served by the same build, and edited sources by a rebuilt
+one, so a server still on the build from before an edit reopens the look instead
+of recording it held. The build is read from the page's script and stylesheet
+names (a production build names them by content hash); a page that cannot be
+read, or that loads nothing to tell by, reuses nothing, and the check says so.
+What a look reads that no input covers — the data a screen renders — is not in
+the key. **`--all`** opens
 every look whatever held: run it after a change the key cannot see, at a UI
 plan's live check, and as the slow tests do after every landing and at every
 release.
+
+**A development server is refused.** Before any look opens, the check reads the
+app's root page (and the first story's frame) over plain HTTP and looks for the
+code a development server adds: Next's live-reload client (`hmr-client`),
+webpack's refresh runtime (`react-refresh`, `/_next/webpack-hmr`) and Vite's
+client (`/@vite/client`). One found ends the run with exit 1 before a look
+opens, naming the command that builds and serves the app:
+
+```
+http://localhost:3961 is a development server (hmr-client) — build and serve the app, then check again: pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940
+```
+
+That command is the optional `serve` entry of the app's
+`.indusk/mockups/<app>/screens.json`; with none declared the message says how to
+declare one. It is not part of the declarations an approval binds, so declaring
+it reopens nothing. A development server compiles each route on first request,
+which once made a check of the admin take half an hour.
 
 Then it decides two things:
 

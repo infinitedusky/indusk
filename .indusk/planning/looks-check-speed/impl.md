@@ -660,7 +660,7 @@ This phase stops the check from spending half an hour in a development server. B
 
 #### Build Phase 3 Document
 
-- [ ] The command reference names the refusal and the serve declaration, the changelog records the change, and the decision is published.
+- [x] The command reference names the refusal and the serve declaration, the changelog records the change, and the decision is published.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/looks.md`: the refusal and `serve` in `screens.json`. `apps/docs/src/changelog.md` (Unreleased): "`indusk looks check` checks what changed: an unchanged look is reported reused from its last held result, each look loads once for every device and scheme, a development server is refused with the command that serves the app, and `--all` / `--only <look>` choose what is opened." New `apps/docs/src/decisions/looks-check-speed.md` from `adr.md`, linked from the decisions index.

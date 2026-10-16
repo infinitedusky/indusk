@@ -82,8 +82,8 @@ recorded as a span, so it appears on the dashboard beside promises.
 the same foundation, declarations, devices, snapshots and, for a screen, page
 code and seed — is reported `reused` from that result instead of being opened,
 so a check after a small change opens only the looks that change touched. After
-changing a component, render the stories first (`indusk looks stories
-<app>`), then check: the stories are what a story look and every screen
+changing a component, render the stories first
+(`indusk looks stories <app>`), then check: the stories are what a story look and every screen
 composing it are held to, so until they are rendered from the sources as they
 are, nothing is reused and the check says so. A screen's data is in no key —
 a new element that appears only because the data changed is not seen by a

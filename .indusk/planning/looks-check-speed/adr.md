@@ -132,6 +132,22 @@ values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
    a migration). A screen named in `uncomposed` is never reused. Both new hashes
    are computed in `mockups.ts`.
 
+   *Amended 2026-10-16 (Build Phase 3).* Two more inputs close ways a token
+   change could be hidden. The configuration a look is drawn with that no source
+   file holds — the app's Tailwind and PostCSS config, its `.storybook` folder
+   and `pnpm-lock.yaml` — is hashed (`configHashOf`, in `mockups.ts`) into every
+   look's key. And the build served at `--url` is checked against the sources,
+   not put in the key: the check reads the app's root (and the first story's
+   frame) once, takes the identity of the build from the page's script and
+   stylesheet names and inline styles (`servedBuildOf`), and keeps it with the
+   sources hash on each held record; the same sources must be served by the same
+   build, and edited sources by a rebuilt one, so a server still on the build
+   from before an edit reopens the look instead of recording it held. A build
+   identity inside the key was the first reading and is the fingerprinting
+   rejected below: a rebuild after one component edit changes the page's chunks
+   and stylesheet for every look. A page that cannot be read, or that loads
+   nothing to tell by, reuses nothing.
+
 3. **`--all` reopens every look; `--only <name>` (repeatable) checks the looks
    of that name** — a screen state, a story, or both — measured even when
    reusable, and nothing else opened or reported. An unknown name is refused,
