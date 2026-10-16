@@ -217,6 +217,12 @@ export interface CatalogComponent {
 }
 
 export interface Catalog {
+	/**
+	 * `sourcesHashOf` the app's sources when the stories were rendered. The
+	 * check reuses no look unless it matches the sources now; a catalog
+	 * without it is not current — absence is a rule, not a migration.
+	 */
+	renderedFrom?: string;
 	components: CatalogComponent[];
 }
 

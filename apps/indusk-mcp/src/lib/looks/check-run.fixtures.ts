@@ -6,7 +6,7 @@ import { InMemorySpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-tr
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import type { ApprovalEntry, StoryApprovalEntry } from "./approvals.js";
 import { approvedValues, type LookOpener, type Measured, type Scheme } from "./check.js";
-import { type LooksApp, readApp } from "./mockups.js";
+import { type LooksApp, readApp, sourcesHashOf } from "./mockups.js";
 
 /**
  * Helpers for the tests of `checkApp`'s decisions, which run without a browser
@@ -59,7 +59,12 @@ export async function fixtureApp(mockups: string[], stories: string[] = []): Pro
 		};
 	});
 	mkdirSync(app.dir, { recursive: true });
-	writeFileSync(join(app.dir, "components.json"), JSON.stringify({ components: catalog }));
+	// Rendered from the sources as they are, so the fixture's looks can be reused.
+	const renderedFrom = await sourcesHashOf(root, app);
+	writeFileSync(
+		join(app.dir, "components.json"),
+		JSON.stringify({ renderedFrom, components: catalog }),
+	);
 	app.stories = stories.map((name) => {
 		const [component, state] = name.split(".") as [string, string];
 		return {

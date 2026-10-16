@@ -471,7 +471,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
   `apps/indusk-mcp/src/lib/looks/mockups.ts`: `sourcesHashOf(root, app)` — sha256 over `<path>\0<bytes>` of every `appSourceFiles(root, app.sources)` file, sorted by path; `pageSourcesHashOf(root, app, catalog)` — the same over the files that are not a catalogued component's `file`, a story (`isImplementationFile` / the stories glob in `components.ts`) or a test (`isTestFile`). Both through `sha256`, per the looks rule that every hash is computed here.
 
   </details>
-- [ ] Make the render step record which sources the stories were rendered from.
+- [x] Make the render step record which sources the stories were rendered from.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/stories.ts` / `stories-catalog.ts` `buildCatalog`: write `renderedFrom: sourcesHashOf(root, app)` at the top of `components.json`; `readCatalog` accepts it as optional. A catalog without it is not current — absence is a rule, not a migration.
