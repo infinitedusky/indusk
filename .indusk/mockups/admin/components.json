@@ -1,4 +1,6 @@
 {
+	"renderedFrom": "3334c1528ecaab98f806511d78febed5ffbb0df75466a850a2e9429f4b32f237",
+	"baseRulesHash": "a63b38705c6e059447323036a91ec945414be08994447e15e36ca4d953797a12",
 	"components": [
 		{
 			"name": "amendment-card",
@@ -2216,6 +2218,12 @@
 					"description": "Where the row goes. A link when given, a button when not."
 				},
 				{
+					"name": "worktree",
+					"type": "ReactNode",
+					"required": false,
+					"description": "Beside the stage, outside the row's link: the worktree mark."
+				},
+				{
 					"name": "className",
 					"type": "unknown",
 					"required": false,
@@ -2432,10 +2440,42 @@
 							]
 						]
 					}
+				},
+				{
+					"name": "worktree",
+					"id": "ui-planrow--worktree",
+					"snapshotHash": "4c3df1a49ff59cabfc6b47d53dea21cf438ed86b031116531140f051c66a37ff",
+					"content": {
+						"initials": [
+							[
+								0,
+								0,
+								0
+							]
+						],
+						"name": [
+							[
+								0,
+								1,
+								0,
+								0,
+								0
+							]
+						],
+						"stage": [
+							[
+								0,
+								1,
+								1,
+								0,
+								0
+							]
+						]
+					}
 				}
 			],
 			"stylesheet": "components/plan-row.css",
-			"stylesheetHash": "07b69b630ba109e10d811414731a9046befe5368c851feb5217cbe0de5d22940"
+			"stylesheetHash": "b3a64bc0cd1152a725314623e3c50fa03cfc42d158d7a705b1122f970021c006"
 		},
 		{
 			"name": "project-card",
@@ -3752,6 +3792,55 @@
 			],
 			"stylesheet": "components/workflow-strip.css",
 			"stylesheetHash": "3473cfd6dbbea9d45cf908bc3fd92c5bda568b80ed4ac5f888d97902a7fbefca"
+		},
+		{
+			"name": "worktree-mark",
+			"file": "apps/indusk-admin/src/components/ui/WorktreeMark.tsx",
+			"properties": [
+				{
+					"name": "name",
+					"type": "string",
+					"required": true,
+					"description": "The worktree's name, shown when open and always in the label."
+				},
+				{
+					"name": "title",
+					"type": "string",
+					"required": false,
+					"description": "Where it is, for the title: \"Read from the worktree at <path> (<branch>)\"."
+				},
+				{
+					"name": "open",
+					"type": "boolean",
+					"required": false,
+					"defaultValue": "false",
+					"description": "Opened by a click from the start: for a story."
+				}
+			],
+			"states": [
+				{
+					"name": "closed",
+					"id": "ui-worktreemark--closed",
+					"snapshotHash": "dfe28ecefe8d7bc8eb6edae57d39f58aab340b42de8034e333bcdf24c44dad1a",
+					"content": {}
+				},
+				{
+					"name": "open",
+					"id": "ui-worktreemark--open",
+					"snapshotHash": "ee0591d6f7d8b72ae16c59a9a25c85a51c0fdcc238f1e992a55560645001067f",
+					"content": {
+						"name": [
+							[
+								0,
+								1,
+								0
+							]
+						]
+					}
+				}
+			],
+			"stylesheet": "components/worktree-mark.css",
+			"stylesheetHash": "5b97646af3fff653735845f114f3f9e393a0384c9910d45295852170b59e0b83"
 		}
 	]
 }

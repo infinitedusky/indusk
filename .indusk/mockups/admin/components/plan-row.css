@@ -11,8 +11,20 @@
 .-right-1 {
     right: calc(var(--space-1) * -1);
 }
+.z-1 {
+    z-index: 1;
+}
+.block {
+    display: block;
+}
+.flex {
+    display: flex;
+}
 .grid {
     display: grid;
+}
+.inline-flex {
+    display: inline-flex;
 }
 .size-badge {
     width: var(--size-badge);
@@ -22,17 +34,26 @@
     width: var(--size-node);
     height: var(--size-node);
 }
+.h-\(--leading-2\) {
+    height: var(--leading-2);
+}
 .w-full {
     width: 100%;
 }
 .min-w-0 {
     min-width: 0;
 }
+.shrink {
+    flex-shrink: 1;
+}
 .place-items-center {
     place-items: center;
 }
 .items-center {
     align-items: center;
+}
+.gap-1 {
+    gap: var(--space-1);
 }
 .gap-2 {
     gap: var(--space-2);
@@ -89,8 +110,14 @@
 .bg-ok {
     background-color: var(--color-ok);
 }
+.bg-surface {
+    background-color: var(--color-surface);
+}
 .p-tight {
     padding: var(--space-tight);
+}
+.px-1 {
+    padding-inline: var(--space-1);
 }
 .text-left {
     text-align: left;
@@ -140,6 +167,24 @@
 .tabular-nums {
     font-variant-numeric:    tabular-nums ;
 }
+.after\:absolute {
+    &::after {
+        content: "";
+        position: absolute;
+    }
+}
+.after\:inset-0 {
+    &::after {
+        content: "";
+        inset: 0;
+    }
+}
+.after\:rounded-lg {
+    &::after {
+        content: "";
+        border-radius: var(--radius-lg);
+    }
+}
 .pulse-slow {
     animation: pulse var(--duration-pulse-slow) var(--easing-in-out) infinite;
 }
@@ -154,6 +199,9 @@
 .cols-plan-row-numbered {
     grid-template-columns: var(--space-3) var(--size-badge) minmax(0, 1fr);
 }
+.cols-fill {
+    grid-template-columns: minmax(0, 1fr);
+}
 [data-component="nav"][data-collapsed="true"] .nav-hide {
     display: none;
 }
@@ -161,6 +209,14 @@
     grid-template-columns: var(--size-badge);
     justify-content: center;
     padding-inline: 0;
+}
+[data-component="nav"][data-collapsed="true"] .nav-row-text {
+    display: contents;
+}
+[data-component="nav"][data-collapsed="true"] .nav-row-link {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-lg);
 }
 @keyframes pulse {
     50% {
