@@ -301,7 +301,7 @@ This phase finishes the promise. Closing a plan — both the check that a plan i
   `apps/indusk-mcp/skills/planner.md`: Step 3 — promises whose work shares code are one plan; promises sharing none are separate plans under a master; suggest, the person decides. Step 4 and the `### brief.md` template — `clauses: required`, clause sub-entries, declaring with `--clause`. Step 5 and the `### test-plan.md` template — the clause plan: `## \`{promise}\`` → `### \`{clause}\` — {sentence}` → `- Signal: {where it is read; upheld when …; broken reports …}` → its assertion table; written before the ADR. Step 7 — rows' `For` names `clause: <promise>/<clause>`. Sync `.claude/skills/planner/SKILL.md`; run `skill-sync-parity.test.ts`. Also `apps/indusk-mcp/templates/workflows/feature.md` names the clause plan.
 
   </details>
-- [ ] The whole story is run once with the real commands and its output recorded.
+- [x] The whole story is run once with the real commands and its output recorded.
   <details><summary>Technical</summary>
 
   A16, after `pnpm --filter @infinitedusky/indusk-mcp build`, in `mktemp -d` with `git init` and `indusk init --local`: `indusk plans start feature demo`; a brief with `clauses: required` and two promises with clauses; `indusk promises declare … --clause …` for each; a clause plan; an impl whose rows name each clause, one left `planned`; `indusk promises contract demo` (passes) and `indusk promises confirm demo` (refused naming the clause); mark it passing; confirm again (closes). Paste the commands and outputs here.
@@ -314,6 +314,29 @@ This phase finishes the promise. Closing a plan — both the check that a plan i
   <details><summary>Technical</summary>
 
   A9, A10, A11, A12 (goes green), A16 (recorded): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-confirm.test.ts src/__tests__/planner-brief-template.test.ts src/__tests__/skill-sync-parity.test.ts src/__tests__/workflow-types-parity.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/promises/rows.ts src/lib/promises/confirm.ts src/lib/cleanup/gate.ts --run`; `pnpm promises:check` passes.
+
+  **A16 record** (2026-10-16, built CLI `apps/indusk-mcp/dist/bin/cli.js`, in `mktemp -d` + `git init`). Deviation from the item's text: `indusk init --no-index` was used, not `--local`, because `--local` git-ignores `.indusk/` and `indusk plans start` then fails at `git add` of the brief (a defect in `plans start` under local init, outside this plan). Plan `demo` in worktree `plan/demo`: brief with `clauses: required` and two promises with two clauses each (`seat-held-once`: fast split, never-lost limit; `seat-map-accurate`: shows-holds split, never-stale limit), a clause plan with a signal per clause, an impl whose four rows say `clause: <promise>/<clause>`, row A4 left `planned`.
+
+  ```
+  $ indusk plans start feature demo
+  Started demo (feature) in …/a16.hr8x-worktrees/demo on plan/demo; …
+  $ indusk promises declare seat-held-once --plan demo --kind state --domain demo --statement "A seat is held by one person at a time." --clause "fast (split). A hold is placed in under a second." --clause "never-lost (limit). No hold is ever lost."
+  seat-held-once declared by demo. Run `indusk promises check` before committing.      (exit 0)
+  $ indusk promises declare seat-map-accurate … --clause "shows-holds (split). …" --clause "never-stale (limit). …"
+  seat-map-accurate declared by demo. Run `indusk promises check` before committing.   (exit 0)
+  $ indusk promises contract demo
+  demo: its brief, its rows and the registry agree — 2 made, 0 kept, 0 changed, 0 replaced; 1 expectation   (exit 0)
+  $ indusk promises confirm demo
+  .indusk/promises/seat-map-accurate.md: seat-map-accurate: clause never-stale: row A4 is planned
+  demo cannot close: 1 refusal, nothing written.                                       (exit 2)
+  # row A4 marked passing
+  $ indusk promises confirm demo
+  seat-held-once: enforced — 1 test file, 1 code site
+  seat-map-accurate: enforced — 1 test file, 1 code site
+  demo: 2 promises confirmed; the registry check passes.                               (exit 0)
+  $ indusk promises check
+  2 promises — declared 0, enforced 2, known-broken 0, retired 0 — behaviour 0, state 2, structure 0 — 0 incidents   (exit 0)
+  ```
 
   </details>
 
