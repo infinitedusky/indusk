@@ -749,6 +749,11 @@ function refuseUnknown(app: LooksApp, only: readonly string[]): void {
 	}
 }
 
+/** The command that builds and serves the app, or how to declare one. */
+const serveCommand = (app: LooksApp): string =>
+	app.serve ??
+	`declare the command that builds and serves the app as "serve" in .indusk/mockups/${app.app}/screens.json`;
+
 /** The builds being served, read from one page of each kind a run opens; null where a page could not be read. */
 interface Served {
 	screens: string | null;
@@ -779,11 +784,8 @@ async function readServed(
 		}
 		const marker = devServerMarker(html);
 		if (marker !== null) {
-			const serve =
-				app.serve ??
-				`declare the command that builds and serves the app as "serve" in .indusk/mockups/${app.app}/screens.json`;
 			throw new LooksCheckError(
-				`${base} is a development server (${marker}) — build and serve the app, then check again: ${serve}`,
+				`${base} is a development server (${marker}) — build and serve the app, then check again: ${serveCommand(app)}`,
 			);
 		}
 		return servedBuildOf(html);
@@ -832,7 +834,7 @@ export async function checkApp(
 			? { screens: null, stories: null }
 			: await readServed(app, base, checked[0], stories.checked[0], opts.fetchPage);
 	const plan = opts.projectRoot
-		? await planReuse(app, opts.projectRoot, checked, stories.checked, served, opts)
+		? await planReuse(app, opts.projectRoot, base, checked, stories.checked, served, opts)
 		: undefined;
 	const screensToOpen = plan?.screens ?? checked;
 	const storiesToOpen = plan?.stories ?? stories.checked;
@@ -890,6 +892,12 @@ interface ReusePlan {
 	builds: { screen: Build | null; story: Build | null };
 	/** Reused looks whose recorded build is not the one served now: rewritten, so the next run judges against this one. */
 	rebuilt: Map<string, Build>;
+	/**
+	 * Each kind whose server still serves the build from before the sources
+	 * changed: a held record names the build served now with other sources.
+	 * What is measured there is reported and never kept.
+	 */
+	stale: { screen: boolean; story: boolean };
 	screens: LookTarget[];
 	stories: StoryTarget[];
 	reused: Reused[];
@@ -906,6 +914,7 @@ interface ReusePlan {
 async function planReuse(
 	app: LooksApp,
 	root: string,
+	base: string,
 	screens: readonly LookTarget[],
 	stories: readonly StoryTarget[],
 	served: Served,
@@ -925,12 +934,25 @@ async function planReuse(
 	const builds = { screen: buildOf(served.screens), story: buildOf(served.stories) };
 	const held = readHeld(root, app.app, opts.home);
 	const devices = app.devices.flatMap((d) => schemes.map((s) => lookDevice(d.name, s)));
+	const staleFor = (kind: LookKey["kind"]): boolean => {
+		const now = builds[kind];
+		return (
+			now !== null &&
+			Object.values(held).some(
+				(h) =>
+					h.key.kind === kind &&
+					h.build?.served === now.served &&
+					h.build.sources !== now.sources,
+			)
+		);
+	};
 	const plan: ReusePlan = {
 		root,
 		held,
 		opened: new Map(),
 		builds,
 		rebuilt: new Map(),
+		stale: { screen: staleFor("screen"), story: staleFor("story") },
 		screens: [],
 		stories: [],
 		reused: [],
@@ -941,7 +963,11 @@ async function planReuse(
 		if (reuse?.reuse) {
 			plan.reused.push({ app: app.app, ...look, at: reuse.at, devices });
 			const before = held[record]?.build;
-			if (build && (before?.sources !== build.sources || before.served !== build.served)) {
+			if (
+				build &&
+				!plan.stale[key.kind] &&
+				(before?.sources !== build.sources || before.served !== build.served)
+			) {
 				plan.rebuilt.set(record, build);
 			}
 			return false;
@@ -969,18 +995,33 @@ async function planReuse(
 	const unread =
 		(screens.length > 0 && served.screens === null) ||
 		(stories.length > 0 && served.stories === null);
+	const stale =
+		(screens.length > 0 && plan.stale.screen) || (stories.length > 0 && plan.stale.story);
+	const notices: string[] = [];
 	if (unread && !opts.all && !opts.only) {
-		plan.notice = `the build served at the check's URL could not be read, so no look was reused`;
+		notices.push(`the build served at the check's URL could not be read, so no look was reused`);
 	} else if (!current && !opts.all && !opts.only) {
-		plan.notice = `the stories were not rendered from ${app.app}'s sources as they are now, so no look was reused — run \`indusk looks stories ${app.app}\`, then check again`;
+		notices.push(
+			`the stories were not rendered from ${app.app}'s sources as they are now, so no look was reused — run \`indusk looks stories ${app.app}\`, then check again`,
+		);
 	}
+	// Said whatever was asked for: what was measured on an old build is not kept.
+	if (stale) {
+		notices.push(
+			`${base} serves a build from before the sources changed — results were not kept; rebuild and serve it: ${serveCommand(app)}`,
+		);
+	}
+	if (notices.length > 0) plan.notice = notices.join("\n");
 	return plan;
 }
 
 /**
  * Keep what this run proved: a look opened and held at every device and
  * scheme is recorded with its key and `now`; one broken or unchecked at any
- * of them is removed, so it is opened next time. A record that cannot be
+ * of them is removed, so it is opened next time. A look measured on a server
+ * still serving the build from before the sources changed proved nothing about
+ * the sources: it is never recorded held, and its earlier record is left as it
+ * was — the evidence that this server is behind its sources. A record that cannot be
  * written costs only reuse, so it is a note on stderr, never the end of a
  * check whose looks were measured.
  */
@@ -1009,6 +1050,7 @@ function keepHeld(
 			mine.every((r) => r.verdict.state === "held") &&
 			!unchecked.some((u) => u.mockup === mockup);
 		const build = plan.builds[key.kind];
+		if (heldEverywhere && plan.stale[key.kind]) continue;
 		if (heldEverywhere) next[record] = { key, at, state: "held", ...(build ? { build } : {}) };
 		else delete next[record];
 	}
