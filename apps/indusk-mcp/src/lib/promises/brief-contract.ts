@@ -207,8 +207,13 @@ function section(lines: Line[], level: number, title: string): Line[] | null {
  * spaces in, as markdown allows), each
  * with what is wrapped or nested under it. A blank line ends an item's
  * wrapped text but not the item — a sub-bullet may follow one.
+ *
+ * `nest`: a bullet indented to where the item's text starts is a sub-bullet
+ * of it (markdown), which is how a promise's clauses are written. Only a brief
+ * that opted in with `clauses: required` reads that way; without it the bullet
+ * is an entry of its own, as it was before clauses.
  */
-function items(lines: Line[], marker: RegExp): Item[] {
+function items(lines: Line[], marker: RegExp, nest = false): Item[] {
 	const out: Item[] = [];
 	let current: Item | null = null;
 	let target: "text" | "sub" = "text";
@@ -218,7 +223,7 @@ function items(lines: Line[], marker: RegExp): Item[] {
 	for (const line of lines) {
 		const lead = /^ */.exec(line.text)?.[0].length ?? 0;
 		const nested: boolean =
-			current !== null && lead >= contentIndent && /^\s+[-*]\s/.test(line.text);
+			nest && current !== null && lead >= contentIndent && /^\s+[-*]\s/.test(line.text);
 		const top: RegExpExecArray | null = nested ? null : marker.exec(line.text);
 		if (top) {
 			contentIndent = top[0].length;
@@ -297,7 +302,7 @@ function readMakes(
 	clausesRequired = false,
 ): BriefMade[] {
 	const makes: BriefMade[] = [];
-	for (const item of items(lines, ENTRY)) {
+	for (const item of items(lines, ENTRY, clausesRequired)) {
 		read.add(item.n);
 		const m = /^\*\*`([^`]+)`\*\*\s*(?:\(([^)]*)\))?[.:]?\s*(.*)$/.exec(item.text);
 		if (!m) {
