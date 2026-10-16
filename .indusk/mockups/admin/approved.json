@@ -7889,6 +7889,15 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T15:00:53.487Z",
 			"plan": "nav-row-legible"
+		},
+		{
+			"mockup": "worktree-mark.closed",
+			"mockupHash": "c6cde2d17ba4460097a35f717c4e340d8b2808cca080e3fa7e24c98e761aa930",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-16T15:00:53.739Z",
+			"plan": "nav-row-legible"
 		}
 	]
 }
