@@ -489,6 +489,18 @@ export async function pageSourcesHashOf(
 }
 
 /**
+ * The scripts and stylesheets a page loads: the `src` or `href` of each
+ * `<script>` and `<link>`, in order. What tells one build from another
+ * (`servedBuildOf`) and a development server from a production one
+ * (`devServerMarker`) — never the page's text, which carries its data.
+ */
+export function assetUrlsOf(html: string): string[] {
+	return [...html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)=["']([^"']+)["']/g)].map(
+		(m) => m[1] as string,
+	);
+}
+
+/**
  * The identity of the build a page is served from, read from its HTML: the
  * scripts and stylesheets it loads (a production build names each by the hash
  * of its content) and its inline styles, hashed. Null when the page loads
@@ -497,9 +509,7 @@ export async function pageSourcesHashOf(
  * screen's data changes between runs and is no part of the build.
  */
 export function servedBuildOf(html: string): string | null {
-	const assets = [...html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)="([^"]+)"/g)].map(
-		(m) => m[1] as string,
-	);
+	const assets = assetUrlsOf(html);
 	const styles = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)].map(
 		(m) => m[1] as string,
 	);

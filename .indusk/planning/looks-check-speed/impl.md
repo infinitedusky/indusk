@@ -735,10 +735,12 @@ A fresh reader went looking for ways a changed look could be reported held from 
   Done as written: `within(work, ms)` races the read; `readServed` takes `opts` (`fetchPage`, `readTimeoutMs`).
 
   </details>
-- [ ] Look for development markers only in the scripts and stylesheets a page loads, never in its text.
+- [x] Look for development markers only in the scripts and stylesheets a page loads, never in its text.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/dev-server.ts` `devServerMarker`: match the markers against the `src`/`href` values of `<script>` and `<link>` (the same extraction `servedBuildOf` uses, shared from one place) instead of the whole HTML. Test with a production page whose inline RSC payload contains `react-refresh` and `hmr-client`, and with the HTML A24's `next dev -p 3961` served, saved as a fixture, which must still be refused. Drop `/_next/webpack-hmr` if it appears in no asset URL. A34.
+
+  Done as: `assetUrlsOf(html)` in `mockups.ts` (single or double quotes), read by `servedBuildOf` and `devServerMarker`. The fixture `src/__tests__/fixtures/next-dev-admin-root.html` is the root page `next dev -p 3961` served the admin on 2026-10-16, its body's rendered data and inline scripts removed (they carried local paths); `hmr-client` is in its asset URLs. `/_next/webpack-hmr` is dropped: it is a WebSocket path in that page, never an asset; webpack's dev page is still told by `react-refresh`.
 
   </details>
 - [ ] Read the served page at the base URL's own path.
