@@ -1,7 +1,7 @@
 ---
 title: "A new project reports from its first run"
 date: 2026-10-16
-status: draft
+status: accepted
 workflow: feature
 clauses: required
 description: "A project InDusk scaffolds sends its spans, named and placed, to the local daemon from its first run, writes its promise signals from a small helper it owns in the one vocabulary every InDusk reader reads, and is told the truth about how."
@@ -38,7 +38,6 @@ reader reads, no way for an app to write a signal — are in
    - **`the-spans-reach-the-daemon`** (split). With nothing set, a scaffolded app exports to the daemon's fixed ports; a set endpoint still wins.
    - **`every-span-says-where-it-ran`** (split). Every span carries the project and its environment, development unless set.
    - **`a-newer-template-is-offered-not-forced`** (limit). `indusk update` never overwrites a template file a project has changed; a newer version is written beside it.
-   - **`the-daemon-is-the-one-running`** (rests on `the-daemon-readers-follow-is-the-one-running`).
 
 2. **`an-app-writes-its-signal-from-a-helper-it-owns`** (state). A scaffolded project carries a small signal helper it owns, with no InDusk dependency, that writes a promise's or a clause's signal in the one vocabulary every InDusk reader reads.
    - **`one-vocabulary`** (limit). The keys a signal carries are defined once, in the package's vocabulary; the helper is pinned to it, and a key changed in one and not the other is refused.
@@ -89,7 +88,7 @@ None — this plan changes the files `init` writes, its printed text and the ski
 
 ## Depends On
 
-- `.indusk/planning/daemon-found-not-guessed/` — the daemon's fixed ports are where a scaffolded app sends.
+- `.indusk/planning/daemon-found-not-guessed/` — the daemon's fixed ports are where a scaffolded app sends. When that plan's promise `the-daemon-readers-follow-is-the-one-running` reaches the trunk at its approval, the first promise here gains a clause resting on it (`the-daemon-is-the-one-running`), re-declared then; the registry refuses a resting clause on a promise it does not hold.
 
 ## Blocks
 
