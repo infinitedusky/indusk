@@ -4,6 +4,7 @@ import type { PlanSummary } from "../plan-parser.js";
 import { type PlanSnapshot, planSteps, stepCount } from "./steps.js";
 
 // promise: a-plan-shows-two-workflows
+// promise: a-finished-ritual-stays-done
 
 /**
  * plan-cockpit A10 and A11, the package's halves: the steps follow the plan's
@@ -175,5 +176,57 @@ describe("A11 — the steps say where the plan is", () => {
 	it("A11 a plan that could not be read has every step not yet", () => {
 		const { planning, release } = planSteps({ workflow: "feature", documents: {} });
 		expect([...planning, ...release].every((s) => s.state === "not-yet")).toBe(true);
+	});
+});
+
+describe("a-finished-ritual-stays-done — a finished ritual reads done whatever the plan is doing now", () => {
+	// `finishedRituals` rides in as a spread, so these rows compile before the
+	// snapshot has the field and fail on a step's state, not on a type.
+	const finished = (...rituals: string[]) => ({ finishedRituals: rituals });
+	const reopened = (...rituals: string[]) =>
+		planSteps({
+			...feature(positionOf("impl", "in-progress")),
+			...finished(...rituals),
+		}).release;
+
+	it("A1 falsification, cleanup and audit finished, a later build phase open: all three done, Build current", () => {
+		expect(states(reopened("falsification", "cleanup", "audit"))).toMatchObject({
+			Build: "current",
+			Falsify: "done",
+			Cleanup: "done",
+			Audit: "done",
+		});
+	});
+
+	it("A3 only falsification finished, a build phase open: Falsify done, Cleanup and Audit not yet", () => {
+		expect(states(reopened("falsification"))).toMatchObject({
+			Build: "current",
+			Falsify: "done",
+			Cleanup: "not-yet",
+			Audit: "not-yet",
+		});
+	});
+
+	it("A4 a regression guard: a ritual being worked reads current, the others not yet", () => {
+		const { release } = planSteps(
+			feature(positionOf("impl", "completed", { missing: ["falsification"] })),
+		);
+		expect(states(release)).toMatchObject({
+			Falsify: "current",
+			Cleanup: "not-yet",
+			Audit: "not-yet",
+		});
+	});
+
+	it("A5 a regression guard: a ritual skipped with a reason reads skipped with it, not done", () => {
+		const { release } = planSteps({
+			...feature(positionOf("impl", "in-progress")),
+			skippedRituals: [{ ritual: "cleanup", reason: "nothing to extract" }],
+		});
+		expect(release.find((s) => s.name === "Cleanup")).toEqual({
+			name: "Cleanup",
+			state: "skipped",
+			reason: "nothing to extract",
+		});
 	});
 });
