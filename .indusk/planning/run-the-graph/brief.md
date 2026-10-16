@@ -47,6 +47,7 @@ which does not exist before then.
    - **`only-the-plan-lands`** (limit). Nothing reaches main from a phase's branch; only a plan's branch, once its promises are verified.
 3. **`earlier-plans-go-first`** (state). When phases of different plans are ready and want the same file, the phase of the plan that comes first runs next: earlier in the plan tree, read top-down from the root master through each parent's ordered children; a plan with no place in the tree comes after every plan that has one, and among those the one approved earlier — to go ahead, a plan is given a place (Sandy, 2026-10-16).
    - **`earliest-next`** (limit). Of ready phases that want a file a running phase holds, the earliest plan's runs next when that file is free.
+   - **`a-broken-promise-jumps-the-line`** (limit). A phase that fixes a broken promise — a Maintenance phase for an open incident — runs before every other ready phase that wants its files, whatever its plan's place (Sandy, 2026-10-16).
    - **`never-interrupted`** (limit). A running phase is never stopped to let an earlier plan's phase in; the earlier one goes next.
 4. **`main-cascades`** (behaviour). When anything lands on main, every open plan's branch merges it, and a running phase's worktree merges it when that phase ends; a conflict is resolved by an agent with the plan's tests as the check, or becomes a question when it cannot be.
    - **`branches-follow-main`** (split). Within five minutes of a landing, every open plan's branch with no running phase has merged it.
