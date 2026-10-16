@@ -135,7 +135,7 @@ This phase teaches the step list that a ritual can be finished independently of 
 
 #### Build Phase 1 Document
 
-- [ ] The changelog records the change.
+- [x] The changelog records the change.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md` (Unreleased, Fixed): "A plan's page keeps Falsify, Cleanup and Audit done once each is finished, even when an audit follow-up reopens the build."
