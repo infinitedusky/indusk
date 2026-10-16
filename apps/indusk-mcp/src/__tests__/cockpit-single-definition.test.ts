@@ -46,6 +46,9 @@ const MODULES = [
 	["./looks/coverage", "src/lib/looks/coverage.ts", "coverageOf"],
 	["./looks/verdict", "src/lib/looks/verdict.ts", "verdict"],
 	["./promises/standing", "src/lib/promises/look-standing.ts", "lookStandingOf"],
+	// finished-rituals-stay-done Build Phase 3: which close-out rituals are finished
+	// is the package's, read by the plan page and by the retrospective gate.
+	["./cleanup/gate", "src/lib/cleanup/gate.ts", "finishedRitualsOf"],
 ] as const;
 
 /** Functions only the package may define. */
@@ -64,6 +67,7 @@ const PACKAGE_ONLY = [
 	"verdict",
 	"lookStandingOf",
 	"lookStandingFor",
+	"finishedRitualsOf",
 ];
 
 function sources(dir: string): string[] {

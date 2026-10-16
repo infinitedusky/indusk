@@ -64,6 +64,8 @@ export interface PlanSnapshot {
 	documents: Partial<Record<DocumentPosition, { status?: string }>>;
 	/** Falsification, cleanup or audit skipped with a reason. */
 	skippedRituals?: ReadonlyArray<{ ritual: SkippedRitual; reason?: string }>;
+	/** Falsification, cleanup or audit finished: its phase closed or its report written. */
+	finishedRituals?: ReadonlyArray<SkippedRitual>;
 }
 
 export interface PlanWorkflows {
@@ -142,6 +144,7 @@ function releaseStep(name: ReleaseStepName, plan: PlanSnapshot): PlanStep<Releas
 	if (ritual) {
 		const skipped = plan.skippedRituals?.find((r) => r.ritual === ritual);
 		if (skipped) return named("skipped", skipped.reason);
+		if (plan.finishedRituals?.includes(ritual)) return named("done");
 	}
 	const segment = (state: SegmentState): StepState =>
 		state === "done"

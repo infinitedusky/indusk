@@ -138,6 +138,24 @@ export function isAuditComplete(planRoot: string): boolean {
 type SkippableRitual = "falsification" | "cleanup" | "audit";
 
 /**
+ * The close-out rituals a plan's own files show finished, in ritual order: a
+ * closed ritual phase (falsification also by a completed legacy log) and a
+ * written `audit.md`. The retrospective gate and the admin's plan page both
+ * ask this, so what the page shows and what the gate accepts cannot differ.
+ *
+ * promise: a-finished-ritual-stays-done
+ */
+export function finishedRitualsOf(planRoot: string, implContent: string): SkippableRitual[] {
+	const finished: SkippableRitual[] = [];
+	if (isFalsificationComplete(planRoot) || isFalsificationPhaseTerminal(implContent)) {
+		finished.push("falsification");
+	}
+	if (isCleanupPhaseTerminal(implContent)) finished.push("cleanup");
+	if (isAuditComplete(planRoot)) finished.push("audit");
+	return finished;
+}
+
+/**
  * A skip satisfies its ritual only when it is a skip and its reason is one
  * sentence of at most SKIP_REASON_MAX characters (`reasonFits`, rituals/reason.ts).
  *
@@ -240,16 +258,15 @@ export function checkRetrospectiveReadiness(
 ): RetrospectiveReadiness {
 	const longSkipReasons: RetrospectiveReadiness["longSkipReasons"] = [];
 	const falsificationSkip = isFalsificationSkipped(implContent);
+	const finished = finishedRitualsOf(planRoot, implContent);
 	const falsificationOk =
-		isFalsificationComplete(planRoot) ||
-		skipIsOneSentence(falsificationSkip) ||
-		isFalsificationPhaseTerminal(implContent);
+		finished.includes("falsification") || skipIsOneSentence(falsificationSkip);
 	noteLongSkip(longSkipReasons, "falsification", falsificationSkip, falsificationOk);
 	const cleanupSkip = isCleanupSkipped(implContent);
-	const cleanupOk = isCleanupComplete(planRoot) || skipIsOneSentence(cleanupSkip);
+	const cleanupOk = finished.includes("cleanup") || skipIsOneSentence(cleanupSkip);
 	noteLongSkip(longSkipReasons, "cleanup", cleanupSkip, cleanupOk);
 	const auditSkip = isAuditSkipped(implContent);
-	const auditOk = isAuditComplete(planRoot) || skipIsOneSentence(auditSkip);
+	const auditOk = finished.includes("audit") || skipIsOneSentence(auditSkip);
 	noteLongSkip(longSkipReasons, "audit", auditSkip, auditOk);
 	// The check the skill's text always promised and the code never performed:
 	// a row left `written` after its phase closed is invisible to the two

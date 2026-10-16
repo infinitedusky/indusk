@@ -120,6 +120,15 @@ pointer; the pointer holds the story.
   something else. A build step's model is `buildStepModel`
   (`lib/build/step-model.ts`), a tier error failing the step. — see
   `/decisions/plan-review-subagent`
+- **A release step for a ritual** (Falsify, Cleanup, Audit) reads done from the
+  ritual's own files (a closed phase, `audit.md`), never from where the plan
+  stands now — a build phase reopened after an audit would hide it. A legacy
+  falsification log counts as finished; a skip with a reason wins over a
+  finished phase; an open item keeps the ritual unfinished. Guarded by
+  `steps.test.ts` and `planning-reader.rituals.test.ts` —
+  `promise: a-finished-ritual-stays-done`. `finishedRitualsOf` in
+  `cleanup/gate.ts` is the one definition (the retrospective gate and the admin
+  both ask it); the admin only passes it on.
 - **`indusk verify`** (`lib/verify/`): detects and never repairs — premature
   checkoff, skipped test-first duty (applied to phase N directly), goalpost
   drift, red tests (files + exit codes, never runner output), phantom work
