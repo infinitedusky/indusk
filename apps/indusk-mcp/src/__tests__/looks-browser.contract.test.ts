@@ -205,5 +205,6 @@ describe.skipIf(SHOULD_SKIP)("indusk looks check — the running app held by val
 			/unchecked\s+home\.empty @ phone\/dark — the page did not render the dark scheme/,
 		);
 		expect(pinned.out).not.toMatch(/held\s+home\.empty @ phone\/dark/);
-	});
+		// Two CLI runs (about 6 s with the first launch): more than vitest's 5 s default.
+	}, 60_000);
 });

@@ -410,7 +410,7 @@ This phase makes every look that is opened cost one page load instead of six. Th
   `apps/indusk-mcp/src/bin/cli.ts` `looks check`: `--only <names...>` (repeatable, comma-separated accepted), passed to `looksCheck` in `src/bin/commands/looks.ts` and on to `checkApp` as `only`. A name selects every screen state `<screen>.<state>` and every story `<component>.<state>` of that name; a name matching neither is a `LooksCheckError` naming it, before anything opens. A17, A18.
 
   </details>
-- [ ] Give the pre-existing scheme case in `looks-browser.contract.test.ts` a timeout that fits its two CLI runs.
+- [x] Give the pre-existing scheme case in `looks-browser.contract.test.ts` a timeout that fits its two CLI runs.
   <details><summary>Technical</summary>
 
   Found work: A37's case ("a look under a scheme the foundation names is held only when that scheme was opened") makes two CLI runs (~5.7 s) and times out at vitest's 5 s default, so the file's verification below cannot be green. Add an explicit third argument (`30_000`) to that `it`. Reason: the case was already slow before this plan; the verification command runs this file.
