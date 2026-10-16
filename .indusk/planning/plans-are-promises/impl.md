@@ -542,7 +542,7 @@ A cold read of the finished plan found that it would not close by the rules it s
 
 #### Build Phase 6 Context
 
-- [ ] The planning rules say a clause's test file carries the clause token.
+- [x] The planning rules say a clause's test file carries the clause token.
   <details><summary>Technical</summary>
 
   `templates/planning/CLAUDE.md`, the per-clause close-out rule: "…and each such row's test file carries `clause: <promise>/<clause>`." Synced by the package.
