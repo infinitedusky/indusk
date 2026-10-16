@@ -558,7 +558,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
 
 #### Build Phase 2 Document
 
-- [ ] The command reference and the guide say what a check reopens, why the stories are rendered first, and when to check everything.
+- [x] The command reference and the guide say what a check reopens, why the stories are rendered first, and when to check everything.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/looks.md`: `--all`; the `reused` line and summary; where held results are kept (`indusk eval home`'s folder, `looks/<app>.json`); the Mermaid flowchart from the ADR's documentation plan (render current? → key unchanged? → reused; else one load → six measurements → verdict → kept). `apps/docs/src/guide/ui-promises.md`, "checking looks": render the stories after a component change, then check; `--all` at a UI plan's live check, because a screen's data is in no key.

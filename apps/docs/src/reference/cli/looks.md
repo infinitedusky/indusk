@@ -337,7 +337,7 @@ screen is the catalog's gap); a name in two is `duplicate component`, and when
 one is the component's own file by name every other is also
 `component markup outside its file: <file>:<line> <name>`.
 
-## `indusk looks check <app> [--url <url>] [--only <look>...]`
+## `indusk looks check <app> [--url <url>] [--only <look>...] [--all]`
 
 Holds the running app to what a person approved, by value, in a real Chromium.
 `--url` is the app's base URL; without it the check uses `url` in the app's
@@ -391,7 +391,52 @@ a screen with a `seed` opens alone.
 A name is a screen state (`home.empty`) or a story (`badge.ok`); a name matches
 the screen state and the story of that name alike. Repeat the option or
 separate names with commas. A name no look of the app has is refused, naming
-it, before any page opens.
+it, before any page opens. A named look is opened even when it could be
+reused.
+
+**An unchanged look is reused, not opened.** After a run, every look that held
+at every device and scheme is kept with what it was held to and drawn from, in
+the project's machine-state folder — `indusk eval home`'s folder,
+`looks/<app>.json`, outside every checkout and the same from every worktree,
+never committed. On the next run a look whose inputs are all unchanged is
+reported from that result, without a browser opening it:
+
+```
+reused  home.empty — held 2026-10-16T03:00:00.000Z, unchanged
+reused  story badge.ok — held 2026-10-16T03:00:00.000Z, unchanged
+```
+
+A look's inputs are the foundation (so a token change always reopens every
+look), the declarations, the devices and schemes, and its snapshot hashes — a
+story's snapshot and stylesheet, a screen's composed mockup and the components
+it composes — and for a screen a hash of the app's page code (every file under
+`sources` that is not a catalogued component's implementation, a story or a
+test) and its seed. A look broken or unchecked at any device is not kept, so it
+is always opened next time. A story's snapshot is only as new as the last
+render, so `indusk looks stories <app>` records the sources it rendered from
+(`renderedFrom` in `components.json`); when the sources have changed since,
+nothing is reused and the check says to render the stories first. A screen
+still drawn without composition (`uncomposed`) is never reused. A run where
+every look was reused exits 0.
+
+```mermaid
+flowchart TD
+  L[A checkable look] --> C{Stories rendered from<br/>the current sources?}
+  C -->|no| O[Open it]
+  C -->|yes| K{Key unchanged since<br/>it last held everywhere?}
+  K -->|yes| R[Reported reused<br/>with when it held]
+  K -->|no| O
+  O --> M[One load, measured at<br/>every device and scheme]
+  M --> V[Verdict]
+  V -->|held everywhere| H[Kept in looks/app.json]
+  V -->|broken or unchecked| X[Removed: opened next time]
+```
+
+What a look reads that no input covers — the data a screen renders, a page
+served from outside the app's sources — is not in the key. **`--all`** opens
+every look whatever held: run it after a change the key cannot see, at a UI
+plan's live check, and as the slow tests do after every landing and at every
+release.
 
 Then it decides two things:
 
@@ -413,7 +458,7 @@ broken  home.empty @ desktop
   element button.primary background-color actual rgb(194, 98, 12) nearest --color-dusk (#c2620b)
 unchecked home.full @ phone — the page did not report state full
 unchecked detail.default — proposed, never approved
-admin: 12 looks held, 54 unchecked
+admin: 12 looks held, 0 reused, 54 unchecked
 ```
 
 Elements the check does not draw are named in `screens.json`'s `ignore` (tag
@@ -426,7 +471,9 @@ whose page answers 404 is `unchecked` too, naming the 404 (`… answered 404 —
 in this project`) and the run goes on: the plan and brief screens open at
 fixture plans only the contract test's project holds, so a check against your
 own project names them unchecked. A page that fails any other way (a 500, a
-refused connection) still ends the run. The closing line counts unchecked looks beside held and broken. Each look is
+refused connection) still ends the run. The closing line counts reused and
+unchecked looks beside held and broken (`admin: 12 looks held, 40 reused, 2
+unchecked`). Each look is
 also recorded as a span, one per screen × state × device and scheme, carrying a
 signal for `tokens-are-held-exactly` — `upheld` when held,
 `violated` (read as broken) with the first finding as the symptom when broken — so a look reads
@@ -435,9 +482,13 @@ beside promises in the health reader. A story's span carries
 `device` (the screen is the component's name); a screen's span carries no
 `kind`. A look's standing counts only runs of its own kind, so a held story
 `nav.expanded` never stands for a broken screen `nav.expanded`; a run recorded
-without `kind` reads as a screen's.
+without `kind` reads as a screen's. A reused look sends one upheld span per
+device and scheme too, marked `indusk.look.reused = true` with
+`indusk.look.measured_at`, the time it was really measured: its standing keeps
+reading holding run after run, and a reader can always tell it from a fresh
+measurement, which carries neither.
 
-Exit 1 on any broken look, and when nothing could be checked: a run that
+Exit 1 on any broken look, and when nothing was checked or reused: a run that
 checked nothing is not a held look. `playwright-core` is an optional
 dependency; without it, or without Chromium, the command refuses by name and
 says what to install. Because it opens a browser it runs in the system tier,
