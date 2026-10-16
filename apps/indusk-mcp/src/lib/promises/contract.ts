@@ -193,6 +193,63 @@ function madeRefusals(
 	return out;
 }
 
+/**
+ * An opted-in brief (`clauses: required`) states every promise it makes as
+ * clauses, and the registry's promise file holds the same ones (plans-are-
+ * promises ADR D4). A promise the registry does not hold, or another plan owns,
+ * is `madeRefusals`' to report.
+ */
+// promise: a-plan-holds-the-promises-it-lands
+function clauseRefusals(
+	brief: BriefContract,
+	plan: string,
+	byName: Map<string, PromiseEntry>,
+): string[] {
+	if (!brief.clausesRequired) return [];
+	const out: string[] = [];
+	for (const made of brief.makes) {
+		const entry = byName.get(made.name);
+		if (made.clauses.length === 0) {
+			out.push(
+				`${made.name}: the brief opts in to clauses (\`clauses: required\`), but states none for this promise — list each split and limit, and each promise it rests on, as a sub-entry under it`,
+			);
+		}
+		if (!entry || entry.owner !== plan) continue;
+		const held = new Map((entry.clauses ?? []).map((c) => [c.name, c]));
+		const stated = new Set(made.clauses.map((c) => c.name));
+		for (const c of made.clauses) {
+			const registered = held.get(c.name);
+			if (!registered) {
+				out.push(
+					`${made.name}: the clause "${c.name}" is in the brief but not in the registry — declare the promise with \`--clause "${c.name} (${c.kind === "rests-on" ? `rests on ${c.restsOn}` : `${c.kind}). ${collapseSpace(c.sentence)}`}"\``,
+				);
+				continue;
+			}
+			if (registered.kind !== c.kind) {
+				out.push(
+					`${made.name}: the clause "${c.name}" is a ${c.kind} in the brief and a ${registered.kind} in the registry — make them one`,
+				);
+			} else if ((registered.restsOn ?? null) !== (c.restsOn ?? null)) {
+				out.push(
+					`${made.name}: the clause "${c.name}" rests on ${c.restsOn ?? "nothing"} in the brief and on ${registered.restsOn ?? "nothing"} in the registry — make them one`,
+				);
+			} else if (!sameSentence(c.sentence, registered.statement ?? "")) {
+				out.push(
+					`${made.name}: the clause "${c.name}" has a different sentence in the brief and in the registry — the brief: "${collapseSpace(c.sentence)}"; the registry: "${collapseSpace(registered.statement ?? "")}". Make them one`,
+				);
+			}
+		}
+		for (const name of held.keys()) {
+			if (!stated.has(name)) {
+				out.push(
+					`${made.name}: the clause "${name}" is in the registry but not in the brief — add it under the promise, or declare the promise again without it`,
+				);
+			}
+		}
+	}
+	return out;
+}
+
 function existingRefusals(brief: BriefContract, byName: Map<string, PromiseEntry>): string[] {
 	const out: string[] = [];
 	const lists: Array<[string, string[]]> = [
@@ -415,6 +472,7 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 		if (brief !== null) {
 			for (const message of [
 				...madeRefusals(brief, plan, byName()),
+				...clauseRefusals(brief, plan, byName()),
 				...existingRefusals(brief, byName()),
 			]) {
 				refusals.push({ file: briefFile, message });

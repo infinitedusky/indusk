@@ -182,7 +182,7 @@ This phase gives a promise its parts. A brief that opts in states each promise's
   `bin/commands/promises.ts` `declare`: repeatable `--clause <spec>`; `lib/promises/write.ts` `declarePromise` gains `clauses`, parses each spec with the brief's sub-entry grammar (one function, exported from `brief-contract.ts`, used by both), refuses a bad kind or a `rests on` promise absent from the registry with exit 2 and nothing written, and writes `clauses:` in frontmatter. The MCP `declare_promise` tool gains an optional `clauses: string[]`.
 
   </details>
-- [ ] The contract check refuses an opted-in brief whose promises lack clauses or disagree with the registry.
+- [x] The contract check refuses an opted-in brief whose promises lack clauses or disagree with the registry.
   <details><summary>Technical</summary>
 
   `lib/promises/contract.ts`: a `clauseRefusals` beside `madeRefusals`, active only when `clausesRequired`: a made promise with no clause; a clause in the brief not in the registry, in the registry not in the brief, or with a different kind, sentence or `rests_on`.

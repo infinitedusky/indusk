@@ -173,6 +173,8 @@ interface Item {
 	text: string;
 	/** Its sub-bullets, each with its wrapped lines joined. */
 	subs: string[];
+	/** The brief's line number of each sub-bullet, parallel to `subs`. */
+	subNs: number[];
 	n: number;
 }
 
@@ -220,7 +222,7 @@ function items(lines: Line[], marker: RegExp): Item[] {
 		const top: RegExpExecArray | null = nested ? null : marker.exec(line.text);
 		if (top) {
 			contentIndent = top[0].length;
-			current = { text: line.text.slice(top[0].length), subs: [], n: line.n };
+			current = { text: line.text.slice(top[0].length), subs: [], subNs: [], n: line.n };
 			out.push(current);
 			target = "text";
 			continue;
@@ -235,6 +237,7 @@ function items(lines: Line[], marker: RegExp): Item[] {
 		const sub = /^\s+[-*]\s+(.*)$/.exec(line.text);
 		if (sub) {
 			current.subs.push(sub[1]);
+			current.subNs.push(line.n);
 			target = "sub";
 		} else if (target === "sub") {
 			current.subs[current.subs.length - 1] += ` ${line.text.trim()}`;
@@ -304,8 +307,9 @@ function readMakes(
 			continue;
 		}
 		const clauses: BriefClause[] = [];
-		for (const sub of item.subs) {
+		for (const [i, sub] of item.subs.entries()) {
 			if (!/^\*\*`[^`]+`\*\*/.test(sub)) continue;
+			read.add(item.subNs[i]);
 			const clause = parseClauseSpec(sub);
 			if (clause.ok) clauses.push(clause.clause);
 			else if (clausesRequired) problems.push(`line ${item.n}: ${m[1]}: ${clause.error}`);
