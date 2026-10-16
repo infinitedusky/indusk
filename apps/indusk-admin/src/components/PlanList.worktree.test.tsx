@@ -210,6 +210,30 @@ describe("nav-row-legible — a plan's row keeps its parts apart", () => {
   });
 });
 
+describe("nav-row-legible — what the stretched link takes from the row (A9–A10)", () => {
+  it("A9 — hovering the title of a row with a worktree carries the full name as a tooltip", async () => {
+    const { row } = await draw();
+    const under = hit(titleText(row));
+    expect(under?.closest("[title]")?.getAttribute("title")).toBe("with-wt");
+  });
+
+  it("A10 — keyboard focus on the plan's link marks the whole row, not only the title", async () => {
+    const { container, row } = await draw();
+    const link = container.querySelector(
+      'a[data-plan-name="with-wt"]',
+    ) as HTMLAnchorElement;
+    for (let i = 0; i < 8 && document.activeElement !== link; i++) {
+      await userEvent.tab();
+    }
+    expect(document.activeElement).toBe(link);
+    const overlay = getComputedStyle(link, "::after");
+    const ring = overlay.outlineStyle !== "none" && overlay.outlineWidth !== "0px";
+    const around = ring ? box(row) : box(link);
+    expect(around.height).toBeGreaterThanOrEqual(box(row).height - 0.5);
+    expect(ring, "an outline on the overlay that spans the row").toBe(true);
+  });
+});
+
 describe("nav-row-legible — guards that pass today", () => {
   it("A6 — collapsed: only the badge, no mark, as tall as any row, the badge opens the plan", async () => {
     const { container, row, plainRow, mark } = await draw({ collapsed: true });
