@@ -1,7 +1,7 @@
 ---
 title: "Plans are promises"
 date: 2026-10-16
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -453,6 +453,8 @@ This plan grew two things worth lifting out of the files it touched. Looking up 
 
   </details>
 
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (`findPromise` is one named, tested job; `clause-rules.ts` holds three functions with one reason to change, reached through `checkPlanContract`. The Shape collector did not load under `tsx` here, so the review was read by hand.)
+
 #### Build Phase 5 Verification
 
 - [x] The lookup has its own test and behaviour is unchanged everywhere it was moved.
@@ -464,7 +466,7 @@ This plan grew two things worth lifting out of the files it touched. Looking up 
 
 #### Build Phase 5 Context
 
-- [ ] The package's instructions name where the promise lookup and the clause rules live.
+- [x] The package's instructions name where the promise lookup and the clause rules live.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the promises area: one line — "find a promise with `findPromise` (name or alias); the brief-vs-registry-vs-clause-plan-vs-rows rules are `clause-rules.ts`." Area tier, not root.
@@ -473,7 +475,11 @@ This plan grew two things worth lifting out of the files it touched. Looking up 
 
 #### Build Phase 5 Document
 
-- [ ] No docs page names the moved functions, and any that does points at their new home.
+- [x] No docs page names the moved functions, and any that does points at their new home. Checked, no hit:
+  ```
+  $ grep -rn "clauseRefusals\|clausePlanRefusals\|clauseRowRefusals" apps/docs/src
+  (no output, exit 1)
+  ```
   <details><summary>Technical</summary>
 
   `grep -rn "clauseRefusals\|clausePlanRefusals\|clauseRowRefusals" apps/docs/src` — update a hit to `clause-rules.ts`; with no hit the check is the record, and the item is checked with that output pasted here.
