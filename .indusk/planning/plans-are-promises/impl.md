@@ -85,7 +85,7 @@ Before anything about clauses is built, this phase writes the tests that say wha
   `indusk worktree assign plans-are-promises /Users/the_dusky/code/sandbox/dusk-worktrees/plans-are-promises` for the one `plans start` made (or confirm with `indusk worktree list`) — worktree-per-plan default.
 
   </details>
-- [ ] Write the tests that the contract check holds a brief's clauses to the registry, to the clause plan and to the test rows, failing today.
+- [x] Write the tests that the contract check holds a brief's clauses to the registry, to the clause plan and to the test rows, failing today.
   <details><summary>Technical</summary>
 
   New `apps/indusk-mcp/src/__tests__/promise-clauses.test.ts`, docblock `promise: a-plan-holds-the-promises-it-lands`. Each case builds a temp project (the fixture pattern in `promises-contract.test.ts`: a `.indusk/promises/` registry, `.indusk/planning/demo/brief.md` with `clauses: required`, optionally `test-plan.md` and `impl.md`) and calls `checkPlanContract` (imported at the top of the file).
