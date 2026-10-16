@@ -711,10 +711,12 @@ A fresh reader went looking for ways a changed look could be reported held from 
   Done as (a departure): the component slices are left as they are. Putting element and root rules into each `components/<name>.css` would change every approved story's `stylesheetHash` and every composed mockup's `componentsHash`, returning the whole admin to proposed for a change to reuse, not to how anything draws. Instead `elementRulesOf(appCss)` (`component-styles.ts`) keeps every rule whose selector names no class and no component marker (element, universal, `html`, `:root`, `body`, attribute-only), inside its wrappers and layers, unresolved; the render step records `baseRulesHash` (`stylesheetHash` of it, `mockups.ts`) in `components.json`; `StoryKey.baseHash` reads it (compared as "base rules"). Every story reopens on such a change rather than only those whose snapshots carry the tag — wider, never narrower. A catalog rendered before this has none, which reopens every story once.
 
   </details>
-- [ ] Make every look's reuse depend on what the check measures and how it judges.
+- [x] Make every look's reuse depend on what the check measures and how it judges.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/mockups.ts`: `checkerHashOf()` = sha256 over `MEASURED_PROPERTIES`, the measure script's text (`measureScript` with empty tokens) and a `VERDICT_VERSION` constant exported from `verdict.ts`, bumped with any change to the verdict's rules. `reuse.ts` `KeyBase.checkerHash`, in `COMPARED` as "checker". A31.
+
+  Done as: `checkerHashOf({ properties, script, verdictVersion })` in `mockups.ts`; `check.ts` hands it `MEASURED_KINDS` (each property with the kind it is judged as, from `verdict.ts`, so a property re-kinded moves it without a bump), the page and story measure scripts with no tokens, `FINISH_TRANSITIONS`, and `VERDICT_VERSION = 1`. Compared second, after the foundation. Every record kept before this has no checker hash, so the first run after it reopens every look once.
 
   </details>
 - [ ] Keep only this run's own changes when writing the held results, so a check of the same project running at the same time keeps its removals.

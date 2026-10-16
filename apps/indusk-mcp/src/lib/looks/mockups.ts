@@ -507,6 +507,21 @@ export function servedBuildOf(html: string): string | null {
 	return sha256(JSON.stringify([[...new Set(assets)].sort(), styles]));
 }
 
+/**
+ * The hash of the checker itself: what it measures (each property with the
+ * kind it is judged as), the script that measures in the page, and the
+ * verdict's version. In every look's reuse key, so a release that measures a
+ * new property or judges by new rules reopens every look rather than reusing a
+ * result the old checker gave (looks-check-speed A31).
+ */
+export function checkerHashOf(checker: {
+	properties: readonly string[];
+	script: string;
+	verdictVersion: number;
+}): string {
+	return sha256(JSON.stringify([checker.properties, checker.script, checker.verdictVersion]));
+}
+
 /** The styling configuration files of an app's own folder: Tailwind and PostCSS. */
 const STYLING_CONFIG = /^(tailwind|postcss)\.config\./;
 

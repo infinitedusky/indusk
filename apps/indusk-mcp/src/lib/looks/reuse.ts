@@ -11,9 +11,9 @@ import type { LooksApp } from "./mockups.js";
  * input it is held to and drawn from is what it was when it last held at
  * every device and scheme: the foundation (so a token change is never hidden
  * behind a reused look — `tokens-are-held-exactly`), the declarations, the
- * devices and schemes, the styling configuration and lockfile, its snapshot
- * hashes, for a story the app's element and root rules it draws under, and
- * for a screen its page code, path and seed. The same sources must be served
+ * devices and schemes, the checker, the styling configuration and lockfile,
+ * its snapshot hashes, for a story the app's element and root rules it draws
+ * under, and for a screen its page code, path and seed. The same sources must be served
  * by the same build (`Build`). Nothing is reused unless the stories were
  * rendered from the sources as they are now, and an uncomposed screen never
  * is. Pure: the caller hands every fact in, and the browser never decides.
@@ -31,6 +31,8 @@ interface KeyBase {
 	current: boolean;
 	/** The styling and Storybook configuration and the lockfile, hashed (`configHashOf`). */
 	configHash: string;
+	/** What the check measures and how it judges, hashed (`checkerHashOf`). */
+	checkerHash: string;
 }
 
 export interface StoryKey extends KeyBase {
@@ -93,6 +95,8 @@ export function lookKey(
 		pageSourcesHash: string;
 		schemes: readonly string[];
 		configHash: string;
+		/** The checker's hash (`checkerHashOf`); "" when not given. */
+		checkerHash?: string;
 		/** The catalog's `baseRulesHash`; "" when it records none. */
 		baseHash?: string;
 	},
@@ -104,6 +108,7 @@ export function lookKey(
 		schemes: facts.schemes.join(","),
 		current: facts.current,
 		configHash: facts.configHash,
+		checkerHash: facts.checkerHash ?? "",
 	};
 	if (isStoryTarget(look)) {
 		const story = app.stories.find((s) => s.name === look.name);
@@ -136,6 +141,7 @@ export function lookKey(
 /** The inputs compared, in the order the first changed one is named. */
 const COMPARED: readonly [string, string][] = [
 	["foundationHash", "foundation"],
+	["checkerHash", "checker"],
 	["declarationsHash", "declarations"],
 	["devices", "devices"],
 	["schemes", "schemes"],

@@ -11,6 +11,7 @@ import {
 import { pageSourceFilter, readCatalog, storybookIds } from "./components.js";
 import { devServerMarker } from "./dev-server.js";
 import {
+	checkerHashOf,
 	configHashOf,
 	type Device,
 	type LooksApp,
@@ -28,7 +29,13 @@ import {
 	reuseOf,
 	writeHeld,
 } from "./reuse.js";
-import { MEASURED_PROPERTIES, type MeasuredElement, verdict } from "./verdict.js";
+import {
+	MEASURED_KINDS,
+	MEASURED_PROPERTIES,
+	type MeasuredElement,
+	VERDICT_VERSION,
+	verdict,
+} from "./verdict.js";
 
 /**
  * The browser half of the look check (ui-promises ADR decision 6): open each
@@ -559,6 +566,26 @@ async function measureInPlace(
 	}
 }
 
+/**
+ * The checker's own hash, in every look's key: the measured properties and
+ * their kinds, the measure script (a page's and a story's, with no tokens:
+ * the foundation is its own key) and the transition finish, and the verdict's
+ * version. Computed once.
+ */
+let checkerHash: string | undefined;
+const checkerHashNow = (): string => {
+	checkerHash ??= checkerHashOf({
+		properties: MEASURED_KINDS,
+		script: [
+			measureScript([], MEASURED_PROPERTIES, []),
+			measureScript([], MEASURED_PROPERTIES, [], "#storybook-root"),
+			FINISH_TRANSITIONS,
+		].join("\n"),
+		verdictVersion: VERDICT_VERSION,
+	});
+	return checkerHash;
+};
+
 /** What a look is opened for: its name as it is reported, where it is served, and what shows it drew. */
 export interface OpenTarget {
 	/** `home.empty` for a screen state; `story badge.ok` for a story. */
@@ -930,6 +957,7 @@ async function planReuse(
 		schemes,
 		configHash: await configHashOf(root, app),
 		baseHash: catalog?.baseRulesHash ?? "",
+		checkerHash: checkerHashNow(),
 	};
 	const buildOf = (served: string | null): Build | null => (served ? { sources, served } : null);
 	const builds = { screen: buildOf(served.screens), story: buildOf(served.stories) };
