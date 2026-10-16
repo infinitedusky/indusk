@@ -2,7 +2,7 @@
 title: "A finished ritual stays done"
 description: "On a plan's page, Falsify, Cleanup and Audit read done once each has been finished, and keep reading done when a later build phase (an audit follow-up, say) sends the plan back to building."
 date: 2026-10-16
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
