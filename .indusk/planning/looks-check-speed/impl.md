@@ -427,7 +427,8 @@ This phase makes every look that is opened cost one page load instead of six. Th
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/looks-check-speed/apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/looks/check-run.test.ts src/__tests__/looks-check-timeout.test.ts && pnpm exec vitest related src/lib/looks/check.ts src/bin/commands/looks.ts` — A16, A17, A18 green, A15 still green; `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-check-speed.contract.test.ts src/__tests__/looks-browser.contract.test.ts` — A11 green, A12 and A20 still green, A10 and A14 still red.
 
   </details>
-- [ ] Types and lint are clean.
+- [x] Types and lint are clean.
+  - Result (2026-10-16): `tsc --noEmit` exits 0 and Biome is clean on every file this phase touched. The repo-wide `pnpm check` exits 1 on errors that predate this plan — 112 on main, 111 on this branch, none in a file the plan changed.
   <details><summary>Technical</summary>
 
   `pnpm exec tsc --noEmit -p apps/indusk-mcp` and `pnpm check` from the worktree root exit 0.
