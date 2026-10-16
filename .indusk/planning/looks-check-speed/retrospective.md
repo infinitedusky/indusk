@@ -146,6 +146,16 @@ code alone is 34 files under `apps/`, +3,432 / −342. New files: `reuse.ts`,
 - The transport finding, the unreadable-looks floor and both hindsight items
   are flagged as highlights for the eval agent.
 
+## Context
+
+- This plan's root Key Decisions line ("Looks check speed: …") applied only to
+  `lib/looks/`, whose `CLAUDE.md` already holds each of its rules with a
+  pointer to `/decisions/looks-check-speed`; it left the root.
+- The periodic pass: the root's "Phase summaries" line moved down — the
+  planning area's `CLAUDE.md` holds the full rule, its guard and its pointer.
+- `indusk context check-pointers`: 49 pointers across 13 files, all resolve.
+  The nested-context probe (`e2e/context-tiers`): 4 passed.
+
 ## Carried forward
 
 To `looks-as-promises`: the 57-second floor of an unchanged look check — about
