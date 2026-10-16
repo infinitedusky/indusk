@@ -1,7 +1,7 @@
 ---
 title: "Looks check speed"
 date: 2026-10-16
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -869,7 +869,8 @@ This plan doubled the look check's main file, from 633 lines to 1,232, and it no
 
 #### Build Phase 5 Verification
 
-- [ ] The look check behaves exactly as before, and every row still passes (no tests flip at this phase — reason: refactor).
+- [x] The look check behaves exactly as before, and every row still passes (no tests flip at this phase — reason: refactor).
+  - Result (2026-10-16): build and types clean; the looks tests and the system-tier contracts pass, the full admin check (A27) in 107 s; `impl-corpus` passes after the phase text was fixed. `check.ts` is 565 lines (1,232 before this phase, 633 before this plan). The cap clause in the technical note was mis-written at cleanup — the cleanup cap is attention-focus, never a gate, and it named untouched files (`mockups.ts`, `stories.ts`); still over it: `check.ts` (the run itself, which this phase keeps) and the new `reuse.test.ts`.
   <details><summary>Technical</summary>
 
   `cd apps/indusk-mcp && pnpm build && pnpm exec vitest related src/lib/looks/*.ts` and the plan's row test files; `pnpm exec tsc --noEmit -p .`; no file under `lib/looks/` over its cleanup cap.
