@@ -122,7 +122,7 @@ Before anything about clauses is built, this phase writes the tests that say wha
   A11 (second half): with `other` declared rather than enforced, the refusal names `base`; with `other` enforced and both other clauses proved, it confirms. Red.
 
   </details>
-- [ ] Write the tests that the planner's instructions describe clauses, failing today.
+- [x] Write the tests that the planner's instructions describe clauses, failing today.
   <details><summary>Technical</summary>
 
   `planner-brief-template.test.ts` (docblock `promise: a-plan-holds-the-promises-it-lands`): A10 — the skill's `### brief.md` template contains a sub-entry `(split)` and `(limit)` under a made promise and `clauses: required` in its frontmatter, and the parsed template's `makes[0].clauses` is non-empty; the `### test-plan.md` template contains a `- Signal:` line under a `### \`{clause-name}\`` heading; Step 5's text says the clause plan is written before the ADR. A12 — Step 3's text says promises whose work shares code are one plan and that the person decides a split. Red: none of it is there.
