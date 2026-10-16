@@ -14,7 +14,14 @@ import {
 	type Registry,
 	readPromises,
 } from "./registry.js";
-import { type RowProof, readImpl, rowProofs, rowsNamingIn, rowsProvingClause } from "./rows.js";
+import {
+	type NamingRow,
+	type RowProof,
+	readImpl,
+	rowProofs,
+	rowsNamingIn,
+	rowsProvingClause,
+} from "./rows.js";
 import { appendHistory } from "./write.js";
 
 /**
@@ -129,6 +136,31 @@ interface Ready {
 }
 
 /**
+ * The clauses whose proving rows name a test file that does not carry
+ * `clause: <promise>/<clause>` (A22): a clause is proved by a test that names
+ * the clause, not only the promise. A resting clause has no row to ask.
+ */
+function clauseTokenRefusals(
+	promise: PromiseEntry,
+	rows: readonly NamingRow[],
+	codeRoot: string,
+): string[] {
+	const out: string[] = [];
+	for (const clause of promise.clauses ?? []) {
+		if (clause.kind === "rests-on") continue;
+		const files = new Set(rowsProvingClause(rows, clause.name).flatMap((r) => r.tests));
+		for (const rel of files) {
+			if (!namesClause(codeRoot, rel, promise, clause.name)) {
+				out.push(
+					`${promise.name}: clause ${clause.name}: its row names the test ${rel}, which does not carry "clause: ${promise.name}/${clause.name}" — a test that proves a clause names it`,
+				);
+			}
+		}
+	}
+	return out;
+}
+
+/**
  * The half of "is it proven" that needs the code: why `proof` cannot be
  * confirmed against `codeRoot`, or what to write when it can. `cited` is the
  * code root's token scan, read once for every promise; `rowTests` is every
@@ -157,18 +189,7 @@ function judge(
 			);
 		}
 	}
-	// A clause is proved by a test that names the clause, not only the promise (A22).
-	for (const clause of promise.clauses ?? []) {
-		if (clause.kind === "rests-on") continue;
-		const files = new Set(rowsProvingClause(proof.rows, clause.name).flatMap((r) => r.tests));
-		for (const rel of files) {
-			if (!namesClause(codeRoot, rel, promise, clause.name)) {
-				refusals.push(
-					`${promise.name}: clause ${clause.name}: its row names the test ${rel}, which does not carry "clause: ${promise.name}/${clause.name}" — a test that proves a clause names it`,
-				);
-			}
-		}
-	}
+	refusals.push(...clauseTokenRefusals(promise, proof.rows, codeRoot));
 	// A promise in force keeps the tests it listed that still prove it; one
 	// that moved or was deleted is dropped, so the plan that moved it closes
 	// without a hand edit (A40).

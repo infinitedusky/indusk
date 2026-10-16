@@ -518,6 +518,18 @@ A cold read of the finished plan found that it would not close by the rules it s
   Under this impl's `## Notes`: `indusk init --local` git-ignores `.indusk/`, so `indusk plans start` fails at `git add` on the brief — outside this plan, to be its own bug plan. A14's `For` cell reads "guards that the library's and the hook's row-purpose readers cannot drift apart, which would let the save hook accept a row the close refuses".
 
   </details>
+- [x] Shape: extract the clause-token loop out of judge into a named clauseTokenRefusals, so judge keeps one job and the check has a seam
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/promises/confirm.ts`. Rule: one reason to change: an inline block doing a second job wants a name
+
+  </details>
+- [x] Shape — reviewed a file this phase changed and left it as it is
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/tokens.ts`: clauseTokenPattern sits beside the one token grammar on purpose: it is not a TokenKind, and cleanup owns whether the grammar should absorb it
+
+  </details>
 
 #### Build Phase 6 Verification
 
