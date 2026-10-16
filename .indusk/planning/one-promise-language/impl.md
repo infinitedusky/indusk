@@ -76,7 +76,7 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 | A18 | The trace-shape helper's failure messages say broken, never violated | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
 | A19 | The word scan also reads the extension skills and the `docker/` image and Fly files, and refuses mark in any promise sense (production marks, a promise's mark, sends marks, what has been marked) | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
 | A20 | No page people read says InDusk's own signals or the demo's are written `broken` this release | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
-| A21 | An enforced promise whose signal has never reported shows a grey dot and "no signal yet" in the promise list, and turns green only once a signal reports it upheld | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/ui/PromiseRow.test.tsx |
+| A21 | An enforced promise whose signal has never reported shows a grey dot and "no signal yet" in the promise list, and turns green only once a signal reports it upheld | Build Phase 5 | Build Phase 5 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/ui/PromiseRow.test.tsx |
 
 ## Checklist
 
