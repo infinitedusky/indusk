@@ -151,7 +151,7 @@ Before anything about clauses is built, this phase writes the tests that say wha
   A1–A12, A14, A15 (write red) and A13 (passes): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promise-clauses.test.ts src/__tests__/promises-declare.test.ts src/__tests__/row-purpose.test.ts src/__tests__/hook-shared-modules.test.ts src/__tests__/promises-confirm.test.ts src/__tests__/planner-brief-template.test.ts` — the new cases fail on their assertions, A13 and every pre-existing case pass. Paste the counts.
 
   </details>
-- [ ] Every deferred test above has been read and judged.
+- [x] Every deferred test above has been read and judged.
   <details><summary>Technical</summary>
 
   A16's commands reviewed: will they exist at Build Phase 3, and does the run show what A16 claims?
