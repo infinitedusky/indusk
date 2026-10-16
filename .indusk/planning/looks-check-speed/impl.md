@@ -571,7 +571,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
 
 This phase stops the check from spending half an hour in a development server. Before it opens any look, the check fetches one page over plain HTTP and looks for the code a development server adds to every page — Next's live-reload client, webpack's refresh runtime, Vite's client — and when it finds one it refuses, naming the command that builds and serves the app. That command is a new optional entry in the app's screen declarations; the admin declares its own. The full check of the admin with every look opened is run once here and passes; from then on the slow tests run it in the background after every landing and at every release, while plan phases stay fast. Then the plan's two expectations are timed against a production build of the admin: a check after a change to one component, and a full check of everything, and the refusal is tried against a real development server of the admin. The results are recorded here.
 
-- [ ] Write the rule that tells a development server's page from a production one.
+- [x] Write the rule that tells a development server's page from a production one.
   <details><summary>Technical</summary>
 
   New `apps/indusk-mcp/src/lib/looks/dev-server.ts` (`promise: a-look-check-costs-what-changed`): `devServerMarker(html: string): string | null`, returning the first of `hmr-client` (Next, Turbopack), `react-refresh` (webpack), `/_next/webpack-hmr`, `/@vite/client` found in the HTML, else null. Pure; probed against Next 16.2.4 on 2026-10-16 (research.md).
