@@ -63,16 +63,16 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A second check with nothing changed opens no page, starts no browser, and reports every look reused with when it last held | Build Phase 2 | Build Phase 2 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
-| A2 | A changed snapshot, stylesheet, mockup or composed component reopens that look and the screens composing it; every other look is reused | Build Phase 2 | Build Phase 2 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A3 | Changed devices, ignored tags or source folders reopen every look | Build Phase 2 | Build Phase 2 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A4 | A look last broken or unchecked is reopened, never reused | Build Phase 2 | Build Phase 2 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A5 | After a source edit the stories were not rendered from, nothing is reused, and the check says to render the stories | Build Phase 2 | Build Phase 2 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A6 | A page-code edit reopens every screen and no story; an uncomposed screen is never reused; a changed seed reopens its screen | Build Phase 2 | Build Phase 2 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A7 | The all option reopens every look whatever was held | Build Phase 2 | Build Phase 2 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A8 | Held results live in the project's home outside the checkout; a run writes nothing under the checkout; another worktree of the project reads the same results | Build Phase 2 | Build Phase 2 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A9 | A reused look sends one upheld signal per device and scheme marked reused with the time it was really measured; a measured look's signal carries no reused mark | Build Phase 2 | Build Phase 2 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
-| A10 | Against real Chromium and a served app, a second run requests no page, prints one reused line per look, counts reused in the summary, exits 0 | Test Phase 1 | Build Phase 2 | written | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
+| A1 | A second check with nothing changed opens no page, starts no browser, and reports every look reused with when it last held | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
+| A2 | A changed snapshot, stylesheet, mockup or composed component reopens that look and the screens composing it; every other look is reused | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A3 | Changed devices, ignored tags or source folders reopen every look | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A4 | A look last broken or unchecked is reopened, never reused | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A5 | After a source edit the stories were not rendered from, nothing is reused, and the check says to render the stories | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A6 | A page-code edit reopens every screen and no story; an uncomposed screen is never reused; a changed seed reopens its screen | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A7 | The all option reopens every look whatever was held | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A8 | Held results live in the project's home outside the checkout; a run writes nothing under the checkout; another worktree of the project reads the same results | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A9 | A reused look sends one upheld signal per device and scheme marked reused with the time it was really measured; a measured look's signal carries no reused mark | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
+| A10 | Against real Chromium and a served app, a second run requests no page, prints one reused line per look, counts reused in the summary, exits 0 | Test Phase 1 | Build Phase 2 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A11 | Each look's page is requested once, and the look is still reported at every device and scheme under today's names | Test Phase 1 | Build Phase 1 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A12 | A page measured in place reads as a fresh load does at every device and scheme, for a colour transition and a pixel-ratio media query | Test Phase 1 | Test Phase 1 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A13 | A development server's page (Next HMR client, webpack refresh runtime, Vite client) is refused before any look opens, naming the declared serve command or how to declare one; a production page is not | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/dev-server.test.ts |
@@ -81,7 +81,7 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 | A16 | With one load per look, a look that does not load or draw in time is unchecked at every device and scheme with the reason, and every other look is judged | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
 | A17 | The only option checks just the looks of that name, screen or story or both, at every device and scheme, measured even when reusable; nothing else is opened or reported | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
 | A18 | The only option with a name no look has is refused, naming it, before any page opens | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
-| A19 | A changed foundation reopens every look; no result held on the old foundation is reported | Build Phase 2 | Build Phase 2 | written | unit | promise: tokens-are-held-exactly, promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A19 | A changed foundation reopens every look; no result held on the old foundation is reported | Build Phase 2 | Build Phase 2 | passing | unit | promise: tokens-are-held-exactly, promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 | A20 | A page with a raw value is still reported broken, naming the element and the approved and actual values, with in-place measuring | Test Phase 1 | Test Phase 1 | passing | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
 | A21 | The new browser tests are in the system tier; the everyday suite starts no browser and no server | Test Phase 1 | Test Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
 | A25 | A look reported only as reused, run after run, keeps reading holding in its standing, never no signal | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/promises/look-standing.test.ts |
@@ -525,19 +525,22 @@ This phase lets the check skip looks that have not changed. After a run, every l
 
 #### Build Phase 2 Verification
 
-- [ ] A second unchanged run opens nothing and reports every look reused, each changed input reopens exactly what it should, a changed foundation reopens everything, and held results live outside the checkout.
+- [x] A second unchanged run opens nothing and reports every look reused, each changed input reopens exactly what it should, a changed foundation reopens everything, and held results live outside the checkout.
+  - Result (2026-10-16): `reuse.test.ts` and `check-run.test.ts` 21 passed; `vitest related` over reuse, mockups, stories and check 319 passed in 50 files — A1–A9 and A19 green, A16–A18 still green.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/looks-check-speed/apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/looks/reuse.test.ts src/lib/looks/check-run.test.ts && pnpm exec vitest related src/lib/looks/reuse.ts src/lib/looks/mockups.ts src/lib/looks/stories.ts src/lib/looks/check.ts` — A1–A9 and A19 green, A16–A18 still green.
 
   </details>
-- [ ] The browser test for reuse now passes against a real browser.
+- [x] The browser test for reuse now passes against a real browser.
+  - Result (2026-10-16): A10 green; A11, A12, A20 still green; A14 still red (Build Phase 3). `looks-components-cli.test.ts` is in the everyday tier, so it ran under the default config: 21 passed. ui-promises A37's scheme case needed `--all` on its second run (the found-work item above).
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-check-speed.contract.test.ts src/__tests__/looks-browser.contract.test.ts src/__tests__/looks-components-cli.test.ts` — A10 green; A11, A12, A20 still green; A14 still red.
 
   </details>
-- [ ] Types and lint are clean.
+- [x] Types and lint are clean.
+  - Result (2026-10-16): `tsc --noEmit` exits 0 and Biome is clean on every file this phase touched. The repo-wide `pnpm check` exits 1 on the 111 errors that predate this plan (the same count Build Phase 1 recorded), none in a file the plan changed.
   <details><summary>Technical</summary>
 
   `pnpm exec tsc --noEmit -p apps/indusk-mcp` and `pnpm check` exit 0.
