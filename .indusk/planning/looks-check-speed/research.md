@@ -212,11 +212,32 @@ named. A look asked for by name is measured, not reused.
 
 ### What a reused look reports
 
-`reportLooks` emits one span per measured result
-(`indusk.looks.check`, marked like a promise); `look-standing.ts` reads them.
-A reused look was not measured this run; marking it again would put a
-measurement in the telemetry that was not taken (`lesson:
-a-value-check-that-says-held-has-not-seen-the-layout`). Its last span stands.
+`reportLooks` emits one span per measured result (`indusk.looks.check`,
+marked like a promise); `look-standing.ts` reads them, newest first, per look
+and kind, over a window. Two ways to report a reused look were weighed: no
+span (telemetry never carries a measurement that was not taken, `lesson:
+a-value-check-that-says-held-has-not-seen-the-layout`, but an unchanged look's
+standing decays to no signal once its last real span leaves the window), or a
+span saying upheld that says it was reused and when it was really measured.
+Sandy chose the second (Decisions, below). `look-standing.ts` ignores
+attributes it does not read, so a reused span counts as holding today.
+
+### Where landing and release run a check
+
+`workflow.steps` in `.indusk/config.json` declares facts, never logic
+(`lib/checks/steps.ts`). Release runs `workflow.steps.release.slow_tests`
+(`pnpm -w test:system`, after publishing; its JUnit failures route to the
+promise of the trajectory rows that name the failing file). Landing runs
+`indusk checks slow`, which runs `workflow.steps.land.slow_tests` — dusk
+declares none, so dusk's landing runs no slow tests today. A green landing run
+is recorded by the code it covered, and release then skips its own slow run on
+the same code (`findCoveringRun` in `lib/checks/record.ts` matches on the code
+key, not the command). So a landing command narrower than release's would make
+release skip the system tier it never ran. The full look check therefore
+belongs in the system tier, as a test file that starts the bundled admin
+(`test:system` builds it first, through `prepublishOnly`) and runs
+`indusk looks check admin --all` against it; release already runs it, and
+landing runs it once `land.slow_tests` names the same command as release.
 
 ## Decisions
 
@@ -227,6 +248,17 @@ a-value-check-that-says-held-has-not-seen-the-layout`). Its last span stands.
   command checks what changed.
 - Held results live in machine state, not next to the approvals (this
   research, 2026-10-16, from `/decisions/bookkeeping-lives-where-it-is-read`).
+- **A reused look sends a signal marked reused** (Sandy, 2026-10-16): the
+  outcome of the result reused (upheld), plus an attribute saying it was reused
+  and the time it was really measured — "so a look keeps reading holding and
+  never decays to no signal, and telemetry never claims a fresh measurement."
+- **Landing and release always run the full `--all` check** (Sandy,
+  2026-10-16), declared in the project's landing and release steps; plan phases
+  use the fast default. Placed in the system tier, with
+  `workflow.steps.land.slow_tests` set to release's command (see "Where
+  landing and release run a check").
+- **The 60-second full run stays an expectation** (Sandy, 2026-10-16):
+  accepted as is; a miss is information.
 
 ## Open Questions
 
