@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { type Dirent, existsSync, readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { type ComponentUse, type ContentMap, compose, type SnapshotBytes } from "./compose.js";
 import { type Foundation, readFoundation } from "./foundation.js";
 
@@ -438,4 +438,45 @@ async function filesUnder(dir: string): Promise<string[]> {
  */
 export async function appSourceFiles(root: string, sources: string[]): Promise<string[]> {
 	return (await Promise.all(sources.map((s) => filesUnder(join(root, s))))).flat().sort();
+}
+
+/**
+ * sha256 over each file's path (relative to `root`) and the hash of its
+ * bytes, one line per file in path order: what a change to any of them, or a
+ * file added, removed or renamed, changes.
+ */
+async function filesHashOf(root: string, files: readonly string[]): Promise<string> {
+	const lines: string[] = [];
+	for (const file of [...files].sort()) {
+		lines.push(`${relative(root, file)}\0${sha256(await readFile(file))}`);
+	}
+	return sha256(lines.join("\n"));
+}
+
+/**
+ * The hash of every file under the app's declared `sources`: what the render
+ * step records as `renderedFrom`, and what the check compares it with, so a
+ * look is reused only while its stories were rendered from the sources as
+ * they are (looks-check-speed ADR decision 2).
+ */
+export async function sourcesHashOf(root: string, app: Pick<LooksApp, "sources">): Promise<string> {
+	return filesHashOf(root, await appSourceFiles(root, app.sources));
+}
+
+/**
+ * The hash of the app's page code: every file under `sources` that
+ * `isPageSource` keeps, given its path relative to `root` — the files that
+ * draw a screen and no story covers. In a screen's reuse key and not a
+ * story's, so an edit to it reopens every screen and no story.
+ */
+export async function pageSourcesHashOf(
+	root: string,
+	app: Pick<LooksApp, "sources">,
+	isPageSource: (file: string) => boolean,
+): Promise<string> {
+	const files = await appSourceFiles(root, app.sources);
+	return filesHashOf(
+		root,
+		files.filter((f) => isPageSource(relative(root, f))),
+	);
 }

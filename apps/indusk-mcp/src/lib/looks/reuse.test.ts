@@ -5,12 +5,14 @@
  * When a look's last held result is reused, and where it is kept
  * (looks-check-speed A2-A8, A19). The rule is pure: every input is handed in.
  */
-import { readdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
 import { checkApp } from "./check.js";
 import { fakeOpener, fixtureApp } from "./check-run.fixtures.js";
+import { pageSourceFilter } from "./components.js";
+import { pageSourcesHashOf, sourcesHashOf } from "./mockups.js";
 import {
 	type Held,
 	heldPath,
@@ -145,6 +147,23 @@ describe("whether a look's last held result is reused", () => {
 			reuse: false,
 			changed: "uncomposed",
 		});
+	});
+
+	it("A6: the page-code hash moves with a layout or stylesheet edit and not with a catalogued component's, a story's or a test's", async () => {
+		const { app, root } = await fixtureApp([]);
+		const catalog = {
+			components: [{ name: "badge", file: "src/Badge.jsx", properties: [], states: [] }],
+		};
+		const page = () => pageSourcesHashOf(root, app, pageSourceFilter(catalog));
+		const all = () => sourcesHashOf(root, app);
+		const [page0, all0] = [await page(), await all()];
+		appendFileSync(join(root, "src", "Badge.jsx"), "// edited\n");
+		writeFileSync(join(root, "src", "Badge.stories.jsx"), "export default {};\n");
+		writeFileSync(join(root, "src", "Badge.test.jsx"), "// a test\n");
+		expect(await page()).toBe(page0);
+		expect(await all()).not.toBe(all0);
+		appendFileSync(join(root, "src", "styles.css"), "/* edited */\n");
+		expect(await page()).not.toBe(page0);
 	});
 
 	it("A7: reopens every look with --all", () => {
