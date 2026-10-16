@@ -78,8 +78,7 @@ are `live check`s, run once and recorded in the plan.
 |----|-----------------------------------|-------|
 | A19 | A changed foundation — one token's value — reopens every look; no result held on the old foundation is reported. | unit |
 | A20 | The check still reports a page with a raw value as broken, naming the element and the approved and actual values, once it measures in place. | contract |
-| A26 | Landing and release both run the slow tests, with the same declared command, and that command includes the full check of the admin with every look opened. | unit |
-| A27 | The full check of the admin, every look opened, against its production build holds every look; a broken one fails the slow tests, so landing or release records it. | contract |
+| A27 | The full check of the admin, every look opened, against its production build holds every look; a broken one fails the slow tests that run in the background after landing and at release, and is recorded as a broken promise. | contract |
 
 ### `everyday-tests-never-wait` — The everyday suite never starts a server and never waits on the wall clock.
 
@@ -104,14 +103,14 @@ that can break.
 
 | ID | Assertion | Reason untestable | Compensating control |
 |----|-----------|-------------------|----------------------|
-| U1 | A held page whose data changed (new plans, new promises) but whose code and snapshots did not still holds. | The admin's data is not in any key; a new element with a raw value that was never on screen before is reused past in a plan's phases. | Landing and release run the full check with every look opened (A26, A27), so the residual lasts at most until the next landing. |
+| U1 | A held page whose data changed (new plans, new promises) but whose code and snapshots did not still holds. | The admin's data is not in any key; a new element with a raw value that was never on screen before is reused past in a plan's phases. | The slow tests after every landing and at every release run the full check with every look opened (A27), so the residual lasts at most until the next landing. |
 
 ## Notes
 
 - A12 and A20 pass today, because today's check loads every device and scheme
   fresh; they are written first as tripwires for the in-place measuring, which
   is where a mid-transition colour or the wrong pixel ratio would read broken.
-- A27 is the check landing and release run (Sandy, 2026-10-16): plan phases use the fast default, and the full check is in the system tier, which release runs and landing runs once it declares the same slow-test command as release. A narrower landing command would make release skip the system tier, because a green landing run is recorded by code, not by command.
+- A27 is the full check landing and release get (Sandy, 2026-10-16): it is a system-tier test, so it runs in the background after landing and at release and never blocks either (the 2026-10-08 rule); a broken look is recorded as an incident on `tokens-are-held-exactly`. Plan phases use the fast default.
 - A15 is the storybook-components test that already holds the slow-look clause
   (`looks-check-timeout.test.ts`); A16 is the same clause once a look is one
   load, so a timeout costs the look's six results, not one.
