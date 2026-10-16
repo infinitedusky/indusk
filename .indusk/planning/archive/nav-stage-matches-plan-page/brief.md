@@ -43,7 +43,23 @@ None.
 
 ## Looks
 
-None — the row's words change, never its layout or styling; the layout is the `nav-row-legible` plan's.
+### This plan makes
+
+None. No new look: the layout and styling of every row are unchanged.
+
+### Existing looks
+
+**Must not break**
+
+- **`nav.collapsed`**. Only the mark shows; the mark's state follows the same answer, and its drawing is unchanged.
+
+**Changes**
+
+- **`nav.expanded`**. The words under each plan's name in the nav change to the step its page shows (*Falsify* for a built plan, not *completed*; *Closed* for a closed plan no release shipped). Where the words sit, their size and the row's layout do not change. The project card's "work in progress" flag and the first line of the copied plan markdown (now `Stage:`) read the same answer; neither has a registered look.
+
+**Replaces**
+
+None.
 
 ## Depends On
 
