@@ -121,7 +121,9 @@ code alone is 34 files under `apps/`, +3,432 / −342. New files: `reuse.ts`,
 
 ## Quality
 
-- **Biome:** no new rule. Fixes during the work were formatting.
+- **Biome:** no new rule. Fixes during the work were formatting; `biome
+  check` over `lib/looks` and the tests reports nothing in this plan's files
+  (the 6 errors it names are pre-existing, in other tests).
 - **Shape:** 2 findings raised across the five build phases — Build Phase 1 one
   (an unused re-export in `check-run.fixtures.ts`), Build Phase 4 one (move the
   reuse notices out of `planReuse` into their own function); Build Phases 2, 3
@@ -134,6 +136,15 @@ code alone is 34 files under `apps/`, +3,432 / −342. New files: `reuse.ts`,
   `downstream-plan`, but its real mitigation is the system-tier full check
   (`looks-admin-all.contract.test.ts`, listed in `vitest.tiers.ts`). The
   classifier has no kind for a slow-tier test; flagged, not changed.
+
+## Lessons
+
+- `a-reused-check-result-keys-on-what-the-check-measured-against-not-only-the-sources`
+  (added with `add_lesson`, committed on main as `b58f326bc`): a reused check
+  result must key on the build measured, the checker, and the files it reads
+  implicitly — not only the sources.
+- The transport finding, the unreadable-looks floor and both hindsight items
+  are flagged as highlights for the eval agent.
 
 ## Carried forward
 
