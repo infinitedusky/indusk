@@ -11,9 +11,9 @@ phase_summary: required
 gate_policy: ask
 falsification: skipped
 falsification_reason: "Probed open phases, skips, legacy logs, out-of-order and all snapshot callers; A6–A9 pin them, none broke."
-approved_brief: "c58128546a4f2ffa98aca30d94cfb85c18b7aad8c0c7cc5843f707a97877008c"
+approved_brief: "6d82f23dfc43d1c35c296084982f6f433c4e96095a952aef7d9f74f176767a72"
 approved_by: "Sandy Corsillo"
-approved_at: "2026-10-16T20:01:27.812Z"
+approved_at: "2026-10-16T21:20:58.764Z"
 ---
 
 # A finished ritual stays done
