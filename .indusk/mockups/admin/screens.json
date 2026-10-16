@@ -1,5 +1,6 @@
 {
 	"url": "http://localhost:3939",
+	"serve": "pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940",
 	"sources": ["apps/indusk-admin/src"],
 	"ignore": ["nextjs-portal"],
 	"screens": [

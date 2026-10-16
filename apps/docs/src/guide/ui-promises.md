@@ -78,6 +78,20 @@ the app alone breaks that token and every element using it, naming the
 element, the property, and the approved and actual values. Each look is
 recorded as a span, so it appears on the dashboard beside promises.
 
+**Checking looks costs what changed.** A look unchanged since it last held —
+the same foundation, declarations, devices, snapshots and, for a screen, page
+code and seed — is reported `reused` from that result instead of being opened,
+so a check after a small change opens only the looks that change touched. After
+changing a component, render the stories first
+(`indusk looks stories <app>`), then check: the stories are what a story look and every screen
+composing it are held to, so until they are rendered from the sources as they
+are, nothing is reused and the check says so. A screen's data is in no key —
+a new element that appears only because the data changed is not seen by a
+reused look — so a UI plan's live check runs `indusk looks check <app> --all`,
+and so do the slow tests, in the background after every landing and at every
+release. A reused look still sends its span, marked reused with when it was
+really measured, so its standing reads holding and never decays to no signal.
+
 ## The cockpit as the worked example
 
 The admin was the first app held. Its foundation was redrawn from the cockpit

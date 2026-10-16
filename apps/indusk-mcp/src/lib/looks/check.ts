@@ -1,6 +1,5 @@
 import { execFileSync } from "node:child_process";
 import pMap from "p-map";
-import type { Browser } from "playwright-core";
 import {
 	type ApprovalEntry,
 	approvalOf,
@@ -8,10 +7,23 @@ import {
 	type StoryApprovalEntry,
 	storyApprovalOf,
 } from "./approvals.js";
+import {
+	chromiumOpener,
+	type LookOpener,
+	lookDevice,
+	type Measured,
+	type OpenTarget,
+	openWithinTime,
+	type Scheme,
+	schemesOf,
+} from "./browser.js";
 import { storybookIds } from "./components.js";
+import { LooksCheckError } from "./errors.js";
 import type { Device, LooksApp } from "./mockups.js";
 import type { LookResult } from "./report.js";
-import { MEASURED_PROPERTIES, type MeasuredElement, verdict } from "./verdict.js";
+import { keepHeld, planReuse } from "./reuse-run.js";
+import { readServed, type Served, storyUrl } from "./served.js";
+import { verdict } from "./verdict.js";
 
 /**
  * The browser half of the look check (ui-promises ADR decision 6): open each
@@ -27,7 +39,18 @@ import { MEASURED_PROPERTIES, type MeasuredElement, verdict } from "./verdict.js
  * promise: tokens-are-held-exactly
  */
 
-export class LooksCheckError extends Error {}
+export {
+	LookNotHere,
+	type LookOpener,
+	lookDevice,
+	type Measured,
+	type OpenTarget,
+	openWithinTime,
+	type Scheme,
+	schemesOf,
+} from "./browser.js";
+export { LooksCheckError } from "./errors.js";
+export { storyUrl } from "./served.js";
 
 /** One screen state to open: the screen, its state and the path it is served at, when declared. */
 export interface LookTarget {
@@ -46,87 +69,28 @@ export interface Unchecked {
 	reason: string;
 }
 
+/** A look reported from its last held result, without being opened (looks-check-speed ADR decision 5). */
+export interface Reused {
+	app: string;
+	/** `home.empty` for a screen state; `badge.ok` for a story. */
+	look: string;
+	kind: "screen" | "story";
+	/** The screen, or the story's component. */
+	screen: string;
+	state: string;
+	/** When it was really measured and held. */
+	at: string;
+	/** The names it is reported under, one per device and scheme (`phone`, `phone/dark`). */
+	devices: string[];
+}
+
 export interface CheckReport {
 	results: LookResult[];
 	unchecked: Unchecked[];
-}
-
-/**
- * Read inside the page. A string, not a function, because the package has no
- * DOM types and the code must run in the browser as written. It returns
- * `{ runtime, elements }`: the named custom properties on `:root`, and every
- * measured property of `body` and its descendants, with a selector for each.
- */
-function measureScript(
-	tokenNames: string[],
-	properties: readonly string[],
-	ignore: readonly string[],
-	scope = "body",
-): string {
-	return `(() => {
-	const tokenNames = ${JSON.stringify(tokenNames)};
-	// Which screen states the page says it drew (A36): \`data-look-state\` on
-	// <html> or on any element, each a space-separated list of <screen>.<state>.
-	const states = [document.documentElement, ...document.querySelectorAll("[data-look-state]")]
-		.flatMap((el) => (el.getAttribute("data-look-state") || "").split(/\\s+/))
-		.filter(Boolean);
-	// Which scheme it drew (A37): a page that pins data-theme says so; else the media query.
-	const theme = document.documentElement.getAttribute("data-theme");
-	const scheme = theme === "dark" || (theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches)
-		? "dark"
-		: "light";
-	const properties = ${JSON.stringify(properties)};
-	const ignored = ${JSON.stringify(ignore.map((t) => t.toUpperCase()))};
-	const rootStyle = getComputedStyle(document.documentElement);
-	const runtime = {};
-	for (const name of tokenNames) {
-		const v = rootStyle.getPropertyValue(name).trim();
-		if (v !== "") runtime[name] = v;
-	}
-	const selectorOf = (el) => {
-		let s = el.tagName.toLowerCase();
-		if (el.id) s += "#" + el.id;
-		const cls = typeof el.className === "string" ? el.className.trim().split(/\\s+/).filter(Boolean) : [];
-		if (cls.length) s += "." + cls.join(".");
-		return s;
-	};
-	const elements = [];
-	// A page is measured from its body; a story from its own root, so what the
-	// Storybook frame draws around it (its loader, its error display) is not read.
-	const root = document.querySelector(${JSON.stringify(scope)}) || document.body;
-	const nodes = [root, ...root.querySelectorAll("*")];
-	for (const el of nodes) {
-		if (["SCRIPT", "STYLE", "LINK", "META", "TITLE", "NOSCRIPT", "OPTION", "OPTGROUP"].includes(el.tagName) || ignored.includes(el.tagName)) continue;
-		const style = getComputedStyle(el);
-		const selector = selectorOf(el);
-		for (const property of properties) {
-			// A border that is not drawn has a colour the author never chose.
-			const side = property.match(/^border-(top|right|bottom|left)-color$/);
-			if (side && style.getPropertyValue("border-" + side[1] + "-width") === "0px") continue;
-			// A margin of \`auto\` is computed to the pixels it resolved to; the
-			// computed value (typed OM) is the keyword the author wrote.
-			const typed = property.startsWith("margin-") && el.computedStyleMap
-				? String(el.computedStyleMap().get(property))
-				: "";
-			const actual = (typed === "auto" ? typed : style.getPropertyValue(property)).trim();
-			if (actual !== "") elements.push({ selector, property, actual });
-		}
-	}
-	return { runtime, elements, states, scheme };
-})()`;
-}
-
-/** A colour scheme a look is opened under. */
-export type Scheme = "light" | "dark";
-
-/** What the page gave back: the measurements, and what it says it drew. */
-export interface Measured {
-	runtime: Record<string, string>;
-	elements: MeasuredElement[];
-	/** `<screen>.<state>` names the page reported with `data-look-state`. */
-	states: string[];
-	/** The scheme the page drew. */
-	scheme: Scheme;
+	/** Looks unchanged since they last held, reported from that result; none were opened. */
+	reused: Reused[];
+	/** Why looks that might have been reused were opened, when the person can act on it (render the stories). */
+	notice?: string;
 }
 
 /**
@@ -211,39 +175,6 @@ export function judgeStory(input: {
 	};
 }
 
-async function loadChromium(): Promise<typeof import("playwright-core").chromium> {
-	try {
-		return (await import("playwright-core")).chromium;
-	} catch {
-		throw new LooksCheckError(
-			"indusk looks check needs playwright-core, which is not installed — install it (`npm install playwright-core`) and a browser (`npx playwright-core install chromium`)",
-		);
-	}
-}
-
-async function launch(chromium: Awaited<ReturnType<typeof loadChromium>>): Promise<Browser> {
-	try {
-		return await chromium.launch();
-	} catch (err) {
-		throw new LooksCheckError(
-			`indusk looks check could not start Chromium (${(err as Error).message.split("\n")[0]}) — install it with \`npx playwright-core install chromium\``,
-		);
-	}
-}
-
-/**
- * The schemes a look is opened under: light, and dark too when the
- * foundation names a dark value for any token (A37). A scheme the foundation
- * names is held only once it has been opened and drawn.
- */
-export function schemesOf(app: LooksApp): Scheme[] {
-	return app.foundation.tokens.some((t) => t.dark !== undefined) ? ["light", "dark"] : ["light"];
-}
-
-/** The name a look is reported under at a device: `phone` in light, `phone/dark` in dark. */
-export const lookDevice = (device: string, scheme: Scheme): string =>
-	scheme === "light" ? device : `${device}/${scheme}`;
-
 /** The foundation's approved values under a scheme: each token's dark value in dark, where it names one. */
 export function approvedValues(app: LooksApp, scheme: Scheme): Record<string, string> {
 	return Object.fromEntries(
@@ -309,18 +240,6 @@ export function checkable(
 		}
 	}
 	return { checked, unchecked };
-}
-
-/**
- * Where a story is served: the app's Storybook build under `/storybook`, the
- * story's id, and the scheme as the theme global the preview's decorator reads.
- */
-export function storyUrl(base: string, id: string, scheme: Scheme): string {
-	const url = new URL("/storybook/iframe.html", base);
-	url.searchParams.set("id", id);
-	url.searchParams.set("viewMode", "story");
-	url.searchParams.set("globals", `theme:${scheme}`);
-	return url.toString();
 }
 
 /** Runs a shell command and returns its stdout; throws when it fails. */
@@ -408,165 +327,170 @@ export function checkableStories(
 	return { checked, unchecked };
 }
 
-/** A page that did not load, or a story that did not draw, within its time. */
-class LookTimedOut extends Error {}
-
-/**
- * A page that answers 404: its plan or screen is not in the project the check
- * runs against (the plan and brief screens are drawn at plans only A10's
- * fixture project holds). A fact about the project, not about the page.
- */
-export class LookNotHere extends LooksCheckError {}
-
-const isTimeout = (e: unknown): boolean =>
-	e instanceof LookTimedOut || (e instanceof Error && e.name === "TimeoutError");
-
-/**
- * Open a look, trying again once when it runs out of time. A look that times
- * out twice is the reason it was not checked, named — never the end of the
- * run: one slow page used to throw away every look measured before it. A page
- * that answers 404 is not in this project: it is unchecked at once (a second
- * try would answer the same), and the run goes on. Any other failure (a 500, a
- * refused connection) is a broken check, not a missing look, and still ends the
- * run, loudly.
- */
-export async function openWithinTime<T>(
-	open: () => Promise<T>,
-	tries = 2,
-): Promise<T | { timedOut: string } | { unchecked: string }> {
-	for (let attempt = 1; ; attempt++) {
-		try {
-			return await open();
-		} catch (e) {
-			if (e instanceof LookNotHere) return { unchecked: `${e.message} — not in this project` };
-			if (!isTimeout(e)) throw e;
-			if (attempt >= tries) {
-				return { timedOut: `timed out ${tries} times: ${(e as Error).message.split("\n")[0]}` };
-			}
-		}
-	}
-}
-
-/** How long a page is given to settle after `load` before it is read. */
-const SETTLE_MS = 3_000;
-
-async function measure(
-	browser: Browser,
-	device: Device,
-	scheme: Scheme,
-	url: string,
-	script: string,
-	/** A selector that appears once a story has drawn; absent for a page, which is read at `load`. */
-	rendered?: string,
-): Promise<Measured> {
-	const context = await browser.newContext({
-		viewport: { width: device.width, height: device.height },
-		deviceScaleFactor: device.pixelRatio,
-		colorScheme: scheme,
-	});
-	try {
-		const page = await context.newPage();
-		const response = await page.goto(url, { waitUntil: "load" });
-		if (!response?.ok()) {
-			const answer = `${url} answered ${response ? response.status() : "nothing"}`;
-			throw response?.status() === 404 ? new LookNotHere(answer) : new LooksCheckError(answer);
-		}
-		// A page that sets its look state, or anything it draws, after hydration
-		// (the nav's width, asked for in the address) has not said so at `load`:
-		// give it until the network is quiet, but never hold a look to a page
-		// that never settles (a poll, a stream).
-		if (!rendered)
-			await page.waitForLoadState("networkidle", { timeout: SETTLE_MS }).catch(() => {});
-		if (rendered) {
-			try {
-				await page.waitForSelector(rendered, { timeout: 30_000 });
-			} catch {
-				throw new LookTimedOut(`${url} did not draw its story within 30s`);
-			}
-		}
-		return (await page.evaluate(script)) as Measured;
-	} finally {
-		await context.close();
-	}
-}
-
 /**
  * Stories open this many at a time: each is a static file in the served
  * Storybook, so the app's own server does no rendering for it; in turn, a
- * run over the admin's 342 story looks took six minutes. Screens stay one at
- * a time — each is a render by the app's server.
+ * run over the admin's 342 story looks took six minutes. Screens are each a
+ * render by the app's server.
  */
 const STORIES_AT_ONCE = 8;
 
 /**
- * Open each story in the app's served Storybook at every device and scheme
- * and judge it, in the stories' order. The script reads `#storybook-root`
- * only, and waits for the story's first element: Storybook marks the body
- * shown before React has drawn, and a story measured then is empty and holds
- * with nothing judged.
+ * Screens that need no seed open this many at a time: the app's server
+ * renders one page at a time, and three overlap the browser's work on one
+ * page with the server's render of the next. A seeded screen's seed is
+ * process-wide state, so those stay one at a time.
  */
-async function checkStories(
-	browser: Browser,
+const SCREENS_AT_ONCE = 3;
+
+/**
+ * Open one look once and judge it at every device and scheme. A look that
+ * does not load or draw in time is unchecked at each of them, with the
+ * reason, and the run goes on; a 404 likewise at once. `judge` turns what the
+ * page gave back into a verdict or an unchecked, from values it is handed.
+ */
+async function openAndJudge(
+	opener: LookOpener,
+	target: OpenTarget,
+	devices: Device[],
+	schemes: Scheme[],
+	judge: (
+		device: string,
+		scheme: Scheme,
+		seen: Measured,
+	) => { result: LookResult } | { unchecked: Unchecked },
+	mockup: string,
+): Promise<CheckReport> {
+	const opened = await openWithinTime(() => opener.open(target, devices, schemes));
+	if ("timedOut" in opened || "unchecked" in opened) {
+		const reason = "timedOut" in opened ? opened.timedOut : opened.unchecked;
+		return {
+			results: [],
+			reused: [],
+			unchecked: devices.flatMap((d) =>
+				schemes.map((scheme) => ({ mockup, device: lookDevice(d.name, scheme), reason })),
+			),
+		};
+	}
+	const report: CheckReport = { results: [], unchecked: [], reused: [] };
+	let at = 0;
+	for (const device of devices) {
+		for (const scheme of schemes) {
+			const judged = judge(lookDevice(device.name, scheme), scheme, opened[at++] as Measured);
+			if ("result" in judged) report.results.push(judged.result);
+			else report.unchecked.push(judged.unchecked);
+		}
+	}
+	return report;
+}
+
+/** One screen state, opened once and judged at every device and scheme. */
+function checkScreenState(
+	opener: LookOpener,
 	app: LooksApp,
 	base: string,
-	stories: readonly StoryTarget[],
+	look: LookTarget,
 ): Promise<CheckReport> {
-	const results: LookResult[] = [];
-	const unchecked: Unchecked[] = [];
-	const script = measureScript(
-		app.foundation.tokens.map((t) => t.name),
-		MEASURED_PROPERTIES,
-		app.ignore,
-		"#storybook-root",
-	);
-	const opens = stories.flatMap((story) =>
-		app.devices.flatMap((device) => schemesOf(app).map((scheme) => ({ story, device, scheme }))),
-	);
-	const judgements = await pMap(
-		opens,
-		async ({ story, device, scheme }) => {
-			const url = storyUrl(base, story.id, scheme);
-			const seen = await openWithinTime(() =>
-				measure(browser, device, scheme, url, script, "#storybook-root > *"),
-			);
-			if ("timedOut" in seen || "unchecked" in seen) {
-				return {
-					unchecked: {
-						mockup: `story ${story.name}`,
-						device: lookDevice(device.name, scheme),
-						reason: "timedOut" in seen ? seen.timedOut : seen.unchecked,
-					},
-				};
-			}
-			return judgeStory({
+	return openAndJudge(
+		opener,
+		{
+			look: `${look.screen}.${look.state}`,
+			url: pageUrl(base, look.screen, look.path, look.state),
+		},
+		app.devices,
+		schemesOf(app),
+		(device, scheme, seen) =>
+			judgeLook({
 				app: app.app,
-				story,
-				device: lookDevice(device.name, scheme),
+				look,
+				device,
 				scheme,
 				approved: approvedValues(app, scheme),
 				seen,
-			});
-		},
-		{ concurrency: STORIES_AT_ONCE },
+			}),
+		`${look.screen}.${look.state}`,
 	);
-	for (const judged of judgements) {
-		if ("result" in judged) results.push(judged.result);
-		else unchecked.push(judged.unchecked);
+}
+
+/** One story, opened once in the served Storybook (read from its first drawn element) and judged at every device and scheme. */
+function checkStory(
+	opener: LookOpener,
+	app: LooksApp,
+	base: string,
+	story: StoryTarget,
+): Promise<CheckReport> {
+	return openAndJudge(
+		opener,
+		{ look: `story ${story.name}`, url: storyUrl(base, story.id), rendered: "#storybook-root > *" },
+		app.devices,
+		schemesOf(app),
+		(device, scheme, seen) =>
+			judgeStory({
+				app: app.app,
+				story,
+				device,
+				scheme,
+				approved: approvedValues(app, scheme),
+				seen,
+			}),
+		`story ${story.name}`,
+	);
+}
+
+/** What `checkApp` is given beyond the app and its record. */
+export interface CheckOptions {
+	/** What opens a look; Chromium when absent. */
+	opener?: LookOpener;
+	/**
+	 * Check just the looks of these names, a screen state (`home.empty`) or a
+	 * story (`badge.ok`) or both, and report nothing else.
+	 */
+	only?: string[];
+	/** Open every look, whatever was held (`--all`). */
+	all?: boolean;
+	/** The project the check runs in: held results are read and kept for it. Without it nothing is reused or kept. */
+	projectRoot?: string;
+	/** The InDusk home the project's held results live under; `induskHome()` when absent. */
+	home?: string;
+	/** When this run's held results are recorded as measured. */
+	now?: Date;
+	/** The HTML at a URL, read once before any look opens to refuse a development server; a plain `fetch` when absent. */
+	fetchPage?: (url: string) => Promise<string>;
+	/** How long that read may take before the build is taken as unreadable; 30 s when absent. */
+	readTimeoutMs?: number;
+}
+
+/** Every look the app declares, by the name `--only` takes: its screen states and its stories. */
+function declaredLooks(app: LooksApp): Set<string> {
+	return new Set([
+		...app.screens.flatMap((s) => s.states.map((state) => `${s.name}.${state}`)),
+		...app.stories.map((s) => s.name),
+	]);
+}
+
+/** The names `--only` was given that no look of the app has: refused by name, before any page opens. */
+function refuseUnknown(app: LooksApp, only: readonly string[]): void {
+	const known = declaredLooks(app);
+	const unknown = only.filter((name) => !known.has(name));
+	if (unknown.length > 0) {
+		throw new LooksCheckError(
+			`${app.app} has no look named ${unknown.join(", ")} — name a screen state (home.empty) or a story (badge.ok)`,
+		);
 	}
-	return { results, unchecked };
 }
 
 /**
  * Open every checkable screen state, and every checkable story in the app's
- * served Storybook, at every device of `app` and judge each. `baseUrl` is
- * `--url`, else the app's own `url`; with neither the check is refused rather
- * than guessed.
+ * served Storybook, once, and judge each at every device and scheme of `app`.
+ * `baseUrl` is `--url`, else the app's own `url`; with neither the check is
+ * refused rather than guessed.
  */
 export async function checkApp(
 	app: LooksApp,
 	approvals: readonly ApprovalEntry[],
 	baseUrl: string | undefined,
 	storyApprovals: readonly StoryApprovalEntry[] = [],
+	opts: CheckOptions = {},
 ): Promise<CheckReport> {
 	const base = baseUrl ?? app.url;
 	if (!base) {
@@ -577,57 +501,65 @@ export async function checkApp(
 	if (app.devices.length === 0) {
 		throw new LooksCheckError(`${app.app} declares no reference devices (devices.json)`);
 	}
-	const { checked, unchecked } = checkable(app, approvals);
+	if (opts.only) refuseUnknown(app, opts.only);
+	const named = (name: string) => !opts.only || opts.only.includes(name);
+	const screens = checkable(app, approvals);
+	const checked = screens.checked.filter((l) => named(`${l.screen}.${l.state}`));
 	const stories = checkableStories(app, storyApprovals);
-	unchecked.push(...stories.unchecked);
-	const results: LookResult[] = [];
-	if (checked.length === 0 && stories.checked.length === 0) return { results, unchecked };
-
-	const chromium = await loadChromium();
-	const browser = await launch(chromium);
-	const script = measureScript(
-		app.foundation.tokens.map((t) => t.name),
-		MEASURED_PROPERTIES,
-		app.ignore,
+	stories.checked = stories.checked.filter((s) => named(s.name));
+	const unchecked = [...screens.unchecked, ...stories.unchecked].filter((u) =>
+		named(u.mockup.replace(/^story /, "")),
 	);
-	try {
-		for (const group of byScreen(checked)) {
-			await withScreenSeed(group, async (seeded) => {
-				for (const look of seeded) {
-					for (const device of app.devices) {
-						for (const scheme of schemesOf(app)) {
-							const url = pageUrl(base, look.screen, look.path, look.state);
-							const seen = await openWithinTime(() =>
-								measure(browser, device, scheme, url, script),
-							);
-							if ("timedOut" in seen || "unchecked" in seen) {
-								unchecked.push({
-									mockup: `${look.screen}.${look.state}`,
-									device: lookDevice(device.name, scheme),
-									reason: "timedOut" in seen ? seen.timedOut : seen.unchecked,
-								});
-								continue;
-							}
-							const judged = judgeLook({
-								app: app.app,
-								look,
-								device: lookDevice(device.name, scheme),
-								scheme,
-								approved: approvedValues(app, scheme),
-								seen,
-							});
-							if ("result" in judged) results.push(judged.result);
-							else unchecked.push(judged.unchecked);
-						}
-					}
-				}
-			});
-		}
-		const found = await checkStories(browser, app, base, stories.checked);
-		results.push(...found.results);
-		unchecked.push(...found.unchecked);
-	} finally {
-		await browser.close();
+	const results: LookResult[] = [];
+	const served: Served =
+		checked.length + stories.checked.length === 0
+			? { screens: null, stories: null }
+			: await readServed(app, base, checked[0], stories.checked[0], opts);
+	const plan = opts.projectRoot
+		? await planReuse(app, opts.projectRoot, base, checked, stories.checked, served, opts)
+		: undefined;
+	const screensToOpen = plan?.screens ?? checked;
+	const storiesToOpen = plan?.stories ?? stories.checked;
+	const reused = plan?.reused ?? [];
+	const notice = plan?.notice ? { notice: plan.notice } : {};
+	if (screensToOpen.length === 0 && storiesToOpen.length === 0) {
+		if (plan && plan.rebuilt.size > 0) keepHeld(plan, app, results, [], opts);
+		return { results, unchecked, reused, ...notice };
 	}
-	return { results, unchecked };
+
+	const opener = opts.opener ?? chromiumOpener(app);
+	const measuredUnchecked: Unchecked[] = [];
+	const take = (found: CheckReport) => {
+		results.push(...found.results);
+		measuredUnchecked.push(...found.unchecked);
+	};
+	try {
+		// Unseeded screens three at a time, then seeded ones one at a time, each
+		// inside its seed; the report keeps the order the screens are declared in.
+		const groups = byScreen(screensToOpen);
+		const reports = new Map<LookTarget[], CheckReport[]>();
+		const checkGroup = async (group: LookTarget[]) => {
+			await withScreenSeed(group, async (seeded) => {
+				const found: CheckReport[] = [];
+				for (const look of seeded) found.push(await checkScreenState(opener, app, base, look));
+				reports.set(group, found);
+			});
+		};
+		await pMap(
+			groups.filter((g) => !g[0]?.seed),
+			checkGroup,
+			{ concurrency: SCREENS_AT_ONCE },
+		);
+		for (const group of groups.filter((g) => g[0]?.seed)) await checkGroup(group);
+		for (const group of groups) for (const found of reports.get(group) ?? []) take(found);
+		const found = await pMap(storiesToOpen, (story) => checkStory(opener, app, base, story), {
+			concurrency: STORIES_AT_ONCE,
+		});
+		for (const f of found) take(f);
+	} finally {
+		await opener.close();
+	}
+	unchecked.push(...measuredUnchecked);
+	if (plan) keepHeld(plan, app, results, measuredUnchecked, opts);
+	return { results, unchecked, reused, ...notice };
 }

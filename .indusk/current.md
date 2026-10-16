@@ -31,6 +31,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **template-reload-on-cold-cache (closed 2026-10-15)** — the browser template tests pass on a cold Vite cache (the templates project now `extends` the root, so its pre-bundle list applies), landing's install syncs to the lockfile first, day-monitor e2e matches the model name. See [archive](planning/archive/template-reload-on-cold-cache/).
 - **story-first-phases (closed 2026-10-15)** — an impl phase opens with a plain paragraph and each task is one sentence with its technical detail folded beneath, held on every edit (`phase_summary: required`); folded text never ticks, skips or adds; the plan page shows both. See [archive](planning/archive/story-first-phases/).
 - **one-promise-language (closed 2026-10-16)** — every page, record and signal says upheld or broken (holding/broken live, no signal unknown); readers take `broken` and `violated` as broken, writers and `promises health --json` keep `violated` until `mark-first`; `known-broken` with `known-violated` still read; no signal is drawn grey. See [archive](planning/archive/one-promise-language/).
+- **looks-check-speed (closed 2026-10-16)** — a look check costs what changed: an unchanged look is reused from machine state, each opened look loads once, dev servers refused, `--only`/`--all`; ~35 min → 98 s full, the 57 s floor of never-checkable looks carried to looks-as-promises. See [archive](planning/archive/looks-check-speed/).
 - **skip-reason-why (closed 2026-10-14)** — a skipped step reads "skipped" with a "why?" that opens its reason; a skip reason is one sentence of at most 120 characters, and an unattended build shortens a long one rather than re-running the ritual. See [archive](planning/archive/skip-reason-why/) for full detail.
 - **component-content (closed 2026-10-14)** — a mockup places a component with its own words; text and placed components only, refused otherwise. Approve does not yet refuse content findings (follow-on). See [archive](planning/archive/component-content/) for full detail.
 - **new-project-flow (closed 2026-10-14)** — a project starts as a conversation in the admin and is created with no command typed; follow-ups in `mark-first` (the creation span, marks for prompt-held promises) and `adopt-existing-project` ([archive](planning/archive/new-project-flow/)).
@@ -3138,6 +3139,27 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 
 **Session ID**: 8abf2bb9-a0b3-4b82-8f4e-b5336a3fb06a
 **Last updated**: 2026-10-14T22:35:53.521Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 8ae65d08 — starting catchup
+
+**Session ID**: 8ae65d08-49fb-4c3f-810f-3b527885d1d6
+**Last updated**: 2026-10-16T14:21:15.530Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
