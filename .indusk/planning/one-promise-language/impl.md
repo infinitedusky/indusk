@@ -456,6 +456,11 @@ This phase makes the promise list stop showing a promise as healthy when nothing
 
   `components/ui/PromiseRow.tsx`: add a `no-signal` standing (`DOT` → `bg-idle`); `Promises.tsx` maps a row to it when its standing is enforced and no source has heard the promise (the same "no signal" reading the timeline and proof page use since Build Phase 2). Add a `NoSignal` story to `PromiseRow.stories.tsx`, run `indusk looks stories admin`.
   </details>
+- [x] Make the promise list report a row drawn with no signal to the looks check, so the approved look can be checked by value.
+  <details><summary>Technical</summary>
+
+  Found at verification (2026-10-16): the check read `promise-row.no-signal` unchecked — "the page did not report state no-signal". `app/p/[project]/promises/page.tsx` `dashboardLookState` now adds `promise-row.no-signal` beside `dashboard.default` when any row is enforced with no signal; confirmed on this branch's admin (`data-look-state="dashboard.default promise-row.no-signal"`).
+  </details>
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules; findings become items here
 
 #### Build Phase 5 Verification
