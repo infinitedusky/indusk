@@ -1,6 +1,6 @@
 # Looks check speed — a check costs what changed
 
-**Decided 2026-10-16.** Full ADR: `.indusk/planning/looks-check-speed/adr.md`.
+**Decided 2026-10-16.** Full ADR: `.indusk/planning/archive/looks-check-speed/adr.md`.
 
 **Amended 2026-10-16.** Decision 2 gained the styling configuration and lockfile in the key, and the served build judged against the sources outside it, while the plan was built; it says why. Its falsification amended it again: a result measured on a server behind its sources is never kept, a story's key holds the app's element and root rules, every key the checker's own hash.
 
@@ -322,7 +322,7 @@ override changes it in place, so one load does.
 The check is one job per file in `apps/indusk-mcp/src/lib/looks/`: `served.ts` reads the served page (root request, development-server refusal, served build); `browser.ts` launches Chromium, loads a page and measures it in place or fresh, with the mount-time fallback and the `LookOpener` seam; `reuse-run.ts` plans which looks reopen and keeps what held, around the rule in `reuse.ts`; `verdict.ts` judges the measured values; `check.ts` is the run. `errors.ts` holds `LooksCheckError` so none of these import each other in a circle.
 
 ## References
-- `research.md`, `brief.md`, `test-plan.md` in `.indusk/planning/looks-check-speed/`
-- `.indusk/planning/storybook-components/` — snapshots, stylesheet hashes, `openWithinTime`
+- `research.md`, `brief.md`, `test-plan.md` in `.indusk/planning/archive/looks-check-speed/`
+- `.indusk/planning/archive/storybook-components/` — snapshots, stylesheet hashes, `openWithinTime`
 - `/decisions/bookkeeping-lives-where-it-is-read`
 - `/decisions/ui-promises` — the check and the verdict split
