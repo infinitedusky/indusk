@@ -89,18 +89,18 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 | A22 | After a one-component change with the stories rendered, the admin's check against a production build finishes under 15 s and names every reused look | Build Phase 3 | Build Phase 3 | skipped | live check | the brief's first expectation, timed once when the build closes | manual: time indusk looks check admin --url http://localhost:3940 |
 | A23 | The admin's full check with the all option against a production build finishes under 60 s | Build Phase 3 | Build Phase 3 | skipped | live check | the brief's second expectation, timed once when the build closes | manual: time indusk looks check admin --url http://localhost:3940 --all |
 | A24 | Against a running next dev of the admin, the check refuses naming the admin's build-and-serve command, without opening a look | Build Phase 3 | Build Phase 3 | passing | live check | the dev-server clause against the framework itself, whose markers this plan reads but does not own | manual: indusk looks check admin --url http://localhost:3961 |
-| A28 | A look opened while the server still serves the build from before the sources changed is reported but not kept held, and the next run against that server opens it again | Build Phase 4 | Build Phase 4 | written | unit | promise: tokens-are-held-exactly, promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A29 | Against a server not rebuilt since a page-code edit, a story whose own inputs are unchanged is reused, and its record keeps the build it was measured on | Build Phase 4 | Build Phase 4 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A30 | A change to an element, universal or body rule of the app's stylesheet reopens every story that draws under it | Build Phase 4 | Build Phase 4 | written | unit | promise: tokens-are-held-exactly | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A31 | A change to what the check measures or how it judges reopens every look | Build Phase 4 | Build Phase 4 | written | unit | promise: tokens-are-held-exactly | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A32 | Two checks of one project finishing in either order never write back as held a look the other removed | Build Phase 4 | Build Phase 4 | written | unit | promise: tokens-are-held-exactly | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A33 | A server that accepts the connection and never answers the first page does not hang the check; nothing is reused and the looks are opened | Build Phase 4 | Build Phase 4 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
-| A34 | A production page whose content mentions a development marker is not refused; the page a real next dev serves still is | Build Phase 4 | Build Phase 4 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/dev-server.test.ts |
-| A35 | With a base URL that has a path, the build and the development marker are read at that path, not the origin's root | Build Phase 4 | Build Phase 4 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
-| A36 | A page that reads its viewport or scheme once on mount, with no listener, is measured at every device and scheme as a fresh load would measure it | Build Phase 4 | Build Phase 4 | written | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
-| A37 | A look held at every device and scheme but one, broken or unchecked there, is not kept and is opened on the next run | Build Phase 4 | Build Phase 4 | written | unit | promise: tokens-are-held-exactly | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
-| A38 | The served build is told by its scripts, stylesheets and inline styles, never the page's text; the same sources served by another build, a look with no recorded build, and a build that cannot be read reopen the look; after a rebuild from edited sources an unchanged look is reused and its record follows the new build | Build Phase 4 | Build Phase 4 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A39 | A change to an app's Tailwind or PostCSS config, its Storybook config or the project's lockfile reopens every look it held | Build Phase 4 | Build Phase 4 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A28 | A look opened while the server still serves the build from before the sources changed is reported but not kept held, and the next run against that server opens it again | Build Phase 4 | Build Phase 4 | passing | unit | promise: tokens-are-held-exactly, promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A29 | Against a server not rebuilt since a page-code edit, a story whose own inputs are unchanged is reused, and its record keeps the build it was measured on | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A30 | A change to an element, universal or body rule of the app's stylesheet reopens every story that draws under it | Build Phase 4 | Build Phase 4 | passing | unit | promise: tokens-are-held-exactly | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A31 | A change to what the check measures or how it judges reopens every look | Build Phase 4 | Build Phase 4 | passing | unit | promise: tokens-are-held-exactly | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A32 | Two checks of one project finishing in either order never write back as held a look the other removed | Build Phase 4 | Build Phase 4 | passing | unit | promise: tokens-are-held-exactly | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A33 | A server that accepts the connection and never answers the first page does not hang the check; nothing is reused and the looks are opened | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
+| A34 | A production page whose content mentions a development marker is not refused; the page a real next dev serves still is | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/dev-server.test.ts |
+| A35 | With a base URL that has a path, the build and the development marker are read at that path, not the origin's root | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
+| A36 | A page that reads its viewport or scheme once on mount, with no listener, is measured at every device and scheme as a fresh load would measure it | Build Phase 4 | Build Phase 4 | passing | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
+| A37 | A look held at every device and scheme but one, broken or unchecked there, is not kept and is opened on the next run | Build Phase 4 | Build Phase 4 | passing | unit | promise: tokens-are-held-exactly | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
+| A38 | The served build is told by its scripts, stylesheets and inline styles, never the page's text; the same sources served by another build, a look with no recorded build, and a build that cannot be read reopen the look; after a rebuild from edited sources an unchanged look is reused and its record follows the new build | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
+| A39 | A change to an app's Tailwind or PostCSS config, its Storybook config or the project's lockfile reopens every look it held | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 
 ### Deferred Verification
 
@@ -774,25 +774,29 @@ A fresh reader went looking for ways a changed look could be reported held from 
 
 #### Build Phase 4 Verification
 
-- [ ] The reuse, check-run and dev-server tests pass, including the new cases for a stale server, a page-code edit, stylesheet and checker changes, concurrent runs, a hung server, page text, a base path and a partly held look.
+- [x] The reuse, check-run and dev-server tests pass, including the new cases for a stale server, a page-code edit, stylesheet and checker changes, concurrent runs, a hung server, page text, a base path and a partly held look.
+  - Result (2026-10-16): the three files 50 passed — A28–A35, A37, A38, A39 green; `vitest related` over every looks file this phase changed (check, reuse, mockups, component-styles, dev-server, verdict, stories, components) 372 passed in 53 files — A1–A9, A13, A16–A19 still green.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/looks-check-speed/apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/looks/reuse.test.ts src/lib/looks/check-run.test.ts src/lib/looks/dev-server.test.ts && pnpm exec vitest related src/lib/looks/check.ts src/lib/looks/reuse.ts src/lib/looks/mockups.ts src/lib/looks/component-styles.ts src/lib/looks/dev-server.ts` — A28–A35 and A37 green; A1–A9, A13, A16–A19 still green.
 
   </details>
-- [ ] The browser tests pass, including the page that reads its size once on mount.
+- [x] The browser tests pass, including the page that reads its size once on mount.
+  - Result (2026-10-16): `looks-check-speed`, `looks-browser` and `looks-component-content` contract files 13 passed — A36 green; A10, A11, A12, A14, A20 still green. After `pnpm run prepublishOnly` (its rewrite of `admin/next.config.ts` reverted), A27, the full check of the bundled admin, green in 106 s.
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-check-speed.contract.test.ts src/__tests__/looks-browser.contract.test.ts` — A36 green; A10, A11, A12, A14, A20 still green.
 
   </details>
-- [ ] Re-rendering the admin's stories after the stylesheet slices change still holds every story against the approved snapshots, or the changed stylesheets are re-approved by a person.
+- [x] Re-rendering the admin's stories after the stylesheet slices change still holds every story against the approved snapshots, or the changed stylesheets are re-approved by a person.
+  - Result (2026-10-16): `indusk looks stories admin` (146 snapshots, 35 components, 6.7 s); `git diff --stat .indusk/mockups/admin/components` empty — no snapshot and no stylesheet changed, because the element rules went into the catalog's `baseRulesHash`, not the slices (see the item above), so nothing needs re-approval. The re-render's only change, `renderedFrom` and `baseRulesHash` in `components.json`, was reverted: the plan changes no admin look.
   <details><summary>Technical</summary>
 
   `indusk looks stories admin`, then `git diff --stat .indusk/mockups/admin/components`; a changed `stylesheetHash` on an approved story is a stylesheet change Sandy approves in the cockpit, not one the agent accepts.
 
   </details>
-- [ ] Types and lint are clean on every file this phase touched.
+- [x] Types and lint are clean on every file this phase touched.
+  - Result (2026-10-16): `pnpm exec tsc --noEmit` in `apps/indusk-mcp` exit 0; `pnpm exec biome check` over the 13 TypeScript files this phase touched, no findings. The repo-wide `biome check` still reports the 111 errors that predate this plan, none in a file the plan changed.
   <details><summary>Technical</summary>
 
   `pnpm exec tsc --noEmit -p apps/indusk-mcp`; `pnpm exec biome check` over the touched files.
