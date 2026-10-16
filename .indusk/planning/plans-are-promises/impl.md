@@ -128,7 +128,7 @@ Before anything about clauses is built, this phase writes the tests that say wha
   `planner-brief-template.test.ts` (docblock `promise: a-plan-holds-the-promises-it-lands`): A10 — the skill's `### brief.md` template contains a sub-entry `(split)` and `(limit)` under a made promise and `clauses: required` in its frontmatter, and the parsed template's `makes[0].clauses` is non-empty; the `### test-plan.md` template contains a `- Signal:` line under a `### \`{clause-name}\`` heading; Step 5's text says the clause plan is written before the ADR. A12 — Step 3's text says promises whose work shares code are one plan and that the person decides a split. Red: none of it is there.
 
   </details>
-- [ ] Confirm no new test fails only because a file it loads is missing.
+- [x] Confirm no new test fails only because a file it loads is missing.
   <details><summary>Technical</summary>
 
   Every test imports existing modules (`checkPlanContract`, `parseBriefContract`, `parsePurpose`, `rowsNamingIn`, `confirmPlan`) or runs the CLI. `clause-plan.ts` is not imported by a test; it is reached through `checkPlanContract`.
