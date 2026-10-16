@@ -386,6 +386,13 @@ This phase tests three places where the finished plan may fail its own promise. 
   `lib/promises/registry.ts` `clausesProblem` takes the promise's name and refuses `rests_on` equal to it; `lib/promises/check.ts` refuses a `rests_on` naming no promise in the registry, naming the clause. Hypothesis: both pass `promises:check` today and surface only as a close that can never succeed.
 
   </details>
+- [x] Shape — reviewed a file this phase changed and left it as it is
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/promises/rows.ts`: rowProofs now holds the memoised proofOf closure; it has one reason to change (how a promise is proved) and the cycle chain needs the closure state, so extracting it would only thread that state through arguments
+
+  </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 4 Verification
 
