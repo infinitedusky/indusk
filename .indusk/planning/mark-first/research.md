@@ -555,6 +555,12 @@ naming a production source. A Next.js app with no endpoint set exports to
 
 #### The proposed structure (the judge's synthesis, three proposals weighed)
 
+*Made the same day (Sandy, 2026-10-16): the parent
+[telemetry-from-day-one](../telemetry-from-day-one/master.md) now holds this
+plan as its second child, with the six siblings below started on their own
+branches, each with its research; the mark-first changes listed further down
+are not yet made.*
+
 A master `telemetry-from-day-one`, display only, a `promise-core` child beside
 `run-the-master`. Plans 1–3 land before Homework Gate's `indusk init`; 4–5
 while HG's first plans build and before its first Fly deploy; 6 before HG's
