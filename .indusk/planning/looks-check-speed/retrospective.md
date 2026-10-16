@@ -127,6 +127,13 @@ code alone is 34 files under `apps/`, +3,432 / −342. New files: `reuse.ts`,
   reuse notices out of `planReuse` into their own function); Build Phases 2, 3
   and 5 none. None was judged wrong by a person.
 - **Audit:** 10 problems, all fixed in Build Phase 4 (above).
+- **Tests at close:** 38 trajectory rows — 36 passing, 2 skipped (the two
+  timing rows, accepted as information). `auditPlanAtClose`: nothing blocked,
+  nothing non-terminal. Its one Deferred Verification row — a screen whose
+  data changed is reused past, since data is in no key — is classified
+  `downstream-plan`, but its real mitigation is the system-tier full check
+  (`looks-admin-all.contract.test.ts`, listed in `vitest.tiers.ts`). The
+  classifier has no kind for a slow-tier test; flagged, not changed.
 
 ## Carried forward
 
