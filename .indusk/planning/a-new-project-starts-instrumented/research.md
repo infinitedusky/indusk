@@ -11,8 +11,7 @@ Child 3 of seven in [telemetry-from-day-one](../telemetry-from-day-one/master.md
 made on 2026-10-16 after the cold audit of `mark-first` against the goal. Blocked by
 [daemon-found-not-guessed](../daemon-found-not-guessed/) for the endpoint it writes and by
 [mark-first](../mark-first/)'s ADR for the keys a signal carries; blocks Homework Gate's
-`indusk init`. File:line citations are on trunk at `82231cc7b`
-(`/Users/the_dusky/code/sandbox/dusk`) unless another checkout is named.
+`indusk init`. File:line citations are on trunk at `82231cc7b` unless another checkout is named.
 
 ## Question
 
@@ -24,19 +23,18 @@ of those this plan should own.
 
 ## Background
 
-Sandy's question on 2026-10-16, after release 1.71.0 opened seven incidents from failing
-slow tests and a reader found the admin emits no telemetry: is `mark-first` a real plan for
-telemetry integral to a project built with InDusk from day one, proved on Homework Gate —
-"if we need to do more than one plan, we can do that". The audit (the "Audit against the
-goal (2026-10-16)" section of `mark-first`'s research) answered that `mark-first` is a sound
-plan for how InDusk *reads* a signal and does not touch what a new application is *handed*
-or *emits*. Seventeen of its 41 gaps are about day one; this plan takes them.
+Sandy's question on 2026-10-16, after release 1.71.0 opened seven incidents from failing slow
+tests: is `mark-first` a real plan for telemetry integral to a project built with InDusk from
+day one, proved on Homework Gate — more than one plan is fine. The audit (the "Audit against
+the goal (2026-10-16)" section of `mark-first`'s research) answered that it is a sound plan for
+how InDusk *reads* a signal and does not touch what a new application is *handed* or *emits*.
+Seventeen of its 41 gaps are about day one; this plan takes them.
 
-Homework Gate is the proof. Its workbench at `/Users/the_dusky/code/sandbox/homework-gate-workbench`
-was made by hand on 2026-10-12 with `indusk init --workbench`. It carries `instrumentation.ts`, `filtering-exporter.ts`
+Homework Gate is the proof. Its workbench (the path is in Sources) was made by hand on
+2026-10-12 with `indusk init --workbench`. It carries `instrumentation.ts`, `filtering-exporter.ts`
 and `logger.ts` at the workbench root where no app runs; `homework-gate/` holds one
 `README.md`; its config says `"detected": {}`; its `.mcp.json` names a Jaeger MCP on port
-54677, a daemon its own creation spawned; the evaluator's first run there failed for want of
+54677, a daemon its own creation spawned; the evaluator's first run there exited on a missing
 `homework-gate/.mcp.json`. Its founding brief says telemetry "carries no content — an
 allowlist of attribute keys at the source, the OpenTelemetry Collector's redaction processor
 as the backstop" (`project-brief.md:177`) and states three measurements as log lines
@@ -44,29 +42,30 @@ as the backstop" (`project-brief.md:177`) and states three measurements as log l
 
 ## Findings
 
+Each finding ends with the number of the audit gap it restates (the gaps are numbered in the
+"Audit against the goal" section of `mark-first`'s research); the finding is that gap's summary.
+
 ### The scaffold lands at the workbench root, not where the app runs
 
 Step 7 of `init` detects by files at `projectRoot` — `next.config.*`, `requirements.txt` or
-`pyproject.toml`, `vite.config.*` — else takes the Node path (`init.ts:914-924,999-1033`),
-copying three files into `src/` or the root and printing an install and a wire line
-(`:1031-1032`). The admin's flow runs that same `init --workbench … --no-index` with the
-workbench as working directory (`lib/new-project/create.ts:390-404`) after making a
-repository holding only `README.md`. Tooling detection does run over declared repos
-(`lib/detect-tooling.ts:76-88` via `resolveCheckRoots`, `lib/health.ts:43-47`), but `init`
-calls it at `:544`, before the workbench config is written at `:1286` — hence
-`"detected": {}`. Nothing re-runs the scaffold: `update.ts` re-detects only
+`pyproject.toml`, `vite.config.*` — else takes the Node path (`init.ts:914-924,999-1033`), copying
+three files into `src/` or the root and printing an install and a wire line (`:1031-1032`). The
+admin's flow runs that same `init --workbench … --no-index` with the workbench as working directory
+(`lib/new-project/create.ts:390-404`) after making a repository holding only `README.md`. Tooling
+detection does run over declared repos (`lib/detect-tooling.ts:76-88` via `resolveCheckRoots`,
+`lib/health.ts:43-47`), but `init` calls it at `:544`, before the workbench config is written at
+`:1286` — hence `"detected": {}`. Nothing re-runs the scaffold: `update.ts` re-detects only
 `verify.testRunner` (`:386-416`) and has no instrumentation reference.
 
-Three consequences, observed in Homework Gate. The otel extension was enabled by detection
-two seconds after the stray file (`instrumentation.ts` 21:19:52, its manifest 21:19:54 on
-2026-10-12): the init-time auto-enable globs `**/instrumentation.{ts,py}` without the
-manifest's exclude list (`extensions.ts:660-665`). Its health check runs in the declared repo,
-which has no instrumentation file, so it reads unhealthy — the audit saw `otel (built-in) —
-unhealthy`; I verified the code path, not the report. The evaluator spawns with
-`--mcp-config .mcp.json` in the code repo, which has none:
-`~/.indusk/projects/homework_gate_workbench-9815b848/eval/results.log` line 1, changeId
-`57ca56f`, 2026-10-13T01:19:56Z, "MCP config file not found: …/homework-gate/.mcp.json";
-`init` writes `.mcp.json` only where it runs (`init.ts:670-687`). (audit gaps G2, G25)
+Three consequences, observed in Homework Gate. The otel extension was enabled by detection two
+seconds after the stray file (`instrumentation.ts` 21:19:52, its manifest 21:19:54 on 2026-10-12):
+the init-time auto-enable globs `**/instrumentation.{ts,py}` without the manifest's exclude list
+(`extensions.ts:660-665`). Its health check runs in the declared repo, which has no instrumentation
+file, so it reads unhealthy — the audit saw `otel (built-in) — unhealthy`; I verified the code
+path, not the report. The evaluator spawns with `--mcp-config .mcp.json` in the code repo, which
+has none: `~/.indusk/projects/homework_gate_workbench-9815b848/eval/results.log` line 1, changeId
+`57ca56f`, 2026-10-13T01:19:56Z, "MCP config file not found: …/homework-gate/.mcp.json"; `init`
+writes `.mcp.json` only where it runs (`init.ts:670-687`). (audit gaps G2, G25)
 
 ### The service is renamed only in a comment
 
@@ -101,13 +100,13 @@ configure your services to emit to it" (`local-telemetry/skill.md:81`); the tele
 overview says the opposite, that enabling "writes the extension's `.env` component"
 (`apps/docs/src/reference/telemetry/overview.md:97,162-165`) — the audit's fifth contradiction.
 
-The port is the first child's, but it shapes this plan: `telemetry register`, run on every
+The port is the daemon plan's, but it shapes this plan: `telemetry register`, run on every
 `init`, starts a daemon with `allowPortBump: true` whenever the record reads not running
-(`telemetry.ts:257-266`; `daemon.ts:116-120,398`). On 2026-10-16 this machine has no
-`~/.indusk/telemetry.json`, three Jaegers running, and Homework Gate's `.mcp.json` on MCP
-port 54677, while the app side says 4318 everywhere (`local-telemetry/skill.md:81,116,127`,
-`examples/seat-holds/README.md:35`). Fixed 4318 or a file written from the record is Sandy's
-decision in the parent; this plan's writer follows it. (audit gap G31, app side)
+(`telemetry.ts:257-266`; `daemon.ts:116-120,398`). At the audit on 2026-10-16 this machine had
+no `~/.indusk/telemetry.json` and three Jaegers running (one, with a record, by this document's
+review later that day); Homework Gate's `.mcp.json` is on MCP port 54677, while the app side
+says 4318 everywhere (`local-telemetry/skill.md:81,116,127`, `examples/seat-holds/README.md:35`).
+Fixed 4318 or a file written from the record is Sandy's decision in the parent. (audit gap G31, app side)
 
 ### No span carries its environment or its project
 
@@ -124,9 +123,10 @@ The project is the same story. `PROMISE_MARK.project` (`indusk.project`) is docu
 "absent from an application's own spans, whose service is its project"
 (`lib/promises/vocabulary.ts:130-137`), and the reader drops a signal only when it names a
 *different* project; on a shared recording server two applications with the same promise
-name count each other's signals — the audit's twelfth contradiction. The judge puts
-`indusk.project` on every scaffolded span as a resource attribute, reversing that comment,
-which lets [production-is-heard](../production-is-heard/) drop an untagged span for free.
+name count each other's signals — the audit's twelfth contradiction. The judge (the synthesis
+that weighed three proposals for this plan, `plan-gaps/judge.json` in the session scratchpad)
+proposes `indusk.project` on every scaffolded span as a resource attribute, reversing that
+comment, which would let [production-is-heard](../production-is-heard/) drop an untagged span for free.
 
 The browser wiring instruction is unsafe for Next.js: `init` says to import the web file
 "in your root client component or layout" (`init.ts:979-981`), while the template registers
@@ -161,11 +161,10 @@ skill says a log line is not a signal; the skill half is this plan's. (audit gap
 ### No app-side way to write a signal, and mark-first widens what one must write
 
 `markPromise` takes `{promise, outcome, project?, symptom?}`, no clause, and writes the
-pre-2026-10-15 outcome word (`lib/promises/mark.ts:5,20-37`). It is not exported:
-`package.json` has `./promises/registry`, `./promises/telemetry` and `./testing/trace-shape`,
-no `./promises/mark`. The app-facing form is two
-hand-set attributes (`guide/promises.md:173-187`, `testing/skill.md:35-41`); a typo is
-silent, since `parseMarkedSpan` returns null when the promise tag is not a string or the
+pre-2026-10-15 outcome word (`lib/promises/mark.ts:5,20-37`). It is not exported: `package.json`
+has `./promises/registry`, `./promises/telemetry` and `./testing/trace-shape`, no `./promises/mark`.
+The app-facing form is two hand-set attributes (`guide/promises.md:173-187`, `testing/skill.md:35-41`);
+a typo is silent, since `parseMarkedSpan` returns null when the promise tag is not a string or the
 outcome is not a verdict (`telemetry.ts:232-235`), and the clause reads no signal forever.
 The shipped test helper asserts by promise only (`lib/testing/trace-shape.ts:118-140,148-167`).
 The day-monitor decision (2026-09-18) rejected "a runtime helper package (InDusk in the
@@ -175,19 +174,18 @@ application's dependency graph for two attribute writes)" (`apps/docs/src/decisi
 every signal and `indusk.signal.plan`/`.phase` to a broken one (its D1), has a writer set
 `indusk.run=test` under a test runner so readers ignore such spans (its D3), and switches
 the writers to the new outcome word (its D7). None of those keys exists on trunk (grep over
-the package, the admin, the docs and the demo: none), and its
-documentation plan (`adr.md:106-116`) adds `guide/signals.md` but names neither the promises
-guide's marking section, the otel or testing skill, the templates nor the test helper — the
-audit's seventh contradiction: the no-helper stance stands while the convention grows from
-two attributes to five. The Node template exports whenever the endpoint is set, with no test
-marker (`instrumentation.ts:31-37`), so a project's vitest run against the daemon writes
-spans a reader takes as real until the marker exists. (audit gap G3, app side; the keys
-half is `mark-first`'s)
+the package, the admin, the docs and the demo: none), and its documentation plan (`adr.md:106-116`)
+adds `guide/signals.md` but names neither the promises guide's section on the two attributes,
+the otel or testing skill, the templates nor the test helper — the audit's seventh contradiction:
+the no-helper stance stands while the convention grows from two attributes to five. The Node
+template exports whenever the endpoint is set, with no test marker (`instrumentation.ts:31-37`),
+so a project's vitest run against the daemon writes spans a reader takes as real until the
+marker exists. (audit gap G3, app side; the keys half is `mark-first`'s)
 
 ### The skills and the printed text do not tell the truth
 
 - `init.ts:1346` prints `indusk infra start` as step 1; `infra` was removed in 1.33.5
-  (`09e44ccfd`, 2026-07-24, "observed misleading a live agent"); the demo and the new-project flow both run `init`.
+  (`09e44ccfd`, 2026-07-24); the demo and the new-project flow both run `init`.
 - `extensions/otel/skill.md:241`: "search for your `OTEL_SERVICE_NAME` in Dash0" (Homework
   Gate's installed copy carries it verbatim); `local-telemetry/skill.md:30,87-120` calls
   production "Dash0's job" and teaches composable.env; `apps/docs/src/reference/tools/otel.md:313-323`
@@ -196,8 +194,8 @@ half is `mark-first`'s)
 - The otel-extension decision of 2026-03-31 says "Every project created with `indusk-mcp
   init` is observable from day one"; the templates default to the console, `--local` skips
   OTel (`init.ts:905-907`), a workbench init scaffolds where no app runs — the audit's sixth
-  contradiction. Two lessons record the evaluator in the same hole (`.claude/lessons/
-  unconfigured-exporter-mark-is-never-seen.md` and `otel-export-needs-a-default-endpoint-not-just-an-emitted-span.md`).
+  contradiction. Two lessons in `.claude/lessons/` record the evaluator in the same hole:
+  `unconfigured-exporter-mark-is-never-seen` and `otel-export-needs-a-default-endpoint-not-just-an-emitted-span`.
 (audit gap G5, guidance half)
 
 ### A scaffolded project never receives a newer template
@@ -216,10 +214,9 @@ The prompt tells the agent to recommend "a GitHub repository, deployment, teleme
 site" and accept a refusal (`lib/new-project/prompt.ts:80`); `recordChoices` writes
 `recommendations[]` with `kept` and `reason` (`create.ts:206-225`). After creation nothing
 reads it (the readers are the proposal page, `apps/indusk-admin/src/app/new/[id]/page.tsx:45,48`,
-and the type, `lib/config.ts:289`). Creation runs the same `init` either way;
-`local-telemetry` is `required: true` and Pass 1
-of `autoEnableExtensions` enables it unless `disabled_extensions` names it
-(`extensions.ts:640-651`, `config.ts:456-458`), which nothing in the flow writes. The
+and the type, `lib/config.ts:289`). Creation runs the same `init` either way; `local-telemetry`
+is `required: true` and Pass 1 of `autoEnableExtensions` enables it unless `disabled_extensions`
+names it (`extensions.ts:635-645`, `config.ts:456-458`), which nothing in the flow writes. The
 archived audit saw it: "declining (for example telemetry) changes nothing that init
 installs" (`archive/new-project-flow/audit.md:17`). (audit gap G38)
 
@@ -240,8 +237,10 @@ of the old break word (`:107-108,119-120`), while `status.ts` has printed "last 
 holding" (`:66`) and "N break(s)" (`:55-58`) since `4aac52073` on 2026-10-15; the test file
 was last changed 2026-10-07. So both demo promises are `known-broken` from a test file's
 exit code (owner `demo-app-template`, archived), and the incident
-`i-2026-10-16-the-demo-break-is-caught-locally.md` (source `release`, tests A4 and A7,
-release "1.71.0 at 019d354") says "Root cause: _Unwritten_" at line 1209.
+`incidents/i-2026-10-16-the-demo-break-is-caught-locally.md` (source `release`, release "1.71.0
+at 019d354", naming the demo plan's two rows: A4, the page starts and a lapsed hold reads as the
+promise held; A7, a late release reads broken with its trace) has `_Unwritten_` under its
+`## Root cause` heading (line 1207).
 
 What survives: `indusk demo` runs `init` (`demo.ts:58-59`), so the Node path copies the three
 templates into `src/` beside the example's own `telemetry.ts`; its `package.json` has no
@@ -263,12 +262,12 @@ templates into `src/` beside the example's own `telemetry.ts`; its `package.json
   (`vocabulary.ts:113-119`) and the daemon's receiver binds `0.0.0.0` (`daemon.ts:236-245`):
   the path exists and is written nowhere. (audit gap G19, documented path only)
 - **The parked new-project-flow gaps.** The parent says this plan takes "the two telemetry
-  gaps `new-project-flow`'s audit parked in `known-issues.md`" (the `plan/mark-first`
-  branch's copy, lines 12-20): the `new_project.create` span goes nowhere because no tracer
-  provider is registered (`create.ts:320` uses the global API), and three new-project
-  promises hold only because the prompt says so. The judge's change 5 to `mark-first` builds
-  that provider there; the policy-signal half is about the conversation's confinement, not
-  the scaffold. Open below.
+  gaps `new-project-flow`'s audit parked in `known-issues.md`" (the `plan/mark-first` branch's
+  copy, lines 12-20): the `new_project.create` span goes nowhere because no tracer provider is
+  registered (`create.ts:320` uses the global API), and three new-project promises hold only
+  because the prompt says so. The judge's change 5 to `mark-first` builds that provider there;
+  the policy-signal half is about the conversation's confinement, not the scaffold. Open below.
+
 ### What exists to build on
 
 - `liveOtlpEndpointSync()` and the record's `logsOtlpPort` (`lib/telemetry/status.ts:44,118-126`);
@@ -283,8 +282,9 @@ templates into `src/` beside the example's own `telemetry.ts`; its `package.json
   definition a generated helper is pinned to, `promises-single-definition.test.ts` as the
   pin's shape, `markPromise` as the writer it mirrors, `trace-shape` as the test helper that
   learns the clause key; `examples/seat-holds/src/telemetry.ts:22-56` as the working emitter.
-- Fixtures: `demo-command.test.ts`, `telemetry-init-fresh.test.ts` (T18),
-  `init-browser-telemetry.test.ts` (A5–A7, A14, init's created-file and propagation lines);
+- Fixtures: `demo-command.test.ts`; `telemetry-init-fresh.test.ts` (T18, the row asserting a
+  fresh `init` auto-enables `local-telemetry`); `init-browser-telemetry.test.ts` (A5–A7 and
+  A14, the rows asserting init's created-file and propagation lines name no vendor);
   `disabled_extensions` / `isExtensionExplicitlyDisabled` (`config.ts:174,456-458`);
   `copyExtensionAssets` overwriting `.env.example` on every update (`extensions.ts:722-727`);
   `indusk editor install`; `otel.role`, absence read as `service` (`config.ts:539-554`),
@@ -292,8 +292,8 @@ templates into `src/` beside the example's own `telemetry.ts`; its `package.json
 
 ## Proposed shape (not decided)
 
-The judge's synthesis (three proposals weighed; `plan-gaps/judge.json`) gives this plan
-three promises; the brief is Sandy's conversation and may regroup.
+The judge's synthesis gives this plan three promises; the brief is Sandy's conversation and
+may regroup. Each is a proposal, not a promise made.
 
 1. **`a-new-project-reports-from-its-first-run`** — a project `indusk init` scaffolds sends
    its spans, named after the project, to the daemon InDusk reads, from its first run, with
@@ -305,30 +305,33 @@ three promises; the brief is Sandy's conversation and may regroup.
    the `NEXT_PUBLIC_`/`VITE_` forms); *the-environment-is-on-every-span*
    (`deployment.environment` and `indusk.project` as resource attributes, default
    `development`). Limit: *a-newer-template-is-offered-not-forced* (`update` writes
-   `<file>.indusk-new` beside a changed file, never over it). Closes G1, G2, G4, G26, G25
-   and the app or local halves of G31, G33, G27, G5. Cost: the largest change to `init.ts`
-   since the templates landed, and a writer that depends on the first child's record.
+   `<file>.indusk-new` beside a changed file, never over it). Closes the audit's gaps on the
+   console default (G1), root placement (G2), missing environment (G4), comment-only rename
+   (G26) and the evaluator's missing `.mcp.json` (G25), with the app or local halves of the
+   port (G31), the Next.js default (G33), the log channel (G27) and the stale text (G5). Cost:
+   the largest change to `init.ts` since the templates landed, and a writer that depends on
+   the daemon plan's record.
 2. **`an-app-writes-its-signal-from-a-helper-it-owns`** — a scaffolded project carries
    `src/signal.ts`, plain OpenTelemetry with no InDusk dependency, whose two calls write the
    keys `mark-first` defines (promise, clause, plan/phase pointer, the new outcome word,
    optional value and bound) and set `indusk.run=test` under the project's test runner; its
    exporter passes only allowlisted attribute keys when `telemetry.attributes_allowed` is
-   set. Closes G3's app side, G17's at-source half, G12's dead files. Cost: a third copy of
-   the keys unless generated from or pinned to `vocabulary.ts`, and a dependency on
-   `mark-first`'s ADR being accepted first.
+   set. Closes the app side of the no-helper gap (G3), the at-source half of the allowlist gap
+   (G17) and the demo's dead files (G12). Cost: a third copy of the keys unless generated from
+   or pinned to `vocabulary.ts`, and a dependency on `mark-first`'s ADR being accepted first.
 3. **`a-new-project-is-told-the-truth`** — what `init` prints and the skills it copies name
    commands that exist and the backend the loop reads. Splits: *next-steps-exist*;
    *the-skills-name-the-daemon-not-a-vendor*. Limit: *a-log-line-is-not-a-signal* (a clause's
    signal is a span attribute and INFO is for diagnosis; the correlation example uses the
    transport's keys; the local-telemetry pattern calls `tail_logs` with its real parameters).
-   Closes G5's guidance half, G28's skill half, G30. Cost: this plan owns the otel, testing
-   and local-telemetry skills wholly, so no sibling edits them.
+   Closes the guidance half of the stale-text gap (G5), the skill half of the logs-as-
+   measurements gap (G28) and the diagnosis pattern's wrong arguments (G30). Cost: this plan
+   owns the otel, testing and local-telemetry skills wholly, so no sibling edits them.
 
-Carried: a declined telemetry recommendation writes `disabled_extensions` (G38); `init`
-prints `indusk editor install` once (G36, day-one half); the demo's two stale tests fixed
-with the root cause written into the open incidents (G12). The second proposal grouped the
-same work as four promises, with workbench placement and the newer-template offer as
-promises of their own — the natural seam if the plan is split.
+Carried: a declined telemetry recommendation writes `disabled_extensions` (G38); `init` prints
+`indusk editor install` once (G36, day-one half); the demo's two stale tests fixed with the root
+cause written into the open incidents (G12). The second proposal grouped the same work as four
+promises, with placement and the newer-template offer as promises of their own — the seam if split.
 
 ## Decisions
 
@@ -342,12 +345,12 @@ promises of their own — the natural seam if the plan is split.
   the browser come after `run-the-master`; the browser template keeps tracing only and
   browser-felt clauses are reported server-side.
 - **The application imports nothing from InDusk** (day-monitor, 2026-09-18): the rejected
-  alternative was a runtime package; a helper the app *owns* — a file `init` writes, not a
-  dependency — keeps that substance.
-- **One promise language** (2026-10-15): readers accept both outcome words; this plan's
-  helper uses the new word from its first line.
+  alternative was a runtime package; the judge's proposal of a helper the app *owns*, a file
+  `init` writes rather than a dependency, keeps that substance.
+- **One promise language** (2026-10-15): readers accept both outcome words and `mark-first`
+  switches the writers; a scaffold written after it has no reason to carry the old one.
 - **Vendor fan-out stays backlog** (Sandy, 2026-10-10, `telemetry-destinations` "is not
-  critical at all"): this plan writes one endpoint, InDusk's.
+  critical at all"): a scaffold is handed one endpoint, InDusk's; the rest is that plan's.
 - **Homework Gate's own promises are not `mark-first`'s** (its brief, accepted 2026-10-14,
   "Not promised"): what Homework Gate is *handed* is this plan's.
 
@@ -388,13 +391,10 @@ promises of their own — the natural seam if the plan is split.
   7 and 12 touch this plan); its `adr.md:44-56`, `brief.md:76,86-91`; that branch's `known-issues.md:12-20`.
 - `plan-gaps/a-new-project-starts-instrumented.json` and `judge.json` in the session
   scratchpad — the audit records and the three proposals.
-- Trunk `82231cc7b`: the files cited inline under `apps/indusk-mcp/` (`src/bin/commands`,
-  `src/lib/{new-project,promises,telemetry,eval,testing}`, `src/tools`, `templates`,
-  `extensions`, `package.json`, `test-results/system.junit.xml`), `examples/seat-holds/`,
-  `.indusk/promises/`, the docs pages and lessons named inline,
-  `.indusk/planning/archive/new-project-flow/{audit,research}.md`, `.indusk/planning/master.md:498-505`.
+- Trunk `82231cc7b` (re-checked at review on `49bde2909`, the next commit): the files cited inline
+  under `apps/indusk-mcp/`, `examples/seat-holds/`, `.indusk/promises/`, the docs pages, lessons
+  and archived plans named inline, `.indusk/planning/master.md:498-505`.
 - `/Users/the_dusky/code/sandbox/homework-gate-workbench` (read only), its eval log under
   `~/.indusk/projects/homework_gate_workbench-9815b848/`, `~/.indusk/telemetry/projects.json`.
 - Installed copies read for their defaults: `@vercel/otel@2.1.3` (numero-workbench),
-  `otlp-logger@2.0.0` and `pino-opentelemetry-transport@3.0.0` (chitin-sportsbook);
-  `/Users/the_dusky/code/sandbox/seat-holds-live/`.
+  `otlp-logger@2.0.0` and `pino-opentelemetry-transport@3.0.0` (chitin-sportsbook).
