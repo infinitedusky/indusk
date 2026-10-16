@@ -54,6 +54,7 @@ export function PlanRow({
         {number}
       </span>
     );
+  // promise: a-nav-row-keeps-its-parts-apart — the mark is a sibling of the link, never inside it.
   if (worktree != null && worktree !== false) {
     return (
       <div data-component="plan-row" className={`${classes} relative`}>

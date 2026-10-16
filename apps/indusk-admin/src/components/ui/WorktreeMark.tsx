@@ -17,6 +17,7 @@ export interface WorktreeMarkProps {
  * click, and a name too long for the row ends in an ellipsis. A control of its
  * own: it sits outside the row's link and never opens the plan.
  */
+// promise: a-nav-row-keeps-its-parts-apart
 export function WorktreeMark({
   name,
   title,
