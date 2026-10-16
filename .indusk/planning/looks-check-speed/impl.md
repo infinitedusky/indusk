@@ -873,7 +873,7 @@ This plan doubled the look check's main file, from 633 lines to 1,232, and it no
 
 #### Build Phase 5 Context
 
-- [ ] The looks area's context file names which file holds each job.
+- [x] The looks area's context file names which file holds each job.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/CLAUDE.md`: one line — served page, browser, reuse planning, verdict, the run.

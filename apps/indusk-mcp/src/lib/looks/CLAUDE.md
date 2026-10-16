@@ -80,3 +80,8 @@ pointer; the pointer holds the story.
   lockfile are in the key (`configHashOf`). Guarded by `dev-server.test.ts`,
   `reuse.test.ts` and `looks-check-speed.contract.test.ts` (A13, A14, A33–A35,
   A38, A39) — see `/decisions/looks-check-speed`.
+- **The look check is one job per file**: `served.ts` reads what the server
+  serves, `browser.ts` launches, loads and measures (the `LookOpener` seam),
+  `reuse-run.ts` plans a run's reuse and keeps what held (around `reuse.ts`'s
+  rule), `verdict.ts` judges, and `check.ts` is the run (`checkApp`, the
+  targets, `judgeLook`); `check.ts` re-exports the names tests import.
