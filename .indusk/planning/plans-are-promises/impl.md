@@ -114,7 +114,7 @@ Before anything about clauses is built, this phase writes the tests that say wha
   `hook-shared-modules.test.ts` A14: for a table of cells — `promise: a`, `lesson: b`, `clause: a/c`, `promise: a, clause: a/c`, `clause: a`, `clause: a/`, free text — the library's `parsePurpose` and the hook port's (`hooks/_trajectory-parser.js`) return equal values, and `clause: a/c` yields a clause in both. Red: both read the clause cells as malformed today, so the equality alone would pass; the clause assertion is what fails.
 
   </details>
-- [ ] Write the tests that closing a plan wants every clause proved, failing today.
+- [x] Write the tests that closing a plan wants every clause proved, failing today.
   <details><summary>Technical</summary>
 
   `promises-confirm.test.ts` (docblock `promise: a-plan-holds-the-promises-it-lands`): a registry promise owned by `demo` with `clauses: [fast (split), never-lost (limit), base (rests-on, rests_on: other)]`, `other` enforced; an impl with a passing row `clause: demo-promise/fast` with a test file carrying the token, and no row for `never-lost`.
