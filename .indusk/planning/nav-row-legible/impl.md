@@ -61,6 +61,9 @@ click would follow the link. See [brief.md](brief.md) and the approved mockups
 | A6 | In a collapsed nav, a row with a worktree shows only its badge, no mark, as tall as any other row, and a click on the badge lands on the plan's link | Test Phase 1 | Test Phase 1 | written | unit | promise: every-plan-is-one-click-away, promise: the-nav-fits-a-phone | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
 | A7 | A plan without a worktree is drawn as today: no mark, and the whole row is one link to the plan | Test Phase 1 | Test Phase 1 | written | unit | promise: every-plan-is-one-click-away | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
 | A8 | Served by the admin, an assigned plan's nav row still names its worktree in the page with the mark closed | Test Phase 1 | Test Phase 1 | written | contract | a regression guard over admin-plan-worktrees' served-sidebar test, which the closed, textless mark must keep passing through its label | apps/indusk-admin/src/__tests__/http-plan-worktrees.test.ts |
+| A9 | In a plan row with a worktree, hovering the plan's title shows the full name on hover as a tooltip: the element under the pointer, or the link it belongs to, carries the name as its title | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-nav-row-keeps-its-parts-apart | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
+| A10 | Focusing the plan's link by keyboard in a row with a worktree draws a focus indicator around the whole row, as the row without a worktree does, not only around the title | Build Phase 3 | Build Phase 3 | planned | unit | promise: every-plan-is-one-click-away | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
+| A11 | A plan row given `worktree={null}` or `worktree={false}` is drawn exactly as a row given none: one link, no container | Build Phase 3 | Build Phase 3 | planned | unit | promise: every-plan-is-one-click-away | apps/indusk-admin/src/components/ui/PlanRow.worktree.test.tsx |
 
 ### Deferred Verification
 
@@ -272,6 +275,60 @@ A new component, and a new state of an existing one, are approved by a person fr
   `apps/docs/src/reference/admin-ui/component-conventions.md`: a `worktree-mark` row (`src/components/ui/WorktreeMark.tsx`, closed, open) and `worktree` added to `plan-row`'s states; the count in the prose brought up to date. `apps/docs/src/changelog.md` (Unreleased): "The admin nav keeps each plan's row to two lines: a plan's worktree is a small ⎇ mark beside its stage that shows the worktree's name on hover or click, without opening the plan."
 
   </details>
+
+### Build Phase 3: Falsification — what the stretched link takes from the row
+
+**Tier**: med — the work step's default
+
+The finished row hands its whole click area to a link stretched over the row by an overlay. This phase tests three things that move with that overlay: whether a name cut short in the row can still be read in full by hovering it, whether keyboard focus still marks the whole row, and whether a caller who passes an empty value for the worktree still gets today's row. Each that fails today is fixed here; once it closes, the worktree row loses nothing a row without a worktree has.
+
+- [ ] A plan's title in a row with a worktree shows its full name when hovered, as it does in a row without one.
+  <details><summary>Technical</summary>
+
+  A9. In the container form of `PlanRow` (`apps/indusk-admin/src/components/ui/PlanRow.tsx`) the `title={name}` sits on the inner span, but the link's `after:absolute after:inset-0` overlay is the element under the pointer and the link itself has no `title`, so the tooltip never shows. Put `title={name}` on the link in the container form (the span's can stay).
+
+  </details>
+- [ ] Focusing the plan's link by keyboard in a row with a worktree marks the whole row.
+  <details><summary>Technical</summary>
+
+  A10. The focus outline is drawn on the link's own box, the title; the no-worktree row outlines its whole root anchor. Give the container form's link a `focus-visible:after:outline` (foundation tokens, no raw values) on its overlay, and `focus-visible:outline-none` on the link, so the ring follows the overlay.
+
+  </details>
+- [ ] A plan row given an empty worktree is drawn as a row without one.
+  <details><summary>Technical</summary>
+
+  A11. `PlanRow` tests `worktree !== undefined`; `null` or `false` (what `cond && <Mark/>` yields) is a valid `ReactNode` and switches to the container form with an empty slot. Test `worktree != null && worktree !== false`.
+
+  </details>
+
+#### Build Phase 3 Verification
+
+- [ ] The three tests failed before the fixes and pass after, and the earlier nav-row tests still pass.
+  <details><summary>Technical</summary>
+
+  A9, A10 authored in `PlanList.worktree.test.tsx`, A11 in a new `ui/PlanRow.worktree.test.tsx`, red at the phase's start. `cd /Users/the_dusky/code/sandbox/dusk-worktrees/nav-row-legible/apps/indusk-admin && pnpm exec vitest run src/components/PlanList.worktree.test.tsx src/components/ui/PlanRow.worktree.test.tsx` — A1–A11 green. `INDUSK_ADMIN_SYSTEM_TIER=1 pnpm exec vitest run --project storybook` green and `indusk looks stories admin` leaves the existing plan-row snapshot hashes unchanged (the new focus rule is on the container form only; if `plan-row.worktree`'s hash moves, it is re-approved by the person).
+
+  </details>
+
+#### Build Phase 3 Context
+
+- [ ] The admin's context file records that a stretched link carries its own title and focus ring.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/CLAUDE.md`, in the nav entry already naming the `worktree` slot: "the stretched link carries the title and the focus ring, since the overlay is what the pointer and focus meet."
+
+  </details>
+
+#### Build Phase 3 Document
+
+- [ ] (none needed — internal fixes with no change to what the docs say)
+  <details><summary>Technical</summary>
+
+  Gate policy is `ask`: ask the person before checking this off with proof.
+
+  </details>
+
+**Looked at, no hypothesis formed:** the collapsed nav (the link becomes the overlay and the slot stays hidden), hover/click state races in `WorktreeMark` (touch, mouse and keyboard orders all end in the same state), the phone drawer's tap handling (the mark is not an anchor), consumers of `data-plan-name` (all tests; none in source read the badge inside the link), the served sidebar's name (`aria-label`), and the open mark squeezing the stage text (the approved mockup shrinks the stage the same way).
 
 ## Files Affected
 
