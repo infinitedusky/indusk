@@ -434,7 +434,7 @@ This plan grew two things worth lifting out of the files it touched. Looking up 
   Add `findPromise(promises, name)` to `lib/promises/registry.ts` (name equals, or in `aliases`) and use it at `rows.ts` (`clauseRefusal`), `proof.ts:116`, `release/route.ts:228` (which also drops retired entries — keep that filter at the caller). Rule of three: five copies, one new in this plan. `standing.ts:168` and `write.ts:134` compare differently (history rows; alias-only) and stay as they are.
 
   </details>
-- [ ] The rules that hold a brief's clauses to the registry, the clause plan and the test rows live in their own file.
+- [x] The rules that hold a brief's clauses to the registry, the clause plan and the test rows live in their own file.
   <details><summary>Technical</summary>
 
   Move `clauseRefusals`, `clausePlanRefusals` and `clauseRowRefusals` from `lib/promises/contract.ts` (633 lines) to a new `lib/promises/clause-rules.ts`, exported and imported back; one reason to change (the clause rules), a seam already tested through `checkPlanContract` (A1–A8, A13, A17–A19). `rowRefusals`' clause loop stays: it reads the same table as the other row checks.
