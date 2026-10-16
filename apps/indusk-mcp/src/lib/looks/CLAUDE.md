@@ -60,3 +60,14 @@ pointer; the pointer holds the story.
   served page that changed outside the sources is in no key — check it with
   `--all`. Guarded by `reuse.test.ts` and `check-run.test.ts` (A1–A9, A19) —
   see `/decisions/looks-check-speed`.
+- **A check never crawls a development server**: before any look opens, the
+  app's root HTML (and the first story's frame) goes to `devServerMarker`
+  (Next's HMR client, webpack's refresh runtime, Vite's client); a marker
+  refuses, naming `screens.json`'s `serve` (outside the declarations hash). A
+  new framework's marker is added there, not worked around with `--url`. The
+  same read gives the served build (`servedBuildOf`), judged against the
+  sources outside the key (`Build`): a build identity in the key would reopen
+  every look on every rebuild. The styling and Storybook configuration and the
+  lockfile are in the key (`configHashOf`). Guarded by `dev-server.test.ts`,
+  `reuse.test.ts` and `looks-check-speed.contract.test.ts` (A13, A14) — see
+  `/decisions/looks-check-speed`.

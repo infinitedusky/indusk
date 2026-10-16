@@ -651,7 +651,7 @@ This phase stops the check from spending half an hour in a development server. B
 
 #### Build Phase 3 Context
 
-- [ ] The looks code's own context file says a development server is refused, and where the serve command comes from.
+- [x] The looks code's own context file says a development server is refused, and where the serve command comes from.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/CLAUDE.md` (area): "**A check never crawls a development server**: before any look opens, one page's HTML goes to `devServerMarker` (Next's HMR client, webpack's refresh runtime, Vite's client); a marker refuses, naming `screens.json`'s `serve` (outside the declarations hash). A new framework's marker is added there, not worked around with `--url`. Guarded by `dev-server.test.ts` and `looks-check-speed.contract.test.ts` (A13, A14) — see `/decisions/looks-check-speed`".
