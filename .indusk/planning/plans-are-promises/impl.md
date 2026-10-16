@@ -414,7 +414,7 @@ This phase tests three places where the finished plan may fail its own promise. 
 
 #### Build Phase 4 Document
 
-- [ ] The planning guide says a resting clause may name a sibling promise.
+- [x] The planning guide says a resting clause may name a sibling promise.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/briefs.md` "Promises as clauses": one sentence and the cycle refusal.

@@ -73,8 +73,12 @@ clauses: required
 The registry keeps the same clauses with the promise, written by
 `indusk promises declare --clause`, and the contract check refuses a brief whose
 clauses differ from the registry's, naming the clause. A promise with no clause
-in an opted-in brief is refused. A brief without `clauses: required` is read as
-it always was.
+in an opted-in brief is refused. A clause may rest on another promise the same
+plan makes: it counts once that promise is proved in the same close, so both
+close together. Two promises that rest on each other cannot close, and the
+refusal names both. A clause that rests on its own promise, or on one the
+registry does not hold, is refused by `indusk promises check`, naming the
+clause. A brief without `clauses: required` is read as it always was.
 
 ### Existing promises
 
