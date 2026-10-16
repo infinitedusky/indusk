@@ -337,7 +337,7 @@ screen is the catalog's gap); a name in two is `duplicate component`, and when
 one is the component's own file by name every other is also
 `component markup outside its file: <file>:<line> <name>`.
 
-## `indusk looks check <app> [--url <url>]`
+## `indusk looks check <app> [--url <url>] [--only <look>...]`
 
 Holds the running app to what a person approved, by value, in a real Chromium.
 `--url` is the app's base URL; without it the check uses `url` in the app's
@@ -368,13 +368,30 @@ the page and first asks it two questions:
 **Stories.** Each approved story of `components.json` (or one held to its last
 approved version on an unchanged foundation) is opened too, in the Storybook
 the app's server serves at `/storybook`:
-`<url>/storybook/iframe.html?id=<id>&viewMode=story&globals=theme:<scheme>`,
-at each device and scheme. The story's id is the catalog's; a story with none is
+`<url>/storybook/iframe.html?id=<id>&viewMode=story`, at each device and
+scheme (the story follows the page's `prefers-color-scheme`, which the check
+switches). The story's id is the catalog's; a story with none is
 `unchecked story <name> — no Storybook id in the catalog`, and an unapproved one
 `unchecked story <name> — proposed, never approved`. A story's page reports no
 state — the URL names it — so only the scheme is asked; the values are read from
 the story's root (`#storybook-root`), not the frame around it. Reported
 `held|broken story <component>.<state> @ <device>`, as a screen is.
+
+**One load per look.** A look's page is loaded once, at the first reference
+device and scheme. For every further device the check sets the page's size and
+pixel ratio in place, and for every further scheme it switches the page's
+colour scheme in place, then reads the values — so a look costs one page load
+whatever the number of devices and schemes. A switch in place starts the
+page's colour transitions, which a fresh load never does, so the check
+finishes each running transition before it reads; a button is never read
+half-way between two colours. Screens that need no seed open three at a time;
+a screen with a `seed` opens alone.
+
+**`--only <look>...`** checks just the named looks and reports nothing else.
+A name is a screen state (`home.empty`) or a story (`badge.ok`); a name matches
+the screen state and the story of that name alike. Repeat the option or
+separate names with commas. A name no look of the app has is refused, naming
+it, before any page opens.
 
 Then it decides two things:
 

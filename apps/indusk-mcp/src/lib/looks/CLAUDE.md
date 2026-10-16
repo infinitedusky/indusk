@@ -43,3 +43,10 @@ pointer; the pointer holds the story.
 - **A mockup places a component with its own words** — text and placed
   components only; paths are recorded from a second render and held to one
   node structure. See `/decisions/component-content`.
+- **A look loads once; every device and scheme is measured on that page**:
+  device metrics through Chromium's `Emulation.setDeviceMetricsOverride`, the
+  scheme by `emulateMedia`, running `CSSTransition`s finished before each read
+  (a switch in place starts them; a fresh load never did), the result returned
+  as one JSON string. The browser still only measures; `checkApp` takes a
+  `LookOpener`, so every decision is tested without one. Guarded by
+  `looks-check-speed.contract.test.ts` (A11, A12) — see `/decisions/looks-check-speed`.

@@ -73,14 +73,14 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 | A8 | Held results live in the project's home outside the checkout; a run writes nothing under the checkout; another worktree of the project reads the same results | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 | A9 | A reused look sends one upheld signal per device and scheme marked reused with the time it was really measured; a measured look's signal carries no reused mark | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
 | A10 | Against real Chromium and a served app, a second run requests no page, prints one reused line per look, counts reused in the summary, exits 0 | Test Phase 1 | Build Phase 2 | written | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
-| A11 | Each look's page is requested once, and the look is still reported at every device and scheme under today's names | Test Phase 1 | Build Phase 1 | written | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
+| A11 | Each look's page is requested once, and the look is still reported at every device and scheme under today's names | Test Phase 1 | Build Phase 1 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A12 | A page measured in place reads as a fresh load does at every device and scheme, for a colour transition and a pixel-ratio media query | Test Phase 1 | Test Phase 1 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A13 | A development server's page (Next HMR client, webpack refresh runtime, Vite client) is refused before any look opens, naming the declared serve command or how to declare one; a production page is not | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/dev-server.test.ts |
 | A14 | Against a served page carrying a development marker, the check exits 1 with the refusal and reports no look held | Test Phase 1 | Build Phase 3 | written | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A15 | A look that times out twice is unchecked with the reason, a 404 is unchecked at once, any other failure ends the run | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-timeout.test.ts |
-| A16 | With one load per look, a look that does not load or draw in time is unchecked at every device and scheme with the reason, and every other look is judged | Build Phase 1 | Build Phase 1 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
-| A17 | The only option checks just the looks of that name, screen or story or both, at every device and scheme, measured even when reusable; nothing else is opened or reported | Build Phase 1 | Build Phase 1 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
-| A18 | The only option with a name no look has is refused, naming it, before any page opens | Build Phase 1 | Build Phase 1 | written | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
+| A16 | With one load per look, a look that does not load or draw in time is unchecked at every device and scheme with the reason, and every other look is judged | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
+| A17 | The only option checks just the looks of that name, screen or story or both, at every device and scheme, measured even when reusable; nothing else is opened or reported | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
+| A18 | The only option with a name no look has is refused, naming it, before any page opens | Build Phase 1 | Build Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
 | A19 | A changed foundation reopens every look; no result held on the old foundation is reported | Build Phase 2 | Build Phase 2 | planned | unit | promise: tokens-are-held-exactly, promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 | A20 | A page with a raw value is still reported broken, naming the element and the approved and actual values, with in-place measuring | Test Phase 1 | Test Phase 1 | passing | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
 | A21 | The new browser tests are in the system tier; the everyday suite starts no browser and no server | Test Phase 1 | Test Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
@@ -436,13 +436,13 @@ This phase makes every look that is opened cost one page load instead of six. Th
 
 #### Build Phase 1 Context
 
-- [ ] The looks code's own context file says how a look is opened.
+- [x] The looks code's own context file says how a look is opened.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/CLAUDE.md` (area): "**A look loads once; every device and scheme is measured on that page**: device metrics through Chromium's `Emulation.setDeviceMetricsOverride`, the scheme by `emulateMedia`, running `CSSTransition`s finished before each read (a switch in place starts them; a fresh load never did), the result returned as one JSON string. The browser still only measures; `checkApp` takes a `LookOpener`, so every decision is tested without one. Guarded by `looks-check-speed.contract.test.ts` (A11, A12) — see `/decisions/looks-check-speed`".
 
   </details>
-- [ ] The root context lists this decision among the key decisions.
+- [x] The root context lists this decision among the key decisions.
   <details><summary>Technical</summary>
 
   root (Key Decisions): "Looks check speed: a look unchanged since it held is reused from machine state, keyed on its snapshot, the foundation, the declarations, the render's currency and page code; one load per look; dev servers refused — see `/decisions/looks-check-speed`" — always-on because Key Decisions is the one index of every ADR.
@@ -451,7 +451,7 @@ This phase makes every look that is opened cost one page load instead of six. Th
 
 #### Build Phase 1 Document
 
-- [ ] The command reference says each look loads once and how to check one look.
+- [x] The command reference says each look loads once and how to check one look.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/looks.md`, section `indusk looks check`: the signature gains `[--only <look>...]`; one paragraph on one load per look and why transitions are finished; `--only` matching screens and stories by name, refused on an unknown name.

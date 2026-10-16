@@ -90,6 +90,7 @@ dusk/
 - Audit step: a fresh subagent on `workflow.steps.audit.tier` reads the approved impl, the final trajectory and the diff, writes `audit.md`; advisory — see `/decisions/plan-review-subagent`
 - UI promises: an app's look is held by mockups a person approves in the cockpit, on one DTCG foundation, no raw values, held by value in Chromium — see `/decisions/ui-promises`
 - Brief as the contract: looks in the brief, approval of the brief, an amendment stops the build until a person re-approves, a plan starts as a conversation — see `/decisions/brief-as-the-contract`
+- Looks check speed: a look unchanged since it held is reused from machine state, keyed on its snapshot, the foundation, the declarations, the render's currency and page code; one load per look; dev servers refused — see `/decisions/looks-check-speed`
 - Phase summaries: opt-in `phase_summary: required`, plain-sentence tasks — see `/decisions/phase-summaries`
 - Plan titles and stories: a plan is named by its title (brief or master, else its handle in words) through one rule in the package; a master's page tells its story from `subplan-row`; Needs you counts amendments — see `/decisions/plan-stories`
 - Sessions per plan: one per plan and kind, at most `sessions.max` a machine — see `/decisions/sessions-per-plan`
