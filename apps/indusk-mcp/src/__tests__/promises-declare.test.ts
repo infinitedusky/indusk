@@ -10,6 +10,8 @@ import { toolCaller } from "./helpers/tool-call.js";
 /**
  * promise: a-briefs-promises-are-in-the-registry — planner-promises A1, A2.
  * promise: a-plan-holds-the-promises-it-lands — plans-are-promises A3, A11 (declaration).
+ * clause: a-plan-holds-the-promises-it-lands/brief-holds-clauses
+ * clause: a-plan-holds-the-promises-it-lands/closing-per-clause
  *
  * A promise reaches the registry from the planning conversation through a
  * command, never by a person typing a file: `indusk promises declare` writes

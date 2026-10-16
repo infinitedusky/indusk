@@ -14,6 +14,7 @@ import { REPO_ROOT } from "./helpers/cli.js";
  * is what makes that the default, so it is pinned.
  *
  * promise: a-plan-holds-the-promises-it-lands — plans-are-promises A10, A12:
+ * clause: a-plan-holds-the-promises-it-lands/planner-teaches-it
  * the planner's instructions plan promises as clauses, and say which promises
  * share a plan.
  */

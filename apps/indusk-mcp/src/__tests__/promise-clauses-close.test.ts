@@ -16,6 +16,7 @@ import {
  * plans-are-promises A21 — the whole story, end to end through the library.
  *
  * promise: a-plan-holds-the-promises-it-lands
+ * clause: a-plan-holds-the-promises-it-lands/closing-per-clause
  *
  * In a temporary project, a plan states two promises as clauses: the contract
  * check passes; closing refuses while one clause's row is `planned`, naming

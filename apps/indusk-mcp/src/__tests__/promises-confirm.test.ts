@@ -18,6 +18,7 @@ import { toolCaller } from "./helpers/tool-call.js";
 /**
  * promise: a-closed-plan-kept-its-promises — planner-promises A8–A11.
  * promise: a-plan-holds-the-promises-it-lands — plans-are-promises A9, A11 (closing per clause), A17 (siblings).
+ * clause: a-plan-holds-the-promises-it-lands/closing-per-clause
  *
  * A plan closes with its promises proven or it does not close. `indusk
  * promises confirm <plan>` moves each promise the plan declared to `enforced`,

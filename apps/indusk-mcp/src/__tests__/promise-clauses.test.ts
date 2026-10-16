@@ -14,6 +14,9 @@ import { type PromiseProject, promiseProject, token } from "./helpers/promises-f
  * holds a brief's clauses to the registry, the clause plan and the test rows.
  *
  * promise: a-plan-holds-the-promises-it-lands
+ * clause: a-plan-holds-the-promises-it-lands/brief-holds-clauses
+ * clause: a-plan-holds-the-promises-it-lands/clause-plan-checked
+ * clause: a-plan-holds-the-promises-it-lands/older-plans-stand
  *
  * An opted-in brief (`clauses: required`) states each promise it makes as
  * clauses; the registry keeps the same clauses; `test-plan.md` has a section
