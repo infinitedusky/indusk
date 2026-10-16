@@ -855,9 +855,13 @@ This plan doubled the look check's main file, from 633 lines to 1,232, and it no
 
   `planReuse`, `reuseNotice`, `keepHeld` from `check.ts` into `reuse.ts` (or `lib/looks/reuse-run.ts` if `reuse.ts` passes its cap); `checkApp` calls them.
   </details>
-- [x] (reviewed `lib/looks/reuse.ts` and `dev-server.ts` — left as they are: each already holds one rule)
+- [x] Leave the reuse rule and the development-server rule as they are, since each already holds one rule.
+  <details><summary>Technical</summary>
+
+  Reviewed `lib/looks/reuse.ts` and `dev-server.ts`; left as they are.
+  </details>
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
-- [x] Shape — reviewed `served.ts`, `browser.ts`, `reuse-run.ts`, `errors.ts` and the slimmed `check.ts`; nothing to change.
+- [x] Shape — reviewed the new files and the slimmed main file; nothing to change.
   <details><summary>Technical</summary>
 
   Each new file holds one job and imports the others one way (`errors.ts` is a leaf; `reuse-run.ts` and `served.ts` take `check.ts`'s types only). `schemesOf`, `lookDevice` and `Scheme` moved to `browser.ts` with the device and scheme work so `reuse-run.ts` needs no import of `check.ts` at run time. `check.ts` re-exports the names its importers use. `check.ts` is 565 lines, still over the 400 cap: the judging, target and seed functions that remain are the run's own, and splitting them is not in this phase's items.
@@ -865,7 +869,7 @@ This plan doubled the look check's main file, from 633 lines to 1,232, and it no
 
 #### Build Phase 5 Verification
 
-- [ ] The look check behaves exactly as before, and every row still passes.
+- [ ] The look check behaves exactly as before, and every row still passes (no tests flip at this phase — reason: refactor).
   <details><summary>Technical</summary>
 
   `cd apps/indusk-mcp && pnpm build && pnpm exec vitest related src/lib/looks/*.ts` and the plan's row test files; `pnpm exec tsc --noEmit -p .`; no file under `lib/looks/` over its cleanup cap.
