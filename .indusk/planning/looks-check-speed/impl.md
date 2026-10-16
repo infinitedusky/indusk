@@ -589,9 +589,17 @@ This phase stops the check from spending half an hour in a development server. B
   `apps/indusk-mcp/src/lib/looks/mockups.ts` `readApp`: optional string `serve` from `screens.json` onto `LooksApp.serve` — not in `declarationsHashOf`, so declaring it reopens nothing. `.indusk/mockups/admin/screens.json`: `"serve": "pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940"`.
 
   </details>
-- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
-  - Reviewed `check.ts`, `looks.ts`, `cli.ts`, the fixtures and tests. One finding, fixed in place: `check-run.fixtures.ts` re-exported `schemesOf` for no importer (rule: no unused surface). Left as is: `openAndJudge` takes six arguments (it is the one place a look's single load becomes per-device judgements; splitting it would scatter the order contract), and `CheckOptions` has no `all` until Build Phase 2 adds the option with its rule.
+- [ ] Make a reused result keyed on what is actually served: the served build's identity joins the key, so a check against an old build never records "held" for sources it did not serve.
+  <details><summary>Technical</summary>
 
+  Found at Build Phase 2's close (the key describes the sources, not what `--url` serves). Read the served build's id (for a Next app the build id the page carries; `screens.json` may name where an app exposes it) once per run before opening any look; add it to `lookKey` for screens and stories; a run that cannot read it reuses nothing.
+  </details>
+- [ ] Make the configuration a look is drawn with part of its key: the styling and Storybook configuration and the lockfile.
+  <details><summary>Technical</summary>
+
+  Found at Build Phase 2's close. Hash the app's Tailwind/PostCSS config, the Storybook config folder and `pnpm-lock.yaml` into a `configHash` fact on every look's key in `reuse.ts`.
+  </details>
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
 #### Build Phase 3 Verification
 
 - [ ] A development server's page is refused before anything opens, a production page is not, and the browser test for the refusal passes.
