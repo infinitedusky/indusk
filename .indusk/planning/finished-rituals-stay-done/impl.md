@@ -14,6 +14,8 @@ falsification_reason: "Probed open phases, skips, legacy logs, out-of-order and 
 approved_brief: "6d82f23dfc43d1c35c296084982f6f433c4e96095a952aef7d9f74f176767a72"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-16T21:20:58.764Z"
+accepted: 2026-10-16T21:21:15.869Z
+accepted_by: person
 ---
 
 # A finished ritual stays done
