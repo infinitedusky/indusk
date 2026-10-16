@@ -405,7 +405,7 @@ This phase tests three places where the finished plan may fail its own promise. 
 
 #### Build Phase 4 Context
 
-- [ ] The planning rules say a promise may rest on a sibling of the same plan.
+- [x] The planning rules say a promise may rest on a sibling of the same plan.
   <details><summary>Technical</summary>
 
   planning: `templates/planning/CLAUDE.md`, the per-clause close-out rule — add "a clause may rest on a promise the same plan makes; it counts once that promise is proved in the same close." Synced by the package.

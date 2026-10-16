@@ -193,7 +193,9 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   confirms the plan's promises (`indusk promises confirm <plan>`) before it
   archives; a declared promise no passing row names blocks the close. A
   promise stated as clauses is confirmed only when each split and limit clause
-  has a passing row and each promise it rests on is in force. — see
+  has a passing row and each promise it rests on is in force. A clause may
+  rest on a promise the same plan makes; it counts once that promise is proved
+  in the same close, and a cycle between them is refused. — see
   `/decisions/falsification-ritual`, `/reference/skills/retrospective`,
   `/decisions/plans-are-promises`
 - **The retrospective's compaction step**: plan close demotes the plan's
