@@ -24,3 +24,10 @@ section). The plans below are the open plans gathered under it on 2026-10-15.
   path is the promise list, which reports only the dashboard's states, and no
   promise is broken to show. Needs a seed with a broken promise and the promise
   page reporting its state.
+- **The 57-second floor of an unchanged look check** (from `looks-check-speed`,
+  2026-10-16, Sandy: accepted as information): about 40 looks can never be
+  checked in dusk's checkout — pages that do not report their state, fixture
+  plans answering 404 — and an unchecked look is always reopened, so every run
+  pays for them. Make them checkable, or reuse an "unchecked, same reason"
+  result when nothing changed. With it, a one-component check should reach
+  seconds (it measured 89–95 s; the full check 98 s, from ~35 min).
