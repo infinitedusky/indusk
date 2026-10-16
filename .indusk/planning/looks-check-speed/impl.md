@@ -410,10 +410,10 @@ This phase makes every look that is opened cost one page load instead of six. Th
   `apps/indusk-mcp/src/bin/cli.ts` `looks check`: `--only <names...>` (repeatable, comma-separated accepted), passed to `looksCheck` in `src/bin/commands/looks.ts` and on to `checkApp` as `only`. A name selects every screen state `<screen>.<state>` and every story `<component>.<state>` of that name; a name matching neither is a `LooksCheckError` naming it, before anything opens. A17, A18.
 
   </details>
-- [x] Give the pre-existing scheme case in `looks-browser.contract.test.ts` a timeout that fits its two CLI runs.
+- [x] Give the older colour-scheme browser test a timeout that fits its two command runs.
   <details><summary>Technical</summary>
 
-  Found work: A37's case ("a look under a scheme the foundation names is held only when that scheme was opened") makes two CLI runs (~5.7 s) and times out at vitest's 5 s default, so the file's verification below cannot be green. Add an explicit third argument (`30_000`) to that `it`. Reason: the case was already slow before this plan; the verification command runs this file.
+  `looks-browser.contract.test.ts`. Found work: the earlier ui-promises plan's case ("a look under a scheme the foundation names is held only when that scheme was opened") makes two CLI runs (~5.7 s) and times out at vitest's 5 s default, so the file's verification below cannot be green. Add an explicit third argument (`30_000`) to that `it`. Reason: the case was already slow before this plan; the verification command runs this file.
 
   </details>
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
@@ -514,10 +514,10 @@ This phase lets the check skip looks that have not changed. After a run, every l
   `cli.ts` `looks check --all`, passed as `all` to `reuseOf`. A7.
 
   </details>
-- [x] Give the pre-existing scheme case in `looks-browser.contract.test.ts` the all option on its second run.
+- [x] Make the older colour-scheme browser test open every look on its second run.
   <details><summary>Technical</summary>
 
-  Found work: ui-promises A37's case ("a look under a scheme the foundation names is held only when that scheme was opened") checks one project twice, rewriting the served page between runs. The page is written by the test, outside every input a look is reused on, so the second run reported `home.empty` reused and never saw the pinned light theme. Its second run now passes `--all` (the helper `check(root, ...extra)`); the row's assertions are unchanged. Reason: the Build Phase 2 verification runs this file, and a check of a page that changed outside the project's sources is exactly what `--all` is for (the ADR's accepted residual).
+  `looks-browser.contract.test.ts`. Found work: the earlier ui-promises plan's case ("a look under a scheme the foundation names is held only when that scheme was opened") checks one project twice, rewriting the served page between runs. The page is written by the test, outside every input a look is reused on, so the second run reported `home.empty` reused and never saw the pinned light theme. Its second run now passes `--all` (the helper `check(root, ...extra)`); the row's assertions are unchanged. Reason: the Build Phase 2 verification runs this file, and a check of a page that changed outside the project's sources is exactly what `--all` is for (the ADR's accepted residual).
 
   </details>
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
@@ -533,7 +533,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
 
   </details>
 - [x] The browser test for reuse now passes against a real browser.
-  - Result (2026-10-16): A10 green; A11, A12, A20 still green; A14 still red (Build Phase 3). `looks-components-cli.test.ts` is in the everyday tier, so it ran under the default config: 21 passed. ui-promises A37's scheme case needed `--all` on its second run (the found-work item above).
+  - Result (2026-10-16): A10 green; A11, A12, A20 still green; A14 still red (Build Phase 3). `looks-components-cli.test.ts` is in the everyday tier, so it ran under the default config: 21 passed. the earlier ui-promises plan's scheme case needed `--all` on its second run (the found-work item above).
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-check-speed.contract.test.ts src/__tests__/looks-browser.contract.test.ts src/__tests__/looks-components-cli.test.ts` — A10 green; A11, A12, A20 still green; A14 still red.
