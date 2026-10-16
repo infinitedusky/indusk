@@ -2502,7 +2502,7 @@
 			"properties": [
 				{
 					"name": "standing",
-					"type": "\"declared\" | \"proving\" | \"enforced\" | \"broken\"",
+					"type": "| \"declared\"\n| \"proving\"\n| \"enforced\"\n| \"no-signal\"\n| \"broken\"",
 					"required": true
 				},
 				{
@@ -2631,6 +2631,43 @@
 					"name": "enforced",
 					"id": "ui-promiserow--enforced",
 					"snapshotHash": "f6b2e5387ebc8c493f548ca38fe1ce4f27fea333af79d924a32877bf2ecd766b",
+					"content": {
+						"says": [
+							[
+								0,
+								1,
+								0,
+								0
+							]
+						],
+						"slug": [
+							[
+								0,
+								1,
+								1,
+								0
+							]
+						],
+						"evals": [
+							[
+								0,
+								3,
+								0
+							]
+						],
+						"last": [
+							[
+								0,
+								4,
+								0
+							]
+						]
+					}
+				},
+				{
+					"name": "no-signal",
+					"id": "ui-promiserow--no-signal",
+					"snapshotHash": "28e9c05220787d29a7f16173c612a1d02fcc8e6459b96069255fb64a3ad95a81",
 					"content": {
 						"says": [
 							[

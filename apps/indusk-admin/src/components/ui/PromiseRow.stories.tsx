@@ -29,6 +29,17 @@ export const Enforced: Story = {
     last: "3d ago",
   },
 };
+export const NoSignal: Story = {
+  args: {
+    ...base,
+    standing: "no-signal",
+    says: "A message sent in a project conversation is answered in the thread",
+    slug: "a-message-sent-gets-a-reply",
+    pips: ["passing", "passing"],
+    evals: "tests pass",
+    last: "no signal yet",
+  },
+};
 export const Declared: Story = {
   args: {
     ...base,

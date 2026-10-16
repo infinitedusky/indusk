@@ -355,7 +355,11 @@ function DashboardRowItem({
     >
       <PromiseRow
         href={`${promiseHrefPrefix}${row.name}`}
-        standing={STANDING_BADGE[row.standing]}
+        standing={
+          row.standing === "enforced" && row.held === null
+            ? "no-signal"
+            : STANDING_BADGE[row.standing]
+        }
         says={row.sentence}
         slug={
           <>

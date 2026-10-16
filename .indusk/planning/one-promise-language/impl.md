@@ -76,7 +76,7 @@ InDusk's own signals and the demo app keep writing `violated` this release;
 | A18 | The trace-shape helper's failure messages say broken, never violated | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/lib/promises/outcome-words.test.ts |
 | A19 | The word scan also reads the extension skills and the `docker/` image and Fly files, and refuses mark in any promise sense (production marks, a promise's mark, sends marks, what has been marked) | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
 | A20 | No page people read says InDusk's own signals or the demo's are written `broken` this release | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-mcp/src/__tests__/promise-words.test.ts |
-| A21 | An enforced promise whose signal has never reported shows a grey dot and "no signal yet" in the promise list, and turns green only once a signal reports it upheld | Build Phase 5 | Build Phase 5 | written | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/ui/PromiseRow.test.tsx |
+| A21 | An enforced promise whose signal has never reported shows a grey dot and "no signal yet" in the promise list, and turns green only once a signal reports it upheld | Build Phase 5 | Build Phase 5 | passing | unit | promise: a-promise-is-upheld-or-broken | apps/indusk-admin/src/components/ui/PromiseRow.test.tsx |
 
 ## Checklist
 
@@ -451,7 +451,7 @@ A fresh reader went looking for places where the plan's promise does not yet hol
 
 This phase makes the promise list stop showing a promise as healthy when nothing has ever reported on it. Today an enforced promise gets a green dot even when its signal has never reported, which contradicts this plan's own rule that a promise with no signal is never shown as holding. The fresh review found it, and Sandy chose to fix it here rather than carry it on. The new look, a grey dot with "no signal yet", is the approved mockup `promise-row.no-signal`.
 
-- [ ] Make the promise list give an enforced promise with no signal its own standing, drawn grey with "no signal yet" where the last report would be.
+- [x] Make the promise list give an enforced promise with no signal its own standing, drawn grey with "no signal yet" where the last report would be.
   <details><summary>Technical</summary>
 
   `components/ui/PromiseRow.tsx`: add a `no-signal` standing (`DOT` → `bg-idle`); `Promises.tsx` maps a row to it when its standing is enforced and no source has heard the promise (the same "no signal" reading the timeline and proof page use since Build Phase 2). Add a `NoSignal` story to `PromiseRow.stories.tsx`, run `indusk looks stories admin`.
