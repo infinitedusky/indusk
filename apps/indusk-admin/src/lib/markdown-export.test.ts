@@ -68,7 +68,12 @@ describe("trajectoryTableMarkdown", () => {
         state: "passing",
         levelText: "unit",
         purposeText: "a regression guard",
-        purpose: { promises: [], lessons: [], reason: "a regression guard" },
+        purpose: {
+          promises: [],
+          clauses: [],
+          lessons: [],
+          reason: "a regression guard",
+        },
       },
     ]);
     expect(md).toBe(

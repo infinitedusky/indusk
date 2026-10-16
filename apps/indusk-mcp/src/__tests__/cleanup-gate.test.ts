@@ -1,14 +1,17 @@
 // promise: a-finished-ritual-stays-done
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import matter from "gray-matter";
+import { afterEach, describe, expect, it } from "vitest";
 import {
 	checkRetrospectiveReadiness,
 	finishedRitualsOf,
 	isCleanupPhaseTerminal,
 	isCleanupSkipped,
 } from "../lib/cleanup/gate.js";
+import { briefText, implText } from "./helpers/plan-fixture.js";
+import { type PromiseProject, promiseProject } from "./helpers/promises-fixture.js";
 
 /**
  * Cleanup-ritual Phase 3 — the retrospective Step 0 gate helpers.
@@ -17,6 +20,8 @@ import {
  * T3  — a terminal Cleanup phase (all items checked) IS complete.
  * T4  — `cleanup: skipped` + non-empty `cleanup_reason` is a skip; missing/empty
  *       reason or wrong flag is not.
+ * A17 — promise: a-plan-holds-the-promises-it-lands: a plan whose second
+ *       promise has a clause resting on its first passes the promises gate.
  * T13 — the composed gate passes only when BOTH falsification AND cleanup are
  *       satisfied; satisfying one alone still blocks.
  */
@@ -218,5 +223,67 @@ describe("A10 — finishedRitualsOf agrees with the retrospective gate", () => {
 		expect(finishedRitualsOf(root, text)).toEqual(["falsification"]);
 		const gate = checkRetrospectiveReadiness(root, text);
 		expect([gate.falsificationOk, gate.cleanupOk, gate.auditOk]).toEqual([true, false, false]);
+	});
+});
+
+describe("plans-are-promises A17 — the gate counts a sibling promise as in force", () => {
+	let fixture: PromiseProject | null = null;
+	afterEach(() => {
+		if (fixture) rmSync(fixture.root, { recursive: true, force: true });
+		fixture = null;
+	});
+
+	const entry = (name: string, restsOn?: string) => ({
+		name,
+		kind: "structure" as const,
+		state: "declared" as const,
+		domain: "seating",
+		owner: "seats-v2",
+		raw: matter.stringify(`The ${name} promise holds.\n\n## History\n- 2026-10-16 — declared.\n`, {
+			name,
+			kind: "structure",
+			lifetime: "holds",
+			state: "declared",
+			domain: "seating",
+			owner: "seats-v2",
+			sites: [],
+			tests: [],
+			incidents: [],
+			...(restsOn
+				? {
+						clauses: [
+							{ name: "fast", kind: "split", statement: "Answers fast." },
+							{ name: "base", kind: "rests-on", rests_on: restsOn },
+						],
+					}
+				: {}),
+		}),
+	});
+
+	const FIRST = "first-promise";
+
+	it("is ready when the first is proved by rows and the second rests on it", () => {
+		fixture = promiseProject({
+			domains: ["seating"],
+			promises: [entry("first-promise"), entry("second-promise", "first-promise")],
+			planFiles: {
+				"seats-v2/brief.md": briefText("seats-v2", {
+					makes: [
+						{ name: "first-promise", sentence: "The first-promise promise holds." },
+						{ name: "second-promise", sentence: "The second-promise promise holds." },
+					],
+				}),
+			},
+		});
+		const content = implText("seats-v2", {
+			keys: ["test_purpose: required"],
+			columns: ["For", "Test"],
+			rows: [
+				{ state: "passing", cells: { For: `promise: ${FIRST}`, Test: "a.test.ts" } },
+				{ state: "passing", cells: { For: "clause: second-promise/fast", Test: "b.test.ts" } },
+			],
+		});
+		const r = checkRetrospectiveReadiness(`${fixture.planRoot}/.indusk/planning/seats-v2`, content);
+		expect(r.unprovenPromises).toEqual([]);
 	});
 });

@@ -316,6 +316,38 @@ When this brief was accepted, the planner called `declare_promise` twice and
 additive changes are needed (the billing module has eight dependents) is in
 `research.md`, not here.
 
+#### The clause plan
+
+A brief with `clauses: required` states each promise's clauses beneath it, and
+`test-plan.md` becomes the **clause plan**, written before the ADR so done is
+fixed before how to build is decided. It has one section per promise and one
+per clause, each clause with the signal that will read it:
+
+```markdown
+## `webhook-events-applied-once`
+
+### `no-double-apply` — A repeated delivery changes nothing.
+
+- Signal: the `webhook.apply` span; upheld when a repeat ends ok with no write; broken reports the event id.
+```
+
+The contract check refuses a missing promise or clause section and a clause with
+no `- Signal:` line, and, once the impl exists, a split or limit clause no test
+row names (`clause: <promise>/<clause>` in the row's `For` cell).
+
+**Closing per clause.** A promise stated as clauses is confirmed
+(`indusk promises confirm <plan>`, and the retrospective's readiness check)
+only when every `split` and `limit` clause has a passing row with a test file,
+that file carries `clause: <promise>/<clause>` (a comment, the way it carries the
+promise token), and every promise a clause rests on is in force. A resting
+clause needs no row of its own. The refusal names the clause, for example
+`seat-map-accurate: clause never-stale: row A4 is planned`, or the clause and the
+file that does not carry its token, and the promise stays `declared`.
+
+The planner groups promises whose work shares code into one plan; promises that
+share none are separate plans under a master. The planner suggests, the person
+decides.
+
 ### 4. ADR (`adr.md`)
 
 The ADR formalizes the decision using the Y-statement format. Each of the seven canonical clauses is its own section: the clause label is bold and ends with a colon, the paragraph body begins on the next line (no blank line between them), and a blank line separates each clause from the next. Every clause must be filled in:

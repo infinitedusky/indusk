@@ -177,6 +177,7 @@ pointer; the pointer holds the story.
   and `symptom`; a credential with a line separator is refused by name. The
   image is built from `docker/`, installing the *published* package; the Fly
   reference never auto-stops. — see `/decisions/day-always-on`
+- Find a promise with `findPromise` (`lib/promises/registry.ts`; name or alias); the brief-vs-registry-vs-clause-plan-vs-rows rules are `lib/promises/clause-rules.ts`.
 - **`.mcp.json` is per machine and untracked** (`.gitignore` carries it): `indusk update`
   writes one naming the `indusk` server when a checkout has none and never touches one
   that exists (`lib/mcp-config.ts`); the daemon's sync edits only the local copy's

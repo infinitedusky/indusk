@@ -236,7 +236,7 @@ function unprovenPromisesOf(planDirIn: string, implContent: string): string[] {
 	if (registry === null) return [];
 	const plan = basename(planDir);
 	const declared = registry.promises.filter((p) => p.owner === plan && p.state === "declared");
-	return rowProofs(declared, plan, implContent)
+	return rowProofs(declared, plan, implContent, registry.promises)
 		.filter((p) => p.refusal !== null)
 		.map((p) => p.promise.name);
 }

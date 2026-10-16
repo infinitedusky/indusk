@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, posix } from "node:path";
 import type { IncidentChange } from "../promises/incidents.js";
 import { planFolders } from "../promises/plan-folder.js";
-import { type PromiseEntry, readPromises } from "../promises/registry.js";
+import { findPromise, type PromiseEntry, readPromises } from "../promises/registry.js";
 import type { ReopenResult } from "../promises/reopen.js";
 import { readImpl } from "../promises/rows.js";
 import { recordTestFailure, type Suspects } from "../promises/test-incident.js";
@@ -224,7 +224,8 @@ function claimsOf(
 
 /** The registry's live promise a row names, by its name or an earlier one; none when retired or unknown. */
 function live(promises: PromiseEntry[], name: string): PromiseEntry | undefined {
-	return promises.find(
-		(p) => p.state !== "retired" && (p.name === name || p.aliases.includes(name)),
+	return findPromise(
+		promises.filter((p) => p.state !== "retired"),
+		name,
 	);
 }

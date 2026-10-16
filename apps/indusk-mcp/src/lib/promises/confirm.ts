@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { isUsableRelPath } from "../path-segment.js";
+import { clauseTokenPattern } from "../tokens.js";
 import { collapseSpace, parseBriefContract, sameSentence } from "./brief-contract.js";
 import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
@@ -13,7 +14,14 @@ import {
 	type Registry,
 	readPromises,
 } from "./registry.js";
-import { type RowProof, readImpl, rowProofs, rowsNamingIn } from "./rows.js";
+import {
+	type NamingRow,
+	type RowProof,
+	readImpl,
+	rowProofs,
+	rowsNamingIn,
+	rowsProvingClause,
+} from "./rows.js";
 import { appendHistory } from "./write.js";
 
 /**
@@ -39,6 +47,14 @@ function carriesToken(
 	if (!isUsableRelPath(rel) || !existsSync(abs) || !statSync(abs).isFile()) return "missing";
 	const text = readFileSync(abs, "utf-8");
 	return [p.name, ...p.aliases].some((n) => promiseTokenPattern(n).test(text)) ? "ok" : "unnamed";
+}
+
+/** Whether the test file `rel` names one clause of `p`, by the promise's name or an earlier one. */
+function namesClause(codeRoot: string, rel: string, p: PromiseEntry, clause: string): boolean {
+	const abs = join(codeRoot, rel);
+	if (!isUsableRelPath(rel) || !existsSync(abs) || !statSync(abs).isFile()) return true; // missing: the token check's refusal
+	const text = readFileSync(abs, "utf-8");
+	return [p.name, ...p.aliases].some((n) => clauseTokenPattern(n, clause).test(text));
 }
 
 export interface ConfirmInput {
@@ -120,6 +136,31 @@ interface Ready {
 }
 
 /**
+ * The clauses whose proving rows name a test file that does not carry
+ * `clause: <promise>/<clause>` (A22): a clause is proved by a test that names
+ * the clause, not only the promise. A resting clause has no row to ask.
+ */
+function clauseTokenRefusals(
+	promise: PromiseEntry,
+	rows: readonly NamingRow[],
+	codeRoot: string,
+): string[] {
+	const out: string[] = [];
+	for (const clause of promise.clauses ?? []) {
+		if (clause.kind === "rests-on") continue;
+		const files = new Set(rowsProvingClause(rows, clause.name).flatMap((r) => r.tests));
+		for (const rel of files) {
+			if (!namesClause(codeRoot, rel, promise, clause.name)) {
+				out.push(
+					`${promise.name}: clause ${clause.name}: its row names the test ${rel}, which does not carry "clause: ${promise.name}/${clause.name}" — a test that proves a clause names it`,
+				);
+			}
+		}
+	}
+	return out;
+}
+
+/**
  * The half of "is it proven" that needs the code: why `proof` cannot be
  * confirmed against `codeRoot`, or what to write when it can. `cited` is the
  * code root's token scan, read once for every promise; `rowTests` is every
@@ -148,6 +189,7 @@ function judge(
 			);
 		}
 	}
+	refusals.push(...clauseTokenRefusals(promise, proof.rows, codeRoot));
 	// A promise in force keeps the tests it listed that still prove it; one
 	// that moved or was deleted is dropped, so the plan that moved it closes
 	// without a hand edit (A40).
@@ -281,7 +323,7 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 			(p.state === "declared" ||
 				(p.state === "enforced" && implText !== null && rowsNamingIn(implText, p).length > 0)),
 	);
-	const proofs = rowProofs(candidates, plan, implText);
+	const proofs = rowProofs(candidates, plan, implText, registry.promises);
 	const refusals: CheckRefusal[] = unmadeChanges(folder, registry);
 	if (proofs.length === 0) {
 		return refusals.length > 0 ? refuse(refusals) : { ok: true, confirmed: [] };

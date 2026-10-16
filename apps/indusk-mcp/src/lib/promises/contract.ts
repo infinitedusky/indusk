@@ -14,6 +14,7 @@ import {
 	parseBriefContract,
 	sameSentence,
 } from "./brief-contract.js";
+import { clausePlanRefusals, clauseRefusals, clauseRowRefusals } from "./clause-rules.js";
 import {
 	describeInterfaceFiles,
 	filesAffectedOf,
@@ -303,6 +304,15 @@ function rowRefusals(
 				);
 			}
 		}
+		for (const { promise, clause } of row.purpose?.clauses ?? []) {
+			const entry = byName().get(promise);
+			// A promise the registry lacks or retired is reported above.
+			if (entry && entry.state !== "retired" && !entry.clauses?.some((c) => c.name === clause)) {
+				out.push(
+					`row ${row.id} names "clause: ${promise}/${clause}", but ${promise} does not have a clause "${clause}" — its clauses are ${(entry.clauses ?? []).map((c) => c.name).join(", ") || "none"}`,
+				);
+			}
+		}
 		for (const name of row.purpose?.lessons ?? []) {
 			if (!existsSync(join(planRoot, LESSONS_REL_DIR, `${name}.md`))) {
 				out.push(
@@ -415,9 +425,16 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 		if (brief !== null) {
 			for (const message of [
 				...madeRefusals(brief, plan, byName()),
+				...clauseRefusals(brief, plan, byName()),
 				...existingRefusals(brief, byName()),
 			]) {
 				refusals.push({ file: briefFile, message });
+			}
+		}
+		const clausePlanPath = join(folder.dir, "test-plan.md");
+		if (brief !== null && existsSync(clausePlanPath)) {
+			for (const message of clausePlanRefusals(brief, readFileSync(clausePlanPath, "utf-8"))) {
+				refusals.push({ file: planFileRel(folder, "test-plan.md"), message });
 			}
 		}
 		if (brief !== null && !(opts.looksAtApprovalOnly && pastApproval(implText))) {
@@ -434,6 +451,7 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 			for (const message of [
 				...rowRuleRefusals(impl),
 				...rowRefusals(planRoot, plan, brief, impl.trajectory, byName),
+				...(brief === null ? [] : clauseRowRefusals(brief, impl.trajectory)),
 			]) {
 				refusals.push({ file: implFile, message });
 			}

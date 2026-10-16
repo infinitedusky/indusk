@@ -67,11 +67,17 @@ export function registerPromiseTools(server: McpServer, projectRoot: string): vo
 			inputSchema: {
 				name: z.string().describe("kebab-case, starting with a letter; it becomes the file name."),
 				...promiseFields,
+				clauses: z
+					.array(z.string())
+					.optional()
+					.describe(
+						"The promise's clauses, one string each: `name (split). sentence`, `name (limit). sentence` or `name (rests on promise)`. Give them when the brief states the promise as clauses; a bad kind or a resting clause on an unknown promise is refused with nothing written.",
+					),
 			},
 		},
-		async ({ name, plan, kind, domain, statement }) =>
+		async ({ name, plan, kind, domain, statement, clauses }) =>
 			written(() => {
-				declarePromise(projectRoot, { name, plan, kind, domain, statement });
+				declarePromise(projectRoot, { name, plan, kind, domain, statement, clauses });
 				return { declared: name, owner: plan, state: "declared" };
 			}),
 	);

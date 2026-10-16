@@ -19,6 +19,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   registry, an accepted brief is, by every `pnpm test`. The problem, the
   context and the decisions made on the way go in `research.md`. — see
   `/guide/briefs`
+- **A brief may state its promises as clauses** (`clauses: required` in its
+  frontmatter): each promise it makes lists its splits, limits and the promises
+  it rests on beneath it, declared with `--clause`; the contract check holds
+  brief and registry equal. — see `/decisions/plans-are-promises`
 - **A plan that changes an app's interface lists its looks, or says why it
   has none.** Once the draft brief exists, ask "does this change how anything
   looks?"; a yes lists each look under `## Looks` as a drawn mockup — a
@@ -93,6 +97,8 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   the assertion, and it says when the test runs (a phase runs only its rows
   and related tests; both tiers run at landing). `For` says what the test is
   for: `promise: <name>`, `lesson: <name>`, or the reason it needs neither.
+  `clause: <promise>/<clause>` names one clause and counts for its promise; an
+  opted-in plan names every split and limit clause in some row.
   `test_levels: required` and `test_purpose: required` make the hook refuse a
   row without them. — see `/guide/test-levels`
 - Vitest is the committed test runner (adaptive first-connect setup); moved
@@ -185,8 +191,14 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   read, never its content. Ritual phases are detected by titles that START
   with the ritual word. The retrospective
   confirms the plan's promises (`indusk promises confirm <plan>`) before it
-  archives; a declared promise no passing row names blocks the close. — see
-  `/decisions/falsification-ritual`, `/reference/skills/retrospective`
+  archives; a declared promise no passing row names blocks the close. A
+  promise stated as clauses is confirmed only when each split and limit clause
+  has a passing row, each such row's test file carries `clause: <promise>/<clause>`,
+  and each promise it rests on is in force. A clause may
+  rest on a promise the same plan makes; it counts once that promise is proved
+  in the same close, and a cycle between them is refused. — see
+  `/decisions/falsification-ritual`, `/reference/skills/retrospective`,
+  `/decisions/plans-are-promises`
 - **The retrospective's compaction step**: plan close demotes the plan's
   narrative to one line + archive link, compresses any context entries it
   authored to rule + pointer, and collapses one old root entry per close. — see

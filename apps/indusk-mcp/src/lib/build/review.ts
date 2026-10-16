@@ -168,7 +168,7 @@ function reviewPromises(
 	const entries = brief.makes.map(
 		(m) => byName.get(m.name) ?? ({ name: m.name, aliases: [] } as unknown as PromiseEntry),
 	);
-	return rowProofs(entries, plan, implText).map((p) => ({
+	return rowProofs(entries, plan, implText, registry?.promises ?? []).map((p) => ({
 		name: p.promise.name,
 		proven: p.refusal === null,
 		rows: p.rows,

@@ -19,6 +19,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 **In flight** (moved here from the root `CLAUDE.md`'s Current State on 2026-10-02 by context-tiers — operational state lives in this file):
 
+- **plans-are-promises (closed 2026-10-16)** — a promise can be stated as clauses (`clauses: required` in a brief, `declare --clause`, `clause:` rows) and a plan closes per clause; accepted and landed by a person next. Open: a promise of only resting clauses cannot close, `change`/`replace` carry no clauses, `indusk plans start` fails under `init --local`. See [archive](planning/archive/plans-are-promises/).
 - **brief-as-the-contract (closed 2026-10-13)** — the brief is the contract: looks in the brief, approval of the brief, amendments wait for the person, a brief page with the agent beside it, a plan starts as a draft outside the repo. See [archive](planning/archive/brief-as-the-contract/) for full detail.
 - **cockpit-redraw (closed 2026-10-14)** — the nav redrawn from the original cockpit and dragged wider, the brief page drawn, re-approval a person's; the admin's look check names a missing page unchecked and goes on. See [archive](planning/archive/cockpit-redraw/).
 - **plan-stories (closed 2026-10-15)** — plans read by their title in the admin and the editor; a master plan's page tells its story (`subplan-row`) and keeps a plan page's controls; Needs you counts amendments. Still to get a title from their next session: `demo-scenarios`, `approve-then-improve`, `main-suite-green`, `skip-reason-why`, `release-preconditions`; Sandy's calls from its research (close `release-preconditions`, `indusk-release`, `jev-decision-model`; the plan overlaps) are in the [archive](planning/archive/plan-stories/research.md). See [archive](planning/archive/plan-stories/). Parked, no plan: the re-approval guard misses `plans "reapprove"`, a line continuation and a shell `sed -i` on `approved_brief:`; 140 admin looks unchecked as "did not report state".
@@ -3157,10 +3158,10 @@ Next: `/work small-fixes` in a fresh session for Build Phase 4 (author A9/A10 re
 
 ---
 
-## Session 8ae65d08 — starting catchup
+## Session 8ae65d08 — run-the-master briefs: run-the-graph + activity-and-graph drafts waiting on plans-are-promises to land
 
 **Session ID**: 8ae65d08-49fb-4c3f-810f-3b527885d1d6
-**Last updated**: 2026-10-16T14:21:15.530Z
+**Last updated**: 2026-10-16T18:57:34.385Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
