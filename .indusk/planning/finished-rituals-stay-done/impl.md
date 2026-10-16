@@ -126,7 +126,7 @@ This phase teaches the step list that a ritual can be finished independently of 
 
 #### Build Phase 1 Context
 
-- [ ] The package's context file records that a ritual's step is read from the ritual's own files.
+- [x] The package's context file records that a ritual's step is read from the ritual's own files.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, in "Run, verify, Shape, cleanup": "A release step for a ritual (Falsify, Cleanup, Audit) reads done from the ritual's own files (a closed phase, `audit.md`), never from where the plan stands now — a build phase reopened after an audit would hide it. Guarded by `steps.test.ts` — `promise: a-finished-ritual-stays-done`."
