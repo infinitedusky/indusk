@@ -14,6 +14,8 @@ Before this, the admin's red chip said *violated*, an incident's promise read *k
 - **One reading rule for a signal's outcome.** `upheld` is upheld; `broken` and `violated` are broken. Every reader uses it, and the always-on server asks Jaeger for both values.
 - **The registry state is `known-broken`.** A file still saying `known-violated` is read as it, and nothing rewrites it.
 - **Writers keep `violated` this release.** InDusk's own signals, the demo app and the docs snippets still write `violated`, so a recording server older than this plan never meets `broken`. The switch is the next release's, in the plan that reworks signals (`mark-first`).
+- **The editor's input keeps `violated` too.** `indusk promises health --json` is read by the installed editor, which `indusk update` does not refresh, so its `runs[].outcome` stays `violated` for a break until `mark-first` switches every writer — the same reader-first rule as the signal attribute. Found by the fresh review, not by the ADR.
+- **No signal is drawn grey, never green.** An enforced promise nothing has reported on shows a grey dot and "no signal yet" in the promise list (the approved look `promise-row.no-signal`), and turns green only once a signal reports it upheld; the editor shows a retired promise as retired, never holding.
 - **A word scan** — a unit test over the pages, skills, templates and descriptions people read — refuses *violated*, *violation*, *known-violated* and the promise sense of *mark*, reporting `file:line`, outside a short named list (attribute and event names, the attribute value in a snippet that sets it, and the sentence saying it is read as broken).
 
 ## What was rejected
