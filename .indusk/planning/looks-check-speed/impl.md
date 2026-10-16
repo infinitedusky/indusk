@@ -577,7 +577,7 @@ This phase stops the check from spending half an hour in a development server. B
   New `apps/indusk-mcp/src/lib/looks/dev-server.ts` (`promise: a-look-check-costs-what-changed`): `devServerMarker(html: string): string | null`, returning the first of `hmr-client` (Next, Turbopack), `react-refresh` (webpack), `/_next/webpack-hmr`, `/@vite/client` found in the HTML, else null. Pure; probed against Next 16.2.4 on 2026-10-16 (research.md).
 
   </details>
-- [ ] Make the check refuse a development server before it opens any look, naming the command that builds and serves the app.
+- [x] Make the check refuse a development server before it opens any look, naming the command that builds and serves the app.
   <details><summary>Technical</summary>
 
   `checkApp`: when at least one look is to be opened, `fetchPage(url)` (option; default `fetch(url).then((r) => r.text())`) of the first screen's `pageUrl`, or of the Storybook frame (`/storybook/iframe.html`) when only stories open; a marker throws `LooksCheckError(`${url} is a development server (${marker}) — build and serve the app, then check again: ${serve}`)`, where `serve` is `app.serve` or `declare the command that builds and serves the app as "serve" in .indusk/mockups/${app}/screens.json`. A run that opens nothing fetches nothing. A13, A14.

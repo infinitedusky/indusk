@@ -134,6 +134,11 @@ export interface LooksApp {
 	/** The running app's base URL, when `screens.json` declares one; `indusk looks check --url` overrides it. */
 	url?: string;
 	/**
+	 * The command that builds and serves the app, named when the check meets a
+	 * development server. Not in `declarationsHash`: declaring it reopens nothing.
+	 */
+	serve?: string;
+	/**
 	 * Element tag names the check does not measure: tooling the framework puts
 	 * on the page in development (`nextjs-portal`), which the app does not draw.
 	 */

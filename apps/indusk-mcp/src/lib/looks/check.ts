@@ -9,6 +9,7 @@ import {
 	storyApprovalOf,
 } from "./approvals.js";
 import { pageSourceFilter, readCatalog, storybookIds } from "./components.js";
+import { devServerMarker } from "./dev-server.js";
 import { type Device, type LooksApp, pageSourcesHashOf, sourcesHashOf } from "./mockups.js";
 import type { LookResult } from "./report.js";
 import { type Held, type LookKey, lookKey, readHeld, reuseOf, writeHeld } from "./reuse.js";
@@ -710,6 +711,8 @@ export interface CheckOptions {
 	home?: string;
 	/** When this run's held results are recorded as measured. */
 	now?: Date;
+	/** The HTML at a URL, read once before any look opens to refuse a development server; a plain `fetch` when absent. */
+	fetchPage?: (url: string) => Promise<string>;
 }
 
 /** Every look the app declares, by the name `--only` takes: its screen states and its stories. */
@@ -729,6 +732,37 @@ function refuseUnknown(app: LooksApp, only: readonly string[]): void {
 			`${app.app} has no look named ${unknown.join(", ")} — name a screen state (home.empty) or a story (badge.ok)`,
 		);
 	}
+}
+
+/**
+ * Refuse a development server before any look opens: one page's HTML, the
+ * first screen to open or else the Storybook frame, goes to `devServerMarker`.
+ * A page that cannot be fetched is not refused here — the look that opens it
+ * says why it cannot be read.
+ */
+async function refuseDevServer(
+	app: LooksApp,
+	base: string,
+	first: LookTarget | StoryTarget | undefined,
+	fetchPage: CheckOptions["fetchPage"] = (url) => fetch(url).then((r) => r.text()),
+): Promise<void> {
+	if (!first) return;
+	const url =
+		"id" in first ? storyUrl(base, first.id) : pageUrl(base, first.screen, first.path, first.state);
+	let html: string;
+	try {
+		html = await fetchPage(url);
+	} catch {
+		return;
+	}
+	const marker = devServerMarker(html);
+	if (marker === null) return;
+	const serve =
+		app.serve ??
+		`declare the command that builds and serves the app as "serve" in .indusk/mockups/${app.app}/screens.json`;
+	throw new LooksCheckError(
+		`${base} is a development server (${marker}) — build and serve the app, then check again: ${serve}`,
+	);
 }
 
 /**
@@ -774,6 +808,7 @@ export async function checkApp(
 		return { results, unchecked, reused, ...notice };
 	}
 
+	await refuseDevServer(app, base, screensToOpen[0] ?? storiesToOpen[0], opts.fetchPage);
 	const opener = opts.opener ?? chromiumOpener(app);
 	const measuredUnchecked: Unchecked[] = [];
 	const take = (found: CheckReport) => {
