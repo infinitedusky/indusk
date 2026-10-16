@@ -38,7 +38,7 @@ which does not exist before then.
    - **`no-needless-wait`** (limit). No phase is held back by a phase it neither depends on nor shares a file with.
    - **`graph-is-current`** (limit). When a phase ends, a plan is approved or a plan lands, the graph is read again before any next phase starts.
    - **`within-the-cap`** (rests on `sessions-are-capped`).
-   - **`reviews-are-phases`** (limit). Falsify, cleanup and the audit's fixes each run as phases of the graph, with the same dependencies, files and order as any other phase.
+   - **`reviews-are-phases`** (limit). The phases falsify, cleanup, the audit and an incident write are build phases of the graph like any other, with the same dependencies, files and order; the steps that write them are not phases (Sandy, 2026-10-16).
 2. **`a-phase-builds-on-its-own-branch`** (state). Each phase works in its own worktree off its plan's branch, merges in what came before it when it starts, and merges into the plan's branch only when its check is green; only the plan's branch reaches main, once its promises are verified.
    - **`own-worktree`** (limit). Every running phase has its own worktree and branch, cut from its plan's branch.
    - **`starts-from-its-dependencies`** (limit). A phase starts with every finished phase it depends on merged into its worktree.
