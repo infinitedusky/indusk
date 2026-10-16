@@ -217,9 +217,7 @@ describe("nav-row-legible — guards that pass today", () => {
     const wt = row.querySelector('[data-testid="plan-worktree"]');
     if (wt) expect(wt.checkVisibility()).toBe(false);
     expect(box(row).height).toBeCloseTo(box(plainRow).height, 0);
-    const badge = row.querySelector(
-      "[data-component='badge']",
-    ) as HTMLElement;
+    const badge = row.querySelector("[data-component='badge']") as HTMLElement;
     expect(hit(badge)?.closest("a[data-plan-name]")).toBe(
       container.querySelector('a[data-plan-name="with-wt"]'),
     );

@@ -113,7 +113,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
   hand-written one beside them. — see `/decisions/incident-recording`
 - **Active plans and their boundary records are read from each plan's live
   root** (`worktree/plan-worktrees`); `components/Worktrees.tsx` renders the
-  worktree chip, a broken assignment, unassigned worktrees and the record error.
+  nav's worktree mark (`PlanWorktreeMark` → `WorktreeMark`; the plan header
+  keeps its tag), a broken assignment, unassigned worktrees and the record error.
 - Tests: `next/link` needs a `vi.mock` stub in vitest browser tests
   (synchronous factory); a page that gains a `lib/*` import needs that module
   mocked in every browser test that renders it (`node:fs` is externalized);
@@ -276,6 +277,10 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `PlanList` only draws the tree (`NavPath`, `PlanRow`, `NavGroup`), never its
   own markup. Guarded by `CockpitFrame.test.tsx` (A1–A4) and
   `PlanList.test.tsx`. — see `/decisions/cockpit-redraw`
+- **A control in a nav row is a sibling of the row's link, never inside it**:
+  `PlanRow`'s `worktree` slot draws the row as a container with its title's
+  link stretched over it. Guarded by `PlanList.worktree.test.tsx` —
+  `promise: a-nav-row-keeps-its-parts-apart`.
 - **The brief page and plan page are held to `brief.*` and `plan.*`**: each
   reports its state with `data-look-state` (`lib/look-state.ts`), never a
   `?state=`; `screens.json` lists one path per state at A10's fixture plans,

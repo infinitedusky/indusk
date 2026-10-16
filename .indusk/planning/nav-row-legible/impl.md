@@ -170,17 +170,19 @@ This phase builds the small worktree mark as a component of its own: a bordered 
   `apps/indusk-admin/src/components/Worktrees.tsx`: replace `WorktreeChip` with `PlanWorktreeMark({ plan })`, returning `null` without `plan.worktree`, else `<span data-testid="plan-worktree"><WorktreeMark name={name} title={`Read from the worktree at ${path} (${branch})`} /></span>` — the test id in the page's wrapper, never in the component's markup (admin rule: a piece a test must find goes in a wrapper or a slot). Update the file's docblock. `PlanList.tsx` `PlanItem`: drop `<WorktreeChip plan={plan} />` from `stage`; pass `worktree={plan.worktree ? <PlanWorktreeMark plan={plan} /> : undefined}` to `NavPlanRow` (whose props type is `PlanRowProps` minus `current`/`href`, so it passes through). `grep -rn WorktreeChip apps/indusk-admin/src` is empty after.
 
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
+  - Reviewed, nothing found: `WorktreeMark`, `PlanRow`'s two forms and `PlanWorktreeMark` each have one job. Left as is: `PlanRow`'s container form repeats the badge and stage markup of the link form — a row with no worktree must stay byte-identical, so the two forms stay separate.
+  - Note: `http-plan-worktrees.test.ts` A1, A4, A7, A14, A22 fail identically on `main`, before this change; A3 (this plan's A8) passes.
 
 #### Build Phase 1 Verification
 
-- [ ] The tests of the nav row now pass: the mark sits apart from the stage, opens on hover and click without opening the plan, fits the row, hides in a collapsed nav, and a row without a worktree is unchanged.
+- [x] The tests of the nav row now pass: the mark sits apart from the stage, opens on hover and click without opening the plan, fits the row, hides in a collapsed nav, and a row without a worktree is unchanged.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/nav-row-legible/apps/indusk-admin && pnpm exec vitest run src/components/PlanList.worktree.test.tsx && pnpm exec vitest related src/components/ui/PlanRow.tsx src/components/ui/WorktreeMark.tsx src/components/Worktrees.tsx src/components/PlanList.tsx --run` — A1–A5 green, A6 and A7 still green; `PlanList.test.tsx`, `cockpit-nav.test.tsx` and `cockpit-phone.test.tsx` among the related, green.
 
   </details>
-- [ ] The served sidebar still names the worktree, and the admin type-checks.
+- [x] The served sidebar still names the worktree, and the admin type-checks.
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run --config vitest.system.config.ts src/__tests__/http-plan-worktrees.test.ts` — A8 green. `pnpm exec vitest run src/__tests__/typecheck.test.ts` (or `pnpm exec tsc --noEmit`) clean; `pnpm check` clean on the changed files.
@@ -189,7 +191,7 @@ This phase builds the small worktree mark as a component of its own: a bordered 
 
 #### Build Phase 1 Context
 
-- [ ] The admin's own context file says the nav's worktree is a mark outside the row's link.
+- [x] The admin's own context file says the nav's worktree is a mark outside the row's link.
   <details><summary>Technical</summary>
 
   admin (`apps/indusk-admin/CLAUDE.md`): in the entry that reads "`components/Worktrees.tsx` renders the worktree chip, …", say it renders the nav's worktree mark (`PlanWorktreeMark` → `WorktreeMark`) and the plan header keeps its tag; and in the nav entry: "a control in a row is a sibling of the row's link, never inside it — `PlanRow`'s `worktree` slot draws the row as a container with its title's link stretched over it. Guarded by `PlanList.worktree.test.tsx` — `promise: a-nav-row-keeps-its-parts-apart`."
@@ -198,7 +200,7 @@ This phase builds the small worktree mark as a component of its own: a bordered 
 
 #### Build Phase 1 Document
 
-- [ ] The admin's reference says a plan's worktree shows as a mark beside its stage that opens to its name.
+- [x] The admin's reference says a plan's worktree shows as a mark beside its stage that opens to its name.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/admin-ui/overview.md`, where the nav's rows are described: the worktree is a ⎇ mark beside the stage; hover or click shows its name; it does not open the plan.
