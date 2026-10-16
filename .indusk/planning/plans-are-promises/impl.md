@@ -188,6 +188,7 @@ This phase gives a promise its parts. A brief that opts in states each promise's
   `lib/promises/contract.ts`: a `clauseRefusals` beside `madeRefusals`, active only when `clausesRequired`: a made promise with no clause; a clause in the brief not in the registry, in the registry not in the brief, or with a different kind, sentence or `rests_on`.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
