@@ -6,7 +6,6 @@ status: living
 subplans:
   - stories-replace-mockups
   - mockup-matching
-  - looks-check-speed
   - approvals-merge-cleanly
   - owned-changes
   - plan-page-shows-its-looks

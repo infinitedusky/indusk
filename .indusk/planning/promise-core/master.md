@@ -9,6 +9,7 @@ status: living
 # as a placeholder.
 subplans:
   - one-promise-language
+  - looks-check-speed
   - plans-are-promises
   - mark-first
   - run-the-master
@@ -204,6 +205,10 @@ parent with its own `master.md` naming them.
    fit within one promise … the goal isn't to force that"), each one promise:
    - **`one-promise-language`** — `a-promise-is-upheld-or-broken`: the words,
      everywhere. First: cheap, and every later plan uses them.
+   - **`looks-check-speed`** — `a-look-check-costs-what-changed` (Sandy,
+     2026-10-16: pulled forward — a full look check took ~35 minutes and was
+     waited on twice in one plan): an unchanged look is not reopened, one page
+     load per look, no dev server, `--only`.
    - **`plans-are-promises`** — `a-plan-is-one-promise`: a plan is one promise
      of clauses; the clause plan replaces the test plan; a clause can rest on
      another promise.
