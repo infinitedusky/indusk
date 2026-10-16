@@ -2,7 +2,7 @@
 title: "Faster look checks"
 description: "Check what changed, load each page once, sample in production."
 date: 2026-10-12
-status: draft
+status: accepted
 workflow: feature
 ---
 
@@ -21,19 +21,25 @@ Why, and what storybook-components already fixed, are in
    - Measure: `indusk looks check admin --all` against a production build, timed, under 60 seconds
    - Look: when this plan's build closes
 
-3. **A deployed app's look is watched without a full run.**
-   - Measure: each pass of the production watcher opens a bounded number of looks (a rotation, not a random draw), and every approved look is opened at least once within a stated number of passes
-   - Look: at the first deploy of an app with looks after this plan lands
 
 ## Promises
 
 ### This plan makes
 
-1. **`an-unchanged-look-is-not-reopened`** (state). A look whose snapshot, foundation, declarations and device set are unchanged since it last held is reported held from that result, named as reused, without a browser opening it.
-2. **`a-page-loads-once-per-look`** (structure). Each look's page is loaded once; every device and colour scheme is measured on that page by resizing it and switching the scheme in place.
-3. **`a-slow-look-never-ends-the-run`** (state). A look that does not load or draw in time is reported unchecked with the reason; every other look is still judged. (Shipped in storybook-components as `openWithinTime`; this plan declares it.)
-4. **`the-check-refuses-a-dev-server`** (state). `looks check` against a development server refuses with the command that builds and serves the app, rather than timing out against it.
-5. **`production-looks-are-sampled-in-rotation`** (state). The production watcher checks a bounded slice of the approved looks each pass, in rotation, so every look is checked within a known number of passes.
+1. **`a-look-check-costs-what-changed`** (state). A look check takes time in proportion to what changed, not to how many looks there are.
+
+Its clauses — written as prose until `plans-are-promises` teaches the brief to
+hold clauses: **an unchanged look is not reopened** — a look whose snapshot,
+foundation, declarations and device set are unchanged since it last held is
+reported held from that result, named as reused, without a browser opening it;
+**a page loads once per look** — every device and colour scheme is measured on
+that one page, resized and switched in place; **the check refuses a dev
+server** — against a development server it refuses, naming the command that
+builds and serves the app, instead of crawling through it; **a slow look never
+ends the run** — one that does not load or draw in time is reported unchecked
+with the reason, and every other look is still judged (shipped in
+storybook-components as `openWithinTime`, declared here); **one look can be
+asked for** — `--only <look>` checks just the named looks.
 
 ### Existing promises
 
@@ -44,8 +50,14 @@ Why, and what storybook-components already fixed, are in
 
 ### Not promised
 
+- **Production looks sampled in rotation** — the watcher runs continuously, so by `promise-core`'s sorting rule it belongs to `workbench-server` (Sandy, 2026-10-16).
+
 - Pixel comparison: [mockup-matching](../mockup-matching/brief.md).
 - Making the admin's own pages render faster under `next dev`.
+
+## Looks
+
+None — this plan changes how looks are checked, not how any screen looks.
 
 ## Depends On
 
