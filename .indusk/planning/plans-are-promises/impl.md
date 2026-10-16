@@ -176,7 +176,7 @@ This phase gives a promise its parts. A brief that opts in states each promise's
   `apps/indusk-mcp/src/lib/promises/registry.ts`: `PromiseEntry.clauses?: PromiseClause[]`; `promiseProblem` reports a non-list, a duplicate name, a kind outside `PROMISE_CLAUSE_KINDS` (new in `vocabulary.ts`: `split | limit | rests-on`), a `rests-on` with no `rests_on`.
 
   </details>
-- [ ] Declaring a promise takes its clauses and refuses a bad one.
+- [x] Declaring a promise takes its clauses and refuses a bad one.
   <details><summary>Technical</summary>
 
   `bin/commands/promises.ts` `declare`: repeatable `--clause <spec>`; `lib/promises/write.ts` `declarePromise` gains `clauses`, parses each spec with the brief's sub-entry grammar (one function, exported from `brief-contract.ts`, used by both), refuses a bad kind or a `rests on` promise absent from the registry with exit 2 and nothing written, and writes `clauses:` in frontmatter. The MCP `declare_promise` tool gains an optional `clauses: string[]`.
