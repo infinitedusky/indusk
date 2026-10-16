@@ -192,6 +192,62 @@ already-declared ones among them, and `a-message-sent-gets-a-reply`, are
 withdrawn now (never in force) and re-declared then. "Mark" becomes "signal"
 throughout, and the plan may be renamed to match.
 
+### What changed since the brief was accepted (2026-10-16)
+
+Three plans have landed since this brief was written, and the primitive was
+reshaped in conversation (Sandy, 2026-10-16; `promise-core`'s master, "The
+primitive"). This plan is written against the result, not the first cut above.
+
+- **A plan holds one or more promises** (replaces `a-plan-is-one-promise`).
+  Promises whose work shares code are one plan, with one approval, one branch
+  and one falsify, cleanup and audit; promises that share none are separate
+  plans under a master, which is only for display. A promise is permanent and a
+  plan ends. Each promise gets its own clause plan, before the ADR.
+- **`plans-are-promises` landed** (merged to `main` at `8235644ff`). It is the
+  first of this plan's three origin plans and gives it everything below as
+  existing behaviour: a brief states each promise as clauses (`clauses:
+  required`; `split`, `limit`, `rests on`); `indusk promises declare --clause`
+  records them in the registry and the contract check holds brief and registry
+  equal; the clause plan (`test-plan.md`: one section per promise and per
+  clause, each with its signal) is checked; a test row names `clause:
+  <promise>/<clause>` and its test file carries the same token; closing
+  confirms a promise only when every `split` and `limit` clause has a passing
+  row and each promise it rests on is in force, including a sibling of the same
+  plan; a resting cycle is refused. So `a-promise-is-made-of-clauses`,
+  `a-promise-can-rest-on-another`, `a-plan-plans-its-clauses` and
+  `a-plan-is-one-promise` from the first cut are done and are not this plan's.
+  What it left, by design, is this plan's: its brief's "Not promised" handed
+  proving a clause by its signal in use here.
+- **`one-promise-language` landed.** The words — upheld, broken, holding, no
+  signal — are in every reader; writers still write `violated` until this
+  plan's switch (carried above).
+- **Phases and clauses are many-to-many** (`run-the-master`, now a parent of
+  three plans): one phase can prove clauses of several promises and one clause
+  can take several phases. Not this plan's, but its closing rule must not
+  assume one phase per clause.
+
+Carried from `plans-are-promises`' audit and retrospective (deferred there, not
+fixed, because each one is about the signal, which is this plan's):
+
+- **A promise made only of resting clauses can never close**: no test row names
+  it and it has nothing of its own to prove. Under this plan a promise's health
+  can be its signal, so it can close on that.
+- **Health and standing do not read resting clauses**: the promise page and
+  `promises health` read a promise's own marks, not those of the promise a
+  clause rests on. A clause "whose health is that promise's health" needs both.
+- **`split` and `limit` are treated identically** by closing. They should not
+  be here: a split's signal is a budget reached at a point, a limit's a bound
+  that holds on every report.
+- **No row covers** the MCP `declare_promise` `clauses` argument or the build
+  review reading the registry; **`change` and `replace` cannot carry clauses**,
+  so a clause cannot be edited after declaration (this plan re-declares its own
+  promise for that reason: withdraw, then declare).
+- **A clause's proof is by file, not by content.** Closing now requires a test
+  file to carry `clause: <promise>/<clause>`, but nothing checks the file
+  asserts the clause. That is `verified-before-release`'s to tighten.
+- **`indusk plans start` fails under `indusk init --local`** (`.indusk/` is
+  git-ignored): outside this plan, its own bug plan.
+
 ### The merged plan — proposed rework of the brief (2026-10-15, parked)
 
 `mark-first` merges with `promise-first-build` (see `promise-core`'s master,
