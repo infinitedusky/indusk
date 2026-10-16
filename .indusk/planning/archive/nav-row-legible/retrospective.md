@@ -46,3 +46,5 @@ Keep a plan's row in the admin nav to two lines. The worktree stopped being a ta
 - **Tests:** 9 tests in `PlanList.worktree.test.tsx`, 2 in `PlanRow.worktree.test.tsx`; the served-sidebar guard passes. Five other tests in `http-plan-worktrees.test.ts` fail on phase/item fields unrelated to this plan; not checked against `main`.
 - **Docs:** `overview.md`, `component-conventions.md` (twenty components) and the changelog updated. No ADR, so no decisions page.
 - **Release:** nothing published; this build is installed from the checkout (`pnpm install:local`).
+
+Landed on main at cb831dbcf, 2026-10-16.
