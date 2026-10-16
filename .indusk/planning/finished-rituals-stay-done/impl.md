@@ -42,7 +42,7 @@ On a plan's page, Falsify, Cleanup and Audit read done once each ritual is finis
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | A plan whose falsification and cleanup phases are closed and whose audit is written, with a later build phase open, shows Falsify, Cleanup and Audit done and Build current | Test Phase 1 | Build Phase 1 | written | unit | promise: a-finished-ritual-stays-done | apps/indusk-mcp/src/lib/plans/steps.test.ts |
-| A2 | The same plan read from its files on disk shows Falsify, Cleanup and Audit done and Build current | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-finished-ritual-stays-done | apps/indusk-admin/src/lib/planning-reader.rituals.test.ts |
+| A2 | The same plan read from its files on disk shows Falsify, Cleanup and Audit done and Build current | Test Phase 1 | Build Phase 1 | written | unit | promise: a-finished-ritual-stays-done | apps/indusk-admin/src/lib/planning-reader.rituals.test.ts |
 | A3 | A plan with only its falsification closed and a build phase open shows Falsify done, and Cleanup and Audit not yet | Test Phase 1 | Build Phase 1 | written | unit | promise: a-finished-ritual-stays-done | apps/indusk-mcp/src/lib/plans/steps.test.ts |
 | A4 | A plan midway through its falsification shows Falsify current, and Cleanup and Audit not yet | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over a-plan-shows-two-workflows: a ritual being worked still reads current | apps/indusk-mcp/src/lib/plans/steps.test.ts |
 | A5 | A ritual skipped with a reason still reads skipped, with its reason, not done | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over a-skipped-step-shows-why-on-request | apps/indusk-mcp/src/lib/plans/steps.test.ts |
@@ -67,7 +67,7 @@ Before any code changes, this phase writes the tests for what a plan's step list
   Add to `apps/indusk-mcp/src/lib/plans/steps.test.ts` (it already opens with `// promise: a-plan-shows-two-workflows`; add `// promise: a-finished-ritual-stays-done`), using the real `derivePlanPosition` as the file does. A1: a snapshot with position `executing`, `finishedRituals: ["falsification","cleanup","audit"]` → `planSteps(...).release` has Falsify, Cleanup, Audit `done`, Build `current`. A3: same with `["falsification"]` only → Falsify `done`, Cleanup and Audit `not-yet`. A4: position `falsify` (active), no finished → Falsify `current`, Cleanup and Audit `not-yet` (green today). A5: `skippedRituals: [{ritual:"cleanup",reason:"…"}]` → Cleanup `skipped` with that reason (green today). Red today on A1, A3: no `finishedRituals`, and the steps read `not-yet`.
 
   </details>
-- [ ] Write the admin test that the same plan read from its folder shows the rituals done, failing today.
+- [x] Write the admin test that the same plan read from its folder shows the rituals done, failing today.
   <details><summary>Technical</summary>
 
   New `apps/indusk-admin/src/lib/planning-reader.rituals.test.ts` (opening `// promise: a-finished-ritual-stays-done`): build a plan folder in a temp project — `impl.md` with a closed `### Build Phase 4: Falsification — x` and `### Build Phase 5: Cleanup — y` (each with checked items), an open `### Build Phase 6: Audit follow-ups`, and `audit.md`; read it with the same reader the page uses and pass `snapshotOf(plan)` to `planSteps`. A2: Falsify, Cleanup, Audit `done`, Build `current`. Red today: they read `not-yet`. Use the harness the sibling `planning-reader` tests use.
