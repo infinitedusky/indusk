@@ -845,7 +845,7 @@ This plan doubled the look check's main file, from 633 lines to 1,232, and it no
 
   `readServed`, `within` and the served-build reading from `check.ts` into `lib/looks/served.ts`, beside `dev-server.ts`.
   </details>
-- [ ] Move the browser work — launching it, loading a page, measuring in place or fresh, and the mount-time fallback — into its own file.
+- [x] Move the browser work — launching it, loading a page, measuring in place or fresh, and the mount-time fallback — into its own file.
   <details><summary>Technical</summary>
 
   `loadChromium`, `launch`, `loadPage`, `measureInPlace`, `measureFresh`, `measureScript`, `chromiumOpener`, `openWithinTime` into `lib/looks/browser.ts`; the `LookOpener` seam stays the one way the run reaches it.
