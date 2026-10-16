@@ -18,6 +18,9 @@ clauses:
   - name: no-signal-is-not-holding
     kind: limit
     statement: "A clause whose signal has never reported, or whose watcher is blind, reads no signal and never reads as holding."
+  - name: a-break-names-its-clause
+    kind: split
+    statement: "When a clause's signal reports broken, the signal's event and the incident it opens name the promise and the clause, and point to the plan and phase that added the signal; its tests are reachable from the clause."
 ---
 
 A clause is verified by its tests before release and upheld by its signal in use, and is upheld only when both say so.

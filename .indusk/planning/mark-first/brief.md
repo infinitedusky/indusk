@@ -4,7 +4,7 @@ date: 2026-10-14
 status: accepted
 workflow: feature
 clauses: required
-description: "Each clause of a promise is verified by its tests before release and upheld by its signal — telemetry from the running system — in use; a plan written as clauses closes when both say so."
+description: "Each clause of a promise is verified by its tests before release and upheld by its signal — telemetry from the running system — in use; a plan written as clauses closes when both say so; a break names its clause; an audit concern is answered with a fix or a signal."
 ---
 
 # Signal first — Brief
@@ -29,6 +29,10 @@ background, the merge with `promise-first-build`, and the later cut are in
    - Measure: on Homework Gate's first plan, the time each split takes with its signals on and off, and the trace storage the daemon uses per day; expect a few percent at most.
    - Look: when that plan closes.
 
+3. **A break is fixed faster.**
+   - Measure: for incidents opened by a clause's signal, the time from broken to fixed, against incidents opened before this plan, from the incident records.
+   - Look: 30 days after release.
+
 ## Promises
 
 ### This plan makes
@@ -37,19 +41,26 @@ background, the merge with `promise-first-build`, and the later cut are in
    - **`verified-before-release`** (split). A clause's tests must pass before anything ships, and a change that makes one fail is stopped before release.
    - **`upheld-by-its-signal`** (split). A clause is upheld only when its signal has reported it upheld in a run of the real system, and a passing test never stands in for its signal.
    - **`no-signal-is-not-holding`** (limit). A clause whose signal has never reported, or whose watcher is blind, reads no signal and never reads as holding.
+   - **`a-break-names-its-clause`** (split). When a clause's signal reports broken, the signal's event and the incident it opens name the promise and the clause, and point to the plan and phase that added the signal; its tests are reachable from the clause.
+
+2. **`an-audit-concern-gets-a-solution`** (state). Each concern an audit raises is answered with a fix, a signal that would show it breaking, or the reason nothing is needed.
+   - **`every-concern-is-answered`** (split). The audit asks, for each concern it raised, what signal would show it breaking, and the answer is a fix, a signal (the invariant checked, where it is emitted, how often it would fire and what happens if its first break reaches a user) or nothing with the reason.
+   - **`a-signal-answer-names-its-clause`** (split). A signal an audit proposes names the clause it would uphold, and a concern no clause covers says so.
 
 ### Existing promises
 
 **Must not break**
 
 - **`a-production-break-is-recorded-unasked`**. A broken clause becomes an incident the same way a broken promise does today.
+- **`an-audit-blocks-nothing`**. The new question changes no gate: the retrospective still reads that audit.md exists, never what it says.
+- **`a-plan-is-audited-by-a-fresh-reader-before-it-closes`**. The audit is still read cold by a reader that has not seen the building session; it gains one question.
 - **`a-plan-holds-the-promises-it-lands`**. A plan still holds one or more promises, each stated as clauses with a clause plan before the ADR, and still closes per clause: this plan adds the signal to what proves a clause and takes none of that away.
 - **`a-break-reaches-the-working-agent`**. A broken clause reaches the agent the same way.
-- **`an-incident-names-its-tests`**. An incident still names the tests tied to what broke.
 - **`everyday-suite-stays-fast`**. Signals add no waiting to the everyday suite.
 
 **Changes**
 
+- **`an-incident-names-its-tests`**. When a clause breaks, its incident names the promise and the clause that broke, and the tests tied to that clause are reachable from it; the plan it reopens can still be edited.
 - **`a-closed-plan-kept-its-promises`**. A plan cannot close while a clause of a promise it holds has a failing test or no signal that has reported it upheld; a plan written before clause plans closes, as before, on passing tests that name its promises. When it closes, its promise is enforced.
 
 **Replaces**
