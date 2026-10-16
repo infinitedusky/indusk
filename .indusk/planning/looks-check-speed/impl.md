@@ -616,7 +616,12 @@ This phase stops the check from spending half an hour in a development server. B
   Done as: `configHashOf(root, app)` (`mockups.ts`) hashes each source folder's app's `tailwind.config.*`, `postcss.config.*`, its `.storybook` folder and the root `pnpm-lock.yaml`; `configHash` joins `lookKey`'s facts and `COMPARED` (named "configuration"). Tests (no trajectory row): `reuse.test.ts` — a changed `configHash` reopens, and a check after each of a Tailwind config, a PostCSS config, the Storybook config and the lockfile changes opens the held look.
   </details>
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
-- [x] Shape — reviewed `lib/looks/dev-server.ts` (one pure rule, its markers named), `reuse.ts`'s `configHashOf` and served-build judgement, and the refusal in `check.ts`; nothing to change. `check.ts` has grown past its cap — splitting it is inter-file, `/cleanup`'s at close.
+- [x] Shape — reviewed the new development-server rule, the configuration hash and served-build judgement, and the refusal; nothing to change.
+  <details><summary>Technical</summary>
+
+  Reviewed `lib/looks/dev-server.ts` (one pure rule, its markers named), `reuse.ts`'s `configHashOf` and served-build judgement, and the refusal in `check.ts`; nothing to change. `check.ts` has grown past its cap — splitting it is inter-file, `/cleanup`'s at close.
+
+  </details>
 #### Build Phase 3 Verification
 
 - [x] A development server's page is refused before anything opens, a production page is not, and the browser test for the refusal passes.
@@ -771,10 +776,10 @@ A fresh reader went looking for ways a changed look could be reported held from 
   A10's Asserts in the trajectory: "a second run requests only the app's root, no look's page, prints one reused line per look, counts reused in the summary, exits 0"; the same in `test-plan.md`'s A10.
 
   </details>
-- [x] Shape: move what planReuse tells the person (unread build, stories not rendered, a stale server) into a named reuseNotice, so planReuse only partitions the looks
+- [x] Shape: move what the check tells the person about reuse (an unreadable build, stories not rendered, a server behind its sources) into a function of its own, so deciding what to reuse does one job
   <details><summary>Technical</summary>
 
-  `apps/indusk-mcp/src/lib/looks/check.ts`. Rule: one reason to change: planReuse grew a second job in this phase
+  `apps/indusk-mcp/src/lib/looks/check.ts`: `planReuse` → `reuseNotice`. Rule: one reason to change: planReuse grew a second job in this phase
 
   Done: `reuseNotice(app, base, { unread, current, stale, chosen })`; reuse, check-run and dev-server tests 50 passed after it. Also reviewed and left as they are: `measureInPlace` / `measureFresh` / `loadPage` / `contextAt` (each one job, the shared load named once), `keepHeld` (one job: what a run proves), `elementRulesOf`, `checkerHashOf`, `assetUrlsOf`, `devServerMarker` (pure, each named for its purpose), and the `fakeOpener` per-device answer (test support, one job).
 
