@@ -41,9 +41,9 @@ On a plan's page, Falsify, Cleanup and Audit read done once each ritual is finis
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A plan whose falsification and cleanup phases are closed and whose audit is written, with a later build phase open, shows Falsify, Cleanup and Audit done and Build current | Test Phase 1 | Build Phase 1 | written | unit | promise: a-finished-ritual-stays-done | apps/indusk-mcp/src/lib/plans/steps.test.ts |
-| A2 | The same plan read from its files on disk shows Falsify, Cleanup and Audit done and Build current | Test Phase 1 | Build Phase 1 | written | unit | promise: a-finished-ritual-stays-done | apps/indusk-admin/src/lib/planning-reader.rituals.test.ts |
-| A3 | A plan with only its falsification closed and a build phase open shows Falsify done, and Cleanup and Audit not yet | Test Phase 1 | Build Phase 1 | written | unit | promise: a-finished-ritual-stays-done | apps/indusk-mcp/src/lib/plans/steps.test.ts |
+| A1 | A plan whose falsification and cleanup phases are closed and whose audit is written, with a later build phase open, shows Falsify, Cleanup and Audit done and Build current | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-finished-ritual-stays-done | apps/indusk-mcp/src/lib/plans/steps.test.ts |
+| A2 | The same plan read from its files on disk shows Falsify, Cleanup and Audit done and Build current | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-finished-ritual-stays-done | apps/indusk-admin/src/lib/planning-reader.rituals.test.ts |
+| A3 | A plan with only its falsification closed and a build phase open shows Falsify done, and Cleanup and Audit not yet | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-finished-ritual-stays-done | apps/indusk-mcp/src/lib/plans/steps.test.ts |
 | A4 | A plan midway through its falsification shows Falsify current, and Cleanup and Audit not yet | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over a-plan-shows-two-workflows: a ritual being worked still reads current | apps/indusk-mcp/src/lib/plans/steps.test.ts |
 | A5 | A ritual skipped with a reason still reads skipped, with its reason, not done | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over a-skipped-step-shows-why-on-request | apps/indusk-mcp/src/lib/plans/steps.test.ts |
 
@@ -112,11 +112,12 @@ This phase teaches the step list that a ritual can be finished independently of 
   `apps/indusk-admin/src/lib/planning-reader.ts` (beside `skippedRitualsOf` at ~L373): `finishedRituals` from `isFalsificationPhaseTerminal(implRaw) || isFalsificationComplete(planRoot)`, `isCleanupPhaseTerminal(implRaw)`, `isAuditComplete(planRoot)` (all in `cleanup/gate.ts`, `falsification/log.ts`); add the field to `Plan`; `plan-snapshot.ts` `snapshotOf` passes `finishedRituals: plan.finishedRituals`. Reuse those helpers; do not re-parse the impl.
 
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
-- [ ] The step tests now pass: a reopened plan shows its finished rituals as done, a ritual being worked as current, and a skipped one as skipped.
+- [x] The step tests now pass: a reopened plan shows its finished rituals as done, a ritual being worked as current, and a skipped one as skipped.
   <details><summary>Technical</summary>
 
   `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/lib/plans/steps.test.ts && pnpm exec vitest related src/lib/plans/steps.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/lib/planning-reader.rituals.test.ts && pnpm exec vitest related src/lib/planning-reader.ts src/lib/plan-snapshot.ts` — A1–A5 green; `workflows.test.tsx`, `plan-stage.test.ts` and `PlanList.test.tsx` among the related, green.
