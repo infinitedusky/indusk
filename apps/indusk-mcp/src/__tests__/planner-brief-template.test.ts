@@ -12,6 +12,10 @@ import { REPO_ROOT } from "./helpers/cli.js";
  * direction is the ADR's; and what should be true is said once, as promises,
  * not a second time as success criteria. The planner skill's brief template
  * is what makes that the default, so it is pinned.
+ *
+ * promise: a-plan-holds-the-promises-it-lands — plans-are-promises A10, A12:
+ * the planner's instructions plan promises as clauses, and say which promises
+ * share a plan.
  */
 
 function briefTemplate(): string {
@@ -73,5 +77,73 @@ describe("planner-promises A20 — the planner's brief template", () => {
 		const t = briefTemplate();
 		expect(t).toMatch(/^## Depends On$/m);
 		expect(t).toMatch(/^## Blocks$/m);
+	});
+});
+
+const planner = () => readFileSync(join(REPO_ROOT, "apps/indusk-mcp/skills/planner.md"), "utf-8");
+
+/** The text of numbered step `n` under "What to Do When Asked to Plan", up to the next step. */
+function step(n: number): string {
+	const text = planner();
+	const start = text.indexOf(`\n${n}. **`);
+	const end = text.indexOf(`\n${n + 1}. **`);
+	expect(start, `the planner has a step ${n}`).toBeGreaterThan(-1);
+	expect(end, `followed by step ${n + 1}`).toBeGreaterThan(start);
+	return text.slice(start, end);
+}
+
+function testPlanTemplate(): string {
+	const text = planner();
+	const start = text.indexOf("### test-plan.md");
+	const end = text.indexOf("### adr.md");
+	expect(start, "the planner skill has a test-plan template").toBeGreaterThan(-1);
+	expect(end).toBeGreaterThan(start);
+	return text.slice(start, end);
+}
+
+describe("plans-are-promises A10 — the planner plans promises as clauses", () => {
+	it("the brief template opts in and states clauses under a made promise", () => {
+		const t = briefTemplate();
+		expect(t).toMatch(/^clauses: required$/m);
+		expect(t).toMatch(/\(split\)/);
+		expect(t).toMatch(/\(limit\)/);
+	});
+
+	it("filled in, the brief template is read with clauses under its promise and nothing out of shape", () => {
+		const block = /```markdown\n([\s\S]*?)\n```/.exec(briefTemplate())?.[1] ?? "";
+		let n = 0;
+		const filled = block
+			.replaceAll("{promise-name}", "seat-held-once")
+			.replaceAll("{behaviour | state | structure}", "state")
+			.replaceAll("{old-name}", "seat-never-double-booked")
+			.replaceAll("{new-name}", "seat-held-once")
+			.replaceAll("{clause-name}", () => `clause-${++n}`)
+			.replace(/- Measure: \{[^}]*\}/, "- Measure: desk calls about stuck seats, per week")
+			.replace(/- Look: \{[^}]*\}/, "- Look: two weeks after release");
+		const brief = parseBriefContract(filled);
+		if (brief.shape !== "contract") throw new Error("the template reads as a legacy brief");
+		expect(brief.problems).toEqual([]);
+		const made = brief.makes[0] as { clauses?: Array<{ kind: string }> };
+		expect(made.clauses?.length ?? 0, "the made promise has clauses").toBeGreaterThan(0);
+	});
+
+	it("the test-plan template has a signal under each clause heading", () => {
+		expect(testPlanTemplate()).toMatch(/### `\{clause-name\}`[^\n]*\n[\s\S]*?- Signal:/);
+	});
+
+	it("Step 5 says the clause plan is written before the ADR", () => {
+		const five = step(5);
+		expect(five).toMatch(/clause plan/i);
+		expect(five).toMatch(/before the ADR/i);
+	});
+});
+
+describe("plans-are-promises A12 — promises that land together share a plan", () => {
+	it("Step 3 says promises sharing code are one plan, those sharing none are separate under a master, and the person decides", () => {
+		const three = step(3);
+		expect(three).toMatch(/shar\w* code[^.]*one plan|one plan[^.]*shar\w* code/i);
+		expect(three).toMatch(/separate plans under a master/i);
+		expect(three).toMatch(/suggest/i);
+		expect(three).toMatch(/person decides/i);
 	});
 });
