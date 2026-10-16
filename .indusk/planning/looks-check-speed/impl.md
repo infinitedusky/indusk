@@ -719,10 +719,12 @@ A fresh reader went looking for ways a changed look could be reported held from 
   Done as: `checkerHashOf({ properties, script, verdictVersion })` in `mockups.ts`; `check.ts` hands it `MEASURED_KINDS` (each property with the kind it is judged as, from `verdict.ts`, so a property re-kinded moves it without a bump), the page and story measure scripts with no tokens, `FINISH_TRANSITIONS`, and `VERDICT_VERSION = 1`. Compared second, after the foundation. Every record kept before this has no checker hash, so the first run after it reopens every look once.
 
   </details>
-- [ ] Keep only this run's own changes when writing the held results, so a check of the same project running at the same time keeps its removals.
+- [x] Keep only this run's own changes when writing the held results, so a check of the same project running at the same time keeps its removals.
   <details><summary>Technical</summary>
 
   `check.ts` `keepHeld`: re-read the record with `readHeld` immediately before `writeHeld` and apply only this run's writes and deletes (`plan.opened`, `plan.rebuilt`) to it, never `plan.held` wholesale. A deletion by another run between the two reads stands. A32.
+
+  Done as: `keepHeld` starts from `readHeld` at write time; `rebuilt` updates only records still there; the plan no longer carries the record read at the start. The window between that read and the rename is not locked — two writes landing inside it still race (milliseconds, against a run's minutes).
 
   </details>
 - [ ] Give the read of the served page a time limit, after which nothing is reused and the looks are opened.

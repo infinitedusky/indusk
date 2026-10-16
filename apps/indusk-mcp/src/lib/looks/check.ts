@@ -22,7 +22,6 @@ import {
 import type { LookResult } from "./report.js";
 import {
 	type Build,
-	type Held,
 	type LookKey,
 	lookKey,
 	readHeld,
@@ -912,7 +911,6 @@ export async function checkApp(
 /** What reuse decided before a run: the looks to open, the looks reused, and each opened look's key. */
 interface ReusePlan {
 	root: string;
-	held: Record<string, Held>;
 	/** Each opened look's key, by record name (`screen:home.empty`, `story:badge.ok`). */
 	opened: Map<string, LookKey>;
 	/** The build each kind of look is served from now; null where it could not be read. */
@@ -977,7 +975,6 @@ async function planReuse(
 	};
 	const plan: ReusePlan = {
 		root,
-		held,
 		opened: new Map(),
 		builds,
 		rebuilt: new Map(),
@@ -1050,7 +1047,8 @@ async function planReuse(
  * of them is removed, so it is opened next time. A look measured on a server
  * still serving the build from before the sources changed proved nothing about
  * the sources: it is never recorded held, and its earlier record is left as it
- * was — the evidence that this server is behind its sources. A record that cannot be
+ * was — the evidence that this server is behind its sources. Only the looks
+ * this run opened or rebuilt are written, over the record as it is now. A record that cannot be
  * written costs only reuse, so it is a note on stderr, never the end of a
  * check whose looks were measured.
  */
@@ -1063,7 +1061,10 @@ function keepHeld(
 ): void {
 	const at = (opts.now ?? new Date()).toISOString();
 	const everywhere = app.devices.length * schemesOf(app).length;
-	const next = { ...plan.held };
+	// Read again now, not at the start of the run: another check of the project
+	// may have kept or removed looks meanwhile, and only this run's own looks
+	// are written over what it left (A32).
+	const next = readHeld(plan.root, app.app, opts.home);
 	for (const [record, build] of plan.rebuilt) {
 		const before = next[record];
 		if (before) next[record] = { ...before, build };
