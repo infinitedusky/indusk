@@ -317,6 +317,10 @@ override changes it in place, so one load does.
   unchecked in that checkout and are reopened on every run by design, a 57 s floor
   that no change removes.
 
+## As built
+
+The check is one job per file in `apps/indusk-mcp/src/lib/looks/`: `served.ts` reads the served page (root request, development-server refusal, served build); `browser.ts` launches Chromium, loads a page and measures it in place or fresh, with the mount-time fallback and the `LookOpener` seam; `reuse-run.ts` plans which looks reopen and keeps what held, around the rule in `reuse.ts`; `verdict.ts` judges the measured values; `check.ts` is the run. `errors.ts` holds `LooksCheckError` so none of these import each other in a circle.
+
 ## References
 - `research.md`, `brief.md`, `test-plan.md` in `.indusk/planning/looks-check-speed/`
 - `.indusk/planning/storybook-components/` — snapshots, stylesheet hashes, `openWithinTime`

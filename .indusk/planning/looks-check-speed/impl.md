@@ -881,7 +881,7 @@ This plan doubled the look check's main file, from 633 lines to 1,232, and it no
 
 #### Build Phase 5 Document
 
-- [ ] The decision page lists where each part of the check now lives.
+- [x] The decision page lists where each part of the check now lives.
   <details><summary>Technical</summary>
 
   `apps/docs/src/decisions/looks-check-speed.md`: an "As built" line naming the files.
