@@ -207,7 +207,7 @@ This phase gives a promise its parts. A brief that opts in states each promise's
 
 #### Build Phase 1 Context
 
-- [ ] The rule that a brief may state its promises as clauses is written where plans are written.
+- [x] The rule that a brief may state its promises as clauses is written where plans are written.
   <details><summary>Technical</summary>
 
   planning: `apps/indusk-mcp/templates/planning/CLAUDE.md` — under Documents, "**A brief may state its promises as clauses** (`clauses: required`): each made promise lists its splits, limits and the promises it rests on beneath it, declared with `--clause`; the contract check holds brief and registry equal. — see `/decisions/plans-are-promises`". Copy to `.indusk/planning/CLAUDE.md` via `indusk update`-equivalent sync, never by hand; the template-sync test pins it.

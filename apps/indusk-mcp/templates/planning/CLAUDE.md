@@ -19,6 +19,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   registry, an accepted brief is, by every `pnpm test`. The problem, the
   context and the decisions made on the way go in `research.md`. — see
   `/guide/briefs`
+- **A brief may state its promises as clauses** (`clauses: required` in its
+  frontmatter): each promise it makes lists its splits, limits and the promises
+  it rests on beneath it, declared with `--clause`; the contract check holds
+  brief and registry equal. — see `/decisions/plans-are-promises`
 - **A plan that changes an app's interface lists its looks, or says why it
   has none.** Once the draft brief exists, ask "does this change how anything
   looks?"; a yes lists each look under `## Looks` as a drawn mockup — a
