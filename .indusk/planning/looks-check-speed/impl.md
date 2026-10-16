@@ -490,7 +490,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
   Pure: every input handed in. `changed` names the first differing input in a fixed order (`--all`, stories not rendered from the current sources, uncomposed, foundation, declarations, devices, schemes, snapshot, stylesheet, mockup, components, page code, path, seed).
 
   </details>
-- [ ] Keep each app's held results in the project's machine-state folder, never in the checkout.
+- [x] Keep each app's held results in the project's machine-state folder, never in the checkout.
   <details><summary>Technical</summary>
 
   In `reuse.ts`: `heldPath(projectRoot, app, home = induskHome())` = `join(bookkeepingRoots(projectRoot, home).home, "looks", `${app}.json`)`; `readHeld` (missing → `{}`; unreadable → `{}` and a stderr note, never a throw that ends the check); `writeHeld` writes `{ version: 1, looks }` to a temp file and renames it. Keys `story:<name>` / `screen:<name>`. A8.

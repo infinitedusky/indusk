@@ -1,3 +1,7 @@
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { bookkeepingRoots } from "../bookkeeping/roots.js";
+import { induskHome } from "../telemetry/status.js";
 import type { LookTarget, StoryTarget } from "./check.js";
 import type { LooksApp } from "./mockups.js";
 
@@ -149,17 +153,69 @@ export function reuseOf(held: Held | undefined, now: LookKey, opts: { all?: bool
 	return { reuse: true, at: held.at };
 }
 
-export function heldPath(_projectRoot: string, _app: string, _home?: string): string {
-	return "";
+/**
+ * Where an app's held results are kept: the project's home outside every
+ * checkout (`bookkeepingRoots(projectRoot).home`, `indusk eval home`'s
+ * folder), `looks/<app>.json` — machine state, true of one machine's build,
+ * the same from every worktree of the project, never committed
+ * (/decisions/bookkeeping-lives-where-it-is-read).
+ */
+export function heldPath(projectRoot: string, app: string, home = induskHome()): string {
+	return join(bookkeepingRoots(projectRoot, home).home, "looks", `${app}.json`);
 }
 
-export function readHeld(_projectRoot: string, _app: string, _home?: string): Record<string, Held> {
-	return {};
+const isHeld = (v: unknown): v is Held => {
+	const o = v as Partial<Held> | null;
+	return (
+		typeof o === "object" &&
+		o !== null &&
+		typeof o.key === "object" &&
+		o.key !== null &&
+		typeof o.at === "string" &&
+		typeof o.state === "string"
+	);
+};
+
+/**
+ * An app's held results by look (`story:<name>`, `screen:<name>`): none when
+ * the file is missing; none, with a note on stderr, when it cannot be read —
+ * a lost record only reopens looks, so it never ends the check.
+ */
+export function readHeld(
+	projectRoot: string,
+	app: string,
+	home = induskHome(),
+): Record<string, Held> {
+	const file = heldPath(projectRoot, app, home);
+	if (!existsSync(file)) return {};
+	try {
+		const parsed = JSON.parse(readFileSync(file, "utf-8")) as {
+			version?: unknown;
+			looks?: unknown;
+		};
+		if (parsed.version !== 1 || typeof parsed.looks !== "object" || parsed.looks === null) {
+			throw new Error("not a version 1 record");
+		}
+		return Object.fromEntries(Object.entries(parsed.looks).filter(([, v]) => isHeld(v))) as Record<
+			string,
+			Held
+		>;
+	} catch (err) {
+		console.error(`${file}: ${(err as Error).message} — every look will be opened`);
+		return {};
+	}
 }
 
+/** Write an app's held results whole: to a temp file beside it, renamed over it, so a reader never sees half a record. */
 export function writeHeld(
-	_projectRoot: string,
-	_app: string,
-	_looks: Record<string, Held>,
-	_home?: string,
-): void {}
+	projectRoot: string,
+	app: string,
+	looks: Record<string, Held>,
+	home = induskHome(),
+): void {
+	const file = heldPath(projectRoot, app, home);
+	mkdirSync(dirname(file), { recursive: true });
+	const temp = `${file}.${process.pid}.tmp`;
+	writeFileSync(temp, `${JSON.stringify({ version: 1, looks }, null, "\t")}\n`);
+	renameSync(temp, file);
+}
