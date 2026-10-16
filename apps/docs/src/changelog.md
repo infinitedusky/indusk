@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.71.0] — 2026-10-16
+
 ### Fixed
 
 - **The nav says where a plan is** (nav-stage-matches-plan-page): a plan's row names the step its page shows, and reads *Released* only once a release shipped it (*Closed* for a closed plan with none). A plan built but not yet falsified no longer reads *completed*. The project card's "work in progress" and the copied plan markdown (now `Stage:`, not `Status:`) read the same answer.
