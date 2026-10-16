@@ -37,10 +37,15 @@ export interface FixtureApp {
  * named by its foundation, so every look is reported at `<device>` and
  * `<device>/dark`.
  */
-export async function fixtureApp(mockups: string[], stories: string[] = []): Promise<FixtureApp> {
+export async function fixtureApp(
+	mockups: string[],
+	stories: string[] = [],
+	extra: { serve?: string } = {},
+): Promise<FixtureApp> {
 	const root = mkdtempSync(join(tmpdir(), "check-run-fixture-"));
 	cpSync(FIXTURE, root, { recursive: true });
 	const app = await readApp(root, "demo");
+	if (extra.serve) app.serve = extra.serve;
 	app.foundation.tokens[0].dark = "#1f1a17";
 	// Only the looks asked for are declared, so no unapproved look is listed beside them.
 	app.screens = app.screens
