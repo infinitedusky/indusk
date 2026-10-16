@@ -1,3 +1,4 @@
+// promise: the-nav-says-where-a-plan-is
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import type { Plan } from "@/lib/planning-reader";
@@ -84,7 +85,7 @@ describe("T11 — an archived subplan is not a placeholder", () => {
       link,
       "archived subplan must render as a link in the group",
     ).not.toBeNull();
-    expect(link?.textContent).toContain("completed");
+    expect(link?.textContent).toContain("Closed");
 
     expect(
       group?.querySelector('[data-testid="plan-placeholder-done-child"]'),
