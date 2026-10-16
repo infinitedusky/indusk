@@ -8,9 +8,10 @@ import {
 	type StoryApprovalEntry,
 	storyApprovalOf,
 } from "./approvals.js";
-import { storybookIds } from "./components.js";
-import type { Device, LooksApp } from "./mockups.js";
+import { pageSourceFilter, readCatalog, storybookIds } from "./components.js";
+import { type Device, type LooksApp, pageSourcesHashOf, sourcesHashOf } from "./mockups.js";
 import type { LookResult } from "./report.js";
+import { type Held, type LookKey, lookKey, readHeld, reuseOf, writeHeld } from "./reuse.js";
 import { MEASURED_PROPERTIES, type MeasuredElement, verdict } from "./verdict.js";
 
 /**
@@ -762,18 +763,27 @@ export async function checkApp(
 		named(u.mockup.replace(/^story /, "")),
 	);
 	const results: LookResult[] = [];
-	if (checked.length === 0 && stories.checked.length === 0)
-		return { results, unchecked, reused: [] };
+	const plan = opts.projectRoot
+		? await planReuse(app, opts.projectRoot, checked, stories.checked, opts)
+		: undefined;
+	const screensToOpen = plan?.screens ?? checked;
+	const storiesToOpen = plan?.stories ?? stories.checked;
+	const reused = plan?.reused ?? [];
+	const notice = plan?.notice ? { notice: plan.notice } : {};
+	if (screensToOpen.length === 0 && storiesToOpen.length === 0) {
+		return { results, unchecked, reused, ...notice };
+	}
 
 	const opener = opts.opener ?? chromiumOpener(app);
+	const measuredUnchecked: Unchecked[] = [];
 	const take = (found: CheckReport) => {
 		results.push(...found.results);
-		unchecked.push(...found.unchecked);
+		measuredUnchecked.push(...found.unchecked);
 	};
 	try {
 		// Unseeded screens three at a time, then seeded ones one at a time, each
 		// inside its seed; the report keeps the order the screens are declared in.
-		const groups = byScreen(checked);
+		const groups = byScreen(screensToOpen);
 		const reports = new Map<LookTarget[], CheckReport[]>();
 		const checkGroup = async (group: LookTarget[]) => {
 			await withScreenSeed(group, async (seeded) => {
@@ -789,12 +799,120 @@ export async function checkApp(
 		);
 		for (const group of groups.filter((g) => g[0]?.seed)) await checkGroup(group);
 		for (const group of groups) for (const found of reports.get(group) ?? []) take(found);
-		const found = await pMap(stories.checked, (story) => checkStory(opener, app, base, story), {
+		const found = await pMap(storiesToOpen, (story) => checkStory(opener, app, base, story), {
 			concurrency: STORIES_AT_ONCE,
 		});
 		for (const f of found) take(f);
 	} finally {
 		await opener.close();
 	}
-	return { results, unchecked, reused: [] };
+	unchecked.push(...measuredUnchecked);
+	if (plan) keepHeld(plan, app, results, measuredUnchecked, opts);
+	return { results, unchecked, reused, ...notice };
+}
+
+/** What reuse decided before a run: the looks to open, the looks reused, and each opened look's key. */
+interface ReusePlan {
+	root: string;
+	held: Record<string, Held>;
+	/** Each opened look's key, by record name (`screen:home.empty`, `story:badge.ok`). */
+	opened: Map<string, LookKey>;
+	screens: LookTarget[];
+	stories: StoryTarget[];
+	reused: Reused[];
+	notice?: string;
+}
+
+/**
+ * Partition the checkable looks into those reused from their last held
+ * result (`reuseOf`) and those to open, from the facts read from the project
+ * now: whether the stories were rendered from the current sources, the
+ * page-code hash, and the held results in machine state. A look named by
+ * `--only` is always opened.
+ */
+async function planReuse(
+	app: LooksApp,
+	root: string,
+	screens: readonly LookTarget[],
+	stories: readonly StoryTarget[],
+	opts: CheckOptions,
+): Promise<ReusePlan> {
+	const catalog = readCatalog(app);
+	const current = catalog === null || catalog.renderedFrom === (await sourcesHashOf(root, app));
+	const schemes = schemesOf(app);
+	const facts = {
+		current,
+		pageSourcesHash: await pageSourcesHashOf(root, app, pageSourceFilter(catalog)),
+		schemes,
+	};
+	const held = readHeld(root, app.app, opts.home);
+	const devices = app.devices.flatMap((d) => schemes.map((s) => lookDevice(d.name, s)));
+	const plan: ReusePlan = { root, held, opened: new Map(), screens: [], stories: [], reused: [] };
+	const opens = (record: string, key: LookKey, look: Omit<Reused, "app" | "at" | "devices">) => {
+		const reuse = opts.only ? undefined : reuseOf(held[record], key, { all: opts.all });
+		if (reuse?.reuse) {
+			plan.reused.push({ app: app.app, ...look, at: reuse.at, devices });
+			return false;
+		}
+		plan.opened.set(record, key);
+		return true;
+	};
+	plan.screens = screens.filter((look) => {
+		const name = `${look.screen}.${look.state}`;
+		return opens(`screen:${name}`, lookKey(app, look, facts), {
+			look: name,
+			kind: "screen",
+			screen: look.screen,
+			state: look.state,
+		});
+	});
+	plan.stories = stories.filter((story) =>
+		opens(`story:${story.name}`, lookKey(app, story, facts), {
+			look: story.name,
+			kind: "story",
+			screen: story.component,
+			state: story.state,
+		}),
+	);
+	if (!current && !opts.all && !opts.only) {
+		plan.notice = `the stories were not rendered from ${app.app}'s sources as they are now, so no look was reused — run \`indusk looks stories ${app.app}\`, then check again`;
+	}
+	return plan;
+}
+
+/**
+ * Keep what this run proved: a look opened and held at every device and
+ * scheme is recorded with its key and `now`; one broken or unchecked at any
+ * of them is removed, so it is opened next time. A record that cannot be
+ * written costs only reuse, so it is a note on stderr, never the end of a
+ * check whose looks were measured.
+ */
+function keepHeld(
+	plan: ReusePlan,
+	app: LooksApp,
+	results: readonly LookResult[],
+	unchecked: readonly Unchecked[],
+	opts: CheckOptions,
+): void {
+	const at = (opts.now ?? new Date()).toISOString();
+	const everywhere = app.devices.length * schemesOf(app).length;
+	const next = { ...plan.held };
+	for (const [record, key] of plan.opened) {
+		const isStory = key.kind === "story";
+		const mine = results.filter(
+			(r) => (r.kind === "story") === isStory && `${r.screen}.${r.state}` === key.name,
+		);
+		const mockup = isStory ? `story ${key.name}` : key.name;
+		const heldEverywhere =
+			mine.length === everywhere &&
+			mine.every((r) => r.verdict.state === "held") &&
+			!unchecked.some((u) => u.mockup === mockup);
+		if (heldEverywhere) next[record] = { key, at, state: "held" };
+		else delete next[record];
+	}
+	try {
+		writeHeld(plan.root, app.app, next, opts.home);
+	} catch (err) {
+		console.error(`could not keep ${app.app}'s held results: ${(err as Error).message}`);
+	}
 }

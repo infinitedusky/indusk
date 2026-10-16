@@ -496,7 +496,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
   In `reuse.ts`: `heldPath(projectRoot, app, home = induskHome())` = `join(bookkeepingRoots(projectRoot, home).home, "looks", `${app}.json`)`; `readHeld` (missing → `{}`; unreadable → `{}` and a stderr note, never a throw that ends the check); `writeHeld` writes `{ version: 1, looks }` to a temp file and renames it. Keys `story:<name>` / `screen:<name>`. A8.
 
   </details>
-- [ ] Make the check report unchanged looks as reused without opening them, and start no browser when nothing needs opening.
+- [x] Make the check report unchanged looks as reused without opening them, and start no browser when nothing needs opening.
   <details><summary>Technical</summary>
 
   `checkApp`: `CheckOptions` gains `projectRoot`, `home`; `CheckReport` gains `reused: { look: string; kind: "screen" | "story"; at: string }[]`. Before opening, partition the checkable looks with `reuseOf`; looks named by `only` are always opened. After the run, write back: a look held at every device × scheme gets `{ key, at: now, state: "held" }`, a look broken or unchecked anywhere is deleted. `now` is an input (`opts.now ?? new Date()`). `src/bin/commands/looks.ts`: print `reused  <subject> — held <at>, unchanged` per reused look, before unchecked lines; summary `<app>: <h> held, <r> reused[, <u> unchecked]`; a run with no result and every look reused exits 0. A1.
