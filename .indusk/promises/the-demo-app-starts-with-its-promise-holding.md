@@ -2,7 +2,7 @@
 name: the-demo-app-starts-with-its-promise-holding
 kind: state
 lifetime: holds
-state: enforced
+state: known-broken
 domain: admin
 owner: demo-app-template
 sites:
@@ -12,7 +12,8 @@ sites:
 tests:
   - apps/indusk-mcp/src/__tests__/demo-example.test.ts
   - apps/indusk-mcp/src/__tests__/demo-command.test.ts
-incidents: []
+incidents:
+  - i-2026-10-16-the-demo-app-starts-with-its-promise-holding
 ---
 
 Copying the seat-holds example and running its start command gives a project that runs locally: a page for holding and booking seats, one promise already marked and tested, and that promise shown holding in the admin.
