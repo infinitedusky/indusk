@@ -4,7 +4,7 @@ import { derivePlanPosition } from "@infinitedusky/indusk-mcp/lifecycle";
 import { planSteps } from "@infinitedusky/indusk-mcp/plans/steps";
 import { describe, expect, it } from "vitest";
 import { snapshotOf } from "@/lib/plan-snapshot";
-import { hasWorkInProgress, planStage } from "@/lib/plan-stage";
+import { hasWorkInProgress, navMarkOf, planStage } from "@/lib/plan-stage";
 import type { Plan } from "@/lib/planning-reader";
 
 const plan = (over: Partial<Plan> = {}): Plan =>
@@ -177,5 +177,16 @@ describe("hasWorkInProgress", () => {
     expect(
       hasWorkInProgress([planAt({ stage: "test-plan", status: "proposed" })]),
     ).toBe(false);
+  });
+});
+
+/** A9 - an audit follow-up reopens the build; the finished rituals stay done, so the nav says Build. */
+describe("navMarkOf — a reopened plan", () => {
+  it("A9 — finished rituals with a build phase open: the mark says Build", () => {
+    const reopened = {
+      ...planAt({ stage: "impl", status: "in-progress" }),
+      finishedRituals: ["falsification", "cleanup", "audit"],
+    } as Plan;
+    expect(navMarkOf(reopened, false, undefined).stage).toBe("Build");
   });
 });
