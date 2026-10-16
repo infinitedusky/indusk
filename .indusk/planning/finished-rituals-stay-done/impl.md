@@ -50,6 +50,10 @@ On a plan's page, Falsify, Cleanup and Audit read done once each ritual is finis
 | A3 | A plan with only its falsification closed and a build phase open shows Falsify done, and Cleanup and Audit not yet | Test Phase 1 | Build Phase 1 | passing | unit | promise: a-finished-ritual-stays-done | apps/indusk-mcp/src/lib/plans/steps.test.ts |
 | A4 | A plan midway through its falsification shows Falsify current, and Cleanup and Audit not yet | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over a-plan-shows-two-workflows: a ritual being worked still reads current | apps/indusk-mcp/src/lib/plans/steps.test.ts |
 | A5 | A ritual skipped with a reason still reads skipped, with its reason, not done | Test Phase 1 | Test Phase 1 | passing | unit | a regression guard over a-skipped-step-shows-why-on-request | apps/indusk-mcp/src/lib/plans/steps.test.ts |
+| A6 | A plan whose falsification is a completed legacy log (no closed phase) and whose build is reopened shows Falsify done | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-finished-ritual-stays-done | apps/indusk-admin/src/lib/planning-reader.rituals.test.ts |
+| A7 | A plan whose Cleanup phase still has an unchecked item shows Cleanup not done | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-finished-ritual-stays-done | apps/indusk-admin/src/lib/planning-reader.rituals.test.ts |
+| A8 | A plan with `cleanup: skipped` and a closed Cleanup phase shows Cleanup skipped, with its reason | Build Phase 2 | Build Phase 2 | planned | unit | a regression guard over a-skipped-step-shows-why-on-request | apps/indusk-admin/src/lib/planning-reader.rituals.test.ts |
+| A9 | The nav mark of the reopened plan (finished rituals, open build phase) says Build | Build Phase 2 | Build Phase 2 | planned | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/plan-stage.test.ts |
 
 ## Checklist
 
@@ -143,6 +147,65 @@ This phase teaches the step list that a ritual can be finished independently of 
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md` (Unreleased, Fixed): "A plan's page keeps Falsify, Cleanup and Audit done once each is finished, even when an audit follow-up reopens the build."
+
+  </details>
+
+### Build Phase 2: Audit follow-ups — the reopened plan's other cases
+
+**Tier**: med — the work step's default (`workflow.steps.work.tier`)
+
+The audit of this plan found that the tests only proved a reopened plan for one shape: closed phases plus an audit report. This phase adds the cases it named: a falsification recorded in the older log format, a ritual phase that still has an open item, a ritual skipped with a reason but also finished, and the plan's mark in the navigation. The code already behaves this way, so the tests are expected to pass when written; they exist to keep it so.
+
+- [ ] A plan whose falsification is in the older log format reads Falsify done after the build reopens.
+  <details><summary>Technical</summary>
+
+  A6 in `apps/indusk-admin/src/lib/planning-reader.rituals.test.ts`: write `falsification.md` ending in a terminator entry (use `appendHypothesis`/`markTerminated` from `@infinitedusky/indusk-mcp/falsification/log` if exported, else the file shape in `lib/falsification/log.ts`), no Falsification phase in the impl.
+
+  </details>
+- [ ] A ritual phase with an unchecked item reads not done.
+  <details><summary>Technical</summary>
+
+  A7: same folder as A2 but `### Build Phase 5: Cleanup — extract` has one `- [ ]`; Cleanup is not `done`.
+
+  </details>
+- [ ] A ritual both skipped with a reason and finished reads skipped, with its reason.
+  <details><summary>Technical</summary>
+
+  A8: A2's folder plus `cleanup: skipped` / `cleanup_reason: "…"` in the impl frontmatter; Cleanup is `skipped` with that reason.
+
+  </details>
+- [ ] The navigation mark of a reopened plan says Build.
+  <details><summary>Technical</summary>
+
+  A9 in `apps/indusk-admin/src/lib/plan-stage.test.ts` (add `// promise: the-nav-says-where-a-plan-is` if absent): read A2's folder, call `navMarkOf(plan, false, undefined)`; `stage` is `Build`.
+
+  </details>
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+
+#### Build Phase 2 Verification
+
+- [ ] The four new tests pass, along with the rest of the plan's tests.
+  <details><summary>Technical</summary>
+
+  `cd apps/indusk-admin && pnpm exec vitest run src/lib/planning-reader.rituals.test.ts src/lib/plan-stage.test.ts`; A6–A9 `passing`. A row that fails reveals a real bug: fix it in this phase and say so in the item.
+
+  </details>
+
+#### Build Phase 2 Context
+
+- [ ] The package's context rule says what counts as finished and that a skip wins.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, the rule Build Phase 1 added: append "A legacy falsification log counts as finished; a skip with a reason wins over a finished phase; an open item keeps the ritual unfinished. Guarded by `planning-reader.rituals.test.ts`."
+
+  </details>
+
+#### Build Phase 2 Document
+
+- [ ] The changelog entry names the cases that were checked.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/changelog.md`, the Build Phase 1 entry: add "older falsification logs count, a skipped ritual still reads skipped, an unfinished ritual phase still reads current."
 
   </details>
 
