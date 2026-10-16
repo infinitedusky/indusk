@@ -263,6 +263,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		screens?: DeclaredScreen[];
 		sources?: string[];
 		url?: string;
+		serve?: string;
 		ignore?: string[];
 		uncatalogued?: string[];
 		uncomposed?: string[];
@@ -323,6 +324,7 @@ export async function readApp(root: string, app: string): Promise<LooksApp> {
 		uncatalogued: declared.uncatalogued ?? [],
 		uncomposed: declared.uncomposed ?? [],
 		...(declared.url ? { url: declared.url } : {}),
+		...(typeof declared.serve === "string" && declared.serve ? { serve: declared.serve } : {}),
 		stories,
 		styles,
 		base,

@@ -1,8 +1,11 @@
 // promise: a-look-check-costs-what-changed
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { checkApp } from "./check.js";
 import { fakeOpener, fixtureApp } from "./check-run.fixtures.js";
 import { devServerMarker } from "./dev-server.js";
+import { readApp } from "./mockups.js";
 
 describe("devServerMarker", () => {
 	it.each([
@@ -46,5 +49,17 @@ describe("checkApp on a development server", () => {
 				fetchPage: async () => '<script src="/@vite/client"></script>',
 			}),
 		).rejects.toThrow(/"serve".*screens\.json/s);
+	});
+});
+
+describe("an app's serve declaration", () => {
+	it("is read from screens.json and reopens nothing", async () => {
+		const { root, app } = await fixtureApp([]);
+		const file = join(app.dir, "screens.json");
+		const declared = JSON.parse(readFileSync(file, "utf-8"));
+		writeFileSync(file, JSON.stringify({ ...declared, serve: "pnpm build && pnpm start" }));
+		const served = await readApp(root, "demo");
+		expect(served.serve).toBe("pnpm build && pnpm start");
+		expect(served.declarationsHash).toBe(app.declarationsHash);
 	});
 });

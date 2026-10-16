@@ -583,7 +583,7 @@ This phase stops the check from spending half an hour in a development server. B
   `checkApp`: when at least one look is to be opened, `fetchPage(url)` (option; default `fetch(url).then((r) => r.text())`) of the first screen's `pageUrl`, or of the Storybook frame (`/storybook/iframe.html`) when only stories open; a marker throws `LooksCheckError(`${url} is a development server (${marker}) — build and serve the app, then check again: ${serve}`)`, where `serve` is `app.serve` or `declare the command that builds and serves the app as "serve" in .indusk/mockups/${app}/screens.json`. A run that opens nothing fetches nothing. A13, A14.
 
   </details>
-- [ ] Let an app declare the command that builds and serves it, and declare the admin's.
+- [x] Let an app declare the command that builds and serves it, and declare the admin's.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/mockups.ts` `readApp`: optional string `serve` from `screens.json` onto `LooksApp.serve` — not in `declarationsHashOf`, so declaring it reopens nothing. `.indusk/mockups/admin/screens.json`: `"serve": "pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940"`.
