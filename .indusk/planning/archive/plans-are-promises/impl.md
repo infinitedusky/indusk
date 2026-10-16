@@ -12,6 +12,8 @@ gate_policy: ask
 approved_brief: "fe936485f782398ef751f5d38fb59ede90f0f38bf607e502aae9a8efaa8ecd88"
 approved_by: "Sandy Corsillo"
 approved_at: "2026-10-16T16:27:41.051Z"
+accepted: 2026-10-16T19:10:10.007Z
+accepted_by: person
 ---
 
 # Plans are promises
