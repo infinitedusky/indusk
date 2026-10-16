@@ -1,7 +1,7 @@
 ---
 title: "The daemon is found, not guessed"
 date: 2026-10-16
-status: draft
+status: accepted
 workflow: feature
 clauses: required
 description: "One local telemetry daemon per machine, on fixed ports, that every reader, every InDusk command and every application reaches: a read never loses it, a lost one is found from the process list, nothing starts a second, and its own commands clear what InDusk left behind."
