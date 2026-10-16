@@ -307,6 +307,7 @@ This phase finishes the promise. Closing a plan — both the check that a plan i
   A16, after `pnpm --filter @infinitedusky/indusk-mcp build`, in `mktemp -d` with `git init` and `indusk init --local`: `indusk plans start feature demo`; a brief with `clauses: required` and two promises with clauses; `indusk promises declare … --clause …` for each; a clause plan; an impl whose rows name each clause, one left `planned`; `indusk promises contract demo` (passes) and `indusk promises confirm demo` (refused naming the clause); mark it passing; confirm again (closes). Paste the commands and outputs here.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 3 Verification
 
