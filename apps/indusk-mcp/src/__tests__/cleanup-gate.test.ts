@@ -1,9 +1,11 @@
+// promise: a-finished-ritual-stays-done
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
 	checkRetrospectiveReadiness,
+	finishedRitualsOf,
 	isCleanupPhaseTerminal,
 	isCleanupSkipped,
 } from "../lib/cleanup/gate.js";
@@ -181,5 +183,40 @@ describe("cleanup-ritual T20: gate honors the phase-authored falsification flow"
 		// no falsification.md log, no `falsification: skipped` — only a terminal
 		// Falsification phase, which is the DEFAULT flow. Must count as satisfied.
 		expect(r.falsificationOk).toBe(true);
+	});
+});
+
+/**
+ * A10 — one definition of "finished": the package's list and the gate's verdict
+ * come from the same files, so the plan page and the retrospective cannot disagree.
+ */
+describe("A10 — finishedRitualsOf agrees with the retrospective gate", () => {
+	const impl = (falsify: boolean, cleanup: boolean) =>
+		[
+			"---",
+			'title: "P"',
+			"---",
+			"",
+			"## Checklist",
+			"",
+			...(falsify ? ["### Build Phase 4: Falsification — hunt", "- [x] hunted", ""] : []),
+			...(cleanup ? ["### Build Phase 5: Cleanup — extract", "- [x] extracted", ""] : []),
+		].join("\n");
+
+	it("lists a closed falsification phase, a closed cleanup phase and a written audit", () => {
+		const root = mkdtempSync(join(tmpdir(), "finished-"));
+		writeFileSync(join(root, "audit.md"), "# Audit\n");
+		const text = impl(true, true);
+		expect(finishedRitualsOf(root, text)).toEqual(["falsification", "cleanup", "audit"]);
+		const gate = checkRetrospectiveReadiness(root, text);
+		expect([gate.falsificationOk, gate.cleanupOk, gate.auditOk]).toEqual([true, true, true]);
+	});
+
+	it("lists only what is finished, and the gate misses the rest", () => {
+		const root = mkdtempSync(join(tmpdir(), "finished-"));
+		const text = impl(true, false);
+		expect(finishedRitualsOf(root, text)).toEqual(["falsification"]);
+		const gate = checkRetrospectiveReadiness(root, text);
+		expect([gate.falsificationOk, gate.cleanupOk, gate.auditOk]).toEqual([true, false, false]);
 	});
 });

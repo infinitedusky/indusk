@@ -52,7 +52,7 @@ On a plan's page, Falsify, Cleanup and Audit read done once each ritual is finis
 | A7 | A plan whose Cleanup phase still has an unchecked item shows Cleanup not done | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-finished-ritual-stays-done | apps/indusk-admin/src/lib/planning-reader.rituals.test.ts |
 | A8 | A plan with `cleanup: skipped` and a closed Cleanup phase shows Cleanup skipped, with its reason | Build Phase 2 | Build Phase 2 | passing | unit | a regression guard over a-skipped-step-shows-why-on-request | apps/indusk-admin/src/lib/planning-reader.rituals.test.ts |
 | A9 | The nav mark of the reopened plan (finished rituals, open build phase) says Build | Build Phase 2 | Build Phase 2 | passing | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/plan-stage.test.ts |
-| A10 | The package answers which rituals a plan has finished from its folder and impl text, and the retrospective gate agrees with it for falsification, cleanup and audit | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-finished-ritual-stays-done | apps/indusk-mcp/src/__tests__/cleanup-gate.test.ts |
+| A10 | The package answers which rituals a plan has finished from its folder and impl text, and the retrospective gate agrees with it for falsification, cleanup and audit | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-finished-ritual-stays-done | apps/indusk-mcp/src/__tests__/cleanup-gate.test.ts |
 
 ## Checklist
 
@@ -214,35 +214,35 @@ The audit of this plan found that the tests only proved a reopened plan for one 
 
 The admin's plan reader and the package's retrospective gate each work out, in their own code, whether falsification is finished: a closed phase or a completed older log. Two places that must agree is how they come apart later, and the package already holds the matching list of skipped rituals. This phase moves the question into the package, next to that list, and has both the plan page and the gate ask it. When it closes there is one definition of a finished ritual and the admin only passes it on.
 
-- [ ] The package answers which rituals a plan has finished, from the plan's folder and impl text.
+- [x] The package answers which rituals a plan has finished, from the plan's folder and impl text.
   <details><summary>Technical</summary>
 
   Add `finishedRitualsOf(planRoot, implContent)` to `apps/indusk-mcp/src/lib/cleanup/gate.ts` beside `skippedRitualsOf`, returning `Array<"falsification"|"cleanup"|"audit">` in that order, built from `isFalsificationPhaseTerminal || isFalsificationComplete`, `isCleanupPhaseTerminal`, `isAuditComplete`. Basis: the cockpit rule that a derived fact is defined once in the package (`cockpit-single-definition.test.ts`, `lesson: structural-single-definition-test-for-must-agree-invariants`); today `falsificationOk` in `checkRetrospectiveReadiness` (gate.ts ~L243) and `finishedRitualsOf` in `planning-reader.ts` ~L320 both write the same OR. Type the result with the existing `SkippableRitual`.
 
   </details>
-- [ ] The retrospective gate and the plan page both use that one answer.
+- [x] The retrospective gate and the plan page both use that one answer.
   <details><summary>Technical</summary>
 
   `checkRetrospectiveReadiness` takes `falsificationOk`/`cleanupOk`/`auditOk` from it plus the skip checks; delete `finishedRitualsOf` and its three imports from `apps/indusk-admin/src/lib/planning-reader.ts` and call the package's, keeping the `implRaw === null` case (audit only: pass `""`). Behaviour parity: `retrospective-gate-backcompat.test.ts`, `cleanup-gate.test.ts`, A2, A6–A8 stay green.
 
   </details>
-- [ ] A structural test keeps the plan page from defining "finished" a second time.
+- [x] A structural test keeps the plan page from defining "finished" a second time.
   <details><summary>Technical</summary>
 
   Add `finishedRitualsOf` to `PACKAGE_ONLY` / the single-definition list in `apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts` (subpath `cleanup/gate`, file `gate.ts`) so a copy in admin or the extension fails it.
 
   </details>
-- [ ] Reviewed the step list's use of the finished list and left it as it is.
+- [x] Reviewed the step list's use of the finished list and left it as it is.
   <details><summary>Technical</summary>
 
   `plans/steps.ts` `releaseStep` — left as-is: one line, one reason to change, reads a handed-in list; moving the check elsewhere would scatter step rules.
 
   </details>
-- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 3 Verification
 
-- [ ] The package's answer matches the gate for each ritual, the plan page still reads the same, and a second copy in the admin is refused.
+- [x] The package's answer matches the gate for each ritual, the plan page still reads the same, and a second copy in the admin is refused.
   <details><summary>Technical</summary>
 
   A10 in `cleanup-gate.test.ts` (`// promise: a-finished-ritual-stays-done`): for a folder with a closed falsification phase, a legacy log, a closed cleanup phase and an `audit.md`, `finishedRitualsOf` lists exactly what `checkRetrospectiveReadiness` calls ok (absent a skip). `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/cleanup-gate.test.ts src/__tests__/cockpit-single-definition.test.ts src/__tests__/retrospective-gate-backcompat.test.ts src/lib/plans/steps.test.ts`; `cd apps/indusk-admin && pnpm exec vitest run src/lib/planning-reader.rituals.test.ts src/lib/plan-stage.test.ts`.
@@ -251,7 +251,7 @@ The admin's plan reader and the package's retrospective gate each work out, in t
 
 #### Build Phase 3 Context
 
-- [ ] The package's context rule says the finished list is defined beside the skipped list.
+- [x] The package's context rule says the finished list is defined beside the skipped list.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the finished-ritual rule: append "`finishedRitualsOf` in `cleanup/gate.ts` is the one definition; the admin passes it on."
@@ -260,7 +260,7 @@ The admin's plan reader and the package's retrospective gate each work out, in t
 
 #### Build Phase 3 Document
 
-- [ ] The changelog entry says the plan page and the retrospective gate now share one answer.
+- [x] The changelog entry says the plan page and the retrospective gate now share one answer.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md`, the Build Phase 1 entry: append "the plan page and the retrospective gate read one definition of a finished ritual."

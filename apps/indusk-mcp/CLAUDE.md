@@ -126,7 +126,9 @@ pointer; the pointer holds the story.
   falsification log counts as finished; a skip with a reason wins over a
   finished phase; an open item keeps the ritual unfinished. Guarded by
   `steps.test.ts` and `planning-reader.rituals.test.ts` —
-  `promise: a-finished-ritual-stays-done`.
+  `promise: a-finished-ritual-stays-done`. `finishedRitualsOf` in
+  `cleanup/gate.ts` is the one definition (the retrospective gate and the admin
+  both ask it); the admin only passes it on.
 - **`indusk verify`** (`lib/verify/`): detects and never repairs — premature
   checkoff, skipped test-first duty (applied to phase N directly), goalpost
   drift, red tests (files + exit codes, never runner output), phantom work
