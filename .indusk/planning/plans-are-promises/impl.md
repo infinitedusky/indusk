@@ -295,7 +295,7 @@ This phase finishes the promise. Closing a plan — both the check that a plan i
   `lib/promises/rows.ts` `rowProofs`: for a promise with `clauses`, the rows naming each clause (via `purpose.clauses`); refusal per unproved `split`/`limit` clause (no row, a row not passing, or no test file), and per `rests-on` clause whose `rests_on` promise is not `enforced` (read from the registry passed in). `confirm.ts` and `cleanup/gate.ts` pass the registry through; their refusal text names the clause.
 
   </details>
-- [ ] The planner's instructions plan promises as clauses.
+- [x] The planner's instructions plan promises as clauses.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/skills/planner.md`: Step 3 — promises whose work shares code are one plan; promises sharing none are separate plans under a master; suggest, the person decides. Step 4 and the `### brief.md` template — `clauses: required`, clause sub-entries, declaring with `--clause`. Step 5 and the `### test-plan.md` template — the clause plan: `## \`{promise}\`` → `### \`{clause}\` — {sentence}` → `- Signal: {where it is read; upheld when …; broken reports …}` → its assertion table; written before the ADR. Step 7 — rows' `For` names `clause: <promise>/<clause>`. Sync `.claude/skills/planner/SKILL.md`; run `skill-sync-parity.test.ts`. Also `apps/indusk-mcp/templates/workflows/feature.md` names the clause plan.
