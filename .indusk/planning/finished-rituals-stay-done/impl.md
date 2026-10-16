@@ -73,7 +73,7 @@ Before any code changes, this phase writes the tests for what a plan's step list
   New `apps/indusk-admin/src/lib/planning-reader.rituals.test.ts` (opening `// promise: a-finished-ritual-stays-done`): build a plan folder in a temp project — `impl.md` with a closed `### Build Phase 4: Falsification — x` and `### Build Phase 5: Cleanup — y` (each with checked items), an open `### Build Phase 6: Audit follow-ups`, and `audit.md`; read it with the same reader the page uses and pass `snapshotOf(plan)` to `planSteps`. A2: Falsify, Cleanup, Audit `done`, Build `current`. Red today: they read `not-yet`. Use the harness the sibling `planning-reader` tests use.
 
   </details>
-- [ ] Confirm no new test fails only because a file it loads is missing.
+- [x] Confirm no new test fails only because a file it loads is missing.
   <details><summary>Technical</summary>
 
   Every import (`planSteps`, `derivePlanPosition`, the reader, `snapshotOf`) exists today; the reds fail on a step's state, an assertion.
@@ -87,7 +87,7 @@ Before any code changes, this phase writes the tests for what a plan's step list
 
 #### Test Phase 1 Verification
 
-- [ ] The new tests exist, the ones about finished rituals fail on their own assertions, and the two guards pass.
+- [x] The new tests exist, the ones about finished rituals fail on their own assertions, and the two guards pass.
   <details><summary>Technical</summary>
 
   `cd apps/indusk-mcp && pnpm exec vitest run src/lib/plans/steps.test.ts` — A1, A3 red, A4, A5 green; `cd apps/indusk-admin && pnpm exec vitest run src/lib/planning-reader.rituals.test.ts` — A2 red.
