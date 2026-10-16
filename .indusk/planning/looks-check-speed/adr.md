@@ -45,7 +45,9 @@ Chromium, the scheme by media emulation, running CSS transitions finished
 before each measurement, the result returned as one JSON string); refusing a
 development server from one HTTP fetch of a page, naming the app's declared
 `serve` command; `--all` to reopen everything and `--only <name>` to check
-named looks.
+named looks; a reused look sending an upheld signal marked reused, with when it
+was really measured; and landing and release always running the full `--all`
+check of the admin, as a system-tier test both declare.
 
 **And against:**
 keying reuse on the snapshot hashes alone (blind to a component edited without
@@ -68,7 +70,8 @@ spends half an hour in a development server.
 **Accepting:**
 that a screen's data (plans, promises the admin renders) is in no key, so a new
 element with a raw value appearing only because the data changed is reused
-past until `--all`; that any edit to page code reopens every screen; that the
+past in a plan's phases until the next landing's full check; that landing now
+runs dusk's whole system tier; that any edit to page code reopens every screen; that the
 stories must be rendered before anything is reused after a source change; and
 that dev-server detection reads known markers (Next, webpack, Vite) and would
 miss an unknown framework's.
@@ -89,7 +92,10 @@ server's 41 s floor for 48 screen renders, the transfer cost, the in-place
 comparison and its transition finding, the dev and production probes. The
 [brief](brief.md) promises `a-look-check-costs-what-changed` with five clauses
 and must not break `tokens-are-held-exactly` or `everyday-tests-never-wait`;
-the [test plan](test-plan.md) holds 24 assertions under them.
+the [test plan](test-plan.md) holds 27 assertions under them.
+Sandy's decisions of 2026-10-16 (research, Decisions): a reused look sends an
+upheld signal marked reused; landing and release always run the full check;
+the 60-second full run stays an expectation.
 
 Rules this lands under: "A look's verdict is decided in `looks/verdict` from
 values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
@@ -142,8 +148,13 @@ values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
    Unseeded screens open three at a time, seeded screens one at a time after
    them, stories eight at a time.
 
-5. **A reused look sends no signal.** `reportLooks` marks only what was
-   measured this run; a reused look's last span stands. Its output line is
+5. **A reused look sends a signal marked reused** (Sandy, 2026-10-16).
+   `reportLooks` emits, for each reused look, one `indusk.looks.check` span per
+   device × scheme with the outcome of the result reused (upheld), plus
+   `indusk.look.reused = true` and `indusk.look.measured_at` (the ISO time it
+   was really measured), both added to `LOOK_MARK`. A look's standing keeps
+   reading holding and never decays to no signal, and a reader can always tell
+   a reused span from a fresh measurement. Its output line is
    `reused  <subject> — held <when>, unchanged`, one per look, and the summary
    counts it beside held, broken and unchecked; a run where everything was
    reused exits 0.
@@ -159,6 +170,21 @@ values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
    app's new optional `serve` in `screens.json` (not part of the declarations
    hash), or, when it declares none, how to declare one. The admin declares
    `pnpm --filter indusk-admin build && pnpm --filter indusk-admin start --port 3940`.
+
+7. **Landing and release always run the full check; plan phases use the fast
+   default** (Sandy, 2026-10-16). The full check is a system-tier test,
+   `looks-admin-all.contract.test.ts`: it starts the bundled admin (built by
+   `test:system`'s `prepublishOnly`) on a free port with a temporary
+   `INDUSK_HOME` and runs `indusk looks check admin --all --url <it>`, failing
+   on any broken look. Release already runs the system tier
+   (`workflow.steps.release.slow_tests.command`, `pnpm -w test:system`).
+   Landing runs `indusk checks slow`, which runs `workflow.steps.land.slow_tests`;
+   this plan declares it as the same command. It must be the same command: a
+   green landing run is recorded by the code it covered, and release skips its
+   slow run on that code whatever command produced it (`findCoveringRun`), so
+   a narrower landing command would let release skip the system tier.
+   A broken look at release fails a JUnit file whose trajectory row names
+   `tokens-are-held-exactly`, and is routed to that promise as an incident.
 
 ## Alternatives Considered
 
@@ -215,15 +241,19 @@ override changes it in place, so one load does.
   screen run of about a minute.
 - After any source change, nothing is reused until the stories are rendered.
 - One more file in machine state, and one more optional declaration (`serve`).
+- Landing in dusk now runs the whole system tier (minutes), where it ran no
+  slow tests before; the alternative, a landing command of the looks check
+  alone, would make release skip its slow tests on the same code.
 
 ### Risks
 - **A reuse that hides a break.** Mitigation: the key includes the foundation
   (so `tokens-are-held-exactly` cannot be hidden), the render's currency and the
   page code; only fully held looks are kept; `--all` reopens everything and is
-  what the brief's full-check expectation times.
+  what the brief's full-check expectation times, and what landing and release
+  always run.
 - **Data-driven drift** (Untestable U1 in the test plan: a new element with a
   raw value that appears only because the admin's data changed). Mitigation:
-  `--all` at each UI plan's live check.
+  landing and release run the full check with every look opened.
 - **In-place measuring differs from a fresh load** for a page that measures
   itself once on mount or animates forever. Mitigation: the contract test
   compares in place with fresh for a transitioning page and a pixel-ratio media
@@ -242,7 +272,8 @@ override changes it in place, so one load does.
   `--all`, `--only`, the reused line and summary, the dev-server refusal and
   `serve`; where held results are kept.
 - Update: `apps/docs/src/guide/ui-promises.md` — "checking looks": what a check
-  reopens, why the stories are rendered first, when to run `--all`.
+  reopens, why the stories are rendered first, that landing and release run
+  `--all`, and how a reused look reads in telemetry.
 
 ### Diagrams
 - A Mermaid flowchart in `reference/cli/looks.md`: for each look, render
