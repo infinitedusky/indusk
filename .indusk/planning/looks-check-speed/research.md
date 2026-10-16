@@ -222,22 +222,23 @@ span saying upheld that says it was reused and when it was really measured.
 Sandy chose the second (Decisions, below). `look-standing.ts` ignores
 attributes it does not read, so a reused span counts as holding today.
 
-### Where landing and release run a check
+### Where the full check runs
 
 `workflow.steps` in `.indusk/config.json` declares facts, never logic
 (`lib/checks/steps.ts`). Release runs `workflow.steps.release.slow_tests`
-(`pnpm -w test:system`, after publishing; its JUnit failures route to the
-promise of the trajectory rows that name the failing file). Landing runs
-`indusk checks slow`, which runs `workflow.steps.land.slow_tests` — dusk
-declares none, so dusk's landing runs no slow tests today. A green landing run
-is recorded by the code it covered, and release then skips its own slow run on
-the same code (`findCoveringRun` in `lib/checks/record.ts` matches on the code
-key, not the command). So a landing command narrower than release's would make
-release skip the system tier it never ran. The full look check therefore
-belongs in the system tier, as a test file that starts the bundled admin
-(`test:system` builds it first, through `prepublishOnly`) and runs
-`indusk looks check admin --all` against it; release already runs it, and
-landing runs it once `land.slow_tests` names the same command as release.
+(`pnpm -w test:system`, `when: after` — after publishing); its JUnit failures
+route to the promise of the trajectory rows that name the failing file. The
+system tier also runs in the background after landing, its failures recorded
+as broken promises (the 2026-10-08 rule: the slow tier never blocks landing or
+release). So a full look check placed in the system tier — a test file that
+starts the bundled admin (`test:system` builds it first, through
+`prepublishOnly`) and runs `indusk looks check admin --all` against it — runs
+after every landing and at every release with no new declaration, and a broken
+look there becomes an incident on `tokens-are-held-exactly`.
+
+Considered and dropped (Sandy, 2026-10-16): declaring
+`workflow.steps.land.slow_tests` so landing runs the system tier itself. It
+would make every landing wait on the slow tier, against the 2026-10-08 rule.
 
 ## Decisions
 
@@ -253,10 +254,11 @@ landing runs it once `land.slow_tests` names the same command as release.
   and the time it was really measured — "so a look keeps reading holding and
   never decays to no signal, and telemetry never claims a fresh measurement."
 - **Landing and release always run the full `--all` check** (Sandy,
-  2026-10-16), declared in the project's landing and release steps; plan phases
-  use the fast default. Placed in the system tier, with
-  `workflow.steps.land.slow_tests` set to release's command (see "Where
-  landing and release run a check").
+  2026-10-16); plan phases use the fast default.
+- **Keep the 10-08 rule** (Sandy, 2026-10-16): "the slow tier never blocks
+  landing or release; it runs in the background after, failures as broken
+  promises." The full check is a system-tier test, run there; no change to
+  `workflow.steps.land.slow_tests`.
 - **The 60-second full run stays an expectation** (Sandy, 2026-10-16):
   accepted as is; a miss is information.
 
