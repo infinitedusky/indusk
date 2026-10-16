@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { isUsableRelPath } from "../path-segment.js";
+import { clauseTokenPattern } from "../tokens.js";
 import { collapseSpace, parseBriefContract, sameSentence } from "./brief-contract.js";
 import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
@@ -13,7 +14,7 @@ import {
 	type Registry,
 	readPromises,
 } from "./registry.js";
-import { type RowProof, readImpl, rowProofs, rowsNamingIn } from "./rows.js";
+import { type RowProof, readImpl, rowProofs, rowsNamingIn, rowsProvingClause } from "./rows.js";
 import { appendHistory } from "./write.js";
 
 /**
@@ -39,6 +40,14 @@ function carriesToken(
 	if (!isUsableRelPath(rel) || !existsSync(abs) || !statSync(abs).isFile()) return "missing";
 	const text = readFileSync(abs, "utf-8");
 	return [p.name, ...p.aliases].some((n) => promiseTokenPattern(n).test(text)) ? "ok" : "unnamed";
+}
+
+/** Whether the test file `rel` names one clause of `p`, by the promise's name or an earlier one. */
+function namesClause(codeRoot: string, rel: string, p: PromiseEntry, clause: string): boolean {
+	const abs = join(codeRoot, rel);
+	if (!isUsableRelPath(rel) || !existsSync(abs) || !statSync(abs).isFile()) return true; // missing: the token check's refusal
+	const text = readFileSync(abs, "utf-8");
+	return [p.name, ...p.aliases].some((n) => clauseTokenPattern(n, clause).test(text));
 }
 
 export interface ConfirmInput {
@@ -146,6 +155,18 @@ function judge(
 			refusals.push(
 				`${promise.name}: its row names the test ${rel}, which does not carry "promise: ${promise.name}" — a test that proves a promise names it`,
 			);
+		}
+	}
+	// A clause is proved by a test that names the clause, not only the promise (A22).
+	for (const clause of promise.clauses ?? []) {
+		if (clause.kind === "rests-on") continue;
+		const files = new Set(rowsProvingClause(proof.rows, clause.name).flatMap((r) => r.tests));
+		for (const rel of files) {
+			if (!namesClause(codeRoot, rel, promise, clause.name)) {
+				refusals.push(
+					`${promise.name}: clause ${clause.name}: its row names the test ${rel}, which does not carry "clause: ${promise.name}/${clause.name}" — a test that proves a clause names it`,
+				);
+			}
 		}
 	}
 	// A promise in force keeps the tests it listed that still prove it; one

@@ -41,6 +41,11 @@ export function rowsNamingIn(
 		}));
 }
 
+/** The rows that say they prove `clause` (`clause: <promise>/<clause>`): the ones closing asks for a passing state and a test file. */
+export function rowsProvingClause(rows: readonly NamingRow[], clause: string): NamingRow[] {
+	return rows.filter((r) => r.clauses?.includes(clause));
+}
+
 /** A row naming the promise, and the plan whose impl holds it. */
 export interface PlanRow extends NamingRow {
 	plan: string;
@@ -175,7 +180,7 @@ function clauseRefusal(
 			}
 			continue;
 		}
-		const proving = rows.filter((r) => r.clauses?.includes(clause.name));
+		const proving = rowsProvingClause(rows, clause.name);
 		if (proving.length === 0) {
 			found.push(
 				`clause ${clause.name}: no test row names it — \`clause: ${promise.name}/${clause.name}\``,

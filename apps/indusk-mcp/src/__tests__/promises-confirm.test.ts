@@ -82,6 +82,10 @@ function project(opts: {
 	return fixture;
 }
 
+/** A test file carrying the promise token and a `clause:` token for each clause named. */
+const provingClauses = (name: string, ...clauseNames: string[]) =>
+	`${testFile(name)}${clauseNames.map((c) => `// clause: ${name}/${c}\n`).join("")}`;
+
 const promise = (p: PromiseProject) =>
 	matter(readFileSync(join(p.planRoot, ".indusk", "promises", `${NAME}.md`), "utf-8"));
 const planDir = (p: PromiseProject) => join(p.planRoot, ".indusk", "planning", PLAN);
@@ -373,7 +377,7 @@ describe.skipIf(SHOULD_SKIP)("plans-are-promises A9 — closing wants every clau
 			},
 			files: {
 				[SITE]: siteFile(NAME),
-				[TEST]: testFile(NAME),
+				[TEST]: provingClauses(NAME, "fast", "never-lost"),
 				"src/seat-map.test.ts": testFile(BASE),
 			},
 		});
@@ -426,7 +430,6 @@ describe.skipIf(SHOULD_SKIP)("plans-are-promises A9 — closing wants every clau
 describe.skipIf(SHOULD_SKIP)(
 	"plans-are-promises A22 — a clause's test file names the clause",
 	() => {
-		const BASE = "seat-map-never-stale";
 		const clauses = [
 			{ name: "fast", kind: "split", statement: "Released in under a second." },
 			{ name: "never-lost", kind: "limit", statement: "No hold is lost." },
@@ -435,8 +438,7 @@ describe.skipIf(SHOULD_SKIP)(
 			state: "passing",
 			cells: { For: `clause: ${NAME}/${clause}`, Test: TEST },
 		});
-		const withClauseTokens = (...names: string[]) =>
-			`${testFile(NAME)}${names.map((c) => `// clause: ${NAME}/${c}\n`).join("")}`;
+		const withClauseTokens = (...names: string[]) => provingClauses(NAME, ...names);
 
 		function closing(testBody: string) {
 			fixture = promiseProject({
@@ -551,9 +553,9 @@ describe.skipIf(SHOULD_SKIP)("plans-are-promises A17 — a clause may rest on a 
 			},
 			files: {
 				"src/first.ts": siteFile(FIRST),
-				"src/first.test.ts": testFile(FIRST),
+				"src/first.test.ts": provingClauses(FIRST, "fast"),
 				[SITE]: siteFile(NAME),
-				[TEST]: testFile(NAME),
+				[TEST]: provingClauses(NAME, "fast"),
 			},
 		});
 		return fixture;

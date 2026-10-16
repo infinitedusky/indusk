@@ -75,7 +75,7 @@ proves. Plans that do not opt in validate and close exactly as before. See
 | A19 | A promise file whose clause rests on the promise itself is refused by the registry check, and a resting clause naming a promise the registry no longer holds is refused by it, naming the clause | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
 | A20 | Finding a promise by its name or by an old alias returns the same entry, and a name that is neither returns nothing | Build Phase 5 | Build Phase 5 | passing | unit | a unit test for the one promise lookup that five readers each wrote inline | apps/indusk-mcp/src/__tests__/promise-lookup.test.ts |
 | A21 | Run end to end through the library in a temporary project, a plan with two promises stated as clauses passes the contract check, is refused at close while one clause's row is planned, and closes once it passes | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses-close.test.ts |
-| A22 | Closing refuses a clause whose passing row names a test file that does not carry `clause: <promise>/<clause>`, naming the clause and the file; with the token it closes | Build Phase 6 | Build Phase 6 | written | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
+| A22 | Closing refuses a clause whose passing row names a test file that does not carry `clause: <promise>/<clause>`, naming the clause and the file; with the token it closes | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 
 ## Checklist
 
@@ -500,7 +500,7 @@ A cold read of the finished plan found that it would not close by the rules it s
   New `apps/indusk-mcp/src/__tests__/promise-clauses-close.test.ts` (docblock `promise: a-plan-holds-the-promises-it-lands`): in a temp project built with the shared `PromiseProject` helper, two promises with clauses, a clause plan and an impl; `checkPlanContract` passes, `confirmPlan` refuses naming the clause with a row `planned`, then confirms once it is `passing`. Row A16's Test cell changes from the `manual:` string to this file and its Level from `live check` to `integration`; its Asserts text and Passes-at stay. The CLI run recorded in Build Phase 3 stays as the record.
 
   </details>
-- [ ] A clause counts as proved only when its row's test file names the clause as well as the promise.
+- [x] A clause counts as proved only when its row's test file names the clause as well as the promise.
   <details><summary>Technical</summary>
 
   `lib/promises/confirm.ts` `judge` (the half that reads code): for each split and limit clause, each file in its proving rows' Test cells must carry `clause: <promise>/<clause>` (a comment, the way the promise token is carried); a refusal names the clause and the file. `rows.ts` exposes which rows prove which clause so `judge` can ask. A22 authored first, failing: today a file with only the promise token closes.
