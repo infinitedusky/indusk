@@ -102,8 +102,13 @@ function project(): string {
 	return root;
 }
 
-function check(root = project()): { code: number; out: string } {
-	const r = runCli(root, ["looks", "check", "demo", "--url", url]);
+/**
+ * `--all` opens a look its last held result would otherwise answer for: the
+ * served page here is written by the test, outside every input a look is
+ * reused on (looks-check-speed), so a second check of one project must say so.
+ */
+function check(root = project(), ...extra: string[]): { code: number; out: string } {
+	const r = runCli(root, ["looks", "check", "demo", "--url", url, ...extra]);
 	return { code: r.code, out: `${r.stdout}\n${r.stderr}` };
 }
 
@@ -199,7 +204,7 @@ describe.skipIf(SHOULD_SKIP)("indusk looks check — the running app held by val
 
 		// The page pins itself light: the dark scheme was asked for and never drawn.
 		writeFileSync(pageFile, pageWith("", "", { tokens, htmlAttrs: 'data-theme="light"' }));
-		const pinned = check(root);
+		const pinned = check(root, "--all");
 		expect(pinned.out).toMatch(/held\s+home\.empty @ phone\s*$/m);
 		expect(pinned.out).toMatch(
 			/unchecked\s+home\.empty @ phone\/dark — the page did not render the dark scheme/,

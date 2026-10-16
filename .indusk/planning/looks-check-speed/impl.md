@@ -514,6 +514,12 @@ This phase lets the check skip looks that have not changed. After a run, every l
   `cli.ts` `looks check --all`, passed as `all` to `reuseOf`. A7.
 
   </details>
+- [x] Give the pre-existing scheme case in `looks-browser.contract.test.ts` the all option on its second run.
+  <details><summary>Technical</summary>
+
+  Found work: ui-promises A37's case ("a look under a scheme the foundation names is held only when that scheme was opened") checks one project twice, rewriting the served page between runs. The page is written by the test, outside every input a look is reused on, so the second run reported `home.empty` reused and never saw the pinned light theme. Its second run now passes `--all` (the helper `check(root, ...extra)`); the row's assertions are unchanged. Reason: the Build Phase 2 verification runs this file, and a check of a page that changed outside the project's sources is exactly what `--all` is for (the ADR's accepted residual).
+
+  </details>
 - [x] Shape — review the files this phase changed against the enabled extensions' craft rules.
   - Reviewed `check.ts`, `looks.ts`, `cli.ts`, the fixtures and tests. One finding, fixed in place: `check-run.fixtures.ts` re-exported `schemesOf` for no importer (rule: no unused surface). Left as is: `openAndJudge` takes six arguments (it is the one place a look's single load becomes per-device judgements; splitting it would scatter the order contract), and `CheckOptions` has no `all` until Build Phase 2 adds the option with its rule.
 
