@@ -145,7 +145,7 @@ Before anything about clauses is built, this phase writes the tests that say wha
 
 #### Test Phase 1 Verification
 
-- [ ] The tests this phase writes exist and each red one fails on its own assertion.
+- [x] The tests this phase writes exist and each red one fails on its own assertion.
   <details><summary>Technical</summary>
 
   A1–A12, A14, A15 (write red) and A13 (passes): `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promise-clauses.test.ts src/__tests__/promises-declare.test.ts src/__tests__/row-purpose.test.ts src/__tests__/hook-shared-modules.test.ts src/__tests__/promises-confirm.test.ts src/__tests__/planner-brief-template.test.ts` — the new cases fail on their assertions, A13 and every pre-existing case pass. Paste the counts.
