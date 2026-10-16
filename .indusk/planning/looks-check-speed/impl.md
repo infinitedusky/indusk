@@ -1,7 +1,7 @@
 ---
 title: "Looks check speed"
 date: 2026-10-16
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
