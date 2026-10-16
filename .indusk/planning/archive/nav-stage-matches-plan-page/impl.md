@@ -239,7 +239,7 @@ Two places in the admin still read the impl's hand-written status word as if it 
 - [x] The project card and the copied markdown agree with the nav at every point of a plan's life.
   <details><summary>Technical</summary>
 
-  `cd apps/indusk-admin && pnpm exec vitest run src/app/page.test.tsx src/lib/markdown-export.test.ts && pnpm exec vitest related src/app/page.tsx src/lib/markdown-export.ts --run`; `pnpm exec tsc --noEmit -p apps/indusk-admin`; `pnpm exec biome check` on the changed files.
+  A7, A8: `cd apps/indusk-admin && pnpm exec vitest run src/lib/plan-stage.test.ts src/lib/markdown-export.test.ts && pnpm exec vitest related src/app/page.tsx src/lib/markdown-export.ts src/lib/plan-stage.ts --run`; `pnpm exec tsc --noEmit -p apps/indusk-admin`; `pnpm exec biome check` on the changed files.
 
   </details>
 
