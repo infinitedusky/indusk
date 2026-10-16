@@ -10,6 +10,7 @@ import {
 
 /**
  * promise: everyday-suite-stays-fast — test-kinds A16, A17.
+ * promise: a-promise-is-upheld-or-broken — one-promise-language A17.
  *
  * Each everyday run is marked held or broken with how long it took; a slow run
  * fails nothing; a run that overlapped another is not judged; with no daemon,

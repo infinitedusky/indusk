@@ -6,6 +6,7 @@ import { ACTIVITY_MAX, activityLines, addRuns, type Run, startActivity } from ".
  * arrives, newest first, and keeps a bounded number.
  *
  * promise: the-editor-shows-each-run-as-it-happens
+ * promise: a-promise-is-upheld-or-broken — one-promise-language A9, A15.
  */
 
 const run = (i: number, outcome: Run["outcome"] = "upheld"): Run => ({
