@@ -850,7 +850,7 @@ This plan doubled the look check's main file, from 633 lines to 1,232, and it no
 
   `loadChromium`, `launch`, `loadPage`, `measureInPlace`, `measureFresh`, `measureScript`, `chromiumOpener`, `openWithinTime` into `lib/looks/browser.ts`; the `LookOpener` seam stays the one way the run reaches it.
   </details>
-- [ ] Move the planning of a run's reuse — which looks reopen, the notices, keeping what held — next to the reuse rule.
+- [x] Move the planning of a run's reuse — which looks reopen, the notices, keeping what held — next to the reuse rule.
   <details><summary>Technical</summary>
 
   `planReuse`, `reuseNotice`, `keepHeld` from `check.ts` into `reuse.ts` (or `lib/looks/reuse-run.ts` if `reuse.ts` passes its cap); `checkApp` calls them.
