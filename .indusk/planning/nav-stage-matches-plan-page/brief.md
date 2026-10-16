@@ -1,6 +1,6 @@
 ---
 title: "The nav says where a plan is"
-description: "A plan's row in the admin nav names the same step its page shows, and reads as finished only once a release has shipped it. Today a plan whose build is done but which has not been falsified or released reads 'completed' in the nav while its page says it is at Falsify."
+description: "A plan's row in the admin nav names the same step its page shows; it reads Released only once a release has shipped it, and Closed once the plan is archived without one. Today a plan whose build is done but which has not been falsified or released reads 'completed' in the nav while its page says it is at Falsify."
 date: 2026-10-16
 status: accepted
 workflow: bugfix
@@ -18,7 +18,7 @@ workflow: bugfix
 
 ### This plan makes
 
-1. **`the-nav-says-where-a-plan-is`** (state). A plan's row in the nav names the same step its page shows, and reads as finished only once a release has shipped it.
+1. **`the-nav-says-where-a-plan-is`** (state). A plan's row in the nav names the same step its page shows; it reads Released only once a release has shipped it, and Closed once the plan is archived without one.
 
 ### Existing promises
 

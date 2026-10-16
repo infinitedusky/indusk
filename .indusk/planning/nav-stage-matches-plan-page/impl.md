@@ -33,9 +33,9 @@ first step in either workflow that is current or needs the person); it moves to
 between two steps (an approved impl not yet built reads *Build*) and `null`
 when every step is done. The admin's `planStage` reads: what the plan waits on,
 else *Released* when a release shipped it, else `stepAt`'s step, else
-*Archived* for a closed plan, else its status word for a plan whose position
+*Closed* for a closed plan, else its status word for a plan whose position
 could not be read. The row's mark follows the same answer: needs-you when
-waiting, finished only when released, in-progress on a Release-workflow step,
+waiting, finished when released or closed, in-progress on a Release-workflow step,
 plain otherwise. Cost: `stepAt` runs over facts the planning reader already
 holds for every plan (`position`, documents, skipped rituals), so the nav gains
 no file read.
@@ -50,7 +50,7 @@ no file read.
 ### Out of Scope
 - The row's layout — the `nav-row-legible` plan's look.
 - Keeping the impl's `status:` field accurate; `/work` still writes it.
-- How a release is placed for a plan (`planDates` in `promises/display`); a plan it cannot place reads *Archived*.
+- How a release is placed for a plan (`planDates` in `promises/display`); a plan it cannot place reads *Closed*.
 
 ## Boundary Map
 
@@ -64,7 +64,7 @@ no file read.
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
 | A1 | At every position before release, the nav stage is the step the page shows as worked or waiting, or the next one between steps; a built, unfalsified plan reads Falsify | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/plan-stage.test.ts |
-| A2 | A plan no release shipped never carries the finished mark: a built plan carries the in-progress mark, an archived unreleased plan reads Archived with the plain mark | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/components/PlanList.test.tsx, apps/indusk-admin/src/components/PlanList.falsify.test.tsx |
+| A2 | A plan no release shipped never reads Released: a built plan carries the in-progress mark and names its step, an archived plan with no release found reads Closed with the finished mark | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/components/PlanList.test.tsx, apps/indusk-admin/src/components/PlanList.falsify.test.tsx |
 | A3 | The step a plan is at is defined once, in the package's steps module; the admin defines no rule of its own | Test Phase 1 | Build Phase 1 | planned | unit | promise: the-nav-says-where-a-plan-is | apps/indusk-mcp/src/__tests__/cockpit-single-definition.test.ts |
 | A4 | A plan waiting on the person reads the step it waits at with the needs-you mark, ahead of its step and of Released | Test Phase 1 | Test Phase 1 | planned | unit | promise: decisions-wait-in-one-place, promise: the-nav-says-where-a-plan-is | apps/indusk-admin/src/lib/plan-stage.test.ts, apps/indusk-admin/src/components/PlanList.test.tsx |
 | A5 | A master plan's page reads each plan at the nav row's stage: Falsify for a built, unfalsified plan, Released for a released one | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-master-plan-tells-its-story | apps/indusk-admin/src/lib/master-story.test.ts |
@@ -93,7 +93,7 @@ Before anything changes, this phase writes down what the nav row must read and p
 - [ ] Write the test that a plan no release has shipped never shows the finished mark in the nav, failing today.
   <details><summary>Technical</summary>
 
-  A2, `apps/indusk-admin/src/components/PlanList.test.tsx` (token `promise: the-nav-says-where-a-plan-is`): render `PlanList` with one active plan whose impl is `completed` and whose position is falsify, and one archived plan (`archived: true`, `status: "completed"`, position archived) with no `dates` entry. Read each row's mark, `[data-component="plan-row"] [data-component="badge"]`, by its `data-state`: the first is `working` and its row reads `Falsify`; the second is `idle` and its row reads `Archived`, not `completed`. Red today: both are `released`. In `PlanList.falsify.test.tsx`, T11's `expect(link?.textContent).toContain("completed")` pins the old reading; change it to `"Archived"` and add the token (the test's own point, that an archived child is a link and not a placeholder, is unchanged).
+  A2, `apps/indusk-admin/src/components/PlanList.test.tsx` (token `promise: the-nav-says-where-a-plan-is`): render `PlanList` with one active plan whose impl is `completed` and whose position is falsify, and one archived plan (`archived: true`, `status: "completed"`, position archived) with no `dates` entry. Read each row's mark, `[data-component="plan-row"] [data-component="badge"]`, by its `data-state`: the first is `working` and its row reads `Falsify`; the second is `released` and its row reads `Closed`, not `completed`. Red today: the first is `released` and the second reads `completed`. In `PlanList.falsify.test.tsx`, T11's `expect(link?.textContent).toContain("completed")` pins the old reading; change it to `"Closed"` and add the token (the test's own point, that an archived child is a link and not a placeholder, is unchanged).
 
   </details>
 - [ ] Write the test that the step a plan is at is defined once, in the package, failing today.
@@ -139,7 +139,7 @@ Before anything changes, this phase writes down what the nav row must read and p
 
 **Tier**: med — the work step's default (`workflow.steps.work.tier`)
 
-This phase moves the rule for which step a plan is at into the package's module that lists a plan's steps, where the plan page already gets them, and makes the nav, the master plan's page and the Needs you list all ask it. Between two steps, such as an approved plan not yet built, the rule answers the next step; when every step is done it answers none. The nav row then reads what the plan waits on, else Released once a release shipped it, else the step the rule gives, else Archived for a closed plan. Its mark follows the same answer: needing you when it waits, finished only when released, in progress during the build and the steps after it, plain otherwise. The old mapping from the impl's status word is deleted. Nothing new is read from disk, since every plan in the nav already carries where it stands.
+This phase moves the rule for which step a plan is at into the package's module that lists a plan's steps, where the plan page already gets them, and makes the nav, the master plan's page and the Needs you list all ask it. Between two steps, such as an approved plan not yet built, the rule answers the next step; when every step is done it answers none. The nav row then reads what the plan waits on, else Released once a release shipped it, else the step the rule gives, else Closed for a closed plan. Its mark follows the same answer: needing you when it waits, finished when released or closed, in progress during the build and the steps after it, plain otherwise. The old mapping from the impl's status word is deleted. Nothing new is read from disk, since every plan in the nav already carries where it stands.
 
 - [ ] Make the package answer which step a plan is at, and make the Needs you list ask it.
   <details><summary>Technical</summary>
@@ -157,7 +157,7 @@ This phase moves the rule for which step a plan is at into the package's module 
 - [ ] Make the nav row's words and mark come from that answer, and delete the mapping from the impl's status word.
   <details><summary>Technical</summary>
 
-  `apps/indusk-admin/src/lib/plan-stage.ts`: `navMarkOf(plan, released, waiting): NavMark` — waiting → `{ state: "needs", stage: waiting }`; released → `{ "released", "Released" }`; `stepAt(snapshotOf(plan))` → `{ state: step.workflow === "release" ? "working" : "idle", stage: step.name }`; archived → `{ "idle", "Archived" }`; no position → `{ "idle", plan.status }`. `planStage` returns `navMarkOf(...).stage` (the master page keeps calling it). Move `NavMark` here. `PlanList.tsx` `PlanItem`: `const mark = navMarkOf(plan, released, waiting)`, `state={mark.state}`, `{mark.stage}`. Delete `statusToNavMark` and `NavMark` from `components/ui/badge-variant.ts`. Update `src/app/p/[project]/plan/[name]/page.test.tsx` (T11) and `master.test.tsx` (A3), which expect `"Building"`, to the page's word `"Build"`. A1, A2, A5 green; A4, A6 still green.
+  `apps/indusk-admin/src/lib/plan-stage.ts`: `navMarkOf(plan, released, waiting): NavMark` — waiting → `{ state: "needs", stage: waiting }`; released → `{ "released", "Released" }`; `stepAt(snapshotOf(plan))` → `{ state: step.workflow === "release" ? "working" : "idle", stage: step.name }`; archived → `{ "released", "Closed" }`; no position → `{ "idle", plan.status }`. `planStage` returns `navMarkOf(...).stage` (the master page keeps calling it). Move `NavMark` here. `PlanList.tsx` `PlanItem`: `const mark = navMarkOf(plan, released, waiting)`, `state={mark.state}`, `{mark.stage}`. Delete `statusToNavMark` and `NavMark` from `components/ui/badge-variant.ts`. Update `src/app/p/[project]/plan/[name]/page.test.tsx` (T11) and `master.test.tsx` (A3), which expect `"Building"`, to the page's word `"Build"`. A1, A2, A5 green; A4, A6 still green.
 
   </details>
 - [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
@@ -187,7 +187,7 @@ This phase moves the rule for which step a plan is at into the package's module 
 - [ ] The admin's own context file says the nav's stage and mark come from the package's step rule, never from the impl's status word.
   <details><summary>Technical</summary>
 
-  `apps/indusk-admin/CLAUDE.md` (area), in the "One home per piece" entry, replace "its stage is `planStage`" with: "its stage and mark are `planStage`/`navMarkOf` in `lib/plan-stage.ts`: waiting, else Released from a release's date, else the package's `stepAt` (`plans/steps`), else Archived — never the impl's `status:`, which `/work` sets `completed` before the rituals. Guarded by `plan-stage.test.ts` and `cockpit-single-definition.test.ts` (`promise: the-nav-says-where-a-plan-is`)".
+  `apps/indusk-admin/CLAUDE.md` (area), in the "One home per piece" entry, replace "its stage is `planStage`" with: "its stage and mark are `planStage`/`navMarkOf` in `lib/plan-stage.ts`: waiting, else Released from a release's date, else the package's `stepAt` (`plans/steps`), else Closed — never the impl's `status:`, which `/work` sets `completed` before the rituals. Guarded by `plan-stage.test.ts` and `cockpit-single-definition.test.ts` (`promise: the-nav-says-where-a-plan-is`)".
 
   </details>
 
@@ -196,7 +196,7 @@ This phase moves the rule for which step a plan is at into the package's module 
 - [ ] The admin reference says what a plan's row in the nav reads.
   <details><summary>Technical</summary>
 
-  `apps/docs/src/reference/admin-ui/overview.md`, the `PlanRow` sentence in the nav paragraph: the step it is at is the step its page shows (*Brief*, *Build*, *Falsify*, … *Release*), *Released* once a release shipped it, *Archived* for a closed plan no release has shipped yet, or the step a plan waiting on you waits at; the finished mark only for a released plan. One line in `apps/docs/src/changelog.md` under Unreleased.
+  `apps/docs/src/reference/admin-ui/overview.md`, the `PlanRow` sentence in the nav paragraph: the step it is at is the step its page shows (*Brief*, *Build*, *Falsify*, … *Release*), *Released* once a release shipped it, *Closed* for a closed plan no release has shipped yet, or the step a plan waiting on you waits at; the finished mark for a released or closed plan. One line in `apps/docs/src/changelog.md` under Unreleased.
 
   </details>
 
@@ -220,5 +220,5 @@ This phase moves the rule for which step a plan is at into the package's module 
 ## Notes
 
 - Needs you's step for a question asked between two steps changes from *Planning* to the next step's name (for example *Build* for an approved plan not yet built), because it now asks `stepAt`. No test reads the old *Planning* fallback; it remains for a plan with no step left.
-- 45 of this project's 140 archived plans have no release the release-date reader can place (counted 2026-10-16); they read *Archived* with the plain mark after this plan, their status word with the finished mark before.
+- 45 of this project's 140 archived plans have no release the release-date reader can place (counted 2026-10-16); they read *Closed* with the finished mark after this plan, their status word with the finished mark before (Sandy, 2026-10-16: Released is a release record; Closed is a plan done without one).
 - Planning steps (*Brief*, *Test plan*, *Impl*, …) read with the plain mark, as *Draft* did; the build and the steps after it read in progress, as *Building* and *Approved* did.

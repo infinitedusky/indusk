@@ -23,12 +23,12 @@ cannot be tested against two different ideas of where a plan stands.
 
 ## Behavioral Assertions
 
-### `the-nav-says-where-a-plan-is` — A plan's row in the nav names the same step its page shows, and reads as finished only once a release has shipped it.
+### `the-nav-says-where-a-plan-is` — A plan's row in the nav names the same step its page shows; it reads Released only once a release has shipped it, and Closed once the plan is archived without one.
 
 | ID | Assertion (user-visible behavior) | Level |
 |----|-----------------------------------|-------|
 | A1 | At every point between its first document and its release, a plan's nav row names the step its page shows as being worked on or waiting on the person, or, between steps, the next one; a plan whose build is finished but not yet falsified reads *Falsify*, never *completed*. | unit |
-| A2 | A plan no release has shipped never carries the finished mark: one whose build is finished carries the in-progress mark, and one that is closed and archived but not yet in a release reads *Archived* with the plain mark. | unit |
+| A2 | A plan no release has shipped reads *Released* never: one whose build is finished carries the in-progress mark and names its step, and one that is archived with no release found reads *Closed* with the finished mark. | unit |
 | A3 | Which step a plan is at is decided once, in the package: the plan page's steps, the nav and Needs you all ask the same rule, and the admin defines none of its own. | unit |
 
 ### `decisions-wait-in-one-place` — When a plan is waiting on the person it is listed under Needs you, and its page shows the one decision with accept, the alternative and a reply in words; the answer reaches the agent and is recorded in the plan's history.
@@ -57,11 +57,11 @@ cannot be tested against two different ideas of where a plan stands.
   sets to `completed` the moment the build checklist is done.
 - A2's archived case changes what 45 of this project's 140 archived plans read
   (counted 2026-10-16 with the package's `readHealthNames`): they read their
-  status word with the finished mark today, and will read *Archived* with the
-  plain mark. Some are recent landings waiting for the next release, which is
-  the promise's point; some are closed spikes and older plans whose release
-  the release-date reader cannot place. That reader is not this plan's; a
-  plan it misplaces reads *Archived* until it is fixed.
+  status word with the finished mark today, and will read *Closed*, keeping the
+  finished mark (Sandy, 2026-10-16: *Released* is a release record; *Closed*
+  is a plan done without one). Some are recent landings waiting for the next
+  release; some are closed spikes and older plans whose release the
+  release-date reader cannot place.
 - The nav renders a row for every plan. The rule reads only facts the
   planning reader already holds for each plan (its position, documents and
   skipped rituals), so the fix adds no file read to the nav.
