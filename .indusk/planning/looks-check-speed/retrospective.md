@@ -57,7 +57,7 @@ promises.
 
 **Structure:** the plan touched 41 files, +3,890 / −422 over 70 commits; the
 code alone is 34 files under `apps/`, +3,432 / −342. New files: `reuse.ts`,
-`dev-server.ts`, `served.ts`, `browser.ts`, their tests, and the contract test
+`reuse-run.ts`, `dev-server.ts`, `served.ts`, `browser.ts`, `errors.ts`, their tests, and the contract test
 `looks-check-speed.contract.test.ts`.
 
 ## Getting to Done
@@ -87,7 +87,7 @@ code alone is 34 files under `apps/`, +3,432 / −342. New files: `reuse.ts`,
   sources is in no key). The full `--all` check in the slow tier catches them.
 - **Cleanup** split `check.ts` from 1,232 lines back to 565: the served-page
   read (`served.ts`), the browser work (`browser.ts`) and the run's reuse
-  planning (`reuse.ts`) each got a file.
+  planning (`reuse-run.ts`, beside the rule in `reuse.ts`) each got a file.
 
 ## What We Learned
 
