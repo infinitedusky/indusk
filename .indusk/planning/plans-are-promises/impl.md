@@ -1,7 +1,7 @@
 ---
 title: "Plans are promises"
 date: 2026-10-16
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -74,6 +74,8 @@ proves. Plans that do not opt in validate and close exactly as before. See
 | A18 | A brief with no `clauses: required`, whose promises are bullets indented two or three spaces beneath a first entry, still reads every one of them as a promise it makes | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses.test.ts |
 | A19 | A promise file whose clause rests on the promise itself is refused by the registry check, and a resting clause naming a promise the registry no longer holds is refused by it, naming the clause | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
 | A20 | Finding a promise by its name or by an old alias returns the same entry, and a name that is neither returns nothing | Build Phase 5 | Build Phase 5 | passing | unit | a unit test for the one promise lookup that five readers each wrote inline | apps/indusk-mcp/src/__tests__/promise-lookup.test.ts |
+| A21 | Run end to end through the library in a temporary project, a plan with two promises stated as clauses passes the contract check, is refused at close while one clause's row is planned, and closes once it passes | Build Phase 6 | Build Phase 6 | planned | integration | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promise-clauses-close.test.ts |
+| A22 | Closing refuses a clause whose passing row names a test file that does not carry `clause: <promise>/<clause>`, naming the clause and the file; with the token it closes | Build Phase 6 | Build Phase 6 | planned | unit | promise: a-plan-holds-the-promises-it-lands | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 
 ## Checklist
 
@@ -483,6 +485,64 @@ This plan grew two things worth lifting out of the files it touched. Looking up 
   <details><summary>Technical</summary>
 
   `grep -rn "clauseRefusals\|clausePlanRefusals\|clauseRowRefusals" apps/docs/src` — update a hit to `clause-rules.ts`; with no hit the check is the record, and the item is checked with that output pasted here.
+
+  </details>
+
+### Build Phase 6: Audit follow-ups — this plan closes by its own rules
+
+**Tier**: med — the work step's default (`workflow.steps.work.tier`)
+
+A cold read of the finished plan found that it would not close by the rules it ships. Its live check names a command instead of a test file, so closing would read it as a missing file. Its own promise has no clauses in the registry. And a clause is proved by any passing test file that names the promise, without that file naming the clause. This phase fixes those, so that the plan's own promise is held as clauses with a test file for each, and records two small gaps the audit named. When it closes, a clause's proof names the clause as well as the promise.
+
+- [ ] The live check has a real test file that runs the whole story through the library, so closing reads it as a test.
+  <details><summary>Technical</summary>
+
+  New `apps/indusk-mcp/src/__tests__/promise-clauses-close.test.ts` (docblock `promise: a-plan-holds-the-promises-it-lands`): in a temp project built with the shared `PromiseProject` helper, two promises with clauses, a clause plan and an impl; `checkPlanContract` passes, `confirmPlan` refuses naming the clause with a row `planned`, then confirms once it is `passing`. Row A16's Test cell changes from the `manual:` string to this file and its Level from `live check` to `integration`; its Asserts text and Passes-at stay. The CLI run recorded in Build Phase 3 stays as the record.
+
+  </details>
+- [ ] A clause counts as proved only when its row's test file names the clause as well as the promise.
+  <details><summary>Technical</summary>
+
+  `lib/promises/confirm.ts` `judge` (the half that reads code): for each split and limit clause, each file in its proving rows' Test cells must carry `clause: <promise>/<clause>` (a comment, the way the promise token is carried); a refusal names the clause and the file. `rows.ts` exposes which rows prove which clause so `judge` can ask. A22 authored first, failing: today a file with only the promise token closes.
+
+  </details>
+- [ ] This plan's own promise is held as clauses in the registry, with each clause named by the rows that prove it.
+  <details><summary>Technical</summary>
+
+  Write `clauses:` into `.indusk/promises/a-plan-holds-the-promises-it-lands.md` frontmatter from the brief's prose: `brief-holds-clauses` (split: A1–A4), `clause-plan-checked` (split: A5–A8, A14, A15), `closing-per-clause` (split: A9, A11, A16, A21, A22), `planner-teaches-it` (split: A10, A12), `older-plans-stand` (limit: A13). Retag each of those rows' `For` cell from `promise: a-plan-holds-the-promises-it-lands` to `clause: a-plan-holds-the-promises-it-lands/<clause>` (A14 and A15 keep the reasons they have); add `clause:` tokens to the test files those rows name. The brief is not edited (it is approved; `clauses: required` stays off), and `indusk promises contract plans-are-promises` and `pnpm promises:check` pass.
+
+  </details>
+- [ ] The two small gaps the audit named are recorded: the `plans start` defect under local init, and A14's weak reason.
+  <details><summary>Technical</summary>
+
+  Under this impl's `## Notes`: `indusk init --local` git-ignores `.indusk/`, so `indusk plans start` fails at `git add` on the brief — outside this plan, to be its own bug plan. A14's `For` cell reads "guards that the library's and the hook's row-purpose readers cannot drift apart, which would let the save hook accept a row the close refuses".
+
+  </details>
+
+#### Build Phase 6 Verification
+
+- [ ] The new tests pass, this plan's own promise confirms in a dry reading, and nothing else moved.
+  <details><summary>Technical</summary>
+
+  A21, A22 (written red first, then green), A16 now pointing at A21's file: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promise-clauses-close.test.ts src/__tests__/promises-confirm.test.ts src/__tests__/promise-clauses.test.ts src/__tests__/row-purpose.test.ts && pnpm --filter @infinitedusky/indusk-mcp exec vitest related src/lib/promises/confirm.ts src/lib/promises/rows.ts --run`; `indusk promises contract plans-are-promises` and `pnpm promises:check` pass. Do not run `indusk promises confirm` on this plan: closing is the retrospective's.
+
+  </details>
+
+#### Build Phase 6 Context
+
+- [ ] The planning rules say a clause's test file carries the clause token.
+  <details><summary>Technical</summary>
+
+  `templates/planning/CLAUDE.md`, the per-clause close-out rule: "…and each such row's test file carries `clause: <promise>/<clause>`." Synced by the package.
+
+  </details>
+
+#### Build Phase 6 Document
+
+- [ ] The brief guide and the command reference say a clause's test file carries its clause token.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/guide/test-trajectory.md` — the `clause:` token also goes in the test file; `apps/docs/src/reference/skills/plan.md` — closing per clause names the file check.
 
   </details>
 
