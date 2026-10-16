@@ -248,6 +248,45 @@ fixed, because each one is about the signal, which is this plan's):
 - **`indusk plans start` fails under `indusk init --local`** (`.indusk/` is
   git-ignored): outside this plan, its own bug plan.
 
+### How a signal gets written: the audit hands its concerns to the signal loop (Sandy, 2026-10-16)
+
+The question this answers: telemetry should fail where a test could not have
+broken, so it cannot be a copy of a test's assertion run in production. Settled
+direction, from a summary Sandy pasted from another page:
+
+- **`/audit` gets a seventh question**: "For each concern above, what signal
+  would show us if it breaks? If telemetry isn't the answer, say so." The audit
+  stays advisory; its `audit.md` shape and the six existing questions are
+  unchanged.
+- **Three answers per concern.** A **signal**: name the invariant to check and
+  the place in the code that emits it (the default for "nothing prevents X"
+  findings). A **fix**: a wrong sentence or a missing guard, where telemetry
+  cannot help. **Nothing**: too unlikely or too cheap, with the reason stated.
+- **Fire rate.** Each signal answer also says how often it would fire. A promise
+  with no signal reads unknown, so a signal on a rarely run path leaves its
+  promise unknown for a long time.
+- **Tests come after**: a test is written when a signal breaks, not up front for
+  every failure anyone can imagine. This does not remove the tests that prove a
+  clause before release (`verified-before-release`); it says the audit's
+  imagined failures are watched, and pinned only when they happen.
+- **Example**: `a-finished-ritual-stays-done` would get a signal in the admin's
+  plan reader, emitted on each read, reading broken when a ritual's phase is
+  closed but its step does not read done.
+- **Where it lives**: the audit skill's source is
+  `apps/indusk-mcp/skills/audit.md`; the copy under `.claude/skills/` is synced
+  from it, never edited directly.
+
+**One word: signal.** `one-promise-language` settled "the telemetry a signal";
+"mark" is one of the old words it replaced. This plan already switches the
+writers (`violated` to `broken`), so the word cleanup belongs here. Still saying
+"mark": the Day 4b entry in the root `CLAUDE.md` and this plan's own name.
+Caveat: OpenTelemetry uses "signal" for traces, metrics and logs; in our docs it
+always means a promise's signal.
+
+Separate, not this plan's: `finished-rituals-stay-done`'s brief promises that a
+skip counts as done, but the behaviour reads `skipped`. A one-line wording fix to
+that brief.
+
 ### The merged plan — proposed rework of the brief (2026-10-15, parked)
 
 `mark-first` merges with `promise-first-build` (see `promise-core`'s master,
