@@ -107,7 +107,7 @@ Before anything about clauses is built, this phase writes the tests that say wha
   A11 (first half): `--clause "base (rests on no-such-promise)"` exits 2 naming `no-such-promise`. Red.
 
   </details>
-- [ ] Write the tests that a row may name a clause and still counts for its promise, and that both readers of a row agree, failing today.
+- [x] Write the tests that a row may name a clause and still counts for its promise, and that both readers of a row agree, failing today.
   <details><summary>Technical</summary>
 
   `row-purpose.test.ts` A15: `parsePurpose("clause: first-promise/fast")` gives `clauses: [{ promise: "first-promise", clause: "fast" }]` and `promises: ["first-promise"]`; `rowsNamingIn(impl, entry)` for `first-promise` lists the row. Red: the cell is malformed.
