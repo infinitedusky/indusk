@@ -141,6 +141,8 @@ to measure.
 
 ## Later, named so absence is not oversight
 
+The measurement plans have their own section below.
+
 The editor reading what the admin reads (it draws every `state` promise green
 "watched by the tests" by kind alone; it activates only where
 `.indusk/config.json` sits, so a window on a workbench's code repo never
@@ -150,6 +152,79 @@ carrying its budget or bound machine-readably, with a reader that compares.
 A staging source beside production. Sampling and reader cost. The server
 writing back to the laptop. A break cascading down a trace to its cause, and
 signals from the browser — the later cut, as chosen on 2026-10-15.
+
+## Measurement: from a look to a number (Sandy, 2026-10-16)
+
+The seven children make a signal written, read and heard; none of them
+computes a measurement. `a-look-comes-due` lists a look when it comes due and
+records what a person measured as a dated `Measured:` line in the brief — the
+files are the history, and a trend is the list of dated lines. That holds for a
+first look at thirty days: the recording server keeps traces for twenty-eight
+days on disk (`DEFAULT_RETENTION_HOURS`, `lib/telemetry/server.ts:65`), so a
+look can still count recent traces when it comes due. It runs out at ninety-day
+looks, at trends, and at rates and percentiles over time: Jaeger is a trace
+viewer, its query API pages with limits, and the laptop daemon keeps nothing
+across a restart (memory store, Sandy, 2026-10-16). Settled in conversation the
+same day, as the next plans after this master's seven, in this order:
+
+1. **`telemetry-destinations`** (a draft on its own branch since 2026-10-10,
+   "backlog, not critical" until now): InDusk always receives an app's
+   telemetry, and other destinations are added and removed beside it. Brought
+   under this master as the first of the measurement plans: everything below
+   is "where telemetry goes".
+2. **A `metrics` extension, three ways to run one store.** The loop depends on
+   one narrow interface, never on a backend: Prometheus remote-write in (the
+   collector's `spanmetrics` connector turning spans into counts, error counts
+   and latency histograms as they arrive — the way Jaeger's own service
+   performance monitoring works), the PromQL HTTP API out. Then the store is an
+   endpoint: **self-hosted open source** (a single binary — VictoriaMetrics
+   leaned on, Prometheus the safer-known name — shipped platform-split the way
+   the daemon's Jaeger and otelcol are, beside the daemon locally and in the
+   recording server's published image); **hosted** (any vendor that accepts
+   remote-write and answers PromQL — Grafana Cloud, Dash0, which has an
+   extension here already); **managed by InDusk** (the same image, run for
+   people). An expectation's Measure may name a query; its look reads one
+   number. The `Measured:` lines stay the record and the store a cache that can
+   be rebuilt — the open-core rule: a server only for what runs continuously,
+   holding nothing the files don't.
+3. **Sources as extensions, normalized on intake.** One collector is the
+   single intake, with a receiver per source: the app's own OTLP; a platform's
+   drains (Vercel's logs and traces, and possibly its speed and analytics data,
+   to a custom endpoint — to verify against Vercel's documentation before it is
+   planned); a platform's Prometheus-shaped metrics (Fly's, to verify); and the
+   collector's existing receivers for HTTP checks, hosts, Kubernetes and
+   GitHub. Each source is an extension contributing its receiver and its
+   mapping onto OpenTelemetry's semantic conventions (names, units and
+   attributes rewritten by the collector's transform processors), and declares
+   which conventional metrics it provides. A Measure names only conventional
+   metrics, so it reads the same whichever source supplied the number. Not
+   everything is piped in: a source is added when an expectation needs a
+   number only it has — for Homework Gate, Vercel first, once one does. Every
+   source passes through `production-keeps-only-what-it-should`'s redaction
+   (Vercel's request logs carry paths and query strings). A platform's metric
+   is the platform's view; a clause's signal still comes from where the
+   promise is felt, the app's own code.
+
+The danger named with it: general cross-vendor normalization is not solved
+anywhere, and a sum across sources that each measure something slightly
+different can be confidently wrong. It works when only what an expectation or a
+clause reads is normalized. This work belongs with
+[expectations-loop](../expectations-loop/master.md), where decisions are taken
+from measurements; Homework Gate's first looks run on its own spans and the
+`Measured:` lines.
+
+## Where this leads (Sandy, 2026-10-16)
+
+"This is the next big … the place where we describe our app going as we talk
+about fundraising for it": InDusk becomes a telemetry play with a software
+development setup, and eventually web hosting, all in one. The promise loop is
+what joins them — a promise stated in planning, held by its tests before
+release, upheld by its signal in use, its breaks reopening the plan that made
+it, and its expectations measured into what is built next. The development
+setup is where promises are made; the telemetry is where they are proved; the
+hosting is where they run and are heard without wiring. The managed metrics
+store above and the recording server InDusk already publishes are the first
+pieces of the hosted half.
 
 ## Decisions this master waits on (Sandy, none taken)
 
