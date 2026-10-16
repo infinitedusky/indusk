@@ -106,7 +106,7 @@ This phase teaches the step list that a ritual can be finished independently of 
   `apps/indusk-mcp/src/lib/plans/steps.ts`: `PlanSnapshot.finishedRituals?: ReadonlyArray<SkippedRitual>` ("Falsification, cleanup or audit finished: its phase closed or its report written"); in `releaseStep`, after the skip check, `if (ritual && plan.finishedRituals?.includes(ritual)) return named("done")`. A step whose segment is active still reads current only when its ritual is not finished.
 
   </details>
-- [ ] The admin reads which rituals are finished from the plan's files and passes them to the step list.
+- [x] The admin reads which rituals are finished from the plan's files and passes them to the step list.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/lib/planning-reader.ts` (beside `skippedRitualsOf` at ~L373): `finishedRituals` from `isFalsificationPhaseTerminal(implRaw) || isFalsificationComplete(planRoot)`, `isCleanupPhaseTerminal(implRaw)`, `isAuditComplete(planRoot)` (all in `cleanup/gate.ts`, `falsification/log.ts`); add the field to `Plan`; `plan-snapshot.ts` `snapshotOf` passes `finishedRituals: plan.finishedRituals`. Reuse those helpers; do not re-parse the impl.

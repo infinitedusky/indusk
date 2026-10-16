@@ -4,6 +4,9 @@ import { join } from "node:path";
 import { evalDir } from "@infinitedusky/indusk-mcp/bookkeeping/roots";
 import {
   checkRetrospectiveReadiness,
+  isAuditComplete,
+  isCleanupPhaseTerminal,
+  isFalsificationPhaseTerminal,
   skippedRitualsOf,
 } from "@infinitedusky/indusk-mcp/cleanup/gate";
 import {
@@ -140,6 +143,8 @@ export interface Plan {
     ritual: "falsification" | "cleanup" | "audit";
     reason: string;
   }>;
+  /** Rituals finished from their own files: a closed phase, or `audit.md` written. */
+  finishedRituals?: Array<"falsification" | "cleanup" | "audit">;
   retrospective?: RetroData;
   /** `audit.md`, when the audit step wrote one. */
   audit?: RetroData;
@@ -306,6 +311,29 @@ interface PlanReadContext {
   words?: Record<string, string>;
 }
 
+/**
+ * The close-out rituals a plan's own files show finished — a closed ritual
+ * phase (or the legacy falsification log) and a written `audit.md` — through
+ * the package's helpers, never re-parsed here.
+ */
+function finishedRitualsOf(
+  planDir: string,
+  implRaw: string | null,
+): NonNullable<Plan["finishedRituals"]> {
+  const finished: NonNullable<Plan["finishedRituals"]> = [];
+  if (
+    (implRaw !== null && isFalsificationPhaseTerminal(implRaw)) ||
+    isFalsificationComplete(planDir)
+  ) {
+    finished.push("falsification");
+  }
+  if (implRaw !== null && isCleanupPhaseTerminal(implRaw)) {
+    finished.push("cleanup");
+  }
+  if (isAuditComplete(planDir)) finished.push("audit");
+  return finished;
+}
+
 async function readPlanFolder(
   planDir: string,
   name: string,
@@ -371,6 +399,7 @@ async function readPlanFolder(
   const readiness =
     implRaw !== null ? checkRetrospectiveReadiness(planDir, implRaw) : null;
   const skippedRituals = implRaw === null ? [] : skippedRitualsOf(implRaw);
+  const finishedRituals = finishedRitualsOf(planDir, implRaw);
   // A closed plan may be back in motion — reopened by an incident, or in
   // `monitor` — derived from files by the same function `list_plans` reads.
   const after =
@@ -420,6 +449,7 @@ async function readPlanFolder(
     impl: implData,
     falsification: falsificationData,
     ...(skippedRituals.length > 0 ? { skippedRituals } : {}),
+    ...(finishedRituals.length > 0 ? { finishedRituals } : {}),
     retrospective:
       retrospective !== null && !isMalformed(retrospective)
         ? retrospective
