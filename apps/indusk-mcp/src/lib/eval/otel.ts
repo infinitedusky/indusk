@@ -272,7 +272,7 @@ export function markEvaluation(
 		return;
 	}
 	const symptom = result.message.split("\n").find((l) => l.trim() !== "") ?? "evaluation failed";
-	markPromise(span, { promise: EVALUATION_PROMISE, outcome: "violated", project, symptom });
+	markPromise(span, { promise: EVALUATION_PROMISE, outcome: "broken", project, symptom });
 }
 
 /**

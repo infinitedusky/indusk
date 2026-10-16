@@ -501,7 +501,7 @@ serverCmd
 	)
 	.requiredOption(
 		"--intake <otlp-url>",
-		"The server's OTLP/HTTP intake, where a mark is sent to read it back",
+		"The server's OTLP/HTTP intake, where a signal is sent to read it back",
 	)
 	.option(
 		"--credential-env <name>",
@@ -660,7 +660,7 @@ telemetryCmd
 
 telemetryCmd
 	.command("announce")
-	.description("Run one always-on pass: announce every violation the server has not announced yet")
+	.description("Run one always-on pass: announce every break the server has not announced yet")
 	.option("--once", "Run a single pass and exit (required)")
 	.action(async function (this: Command) {
 		const opts = this.opts() as { once?: boolean };
@@ -1280,7 +1280,7 @@ const promisesCmd = program
 promisesCmd
 	.command("check")
 	.description(
-		"Refuse the registry by name when it lies: a name cited in code or a test with no entry, an enforced promise without the links its kind requires, a known-violated promise without an open incident, an undeclared domain, an owner that is not a plan. Exit 2 on refusal; exit 0 with a summary.",
+		"Refuse the registry by name when it lies: a name cited in code or a test with no entry, an enforced promise without the links its kind requires, a known-broken promise without an open incident, an undeclared domain, an owner that is not a plan. Exit 2 on refusal; exit 0 with a summary.",
 	)
 	.action(async () => {
 		const { promisesCheck } = await import("./commands/promises.js");
@@ -1290,7 +1290,7 @@ promisesCmd
 promisesCmd
 	.command("status")
 	.description(
-		"Each behaviour promise as the local Jaeger saw it: violations in the window with their traces, last seen upheld, or not seen. State and structure promises are listed as watched by the suite. Exit 2, naming where it looked, when Jaeger cannot be reached — never a count.",
+		"Each behaviour promise as the local Jaeger saw it: breaks in the window with their traces, last seen holding, or no signal. State and structure promises are listed as watched by the suite. Exit 2, naming where it looked, when Jaeger cannot be reached — never a count.",
 	)
 	.option("--since <duration>", "window to report, e.g. 90m, 24h, 7d (default: the quiet window)")
 	.action(async function (this: Command) {
@@ -1324,9 +1324,9 @@ promisesCmd
 promisesCmd
 	.command("watch")
 	.description(
-		"One monitor pass: open or extend an incident for each behaviour promise with new violations in the local Jaeger, and append a Maintenance phase to its owning plan. Writes plan documents; commits nothing. Exit 2 when Jaeger cannot be reached.",
+		"One monitor pass: open or extend an incident for each behaviour promise with new breaks in the local Jaeger, and append a Maintenance phase to its owning plan. Writes plan documents; commits nothing. Exit 2 when Jaeger cannot be reached.",
 	)
-	.option("--source <source>", "where the violations came from: local | smoke | deployed", "local")
+	.option("--source <source>", "where the breaks came from: local | smoke | deployed", "local")
 	.action(async function (this: Command) {
 		const opts = this.opts() as { source?: string };
 		const { promisesWatch } = await import("./commands/promises.js");

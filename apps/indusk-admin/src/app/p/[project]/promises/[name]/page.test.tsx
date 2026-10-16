@@ -164,10 +164,10 @@ describe("A26 — where it was marked, and when last held or broken", () => {
     expect(text(marks[1])).toContain("never broken");
   });
 
-  it("A26 a promise never seen says not seen yet", async () => {
+  it("A26 a promise never reported on says no signal yet", async () => {
     const root = await open("checkout-never-charges-twice");
     expect(all(root, "proof-mark")).toHaveLength(0);
-    expect(text(q(root, "proof-marks"))).toContain("not seen yet");
+    expect(text(q(root, "proof-marks"))).toContain("no signal yet");
   });
 });
 

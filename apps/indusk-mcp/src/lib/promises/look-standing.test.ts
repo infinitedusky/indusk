@@ -39,13 +39,13 @@ describe("readLookStanding — each look's standing", () => {
 		const { rows } = await readLookStanding(FIXTURE, {
 			runs: [
 				run("empty", "phone", "upheld", "2026-10-09T00:00:00.000Z"),
-				run("empty", "desktop", "violated", "2026-10-11T00:00:00.000Z"),
+				run("empty", "desktop", "broken", "2026-10-11T00:00:00.000Z"),
 			],
 		});
 		expect(find(rows, "home.empty", "phone")?.standing).toBe("unchecked");
 		expect(find(rows, "home.empty", "desktop")).toMatchObject({
 			standing: "broken",
-			symptom: "empty violated",
+			symptom: "empty broken",
 		});
 		expect(rows[0]).toMatchObject({ look: "home.empty", device: "desktop" });
 	});
@@ -72,7 +72,7 @@ describe("readLookStanding — each look's standing", () => {
 describe("lookStandingFor — the look rule", () => {
 	it("broken first, then uncovered until approved, then held or unchecked", () => {
 		const held = run("empty", "phone", "upheld", "2026-10-11T00:00:00.000Z");
-		const broke = run("empty", "phone", "violated", "2026-10-11T00:00:00.000Z");
+		const broke = run("empty", "phone", "broken", "2026-10-11T00:00:00.000Z");
 		expect(lookStandingFor(false, broke)).toBe("broken");
 		expect(lookStandingFor(false, held)).toBe("uncovered");
 		expect(lookStandingFor(false, null)).toBe("uncovered");
@@ -159,7 +159,7 @@ describe("a story's check run is told from a screen's", () => {
 		// The screen `home.empty @ phone` broke; a later held run of the story `home.empty @ phone` exists.
 		const { rows } = await readLookStanding(FIXTURE, {
 			runs: [
-				run("empty", "phone", "violated", "2026-10-11T00:00:00.000Z"),
+				run("empty", "phone", "broken", "2026-10-11T00:00:00.000Z"),
 				{ ...run("empty", "phone", "upheld", "2026-10-11T06:00:00.000Z"), kind: "story" },
 			],
 		});

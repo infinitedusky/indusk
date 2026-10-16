@@ -67,7 +67,7 @@ const marks: MarkedSpansResult = {
 const WORD: Record<string, string> = {
 	red: "broken",
 	green: "holding",
-	unverified: "not seen",
+	unverified: "no signal",
 	fixed: "fixed",
 };
 

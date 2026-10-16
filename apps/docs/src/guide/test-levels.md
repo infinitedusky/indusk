@@ -30,7 +30,7 @@ flowchart LR
 
 An assertion's wording is behavioural: what someone outside sees. Its level is
 usually `unit`, because the behaviour is decided by a rule, and a rule is tested
-by feeding it inputs. "A violation that reaches Jaeger late still turns the
+by feeding it inputs. "A break that reaches Jaeger late still turns the
 chip red" is a rule about what the store reads, so it is a `unit` test. "Jaeger
 still answers our query the way we expect" is a question about Jaeger, so it is
 a `contract`.

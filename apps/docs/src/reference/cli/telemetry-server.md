@@ -44,19 +44,19 @@ instead.
 ## The pass
 
 The server does not only receive spans; it watches them. On an interval, in
-its own process, it asks its own Jaeger one question — what has been marked
-violated since the window began — and says each answer once, to Slack.
+its own process, it asks its own Jaeger one question — what has signalled
+broken since the window began — and says each answer once, to Slack.
 
 It does not know what promises exist. The registry lives in a plan
 repository and the server has none, so a span carrying `indusk.promise` with
-outcome `violated` is a violation and that is the whole of the server's
+outcome `broken` (`violated` is read as broken) is a break and that is the whole of the server's
 knowledge. Deciding which plan owns it happens later, on a developer machine,
 when `indusk promises watch --source deployed` reads the same server.
 
 A message looks like this:
 
 ```
-Promise violated: seat-never-double-booked
+Promise broken: seat-never-double-booked
 seat 4 held by two players
 staging · seats-api · hold-seat
 https://your-server/trace/4f1e…
@@ -82,7 +82,7 @@ to prevent.
 
 The record itself is read forgivingly: a corrupt or missing file reads as
 empty, which costs a repeated message. The alternative — refusing to run —
-would cost every violation from then on.
+would cost every break from then on.
 
 ### The heartbeat
 
@@ -91,7 +91,7 @@ span (service `indusk-watcher`) from the server's own Jaeger. Then it sends
 this pass's beat into the server's own OTLP intake, with the server's
 credential: the same door an application's marks come through. When the
 newest beat is older than `max(3 × interval, 3 minutes)`, or the read fails,
-the watcher is **blind**. Violations reported now would come from something
+the watcher is **blind**. Breaks reported now would come from something
 that cannot hear them.
 
 A server with no beat yet counts from its own start, so a clean start says
@@ -102,7 +102,7 @@ only, so it is found whatever order Jaeger returns beats in. Slack hears on a ch
 
 - going blind: *Watcher blind since \<newest beat\> — \<why\>*;
 - coming back: *Watcher recovered — blind from \<then\> to \<now\>*, with a
-  warning that violations marked in that time may not have been announced.
+  warning that breaks marked in that time may not have been announced.
 
 `<volume>/watcher-state.json` holds the last state Slack was told, written
 only after Slack accepts. A message that fails is sent again on the next pass;
@@ -141,7 +141,7 @@ write, so a machine restart cannot empty it; since 1.58.5 a write cut short by
 a full volume also leaves the previous record in place rather than a truncated
 one. To repair a server that hit this before 1.58.2, remove the file (`fly ssh console -C "rm /data/announced.json"`).
 The next pass reads an absent record as empty and announces the last
-`INDUSK_SERVER_PASS_WINDOW_HOURS` of violations once.
+`INDUSK_SERVER_PASS_WINDOW_HOURS` of breaks once.
 
 ### Running a pass by hand
 
@@ -169,7 +169,7 @@ did not start. `--once` is required: the scheduled pass belongs to
 | `INDUSK_SERVER_USER` | yes | The basic-auth user, for both doors. |
 | `INDUSK_SERVER_PASSWORD` | yes | Its password. Never commit it; give it to the host as a secret. |
 | `INDUSK_SERVER_RETENTION_HOURS` | no | How long a span stays readable. Defaults to 672 (28 days). |
-| `INDUSK_SERVER_SLACK_WEBHOOK` | yes | The incoming-webhook URL violations are announced to. A server that cannot say anything is not watching, so this is required. |
+| `INDUSK_SERVER_SLACK_WEBHOOK` | yes | The incoming-webhook URL breaks are announced to. A server that cannot say anything is not watching, so this is required. |
 | `INDUSK_SERVER_PASS_INTERVAL_MS` | no | How often the pass runs. Defaults to 60000. |
 | `INDUSK_SERVER_PASS_WINDOW_HOURS` | no | How far back each pass looks, and how long the announced record keeps a span. Defaults to 24. |
 | `INDUSK_SERVER_WATCHER_STALE_MS` | no | How old the newest heartbeat may be before the watcher is blind. Defaults to `max(3 × interval, 180000)`; set lower only in tests. |
@@ -205,7 +205,7 @@ so this is a refusal rather than a default.
 
 `monitor` — the position a closed plan holds while its behaviour promises are
 being watched — waits out a quiet window of `promises.quiet_window_days`,
-seven by default. A violation has to still be readable when a person comes to
+seven by default. A break has to still be readable when a person comes to
 look at it, and the person who comes to look may be a week late. The default
 retention is four quiet windows, so nothing in the loop's own cadence can
 outlive the evidence it is about. Shorten it with

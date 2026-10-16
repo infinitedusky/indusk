@@ -174,13 +174,13 @@ the application you build runs, ships and serves with InDusk deleted.
 | Where | What | Who reads it |
 |---|---|---|
 | **In your repo** | `.indusk/` (plans, the promise registry, incidents, config), `.claude/` (skills, hooks, lessons), `CLAUDE.md` | people and agents, at development time; committed like code |
-| **In your code** | only what your code already does: OpenTelemetry spans. A behaviour promise is marked with two attributes and an event you set yourself — no InDusk import | anyone with the trace |
-| **In your tests** | `@infinitedusky/indusk-mcp/testing/trace-shape`, to assert a promise's mark — a dev dependency, test code only | the test runner |
+| **In your code** | only what your code already does: OpenTelemetry spans. A behaviour promise sends its signal with two attributes and an event you set yourself — no InDusk import | anyone with the trace |
+| **In your tests** | `@infinitedusky/indusk-mcp/testing/trace-shape`, to assert a promise's signal — a dev dependency, test code only | the test runner |
 | **On your machine** | the `indusk` CLI and MCP server, the admin UI daemon, and the local-telemetry daemon (Jaeger + otelcol) — the one backend the monitor reads | `indusk promises status` / `watch`, the admin's health chips |
 | **Always on** | nothing yet. Running `watch` on a schedule, and reading deployed systems, is planned as `day-always-on` | — |
 
 A hosted observability service is optional: a place to look, never a source the
-loop depends on. The loop — run, mark, Jaeger, `watch`, incident, Maintenance
+loop depends on. The loop — run, signal, Jaeger, `watch`, incident, Maintenance
 phase — works on a laptop with nothing else installed.
 
 → [Promises](/guide/promises#the-loop) · [The plan lifecycle](/guide/plan-lifecycle#monitor-as-built)

@@ -171,7 +171,7 @@ A 0% false-positive rate from a reviewer grading their own morning's work is not
 
 ### Why this can't be a test
 
-The honest limit: whether a unit "should have been extracted" depends on the codebase, the domain, and taste the extensions encode only partially. Testing it would need a labelled corpus of craft violations and non-violations drawn from real plans — which does not exist and cannot be manufactured without inventing the very judgments under test.
+The honest limit: whether a unit "should have been extracted" depends on the codebase, the domain, and taste the extensions encode only partially. Testing it would need a labelled corpus of craft problems and non-problems drawn from real plans — which does not exist and cannot be manufactured without inventing the very judgments under test.
 
 So the mechanism is tested and the judgment is measured. A12 rows prove Shape fires, scopes correctly, and records outcomes; the counts above are the only evidence about whether it fires *wisely*. Treating the passing test suite as evidence of good judgment would be the mistake this section exists to prevent.
 

@@ -74,7 +74,7 @@ Tabulates the wrapped repo's status: trunk path + worktree slugs at workbench ro
 
 ### `indusk worktree preflight <slug>`
 
-Runs the wrapped repo's `preflight[]` commands against the worktree's diff vs base branch. Exits non-zero on any command failure; stderr surfaces the violations. Exports a stable env contract to each preflight command:
+Runs the wrapped repo's `preflight[]` commands against the worktree's diff vs base branch. Exits non-zero on any command failure; stderr surfaces the failures. Exports a stable env contract to each preflight command:
 - `CHANGED_FILES` — full list of files changed vs base
 - `CHANGED_FILES_BIOME` — same list filtered to biome-relevant extensions
 - Any declarative `preflight_env{}` derived booleans (e.g., `MIGRATIONS_RELEVANT=true` when `packages/db/migrations/**` matches)

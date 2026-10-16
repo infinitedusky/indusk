@@ -60,7 +60,7 @@ flowchart TD
     F5 --> R
 ```
 
-Detections are **not** short-circuited in practice — a run reports every violation it finds, not just the first. The flow above reads top-to-bottom for clarity.
+Detections are **not** short-circuited in practice — a run reports every break it finds, not just the first. The flow above reads top-to-bottom for clarity.
 
 ### Test references: paths, and the difference between red and unchecked
 
@@ -108,7 +108,7 @@ Plan:     dawn-verify
 Phase:    5
 Baseline: a2c95bd0 (ledger)
 
-✗ PHASE 5 REJECTED (2 violations)
+✗ PHASE 5 REJECTED (2 breaks)
 
   red-test    A4 — Row A4 claims "passing", but its test does not pass:
               apps/indusk-mcp/src/lib/verify/red-tests.test.ts exited non-zero.

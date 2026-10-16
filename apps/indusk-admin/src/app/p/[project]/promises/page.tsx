@@ -25,7 +25,7 @@ import {
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { readPlanHierarchy } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
-import { buildRows, parseQuery } from "@/lib/promise-dashboard";
+import { buildRows, parseQuery, readsNoSignal } from "@/lib/promise-dashboard";
 import { readTimelineView } from "@/lib/promise-timeline";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
@@ -60,7 +60,7 @@ interface PromisesRouteProps {
  * and the field, with every well-formed entry still listed beneath; no
  * registry at all is an empty state that says how to create one.
  *
- * Live like the plan page (day-always-on, ADR D8): a violation arriving from
+ * Live like the plan page (day-always-on, ADR D8): a break arriving from
  * a deployed system has to turn the chip red without anyone reloading, or the
  * page is a snapshot pretending to be a status board. Same `LiveRefresh` at
  * the project's `admin.refresh_ms`, which also bounds the health read's cache.
@@ -71,15 +71,21 @@ interface PromisesRouteProps {
 /**
  * Which dashboard state this page drew, for the look check (ui-promises Build
  * Phase 6): a registry with promises is the default, one without any the
- * empty state; no registry reports neither. The nav and a promise's states
- * are not reported here, so the check reads them unchecked.
+ * empty state; no registry reports neither. A row drawn with no signal is
+ * reported as `promise-row.no-signal` beside it (one-promise-language). The nav
+ * and a promise's states are not reported here, so the check reads them
+ * unchecked.
  */
 function dashboardLookState(
   hasRegistry: boolean,
   promises: number,
+  hasNoSignalRow: boolean,
 ): string | undefined {
   if (!hasRegistry) return undefined;
-  return promises > 0 ? "dashboard.default" : "dashboard.empty";
+  if (promises === 0) return "dashboard.empty";
+  return hasNoSignalRow
+    ? "dashboard.default promise-row.no-signal"
+    : "dashboard.default";
 }
 
 export default async function PerProjectPromisesPage({
@@ -166,7 +172,11 @@ export default async function PerProjectPromisesPage({
   return (
     <div
       className="flex flex-col gap-4"
-      data-look-state={dashboardLookState(registry !== null, rows.length)}
+      data-look-state={dashboardLookState(
+        registry !== null,
+        rows.length,
+        rows.some(readsNoSignal),
+      )}
     >
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
       {!read.ok && "problems" in read && (

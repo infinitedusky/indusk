@@ -43,7 +43,7 @@ export interface LookRun {
 	device: string;
 	/** `story` for a component story's run; absent for a screen's, so no recorded run needs rewriting. */
 	kind?: "story";
-	outcome: "upheld" | "violated";
+	outcome: "upheld" | "broken";
 	/** When the run ended, ISO. */
 	at: string;
 	symptom: string | null;
@@ -110,7 +110,7 @@ export function newestRunSince(
  * its mockup is approved as it is, else held or, with no run, unchecked.
  */
 export function lookStandingFor(approved: boolean, newest: LookRun | null): LookStanding {
-	if (newest?.outcome === "violated") return "broken";
+	if (newest?.outcome === "broken") return "broken";
 	if (!approved) return "uncovered";
 	return newest ? "held" : "unchecked";
 }

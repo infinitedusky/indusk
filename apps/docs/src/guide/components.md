@@ -139,8 +139,7 @@ and is never written inside another `<indusk-content>`; a self-closing
   Name a property the state lists, or give the component a story that takes it.
 - **`content-given-twice`** — one property was given two times: two
   `<indusk-content for="name">`, or `for="children"` beside bare words
-  (`content given twice: <file>:<line> button "children" is also given at line
-  <n>`). Keep one.
+  (`content given twice: <file>:<line> button "children" is also given at line <n>`). Keep one.
 
 ## Approval, and taking it back
 

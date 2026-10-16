@@ -66,7 +66,7 @@ describe("the store — test-kinds A6–A9", () => {
     src.clock.now += MIN;
     src.add("production", {
       promise: PROMISE,
-      outcome: "violated",
+      outcome: "broken",
       at: T0 - 5 * MIN,
     });
     expect(states(await view(f, src)), LESSON).toContain("red");
@@ -77,7 +77,7 @@ describe("the store — test-kinds A6–A9", () => {
     const src = fakeSource({ now: T0 });
     src.add("production", {
       promise: PROMISE,
-      outcome: "violated",
+      outcome: "broken",
       at: T0 - 2 * HOUR,
     });
     expect(states(await view(f, src)), "the first server's break").toContain(

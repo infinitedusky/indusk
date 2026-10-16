@@ -6,6 +6,7 @@ import { ACTIVITY_MAX, activityLines, addRuns, type Run, startActivity } from ".
  * arrives, newest first, and keeps a bounded number.
  *
  * promise: the-editor-shows-each-run-as-it-happens
+ * promise: a-promise-is-upheld-or-broken — one-promise-language A9, A15.
  */
 
 const run = (i: number, outcome: Run["outcome"] = "upheld"): Run => ({
@@ -18,7 +19,13 @@ const run = (i: number, outcome: Run["outcome"] = "upheld"): Run => ({
 
 describe("activity", () => {
 	it("A27 — says when no run has arrived yet", () => {
-		expect(activityLines(startActivity())).toEqual(["No runs yet."]);
+		expect(activityLines(startActivity())).toEqual(["No signal yet."]);
+	});
+
+	it("A15 — an empty activity section says no signal, never no runs", () => {
+		const said = activityLines(startActivity()).join(" ");
+		expect(said).toMatch(/no signal/i);
+		expect(said).not.toMatch(/no runs/i);
 	});
 
 	it("A27 — adds only runs it has not shown, newest first", () => {
@@ -27,6 +34,17 @@ describe("activity", () => {
 		expect(a.runs.map((r) => r.traceId)).toEqual(["t-3", "t-2", "t-1"]);
 		expect(activityLines(a)[0]).toMatch(/seats-held broke \(local\)/);
 		expect(activityLines(a)[1]).toMatch(/seats-held held \(local\)/);
+	});
+
+	it("A9 — a run whose outcome is broken reads broke; held and a run written violated read as before", () => {
+		const a = addRuns(startActivity(), [
+			run(3, "broken" as Run["outcome"]),
+			run(2, "violated"),
+			run(1),
+		]);
+		expect(activityLines(a)[0]).toMatch(/seats-held broke \(local\)/);
+		expect(activityLines(a)[1]).toMatch(/seats-held broke \(local\)/);
+		expect(activityLines(a)[2]).toMatch(/seats-held held \(local\)/);
 	});
 
 	it("A27 — keeps a bounded number, dropping the oldest", () => {

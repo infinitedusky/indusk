@@ -133,7 +133,7 @@ The retrospective also captures **lessons learned** — patterns that worked wel
 ### For Developers
 
 - **Structure without bureaucracy.** The planning lifecycle adds just enough process to prevent the "I'll just start coding" trap without turning into JIRA.
-- **The agent checks its own work.** Verification gates mean you're not manually reviewing every line — the system catches type errors, lint violations, and test failures automatically.
+- **The agent checks its own work.** Verification gates mean you're not manually reviewing every line — the system catches type errors, lint errors, and test failures automatically.
 - **Context survives between sessions.** CLAUDE.md means the agent doesn't start from zero every time. It knows your architecture, conventions, and past decisions.
 - **Code graph prevents breakage.** Before modifying any file, the agent checks what depends on it. No more "I changed a utility function and broke 12 components."
 

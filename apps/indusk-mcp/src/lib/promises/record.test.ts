@@ -178,7 +178,7 @@ describe("A3 — a pass marks itself", () => {
 		expect(r.opened).toEqual([]);
 		expect(incidentsIn(fx.root)).toEqual([]);
 		expect(gitOut(fx.root, ["rev-parse", "HEAD"])).toBe(head);
-		expect(marks).toEqual([{ outcome: "violated", symptom: expect.stringMatching(reason) }]);
+		expect(marks).toEqual([{ outcome: "broken", symptom: expect.stringMatching(reason) }]);
 	});
 
 	it("the incident could not be written: nothing committed, marked broken with the reason", async () => {
@@ -190,7 +190,7 @@ describe("A3 — a pass marks itself", () => {
 		await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
 		expect(gitOut(fx.root, ["rev-parse", "HEAD"])).toBe(head);
 		expect(marks).toEqual([
-			{ outcome: "violated", symptom: expect.stringMatching(/EACCES|permission/i) },
+			{ outcome: "broken", symptom: expect.stringMatching(/EACCES|permission/i) },
 		]);
 	});
 
@@ -312,7 +312,7 @@ describe("A27 — a commit that failed is finished by a later pass", () => {
 		expect(gitOut(fx.root, ["status", "--porcelain", "-uall"])).toContain(file);
 
 		await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
-		expect(marks.map((m) => m.outcome)).toEqual(["violated", "violated"]);
+		expect(marks.map((m) => m.outcome)).toEqual(["broken", "broken"]);
 
 		rmSync(lock);
 		const r = await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
@@ -352,7 +352,7 @@ describe("A29 — recording commits on the trunk only", () => {
 		const r = await record(fx.root, { by: "admin", source: "deployed" }, deps(answering([TRACE])));
 		expect(gitOut(fx.root, ["rev-parse", "HEAD"])).toBe(head);
 		expect(r.committed).toEqual([]);
-		expect(marks).toEqual([{ outcome: "violated", symptom: expect.stringMatching(/feature/) }]);
+		expect(marks).toEqual([{ outcome: "broken", symptom: expect.stringMatching(/feature/) }]);
 		expect(r.error?.message ?? "").toMatch(/trunk/);
 	});
 });

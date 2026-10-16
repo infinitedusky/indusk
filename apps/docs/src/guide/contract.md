@@ -25,7 +25,7 @@ A promise is never read from both.
 ## Why it lives with the code
 
 The code already names its promises. Tests and code carry `promise: <name>`
-tokens, and the running application sends marks under those names. If the
+tokens, and the running application sends signals under those names. If the
 contract lived only in a workbench, two workbenches on one repo could define
 the same name two ways, and one application's telemetry would be read against
 two contracts. Kept with the code, the contract, the tests that prove it and
@@ -34,7 +34,7 @@ the telemetry that watches it share one history.
 ## How a repo adopts its contract
 
 1. You work on the repo from a workbench, under the shadow contract. The
-   tokens you add are plain comments, and the marks are plain OpenTelemetry
+   tokens you add are plain comments, and the signals are plain OpenTelemetry
    spans.
 2. A broken promise caught, or a review's evidence, makes the case.
 3. A pull request moves the contract into the repo: the folder, a CI check,

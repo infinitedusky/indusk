@@ -195,7 +195,7 @@ The agent's original reasoning, kept as the record:
 ## Sources
 
 - `.indusk/planning/promise-core/master.md` — "The words", "Signal, not mark".
-- `.indusk/planning/one-promise-language/brief.md`.
+- `.indusk/planning/archive/one-promise-language/brief.md`.
 - `apps/indusk-mcp/src/lib/promises/{vocabulary,mark,telemetry,registry,incidents,check,status,watch,store}.ts`,
   `apps/indusk-mcp/src/lib/always-on/pass.ts`, `apps/indusk-admin/src/components/bars/labels.ts`,
   `apps/vscode-extension/src/core/view.ts`.

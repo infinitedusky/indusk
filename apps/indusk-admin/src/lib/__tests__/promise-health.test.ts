@@ -83,7 +83,7 @@ describe("the chips — test-kinds A4, A5, A10–A12", () => {
       const src = fakeSource({ now: T0 });
       src.add("production", {
         promise: PROMISE,
-        outcome: "violated",
+        outcome: "broken",
         at: T0 - 2 * HOUR,
         traceId: TRACE,
       });
@@ -104,7 +104,7 @@ describe("the chips — test-kinds A4, A5, A10–A12", () => {
     });
     src.add("local", {
       promise: PROMISE,
-      outcome: "violated",
+      outcome: "broken",
       at: T0 - 10 * MIN,
     });
     expect(
@@ -169,13 +169,13 @@ describe("the chips — test-kinds A4, A5, A10–A12", () => {
     const src = fakeSource({ now: T0 });
     src.add("production", {
       promise: PROMISE,
-      outcome: "violated",
+      outcome: "broken",
       at: T0 - 3 * HOUR,
       environment: "production",
     });
     src.add("production", {
       promise: PROMISE,
-      outcome: "violated",
+      outcome: "broken",
       at: T0 - HOUR,
       environment: "staging",
     });

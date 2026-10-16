@@ -203,7 +203,7 @@ function stateRefusals(
 				if (incidentsById.get(id)?.status === "open") {
 					refusals.push({
 						file: registryFile(p.file),
-						message: `${p.name}: enforced, but incident "${id}" is open — an open incident says the promise is broken now; mark the incident fixed or the promise known-violated`,
+						message: `${p.name}: enforced, but incident "${id}" is open — an open incident says the promise is broken now; mark the incident fixed or the promise known-broken`,
 					});
 				}
 			}
@@ -227,13 +227,13 @@ function stateRefusals(
 			}
 			break;
 		}
-		case "known-violated": {
+		case "known-broken": {
 			linkRefusals(codeRoot, p, refusals);
 			const open = p.incidents.filter((id) => incidentsById.get(id)?.status === "open");
 			if (open.length === 0) {
 				refusals.push({
 					file: registryFile(p.file),
-					message: `${p.name}: known-violated with no open incident — the state is evidence, not an excuse; record the incident under ${PROMISES_REL_DIR}/incidents/ or change the state`,
+					message: `${p.name}: known-broken with no open incident — the state is evidence, not an excuse; record the incident under ${PROMISES_REL_DIR}/incidents/ or change the state`,
 				});
 			}
 			break;
