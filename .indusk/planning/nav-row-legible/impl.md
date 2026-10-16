@@ -53,14 +53,14 @@ click would follow the link. See [brief.md](brief.md) and the approved mockups
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | A plan with a worktree shows its title on line one and its stage on line two, with a textless mark on the stage's line 8 px after the stage; the row is no taller than a row without a worktree | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-nav-row-keeps-its-parts-apart | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
-| A2 | Clicking the mark does not open the plan; a click on the row's title, badge or stage lands on the plan's link | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-nav-row-keeps-its-parts-apart, promise: every-plan-is-one-click-away | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
-| A3 | Hovering the mark widens it in place on the stage's line to show the worktree's name; leaving closes it | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-nav-row-keeps-its-parts-apart | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
-| A4 | Clicking the mark, or Enter or Space on it, opens it to the name with aria-expanded true; again closes it with aria-expanded false | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-nav-row-keeps-its-parts-apart | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
-| A5 | An open mark with a long worktree name ends in an ellipsis inside the row; the row keeps its width and two lines, and the nav does not scroll sideways | Test Phase 1 | Build Phase 1 | planned | unit | promise: a-nav-row-keeps-its-parts-apart, promise: the-nav-fits-a-phone | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
-| A6 | In a collapsed nav, a row with a worktree shows only its badge, no mark, as tall as any other row, and a click on the badge lands on the plan's link | Test Phase 1 | Test Phase 1 | planned | unit | promise: every-plan-is-one-click-away, promise: the-nav-fits-a-phone | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
-| A7 | A plan without a worktree is drawn as today: no mark, and the whole row is one link to the plan | Test Phase 1 | Test Phase 1 | planned | unit | promise: every-plan-is-one-click-away | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
-| A8 | Served by the admin, an assigned plan's nav row still names its worktree in the page with the mark closed | Test Phase 1 | Test Phase 1 | planned | contract | a regression guard over admin-plan-worktrees' served-sidebar test, which the closed, textless mark must keep passing through its label | apps/indusk-admin/src/__tests__/http-plan-worktrees.test.ts |
+| A1 | A plan with a worktree shows its title on line one and its stage on line two, with a textless mark on the stage's line 8 px after the stage; the row is no taller than a row without a worktree | Test Phase 1 | Build Phase 1 | written | unit | promise: a-nav-row-keeps-its-parts-apart | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
+| A2 | Clicking the mark does not open the plan; a click on the row's title, badge or stage lands on the plan's link | Test Phase 1 | Build Phase 1 | written | unit | promise: a-nav-row-keeps-its-parts-apart, promise: every-plan-is-one-click-away | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
+| A3 | Hovering the mark widens it in place on the stage's line to show the worktree's name; leaving closes it | Test Phase 1 | Build Phase 1 | written | unit | promise: a-nav-row-keeps-its-parts-apart | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
+| A4 | Clicking the mark, or Enter or Space on it, opens it to the name with aria-expanded true; again closes it with aria-expanded false | Test Phase 1 | Build Phase 1 | written | unit | promise: a-nav-row-keeps-its-parts-apart | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
+| A5 | An open mark with a long worktree name ends in an ellipsis inside the row; the row keeps its width and two lines, and the nav does not scroll sideways | Test Phase 1 | Build Phase 1 | written | unit | promise: a-nav-row-keeps-its-parts-apart, promise: the-nav-fits-a-phone | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
+| A6 | In a collapsed nav, a row with a worktree shows only its badge, no mark, as tall as any other row, and a click on the badge lands on the plan's link | Test Phase 1 | Test Phase 1 | written | unit | promise: every-plan-is-one-click-away, promise: the-nav-fits-a-phone | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
+| A7 | A plan without a worktree is drawn as today: no mark, and the whole row is one link to the plan | Test Phase 1 | Test Phase 1 | written | unit | promise: every-plan-is-one-click-away | apps/indusk-admin/src/components/PlanList.worktree.test.tsx |
+| A8 | Served by the admin, an assigned plan's nav row still names its worktree in the page with the mark closed | Test Phase 1 | Test Phase 1 | written | contract | a regression guard over admin-plan-worktrees' served-sidebar test, which the closed, textless mark must keep passing through its label | apps/indusk-admin/src/__tests__/http-plan-worktrees.test.ts |
 
 ### Deferred Verification
 
@@ -77,13 +77,13 @@ click would follow the link. See [brief.md](brief.md) and the approved mockups
 
 Before any component changes, this phase writes one browser test file that draws the real nav with the real stylesheet and measures a plan's row: where the title, stage and worktree mark sit, what a click at the centre of each part lands on, what hovering and clicking the mark does, how a long worktree name fits, and what a collapsed nav shows. The tests about the mark fail today, because the worktree is a tag with its name, crowded into the stage's text inside the plan's link. Two tests pass today and must keep passing: a collapsed nav still shows only the badge and the badge still opens the plan, and a plan without a worktree is still one link. An existing test that boots the admin and finds the worktree's name in the served sidebar also passes today, and must keep passing once the closed mark shows no text. The next phase builds the mark and the row's new form.
 
-- [ ] Confirm this plan has its own worktree.
+- [x] Confirm this plan has its own worktree.
   <details><summary>Technical</summary>
 
   `indusk worktree create nav-row-legible`, or `indusk worktree assign nav-row-legible /Users/the_dusky/code/sandbox/dusk-worktrees/nav-row-legible` for the one `plans start` made — worktree-per-plan default.
 
   </details>
-- [ ] Write the browser tests that a plan's row keeps its title, stage and worktree mark apart, and that the mark opens to its name without opening the plan, failing today.
+- [x] Write the browser tests that a plan's row keeps its title, stage and worktree mark apart, and that the mark opens to its name without opening the plan, failing today.
   <details><summary>Technical</summary>
 
   New `apps/indusk-admin/src/components/PlanList.worktree.test.tsx`, opening with `// promise: a-nav-row-keeps-its-parts-apart`, `// promise: every-plan-is-one-click-away`, `// promise: the-nav-fits-a-phone`. `import "@/app/globals.css"` (as `LookRow.test.tsx` does) so the foundation and `nav-hide` / `nav-mark` rules apply; the `next/link` and `promises/display` mocks of `PlanList.test.tsx`, plus `next/navigation`'s `usePathname` if `NavPlanRow` needs it. Render `<Nav project="p">` (and `collapsed` for the collapsed case) around `<PlanList>` with `mockPlan`s, one carrying `worktree: { name: "nav-stage-matches-plan-page", path: "/wt/nav-stage-matches-plan-page", branch: "plan/nav-stage-matches-plan-page" }`, one without; `page.viewport(1280, 900)`. The mark is found as `[data-testid="plan-worktree"] button` (the wrapper is the page's, the button the component's). Positions come from `getBoundingClientRect`; "a click lands on" is `document.elementFromPoint(centre)?.closest(...)`.
@@ -97,13 +97,13 @@ Before any component changes, this phase writes one browser test file that draws
   - A7: the worktree-less row's `[data-component="plan-row"]` is itself `a[data-plan-name]` with the plan's `href`, and holds no `[data-testid="plan-worktree"]`. Passes today.
 
   </details>
-- [ ] Confirm the test of the served sidebar still finds the worktree's name, and mark it as guarding this plan's row.
+- [x] Confirm the test of the served sidebar still finds the worktree's name, and mark it as guarding this plan's row.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/__tests__/http-plan-worktrees.test.ts` A3 ("the sidebar row for an assigned plan names its worktree") reads `wt-alpha` within 600 characters after `data-testid="plan-worktree"` in the served HTML. Add a comment beside it naming this plan: the closed mark shows no text, so the name rides in the mark's label (`aria-label` / `title`). No assertion changes. A8.
 
   </details>
-- [ ] Confirm no new test fails only because a file it loads is missing.
+- [x] Confirm no new test fails only because a file it loads is missing.
   <details><summary>Technical</summary>
 
   The test imports only `PlanList`, `Nav` and `globals.css`, which exist; the red rows fail on finding no button, an assertion.
@@ -118,16 +118,18 @@ Before any component changes, this phase writes one browser test file that draws
 
 #### Test Phase 1 Verification
 
-- [ ] The new tests exist, the ones about the mark fail because there is no mark yet, and the two guards pass.
+- [x] The new tests exist, the ones about the mark fail because there is no mark yet, and the two guards pass.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/nav-row-legible/apps/indusk-admin && pnpm exec vitest run src/components/PlanList.worktree.test.tsx` — A1–A5 red, each on its own assertion (no `[data-testid="plan-worktree"] button`); A6 and A7 green.
 
   </details>
-- [ ] The test of the served sidebar still passes.
+- [x] The test of the served sidebar still passes.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/nav-row-legible/apps/indusk-admin && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/http-plan-worktrees.test.ts` — A8 green (it boots `next dev`; no other dev server on the app dir).
+
+  Note: A8 (that file's A3) passes. Five other tests in the file (A1, A4, A7, A14, A22 — the active-phase bar reads null/undefined) fail with this phase's edit being a comment only, so they predate this plan; not this plan's to fix.
 
   </details>
 
