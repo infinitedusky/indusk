@@ -5,7 +5,7 @@
  * promise: tokens-are-held-exactly — a look not held everywhere is never kept (A37).
  */
 import { describe, expect, it } from "vitest";
-import { type CheckOptions, checkApp } from "./check.js";
+import { checkApp } from "./check.js";
 import { fakeOpener, fixtureApp, recordingTracer, servedPage } from "./check-run.fixtures.js";
 import { reportLooks } from "./report.js";
 import { readHeld } from "./reuse.js";
@@ -129,7 +129,7 @@ describe("reading what is served", () => {
 			home,
 			fetchPage: () => new Promise<string>(() => {}),
 			readTimeoutMs: 1,
-		} as CheckOptions);
+		});
 		// A guard that only matters when the check hangs: a held check answers in milliseconds.
 		const guard = new Promise<"hung">((r) => setTimeout(() => r("hung"), 3_000));
 		const report = await Promise.race([hung, guard]);

@@ -727,10 +727,12 @@ A fresh reader went looking for ways a changed look could be reported held from 
   Done as: `keepHeld` starts from `readHeld` at write time; `rebuilt` updates only records still there; the plan no longer carries the record read at the start. The window between that read and the rename is not locked — two writes landing inside it still race (milliseconds, against a run's minutes).
 
   </details>
-- [ ] Give the read of the served page a time limit, after which nothing is reused and the looks are opened.
+- [x] Give the read of the served page a time limit, after which nothing is reused and the looks are opened.
   <details><summary>Technical</summary>
 
   `check.ts` `readServed`: the default `fetchPage` passes `signal: AbortSignal.timeout(30_000)`; `read` races any `fetchPage` against the same limit (an option, `readTimeoutMs`, so the test injects a short one) and answers null on expiry, which `planReuse` already turns into "could not be read". A33.
+
+  Done as written: `within(work, ms)` races the read; `readServed` takes `opts` (`fetchPage`, `readTimeoutMs`).
 
   </details>
 - [ ] Look for development markers only in the scripts and stylesheets a page loads, never in its text.

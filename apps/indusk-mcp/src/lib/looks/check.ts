@@ -754,6 +754,24 @@ export interface CheckOptions {
 	now?: Date;
 	/** The HTML at a URL, read once before any look opens to refuse a development server; a plain `fetch` when absent. */
 	fetchPage?: (url: string) => Promise<string>;
+	/** How long that read may take before the build is taken as unreadable; 30 s when absent. */
+	readTimeoutMs?: number;
+}
+
+/** How long the served page is waited for before its build is taken as unreadable. */
+const READ_TIMEOUT_MS = 30_000;
+
+/** `work` within `ms`, else null: a page that never answers costs only reuse, never the run. */
+async function within<T>(work: Promise<T>, ms: number): Promise<T | null> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const expired = new Promise<null>((done) => {
+		timer = setTimeout(() => done(null), ms);
+	});
+	try {
+		return await Promise.race([work, expired]);
+	} finally {
+		clearTimeout(timer);
+	}
 }
 
 /** Every look the app declares, by the name `--only` takes: its screen states and its stories. */
@@ -798,16 +816,21 @@ async function readServed(
 	base: string,
 	firstScreen: LookTarget | undefined,
 	firstStory: StoryTarget | undefined,
-	fetchPage: CheckOptions["fetchPage"] = (url) => fetch(url).then((r) => r.text()),
+	opts: Pick<CheckOptions, "fetchPage" | "readTimeoutMs"> = {},
 ): Promise<Served> {
+	const limit = opts.readTimeoutMs ?? READ_TIMEOUT_MS;
+	const fetchPage =
+		opts.fetchPage ??
+		((url: string) => fetch(url, { signal: AbortSignal.timeout(limit) }).then((r) => r.text()));
 	const read = async (url: string | undefined): Promise<string | null> => {
 		if (!url) return null;
-		let html: string;
+		let html: string | null;
 		try {
-			html = await fetchPage(url);
+			html = await within(fetchPage(url), limit);
 		} catch {
 			return null;
 		}
+		if (html === null) return null;
 		const marker = devServerMarker(html);
 		if (marker !== null) {
 			throw new LooksCheckError(
@@ -858,7 +881,7 @@ export async function checkApp(
 	const served: Served =
 		checked.length + stories.checked.length === 0
 			? { screens: null, stories: null }
-			: await readServed(app, base, checked[0], stories.checked[0], opts.fetchPage);
+			: await readServed(app, base, checked[0], stories.checked[0], opts);
 	const plan = opts.projectRoot
 		? await planReuse(app, opts.projectRoot, base, checked, stories.checked, served, opts)
 		: undefined;
