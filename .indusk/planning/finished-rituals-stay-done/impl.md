@@ -1,7 +1,7 @@
 ---
 title: "A finished ritual stays done"
 date: 2026-10-16
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -55,7 +55,7 @@ On a plan's page, Falsify, Cleanup and Audit read done once each ritual is finis
 
 Before any code changes, this phase writes the tests for what a plan's step list says once a later build phase has reopened the plan. They feed the step list a plan whose rituals are finished and whose build is open again, once from facts handed in and once read from a plan folder on disk, and check which steps read done. The ones about finished rituals fail today, because a step is read only from where the plan stands. Two pass from the start and guard what must not change: a ritual being worked still reads current, and a ritual skipped with a reason still reads skipped. The next phase makes the finished rituals count.
 
-- [ ] Confirm this plan has its own worktree.
+- [x] Confirm this plan has its own worktree.
   <details><summary>Technical</summary>
 
   `plans start` made `/Users/the_dusky/code/sandbox/dusk-worktrees/finished-rituals-stay-done` and assigned it; confirm with `indusk worktree list` — worktree-per-plan default.
