@@ -1,7 +1,7 @@
 ---
 title: "Plans are promises"
 date: 2026-10-16
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -551,7 +551,7 @@ A cold read of the finished plan found that it would not close by the rules it s
 
 #### Build Phase 6 Document
 
-- [ ] The brief guide and the command reference say a clause's test file carries its clause token.
+- [x] The brief guide and the command reference say a clause's test file carries its clause token.
   <details><summary>Technical</summary>
 
   `apps/docs/src/guide/test-trajectory.md` — the `clause:` token also goes in the test file; `apps/docs/src/reference/skills/plan.md` — closing per clause names the file check.
