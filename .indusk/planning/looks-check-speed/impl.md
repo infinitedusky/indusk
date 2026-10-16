@@ -72,20 +72,20 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 | A7 | The all option reopens every look whatever was held | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 | A8 | Held results live in the project's home outside the checkout; a run writes nothing under the checkout; another worktree of the project reads the same results | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 | A9 | A reused look sends one upheld signal per device and scheme marked reused with the time it was really measured; a measured look's signal carries no reused mark | Build Phase 2 | Build Phase 2 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
-| A10 | Against real Chromium and a served app, a second run requests no page, prints one reused line per look, counts reused in the summary, exits 0 | Test Phase 1 | Build Phase 2 | planned | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
-| A11 | Each look's page is requested once, and the look is still reported at every device and scheme under today's names | Test Phase 1 | Build Phase 1 | planned | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
-| A12 | A page measured in place reads as a fresh load does at every device and scheme, for a colour transition and a pixel-ratio media query | Test Phase 1 | Test Phase 1 | planned | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
+| A10 | Against real Chromium and a served app, a second run requests no page, prints one reused line per look, counts reused in the summary, exits 0 | Test Phase 1 | Build Phase 2 | written | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
+| A11 | Each look's page is requested once, and the look is still reported at every device and scheme under today's names | Test Phase 1 | Build Phase 1 | written | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
+| A12 | A page measured in place reads as a fresh load does at every device and scheme, for a colour transition and a pixel-ratio media query | Test Phase 1 | Test Phase 1 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A13 | A development server's page (Next HMR client, webpack refresh runtime, Vite client) is refused before any look opens, naming the declared serve command or how to declare one; a production page is not | Build Phase 3 | Build Phase 3 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/dev-server.test.ts |
-| A14 | Against a served page carrying a development marker, the check exits 1 with the refusal and reports no look held | Test Phase 1 | Build Phase 3 | planned | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
-| A15 | A look that times out twice is unchecked with the reason, a 404 is unchecked at once, any other failure ends the run | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-timeout.test.ts |
+| A14 | Against a served page carrying a development marker, the check exits 1 with the refusal and reports no look held | Test Phase 1 | Build Phase 3 | written | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
+| A15 | A look that times out twice is unchecked with the reason, a 404 is unchecked at once, any other failure ends the run | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-timeout.test.ts |
 | A16 | With one load per look, a look that does not load or draw in time is unchecked at every device and scheme with the reason, and every other look is judged | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
 | A17 | The only option checks just the looks of that name, screen or story or both, at every device and scheme, measured even when reusable; nothing else is opened or reported | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
 | A18 | The only option with a name no look has is refused, naming it, before any page opens | Build Phase 1 | Build Phase 1 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
 | A19 | A changed foundation reopens every look; no result held on the old foundation is reported | Build Phase 2 | Build Phase 2 | planned | unit | promise: tokens-are-held-exactly, promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
-| A20 | A page with a raw value is still reported broken, naming the element and the approved and actual values, with in-place measuring | Test Phase 1 | Test Phase 1 | planned | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
-| A21 | The new browser tests are in the system tier; the everyday suite starts no browser and no server | Test Phase 1 | Test Phase 1 | planned | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
-| A25 | A look reported only as reused, run after run, keeps reading holding in its standing, never no signal | Test Phase 1 | Test Phase 1 | planned | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/promises/look-standing.test.ts |
-| A27 | The full check of the admin with every look opened, against its production build, holds every look, and a broken look fails the slow tests | Test Phase 1 | Build Phase 3 | planned | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-admin-all.contract.test.ts |
+| A20 | A page with a raw value is still reported broken, naming the element and the approved and actual values, with in-place measuring | Test Phase 1 | Test Phase 1 | passing | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-browser.contract.test.ts |
+| A21 | The new browser tests are in the system tier; the everyday suite starts no browser and no server | Test Phase 1 | Test Phase 1 | passing | unit | promise: everyday-tests-never-wait | apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts |
+| A25 | A look reported only as reused, run after run, keeps reading holding in its standing, never no signal | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/promises/look-standing.test.ts |
+| A27 | The full check of the admin with every look opened, against its production build, holds every look, and a broken look fails the slow tests | Test Phase 1 | Build Phase 3 | written | contract | promise: tokens-are-held-exactly | apps/indusk-mcp/src/__tests__/looks-admin-all.contract.test.ts |
 | A22 | After a one-component change with the stories rendered, the admin's check against a production build finishes under 15 s and names every reused look | Build Phase 3 | Build Phase 3 | planned | live check | the brief's first expectation, timed once when the build closes | manual: time indusk looks check admin --url http://localhost:3940 |
 | A23 | The admin's full check with the all option against a production build finishes under 60 s | Build Phase 3 | Build Phase 3 | planned | live check | the brief's second expectation, timed once when the build closes | manual: time indusk looks check admin --url http://localhost:3940 --all |
 | A24 | Against a running next dev of the admin, the check refuses naming the admin's build-and-serve command, without opening a look | Build Phase 3 | Build Phase 3 | planned | live check | the dev-server clause against the framework itself, whose markers this plan reads but does not own | manual: indusk looks check admin --url http://localhost:3961 |
@@ -105,13 +105,13 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 
 Before the check changes, this phase writes the tests that run the real check in a real browser against a small served app and say what a fast check does: a second run with nothing changed asks the server for no page and says each look was reused; each look's page is asked for once yet reported at every device and colour scheme; a page that a development server would answer is refused. These fail today. Two more pass today and must keep passing once a page is measured in place: a page whose colours transition, or that changes with the screen's pixel ratio, still holds, and a page with a raw colour is still caught. A further test runs the full check of the admin, every look opened, against its production build; it belongs to the slow tests that run in the background after landing and at release, and it fails today because the check has no option to open every look. A look that is only ever reused must keep reading holding, which the standing reader already does for a signal marked reused. The test that a slow look never ends the run already exists and is marked as proving this plan's promise. The tests that decide reuse, the only option and the dev-server markers need code the build phases add, so their bodies are written into the register below. The next phase makes each look load once.
 
-- [ ] Confirm this plan has its own worktree.
+- [x] Confirm this plan has its own worktree.
   <details><summary>Technical</summary>
 
   `indusk worktree create looks-check-speed`, or `indusk worktree assign looks-check-speed /Users/the_dusky/code/sandbox/dusk-worktrees/looks-check-speed` for the one `plans start` made — worktree-per-plan default.
 
   </details>
-- [ ] Write the browser tests that a check reuses what held, asks for each page once, and refuses a development server, failing today.
+- [x] Write the browser tests that a check reuses what held, asks for each page once, and refuses a development server, failing today.
   <details><summary>Technical</summary>
 
   New `apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts`, carrying `promise: a-look-check-costs-what-changed` and `promise: tokens-are-held-exactly` in its docblock, on `looks-browser.contract.test.ts`'s pattern: copy `src/__tests__/fixtures/looks-app` to a temp project, approve `home.empty` at its true hashes (`approve` from `lib/looks/approve.js`), serve pages from a child process (`SERVER`), and run `indusk looks check demo --url <server>` through `runCli` with a temp `INDUSK_HOME`. The server appends each request's path and query to a log file the test reads.
@@ -122,25 +122,25 @@ Before the check changes, this phase writes the tests that run the real check in
   Add the file to `SYSTEM` in `apps/indusk-mcp/vitest.tiers.ts`.
 
   </details>
-- [ ] Write the test that the full check of the admin, every look opened, holds every look, failing today.
+- [x] Write the test that the full check of the admin, every look opened, holds every look, failing today.
   <details><summary>Technical</summary>
 
   A27, new `apps/indusk-mcp/src/__tests__/looks-admin-all.contract.test.ts` (`promise: tokens-are-held-exactly`): start the bundled admin (`apps/indusk-mcp/admin`, built by `test:system`'s `prepublishOnly`) on a free port with a temporary `INDUSK_HOME` that registers this checkout, the way `admin-cli-lifecycle.test.ts` starts the daemon; run `indusk looks check admin --all --url http://localhost:<port>` through `runCli` from the repository root; expect exit 0 and no `broken` line, and print the run's time. Red today: `--all` is an unknown option. Add the file to `SYSTEM`: the slow tier runs it in the background after landing and at release, and a failure there is routed to `tokens-are-held-exactly` as an incident; it never blocks either.
 
   </details>
-- [ ] Add a case that a look reported only as reused keeps reading holding.
+- [x] Add a case that a look reported only as reused keeps reading holding.
   <details><summary>Technical</summary>
 
   A25, `apps/indusk-mcp/src/lib/promises/look-standing.test.ts`: Jaeger-shaped look spans (outcome `upheld`) carrying `indusk.look.reused = true` and `indusk.look.measured_at`, over runs with no fresh measurement, give the look's standing `holding`, never no signal. Passes today: the reader ignores attributes it does not read.
 
   </details>
-- [ ] Mark the existing slow-look test as proving this plan's promise.
+- [x] Mark the existing slow-look test as proving this plan's promise.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/__tests__/looks-check-timeout.test.ts`: add `promise: a-look-check-costs-what-changed` to a docblock (the clause "a slow look never ends the run", shipped in storybook-components). A15.
 
   </details>
-- [ ] Confirm no new test fails only because a file it loads is missing.
+- [x] Confirm no new test fails only because a file it loads is missing.
   <details><summary>Technical</summary>
 
   The contract file imports only existing modules (`approve`, `generateCss`, `readApp`, `runCli`). Red rows fail on their own assertions.
@@ -340,19 +340,19 @@ Before the check changes, this phase writes the tests that run the real check in
 
 #### Test Phase 1 Verification
 
-- [ ] The new browser tests exist; the ones for reuse, one request per look and the dev-server refusal fail on their own assertions, and the in-place tripwire passes.
+- [x] The new browser tests exist; the ones for reuse, one request per look and the dev-server refusal fail on their own assertions, and the in-place tripwire passes.
   <details><summary>Technical</summary>
 
   `cd /Users/the_dusky/code/sandbox/dusk-worktrees/looks-check-speed/apps/indusk-mcp && pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/looks-check-speed.contract.test.ts src/__tests__/looks-browser.contract.test.ts src/__tests__/looks-admin-all.contract.test.ts` — red: A10, A11, A14, A27; green: A12, A20.
 
   </details>
-- [ ] The slow-look test, the everyday-suite guard and the reused-standing case pass.
+- [x] The slow-look test, the everyday-suite guard and the reused-standing case pass.
   <details><summary>Technical</summary>
 
   `pnpm exec vitest run src/__tests__/looks-check-timeout.test.ts src/__tests__/everyday-tests-never-wait.test.ts src/lib/promises/look-standing.test.ts` — A15, A21 and A25 green.
 
   </details>
-- [ ] Every deferred test body above has been read and judged.
+- [x] Every deferred test body above has been read and judged.
   <details><summary>Technical</summary>
 
   Each body in the three Deferred sections reviewed against both questions: will it compile at the phase it names (the helpers `fixtureApp`, `fakeOpener`, `recordingTracer` and `gitRepoWithWorktree` are written with it), and does it assert what its row claims?
