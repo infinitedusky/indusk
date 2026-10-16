@@ -418,6 +418,79 @@ describe.skipIf(SHOULD_SKIP)("plans-are-promises A9 — closing wants every clau
 });
 
 /**
+ * plans-are-promises A22 — a clause is proved only when its row's test file
+ * names the clause as well as the promise: `clause: <promise>/<clause>`. A
+ * file carrying only the promise token refuses, naming the clause and the file;
+ * with the clause token the plan closes.
+ */
+describe.skipIf(SHOULD_SKIP)(
+	"plans-are-promises A22 — a clause's test file names the clause",
+	() => {
+		const BASE = "seat-map-never-stale";
+		const clauses = [
+			{ name: "fast", kind: "split", statement: "Released in under a second." },
+			{ name: "never-lost", kind: "limit", statement: "No hold is lost." },
+		];
+		const clauseRow = (clause: string) => ({
+			state: "passing",
+			cells: { For: `clause: ${NAME}/${clause}`, Test: TEST },
+		});
+		const withClauseTokens = (...names: string[]) =>
+			`${testFile(NAME)}${names.map((c) => `// clause: ${NAME}/${c}\n`).join("")}`;
+
+		function closing(testBody: string) {
+			fixture = promiseProject({
+				domains: ["seating"],
+				promises: [
+					{
+						name: NAME,
+						kind: "state",
+						state: "declared",
+						domain: "seating",
+						owner: PLAN,
+						raw: matter.stringify(`${SENTENCE}\n\n## History\n- 2026-10-16 — declared.\n`, {
+							name: NAME,
+							kind: "state",
+							lifetime: "holds",
+							state: "declared",
+							domain: "seating",
+							owner: PLAN,
+							sites: [],
+							tests: [],
+							incidents: [],
+							clauses,
+						}),
+					},
+				],
+				planFiles: {
+					[`${PLAN}/brief.md`]: briefText(PLAN, { makes: [{ name: NAME, sentence: SENTENCE }] }),
+					[`${PLAN}/impl.md`]: implText(PLAN, impl([clauseRow("fast"), clauseRow("never-lost")])),
+				},
+				files: { [SITE]: siteFile(NAME), [TEST]: testBody },
+			});
+			return fixture;
+		}
+
+		it("refuses a clause whose test file carries only the promise token, naming the clause and the file", () => {
+			const p = closing(withClauseTokens("fast"));
+			const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+			expect(r.code, r.stdout + r.stderr).toBe(2);
+			expect(r.stderr).toContain("never-lost");
+			expect(r.stderr).toContain(TEST);
+			expect(r.stderr).toContain(`clause: ${NAME}/never-lost`);
+			expect(promise(p).data.state).toBe("declared");
+		});
+
+		it("closes once the file carries the token of every clause its rows prove", () => {
+			const p = closing(withClauseTokens("fast", "never-lost"));
+			const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+			expect(r.code, r.stdout + r.stderr).toBe(0);
+			expect(promise(p).data.state).toBe("enforced");
+		});
+	},
+);
+
+/**
  * plans-are-promises A17 — a plan that makes two promises, the second with a
  * clause resting on the first, closes in one confirm: the sibling counts as in
  * force once it is itself proved in the same close. A resting cycle inside one
