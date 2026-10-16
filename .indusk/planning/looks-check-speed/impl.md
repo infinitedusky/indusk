@@ -822,7 +822,7 @@ A fresh reader went looking for ways a changed look could be reported held from 
 
 #### Build Phase 4 Document
 
-- [ ] The decision and the command reference say what a stale server does to a check, and what no key covers.
+- [x] The decision and the command reference say what a stale server does to a check, and what no key covers.
   <details><summary>Technical</summary>
 
   `adr.md` Accepting: add "code outside `sources` that the app imports (the admin reads `@infinitedusky/indusk-mcp`'s parsers) is in no key, like the data it shapes"; Decision 2's amendment: a look measured against an old build is not kept. Mirror both in `apps/docs/src/decisions/looks-check-speed.md`; `apps/docs/src/reference/cli/looks.md`: the stale-server notice and the checker hash.

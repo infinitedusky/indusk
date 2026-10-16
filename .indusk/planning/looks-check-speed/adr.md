@@ -75,7 +75,9 @@ broken look found there is an incident after the fact, never a blocked landing;
 that any edit to page code reopens every screen; that the
 stories must be rendered before anything is reused after a source change; and
 that dev-server detection reads known markers (Next, webpack, Vite) and would
-miss an unknown framework's.
+miss an unknown framework's; and that code outside `sources` that the app
+imports (the admin reads `@infinitedusky/indusk-mcp`'s parsers) is in no key,
+like the data it shapes.
 
 **Because:**
 the snapshots are rendered output, so a component used inside another changes
@@ -148,6 +150,25 @@ values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
    and stylesheet for every look. A page that cannot be read, or that loads
    nothing to tell by, reuses nothing.
 
+   *Amended 2026-10-16 (Build Phase 4, falsification).* A reuse proves only
+   the build it measured. A look opened while the server still serves the build
+   from before the sources changed (a held record names the build served now
+   with other sources) is reported but never kept held — its earlier record is
+   left as it was, the evidence that the server is behind — and the run says
+   `<url> serves a build from before the sources changed — results were not
+   kept; rebuild and serve it: <serve>`. A look whose own key is unchanged is
+   reused on such a server, on the build it was measured on, so an edit to page
+   code no longer reopens every story; only the same sources served by another
+   build reopen it. Two more inputs join the key: for a story, the app's
+   element, universal and root rules (every compiled rule no class or component
+   marker names, hashed at render as the catalog's `baseRulesHash`, not put in
+   the component slices, which approvals bind); for every look, the checker's
+   own hash (`checkerHashOf`: the measured properties with the kinds they are
+   judged as, the measure scripts, and `VERDICT_VERSION`, bumped with any
+   verdict rule). A run writes only its own looks over the record as it is when
+   it writes, so a concurrent check's removals stand. The read of the served
+   page has a 30-second limit, after which nothing is reused.
+
 3. **`--all` reopens every look; `--only <name>` (repeatable) checks the looks
    of that name** — a screen state, a story, or both — measured even when
    reusable, and nothing else opened or reported. An unknown name is refused,
@@ -163,6 +184,11 @@ values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
    page to the scheme it drew. The measure returns `JSON.stringify` of its
    result, parsed in Node. A look that does not load or draw in time is
    unchecked at every device and scheme (`openWithinTime` around the load).
+   *Amended (Build Phase 4):* an init script notes a page that asks a media
+   query on size, ratio, orientation, resolution or scheme with no change
+   listener, or reads `innerWidth`, `innerHeight` or `devicePixelRatio` with no
+   `resize` listener; such a page draws from what it read once on mount, so it
+   is loaded fresh at each device and scheme instead.
    Unseeded screens open three at a time, seeded screens one at a time after
    them, stories eight at a time.
 
@@ -178,11 +204,13 @@ values handed to it; the browser only measures" (`apps/indusk-mcp/CLAUDE.md`);
    reused exits 0.
 
 6. **A development server is refused before any look opens.** When at least
-   one look must be opened, the check fetches the first screen's page (or the
-   Storybook frame, when only stories are opened) over plain HTTP and hands its
-   HTML to `devServerMarker` in `looks/dev-server`, which returns the marker it
-   found — Next's Turbopack HMR client (`hmr-client`), webpack's
-   `react-refresh`, `/_next/webpack-hmr`, Vite's `/@vite/client` — or null. A
+   one look must be opened, the check fetches the page at the base URL's own
+   path (or the Storybook frame, when only stories are opened) over plain HTTP,
+   within 30 seconds, and hands its HTML to `devServerMarker` in
+   `looks/dev-server`, which looks only in the scripts and stylesheets the page
+   loads — never its text, which carries the page's data — and returns the
+   marker it found — Next's Turbopack HMR client (`hmr-client`), webpack's
+   `react-refresh`, Vite's `/@vite/client` — or null. A
    marker refuses the run: `<url> is a development server (<marker>) — build
    and serve the app, then check again: <serve>`, where `<serve>` is the
    app's new optional `serve` in `screens.json` (not part of the declarations
