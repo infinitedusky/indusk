@@ -510,6 +510,14 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 	return { ok: true, registry };
 }
 
+/** The promise called `name`, or one that carries it as an earlier name; undefined when neither. */
+export function findPromise<T extends Pick<PromiseEntry, "name" | "aliases">>(
+	promises: readonly T[],
+	name: string,
+): T | undefined {
+	return promises.find((p) => p.name === name || p.aliases.includes(name));
+}
+
 /**
  * Do the aliases resolve to exactly one live promise each? (A29.) A
  * registry-wide fact, judged after every entry is read: an alias equal to a

@@ -428,7 +428,7 @@ This phase tests three places where the finished plan may fail its own promise. 
 
 This plan grew two things worth lifting out of the files it touched. Looking up a promise by its name or an old alias is now written inline in five places, one of them this plan's, so it becomes one function the readers share. And the three rules that hold a brief's clauses to the registry, the clause plan and the test rows sit inside an already long contract file, so they move to a file of their own. When the phase closes, behaviour is unchanged and each of those has a single home.
 
-- [ ] Promise lookup by name or alias is one shared function, used where the same lookup was written inline.
+- [x] Promise lookup by name or alias is one shared function, used where the same lookup was written inline.
   <details><summary>Technical</summary>
 
   Add `findPromise(promises, name)` to `lib/promises/registry.ts` (name equals, or in `aliases`) and use it at `rows.ts` (`clauseRefusal`), `proof.ts:116`, `release/route.ts:228` (which also drops retired entries — keep that filter at the caller). Rule of three: five copies, one new in this plan. `standing.ts:168` and `write.ts:134` compare differently (history rows; alias-only) and stay as they are.

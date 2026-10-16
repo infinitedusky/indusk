@@ -3,7 +3,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { parseTrajectory, type Trajectory } from "../trajectory/parser.js";
 import { planFolders } from "./plan-folder.js";
-import { type PromiseEntry, parseFrontmatter } from "./registry.js";
+import { findPromise, type PromiseEntry, parseFrontmatter } from "./registry.js";
 
 /**
  * The test rows that name a promise (planner-promises ADR D3, D5, D6).
@@ -154,7 +154,7 @@ function clauseRefusal(
 	for (const clause of promise.clauses ?? []) {
 		if (clause.kind === "rests-on") {
 			const target = clause.restsOn ?? "";
-			const base = resting.registry.find((p) => p.name === target || p.aliases.includes(target));
+			const base = findPromise(resting.registry, target);
 			const baseName = base?.name ?? target;
 			if (base?.state === "enforced") continue;
 			if (chain.includes(baseName)) {
