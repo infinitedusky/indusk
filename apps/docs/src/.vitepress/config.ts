@@ -321,6 +321,7 @@ const config = defineConfig({
 						{ text: "Promise Sources — Lessons", link: "/lessons/promise-sources" },
 						{ text: "Promises — Lessons", link: "/lessons/day-promises" },
 						{ text: "Planner Promises — Lessons", link: "/lessons/planner-promises" },
+						{ text: "One Promise Language — Lessons", link: "/lessons/one-promise-language" },
 						{ text: "Monitor — Lessons", link: "/lessons/day-monitor" },
 						{ text: "Always On — Lessons", link: "/lessons/day-always-on" },
 						{ text: "Always-on Deploy — Lessons", link: "/lessons/day-always-on-deploy" },
