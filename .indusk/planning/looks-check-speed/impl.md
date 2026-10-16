@@ -72,7 +72,7 @@ production build. See [adr.md](adr.md) and [research.md](research.md).
 | A7 | The all option reopens every look whatever was held | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 | A8 | Held results live in the project's home outside the checkout; a run writes nothing under the checkout; another worktree of the project reads the same results | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/reuse.test.ts |
 | A9 | A reused look sends one upheld signal per device and scheme marked reused with the time it was really measured; a measured look's signal carries no reused mark | Build Phase 2 | Build Phase 2 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/check-run.test.ts |
-| A10 | Against real Chromium and a served app, a second run requests no page, prints one reused line per look, counts reused in the summary, exits 0 | Test Phase 1 | Build Phase 2 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
+| A10 | Against real Chromium and a served app, a second run requests only the app's root, no look's page, prints one reused line per look, counts reused in the summary, exits 0 | Test Phase 1 | Build Phase 2 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A11 | Each look's page is requested once, and the look is still reported at every device and scheme under today's names | Test Phase 1 | Build Phase 1 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A12 | A page measured in place reads as a fresh load does at every device and scheme, for a colour transition and a pixel-ratio media query | Test Phase 1 | Test Phase 1 | passing | contract | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/__tests__/looks-check-speed.contract.test.ts |
 | A13 | A development server's page (Next HMR client, webpack refresh runtime, Vite client) is refused before any look opens, naming the declared serve command or how to declare one; a production page is not | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-look-check-costs-what-changed | apps/indusk-mcp/src/lib/looks/dev-server.test.ts |
@@ -765,7 +765,7 @@ A fresh reader went looking for ways a changed look could be reported held from 
   Done as: `fakeOpener` answers `{ "<device>/<scheme>": "broken" | "unchecked" }` (broken: the first token off its value; unchecked: no state reported, or the other scheme for a story), and takes an `onOpen` hook (A32). Both cases — broken at `phone/dark`, unchecked at `desktop/dark` — passed when written: `keepHeld` already removed such a look; the row closes the audit's coverage gap rather than a defect.
 
   </details>
-- [ ] Correct the row that says a second unchanged run requests no page.
+- [x] Correct the row that says a second unchanged run requests no page.
   <details><summary>Technical</summary>
 
   A10's Asserts in the trajectory: "a second run requests only the app's root, no look's page, prints one reused line per look, counts reused in the summary, exits 0"; the same in `test-plan.md`'s A10.

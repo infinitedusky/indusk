@@ -130,7 +130,7 @@ function check(root: string, home: string): { code: number; out: string; err: st
 }
 
 describe.skipIf(SHOULD_SKIP)("indusk looks check — cost follows what changed", () => {
-	it("A10: a second run with nothing changed requests no page and says each look was reused", async () => {
+	it("A10: a second run with nothing changed requests only the app's root, no look's page, and says each look was reused", async () => {
 		const { root, home, tokens } = await darkProject();
 		writeFileSync(pageFile, page(tokens));
 		clearRequests();
