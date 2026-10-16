@@ -455,7 +455,12 @@ This plan grew two things worth lifting out of the files it touched. Looking up 
 
   </details>
 
-- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (`findPromise` is one named, tested job; `clause-rules.ts` holds three functions with one reason to change, reached through `checkPlanContract`. The Shape collector did not load under `tsx` here, so the review was read by hand.)
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+  <details><summary>Technical</summary>
+
+  `findPromise` is one named, tested job; `clause-rules.ts` holds three functions with one reason to change, reached through `checkPlanContract`. The Shape collector did not load under `tsx` here, so the review was read by hand.
+
+  </details>
 
 #### Build Phase 5 Verification
 
@@ -512,7 +517,7 @@ A cold read of the finished plan found that it would not close by the rules it s
   Write `clauses:` into `.indusk/promises/a-plan-holds-the-promises-it-lands.md` frontmatter from the brief's prose: `brief-holds-clauses` (split: A1–A4), `clause-plan-checked` (split: A5–A8, A14, A15), `closing-per-clause` (split: A9, A11, A16, A21, A22), `planner-teaches-it` (split: A10, A12), `older-plans-stand` (limit: A13). Retag each of those rows' `For` cell from `promise: a-plan-holds-the-promises-it-lands` to `clause: a-plan-holds-the-promises-it-lands/<clause>` (A14 and A15 keep the reasons they have); add `clause:` tokens to the test files those rows name. The brief is not edited (it is approved; `clauses: required` stays off), and `indusk promises contract plans-are-promises` and `pnpm promises:check` pass.
 
   </details>
-- [x] The two small gaps the audit named are recorded: the `plans start` defect under local init, and A14's weak reason.
+- [x] The two small gaps the audit named are recorded: the plan-start defect under local init, and one test row's weak reason.
   <details><summary>Technical</summary>
 
   Under this impl's `## Notes`: `indusk init --local` git-ignores `.indusk/`, so `indusk plans start` fails at `git add` on the brief — outside this plan, to be its own bug plan. A14's `For` cell reads "guards that the library's and the hook's row-purpose readers cannot drift apart, which would let the save hook accept a row the close refuses".
