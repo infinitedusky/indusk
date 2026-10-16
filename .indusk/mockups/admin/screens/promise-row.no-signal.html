@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="indusk-new-components" content="promise-row" />
+		<title>promise-row — no signal</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<style>
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--color-ground); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-5); font-weight: var(--font-weight-regular); }
+			h1, h2, h3, p, dl, dd, ol, ul { margin: 0; padding: 0; }
+			ul, ol { list-style: none; }
+			button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+			.page { max-width: var(--size-content); margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-16); display: grid; gap: var(--space-5); }
+			.crumb { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.crumb b { color: var(--color-ink-soft); font-weight: var(--font-weight-medium); }
+			.title { font-family: var(--font-display); font-size: var(--text-4xl); line-height: var(--leading-7); font-weight: var(--font-weight-bold); }
+			.says { font-family: var(--font-display); font-size: var(--text-3xl); line-height: var(--leading-7); font-weight: var(--font-weight-bold); max-width: 30ch; }
+			.hint { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+			.label { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-ink-faint); }
+			.mono { font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); overflow-wrap: anywhere; }
+			.card { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); padding: var(--space-4); display: grid; gap: var(--space-3); }
+			.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); border-radius: var(--radius-lg); font-weight: var(--font-weight-semibold); padding: var(--space-snug) var(--space-5); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); background: var(--color-surface); }
+			.btn.primary { background: var(--color-dusk); border-color: var(--color-dusk); color: var(--color-surface); }
+			.btn.quiet { padding: var(--space-tight) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); font-weight: var(--font-weight-medium); }
+			.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+			.box { display: grid; gap: var(--space-3); }
+			.box textarea { font: inherit; color: var(--color-ink); background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); padding: var(--space-4); min-height: var(--size-input); width: 100%; resize: vertical; }
+			.attach { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.file { display: inline-flex; align-items: center; gap: var(--space-2); background: var(--color-idle-wash); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-3); font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.dot { width: var(--size-dot); height: var(--size-dot); border-radius: var(--radius-pill); background: var(--color-dusk); flex: none; }
+			.dot.ok { background: var(--color-ok); }
+			.dot.idle { background: var(--color-idle); }
+			.cols { display: grid; grid-template-columns: minmax(0, 1fr) var(--size-side); gap: var(--space-5); align-items: start; }
+			.thread { display: grid; gap: var(--space-3); }
+			.msg { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-xl); max-width: 60ch; }
+			.msg.you { justify-self: end; background: var(--color-dusk-wash); }
+			.msg.agent { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); }
+			.msg .who { font-size: var(--text-2xs); line-height: var(--leading-1); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-ink-faint); }
+			.msg ol { display: grid; gap: var(--space-1); list-style: decimal; padding-left: var(--space-5); }
+			.reply { display: grid; gap: var(--space-2); }
+			.reply textarea { font: inherit; color: var(--color-ink); background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); padding: var(--space-3) var(--space-4); width: 100%; resize: vertical; }
+			.side { display: grid; gap: var(--space-3); }
+			.know { display: grid; gap: var(--space-2); }
+			.know li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); align-items: center; font-size: var(--text-sm); line-height: var(--leading-3); }
+			.know li span.q { color: var(--color-ink-faint); }
+			@media (max-width: 60rem) { .cols { grid-template-columns: minmax(0, 1fr); } }
+					.rows { background: var(--color-surface); border-width: var(--border-1); border-style: solid; border-color: var(--color-line); border-radius: var(--radius-xl); }
+			.row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); }
+			.row + .row { border-top-width: var(--border-1); border-top-style: solid; border-top-color: var(--color-line); }
+			.big { width: var(--size-dot-lg); height: var(--size-dot-lg); border-radius: var(--radius-pill); }
+			.big.ok { background: var(--color-ok); }
+			.big.idle { background: var(--color-idle); }
+			.says { display: block; font-weight: var(--font-weight-medium); line-height: var(--leading-4); font-family: var(--font-sans); font-size: var(--text-base); max-width: none; }
+			.slug { display: block; font-family: var(--font-mono); font-size: var(--text-xs); line-height: var(--leading-2); color: var(--color-ink-faint); overflow-wrap: anywhere; }
+			.pips { display: flex; gap: var(--space-1); }
+			.pip { width: var(--size-pip); height: var(--size-pip-h); border-radius: var(--radius-xs); border-width: var(--border-1); border-style: solid; border-color: var(--color-ok); background: var(--color-ok); }
+			.ev { font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-soft); }
+			.last { text-align: right; font-size: var(--text-sm); line-height: var(--leading-3); color: var(--color-ink-faint); }
+		</style>
+	</head>
+		<body>
+<main class="page"><div class="rows">
+<div class="row" data-component="promise-row" data-state="enforced"><span class="big ok"></span><span><span class="says">A token changed in the app alone shows broken on the dashboard</span><span class="slug">tokens-are-held-exactly</span></span><span class="pips"><span class="pip"></span><span class="pip"></span></span><span class="ev">12 of 12 held</span><span class="last">3d ago</span></div>
+<div class="row" data-component="promise-row" data-state="no-signal"><span class="big idle"></span><span><span class="says">A message sent in a project conversation is answered in the thread</span><span class="slug">a-message-sent-gets-a-reply</span></span><span class="pips"><span class="pip"></span><span class="pip"></span></span><span class="ev">tests pass</span><span class="last">no signal yet</span></div>
+</div><p class="hint">An enforced promise whose signal has never reported is grey, not green, and says "no signal yet" — holding only once a signal says so.</p></main>
+	</body>
+</html>
