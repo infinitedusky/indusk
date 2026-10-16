@@ -2,7 +2,7 @@
 title: "A nav row reads at a glance"
 description: "A plan's row in the admin nav stays two lines: the worktree becomes a small mark without text beside the stage, set apart from it, and hovering or clicking it widens it in place to show the worktree's name."
 date: 2026-10-16
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
