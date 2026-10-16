@@ -365,25 +365,25 @@ Before the check changes, this phase writes the tests that run the real check in
 
 This phase makes every look that is opened cost one page load instead of six. The check loads the page at the first reference device, then for each device sets the page's size and pixel ratio in place and for each colour scheme switches the page's scheme in place, finishing any colour transition the switch started before it reads the values, so a page that animates its colours is not read half-way. The measurement comes back as one string rather than one object per value, which measured ten times faster on the largest pages. Stories follow the switched scheme the way screens do. A page that does not load in time is unchecked at every device and scheme, with the reason, and the run goes on. Screens that need no seed open three at a time. The check also learns to check only the looks a person names. To test those decisions without a browser, the check takes what opens a look as an input. The next phase stops reopening looks that have not changed.
 
-- [ ] Make the check load each look's page once and measure every device and colour scheme on that page.
+- [x] Make the check load each look's page once and measure every device and colour scheme on that page.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/check.ts`: replace `measure` with `measureInPlace(browser, devices, schemes, url, script, rendered?)`: one `newContext({ viewport: first, deviceScaleFactor: first.pixelRatio, colorScheme: schemes[0] })`, `goto` + settle as today; then for each device `cdp.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: pixelRatio, mobile: false })` (`context.newCDPSession(page)`), for each scheme `page.emulateMedia({ colorScheme })`, then `page.evaluate` of two `requestAnimationFrame`s, then `document.getAnimations().filter((a) => a instanceof CSSTransition).forEach((a) => a.finish())`, then the measure. Returns `Measured[]` in device × scheme order. `measureScript` returns `JSON.stringify(result)`; parse in Node. Measured 2026-10-16: 1,149 ms → 120 ms for 75,815 values.
 
   </details>
-- [ ] Make stories follow the scheme switched on the page, as screens do.
+- [x] Make stories follow the scheme switched on the page, as screens do.
   <details><summary>Technical</summary>
 
   `storyUrl(base, id)` drops the `globals=theme:` parameter, so the admin's preview decorator leaves `data-theme` off (`theme: "match"`) and the story follows `prefers-color-scheme`; `judgeStory` still refuses a page that did not draw the scheme it was opened under. Update `check.test.ts`'s `storyUrl` case.
 
   </details>
-- [ ] Make a look that does not load or draw in time unchecked at every device and scheme, with the reason, while every other look is still judged.
+- [x] Make a look that does not load or draw in time unchecked at every device and scheme, with the reason, while every other look is still judged.
   <details><summary>Technical</summary>
 
   `openWithinTime(() => opener.open(...))` wraps the one load; a `{ timedOut }` or `{ unchecked }` answer expands to one `Unchecked` per `lookDevice(device, scheme)`. A16.
 
   </details>
-- [ ] Make the check take what opens a look as an input, so its decisions can be tested without a browser.
+- [x] Make the check take what opens a look as an input, so its decisions can be tested without a browser.
   <details><summary>Technical</summary>
 
   ```typescript

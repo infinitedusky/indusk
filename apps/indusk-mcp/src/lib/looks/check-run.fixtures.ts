@@ -2,13 +2,7 @@ import { cpSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { ApprovalEntry, StoryApprovalEntry } from "./approvals.js";
-import {
-	approvedValues,
-	type LookOpener,
-	type Measured,
-	type Scheme,
-	schemesOf,
-} from "./check.js";
+import { approvedValues, type LookOpener, type Measured, type Scheme, schemesOf } from "./check.js";
 import { type LooksApp, readApp } from "./mockups.js";
 
 /**
@@ -41,17 +35,42 @@ export async function fixtureApp(mockups: string[], stories: string[] = []): Pro
 	cpSync(FIXTURE, root, { recursive: true });
 	const app = await readApp(root, "demo");
 	app.foundation.tokens[0].dark = "#1f1a17";
+	// Only the looks asked for are declared, so no unapproved look is listed beside them.
+	app.screens = app.screens
+		.map((s) => ({
+			...s,
+			states: s.states.filter((state) => mockups.includes(`${s.name}.${state}`)),
+		}))
+		.filter((s) => s.states.length > 0);
 	const catalog = stories.map((name) => {
 		const [component, state] = name.split(".") as [string, string];
-		return { name: component, file: `${component}.tsx`, properties: [], states: [{ name: state, id: `${component}--${state}` }] };
+		return {
+			name: component,
+			file: `${component}.tsx`,
+			properties: [],
+			states: [{ name: state, id: `${component}--${state}` }],
+		};
 	});
 	mkdirSync(app.dir, { recursive: true });
 	writeFileSync(join(app.dir, "components.json"), JSON.stringify({ components: catalog }));
 	app.stories = stories.map((name) => {
 		const [component, state] = name.split(".") as [string, string];
-		return { name, component, state, file: `${name}.html`, html: "", hash: `hash-${name}`, stylesheetHash: null };
+		return {
+			name,
+			component,
+			state,
+			file: `${name}.html`,
+			html: "",
+			hash: `hash-${name}`,
+			stylesheetHash: null,
+		};
 	});
-	const bound = { foundationHash: app.foundation.hash, declarationsHash: app.declarationsHash, by: "test", at: "2026-10-16T00:00:00.000Z" };
+	const bound = {
+		foundationHash: app.foundation.hash,
+		declarationsHash: app.declarationsHash,
+		by: "test",
+		at: "2026-10-16T00:00:00.000Z",
+	};
 	const approvals = mockups.map((name) => {
 		const m = app.mockups.find((x) => x.name === name);
 		if (!m) throw new Error(`the fixture has no mockup ${name}`);
@@ -86,15 +105,23 @@ export function fakeOpener(answers: Record<string, Answer>): FakeOpener {
 			opener.launched = true;
 			opener.opened.push(target.look);
 			const answer = answers[target.look];
-			if (answer === undefined) throw new Error(`the fake opener was not told about ${target.look}`);
+			if (answer === undefined)
+				throw new Error(`the fake opener was not told about ${target.look}`);
 			if (answer === "timeout") {
-				throw Object.assign(new Error(`page.goto: Timeout 30000ms exceeded (${target.look})`), { name: "TimeoutError" });
+				throw Object.assign(new Error(`page.goto: Timeout 30000ms exceeded (${target.look})`), {
+					name: "TimeoutError",
+				});
 			}
 			const app = current;
 			if (!app) throw new Error("fakeOpener needs a fixtureApp first");
 			const states = target.look.startsWith("story ") ? [] : [target.look];
 			return devices.flatMap(() =>
-				schemes.map<Measured>((scheme: Scheme) => ({ runtime: approvedValues(app, scheme), elements: [], states, scheme })),
+				schemes.map<Measured>((scheme: Scheme) => ({
+					runtime: approvedValues(app, scheme),
+					elements: [],
+					states,
+					scheme,
+				})),
 			);
 		},
 		async close() {},

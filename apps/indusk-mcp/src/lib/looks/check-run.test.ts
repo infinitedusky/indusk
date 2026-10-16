@@ -20,9 +20,19 @@ describe("what the check opens", () => {
 	});
 
 	it("--only checks just the named looks, screen and story alike", async () => {
-		const { app, approvals, storyApprovals } = await fixtureApp(["home.empty", "home.full"], ["home.full"]);
-		const opener = fakeOpener({ "home.empty": "held", "home.full": "held", "story home.full": "held" });
-		const { results } = await checkApp(app, approvals, "http://app", storyApprovals, { opener, only: ["home.full"] });
+		const { app, approvals, storyApprovals } = await fixtureApp(
+			["home.empty", "home.full"],
+			["home.full"],
+		);
+		const opener = fakeOpener({
+			"home.empty": "held",
+			"home.full": "held",
+			"story home.full": "held",
+		});
+		const { results } = await checkApp(app, approvals, "http://app", storyApprovals, {
+			opener,
+			only: ["home.full"],
+		});
 		expect(opener.opened.sort()).toEqual(["home.full", "story home.full"]);
 		expect(new Set(results.map((r) => `${r.kind ?? "screen"}:${r.screen}.${r.state}`))).toEqual(
 			new Set(["screen:home.full", "story:home.full"]),
@@ -32,7 +42,9 @@ describe("what the check opens", () => {
 	it("--only with a name no look has is refused, naming it, before any page opens", async () => {
 		const { app, approvals } = await fixtureApp(["home.empty"]);
 		const opener = fakeOpener({ "home.empty": "held" });
-		await expect(checkApp(app, approvals, "http://app", [], { opener, only: ["nope.x"] })).rejects.toThrow(/nope\.x/);
+		await expect(
+			checkApp(app, approvals, "http://app", [], { opener, only: ["nope.x"] }),
+		).rejects.toThrow(/nope\.x/);
 		expect(opener.opened).toEqual([]);
 	});
 });
