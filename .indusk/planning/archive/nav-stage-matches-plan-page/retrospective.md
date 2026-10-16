@@ -49,3 +49,4 @@ An unreachable `plan.status` fallback in `navMarkOf` with no test; Needs you's f
 ## Release
 
 The project installs its own build; nothing published, no version bump for this close.
+Landed on main at ffb58d43, 2026-10-16.
