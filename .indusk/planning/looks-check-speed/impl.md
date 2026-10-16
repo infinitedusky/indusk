@@ -549,7 +549,7 @@ This phase lets the check skip looks that have not changed. After a run, every l
 
 #### Build Phase 2 Context
 
-- [ ] The looks code's own context file says when a look is reused and where its last result is kept.
+- [x] The looks code's own context file says when a look is reused and where its last result is kept.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/looks/CLAUDE.md` (area): "**A look is reused only by `reuseOf`, from the record in machine state** (`<project home>/looks/<app>.json`, never the checkout): its key is the foundation, the declarations, devices and schemes, its snapshot hashes, and for a screen the page-code hash and seed; nothing is reused unless `components.json`'s `renderedFrom` matches the sources now; only a look held everywhere is kept; a reused look sends an upheld span marked `indusk.look.reused` with `indusk.look.measured_at`, never a bare one. Guarded by `reuse.test.ts` and `check-run.test.ts` (A1–A9, A19) — see `/decisions/looks-check-speed`".

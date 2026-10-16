@@ -50,3 +50,13 @@ pointer; the pointer holds the story.
   as one JSON string. The browser still only measures; `checkApp` takes a
   `LookOpener`, so every decision is tested without one. Guarded by
   `looks-check-speed.contract.test.ts` (A11, A12) — see `/decisions/looks-check-speed`.
+- **A look is reused only by `reuseOf`, from the record in machine state**
+  (`<project home>/looks/<app>.json`, never the checkout): its key is the
+  foundation, the declarations, devices and schemes, its snapshot hashes, and
+  for a screen the page-code hash and seed; nothing is reused unless
+  `components.json`'s `renderedFrom` matches the sources now; only a look held
+  everywhere is kept; a reused look sends an upheld span marked
+  `indusk.look.reused` with `indusk.look.measured_at`, never a bare one. A
+  served page that changed outside the sources is in no key — check it with
+  `--all`. Guarded by `reuse.test.ts` and `check-run.test.ts` (A1–A9, A19) —
+  see `/decisions/looks-check-speed`.
