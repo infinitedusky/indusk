@@ -193,6 +193,7 @@ Before any code changes, this phase writes every test that today's code can alre
   The four contract files and the live check drive the built CLI and `daemonStatus`; `telemetry-daemon-state.test.ts` imports `daemonStatus`; `port-guard.test.ts` imports `daemonStart`; `telemetry-mcp-entries.test.ts` imports `upsertJaegerEntry` and `ensureMcpJson`. All exist today; every red is an assertion.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Deferred to Build Phase 1
 
