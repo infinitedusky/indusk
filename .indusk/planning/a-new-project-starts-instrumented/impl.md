@@ -716,12 +716,13 @@ record that its first run reports.
   `apps/indusk-mcp/src/lib/scaffold/plan.ts` `HELPER` printed "signal helper —upheld"; now "signal helper — upheld".
 
   </details>
-- [ ] Review the text this phase wrote against the extensions' writing rules, and add what the review finds here as unchecked items.
+- [x] Review the text this phase wrote against the extensions' writing rules, and add what the review finds here as unchecked items.
   <details><summary>Technical</summary>
 
   Shape step over the skills, the template header and the docs page.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 3 Verification
 
