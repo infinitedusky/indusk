@@ -696,7 +696,7 @@ record that its first run reports.
   `templates/logger.ts` docblock: INFO is "what happened, for diagnosis"; a promise's signal is a span written with `./signal`.
 
   </details>
-- [ ] Remove port 4318 as an application's default from the docs page, the demo's README, this repository's allow-list and the stale extension file copy.
+- [x] Remove port 4318 as an application's default from the docs page, the demo's README, this repository's allow-list and the stale extension file copy.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/tools/otel.md` (~line 329, and the Dash0 / `pnpm ce env:build` section ~313–323 → the scaffold per runtime), `examples/seat-holds/README.md:35` (→ `indusk telemetry address`), `.claude/settings.json` (the curl allow entry naming `localhost:4318`), `.indusk/extensions/local-telemetry/.env.example` (refreshed by `indusk update` in this repo).
