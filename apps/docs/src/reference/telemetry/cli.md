@@ -15,7 +15,7 @@ indusk telemetry start      # Start the daemon on its stored address, or take ov
 indusk telemetry stop       # Stop the daemon
 indusk telemetry restart    # Stop then start, on the same stored address
 indusk telemetry status     # Report state + the four ports + PIDs
-indusk telemetry reap       # Stop this home's strays (--dry-run lists them)
+indusk telemetry reap       # Stop this home's strays and any orphan (--dry-run lists them)
 indusk telemetry address    # Print the stored address (--json for init, --reset to choose again)
 ```
 
@@ -50,8 +50,8 @@ flowchart TD
     G -- no --> S[start both on the stored address]
 ```
 
-- **Taking over.** If the record is lost but the daemon runs, `start` reads it from the process list and its listening sockets, writes the record again and starts nothing: `took over the running daemon: jaeger 43599, otelcol 43600 on 24318, 24319, 24316, 24317`. Any other InDusk Jaeger or collector of this home is listed as a stray for `indusk telemetry reap`.
-- **Refusing.** Once the address is stored, a start that finds one of its ports held by a process that is not InDusk's starts nothing, picks nothing, leaves the address as it was and exits `1`, naming the port, the holder's process id and its command.
+- **Taking over.** If the record is lost but the daemon runs, `start` reads it from the process list and its listening sockets, writes the record again and starts nothing: `took over the running daemon: jaeger 43599, otelcol 43600 on 24318, 24319, 24316, 24317`. Any other InDusk Jaeger or collector of this home is listed as a stray for `indusk telemetry reap`. When several processes run, a Jaeger is paired with the collector holding the stored logs port when it holds the stored traces port, and by start time only when the stored address does not say. If the address file was lost while the daemon runs on picked ports, the address is written again with the ports the daemon holds, so it is on its stored address and `status` reports no difference.
+- **Refusing.** Once the address is stored, a start that finds one of its ports held by a process that is not InDusk's starts nothing, picks nothing, leaves the address as it was and exits `1`, naming the port, the holder's process id and its command. When the holder is an InDusk daemon, the message suggests `reap` only if it is an orphan or this home's stray; for a live daemon of another home it names that home and says `INDUSK_HOME=<home> indusk telemetry stop`.
 - **An unreadable address file.** A file that exists but is cut short, or names a port that is not a number, is never taken for a missing one: a start refuses, naming the file, chooses nothing and leaves it as it was. `indusk telemetry address --reset` chooses the address again. The address is always written whole (a temporary file, then linked into place at first setup, or renamed over the old file by `--reset`), so a crash never leaves it half-written.
 
 **Port options** (`--otlp-port`, `--ui-port`, `--logs-port`, `--mcp-port`) are accepted only in a temporary home (a test's, under the system temp directory). A temporary home takes the ports it is given (`0` means any free port) and never reads or writes the stored address. In your own home they are refused by name.
@@ -115,9 +115,9 @@ Warning: Telemetry daemon (jaeger=72113 otelcol=72117) did not exit within 3s; f
 
 ## `indusk telemetry reap`
 
-Stops every **stray** of this home: a Jaeger or collector run out of this home's config files that the record does not name, whether its config file still exists or not. A lost record is how they appear, when a start that did not know the daemon was running started another beside it. `reap` never touches the recorded daemon, a daemon of another home (a test's, for one), or a process that is not InDusk's; each process is read again by its command line just before it is signalled, so a process id the operating system has since given to another program is left alone.
+Stops two kinds of process. A **stray** is a Jaeger or collector run out of this home's config files that the record does not name; a lost record is how they appear, when a start that did not know the daemon was running started another beside it. An **orphan** is an InDusk Jaeger or collector of any home whose config file is gone: its home was deleted underneath it, so it is no one's daemon (the leak a test's temporary home leaves). `reap` never touches the recorded daemon, a daemon of another live home, or a process that is not InDusk's; each process is read again by its command line just before it is signalled, so a process id the operating system has since given to another program is left alone. A home reached through a link is the same home as its real path.
 
-With no record, nothing is known to be the daemon, so `reap` stops nothing and says to run `indusk telemetry start` first, which takes the running daemon over.
+With no record, or a record that names only dead processes while this home's daemon runs, nothing is known to be the daemon, so `reap` stops no stray and says to run `indusk telemetry start` first, which takes the running daemon over (orphans are still stopped).
 
 ```sh
 indusk telemetry reap --dry-run   # list the strays, signal nothing
@@ -151,8 +151,8 @@ Report current daemon state. The recorded Jaeger and otelcol are judged by their
 | State | Meaning |
 |-------|---------|
 | running | the record names both processes and both are InDusk's daemon |
-| partly running | only one of the two is still the daemon; `stop` then `start` |
-| record missing | no record, but this home's daemon processes run |
+| partly running | only one of the two is still the daemon; `stop` then `start`. While the recorded Jaeger runs, every reader still reaches it through the record and `status` reports the daemon broken |
+| record missing | no record, or a record naming only dead processes, but this home's daemon processes run; the next command that looks finds the daemon and writes the record again |
 | not running, record kept | the record names processes that are gone or are something else now; it is named and left for `start` to overwrite and `stop` to remove |
 | not running | no record and nothing runs |
 

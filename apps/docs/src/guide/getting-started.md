@@ -122,14 +122,14 @@ Each check is a shell command declared in the extension's manifest, so the faili
 
 ### Telemetry: the daemon looks up but no traces arrive
 
-Usually a stray daemon: an InDusk Jaeger or collector of this home that the record does not name, left by a start that did not know the daemon was running. `status` lists them, with the time each started and the ports it holds.
+Usually a stray daemon: an InDusk Jaeger or collector of this home that the record does not name, left by a start that did not know the daemon was running (or an orphan, whose home was deleted underneath it). `status` lists them, with the time each started and the ports it holds.
 
 ```bash
 indusk telemetry status           # the real daemon's ports; finds a daemon whose record is gone
-indusk telemetry reap --dry-run   # which strays of this home would be stopped
-indusk telemetry reap             # stop them (never the recorded daemon, another home's, or a stranger's)
+indusk telemetry reap --dry-run   # which strays of this home, and which orphans, would be stopped
+indusk telemetry reap             # stop them (never the recorded daemon, another live home's, or a stranger's)
 ```
 
-If the record (`~/.indusk/telemetry.json`) went missing while the daemon kept running, nothing needs repairing by hand: the next command that looks (`status`, a promise reader, the evaluator) finds the daemon from the process list and its listening sockets and writes the record again.
+If the record (`~/.indusk/telemetry.json`) went missing while the daemon kept running, nothing needs repairing by hand (the same holds for a record that names only dead processes): the next command that looks (`status`, a promise reader, the evaluator) finds the daemon from the process list and its listening sockets and writes the record again.
 
 The daemon runs on its own ports, chosen once and stored (`indusk telemetry address` prints them: `24318` for traces, `24319` for logs, `24316` for the interface and `24317` for MCP when the block was free). `indusk telemetry start` takes over a daemon that is already running and never starts a second; a port that something else holds is refused with the port, the process and its command named, never silently replaced by a random one, which is what made this failure invisible.
