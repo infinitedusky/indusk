@@ -401,3 +401,4 @@
 {"plan":"impl-tasks-are-instructions","phase":1,"kind":"build","sha":"5155fdbf37166d768451229dd8ddc1b45a5b59a8","timestamp":"2026-10-17T17:54:46.553Z"}
 {"plan":"impl-tasks-are-instructions","phase":2,"kind":"build","sha":"4d1c35ca468b0d08833ed1515860d7b8c5fd68b3","timestamp":"2026-10-17T18:06:20.285Z"}
 {"plan":"a-new-project-starts-instrumented","phase":1,"kind":"test","sha":"141d82d36004f5b0eb6e06769c1f62dd1fcc40e0","timestamp":"2026-10-17T18:49:26.603Z"}
+{"plan":"a-new-project-starts-instrumented","phase":1,"kind":"build","sha":"809cbc85c93947e06cf7e6b3ae8087796893a164","timestamp":"2026-10-17T19:13:53.018Z"}
