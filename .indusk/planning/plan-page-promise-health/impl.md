@@ -82,7 +82,7 @@ This phase gives a plan's parts each promise's health, from the same rule and so
   `planPromiseHealth(registry, reads): Record<string, PromiseHealth>` in `apps/indusk-mcp/src/lib/promises/health.ts`, `healthRows(registry, alarmRead(reads) ?? null)` mapped to `health`; `redPlans` reads through it so the nav and the plan page share one answer. `readPlanParts` (`apps/indusk-mcp/src/lib/plans/parts.ts:129`) takes `options.health?: Record<string, PromiseHealth>` and sets `health` on each `PartPromise` that has one. Export from the subpaths the admin already imports (`promises/health`, `plans/parts`).
 
   </details>
-- [ ] The plan page and the brief page read the health once and colour each promise's dot by it.
+- [x] The plan page and the brief page read the health once and colour each promise's dot by it.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/src/app/p/[project]/plan/[name]/page.tsx:77` and `.../brief/page.tsx:42`: `readHealth(projectPath, registry)` as the layout does (`app/p/[project]/layout.tsx:94`), then `readPlanParts(checkout, name, { archived, health: planPromiseHealth(registry, reads) })`. `PlanParts.tsx:33-39`: a `HEALTH_DOT` map `satisfies Record<PromiseHealth, string>` (`red: "bg-bad"`, `fixed: "bg-ink-soft"`, `green: "bg-ok"`, `unverified: "bg-idle"`, `amber: "bg-warn"`, `grey: "bg-idle"`), the colours of `PROMISE_HEALTH_CHIP` in `components/bars/labels.ts`; the dot is `HEALTH_DOT[p.health]` when present, else `DOT[p.state]`. Markup unchanged; `data-health` on the chip for tests. Update every browser test's `readPlanParts` mock that the change reaches.

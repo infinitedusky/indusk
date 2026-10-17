@@ -1,4 +1,5 @@
 import type { PlanParts as Parts } from "@infinitedusky/indusk-mcp/plans/parts";
+import type { PromiseHealth } from "@infinitedusky/indusk-mcp/promises/health";
 import { Markdown } from "@/components/Markdown";
 import { AmendmentCard } from "@/components/ui/AmendmentCard";
 import { ExpectationRow } from "@/components/ui/ExpectationRow";
@@ -39,6 +40,20 @@ const DOT: Record<string, string> = {
 };
 
 /**
+ * A promise's health as the dot beside its name: the colours of
+ * `PROMISE_HEALTH_CHIP`, the Promises page's. A promise telemetry says nothing
+ * about has no health and takes `DOT` by its registry state.
+ */
+const HEALTH_DOT = {
+  red: "bg-bad",
+  fixed: "bg-ink-soft",
+  green: "bg-ok",
+  unverified: "bg-idle",
+  amber: "bg-warn",
+  grey: "bg-idle",
+} satisfies Record<PromiseHealth, string>;
+
+/**
  * The parts of a plan's brief, each folded to a closed row of its name and one
  * line, in the approved order: Promises, Expectations, Looks. The Phases and
  * Documents parts follow, then History, where the page places them.
@@ -77,11 +92,12 @@ export function PlanParts({
               data-testid="plan-promise"
               data-promise={p.name}
               data-state={p.state}
+              data-health={p.health}
               title={p.sentence}
               className="inline-flex items-center gap-2 rounded-pill border border-line bg-surface px-3 py-snug text-sm leading-3 font-medium"
             >
               <span
-                className={`size-dot rounded-pill ${DOT[p.state] ?? "bg-idle"}`}
+                className={`size-dot rounded-pill ${(p.health ? HEALTH_DOT[p.health] : DOT[p.state]) ?? "bg-idle"}`}
               />
               {p.name}
             </span>

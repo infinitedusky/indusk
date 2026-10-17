@@ -24,6 +24,7 @@ import { planLookState } from "@/lib/look-state";
 import { masterStory } from "@/lib/master-story";
 import { extractPhases } from "@/lib/phases";
 import { planActions } from "@/lib/plan-actions";
+import { readPlanHealth } from "@/lib/plan-health";
 import { buildGroups, groupOf } from "@/lib/plan-groups";
 import { readPlanPage } from "@/lib/plan-page";
 import { planDocuments } from "@/lib/plan-parts-view";
@@ -76,6 +77,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
   const checkout = plan.worktree?.path ?? projectPath;
   const parts = await readPlanParts(checkout, name, {
     archived: plan.archived || Boolean(plan.archivedInWorktree),
+    health: await readPlanHealth(projectPath),
   });
 
   // A master (a plan that declares subplans) tells its story where a plan's
