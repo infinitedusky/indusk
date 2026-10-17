@@ -299,3 +299,84 @@ describe("A38 — a lost address file comes back as the ports the running daemon
 		expect(reads.address()).toMatchObject(PICKED);
 	});
 });
+
+describe("A43 — a lost address file is rebuilt from the address the daemon recorded", () => {
+	// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+	const STRANGER = { pid: 4242, command: "/usr/bin/nginx -g daemon off;" };
+	const strangerOnBlock = Object.fromEntries(
+		Object.values(PORT_BLOCK).map((port) => [port, STRANGER]),
+	);
+	const RUN_ON: StoredAddress = {
+		traces: 41001,
+		logs: 41002,
+		ui: 41003,
+		mcp: 41004,
+		picked: [{ role: "traces", blockPort: 24318, holder: `4242 ${STRANGER.command}` }],
+	};
+	const recordOf = (address?: StoredAddress) =>
+		rec(1, 2, {
+			otlpPort: 41001,
+			logsOtlpPort: 41002,
+			uiPort: 41003,
+			mcpPort: 41004,
+			...(address ? { address } : {}),
+		});
+
+	it("a start beside a record carrying its address writes that address back exactly, picked ports and holders included", async () => {
+		const reads = fakeReads({
+			record: recordOf(RUN_ON),
+			address: null,
+			processes: [jaegerCmd(1, HOME)],
+			listening: { 1: [41001, 41003, 41004] },
+			holders: strangerOnBlock,
+		});
+		await ensureDaemon("start", reads, HOME, spawnSpy(), { spare: [51001, 51002, 51003, 51004] });
+		expect(reads.address()).toEqual(RUN_ON);
+	});
+
+	it("`--reset` with the file lost rebuilds the address from that record", () => {
+		const reads = fakeReads({
+			record: recordOf(RUN_ON),
+			address: null,
+			processes: [jaegerCmd(1, HOME)],
+			listening: { 1: [41001, 41003, 41004] },
+			holders: strangerOnBlock,
+		});
+		const result = resetAddress(reads, HOME, [51001, 51002, 51003, 51004]);
+		expect(result).toMatchObject({ ok: true, new: RUN_ON });
+	});
+
+	const PRE_PLAN = rec(1, 2, {
+		otlpPort: 4318,
+		uiPort: 16686,
+		mcpPort: 62843,
+		logsOtlpPort: 62841,
+	});
+	const preOnPorts = { 1: [4318, 16686, 62843], 2: [62841] };
+
+	it("a running daemon whose record carries no address never lends its ports: the block is free, so the address is the block", async () => {
+		const reads = fakeReads({
+			record: PRE_PLAN,
+			address: null,
+			processes: [jaegerCmd(1, HOME)],
+			listening: preOnPorts,
+		});
+		await ensureDaemon("start", reads, HOME, spawnSpy());
+		expect(reads.address()).toEqual({ ...PORT_BLOCK, picked: [] });
+	});
+
+	it("a daemon found with no record at all never lends its ports either", async () => {
+		const reads = fakeReads({
+			record: null,
+			address: null,
+			processes: OWN,
+			listening: preOnPorts,
+			yaml: {
+				ports: { otlpPort: 4318, uiPort: 16686, mcpPort: 62843, logsOtlpPort: 62841 },
+				mtimeAfterStart: false,
+			},
+		});
+		await ensureDaemon("start", reads, HOME, spawnSpy());
+		expect(reads.address()).toEqual({ ...PORT_BLOCK, picked: [] });
+	});
+});
