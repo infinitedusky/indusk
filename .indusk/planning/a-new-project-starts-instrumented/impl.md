@@ -471,7 +471,7 @@ turns the telemetry extensions off. If the later phases stall, this one can land
   `templates/instrumentation.ts`: `const s = telemetrySettings(process.env)`; `new OTLPTraceExporter({ url: s.tracesUrl })` always (console exporter removed), resource from `s.resource`. `templates/instrumentation.next.ts`: set `process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ??= s.tracesUrl` before `registerOTel({ serviceName: s.serviceName, attributes: s.resource })`. `templates/instrumentation.web.ts`: endpoint default from `telemetrySettings(import.meta.env ?? process.env-shaped values)`; propagation and instrumentations untouched (must not break the click trace). `templates/instrumentation.py`: rendered values, `OTLPSpanExporter(endpoint=…)` always, resource with both keys. `templates/logger.ts`: transport `url: s.logsUrl`; docblock left for Build Phase 3. No `unknown-service` anywhere.
 
   </details>
-- [ ] Move init's scaffold step after the config write and the extension enable, and replace it with a call to the scaffold module.
+- [x] Move init's scaffold step after the config write and the extension enable, and replace it with a call to the scaffold module.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/bin/commands/init.ts`: delete the `[OpenTelemetry]` block (step 7) and its four `String.replace` calls; call `applyScaffold(projectRoot, { force })` after `writeConfig` and the workbench's `extensionsEnable(["worktree"])`, still skipped for `--local` and the package's own repo; skipped too when `otel` is in `disabled_extensions`. `--force` keeps today's meaning (overwrite). `NODE_TEMPLATE_PURPOSE` and the printed install and wire lines move into `apply.ts` per runtime.
