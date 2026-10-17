@@ -13,7 +13,7 @@ subplans:
   - production-is-heard
   - production-keeps-only-what-it-should
   - a-look-comes-due
-  - a-break-on-the-laptop-closes-its-loop
+  - a-break-runs-its-tests
 ---
 
 # Telemetry from day one
@@ -158,7 +158,7 @@ each child is one plan with one landing.
    listed; a measurement is recorded in the brief. Trends, shared history and
    retention past ninety days stay [expectations-loop](../expectations-loop/master.md)'s.
 
-7. **`a-break-on-the-laptop-closes-its-loop`** — optional, Sandy's call;
+7. **`a-break-runs-its-tests`** — optional, Sandy's call;
    blocked by `mark-first`'s decision that a signal is keyed by promise and
    clause. For a project naming no production source — Homework Gate's first
    weeks — a break the agent causes while building is a red chip and nothing
