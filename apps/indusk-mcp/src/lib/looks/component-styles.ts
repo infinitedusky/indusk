@@ -343,8 +343,15 @@ function guarded(selector: string, guard: string): string {
 /** `a:hover` -> `a:hover:where(<scope>)`, `::before` -> `:where(<scope>)::before`: the scope adds no specificity. */
 const scoped = (selector: string): string => guarded(selector, COMPONENT_SCOPE);
 
-/** What a mockup's own rule must not reach: any element of a component. `:not(:where())` adds no specificity. */
-const OUTSIDE_COMPONENTS = `:not(${COMPONENT_SCOPE})`;
+/**
+ * What a mockup's own rule must not reach: any element of a component it did not
+ * declare new. `:not(:where())` adds no specificity. A component drawn here has
+ * no look but this mockup's, so its marker is left out of the guard.
+ */
+const outsideComponents = (drawnHere: readonly string[]): string => {
+	const marker = `[data-component]${drawnHere.map((name) => `:not([data-component="${name}"])`).join("")}`;
+	return `:not(:where(${marker}, ${marker} *))`;
+};
 
 /**
  * A mockup's own style rules, cut to its page. A mockup's `.grid { display: grid }`
@@ -353,21 +360,24 @@ const OUTSIDE_COMPONENTS = `:not(${COMPONENT_SCOPE})`;
  * `componentReset`'s scope. A selector that names a component's marker
  * (`[data-component="card"] .grid`) is the mockup placing that component and
  * is left as written; rules inside `@keyframes` have no selector to scope.
+ * `drawnHere` names the components the mockup declares new and draws itself;
+ * their markers are not excluded, so its styles reach them.
  *
  * promise: mockups-render-in-the-cockpit
  */
-export function pageOnly(css: string): string {
+export function pageOnly(css: string, drawnHere: readonly string[] = []): string {
 	let root: postcss.Root;
 	try {
 		root = postcss.parse(css);
 	} catch {
 		return css;
 	}
+	const outside = outsideComponents(drawnHere);
 	root.walkRules((rule) => {
 		const parent = rule.parent;
 		if (parent?.type === "atrule" && /keyframes$/i.test((parent as postcss.AtRule).name)) return;
 		rule.selectors = rule.selectors.map((selector) =>
-			selectorMarks(selector).length > 0 ? selector : guarded(selector, OUTSIDE_COMPONENTS),
+			selectorMarks(selector).length > 0 ? selector : guarded(selector, outside),
 		);
 	});
 	return root.toString();
