@@ -80,3 +80,5 @@ Shape findings: 1 raised (a duplicated test helper, recorded as left as is),
 - Files touched: 27 (outside `.indusk/`)
 - Lines added/removed: +302 / −76
 - Tests added: 1 file (`task-wording-gone.test.ts`) and 16 cases across two existing files
+
+Landed on main at fb166688, 2026-10-17. Installed locally (`pnpm install:local`); nothing published — dusk publishes deliberately, not per plan.
