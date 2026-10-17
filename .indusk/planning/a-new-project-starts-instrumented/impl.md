@@ -626,7 +626,7 @@ next phase then makes what init prints and the skills teach match all of this.
   `apps/indusk-mcp/src/lib/scaffold/apply.ts`. Rule: Shape: does this unit have one reason to change
 
   </details>
-- [ ] Shape: Pass the measurement to _write by keyword instead of eight positional arguments, so a verdict cannot swap value and bound without being seen
+- [x] Shape: Pass the measurement to _write by keyword instead of eight positional arguments, so a verdict cannot swap value and bound without being seen
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/templates/signal.py`. Rule: Shape: does the name say what the code is for / is there a seam a test can reach

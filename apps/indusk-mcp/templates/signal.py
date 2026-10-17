@@ -42,7 +42,7 @@ def _context():
     return attributes
 
 
-def _write(promise, outcome, symptom=None, clause=None, value=None, bound=None, plan=None, phase=None):
+def _write(promise, outcome, *, symptom=None, clause=None, value=None, bound=None, plan=None, phase=None):
     attributes = {"indusk.promise": promise, "indusk.promise.outcome": outcome, **_context()}
     for key, given in (
         ("indusk.clause", clause),
@@ -65,9 +65,11 @@ class signal:
     @staticmethod
     def upheld(promise, clause=None, value=None, bound=None, plan=None, phase=None):
         """The promise held in this run of the behaviour."""
-        _write(promise, "upheld", None, clause, value, bound, plan, phase)
+        _write(promise, "upheld", clause=clause, value=value, bound=bound, plan=plan, phase=phase)
 
     @staticmethod
     def broken(promise, symptom, clause=None, value=None, bound=None, plan=None, phase=None):
         """The promise broke; `symptom` is one line saying what was seen."""
-        _write(promise, "broken", symptom, clause, value, bound, plan, phase)
+        _write(
+            promise, "broken", symptom=symptom, clause=clause, value=value, bound=bound, plan=plan, phase=phase
+        )
