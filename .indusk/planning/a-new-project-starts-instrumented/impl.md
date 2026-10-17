@@ -148,6 +148,18 @@ makes the placement, naming, address and environment tests pass.
   T22: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.templates.config.ts`; T23: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/init-browser-telemetry.test.ts`.
 
   </details>
+- [x] Make the two whole-repository wording checks run whether or not the command line is built, since they never use it.
+  <details><summary>Technical</summary>
+
+  Shape finding. `unknown-service-gone.test.ts` (T4) and `app-port-4318-gone.test.ts` (T6) dropped `describe.skipIf(SHOULD_SKIP)`: they read the tracked tree and never run the CLI, so the gate made them report green by not running whenever dist was absent. Rule: a check that cannot tell nothing-to-do from did-not-run reports the shape of success (work skill, Shape). Both still red on their own assertion.
+
+  </details>
+- [x] Make the declined-telemetry test's description claim only what it checks.
+  <details><summary>Technical</summary>
+
+  Shape finding. `new-project-telemetry-declined.test.ts` (T20): its header said no daemon is registered; the test asserts no such thing and the row does not claim it. Rule: a test says what it asserts, no more (testing extension).
+
+  </details>
 
 #### Deferred to Build Phase 1
 
