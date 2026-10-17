@@ -1,7 +1,7 @@
 ---
 title: "The daemon is found, not guessed"
 date: 2026-10-16
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -112,7 +112,7 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 
 Before any code changes, this phase writes every test that today's code can already be driven by, and records the rest with the body each will have. The tests that start a real Jaeger in a temporary home are written now: a daemon given its ports binds all of them, including a logs port and an MCP port today's command does not accept; a status read made while the reader is busy keeps the record; a stray beside the recorded daemon is stopped by reap; the daemon's log stays free of Jaeger failing to trace itself. So are the tests that a project's MCP file is rewritten only when its address changes, and that a new checkout's MCP file names the daemon; that a start refused because a port is taken names the process holding it; that a status read leaves a stale record in place; and the check against this machine's own daemon on this machine that a daemon whose record was moved aside is taken over and found, which today stops at its first step and puts the record back. Each fails today on what it asserts. Every other test's subject is a function a build phase introduces, so its body is written into this phase's register below and authored in that build phase. The next phase starts the code.
 
-- [ ] This plan's own worktree is confirmed as the place the work happens.
+- [x] This plan's own worktree is confirmed as the place the work happens.
   <details><summary>Technical</summary>
 
   `plans start` made `/Users/the_dusky/code/sandbox/dusk-worktrees/daemon-found-not-guessed` on `plan/daemon-found-not-guessed`; confirm with `indusk worktree list` — worktree-per-plan default.
