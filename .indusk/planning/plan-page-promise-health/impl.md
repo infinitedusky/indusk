@@ -62,7 +62,7 @@ This phase writes the three tests that say what the plan page must show: a broke
 
 #### Test Phase 1 Verification
 
-- [ ] The tests this phase writes exist and each fails on its own assertion, not on a missing import.
+- [x] The tests this phase writes exist and each fails on its own assertion, not on a missing import.
   <details><summary>Technical</summary>
 
   `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plan-parts-health.test.ts` and `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/plan-parts.test.tsx` — A1, A2, A3 red on their assertions. Rows' State to `written` in the same edit.
