@@ -971,7 +971,8 @@ This phase makes the promise heard in the running system. Each part of the promi
   `INDUSK_LIVE_CHECK=daemon-found-not-guessed pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-daemon-found-live.test.ts` — A15 green: `start` took over, `status` found the daemon, one Jaeger and one collector on the stored address, `indusk promises status` in this repository shows the promise broken naming `a-read-never-loses-the-daemon`, and the interface (the stored interface port, `http://localhost:24316` if the block was free, service `indusk-telemetry`) shows two upheld `a-lost-daemon-is-found` reports. Record the date, the process ids and the result in Notes.
 
   </details>
-- [ ] Jaeger's memory store is checked to return a fresh broken report once more traces than the query limit are stored.
+- [x] Jaeger's memory store is checked to return a fresh broken report once more traces than the query limit are stored.
+  Note (2026-10-16): in a temporary home on 34316–34319, 1,600 upheld `indusk-telemetry` reports an hour old then one broken; the query with `limit=1500` returned 1,500 traces and the broken one (wire word `violated`) among them. Present: the newest are returned first, so the throttle's volume stands.
   <details><summary>Technical</summary>
 
   In a temporary home, start a daemon on given ports, post 1,600 upheld `indusk-telemetry` spans for the promise, then one broken; query `/api/traces?service=indusk-telemetry&tags={"indusk.promise":"the-daemon-readers-follow-is-the-one-running"}&limit=1500` and check the broken one is among the results. Expected: present. If absent, record it in Notes and lower the throttle's volume or query by outcome; this is the ADR's "query order is assumed" risk.
