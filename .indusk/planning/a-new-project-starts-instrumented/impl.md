@@ -14,6 +14,8 @@ approved_by: "Sandy Corsillo"
 approved_at: "2026-10-17T23:55:41.690Z"
 cleanup: skipped
 cleanup_reason: "reviewed every changed file; flagged ones are old large files touched lightly, no copy reaches three"
+accepted: 2026-10-17T23:55:49.913Z
+accepted_by: person
 ---
 
 # Init sets up telemetry (New Projects)
