@@ -300,7 +300,7 @@ changed; and Sandy approves the changed `message.you` story.
 
 #### Build Phase 2 Document
 
-- [ ] The changelog records the fix.
+- [x] The changelog records the fix.
   <details><summary>Technical</summary>
 
   `apps/docs/src/changelog.md`: mockups draw components with their stories' resets; Message wraps long text.
