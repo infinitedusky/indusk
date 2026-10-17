@@ -1,7 +1,7 @@
 ---
 title: "Impl tasks are written as instructions"
 date: 2026-10-17
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -46,10 +46,10 @@ hold, so a person reading a phase can tell the work from the checks.
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|-------|-----|------|
-| A1 | The planner's impl instructions say a task is an instruction and a verification item what must hold, with a before-and-after pair | Test Phase 1 | Build Phase 1 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
-| A2 | Every task placeholder in the impl, falsify and cleanup templates asks for an instruction; every verification placeholder for what must hold | Test Phase 1 | Build Phase 1 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts, apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
-| A3 | The planning rules a project is shipped say the same, and its copy matches the package's | Test Phase 1 | Build Phase 1 | planned | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
-| A4 | The templates still pass the save check as written, and an impl written before still validates | Test Phase 1 | Test Phase 1 | planned | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts, apps/indusk-mcp/src/__tests__/phase-summary-existing-impls.test.ts |
+| A1 | The planner's impl instructions say a task is an instruction and a verification item what must hold, with a before-and-after pair | Test Phase 1 | Build Phase 1 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
+| A2 | Every task placeholder in the impl, falsify and cleanup templates asks for an instruction; every verification placeholder for what must hold | Test Phase 1 | Build Phase 1 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts, apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts |
+| A3 | The planning rules a project is shipped say the same, and its copy matches the package's | Test Phase 1 | Build Phase 1 | written | unit | promise: an-impl-phase-explains-itself | apps/indusk-mcp/src/__tests__/planner-impl-summary-template.test.ts |
+| A4 | The templates still pass the save check as written, and an impl written before still validates | Test Phase 1 | Test Phase 1 | passing | unit | promise: hidden-detail-is-only-read | apps/indusk-mcp/src/__tests__/ritual-templates-phase-summary.test.ts, apps/indusk-mcp/src/__tests__/phase-summary-existing-impls.test.ts |
 
 ## Checklist
 
@@ -61,7 +61,7 @@ This phase writes the tests that read the planner's instructions and fail
 while they still tell a task to say what will be true. Build Phase 1 changes
 the wording until they pass.
 
-- [ ] Confirm this plan has its own worktree.
+- [x] Confirm this plan has its own worktree.
   <details><summary>Technical</summary>
 
   Created by `indusk plans start bugfix impl-tasks-are-instructions`; check with `indusk worktree list`.
