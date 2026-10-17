@@ -786,7 +786,7 @@ This phase tests the finished scaffold against apps shaped differently from the 
   Hypothesis: `guidance("python")` prints `run: opentelemetry-instrument python your_app.py`, and `templates/instrumentation.py` offers it first. That wrapper builds its own tracer provider from the environment (the standard port, `unknown_service`) before the app runs; `instrumentation.py` is then either never imported or its `trace.set_tracer_provider` is refused as an override. Either way the spans miss the daemon and carry no service name or project, against the clauses about where spans go and how they are named. Fix: print a wiring line that imports `instrumentation` at the top of the entry point, reorder the template's docstring so that is the way and the wrapper is not offered, and keep the install line to what the template imports.
 
   </details>
-- [ ] Make the settings keep the environment value as written when it is not valid percent-encoding, instead of throwing.
+- [x] Make the settings keep the environment value as written when it is not valid percent-encoding, instead of throwing.
   <details><summary>Technical</summary>
 
   Hypothesis: `resourceAttribute` in `templates/telemetry-settings.ts` calls `decodeURIComponent` unguarded, so `OTEL_RESOURCE_ATTRIBUTES=deployment.environment=100%` throws a `URIError` from `telemetrySettings`, which runs at import in the instrumentation, the logger, the browser file and the helper: the app fails to start because of its telemetry. Fix: on a decode error use the trimmed raw value. The seat-holds copy of the settings (`examples/seat-holds/src/telemetry-settings.ts`) gets the same change, so the demo stays a copy.
