@@ -207,5 +207,8 @@ describe("A18 — each story opens on the Looks page at its component's size, an
     } finally {
       await page.close();
     }
-  }, 580_000);
+    // Every story of the admin, about 11 s each with its devices: 113 stories
+    // took 1 192 s on 2026-10-17. The limit is that with room for the catalog
+    // to grow.
+  }, 1_800_000);
 });
