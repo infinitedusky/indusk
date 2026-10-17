@@ -949,6 +949,13 @@ This phase makes the promise heard in the running system. Each part of the promi
 
   </details>
 
+- [x] The promise status command says broken when a promise has a break still live, and broke and fixed when every break's incident is fixed, by the same rule the admin and the editor read.
+  <details><summary>Technical</summary>
+
+  Discovered: the live check, row A15, was red only because `promises status` never printed "broken". `formatStatus` in `apps/indusk-mcp/src/lib/promises/status.ts` takes the registry's incidents and prefixes the count line with `broken — ` or `broke — fixed — ` from `healthOf` (`lib/promises/health.ts`); `bin/commands/promises.ts` passes `read.registry.incidents`. Guarded by two cases in `src/__tests__/promises-cli-words.test.ts`. Asked: "Row A15 … is red only on wording … How should it go?" — user: "Make status say broken".
+
+  </details>
+
 #### Build Phase 5 Verification
 
 - [x] The report tests pass, the reap report test passes, and the files that depend on the changed modules still pass.
