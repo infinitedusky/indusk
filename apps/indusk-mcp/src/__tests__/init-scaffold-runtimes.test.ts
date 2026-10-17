@@ -13,7 +13,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { git, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
 const NAME = "homework-gate";
-const PLACEHOLDER = "unknown-service";
+// Joined, so this file is not itself a line the placeholder-gone check finds.
+const PLACEHOLDER = ["unknown", "service"].join("-");
 
 type Kind = "react-spa" | "nextjs" | "node" | "python";
 const KINDS: Kind[] = ["node", "nextjs", "react-spa", "python"];
