@@ -90,9 +90,9 @@ assertions in [test-plan.md](test-plan.md).
 | T29 | A scaffolded file InDusk recorded writing and a person then deleted is not written back by `update` (one line says it was left out), `--force` writes it, and a missing file with no record is still created | Build Phase 4 | Build Phase 4 | passing | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/lib/scaffold/plan.test.ts, apps/indusk-mcp/src/__tests__/update-scaffold-refresh.test.ts |
 | T30 | A recorded scaffolded file whose only changes are layout (whitespace and line breaks, trailing commas, semicolons, quote style) is refreshed, not written beside; one already the rendering in another layout is left untouched; a changed word still goes beside; a record written as a hash of the exact text still matches | Build Phase 5 | Build Phase 5 | passing | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/lib/scaffold/plan.test.ts |
 | T31 | After `init`, the settings file reformatted the way Biome prints it (the values line split across lines) is not reported as changed by `update`: nothing beside it, no "you changed"; and `init` on a fresh copy of the seat-holds example writes nothing beside any file | Build Phase 5 | Build Phase 5 | passing | unit | clause: a-new-project-reports-from-its-first-run/a-newer-template-is-offered-not-forced | apps/indusk-mcp/src/__tests__/update-scaffold-refresh.test.ts, apps/indusk-mcp/src/__tests__/demo-signal-helper.test.ts |
-| T32 | The new-project agent is told the exact name a telemetry recommendation must carry, the same name the declined-telemetry rule reads, so a decline the agent writes always turns both telemetry extensions off | Build Phase 6 | Build Phase 6 | written | unit | promise: a-recommendation-can-be-declined | apps/indusk-mcp/src/lib/new-project/prompt.test.ts |
-| T33 | The seat-holds demo's spans say `development` when nothing sets the environment, and `SEAT_HOLDS_ENV` or `OTEL_RESOURCE_ATTRIBUTES` when one does | Build Phase 6 | Build Phase 6 | written | unit | clause: a-new-project-reports-from-its-first-run/every-span-says-where-it-ran | examples/seat-holds/src/telemetry.test.ts |
-| T34 | The otel extension's installed-packages health check passes in an app holding only the packages its scaffold installs — a Next.js app (`@vercel/otel`), a browser app (`@opentelemetry/sdk-trace-web`), a Node app (`@opentelemetry/sdk-node`) — and fails in one holding none | Build Phase 6 | Build Phase 6 | written | unit | clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs | apps/indusk-mcp/src/__tests__/otel-health-packages.test.ts |
+| T32 | The new-project agent is told the exact name a telemetry recommendation must carry, the same name the declined-telemetry rule reads, so a decline the agent writes always turns both telemetry extensions off | Build Phase 6 | Build Phase 6 | passing | unit | promise: a-recommendation-can-be-declined | apps/indusk-mcp/src/lib/new-project/prompt.test.ts |
+| T33 | The seat-holds demo's spans say `development` when nothing sets the environment, and `SEAT_HOLDS_ENV` or `OTEL_RESOURCE_ATTRIBUTES` when one does | Build Phase 6 | Build Phase 6 | passing | unit | clause: a-new-project-reports-from-its-first-run/every-span-says-where-it-ran | examples/seat-holds/src/telemetry.test.ts |
+| T34 | The otel extension's installed-packages health check passes in an app holding only the packages its scaffold installs — a Next.js app (`@vercel/otel`), a browser app (`@opentelemetry/sdk-trace-web`), a Node app (`@opentelemetry/sdk-node`) — and fails in one holding none | Build Phase 6 | Build Phase 6 | passing | unit | clause: a-new-project-reports-from-its-first-run/the-scaffold-sits-where-the-app-runs | apps/indusk-mcp/src/__tests__/otel-health-packages.test.ts |
 
 ## Checklist
 
@@ -934,41 +934,41 @@ The cold audit ran `init` on a fresh copy of the demo and was told a file nobody
 
 Three of the cold audit's findings were defects nothing had answered. A person who declines telemetry while creating a project could still get it, because the decline counted only when the agent happened to name it `telemetry`. The demo's spans said `local`, against the clause that every span says `development` unless set. And the otel extension's health check looked for a package only a plain Node app installs, so a correctly scaffolded Next.js or browser app could read as unhealthy. Once this phase closes, each holds as the brief says.
 
-- [ ] Tell the new-project agent the exact name of the telemetry recommendation, from the one constant the decline rule reads.
+- [x] Tell the new-project agent the exact name of the telemetry recommendation, from the one constant the decline rule reads.
   <details><summary>Technical</summary>
 
   `lib/new-project/proposal.ts`: export `TELEMETRY_RECOMMENDATION = "telemetry"`; `create.ts` `disableDeclinedTelemetry` matches it; `prompt.ts` step 6 says the telemetry recommendation is named exactly that. T32 imports the constant and asserts the prompt names it as the recommendation's name.
 
   </details>
-- [ ] Make the demo's spans carry the settings' environment unless the demo's own environment variable sets one.
+- [x] Make the demo's spans carry the settings' environment unless the demo's own environment variable sets one.
   <details><summary>Technical</summary>
 
   `examples/seat-holds/src/telemetry.ts`: a named `demoResourceAttributes(env)` the provider uses, overriding `deployment.environment` only when `SEAT_HOLDS_ENV` is set (the Dockerfile and `fly.toml` set `production`). `README.md`'s variable table: default `development`.
 
   </details>
-- [ ] Let the otel health check accept the packages each runtime's scaffold installs.
+- [x] Let the otel health check accept the packages each runtime's scaffold installs.
   <details><summary>Technical</summary>
 
   `extensions/otel/manifest.json` `otel-packages-installed`: `require.resolve` of `@opentelemetry/sdk-node`, `@vercel/otel` or `@opentelemetry/sdk-trace-web`, else Python's `opentelemetry`. T34 runs the manifest's own command in temporary apps holding a stub of each package.
 
   </details>
-- [ ] Shape — review the files this phase changes against the enabled extensions' craft rules.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 6 Verification
 
-- [ ] A declined telemetry recommendation is named the way the decline rule reads it.
+- [x] A declined telemetry recommendation is named the way the decline rule reads it.
   <details><summary>Technical</summary>
 
   T32: red today (the prompt writes `"name": "<practice>"`).
 
   </details>
-- [ ] The demo's spans say development unless something sets the environment.
+- [x] The demo's spans say development unless something sets the environment.
   <details><summary>Technical</summary>
 
   T33: red today (`local`). `pnpm --filter seat-holds test`.
 
   </details>
-- [ ] The health check passes for a scaffolded Next.js, browser or Node app and fails for an app with no OpenTelemetry.
+- [x] The health check passes for a scaffolded Next.js, browser or Node app and fails for an app with no OpenTelemetry.
   <details><summary>Technical</summary>
 
   T34: red today on the Next.js and browser apps. `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/new-project/prompt.test.ts src/__tests__/otel-health-packages.test.ts src/__tests__/new-project-telemetry-declined.test.ts`; tsc and biome on the changed files.
@@ -977,7 +977,7 @@ Three of the cold audit's findings were defects nothing had answered. A person w
 
 #### Build Phase 6 Context
 
-- [ ] Add to the package's context file that a recommendation the new-project flow acts on is named by a constant the agent's prompt reads.
+- [x] Add to the package's context file that a recommendation the new-project flow acts on is named by a constant the agent's prompt reads.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the eval/agents/skills section: one line, T32 as its guard.
@@ -986,7 +986,7 @@ Three of the cold audit's findings were defects nothing had answered. A person w
 
 #### Build Phase 6 Document
 
-- [ ] Say in the demo's README that its spans say development unless set, and add a changelog line.
+- [x] Say in the demo's README that its spans say development unless set, and add a changelog line.
   <details><summary>Technical</summary>
 
   `examples/seat-holds/README.md`; the changelog's unreleased section.
