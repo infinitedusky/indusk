@@ -187,6 +187,35 @@ function readText(path: string): string | null {
 	}
 }
 
+/**
+ * The time a daemon log line was written, or `null` for a line with none.
+ * Two formats share the file: Jaeger's own (`2026/10/16 19:13:04`, local time)
+ * and the collector's and gRPC's (`2026-10-16T19:13:17.583-0400`, with an offset).
+ */
+export function timestampOf(line: string): number | null {
+	const iso = /^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?)(Z|[+-]\d\d:?\d\d)?/.exec(line);
+	if (iso) {
+		const zone = iso[2]?.replace(/^([+-]\d\d)(\d\d)$/, "$1:$2") ?? "";
+		const at = Date.parse(`${iso[1]}${zone}`);
+		return Number.isNaN(at) ? null : at;
+	}
+	const slash = /^(\d{4})\/(\d\d)\/(\d\d) (\d\d):(\d\d):(\d\d)/.exec(line);
+	if (slash) {
+		const [y, mo, d, h, mi, sec] = slash.slice(1).map(Number);
+		return new Date(y, mo - 1, d, h, mi, sec).getTime();
+	}
+	return null;
+}
+
+/** The lines written at or after `time`: scans back from the end to the first line stamped before it. */
+export function linesSince(lines: string[], time: number): string[] {
+	for (let i = lines.length - 1; i >= 0; i--) {
+		const at = timestampOf(lines[i]);
+		if (at !== null && at < time) return lines.slice(i + 1);
+	}
+	return lines;
+}
+
 /** A start holds the lock while two processes come up, up to 15 s each. */
 const DAEMON_LOCK = { timeoutMs: 90_000, staleAfterMs: 90_000 };
 
@@ -282,12 +311,7 @@ export function realDaemonReads(home: string): DaemonReads {
 					}
 					return buf.toString("utf-8").split("\n").filter(Boolean);
 				}
-				return readFileSync(logPath, "utf-8")
-					.split("\n")
-					.filter((line) => {
-						const at = Date.parse(line.slice(0, 24));
-						return line !== "" && (Number.isNaN(at) || at >= from.time);
-					});
+				return linesSince(readFileSync(logPath, "utf-8").split("\n").filter(Boolean), from.time);
 			} catch {
 				return [];
 			}

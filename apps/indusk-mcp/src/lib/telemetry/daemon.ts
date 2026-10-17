@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, openSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import { join } from "node:path";
@@ -383,6 +383,8 @@ export async function spawnDaemonProcesses(request: { ports: Ports }): Promise<D
 		renderCollectorConfig({ otlpHttp: logsOtlp, health: otelcolHealth }, logsPath),
 	);
 
+	// Where this daemon's own lines begin in the log, for the self-tracing count.
+	const logOffset = existsSync(logFilePath()) ? statSync(logFilePath()).size : 0;
 	const logFd = openSync(logFilePath(), "a");
 
 	// Spawn Jaeger first
@@ -450,6 +452,7 @@ export async function spawnDaemonProcesses(request: { ports: Ports }): Promise<D
 		otelcolBinary: otelcolBin,
 		platform: currentPlatformTag(),
 		logsPath,
+		logOffset,
 	};
 }
 

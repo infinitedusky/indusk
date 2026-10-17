@@ -224,6 +224,35 @@ export function renderStatus(state: DaemonState, answers: Record<number, PortAns
 	return lines;
 }
 
+// ---- Jaeger tracing itself ---------------------------------------------------
+
+/**
+ * A line of Jaeger failing to send its own traces: it names the port nothing
+ * listens on (4317) and either the trace exporter or the failed connection.
+ */
+const SELF_TRACING =
+	/4317.*(?:traces export|addrConn\.createTransport failed)|(?:traces export|addrConn\.createTransport failed).*4317/;
+
+export interface SelfTracing {
+	count: number;
+	first?: string;
+}
+
+/** How many of `lines` are Jaeger failing to trace itself, and the first of them. */
+export function selfTracingLines(lines: string[]): SelfTracing {
+	const hits = lines.filter((line) => SELF_TRACING.test(line));
+	return hits.length === 0 ? { count: 0 } : { count: hits.length, first: hits[0] };
+}
+
+/** The self-tracing lines written since the running daemon started: from the offset its record holds, else from its start time. */
+export function selfTracingSince(reads: DaemonReads, meta: DaemonMeta): SelfTracing {
+	const from =
+		meta.logOffset !== undefined
+			? { offset: meta.logOffset }
+			: { time: Date.parse(meta.startedAt) };
+	return selfTracingLines(reads.logSince(from));
+}
+
 // ---- finding a daemon whose record is gone ---------------------------------
 
 /** A rendered config written this long after a process started is still that process's own. */

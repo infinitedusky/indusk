@@ -55,6 +55,8 @@ export interface DaemonMeta {
 	otelcolBinary: string;
 	platform: string;
 	logsPath: string;
+	/** The size of `telemetry.log` just before this daemon was spawned: where its own lines begin. Absent in a record written by a finder. */
+	logOffset?: number;
 }
 
 export type DaemonStatusResult =

@@ -14,6 +14,7 @@ import {
 	describeFinding,
 	findDaemon,
 	renderStatus,
+	selfTracingSince,
 } from "../../lib/telemetry/daemon-state.js";
 import { runReap } from "../../lib/telemetry/reap-plan.js";
 import { registerWithDaemon } from "../../lib/telemetry/register.js";
@@ -179,6 +180,15 @@ export async function telemetryStatus(): Promise<void> {
 
 	for (const line of renderStatus(state, answers)) console.info(line);
 	if (finding !== null) console.info(finding);
+	if (state.meta !== null && (state.kind === "running" || state.kind === "partial")) {
+		const tracing = selfTracingSince(reads, state.meta);
+		if (tracing.count > 0) {
+			console.info(
+				`Log: ${tracing.count} line(s) of Jaeger failing to trace itself since the daemon started; first: ${tracing.first}`,
+			);
+			console.info("  `indusk telemetry restart` starts it with its own tracing off.");
+		}
+	}
 	console.info(`Registered ${projectLabel} ${projectCount}`);
 }
 
