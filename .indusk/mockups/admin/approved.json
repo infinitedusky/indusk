@@ -8017,6 +8017,17 @@
 			"by": "Sandy Corsillo",
 			"at": "2026-10-16T18:33:24.402Z",
 			"plan": "nav-row-legible"
+		},
+		{
+			"kind": "story",
+			"story": "message.agent-folded",
+			"snapshotHash": "c277af5511d05dfbc12eaf4fc24ac3a546b8dbf96f7312213923a822273aa104",
+			"stylesheetHash": "b996f3c65e1c8b6498cd9c83ce8d8b4bf91b7991164493d9271866ecee1e8fca",
+			"foundationHash": "037016f4fcf6969a2783e4d00158905c0d3f4a40c2098abb83a16aefbdf1646b",
+			"declarationsHash": "08332fe298031086ccf5dced9d283429121ef5cd1e164e1d16383daa34ddb1ca",
+			"by": "Sandy Corsillo",
+			"at": "2026-10-17T17:11:16.693Z",
+			"plan": "mockups-draw-components-as-stories"
 		}
 	]
 }
