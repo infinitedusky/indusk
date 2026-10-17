@@ -644,7 +644,7 @@ This phase gives InDusk one way to tell its own daemon processes apart from ever
 
 #### Build Phase 1 Context
 
-- [ ] The root context file records the decision in one line.
+- [x] The root context file records the decision in one line.
   <details><summary>Technical</summary>
 
   root (Key Decisions): `- The daemon is found, not guessed: one daemon on one address chosen once and stored in ~/.indusk (InDusk's block 24316-24319, or ports picked once when held at first setup; a recording server keeps 4318), read by every reader and handed out by \`indusk telemetry address\`, recognised by binary + config path, its record never deleted by a read and rebuilt from the process list; nothing starts a second — see /decisions/daemon-found-not-guessed` — always-on because every session that runs `init`, `update`, a telemetry command or a promise reader depends on which daemon it reaches, across every area of the repository, and a session that guesses a port or reads a record as truth reintroduces the defect.

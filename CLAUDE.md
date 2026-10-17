@@ -94,6 +94,7 @@ dusk/
 - Sessions per plan: one per plan and kind, at most `sessions.max` a machine — see `/decisions/sessions-per-plan`
 - New project flow: a project starts as a conversation in the admin; drafts at `~/.indusk/new-projects/`, creation by the package — see `/decisions/new-project-flow`
 - Plans are promises: a plan holds the promises it lands, each stated as clauses with a clause plan before the ADR; opt-in `clauses: required` — see `/decisions/plans-are-promises`
+- The daemon is found, not guessed: one daemon on one address chosen once and stored in ~/.indusk (InDusk's block 24316-24319, or ports picked once when held at first setup; a recording server keeps 4318), read by every reader and handed out by `indusk telemetry address`, recognised by binary + config path, its record never deleted by a read and rebuilt from the process list; nothing starts a second — see /decisions/daemon-found-not-guessed
 
 ## Known Gotchas
 
