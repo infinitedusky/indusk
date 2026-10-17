@@ -1,7 +1,7 @@
 ---
 title: "A promise reads the same on its plan's page"
 date: 2026-10-17
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -44,6 +44,7 @@ Make true the [brief](brief.md)'s promise `a-promise-reads-the-same-on-its-plan-
 | A1 | A plan whose enforced behaviour promise has a break no incident records shows that promise's dot in the broken colour on its plan's page, not the healthy green it shows today | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-promise-reads-the-same-on-its-plan-page/broken-reads-broken | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts, apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
 | A2 | On a plan's page, a promise that broke and was fixed, one seen holding, one with no signal, one known broken and a state promise each show the colour the Promises page gives them, and the enforced behaviour promise nothing has reported on is grey, not green | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike | apps/indusk-admin/src/__tests__/plan-parts.test.tsx |
 | A3 | For a project with a production source holding and a local break, the plan's parts read each promise's health exactly as the nav's red dot does, from the alarm source, so a laptop break alone does not turn the plan page red | Test Phase 1 | Build Phase 1 | passing | unit | clause: a-promise-reads-the-same-on-its-plan-page/no-rule-of-its-own | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts |
+| A4 | On a plan's page, an enforced behaviour promise that the plan's checkout registers and the trunk's registry does not (added, or changed to a behaviour promise, on the plan's branch and confirmed there) reads no signal, not green; today the health is computed over the trunk's registry alone, so it has no entry and falls back to the enforced state's green | Build Phase 2 | Build Phase 2 | planned | unit | clause: a-promise-reads-the-same-on-its-plan-page/each-health-alike | apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts |
 
 ## Checklist
 
@@ -89,7 +90,7 @@ This phase gives a plan's parts each promise's health, from the same rule and so
 
   </details>
 
-- [x] The package's own test reads health through `planPromiseHealth` rather than a copy of the nav's rule.
+- [x] The package's own test reads health through the package's answer rather than a copy of the nav's rule.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts`: the `alarmHealth` helper is replaced by `planPromiseHealth`, and the `as unknown as` cast on `readPlanParts` is gone now that the option and field exist. No assertion changes.
@@ -125,6 +126,47 @@ This phase gives a plan's parts each promise's health, from the same rule and so
 
   </details>
 
+### Build Phase 2: Falsification — a promise the trunk does not yet register
+
+**Tier**: med — the work step's default (`workflow.steps.work.tier`)
+
+This phase tests whether a promise with no signal can still look healthy on its plan's page. The page reads each promise from the plan's own branch, but its health from the trunk's list of promises, so a behaviour promise that exists only on the branch gets no health and falls back to the green of an enforced promise. The fix answers health for those promises too, through the same rule, so once this phase closes a promise nothing has reported on is never green on its plan's page.
+
+- [ ] A behaviour promise that only the plan's branch registers gets its health from the package's rule, so it reads no signal until telemetry reports on it.
+  <details><summary>Technical</summary>
+
+  Answers A4. `planPromiseHealth(registry, reads, extra: PromiseEntry[] = [])` in `apps/indusk-mcp/src/lib/promises/health.ts` also runs `healthOf(p, alarmRead(reads) ?? null, registry.incidents)` for each `extra` promise the trunk's registry lacks, so its incidents and source stay the nav's; a behaviour promise outside the read window has no marks and reads `unverified`. `readPlanHealth(projectPath, checkout)` in `apps/indusk-admin/src/lib/plan-health.ts` passes the checkout registry's promises absent from the trunk's (none when `checkout` is the project); `plan/[name]/page.tsx` and `brief/page.tsx` pass `checkout`. `redPlans` keeps calling it with no `extra`.
+
+  </details>
+- [ ] Shape — review the files this phase changed against the enabled extensions' craft rules.
+
+#### Build Phase 2 Verification
+
+- [ ] The test for a branch-only behaviour promise fails before the fix and passes after it, and the earlier three still pass.
+  <details><summary>Technical</summary>
+
+  A4: fixture through `helpers/promises-fixture.ts` with a trunk registry lacking an enforced behaviour promise that a second (checkout) registry holds, owned by the plan; `readPlanParts(checkout, plan, { health: planPromiseHealth(trunk, reads, extra) })` with a holding alarm read that has no marks for it — the promise's `health` is `unverified`, never absent (absent draws `DOT.enforced`, `bg-ok`). `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plan-parts-health.test.ts && pnpm exec vitest related --run src/lib/promises/health.ts && pnpm exec tsc --noEmit`; `cd apps/indusk-admin && pnpm exec vitest related --run src/lib/plan-health.ts "src/app/p/[project]/plan/[name]/page.tsx" "src/app/p/[project]/plan/[name]/brief/page.tsx"`. A4 to `written` when authored red, `passing` in the closing edit.
+
+  </details>
+
+#### Build Phase 2 Context
+
+- [ ] The admin's context file says a promise only the plan's branch registers takes its health from the same rule.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-admin/CLAUDE.md`, the plan-parts rule this plan's Build Phase 1 Context item extended: add "— a promise only the plan's checkout registers too, so no signal is never the enforced green".
+
+  </details>
+
+#### Build Phase 2 Document
+
+- [ ] The admin reference says a behaviour promise new on the plan's branch shows no signal until telemetry reports on it.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/admin-ui/overview.md`, the plan page's Promises part: one clause after the health sentence Build Phase 1 wrote.
+
+  </details>
+
 ## Files Affected
 
 | File | Change |
@@ -132,7 +174,8 @@ This phase gives a plan's parts each promise's health, from the same rule and so
 | `apps/indusk-mcp/src/lib/promises/health.ts` | `planPromiseHealth`; `redPlans` through it |
 | `apps/indusk-mcp/src/lib/plans/parts.ts` | `health` option, `PartPromise.health` |
 | `apps/indusk-admin/src/components/plan/PlanParts.tsx` | dot from health, else state |
-| `apps/indusk-admin/src/app/p/[project]/plan/[name]/page.tsx`, `brief/page.tsx` | read health, pass it in |
+| `apps/indusk-admin/src/app/p/[project]/plan/[name]/page.tsx`, `brief/page.tsx` | read health, pass it in (and the checkout, Build Phase 2) |
+| `apps/indusk-admin/src/lib/plan-health.ts` | the plan page's health read; promises only the checkout registers (Build Phase 2) |
 | `apps/indusk-mcp/src/__tests__/plan-parts-health.test.ts`, `apps/indusk-admin/src/__tests__/plan-parts.test.tsx` | the three rows |
 | `apps/indusk-admin/CLAUDE.md`, `apps/docs/src/reference/admin-ui/overview.md`, `apps/docs/src/changelog.md` | context and docs |
 
@@ -143,3 +186,4 @@ This phase gives a plan's parts each promise's health, from the same rule and so
 ## Notes
 
 - Found 2026-10-17 at the close of `daemon-found-not-guessed`: its promise read broken in the nav and on the Promises page from the live check's deliberate breaks, while its plan page showed it green.
+- Falsification, 2026-10-17. Investigated without a hypothesis forming: an unreachable or blind alarm source (every behaviour promise reads no signal, not green); retired and known-broken promises (grey and amber, as on the Promises page); a malformed or partial trunk registry (`registryOf` takes the partial one); the health cache shared with the layout (one key per project, the same reads). Not authored, as the accepted brief settles them: a promise broken locally while production holds it is red in the Promises page's local column but not on its plan's page — the brief's `no-rule-of-its-own` clause chose the nav's alarm source, though its first expectation says "broken on the Promises page … never looks healthy"; and `HEALTH_DOT` copies `PROMISE_HEALTH_CHIP`'s colours by hand rather than deriving them, which is `/cleanup`'s.
