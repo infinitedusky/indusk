@@ -1210,7 +1210,9 @@ Commits since the last green slow run (c804aaf) touching `apps`, `packages`, `ex
 
 ## Root cause
 
-_Unwritten — a person writes this._
+Two layers. First, both checks had gone stale. The composition check (A30, `composition.contract.test.ts`) matched a placed component by its top-level position in the mockup; since `component-content` a component mockup places components inside its own, so the match landed on the wrong box. It also read `start` alignment as something other than left, and sized boxes that hold the mockup's own words. The story-frame check (A18, `looks-components.contract.test.ts`) ran the admin's 113 stories under `next dev` at about 11 s each, past its 580 s limit — it had only ever stopped early, on `message.you`.
+
+Second, once the checks were fixed they reported real differences: a component's generated mockup stylesheet carried its classes but not the app's element resets (Tailwind preflight), so `project-card` (an `<a>`) drew in link blue and `prompt-box`'s textarea in the browser's monospace; `home.default`'s own `.grid` rule matched the card root's `grid` utility; and `message.you` overflowed its frame after e5915cbc4 removed Message's `overflow-wrap` class.
 
 ## Fix
 
