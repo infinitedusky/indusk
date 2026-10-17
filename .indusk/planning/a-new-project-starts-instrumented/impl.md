@@ -792,7 +792,7 @@ This phase tests the finished scaffold against apps shaped differently from the 
   Hypothesis: `resourceAttribute` in `templates/telemetry-settings.ts` calls `decodeURIComponent` unguarded, so `OTEL_RESOURCE_ATTRIBUTES=deployment.environment=100%` throws a `URIError` from `telemetrySettings`, which runs at import in the instrumentation, the logger, the browser file and the helper: the app fails to start because of its telemetry. Fix: on a decode error use the trimmed raw value. The seat-holds copy of the settings (`examples/seat-holds/src/telemetry-settings.ts`) gets the same change, so the demo stays a copy.
 
   </details>
-- [ ] Leave out a scaffolded file a person deleted when InDusk updates the project, and say so once.
+- [x] Leave out a scaffolded file a person deleted when InDusk updates the project, and say so once.
   <details><summary>Technical</summary>
 
   Hypothesis: `decideFile` returns `create` for any missing file, recorded or not, so after a person deletes a file InDusk wrote (the logger they don't want, a root setup they moved), every `indusk update` writes it back, and because a create counts as a first scaffold it reprints the install lines. That forces a template on its owner, against the clause that a newer template is offered, not forced. Fix: a missing file with a record and no `--force` gets a new `removed` action: nothing written, the record kept, one line `left out: <path> (you removed it; delete its entry in .indusk/scaffold.json to have it back)`. The plan test's expectation for the missing-and-recorded combination changes from create to removed; the trajectory row's assertion text does not change, because "leave alone" already covers it.
