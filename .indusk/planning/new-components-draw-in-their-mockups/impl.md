@@ -59,6 +59,7 @@ This phase writes the two tests the fix is measured by: one showing a new compon
   `overview.test.ts`: a mockup declaring `<meta name="indusk-new-components" content="idea-row">` with `.ir { display: grid }` on its own `[data-component="idea-row"]` element, composed by `mockupDocument` — A1 asserts the rule reaches it (the scoped selector does not exclude `[data-component="idea-row"]`); A2 asserts a placed `[data-component="card"]` in the same mockup, and an element inside it, are still excluded. Both carry `promise: mockups-render-in-the-cockpit`.
 
   </details>
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Regression Guards
 
@@ -75,21 +76,23 @@ This phase writes the two tests the fix is measured by: one showing a new compon
 
 #### Test Phase 1 Context
 
-- [ ] Leave the package's rules unchanged in this phase, since they change with the fix.
+- [x] Leave the package's rules unchanged in this phase, since they change with the fix.
   <details><summary>Technical</summary>
 
   (no rule is written at this phase; Build Phase 1's Context item writes it.)
 
   </details>
+  Note: left unchanged in this phase; the rule is written in Build Phase 1.
 
 #### Test Phase 1 Document
 
-- [ ] Leave the docs unchanged in this phase, since they change with the fix.
+- [x] Leave the docs unchanged in this phase, since they change with the fix.
   <details><summary>Technical</summary>
 
   (no page changes at this phase; Build Phase 1's Document item writes it.)
 
   </details>
+  Note: left unchanged in this phase; the docs are written in Build Phase 1.
 
 ### Build Phase 1: The scoping skips what a mockup draws itself
 
