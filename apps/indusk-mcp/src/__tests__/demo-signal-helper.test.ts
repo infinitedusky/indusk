@@ -5,7 +5,7 @@
 //
 // Both files are read inside the test, so a missing helper fails an assertion naming it
 // rather than the load of this file.
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -57,6 +57,21 @@ describe("demo-signal-helper", () => {
 				existsSync(join(dir, "src", f)),
 			);
 			expect(added, "init added these to the example").toEqual([]);
+		},
+	);
+
+	// Build Phase 5, T31: the demo ships as InDusk wrote it, so init finds nothing changed.
+	it.skipIf(SHOULD_SKIP)(
+		"T31: init on a fresh copy writes nothing beside any file and never says a file was changed",
+		() => {
+			const dir = freshCopy();
+			const r = runCli(dir, ["init"], { INDUSK_SKIP_TELEMETRY_AUTOSTART: "1" });
+			expect(r.code, `init exit\n${r.stderr}`).toBe(0);
+			const beside = readdirSync(dir, { recursive: true, encoding: "utf-8" }).filter(
+				(f) => f.endsWith(".indusk-new") && !f.includes("node_modules"),
+			);
+			expect(beside, "files written beside").toEqual([]);
+			expect(`${r.stdout}${r.stderr}`).not.toContain("you changed");
 		},
 	);
 });

@@ -41,6 +41,62 @@ describe("what the scaffold does with one file", () => {
 	});
 });
 
+describe("a formatter's layout is not an edit", () => {
+	// The one line the scaffold writes, and the same values as Biome prints them.
+	const ONE_LINE =
+		'export const RENDERED = { service: "app", project: "p", traces: "http://a" };\n';
+	const BIOME = `export const RENDERED = {\n\tservice: "app",\n\tproject: "p",\n\ttraces: "http://a",\n};\n`;
+	const SINGLE = "export const RENDERED = { service: 'app', project: 'p', traces: 'http://a' }\n";
+	const NEWER = ONE_LINE.replace("http://a", "http://b");
+
+	it("T30: a recorded file changed only in layout is refreshed, whichever layout it is in", () => {
+		for (const current of [BIOME, SINGLE]) {
+			expect(decideFile({ current, recorded: h(ONE_LINE), rendered: NEWER }).action).toBe(
+				"refresh",
+			);
+		}
+	});
+
+	it("T30: a file already the rendering in another layout is recorded, and a scaffold run writes nothing", () => {
+		expect(decideFile({ current: BIOME, recorded: h("older"), rendered: ONE_LINE }).action).toBe(
+			"record",
+		);
+		const [node] = scaffoldPlan(
+			[
+				{
+					name: "app",
+					rel: "",
+					exists: true,
+					present: (f: string) => f === "package.json",
+					hasSrc: false,
+					srcApp: false,
+					current: (p: string) =>
+						p === "telemetry-settings.ts" ? BIOME : p === "package.json" ? "{}" : null,
+				},
+			],
+			{
+				record: {},
+				force: false,
+				render: (t: string) => (t === "telemetry-settings.ts" ? ONE_LINE : t),
+			},
+		);
+		const file = node?.files.find((f) => f.path === "telemetry-settings.ts");
+		expect(file).toMatchObject({ action: "record", current: true });
+	});
+
+	it("T30: a changed word still goes beside, in any layout", () => {
+		for (const current of [BIOME.replace('"p"', '"q"'), ONE_LINE.replace("app", "other")]) {
+			expect(decideFile({ current, recorded: h(ONE_LINE), rendered: NEWER }).action).toBe("beside");
+		}
+	});
+
+	it("T30: a record written as a hash of the exact text still matches", () => {
+		expect(decideFile({ current: ONE_LINE, recorded: h(ONE_LINE), rendered: NEWER }).action).toBe(
+			"refresh",
+		);
+	});
+});
+
 describe("the scaffold for a target, from what was read", () => {
 	const target = (files: Record<string, string>) => ({
 		name: "homework-gate",

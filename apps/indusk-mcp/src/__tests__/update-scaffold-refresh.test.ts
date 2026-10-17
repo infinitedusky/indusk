@@ -100,4 +100,31 @@ describe.skipIf(SHOULD_SKIP)("update-scaffold-refresh", () => {
 		expect(fresh.code).toBe(0);
 		expect(existsSync(logger), "no record: created").toBe(true);
 	});
+
+	// Build Phase 5, T31: a formatter rewrapping the settings line is not an edit.
+	it("T31: the settings file reformatted as Biome prints it is not reported as changed by update", () => {
+		const env = { INDUSK_SKIP_TELEMETRY_AUTOSTART: "1" };
+		const dir = nodeProject();
+		const init = runCli(dir, ["init"], env);
+		expect(init.code, `init exit\n${init.stderr}`).toBe(0);
+
+		const settings = join(dir, "src", "telemetry-settings.ts");
+		const written = readFileSync(settings, "utf-8");
+		const wrapped = written.replace(
+			/^export const RENDERED: Rendered = \{ (.*) \};$/m,
+			(_all, body: string) =>
+				`export const RENDERED: Rendered = {\n${body
+					.split(", ")
+					.map((pair) => `\t${pair},`)
+					.join("\n")}\n};`,
+		);
+		expect(wrapped, "the values line is split across lines").not.toBe(written);
+		writeFileSync(settings, wrapped);
+
+		const u = runCli(dir, ["update"], env);
+		expect(u.code, `update exit\n${u.stderr}`).toBe(0);
+		expect(existsSync(`${settings}.indusk-new`), "nothing beside a reformatted file").toBe(false);
+		expect(u.stdout, "update does not say it was changed").not.toContain("you changed");
+		expect(readFileSync(settings, "utf-8"), "the person's layout is kept").toBe(wrapped);
+	});
 });
