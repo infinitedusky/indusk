@@ -91,7 +91,7 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 | A32 | With the record naming a running Jaeger and a collector that has died, `status` sends the Jaeger a broken report for one-daemon-on-its-own-ports naming the collector as not running and the stored logs port as not held; today it sends nothing | Build Phase 6 | Build Phase 6 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
 | A33 | An address file that exists but cannot be read (cut short, or a port that is not a number) is never taken for a missing one: a start in the real home refuses naming the file and leaves it as it was, chooses nothing and moves no port, and `telemetry address` says it is unreadable; the address is written whole or not at all | Build Phase 6 | Build Phase 6 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-start-plan.test.ts |
 | A34 | In a project with a production source, `promises status` judges the local section by the rule the admin uses for it (the newest signal), so a local break followed by a newer upheld report does not read broken there, while the production section still reads broken by its incidents | Build Phase 6 | Build Phase 6 | passing | unit | a regression guard over a-promise-is-upheld-or-broken: the command line and the admin say the same word for the same source | apps/indusk-mcp/src/__tests__/promises-cli-words.test.ts |
-| A35 | One definition reads a record's four ports by role, and one compares them with the stored address: a record on the stored address has no differences, one on another port names that role, the port held and the port expected, and a port the finder could not read (0) is no difference; status's lines and the daemon's reports both say what that one comparison found | Build Phase 7 | Build Phase 7 | written | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-address.test.ts |
+| A35 | One definition reads a record's four ports by role, and one compares them with the stored address: a record on the stored address has no differences, one on another port names that role, the port held and the port expected, and a port the finder could not read (0) is no difference; status's lines and the daemon's reports both say what that one comparison found | Build Phase 7 | Build Phase 7 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports | apps/indusk-mcp/src/__tests__/telemetry-address.test.ts |
 
 ### Deferred Verification
 
@@ -1102,9 +1102,16 @@ This plan grew the daemon's code across several new files, and two things are no
 
   </details>
 
+- [x] Shape — reviewed the files this phase changed and left them as they are
+  <details><summary>Technical</summary>
+
+  Reviewed `daemon-address.ts`, `daemon-state.ts`, `daemon-find.ts`, `daemon-process.ts`, `daemon-reports.ts` and `start-plan.ts` against the TypeScript craft rules: nothing to change. One judgement call recorded: `OwnProcess` and `ownProcess` moved to `daemon-process.ts` so the finding module imports no value from the state module (the state module's resolver imports the finder, and a value import back would make a cycle); status keeps its own port order (traces, interface, MCP, logs) through a small ordering constant, because the reports order differs and nothing printed may change.
+
+  </details>
+
 #### Build Phase 7 Verification
 
-- [ ] The new definitions are tested and every daemon test still passes with the same words.
+- [x] The new definitions are tested and every daemon test still passes with the same words.
   <details><summary>Technical</summary>
 
   A35 authored red first in `src/__tests__/telemetry-address.test.ts`. `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-address.test.ts src/__tests__/telemetry-daemon-reports.test.ts src/__tests__/telemetry-daemon-state.test.ts src/__tests__/telemetry-daemon-found.test.ts src/__tests__/telemetry-start-plan.test.ts && pnpm exec vitest related --run src/lib/telemetry/daemon-address.ts src/lib/telemetry/daemon-state.ts src/lib/telemetry/daemon-find.ts src/lib/telemetry/daemon-reports.ts src/lib/telemetry/start-plan.ts && pnpm exec tsc --noEmit`. Row State updated in the same edit.
