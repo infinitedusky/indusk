@@ -177,7 +177,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   Looks page) and any waiting amendment come from the package's
   `readPlanParts`, read from the plan's own checkout on every request; Approve
   on an amendment posts to `plans/[name]/reapprove`. The review's `evidence`
-  group is read, not signed off. Guarded by `cockpit-single-definition.test.ts`
+  group is read, not signed off. Each promise's dot is its health from the
+  package's `planPromiseHealth` (the alarm source, as the nav's red), its
+  registry state only when telemetry says nothing. Guarded by `cockpit-single-definition.test.ts`
   and `plan-parts.test.tsx` (A15). — see `/reference/admin-ui/overview`
 - **A task's Technical detail renders through `components/Markdown.tsx` in
   `PhaseItems`, never as raw text**: the phase's paragraph and each task's

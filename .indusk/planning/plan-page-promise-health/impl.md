@@ -96,6 +96,8 @@ This phase gives a plan's parts each promise's health, from the same rule and so
 
   </details>
 
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+
 #### Build Phase 1 Verification
 
 - [x] The three tests pass, the files that depend on the changed modules still pass, and the plan and brief pages' looks still hold.
@@ -107,7 +109,7 @@ This phase gives a plan's parts each promise's health, from the same rule and so
 
 #### Build Phase 1 Context
 
-- [ ] The admin's context file says a plan's promise chips take their colour from the package's health, as the nav does.
+- [x] The admin's context file says a plan's promise chips take their colour from the package's health, as the nav does.
   <details><summary>Technical</summary>
 
   `apps/indusk-admin/CLAUDE.md`, the plan-parts rule ("A plan's page shows its brief's three parts from `plans/parts` and computes none"): add "each promise's dot is its health from `planPromiseHealth` (the alarm source, as the nav's red), its registry state only when telemetry says nothing". Root `CLAUDE.md` gets no line: a bugfix with no ADR.
