@@ -198,7 +198,7 @@ activates) — one plan, after the editor's one-release wait on the wire word.
 The evaluator asked whether a commit emitted its clause's signal. A clause
 carrying its budget or bound machine-readably, with a reader that compares.
 A staging source beside production. Sampling and reader cost. The server
-writing back to the laptop. A break cascading down a trace to its cause, and
+writing back to the local machine. A break cascading down a trace to its cause, and
 signals from the browser — the later cut, as chosen on 2026-10-15.
 
 ## Measurement: from a look to a number (Sandy, 2026-10-16)
@@ -211,7 +211,7 @@ first look at thirty days: the recording server keeps traces for twenty-eight
 days on disk (`DEFAULT_RETENTION_HOURS`, `lib/telemetry/server.ts:65`), so a
 look can still count recent traces when it comes due. It runs out at ninety-day
 looks, at trends, and at rates and percentiles over time: Jaeger is a trace
-viewer, its query API pages with limits, and the laptop daemon keeps nothing
+viewer, its query API pages with limits, and the local daemon keeps nothing
 across a restart (memory store, Sandy, 2026-10-16). Settled in conversation the
 same day, as the next plans after this master's seven, in this order:
 
