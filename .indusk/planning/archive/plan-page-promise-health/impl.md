@@ -269,8 +269,10 @@ The audit, a reader that had not seen the build, found three ways the promise co
 
 #### Build Phase 4 Verification
 
-- [x] A6 and A7 fail before their fixes and pass after; A5 fails with either page's health line removed and passes as built; A1–A4 still pass.
+- [x] The changed-kind and nav tests fail before their fixes and pass after, the page test fails with either page's health line removed, and the earlier tests still pass.
   <details><summary>Technical</summary>
+
+  A6 and A7 red before, green after; A5 red with either `health:` line removed; A1–A4 green.
 
   `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/plan-parts-health.test.ts && pnpm exec vitest related --run src/lib/promises/health.ts && pnpm exec tsc --noEmit`; `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/plan-parts.test.tsx && pnpm exec vitest related --run src/lib/plan-health.ts "src/app/p/[project]/layout.tsx" && pnpm exec tsc --noEmit`; `pnpm check`.
 
