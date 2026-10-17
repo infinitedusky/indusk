@@ -1,7 +1,7 @@
 ---
 title: "Impl tasks are written as instructions"
 date: 2026-10-17
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 test_levels: required
@@ -9,6 +9,9 @@ test_purpose: required
 rationale: required
 phase_summary: required
 gate_policy: ask
+approved_brief: "68e5c8933f4f0c3d3c62ba16ecb0537a828ef0a60d5cdfd59f16450e51517ea8"
+approved_by: "Sandy Corsillo"
+approved_at: "2026-10-17T17:44:15.988Z"
 ---
 
 # Impl tasks are written as instructions
