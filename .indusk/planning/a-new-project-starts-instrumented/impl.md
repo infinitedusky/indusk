@@ -584,7 +584,7 @@ next phase then makes what init prints and the skills teach match all of this.
   `apps/indusk-mcp/src/lib/promises/vocabulary.ts`: `APP_SIGNAL_KEYS = { promise, clause, outcome, violatedEvent, symptom, value: "indusk.signal.value", bound: "indusk.signal.bound", plan: "indusk.signal.plan", phase: "indusk.signal.phase" }` (the first five from `PROMISE_MARK`), `APP_RESOURCE_KEYS = { project: "indusk.project", environment: "deployment.environment", run: "indusk.run" }`, `TEST_RUN_VALUE = "test"`. `lib/promises/telemetry.ts` imports `ENVIRONMENT_ATTRIBUTE` from the vocabulary. `promises-single-definition.test.ts` stays green.
 
   </details>
-- [ ] Make the package's span reader read a signal's clause back, so a clause the helper writes is read by something.
+- [x] Make the package's span reader read a signal's clause back, so a clause the helper writes is read by something.
   <details><summary>Technical</summary>
 
   Added at the Test Phase 1 register review (Sandy, 2026-10-17): T13 and T14 assert `clause` on `parseMarkedSpan`'s result and `MarkedSpan` had none. `lib/promises/telemetry.ts`: `MarkedSpan` gains `clause?: string`, set from `PROMISE_MARK.clause` when the span carries it and absent otherwise (as `look` is), so every existing reader and fixture is unchanged. The reader is mark-first's; this adds a field and changes no rule.

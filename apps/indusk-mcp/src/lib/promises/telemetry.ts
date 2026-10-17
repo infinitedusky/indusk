@@ -54,6 +54,8 @@ export interface MarkedSpan {
 	environment: string | null;
 	/** Which look a look check's mark is for (`indusk.look.*`); absent on any other mark. */
 	look?: LookKey;
+	/** The clause of the promise this signal concerns (`indusk.clause`); absent when the span names none. */
+	clause?: string;
 }
 
 /** The app, screen, state and device a look check's span names. */
@@ -240,6 +242,7 @@ export function parseMarkedSpan(
 		if (typeof s === "string") symptom = s;
 	}
 	const look = lookOf(span.tags);
+	const clause = tag(span.tags, PROMISE_MARK.clause);
 	return {
 		promise,
 		outcome,
@@ -251,6 +254,7 @@ export function parseMarkedSpan(
 		symptom,
 		environment: typeof environment === "string" ? environment : null,
 		...(look ? { look } : {}),
+		...(typeof clause === "string" ? { clause } : {}),
 	};
 }
 
