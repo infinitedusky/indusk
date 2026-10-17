@@ -9,9 +9,9 @@ sites: []
 tests: []
 incidents: []
 clauses:
-  - name: one-daemon-on-fixed-ports
+  - name: one-daemon-on-its-own-ports
     kind: limit
-    statement: "At most one InDusk daemon runs on a machine, on fixed ports: 4318 for traces, 4319 for logs, 16686 for its interface and one fixed port for its MCP server; a start that finds one of them held by something else refuses and names what holds it."
+    statement: "At most one InDusk daemon runs on a machine, on one address chosen once and kept: InDusk's own port block (24318 for traces, 24319 for logs, 24316 for its interface, 24317 for its MCP server), or, when one of those is held at first setup, free ports picked once, recorded and never changed; every reader, every InDusk command and what `init` hands an application read that stored address and never assume one."
   - name: a-read-never-loses-the-daemon
     kind: limit
     statement: "No status read, health check or promise reader deletes the daemon's record; a port slow to answer reads as slow, never as gone."
@@ -32,4 +32,4 @@ clauses:
 Every reader of promises, every InDusk command and every application on a machine reaches the same one local telemetry daemon.
 
 ## History
-- 2026-10-16 — declared (daemon-found-not-guessed), from its planning conversation.
+- 2026-10-17 — declared (daemon-found-not-guessed), from its planning conversation.

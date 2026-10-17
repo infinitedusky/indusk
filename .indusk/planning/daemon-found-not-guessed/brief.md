@@ -4,7 +4,7 @@ date: 2026-10-16
 status: accepted
 workflow: feature
 clauses: required
-description: "One local telemetry daemon per machine, on fixed ports, that every reader, every InDusk command and every application reaches: a read never loses it, a lost one is found from the process list, nothing starts a second, and its own commands clear what InDusk left behind."
+description: "One local telemetry daemon per machine, on InDusk's own ports, chosen once and handed to every application: a read never loses it, a lost one is found from the process list, nothing starts a second, and its own commands clear what InDusk left behind."
 ---
 
 # The daemon is found, not guessed — Brief
@@ -15,8 +15,12 @@ of its own daemon and started another beside it, twice; on 2026-10-16 this
 machine had three Jaegers and four collectors, no record, and readers that
 answered four different ways. The background and the findings are in
 [research.md](research.md). The machine was cleared by hand on 2026-10-16
-(Sandy's choice) and runs one daemon on 4318 and 16686; this plan makes that
-the state InDusk keeps.
+(Sandy's choice) and runs one daemon, on 4318 and 16686 until this plan moves it
+to InDusk's own ports. The standard 4318 is every OpenTelemetry tool's default,
+so a person's other tools are the likeliest to hold it; InDusk, installed on
+someone else's machine, takes a block of its own and hands the address to every
+application, so a taken port never splits writers from readers (Sandy,
+2026-10-16).
 
 ## Expectations
 
@@ -37,7 +41,7 @@ the state InDusk keeps.
 ### This plan makes
 
 1. **`the-daemon-readers-follow-is-the-one-running`** (behaviour). Every reader of promises, every InDusk command and every application on a machine reaches the same one local telemetry daemon.
-   - **`one-daemon-on-fixed-ports`** (limit). At most one InDusk daemon runs on a machine, on fixed ports: 4318 for traces, 4319 for logs, 16686 for its interface and one fixed port for its MCP server; a start that finds one of them held by something else refuses and names what holds it.
+   - **`one-daemon-on-its-own-ports`** (limit). At most one InDusk daemon runs on a machine, on one address chosen once and kept: InDusk's own port block (24318 for traces, 24319 for logs, 24316 for its interface, 24317 for its MCP server), or, when one of those is held at first setup, free ports picked once, recorded and never changed; every reader, every InDusk command and what `init` hands an application read that stored address and never assume one.
    - **`a-read-never-loses-the-daemon`** (limit). No status read, health check or promise reader deletes the daemon's record; a port slow to answer reads as slow, never as gone.
    - **`a-lost-daemon-is-found`** (split). When the record is missing, a running InDusk daemon is found from the process list, its record is written again, and `telemetry start` takes it over instead of starting another.
    - **`nothing-starts-a-second`** (limit). Enabling the telemetry extension, `init` and `update` never start a daemon beside a running one and never point another project's MCP entry somewhere else.
@@ -49,7 +53,7 @@ the state InDusk keeps.
 **Must not break**
 
 - **`indusk-stops-only-its-own-daemons`**. Taking over and reaping judge a process by its command line, as `stop` does; nothing signals a process that is not InDusk's.
-- **`everyday-tests-never-wait`**. A test's daemon still runs in a temporary home on its own ports, in the system tier; fixed ports belong to the real home only.
+- **`everyday-tests-never-wait`**. A test's daemon still runs in a temporary home on its own random ports, in the system tier; the machine's address belongs to the real home only.
 - **`the-mcp-config-is-not-tracked`**. With a fixed MCP port, `.mcp.json` stops being rewritten on every start, and stays untracked.
 - **`a-clone-without-an-mcp-config-gets-the-keep-list`**. A checkout with no `.mcp.json` still gets one naming `indusk`, now with the fixed daemon port.
 - **`every-commit-evaluated`**. The evaluator exports to the daemon the record names; it no longer falls back to a no-op logger while the daemon runs.
@@ -65,8 +69,8 @@ None.
 ### Not promised
 
 - **Traces kept across a restart** — the daemon's store stays in memory (Sandy, 2026-10-16); a file-backed store is `every-broken-trace-is-kept`, in the later cut chosen 2026-10-15.
-- **Several daemons on one machine, each on its own ports** — `instance-ports`' first promise; superseded by one daemon on fixed ports (Sandy, 2026-10-16). Its churn promise is already kept: `.mcp.json` is untracked.
-- **Writing the daemon's address into an application** — [a-new-project-starts-instrumented](../a-new-project-starts-instrumented/)'s; with fixed ports an application needs no written address on the laptop, only the default.
+- **Several daemons on one machine, each on its own ports** — `instance-ports`' first promise; superseded by one daemon on one stored address (Sandy, 2026-10-16). Its churn promise is already kept: `.mcp.json` is untracked.
+- **The recording server's ports** — a deployed server is a dedicated machine and keeps the standard 4318 (Sandy, 2026-10-16); only the laptop daemon, which shares a person's machine with their other tools, gets InDusk's own block.
 - **Pruning the 2,663 dead entries in the project registry** — left in `known-issues.md`; the sync skips them.
 - **Rotating the daemon's log** — once the noise is gone the log grows slowly; later, if it asks for it.
 
@@ -80,5 +84,5 @@ None — this plan changes the daemon, its commands and their printed output; no
 
 ## Blocks
 
-- `.indusk/planning/a-new-project-starts-instrumented/` — it hands an application the daemon's address.
+- `.indusk/planning/a-new-project-starts-instrumented/` — it writes the stored address into each application `init` scaffolds; an application no longer reaches the daemon by the SDK's default port.
 - `.indusk/planning/mark-first/` — its live check reads a clause through this daemon, and its closing rule asks it.
