@@ -58,8 +58,8 @@ release raised.
 | A4 | Every component every admin mockup places draws with its story's computed values | Test Phase 1 | Build Phase 2 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
 | A5 | Every story of the admin fits its frame at each device; a long unbroken message wraps in its bubble | Test Phase 1 | Build Phase 2 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
 | A6 | A mockup still shows a component only by naming it; one it draws itself is refused unless declared new | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/lib/looks/compose.test.ts |
-| T1 | A story or mockup approved before the app's element rules change reads proposed after they change; an approval recorded without the rules' hash still reads approved | Build Phase 3 | Build Phase 3 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
-| T2 | A story whose component is centred by auto margins is fitted to its component's width, not the frame's | Build Phase 3 | Build Phase 3 | planned | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
+| T1 | A story or mockup approved before the app's element rules change reads proposed after they change; an approval recorded without the rules' hash still reads approved | Build Phase 3 | Build Phase 3 | written | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
+| T2 | A story whose component is centred by auto margins is fitted to its component's width, not the frame's | Build Phase 3 | Build Phase 3 | written | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
 
 ## Checklist
 
