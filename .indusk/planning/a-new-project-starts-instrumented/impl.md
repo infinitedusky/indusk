@@ -1,7 +1,7 @@
 ---
 title: "Init sets up telemetry (New Projects)"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
