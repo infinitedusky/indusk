@@ -144,3 +144,5 @@ nothing.
   `pnpm e2e -- context-tiers` does not filter and runs every e2e file;
   `day-monitor.e2e.test.ts` failed there waiting 60 s for a violation in
   Jaeger, unrelated to this plan.
+
+Landed on main at 301c1a258, 2026-10-17. Installed with `pnpm install:local` (indusk 1.71.0); nothing published.
