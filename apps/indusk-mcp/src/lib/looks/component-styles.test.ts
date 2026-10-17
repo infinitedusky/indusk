@@ -1,3 +1,4 @@
+import postcss from "postcss";
 import { describe, expect, it } from "vitest";
 import * as styles from "./component-styles.js";
 import {
@@ -237,5 +238,25 @@ describe("componentReset", () => {
 		expect(css).not.toContain(".px-2");
 		expect(css).not.toContain('[data-component="badge"] p');
 		expect(css).not.toMatch(/(^|[\s,])(html|body|:root|:host)\b/m);
+	});
+	it("T4: a reset for a pseudo-element keeps the scope before it, in a selector a browser accepts", () => {
+		const fn = (styles as Record<string, unknown>).componentReset as (
+			css: string,
+			f: Foundation,
+		) => string;
+		const css = fn(
+			"@layer base { *, ::before, ::after { box-sizing: border-box; } input::placeholder { color: red } }",
+			foundation,
+		);
+		const selectors: string[] = [];
+		postcss.parse(css).walkRules((r) => {
+			selectors.push(...r.selectors);
+		});
+		expect(selectors).toEqual([
+			`*${SCOPE}`,
+			`${SCOPE}::before`,
+			`${SCOPE}::after`,
+			`input${SCOPE}::placeholder`,
+		]);
 	});
 });

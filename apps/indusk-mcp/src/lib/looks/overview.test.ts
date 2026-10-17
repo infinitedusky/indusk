@@ -1,5 +1,6 @@
+import postcss from "postcss";
 import { describe, expect, it } from "vitest";
-import { type AppLooksRead, proposedCount, storyDocument } from "./overview";
+import { type AppLooksRead, mockupDocument, proposedCount, storyDocument } from "./overview";
 
 const look = (approval: "approved" | "proposed") => ({ approval });
 const app = (mockups: string[], stories: string[]) =>
@@ -50,5 +51,53 @@ describe("a story's frame", () => {
 		expect(storyDocument(story, "", { styles, base: "", reset: "" })).not.toContain(
 			'data-component-style="_base"',
 		);
+	});
+});
+
+/**
+ * The cockpit's own pages (mockups-draw-components-as-stories, T5, T6): the
+ * reset sits in its place on a story page, and a mockup's own style rules reach
+ * its page only, never a component it places.
+ *
+ * promise: mockups-render-in-the-cockpit
+ */
+describe("the cockpit's pages draw components as their stories do", () => {
+	it("T5: a story page loads the reset after the tokens and before the base and the component's sheet", () => {
+		const doc = storyDocument(
+			{ component: "badge", html: '<span data-component="badge">ok</span>' },
+			":root{--font-sans:x}",
+			{
+				styles: [{ component: "badge", css: ".badge-own {}" }],
+				base: "body { color: red; }",
+				reset: "a:where([data-component]) { color: inherit; }",
+			},
+		);
+		const at = (needle: string) => doc.indexOf(needle);
+		expect(at("data-foundation")).toBeGreaterThanOrEqual(0);
+		expect(at('data-component-style="_reset"')).toBeGreaterThan(at("data-foundation"));
+		expect(at('data-component-style="_base"')).toBeGreaterThan(at('data-component-style="_reset"'));
+		expect(at('data-component-style="badge"')).toBeGreaterThan(at('data-component-style="_base"'));
+	});
+
+	const MARKUP =
+		'<html><head><style>.grid { display: grid; } [data-component="card"] .grid { gap: 0; } .grid::before { content: ""; } .page { color: red; }</style></head><body class="page"><div data-component="card" class="grid">x</div></body></html>';
+	const SCOPE = ":not(:where([data-component], [data-component] *))";
+
+	it("T6: a mockup's own rule never reaches a component; a rule naming a marker still places it", () => {
+		const doc = mockupDocument(MARKUP, ":root{}", [{ component: "card", css: ".card-own {}" }], "");
+		const own = doc.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
+		const selectors: string[] = [];
+		postcss.parse(own).walkRules((r) => {
+			selectors.push(...r.selectors);
+		});
+		expect(selectors).toEqual([
+			`.grid${SCOPE}`,
+			'[data-component="card"] .grid',
+			`.grid${SCOPE}::before`,
+			`.page${SCOPE}`,
+		]);
+		// the foundation's and the component's own sheets are not the mockup's rules
+		expect(doc).toContain(".card-own {}");
+		expect(doc).not.toContain(`.card-own${SCOPE}`);
 	});
 });

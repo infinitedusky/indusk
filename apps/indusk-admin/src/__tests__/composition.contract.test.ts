@@ -1,4 +1,4 @@
-// promise: mockups-render-in-the-cockpit — A30.
+// promise: mockups-render-in-the-cockpit — A30, T7.
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
@@ -7,8 +7,9 @@ import { type Browser, chromium, type Page } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 /**
- * storybook-components A30 — a composed mockup draws each component as its
- * story does. A25 asked only whether a component's rules were *present* in the
+ * storybook-components A30, and mockups-draw-components-as-stories T7 — a
+ * composed mockup draws each component as its story does, at each reference
+ * device of the app. A25 asked only whether a component's rules were *present* in the
  * mockup's document; a mockup's own unlayered resets (`button { padding: 0 }`)
  * beat a layered rule whatever its specificity, so the rules were present and
  * lost. This compares what the browser computed.
@@ -20,6 +21,16 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * `public/storybook` by a static server: nothing here needs `next dev`, so it
  * does not contend for `.next/`). The component's root and each descendant are
  * compared, in document order, property by property.
+ *
+ * Devices (T7). Every mockup is drawn at each of the app's reference devices'
+ * widths, and the story is read at that same width, so a responsive class is
+ * compared where it applies.
+ *
+ * Own words (T7). A mockup may give a component its own words
+ * (component-content). The story is read with the mockup's words placed into
+ * its leaf elements (those with no element child) before it is measured, so a
+ * box holding the mockup's words is held to the story's box given those words,
+ * never skipped.
  *
  * Sizes. A box's content width and height are compared with the story's root
  * drawn as wide as the mockup drew it (the root's width forced to the
@@ -119,6 +130,8 @@ function readDrawn(args: {
   props: readonly string[];
   /** Draw the root this many pixels wide (its border box), as a mockup's column did. */
   width?: number;
+  /** The words to place into the leaf elements, by document-order index (the mockup's own). */
+  words?: readonly string[];
 }): Drawn[] | { problem: string } {
   const marked = Array.from(
     document.querySelectorAll<HTMLElement>(
@@ -134,6 +147,18 @@ function readDrawn(args: {
   if (args.width !== undefined) {
     root.style.boxSizing = "border-box";
     root.style.width = `${args.width}px`;
+  }
+  if (args.words) {
+    // A leaf (no element child) holding other words than the mockup's is given
+    // them, so its box is the story's box for the same words.
+    const all = [root, ...Array.from(root.querySelectorAll("*"))];
+    all.forEach((el, i) => {
+      const want = args.words?.[i];
+      if (want === undefined || el.children.length > 0) return;
+      if ((el.textContent ?? "").replace(/\s+/g, " ").trim() !== want) {
+        el.textContent = want;
+      }
+    });
   }
   const label = (el: Element, parent: string, n: number) =>
     `${parent}${parent ? " > " : ""}${el.tagName.toLowerCase()}${
@@ -264,16 +289,19 @@ afterAll(async () => {
   });
 });
 
-const WIDE = 1280;
-const NARROW = 1000;
+/** How far a second viewport is from the device's, to drop a value the container drives. */
+const WIDER_BY = 120;
+/** The height of every read viewport; nothing here depends on it. */
+const TALL = 900;
 
 async function drawn(
   page: Page,
   index: number,
   name: string,
   width?: number,
+  words?: readonly string[],
 ): Promise<Drawn[] | { problem: string }> {
-  return page.evaluate(readDrawn, { index, name, props: PROPS, width });
+  return page.evaluate(readDrawn, { index, name, props: PROPS, width, words });
 }
 
 async function story(
@@ -282,6 +310,7 @@ async function story(
   name: string,
   siblings: boolean,
   width?: number,
+  words?: readonly string[],
 ): Promise<Drawn[] | { problem: string }> {
   await page.goto(
     `${origin}/storybook/iframe.html?id=${encodeURIComponent(id)}&viewMode=story`,
@@ -307,7 +336,7 @@ async function story(
       root.after(document.createElement("span"));
     }, name);
   }
-  return drawn(page, 0, name, width);
+  return drawn(page, 0, name, width, words);
 }
 
 /**
@@ -320,15 +349,16 @@ async function storyProps(
   browser: Browser,
   id: string,
   name: string,
+  device: number,
 ): Promise<Drawn[] | { problem: string }> {
   const reads: Array<Drawn[] | { problem: string }> = [];
   for (const [width, siblings] of [
-    [WIDE, false],
-    [NARROW, false],
-    [WIDE, true],
+    [device, false],
+    [device + WIDER_BY, false],
+    [device, true],
   ] as const) {
     const page = await browser.newPage({
-      viewport: { width, height: 900 },
+      viewport: { width, height: TALL },
     });
     try {
       reads.push(await story(page, id, name, siblings));
@@ -360,25 +390,30 @@ async function storyProps(
   });
 }
 
-/** The story's boxes with its root drawn `width` px wide, on a viewport wide enough not to wrap it. */
+/**
+ * The story's boxes with its root drawn `width` px wide and the mockup's
+ * `words` in its leaves, on a viewport wide enough not to wrap it.
+ */
 async function storySizes(
   browser: Browser,
   id: string,
   name: string,
   width: number,
+  device: number,
+  words: readonly string[],
 ): Promise<Drawn[] | { problem: string }> {
   const page = await browser.newPage({
-    viewport: { width: Math.max(WIDE, Math.ceil(width) + 64), height: 900 },
+    viewport: { width: Math.max(device, Math.ceil(width) + 64), height: TALL },
   });
   try {
-    return await story(page, id, name, false, width);
+    return await story(page, id, name, false, width, words);
   } finally {
     await page.close();
   }
 }
 
-describe("A30 — a composed mockup draws each component as its story does", () => {
-  it("A30 every component every admin mockup places has, on its root and each descendant, the story's computed values", async () => {
+describe("T7 — a composed mockup draws each component as its story does, at each device", () => {
+  it("T7 (A30) every component every admin mockup places has, at each reference device, on its root and each descendant, the story's computed values and its box given the mockup's words", async () => {
     const { readAppLooks } = await import(
       "@infinitedusky/indusk-mcp/looks/overview"
     );
@@ -394,111 +429,125 @@ describe("A30 — a composed mockup draws each component as its story does", () 
     const failures: string[] = [];
     let compared = 0;
 
-    for (const mockup of looks.mockups) {
-      const uses = app.mockups.find((m) => m.name === mockup.name)?.uses ?? [];
-      const page = await browser.newPage({
-        viewport: { width: WIDE, height: 900 },
-      });
-      try {
-        await page.setContent(mockup.document, { waitUntil: "load" });
-        await page.evaluate(() => document.fonts.ready);
-        const seen = new Map<string, number>();
-        for (const use of uses) {
-          const index = seen.get(use.name) ?? 0;
-          seen.set(use.name, index + 1);
-          const key = `${use.name}.${use.state}`;
-          const where = `${mockup.name} / ${key}`;
-          const id = ids.get(key);
-          if (!id) {
-            failures.push(`${where}: no story id in the catalog`);
-            continue;
-          }
-          if (!stories.has(key)) {
-            stories.set(key, await storyProps(browser, id, use.name));
-          }
-          const expected = stories.get(key);
-          const actual = await drawn(page, index, use.name);
-          if (!expected || "problem" in expected) {
-            failures.push(
-              `${where}: the story could not be read: ${expected && "problem" in expected ? expected.problem : "none"}`,
-            );
-            continue;
-          }
-          if ("problem" in actual) {
-            failures.push(`${where}: ${actual.problem}`);
-            continue;
-          }
-          const rootWidth = (actual[0] as Drawn).box;
-          const sizeKey = `${key}@${rootWidth}`;
-          if (!sizes.has(sizeKey)) {
-            sizes.set(
-              sizeKey,
-              await storySizes(browser, id, use.name, rootWidth),
-            );
-          }
-          const sized = sizes.get(sizeKey);
-          if (
-            !sized ||
-            "problem" in sized ||
-            sized.length !== expected.length
-          ) {
-            failures.push(`${where}: the story's sizes could not be read`);
-            continue;
-          }
-          if (expected.length !== actual.length) {
-            failures.push(
-              `${where}: the story draws ${expected.length} elements, the mockup ${actual.length}`,
-            );
-            continue;
-          }
-          for (const [i, want] of expected.entries()) {
-            const got = actual[i] as Drawn;
-            compared++;
-            for (const p of PROPS) {
-              if (!(p in want.props)) continue;
-              if (!BORDER_DRAWN.test(p) || borderDrawn(want, p)) {
-                const ask =
-                  p === "display" && i === 0
-                    ? blockified
-                    : p === "text-align"
-                      ? logical
-                      : (v: string) => v;
-                if (
-                  ask(want.props[p] as string) !== ask(got.props[p] as string)
-                ) {
-                  failures.push(
-                    `${where} ${want.path} ${p}: story ${want.props[p]}, mockup ${got.props[p]}`,
-                  );
+    for (const device of app.devices)
+      for (const mockup of looks.mockups) {
+        const uses =
+          app.mockups.find((m) => m.name === mockup.name)?.uses ?? [];
+        const page = await browser.newPage({
+          viewport: { width: device.width, height: device.height },
+        });
+        try {
+          await page.setContent(mockup.document, { waitUntil: "load" });
+          await page.evaluate(() => document.fonts.ready);
+          const seen = new Map<string, number>();
+          for (const use of uses) {
+            const index = seen.get(use.name) ?? 0;
+            seen.set(use.name, index + 1);
+            const key = `${use.name}.${use.state}`;
+            const where = `${mockup.name} (${device.name}) / ${key}`;
+            const id = ids.get(key);
+            if (!id) {
+              failures.push(`${where}: no story id in the catalog`);
+              continue;
+            }
+            const storyKey = `${key}@${device.width}`;
+            if (!stories.has(storyKey)) {
+              stories.set(
+                storyKey,
+                await storyProps(browser, id, use.name, device.width),
+              );
+            }
+            const expected = stories.get(storyKey);
+            const actual = await drawn(page, index, use.name);
+            if (!expected || "problem" in expected) {
+              failures.push(
+                `${where}: the story could not be read: ${expected && "problem" in expected ? expected.problem : "none"}`,
+              );
+              continue;
+            }
+            if ("problem" in actual) {
+              failures.push(`${where}: ${actual.problem}`);
+              continue;
+            }
+            const rootWidth = (actual[0] as Drawn).box;
+            const words = actual.map((el) => el.text);
+            const sizeKey = `${key}@${device.width}@${rootWidth}@${JSON.stringify(words)}`;
+            if (!sizes.has(sizeKey)) {
+              sizes.set(
+                sizeKey,
+                await storySizes(
+                  browser,
+                  id,
+                  use.name,
+                  rootWidth,
+                  device.width,
+                  words,
+                ),
+              );
+            }
+            const sized = sizes.get(sizeKey);
+            if (
+              !sized ||
+              "problem" in sized ||
+              sized.length !== expected.length
+            ) {
+              failures.push(`${where}: the story's sizes could not be read`);
+              continue;
+            }
+            if (expected.length !== actual.length) {
+              failures.push(
+                `${where}: the story draws ${expected.length} elements, the mockup ${actual.length}`,
+              );
+              continue;
+            }
+            for (const [i, want] of expected.entries()) {
+              const got = actual[i] as Drawn;
+              compared++;
+              for (const p of PROPS) {
+                if (!(p in want.props)) continue;
+                if (!BORDER_DRAWN.test(p) || borderDrawn(want, p)) {
+                  const ask =
+                    p === "display" && i === 0
+                      ? blockified
+                      : p === "text-align"
+                        ? logical
+                        : (v: string) => v;
+                  if (
+                    ask(want.props[p] as string) !== ask(got.props[p] as string)
+                  ) {
+                    failures.push(
+                      `${where} ${want.path} ${p}: story ${want.props[p]}, mockup ${got.props[p]}`,
+                    );
+                  }
+                }
+              }
+              // An inline root's box depends on the formatting context the
+              // mockup puts it in (a flex parent blockifies it and it fills the
+              // line), so its size is the page's, not the component's.
+              const inlineRoot =
+                i === 0 &&
+                String(expected[0]?.props.display).startsWith("inline");
+              const wantSize = (sized[i] as Drawn).size;
+              const stretched = i === 0 && /flex|grid/.test(got.parentDisplay);
+              // The story was read with the mockup's own words in its leaves
+              // (component-content), so a box holding them is held to the
+              // story's box for the same words.
+              if (wantSize && got.size && !inlineRoot) {
+                for (const dim of ["width", "height"] as const) {
+                  if (dim === "height" && stretched) continue;
+                  if (Math.abs(wantSize[dim] - got.size[dim]) > 1) {
+                    failures.push(
+                      `${where} ${want.path} content-${dim}: story ${wantSize[dim]}px, mockup ${got.size[dim]}px`,
+                    );
+                  }
                 }
               }
             }
-            // An inline root's box depends on the formatting context the
-            // mockup puts it in (a flex parent blockifies it and it fills the
-            // line), so its size is the page's, not the component's.
-            const inlineRoot =
-              i === 0 &&
-              String(expected[0]?.props.display).startsWith("inline");
-            const wantSize = (sized[i] as Drawn).size;
-            const stretched = i === 0 && /flex|grid/.test(got.parentDisplay);
-            // A mockup may give a component its own words (component-content):
-            // a box holding other words is sized by them, not by the component.
-            const ownWords = (sized[i] as Drawn).text !== got.text;
-            if (wantSize && got.size && !inlineRoot && !ownWords) {
-              for (const dim of ["width", "height"] as const) {
-                if (dim === "height" && stretched) continue;
-                if (Math.abs(wantSize[dim] - got.size[dim]) > 1) {
-                  failures.push(
-                    `${where} ${want.path} content-${dim}: story ${wantSize[dim]}px, mockup ${got.size[dim]}px`,
-                  );
-                }
-              }
-            }
           }
+        } finally {
+          await page.close();
         }
-      } finally {
-        await page.close();
       }
-    }
 
     expect(compared, "elements were compared").toBeGreaterThan(0);
     // The same difference in the same story recurs in every mockup that places
@@ -512,5 +561,5 @@ describe("A30 — a composed mockup draws each component as its story does", () 
       ([line, mockups]) => `${line}  [mockups: ${mockups.join(", ")}]`,
     );
     expect(report, report.join("\n")).toEqual([]);
-  }, 580_000);
+  }, 2_400_000);
 });

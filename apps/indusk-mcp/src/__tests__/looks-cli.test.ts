@@ -17,6 +17,7 @@ import {
  * promise: a-mockup-is-approved-by-a-person — ui-promises A1 (status half), A3 (command half), A4.
  * promise: a-mockup-leaves-nothing-undefined — ui-promises A5, A6, A7, A8, and A38 (the lint unchanged by its decomposition).
  * promise: every-part-of-the-ui-is-covered — ui-promises A10, A11, A12.
+ * promise: a-mockup-is-approved-by-a-person — T8 (the status line of a look last approved under other element rules).
  * A31–A34 are in `looks-lint-rules.test.ts`.
  *
  * `indusk looks lint | status | coverage | approve` over a copy of the fixture
@@ -191,6 +192,27 @@ describe("looks status — a mockup is approved by a person", () => {
 		);
 		const { out } = run(root, ["status", "demo"]);
 		expect(statusLine(out, "home.empty"), out).toMatch(/proposed/);
+	});
+});
+
+describe("looks status — a look last approved under other element rules (T8)", () => {
+	// T8
+	it("T8 a changed mockup last approved under other element rules says nothing is held, naming the element rules", () => {
+		const root = app();
+		const record = join(root, MOCKUPS, "approved.json");
+		const entries = JSON.parse(readFileSync(record, "utf-8")).approvals as Array<
+			Record<string, string>
+		>;
+		// The fixture app keeps no element rules; an entry bound to some names other ones.
+		for (const e of entries) e.baseRulesHash = "0".repeat(64);
+		writeFileSync(record, JSON.stringify({ approvals: entries }, null, "\t"));
+		const file = join(root, mockupFile("home.empty"));
+		writeFileSync(file, `${readFileSync(file, "utf-8")}<!-- a change a person has not seen -->\n`);
+		const line = statusLine(run(root, ["status", "demo"]).out, "home.empty");
+		expect(line).toMatch(/proposed/);
+		expect(line).toMatch(/element rules/);
+		expect(line).toMatch(/nothing held/);
+		expect(line).not.toMatch(/held to/);
 	});
 });
 
