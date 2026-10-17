@@ -1,7 +1,7 @@
 ---
 title: "Mockups draw components as their stories do"
 date: 2026-10-17
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -57,10 +57,16 @@ release raised.
 | A3 | The resets reach only the components inside a mockup; the page around them draws as before | Test Phase 1 | Build Phase 1 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
 | A4 | Every component every admin mockup places draws with its story's computed values | Test Phase 1 | Build Phase 2 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
 | A5 | Every story of the admin fits its frame at each device; a long unbroken message wraps in its bubble | Test Phase 1 | Build Phase 2 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
-| A6 | A mockup still shows a component only by naming it; one it draws itself is refused unless declared new | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/lib/looks/compose.test.ts |
-| T1 | A story or mockup approved before the app's element rules change reads proposed after they change; an approval recorded without the rules' hash still reads approved | Build Phase 3 | Build Phase 3 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
+| A6 | A mockup still shows a component only by naming it; one it draws itself is refused unless declared new | Test Phase 1 | Test Phase 1 | passing | unit | promise: a-mockup-composes-approved-components | apps/indusk-mcp/src/lib/looks/compose.test.ts, apps/indusk-mcp/src/__tests__/looks-component-content-lint.test.ts |
+| T1 | A story or mockup approved before the app's element rules change reads proposed after they change; an approval recorded without the rules' hash still reads approved | Build Phase 3 | Build Phase 3 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
 | T2 | A story whose component is centred by auto margins is fitted to its component's width, not the frame's | Build Phase 3 | Build Phase 3 | passing | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/app/p/[project]/looks/looks-components.contract.test.ts |
-| T3 | A proposed story or mockup whose last approval was drawn under other element rules is held to nothing, in the look check and in the status line, as one drawn on another foundation is | Build Phase 4 | Build Phase 4 | passing | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
+| T3 | A proposed story or mockup whose last approval was drawn under other element rules is held to nothing, in the look check and in the status line, as one drawn on another foundation is | Build Phase 4 | Build Phase 4 | passing | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/lib/looks/approvals.test.ts |
+| T4 | An element reset written for a pseudo-element keeps the component scope before the pseudo-element, and the selector it writes is one a browser accepts | Build Phase 5 | Build Phase 5 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/component-styles.test.ts |
+| T5 | The cockpit's own story page loads the element resets after the foundation's tokens and before the app's base and the component's sheet | Build Phase 5 | Build Phase 5 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
+| T6 | A mockup's own style rule never reaches a component it places, on its root or inside it, even when it names a class the component also uses; a rule that names the component's marker still places it | Build Phase 5 | Build Phase 5 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/lib/looks/overview.test.ts |
+| T7 | Every component every admin mockup places draws as its story does at each reference device, and a box the mockup gives its own words is as large as the story's box given those words | Build Phase 5 | Build Phase 5 | planned | contract | promise: mockups-render-in-the-cockpit | apps/indusk-admin/src/__tests__/composition.contract.test.ts |
+| T8 | The looks status line of a look last approved under other element rules says nothing is held, and names the element rules | Build Phase 5 | Build Phase 5 | planned | unit | promise: a-mockup-is-approved-by-a-person | apps/indusk-mcp/src/__tests__/looks-cli.test.ts |
+| T9 | An arbitrary wrapping class is refused with a message naming the standard wrapping utility to use instead | Build Phase 5 | Build Phase 5 | planned | unit | promise: mockups-render-in-the-cockpit | apps/indusk-mcp/src/__tests__/looks-lint-rules.test.ts |
 
 ## Checklist
 
@@ -459,6 +465,88 @@ This plan taught approvals to remember the app's element rules, but it did so be
 
   </details>
   Note: the `_reset.css` paragraph and the `looks status` paragraph in `apps/docs/src/reference/cli/looks.md` now say it.
+
+### Build Phase 5: Audit findings — what the cold read found unproven or undeclared
+
+**Tier**: med — the work step's default
+
+A reader that had not seen the build found gaps between what the plan promises and what its tests prove, and changes the brief never declared. The brief now declares them, and this phase closes the rest: a mockup's own styles stop reaching the components it places, the composition check runs at every reference device and measures boxes that hold a mockup's own words, the approvals that history shows were drawn under today's element rules record them, and the small unproven pieces get their own tests. Once it closes, each promise this plan touches is proven as worded.
+
+- [ ] The current admin approvals made since the element rules last changed record the rules they were drawn under.
+  <details><summary>Technical</summary>
+
+  The catalog's `baseRulesHash` has been `333ab599…` since `d4b1fede2` (2026-10-16T16:46:41Z, `git log -G '"baseRulesHash"' -- .indusk/mockups/admin/components.json`). Add `baseRulesHash` to the latest approval of each look in `.indusk/mockups/admin/approved.json` whose `at` is at or after that time (22 of 193); touch no other field or entry. A one-off script in the scratchpad, not committed; the commit message names the rule used. Re-check the hash history on this branch before writing, and stop if it changed since.
+
+  </details>
+- [ ] A mockup's own style rules reach only its page, never a component it places.
+  <details><summary>Technical</summary>
+
+  The `home.default` spacing defect was the mockup's own `.grid` rule reaching the card's `grid` utility class; it was fixed by renaming the class, and nothing stops the next one. In `mockupDocument` (`overview.ts`), rewrite each rule of the mockup's own `<style>` elements so its selectors carry `:not(:where([data-component], [data-component] *))` before any pseudo-element — the inverse of `componentReset`'s scope, reusing `pseudoElementAt` from `component-styles.ts` (export a `pageOnly(css)` beside `componentReset`). A selector that names a component marker (`selectorMarks`) is placement and is left as written. Before the change, find every reader of `mockupDocument`'s output (look check, screenshots, hashes) and confirm none hashes it or compares it to a stored baseline; if one does, stop and record a blocker. T6.
+
+  </details>
+- [ ] The composition check compares each placed component at every reference device, and compares the size of a box that holds a mockup's own words against the story given those words.
+  <details><summary>Technical</summary>
+
+  `composition.contract.test.ts`: draw each mockup at each of `app.devices`' widths, not only `WIDE`; replace the `ownWords` skip with a story read whose leaf elements are given the mockup's text before measuring (`readDrawn` takes the words per element index; only elements without element children are rewritten). T7. If T7 is red on the admin's real mockups, each difference is a defect to fix in this phase, named in a note — not a reason to loosen the check.
+
+  </details>
+- [ ] The reset's scope is tested where it must sit, before a pseudo-element, in a selector a browser accepts.
+  <details><summary>Technical</summary>
+
+  `component-styles.test.ts`: `*, ::before, ::after { box-sizing: border-box }` becomes `*:where(<scope>), :where(<scope>)::before, …`; assert each selector exactly, so a scope placed after a pseudo-element (an invalid selector that drops the whole rule) is caught. T4.
+
+  </details>
+- [ ] The cockpit's own story page is tested to load the reset in its place.
+  <details><summary>Technical</summary>
+
+  `overview.test.ts`: `storyDocument` with `reset` non-empty puts `data-component-style="_reset"` after `data-foundation` and before `_base` and the component's sheet. T5.
+
+  </details>
+- [ ] The status line for a look last approved under other element rules is tested.
+  <details><summary>Technical</summary>
+
+  `looks-cli.test.ts`: a fixture approval carrying a `baseRulesHash` other than the catalog's; `indusk looks status` prints `… element rules — nothing held`. T8.
+
+  </details>
+- [ ] The check that refuses an arbitrary wrapping class says which standard utility to use.
+  <details><summary>Technical</summary>
+
+  `lint-classes.ts` `arbitrary-class`: for an arbitrary `overflow-wrap` or `word-break` value, the message names `wrap-anywhere` / `wrap-break-word` / `break-all`. This is the enforcer the admin's over-budget `CLAUDE.md` could not hold (Build Phase 2's Context item). T9.
+
+  </details>
+- [ ] The frame's height fitting was reviewed and stays as it is: a story's component cannot be pushed down inside its frame.
+  <details><summary>Technical</summary>
+
+  Reviewed `useFittedFrame.ts` `measure`'s `r.bottom + r.top` against the audit's claim that a bottom-aligned or vertically centred story grows the frame. `#storybook-root` is a block container and no admin story sets Storybook's `centered` layout, so a vertical `auto` margin computes to 0, and the measurement is taken at a one-pixel frame height, where alignment cannot add space above the component. Width needed the fix because `auto` horizontal margins do take space.
+
+  </details>
+
+#### Build Phase 5 Verification
+
+- [ ] Each new test fails before its fix where there is a fix, and every looks test passes after.
+  <details><summary>Technical</summary>
+
+  T4, T5, T6, T8, T9: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/looks/ src/__tests__/looks-cli.test.ts src/__tests__/looks-lint-rules.test.ts src/__tests__/looks-component-content-lint.test.ts`. T7: `cd apps/indusk-admin && node ../indusk-mcp/scripts/with-daemon-guard.js npx vitest run --config vitest.system.config.ts src/__tests__/composition.contract.test.ts`. Approvals: a script reading `approved.json` reports 22 current entries carrying `baseRulesHash` and `indusk looks status admin` reports the same approved count as before. Typecheck and biome clean on both packages' changed files.
+
+  </details>
+
+#### Build Phase 5 Context
+
+- [ ] The package's rules say a mockup's own style rules reach only its page.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/CLAUDE.md`, the looks entries beside `_reset.css`: `pageOnly` scopes a mockup's own rules off placed components; place a component with a selector naming its marker.
+
+  </details>
+
+#### Build Phase 5 Document
+
+- [ ] The looks reference says a mockup's own styles never reach the components it places.
+  <details><summary>Technical</summary>
+
+  `apps/docs/src/reference/cli/looks.md`, the composition section: a mockup's own rules are scoped to its page; a rule naming `[data-component=…]` places a component.
+
+  </details>
 
 ## Files Affected
 

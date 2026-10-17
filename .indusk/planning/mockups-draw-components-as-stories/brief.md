@@ -23,7 +23,7 @@ lands.
 
 ### This plan makes
 
-None — the promise this plan keeps already exists; its sentence changes to say more.
+None — the promises this plan keeps already exist; their sentences change to say more. The cockpit now draws every look under the app's element rules, so a change to them changes what an approval shows.
 
 ### Existing promises
 
@@ -34,6 +34,7 @@ None — the promise this plan keeps already exists; its sentence changes to say
 **Changes**
 
 - **`mockups-render-in-the-cockpit`**. Each mockup and each story opens in the cockpit at each reference device, drawn with the foundation's tokens and, where it names components, with each component drawn as its own story draws it, and each story fitted to its frame, with nothing to run beside the cockpit.
+- **`a-mockup-is-approved-by-a-person`**. A mockup or a story, and the foundation and the app's element rules it is drawn under, becomes the reference only when a person approves it in the cockpit, and stops being one when a person takes the approval back there; an agent can draw and propose one and never approve it or take it back.
 
 **Replaces**
 
@@ -41,25 +42,28 @@ None.
 
 ### Not promised
 
+- Binding the approvals made before the element rules were last changed. The 22 current admin approvals made since then record the rules they were drawn under; the 171 older ones bind none until a person approves them again.
 - Approving looks again. The approved mockups do not change; they start drawing their components as approved. Re-approval is a person's call if one now looks different from what they approved.
 
 ## Looks
 
 ### This plan makes
 
-None.
+- **`project-card.in-progress`**. A project with a plan being worked: its shape, an in-progress badge and when it was last seen, drawn by the card itself.
+- **`project-card.workbench`**. A workbench project, the same way.
 
 ### Existing looks
 
 **Must not break**
 
-- **`home.default`**. Its project cards draw in the card's ink, not link blue, with the card's own spacing.
 - **`new-project.start`**. Its prompt box's text area draws in the foundation's text font.
 - **`new-project.no-parent`**. The same prompt box.
 
 **Changes**
 
 - **`message.you`**. Long unbroken text wraps inside the bubble instead of widening it; the approved story stays held until a person approves the new one.
+- **`project-card.default`**. The card draws its own shape badge and last-seen line instead of taking them from the page.
+- **`home.default`**. Its project cards draw in the card's ink, not link blue, with the card's own spacing; it places a card of each kind (default, in progress, workbench), and its primary button is ink, not dusk.
 
 **Replaces**
 
