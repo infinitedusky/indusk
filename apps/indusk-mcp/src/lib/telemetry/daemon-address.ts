@@ -153,8 +153,9 @@ export function chooseAddress(
 		const holder = holders[blockPort] ?? null;
 		const proc = holder === null ? null : daemonProcessOf(holder.command);
 		const held = holder === null || (proc !== null && isOwn(proc, home)) ? null : holder;
+		const otherHomesDaemon = held !== null && proc !== null;
 		const kept = ownPorts[role];
-		if (kept !== undefined && !(held !== null && proc !== null)) {
+		if (kept !== undefined && !otherHomesDaemon) {
 			// the running daemon already holds this role's port: the address says so
 			ports[role] = kept;
 			if (held !== null) {

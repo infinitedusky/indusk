@@ -227,12 +227,7 @@ export interface Candidate {
 /** The ports a labelled pair holds, by the address's roles; a role no socket named is left out. */
 function portsHeld(labelled: RenderedPorts): Partial<Ports> {
 	const held: Partial<Ports> = {};
-	for (const [role, field] of [
-		["traces", "otlpPort"],
-		["ui", "uiPort"],
-		["mcp", "mcpPort"],
-		["logs", "logsOtlpPort"],
-	] as const) {
+	for (const [role, field] of ROLE_FIELDS) {
 		const port = labelled[field];
 		if (port !== undefined) held[role] = port;
 	}
