@@ -76,7 +76,7 @@ export const BLOCK: RenderedPorts = {
 export const ON_BLOCK: Record<number, number[]> = { 1: [24318, 24316, 24317], 2: [24319] };
 
 export interface FakeReads extends DaemonReads {
-	/** Every record the code under test removed: none, since a read never removes one. */
+	/** Every time the code under test removed the record: only a finder, under the lock, for a record of dead processes. */
 	removed: string[];
 	/** Every record it wrote. */
 	written: { meta: DaemonMeta; exclusive: boolean }[];
@@ -107,9 +107,10 @@ export function fakeReads(
 	let record = machine.record ?? null;
 	let address = machine.address ?? null;
 	const written: FakeReads["written"] = [];
+	const removed: string[] = [];
 	const addressWrites: FakeReads["addressWrites"] = [];
 	return {
-		removed: [],
+		removed,
 		written,
 		addressWrites,
 		address: () => address,
@@ -121,6 +122,10 @@ export function fakeReads(
 			return true;
 		},
 		record: () => record,
+		removeRecord() {
+			record = null;
+			removed.push("record");
+		},
 		writeRecord(meta, opts) {
 			if (opts.exclusive && record !== null) return false;
 			record = meta;

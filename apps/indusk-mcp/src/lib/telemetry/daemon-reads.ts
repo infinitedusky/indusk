@@ -56,6 +56,8 @@ export interface DaemonReads {
 	record(): DaemonMeta | null;
 	/** Writes the record; with `exclusive`, only when none exists. Whether it wrote. */
 	writeRecord(meta: DaemonMeta, opts: { exclusive: boolean }): boolean;
+	/** Removes the record and its pid file; only the finder, under the home's lock, after re-reading that every process the record names is dead. */
+	removeRecord(): void;
 	/** The whole process list. */
 	processes(): ProcessRow[];
 	/** The TCP ports each process listens on. */
@@ -254,6 +256,10 @@ export function realDaemonReads(home: string): DaemonReads {
 			} catch {
 				return false;
 			}
+		},
+		removeRecord() {
+			rmSync(metaPath, { force: true });
+			rmSync(pidPath, { force: true });
 		},
 		address() {
 			const read = readAddress(home);

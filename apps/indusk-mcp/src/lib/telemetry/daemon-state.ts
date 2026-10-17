@@ -35,7 +35,7 @@ export type DaemonStateKind =
 	| "running"
 	/** The record names two processes and only one is still the daemon. */
 	| "partial"
-	/** No record, but this home's daemon processes run. */
+	/** No record, or one naming only dead processes, while this home's daemon processes run. */
 	| "found"
 	/** The record names processes that are gone, or are no longer the daemon. */
 	| "stale"
@@ -88,7 +88,8 @@ export function daemonState(reads: DaemonReads, home: string): DaemonState {
 	if (meta === null) kind = unnamed.length > 0 ? "found" : "none";
 	else if (recorded.jaeger && recorded.otelcol) kind = "running";
 	else if (recorded.jaeger || recorded.otelcol) kind = "partial";
-	else kind = "stale";
+	// A record naming only dead processes beside this home's running daemon is a lost record.
+	else kind = unnamed.length > 0 ? "found" : "stale";
 
 	// The stored address belongs to the real home: a temporary home never reads one.
 	const address = homeKind(home, realTempRoots()) === "real" ? reads.address() : null;
@@ -189,7 +190,7 @@ export function renderStatus(state: DaemonState, answers: Record<number, PortAns
 		}
 		case "found":
 			lines.push(
-				`Telemetry daemon: running, record missing — ${state.found.map((p) => `${p.role} ${p.pid}`).join(" and ")}`,
+				`Telemetry daemon: running, record ${state.meta === null ? "missing" : "names dead processes"} — ${state.found.map((p) => `${p.role} ${p.pid}`).join(" and ")}`,
 			);
 			break;
 		case "stale":

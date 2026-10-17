@@ -265,12 +265,33 @@ export function takeOverLocked(
 	return located === null ? null : recordFound(reads, home, located);
 }
 
+/**
+ * Under the lock: removes a record whose processes are all dead, re-read just
+ * now by their command lines, so the exclusive create can write the daemon
+ * that runs. A record naming a process that is still this home's daemon is
+ * left as it is.
+ */
+function clearDeadRecord(reads: DaemonReads, home: string): void {
+	const recorded = reads.record();
+	if (recorded === null) return;
+	const alive = reads.processes().some((row) => {
+		const proc = daemonProcessOf(row.command);
+		if (proc === null || !isOwn(proc, home)) return false;
+		return (
+			(proc.role === "jaeger" && row.pid === recorded.jaegerPid) ||
+			(proc.role === "otelcol" && row.pid === recorded.otelcolPid)
+		);
+	});
+	if (!alive) reads.removeRecord();
+}
+
 /** Under the lock: writes the record when no command has, or reads back the one that did. */
 function recordFound(
 	reads: DaemonReads,
 	home: string,
 	located: { pair: Pair; strays: OwnProcess[] },
 ): Found {
+	clearDeadRecord(reads, home);
 	const { meta, unknownRoles } = metaOf(reads, home, located.pair);
 	const finder = reads.writeRecord(meta, { exclusive: true });
 	return {
