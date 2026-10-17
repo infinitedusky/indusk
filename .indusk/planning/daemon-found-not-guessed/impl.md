@@ -79,12 +79,12 @@ Make true the promise this plan's [brief](brief.md) makes, `the-daemon-readers-f
 | A17 | Registering a project points its own MCP entry at the stored MCP port and leaves every other registered project's entry as it was, whatever port it names | Build Phase 3 | Build Phase 3 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second | apps/indusk-mcp/src/__tests__/telemetry-mcp-entries.test.ts |
 | A18 | Registering sends an upheld report for nothing-starts-a-second when it found or started the one daemon and changed no other entry, and a broken one naming both process ids of a second daemon or each other entry it changed | Build Phase 5 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/nothing-starts-a-second | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
 | A19 | `status` lists every InDusk Jaeger and collector the record does not name, each with process id, start time, ports and install, and says `reap` stops them | Build Phase 1 | Build Phase 1 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-daemon-state.test.ts |
-| A20 | `reap` stops every stray of this home, including one whose config file still exists, and leaves the recorded daemon and every process that is not InDusk's untouched | Build Phase 4 | Build Phase 4 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-reap-plan.test.ts |
-| A21 | `reap` prints each stray it stopped, exits non-zero naming each that would not stop, and sends upheld for strays-are-cleared when none remains and broken naming each that does | Build Phase 4 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-reap-plan.test.ts |
-| A22 | With two daemons in a temporary home and the record naming one, `reap` stops the other and the recorded one still receives traces | Test Phase 1 | Build Phase 4 | written | contract | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-reap-strays.test.ts |
-| A23 | The shipped Jaeger with the config InDusk renders writes no line of failing to send its own traces over half a minute while traces and logs sent to it still arrive | Test Phase 1 | Build Phase 4 | written | contract | clause: the-daemon-readers-follow-is-the-one-running/the-log-is-readable | apps/indusk-mcp/src/__tests__/telemetry-self-tracing.test.ts |
+| A20 | `reap` stops every stray of this home, including one whose config file still exists, and leaves the recorded daemon and every process that is not InDusk's untouched | Build Phase 4 | Build Phase 4 | passing | unit | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-reap-plan.test.ts |
+| A21 | `reap` prints each stray it stopped, exits non-zero naming each that would not stop, and sends upheld for strays-are-cleared when none remains and broken naming each that does | Build Phase 4 | Build Phase 5 | written | unit | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-reap-plan.test.ts |
+| A22 | With two daemons in a temporary home and the record naming one, `reap` stops the other and the recorded one still receives traces | Test Phase 1 | Build Phase 4 | passing | contract | clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared | apps/indusk-mcp/src/__tests__/telemetry-reap-strays.test.ts |
+| A23 | The shipped Jaeger with the config InDusk renders writes no line of failing to send its own traces over half a minute while traces and logs sent to it still arrive | Test Phase 1 | Build Phase 4 | passing | contract | clause: the-daemon-readers-follow-is-the-one-running/the-log-is-readable | apps/indusk-mcp/src/__tests__/telemetry-self-tracing.test.ts |
 | A24 | `status` sends upheld for the-log-is-readable when the log since the daemon started holds no self-tracing line, and broken giving their count and the first of them | Build Phase 5 | Build Phase 5 | planned | unit | clause: the-daemon-readers-follow-is-the-one-running/the-log-is-readable | apps/indusk-mcp/src/__tests__/telemetry-daemon-reports.test.ts |
-| A25 | Taking over and reaping judge a process by its command line: a stranger on a stored port and a temporary-home daemon are never signalled or taken over from the real home; after a takeover, `stop` stops that daemon and says, non-zero, if a process would not stop | Build Phase 4 | Build Phase 4 | planned | unit | a regression guard over indusk-stops-only-its-own-daemons: stop and ui stop judge a process by its command line and signal only their own | apps/indusk-mcp/src/__tests__/telemetry-own-only.test.ts |
+| A25 | Taking over and reaping judge a process by its command line: a stranger on a stored port and a temporary-home daemon are never signalled or taken over from the real home; after a takeover, `stop` stops that daemon and says, non-zero, if a process would not stop | Build Phase 4 | Build Phase 4 | passing | unit | a regression guard over indusk-stops-only-its-own-daemons: stop and ui stop judge a process by its command line and signal only their own | apps/indusk-mcp/src/__tests__/telemetry-own-only.test.ts |
 | A26 | A test's daemon runs in a temporary home on the ports it is given, never the block or the real home's stored address, which it never reads or writes, only in the system tier; the guard script and the package recognise a daemon process the same way | Build Phase 1 | Build Phase 3 | passing | unit | a regression guard over everyday-tests-never-wait: the everyday suite starts no server, and the stored address belongs to the real home only | apps/indusk-mcp/src/__tests__/telemetry-test-homes.test.ts |
 | A27 | Starting, restarting or taking over leaves a `.mcp.json` that already names the stored MCP port unchanged; `update` in a checkout with none writes one naming `indusk` and `jaeger` at the stored MCP port | Test Phase 1 | Build Phase 3 | passing | unit | a regression guard over the-mcp-config-is-not-tracked and a-clone-without-an-mcp-config-gets-the-keep-list: the file stays untracked and a checkout without one gets the keep-list | apps/indusk-mcp/src/__tests__/telemetry-mcp-entries.test.ts |
 | A28 | The evaluator exports to the daemon the record names, or to the one found when the record is missing, and writes no "endpoint unset; falling back to no-op logger" line while a daemon runs | Build Phase 2 | Build Phase 2 | passing | unit | a regression guard over every-commit-evaluated: each evaluation's report reaches the local Jaeger | apps/indusk-mcp/src/__tests__/telemetry-readers-follow.test.ts |
@@ -857,22 +857,35 @@ This phase finishes the clean-up commands and the log. Reap now stops every daem
   New `apps/indusk-mcp/src/lib/telemetry/reap-plan.ts`: `reapPlan(state)` returns strays plus orphans of this home only (today's `reapOrphans()` reaps every orphan on the machine, `apps/indusk-mcp/src/lib/telemetry/orphans.ts:109`). With no record, reap stops nothing and tells the person to run `telemetry start` first. The reap command prints each stopped process and exits non-zero naming each survivor. Rewrite `apps/indusk-mcp/src/lib/telemetry/orphans.test.ts`: lines 72-78 stay true for orphans; "reap leaves the live one alone" becomes "leaves the recorded one alone"; fixtures name `<home>/telemetry-collector.yaml` with `INDUSK_HOME` set to the fixture root. Author A20 and A21's reap half in `apps/indusk-mcp/src/__tests__/telemetry-reap-plan.test.ts`, and A25 in `apps/indusk-mcp/src/__tests__/telemetry-own-only.test.ts`.
 
   </details>
-- [ ] Every Jaeger configuration InDusk renders or ships switches off Jaeger's own tracing.
+- [x] Every Jaeger configuration InDusk renders or ships switches off Jaeger's own tracing.
   <details><summary>Technical</summary>
 
   Add `enable_tracing: false` under `jaeger_query` in `renderJaegerConfig` (`apps/indusk-mcp/src/lib/telemetry/daemon.ts:221-227`), in `packages/telemetry-binaries-shared/jaeger-config.yaml` and its four platform copies (`packages/telemetry-binaries-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}/jaeger-config.yaml`), and in `renderServerConfig` (`apps/indusk-mcp/src/lib/telemetry/server.ts:285`). Remove the "Noise, not an error" comment at `apps/indusk-mcp/templates/server/Dockerfile:34-35`. `jaeger validate` rejects unknown keys, so a misspelling fails at start.
 
   </details>
-- [ ] Status counts the lines of Jaeger failing to trace itself written since the running daemon started.
+- [x] Status counts the lines of Jaeger failing to trace itself written since the running daemon started.
   <details><summary>Technical</summary>
 
   `selfTracingLines(lines): { count: number; first?: string }` in `apps/indusk-mcp/src/lib/telemetry/daemon-state.ts` (a line containing `4317` and either `traces export` or `addrConn.createTransport failed`). `daemonStart` records `logOffset` (the size of `telemetry.log` just before spawn) on the record; for a found daemon, `reads.logSince({ time })` scans back from the end to the first line timestamped before Jaeger's start, reading both `2026/10/16 19:13:04` and `2026-10-16T19:13:17.583-0400`.
 
   </details>
 
+- [x] Shape: The sentence status prints about Jaeger tracing itself gets its own name, so a test can reach it.
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/bin/commands/telemetry.ts`: move the inline block in `telemetryStatus` that turns a `SelfTracing` count into the two lines status prints into `renderSelfTracing(tracing)` beside `selfTracingLines` in `apps/indusk-mcp/src/lib/telemetry/daemon-state.ts`, returning the lines (none when the count is zero), with a case in `apps/indusk-mcp/src/__tests__/telemetry-self-tracing-lines.test.ts`. Rule: Should this inline block have been a named function, and is there a seam a test can reach? The wording lived in the command, which no unit test reaches.
+
+  </details>
+- [x] Shape — reviewed a file this phase changed and left it as it is
+  <details><summary>Technical</summary>
+
+  `apps/indusk-mcp/src/lib/telemetry/reap-plan.ts`: `runReap` reads the state, plans, stops and words the result in one body; each step is a few lines over one decision (what is a stray, then stop it, then say so), `reapPlan` already holds the decision as its own named unit, and splitting the wording out would be a module boundary for the cleanup to judge on the finished whole
+
+  </details>
+
 #### Build Phase 4 Verification
 
-- [ ] The reap, own-only and self-tracing tests pass, and the files that depend on the changed modules still pass.
+- [x] The reap, own-only and self-tracing tests pass, and the files that depend on the changed modules still pass.
   <details><summary>Technical</summary>
 
   `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/telemetry-reap-plan.test.ts src/__tests__/telemetry-own-only.test.ts && pnpm exec vitest related --run src/lib/telemetry/reap-plan.ts src/lib/telemetry/orphans.ts src/lib/telemetry/daemon.ts src/lib/telemetry/daemon-state.ts src/lib/telemetry/server.ts src/bin/commands/telemetry.ts` — A20, A25 green; A21 written, its report half waiting for Build Phase 5. `pnpm build && pnpm exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-reap-strays.test.ts src/__tests__/telemetry-self-tracing.test.ts src/lib/telemetry/orphans.test.ts` — A22, A23 green. Rows' State updated in the same edit.
@@ -881,7 +894,7 @@ This phase finishes the clean-up commands and the log. Reap now stops every daem
 
 #### Build Phase 4 Context
 
-- [ ] The package's context file records that reap stops this home's strays and that Jaeger's own tracing is off.
+- [x] The package's context file records that reap stops this home's strays and that Jaeger's own tracing is off.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, "Promises and telemetry": extend "self-metrics off via `service.telemetry.metrics.level: none`" with "and its own tracing off via `jaeger_query.enable_tracing: false` (the only setting that silences it; `service.telemetry.traces` and `OTEL_*` do not)"; add "`reap` stops this home's strays (own processes the record does not name) and orphans, never another home's or a stranger's. — guarded by `telemetry-reap-plan.test.ts`, `telemetry-own-only.test.ts`."
@@ -890,7 +903,7 @@ This phase finishes the clean-up commands and the log. Reap now stops every daem
 
 #### Build Phase 4 Document
 
-- [ ] The telemetry reference and the troubleshooting guide say reap stops strays, and the changelog says the log is quiet.
+- [x] The telemetry reference and the troubleshooting guide say reap stops strays, and the changelog says the log is quiet.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/telemetry/cli.md`: `reap` stops strays as well as orphans, scoped to this home. `apps/docs/src/guide/getting-started.md:123-133`: `reap` in the recovery path. Changelog (Unreleased, Changed): "`telemetry reap` stops strays"; "Jaeger no longer logs failing to trace itself."
