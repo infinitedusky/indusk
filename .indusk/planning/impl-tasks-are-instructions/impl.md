@@ -80,7 +80,7 @@ the wording until they pass.
 
 #### Test Phase 1 Verification
 
-- [ ] The new wording tests fail on their own assertions, and the existing save-check tests pass.
+- [x] The new wording tests fail on their own assertions, and the existing save-check tests pass.
   <details><summary>Technical</summary>
 
   `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/planner-impl-summary-template.test.ts src/__tests__/ritual-templates-phase-summary.test.ts src/__tests__/phase-summary-existing-impls.test.ts` — A1–A3 red on assertions; A4 green.
