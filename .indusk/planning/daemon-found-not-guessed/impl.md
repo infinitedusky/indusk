@@ -1222,7 +1222,7 @@ A reader who did not build this plan found two places where the code does not do
 
 #### Build Phase 8 Document
 
-- [ ] The telemetry reference says reap stops orphans as well as strays, and what happens when the record names dead processes.
+- [x] The telemetry reference says reap stops orphans as well as strays, and what happens when the record names dead processes.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/telemetry/cli.md`, `reap` and `status`; `apps/docs/src/guide/getting-started.md` recovery path if it describes reap; the changelog line "It no longer reaps orphans of every home on the machine". The ADR's amendments section (`adr.md`, "Amendments (2026-10-17)") and `apps/docs/src/decisions/daemon-found-not-guessed.md` record the five gaps this phase closes as what the code did: rewrite each as the behaviour now built (lost address file keeps the daemon's ports, homes matched by real path, pairing by the stored address first, readers reach a half-running daemon's Jaeger, reap suggested only where it can act).
