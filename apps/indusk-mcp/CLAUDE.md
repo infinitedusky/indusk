@@ -196,23 +196,22 @@ pointer; the pointer holds the story.
   image is built from `docker/`, installing the *published* package; the Fly
   reference never auto-stops. — see `/decisions/day-always-on`
 - Find a promise with `findPromise` (`lib/promises/registry.ts`; name or alias); the brief-vs-registry-vs-clause-plan-vs-rows rules are `lib/promises/clause-rules.ts`.
-- **`.mcp.json` is per machine and untracked** (`.gitignore` carries it): `indusk update`
-  writes one naming the `indusk` server when a checkout has none and never touches one
-  that exists (`lib/mcp-config.ts`); `register` writes only its own project's
-  `jaeger` entry, at the stored MCP port, and only when it differs; nothing re-points
-  another project's entry. Pulling the commit that untracked it deletes the file from a clone's
-  working tree once — run `indusk update`. A test of `update` pins
-  `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`: without it `update` on a project lacking
-  `local-telemetry` starts a real daemon. A new plan worktree gets a copy of the
-  trunk's file (`createPlanWorktree` → `provisionMcpJson`), since git no longer brings
-  it; anything that creates the file creates it through `ensureMcpJson`, so a file
-  the daemon's sync made still names `indusk`.
-- The local daemon is native Jaeger + otelcol (`indusk telemetry *`; see
-  `archive/local-telemetry/adr.md`): self-metrics off (`service.telemetry.metrics.level:
-  none`), its own tracing off (`jaeger_query.enable_tracing: false`, the only setting
-  that silences it). `reap` stops this home's strays, never another home's or a
-  stranger's — guarded by `telemetry-reap-plan.test.ts`, `telemetry-own-only.test.ts`.
-  Binaries are platform-split; registry paths are realpaths; OTel instrumentation loads first.
+- **`.mcp.json` is per machine and untracked**: only `ensureMcpJson` creates it (naming
+  `indusk`), and `update` only when none exists; `register` writes only its own
+  `jaeger` entry, at the stored MCP port, when it differs. A clone pulling the untracking
+  commit loses it once — run `indusk update`. A test of `update` pins
+  `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`, or it starts a real daemon. A new plan worktree
+  copies the trunk's (`provisionMcpJson`).
+- The local daemon is native Jaeger + otelcol (`archive/local-telemetry/adr.md`):
+  self-metrics off, its own tracing off (`jaeger_query.enable_tracing: false`, the only
+  setting that silences it). `reap` stops this home's strays only — guarded by
+  `telemetry-reap-plan.test.ts`, `telemetry-own-only.test.ts`. Binaries are
+  platform-split; registry paths are realpaths; OTel instrumentation loads first.
+- The daemon promise's reports go through `lib/telemetry/daemon-reports.ts` on the
+  SDK-free span path (`watcherSpanBody`), service `indusk-telemetry`, with
+  `indusk.clause`; never `initEvalOtel`, which is off when the record is missing and
+  follows `OTEL_EXPORTER_OTLP_ENDPOINT`. A loss is reported by whoever finds it.
+  — guarded by `telemetry-daemon-reports.test.ts`, `signal-writers.test.ts`.
 - `papers.destinations[]` and `promises.domains[]` are ensured on `update`
   through `ensureConfigBlock`; `resolveDestination` is the one resolver and a
   `repo` destination is refused outside a workbench. `indusk papers publish`
