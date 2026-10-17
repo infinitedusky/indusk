@@ -346,7 +346,7 @@ export async function spawnDaemonProcesses(request: { ports: Ports }): Promise<D
 
 	// Pick every port simultaneously to avoid sequential-pickFreePort collision
 	// (see telemetry-ui-reachable.test.ts lesson from Phase 2).
-	const [otlpHttp, ui, logsOtlp, mcp, otlpGrpc, uiGrpc, jaegerHealth, otelcolHealth] =
+	const [otlpHttp, logsOtlp, ui, mcp, otlpGrpc, uiGrpc, jaegerHealth, otelcolHealth] =
 		await Promise.all([
 			...ADDRESS_ROLES.map((role) => (ports[role] === 0 ? pickAnyFreePort() : ports[role])),
 			pickAnyFreePort(),
