@@ -2,7 +2,7 @@ import { cpSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type Fixture, makeFixture } from "../bookkeeping/fixture.test-support.js";
-import { approvalOf, readApprovals } from "./approvals.js";
+import { approvalOf, readApprovals, readStoryApprovals, storyApprovalOf } from "./approvals.js";
 import { approve, withdraw } from "./approve.js";
 import { LooksAppError, readApp } from "./mockups.js";
 
@@ -397,5 +397,91 @@ describe("the record and its reading are one subpath, the write side another", (
 				/\/looks\/approvals"/,
 			);
 		}
+	});
+});
+
+/**
+ * promise: mockups-render-in-the-cockpit — T1. Every story and mockup is drawn
+ * in the cockpit under the app's element rules (`_reset.css`), whose hash the
+ * catalog keeps as `baseRulesHash`. An approval records it and reads proposed
+ * once the rules change; an entry recorded without it reads as before.
+ */
+describe("approvals bound to the app's element rules", () => {
+	const COMPONENTS = join(__dirname, "..", "..", "__tests__", "fixtures", "components-app");
+	const CATALOG = ".indusk/mockups/demo/components.json";
+	let g: Fixture;
+	beforeEach(() => {
+		g = makeFixture();
+		cpSync(COMPONENTS, g.main, { recursive: true });
+		g.git(g.main, "add", "-A");
+		g.git(g.main, "commit", "-qm", "the components fixture");
+	});
+	afterEach(() => g.cleanup());
+
+	const setRules = (hash: string) => {
+		const file = join(g.main, CATALOG);
+		const catalog = JSON.parse(readFileSync(file, "utf-8"));
+		writeFileSync(file, JSON.stringify({ ...catalog, baseRulesHash: hash }, null, "\t"));
+	};
+
+	// T1
+	it("T1 a story or mockup approved before the element rules change reads proposed after; an entry recorded without the hash reads approved", async () => {
+		setRules("a".repeat(64));
+		const first = await readApp(g.main, "demo");
+		const badge = first.stories.find((s) => s.name === "badge.ok");
+		const home = first.mockups.find((m) => m.name === "home.default");
+		if (!badge || !home) throw new Error("fixture lacks badge.ok or home.default");
+		const foundationHash = first.foundation.hash;
+		// Both fixture entries were recorded without the rules' hash: they stay approved.
+		expect(storyApprovalOf(first, badge, readStoryApprovals(first)).state).toBe("approved");
+		expect(approvalOf(first, home, readApprovals(first)).state).toBe("approved");
+
+		// Taken back and approved again, they record the rules they were shown under.
+		await withdraw(g.main, "demo", "home.default", "sandy", "mockup", {
+			foundationHash,
+			mockupHash: home.hash,
+			componentsHash: home.componentsHash,
+		});
+		await withdraw(g.main, "demo", "badge.ok", "sandy", "story", {
+			foundationHash,
+			snapshotHash: badge.hash,
+		});
+		await approve(g.main, "demo", "badge.ok", "sandy", {
+			kind: "story",
+			snapshotHash: badge.hash,
+			stylesheetHash: badge.stylesheetHash ?? undefined,
+			foundationHash,
+		});
+		await approve(g.main, "demo", "home.default", "sandy", {
+			mockupHash: home.hash,
+			componentsHash: home.componentsHash,
+			foundationHash,
+		});
+		const approved = await readApp(g.main, "demo");
+		const storyNow = approved.stories.find((s) => s.name === "badge.ok") ?? badge;
+		const entries = readStoryApprovals(approved).filter((e) => e.story === "badge.ok");
+		expect(entries[entries.length - 1]).toMatchObject({ baseRulesHash: "a".repeat(64) });
+		const mockupEntries = readApprovals(approved).filter((e) => e.mockup === "home.default");
+		expect(mockupEntries[mockupEntries.length - 1]).toMatchObject({
+			baseRulesHash: "a".repeat(64),
+		});
+		expect(storyApprovalOf(approved, storyNow, readStoryApprovals(approved)).state).toBe(
+			"approved",
+		);
+		expect(approvalOf(approved, home, readApprovals(approved)).state).toBe("approved");
+
+		// The app's element rules change: what they were drawn under is gone.
+		setRules("b".repeat(64));
+		const changed = await readApp(g.main, "demo");
+		const storyAfter = changed.stories.find((s) => s.name === "badge.ok") ?? badge;
+		const homeAfter = changed.mockups.find((m) => m.name === "home.default") ?? home;
+		expect(storyApprovalOf(changed, storyAfter, readStoryApprovals(changed)).state).toBe(
+			"proposed",
+		);
+		expect(approvalOf(changed, homeAfter, readApprovals(changed)).state).toBe("proposed");
+		// A story approved without the hash is read as before.
+		const card = changed.stories.find((s) => s.name === "card.default");
+		if (!card) throw new Error("fixture lacks card.default");
+		expect(storyApprovalOf(changed, card, readStoryApprovals(changed)).state).toBe("approved");
 	});
 });
