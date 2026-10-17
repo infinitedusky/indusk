@@ -1195,6 +1195,13 @@ A reader who did not build this plan found two places where the code does not do
 
   </details>
 
+- [x] Shape: the table that says which port belongs to which role lives in one place in the finder, and a port held by another home's daemon is named once.
+  <details><summary>Technical</summary>
+
+  `portsHeld` in `lib/telemetry/daemon-find.ts` first spelled its own role-to-field table beside `ROLE_FIELDS`; it reads `ROLE_FIELDS`. In `chooseAddress` (`lib/telemetry/daemon-address.ts`) the test for another home's InDusk daemon on a block port was a negated compound condition; it is the named `otherHomesDaemon`. The rest of the phase's files (`daemon-state.ts`, `daemon-process.ts`, `reap-plan.ts`, `start-plan.ts`, `stop.ts`, `daemon-reads.ts`) reviewed, nothing else found.
+
+  </details>
+
 #### Build Phase 8 Verification
 
 - [x] Every finding fails today and passes after its fix, and the files that depend on the changed modules still pass.
