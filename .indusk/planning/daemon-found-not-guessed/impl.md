@@ -1042,7 +1042,7 @@ This phase tests the finished plan against three ways it could fail and nobody w
 
 #### Build Phase 6 Context
 
-- [ ] The package's context file says an unreadable address refuses a start rather than counting as none.
+- [x] The package's context file says an unreadable address refuses a start rather than counting as none.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/CLAUDE.md`, the stored-address rule in "Promises and telemetry": add "an unreadable address file refuses by name, never reads as none; it is written whole (temporary + rename)". The file is over its budget: make the edit shrink it.

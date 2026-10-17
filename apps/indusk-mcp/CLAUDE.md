@@ -176,11 +176,11 @@ pointer; the pointer holds the story.
   Code that decides about the daemon takes `DaemonReads`. — guarded by
   `telemetry-daemon-state.test.ts` and `telemetry-test-homes.test.ts`.
 - **The real home's daemon runs on the address in `<home>/telemetry-address.json`**,
-  chosen once (`PORT_BLOCK` 24316-24319, or a port picked once for a block port held at
-  first setup) and never moved; no code names a daemon port but `daemon-address.ts`; a
-  stored port later held by a stranger is refused by name; port options are accepted only
-  in a temporary home; every start goes through `ensureDaemon`; `indusk telemetry
-  address` is how anything else learns it. — guarded by `port-guard.test.ts`,
+  chosen once (`PORT_BLOCK` 24316-24319, a port picked once if held), never moved,
+  written whole (temporary + rename); only `daemon-address.ts` names a port; a held
+  port or an unreadable file refuses a start by name, never reads as none; port options
+  only in a temporary home; every start goes through `ensureDaemon`; `indusk telemetry
+  address` tells anything else. — guarded by `port-guard.test.ts`,
   `telemetry-start-plan.test.ts` and `telemetry-address.test.ts`.
 - **`server deploy` decides from a recorded Fly state**: `planDeploy` is pure,
   every Fly call goes through `FlyCli`, a failed read is refused, never read
