@@ -1,7 +1,7 @@
 ---
 title: "Mockups draw components as their stories do"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
