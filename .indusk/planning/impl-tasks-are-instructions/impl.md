@@ -1,7 +1,7 @@
 ---
 title: "Impl tasks are written as instructions"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -167,7 +167,7 @@ verification item an end state, then changes the promise's sentence to match.
 
 #### Build Phase 1 Context
 
-- [ ] Make the shipped planning rules carry the new wording, which is where an agent writing an impl reads it.
+- [x] Make the shipped planning rules carry the new wording, which is where an agent writing an impl reads it.
   <details><summary>Technical</summary>
 
   planning: `templates/planning/CLAUDE.md` (done above); nothing for the root.
@@ -176,7 +176,7 @@ verification item an end state, then changes the promise's sentence to match.
 
 #### Build Phase 1 Document
 
-- [ ] Update the planner's reference page and the changelog.
+- [x] Update the planner's reference page and the changelog.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/skills/plan.md`, "Phase summaries for a reader without the shorthand": tasks as instructions, with the before-and-after pair; `apps/docs/src/changelog.md`.
