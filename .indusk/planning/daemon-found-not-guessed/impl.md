@@ -1176,7 +1176,7 @@ A reader who did not build this plan found two places where the code does not do
   `isOwn` in `lib/telemetry/daemon-process.ts:84` compares `p.home === home`; compare the resolved real paths of both (the module already resolves with `realpathSync` for `homeKind`), falling back to the exact string when a path cannot be resolved. Answers row A39.
 
   </details>
-- [ ] Finding pairs a Jaeger with its collector by the stored address first, and by start time only when the address does not say.
+- [x] Finding pairs a Jaeger with its collector by the stored address first, and by start time only when the address does not say.
   <details><summary>Technical</summary>
 
   `pairProcesses` in `lib/telemetry/daemon-find.ts:109` pairs by start time within 20 seconds only; when an address is stored, first pair the Jaeger holding the stored traces port with the collector holding the stored logs port, then fall back to start time for the rest, as the ADR's finding decision said. Answers row A40.
