@@ -78,7 +78,7 @@ it writes no resets yet. Build Phase 1 then makes the generator tests pass.
   `indusk worktree create mockups-draw-components-as-stories` — created by `indusk plans start`; confirm with `indusk worktree list`.
 
   </details>
-- [ ] The repaired composition and story-frame checks are on this branch.
+- [x] The repaired composition and story-frame checks are on this branch.
   <details><summary>Technical</summary>
 
   `git merge plan/storybook-components` (commits cc1e18618, 742861018, 04a75ed0a). Landing storybook-components later merges nothing new for them.
