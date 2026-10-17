@@ -7,7 +7,7 @@ import { NO_TESTS_FLIP, summaryImpl } from "./helpers/phase-summary-fixture.js";
  * story-first-phases impl (the phase_summary rule of the save check).
  *
  * An impl that opts in with `phase_summary: required` has each phase open with
- * a paragraph, each task as one plain sentence with no code and no row label,
+ * a paragraph, each task as one plain instruction with no code and no row label,
  * and its technical detail folded beneath. Driven through the real
  * validate-impl-structure hook, as phase-tier-rule.test.ts does. Every case
  * first asserts the well-formed shape passes, so a red here is the refusal

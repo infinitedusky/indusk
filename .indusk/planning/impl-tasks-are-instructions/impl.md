@@ -224,7 +224,7 @@ rewords every place it names, so the change cannot be partial again.
   OTel, Context and Document placeholders in `skills/planner.md`, `skills/falsify.md`, `skills/cleanup.md`.
 
   </details>
-- [ ] Reword the Shape step's written item and the save check's refusal messages.
+- [x] Reword the Shape step's written item and the save check's refusal messages.
   <details><summary>Technical</summary>
 
   `apps/indusk-mcp/src/lib/shape/` (the item it writes), `apps/indusk-mcp/hooks/_phase-summary.js`, `apps/indusk-mcp/hooks/validate-impl-structure.js`, and `src/__tests__/helpers/phase-summary-fixture.ts` if it carries the old text; keep any test asserting a refusal message in step.
