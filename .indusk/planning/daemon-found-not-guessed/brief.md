@@ -20,7 +20,12 @@ to InDusk's own ports. The standard 4318 is every OpenTelemetry tool's default,
 so a person's other tools are the likeliest to hold it; InDusk, installed on
 someone else's machine, takes a block of its own and hands the address to every
 application, so a taken port never splits writers from readers (Sandy,
-2026-10-16).
+2026-10-16). InDusk never moves that address on its own. `indusk telemetry
+address --reset` is the one deliberate way a person chooses it again, and it
+prints the old and the new address. It is the way out of two refusals: a stored
+port that another program has taken for good, and an address file that exists
+but cannot be read (Sandy, 2026-10-16). "Never changed" in the first clause below
+means never changed by InDusk; `--reset` is a person's act.
 
 ## Expectations
 
