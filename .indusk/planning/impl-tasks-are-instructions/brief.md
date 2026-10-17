@@ -1,7 +1,7 @@
 ---
 title: "Impl tasks are written as instructions"
 date: 2026-10-17
-status: draft
+status: accepted
 workflow: bugfix
 description: "A task in a new impl reads as work to do — \"Make the prompt box's text area use the app's font\" — and a verification item as what must hold once it is done. The planner and the ritual templates say so; impls written before still validate."
 ---
