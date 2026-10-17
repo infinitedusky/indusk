@@ -1,7 +1,7 @@
 ---
 title: "Mockups draw components as their stories do"
 date: 2026-10-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -452,12 +452,13 @@ This plan taught approvals to remember the app's element rules, but it did so be
 
 #### Build Phase 4 Document
 
-- [ ] The looks reference says a look last approved under other element rules is held to nothing until approved again.
+- [x] The looks reference says a look last approved under other element rules is held to nothing until approved again.
   <details><summary>Technical</summary>
 
   `apps/docs/src/reference/cli/looks.md`, the `_reset.css` paragraph and the `looks status` line wording.
 
   </details>
+  Note: the `_reset.css` paragraph and the `looks status` paragraph in `apps/docs/src/reference/cli/looks.md` now say it.
 
 ## Files Affected
 

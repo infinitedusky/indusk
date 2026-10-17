@@ -247,8 +247,8 @@ story card.default  approved  by sandy at 2026-10-12T09:00:00.000Z
 
 A proposed mockup with an approved version names that version's first eight
 hash characters: the reference the app is held to meanwhile — or, when that
-version was approved on another foundation or other declarations, says
-`last approved … — nothing held`. Exit 0; a missing
+version was approved on another foundation, other declarations or other
+element rules, says `last approved … — nothing held`. Exit 0; a missing
 app or an unreadable record exits 1 naming the file.
 
 ## `indusk looks coverage <app>`
@@ -329,8 +329,10 @@ binds it another way: the catalog keeps a hash of these rules (`baseRulesHash`)
 and an approved story or mockup records the one it was approved under. When the
 app's element rules change, every look is drawn differently in the cockpit, so
 each approval that recorded the old hash reads proposed until a person approves
-it again. An approval made before the hash was kept records none and reads as
-it always did.
+it again. A proposed look whose last approval was drawn under other element
+rules is held to nothing, in the look check and in `looks status`, as one drawn
+on another foundation is, until it is approved again. An approval made before
+the hash was kept records none and reads as it always did.
 
 `components.json` is `{ components: [{ name, file, properties[], states[] }] }`:
 `file` is the component's one source file, `properties` are Storybook's
