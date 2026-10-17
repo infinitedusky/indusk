@@ -220,3 +220,38 @@ describe("A4 — once an address is stored, every start in the real home uses it
 		expect(reads.addressWrites).toEqual([]);
 	});
 });
+
+describe("A42 — a refusal suggests reap only where reap can act", () => {
+	// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+	const OTHER_HOME = "/home/other/.indusk";
+	const refusedBy = (command: string) =>
+		startPlan({ kind: "none" }, { 24318: { pid: 8, command } }, HOME, { address: HOME_ADDRESS });
+
+	it("a live daemon of another home is named with its home and how to stop it there, never reap", () => {
+		const text = refusalText(
+			refusedBy(jaegerCmd(8, OTHER_HOME).command),
+			HOME,
+			HOME_ADDRESS,
+			() => true,
+		);
+		expect(text).toContain(OTHER_HOME);
+		expect(text).toContain(`INDUSK_HOME=${OTHER_HOME} indusk telemetry stop`);
+		expect(text).not.toMatch(/telemetry reap/);
+	});
+
+	it("an orphan, whose home is gone, is a reap", () => {
+		const text = refusalText(
+			refusedBy(jaegerCmd(8, OTHER_HOME).command),
+			HOME,
+			HOME_ADDRESS,
+			() => false,
+		);
+		expect(text).toMatch(/indusk telemetry reap/);
+	});
+
+	it("this home's own stray is a reap", () => {
+		const text = refusalText(refusedBy(jaegerCmd(8, HOME).command), HOME, HOME_ADDRESS, () => true);
+		expect(text).toMatch(/indusk telemetry reap/);
+		expect(text).not.toMatch(/INDUSK_HOME=/);
+	});
+});

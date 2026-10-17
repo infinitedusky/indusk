@@ -1,9 +1,9 @@
 // clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared
 // promise: the-daemon-readers-follow-is-the-one-running
 import { describe, expect, it } from "vitest";
-import { daemonState } from "../lib/telemetry/daemon-state.js";
+import { daemonState, resolveLocalDaemonVia } from "../lib/telemetry/daemon-state.js";
 import { reapPlan, runReap } from "../lib/telemetry/reap-plan.js";
-import { collectorCmd, fakeReads, HOME, jaegerCmd, rec } from "./helpers/daemon-reads.js";
+import { BLOCK, collectorCmd, fakeReads, HOME, jaegerCmd, rec } from "./helpers/daemon-reads.js";
 
 /**
  * A20 and the reap half of A21 — what `reap` stops, decided from reads, and
@@ -150,5 +150,90 @@ describe("A21 — reap says what it stopped and what would not stop", () => {
 		const reads = fakeReads({ record: null, processes, files: filesOf(processes) });
 		const out = await runReap(reads, HOME, table(processes).deps);
 		expect(out.reports).toEqual([]);
+	});
+});
+
+describe("A36 — a record naming dead processes, beside a running daemon, is a lost record", () => {
+	// clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
+	// The record names pids 1 and 2, long gone; this home's real daemon is 3 and 4, unrecorded.
+	const RUNNING = [jaegerCmd(3, HOME), collectorCmd(4, HOME)];
+	const lost = () =>
+		fakeReads({
+			record: rec(1, 2),
+			processes: RUNNING,
+			listening: { 3: [24318, 24316, 24317], 4: [24319] },
+			yaml: { ports: BLOCK, mtimeAfterStart: false },
+		});
+
+	it("reads the state as found, with no strays", () => {
+		const state = daemonState(lost(), HOME);
+		expect(state.kind).toBe("found");
+		expect(state.found.map((p) => p.pid)).toEqual([3, 4]);
+		expect(state.strays).toEqual([]);
+	});
+
+	it("reap stops nothing and says to take the daemon over first", async () => {
+		const reads = lost();
+		expect(reapPlan(daemonState(reads, HOME))).toEqual([]);
+		const { deps, signals } = table(RUNNING);
+		const out = await runReap(reads, HOME, deps);
+		expect(signals).toEqual([]);
+		expect(out.text).toMatch(/indusk telemetry start/);
+	});
+
+	it("a reader gets the running daemon's meta, and the record is written again naming it", async () => {
+		const reads = lost();
+		const reached = await resolveLocalDaemonVia({ reads, home: HOME, by: "promises" });
+		expect(reached).toMatchObject({ via: "found", meta: { jaegerPid: 3, otelcolPid: 4 } });
+		expect(reads.record()).toMatchObject({ jaegerPid: 3, otelcolPid: 4, otlpPort: 24318 });
+	});
+
+	it("with nothing running the stale record stays stale and is left where it is", () => {
+		const state = daemonState(fakeReads({ record: rec(1, 2) }), HOME);
+		expect(state.kind).toBe("stale");
+	});
+});
+
+describe("A37 — reap stops a daemon whose home was deleted, and no live daemon", () => {
+	// clause: the-daemon-readers-follow-is-the-one-running/strays-are-cleared
+	const GONE_HOME = "/tmp/a-home-deleted-underneath-its-daemon";
+
+	it("stops an orphan of any home, never the recorded daemon, another live home's or a stranger", async () => {
+		const processes = [
+			...OWN,
+			jaegerCmd(5, TEMP_HOME),
+			jaegerCmd(7, GONE_HOME),
+			collectorCmd(8, GONE_HOME),
+			STRANGER_CMD,
+		];
+		const reads = fakeReads({
+			record: rec(1, 2),
+			processes,
+			files: filesOf(processes, [7, 8]),
+		});
+		expect(
+			reapPlan(daemonState(reads, HOME))
+				.map((p) => p.pid)
+				.sort(),
+		).toEqual([7, 8]);
+		const { deps, signals } = table(processes);
+		const out = await runReap(reads, HOME, deps);
+		expect([...new Set(signals.map(([pid]) => pid))].sort()).toEqual([7, 8]);
+		expect(out.code).toBe(0);
+	});
+
+	it("an orphan is stopped even with no record, since its home is no one's", async () => {
+		const processes = [jaegerCmd(7, GONE_HOME), STRANGER_CMD];
+		const reads = fakeReads({ record: null, processes, files: filesOf(processes, [7]) });
+		const { deps, signals } = table(processes);
+		await runReap(reads, HOME, deps);
+		expect([...new Set(signals.map(([pid]) => pid))]).toEqual([7]);
+	});
+
+	it("the recorded daemon is not stopped even when its config file is gone", async () => {
+		const reads = fakeReads({ record: rec(1, 2), processes: OWN, files: filesOf(OWN, [1, 2]) });
+		const { deps, signals } = table(OWN);
+		await runReap(reads, HOME, deps);
+		expect(signals).toEqual([]);
 	});
 });

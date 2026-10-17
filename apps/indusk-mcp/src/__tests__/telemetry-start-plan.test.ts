@@ -243,3 +243,59 @@ describe("A33 — a damaged address file is never taken for a missing one", () =
 		}
 	});
 });
+
+describe("A38 — a lost address file comes back as the ports the running daemon holds", () => {
+	// clause: the-daemon-readers-follow-is-the-one-running/one-daemon-on-its-own-ports
+	// The daemon runs on ports picked at first setup because a stranger held the whole block;
+	// the address file has since been lost and the stranger still holds the block.
+	const PICKED = { traces: 41001, logs: 41002, ui: 41003, mcp: 41004 };
+	const STRANGER = { pid: 4242, command: "/usr/bin/nginx -g daemon off;" };
+	const strangerOnBlock = Object.fromEntries(
+		Object.values(PORT_BLOCK).map((port) => [port, STRANGER]),
+	);
+	const SPARE = [51001, 51002, 51003, 51004];
+	const onPicked = {
+		1: [PICKED.traces, PICKED.ui, PICKED.mcp],
+		2: [PICKED.logs],
+	};
+
+	it("a takeover writes the address with every port the daemon holds, so it reads on its address", async () => {
+		const reads = fakeReads({
+			record: null,
+			address: null,
+			processes: OWN,
+			listening: onPicked,
+			holders: strangerOnBlock,
+			yaml: {
+				ports: {
+					otlpPort: PICKED.traces,
+					logsOtlpPort: PICKED.logs,
+					uiPort: PICKED.ui,
+					mcpPort: PICKED.mcp,
+				},
+				mtimeAfterStart: false,
+			},
+		});
+		const result = await ensureDaemon("start", reads, HOME, spawnSpy(), { spare: SPARE });
+		expect(result.kind).toBe("took-over");
+		expect(reads.address()).toMatchObject(PICKED);
+		expect(daemonState(reads, HOME).portDifferences).toEqual([]);
+	});
+
+	it("a start beside a record whose Jaeger lives keeps the ports that record holds", async () => {
+		const reads = fakeReads({
+			record: rec(1, 2, {
+				otlpPort: PICKED.traces,
+				logsOtlpPort: PICKED.logs,
+				uiPort: PICKED.ui,
+				mcpPort: PICKED.mcp,
+			}),
+			address: null,
+			processes: [jaegerCmd(1, HOME)],
+			listening: onPicked,
+			holders: strangerOnBlock,
+		});
+		await ensureDaemon("start", reads, HOME, spawnSpy(), { spare: SPARE });
+		expect(reads.address()).toMatchObject(PICKED);
+	});
+});

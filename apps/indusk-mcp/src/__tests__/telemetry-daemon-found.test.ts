@@ -1,6 +1,7 @@
 // clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
 // promise: the-daemon-readers-follow-is-the-one-running
 import { describe, expect, it } from "vitest";
+import { PORT_BLOCK } from "../lib/telemetry/daemon-address.js";
 import { describeFinding, findDaemon } from "../lib/telemetry/daemon-find.js";
 import { listeningFromProc } from "../lib/telemetry/daemon-reads.js";
 import { BLOCK, collectorCmd, fakeReads, HOME, jaegerCmd, rec } from "./helpers/daemon-reads.js";
@@ -145,5 +146,34 @@ describe("A10 — a lost daemon is found", () => {
 		const found = await findDaemon(mine, HOME, "status");
 		expect(found && describeFinding(found)).toContain("written again; ports not read: mcp, logs");
 		expect(found && describeFinding({ ...found, finder: false })).toBeNull();
+	});
+});
+
+describe("A40 — a Jaeger is paired with the collector that holds the stored logs port", () => {
+	// clause: the-daemon-readers-follow-is-the-one-running/a-lost-daemon-is-found
+	// Jaeger 1 holds the stored traces port. Collector 3 started nearer in time but holds an
+	// unrelated port; collector 2 started later and holds the stored logs port.
+	const processes = [
+		jaegerCmd(1, HOME, { startedAt: "2026-10-16T12:00:00.000Z" }),
+		collectorCmd(3, HOME, { startedAt: "2026-10-16T12:00:01.000Z" }),
+		collectorCmd(2, HOME, { startedAt: "2026-10-16T12:00:10.000Z" }),
+	];
+	const listening = { 1: [24318, 24316, 24317], 2: [24319], 3: [30000] };
+
+	it("the stored address pairs them, whichever collector started nearer", async () => {
+		const reads = fakeReads({
+			record: null,
+			address: { ...PORT_BLOCK, picked: [] },
+			processes,
+			listening,
+		});
+		const found = await findDaemon(reads, HOME, "status");
+		expect(found?.meta).toMatchObject({ jaegerPid: 1, otelcolPid: 2, logsOtlpPort: 24319 });
+	});
+
+	it("start time decides only when no stored port says", async () => {
+		const reads = fakeReads({ record: null, processes, listening });
+		const found = await findDaemon(reads, HOME, "status");
+		expect(found?.meta).toMatchObject({ jaegerPid: 1, otelcolPid: 3 });
 	});
 });

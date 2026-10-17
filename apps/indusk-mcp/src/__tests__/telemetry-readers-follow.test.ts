@@ -13,6 +13,7 @@ import {
 	shutdownEvalOtel,
 } from "../lib/eval/otel.js";
 import { resolveLocal } from "../lib/promises/sources.js";
+import { resolveLocalDaemonSync, resolveLocalDaemonVia } from "../lib/telemetry/daemon-state.js";
 import { liveOtlpEndpointSync } from "../lib/telemetry/status.js";
 import {
 	BLOCK,
@@ -21,6 +22,7 @@ import {
 	HOME,
 	jaegerCmd,
 	ON_BLOCK,
+	rec,
 } from "./helpers/daemon-reads.js";
 
 /**
@@ -123,5 +125,47 @@ describe("A31 — the evaluator's logs go to the daemon's log channel, never the
 		const log = readFileSync(join(evalDir(projectRoot), "system.log"), "utf-8");
 		expect(log).toContain("logs: http://localhost:24319/v1/logs");
 		rmSync(projectRoot, { recursive: true, force: true });
+	});
+});
+
+describe("A41 — a reader reaches the recorded Jaeger while its collector is gone", () => {
+	// clause: the-daemon-readers-follow-is-the-one-running/a-read-never-loses-the-daemon
+	const halfRunning = () =>
+		fakeReads({
+			record: rec(1, 2),
+			processes: [jaegerCmd(1, HOME)],
+			listening: { 1: [24318, 24316, 24317] },
+		});
+
+	it("the promise reader reaches the Jaeger through the record", async () => {
+		const local = await resolveLocal({ reads: halfRunning(), home: HOME });
+		expect(local).toMatchObject({
+			endpoint: { queryUrl: "http://localhost:24316" },
+			intakeUrl: "http://localhost:24318",
+		});
+	});
+
+	it("the resolver says it reached the daemon through the record, async and sync", async () => {
+		const reached = await resolveLocalDaemonVia({ reads: halfRunning(), home: HOME });
+		expect(reached).toMatchObject({ via: "record", meta: { jaegerPid: 1, otlpPort: 24318 } });
+		expect(resolveLocalDaemonSync({ reads: halfRunning(), home: HOME })).toMatchObject({
+			jaegerPid: 1,
+			otlpPort: 24318,
+		});
+		expect(liveOtlpEndpointSync({ reads: halfRunning(), home: HOME })).toBe(
+			"http://localhost:24318",
+		);
+	});
+
+	it("a reader reports no daemon when the recorded Jaeger is gone, whatever else runs", async () => {
+		const collectorOnly = fakeReads({
+			record: rec(1, 2),
+			processes: [collectorCmd(2, HOME)],
+			listening: { 2: [24319] },
+		});
+		await expect(resolveLocal({ reads: collectorOnly, home: HOME })).rejects.toThrow(
+			/no telemetry daemon is running/,
+		);
+		expect(resolveLocalDaemonSync({ reads: collectorOnly, home: HOME })).toBeNull();
 	});
 });
